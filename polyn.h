@@ -179,17 +179,17 @@ PolyN<N>::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
             double zz = 1.0;
             for (int q = 0; q < m + 1 - k - l; ++q)
             {
-              v[i] += xx * yy * zz * coeffs[idx(k, l, q)];
+              v[i] += xx * yy * zz * this->coeffs[idx(k, l, q)];
               zz *= points(i, 2);
             }
           }
           else if (N == 2)
-            v[i] += xx * yy * coeffs[idx(k, l)];
+            v[i] += xx * yy * this->coeffs[idx(k, l)];
           yy *= points(i, 1);
         }
       }
       else
-        v[i] += xx * coeffs[k];
+        v[i] += xx * this->coeffs[k];
       xx *= points(i, 0);
     }
   }
@@ -285,53 +285,55 @@ const PolyN<N> PolyN<N>::diff(int axis) const {
   if (N == 1)
     {
       assert (axis == 0);
+      result.coeffs.resize(m);
       for (int k = 0; k < m; ++k)
-	result.coeffs[k] = (k + 1) * coeffs[k + 1];
+	result.coeffs[k] = (k + 1) * this->coeffs[k + 1];
     }
 
   if (N == 2)
     {
       assert (axis < 2);
+      result.coeffs.resize(m *(m + 1)/2);
       if (axis == 0)
 	{
 	  for (int k = 0; k < m; ++k)
 	    for (int l = 0; l < m - k; ++l)
-	      result.coeffs[idx(k, l)] = (k + 1) * coeffs[idx(k + 1, l)];
+	      result.coeffs[idx(k, l)] = (k + 1) * this->coeffs[idx(k + 1, l)];
 	}
       else
 	{
 	  for (int k = 0; k < m; ++k)
 	    for (int l = 0; l < m - k; ++l)
-	      result.coeffs[idx(k, l)] = (l + 1) * coeffs[idx(k, l + 1)];
+	      result.coeffs[idx(k, l)] = (l + 1) * this->coeffs[idx(k, l + 1)];
 	}
     }
 
     if (N == 3)
     {
       assert (axis < 3);
+      result.coeffs.resize(m *(m + 1)*(m + 2)/6);
       if (axis == 0)
 	{
 	  for (int k = 0; k < m; ++k)
 	    for (int l = 0; l < m - k; ++l)
 	      for (int q = 0; q < m - k - l; ++q)
-		result.coeffs[idx(k, l, q)] = (k + 1) * coeffs[idx(k + 1, l, q)];
+		result.coeffs[idx(k, l, q)] = (k + 1) * this->coeffs[idx(k + 1, l, q)];
 	}
       else if (axis == 1)
 	{
 	  for (int k = 0; k < m; ++k)
 	    for (int l = 0; l < m - k; ++l)
 	      for (int q = 0; q < m - k - l; ++q)
-		result.coeffs[idx(k, l, q)] = (l + 1) * coeffs[idx(k, l + 1, q)];
+		result.coeffs[idx(k, l, q)] = (l + 1) * this->coeffs[idx(k, l + 1, q)];
 	}
       else
 	{
 	  for (int k = 0; k < m; ++k)
 	    for (int l = 0; l < m - k; ++l)
 	      for (int q = 0; q < m - k - l; ++q)
-		result.coeffs[idx(k, l, q)] = (q + 1) * coeffs[idx(k, l, q + 1)];
+		result.coeffs[idx(k, l, q)] = (q + 1) * this->coeffs[idx(k, l, q + 1)];
 	}
     }
-
   
   return result;
 }

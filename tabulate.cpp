@@ -7,6 +7,21 @@
 #include "polyn.h"
 #include "tabulate.h"
 
+namespace
+{
+// Compute coefficients in the Jacobi Polynomial recurrence relation
+std::tuple<double, double, double> jrc(int a, int n)
+{
+  double an = (a + 2 * n + 1) * (a + 2 * n + 2)
+              / static_cast<double>(2 * (n + 1) * (a + n + 1));
+  double bn = a * a * (a + 2 * n + 1)
+              / static_cast<double>(2 * (n + 1) * (a + n + 1) * (a + 2 * n));
+  double cn = n * (a + n) * (a + 2 * n + 2)
+              / static_cast<double>((n + 1) * (a + n + 1) * (a + 2 * n));
+  return std::tuple<double, double, double>(an, bn, cn);
+}
+} // namespace
+
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_line(

@@ -4,18 +4,6 @@
 
 #pragma once
 
-// Compute coefficients in the Jacobi Polynomial recurrence relation
-static inline std::tuple<double, double, double> jrc(int a, int n)
-{
-  double an = (a + 2 * n + 1) * (a + 2 * n + 2)
-              / static_cast<double>(2 * (n + 1) * (a + n + 1));
-  double bn = a * a * (a + 2 * n + 1)
-              / static_cast<double>(2 * (n + 1) * (a + n + 1) * (a + 2 * n));
-  double cn = n * (a + n) * (a + 2 * n + 2)
-              / static_cast<double>((n + 1) * (a + n + 1) * (a + 2 * n));
-  return std::tuple<double, double, double>(an, bn, cn);
-}
-
 // Compute indexing in a 2D triangular array compressed into a 1D array
 static inline int idx(int p, int q) { return (p + q + 1) * (p + q) / 2 + q; }
 

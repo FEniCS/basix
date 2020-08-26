@@ -104,7 +104,7 @@ public:
   // Compute polynomial value at points (tabulate)
   Eigen::ArrayXd
   tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                              Eigen::RowMajor>& points);
+                              Eigen::RowMajor>& points) const;
 
   // Differentiate with respect to x, y or z.
   // @param axis (x=0, y=1, z=2)
@@ -170,7 +170,7 @@ PolyN<N>& PolyN<N>::operator*=(const double& scale)
 template <int N>
 Eigen::ArrayXd
 PolyN<N>::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& points)
+                                      Eigen::RowMajor>& points) const
 {
   assert(points.cols() == N);
   Eigen::ArrayXd v(points.rows());

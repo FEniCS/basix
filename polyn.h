@@ -94,6 +94,9 @@ public:
   tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& points);
 
+  // Differentiate
+  const PolyN diff(int axis) const;
+  
 private:
   int order;
   Eigen::Array<double, Eigen::Dynamic, 1> coeffs;
@@ -271,3 +274,64 @@ const PolyN<1> PolyN<1>::operator*(const PolyN<1>& other) const
   return result;
 };
 //-----------------------------------------------------------------------------
+template <int N>
+const PolyN<N> PolyN<N>::diff(int axis) const {
+
+  assert (axis >= 0);
+  PolyN<N> result;
+  const int m = this->order;
+  result.order = m - 1;
+
+  if (N == 1)
+    {
+      assert (axis == 0);
+      for (int k = 0; k < m; ++k)
+	result.coeffs[k] = (k + 1) * coeffs[k + 1];
+    }
+
+  if (N == 2)
+    {
+      assert (axis < 2);
+      if (axis == 0)
+	{
+	  for (int k = 0; k < m; ++k)
+	    for (int l = 0; l < m - k; ++l)
+	      result.coeffs[idx(k, l)] = (k + 1) * coeffs[idx(k + 1, l)];
+	}
+      else
+	{
+	  for (int k = 0; k < m; ++k)
+	    for (int l = 0; l < m - k; ++l)
+	      result.coeffs[idx(k, l)] = (l + 1) * coeffs[idx(k, l + 1)];
+	}
+    }
+
+    if (N == 3)
+    {
+      assert (axis < 3);
+      if (axis == 0)
+	{
+	  for (int k = 0; k < m; ++k)
+	    for (int l = 0; l < m - k; ++l)
+	      for (int q = 0; q < m - k - l; ++q)
+		result.coeffs[idx(k, l, q)] = (k + 1) * coeffs[idx(k + 1, l, q)];
+	}
+      else if (axis == 1)
+	{
+	  for (int k = 0; k < m; ++k)
+	    for (int l = 0; l < m - k; ++l)
+	      for (int q = 0; q < m - k - l; ++q)
+		result.coeffs[idx(k, l, q)] = (l + 1) * coeffs[idx(k, l + 1, q)];
+	}
+      else
+	{
+	  for (int k = 0; k < m; ++k)
+	    for (int l = 0; l < m - k; ++l)
+	      for (int q = 0; q < m - k - l; ++q)
+		result.coeffs[idx(k, l, q)] = (q + 1) * coeffs[idx(k, l, q + 1)];
+	}
+    }
+
+  
+  return result;
+}

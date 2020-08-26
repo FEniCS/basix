@@ -7,6 +7,7 @@
 #include "polyn.h"
 #include "tabulate.h"
 
+//-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_line(
     int n,
@@ -37,7 +38,7 @@ tabulate_line(
 
   return result;
 }
-
+//-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_triangle(int n,
                   Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor> pts)
@@ -85,7 +86,7 @@ tabulate_triangle(int n,
 
   return result;
 }
-
+//-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_tetrahedron(
     int n, Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> pts)
@@ -111,7 +112,7 @@ tabulate_tetrahedron(
   {
     double a = static_cast<double>(p) / static_cast<double>(p + 1);
     poly[idx(p + 1, 0, 0)]
-      = f1 * poly[idx(p, 0, 0)] * (a + 1.0) - f2 * poly[idx(p - 1, 0, 0)] * a;
+        = f1 * poly[idx(p, 0, 0)] * (a + 1.0) - f2 * poly[idx(p - 1, 0, 0)] * a;
   }
 
   for (int p = 0; p < n; ++p)
@@ -156,3 +157,4 @@ tabulate_tetrahedron(
 
   return result;
 }
+//-----------------------------------------------------------------------------

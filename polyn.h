@@ -4,6 +4,7 @@
 
 #pragma once
 
+// Compute coefficients in the Jacobi Polynomial recurrence relation
 static inline std::tuple<double, double, double> jrc(int a, int n)
 {
   double an = (a + 2 * n + 1) * (a + 2 * n + 2)
@@ -15,24 +16,32 @@ static inline std::tuple<double, double, double> jrc(int a, int n)
   return std::tuple<double, double, double>(an, bn, cn);
 }
 
+// Compute indexing in a 2D triangular array compressed into a 1D array
 static inline int idx(int p, int q) { return (p + q + 1) * (p + q) / 2 + q; }
 
+// Compute indexing in a 3D tetrahedral array compressed into a 1D array
 static inline int idx(int p, int q, int r)
 {
   return (p + q + r) * (p + q + r + 1) * (p + q + r + 2) / 6
          + (q + r) * (q + r + 1) / 2 + r;
 };
 
+// Implementation of a polynomial of N variables as a set of coefficients
+// The total number of coefficients determines the order of the polynomial.
+// e.g. in 1D, there are n+1 coefficients for an order n polynomial,
+// e.g. in 2D there are 6 coefficients for order 2: 1, x, y, x^2, xy, y^2.
 template <int N>
 class PolyN
 {
 public:
+  // Default constructor
   PolyN()
   {
     if (N < 1 or N > 3)
       throw std::runtime_error("Invalid dimension (must be in range 1-3)");
   }
 
+  // Static method instantiating an order zero polynomial with value 1.0
   static PolyN one()
   {
     PolyN p;
@@ -41,7 +50,8 @@ public:
     p.coeffs[0] = 1.0;
     return p;
   }
-  
+
+  // Static method instantiating an order one polynomial with value x
   static PolyN x()
   {
     PolyN p;
@@ -52,9 +62,10 @@ public:
     return p;
   }
 
+  // Static method instantiating an order one polynomial with value y
   static PolyN y()
   {
-    assert (N > 1);
+    assert(N > 1);
     PolyN p;
     p.order = 1;
     p.coeffs.resize(N + 1);
@@ -63,9 +74,10 @@ public:
     return p;
   }
 
+  // Static method instantiating an order one polynomial with value z
   static PolyN z()
   {
-    assert (N == 3);
+    assert(N == 3);
     PolyN p;
     p.order = 1;
     p.coeffs.resize(N + 1);
@@ -89,14 +101,15 @@ public:
   // Multiply by a scalar
   PolyN& operator*=(const double& scale);
 
-  // Compute polynomial value at points
+  // Compute polynomial value at points (tabulate)
   Eigen::ArrayXd
   tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& points);
 
-  // Differentiate
+  // Differentiate with respect to x, y or z.
+  // @param axis (x=0, y=1, z=2)
   const PolyN diff(int axis) const;
-  
+
 private:
   int order;
   Eigen::Array<double, Eigen::Dynamic, 1> coeffs;
@@ -164,6 +177,7 @@ PolyN<N>::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
   v.setZero();
   const int m = this->order;
 
+  // FIXME: could use points.col() instead of looping here
   for (int i = 0; i < points.rows(); ++i)
   {
     double xx = 1.0;
@@ -197,6 +211,7 @@ PolyN<N>::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
 }
 
 //-----------------------------------------------------------------------------
+// Specialisation for multiplying together 3D polynomials
 template <>
 const PolyN<3> PolyN<3>::operator*(const PolyN<3>& other) const
 {
@@ -227,6 +242,7 @@ const PolyN<3> PolyN<3>::operator*(const PolyN<3>& other) const
 };
 
 //-----------------------------------------------------------------------------
+// Specialisation for multiplying together 2D polynomials
 template <>
 const PolyN<2> PolyN<2>::operator*(const PolyN<2>& other) const
 {
@@ -255,6 +271,7 @@ const PolyN<2> PolyN<2>::operator*(const PolyN<2>& other) const
 };
 
 //-----------------------------------------------------------------------------
+// Specialisation for multiplying together 1D polynomials
 template <>
 const PolyN<1> PolyN<1>::operator*(const PolyN<1>& other) const
 {
@@ -274,66 +291,71 @@ const PolyN<1> PolyN<1>::operator*(const PolyN<1>& other) const
   return result;
 };
 //-----------------------------------------------------------------------------
+// Differentiation (untested)
 template <int N>
-const PolyN<N> PolyN<N>::diff(int axis) const {
+const PolyN<N> PolyN<N>::diff(int axis) const
+{
 
-  assert (axis >= 0);
+  assert(axis >= 0);
   PolyN<N> result;
   const int m = this->order;
   result.order = m - 1;
 
   if (N == 1)
-    {
-      assert (axis == 0);
-      result.coeffs.resize(m);
-      for (int k = 0; k < m; ++k)
-	result.coeffs[k] = (k + 1) * this->coeffs[k + 1];
-    }
+  {
+    assert(axis == 0);
+    result.coeffs.resize(m);
+    for (int k = 0; k < m; ++k)
+      result.coeffs[k] = (k + 1) * this->coeffs[k + 1];
+  }
 
   if (N == 2)
+  {
+    assert(axis < 2);
+    result.coeffs.resize(m * (m + 1) / 2);
+    if (axis == 0)
     {
-      assert (axis < 2);
-      result.coeffs.resize(m *(m + 1)/2);
-      if (axis == 0)
-	{
-	  for (int k = 0; k < m; ++k)
-	    for (int l = 0; l < m - k; ++l)
-	      result.coeffs[idx(k, l)] = (k + 1) * this->coeffs[idx(k + 1, l)];
-	}
-      else
-	{
-	  for (int k = 0; k < m; ++k)
-	    for (int l = 0; l < m - k; ++l)
-	      result.coeffs[idx(k, l)] = (l + 1) * this->coeffs[idx(k, l + 1)];
-	}
+      for (int k = 0; k < m; ++k)
+        for (int l = 0; l < m - k; ++l)
+          result.coeffs[idx(k, l)] = (k + 1) * this->coeffs[idx(k + 1, l)];
     }
+    else
+    {
+      for (int k = 0; k < m; ++k)
+        for (int l = 0; l < m - k; ++l)
+          result.coeffs[idx(k, l)] = (l + 1) * this->coeffs[idx(k, l + 1)];
+    }
+  }
 
-    if (N == 3)
+  if (N == 3)
+  {
+    assert(axis < 3);
+    result.coeffs.resize(m * (m + 1) * (m + 2) / 6);
+    if (axis == 0)
     {
-      assert (axis < 3);
-      result.coeffs.resize(m *(m + 1)*(m + 2)/6);
-      if (axis == 0)
-	{
-	  for (int k = 0; k < m; ++k)
-	    for (int l = 0; l < m - k; ++l)
-	      for (int q = 0; q < m - k - l; ++q)
-		result.coeffs[idx(k, l, q)] = (k + 1) * this->coeffs[idx(k + 1, l, q)];
-	}
-      else if (axis == 1)
-	{
-	  for (int k = 0; k < m; ++k)
-	    for (int l = 0; l < m - k; ++l)
-	      for (int q = 0; q < m - k - l; ++q)
-		result.coeffs[idx(k, l, q)] = (l + 1) * this->coeffs[idx(k, l + 1, q)];
-	}
-      else
-	{
-	  for (int k = 0; k < m; ++k)
-	    for (int l = 0; l < m - k; ++l)
-	      for (int q = 0; q < m - k - l; ++q)
-		result.coeffs[idx(k, l, q)] = (q + 1) * this->coeffs[idx(k, l, q + 1)];
-	}
+      for (int k = 0; k < m; ++k)
+        for (int l = 0; l < m - k; ++l)
+          for (int q = 0; q < m - k - l; ++q)
+            result.coeffs[idx(k, l, q)]
+                = (k + 1) * this->coeffs[idx(k + 1, l, q)];
     }
-  
+    else if (axis == 1)
+    {
+      for (int k = 0; k < m; ++k)
+        for (int l = 0; l < m - k; ++l)
+          for (int q = 0; q < m - k - l; ++q)
+            result.coeffs[idx(k, l, q)]
+                = (l + 1) * this->coeffs[idx(k, l + 1, q)];
+    }
+    else
+    {
+      for (int k = 0; k < m; ++k)
+        for (int l = 0; l < m - k; ++l)
+          for (int q = 0; q < m - k - l; ++q)
+            result.coeffs[idx(k, l, q)]
+                = (q + 1) * this->coeffs[idx(k, l, q + 1)];
+    }
+  }
+
   return result;
 }

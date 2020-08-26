@@ -1,11 +1,13 @@
 
 #include "tabulate.h"
-#include <iostream>
-#include <iomanip>
 #include <Eigen/Dense>
+#include <iomanip>
+#include <iostream>
 
 int main()
 {
+
+  // Tabulate at some random points
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts1d(
       3, 1);
@@ -30,4 +32,6 @@ int main()
   pts3d.row(2) << 0.0, 0.9, 0.1;
 
   std::cout << tabulate_tetrahedron(3, pts3d) << std::endl;
+
+  return 0;
 }

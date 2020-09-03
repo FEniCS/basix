@@ -19,20 +19,20 @@ static inline int idx(int p, int q, int r)
 // e.g. in 1D, there are n+1 coefficients for an order n polynomial,
 // e.g. in 2D there are 6 coefficients for order 2: 1, x, y, x^2, xy, y^2.
 template <int N>
-class PolyN
+class Polynomial
 {
 public:
   // Default constructor
-  PolyN()
+  Polynomial()
   {
     if (N < 1 or N > 3)
       throw std::runtime_error("Invalid dimension (must be in range 1-3)");
   }
 
   // Static method instantiating an order zero polynomial with value 1.0
-  static PolyN one()
+  static Polynomial one()
   {
-    PolyN p;
+    Polynomial p;
     p.order = 0;
     p.coeffs.resize(1);
     p.coeffs[0] = 1.0;
@@ -40,9 +40,9 @@ public:
   }
 
   // Static method instantiating an order one polynomial with value x
-  static PolyN x()
+  static Polynomial x()
   {
-    PolyN p;
+    Polynomial p;
     p.order = 1;
     p.coeffs.resize(N + 1);
     p.coeffs.setZero();
@@ -51,10 +51,10 @@ public:
   }
 
   // Static method instantiating an order one polynomial with value y
-  static PolyN y()
+  static Polynomial y()
   {
     assert(N > 1);
-    PolyN p;
+    Polynomial p;
     p.order = 1;
     p.coeffs.resize(N + 1);
     p.coeffs.setZero();
@@ -63,10 +63,10 @@ public:
   }
 
   // Static method instantiating an order one polynomial with value z
-  static PolyN z()
+  static Polynomial z()
   {
     assert(N == 3);
-    PolyN p;
+    Polynomial p;
     p.order = 1;
     p.coeffs.resize(N + 1);
     p.coeffs.setZero();
@@ -75,19 +75,19 @@ public:
   }
 
   // Add two polynomials
-  const PolyN operator+(const PolyN& other) const;
+  const Polynomial operator+(const Polynomial& other) const;
 
   // Subtract two polynomials
-  const PolyN operator-(const PolyN& other) const;
+  const Polynomial operator-(const Polynomial& other) const;
 
   // Multiply two polynomials
-  const PolyN operator*(const PolyN& other) const;
+  const Polynomial operator*(const Polynomial& other) const;
 
   // Multiply by a scalar
-  const PolyN operator*(const double& scale) const;
+  const Polynomial operator*(const double& scale) const;
 
   // Multiply by a scalar
-  PolyN& operator*=(const double& scale);
+  Polynomial& operator*=(const double& scale);
 
   // Compute polynomial value at points (tabulate)
   Eigen::ArrayXd
@@ -96,7 +96,7 @@ public:
 
   // Differentiate with respect to x, y or z.
   // @param axis (x=0, y=1, z=2)
-  const PolyN diff(int axis) const;
+  const Polynomial diff(int axis) const;
 
 private:
   int order;
@@ -105,9 +105,9 @@ private:
 
 //-----------------------------------------------------------------------------
 template <int N>
-const PolyN<N> PolyN<N>::operator+(const PolyN<N>& other) const
+const Polynomial<N> Polynomial<N>::operator+(const Polynomial<N>& other) const
 {
-  PolyN<N> result = *this;
+  Polynomial<N> result = *this;
   int n = other.coeffs.size();
   int m = result.coeffs.size();
   if (n > m)
@@ -122,9 +122,9 @@ const PolyN<N> PolyN<N>::operator+(const PolyN<N>& other) const
 
 //-----------------------------------------------------------------------------
 template <int N>
-const PolyN<N> PolyN<N>::operator-(const PolyN<N>& other) const
+const Polynomial<N> Polynomial<N>::operator-(const Polynomial<N>& other) const
 {
-  PolyN<N> result = *this;
+  Polynomial<N> result = *this;
   int n = other.coeffs.size();
   int m = result.coeffs.size();
   if (n > m)
@@ -139,16 +139,16 @@ const PolyN<N> PolyN<N>::operator-(const PolyN<N>& other) const
 
 //-----------------------------------------------------------------------------
 template <int N>
-const PolyN<N> PolyN<N>::operator*(const double& scale) const
+const Polynomial<N> Polynomial<N>::operator*(const double& scale) const
 {
-  PolyN<N> result = *this;
+  Polynomial<N> result = *this;
   result.coeffs *= scale;
   return result;
 };
 
 //-----------------------------------------------------------------------------
 template <int N>
-PolyN<N>& PolyN<N>::operator*=(const double& scale)
+Polynomial<N>& Polynomial<N>::operator*=(const double& scale)
 {
   this->coeffs *= scale;
   return *this;
@@ -157,7 +157,7 @@ PolyN<N>& PolyN<N>::operator*=(const double& scale)
 //-----------------------------------------------------------------------------
 template <int N>
 Eigen::ArrayXd
-PolyN<N>::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+Polynomial<N>::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                       Eigen::RowMajor>& points) const
 {
   assert(points.cols() == N);
@@ -201,9 +201,9 @@ PolyN<N>::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
 //-----------------------------------------------------------------------------
 // Specialisation for multiplying together 3D polynomials
 template <>
-const PolyN<3> PolyN<3>::operator*(const PolyN<3>& other) const
+const Polynomial<3> Polynomial<3>::operator*(const Polynomial<3>& other) const
 {
-  PolyN<3> result;
+  Polynomial<3> result;
   int n0 = this->order;
   int n1 = other.order;
   int n = n0 + n1;
@@ -232,9 +232,9 @@ const PolyN<3> PolyN<3>::operator*(const PolyN<3>& other) const
 //-----------------------------------------------------------------------------
 // Specialisation for multiplying together 2D polynomials
 template <>
-const PolyN<2> PolyN<2>::operator*(const PolyN<2>& other) const
+const Polynomial<2> Polynomial<2>::operator*(const Polynomial<2>& other) const
 {
-  PolyN<2> result;
+  Polynomial<2> result;
   int n0 = this->order;
   int n1 = other.order;
   int n = n0 + n1;
@@ -261,9 +261,9 @@ const PolyN<2> PolyN<2>::operator*(const PolyN<2>& other) const
 //-----------------------------------------------------------------------------
 // Specialisation for multiplying together 1D polynomials
 template <>
-const PolyN<1> PolyN<1>::operator*(const PolyN<1>& other) const
+const Polynomial<1> Polynomial<1>::operator*(const Polynomial<1>& other) const
 {
-  PolyN<1> result;
+  Polynomial<1> result;
   int n0 = this->order;
   int n1 = other.order;
   int n = n0 + n1;
@@ -281,11 +281,11 @@ const PolyN<1> PolyN<1>::operator*(const PolyN<1>& other) const
 //-----------------------------------------------------------------------------
 // Differentiation (untested)
 template <int N>
-const PolyN<N> PolyN<N>::diff(int axis) const
+const Polynomial<N> Polynomial<N>::diff(int axis) const
 {
 
   assert(axis >= 0);
-  PolyN<N> result;
+  Polynomial<N> result;
   const int m = this->order;
   result.order = m - 1;
 

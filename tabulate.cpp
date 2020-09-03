@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include "polyn.h"
+#include "polynomial.h"
 #include "tabulate.h"
 
 namespace
@@ -28,11 +28,11 @@ tabulate_line(
     int n,
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts)
 {
-  PolyN<1> one = PolyN<1>::one();
-  PolyN<1> x = PolyN<1>::x();
+  Polynomial<1> one = Polynomial<1>::one();
+  Polynomial<1> x = Polynomial<1>::x();
 
   const int m = (n + 1);
-  std::vector<PolyN<1>> poly(m);
+  std::vector<Polynomial<1>> poly(m);
   poly[0] = one;
   if (n > 0)
     poly[1] = x;
@@ -58,16 +58,16 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_triangle(int n,
                   Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor> pts)
 {
-  PolyN<2> one = PolyN<2>::one();
-  PolyN<2> x = PolyN<2>::x();
-  PolyN<2> y = PolyN<2>::y();
+  Polynomial<2> one = Polynomial<2>::one();
+  Polynomial<2> x = Polynomial<2>::x();
+  Polynomial<2> y = Polynomial<2>::y();
 
   const int m = (n + 1) * (n + 2) / 2;
-  std::vector<PolyN<2>> poly(m);
+  std::vector<Polynomial<2>> poly(m);
   poly[0] = one;
-  PolyN<2> f1 = x + (one + y) * 0.5;
-  PolyN<2> f2 = (one - y) * 0.5;
-  PolyN<2> f3 = f2 * f2;
+  Polynomial<2> f1 = x + (one + y) * 0.5;
+  Polynomial<2> f2 = (one - y) * 0.5;
+  Polynomial<2> f3 = f2 * f2;
   if (n > 0)
     poly[1] = f1;
 
@@ -106,19 +106,19 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_tetrahedron(
     int n, Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> pts)
 {
-  const PolyN<3> one = PolyN<3>::one();
-  const PolyN<3> x = PolyN<3>::x();
-  const PolyN<3> y = PolyN<3>::y();
-  const PolyN<3> z = PolyN<3>::z();
+  const Polynomial<3> one = Polynomial<3>::one();
+  const Polynomial<3> x = Polynomial<3>::x();
+  const Polynomial<3> y = Polynomial<3>::y();
+  const Polynomial<3> z = Polynomial<3>::z();
 
   const int m = (n + 1) * (n + 2) * (n + 3) / 6;
-  std::vector<PolyN<3>> poly(m);
+  std::vector<Polynomial<3>> poly(m);
   poly[0] = one;
-  const PolyN<3> f1 = one + x + (y + z) * 0.5;
-  const PolyN<3> f2 = (y + z) * (y + z) * 0.25;
-  const PolyN<3> f3 = (one + y * 2.0 + z) * 0.5;
-  const PolyN<3> f4 = (one - z) * 0.5;
-  const PolyN<3> f5 = f4 * f4;
+  const Polynomial<3> f1 = one + x + (y + z) * 0.5;
+  const Polynomial<3> f2 = (y + z) * (y + z) * 0.25;
+  const Polynomial<3> f3 = (one + y * 2.0 + z) * 0.5;
+  const Polynomial<3> f4 = (one - z) * 0.5;
+  const Polynomial<3> f5 = f4 * f4;
 
   if (n > 0)
     poly[1] = f1;
@@ -138,8 +138,8 @@ tabulate_tetrahedron(
     for (int q = 1; q < n - p; ++q)
     {
       auto [aq, bq, cq] = jrc(2 * p + 1, q);
-      PolyN<3> qmcoeff = f3 * aq + f4 * bq;
-      PolyN<3> qm1coeff = f5 * cq;
+      Polynomial<3> qmcoeff = f3 * aq + f4 * bq;
+      Polynomial<3> qm1coeff = f5 * cq;
       poly[idx(p, q + 1, 0)]
           = poly[idx(p, q, 0)] * qmcoeff - poly[idx(p, q - 1, 0)] * qm1coeff;
     }

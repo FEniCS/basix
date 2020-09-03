@@ -94,7 +94,8 @@ public:
   tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& points) const;
 
-  // Differentiate with respect to x, y or z.
+  // Differentiate with respect to x, y or z, returning a polynomial of lower
+  // order.
   // @param axis (x=0, y=1, z=2)
   const Polynomial diff(int axis) const;
 
@@ -156,45 +157,45 @@ Polynomial<N>& Polynomial<N>::operator*=(const double& scale)
 
 //-----------------------------------------------------------------------------
 template <int N>
-Eigen::ArrayXd
-Polynomial<N>::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& points) const
+Eigen::ArrayXd Polynomial<N>::tabulate(
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        points) const
 {
   assert(points.cols() == N);
   Eigen::ArrayXd v(points.rows());
   v.setZero();
   const int m = this->order;
 
-  // FIXME: could use points.col() instead of looping here
-  for (int i = 0; i < points.rows(); ++i)
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> p(
+      points.rows(), points.cols());
+  p.fill(1.0);
+
+  for (int k = 0; k < m + 1; ++k)
   {
-    double xx = 1.0;
-    for (int k = 0; k < m + 1; ++k)
+    if (N > 1)
     {
-      if (N > 1)
+      p.col(1).fill(1.0);
+      for (int l = 0; l < m + 1 - k; ++l)
       {
-        double yy = 1.0;
-        for (int l = 0; l < m + 1 - k; ++l)
+        if (N == 3)
         {
-          if (N == 3)
+	  p.col(2).fill(1.0);
+          for (int q = 0; q < m + 1 - k - l; ++q)
           {
-            double zz = 1.0;
-            for (int q = 0; q < m + 1 - k - l; ++q)
-            {
-              v[i] += xx * yy * zz * this->coeffs[idx(k, l, q)];
-              zz *= points(i, 2);
-            }
+            v += p.col(0) * p.col(1) * p.col(2) * this->coeffs[idx(k, l, q)];
+            p.col(2) *= points.col(2);
           }
-          else if (N == 2)
-            v[i] += xx * yy * this->coeffs[idx(k, l)];
-          yy *= points(i, 1);
         }
+        else if (N == 2)
+          v += p.col(0) * p.col(1) * this->coeffs[idx(k, l)];
+        p.col(1) *= points.col(1);
       }
-      else
-        v[i] += xx * this->coeffs[k];
-      xx *= points(i, 0);
     }
+    else
+      v += p.col(0) * this->coeffs[k];
+    p.col(0) *= points.col(0);
   }
+
   return v;
 }
 

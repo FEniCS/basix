@@ -7,38 +7,27 @@
 
 int main()
 {
+  int n = 2;
 
-  // Tabulate at some random points
+  // Reference triangle
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> v(3, 2);
+  v << -1.0, -1.0, -1.0, 1.0, 1.0, -1.0;
+  
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt = create_lattice(n, v);
+  Eigen::MatrixXd r = tabulate_triangle(n, pt).transpose();
+  Eigen::MatrixXd w = r.inverse();
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts1d(
-      3, 1);
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt2 = create_lattice(50, v);
+  Eigen::MatrixXd vals = tabulate_triangle(n, pt2).matrix();
 
-  pts1d << -1.0, 0.4, 0.9;
+  for (int i = 0; i < pt2.rows(); ++i)
+    {
+      Eigen::Matrix r = vals.row(i).transpose();
+      auto t2 = w * r;
+      std::cout << t2.rows() << "x" << t2.cols() << "\n";
+						    //    std::cout << std::setprecision(5) << std::fixed << std::setw(10) << pt2.row(i) << " " << w * (vals.row(i).transpose()).transpose() << "\n";
+    }
 
-  std::cout << std::setprecision(9) << std::endl
-            << tabulate_line(6, pts1d) << std::endl;
-
-  Eigen::Array<double, 3, 2, Eigen::RowMajor> pts2d;
-
-  pts2d.row(0) << -1.0, -1.0;
-  pts2d.row(1) << 0.0, 1.0;
-  pts2d.row(2) << 1.0, 0.0;
-
-  std::cout << std::setprecision(9) << std::endl
-            << tabulate_triangle(3, pts2d) << std::endl;
-
-  Eigen::Array<double, 4, 3, Eigen::RowMajor> pts3d;
-  pts3d.row(0) << 0.0, 0.0, 0.0;
-  pts3d.row(1) << 0.0, 0.0, 1.0;
-  pts3d.row(2) << 0.0, 1.0, 0.0;
-  pts3d.row(3) << 1.0, 0.0, 0.0;
-
-  std::cout << tabulate_tetrahedron(3, pts3d) << std::endl;
-
-  auto pt = create_lattice(pts2d, 2);
-  std::cout << pt;
-  Eigen::MatrixXd w = tabulate_triangle(2, pt);
-  std::cout << "\n\n" << w.inverse() << "\n";
-
+  
   return 0;
 }

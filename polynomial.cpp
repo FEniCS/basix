@@ -4,7 +4,7 @@
 //-----------------------------------------------------------------------------
 const Polynomial Polynomial::operator+(const Polynomial& other) const
 {
-  assert (this->dim == other.dim);
+  assert(this->dim == other.dim);
   Polynomial result = *this;
   int n = other.coeffs.size();
   int m = result.coeffs.size();
@@ -21,7 +21,7 @@ const Polynomial Polynomial::operator+(const Polynomial& other) const
 //-----------------------------------------------------------------------------
 const Polynomial Polynomial::operator-(const Polynomial& other) const
 {
-  assert (this->dim == other.dim);
+  assert(this->dim == other.dim);
   Polynomial result = *this;
   int n = other.coeffs.size();
   int m = result.coeffs.size();
@@ -49,11 +49,82 @@ Polynomial& Polynomial::operator*=(const double& scale)
   this->coeffs *= scale;
   return *this;
 }
-
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd Polynomial::tabulate(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        points) const
+const Polynomial Polynomial::operator*(const Polynomial& other) const
+{
+  Polynomial result;
+  result.dim = this->dim;
+  int n0 = this->order;
+  int n1 = other.order;
+  int n = n0 + n1;
+  result.order = n;
+
+  // Compute size of product coeff vector
+  int m = 1;
+  for (int i = 0; i < dim; ++i)
+  {
+    m *= (n + i + 1);
+    m /= (i + 1);
+  }
+  result.coeffs.resize(m);
+  result.coeffs.setZero();
+
+  // Index vectors to march through polynomial in correct order
+  // and a function to update them
+  std::vector<int> c0(this->dim, 0);
+  std::vector<int> c1(this->dim, 0);
+  std::function<void(std::vector<int>&, int)> _update
+      = [&_update](std::vector<int>& c, int s) {
+          if (s > 1 and c[s - 1] == c[s - 2])
+          {
+            c[s - 1] = 0;
+            _update(c, s - 1);
+          }
+          else
+            ++c[s - 1];
+        };
+
+  // Computation of linear index from index vector, needed to
+  // locate correct entry of the sum of two index vectors
+  auto _idx = [](std::vector<int>& c) {
+    int s = 0;
+    int n = c.size() - 1;
+    for (int i = 0; i < n + 1; ++i)
+    {
+      int p = c[n - i];
+      int r = 1;
+      for (int j = 0; j < i + 1; ++j)
+      {
+        r *= (p + j);
+        r /= (1 + j);
+      }
+      s += r;
+    }
+    return s;
+  };
+
+  // Iterate through both sets of indices, summing coeffs
+  // into the correct place in result.coeffs
+  std::vector<int> csum(this->dim, 0);
+  for (int i = 0; i < this->coeffs.size(); ++i)
+  {
+    std::fill(c1.begin(), c1.end(), 0);
+    for (int j = 0; j < other.coeffs.size(); ++j)
+    {
+      for (int k = 0; k < this->dim; ++k)
+        csum[k] = c0[k] + c1[k];
+      result.coeffs[_idx(csum)] += this->coeffs[i] * other.coeffs[j];
+      _update(c1, c1.size());
+    }
+    _update(c0, c0.size());
+  }
+
+  return result;
+};
+//-----------------------------------------------------------------------------
+Eigen::ArrayXd
+Polynomial::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                        Eigen::RowMajor>& points) const
 {
   assert(points.cols() == dim);
   Eigen::ArrayXd v(points.rows());
@@ -160,91 +231,3 @@ const Polynomial Polynomial::diff(int axis) const
 
   return result;
 }
-
-const Polynomial Polynomial::operator*(const Polynomial& other) const
-{
-  Polynomial result;
-  result.dim = this->dim;
-  int n0 = this->order;
-  int n1 = other.order;
-  int n = n0 + n1;
-  result.order = n;
-  int m = 1;
-  int m0 = 1;
-  int m1 = 1;
-  for (int i = 0; i < dim; ++i)
-  {
-    m0 *= (n0 + i + 1);
-    m1 *= (n1 + i + 1);
-    m *= (n + i + 1);
-    m0 /= (i + 1);
-    m1 /= (i + 1);
-    m /= (i + 1);
-  }
-  std::cout << "m = " << m0 << "," << m1 << "," << m << "\n";
-  result.coeffs.resize(m);
-  result.coeffs.setZero();
-
-  std::vector<int> c0(dim, 0);
-  std::vector<int> c1(dim, 0);
-  std::function<void(std::vector<int>&, int)> _update
-      = [&_update](std::vector<int>& c, int s) {
-          if (s > 1 and c[s - 1] == c[s - 2])
-          {
-            c[s - 1] = 0;
-            _update(c, s - 1);
-          }
-          else
-            ++c[s - 1];
-        };
-
-  auto _idx = [](std::vector<int>& c) {
-    int s = 0;
-    int n = c.size() - 1;
-    for (int i = 0; i < n + 1; ++i)
-    {
-      int p = c[n - i];
-      int r = 1;
-      for (int j = 0; j < i + 1; ++j)
-      {
-        r *= (p + j);
-        r /= (1 + j);
-      }
-      s += r;
-    }
-    return s;
-  };
-
-  std::vector<int> csum(dim, 0);
-  for (int i = 0; i < m0; ++i)
-  {
-    std::fill(c1.begin(), c1.end(), 0);
-    for (int j = 0; j < m1; ++j)
-    {
-      for (int k = 0; k < dim; ++k)
-        csum[k] = c0[k] + c1[k];
-      result.coeffs[_idx(csum)] += this->coeffs[i] * other.coeffs[j];
-      std::cout << _idx(csum) << "\n";
-      _update(c1, c1.size());
-    }
-    _update(c0, c0.size());
-  }
-
-  return result;
-  
-  // for (int p0 = 0; p0 < n0 + 1; ++p0)
-  //   for (int q0 = 0; q0 < n0 + 1 - p0; ++q0)
-  //     for (int r0 = 0; r0 < n0 + 1 - p0 - q0; ++r0)
-  //     {
-  //       int i0 = idx(p0, q0, r0);
-  //       for (int p1 = 0; p1 < n1 + 1; ++p1)
-  //         for (int q1 = 0; q1 < n1 + 1 - p1; ++q1)
-  //           for (int r1 = 0; r1 < n1 + 1 - p1 - q1; ++r1)
-  //           {
-  //             int i1 = idx(p1, q1, r1);
-  //             int i2 = idx(p0 + p1, q0 + q1, r0 + r1);
-  //             result.coeffs[i2] += this->coeffs[i0] * other.coeffs[i1];
-  //           }
-  //     }
-  // return result;
-};

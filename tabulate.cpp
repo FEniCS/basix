@@ -28,11 +28,11 @@ tabulate_line(
     int n,
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts)
 {
-  const Polynomial<1> one = Polynomial<1>::one();
-  const Polynomial<1> x = Polynomial<1>::x();
+  const Polynomial one = Polynomial::one(1);
+  const Polynomial x = Polynomial::x(1);
 
   const int m = (n + 1);
-  std::vector<Polynomial<1>> poly_set(m);
+  std::vector<Polynomial> poly_set(m);
   poly_set[0] = one;
   if (n > 0)
     poly_set[1] = x;
@@ -58,16 +58,16 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_triangle(int n,
                   Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor> pts)
 {
-  const Polynomial<2> one = Polynomial<2>::one();
-  const Polynomial<2> x = Polynomial<2>::x();
-  const Polynomial<2> y = Polynomial<2>::y();
+  const Polynomial one = Polynomial::one(2);
+  const Polynomial x = Polynomial::x(2);
+  const Polynomial y = Polynomial::y(2);
 
   const int m = (n + 1) * (n + 2) / 2;
-  std::vector<Polynomial<2>> poly_set(m);
+  std::vector<Polynomial> poly_set(m);
   poly_set[0] = one;
-  const Polynomial<2> f1 = x + (one + y) * 0.5;
-  const Polynomial<2> f2 = (one - y) * 0.5;
-  const Polynomial<2> f3 = f2 * f2;
+  const Polynomial f1 = x + (one + y) * 0.5;
+  const Polynomial f2 = (one - y) * 0.5;
+  const Polynomial f3 = f2 * f2;
   if (n > 0)
     poly_set[1] = f1;
 
@@ -106,19 +106,19 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_tetrahedron(
     int n, Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> pts)
 {
-  const Polynomial<3> one = Polynomial<3>::one();
-  const Polynomial<3> x = Polynomial<3>::x();
-  const Polynomial<3> y = Polynomial<3>::y();
-  const Polynomial<3> z = Polynomial<3>::z();
+  const Polynomial one = Polynomial::one(3);
+  const Polynomial x = Polynomial::x(3);
+  const Polynomial y = Polynomial::y(3);
+  const Polynomial z = Polynomial::z(3);
 
   const int m = (n + 1) * (n + 2) * (n + 3) / 6;
-  std::vector<Polynomial<3>> poly_set(m);
+  std::vector<Polynomial> poly_set(m);
   poly_set[0] = one;
-  const Polynomial<3> f1 = one + x + (y + z) * 0.5;
-  const Polynomial<3> f2 = (y + z) * (y + z) * 0.25;
-  const Polynomial<3> f3 = (one + y * 2.0 + z) * 0.5;
-  const Polynomial<3> f4 = (one - z) * 0.5;
-  const Polynomial<3> f5 = f4 * f4;
+  const Polynomial f1 = one + x + (y + z) * 0.5;
+  const Polynomial f2 = (y + z) * (y + z) * 0.25;
+  const Polynomial f3 = (one + y * 2.0 + z) * 0.5;
+  const Polynomial f4 = (one - z) * 0.5;
+  const Polynomial f5 = f4 * f4;
 
   if (n > 0)
     poly_set[1] = f1;
@@ -138,8 +138,8 @@ tabulate_tetrahedron(
     for (int q = 1; q < n - p; ++q)
     {
       auto [aq, bq, cq] = jrc(2 * p + 1, q);
-      const Polynomial<3> qmcoeff = f3 * aq + f4 * bq;
-      const Polynomial<3> qm1coeff = f5 * cq;
+      const Polynomial qmcoeff = f3 * aq + f4 * bq;
+      const Polynomial qm1coeff = f5 * cq;
       poly_set[idx(p, q + 1, 0)]
           = poly_set[idx(p, q, 0)] * qmcoeff - poly_set[idx(p, q - 1, 0)] * qm1coeff;
     }

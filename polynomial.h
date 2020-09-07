@@ -1,7 +1,7 @@
 
 #include <Eigen/Dense>
-#include <vector>
 #include <iostream>
+#include <vector>
 
 #pragma once
 
@@ -23,8 +23,8 @@ class Polynomial
 {
 public:
   // Default constructor
-  Polynomial(){}
-  
+  Polynomial() : dim(-1), order(-1) {}
+
   // Static method instantiating an order zero polynomial with value 1.0
   static Polynomial one(int N)
   {
@@ -100,7 +100,13 @@ public:
   const Polynomial diff(int axis) const;
 
 private:
+  // Polynomial dimension (1=x, 2=(x,y), 3=(x,y,z)) etc.
+  // Dimension over 3 is not fully supported
   int dim;
+  // Polynomial order, somewhat redundant, since coeffs size is related
+  // e.g. for dim=2, coeffs.size() = (order + 1) * (order + 2)/2
   int order;
+  // Coefficients of polynomial in a triangular array, compressed to a linear
+  // Order is e.g. 1, x, y, x^2, xy, y^2, x^3, x^2y, y^2x, y^3 etc. for dim=2
   Eigen::Array<double, Eigen::Dynamic, 1> coeffs;
 };

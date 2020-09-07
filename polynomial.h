@@ -19,6 +19,7 @@ static inline int idx(int p, int q, int r)
 // The total number of coefficients determines the order of the polynomial.
 // e.g. in 1D, there are n+1 coefficients for an order n polynomial,
 // e.g. in 2D there are 6 coefficients for order 2: 1, x, y, x^2, xy, y^2.
+
 class Polynomial
 {
 public:

@@ -28,7 +28,7 @@ tabulate_line(int n, const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                         Eigen::RowMajor>& pts)
 {
   if (pts.cols() != 1)
-    throw std::runtime_error("Points must be in 3D for tetrahedron");
+    throw std::runtime_error("Points must be in 1D for line");
   const Polynomial one = Polynomial::one(1);
   const Polynomial x = Polynomial::x(1);
 
@@ -61,7 +61,7 @@ tabulate_triangle(int n,
                                      Eigen::RowMajor>& pts)
 {
   if (pts.cols() != 2)
-    throw std::runtime_error("Points must be in 3D for tetrahedron");
+    throw std::runtime_error("Points must be in 2D for triangle");
   const Polynomial one = Polynomial::one(2);
   const Polynomial x = Polynomial::x(2);
   const Polynomial y = Polynomial::y(2);

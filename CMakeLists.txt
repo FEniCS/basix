@@ -26,4 +26,4 @@ if (HAVE_NO_MULTLINE)
 endif()
 
 # Executable
-add_executable(${PROJECT_NAME} main.cpp tabulate.cpp lattice.cpp polynomial.cpp)
+add_executable(${PROJECT_NAME} main.cpp polynomial.cpp lagrange.cpp simplex.cpp)

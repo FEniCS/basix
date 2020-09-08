@@ -15,16 +15,27 @@ static inline int idx(int p, int q, int r)
          + (q + r) * (q + r + 1) / 2 + r;
 };
 
-// Implementation of a polynomial of N variables as a set of coefficients
+// Implementation of a polynomial of dim=N variables as a set of coefficients
 // The total number of coefficients determines the order of the polynomial.
-// e.g. in 1D, there are n+1 coefficients for an order n polynomial,
-// e.g. in 2D there are 6 coefficients for order 2: 1, x, y, x^2, xy, y^2.
+// e.g. in 1D (dim=1), there are n+1 coefficients for an order n polynomial,
+// e.g. in 2D (dim=2), there are 6 coefficients for order 2: 1, x, y, x^2, xy, y^2.
 
 class Polynomial
 {
 public:
   // Default constructor
   Polynomial() : dim(-1), order(-1) {}
+
+  // Static method instantiating an order zero polynomial with value 1.0
+  static Polynomial zero(int N)
+  {
+    Polynomial p;
+    p.dim = N;
+    p.order = 0;
+    p.coeffs.resize(1);
+    p.coeffs[0] = 0.0;
+    return p;
+  }
 
   // Static method instantiating an order zero polynomial with value 1.0
   static Polynomial one(int N)

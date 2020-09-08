@@ -3,7 +3,7 @@
 
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 create_lattice(int n, const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-	       Eigen::RowMajor>& vertices)
+                                         Eigen::RowMajor>& vertices)
 {
   int tdim = vertices.rows() - 1;
   int gdim = vertices.cols();

@@ -169,7 +169,7 @@ ReferenceSimplex::ReferenceSimplex(int dim) : _dim(dim)
     throw std::runtime_error("Unsupported dim");
 }
 //-----------------------------------------------------------------------------
-std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(int n)
+std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(int n) const
 {
   if (_dim == 1)
     return create_polyset_line(n);
@@ -180,7 +180,7 @@ std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(int n)
 }
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-ReferenceSimplex::lattice(int n)
+ReferenceSimplex::lattice(int n) const
 {
   int tdim = _ref_geom.rows() - 1;
   int gdim = _ref_geom.cols();

@@ -7,9 +7,11 @@
 
 int main()
 {
-  Lagrange L(2, 3);
+  int dim = 2;
 
-  ReferenceSimplex triangle(2);
+  Lagrange L(dim, 3);
+
+  ReferenceSimplex triangle(dim);
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       test_pts = triangle.lattice(50);
   auto ltab = L.tabulate_basis(test_pts);

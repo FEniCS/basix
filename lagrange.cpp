@@ -31,7 +31,7 @@ Lagrange::Lagrange(int dim, int degree) : _dim(dim), _degree(degree)
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 Lagrange::tabulate_basis(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts)
+        pts) const
 {
   if (pts.cols() != _dim)
     throw std::runtime_error(

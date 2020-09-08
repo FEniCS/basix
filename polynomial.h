@@ -106,6 +106,9 @@ public:
   tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& points) const;
 
+  // Simple evaluation for dim=1 polynomial at a point
+  double tabulate(double r) const;
+
   // Differentiate with respect to x, y or z, returning a polynomial of lower
   // order.
   // @param axis (x=0, y=1, z=2)

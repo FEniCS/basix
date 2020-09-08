@@ -163,8 +163,23 @@ Polynomial::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
 
   return v;
 }
-
-// Differentiation (untested)
+//-----------------------------------------------------------------------------
+double Polynomial::tabulate(double r) const
+{
+  if (this->dim != 1)
+    throw std::runtime_error("Cannot tabulate vector with scalar input");
+  const int m = this->order;
+  double v = 0.0;
+  double p = 1.0;
+  for (int k = 0; k < m + 1; ++k)
+  {
+    v += this->coeffs[k] * p;
+    p *= r;
+  }
+  return v;
+}
+//-----------------------------------------------------------------------------
+// Differentiation
 const Polynomial Polynomial::diff(int axis) const
 {
   assert(axis >= 0);

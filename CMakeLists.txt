@@ -1,4 +1,5 @@
-# Copyright 2020 Chris Richardson
+# Copyright (c) 2020 Chris Richardson
+# FEniCS Project
 # SPDX-License-Identifier: MIT
 
 cmake_minimum_required(VERSION 3.9)

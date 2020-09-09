@@ -1,3 +1,6 @@
+// Copyright (c) 2020 Chris Richardson
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
 
 #include "nedelec.h"
 #include "quadrature.h"
@@ -31,19 +34,24 @@ Nedelec2D::Nedelec2D(int k) : _degree(k - 1)
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       PkH_crossx_coeffs_0(ns, Pkp1.size());
+  PkH_crossx_coeffs_0.setZero();
+
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       PkH_crossx_coeffs_1(ns, Pkp1.size());
+  PkH_crossx_coeffs_1.setZero();
 
   for (int i = 0; i < ns; ++i)
     for (std::size_t k = 0; k < Pkp1.size(); ++k)
     {
       auto w = Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose() * Qpts.col(1)
                * Pkp1_at_Qpts.row(k).transpose();
-      PkH_crossx_coeffs_0(i, k) = w.sum();
+      double wsum = w.sum();
+      PkH_crossx_coeffs_0(i, k) = wsum;
 
       auto w2 = -Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose()
                 * Qpts.col(0) * Pkp1_at_Qpts.row(k).transpose();
-      PkH_crossx_coeffs_1(i, k) = w2.sum();
+      wsum = w2.sum();
+      PkH_crossx_coeffs_1(i, k) = wsum;
     }
 
   // Reproducing code from FIAT to get SVD
@@ -56,9 +64,14 @@ Nedelec2D::Nedelec2D(int k) : _degree(k - 1)
   wcoeffs.block(nv * 2, 0, ns, Pkp1.size()) = PkH_crossx_coeffs_0;
   wcoeffs.block(nv * 2, Pkp1.size(), ns, Pkp1.size()) = PkH_crossx_coeffs_1;
 
-  Eigen::JacobiSVD svd(wcoeffs, Eigen::ComputeFullV);
+  Eigen::JacobiSVD svd(wcoeffs, Eigen::ComputeThinV);
 
-  std::cout << "v=" << svd.matrixV() << "\n";
+  // Gives same singular values, but different V compared to FIAT.
+  // This may be expected, but not clear that FIAT is really OK.
+  // When clamping small input values to zero, results in a crash in FIAT.
+  std::cout << "w=\n" << wcoeffs << "\n\n";
+  std::cout << "s=\n" << svd.singularValues() << "\n\n";
+  std::cout << "v=\n" << svd.matrixV().transpose() << "\n\n";
 }
 
 //-----------------------------------------------------------------------------

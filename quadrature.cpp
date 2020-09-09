@@ -96,3 +96,60 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
 
   return {pts, wts};
 }
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m)
+{
+  return compute_gauss_jacobi_rule(0.0, m);
+}
+//-----------------------------------------------------------------------------
+std::pair<Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor>,
+          Eigen::ArrayXd>
+make_quadrature_triangle_collapsed(int m)
+{
+  auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
+  auto [pty, wy] = compute_gauss_jacobi_rule(1.0, m);
+
+  Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor> pts(m * m, 2);
+  Eigen::ArrayXd wts(m * m);
+
+  int idx = 0;
+  for (int i = 0; i < m; ++i)
+    for (int j = 0; j < m; ++j)
+    {
+      const double x = 0.5 * (1.0 + ptx[i]) * (1.0 - pty[j]) - 1.0;
+      const double y = pty[j];
+      pts.row(idx) << x, y;
+      wts[idx] = wx[i] * wy[j] * 0.5;
+      ++idx;
+    }
+
+  return {pts, wts};
+}
+//-----------------------------------------------------------------------------
+std::pair<Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>,
+          Eigen::ArrayXd>
+make_quadrature_tetrahedron_collapsed(int m)
+{
+  auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
+  auto [pty, wy] = compute_gauss_jacobi_rule(1.0, m);
+  auto [ptz, wz] = compute_gauss_jacobi_rule(2.0, m);
+
+  Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> pts(m * m * m, 3);
+  Eigen::ArrayXd wts(m * m * m);
+
+  int idx = 0;
+  for (int i = 0; i < m; ++i)
+    for (int j = 0; j < m; ++j)
+      for (int k = 0; k < m; ++k)
+      {
+        const double x
+            = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]) * (1.0 - ptz[k]) - 1.0;
+        const double y = 0.5 * (1. + pty[j]) * (1. - ptz[k]) - 1.0;
+        const double z = ptz[k];
+        pts.row(idx) << x, y, z;
+        wts[idx] = wx[i] * wy[j] * wz[k] * 0.125;
+        ++idx;
+      }
+
+  return {pts, wts};
+}

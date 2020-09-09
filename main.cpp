@@ -1,5 +1,6 @@
 
 #include "lagrange.h"
+#include "nedelec.h"
 #include "quadrature.h"
 #include "simplex.h"
 #include <Eigen/Dense>
@@ -21,7 +22,7 @@ int main()
     std::cout << std::setprecision(5) << std::fixed << std::setw(10)
               << test_pts.row(i) << " " << ltab.row(i) << "\n";
 
-  int n = 4;
+  int n = 3;
   double a = 1.0;
 
   Polynomial J = compute_jacobi(a, n);
@@ -37,9 +38,7 @@ int main()
   Eigen::ArrayXd p = compute_gauss_jacobi_points(a, n);
   std::cout << p << std::endl << std::endl;
 
-  auto [qpts, qwts] = compute_gauss_jacobi_rule(a, n);
-
-  std::cout << qpts << "\n\n" << qwts << "\n\n";
+  Nedelec2D(2);
 
   return 0;
 }

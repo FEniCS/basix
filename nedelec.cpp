@@ -8,13 +8,13 @@
 #include <Eigen/SVD>
 #include <numeric>
 
-Nedelec2D::Nedelec2D(int k) : _degree(k - 1)
+Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 {
-  // Reference simplex
-  ReferenceSimplex simplex(2);
+  // Reference triangle
+  ReferenceSimplex triangle(2);
 
-  // Create orthonormal basis on simplex
-  std::vector<Polynomial> Pkp1 = simplex.compute_polynomial_set(_degree + 1);
+  // Create orthonormal basis on triangle
+  std::vector<Polynomial> Pkp1 = triangle.compute_polynomial_set(_degree + 1);
 
   // Vector subset
   const int nv = (_degree + 1) * (_degree + 2) / 2;
@@ -43,35 +43,72 @@ Nedelec2D::Nedelec2D(int k) : _degree(k - 1)
   for (int i = 0; i < ns; ++i)
     for (std::size_t k = 0; k < Pkp1.size(); ++k)
     {
-      auto w = Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose() * Qpts.col(1)
-               * Pkp1_at_Qpts.row(k).transpose();
-      double wsum = w.sum();
-      PkH_crossx_coeffs_0(i, k) = wsum;
+      auto w0 = Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose() * Qpts.col(1)
+                * Pkp1_at_Qpts.row(k).transpose();
+      PkH_crossx_coeffs_0(i, k) = w0.sum();
 
-      auto w2 = -Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose()
+      auto w1 = -Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose()
                 * Qpts.col(0) * Pkp1_at_Qpts.row(k).transpose();
-      wsum = w2.sum();
-      PkH_crossx_coeffs_1(i, k) = wsum;
+      PkH_crossx_coeffs_1(i, k) = w1.sum();
     }
 
-  // Reproducing code from FIAT to get SVD
+  // Create polynomial sets for x and y components
+  std::vector<Polynomial> poly_set_x(nv * 2 + ns, Polynomial::zero(2));
+  std::vector<Polynomial> poly_set_y(nv * 2 + ns, Polynomial::zero(2));
+  for (int i = 0; i < nv; ++i)
+  {
+    poly_set_x[i] = Pkp1[i];
+    poly_set_y[i + nv] = Pkp1[i];
+  }
+  for (int i = 0; i < ns; ++i)
+  {
+    for (std::size_t j = 0; j < Pkp1.size(); ++j)
+    {
+      poly_set_x[i + 2 * nv] += Pkp1[j] * PkH_crossx_coeffs_0(i, j);
+      poly_set_y[i + 2 * nv] += Pkp1[j] * PkH_crossx_coeffs_1(i, j);
+    }
+  }
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs(nv * 2 + ns, Pkp1.size() * 2);
-  wcoeffs.setZero();
-  wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
-  wcoeffs.block(nv, Pkp1.size(), nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
-  wcoeffs.block(nv * 2, 0, ns, Pkp1.size()) = PkH_crossx_coeffs_0;
-  wcoeffs.block(nv * 2, Pkp1.size(), ns, Pkp1.size()) = PkH_crossx_coeffs_1;
+  poly_set.resize(nv * 4 + ns * 2);
+  for (int i = 0; i < nv * 2 + ns; ++i)
+  {
+    poly_set[i] = poly_set_x[i];
+    poly_set[i + nv * 2 + ns] = poly_set_y[i];
+  }
 
-  Eigen::JacobiSVD svd(wcoeffs, Eigen::ComputeThinV);
+  // Dual space
+  ReferenceSimplex edge(1);
+  int quad_deg = 2; //? FIXME
+  auto [QptsL, QwtsL] = make_quadrature_line(quad_deg);
+  std::vector<Polynomial> Pq
+      = edge.compute_polynomial_set(_degree); //? FIXME - check degree
 
-  // Gives same singular values, but different V compared to FIAT.
-  // This may be expected, but not clear that FIAT is really OK.
-  // When clamping small input values to zero, results in a crash in FIAT.
-  std::cout << "w=\n" << wcoeffs << "\n\n";
-  std::cout << "s=\n" << svd.singularValues() << "\n\n";
-  std::cout << "v=\n" << svd.matrixV().transpose() << "\n\n";
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      Pq_at_qpts(QptsL.rows(), Pq.size());
+  for (std::size_t j = 0; j < Pq.size(); ++j)
+    Pq_at_qpts.col(j) = Pq[j].tabulate(QptsL);
+
+  //            for e in range(len(t[sd - 1])):
+  //                for i in range(Pq_at_qpts.shape[0]):
+  //                    phi = Pq_at_qpts[i, :]
+  //                    nodes.append(functional.IntegralMomentOfEdgeTangentEvaluation(ref_el,
+  //                    Q, phi, e))
 }
-
 //-----------------------------------------------------------------------------
+// Compute basis values at set of points
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+Nedelec2D::tabulate_basis(
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts) const
+{
+  if (pts.cols() != _dim)
+    throw std::runtime_error(
+        "Point dimension does not match element dimension");
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
+      pts.rows(), poly_set.size());
+  for (std::size_t j = 0; j < poly_set.size(); ++j)
+    result.col(j) = poly_set[j].tabulate(pts);
+
+  return result;
+}

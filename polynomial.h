@@ -92,6 +92,9 @@ public:
   // Add two polynomials
   const Polynomial operator+(const Polynomial& other) const;
 
+  // Add two polynomials
+  Polynomial& operator+=(const Polynomial& other);
+
   // Subtract two polynomials
   const Polynomial operator-(const Polynomial& other) const;
 

@@ -20,7 +20,21 @@ const Polynomial Polynomial::operator+(const Polynomial& other) const
   result.coeffs.head(n) += other.coeffs;
   return result;
 };
-
+//-----------------------------------------------------------------------------
+Polynomial& Polynomial::operator+=(const Polynomial& other)
+{
+  assert(this->dim == other.dim);
+  int n = other.coeffs.size();
+  int m = this->coeffs.size();
+  if (n > m)
+  {
+    this->coeffs.conservativeResize(n);
+    this->coeffs.tail(n - m).setZero();
+    this->order = other.order;
+  }
+  this->coeffs.head(n) += other.coeffs;
+  return *this;
+}
 //-----------------------------------------------------------------------------
 const Polynomial Polynomial::operator-(const Polynomial& other) const
 {

@@ -27,7 +27,7 @@ Lagrange::Lagrange(int dim, int degree) : _dim(dim), _degree(degree)
   {
     poly_set[j] = Polynomial::zero(dim);
     for (std::size_t k = 0; k < bset.size(); ++k)
-      poly_set[j] = poly_set[j] + bset[k] * w(k, j);
+      poly_set[j] += bset[k] * w(k, j);
   }
 }
 //-----------------------------------------------------------------------------

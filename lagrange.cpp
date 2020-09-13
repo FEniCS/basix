@@ -16,16 +16,15 @@ Lagrange::Lagrange(int dim, int degree) : _dim(dim), _degree(degree)
   // Tabulate basis at nodes and get inverse
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
       = simplex.lattice(degree);
-  Eigen::MatrixXd r(pt.rows(), bset.size());
+  Eigen::MatrixXd dualmat(pt.rows(), bset.size());
   for (std::size_t j = 0; j < bset.size(); ++j)
-    r.col(j) = bset[j].tabulate(pt);
-  Eigen::MatrixXd w = r.inverse();
+    dualmat.col(j) = bset[j].tabulate(pt);
+  Eigen::MatrixXd w = dualmat.inverse();
 
   // Matrix multiply basis by w
-  poly_set.resize(bset.size());
+  poly_set.resize(bset.size(), Polynomial::zero(dim));
   for (std::size_t j = 0; j < bset.size(); ++j)
   {
-    poly_set[j] = Polynomial::zero(dim);
     for (std::size_t k = 0; k < bset.size(); ++k)
       poly_set[j] += bset[k] * w(k, j);
   }

@@ -30,31 +30,24 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   for (std::size_t j = 0; j < Pkp1.size(); ++j)
     Pkp1_at_Qpts.row(j) = Pkp1[j].tabulate(Qpts);
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      PkH_crossx_coeffs_0(ns, Pkp1.size());
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      PkH_crossx_coeffs_1(ns, Pkp1.size());
+  // Create coefficients of Pkp1.
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      wcoeffs(nv * 2 + ns, Pkp1.size() * 2);
+  wcoeffs.setZero();
+  wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
+  wcoeffs.block(nv, Pkp1.size(), nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
 
   for (int i = 0; i < ns; ++i)
     for (std::size_t k = 0; k < Pkp1.size(); ++k)
     {
       auto w0 = Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose() * Qpts.col(1)
                 * Pkp1_at_Qpts.row(k).transpose();
-      PkH_crossx_coeffs_0(i, k) = w0.sum();
+      wcoeffs(2 * nv + i, k) = w0.sum();
 
       auto w1 = -Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose()
                 * Qpts.col(0) * Pkp1_at_Qpts.row(k).transpose();
-      PkH_crossx_coeffs_1(i, k) = w1.sum();
+      wcoeffs(2 * nv + i, k + Pkp1.size()) = w1.sum();
     }
-
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs(nv * 2 + ns, Pkp1.size() * 2);
-  wcoeffs.setZero();
-  wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
-  wcoeffs.block(nv, Pkp1.size(), nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
-  wcoeffs.block(nv * 2, 0, ns, Pkp1.size()) = PkH_crossx_coeffs_0;
-  wcoeffs.block(nv * 2, Pkp1.size(), ns, Pkp1.size()) = PkH_crossx_coeffs_1;
 
   std::cout << "Coeffs = \n[" << wcoeffs << "]\n";
 
@@ -68,6 +61,10 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       dualmat(nv * 2 + ns, nv * 4 + ns * 2);
   dualmat.setZero();
+
+  // FIXME: need to add interior dofs for higher order
+
+  // See FIAT dual_set to_riesz and functional
 
   // Get edge interior points, and tangent direction
   int c = 0;
@@ -101,12 +98,14 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   }
   std::cout << "dualmat = " << dualmat << "\n";
 
-  auto A = dualmat * wcoeffs.transpose();
+  // See FIAT in finite_element.py constructor
+  auto A = wcoeffs * dualmat.transpose();
   auto Ainv = A.inverse();
-  auto new_coeffs = Ainv.transpose() * wcoeffs;
+  auto new_coeffs = Ainv * wcoeffs;
   std::cout << "new_coeffs = \n" << new_coeffs << "\n";
 
   // Create polynomial sets for x and y components
+  // stacking x0, x1, x2,... y0, y1, y2,...
   poly_set.resize(nv * 4 + ns * 2, Polynomial::zero(2));
   for (int i = 0; i < nv * 2 + ns; ++i)
   {

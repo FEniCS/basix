@@ -156,3 +156,15 @@ make_quadrature_tetrahedron_collapsed(int m)
 
   return {pts, wts};
 }
+//-----------------------------------------------------------------------------
+std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
+          Eigen::ArrayXd>
+make_quadrature(int dim, int m)
+{
+  if (dim == 1)
+    return make_quadrature_line(m);
+  else if (dim == 2)
+    return make_quadrature_triangle_collapsed(m);
+  else
+    return make_quadrature_tetrahedron_collapsed(m);
+}

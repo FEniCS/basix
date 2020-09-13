@@ -123,15 +123,12 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
   // Create polynomial sets for x and y components
   // stacking x0, x1, x2,... y0, y1, y2,...
-  poly_set.resize(nv * 4 + ns * 2, Polynomial::zero(2));
-  for (int i = 0; i < nv * 2 + ns; ++i)
-  {
-    for (int j = 0; j < psize; ++j)
-    {
-      poly_set[i] += Pkp1[j] * new_coeffs(i, j);
-      poly_set[i + nv * 2 + ns] += Pkp1[j] * new_coeffs(i, j + psize);
-    }
-  }
+  poly_set.resize((nv * 2 + ns) * _dim, Polynomial::zero(2));
+  for (int j = 0; j < _dim; ++j)
+    for (int i = 0; i < nv * 2 + ns; ++i)
+      for (int k = 0; k < psize; ++j)
+        poly_set[i + (nv * 2 + ns) * j]
+            += Pkp1[k] * new_coeffs(i, k + psize * j);
 }
 //-----------------------------------------------------------------------------
 // Compute basis values at set of points

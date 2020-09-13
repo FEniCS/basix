@@ -27,6 +27,6 @@ if (HAVE_NO_MULTLINE)
 endif()
 
 # Executable
-add_library(tab SHARED polynomial.cpp lagrange.cpp simplex.cpp quadrature.cpp nedelec.cpp)
+add_library(tab SHARED polynomial.cpp lagrange.cpp simplex.cpp quadrature.cpp nedelec.cpp raviart-thomas.cpp)
 add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} tab)

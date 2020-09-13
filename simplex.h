@@ -27,11 +27,15 @@ public:
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   lattice(int n) const;
 
+  // Create a lattice of points on the simplex defined by the given vertices
+  // optionally including the exterior points
   static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   make_lattice(int n,
                const Eigen::Ref<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                   Eigen::RowMajor>>& vertices,
                bool exterior);
+
+
 
   // Orthonormal polynomial basis on simplex
   std::vector<Polynomial> compute_polynomial_set(int n) const;

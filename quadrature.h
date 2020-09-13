@@ -5,6 +5,8 @@
 #include "polynomial.h"
 #include <Eigen/Dense>
 
+#pragma once
+
 // Evaluates the nth jacobi polynomial with weight parameters (a, 0)
 Polynomial compute_jacobi(int a, int n);
 
@@ -27,3 +29,8 @@ make_quadrature_triangle_collapsed(int m);
 std::pair<Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>,
           Eigen::ArrayXd>
 make_quadrature_tetrahedron_collapsed(int m);
+
+// Utility for general simplex
+std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
+          Eigen::ArrayXd>
+  make_quadrature(int dim, int m);

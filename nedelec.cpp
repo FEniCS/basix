@@ -15,6 +15,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
   // Create orthonormal basis on triangle
   std::vector<Polynomial> Pkp1 = triangle.compute_polynomial_set(_degree + 1);
+  int psize = Pkp1.size();
 
   // Vector subset
   const int nv = (_degree + 1) * (_degree + 2) / 2;
@@ -26,19 +27,19 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
   auto [Qpts, Qwts] = make_quadrature_triangle_collapsed(2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts(Pkp1.size(), Qpts.rows());
-  for (std::size_t j = 0; j < Pkp1.size(); ++j)
+      Pkp1_at_Qpts(psize, Qpts.rows());
+  for (int j = 0; j < psize; ++j)
     Pkp1_at_Qpts.row(j) = Pkp1[j].tabulate(Qpts);
 
-  // Create coefficients of Pkp1.
+  // Create initial coefficients of Pkp1.
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs(nv * 2 + ns, Pkp1.size() * 2);
+      wcoeffs(nv * 2 + ns, psize * 2);
   wcoeffs.setZero();
   wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
-  wcoeffs.block(nv, Pkp1.size(), nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
+  wcoeffs.block(nv, psize, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
 
   for (int i = 0; i < ns; ++i)
-    for (std::size_t k = 0; k < Pkp1.size(); ++k)
+    for (int k = 0; k < psize; ++k)
     {
       auto w0 = Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose() * Qpts.col(1)
                 * Pkp1_at_Qpts.row(k).transpose();
@@ -46,10 +47,10 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
       auto w1 = -Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose()
                 * Qpts.col(0) * Pkp1_at_Qpts.row(k).transpose();
-      wcoeffs(2 * nv + i, k + Pkp1.size()) = w1.sum();
+      wcoeffs(2 * nv + i, k + psize) = w1.sum();
     }
 
-  std::cout << "Coeffs = \n[" << wcoeffs << "]\n";
+  std::cout << "Initial coeffs = \n[" << wcoeffs << "]\n";
 
   // Dual space
 
@@ -59,7 +60,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
       = triangle.reference_geometry();
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(nv * 2 + ns, Pkp1.size() * 2);
+      dualmat(nv * 2 + ns, psize * 2);
   dualmat.setZero();
 
   // See FIAT nedelec, dual_set.to_riesz and functional
@@ -68,76 +69,67 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   int c = 0;
   for (int i = 0; i < 3; ++i)
   {
+    // FIXME: get this from the simplex class
+    // FIXME: using Point Tangent evaluation - should use integral moment?
     Eigen::Array<double, 2, 2, Eigen::RowMajor> edge;
     edge.row(0) = triangle_geom.row((i + 1) % 3);
     edge.row(1) = triangle_geom.row((i + 2) % 3);
     Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
-    std::cout << "tangent = " << tangent.transpose() << "\n";
 
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         pts = ReferenceSimplex::make_lattice(_degree + 2, edge, false);
-    std::cout << "pts = " << pts << "\n";
 
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        values(pts.rows(), Pkp1.size());
-    for (std::size_t j = 0; j < Pkp1.size(); ++j)
+        values(pts.rows(), psize);
+    for (int j = 0; j < psize; ++j)
       values.col(j) = Pkp1[j].tabulate(pts);
-    std::cout << "values = " << values << "\n";
 
     for (int j = 0; j < pts.rows(); ++j)
     {
-      for (int k = 0; k < Pkp1.size(); ++k)
+      for (int k = 0; k < psize; ++k)
       {
         dualmat(c, k) = tangent[0] * values(j, k);
-        dualmat(c, k + Pkp1.size()) = tangent[1] * values(j, k);
+        dualmat(c, k + psize) = tangent[1] * values(j, k);
       }
       ++c;
     }
   }
 
-  // FIXME: need to add interior dofs for higher order
   if (_degree > 0)
   {
+    // Interior integral moment
     std::vector<Polynomial> Pkm1 = triangle.compute_polynomial_set(_degree - 1);
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkm1_at_Qpts(Pkm1.size(), Qpts.rows());
-    for (std::size_t j = 0; j < Pkm1.size(); ++j)
-      Pkm1_at_Qpts.row(j) = Pkm1[j].tabulate(Qpts);
-    std::cout << "Pkm1 = " << _degree << "\n[" << Pkm1_at_Qpts << "]\n";
-    std::cout << "Qpts = \n[" << Qpts << "]\n";
-
-    for (int i = 0; i < Pkm1.size(); ++i)
+    for (std::size_t i = 0; i < Pkm1.size(); ++i)
     {
-      Eigen::ArrayXd phi_cur = Pkm1_at_Qpts.row(i);
-      Eigen::VectorXd w = phi_cur * Qwts;
-      Eigen::RowVectorXd wcoeffs = Pkp1_at_Qpts.matrix() * w;
-      std::cout << "w = [" << w.transpose() << "]\n";
-      std::cout << "Pkp1 = [" << Pkp1_at_Qpts.transpose() << "]\n";
-      std::cout << "wcoeffs = [" << wcoeffs << "]\n";
-      dualmat.block(c, 0, 1, wcoeffs.size()) = wcoeffs;
+      Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);
+      Eigen::VectorXd q = phi * Qwts;
+      Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
+      assert(qcoeffs.size() == psize);
+      std::cout << "q = [" << q.transpose() << "]\n";
+      dualmat.block(c, 0, 1, psize) = qcoeffs;
       ++c;
-      dualmat.block(c, wcoeffs.size(), 1, wcoeffs.size()) = wcoeffs;
+      dualmat.block(c, psize, 1, psize) = qcoeffs;
       ++c;
     }
   }
 
-  std::cout << "dualmat = " << dualmat << "\n";
+  std::cout << "dualmat = \n[" << dualmat << "]\n";
 
   // See FIAT in finite_element.py constructor
   auto A = wcoeffs * dualmat.transpose();
   auto Ainv = A.inverse();
   auto new_coeffs = Ainv * wcoeffs;
-  std::cout << "new_coeffs = \n" << new_coeffs << "\n";
+  std::cout << "new_coeffs = \n[" << new_coeffs << "]\n";
 
   // Create polynomial sets for x and y components
   // stacking x0, x1, x2,... y0, y1, y2,...
   poly_set.resize(nv * 4 + ns * 2, Polynomial::zero(2));
   for (int i = 0; i < nv * 2 + ns; ++i)
   {
-    for (std::size_t j = 0; j < Pkp1.size(); ++j)
+    for (int j = 0; j < psize; ++j)
     {
       poly_set[i] += Pkp1[j] * new_coeffs(i, j);
-      poly_set[i + nv * 2 + ns] += Pkp1[j] * new_coeffs(i, j + Pkp1.size());
+      poly_set[i + nv * 2 + ns] += Pkp1[j] * new_coeffs(i, j + psize);
     }
   }
 }

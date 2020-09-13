@@ -59,12 +59,10 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
       = triangle.reference_geometry();
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(nv * 2 + ns, nv * 4 + ns * 2);
+      dualmat(nv * 2 + ns, Pkp1.size() * 2);
   dualmat.setZero();
 
-  // FIXME: need to add interior dofs for higher order
-
-  // See FIAT dual_set to_riesz and functional
+  // See FIAT nedelec, dual_set.to_riesz and functional
 
   // Get edge interior points, and tangent direction
   int c = 0;
@@ -88,14 +86,41 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
     for (int j = 0; j < pts.rows(); ++j)
     {
-      for (int k = 0; k < nv * 2 + ns; ++k)
+      for (int k = 0; k < Pkp1.size(); ++k)
       {
         dualmat(c, k) = tangent[0] * values(j, k);
-        dualmat(c, k + nv * 2 + ns) = tangent[1] * values(j, k);
+        dualmat(c, k + Pkp1.size()) = tangent[1] * values(j, k);
       }
       ++c;
     }
   }
+
+  // FIXME: need to add interior dofs for higher order
+  if (_degree > 0)
+  {
+    std::vector<Polynomial> Pkm1 = triangle.compute_polynomial_set(_degree - 1);
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        Pkm1_at_Qpts(Pkm1.size(), Qpts.rows());
+    for (std::size_t j = 0; j < Pkm1.size(); ++j)
+      Pkm1_at_Qpts.row(j) = Pkm1[j].tabulate(Qpts);
+    std::cout << "Pkm1 = " << _degree << "\n[" << Pkm1_at_Qpts << "]\n";
+    std::cout << "Qpts = \n[" << Qpts << "]\n";
+
+    for (int i = 0; i < Pkm1.size(); ++i)
+    {
+      Eigen::ArrayXd phi_cur = Pkm1_at_Qpts.row(i);
+      Eigen::VectorXd w = phi_cur * Qwts;
+      Eigen::RowVectorXd wcoeffs = Pkp1_at_Qpts.matrix() * w;
+      std::cout << "w = [" << w.transpose() << "]\n";
+      std::cout << "Pkp1 = [" << Pkp1_at_Qpts.transpose() << "]\n";
+      std::cout << "wcoeffs = [" << wcoeffs << "]\n";
+      dualmat.block(c, 0, 1, wcoeffs.size()) = wcoeffs;
+      ++c;
+      dualmat.block(c, wcoeffs.size(), 1, wcoeffs.size()) = wcoeffs;
+      ++c;
+    }
+  }
+
   std::cout << "dualmat = " << dualmat << "\n";
 
   // See FIAT in finite_element.py constructor

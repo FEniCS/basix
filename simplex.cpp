@@ -29,6 +29,8 @@ std::vector<Polynomial> create_polyset_line(int n)
   poly_set[0] = one;
   if (n > 0)
     poly_set[1] = x;
+  else
+    return poly_set;
 
   for (int p = 2; p < n + 1; ++p)
   {
@@ -56,6 +58,8 @@ std::vector<Polynomial> create_polyset_triangle(int n)
   const Polynomial f3 = f2 * f2;
   if (n > 0)
     poly_set[1] = f1;
+  else
+    return poly_set;
 
   for (int p = 1; p < n; ++p)
   {
@@ -102,6 +106,8 @@ std::vector<Polynomial> create_polyset_tetrahedron(int n)
 
   if (n > 0)
     poly_set[1] = f1;
+  else
+    return poly_set;
 
   for (int p = 1; p < n; ++p)
   {

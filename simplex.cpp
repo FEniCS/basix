@@ -185,47 +185,58 @@ std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(int n) const
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 ReferenceSimplex::lattice(int n) const
 {
-  int tdim = _ref_geom.rows() - 1;
-  int gdim = _ref_geom.cols();
+  return make_lattice(n, _ref_geom, true);
+}
+//-----------------------------------------------------------------------------
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+ReferenceSimplex::make_lattice(
+    int n,
+    const Eigen::Ref<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                        Eigen::RowMajor>>& vertices,
+    bool exterior)
+{
+  int tdim = vertices.rows() - 1;
+  int gdim = vertices.cols();
   assert(gdim > 0 and gdim < 4);
   assert(tdim <= gdim);
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
-      tdim, _ref_geom.cols());
+      tdim, vertices.cols());
   for (int j = 1; j < tdim + 1; ++j)
     hs.row(tdim - j)
-        = (_ref_geom.row(j) - _ref_geom.row(0)) / static_cast<double>(n);
+        = (vertices.row(j) - vertices.row(0)) / static_cast<double>(n);
+
+  int b = (exterior == false) ? 1 : 0;
 
   int m = 1;
   for (int j = 0; j < tdim; ++j)
   {
-    m *= (n + j + 1);
+    m *= (n - (tdim + 1) * b + j + 1);
     m /= (j + 1);
   }
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> points(
       m, gdim);
 
+  int c = 0;
   if (tdim == 3)
   {
-    int c = 0;
-    for (int i = 0; i < n + 1; ++i)
-      for (int j = 0; j < n + 1 - i; ++j)
-        for (int k = 0; k < n + 1 - i - j; ++k)
-          points.row(c++) = _ref_geom.row(0) + hs.row(2) * k + hs.row(1) * j
-                            + hs.row(0) * i;
+    for (int i = b; i < n + 1 - b; ++i)
+      for (int j = b; j < n + 1 - i - b; ++j)
+        for (int k = b; k < n + 1 - i - j - b; ++k)
+          points.row(c++)
+              = vertices.row(0) + hs.row(2) * k + hs.row(1) * j + hs.row(0) * i;
   }
   else if (tdim == 2)
   {
-    int c = 0;
-    for (int i = 0; i < n + 1; ++i)
-      for (int j = 0; j < n + 1 - i; ++j)
-        points.row(c++) = _ref_geom.row(0) + hs.row(1) * j + hs.row(0) * i;
+    for (int i = b; i < n + 1 - b; ++i)
+      for (int j = b; j < n + 1 - i - b; ++j)
+        points.row(c++) = vertices.row(0) + hs.row(1) * j + hs.row(0) * i;
   }
   else
   {
-    for (int i = 0; i < n + 1; ++i)
-      points.row(i) = _ref_geom.row(0) + hs.row(0) * i;
+    for (int i = b; i < n + 1 - b; ++i)
+      points.row(c++) = vertices.row(0) + hs.row(0) * i;
   }
 
   return points;

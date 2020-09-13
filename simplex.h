@@ -10,31 +10,34 @@
 
 class ReferenceSimplex
 {
- public:
+public:
   ReferenceSimplex(int dim);
 
   // Dimension
-  int dim() const
-  {
-    return _dim;
-  }
+  int dim() const { return _dim; }
 
   // Return the vertex points of the reference element
   const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-    reference_geometry() const
+  reference_geometry() const
   {
     return _ref_geom;
   }
 
   // Create a lattice of points on the simplex
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-    lattice(int n) const;
+  lattice(int n) const;
+
+  static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  make_lattice(int n,
+               const Eigen::Ref<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                  Eigen::RowMajor>>& vertices,
+               bool exterior);
 
   // Orthonormal polynomial basis on simplex
-  std::vector<Polynomial>
-    compute_polynomial_set(int n) const;
+  std::vector<Polynomial> compute_polynomial_set(int n) const;
 
- private:
+private:
   int _dim;
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _ref_geom;
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      _ref_geom;
 };

@@ -18,8 +18,6 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
   // Vector subset
   const int nv = (_degree + 1) * (_degree + 2) / 2;
-  std::vector<int> vec_idx(nv);
-  std::iota(vec_idx.begin(), vec_idx.end(), 0);
 
   // PkH subset
   const int ns = _degree + 1;
@@ -34,11 +32,9 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       PkH_crossx_coeffs_0(ns, Pkp1.size());
-  PkH_crossx_coeffs_0.setZero();
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       PkH_crossx_coeffs_1(ns, Pkp1.size());
-  PkH_crossx_coeffs_1.setZero();
 
   for (int i = 0; i < ns; ++i)
     for (std::size_t k = 0; k < Pkp1.size(); ++k)
@@ -52,47 +48,74 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
       PkH_crossx_coeffs_1(i, k) = w1.sum();
     }
 
-  // Create polynomial sets for x and y components
-  std::vector<Polynomial> poly_set_x(nv * 2 + ns, Polynomial::zero(2));
-  std::vector<Polynomial> poly_set_y(nv * 2 + ns, Polynomial::zero(2));
-  for (int i = 0; i < nv; ++i)
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      wcoeffs(nv * 2 + ns, Pkp1.size() * 2);
+  wcoeffs.setZero();
+  wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
+  wcoeffs.block(nv, Pkp1.size(), nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
+  wcoeffs.block(nv * 2, 0, ns, Pkp1.size()) = PkH_crossx_coeffs_0;
+  wcoeffs.block(nv * 2, Pkp1.size(), ns, Pkp1.size()) = PkH_crossx_coeffs_1;
+
+  std::cout << "Coeffs = \n[" << wcoeffs << "]\n";
+
+  // Dual space
+
+  // Iterate over edges
+  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+      triangle_geom
+      = triangle.reference_geometry();
+
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      dualmat(nv * 2 + ns, nv * 4 + ns * 2);
+  dualmat.setZero();
+
+  // Get edge interior points, and tangent direction
+  int c = 0;
+  for (int i = 0; i < 3; ++i)
   {
-    poly_set_x[i] = Pkp1[i];
-    poly_set_y[i + nv] = Pkp1[i];
+    Eigen::Array<double, 2, 2, Eigen::RowMajor> edge;
+    edge.row(0) = triangle_geom.row((i + 1) % 3);
+    edge.row(1) = triangle_geom.row((i + 2) % 3);
+    Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
+    std::cout << "tangent = " << tangent.transpose() << "\n";
+
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        pts = ReferenceSimplex::make_lattice(_degree + 2, edge, false);
+    std::cout << "pts = " << pts << "\n";
+
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        values(pts.rows(), Pkp1.size());
+    for (std::size_t j = 0; j < Pkp1.size(); ++j)
+      values.col(j) = Pkp1[j].tabulate(pts);
+    std::cout << "values = " << values << "\n";
+
+    for (int j = 0; j < pts.rows(); ++j)
+    {
+      for (int k = 0; k < nv * 2 + ns; ++k)
+      {
+        dualmat(c, k) = tangent[0] * values(j, k);
+        dualmat(c, k + nv * 2 + ns) = tangent[1] * values(j, k);
+      }
+      ++c;
+    }
   }
-  for (int i = 0; i < ns; ++i)
+  std::cout << "dualmat = " << dualmat << "\n";
+
+  auto A = dualmat * wcoeffs.transpose();
+  auto Ainv = A.inverse();
+  auto new_coeffs = Ainv.transpose() * wcoeffs;
+  std::cout << "new_coeffs = \n" << new_coeffs << "\n";
+
+  // Create polynomial sets for x and y components
+  poly_set.resize(nv * 4 + ns * 2, Polynomial::zero(2));
+  for (int i = 0; i < nv * 2 + ns; ++i)
   {
     for (std::size_t j = 0; j < Pkp1.size(); ++j)
     {
-      poly_set_x[i + 2 * nv] += Pkp1[j] * PkH_crossx_coeffs_0(i, j);
-      poly_set_y[i + 2 * nv] += Pkp1[j] * PkH_crossx_coeffs_1(i, j);
+      poly_set[i] += Pkp1[j] * new_coeffs(i, j);
+      poly_set[i + nv * 2 + ns] += Pkp1[j] * new_coeffs(i, j + Pkp1.size());
     }
   }
-
-  poly_set.resize(nv * 4 + ns * 2);
-  for (int i = 0; i < nv * 2 + ns; ++i)
-  {
-    poly_set[i] = poly_set_x[i];
-    poly_set[i + nv * 2 + ns] = poly_set_y[i];
-  }
-
-  // Dual space
-  ReferenceSimplex edge(1);
-  int quad_deg = 2; //? FIXME
-  auto [QptsL, QwtsL] = make_quadrature_line(quad_deg);
-  std::vector<Polynomial> Pq
-      = edge.compute_polynomial_set(_degree); //? FIXME - check degree
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pq_at_qpts(QptsL.rows(), Pq.size());
-  for (std::size_t j = 0; j < Pq.size(); ++j)
-    Pq_at_qpts.col(j) = Pq[j].tabulate(QptsL);
-
-  //            for e in range(len(t[sd - 1])):
-  //                for i in range(Pq_at_qpts.shape[0]):
-  //                    phi = Pq_at_qpts[i, :]
-  //                    nodes.append(functional.IntegralMomentOfEdgeTangentEvaluation(ref_el,
-  //                    Q, phi, e))
 }
 //-----------------------------------------------------------------------------
 // Compute basis values at set of points

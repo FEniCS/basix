@@ -20,5 +20,8 @@ int main()
   Nedelec2D N(1);
   auto ntab = N.tabulate_basis(test_pts);
 
+  for (int i = 0; i < test_pts.rows(); ++i)
+    std::cout << test_pts.row(i) << " " << ntab.row(i) << "\n";
+
   return 0;
 }

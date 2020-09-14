@@ -5,7 +5,7 @@ from fiatx import *
 d = 3
 L = Lagrange(2, d)
 
-pts = make_lattice(50, [[0,0],[0,1],[1,0]], True)
+pts = create_lattice([[0,0],[0,1],[1,0]], 50, True)
 
 w = L.tabulate_basis(pts)
 

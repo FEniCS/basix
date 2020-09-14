@@ -70,9 +70,8 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   {
     // FIXME: get this from the simplex class
     // FIXME: using Point Tangent evaluation - should use integral moment?
-    Eigen::Array<double, 2, 2, Eigen::RowMajor> edge;
-    edge.row(0) = triangle.row((i + 1) % 3);
-    edge.row(1) = triangle.row((i + 2) % 3);
+    Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
+        = ReferenceSimplex::sub(triangle, 1, i);
     Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
 
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>

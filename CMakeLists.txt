@@ -30,3 +30,9 @@ endif()
 add_library(tab SHARED polynomial.cpp lagrange.cpp simplex.cpp quadrature.cpp nedelec.cpp raviart-thomas.cpp)
 add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} tab)
+
+find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
+  $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
+
+pybind11_add_module(fiatx SHARED wrapper.cpp)
+target_link_libraries(fiatx PRIVATE pybind11::module tab)

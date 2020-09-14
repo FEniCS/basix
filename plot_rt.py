@@ -4,7 +4,7 @@ from fiatx import *
 
 RT = RaviartThomas(2, 2)
 
-pts = make_lattice(20, [[0,0],[0,1],[1,0]], True)
+pts = create_lattice([[0,0],[0,1],[1,0]], 20, True)
 
 w = RT.tabulate_basis(pts)
 nc = w.shape[1]//2

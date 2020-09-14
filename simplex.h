@@ -23,6 +23,12 @@ public:
           double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>& vertices,
       int n, bool exterior);
 
+  // Sub-entity of a simplex, given by topological dimension and index
+  static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  sub(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& simplex,
+      int dim, int index);
+
   // Orthonormal polynomial basis on simplex
   static std::vector<Polynomial> compute_polynomial_set(
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,

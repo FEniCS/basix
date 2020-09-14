@@ -173,43 +173,50 @@ ReferenceSimplex::create_simplex(int dim)
   return ref_geom;
 }
 //-----------------------------------------------------------------------------
-// Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-// sub(int dim, int index)
-// {
-//   if (dim == 0)
-//   {
-//     assert(index >= 0 and index < _ref_geom.rows());
-//     return _ref_geom.row(index);
-//   }
-//   else if (dim == _dim)
-//   {
-//     assert(index == 0);
-//     return _ref_geom;
-//   }
-//   else if (dim == 1 and _dim == 2)
-//   {
-//     assert(index >= 0 and index < 3);
-//     // Edge of triangle
-//     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-//     edge(
-//         2, 2);
-//     edge.row(0) = _ref_geom.row((index + 1) % 3);
-//     edge.row(1) = _ref_geom.row((index + 2) % 3);
-//     return edge;
-//   }
-//   else if (dim == 2 and _dim == 3)
-//   {
-//     assert(index >= 0 and index < 4);
-//     // Facet of tetrahedron
-//     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-//     facet(
-//         3, 3);
-//     facet.row(0) = _ref_geom.row((index + 1) % 4);
-//     facet.row(1) = _ref_geom.row((index + 2) % 4);
-//     facet.row(2) = _ref_geom.row((index + 3) % 4);
-//     return facet;
-//   }
-// }
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+ReferenceSimplex::sub(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>& simplex,
+                      int dim, int index)
+{
+  const int simplex_dim = simplex.rows() - 1;
+
+  if (dim == 0)
+  {
+    assert(index >= 0 and index < simplex.rows());
+    return simplex.row(index);
+  }
+  else if (dim == simplex_dim)
+  {
+    assert(index == 0);
+    return simplex;
+  }
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> entity;
+
+  if (dim == 1 and simplex_dim == 2)
+  {
+    assert(index >= 0 and index < 3);
+    // Edge of triangle
+    entity.resize(2, 2);
+    entity.row(0) = simplex.row((index + 1) % 3);
+    entity.row(1) = simplex.row((index + 2) % 3);
+  }
+  else if (dim == 2 and simplex_dim == 3)
+  {
+    assert(index >= 0 and index < 4);
+    // Facet of tetrahedron
+    entity.resize(3, 3);
+    entity.row(0) = simplex.row((index + 1) % 4);
+    entity.row(1) = simplex.row((index + 2) % 4);
+    entity.row(2) = simplex.row((index + 3) % 4);
+  }
+  else if (dim == 1 and simplex_dim == 3)
+  {
+    // Edge of tetrahedron...
+    throw std::runtime_error("Fix me");
+  }
+  return entity;
+}
 //-----------------------------------------------------------------------------
 std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
@@ -217,6 +224,7 @@ std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(
     int n)
 
 {
+  // Could just use dim as an argument, just checking rows to get dimension.
   const int dim = simplex.rows() - 1;
   if (dim < 1 or dim > 3)
     throw std::runtime_error("Unsupported dim");

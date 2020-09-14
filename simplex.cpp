@@ -22,7 +22,7 @@ std::tuple<double, double, double> jrc(int a, int n)
 std::vector<Polynomial> create_polyset_line(int n)
 {
   const Polynomial one = Polynomial::one(1);
-  const Polynomial x = Polynomial::x(1);
+  const Polynomial x = Polynomial::x(1) * 2.0 - one;
 
   const int m = (n + 1);
   std::vector<Polynomial> poly_set(m);
@@ -47,8 +47,8 @@ std::vector<Polynomial> create_polyset_line(int n)
 std::vector<Polynomial> create_polyset_triangle(int n)
 {
   const Polynomial one = Polynomial::one(2);
-  const Polynomial x = Polynomial::x(2);
-  const Polynomial y = Polynomial::y(2);
+  const Polynomial x = Polynomial::x(2) * 2.0 - one;
+  const Polynomial y = Polynomial::y(2) * 2.0 - one;
 
   const int m = (n + 1) * (n + 2) / 2;
   std::vector<Polynomial> poly_set(m);
@@ -91,9 +91,9 @@ std::vector<Polynomial> create_polyset_triangle(int n)
 std::vector<Polynomial> create_polyset_tetrahedron(int n)
 {
   const Polynomial one = Polynomial::one(3);
-  const Polynomial x = Polynomial::x(3);
-  const Polynomial y = Polynomial::y(3);
-  const Polynomial z = Polynomial::z(3);
+  const Polynomial x = Polynomial::x(3) * 2.0 - one;
+  const Polynomial y = Polynomial::y(3) * 2.0 - one;
+  const Polynomial z = Polynomial::z(3) * 2.0 - one;
 
   const int m = (n + 1) * (n + 2) * (n + 3) / 6;
   std::vector<Polynomial> poly_set(m);
@@ -161,18 +161,17 @@ ReferenceSimplex::ReferenceSimplex(int dim) : _dim(dim)
   if (dim == 1)
   {
     _ref_geom.resize(2, 1);
-    _ref_geom << -1.0, 1.0;
+    _ref_geom << 0.0, 1.0;
   }
   else if (dim == 2)
   {
     _ref_geom.resize(3, 2);
-    _ref_geom << -1.0, -1.0, 1.0, -1.0, -1.0, 1.0;
+    _ref_geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0;
   }
   else if (dim == 3)
   {
     _ref_geom.resize(4, 3);
-    _ref_geom << -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0,
-        1.0;
+    _ref_geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
   }
   else
     throw std::runtime_error("Unsupported dim");

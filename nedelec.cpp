@@ -27,7 +27,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   std::vector<int> scalar_idx(ns);
   std::iota(scalar_idx.begin(), scalar_idx.end(), (_degree + 1) * _degree / 2);
 
-  auto [Qpts, Qwts] = make_quadrature_triangle_collapsed(2 * _degree + 2);
+  auto [Qpts, Qwts] = make_quadrature(2, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts(psize, Qpts.rows());
   for (int j = 0; j < psize; ++j)
@@ -82,14 +82,34 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
     for (int j = 0; j < psize; ++j)
       values.col(j) = Pkp1[j].tabulate(pts);
 
-    for (int j = 0; j < pts.rows(); ++j)
+    bool integral_rep = false;
+
+    if (integral_rep)
     {
-      for (int k = 0; k < psize; ++k)
+      int quad_deg = 2 * _degree + 1;
+
+      auto [Qpts, Qwts] = make_quadrature(1, quad_deg);
+      std::vector<Polynomial> Pq
+          = ReferenceSimplex::compute_polynomial_set(edge, _degree);
+      for (std::size_t j = 0; j < Pq.size(); ++j)
       {
-        dualmat(c, k) = tangent[0] * values(j, k);
-        dualmat(c, k + psize) = tangent[1] * values(j, k);
+        Eigen::ArrayXd phi = Pq[j].tabulate(Qpts);
+        Eigen::VectorXd q0 = phi * Qwts * tangent[0];
+        Eigen::VectorXd q1 = phi * Qwts * tangent[1];
       }
-      ++c;
+    }
+
+    else
+    {
+      for (int j = 0; j < pts.rows(); ++j)
+      {
+        for (int k = 0; k < psize; ++k)
+        {
+          dualmat(c, k) = tangent[0] * values(j, k);
+          dualmat(c, k + psize) = tangent[1] * values(j, k);
+        }
+        ++c;
+      }
     }
   }
 

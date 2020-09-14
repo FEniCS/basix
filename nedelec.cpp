@@ -126,7 +126,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   poly_set.resize((nv * 2 + ns) * _dim, Polynomial::zero(2));
   for (int j = 0; j < _dim; ++j)
     for (int i = 0; i < nv * 2 + ns; ++i)
-      for (int k = 0; k < psize; ++j)
+      for (int k = 0; k < psize; ++k)
         poly_set[i + (nv * 2 + ns) * j]
             += Pkp1[k] * new_coeffs(i, k + psize * j);
 }

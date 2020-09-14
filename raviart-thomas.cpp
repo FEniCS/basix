@@ -10,24 +10,27 @@
 
 RaviartThomas::RaviartThomas(int dim, int k) : _dim(dim), _degree(k - 1)
 {
-  // Reference triangle
-  ReferenceSimplex simplex(_dim);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
+      = ReferenceSimplex::create_simplex(dim);
 
   // Create orthonormal basis on simplex
-  std::vector<Polynomial> Pkp1 = simplex.compute_polynomial_set(_degree + 1);
+  std::vector<Polynomial> Pkp1
+      = ReferenceSimplex::compute_polynomial_set(simplex, _degree + 1);
   int psize = Pkp1.size();
 
-  // Vector subset (2D or 3D? FIXME)
+  // Vector subsets
   int nv = (_degree + 1) * (_degree + 2) / 2;
   int ns0 = _degree * (_degree + 1) / 2;
+  int ns = (_degree + 1);
   if (_dim == 3)
   {
-    nv *= (_degree + 3) / 3;
-    ns0 *= (_degree + 2) / 3;
+    nv *= (_degree + 3);
+    nv /= 3;
+    ns0 *= (_degree + 2);
+    ns0 /= 3;
+    ns *= (_degree + 2);
+    ns /= 2;
   }
-
-  // PkH subset = 2D ?3D FIXME?
-  const int ns = _degree + _dim - 1;
 
   std::cout << "nv = " << nv << "\n";
   std::cout << "ns = " << ns << "\n";
@@ -70,25 +73,21 @@ RaviartThomas::RaviartThomas(int dim, int k) : _dim(dim), _degree(k - 1)
 
   if (_dim == 2)
   {
-    // Iterate over edges
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        triangle_geom
-        = simplex.reference_geometry();
-
-    // Get edge interior points, and tangent direction
+    // Get edge interior points, and normal direction
     int c = 0;
     for (int i = 0; i < 3; ++i)
     {
       // FIXME: get this from simplex
+      // FIXME: replace with integral representation
       Eigen::Array<double, 2, 2, Eigen::RowMajor> edge;
-      edge.row(0) = triangle_geom.row((i + 1) % 3);
-      edge.row(1) = triangle_geom.row((i + 2) % 3);
+      edge.row(0) = simplex.row((i + 1) % 3);
+      edge.row(1) = simplex.row((i + 2) % 3);
       Eigen::Vector2d normal;
       normal << edge(1, 1) - edge(0, 1), edge(0, 0) - edge(1, 0);
 
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>
-          pts = ReferenceSimplex::make_lattice(_degree + 2, edge, false);
+          pts = ReferenceSimplex::create_lattice(edge, _degree + 2, false);
 
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           values(pts.rows(), psize);
@@ -98,10 +97,8 @@ RaviartThomas::RaviartThomas(int dim, int k) : _dim(dim), _degree(k - 1)
       for (int j = 0; j < pts.rows(); ++j)
       {
         for (int k = 0; k < psize; ++k)
-        {
-          dualmat(c, k) = normal[0] * values(j, k);
-          dualmat(c, k + psize) = normal[1] * values(j, k);
-        }
+          for (int l = 0; l < 2; ++l)
+            dualmat(c, k + psize * l) = normal[l] * values(j, k);
         ++c;
       }
     }
@@ -110,7 +107,7 @@ RaviartThomas::RaviartThomas(int dim, int k) : _dim(dim), _degree(k - 1)
     {
       // Interior integral moment
       std::vector<Polynomial> Pkm1
-          = simplex.compute_polynomial_set(_degree - 1);
+          = ReferenceSimplex::compute_polynomial_set(simplex, _degree - 1);
       for (std::size_t i = 0; i < Pkm1.size(); ++i)
       {
         Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);
@@ -118,10 +115,11 @@ RaviartThomas::RaviartThomas(int dim, int k) : _dim(dim), _degree(k - 1)
         Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
         assert(qcoeffs.size() == psize);
         std::cout << "q = [" << q.transpose() << "]\n";
-        dualmat.block(c, 0, 1, psize) = qcoeffs;
-        ++c;
-        dualmat.block(c, psize, 1, psize) = qcoeffs;
-        ++c;
+        for (int j = 0; j < _dim; ++j)
+        {
+          dualmat.block(c, psize * j, 1, psize) = qcoeffs;
+          ++c;
+        }
       }
     }
   }

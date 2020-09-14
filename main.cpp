@@ -10,9 +10,10 @@
 int main()
 {
   int dim = 2;
-  ReferenceSimplex triangle(dim);
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      test_pts = triangle.lattice(50);
+      triangle = ReferenceSimplex::create_simplex(dim);
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      test_pts = ReferenceSimplex::create_lattice(triangle, 50, true);
 
   Lagrange L(dim, 3);
   auto ltab = L.tabulate_basis(test_pts);

@@ -11,10 +11,12 @@
 Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 {
   // Reference triangle
-  ReferenceSimplex triangle(2);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> triangle
+      = ReferenceSimplex::create_simplex(2);
 
   // Create orthonormal basis on triangle
-  std::vector<Polynomial> Pkp1 = triangle.compute_polynomial_set(_degree + 1);
+  std::vector<Polynomial> Pkp1
+      = ReferenceSimplex::compute_polynomial_set(triangle, _degree + 1);
   int psize = Pkp1.size();
 
   // Vector subset
@@ -55,9 +57,6 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   // Dual space
 
   // Iterate over edges
-  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-      triangle_geom
-      = triangle.reference_geometry();
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       dualmat(nv * 2 + ns, psize * 2);
@@ -72,12 +71,12 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
     // FIXME: get this from the simplex class
     // FIXME: using Point Tangent evaluation - should use integral moment?
     Eigen::Array<double, 2, 2, Eigen::RowMajor> edge;
-    edge.row(0) = triangle_geom.row((i + 1) % 3);
-    edge.row(1) = triangle_geom.row((i + 2) % 3);
+    edge.row(0) = triangle.row((i + 1) % 3);
+    edge.row(1) = triangle.row((i + 2) % 3);
     Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
 
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        pts = ReferenceSimplex::make_lattice(_degree + 2, edge, false);
+        pts = ReferenceSimplex::create_lattice(edge, _degree + 2, false);
 
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         values(pts.rows(), psize);
@@ -98,7 +97,8 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   if (_degree > 0)
   {
     // Interior integral moment
-    std::vector<Polynomial> Pkm1 = triangle.compute_polynomial_set(_degree - 1);
+    std::vector<Polynomial> Pkm1
+        = ReferenceSimplex::compute_polynomial_set(triangle, _degree - 1);
     for (std::size_t i = 0; i < Pkm1.size(); ++i)
     {
       Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);

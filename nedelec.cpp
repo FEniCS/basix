@@ -68,11 +68,14 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   int c = 0;
   for (int i = 0; i < 3; ++i)
   {
-    // FIXME: get this from the simplex class
-    // FIXME: using Point Tangent evaluation - should use integral moment?
+    // FIXME: get tangent from the simplex class
     Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
         = ReferenceSimplex::sub(triangle, 1, i);
     Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
+
+    // UFC convention?
+    if (i == 1)
+      tangent *= -1;
 
     bool integral_rep = true;
 
@@ -91,7 +94,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
         QptsE_scaled.row(j)
             = edge.row(0) + QptsE(j, 0) * (edge.row(1) - edge.row(0));
 
-      // Tabulate main triangle basis on edges
+      // Tabulate main triangle basis at edge Quadrature points
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           Pkp1_at_QptsE(psize, QptsE_scaled.rows());
       for (int j = 0; j < psize; ++j)

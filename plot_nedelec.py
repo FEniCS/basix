@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from fiatx import *
 
 N = Nedelec2D(1)
+
 pts = create_lattice([[0,0],[0,1],[1,0]], 20, True)
 w = N.tabulate_basis(pts)
 

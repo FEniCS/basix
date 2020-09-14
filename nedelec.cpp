@@ -74,33 +74,55 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
         = ReferenceSimplex::sub(triangle, 1, i);
     Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
 
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        pts = ReferenceSimplex::create_lattice(edge, _degree + 2, false);
-
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        values(pts.rows(), psize);
-    for (int j = 0; j < psize; ++j)
-      values.col(j) = Pkp1[j].tabulate(pts);
-
-    bool integral_rep = false;
+    bool integral_rep = true;
 
     if (integral_rep)
     {
-      int quad_deg = 2 * _degree + 1;
-
-      auto [Qpts, Qwts] = make_quadrature(1, quad_deg);
+      // Create a polynomial set on a reference edge
       std::vector<Polynomial> Pq
           = ReferenceSimplex::compute_polynomial_set(edge, _degree);
+
+      // Create quadrature scheme on the edge, and map to triangle
+      int quad_deg = 5 * (_degree + 1);
+      auto [QptsE, QwtsE] = make_quadrature(1, quad_deg);
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          QptsE_scaled(QptsE.rows(), 2);
+      for (int j = 0; j < QptsE.rows(); ++j)
+        QptsE_scaled.row(j)
+            = edge.row(0) + QptsE(j, 0) * (edge.row(1) - edge.row(0));
+
+      // Tabulate main triangle basis on edges
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          Pkp1_at_QptsE(psize, QptsE_scaled.rows());
+      for (int j = 0; j < psize; ++j)
+        Pkp1_at_QptsE.row(j) = Pkp1[j].tabulate(QptsE_scaled);
+
+      // Compute edge tangent integral moments
       for (std::size_t j = 0; j < Pq.size(); ++j)
       {
-        Eigen::ArrayXd phi = Pq[j].tabulate(Qpts);
-        Eigen::VectorXd q0 = phi * Qwts * tangent[0];
-        Eigen::VectorXd q1 = phi * Qwts * tangent[1];
+        Eigen::ArrayXd phi = Pq[j].tabulate(QptsE);
+        Eigen::VectorXd q0 = phi * QwtsE * tangent[0];
+        Eigen::RowVectorXd q0coeffs = Pkp1_at_QptsE.matrix() * q0;
+        Eigen::VectorXd q1 = phi * QwtsE * tangent[1];
+        Eigen::RowVectorXd q1coeffs = Pkp1_at_QptsE.matrix() * q1;
+        dualmat.block(c, 0, 1, psize) = q0coeffs;
+        dualmat.block(c, psize, 1, psize) = q1coeffs;
+        ++c;
       }
     }
 
     else
     {
+      // PointTangent evaluation
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>
+          pts = ReferenceSimplex::create_lattice(edge, _degree + 2, false);
+
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          values(pts.rows(), psize);
+      for (int j = 0; j < psize; ++j)
+        values.col(j) = Pkp1[j].tabulate(pts);
+
       for (int j = 0; j < pts.rows(); ++j)
       {
         for (int k = 0; k < psize; ++k)

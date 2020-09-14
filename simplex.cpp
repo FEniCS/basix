@@ -29,8 +29,6 @@ std::vector<Polynomial> create_polyset_line(int n)
   poly_set[0] = one;
   if (n > 0)
     poly_set[1] = x;
-  else
-    return poly_set;
 
   for (int p = 2; p < n + 1; ++p)
   {

@@ -30,7 +30,14 @@ std::pair<Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>,
           Eigen::ArrayXd>
 make_quadrature_tetrahedron_collapsed(int m);
 
-// Utility for general simplex
+// Utility for reference simplex of any dimension
 std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
           Eigen::ArrayXd>
   make_quadrature(int dim, int m);
+
+// Scaled quadrature on arbitrary simplices
+std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
+          Eigen::ArrayXd>
+make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>& simplex,
+                int m);

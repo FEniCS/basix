@@ -22,14 +22,14 @@ Lagrange::Lagrange(int dim, int degree) : _dim(dim), _degree(degree)
   Eigen::MatrixXd dualmat(pt.rows(), bset.size());
   for (std::size_t j = 0; j < bset.size(); ++j)
     dualmat.col(j) = bset[j].tabulate(pt);
-  Eigen::MatrixXd w = dualmat.inverse();
+  Eigen::MatrixXd new_coeffs = dualmat.inverse();
 
-  // Matrix multiply basis by w
+  // Matrix multiply basis by new_coeffs
   poly_set.resize(bset.size(), Polynomial::zero(dim));
   for (std::size_t j = 0; j < bset.size(); ++j)
   {
     for (std::size_t k = 0; k < bset.size(); ++k)
-      poly_set[j] += bset[k] * w(k, j);
+      poly_set[j] += bset[k] * new_coeffs(k, j);
   }
 }
 //-----------------------------------------------------------------------------

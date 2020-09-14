@@ -3,6 +3,7 @@
 
 #include "lagrange.h"
 #include "nedelec.h"
+#include "quadrature.h"
 #include "raviart-thomas.h"
 #include "simplex.h"
 
@@ -26,4 +27,9 @@ PYBIND11_MODULE(fiatx, m)
   py::class_<RaviartThomas>(m, "RaviartThomas")
       .def(py::init<int, int>())
       .def("tabulate_basis", &RaviartThomas::tabulate_basis);
+
+  m.def("make_quadrature",
+        py::overload_cast<const Eigen::Array<double, Eigen::Dynamic,
+                                             Eigen::Dynamic, Eigen::RowMajor>&,
+                          int>(&make_quadrature));
 }

@@ -77,11 +77,9 @@ RaviartThomas::RaviartThomas(int dim, int k) : _dim(dim), _degree(k - 1)
     int c = 0;
     for (int i = 0; i < 3; ++i)
     {
-      // FIXME: get this from simplex
       // FIXME: replace with integral representation
-      Eigen::Array<double, 2, 2, Eigen::RowMajor> edge;
-      edge.row(0) = simplex.row((i + 1) % 3);
-      edge.row(1) = simplex.row((i + 2) % 3);
+      Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
+          = ReferenceSimplex::sub(simplex, 1, i);
       Eigen::Vector2d normal;
       normal << edge(1, 1) - edge(0, 1), edge(0, 0) - edge(1, 0);
 

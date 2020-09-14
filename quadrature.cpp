@@ -172,3 +172,66 @@ make_quadrature(int dim, int m)
   else
     return make_quadrature_tetrahedron_collapsed(m);
 }
+//-----------------------------------------------------------------------------
+std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
+          Eigen::ArrayXd>
+make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>& simplex,
+                int m)
+{
+  const int dim = simplex.rows() - 1;
+  if (dim < 1 or dim > 3)
+    throw std::runtime_error("Unsupported dim");
+  if (simplex.cols() < dim)
+    throw std::runtime_error("Invalid simplex");
+
+  // Compute edge vectors of simplex
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> bvec(
+      dim, simplex.cols());
+  for (int i = 0; i < dim; ++i)
+    bvec.row(i) = simplex.row(i + 1) - simplex.row(0);
+
+  std::cout << "Bvec = " << bvec << "\n";
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts;
+  Eigen::ArrayXd Qwts;
+
+  double scale = 1.0;
+  if (dim == 1)
+  {
+    std::tie(Qpts, Qwts) = make_quadrature_line(m);
+    scale = bvec.norm();
+  }
+  else if (dim == 2)
+  {
+    std::tie(Qpts, Qwts) = make_quadrature_triangle_collapsed(m);
+    if (bvec.cols() == 2)
+      scale = bvec.determinant();
+    else
+    {
+      Eigen::Vector3d a = bvec.row(0);
+      Eigen::Vector3d b = bvec.row(1);
+      scale = a.cross(b).norm();
+    }
+  }
+  else
+  {
+    std::tie(Qpts, Qwts) = make_quadrature_tetrahedron_collapsed(m);
+    assert(bvec.cols() == 3);
+    scale = bvec.determinant();
+  }
+
+  std::cout << "scale = " << scale << "\n";
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      Qpts_scaled(Qpts.rows(), bvec.cols());
+  Eigen::ArrayXd Qwts_scaled = Qwts * scale;
+
+  for (int i = 0; i < Qpts.rows(); ++i)
+  {
+    Eigen::RowVectorXd s = Qpts.row(i).matrix() * bvec;
+    Qpts_scaled.row(i) = simplex.row(0) + s.array();
+  }
+
+  return {Qpts_scaled, Qwts_scaled};
+}

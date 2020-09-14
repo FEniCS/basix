@@ -22,7 +22,7 @@ std::tuple<double, double, double> jrc(int a, int n)
 std::vector<Polynomial> create_polyset_line(int n)
 {
   const Polynomial one = Polynomial::one(1);
-  const Polynomial x = Polynomial::x(1);
+  const Polynomial x = Polynomial::x(1) * 2.0 - one;
 
   const int m = (n + 1);
   std::vector<Polynomial> poly_set(m);
@@ -47,8 +47,8 @@ std::vector<Polynomial> create_polyset_line(int n)
 std::vector<Polynomial> create_polyset_triangle(int n)
 {
   const Polynomial one = Polynomial::one(2);
-  const Polynomial x = Polynomial::x(2);
-  const Polynomial y = Polynomial::y(2);
+  const Polynomial x = Polynomial::x(2) * 2.0 - one;
+  const Polynomial y = Polynomial::y(2) * 2.0 - one;
 
   const int m = (n + 1) * (n + 2) / 2;
   std::vector<Polynomial> poly_set(m);
@@ -91,9 +91,9 @@ std::vector<Polynomial> create_polyset_triangle(int n)
 std::vector<Polynomial> create_polyset_tetrahedron(int n)
 {
   const Polynomial one = Polynomial::one(3);
-  const Polynomial x = Polynomial::x(3);
-  const Polynomial y = Polynomial::y(3);
-  const Polynomial z = Polynomial::z(3);
+  const Polynomial x = Polynomial::x(3) * 2.0 - one;
+  const Polynomial y = Polynomial::y(3) * 2.0 - one;
+  const Polynomial z = Polynomial::z(3) * 2.0 - one;
 
   const int m = (n + 1) * (n + 2) * (n + 3) / 6;
   std::vector<Polynomial> poly_set(m);
@@ -156,50 +156,92 @@ std::vector<Polynomial> create_polyset_tetrahedron(int n)
 }
 } // namespace
 //-----------------------------------------------------------------------------
-ReferenceSimplex::ReferenceSimplex(int dim) : _dim(dim)
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+ReferenceSimplex::create_simplex(int dim)
 {
-  if (dim == 1)
-  {
-    _ref_geom.resize(2, 1);
-    _ref_geom << -1.0, 1.0;
-  }
-  else if (dim == 2)
-  {
-    _ref_geom.resize(3, 2);
-    _ref_geom << -1.0, -1.0, 1.0, -1.0, -1.0, 1.0;
-  }
-  else if (dim == 3)
-  {
-    _ref_geom.resize(4, 3);
-    _ref_geom << -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0, 1.0, -1.0, -1.0, -1.0,
-        1.0;
-  }
-  else
+  if (dim < 1 or dim > 3)
     throw std::runtime_error("Unsupported dim");
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      ref_geom(dim + 1, dim);
+  if (dim == 1)
+    ref_geom << 0.0, 1.0;
+  else if (dim == 2)
+    ref_geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0;
+  else if (dim == 3)
+    ref_geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+  return ref_geom;
 }
 //-----------------------------------------------------------------------------
-std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(int n) const
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+ReferenceSimplex::sub(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>& simplex,
+                      int dim, int index)
 {
-  if (_dim == 1)
+  const int simplex_dim = simplex.rows() - 1;
+
+  if (dim == 0)
+  {
+    assert(index >= 0 and index < simplex.rows());
+    return simplex.row(index);
+  }
+  else if (dim == simplex_dim)
+  {
+    assert(index == 0);
+    return simplex;
+  }
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> entity;
+
+  if (dim == 1 and simplex_dim == 2)
+  {
+    assert(index >= 0 and index < 3);
+    // Edge of triangle
+    entity.resize(2, 2);
+    entity.row(0) = simplex.row((index + 1) % 3);
+    entity.row(1) = simplex.row((index + 2) % 3);
+  }
+  else if (dim == 2 and simplex_dim == 3)
+  {
+    assert(index >= 0 and index < 4);
+    // Facet of tetrahedron
+    entity.resize(3, 3);
+    entity.row(0) = simplex.row((index + 1) % 4);
+    entity.row(1) = simplex.row((index + 2) % 4);
+    entity.row(2) = simplex.row((index + 3) % 4);
+  }
+  else if (dim == 1 and simplex_dim == 3)
+  {
+    // Edge of tetrahedron...
+    throw std::runtime_error("Fix me");
+  }
+  return entity;
+}
+//-----------------------------------------------------------------------------
+std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        simplex,
+    int n)
+
+{
+  // Could just use dim as an argument, just checking rows to get dimension.
+  const int dim = simplex.rows() - 1;
+  if (dim < 1 or dim > 3)
+    throw std::runtime_error("Unsupported dim");
+
+  if (dim == 1)
     return create_polyset_line(n);
-  else if (_dim == 2)
+  else if (dim == 2)
     return create_polyset_triangle(n);
   else
     return create_polyset_tetrahedron(n);
 }
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-ReferenceSimplex::lattice(int n) const
-{
-  return make_lattice(n, _ref_geom, true);
-}
-//-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-ReferenceSimplex::make_lattice(
-    int n,
+ReferenceSimplex::create_lattice(
     const Eigen::Ref<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                         Eigen::RowMajor>>& vertices,
-    bool exterior)
+    int n, bool exterior)
 {
   int tdim = vertices.rows() - 1;
   int gdim = vertices.cols();

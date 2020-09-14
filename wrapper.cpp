@@ -12,7 +12,8 @@ PYBIND11_MODULE(fiatx, m)
 {
   m.doc() = "FIATx example plugin";
 
-  m.def("make_lattice", &ReferenceSimplex::make_lattice, "Create a lattice");
+  m.def("create_lattice", &ReferenceSimplex::create_lattice,
+        "Create a lattice");
 
   py::class_<Nedelec2D>(m, "Nedelec2D")
       .def(py::init<int>())

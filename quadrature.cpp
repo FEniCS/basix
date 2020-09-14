@@ -78,6 +78,7 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
                                                                     int m)
 {
+  // Computes on [-1, 1]
   const Eigen::ArrayXd pts = compute_gauss_jacobi_points(a, m);
   const Polynomial Jd = compute_jacobi(a, m).diff(0);
 
@@ -102,7 +103,10 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m)
 {
-  return compute_gauss_jacobi_rule(0.0, m);
+  auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
+  Eigen::ArrayXd pts = 0.5 * (ptx + 1.0);
+  Eigen::ArrayXd wts = wx * 0.5;
+  return {pts, wts};
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor>,
@@ -119,10 +123,10 @@ make_quadrature_triangle_collapsed(int m)
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < m; ++j)
     {
-      const double x = 0.5 * (1.0 + ptx[i]) * (1.0 - pty[j]) - 1.0;
-      const double y = pty[j];
+      const double x = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]);
+      const double y = 0.5 * (1.0 + pty[j]);
       pts.row(idx) << x, y;
-      wts[idx] = wx[i] * wy[j] * 0.5;
+      wts[idx] = wx[i] * wy[j] * 0.125;
       ++idx;
     }
 
@@ -146,11 +150,11 @@ make_quadrature_tetrahedron_collapsed(int m)
       for (int k = 0; k < m; ++k)
       {
         const double x
-            = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]) * (1.0 - ptz[k]) - 1.0;
-        const double y = 0.5 * (1. + pty[j]) * (1. - ptz[k]) - 1.0;
-        const double z = ptz[k];
+            = 0.125 * (1.0 + ptx[i]) * (1.0 - pty[j]) * (1.0 - ptz[k]);
+        const double y = 0.25 * (1. + pty[j]) * (1. - ptz[k]);
+        const double z = 0.5 * (1.0 + ptz[k]);
         pts.row(idx) << x, y, z;
-        wts[idx] = wx[i] * wy[j] * wz[k] * 0.125;
+        wts[idx] = wx[i] * wy[j] * wz[k] * 0.125 * 0.125;
         ++idx;
       }
 

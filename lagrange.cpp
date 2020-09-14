@@ -7,15 +7,18 @@
 
 Lagrange::Lagrange(int dim, int degree) : _dim(dim), _degree(degree)
 {
-  // Reference simplex
-  ReferenceSimplex simplex(dim);
+  // Reference simplex vertices
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
+      = ReferenceSimplex::create_simplex(dim);
 
   // Create orthonormal basis on simplex
-  std::vector<Polynomial> bset = simplex.compute_polynomial_set(degree);
+  std::vector<Polynomial> bset
+      = ReferenceSimplex::compute_polynomial_set(simplex, degree);
 
   // Tabulate basis at nodes and get inverse
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
-      = simplex.lattice(degree);
+      = ReferenceSimplex::create_lattice(simplex, degree, true);
+
   Eigen::MatrixXd dualmat(pt.rows(), bset.size());
   for (std::size_t j = 0; j < bset.size(); ++j)
     dualmat.col(j) = bset[j].tabulate(pt);

@@ -11,37 +11,27 @@
 class ReferenceSimplex
 {
 public:
-  ReferenceSimplex(int dim);
-
-  // Dimension
-  int dim() const { return _dim; }
-
   // Return the vertex points of the reference element
-  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-  reference_geometry() const
-  {
-    return _ref_geom;
-  }
-
-  // Create a lattice of points on the simplex
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  lattice(int n) const;
+  static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  create_simplex(int dim);
 
   // Create a lattice of points on the simplex defined by the given vertices
   // optionally including the exterior points
   static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  make_lattice(int n,
-               const Eigen::Ref<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>>& vertices,
-               bool exterior);
+  create_lattice(
+      const Eigen::Ref<const Eigen::Array<
+          double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>& vertices,
+      int n, bool exterior);
 
-
+  // Sub-entity of a simplex, given by topological dimension and index
+  static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  sub(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& simplex,
+      int dim, int index);
 
   // Orthonormal polynomial basis on simplex
-  std::vector<Polynomial> compute_polynomial_set(int n) const;
-
-private:
-  int _dim;
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      _ref_geom;
+  static std::vector<Polynomial> compute_polynomial_set(
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& simplex,
+      int n);
 };

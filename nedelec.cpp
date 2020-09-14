@@ -16,7 +16,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
   // Create orthonormal basis on triangle
   std::vector<Polynomial> Pkp1
-      = ReferenceSimplex::compute_polynomial_set(triangle, _degree + 1);
+      = ReferenceSimplex::compute_polynomial_set(2, _degree + 1);
   int psize = Pkp1.size();
 
   // Vector subset
@@ -24,8 +24,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
   // PkH subset
   const int ns = _degree + 1;
-  std::vector<int> scalar_idx(ns);
-  std::iota(scalar_idx.begin(), scalar_idx.end(), (_degree + 1) * _degree / 2);
+  const int ns0 = (_degree + 1) * _degree / 2;
 
   auto [Qpts, Qwts] = make_quadrature(2, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -43,12 +42,12 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   for (int i = 0; i < ns; ++i)
     for (int k = 0; k < psize; ++k)
     {
-      auto w0 = Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose() * Qpts.col(1)
+      auto w0 = Qwts * Pkp1_at_Qpts.row(ns0 + i).transpose() * Qpts.col(1)
                 * Pkp1_at_Qpts.row(k).transpose();
       wcoeffs(2 * nv + i, k) = w0.sum();
 
-      auto w1 = -Qwts * Pkp1_at_Qpts.row(scalar_idx[i]).transpose()
-                * Qpts.col(0) * Pkp1_at_Qpts.row(k).transpose();
+      auto w1 = -Qwts * Pkp1_at_Qpts.row(ns0 + i).transpose() * Qpts.col(0)
+                * Pkp1_at_Qpts.row(k).transpose();
       wcoeffs(2 * nv + i, k + psize) = w1.sum();
     }
 
@@ -66,28 +65,31 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
   // Get edge interior points, and tangent direction
   int c = 0;
-  for (int i = 0; i < 3; ++i)
+
+  bool integral_rep = true;
+
+  if (integral_rep)
   {
-    // FIXME: get tangent from the simplex class
-    Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
-        = ReferenceSimplex::sub(triangle, 1, i);
-    Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
+    // Create a polynomial set on a reference edge
+    std::vector<Polynomial> Pq
+        = ReferenceSimplex::compute_polynomial_set(1, _degree);
 
-    // UFC convention?
-    if (i == 1)
-      tangent *= -1;
+    // Create quadrature scheme on the edge
+    int quad_deg = 5 * (_degree + 1);
+    auto [QptsE, QwtsE] = make_quadrature(1, quad_deg);
 
-    bool integral_rep = true;
-
-    if (integral_rep)
+    for (int i = 0; i < 3; ++i)
     {
-      // Create a polynomial set on a reference edge
-      std::vector<Polynomial> Pq
-          = ReferenceSimplex::compute_polynomial_set(edge, _degree);
+      // FIXME: get tangent from the simplex class
+      Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
+          = ReferenceSimplex::sub(triangle, 1, i);
+      Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
 
-      // Create quadrature scheme on the edge, and map to triangle
-      int quad_deg = 5 * (_degree + 1);
-      auto [QptsE, QwtsE] = make_quadrature(1, quad_deg);
+      // UFC convention?
+      if (i == 1)
+        tangent *= -1;
+
+      // Map quadrature points onto triangle edge
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           QptsE_scaled(QptsE.rows(), 2);
       for (int j = 0; j < QptsE.rows(); ++j)
@@ -104,19 +106,32 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
       for (std::size_t j = 0; j < Pq.size(); ++j)
       {
         Eigen::ArrayXd phi = Pq[j].tabulate(QptsE);
-        Eigen::VectorXd q0 = phi * QwtsE * tangent[0];
-        Eigen::RowVectorXd q0coeffs = Pkp1_at_QptsE.matrix() * q0;
-        Eigen::VectorXd q1 = phi * QwtsE * tangent[1];
-        Eigen::RowVectorXd q1coeffs = Pkp1_at_QptsE.matrix() * q1;
-        dualmat.block(c, 0, 1, psize) = q0coeffs;
-        dualmat.block(c, psize, 1, psize) = q1coeffs;
+        for (int k = 0; k < 2; ++k)
+        {
+          Eigen::VectorXd q = phi * QwtsE * tangent[k];
+          Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE.matrix() * q;
+          dualmat.block(c, psize * k, 1, psize) = qcoeffs;
+        }
         ++c;
       }
     }
+  }
 
-    else
+  else
+  {
+    // PointTangent evaluation
+
+    for (int i = 0; i < 3; ++i)
     {
-      // PointTangent evaluation
+      // FIXME: get tangent from the simplex class
+      Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
+          = ReferenceSimplex::sub(triangle, 1, i);
+      Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
+
+      // UFC convention?
+      if (i == 1)
+        tangent *= -1;
+
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>
           pts = ReferenceSimplex::create_lattice(edge, _degree + 2, false);
@@ -142,7 +157,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   {
     // Interior integral moment
     std::vector<Polynomial> Pkm1
-        = ReferenceSimplex::compute_polynomial_set(triangle, _degree - 1);
+        = ReferenceSimplex::compute_polynomial_set(2, _degree - 1);
     for (std::size_t i = 0; i < Pkm1.size(); ++i)
     {
       Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);

@@ -13,7 +13,7 @@ Lagrange::Lagrange(int dim, int degree) : _dim(dim), _degree(degree)
 
   // Create orthonormal basis on simplex
   std::vector<Polynomial> bset
-      = ReferenceSimplex::compute_polynomial_set(simplex, degree);
+      = ReferenceSimplex::compute_polynomial_set(dim, degree);
 
   // Tabulate basis at nodes and get inverse
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt

@@ -216,14 +216,9 @@ ReferenceSimplex::sub(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
   return entity;
 }
 //-----------------------------------------------------------------------------
-std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        simplex,
-    int n)
+std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(int dim, int n)
 
 {
-  // Could just use dim as an argument, just checking rows to get dimension.
-  const int dim = simplex.rows() - 1;
   if (dim < 1 or dim > 3)
     throw std::runtime_error("Unsupported dim");
 

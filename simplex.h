@@ -29,9 +29,6 @@ public:
                          Eigen::RowMajor>& simplex,
       int dim, int index);
 
-  // Orthonormal polynomial basis on simplex
-  static std::vector<Polynomial> compute_polynomial_set(
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>& simplex,
-      int n);
+  // Orthonormal polynomial basis on reference simplex of dimension dim
+  static std::vector<Polynomial> compute_polynomial_set(int dim, int n);
 };

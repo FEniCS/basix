@@ -12,11 +12,11 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 {
   // Reference triangle
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> triangle
-      = ReferenceSimplex::create_simplex(2);
+      = ReferenceSimplex::create_simplex(_dim);
 
   // Create orthonormal basis on triangle
   std::vector<Polynomial> Pkp1
-      = ReferenceSimplex::compute_polynomial_set(2, _degree + 1);
+      = ReferenceSimplex::compute_polynomial_set(_dim, _degree + 1);
   int psize = Pkp1.size();
 
   // Vector subset
@@ -26,7 +26,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
   const int ns = _degree + 1;
   const int ns0 = (_degree + 1) * _degree / 2;
 
-  auto [Qpts, Qwts] = make_quadrature(2, 2 * _degree + 2);
+  auto [Qpts, Qwts] = make_quadrature(_dim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts(psize, Qpts.rows());
   for (int j = 0; j < psize; ++j)
@@ -270,14 +270,56 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
 
   if (_degree > 0)
   {
-    throw std::runtime_error("TODO: facet tangent integrals");
+    // Create a polynomial set on a reference facet
+    std::vector<Polynomial> PqF
+        = ReferenceSimplex::compute_polynomial_set(2, _degree - 1);
 
-    // Interior integral moment
-    std::vector<Polynomial> Pkm1
-        = ReferenceSimplex::compute_polynomial_set(_dim, _degree - 1);
-    for (std::size_t i = 0; i < Pkm1.size(); ++i)
+    // Create quadrature scheme on the facet
+    int quad_deg = 5 * (_degree + 1);
+    auto [QptsF, QwtsF] = make_quadrature(2, quad_deg);
+
+    for (int i = 0; i < 4; ++i)
     {
-      Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          facet = ReferenceSimplex::sub(simplex, 2, i);
+      // Face tangents
+      Eigen::Vector3d t0 = facet.row(1) - facet.row(0);
+      Eigen::Vector3d t1 = facet.row(2) - facet.row(0);
+
+      // Map quadrature points onto tetrahedron facet
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          QptsF_scaled(QptsF.rows(), _dim);
+      for (int j = 0; j < QptsF.rows(); ++j)
+        QptsF_scaled.row(j) = facet.row(0)
+                              + QptsF(j, 0) * (facet.row(1) - facet.row(0))
+                              + QptsF(j, 1) * (facet.row(2) - facet.row(0));
+
+      // Tabulate Pkp1 at facet quadrature points
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          Pkp1_at_QptsF(psize, QptsF_scaled.rows());
+      for (int j = 0; j < psize; ++j)
+        Pkp1_at_QptsF.row(j) = Pkp1[j].tabulate(QptsF_scaled);
+
+      for (std::size_t j = 0; j < PqF.size(); ++j)
+      {
+        Eigen::ArrayXd phi = PqF[j].tabulate(QptsF);
+        // Eigen::VectorXd q0 = phi * QwtsF * t0;
+        // Eigen::RowVectorXd qcoeffs0 = Pkp1_at_QptsF * q0;
+        // Eigen::VectorXd q1 = phi * QwtsF * t1;
+        // Eigen::RowVectorXd qcoeffs1 = Pkp1_at_QptsF * q1;
+        // FIXME...
+        throw std::runtime_error("TODO: facet tangent integrals");
+      }
+    }
+  }
+  if (_degree > 1)
+  {
+    // Interior integral moment
+    std::vector<Polynomial> Pkm2
+        = ReferenceSimplex::compute_polynomial_set(_dim, _degree - 2);
+    for (std::size_t i = 0; i < Pkm2.size(); ++i)
+    {
+      Eigen::ArrayXd phi = Pkm2[i].tabulate(Qpts);
       Eigen::VectorXd q = phi * Qwts;
       Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
       assert(qcoeffs.size() == psize);

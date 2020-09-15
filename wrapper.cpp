@@ -1,5 +1,6 @@
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
+#include <string>
 
 #include "lagrange.h"
 #include "nedelec.h"
@@ -19,6 +20,10 @@ PYBIND11_MODULE(fiatx, m)
   py::class_<Nedelec2D>(m, "Nedelec2D")
       .def(py::init<int>())
       .def("tabulate_basis", &Nedelec2D::tabulate_basis);
+
+  py::class_<Nedelec3D>(m, "Nedelec3D")
+      .def(py::init<int>())
+      .def("tabulate_basis", &Nedelec3D::tabulate_basis);
 
   py::class_<Lagrange>(m, "Lagrange")
       .def(py::init<int, int>())

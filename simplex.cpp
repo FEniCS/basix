@@ -210,8 +210,11 @@ ReferenceSimplex::sub(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
   }
   else if (dim == 1 and simplex_dim == 3)
   {
-    // Edge of tetrahedron...
-    throw std::runtime_error("Fix me");
+    entity.resize(2, 3);
+    static const int edges[6][2]
+        = {{2, 3}, {1, 3}, {1, 2}, {0, 3}, {0, 2}, {0, 1}};
+    entity.row(0) = simplex.row(edges[index][0]);
+    entity.row(1) = simplex.row(edges[index][1]);
   }
   return entity;
 }

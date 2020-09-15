@@ -71,109 +71,83 @@ RaviartThomas::RaviartThomas(int dim, int k) : _dim(dim), _degree(k - 1)
       dualmat(nv * _dim + ns, psize * _dim);
   dualmat.setZero();
 
-  // 3D to do
+  // dof counter
+  int c = 0;
 
-  if (_dim == 2)
+  // Create a polynomial set on a reference facet
+  std::vector<Polynomial> Pq
+      = ReferenceSimplex::compute_polynomial_set(_dim - 1, _degree);
+  // Create quadrature scheme on the facet
+  int quad_deg = 5 * (_degree + 1);
+  auto [QptsE, QwtsE] = make_quadrature(_dim - 1, quad_deg);
+
+  for (int i = 0; i < (_dim + 1); ++i)
   {
-    // Get edge interior points, and normal direction
-    int c = 0;
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> facet
+        = ReferenceSimplex::sub(simplex, _dim - 1, i);
 
-    bool integral_rep = true;
-
-    if (integral_rep)
+    // FIXME: get normal from the simplex class
+    Eigen::VectorXd normal;
+    if (_dim == 2)
     {
-      // Create a polynomial set on a reference edge
-      std::vector<Polynomial> Pq
-          = ReferenceSimplex::compute_polynomial_set(1, _degree);
-      // Create quadrature scheme on the edge
-      int quad_deg = 5 * (_degree + 1);
-      auto [QptsE, QwtsE] = make_quadrature(1, quad_deg);
-
-      for (int i = 0; i < 3; ++i)
-      {
-        // FIXME: get normal from the simplex class
-        Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
-            = ReferenceSimplex::sub(simplex, 1, i);
-        Eigen::Vector2d normal;
-        normal << edge(1, 1) - edge(0, 1), edge(0, 0) - edge(1, 0);
-        if (i == 1)
-          normal *= -1;
-
-        // Map reference edge to triangle
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-            QptsE_scaled(QptsE.rows(), 2);
-        for (int j = 0; j < QptsE.rows(); ++j)
-          QptsE_scaled.row(j)
-              = edge.row(0) + QptsE(j, 0) * (edge.row(1) - edge.row(0));
-
-        // Tabulate main triangle basis at edge Quadrature points
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-            Pkp1_at_QptsE(psize, QptsE_scaled.rows());
-        for (int j = 0; j < psize; ++j)
-          Pkp1_at_QptsE.row(j) = Pkp1[j].tabulate(QptsE_scaled);
-
-        // Compute edge normal integral moments by quadrature
-        for (std::size_t j = 0; j < Pq.size(); ++j)
-        {
-          Eigen::ArrayXd phi = Pq[j].tabulate(QptsE);
-          for (int k = 0; k < 2; ++k)
-          {
-            Eigen::VectorXd q = phi * QwtsE * normal[k];
-            Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE.matrix() * q;
-            dualmat.block(c, psize * k, 1, psize) = qcoeffs;
-          }
-          ++c;
-        }
-      }
+      normal.resize(2);
+      normal << facet(1, 1) - facet(0, 1), facet(0, 0) - facet(1, 0);
+      if (i == 1)
+        normal *= -1;
     }
-    else
+    else if (_dim == 3)
     {
-      for (int i = 0; i < 3; ++i)
-      {
-        // Point Normal
-        Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
-            = ReferenceSimplex::sub(simplex, 1, i);
-        Eigen::Vector2d normal;
-        normal << edge(1, 1) - edge(0, 1), edge(0, 0) - edge(1, 0);
-
-        if (i == 1)
-          normal *= -1;
-
-        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                           Eigen::RowMajor>
-            pts = ReferenceSimplex::create_lattice(edge, _degree + 2, false);
-
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-            values(pts.rows(), psize);
-        for (int j = 0; j < psize; ++j)
-          values.col(j) = Pkp1[j].tabulate(pts);
-
-        for (int j = 0; j < pts.rows(); ++j)
-        {
-          for (int k = 0; k < psize; ++k)
-            for (int l = 0; l < 2; ++l)
-              dualmat(c, k + psize * l) = normal[l] * values(j, k);
-          ++c;
-        }
-      }
+      Eigen::Vector3d e0 = facet.row(1) - facet.row(0);
+      Eigen::Vector3d e1 = facet.row(2) - facet.row(0);
+      normal = e1.cross(e0);
     }
 
-    if (_degree > 0)
+    // Map reference facet to cell
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        QptsE_scaled(QptsE.rows(), _dim);
+    for (int j = 0; j < QptsE.rows(); ++j)
     {
-      // Interior integral moment
-      std::vector<Polynomial> Pkm1
-          = ReferenceSimplex::compute_polynomial_set(_dim, _degree - 1);
-      for (std::size_t i = 0; i < Pkm1.size(); ++i)
+      QptsE_scaled.row(j) = facet.row(0);
+      for (int k = 0; k < (_dim - 1); ++k)
+        QptsE_scaled.row(j) += QptsE(j, k) * (facet.row(k + 1) - facet.row(0));
+    }
+
+    // Tabulate Pkp1 at facet quadrature points
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        Pkp1_at_QptsE(psize, QptsE_scaled.rows());
+    for (int j = 0; j < psize; ++j)
+      Pkp1_at_QptsE.row(j) = Pkp1[j].tabulate(QptsE_scaled);
+
+    // Compute facet normal integral moments by quadrature
+    for (std::size_t j = 0; j < Pq.size(); ++j)
+    {
+      Eigen::ArrayXd phi = Pq[j].tabulate(QptsE);
+      for (int k = 0; k < _dim; ++k)
       {
-        Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);
-        Eigen::VectorXd q = phi * Qwts;
-        Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
-        assert(qcoeffs.size() == psize);
-        for (int j = 0; j < _dim; ++j)
-        {
-          dualmat.block(c, psize * j, 1, psize) = qcoeffs;
-          ++c;
-        }
+        Eigen::VectorXd q = phi * QwtsE * normal[k];
+        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE.matrix() * q;
+        dualmat.block(c, psize * k, 1, psize) = qcoeffs;
+      }
+      ++c;
+    }
+  }
+
+  // Should work for 2D and 3D
+  if (_degree > 0)
+  {
+    // Interior integral moment
+    std::vector<Polynomial> Pkm1
+        = ReferenceSimplex::compute_polynomial_set(_dim, _degree - 1);
+    for (std::size_t i = 0; i < Pkm1.size(); ++i)
+    {
+      Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);
+      Eigen::VectorXd q = phi * Qwts;
+      Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
+      assert(qcoeffs.size() == psize);
+      for (int j = 0; j < _dim; ++j)
+      {
+        dualmat.block(c, psize * j, 1, psize) = qcoeffs;
+        ++c;
       }
     }
   }

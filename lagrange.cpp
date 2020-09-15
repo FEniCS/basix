@@ -18,11 +18,13 @@ Lagrange::Lagrange(int dim, int degree) : _dim(dim), _degree(degree)
   // Tabulate basis at nodes and get inverse
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
       = ReferenceSimplex::create_lattice(simplex, degree, true);
+  assert(pt.rows() == bset.size());
 
-  Eigen::MatrixXd dualmat(pt.rows(), bset.size());
+  Eigen::MatrixXd dualmat(bset.size(), pt.rows());
   for (std::size_t j = 0; j < bset.size(); ++j)
-    dualmat.col(j) = bset[j].tabulate(pt);
-  Eigen::MatrixXd new_coeffs = dualmat.inverse();
+    dualmat.row(j) = bset[j].tabulate(pt);
+
+  Eigen::MatrixXd new_coeffs = dualmat.transpose().inverse();
 
   // Matrix multiply basis by new_coeffs
   poly_set.resize(bset.size(), Polynomial::zero(dim));

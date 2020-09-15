@@ -55,101 +55,59 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
 
   // Dual space
 
-  // Iterate over edges
-
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       dualmat(nv * 2 + ns, psize * 2);
   dualmat.setZero();
 
-  // See FIAT nedelec, dual_set.to_riesz and functional
-
-  // Get edge interior points, and tangent direction
+  // dof counter
   int c = 0;
 
-  bool integral_rep = true;
+  // Integral representation for the boundary (edge) dofs
 
-  if (integral_rep)
+  // Create a polynomial set on a reference edge
+  std::vector<Polynomial> Pq
+      = ReferenceSimplex::compute_polynomial_set(1, _degree);
+
+  // Create quadrature scheme on the edge
+  int quad_deg = 5 * (_degree + 1);
+  auto [QptsE, QwtsE] = make_quadrature(1, quad_deg);
+
+  // Iterate over edges
+  for (int i = 0; i < 3; ++i)
   {
-    // Create a polynomial set on a reference edge
-    std::vector<Polynomial> Pq
-        = ReferenceSimplex::compute_polynomial_set(1, _degree);
+    // FIXME: get tangent from the simplex class
+    Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
+        = ReferenceSimplex::sub(triangle, 1, i);
+    Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
 
-    // Create quadrature scheme on the edge
-    int quad_deg = 5 * (_degree + 1);
-    auto [QptsE, QwtsE] = make_quadrature(1, quad_deg);
+    // UFC convention?
+    if (i == 1)
+      tangent *= -1;
 
-    for (int i = 0; i < 3; ++i)
+    // Map quadrature points onto triangle edge
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        QptsE_scaled(QptsE.rows(), 2);
+    for (int j = 0; j < QptsE.rows(); ++j)
+      QptsE_scaled.row(j)
+          = edge.row(0) + QptsE(j, 0) * (edge.row(1) - edge.row(0));
+
+    // Tabulate Pkp1 at edge quadrature points
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        Pkp1_at_QptsE(psize, QptsE_scaled.rows());
+    for (int j = 0; j < psize; ++j)
+      Pkp1_at_QptsE.row(j) = Pkp1[j].tabulate(QptsE_scaled);
+
+    // Compute edge tangent integral moments
+    for (std::size_t j = 0; j < Pq.size(); ++j)
     {
-      // FIXME: get tangent from the simplex class
-      Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
-          = ReferenceSimplex::sub(triangle, 1, i);
-      Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
-
-      // UFC convention?
-      if (i == 1)
-        tangent *= -1;
-
-      // Map quadrature points onto triangle edge
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          QptsE_scaled(QptsE.rows(), 2);
-      for (int j = 0; j < QptsE.rows(); ++j)
-        QptsE_scaled.row(j)
-            = edge.row(0) + QptsE(j, 0) * (edge.row(1) - edge.row(0));
-
-      // Tabulate main triangle basis at edge Quadrature points
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          Pkp1_at_QptsE(psize, QptsE_scaled.rows());
-      for (int j = 0; j < psize; ++j)
-        Pkp1_at_QptsE.row(j) = Pkp1[j].tabulate(QptsE_scaled);
-
-      // Compute edge tangent integral moments
-      for (std::size_t j = 0; j < Pq.size(); ++j)
+      Eigen::ArrayXd phi = Pq[j].tabulate(QptsE);
+      for (int k = 0; k < 2; ++k)
       {
-        Eigen::ArrayXd phi = Pq[j].tabulate(QptsE);
-        for (int k = 0; k < 2; ++k)
-        {
-          Eigen::VectorXd q = phi * QwtsE * tangent[k];
-          Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE.matrix() * q;
-          dualmat.block(c, psize * k, 1, psize) = qcoeffs;
-        }
-        ++c;
+        Eigen::VectorXd q = phi * QwtsE * tangent[k];
+        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE * q;
+        dualmat.block(c, psize * k, 1, psize) = qcoeffs;
       }
-    }
-  }
-
-  else
-  {
-    // PointTangent evaluation
-
-    for (int i = 0; i < 3; ++i)
-    {
-      // FIXME: get tangent from the simplex class
-      Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
-          = ReferenceSimplex::sub(triangle, 1, i);
-      Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
-
-      // UFC convention?
-      if (i == 1)
-        tangent *= -1;
-
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>
-          pts = ReferenceSimplex::create_lattice(edge, _degree + 2, false);
-
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          values(pts.rows(), psize);
-      for (int j = 0; j < psize; ++j)
-        values.col(j) = Pkp1[j].tabulate(pts);
-
-      for (int j = 0; j < pts.rows(); ++j)
-      {
-        for (int k = 0; k < psize; ++k)
-        {
-          dualmat(c, k) = tangent[0] * values(j, k);
-          dualmat(c, k + psize) = tangent[1] * values(j, k);
-        }
-        ++c;
-      }
+      ++c;
     }
   }
 

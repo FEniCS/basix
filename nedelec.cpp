@@ -5,10 +5,12 @@
 #include "nedelec.h"
 #include "quadrature.h"
 #include "simplex.h"
+#include <Eigen/Dense>
 #include <Eigen/SVD>
 #include <numeric>
+#include <vector>
 
-Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
+Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
 {
   // Reference triangle
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> triangle
@@ -148,25 +150,7 @@ Nedelec2D::Nedelec2D(int k) : _dim(2), _degree(k - 1)
             += Pkp1[k] * new_coeffs(i, k + psize * j);
 }
 //-----------------------------------------------------------------------------
-// Compute basis values at set of points
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-Nedelec2D::tabulate_basis(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts) const
-{
-  if (pts.cols() != _dim)
-    throw std::runtime_error(
-        "Point dimension does not match element dimension");
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
-      pts.rows(), poly_set.size());
-  for (std::size_t j = 0; j < poly_set.size(); ++j)
-    result.col(j) = poly_set[j].tabulate(pts);
-
-  return result;
-}
-//-----------------------------------------------------------------------------
-Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
+Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
 {
   // Reference tetrahedron
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
@@ -374,20 +358,3 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
             += Pkp1[k] * new_coeffs(i, k + psize * j);
 }
 //-----------------------------------------------------------------------------
-// Compute basis values at set of points
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-Nedelec3D::tabulate_basis(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts) const
-{
-  if (pts.cols() != _dim)
-    throw std::runtime_error(
-        "Point dimension does not match element dimension");
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
-      pts.rows(), poly_set.size());
-  for (std::size_t j = 0; j < poly_set.size(); ++j)
-    result.col(j) = poly_set[j].tabulate(pts);
-
-  return result;
-}

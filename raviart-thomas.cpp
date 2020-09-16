@@ -3,12 +3,14 @@
 // SPDX-License-Identifier:    MIT
 
 #include "raviart-thomas.h"
+#include "polynomial.h"
 #include "quadrature.h"
 #include "simplex.h"
-#include <Eigen/SVD>
+#include <Eigen/Dense>
 #include <numeric>
+#include <vector>
 
-RaviartThomas::RaviartThomas(int dim, int k) : _dim(dim), _degree(k - 1)
+RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
 {
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
       = ReferenceSimplex::create_simplex(dim);
@@ -171,20 +173,3 @@ RaviartThomas::RaviartThomas(int dim, int k) : _dim(dim), _degree(k - 1)
             += Pkp1[k] * new_coeffs(i, k + psize * j);
 }
 //-----------------------------------------------------------------------------
-// Compute basis values at set of points
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-RaviartThomas::tabulate_basis(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts) const
-{
-  if (pts.cols() != _dim)
-    throw std::runtime_error(
-        "Point dimension does not match element dimension");
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
-      pts.rows(), poly_set.size());
-  for (std::size_t j = 0; j < poly_set.size(); ++j)
-    result.col(j) = poly_set[j].tabulate(pts);
-
-  return result;
-}

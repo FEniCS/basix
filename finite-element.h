@@ -10,16 +10,23 @@
 
 class FiniteElement
 {
+  /// Finite element base class, taking the spatial dimension and degree,
+  /// storing basis as a polynomial set.
+
 public:
-  // Element of given dimension (1, 2 or 3) and degree.
+  /// Element of given dimension (1, 2 or 3) and degree.
   FiniteElement(int dim, int degree);
 
-  // Compute basis values at set of points
+  /// Compute basis values at set of points. If a vector result is expected, it
+  /// will be stacked with all x values, followed by all y-values (and then z,
+  /// if any).
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   tabulate_basis(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>& pts) const;
 
 protected:
+  // Applies nodal constraints from dualmat to original coeffs on basis, and
+  // stores to polynomial set.
   void apply_dualmat_to_basis(
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& coeffs,
@@ -27,7 +34,10 @@ protected:
                           Eigen::RowMajor>& dualmat,
       const std::vector<Polynomial>& basis, int ndim);
 
+  // spatial dimension
   int _dim;
+  // degree
   int _degree;
+  // set of polynomials
   std::vector<Polynomial> poly_set;
 };

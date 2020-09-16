@@ -11,24 +11,38 @@
 class ReferenceSimplex
 {
 public:
-  // Return the vertex points of the reference element
+  /// Return the vertex points of the reference element
+  /// @param dim
+  /// @return Set of vertices
   static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   create_simplex(int dim);
 
-  // Create a lattice of points on the simplex defined by the given vertices
-  // optionally including the exterior points
+  /// Create a lattice of points on the simplex defined by the given vertices
+  /// optionally including the exterior points
+  /// @param vertices Set ov simplex vertices
+  /// @param n number of points in each direction
+  /// @param exterior If set, includes outer boundaries
+  /// @return Set of points
   static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   create_lattice(
       const Eigen::Ref<const Eigen::Array<
           double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>& vertices,
       int n, bool exterior);
 
-  // Sub-entity of a simplex, given by topological dimension and index
+  /// Sub-entity of a simplex, given by topological dimension and index
+  /// @param simplex Imput set of vertices
+  /// @param dim Dimension of sub-entity
+  /// @param index Local index of sub-entity
+  /// @return Set of points
   static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   sub(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& simplex,
       int dim, int index);
 
-  // Orthonormal polynomial basis on reference simplex of dimension dim
+  /// Orthonormal polynomial basis on reference simplex of dimension dim
+  /// Computes the orthonormal basis set on a reference simplex
+  /// @param dim Simplex dimension
+  /// @param n order
+  /// @return polynomial set
   static std::vector<Polynomial> compute_polynomial_set(int dim, int n);
 };

@@ -43,7 +43,7 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
   ///    Sherwin
 
   const Polynomial J = compute_jacobi(a, m);
-  const Polynomial Jd = J.diff(0);
+  const Polynomial Jd = J.diff({1});
   const double eps = 1.e-8;
   const int max_iter = 100;
   Eigen::ArrayXd x(m);
@@ -80,7 +80,7 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
 {
   // Computes on [-1, 1]
   const Eigen::ArrayXd pts = compute_gauss_jacobi_points(a, m);
-  const Polynomial Jd = compute_jacobi(a, m).diff(0);
+  const Polynomial Jd = compute_jacobi(a, m).diff({1});
 
   const double a1 = pow(2.0, a + 1.0);
   const double a3 = tgamma(m + 1.0);

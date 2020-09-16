@@ -197,33 +197,35 @@ double Polynomial::tabulate(double r) const
 }
 //-----------------------------------------------------------------------------
 // Differentiation
-const Polynomial Polynomial::diff(int axis) const
+const Polynomial Polynomial::diff(const std::vector<int>& d) const
 {
-  assert(axis >= 0);
+  assert(d.size() == this->dim);
   Polynomial result;
   result.dim = this->dim;
   const int m = this->order;
-  result.order = m - 1;
 
   if (dim == 1)
   {
-    assert(axis == 0);
-    result.coeffs.resize(m);
-    for (int k = 0; k < m; ++k)
-      result.coeffs[k] = (k + 1) * this->coeffs[k + 1];
-  }
+    result.order = m - 1;
+    if (d[0] == 1)
+    {
 
+      result.coeffs.resize(m);
+      for (int k = 0; k < m; ++k)
+        result.coeffs[k] = (k + 1) * this->coeffs[k + 1];
+    }
+  }
   if (dim == 2)
   {
-    assert(axis < 2);
+    result.order = m - 1;
     result.coeffs.resize(m * (m + 1) / 2);
-    if (axis == 0)
+    if (d[0] == 1)
     {
       for (int k = 0; k < m; ++k)
         for (int l = 0; l < m - k; ++l)
           result.coeffs[idx(k, l)] = (k + 1) * this->coeffs[idx(k + 1, l)];
     }
-    else
+    else if (d[1] == 1)
     {
       for (int k = 0; k < m; ++k)
         for (int l = 0; l < m - k; ++l)
@@ -233,9 +235,9 @@ const Polynomial Polynomial::diff(int axis) const
 
   if (dim == 3)
   {
-    assert(axis < 3);
+    result.order = m - 1;
     result.coeffs.resize(m * (m + 1) * (m + 2) / 6);
-    if (axis == 0)
+    if (d[0] == 1)
     {
       for (int k = 0; k < m; ++k)
         for (int l = 0; l < m - k; ++l)
@@ -243,7 +245,7 @@ const Polynomial Polynomial::diff(int axis) const
             result.coeffs[idx(k, l, q)]
                 = (k + 1) * this->coeffs[idx(k + 1, l, q)];
     }
-    else if (axis == 1)
+    else if (d[1] == 1)
     {
       for (int k = 0; k < m; ++k)
         for (int l = 0; l < m - k; ++l)
@@ -251,7 +253,7 @@ const Polynomial Polynomial::diff(int axis) const
             result.coeffs[idx(k, l, q)]
                 = (l + 1) * this->coeffs[idx(k, l + 1, q)];
     }
-    else
+    else if (d[2] == 1)
     {
       for (int k = 0; k < m; ++k)
         for (int l = 0; l < m - k; ++l)

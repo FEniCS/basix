@@ -18,18 +18,20 @@ static inline int idx(int p, int q, int r)
          + (q + r) * (q + r + 1) / 2 + r;
 };
 
-// Implementation of a polynomial of dim=N variables as a set of coefficients
-// The total number of coefficients determines the order of the polynomial.
-// e.g. in 1D (dim=1), there are n+1 coefficients for an order n polynomial,
-// e.g. in 2D (dim=2), there are 6 coefficients for order 2: 1, x, y, x^2, xy, y^2.
-
 class Polynomial
 {
+  /// Implementation of a polynomial of dim=N variables as a set of coefficients
+  /// The total number of coefficients determines the order of the polynomial.
+  /// e.g. in 1D (dim=1), there are n+1 coefficients for an order n polynomial,
+  /// e.g. in 2D (dim=2), there are 6 coefficients for order 2: 1, x, y, x^2,
+  /// xy, y^2.
+
 public:
-  // Default constructor
+  /// Default constructor
   Polynomial() : dim(-1), order(-1) {}
 
-  // Static method instantiating an order zero polynomial with value 1.0
+  /// Static method instantiating an order zero polynomial with value 1.0
+  /// @param N spatial dimension
   static Polynomial zero(int N)
   {
     Polynomial p;
@@ -40,7 +42,8 @@ public:
     return p;
   }
 
-  // Static method instantiating an order zero polynomial with value 1.0
+  /// Static method instantiating an order zero polynomial with value 1.0
+  /// @param N spatial dimension
   static Polynomial one(int N)
   {
     Polynomial p;
@@ -51,7 +54,8 @@ public:
     return p;
   }
 
-  // Static method instantiating an order one polynomial with value x
+  /// Static method instantiating an order one polynomial with value x
+  /// @param N spatial dimension
   static Polynomial x(int N)
   {
     Polynomial p;
@@ -63,7 +67,8 @@ public:
     return p;
   }
 
-  // Static method instantiating an order one polynomial with value y
+  /// Static method instantiating an order one polynomial with value y
+  /// @param N spatial dimension
   static Polynomial y(int N)
   {
     assert(N > 1);
@@ -76,7 +81,8 @@ public:
     return p;
   }
 
-  // Static method instantiating an order one polynomial with value z
+  /// Static method instantiating an order one polynomial with value z
+  /// @param N spatial dimensio
   static Polynomial z(int N)
   {
     assert(N == 3);
@@ -89,36 +95,36 @@ public:
     return p;
   }
 
-  // Add two polynomials
+  /// Add two polynomials
   const Polynomial operator+(const Polynomial& other) const;
 
-  // Add two polynomials
+  /// Add two polynomials
   Polynomial& operator+=(const Polynomial& other);
 
-  // Subtract two polynomials
+  /// Subtract two polynomials
   const Polynomial operator-(const Polynomial& other) const;
 
-  // Multiply two polynomials
+  /// Multiply two polynomials
   const Polynomial operator*(const Polynomial& other) const;
 
-  // Multiply by a scalar
+  /// Multiply polynomial by a scalar
   const Polynomial operator*(const double& scale) const;
 
   // Multiply by a scalar
   Polynomial& operator*=(const double& scale);
 
-  // Compute polynomial value at points (tabulate)
+  /// Compute polynomial value at points (tabulate)
   Eigen::ArrayXd
   tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& points) const;
 
-  // Simple evaluation for dim=1 polynomial at a point
+  /// Simple evaluation for dim=1 polynomial at a point
   double tabulate(double r) const;
 
-  // Differentiate with respect to x, y or z, returning a polynomial of lower
-  // order.
-  // @param axis (x=0, y=1, z=2)
-  const Polynomial diff(int axis) const;
+  /// Differentiate with respect to x, y or z, returning a polynomial of lower
+  /// order.
+  /// @param d level of differentiation on each axis
+  const Polynomial diff(const std::vector<int>& d) const;
 
 private:
   // Polynomial dimension (1=x, 2=(x,y), 3=(x,y,z)) etc.

@@ -34,6 +34,7 @@ public:
   /// @param N spatial dimension
   static Polynomial zero(int N)
   {
+    // FIXME: shouldn't need N
     Polynomial p;
     p.dim = N;
     p.order = 0;
@@ -46,6 +47,7 @@ public:
   /// @param N spatial dimension
   static Polynomial one(int N)
   {
+    // FIXME: shouldn't need N
     Polynomial p;
     p.dim = N;
     p.order = 0;
@@ -114,12 +116,16 @@ public:
   Polynomial& operator*=(const double& scale);
 
   /// Compute polynomial value at points (tabulate)
+  /// @param points
+  /// @return Polynomial values at points
   Eigen::ArrayXd
   tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& points) const;
 
-  /// Simple evaluation for dim=1 polynomial at a point
-  double tabulate(double r) const;
+  /// Simple evaluation for dim=1 polynomial at a point x
+  /// @param x Point
+  /// @return Polynomial value at x
+  double tabulate(double x) const;
 
   /// Differentiate with respect to x, y or z, returning a polynomial of lower
   /// order.

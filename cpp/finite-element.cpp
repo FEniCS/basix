@@ -47,11 +47,13 @@ void FiniteElement::apply_dualmat_to_basis(
   int psize = basis.size();
   int ndofs = dualmat.rows();
 
-  // Create polynomial sets for x and y components
-  // stacking x0, x1, x2,... y0, y1, y2,...
+  // Create polynomial sets for x, y (and z) components
+  // stacking x0, x1, x2,... y0, y1, y2,... z0, z1, z2...
+  // FIXME: hacked here zero to be same dimension as first basis function...
   poly_set.resize(ndofs * ndim, Polynomial::zero(basis[0].dimension()));
   for (int j = 0; j < ndim; ++j)
     for (int i = 0; i < ndofs; ++i)
       for (int k = 0; k < psize; ++k)
         poly_set[i + ndofs * j] += basis[k] * new_coeffs(i, k + psize * j);
 }
+//-----------------------------------------------------------------------------

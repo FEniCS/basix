@@ -181,7 +181,7 @@ Polynomial::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
   return v;
 }
 //-----------------------------------------------------------------------------
-double Polynomial::tabulate(double r) const
+double Polynomial::tabulate(double x) const
 {
   if (this->dim != 1)
     throw std::runtime_error("Cannot tabulate vector with scalar input");
@@ -191,7 +191,7 @@ double Polynomial::tabulate(double r) const
   for (int k = 0; k < m + 1; ++k)
   {
     v += this->coeffs[k] * p;
-    p *= r;
+    p *= x;
   }
   return v;
 }
@@ -211,7 +211,6 @@ const Polynomial Polynomial::diff(const std::vector<int>& d) const
     result.order = m - 1;
     if (d[0] == 1)
     {
-
       result.coeffs.resize(m);
       for (int k = 0; k < m; ++k)
         result.coeffs[k] = (k + 1) * this->coeffs[k + 1];

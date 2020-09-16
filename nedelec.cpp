@@ -198,7 +198,6 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
     wcoeffs.block(nv * i, psize * i, nv, nv)
         = Eigen::MatrixXd::Identity(nv, nv);
 
-  // FIXME - this is wrong...
   for (int i = 0; i < ns; ++i)
     for (int k = 0; k < psize; ++k)
       for (int j = 0; j < _dim; ++j)
@@ -208,9 +207,27 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
 
         auto w = Qwts * Pkp1_at_Qpts.row(ns0 + i).transpose() * Qpts.col(j)
                  * Pkp1_at_Qpts.row(k).transpose();
-        wcoeffs(nv * _dim + i + j1 * ns, k + psize * j2) = -w.sum();
-        wcoeffs(nv * _dim + i + j2 * ns, k + psize * j1) = w.sum();
+        wcoeffs(_dim * nv + i + ns * j1, psize * j2 + k) = -w.sum();
+        wcoeffs(_dim * nv + i + ns * j2, psize * j1 + k) = w.sum();
       }
+
+  // Remove dependent components from space with SVD
+  Eigen::JacobiSVD<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      svd(wcoeffs, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+  int ndofs = 6 * (_degree + 1) + 4 * _degree * (_degree + 1)
+              + (_degree - 1) * _degree * (_degree + 1) / 2;
+  wcoeffs = svd.matrixV().transpose().topRows(ndofs);
+
+  // Check singular values
+  Eigen::VectorXd s = svd.singularValues();
+  for (int i = 0; i < ndofs; ++i)
+    if (s[i] < 1e-12)
+      throw std::runtime_error("Error in Nedelec3D space");
+  for (int i = ndofs; i < s.size(); ++i)
+    if (s[i] > 1e-12)
+      throw std::runtime_error("Error in Nedelec3D space");
 
   wcoeffs = (wcoeffs.array().abs() < 1e-16).select(0.0, wcoeffs);
 
@@ -219,9 +236,7 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
   // Dual space
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(6 * (_degree + 1) + 4 * _degree * (_degree + 1)
-                  + (_degree - 1) * _degree * (_degree + 1) / 2,
-              psize * _dim);
+      dualmat(ndofs, psize * _dim);
   dualmat.setZero();
 
   // dof counter
@@ -319,7 +334,6 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
           dualmat.block(c + 1, psize * k, 1, psize) = qcoeffs1;
         }
         c += 2;
-        //        throw std::runtime_error("TODO: facet tangent integrals");
       }
     }
   }
@@ -341,8 +355,6 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
       }
     }
   }
-
-  std::cout << "c = " << c << "/ " << dualmat.rows() << "\n";
 
   std::cout << "dualmat = \n[" << dualmat << "]\n";
 

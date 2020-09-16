@@ -198,6 +198,7 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
     wcoeffs.block(nv * i, psize * i, nv, nv)
         = Eigen::MatrixXd::Identity(nv, nv);
 
+  // FIXME - this is wrong...
   for (int i = 0; i < ns; ++i)
     for (int k = 0; k < psize; ++k)
       for (int j = 0; j < _dim; ++j)
@@ -211,12 +212,16 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
         wcoeffs(nv * _dim + i + j2 * ns, k + psize * j1) = w.sum();
       }
 
+  wcoeffs = (wcoeffs.array().abs() < 1e-16).select(0.0, wcoeffs);
+
   std::cout << "Initial coeffs = \n[" << wcoeffs << "]\n";
 
   // Dual space
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(nv * _dim + ns * _dim, psize * _dim);
+      dualmat(6 * (_degree + 1) + 4 * _degree * (_degree + 1)
+                  + (_degree - 1) * _degree * (_degree + 1) / 2,
+              psize * _dim);
   dualmat.setZero();
 
   // dof counter
@@ -302,13 +307,19 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
 
       for (std::size_t j = 0; j < PqF.size(); ++j)
       {
-        Eigen::ArrayXd phi = PqF[j].tabulate(QptsF);
-        // Eigen::VectorXd q0 = phi * QwtsF * t0;
-        // Eigen::RowVectorXd qcoeffs0 = Pkp1_at_QptsF * q0;
-        // Eigen::VectorXd q1 = phi * QwtsF * t1;
-        // Eigen::RowVectorXd qcoeffs1 = Pkp1_at_QptsF * q1;
-        // FIXME...
-        throw std::runtime_error("TODO: facet tangent integrals");
+        for (int k = 0; k < _dim; ++k)
+        {
+          // FIXME: check this over
+          Eigen::ArrayXd phi = PqF[j].tabulate(QptsF);
+          Eigen::VectorXd q0 = phi * QwtsF * t0[k];
+          Eigen::RowVectorXd qcoeffs0 = Pkp1_at_QptsF * q0;
+          Eigen::VectorXd q1 = phi * QwtsF * t1[k];
+          Eigen::RowVectorXd qcoeffs1 = Pkp1_at_QptsF * q1;
+          dualmat.block(c, psize * k, 1, psize) = qcoeffs0;
+          dualmat.block(c + 1, psize * k, 1, psize) = qcoeffs1;
+        }
+        c += 2;
+        //        throw std::runtime_error("TODO: facet tangent integrals");
       }
     }
   }
@@ -330,6 +341,8 @@ Nedelec3D::Nedelec3D(int k) : _dim(3), _degree(k - 1)
       }
     }
   }
+
+  std::cout << "c = " << c << "/ " << dualmat.rows() << "\n";
 
   std::cout << "dualmat = \n[" << dualmat << "]\n";
 

@@ -52,5 +52,5 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: |
         cd test
-        export PYTHONPATH=$PWD/../build
+        export PYTHONPATH=${{runner.workspace}}/build
         python3 -m pytest .

@@ -20,7 +20,7 @@ Lagrange::Lagrange(int dim, int degree) : FiniteElement(dim, degree)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
       = ReferenceSimplex::create_lattice(simplex, degree, true);
   const int ndofs = pt.rows();
-  assert(ndofs == basis.size());
+  assert(ndofs == (int)basis.size());
 
   Eigen::MatrixXd dualmat(ndofs, ndofs);
   for (int j = 0; j < ndofs; ++j)

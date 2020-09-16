@@ -126,6 +126,13 @@ public:
   /// @param d level of differentiation on each axis
   const Polynomial diff(const std::vector<int>& d) const;
 
+  /// Polynomial dimension (number of variables)
+  int dimension() const
+  {
+    return dim;
+  }
+
+
 private:
   // Polynomial dimension (1=x, 2=(x,y), 3=(x,y,z)) etc.
   // Dimension over 3 is not fully supported

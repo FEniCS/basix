@@ -191,8 +191,6 @@ make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
   for (int i = 0; i < dim; ++i)
     bvec.row(i) = simplex.row(i + 1) - simplex.row(0);
 
-  std::cout << "Bvec = " << bvec << "\n";
-
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts;
   Eigen::ArrayXd Qwts;
 
@@ -221,7 +219,10 @@ make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
     scale = bvec.determinant();
   }
 
+#ifdef DEBUG
+  std::cout << "bvec = " << bvec << "\n";
   std::cout << "scale = " << scale << "\n";
+#endif
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Qpts_scaled(Qpts.rows(), bvec.cols());

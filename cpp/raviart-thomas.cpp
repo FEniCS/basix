@@ -38,10 +38,6 @@ RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
     ns = (_degree + 1) * (_degree + 2) / 2;
   }
 
-  std::cout << "nv = " << nv << "\n";
-  std::cout << "ns = " << ns << "\n";
-  std::cout << "ns0 = " << ns0 << "\n";
-
   auto [Qpts, Qwts] = make_quadrature(_dim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts(psize, Qpts.rows());
@@ -64,8 +60,6 @@ RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
                  * Pkp1_at_Qpts.row(k).transpose();
         wcoeffs(nv * _dim + i, k + psize * j) = w.sum();
       }
-
-  std::cout << "Initial coeffs = \n[" << wcoeffs << "]\n";
 
   // Dual space
 
@@ -154,25 +148,6 @@ RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
     }
   }
 
-  std::cout << "dualmat = \n[" << dualmat << "]\n";
-
   apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, _dim);
 }
-
-// // See FIAT in finite_element.py constructor
-//   auto A = wcoeffs * dualmat.transpose();
-//   auto Ainv = A.inverse();
-//   auto new_coeffs = Ainv * wcoeffs;
-//   std::cout << "new_coeffs = \n[" << new_coeffs << "]\n";
-
-//   // Create polynomial sets for x and y components
-//   // stacking x0, x1, x2,... y0, y1, y2,...
-//   poly_set.resize((nv * _dim + ns) * _dim, Polynomial::zero(2));
-
-//   for (int j = 0; j < _dim; ++j)
-//     for (int i = 0; i < nv * _dim + ns; ++i)
-//       for (int k = 0; k < psize; ++k)
-//         poly_set[i + (nv * _dim + ns) * j]
-//             += Pkp1[k] * new_coeffs(i, k + psize * j);
-// }
 //-----------------------------------------------------------------------------

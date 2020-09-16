@@ -143,7 +143,7 @@ Eigen::ArrayXd
 Polynomial::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                         Eigen::RowMajor>& points) const
 {
-  assert(points.cols() == dim);
+  assert((int)points.cols() == dim);
   Eigen::ArrayXd v(points.rows());
   v.setZero();
   const int m = this->order;
@@ -199,10 +199,12 @@ double Polynomial::tabulate(double r) const
 // Differentiation
 const Polynomial Polynomial::diff(const std::vector<int>& d) const
 {
-  assert(d.size() == this->dim);
+  assert((int)d.size() == this->dim);
   Polynomial result;
   result.dim = this->dim;
   const int m = this->order;
+
+  // FIXME - make it work for other derivatives >1
 
   if (dim == 1)
   {

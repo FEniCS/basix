@@ -53,8 +53,6 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
       wcoeffs(2 * nv + i, k + psize) = w1.sum();
     }
 
-  std::cout << "Initial coeffs = \n[" << wcoeffs << "]\n";
-
   // Dual space
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -124,15 +122,12 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
       Eigen::VectorXd q = phi * Qwts;
       Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
       assert(qcoeffs.size() == psize);
-      std::cout << "q = [" << q.transpose() << "]\n";
       dualmat.block(c, 0, 1, psize) = qcoeffs;
       ++c;
       dualmat.block(c, psize, 1, psize) = qcoeffs;
       ++c;
     }
   }
-
-  std::cout << "dualmat = \n[" << dualmat << "]\n";
 
   apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, _dim);
 }
@@ -202,8 +197,6 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
 
   wcoeffs = (wcoeffs.array().abs() < 1e-16).select(0.0, wcoeffs);
 
-  std::cout << "Initial coeffs = \n[" << wcoeffs << "]\n";
-
   // Dual space
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -230,7 +223,6 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> edge
         = ReferenceSimplex::sub(simplex, 1, i);
     Eigen::Vector3d tangent = edge.row(1) - edge.row(0);
-    std::cout << "Edge " << i << " " << tangent.transpose() << "\n";
 
     // Map quadrature points onto tetrahedron edge
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -326,8 +318,6 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
       }
     }
   }
-
-  std::cout << "dualmat = \n[" << dualmat << "]\n";
 
   apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, _dim);
 }

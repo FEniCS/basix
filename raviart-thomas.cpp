@@ -156,20 +156,23 @@ RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
 
   std::cout << "dualmat = \n[" << dualmat << "]\n";
 
-  // See FIAT in finite_element.py constructor
-  auto A = wcoeffs * dualmat.transpose();
-  auto Ainv = A.inverse();
-  auto new_coeffs = Ainv * wcoeffs;
-  std::cout << "new_coeffs = \n[" << new_coeffs << "]\n";
-
-  // Create polynomial sets for x and y components
-  // stacking x0, x1, x2,... y0, y1, y2,...
-  poly_set.resize((nv * _dim + ns) * _dim, Polynomial::zero(2));
-
-  for (int j = 0; j < _dim; ++j)
-    for (int i = 0; i < nv * _dim + ns; ++i)
-      for (int k = 0; k < psize; ++k)
-        poly_set[i + (nv * _dim + ns) * j]
-            += Pkp1[k] * new_coeffs(i, k + psize * j);
+  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, _dim);
 }
+
+// // See FIAT in finite_element.py constructor
+//   auto A = wcoeffs * dualmat.transpose();
+//   auto Ainv = A.inverse();
+//   auto new_coeffs = Ainv * wcoeffs;
+//   std::cout << "new_coeffs = \n[" << new_coeffs << "]\n";
+
+//   // Create polynomial sets for x and y components
+//   // stacking x0, x1, x2,... y0, y1, y2,...
+//   poly_set.resize((nv * _dim + ns) * _dim, Polynomial::zero(2));
+
+//   for (int j = 0; j < _dim; ++j)
+//     for (int i = 0; i < nv * _dim + ns; ++i)
+//       for (int k = 0; k < psize; ++k)
+//         poly_set[i + (nv * _dim + ns) * j]
+//             += Pkp1[k] * new_coeffs(i, k + psize * j);
+// }
 //-----------------------------------------------------------------------------

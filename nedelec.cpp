@@ -134,20 +134,22 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
 
   std::cout << "dualmat = \n[" << dualmat << "]\n";
 
-  // See FIAT in finite_element.py constructor
-  auto A = wcoeffs * dualmat.transpose();
-  auto Ainv = A.inverse();
-  auto new_coeffs = Ainv * wcoeffs;
-  std::cout << "new_coeffs = \n[" << new_coeffs << "]\n";
+  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, _dim);
 
-  // Create polynomial sets for x and y components
-  // stacking x0, x1, x2,... y0, y1, y2,...
-  poly_set.resize((nv * 2 + ns) * _dim, Polynomial::zero(2));
-  for (int j = 0; j < _dim; ++j)
-    for (int i = 0; i < nv * 2 + ns; ++i)
-      for (int k = 0; k < psize; ++k)
-        poly_set[i + (nv * 2 + ns) * j]
-            += Pkp1[k] * new_coeffs(i, k + psize * j);
+  // // See FIAT in finite_element.py constructor
+  // auto A = wcoeffs * dualmat.transpose();
+  // auto Ainv = A.inverse();
+  // auto new_coeffs = Ainv * wcoeffs;
+  // std::cout << "new_coeffs = \n[" << new_coeffs << "]\n";
+
+  // // Create polynomial sets for x and y components
+  // // stacking x0, x1, x2,... y0, y1, y2,...
+  // poly_set.resize((nv * 2 + ns) * _dim, Polynomial::zero(2));
+  // for (int j = 0; j < _dim; ++j)
+  //   for (int i = 0; i < nv * 2 + ns; ++i)
+  //     for (int k = 0; k < psize; ++k)
+  //       poly_set[i + (nv * 2 + ns) * j]
+  //           += Pkp1[k] * new_coeffs(i, k + psize * j);
 }
 //-----------------------------------------------------------------------------
 Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
@@ -342,19 +344,20 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
 
   std::cout << "dualmat = \n[" << dualmat << "]\n";
 
-  // See FIAT in finite_element.py constructor
-  auto A = wcoeffs * dualmat.transpose();
-  auto Ainv = A.inverse();
-  auto new_coeffs = Ainv * wcoeffs;
-  std::cout << "new_coeffs = \n[" << new_coeffs << "]\n";
+  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, _dim);
 
-  // Create polynomial sets for x and y components
-  // stacking x0, x1, x2,... y0, y1, y2,...
-  poly_set.resize((nv * 2 + ns) * _dim, Polynomial::zero(2));
-  for (int j = 0; j < _dim; ++j)
-    for (int i = 0; i < nv * 2 + ns; ++i)
-      for (int k = 0; k < psize; ++k)
-        poly_set[i + (nv * 2 + ns) * j]
-            += Pkp1[k] * new_coeffs(i, k + psize * j);
+  // // See FIAT in finite_element.py constructor
+  // auto A = wcoeffs * dualmat.transpose();
+  // auto Ainv = A.inverse();
+  // auto new_coeffs = Ainv * wcoeffs;
+  // std::cout << "new_coeffs = \n[" << new_coeffs << "]\n";
+
+  // // Create polynomial sets for x and y components
+  // // stacking x0, x1, x2,... y0, y1, y2,...
+  // poly_set.resize(ndofs * _dim, Polynomial::zero(2));
+  // for (int j = 0; j < _dim; ++j)
+  //   for (int i = 0; i < ndofs; ++i)
+  //     for (int k = 0; k < psize; ++k)
+  //       poly_set[i + ndofs * j] += Pkp1[k] * new_coeffs(i, k + psize * j);
 }
 //-----------------------------------------------------------------------------

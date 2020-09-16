@@ -26,3 +26,27 @@ FiniteElement::tabulate_basis(
 
   return result;
 }
+//-----------------------------------------------------------------------------
+void FiniteElement::apply_dualmat_to_basis(
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                        Eigen::RowMajor>& coeffs,
+    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                        Eigen::RowMajor>& dualmat,
+    const std::vector<Polynomial>& basis, int ndim)
+{
+  auto A = coeffs * dualmat.transpose();
+  auto Ainv = A.inverse();
+  auto new_coeffs = Ainv * coeffs;
+  std::cout << "new_coeffs = \n[" << new_coeffs << "]\n";
+
+  int psize = basis.size();
+  int ndofs = dualmat.rows();
+
+  // Create polynomial sets for x and y components
+  // stacking x0, x1, x2,... y0, y1, y2,...
+  poly_set.resize(ndofs * ndim, Polynomial::zero(2));
+  for (int j = 0; j < ndim; ++j)
+    for (int i = 0; i < ndofs; ++i)
+      for (int k = 0; k < psize; ++k)
+        poly_set[i + ndofs * j] += basis[k] * new_coeffs(i, k + psize * j);
+}

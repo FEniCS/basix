@@ -4,6 +4,7 @@
 
 #include "lagrange.h"
 #include "simplex.h"
+#include <Eigen/Dense>
 
 Lagrange::Lagrange(int dim, int degree) : FiniteElement(dim, degree)
 {
@@ -12,25 +13,19 @@ Lagrange::Lagrange(int dim, int degree) : FiniteElement(dim, degree)
       = ReferenceSimplex::create_simplex(dim);
 
   // Create orthonormal basis on simplex
-  std::vector<Polynomial> bset
+  std::vector<Polynomial> basis
       = ReferenceSimplex::compute_polynomial_set(dim, degree);
 
   // Tabulate basis at nodes and get inverse
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
       = ReferenceSimplex::create_lattice(simplex, degree, true);
-  assert(pt.rows() == bset.size());
+  const int ndofs = pt.rows();
+  assert(ndofs == basis.size());
 
-  Eigen::MatrixXd dualmat(bset.size(), pt.rows());
-  for (std::size_t j = 0; j < bset.size(); ++j)
-    dualmat.row(j) = bset[j].tabulate(pt);
+  Eigen::MatrixXd dualmat(ndofs, ndofs);
+  for (int j = 0; j < ndofs; ++j)
+    dualmat.col(j) = basis[j].tabulate(pt);
 
-  Eigen::MatrixXd new_coeffs = dualmat.transpose().inverse();
-
-  // Matrix multiply basis by new_coeffs
-  poly_set.resize(bset.size(), Polynomial::zero(dim));
-  for (std::size_t j = 0; j < bset.size(); ++j)
-  {
-    for (std::size_t k = 0; k < bset.size(); ++k)
-      poly_set[j] += bset[k] * new_coeffs(k, j);
-  }
+  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
+  apply_dualmat_to_basis(coeffs, dualmat, basis, 1);
 }

@@ -4,7 +4,7 @@
 
 cmake_minimum_required(VERSION 3.9)
 
-set(PROJECT_NAME tabulate)
+set(PROJECT_NAME libtab)
 project(${PROJECT_NAME})
 
 # Set CMake behavior
@@ -28,8 +28,6 @@ endif()
 
 # Executable
 add_library(tab SHARED polynomial.cpp lagrange.cpp simplex.cpp quadrature.cpp nedelec.cpp raviart-thomas.cpp finite-element.cpp)
-add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} tab)
 
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})

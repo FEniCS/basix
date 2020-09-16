@@ -2,9 +2,9 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include "polynomial.h"
 #include <Eigen/Dense>
 #include <vector>
-#include "polynomial.h"
 
 #pragma once
 
@@ -19,7 +19,14 @@ public:
   tabulate_basis(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>& pts) const;
 
- protected:
+protected:
+  void apply_dualmat_to_basis(
+      const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                          Eigen::RowMajor>& coeffs,
+      const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                          Eigen::RowMajor>& dualmat,
+      const std::vector<Polynomial>& basis, int ndim);
+
   int _dim;
   int _degree;
   std::vector<Polynomial> poly_set;

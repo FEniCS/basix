@@ -10,6 +10,7 @@
 #include "quadrature.h"
 #include "raviart-thomas.h"
 #include "simplex.h"
+#include "tp.h"
 
 namespace py = pybind11;
 
@@ -40,6 +41,10 @@ PYBIND11_MODULE(fiatx, m)
   py::class_<Lagrange>(m, "Lagrange")
       .def(py::init<CellType, int>())
       .def("tabulate_basis", &Lagrange::tabulate_basis);
+
+  py::class_<TensorProduct>(m, "TensorProduct")
+      .def(py::init<CellType, int>())
+      .def("tabulate_basis", &TensorProduct::tabulate_basis);
 
   py::class_<RaviartThomas>(m, "RaviartThomas")
       .def(py::init<CellType, int>())

@@ -51,18 +51,6 @@ std::vector<Polynomial> create_polyset_line(int n, int axis, int dim)
   return poly_set;
 }
 //-----------------------------------------------------------------------------
-std::vector<Polynomial> create_polyset_quad(int n)
-{
-  const std::vector<Polynomial> px = create_polyset_line(n, 0, 2);
-  const std::vector<Polynomial> py = create_polyset_line(n, 1, 2);
-  std::vector<Polynomial> pxy;
-  for (const Polynomial& p : px)
-    for (const Polynomial& q : py)
-      pxy.push_back(p * q);
-
-  return pxy;
-}
-//-----------------------------------------------------------------------------
 std::vector<Polynomial> create_polyset_triangle(int n)
 {
   const Polynomial one = Polynomial::one();
@@ -174,6 +162,18 @@ std::vector<Polynomial> create_polyset_tetrahedron(int n)
   return poly_set;
 }
 } // namespace
+//-----------------------------------------------------------------------------
+std::vector<Polynomial> PolynomialSet::compute_polyset_quad(int n)
+{
+  const std::vector<Polynomial> px = create_polyset_line(n, 0, 2);
+  const std::vector<Polynomial> py = create_polyset_line(n, 1, 2);
+  std::vector<Polynomial> pxy;
+  for (const Polynomial& p : px)
+    for (const Polynomial& q : py)
+      pxy.push_back(p * q);
+
+  return pxy;
+}
 //-----------------------------------------------------------------------------
 std::vector<Polynomial> PolynomialSet::compute_polynomial_set(CellType celltype,
                                                               int n)

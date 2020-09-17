@@ -9,7 +9,6 @@
 
 Lagrange::Lagrange(CellType celltype, int degree) : FiniteElement(0, degree)
 {
-
   if (celltype == CellType::interval)
     _dim = 1;
   else if (celltype == CellType::triangle)

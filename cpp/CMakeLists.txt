@@ -27,7 +27,7 @@ if (HAVE_NO_MULTLINE)
 endif()
 
 # Executable
-add_library(tab SHARED polynomial.cpp polynomial-set.cpp lagrange.cpp simplex.cpp quadrature.cpp nedelec.cpp raviart-thomas.cpp finite-element.cpp)
+add_library(tab SHARED polynomial.cpp polynomial-set.cpp lagrange.cpp simplex.cpp quadrature.cpp nedelec.cpp raviart-thomas.cpp finite-element.cpp tp.cpp)
 
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})

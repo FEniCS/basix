@@ -75,9 +75,13 @@ Polynomial& Polynomial::operator*=(const double& scale)
 //-----------------------------------------------------------------------------
 const Polynomial Polynomial::operator*(const Polynomial& other) const
 {
-  assert(this->dim == other.dim or this->dim == 0 or other.dim == 0);
-  if (this->dim == 0)
-    assert(this->order == 0);
+  // Handle multiplication by "constant" polynomial
+  if (other.dim == 0)
+    return (*this) * other.coeffs[0];
+  else if (this->dim == 0)
+    return other * this->coeffs[0];
+
+  assert(this->dim == other.dim);
 
   Polynomial result;
   result.dim = std::max(this->dim, other.dim);

@@ -18,11 +18,16 @@ std::tuple<double, double, double> jrc(int a, int n)
   return std::tuple<double, double, double>(an, bn, cn);
 }
 //-----------------------------------------------------------------------------
-// Compute polynomial set on a line
-std::vector<Polynomial> create_polyset_line(int n)
+// Compute polynomial set on 1D line on given axis (dim 1=x, 2=y, 3=z)
+std::vector<Polynomial> create_polyset_line(int n, int dim)
 {
+  assert(dim > 0 and dim < 4);
+  std::vector<double> w(dim + 1);
+  w[dim] = 1.0;
+  const Polynomial x0(w, dim);
+
   const Polynomial one = Polynomial::one();
-  const Polynomial x = Polynomial::x(1) * 2.0 - one;
+  const Polynomial x = x0 * 2.0 - one;
 
   const int m = (n + 1);
   std::vector<Polynomial> poly_set(m);
@@ -226,7 +231,7 @@ std::vector<Polynomial> ReferenceSimplex::compute_polynomial_set(int dim, int n)
     throw std::runtime_error("Unsupported dim");
 
   if (dim == 1)
-    return create_polyset_line(n);
+    return create_polyset_line(n, 1);
   else if (dim == 2)
     return create_polyset_triangle(n);
   else

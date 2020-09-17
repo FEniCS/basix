@@ -28,41 +28,54 @@ class Polynomial
 
 public:
   /// Default constructor
-  Polynomial() : dim(-1), order(-1) {}
+  Polynomial() : dim(0), order(0), coeffs(1) { coeffs[0] = 0.0; }
+
+  // Constructor with values
+  Polynomial(const std::vector<double>& values, int dimension)
+      : dim(dimension), order(0), coeffs(values.size())
+  {
+    std::copy(values.data(), values.data() + values.size(), coeffs.data());
+    if (dim == 0)
+      assert(values.size() == 1);
+    else if (dim == 1)
+      order = values.size() - 1;
+    else if (dim == 2)
+    {
+      std::size_t m = 1;
+      while (m < values.size())
+      {
+        ++order;
+        m = (order + 1) * (order + 2) / 2;
+      }
+      if (m != values.size())
+        throw std::runtime_error("Incorrect number of initialisers");
+    }
+    else if (dim == 3)
+    {
+      std::size_t m = 1;
+      while (m < values.size())
+      {
+        ++order;
+        m = (order + 1) * (order + 2) * (order + 3) / 6;
+      }
+      if (m != values.size())
+        throw std::runtime_error("Incorrect number of initialisers");
+    }
+  }
 
   /// Static method instantiating an order zero polynomial with value 0.0
-  static Polynomial zero()
-  {
-    Polynomial p;
-    p.dim = 0;
-    p.order = 0;
-    p.coeffs.resize(1);
-    p.coeffs[0] = 0.0;
-    return p;
-  }
+  static Polynomial zero() { return Polynomial({0.0}, 0); }
 
   /// Static method instantiating an order zero polynomial with value 1.0
-  static Polynomial one()
-  {
-    Polynomial p;
-    p.dim = 0;
-    p.order = 0;
-    p.coeffs.resize(1);
-    p.coeffs[0] = 1.0;
-    return p;
-  }
+  static Polynomial one() { return Polynomial({1.0}, 0); }
 
   /// Static method instantiating an order one polynomial with value x
   /// @param N spatial dimension
   static Polynomial x(int N)
   {
-    Polynomial p;
-    p.dim = N;
-    p.order = 1;
-    p.coeffs.resize(N + 1);
-    p.coeffs.setZero();
-    p.coeffs[1] = 1.0;
-    return p;
+    std::vector<double> p(N + 1);
+    p[1] = 1.0;
+    return Polynomial(p, N);
   }
 
   /// Static method instantiating an order one polynomial with value y
@@ -70,27 +83,17 @@ public:
   static Polynomial y(int N)
   {
     assert(N > 1);
-    Polynomial p;
-    p.dim = N;
-    p.order = 1;
-    p.coeffs.resize(N + 1);
-    p.coeffs.setZero();
-    p.coeffs[2] = 1.0;
-    return p;
+    std::vector<double> p(N + 1);
+    p[2] = 1.0;
+    return Polynomial(p, N);
   }
 
   /// Static method instantiating an order one polynomial with value z
-  /// @param N spatial dimensio
+  /// @param N spatial dimension
   static Polynomial z(int N)
   {
     assert(N == 3);
-    Polynomial p;
-    p.dim = N;
-    p.order = 1;
-    p.coeffs.resize(N + 1);
-    p.coeffs.setZero();
-    p.coeffs[3] = 1.0;
-    return p;
+    return Polynomial({0.0, 0.0, 0.0, 1.0}, N);
   }
 
   /// Add two polynomials
@@ -129,11 +132,7 @@ public:
   const Polynomial diff(const std::vector<int>& d) const;
 
   /// Polynomial dimension (number of variables)
-  int dimension() const
-  {
-    return dim;
-  }
-
+  int dimension() const { return dim; }
 
 private:
   // Polynomial dimension (1=x, 2=(x,y), 3=(x,y,z)) etc.

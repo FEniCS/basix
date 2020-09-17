@@ -221,7 +221,7 @@ const Polynomial Polynomial::diff(const std::vector<int>& d) const
         --result.order;
       }
     }
-    result.coeffs.conservativeResize(result.order);
+    result.coeffs.conservativeResize(result.order + 1);
   }
   else if (dim == 2)
   {
@@ -249,7 +249,8 @@ const Polynomial Polynomial::diff(const std::vector<int>& d) const
         --result.order;
       }
     }
-    result.coeffs.conservativeResize(result.order * (result.order + 1) / 2);
+    result.coeffs.conservativeResize((result.order + 1) * (result.order + 2)
+                                     / 2);
   }
   else if (dim == 3)
   {
@@ -295,8 +296,8 @@ const Polynomial Polynomial::diff(const std::vector<int>& d) const
         --result.order;
       }
     }
-    result.coeffs.conservativeResize(result.order * (result.order + 1)
-                                     * (result.order + 2) / 6);
+    result.coeffs.conservativeResize((result.order + 1) * (result.order + 2)
+                                     * (result.order + 3) / 6);
   }
   else
     throw std::runtime_error("Invalid dimension");

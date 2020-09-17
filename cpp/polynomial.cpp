@@ -69,6 +69,7 @@ Polynomial& Polynomial::operator*=(const double& scale)
 //-----------------------------------------------------------------------------
 const Polynomial Polynomial::operator*(const Polynomial& other) const
 {
+  assert(this->dim == other.dim);
   Polynomial result;
   result.dim = this->dim;
   int n0 = this->order;
@@ -78,7 +79,7 @@ const Polynomial Polynomial::operator*(const Polynomial& other) const
 
   // Compute size of product coeff vector
   int m = 1;
-  for (int i = 0; i < dim; ++i)
+  for (int i = 0; i < this->dim; ++i)
   {
     m *= (n + i + 1);
     m /= (i + 1);
@@ -196,73 +197,109 @@ double Polynomial::tabulate(double x) const
   return v;
 }
 //-----------------------------------------------------------------------------
-// Differentiation
 const Polynomial Polynomial::diff(const std::vector<int>& d) const
 {
   assert((int)d.size() == this->dim);
-  Polynomial result;
-  result.dim = this->dim;
-  const int m = this->order;
+  Polynomial result = *this;
 
-  // FIXME - make it work for other derivatives >1
-
-  if (dim == 1)
+  if (dim == 0)
   {
-    result.order = m - 1;
-    if (d[0] == 1)
-    {
-      result.coeffs.resize(m);
-      for (int k = 0; k < m; ++k)
-        result.coeffs[k] = (k + 1) * this->coeffs[k + 1];
-    }
+    assert(result.coeffs.size() == 1);
+    assert(result.order == 0);
+    result.coeffs[0] = 0.0;
   }
-  if (dim == 2)
+  else if (dim == 1)
   {
-    result.order = m - 1;
-    result.coeffs.resize(m * (m + 1) / 2);
-    if (d[0] == 1)
+    for (int i = 0; i < d[0]; ++i)
     {
-      for (int k = 0; k < m; ++k)
-        for (int l = 0; l < m - k; ++l)
-          result.coeffs[idx(k, l)] = (k + 1) * this->coeffs[idx(k + 1, l)];
+      if (result.order == 0)
+        result.coeffs[0] = 0.0;
+      else
+      {
+        for (int k = 0; k < result.order; ++k)
+          result.coeffs[k] = (k + 1) * result.coeffs[k + 1];
+        --result.order;
+      }
     }
-    else if (d[1] == 1)
-    {
-      for (int k = 0; k < m; ++k)
-        for (int l = 0; l < m - k; ++l)
-          result.coeffs[idx(k, l)] = (l + 1) * this->coeffs[idx(k, l + 1)];
-    }
+    result.coeffs.conservativeResize(result.order);
   }
-
-  if (dim == 3)
+  else if (dim == 2)
   {
-    result.order = m - 1;
-    result.coeffs.resize(m * (m + 1) * (m + 2) / 6);
-    if (d[0] == 1)
+    for (int i = 0; i < d[0]; ++i)
     {
-      for (int k = 0; k < m; ++k)
-        for (int l = 0; l < m - k; ++l)
-          for (int q = 0; q < m - k - l; ++q)
-            result.coeffs[idx(k, l, q)]
-                = (k + 1) * this->coeffs[idx(k + 1, l, q)];
+      if (result.order == 0)
+        result.coeffs[0] = 0.0;
+      else
+      {
+        for (int k = 0; k < result.order; ++k)
+          for (int l = 0; l < result.order - k; ++l)
+            result.coeffs[idx(k, l)] = (k + 1) * result.coeffs[idx(k + 1, l)];
+        --result.order;
+      }
     }
-    else if (d[1] == 1)
+    for (int i = 0; i < d[1]; ++i)
     {
-      for (int k = 0; k < m; ++k)
-        for (int l = 0; l < m - k; ++l)
-          for (int q = 0; q < m - k - l; ++q)
-            result.coeffs[idx(k, l, q)]
-                = (l + 1) * this->coeffs[idx(k, l + 1, q)];
+      if (result.order == 0)
+        result.coeffs[0] = 0.0;
+      else
+      {
+        for (int k = 0; k < result.order; ++k)
+          for (int l = 0; l < result.order - k; ++l)
+            result.coeffs[idx(k, l)] = (l + 1) * result.coeffs[idx(k, l + 1)];
+        --result.order;
+      }
     }
-    else if (d[2] == 1)
-    {
-      for (int k = 0; k < m; ++k)
-        for (int l = 0; l < m - k; ++l)
-          for (int q = 0; q < m - k - l; ++q)
-            result.coeffs[idx(k, l, q)]
-                = (q + 1) * this->coeffs[idx(k, l, q + 1)];
-    }
+    result.coeffs.conservativeResize(result.order * (result.order + 1) / 2);
   }
+  else if (dim == 3)
+  {
+    for (int i = 0; i < d[0]; ++i)
+    {
+      if (result.order == 0)
+        result.coeffs[0] = 0.0;
+      else
+      {
+        for (int k = 0; k < result.order; ++k)
+          for (int l = 0; l < result.order - k; ++l)
+            for (int q = 0; q < result.order - k - l; ++q)
+              result.coeffs[idx(k, l, q)]
+                  = (k + 1) * result.coeffs[idx(k + 1, l, q)];
+        --result.order;
+      }
+    }
+    for (int i = 0; i < d[1]; ++i)
+    {
+      if (result.order == 0)
+        result.coeffs[0] = 0.0;
+      else
+      {
+        for (int k = 0; k < result.order; ++k)
+          for (int l = 0; l < result.order - k; ++l)
+            for (int q = 0; q < result.order - k - l; ++q)
+              result.coeffs[idx(k, l, q)]
+                  = (l + 1) * result.coeffs[idx(k, l + 1, q)];
+        --result.order;
+      }
+    }
+    for (int i = 0; i < d[2]; ++i)
+    {
+      if (result.order == 0)
+        result.coeffs[0] = 0.0;
+      else
+      {
+        for (int k = 0; k < result.order; ++k)
+          for (int l = 0; l < result.order - k; ++l)
+            for (int q = 0; q < result.order - k - l; ++q)
+              result.coeffs[idx(k, l, q)]
+                  = (q + 1) * result.coeffs[idx(k, l, q + 1)];
+        --result.order;
+      }
+    }
+    result.coeffs.conservativeResize(result.order * (result.order + 1)
+                                     * (result.order + 2) / 6);
+  }
+  else
+    throw std::runtime_error("Invalid dimension");
 
   return result;
 }

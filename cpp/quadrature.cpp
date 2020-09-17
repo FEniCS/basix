@@ -13,7 +13,7 @@ Polynomial compute_jacobi(int a, int n)
 {
   std::vector<Polynomial> Jn(n + 1);
   const Polynomial x = Polynomial::x(1);
-  const Polynomial one = Polynomial::one(1);
+  const Polynomial one = Polynomial::one();
 
   Jn[0] = one;
 

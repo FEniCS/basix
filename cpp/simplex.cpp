@@ -21,7 +21,7 @@ std::tuple<double, double, double> jrc(int a, int n)
 // Compute polynomial set on a line
 std::vector<Polynomial> create_polyset_line(int n)
 {
-  const Polynomial one = Polynomial::one(1);
+  const Polynomial one = Polynomial::one();
   const Polynomial x = Polynomial::x(1) * 2.0 - one;
 
   const int m = (n + 1);
@@ -44,7 +44,7 @@ std::vector<Polynomial> create_polyset_line(int n)
 //-----------------------------------------------------------------------------
 std::vector<Polynomial> create_polyset_triangle(int n)
 {
-  const Polynomial one = Polynomial::one(2);
+  const Polynomial one = Polynomial::one();
   const Polynomial x = Polynomial::x(2) * 2.0 - one;
   const Polynomial y = Polynomial::y(2) * 2.0 - one;
 
@@ -88,7 +88,7 @@ std::vector<Polynomial> create_polyset_triangle(int n)
 //-----------------------------------------------------------------------------
 std::vector<Polynomial> create_polyset_tetrahedron(int n)
 {
-  const Polynomial one = Polynomial::one(3);
+  const Polynomial one = Polynomial::one();
   const Polynomial x = Polynomial::x(3) * 2.0 - one;
   const Polynomial y = Polynomial::y(3) * 2.0 - one;
   const Polynomial z = Polynomial::z(3) * 2.0 - one;

@@ -1,5 +1,7 @@
 #include <pybind11/eigen.h>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 #include <string>
 
 #include "lagrange.h"
@@ -32,6 +34,25 @@ PYBIND11_MODULE(fiatx, m)
   py::class_<RaviartThomas>(m, "RaviartThomas")
       .def(py::init<int, int>())
       .def("tabulate_basis", &RaviartThomas::tabulate_basis);
+
+  py::class_<Polynomial>(m, "Polynomial")
+      .def(py::init<>())
+      .def(py::self + py::self)
+      .def(py::self += py::self)
+      .def(py::self - py::self)
+      .def(py::self * py::self)
+      .def(py::self * float())
+      .def(py::self *= float())
+      .def_static("zero", &Polynomial::zero)
+      .def_static("one", &Polynomial::one)
+      .def_static("x", &Polynomial::x)
+      .def_static("y", &Polynomial::y)
+      .def_static("z", &Polynomial::z)
+      .def("diff", &Polynomial::diff)
+      .def("tabulate",
+           py::overload_cast<const Eigen::Array<
+               double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&>(
+               &Polynomial::tabulate, py::const_));
 
   m.def("make_quadrature",
         py::overload_cast<const Eigen::Array<double, Eigen::Dynamic,

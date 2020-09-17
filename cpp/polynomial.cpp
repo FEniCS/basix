@@ -7,8 +7,10 @@
 //-----------------------------------------------------------------------------
 const Polynomial Polynomial::operator+(const Polynomial& other) const
 {
-  assert(this->dim == other.dim);
+  assert(this->dim == other.dim or this->dim == 0 or other.dim == 0);
   Polynomial result = *this;
+  result.dim = std::max(this->dim, other.dim);
+
   int n = other.coeffs.size();
   int m = result.coeffs.size();
   if (n > m)
@@ -23,7 +25,9 @@ const Polynomial Polynomial::operator+(const Polynomial& other) const
 //-----------------------------------------------------------------------------
 Polynomial& Polynomial::operator+=(const Polynomial& other)
 {
-  assert(this->dim == other.dim);
+  assert(this->dim == other.dim or this->dim == 0 or other.dim == 0);
+  this->dim = std::max(this->dim, other.dim);
+
   int n = other.coeffs.size();
   int m = this->coeffs.size();
   if (n > m)
@@ -38,8 +42,10 @@ Polynomial& Polynomial::operator+=(const Polynomial& other)
 //-----------------------------------------------------------------------------
 const Polynomial Polynomial::operator-(const Polynomial& other) const
 {
-  assert(this->dim == other.dim);
+  assert(this->dim == other.dim or this->dim == 0 or other.dim == 0);
   Polynomial result = *this;
+  result.dim = std::max(this->dim, other.dim);
+
   int n = other.coeffs.size();
   int m = result.coeffs.size();
   if (n > m)
@@ -69,9 +75,12 @@ Polynomial& Polynomial::operator*=(const double& scale)
 //-----------------------------------------------------------------------------
 const Polynomial Polynomial::operator*(const Polynomial& other) const
 {
-  assert(this->dim == other.dim);
+  assert(this->dim == other.dim or this->dim == 0 or other.dim == 0);
+  if (this->dim == 0)
+    assert(this->order == 0);
+
   Polynomial result;
-  result.dim = this->dim;
+  result.dim = std::max(this->dim, other.dim);
   int n0 = this->order;
   int n1 = other.order;
   int n = n0 + n1;
@@ -79,7 +88,7 @@ const Polynomial Polynomial::operator*(const Polynomial& other) const
 
   // Compute size of product coeff vector
   int m = 1;
-  for (int i = 0; i < this->dim; ++i)
+  for (int i = 0; i < result.dim; ++i)
   {
     m *= (n + i + 1);
     m /= (i + 1);
@@ -89,8 +98,8 @@ const Polynomial Polynomial::operator*(const Polynomial& other) const
 
   // Index vectors to march through polynomial in correct order
   // and a function to update them
-  std::vector<int> c0(this->dim, 0);
-  std::vector<int> c1(this->dim, 0);
+  std::vector<int> c0(result.dim, 0);
+  std::vector<int> c1(result.dim, 0);
   std::function<void(std::vector<int>&, int)> _update
       = [&_update](std::vector<int>& c, int s) {
           if (s > 1 and c[s - 1] == c[s - 2])
@@ -123,13 +132,13 @@ const Polynomial Polynomial::operator*(const Polynomial& other) const
 
   // Iterate through both sets of indices, summing coeffs
   // into the correct place in result.coeffs
-  std::vector<int> csum(this->dim, 0);
+  std::vector<int> csum(result.dim, 0);
   for (int i = 0; i < this->coeffs.size(); ++i)
   {
     std::fill(c1.begin(), c1.end(), 0);
     for (int j = 0; j < other.coeffs.size(); ++j)
     {
-      for (int k = 0; k < this->dim; ++k)
+      for (int k = 0; k < result.dim; ++k)
         csum[k] = c0[k] + c1[k];
       result.coeffs[_idx(csum)] += this->coeffs[i] * other.coeffs[j];
       _update(c1, c1.size());
@@ -144,7 +153,7 @@ Eigen::ArrayXd
 Polynomial::tabulate(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                         Eigen::RowMajor>& points) const
 {
-  assert((int)points.cols() == dim);
+  assert((int)points.cols() == dim or dim == 0);
   Eigen::ArrayXd v(points.rows());
   v.setZero();
   const int m = this->order;

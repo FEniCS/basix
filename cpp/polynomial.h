@@ -30,13 +30,11 @@ public:
   /// Default constructor
   Polynomial() : dim(-1), order(-1) {}
 
-  /// Static method instantiating an order zero polynomial with value 1.0
-  /// @param N spatial dimension
-  static Polynomial zero(int N)
+  /// Static method instantiating an order zero polynomial with value 0.0
+  static Polynomial zero()
   {
-    // FIXME: shouldn't need N
     Polynomial p;
-    p.dim = N;
+    p.dim = 0;
     p.order = 0;
     p.coeffs.resize(1);
     p.coeffs[0] = 0.0;
@@ -44,12 +42,10 @@ public:
   }
 
   /// Static method instantiating an order zero polynomial with value 1.0
-  /// @param N spatial dimension
-  static Polynomial one(int N)
+  static Polynomial one()
   {
-    // FIXME: shouldn't need N
     Polynomial p;
-    p.dim = N;
+    p.dim = 0;
     p.order = 0;
     p.coeffs.resize(1);
     p.coeffs[0] = 1.0;

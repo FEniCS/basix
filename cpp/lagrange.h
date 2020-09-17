@@ -4,6 +4,7 @@
 
 #include "finite-element.h"
 #include "polynomial.h"
+#include "cell.h"
 #include <Eigen/Dense>
 #include <vector>
 
@@ -13,5 +14,5 @@ class Lagrange : public FiniteElement
 {
   /// Lagrange element of given dimension (1, 2 or 3) and degree.
 public:
-  Lagrange(int dim, int degree);
+  Lagrange(CellType celltype, int degree);
 };

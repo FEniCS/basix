@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from fiatx import *
 
 d = 3
-L = Lagrange(2, d)
+L = Lagrange(CellType.triangle, d)
 
 pts = create_lattice([[0,0],[0,1],[1,0]], 50, True)
 

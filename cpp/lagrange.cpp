@@ -7,19 +7,19 @@
 #include "simplex.h"
 #include <Eigen/Dense>
 
-Lagrange::Lagrange(int dim, int degree) : FiniteElement(dim, degree)
+Lagrange::Lagrange(CellType celltype, int degree) : FiniteElement(0, degree)
 {
+
+  if (celltype == CellType::interval)
+    _dim = 1;
+  else if (celltype == CellType::triangle)
+    _dim = 2;
+  else if (celltype == CellType::tetrahedron)
+    _dim = 3;
+
   // Reference simplex vertices
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
-      = ReferenceSimplex::create_simplex(dim);
-
-  CellType celltype;
-  if (dim == 1)
-    celltype = CellType::interval;
-  else if (dim == 2)
-    celltype = CellType::triangle;
-  else if (dim == 3)
-    celltype = CellType::tetrahedron;
+      = ReferenceSimplex::create_simplex(_dim);
 
   // Create orthonormal basis on simplex
   std::vector<Polynomial> basis

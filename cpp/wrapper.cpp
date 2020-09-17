@@ -4,6 +4,7 @@
 #include <pybind11/stl.h>
 #include <string>
 
+#include "cell.h"
 #include "lagrange.h"
 #include "nedelec.h"
 #include "quadrature.h"
@@ -14,7 +15,16 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(fiatx, m)
 {
-  m.doc() = "FIATx example plugin";
+  m.doc() = "FIATx/libtab plugin";
+
+  py::enum_<CellType>(m, "CellType")
+      .value("interval", CellType::interval)
+      .value("triangle", CellType::triangle)
+      .value("tetrahedron", CellType::tetrahedron)
+      .value("quadrilateral", CellType::quadrilateral)
+      .value("hexahedron", CellType::hexahedron)
+      .value("prism", CellType::prism)
+      .value("pyramid", CellType::pyramid);
 
   m.def("create_lattice", &ReferenceSimplex::create_lattice,
         "Create a lattice");
@@ -28,7 +38,7 @@ PYBIND11_MODULE(fiatx, m)
       .def("tabulate_basis", &Nedelec3D::tabulate_basis);
 
   py::class_<Lagrange>(m, "Lagrange")
-      .def(py::init<int, int>())
+      .def(py::init<CellType, int>())
       .def("tabulate_basis", &Lagrange::tabulate_basis);
 
   py::class_<RaviartThomas>(m, "RaviartThomas")

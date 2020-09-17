@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "lagrange.h"
+#include "polynomial-set.h"
 #include "simplex.h"
 #include <Eigen/Dense>
 
@@ -12,9 +13,17 @@ Lagrange::Lagrange(int dim, int degree) : FiniteElement(dim, degree)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
       = ReferenceSimplex::create_simplex(dim);
 
+  CellType celltype;
+  if (dim == 1)
+    celltype = CellType::interval;
+  else if (dim == 2)
+    celltype = CellType::triangle;
+  else if (dim == 3)
+    celltype = CellType::tetrahedron;
+
   // Create orthonormal basis on simplex
   std::vector<Polynomial> basis
-      = ReferenceSimplex::compute_polynomial_set(dim, degree);
+      = PolynomialSet::compute_polynomial_set(celltype, degree);
 
   // Tabulate basis at nodes and get inverse
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "nedelec.h"
+#include "polynomial-set.h"
 #include "quadrature.h"
 #include "simplex.h"
 #include <Eigen/Dense>
@@ -18,7 +19,7 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
 
   // Create orthonormal basis on triangle
   std::vector<Polynomial> Pkp1
-      = ReferenceSimplex::compute_polynomial_set(_dim, _degree + 1);
+      = PolynomialSet::compute_polynomial_set(CellType::triangle, _degree + 1);
   int psize = Pkp1.size();
 
   // Vector subset
@@ -67,7 +68,7 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
 
   // Create a polynomial set on a reference edge
   std::vector<Polynomial> Pq
-      = ReferenceSimplex::compute_polynomial_set(1, _degree);
+      = PolynomialSet::compute_polynomial_set(CellType::interval, _degree);
 
   // Create quadrature scheme on the edge
   int quad_deg = 5 * (_degree + 1);
@@ -115,8 +116,8 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
   if (_degree > 0)
   {
     // Interior integral moment
-    std::vector<Polynomial> Pkm1
-        = ReferenceSimplex::compute_polynomial_set(2, _degree - 1);
+    std::vector<Polynomial> Pkm1 = PolynomialSet::compute_polynomial_set(
+        CellType::triangle, _degree - 1);
     for (std::size_t i = 0; i < Pkm1.size(); ++i)
     {
       Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);
@@ -140,8 +141,8 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
       = ReferenceSimplex::create_simplex(_dim);
 
   // Create orthonormal basis on simplex
-  std::vector<Polynomial> Pkp1
-      = ReferenceSimplex::compute_polynomial_set(_dim, _degree + 1);
+  std::vector<Polynomial> Pkp1 = PolynomialSet::compute_polynomial_set(
+      CellType::tetrahedron, _degree + 1);
   int psize = Pkp1.size();
 
   // Vector subset
@@ -211,7 +212,7 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
 
   // Create a polynomial set on a reference edge
   std::vector<Polynomial> Pq
-      = ReferenceSimplex::compute_polynomial_set(1, _degree);
+      = PolynomialSet::compute_polynomial_set(CellType::interval, _degree);
 
   // Create quadrature scheme on the edge
   int quad_deg = 5 * (_degree + 1);
@@ -255,8 +256,8 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
   if (_degree > 0)
   {
     // Create a polynomial set on a reference facet
-    std::vector<Polynomial> PqF
-        = ReferenceSimplex::compute_polynomial_set(2, _degree - 1);
+    std::vector<Polynomial> PqF = PolynomialSet::compute_polynomial_set(
+        CellType::triangle, _degree - 1);
 
     // Create quadrature scheme on the facet
     int quad_deg = 5 * (_degree + 1);
@@ -304,8 +305,8 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
   if (_degree > 1)
   {
     // Interior integral moment
-    std::vector<Polynomial> Pkm2
-        = ReferenceSimplex::compute_polynomial_set(_dim, _degree - 2);
+    std::vector<Polynomial> Pkm2 = PolynomialSet::compute_polynomial_set(
+        CellType::tetrahedron, _degree - 2);
     for (std::size_t i = 0; i < Pkm2.size(); ++i)
     {
       Eigen::ArrayXd phi = Pkm2[i].tabulate(Qpts);

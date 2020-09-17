@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "raviart-thomas.h"
+#include "polynomial-set.h"
 #include "polynomial.h"
 #include "quadrature.h"
 #include "simplex.h"
@@ -13,11 +14,23 @@
 RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
 {
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
-      = ReferenceSimplex::create_simplex(dim);
+      = ReferenceSimplex::create_simplex(_dim);
+
+  CellType celltype, facettype;
+  if (_dim == 2)
+  {
+    celltype = CellType::triangle;
+    facettype = CellType::interval;
+  }
+  else
+  {
+    celltype = CellType::tetrahedron;
+    facettype = CellType::triangle;
+  }
 
   // Create orthonormal basis on simplex
   std::vector<Polynomial> Pkp1
-      = ReferenceSimplex::compute_polynomial_set(_dim, _degree + 1);
+      = PolynomialSet::compute_polynomial_set(celltype, _degree + 1);
   int psize = Pkp1.size();
 
   // Vector subsets
@@ -72,7 +85,7 @@ RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
 
   // Create a polynomial set on a reference facet
   std::vector<Polynomial> Pq
-      = ReferenceSimplex::compute_polynomial_set(_dim - 1, _degree);
+      = PolynomialSet::compute_polynomial_set(facettype, _degree);
   // Create quadrature scheme on the facet
   int quad_deg = 5 * (_degree + 1);
   auto [QptsE, QwtsE] = make_quadrature(_dim - 1, quad_deg);
@@ -133,7 +146,7 @@ RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
   {
     // Interior integral moment
     std::vector<Polynomial> Pkm1
-        = ReferenceSimplex::compute_polynomial_set(_dim, _degree - 1);
+        = PolynomialSet::compute_polynomial_set(celltype, _degree - 1);
     for (std::size_t i = 0; i < Pkm1.size(); ++i)
     {
       Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);

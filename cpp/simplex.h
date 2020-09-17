@@ -39,10 +39,4 @@ public:
                          Eigen::RowMajor>& simplex,
       int dim, int index);
 
-  /// Orthonormal polynomial basis on reference simplex of dimension dim
-  /// Computes the orthonormal basis set on a reference simplex
-  /// @param dim Simplex dimension
-  /// @param n order
-  /// @return polynomial set
-  static std::vector<Polynomial> compute_polynomial_set(int dim, int n);
 };

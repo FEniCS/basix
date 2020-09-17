@@ -16,6 +16,8 @@ Lagrange::Lagrange(CellType celltype, int degree) : FiniteElement(0, degree)
     _dim = 2;
   else if (celltype == CellType::tetrahedron)
     _dim = 3;
+  else
+    throw std::runtime_error("Invalid celltype");
 
   // Reference simplex vertices
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
@@ -25,7 +27,7 @@ Lagrange::Lagrange(CellType celltype, int degree) : FiniteElement(0, degree)
   std::vector<Polynomial> basis
       = PolynomialSet::compute_polynomial_set(celltype, degree);
 
-  // Tabulate basis at nodes and get inverse
+  // Tabulate basis at nodes
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
       = ReferenceSimplex::create_lattice(simplex, degree, true);
   const int ndofs = pt.rows();

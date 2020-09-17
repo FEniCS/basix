@@ -11,22 +11,17 @@
 #include <numeric>
 #include <vector>
 
-RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
+RaviartThomas::RaviartThomas(CellType celltype, int k) : FiniteElement(0, k - 1)
 {
+  if (celltype == CellType::triangle)
+    _dim = 2;
+  else if (celltype == CellType::tetrahedron)
+    _dim = 3;
+  else
+    throw std::runtime_error("Invalid celltype");
+
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
       = ReferenceSimplex::create_simplex(_dim);
-
-  CellType celltype, facettype;
-  if (_dim == 2)
-  {
-    celltype = CellType::triangle;
-    facettype = CellType::interval;
-  }
-  else
-  {
-    celltype = CellType::tetrahedron;
-    facettype = CellType::triangle;
-  }
 
   // Create orthonormal basis on simplex
   std::vector<Polynomial> Pkp1
@@ -84,6 +79,7 @@ RaviartThomas::RaviartThomas(int dim, int k) : FiniteElement(dim, k - 1)
   int c = 0;
 
   // Create a polynomial set on a reference facet
+  CellType facettype = (_dim == 2) ? CellType::interval : CellType::triangle;
   std::vector<Polynomial> Pq
       = PolynomialSet::compute_polynomial_set(facettype, _degree);
   // Create quadrature scheme on the facet

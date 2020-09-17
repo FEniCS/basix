@@ -2,7 +2,7 @@ import numpy
 import matplotlib.pyplot as plt
 from fiatx import *
 
-RT = RaviartThomas(2, 2)
+RT = RaviartThomas(CellType.triangle, 2)
 
 pts = create_lattice([[0,0],[0,1],[1,0]], 20, True)
 

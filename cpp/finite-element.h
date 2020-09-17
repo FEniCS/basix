@@ -36,8 +36,10 @@ protected:
 
   // spatial dimension
   int _dim;
+
   // degree
   int _degree;
+
   // set of polynomials
   std::vector<Polynomial> poly_set;
 };

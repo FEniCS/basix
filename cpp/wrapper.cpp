@@ -42,7 +42,7 @@ PYBIND11_MODULE(fiatx, m)
       .def("tabulate_basis", &Lagrange::tabulate_basis);
 
   py::class_<RaviartThomas>(m, "RaviartThomas")
-      .def(py::init<int, int>())
+      .def(py::init<CellType, int>())
       .def("tabulate_basis", &RaviartThomas::tabulate_basis);
 
   py::class_<Polynomial>(m, "Polynomial")

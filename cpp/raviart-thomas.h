@@ -2,6 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include "cell.h"
 #include "finite-element.h"
 
 #pragma once
@@ -10,5 +11,5 @@ class RaviartThomas : public FiniteElement
 {
   /// Raviart-Thomas element of given dimension (2 or 3) and degree k .
 public:
-  RaviartThomas(int dim, int k);
+  RaviartThomas(CellType celltype, int k);
 };

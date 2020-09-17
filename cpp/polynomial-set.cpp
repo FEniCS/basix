@@ -161,9 +161,8 @@ std::vector<Polynomial> create_polyset_tetrahedron(int n)
 
   return poly_set;
 }
-} // namespace
 //-----------------------------------------------------------------------------
-std::vector<Polynomial> PolynomialSet::compute_polyset_quad(int n)
+std::vector<Polynomial> create_polyset_quad(int n)
 {
   const std::vector<Polynomial> px = create_polyset_line(n, 0, 2);
   const std::vector<Polynomial> py = create_polyset_line(n, 1, 2);
@@ -175,6 +174,22 @@ std::vector<Polynomial> PolynomialSet::compute_polyset_quad(int n)
   return pxy;
 }
 //-----------------------------------------------------------------------------
+std::vector<Polynomial> create_polyset_hex(int n)
+{
+  const std::vector<Polynomial> px = create_polyset_line(n, 0, 3);
+  const std::vector<Polynomial> py = create_polyset_line(n, 1, 3);
+  const std::vector<Polynomial> pz = create_polyset_line(n, 2, 3);
+  std::vector<Polynomial> pxyz;
+  for (const Polynomial& p : px)
+    for (const Polynomial& q : py)
+      for (const Polynomial& r : pz)
+        pxyz.push_back(p * q * r);
+
+  return pxyz;
+}
+
+} // namespace
+//-----------------------------------------------------------------------------
 std::vector<Polynomial> PolynomialSet::compute_polynomial_set(CellType celltype,
                                                               int n)
 {
@@ -184,6 +199,10 @@ std::vector<Polynomial> PolynomialSet::compute_polynomial_set(CellType celltype,
     return create_polyset_triangle(n);
   else if (celltype == CellType::tetrahedron)
     return create_polyset_tetrahedron(n);
+  else if (celltype == CellType::quadrilateral)
+    return create_polyset_quad(n);
+  else if (celltype == CellType::hexahedron)
+    return create_polyset_hex(n);
   else
-    throw std::runtime_error("Unsupported type");
+    throw std::runtime_error("Polynomial set: Unsupported cell type");
 }

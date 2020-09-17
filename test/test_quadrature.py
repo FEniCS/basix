@@ -18,11 +18,11 @@ def test_quadrature_basic(order):
 
     b = 7.0
     h = 5.0
-    l = 3.0
-    simplex = [[0, 0, 0], [b, 0, 0], [0, h, 0], [0, 0, l]]
+    x = 3.0
+    simplex = [[0, 0, 0], [b, 0, 0], [0, h, 0], [0, 0, x]]
     Qpts, Qwts = fiatx.make_quadrature(simplex, order)
     w = sum(Qwts)
-    assert np.isclose(w, b * h * l / 6.0)
+    assert np.isclose(w, b * h * x / 6.0)
 
 
 def test_quadrature_function():
@@ -32,6 +32,6 @@ def test_quadrature_function():
     def f(x):
         return x*x
 
-    b = sum([w * f(pt[0])     for pt,w in zip(Qpts, Qwts)])
+    b = sum([w * f(pt[0]) for pt, w in zip(Qpts, Qwts)])
 
     assert np.isclose(b, 8.0/3.0)

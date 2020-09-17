@@ -16,6 +16,4 @@ public:
   /// @param n order
   /// @return polynomial set
   static std::vector<Polynomial> compute_polynomial_set(CellType celltype, int n);
-
-  static std::vector<Polynomial> compute_polyset_quad(int n);
 };

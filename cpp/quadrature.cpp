@@ -219,8 +219,8 @@ make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
     scale = bvec.determinant();
   }
 
-#ifdef DEBUG
-  std::cout << "bvec = " << bvec << "\n";
+#ifndef NDEBUG
+  std::cout << "vecs = \n[" << bvec << "]\n";
   std::cout << "scale = " << scale << "\n";
 #endif
 

@@ -35,10 +35,16 @@ void FiniteElement::apply_dualmat_to_basis(
     const std::vector<Polynomial>& basis, int ndim)
 {
   auto A = coeffs * dualmat.transpose();
-  auto Ainv = A.inverse();
-  auto new_coeffs = Ainv * coeffs;
 
-#ifdef DEBUG
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      new_coeffs(coeffs.rows(), coeffs.cols());
+
+  // auto Ainv = A.inverse();
+  // new_coeffs = Ainv * coeffs;
+  // faster to use solve()
+  new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+
+#ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
   std::cout << "Dual matrix = \n[" << dualmat << "]\n";
   std::cout << "New coeffs = \n[" << new_coeffs << "]\n";

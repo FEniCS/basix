@@ -27,6 +27,8 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
   // PkH subset
   const int ns = _degree + 1;
   const int ns0 = (_degree + 1) * _degree / 2;
+  const int ndofs = 3 * (_degree + 1) + _degree * (_degree + 1);
+  assert(ndofs == nv * 2 + ns);
 
   auto [Qpts, Qwts] = make_quadrature(_dim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -54,9 +56,8 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
     }
 
   // Dual space
-
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(nv * 2 + ns, psize * 2);
+      dualmat(ndofs, psize * 2);
   dualmat.setZero();
 
   // dof counter
@@ -158,7 +159,7 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
 
   // Create initial coefficients of Pkp1.
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs(nv * _dim + ns * _dim, psize * _dim);
+      wcoeffs((nv + ns) * _dim, psize * _dim);
   wcoeffs.setZero();
   for (int i = 0; i < _dim; ++i)
     wcoeffs.block(nv * i, psize * i, nv, nv)

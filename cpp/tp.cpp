@@ -4,7 +4,6 @@
 
 #include "tp.h"
 #include "polynomial-set.h"
-#include "simplex.h"
 #include <Eigen/Dense>
 
 TensorProduct::TensorProduct(Cell::Type celltype, int degree)

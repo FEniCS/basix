@@ -9,7 +9,6 @@
 #include "nedelec.h"
 #include "quadrature.h"
 #include "raviart-thomas.h"
-#include "simplex.h"
 #include "tp.h"
 
 namespace py = pybind11;
@@ -27,8 +26,9 @@ PYBIND11_MODULE(fiatx, m)
       .value("prism", Cell::Type::prism)
       .value("pyramid", Cell::Type::pyramid);
 
-  m.def("create_lattice", &ReferenceSimplex::create_lattice,
-        "Create a lattice");
+  py::class_<Cell>(m, "Cell")
+      .def(py::init<Cell::Type>())
+      .def("create_lattice", &Cell::create_lattice);
 
   py::class_<Nedelec2D>(m, "Nedelec2D")
       .def(py::init<int>())

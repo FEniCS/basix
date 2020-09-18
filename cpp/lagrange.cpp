@@ -4,7 +4,6 @@
 
 #include "lagrange.h"
 #include "polynomial-set.h"
-#include "simplex.h"
 #include <Eigen/Dense>
 
 Lagrange::Lagrange(Cell::Type celltype, int degree)

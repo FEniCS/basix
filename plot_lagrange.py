@@ -5,7 +5,8 @@ from fiatx import *
 d = 3
 L = Lagrange(CellType.triangle, d)
 
-pts = create_lattice([[0,0],[0,1],[1,0]], 50, True)
+cell = Cell(CellType.triangle)
+pts = cell.create_lattice(50, True)
 
 w = L.tabulate_basis(pts)
 

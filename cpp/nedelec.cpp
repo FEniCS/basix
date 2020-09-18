@@ -5,7 +5,6 @@
 #include "nedelec.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
-#include "simplex.h"
 #include <Eigen/Dense>
 #include <Eigen/SVD>
 #include <numeric>

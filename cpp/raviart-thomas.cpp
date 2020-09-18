@@ -6,7 +6,6 @@
 #include "polynomial-set.h"
 #include "polynomial.h"
 #include "quadrature.h"
-#include "simplex.h"
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>

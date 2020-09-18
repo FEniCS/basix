@@ -4,7 +4,8 @@ from fiatx import *
 
 N = Nedelec2D(2)
 
-pts = create_lattice([[0,0],[0,1],[1,0]], 20, True)
+cell = Cell(CellType.triangle)
+pts = cell.create_lattice(20, True)
 w = N.tabulate_basis(pts)
 
 nc = w.shape[1]//2

@@ -7,26 +7,11 @@
 #include "simplex.h"
 #include <Eigen/Dense>
 
-TensorProduct::TensorProduct(CellType celltype, int degree)
-    : FiniteElement(0, degree)
+TensorProduct::TensorProduct(Cell::Type celltype, int degree)
+    : FiniteElement(celltype, degree)
 {
-  // Reference cell vertices
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> cell;
-
-  if (celltype == CellType::quadrilateral)
-  {
-    _dim = 2;
-    cell.resize(4, 2);
-    cell << 0, 0, 1, 0, 0, 1, 1, 1;
-  }
-  else if (celltype == CellType::hexahedron)
-  {
-    _dim = 3;
-    cell.resize(8, 3);
-    cell << 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1,
-        1;
-  }
-  else
+  if (celltype != Cell::Type::quadrilateral
+      and celltype != Cell::Type::hexahedron)
     throw std::runtime_error("Invalid celltype");
 
   // Create orthonormal basis on cell
@@ -34,39 +19,9 @@ TensorProduct::TensorProduct(CellType celltype, int degree)
       = PolynomialSet::compute_polynomial_set(celltype, degree);
 
   // Tabulate basis at nodes
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt;
-
-  // Create lattice
-  if (celltype == CellType::quadrilateral)
-  {
-    pt.resize((degree + 1) * (degree + 1), 2);
-
-    int c = 0;
-    for (int i = 0; i < degree + 1; ++i)
-      for (int j = 0; j < degree + 1; ++j)
-      {
-        pt(c, 0) = i;
-        pt(c, 1) = j;
-        ++c;
-      }
-    pt /= degree;
-  }
-  else
-  {
-    pt.resize((degree + 1) * (degree + 1) * (degree + 1), 3);
-
-    int c = 0;
-    for (int i = 0; i < degree + 1; ++i)
-      for (int j = 0; j < degree + 1; ++j)
-        for (int k = 0; k < degree + 1; ++k)
-        {
-          pt(c, 0) = i;
-          pt(c, 1) = j;
-          pt(c, 2) = k;
-          ++c;
-        }
-    pt /= degree;
-  }
+  Cell c(celltype);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
+      = c.create_lattice(degree, true);
 
   int ndofs = pt.rows();
   assert(ndofs == (int)basis.size());

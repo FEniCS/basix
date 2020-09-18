@@ -7,20 +7,19 @@
 #include "simplex.h"
 #include <Eigen/Dense>
 
-Lagrange::Lagrange(CellType celltype, int degree) : FiniteElement(0, degree)
+Lagrange::Lagrange(Cell::Type celltype, int degree)
+    : FiniteElement(celltype, degree)
 {
-  if (celltype == CellType::interval)
-    _dim = 1;
-  else if (celltype == CellType::triangle)
-    _dim = 2;
-  else if (celltype == CellType::tetrahedron)
-    _dim = 3;
-  else
+  if (celltype != Cell::Type::interval and celltype != Cell::Type::triangle
+      and celltype != Cell::Type::tetrahedron)
     throw std::runtime_error("Invalid celltype");
 
+  Cell c(celltype);
+
   // Reference simplex vertices
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
-      = ReferenceSimplex::create_simplex(_dim);
+  // Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  // simplex
+  //      = ReferenceSimplex::create_simplex(_dim);
 
   // Create orthonormal basis on simplex
   std::vector<Polynomial> basis
@@ -28,7 +27,7 @@ Lagrange::Lagrange(CellType celltype, int degree) : FiniteElement(0, degree)
 
   // Tabulate basis at nodes
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
-      = ReferenceSimplex::create_lattice(simplex, degree, true);
+      = c.create_lattice(degree, true);
   const int ndofs = pt.rows();
   assert(ndofs == (int)basis.size());
 

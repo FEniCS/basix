@@ -15,5 +15,5 @@ public:
   /// @param celltype Cell type
   /// @param n order
   /// @return polynomial set
-  static std::vector<Polynomial> compute_polynomial_set(CellType celltype, int n);
+  static std::vector<Polynomial> compute_polynomial_set(Cell::Type celltype, int n);
 };

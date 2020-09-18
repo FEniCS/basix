@@ -4,6 +4,7 @@
 
 #include "polynomial-set.h"
 #include "cell.h"
+#include <Eigen/Dense>
 
 namespace
 {
@@ -190,18 +191,18 @@ std::vector<Polynomial> create_polyset_hex(int n)
 
 } // namespace
 //-----------------------------------------------------------------------------
-std::vector<Polynomial> PolynomialSet::compute_polynomial_set(CellType celltype,
-                                                              int n)
+std::vector<Polynomial>
+PolynomialSet::compute_polynomial_set(Cell::Type celltype, int n)
 {
-  if (celltype == CellType::interval)
+  if (celltype == Cell::Type::interval)
     return create_polyset_line(n, 0, 1);
-  else if (celltype == CellType::triangle)
+  else if (celltype == Cell::Type::triangle)
     return create_polyset_triangle(n);
-  else if (celltype == CellType::tetrahedron)
+  else if (celltype == Cell::Type::tetrahedron)
     return create_polyset_tetrahedron(n);
-  else if (celltype == CellType::quadrilateral)
+  else if (celltype == Cell::Type::quadrilateral)
     return create_polyset_quad(n);
-  else if (celltype == CellType::hexahedron)
+  else if (celltype == Cell::Type::hexahedron)
     return create_polyset_hex(n);
   else
     throw std::runtime_error("Polynomial set: Unsupported cell type");

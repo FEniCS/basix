@@ -18,14 +18,14 @@ PYBIND11_MODULE(fiatx, m)
 {
   m.doc() = "FIATx/libtab plugin";
 
-  py::enum_<CellType>(m, "CellType")
-      .value("interval", CellType::interval)
-      .value("triangle", CellType::triangle)
-      .value("tetrahedron", CellType::tetrahedron)
-      .value("quadrilateral", CellType::quadrilateral)
-      .value("hexahedron", CellType::hexahedron)
-      .value("prism", CellType::prism)
-      .value("pyramid", CellType::pyramid);
+  py::enum_<Cell::Type>(m, "CellType")
+      .value("interval", Cell::Type::interval)
+      .value("triangle", Cell::Type::triangle)
+      .value("tetrahedron", Cell::Type::tetrahedron)
+      .value("quadrilateral", Cell::Type::quadrilateral)
+      .value("hexahedron", Cell::Type::hexahedron)
+      .value("prism", Cell::Type::prism)
+      .value("pyramid", Cell::Type::pyramid);
 
   m.def("create_lattice", &ReferenceSimplex::create_lattice,
         "Create a lattice");
@@ -39,15 +39,15 @@ PYBIND11_MODULE(fiatx, m)
       .def("tabulate_basis", &Nedelec3D::tabulate_basis);
 
   py::class_<Lagrange>(m, "Lagrange")
-      .def(py::init<CellType, int>())
+      .def(py::init<Cell::Type, int>())
       .def("tabulate_basis", &Lagrange::tabulate_basis);
 
   py::class_<TensorProduct>(m, "TensorProduct")
-      .def(py::init<CellType, int>())
+      .def(py::init<Cell::Type, int>())
       .def("tabulate_basis", &TensorProduct::tabulate_basis);
 
   py::class_<RaviartThomas>(m, "RaviartThomas")
-      .def(py::init<CellType, int>())
+      .def(py::init<Cell::Type, int>())
       .def("tabulate_basis", &RaviartThomas::tabulate_basis);
 
   py::class_<Polynomial>(m, "Polynomial")

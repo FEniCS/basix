@@ -13,5 +13,5 @@
 class TensorProduct : public FiniteElement
 {
 public:
-  TensorProduct(CellType celltype, int degree);
+  TensorProduct(Cell::Type celltype, int degree);
 };

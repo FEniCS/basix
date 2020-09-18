@@ -5,7 +5,8 @@
 #include "finite-element.h"
 
 //-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(int dim, int degree) : _dim(dim), _degree(degree)
+FiniteElement::FiniteElement(Cell::Type cell_type, int degree)
+    : _cell_type(cell_type), _degree(degree)
 {
   // Do nothing in base class
 }
@@ -15,7 +16,8 @@ FiniteElement::tabulate_basis(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts) const
 {
-  if (pts.cols() != _dim)
+  const int tdim = Cell::topological_dimension(_cell_type);
+  if (pts.cols() != tdim)
     throw std::runtime_error(
         "Point dimension does not match element dimension");
 

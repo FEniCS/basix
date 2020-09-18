@@ -11,17 +11,16 @@
 #include <numeric>
 #include <vector>
 
-RaviartThomas::RaviartThomas(CellType celltype, int k) : FiniteElement(0, k - 1)
+RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
+    : FiniteElement(celltype, k - 1)
 {
-  if (celltype == CellType::triangle)
-    _dim = 2;
-  else if (celltype == CellType::tetrahedron)
-    _dim = 3;
-  else
-    throw std::runtime_error("Invalid celltype");
+  if (celltype != Cell::Type::triangle and celltype != Cell::Type::tetrahedron)
+    throw std::runtime_error("Unsupported cell type");
 
+  const int tdim = Cell::topological_dimension(celltype);
+  Cell simplex_cell(celltype);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
-      = ReferenceSimplex::create_simplex(_dim);
+      = simplex_cell.geometry();
 
   // Create orthonormal basis on simplex
   std::vector<Polynomial> Pkp1
@@ -32,7 +31,7 @@ RaviartThomas::RaviartThomas(CellType celltype, int k) : FiniteElement(0, k - 1)
   int nv;
   int ns0;
   int ns;
-  if (_dim == 2)
+  if (tdim == 2)
   {
     nv = (_degree + 1) * (_degree + 2) / 2;
     ns0 = _degree * (_degree + 1) / 2;
@@ -40,13 +39,13 @@ RaviartThomas::RaviartThomas(CellType celltype, int k) : FiniteElement(0, k - 1)
   }
   else
   {
-    assert(_dim == 3);
+    assert(tdim == 3);
     nv = (_degree + 1) * (_degree + 2) * (_degree + 3) / 6;
     ns0 = _degree * (_degree + 1) * (_degree + 2) / 6;
     ns = (_degree + 1) * (_degree + 2) / 2;
   }
 
-  auto [Qpts, Qwts] = make_quadrature(_dim, 2 * _degree + 2);
+  auto [Qpts, Qwts] = make_quadrature(tdim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts(psize, Qpts.rows());
   for (int j = 0; j < psize; ++j)
@@ -54,53 +53,54 @@ RaviartThomas::RaviartThomas(CellType celltype, int k) : FiniteElement(0, k - 1)
 
   // Create initial coefficients of Pkp1.
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs(nv * _dim + ns, psize * _dim);
+      wcoeffs(nv * tdim + ns, psize * tdim);
   wcoeffs.setZero();
-  for (int j = 0; j < _dim; ++j)
+  for (int j = 0; j < tdim; ++j)
     wcoeffs.block(nv * j, psize * j, nv, nv)
         = Eigen::MatrixXd::Identity(nv, nv);
 
   for (int i = 0; i < ns; ++i)
     for (int k = 0; k < psize; ++k)
-      for (int j = 0; j < _dim; ++j)
+      for (int j = 0; j < tdim; ++j)
       {
         auto w = Qwts * Pkp1_at_Qpts.row(ns0 + i).transpose() * Qpts.col(j)
                  * Pkp1_at_Qpts.row(k).transpose();
-        wcoeffs(nv * _dim + i, k + psize * j) = w.sum();
+        wcoeffs(nv * tdim + i, k + psize * j) = w.sum();
       }
 
   // Dual space
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(nv * _dim + ns, psize * _dim);
+      dualmat(nv * tdim + ns, psize * tdim);
   dualmat.setZero();
 
   // dof counter
   int c = 0;
 
   // Create a polynomial set on a reference facet
-  CellType facettype = (_dim == 2) ? CellType::interval : CellType::triangle;
+  Cell::Type facettype
+      = (tdim == 2) ? Cell::Type::interval : Cell::Type::triangle;
   std::vector<Polynomial> Pq
       = PolynomialSet::compute_polynomial_set(facettype, _degree);
   // Create quadrature scheme on the facet
   int quad_deg = 5 * (_degree + 1);
-  auto [QptsE, QwtsE] = make_quadrature(_dim - 1, quad_deg);
+  auto [QptsE, QwtsE] = make_quadrature(tdim - 1, quad_deg);
 
-  for (int i = 0; i < (_dim + 1); ++i)
+  for (int i = 0; i < (tdim + 1); ++i)
   {
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> facet
-        = ReferenceSimplex::sub(simplex, _dim - 1, i);
+        = simplex_cell.sub_entity_geometry(tdim - 1, i);
 
-    // FIXME: get normal from the simplex class
+    // FIXME: get normal from the cell class
     Eigen::VectorXd normal;
-    if (_dim == 2)
+    if (tdim == 2)
     {
       normal.resize(2);
       normal << facet(1, 1) - facet(0, 1), facet(0, 0) - facet(1, 0);
       if (i == 1)
         normal *= -1;
     }
-    else if (_dim == 3)
+    else if (tdim == 3)
     {
       Eigen::Vector3d e0 = facet.row(1) - facet.row(0);
       Eigen::Vector3d e1 = facet.row(2) - facet.row(0);
@@ -109,11 +109,11 @@ RaviartThomas::RaviartThomas(CellType celltype, int k) : FiniteElement(0, k - 1)
 
     // Map reference facet to cell
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        QptsE_scaled(QptsE.rows(), _dim);
+        QptsE_scaled(QptsE.rows(), tdim);
     for (int j = 0; j < QptsE.rows(); ++j)
     {
       QptsE_scaled.row(j) = facet.row(0);
-      for (int k = 0; k < (_dim - 1); ++k)
+      for (int k = 0; k < (tdim - 1); ++k)
         QptsE_scaled.row(j) += QptsE(j, k) * (facet.row(k + 1) - facet.row(0));
     }
 
@@ -127,7 +127,7 @@ RaviartThomas::RaviartThomas(CellType celltype, int k) : FiniteElement(0, k - 1)
     for (std::size_t j = 0; j < Pq.size(); ++j)
     {
       Eigen::ArrayXd phi = Pq[j].tabulate(QptsE);
-      for (int k = 0; k < _dim; ++k)
+      for (int k = 0; k < tdim; ++k)
       {
         Eigen::VectorXd q = phi * QwtsE * normal[k];
         Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE.matrix() * q;
@@ -149,7 +149,7 @@ RaviartThomas::RaviartThomas(CellType celltype, int k) : FiniteElement(0, k - 1)
       Eigen::VectorXd q = phi * Qwts;
       Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
       assert(qcoeffs.size() == psize);
-      for (int j = 0; j < _dim; ++j)
+      for (int j = 0; j < tdim; ++j)
       {
         dualmat.block(c, psize * j, 1, psize) = qcoeffs;
         ++c;
@@ -157,6 +157,6 @@ RaviartThomas::RaviartThomas(CellType celltype, int k) : FiniteElement(0, k - 1)
     }
   }
 
-  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, _dim);
+  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, tdim);
 }
 //-----------------------------------------------------------------------------

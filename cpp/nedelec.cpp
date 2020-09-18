@@ -11,15 +11,18 @@
 #include <numeric>
 #include <vector>
 
-Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
+Nedelec2D::Nedelec2D(int k) : FiniteElement(Cell::Type::triangle, k - 1)
 {
   // Reference triangle
+  const int tdim = 2;
+  Cell simplex_cell(Cell::Type::triangle);
+
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> triangle
-      = ReferenceSimplex::create_simplex(_dim);
+      = simplex_cell.geometry();
 
   // Create orthonormal basis on triangle
-  std::vector<Polynomial> Pkp1
-      = PolynomialSet::compute_polynomial_set(CellType::triangle, _degree + 1);
+  std::vector<Polynomial> Pkp1 = PolynomialSet::compute_polynomial_set(
+      Cell::Type::triangle, _degree + 1);
   int psize = Pkp1.size();
 
   // Vector subset
@@ -31,7 +34,7 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
   const int ndofs = 3 * (_degree + 1) + _degree * (_degree + 1);
   assert(ndofs == nv * 2 + ns);
 
-  auto [Qpts, Qwts] = make_quadrature(_dim, 2 * _degree + 2);
+  auto [Qpts, Qwts] = make_quadrature(tdim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts(psize, Qpts.rows());
   for (int j = 0; j < psize; ++j)
@@ -68,7 +71,7 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
 
   // Create a polynomial set on a reference edge
   std::vector<Polynomial> Pq
-      = PolynomialSet::compute_polynomial_set(CellType::interval, _degree);
+      = PolynomialSet::compute_polynomial_set(Cell::Type::interval, _degree);
 
   // Create quadrature scheme on the edge
   int quad_deg = 5 * (_degree + 1);
@@ -77,9 +80,9 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
   // Iterate over edges
   for (int i = 0; i < 3; ++i)
   {
-    // FIXME: get tangent from the simplex class
+    // FIXME: get edge tangent from the cell class
     Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
-        = ReferenceSimplex::sub(triangle, 1, i);
+        = simplex_cell.sub_entity_geometry(1, i);
     Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
 
     // UFC convention?
@@ -117,7 +120,7 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
   {
     // Interior integral moment
     std::vector<Polynomial> Pkm1 = PolynomialSet::compute_polynomial_set(
-        CellType::triangle, _degree - 1);
+        Cell::Type::triangle, _degree - 1);
     for (std::size_t i = 0; i < Pkm1.size(); ++i)
     {
       Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);
@@ -131,18 +134,21 @@ Nedelec2D::Nedelec2D(int k) : FiniteElement(2, k - 1)
     }
   }
 
-  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, _dim);
+  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, tdim);
 }
 //-----------------------------------------------------------------------------
-Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
+Nedelec3D::Nedelec3D(int k) : FiniteElement(Cell::Type::tetrahedron, k - 1)
 {
   // Reference tetrahedron
+  const int tdim = 3;
+  Cell simplex_cell(Cell::Type::tetrahedron);
+
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
-      = ReferenceSimplex::create_simplex(_dim);
+      = simplex_cell.geometry();
 
   // Create orthonormal basis on simplex
   std::vector<Polynomial> Pkp1 = PolynomialSet::compute_polynomial_set(
-      CellType::tetrahedron, _degree + 1);
+      Cell::Type::tetrahedron, _degree + 1);
   int psize = Pkp1.size();
 
   // Vector subset
@@ -152,7 +158,7 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
   const int ns = (_degree + 1) * (_degree + 2) / 2;
   const int ns0 = _degree * (_degree + 1) * (_degree + 2) / 6;
 
-  auto [Qpts, Qwts] = make_quadrature(_dim, 2 * _degree + 2);
+  auto [Qpts, Qwts] = make_quadrature(tdim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts(psize, Qpts.rows());
   for (int j = 0; j < psize; ++j)
@@ -160,23 +166,23 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
 
   // Create initial coefficients of Pkp1.
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs((nv + ns) * _dim, psize * _dim);
+      wcoeffs((nv + ns) * tdim, psize * tdim);
   wcoeffs.setZero();
-  for (int i = 0; i < _dim; ++i)
+  for (int i = 0; i < tdim; ++i)
     wcoeffs.block(nv * i, psize * i, nv, nv)
         = Eigen::MatrixXd::Identity(nv, nv);
 
   for (int i = 0; i < ns; ++i)
     for (int k = 0; k < psize; ++k)
-      for (int j = 0; j < _dim; ++j)
+      for (int j = 0; j < tdim; ++j)
       {
         const int j1 = (j + 1) % 3;
         const int j2 = (j + 2) % 3;
 
         auto w = Qwts * Pkp1_at_Qpts.row(ns0 + i).transpose() * Qpts.col(j)
                  * Pkp1_at_Qpts.row(k).transpose();
-        wcoeffs(_dim * nv + i + ns * j1, psize * j2 + k) = -w.sum();
-        wcoeffs(_dim * nv + i + ns * j2, psize * j1 + k) = w.sum();
+        wcoeffs(tdim * nv + i + ns * j1, psize * j2 + k) = -w.sum();
+        wcoeffs(tdim * nv + i + ns * j2, psize * j1 + k) = w.sum();
       }
 
   // Remove dependent components from space with SVD
@@ -202,7 +208,7 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
   // Dual space
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(ndofs, psize * _dim);
+      dualmat(ndofs, psize * tdim);
   dualmat.setZero();
 
   // dof counter
@@ -212,7 +218,7 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
 
   // Create a polynomial set on a reference edge
   std::vector<Polynomial> Pq
-      = PolynomialSet::compute_polynomial_set(CellType::interval, _degree);
+      = PolynomialSet::compute_polynomial_set(Cell::Type::interval, _degree);
 
   // Create quadrature scheme on the edge
   int quad_deg = 5 * (_degree + 1);
@@ -223,12 +229,12 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
   {
     // FIXME: get tangent from the simplex class
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> edge
-        = ReferenceSimplex::sub(simplex, 1, i);
+        = simplex_cell.sub_entity_geometry(1, i);
     Eigen::Vector3d tangent = edge.row(1) - edge.row(0);
 
     // Map quadrature points onto tetrahedron edge
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        QptsE_scaled(QptsE.rows(), _dim);
+        QptsE_scaled(QptsE.rows(), tdim);
     for (int j = 0; j < QptsE.rows(); ++j)
       QptsE_scaled.row(j)
           = edge.row(0) + QptsE(j, 0) * (edge.row(1) - edge.row(0));
@@ -257,7 +263,7 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
   {
     // Create a polynomial set on a reference facet
     std::vector<Polynomial> PqF = PolynomialSet::compute_polynomial_set(
-        CellType::triangle, _degree - 1);
+        Cell::Type::triangle, _degree - 1);
 
     // Create quadrature scheme on the facet
     int quad_deg = 5 * (_degree + 1);
@@ -266,14 +272,14 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
     for (int i = 0; i < 4; ++i)
     {
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          facet = ReferenceSimplex::sub(simplex, 2, i);
+          facet = simplex_cell.sub_entity_geometry(2, i);
       // Face tangents
       Eigen::Vector3d t0 = facet.row(1) - facet.row(0);
       Eigen::Vector3d t1 = facet.row(2) - facet.row(0);
 
       // Map quadrature points onto tetrahedron facet
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          QptsF_scaled(QptsF.rows(), _dim);
+          QptsF_scaled(QptsF.rows(), tdim);
       for (int j = 0; j < QptsF.rows(); ++j)
         QptsF_scaled.row(j) = facet.row(0)
                               + QptsF(j, 0) * (facet.row(1) - facet.row(0))
@@ -287,7 +293,7 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
 
       for (std::size_t j = 0; j < PqF.size(); ++j)
       {
-        for (int k = 0; k < _dim; ++k)
+        for (int k = 0; k < tdim; ++k)
         {
           // FIXME: check this over
           Eigen::ArrayXd phi = PqF[j].tabulate(QptsF);
@@ -306,14 +312,14 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
   {
     // Interior integral moment
     std::vector<Polynomial> Pkm2 = PolynomialSet::compute_polynomial_set(
-        CellType::tetrahedron, _degree - 2);
+        Cell::Type::tetrahedron, _degree - 2);
     for (std::size_t i = 0; i < Pkm2.size(); ++i)
     {
       Eigen::ArrayXd phi = Pkm2[i].tabulate(Qpts);
       Eigen::VectorXd q = phi * Qwts;
       Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
       assert(qcoeffs.size() == psize);
-      for (int j = 0; j < _dim; ++j)
+      for (int j = 0; j < tdim; ++j)
       {
         dualmat.block(c, psize * j, 1, psize) = qcoeffs;
         ++c;
@@ -321,6 +327,6 @@ Nedelec3D::Nedelec3D(int k) : FiniteElement(3, k - 1)
     }
   }
 
-  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, _dim);
+  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, tdim);
 }
 //-----------------------------------------------------------------------------

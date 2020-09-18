@@ -14,5 +14,5 @@ class Lagrange : public FiniteElement
 {
   /// Lagrange element of given dimension (1, 2 or 3) and degree.
 public:
-  Lagrange(CellType celltype, int degree);
+  Lagrange(Cell::Type celltype, int degree);
 };

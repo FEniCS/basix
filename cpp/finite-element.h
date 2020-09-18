@@ -2,6 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include "cell.h"
 #include "polynomial.h"
 #include <Eigen/Dense>
 #include <vector>
@@ -15,7 +16,7 @@ class FiniteElement
 
 public:
   /// Element of given dimension (1, 2 or 3) and degree.
-  FiniteElement(int dim, int degree);
+  FiniteElement(Cell::Type cell_type, int degree);
 
   /// Compute basis values at set of points. If a vector result is expected, it
   /// will be stacked with all x values, followed by all y-values (and then z,
@@ -34,8 +35,8 @@ protected:
                           Eigen::RowMajor>& dualmat,
       const std::vector<Polynomial>& basis, int ndim);
 
-  // spatial dimension
-  int _dim;
+  // cell type
+  Cell::Type _cell_type;
 
   // degree
   int _degree;

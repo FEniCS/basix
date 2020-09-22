@@ -227,7 +227,6 @@ std::vector<Polynomial> create_polyset_pyramid(int n)
                                    * (one * (1.0 + p + q) + z * (2.0 + p + q));
     }
 
-  // FIXME - check this
   for (int r = 1; r < n + 1; ++r)
     for (int p = 0; p < n - r; ++p)
       for (int q = 0; q < n - r; ++q)
@@ -238,12 +237,13 @@ std::vector<Polynomial> create_polyset_pyramid(int n)
               - poly_set[pyr_idx(p, q, r - 1)] * cr;
       }
 
-  // Normalize - check
   for (int r = 0; r < n + 1; ++r)
-    for (int p = 0; p < n - r; ++p)
-      for (int q = 0; q < n - r; ++q)
+    for (int p = 0; p < n - r + 1; ++p)
+      for (int q = 0; q < n - r + 1; ++q)
+      {
         poly_set[pyr_idx(p, q, r)]
-            *= sqrt((p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5));
+            *= sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
+      }
 
   return poly_set;
 }

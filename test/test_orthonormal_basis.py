@@ -34,6 +34,35 @@ def test_quad():
     assert(np.isclose(mat * 4.0, np.eye(mat.shape[0])).all())
 
 
+def test_pyramid():
+    order = 2
+    basis = fiatx.compute_polynomial_set(fiatx.CellType.pyramid, order)
+    cell = fiatx.Cell(fiatx.CellType.interval)
+    pts = cell.create_lattice(1, True)
+    Lpts, Lwts = fiatx.make_quadrature(pts, order + 5)
+    Qwts = []
+    Qpts = []
+    for p, u in zip(Lpts, Lwts):
+        for q, v in zip(Lpts, Lwts):
+            for r, w in zip(Lpts, Lwts):
+                sc = (1.0 - r[0])
+                Qpts.append([p[0]*sc, q[0]*sc, r[0]])
+                Qwts.append(u*v*sc*sc*w)
+
+    mat = np.zeros((len(basis), len(basis)))
+    for i, p in enumerate(basis):
+        for j, q in enumerate(basis):
+            w = p*q
+            s = 0.0
+            for val, wt in zip(w.tabulate(Qpts), Qwts):
+                s += val*wt
+            mat[i, j] = s
+
+    np.set_printoptions(suppress=True, linewidth=220)
+    print(mat)
+    assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
+
+
 def test_hex():
     order = 2
     basis = fiatx.compute_polynomial_set(fiatx.CellType.hexahedron, order)

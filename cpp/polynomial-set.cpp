@@ -172,7 +172,6 @@ std::vector<Polynomial> create_polyset_pyramid(int n)
 
   const int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
   std::vector<Polynomial> poly_set(m);
-  poly_set[0] = one;
   const Polynomial f1x = (one + x * 2.0 + z) * 0.5;
   const Polynomial f1y = (one + y * 2.0 + z) * 0.5;
   const Polynomial f2 = (one - z) * (one - z) * 0.25;
@@ -185,6 +184,8 @@ std::vector<Polynomial> create_polyset_pyramid(int n)
     assert(idx < m);
     return idx;
   };
+
+  poly_set[pyr_idx(0, 0, 0)] = one;
 
   if (n > 0)
   {
@@ -213,19 +214,23 @@ std::vector<Polynomial> create_polyset_pyramid(int n)
 
   for (int p = 1; p < n + 1; ++p)
     for (int q = 1; q < n + 1; ++q)
+    {
       poly_set[pyr_idx(p, q, 0)]
           = poly_set[pyr_idx(p, 0, 0)] * poly_set[pyr_idx(0, q, 0)];
+    }
 
   // Extend into r > 0
   for (int p = 0; p < n; ++p)
     for (int q = 0; q < n; ++q)
+    {
       poly_set[pyr_idx(p, q, 1)] = poly_set[pyr_idx(p, q, 0)]
                                    * (one * (1.0 + p + q) + z * (2.0 + p + q));
+    }
 
   // FIXME - check this
-  for (int r = 1; r < n; ++r)
-    for (int p = 0; p < n - r - 1; ++p)
-      for (int q = 0; q < n - r - 1; ++q)
+  for (int r = 1; r < n + 1; ++r)
+    for (int p = 0; p < n - r; ++p)
+      for (int q = 0; q < n - r; ++q)
       {
         auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
         poly_set[pyr_idx(p, q, r + 1)]

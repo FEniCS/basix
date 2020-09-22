@@ -10,6 +10,7 @@ TensorProduct::TensorProduct(Cell::Type celltype, int degree)
     : FiniteElement(celltype, degree)
 {
   if (celltype != Cell::Type::quadrilateral and celltype != Cell::Type::prism
+      and celltype != Cell::Type::pyramid
       and celltype != Cell::Type::hexahedron)
     throw std::runtime_error("Invalid celltype");
 

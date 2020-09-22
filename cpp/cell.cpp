@@ -84,6 +84,8 @@ Cell::Cell(Cell::Type celltype) : _type(celltype)
     break;
   case Cell::Type::pyramid:
     _geometry.resize(5, 3);
+    _geometry << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0,
+        0.0, 0.0, 1.0;
     _topology.resize(4);
     // Vertices
     _topology[0].resize(5, 1);
@@ -252,6 +254,26 @@ Cell::create_lattice(int n, bool exterior) const
     for (int i = b; i < n + 1 - b; ++i)
       for (int j = b; j < n + 1 - i - b; ++j)
         for (int k = b; k < n + 1 - b; ++k)
+          points.row(c++) = _geometry.row(0) + hs.row(2) * k + hs.row(1) * j
+                            + hs.row(0) * i;
+  }
+  else if (_type == Cell::Type::pyramid)
+  {
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
+        3, _geometry.cols());
+    hs.row(2) = (_geometry.row(4) - _geometry.row(0)) / static_cast<double>(n);
+    hs.row(1) = (_geometry.row(1) - _geometry.row(0)) / static_cast<double>(n);
+    hs.row(0) = (_geometry.row(2) - _geometry.row(0)) / static_cast<double>(n);
+
+    if (exterior == false)
+      throw std::runtime_error("not implemented in pyramid");
+
+    int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
+    points.resize(m, gdim);
+    int c = 0;
+    for (int k = 0; k < n + 1; ++k)
+      for (int i = 0; i < n + 1 - k; ++i)
+        for (int j = 0; j < n + 1 - k; ++j)
           points.row(c++) = _geometry.row(0) + hs.row(2) * k + hs.row(1) * j
                             + hs.row(0) * i;
   }

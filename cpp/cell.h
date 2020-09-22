@@ -2,6 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include <vector>
 #include <Eigen/Dense>
 
 #pragma once

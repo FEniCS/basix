@@ -7,6 +7,7 @@
 #include "cell.h"
 #include "lagrange.h"
 #include "nedelec.h"
+#include "polynomial-set.h"
 #include "quadrature.h"
 #include "raviart-thomas.h"
 #include "tp.h"
@@ -68,6 +69,8 @@ PYBIND11_MODULE(fiatx, m)
            py::overload_cast<const Eigen::Array<
                double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&>(
                &Polynomial::tabulate, py::const_));
+
+  m.def("compute_polynomial_set", &PolynomialSet::compute_polynomial_set);
 
   m.def("make_quadrature",
         py::overload_cast<const Eigen::Array<double, Eigen::Dynamic,

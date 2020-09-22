@@ -52,11 +52,11 @@ std::vector<Polynomial> create_polyset_line(int n, int axis, int dim)
   return poly_set;
 }
 //-----------------------------------------------------------------------------
-std::vector<Polynomial> create_polyset_triangle(int n)
+std::vector<Polynomial> create_polyset_triangle(int n, int dim)
 {
   const Polynomial one = Polynomial::one();
-  const Polynomial x = Polynomial::x(2) * 2.0 - one;
-  const Polynomial y = Polynomial::y(2) * 2.0 - one;
+  const Polynomial x = Polynomial::x(dim) * 2.0 - one;
+  const Polynomial y = Polynomial::y(dim) * 2.0 - one;
 
   const int m = (n + 1) * (n + 2) / 2;
   std::vector<Polynomial> poly_set(m);
@@ -71,8 +71,8 @@ std::vector<Polynomial> create_polyset_triangle(int n)
 
   for (int p = 1; p < n; ++p)
   {
-    double a = (2 * p + 1) / static_cast<double>(p + 1);
-    double b = p / static_cast<double>(p + 1);
+    double a = static_cast<double>(2 * p + 1) / static_cast<double>(p + 1);
+    double b = static_cast<double>(p) / static_cast<double>(p + 1);
     poly_set[idx(p + 1, 0)]
         = f1 * poly_set[idx(p, 0)] * a - f3 * poly_set[idx(p - 1, 0)] * b;
   }
@@ -163,6 +163,86 @@ std::vector<Polynomial> create_polyset_tetrahedron(int n)
   return poly_set;
 }
 //-----------------------------------------------------------------------------
+std::vector<Polynomial> create_polyset_pyramid(int n)
+{
+  const Polynomial one = Polynomial::one();
+  const Polynomial x = Polynomial::x(3) * 2.0 - one;
+  const Polynomial y = Polynomial::y(3) * 2.0 - one;
+  const Polynomial z = Polynomial::z(3) * 2.0 - one;
+
+  const int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
+  std::vector<Polynomial> poly_set(m);
+  poly_set[0] = one;
+  const Polynomial f1x = (one + x * 2.0 + z) * 0.5;
+  const Polynomial f1y = (one + y * 2.0 + z) * 0.5;
+  const Polynomial f2 = (one - z) * (one - z) * 0.25;
+
+  // Indexing for pyramidal basis functions
+  auto pyr_idx = [&n, &m](int p, int q, int r) {
+    const int rv = (n - r);
+    const int r0 = rv * (rv + 1) * (2 * rv + 1) / 6;
+    const int idx = r0 + p * (rv + 1) + q;
+    assert(idx < m);
+    return idx;
+  };
+
+  if (n > 0)
+  {
+    poly_set[pyr_idx(1, 0, 0)] = f1x;
+    poly_set[pyr_idx(0, 1, 0)] = f1y;
+  }
+  else
+    return poly_set;
+
+  // r = 0
+  for (int p = 1; p < n; ++p)
+  {
+    const double a = static_cast<double>(p) / static_cast<double>(p + 1);
+    poly_set[pyr_idx(p + 1, 0, 0)]
+        = f1x * poly_set[pyr_idx(p, 0, 0)] * (a + 1.0)
+          - f2 * poly_set[pyr_idx(p - 1, 0, 0)] * a;
+  }
+
+  for (int q = 1; q < n; ++q)
+  {
+    const double a = static_cast<double>(q) / static_cast<double>(q + 1);
+    poly_set[pyr_idx(0, q + 1, 0)]
+        = f1y * poly_set[pyr_idx(0, q, 0)] * (a + 1.0)
+          - f2 * poly_set[pyr_idx(0, q - 1, 0)] * a;
+  }
+
+  for (int p = 1; p < n + 1; ++p)
+    for (int q = 1; q < n + 1; ++q)
+      poly_set[pyr_idx(p, q, 0)]
+          = poly_set[pyr_idx(p, 0, 0)] * poly_set[pyr_idx(0, q, 0)];
+
+  // Extend into r > 0
+  for (int p = 0; p < n; ++p)
+    for (int q = 0; q < n; ++q)
+      poly_set[pyr_idx(p, q, 1)] = poly_set[pyr_idx(p, q, 0)]
+                                   * (one * (1.0 + p + q) + z * (2.0 + p + q));
+
+  // FIXME - check this
+  for (int r = 1; r < n; ++r)
+    for (int p = 0; p < n - r - 1; ++p)
+      for (int q = 0; q < n - r - 1; ++q)
+      {
+        auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+        poly_set[pyr_idx(p, q, r + 1)]
+            = poly_set[pyr_idx(p, q, r)] * (z * ar + one * br)
+              - poly_set[pyr_idx(p, q, r - 1)] * cr;
+      }
+
+  // Normalize - check
+  for (int r = 0; r < n + 1; ++r)
+    for (int p = 0; p < n - r; ++p)
+      for (int q = 0; q < n - r; ++q)
+        poly_set[pyr_idx(p, q, r)]
+            *= sqrt((p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5));
+
+  return poly_set;
+}
+//-----------------------------------------------------------------------------
 std::vector<Polynomial> create_polyset_quad(int n)
 {
   const std::vector<Polynomial> px = create_polyset_line(n, 0, 2);
@@ -188,7 +268,19 @@ std::vector<Polynomial> create_polyset_hex(int n)
 
   return pxyz;
 }
+//-----------------------------------------------------------------------------
+std::vector<Polynomial> create_polyset_prism(int n)
+{
+  const std::vector<Polynomial> pxy = create_polyset_triangle(n, 3);
+  const std::vector<Polynomial> pz = create_polyset_line(n, 2, 3);
+  std::vector<Polynomial> pxyz;
+  for (const Polynomial& p : pxy)
+    for (const Polynomial& q : pz)
+      pxyz.push_back(p * q);
 
+  return pxyz;
+}
+//-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
 std::vector<Polynomial>
@@ -197,13 +289,17 @@ PolynomialSet::compute_polynomial_set(Cell::Type celltype, int n)
   if (celltype == Cell::Type::interval)
     return create_polyset_line(n, 0, 1);
   else if (celltype == Cell::Type::triangle)
-    return create_polyset_triangle(n);
+    return create_polyset_triangle(n, 2);
   else if (celltype == Cell::Type::tetrahedron)
     return create_polyset_tetrahedron(n);
   else if (celltype == Cell::Type::quadrilateral)
     return create_polyset_quad(n);
   else if (celltype == Cell::Type::hexahedron)
     return create_polyset_hex(n);
+  else if (celltype == Cell::Type::prism)
+    return create_polyset_prism(n);
+  else if (celltype == Cell::Type::pyramid)
+    return create_polyset_pyramid(n);
   else
     throw std::runtime_error("Polynomial set: Unsupported cell type");
 }

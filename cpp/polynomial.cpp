@@ -84,7 +84,7 @@ const Polynomial Polynomial::operator*(const Polynomial& other) const
   assert(this->dim == other.dim);
 
   Polynomial result;
-  result.dim = std::max(this->dim, other.dim);
+  result.dim = this->dim;
   int n0 = this->order;
   int n1 = other.order;
   int n = n0 + n1;

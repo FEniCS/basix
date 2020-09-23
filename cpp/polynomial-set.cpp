@@ -47,13 +47,39 @@ std::vector<Polynomial> create_polyset_line(int n, int axis, int dim)
   }
 
   for (int p = 0; p < n + 1; ++p)
-  {
     poly_set[p] *= sqrt(p + 0.5);
-    std::cout << "poly set Coeffs = " << poly_set[p].coefficients().transpose()
-              << "\n";
-  }
 
   return poly_set;
+}
+//-----------------------------------------------------------------------------
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+tabulate_polyset_line(int n,
+                      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>& pts)
+{
+  assert(pts.cols() == 1);
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x
+      = pts * 2.0 - 1.0;
+
+  const int m = (n + 1);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
+      pts.rows(), m);
+
+  result.col(0).fill(1.0);
+  if (n > 0)
+    result.col(1) = x;
+
+  for (int p = 2; p < n + 1; ++p)
+  {
+    double a = 1.0 - 1.0 / static_cast<double>(p);
+    result.col(p) = x * result.col(p - 1) * (a + 1.0) - result.col(p - 2) * a;
+  }
+
+  for (int p = 0; p < n + 1; ++p)
+    result.col(p) *= sqrt(p + 0.5);
+
+  return result;
 }
 //-----------------------------------------------------------------------------
 std::vector<Polynomial> create_polyset_triangle(int n, int dim)
@@ -98,6 +124,56 @@ std::vector<Polynomial> create_polyset_triangle(int n, int dim)
       poly_set[idx(p, q)] *= sqrt((p + 0.5) * (p + q + 1));
 
   return poly_set;
+}
+//-----------------------------------------------------------------------------
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+tabulate_polyset_triangle(
+    int n,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts)
+{
+  assert(pts.cols() == 2);
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x
+      = pts * 2.0 - 1.0;
+
+  const int m = (n + 1) * (n + 2) / 2;
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
+      pts.rows(), m);
+
+  result.col(0).fill(1.0);
+  if (n > 0)
+    result.col(1) = x.col(0) + 0.5 * x.col(1) + 0.5;
+  else
+    return result;
+
+  const auto f3 = (1.0 - x.col(1)) * (1.0 - x.col(1)) * 0.25;
+
+  for (int p = 1; p < n; ++p)
+  {
+    double a = static_cast<double>(2 * p + 1) / static_cast<double>(p + 1);
+    double b = static_cast<double>(p) / static_cast<double>(p + 1);
+    result.col(idx(p + 1, 0)) = result.col(1) * result.col(idx(p, 0)) * a
+                                - f3 * result.col(idx(p - 1, 0)) * b;
+  }
+
+  for (int p = 0; p < n; ++p)
+  {
+    result.col(idx(p, 1))
+        = result.col(idx(p, 0)) * (x.col(1) * (1.5 + p) + 0.5 + p);
+    for (int q = 1; q < n - p; ++q)
+    {
+      auto [a1, a2, a3] = jrc(2 * p + 1, q);
+      result.col(idx(p, q + 1)) = result.col(idx(p, q)) * (x.col(1) * a1 + a2)
+                                  - result.col(idx(p, q - 1)) * a3;
+    }
+  }
+
+  for (int p = 0; p < n + 1; ++p)
+    for (int q = 0; q < n - p + 1; ++q)
+      result.col(idx(p, q)) *= sqrt((p + 0.5) * (p + q + 1));
+
+  return result;
 }
 //-----------------------------------------------------------------------------
 std::vector<Polynomial> create_polyset_tetrahedron(int n)
@@ -167,6 +243,78 @@ std::vector<Polynomial> create_polyset_tetrahedron(int n)
   return poly_set;
 }
 //-----------------------------------------------------------------------------
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+tabulate_polyset_tetrahedron(
+    int n,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts)
+{
+  assert(pts.cols() == 3);
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x
+      = pts * 2.0 - 1.0;
+
+  const int m = (n + 1) * (n + 2) * (n + 3) / 6;
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
+      pts.rows(), m);
+
+  result.col(0).fill(1.0);
+  if (n > 0)
+    result.col(1) = x.col(0) + 0.5 * (x.col(1) + x.col(2)) + 1.0;
+  else
+    return result;
+
+  const auto f2 = (x.col(1) + x.col(2)).square() * 0.25;
+  const auto f3 = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
+  const auto f4 = (1.0 - x.col(2)) * 0.5;
+  const auto f5 = f4 * f4;
+
+  for (int p = 1; p < n; ++p)
+  {
+    double a = static_cast<double>(p) / static_cast<double>(p + 1);
+    result.col(idx(p + 1, 0, 0))
+        = result.col(1) * result.col(idx(p, 0, 0)) * (a + 1.0)
+          - f2 * result.col(idx(p - 1, 0, 0)) * a;
+  }
+
+  for (int p = 0; p < n; ++p)
+  {
+    result.col(idx(p, 1, 0))
+        = result.col(idx(p, 0, 0))
+          * ((1.0 + x.col(1)) * p + (2.0 + x.col(1) * 3.0 + x.col(2)) * 0.5);
+    for (int q = 1; q < n - p; ++q)
+    {
+      auto [aq, bq, cq] = jrc(2 * p + 1, q);
+      result.col(idx(p, q + 1, 0))
+          = result.col(idx(p, q, 0)) * (f3 * aq + f4 * bq)
+            - result.col(idx(p, q - 1, 0)) * f5 * cq;
+    }
+  }
+
+  for (int p = 0; p < n; ++p)
+    for (int q = 0; q < n - p; ++q)
+      result.col(idx(p, q, 1)) = result.col(idx(p, q, 0))
+                                 * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
+
+  for (int p = 0; p < n - 1; ++p)
+    for (int q = 0; q < n - p - 1; ++q)
+      for (int r = 1; r < n - p - q; ++r)
+      {
+        auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+        result.col(idx(p, q, r + 1))
+            = result.col(idx(p, q, r)) * (x.col(2) * ar + br)
+              - result.col(idx(p, q, r - 1)) * cr;
+      }
+
+  for (int p = 0; p < n + 1; ++p)
+    for (int q = 0; q < n - p + 1; ++q)
+      for (int r = 0; r < n - p - q + 1; ++r)
+        result.col(idx(p, q, r))
+            *= sqrt((p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5));
+
+  return result;
+}
+//-----------------------------------------------------------------------------
 std::vector<Polynomial> create_polyset_pyramid(int n)
 {
   const Polynomial one = Polynomial::one();
@@ -190,7 +338,6 @@ std::vector<Polynomial> create_polyset_pyramid(int n)
   };
 
   poly_set[pyr_idx(0, 0, 0)] = one;
-
   if (n > 0)
   {
     poly_set[pyr_idx(1, 0, 0)] = f1x;
@@ -309,6 +456,22 @@ PolynomialSet::compute_polynomial_set(Cell::Type celltype, int n)
     return create_polyset_prism(n);
   else if (celltype == Cell::Type::pyramid)
     return create_polyset_pyramid(n);
+  else
+    throw std::runtime_error("Polynomial set: Unsupported cell type");
+}
+//-----------------------------------------------------------------------------
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+PolynomialSet::tabulate_polynomial_set(
+    Cell::Type celltype, int n,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts)
+{
+  if (celltype == Cell::Type::interval)
+    return tabulate_polyset_line(n, pts);
+  else if (celltype == Cell::Type::triangle)
+    return tabulate_polyset_triangle(n, pts);
+  else if (celltype == Cell::Type::tetrahedron)
+    return tabulate_polyset_tetrahedron(n, pts);
   else
     throw std::runtime_error("Polynomial set: Unsupported cell type");
 }

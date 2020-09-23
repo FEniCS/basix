@@ -15,5 +15,12 @@ public:
   /// @param celltype Cell type
   /// @param n order
   /// @return polynomial set
-  static std::vector<Polynomial> compute_polynomial_set(Cell::Type celltype, int n);
+  static std::vector<Polynomial> compute_polynomial_set(Cell::Type celltype,
+                                                        int n);
+
+  static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  tabulate_polynomial_set(
+      Cell::Type celltype, int n,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& pts);
 };

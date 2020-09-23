@@ -134,6 +134,13 @@ public:
   /// Polynomial dimension (number of variables)
   int dimension() const { return dim; }
 
+  /// Coefficients
+  const Eigen::ArrayXd& coefficients() const
+  {
+    return coeffs;
+  }
+
+
 private:
   // Polynomial dimension (1=x, 2=(x,y), 3=(x,y,z)) etc.
   // Dimension over 3 is not fully supported

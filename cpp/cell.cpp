@@ -107,7 +107,7 @@ Cell::Cell(Cell::Type celltype) : _type(celltype)
     throw std::runtime_error("Unsupported cell type");
   }
 }
-//
+//-----------------------------------------------------------------------------
 int Cell::topological_dimension(Cell::Type cell_type)
 {
   switch (cell_type)

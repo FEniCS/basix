@@ -3,22 +3,21 @@
 // SPDX-License-Identifier:    MIT
 
 #include "quadrature.h"
-#include "polynomial.h"
 #include <cmath>
+#include <iostream>
 #include <vector>
 
 // Evaluates the nth jacobi polynomial with weight parameters a,0
-// FIXME: similar code in simplex.cpp - remove duplication
-Polynomial compute_jacobi(int a, int n)
+// at a set of points x
+Eigen::ArrayXd compute_jacobi(double a, int n, const Eigen::ArrayXd& x)
 {
-  std::vector<Polynomial> Jn(n + 1);
-  const Polynomial x = Polynomial::x(1);
-  const Polynomial one = Polynomial::one();
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Jn(
+      n + 1, x.rows());
 
-  Jn[0] = one;
+  Jn.row(0).fill(1.0);
 
   if (n > 0)
-    Jn[1] = (one * a + x * (a + 2.0)) * 0.5;
+    Jn.row(1) = (x.transpose() * (a + 2.0) + a) * 0.5;
 
   for (int k = 2; k < n + 1; ++k)
   {
@@ -29,10 +28,43 @@ Polynomial compute_jacobi(int a, int n)
     a2 = a2 / a1;
     a3 = a3 / a1;
     a4 = a4 / a1;
-    Jn[k] = Jn[k - 1] * (one * a2 + x * a3) - Jn[k - 2] * a4;
+    Jn.row(k) = Jn.row(k - 1) * (x.transpose() * a3 + a2) - Jn.row(k - 2) * a4;
   }
 
-  return Jn[n];
+  return Jn.row(n);
+}
+//-----------------------------------------------------------------------------
+Eigen::ArrayXd compute_jacobi_deriv(double a, int n, const Eigen::ArrayXd& x)
+{
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Jn(
+      n + 1, x.rows());
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Jd(
+      n + 1, x.rows());
+
+  Jn.row(0).fill(1.0);
+  Jd.row(0).fill(0.0);
+
+  if (n > 0)
+  {
+    Jn.row(1) = (x.transpose() * (a + 2.0) + a) * 0.5;
+    Jd.row(1) = a * 0.5 + 1;
+  }
+
+  for (int k = 2; k < n + 1; ++k)
+  {
+    double a1 = 2.0 * k * (k + a) * (2.0 * k + a - 2.0);
+    double a2 = (2.0 * k + a - 1.0) * (a * a);
+    double a3 = (2.0 * k + a - 2.0) * (2.0 * k + a - 1.0) * (2.0 * k + a);
+    double a4 = 2.0 * (k + a - 1.0) * (k - 1.0) * (2.0 * k + a);
+    a2 = a2 / a1;
+    a3 = a3 / a1;
+    a4 = a4 / a1;
+    Jn.row(k) = Jn.row(k - 1) * (x.transpose() * a3 + a2) - Jn.row(k - 2) * a4;
+    Jd.row(k) = Jn.row(k - 1) * a3 + Jd.row(k - 1) * (x.transpose() * a3 + a2)
+                - Jd.row(k - 2) * a4;
+  }
+
+  return Jd.row(n);
 }
 //-----------------------------------------------------------------------------
 Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
@@ -42,8 +74,6 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
   ///    implemented from the pseudocode given by Karniadakis and
   ///    Sherwin
 
-  const Polynomial J = compute_jacobi(a, m);
-  const Polynomial Jd = J.diff({1});
   const double eps = 1.e-8;
   const int max_iter = 100;
   Eigen::ArrayXd x(m);
@@ -61,8 +91,8 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
       double s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      double f = J.tabulate(x[k]);
-      double fp = Jd.tabulate(x[k]);
+      double f = compute_jacobi(a, m, x.row(k))[0];
+      double fp = compute_jacobi_deriv(a, m, x.row(k))[0];
       double delta = f / (fp - f * s);
       x[k] -= delta;
 
@@ -80,7 +110,7 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
 {
   // Computes on [-1, 1]
   const Eigen::ArrayXd pts = compute_gauss_jacobi_points(a, m);
-  const Polynomial Jd = compute_jacobi(a, m).diff({1});
+  const Eigen::ArrayXd Jd = compute_jacobi_deriv(a, m, pts);
 
   const double a1 = pow(2.0, a + 1.0);
   const double a3 = tgamma(m + 1.0);
@@ -94,7 +124,7 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
   for (int i = 0; i < m; ++i)
   {
     const double x = pts[i];
-    const double f = Jd.tabulate(x);
+    const double f = Jd[i];
     wts[i] = a6 / (1.0 - x * x) / (f * f);
   }
 

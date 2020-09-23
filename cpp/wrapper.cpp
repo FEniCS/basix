@@ -72,6 +72,9 @@ PYBIND11_MODULE(fiatx, m)
 
   m.def("compute_polynomial_set", &PolynomialSet::compute_polynomial_set);
 
+  m.def("compute_jacobi", &compute_jacobi);
+  m.def("compute_jacobi_deriv", &compute_jacobi_deriv);
+
   m.def("make_quadrature",
         py::overload_cast<const Eigen::Array<double, Eigen::Dynamic,
                                              Eigen::Dynamic, Eigen::RowMajor>&,

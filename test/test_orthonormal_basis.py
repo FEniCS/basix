@@ -7,8 +7,8 @@ import pytest
 import numpy as np
 
 
-def test_quad():
-    order = 2
+@pytest.mark.parametrize("order", [2, 3, 4, 5])
+def test_quad(order):
     basis = fiatx.compute_polynomial_set(fiatx.CellType.quadrilateral, order)
     cell = fiatx.Cell(fiatx.CellType.interval)
     pts = cell.create_lattice(1, True)
@@ -23,9 +23,9 @@ def test_quad():
     mat = np.zeros((len(basis), len(basis)))
     for i, p in enumerate(basis):
         for j, q in enumerate(basis):
-            w = p*q
+            w = p.tabulate(Qpts) * q.tabulate(Qpts)
             s = 0.0
-            for val, wt in zip(w.tabulate(Qpts), Qwts):
+            for val, wt in zip(w, Qwts):
                 s += val*wt
             mat[i, j] = s
 
@@ -34,12 +34,12 @@ def test_quad():
     assert(np.isclose(mat * 4.0, np.eye(mat.shape[0])).all())
 
 
-def test_pyramid():
-    order = 2
+@pytest.mark.parametrize("order", [1, 2, 3])
+def test_pyramid(order):
     basis = fiatx.compute_polynomial_set(fiatx.CellType.pyramid, order)
     cell = fiatx.Cell(fiatx.CellType.interval)
     pts = cell.create_lattice(1, True)
-    Lpts, Lwts = fiatx.make_quadrature(pts, order + 5)
+    Lpts, Lwts = fiatx.make_quadrature(pts, order + 4)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -52,9 +52,9 @@ def test_pyramid():
     mat = np.zeros((len(basis), len(basis)))
     for i, p in enumerate(basis):
         for j, q in enumerate(basis):
-            w = p*q
+            w = p.tabulate(Qpts) * q.tabulate(Qpts)
             s = 0.0
-            for val, wt in zip(w.tabulate(Qpts), Qwts):
+            for val, wt in zip(w, Qwts):
                 s += val*wt
             mat[i, j] = s
 
@@ -63,8 +63,8 @@ def test_pyramid():
     assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
 
 
-def test_hex():
-    order = 2
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
+def test_hex(order):
     basis = fiatx.compute_polynomial_set(fiatx.CellType.hexahedron, order)
     cell = fiatx.Cell(fiatx.CellType.interval)
     pts = cell.create_lattice(1, True)
@@ -80,9 +80,9 @@ def test_hex():
     mat = np.zeros((len(basis), len(basis)))
     for i, p in enumerate(basis):
         for j, q in enumerate(basis):
-            w = p*q
+            w = p.tabulate(Qpts) * q.tabulate(Qpts)
             s = 0.0
-            for val, wt in zip(w.tabulate(Qpts), Qwts):
+            for val, wt in zip(w, Qwts):
                 s += val*wt
             mat[i, j] = s
 
@@ -91,8 +91,8 @@ def test_hex():
     assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
 
 
-def test_prism():
-    order = 2
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
+def test_prism(order):
     basis = fiatx.compute_polynomial_set(fiatx.CellType.prism, order)
     tri_cell = fiatx.Cell(fiatx.CellType.triangle)
     pts = tri_cell.create_lattice(1, True)
@@ -110,9 +110,9 @@ def test_prism():
     mat = np.zeros((len(basis), len(basis)))
     for i, p in enumerate(basis):
         for j, q in enumerate(basis):
-            w = p*q
+            w = p.tabulate(Qpts) * q.tabulate(Qpts)
             s = 0.0
-            for val, wt in zip(w.tabulate(Qpts), Qwts):
+            for val, wt in zip(w, Qwts):
                 s += val*wt
             mat[i, j] = s
 
@@ -122,8 +122,8 @@ def test_prism():
 
 
 @pytest.mark.parametrize("cell_type", [fiatx.CellType.interval, fiatx.CellType.triangle, fiatx.CellType.tetrahedron])
-def test_cell(cell_type):
-    order = 3
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
+def test_cell(cell_type, order):
     basis = fiatx.compute_polynomial_set(cell_type, order)
     cell = fiatx.Cell(cell_type)
     pts = cell.create_lattice(1, True)
@@ -131,9 +131,9 @@ def test_cell(cell_type):
     mat = np.zeros((len(basis), len(basis)))
     for i, p in enumerate(basis):
         for j, q in enumerate(basis):
-            w = p*q
+            w = p.tabulate(Qpts) * q.tabulate(Qpts)
             s = 0.0
-            for val, wt in zip(w.tabulate(Qpts), Qwts):
+            for val, wt in zip(w, Qwts):
                 s += val*wt
             mat[i, j] = s
 

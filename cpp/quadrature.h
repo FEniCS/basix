@@ -2,17 +2,25 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "polynomial.h"
 #include <Eigen/Dense>
 
 #pragma once
 
-/// Evaluate the nth jacobi polynomial with weight parameters (a, 0)
-Polynomial compute_jacobi(int a, int n);
+/// Evaluate the nth jacobi polynomial with weight parameters (a, 0) at points x
+/// @param a Jacobi weight a
+/// @param n Order of polynomial
+/// @param x Points at which to evaluate
+Eigen::ArrayXd compute_jacobi(double a, int n, const Eigen::ArrayXd& x);
+
+/// Evaluate the nth jacobi polynomial derivative with weight parameters (a, 0) at points x
+/// @param a Jacobi weight a
+/// @param n Order of polynomial
+/// @param x Points at which to evaluate
+Eigen::ArrayXd compute_jacobi_deriv(double a, int n, const Eigen::ArrayXd& x);
 
 // Computes Gauss-Jacobi quadrature points
 /// Finds the m roots of P_{m}^{a,0} on [-1,1] by Newton's method.
-/// @param a weight in jacobi (b=0)
+/// @param a weight in Jacobi (b=0)
 /// @param m order
 /// @return list of points in 1D
 Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m);

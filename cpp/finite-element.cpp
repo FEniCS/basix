@@ -42,7 +42,7 @@ void FiniteElement::apply_dualmat_to_basis(
       new_coeffs(coeffs.rows(), coeffs.cols());
 
   // auto Ainv = A.inverse();
-  // new_coeffs = Ainv * coeffs;
+  //  new_coeffs = Ainv * coeffs;
   // faster to use solve()
   new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 

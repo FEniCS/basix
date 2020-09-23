@@ -47,7 +47,11 @@ std::vector<Polynomial> create_polyset_line(int n, int axis, int dim)
   }
 
   for (int p = 0; p < n + 1; ++p)
+  {
     poly_set[p] *= sqrt(p + 0.5);
+    std::cout << "poly set Coeffs = " << poly_set[p].coefficients().transpose()
+              << "\n";
+  }
 
   return poly_set;
 }

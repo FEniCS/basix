@@ -7,8 +7,16 @@ import pytest
 import numpy as np
 
 
-@pytest.mark.parametrize("order", [1, 2, 3, 4, 6, 8, 10, 11])
-def test_quadrature_basic(order):
+@pytest.mark.parametrize("order", [1, 2, 4, 8, 20, 40, 80])
+def test_quadrature_interval(order):
+    simplex = [[0], [1]]
+    Qpts, Qwts = fiatx.make_quadrature(simplex, order)
+    w = sum(Qwts)
+    assert np.isclose(w, 1.0)
+
+
+@pytest.mark.parametrize("order", [1, 2, 4, 20, 40])
+def test_quadrature_triangle(order):
     b = 7.0
     h = 5.0
     simplex = [[0, 0], [b, 0], [0, h]]
@@ -16,6 +24,8 @@ def test_quadrature_basic(order):
     w = sum(Qwts)
     assert np.isclose(w, 0.5 * b * h)
 
+@pytest.mark.parametrize("order", [1, 2, 4, 20, 40])
+def test_quadrature_tet(order):
     b = 7.0
     h = 5.0
     x = 3.0

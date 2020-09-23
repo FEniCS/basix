@@ -27,7 +27,7 @@ std::vector<Polynomial> create_polyset_line(int n, int axis, int dim)
   assert(axis < dim);
 
   // Polynomial representing x, y, or z.
-  std::vector<double> w(dim + 1);
+  std::vector<double> w(dim + 1, 0.0);
   w[axis + 1] = 1.0;
   const Polynomial x0(w, dim);
 

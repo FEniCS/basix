@@ -46,9 +46,9 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
 
   auto [Qpts, Qwts] = make_quadrature(tdim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts(psize, Qpts.rows());
-  for (int j = 0; j < psize; ++j)
-    Pkp1_at_Qpts.row(j) = Pkp1[j].tabulate(Qpts);
+      Pkp1_at_Qpts
+      = PolynomialSet::tabulate_polynomial_set(celltype, _degree + 1, Qpts)
+            .transpose();
 
   // Create initial coefficients of Pkp1.
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -118,9 +118,9 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
 
     // Tabulate Pkp1 at facet quadrature points
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsE(psize, QptsE_scaled.rows());
-    for (int j = 0; j < psize; ++j)
-      Pkp1_at_QptsE.row(j) = Pkp1[j].tabulate(QptsE_scaled);
+        Pkp1_at_QptsE = PolynomialSet::tabulate_polynomial_set(
+                            celltype, _degree + 1, QptsE_scaled)
+                            .transpose();
 
     // Compute facet normal integral moments by quadrature
     for (std::size_t j = 0; j < Pq.size(); ++j)
@@ -140,11 +140,12 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
   if (_degree > 0)
   {
     // Interior integral moment
-    std::vector<Polynomial> Pkm1
-        = PolynomialSet::compute_polynomial_set(celltype, _degree - 1);
-    for (std::size_t i = 0; i < Pkm1.size(); ++i)
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        Pkm1_at_Qpts
+        = PolynomialSet::tabulate_polynomial_set(celltype, _degree - 1, Qpts);
+    for (std::size_t i = 0; i < Pkm1_at_Qpts.cols(); ++i)
     {
-      Eigen::ArrayXd phi = Pkm1[i].tabulate(Qpts);
+      Eigen::ArrayXd phi = Pkm1_at_Qpts.col(i);
       Eigen::VectorXd q = phi * Qwts;
       Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
       assert(qcoeffs.size() == psize);

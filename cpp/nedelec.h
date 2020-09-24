@@ -6,23 +6,15 @@
 
 #pragma once
 
-class Nedelec2D : public FiniteElement
+class Nedelec : public FiniteElement
 {
-  /// Nedelec element (first kind) in 2D of order k
+  /// Nedelec element (first kind) of order k
 public:
-  Nedelec2D(int k);
+  Nedelec(Cell::Type celltype, int k);
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  tabulate_basis(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                    Eigen::RowMajor>& pts) const;
-};
-
-class Nedelec3D : public FiniteElement
-{
-  /// Nedelec element (first kind) in 3D of order k
-public:
-  Nedelec3D(int k);
-
+  /// Tabulate basis at points
+  /// @param pts Points
+  /// @return Basis values at points
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   tabulate_basis(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>& pts) const;

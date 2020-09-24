@@ -31,13 +31,9 @@ PYBIND11_MODULE(fiatx, m)
       .def(py::init<Cell::Type>())
       .def("create_lattice", &Cell::create_lattice);
 
-  py::class_<Nedelec2D>(m, "Nedelec2D")
-      .def(py::init<int>())
-      .def("tabulate_basis", &Nedelec2D::tabulate_basis);
-
-  py::class_<Nedelec3D>(m, "Nedelec3D")
-      .def(py::init<int>())
-      .def("tabulate_basis", &Nedelec3D::tabulate_basis);
+  py::class_<Nedelec>(m, "Nedelec")
+      .def(py::init<Cell::Type, int>())
+      .def("tabulate_basis", &Nedelec::tabulate_basis);
 
   py::class_<Lagrange>(m, "Lagrange")
       .def(py::init<Cell::Type, int>())

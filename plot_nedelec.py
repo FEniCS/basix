@@ -2,10 +2,9 @@ import numpy
 import matplotlib.pyplot as plt
 from fiatx import *
 
-N = Nedelec2D(2)
+N = Nedelec(CellType.triangle, 2)
 
-cell = Cell(CellType.triangle)
-pts = cell.create_lattice(20, True)
+pts = create_lattice(CellType.triangle, 20, True)
 w = N.tabulate_basis(pts)
 
 nc = w.shape[1]//2

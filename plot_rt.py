@@ -4,8 +4,7 @@ from fiatx import *
 
 RT = RaviartThomas(CellType.triangle, 2)
 
-cell = Cell(CellType.triangle)
-pts = cell.create_lattice(20, True)
+pts = create_lattice(CellType.triangle, 20, True)
 
 w = RT.tabulate_basis(pts)
 nc = w.shape[1]//2

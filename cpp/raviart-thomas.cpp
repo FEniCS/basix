@@ -4,7 +4,6 @@
 
 #include "raviart-thomas.h"
 #include "polynomial-set.h"
-#include "polynomial.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
@@ -20,11 +19,6 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
   Cell simplex_cell(celltype);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
       = simplex_cell.geometry();
-
-  // Create orthonormal basis on simplex
-  std::vector<Polynomial> Pkp1
-      = PolynomialSet::compute_polynomial_set(celltype, _degree + 1);
-  int psize = Pkp1.size();
 
   // Vector subsets
   int nv;
@@ -47,8 +41,9 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
   auto [Qpts, Qwts] = make_quadrature(tdim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts
-      = PolynomialSet::tabulate_polynomial_set(celltype, _degree + 1, Qpts)
-            .transpose();
+      = PolynomialSet::tabulate_polynomial_set(celltype, _degree + 1, Qpts);
+
+  const int psize = Pkp1_at_Qpts.cols();
 
   // Create initial coefficients of Pkp1.
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -62,8 +57,8 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
     for (int k = 0; k < psize; ++k)
       for (int j = 0; j < tdim; ++j)
       {
-        auto w = Qwts * Pkp1_at_Qpts.row(ns0 + i).transpose() * Qpts.col(j)
-                 * Pkp1_at_Qpts.row(k).transpose();
+        auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
+                 * Pkp1_at_Qpts.col(k);
         wcoeffs(nv * tdim + i, k + psize * j) = w.sum();
       }
 
@@ -79,11 +74,12 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
   // Create a polynomial set on a reference facet
   Cell::Type facettype
       = (tdim == 2) ? Cell::Type::interval : Cell::Type::triangle;
-  std::vector<Polynomial> Pq
-      = PolynomialSet::compute_polynomial_set(facettype, _degree);
   // Create quadrature scheme on the facet
   int quad_deg = 5 * (_degree + 1);
   auto [QptsE, QwtsE] = make_quadrature(tdim - 1, quad_deg);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      Pq_at_QptsE
+      = PolynomialSet::tabulate_polynomial_set(facettype, _degree, QptsE);
 
   for (int i = 0; i < (tdim + 1); ++i)
   {
@@ -119,17 +115,16 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
     // Tabulate Pkp1 at facet quadrature points
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Pkp1_at_QptsE = PolynomialSet::tabulate_polynomial_set(
-                            celltype, _degree + 1, QptsE_scaled)
-                            .transpose();
+            celltype, _degree + 1, QptsE_scaled);
 
     // Compute facet normal integral moments by quadrature
-    for (std::size_t j = 0; j < Pq.size(); ++j)
+    for (int j = 0; j < Pq_at_QptsE.cols(); ++j)
     {
-      Eigen::ArrayXd phi = Pq[j].tabulate(QptsE);
+      Eigen::ArrayXd phi = Pq_at_QptsE.col(j);
       for (int k = 0; k < tdim; ++k)
       {
         Eigen::VectorXd q = phi * QwtsE * normal[k];
-        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE.matrix() * q;
+        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE.matrix().transpose() * q;
         dualmat.block(c, psize * k, 1, psize) = qcoeffs;
       }
       ++c;
@@ -143,11 +138,11 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Pkm1_at_Qpts
         = PolynomialSet::tabulate_polynomial_set(celltype, _degree - 1, Qpts);
-    for (std::size_t i = 0; i < Pkm1_at_Qpts.cols(); ++i)
+    for (int i = 0; i < Pkm1_at_Qpts.cols(); ++i)
     {
       Eigen::ArrayXd phi = Pkm1_at_Qpts.col(i);
       Eigen::VectorXd q = phi * Qwts;
-      Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix() * q;
+      Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix().transpose() * q;
       assert(qcoeffs.size() == psize);
       for (int j = 0; j < tdim; ++j)
       {
@@ -157,6 +152,34 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
     }
   }
 
-  apply_dualmat_to_basis(wcoeffs, dualmat, Pkp1, tdim);
+  apply_dualmat_to_basis(wcoeffs, dualmat);
 }
 //-----------------------------------------------------------------------------
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+RaviartThomas::tabulate_basis(
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts) const
+{
+  const int tdim = Cell::topological_dimension(_cell_type);
+  if (pts.cols() != tdim)
+    throw std::runtime_error(
+        "Point dimension does not match element dimension");
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      Pkp1_at_pts
+      = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree + 1, pts);
+  const int psize = Pkp1_at_pts.cols();
+  const int ndofs = _new_coeffs.rows();
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
+      pts.rows(), ndofs * tdim);
+  result.setZero();
+
+  for (int j = 0; j < tdim; ++j)
+    for (int i = 0; i < ndofs; ++i)
+      for (int k = 0; k < psize; ++k)
+        result.col(i + ndofs * j)
+            += Pkp1_at_pts.col(k) * _new_coeffs(i, k + psize * j);
+
+  return result;
+}

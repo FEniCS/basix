@@ -51,26 +51,7 @@ PYBIND11_MODULE(fiatx, m)
       .def(py::init<Cell::Type, int>())
       .def("tabulate_basis", &RaviartThomas::tabulate_basis);
 
-  py::class_<Polynomial>(m, "Polynomial")
-      .def(py::init<>())
-      .def(py::self + py::self)
-      .def(py::self += py::self)
-      .def(py::self - py::self)
-      .def(py::self * py::self)
-      .def(py::self * float())
-      .def(py::self *= float())
-      .def_static("zero", &Polynomial::zero)
-      .def_static("one", &Polynomial::one)
-      .def_static("x", &Polynomial::x)
-      .def_static("y", &Polynomial::y)
-      .def_static("z", &Polynomial::z)
-      .def("diff", &Polynomial::diff)
-      .def("tabulate",
-           py::overload_cast<const Eigen::Array<
-               double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&>(
-               &Polynomial::tabulate, py::const_));
-
-  m.def("compute_polynomial_set", &PolynomialSet::compute_polynomial_set);
+  m.def("tabulate_polynomial_set", &PolynomialSet::tabulate_polynomial_set);
 
   m.def("compute_jacobi", &compute_jacobi);
   m.def("compute_jacobi_deriv", &compute_jacobi_deriv);

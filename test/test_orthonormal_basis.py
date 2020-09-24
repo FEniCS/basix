@@ -59,7 +59,7 @@ def test_pyramid(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_hex(order):
-    pts = fiatx.create_lattice(fiatx.CellType.interval,1, True)
+    pts = fiatx.create_lattice(fiatx.CellType.interval, 1, True)
     Lpts, Lwts = fiatx.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []

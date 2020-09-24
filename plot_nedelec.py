@@ -1,6 +1,5 @@
-import numpy
 import matplotlib.pyplot as plt
-from fiatx import *
+from fiatx import Nedelec, CellType, create_lattice
 
 N = Nedelec(CellType.triangle, 2)
 
@@ -13,6 +12,6 @@ fig, ax = plt.subplots(2, 3)
 for j, a in enumerate(ax.flatten()):
     ned_shape_fn_x = w[:, j]
     ned_shape_fn_y = w[:, j + nc]
-    a.quiver(pts[:,0], pts[:, 1], ned_shape_fn_x, ned_shape_fn_y)
+    a.quiver(pts[:, 0], pts[:, 1], ned_shape_fn_x, ned_shape_fn_y)
 
 plt.show()

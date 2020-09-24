@@ -172,90 +172,98 @@ tabulate_polyset_tetrahedron(
   return result;
 }
 //-----------------------------------------------------------------------------
-// std::vector<Polynomial> create_polyset_pyramid(int n)
-// {
-//   const Polynomial one = Polynomial::one();
-//   const Polynomial x = Polynomial::x(3) * 2.0 - one;
-//   const Polynomial y = Polynomial::y(3) * 2.0 - one;
-//   const Polynomial z = Polynomial::z(3) * 2.0 - one;
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+tabulate_polyset_pyramid(
+    int n,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts)
+{
+  assert(pts.cols() == 3);
 
-//   const int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
-//   std::vector<Polynomial> poly_set(m);
-//   const Polynomial f1x = (one + x * 2.0 + z) * 0.5;
-//   const Polynomial f1y = (one + y * 2.0 + z) * 0.5;
-//   const Polynomial f2 = (one - z) * (one - z) * 0.25;
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x
+      = pts * 2.0 - 1.0;
 
-//   // Indexing for pyramidal basis functions
-//   auto pyr_idx = [&n, &m](int p, int q, int r) {
-//     const int rv = (n - r);
-//     const int r0 = rv * (rv + 1) * (2 * rv + 1) / 6;
-//     const int idx = r0 + p * (rv + 1) + q;
-//     assert(idx < m);
-//     return idx;
-//   };
+  const int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
+      pts.rows(), m);
 
-//   poly_set[pyr_idx(0, 0, 0)] = one;
-//   if (n > 0)
-//   {
-//     poly_set[pyr_idx(1, 0, 0)] = f1x;
-//     poly_set[pyr_idx(0, 1, 0)] = f1y;
-//   }
-//   else
-//     return poly_set;
+  //  const auto f1x = (1.0 + x.col(0) * 2.0 + x.col(2)) * 0.5;
+  //  const auto f1y = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
+  const auto f2 = (1.0 - x.col(2)).square() * 0.25;
 
-//   // r = 0
-//   for (int p = 1; p < n; ++p)
-//   {
-//     const double a = static_cast<double>(p) / static_cast<double>(p + 1);
-//     poly_set[pyr_idx(p + 1, 0, 0)]
-//         = f1x * poly_set[pyr_idx(p, 0, 0)] * (a + 1.0)
-//           - f2 * poly_set[pyr_idx(p - 1, 0, 0)] * a;
-//   }
+  // Indexing for pyramidal basis functions
+  auto pyr_idx = [&n, &m](int p, int q, int r) {
+    const int rv = (n - r);
+    const int r0 = rv * (rv + 1) * (2 * rv + 1) / 6;
+    const int idx = r0 + p * (rv + 1) + q;
+    assert(idx < m);
+    return idx;
+  };
 
-//   for (int q = 1; q < n; ++q)
-//   {
-//     const double a = static_cast<double>(q) / static_cast<double>(q + 1);
-//     poly_set[pyr_idx(0, q + 1, 0)]
-//         = f1y * poly_set[pyr_idx(0, q, 0)] * (a + 1.0)
-//           - f2 * poly_set[pyr_idx(0, q - 1, 0)] * a;
-//   }
+  result.col(pyr_idx(0, 0, 0)).fill(1.0);
+  if (n > 0)
+  {
+    result.col(pyr_idx(1, 0, 0)) = (1.0 + x.col(0) * 2.0 + x.col(2)) * 0.5;
+    result.col(pyr_idx(0, 1, 0)) = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
+  }
+  else
+    return result;
 
-//   for (int p = 1; p < n + 1; ++p)
-//     for (int q = 1; q < n + 1; ++q)
-//     {
-//       poly_set[pyr_idx(p, q, 0)]
-//           = poly_set[pyr_idx(p, 0, 0)] * poly_set[pyr_idx(0, q, 0)];
-//     }
+  // r = 0
+  for (int p = 1; p < n; ++p)
+  {
+    const double a = static_cast<double>(p) / static_cast<double>(p + 1);
+    result.col(pyr_idx(p + 1, 0, 0))
+        = result.col(pyr_idx(1, 0, 0)) * result.col(pyr_idx(p, 0, 0))
+              * (a + 1.0)
+          - f2 * result.col(pyr_idx(p - 1, 0, 0)) * a;
+  }
 
-//   // Extend into r > 0
-//   for (int p = 0; p < n; ++p)
-//     for (int q = 0; q < n; ++q)
-//     {
-//       poly_set[pyr_idx(p, q, 1)] = poly_set[pyr_idx(p, q, 0)]
-//                                    * (one * (1.0 + p + q) + z * (2.0 + p +
-//                                    q));
-//     }
+  for (int q = 1; q < n; ++q)
+  {
+    const double a = static_cast<double>(q) / static_cast<double>(q + 1);
+    result.col(pyr_idx(0, q + 1, 0))
+        = result.col(pyr_idx(0, 1, 0)) * result.col(pyr_idx(0, q, 0))
+              * (a + 1.0)
+          - f2 * result.col(pyr_idx(0, q - 1, 0)) * a;
+  }
 
-//   for (int r = 1; r < n + 1; ++r)
-//     for (int p = 0; p < n - r; ++p)
-//       for (int q = 0; q < n - r; ++q)
-//       {
-//         auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
-//         poly_set[pyr_idx(p, q, r + 1)]
-//             = poly_set[pyr_idx(p, q, r)] * (z * ar + one * br)
-//               - poly_set[pyr_idx(p, q, r - 1)] * cr;
-//       }
+  for (int p = 1; p < n + 1; ++p)
+    for (int q = 1; q < n + 1; ++q)
+    {
+      result.col(pyr_idx(p, q, 0))
+          = result.col(pyr_idx(p, 0, 0)) * result.col(pyr_idx(0, q, 0));
+    }
 
-//   for (int r = 0; r < n + 1; ++r)
-//     for (int p = 0; p < n - r + 1; ++p)
-//       for (int q = 0; q < n - r + 1; ++q)
-//       {
-//         poly_set[pyr_idx(p, q, r)]
-//             *= sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
-//       }
+  // Extend into r > 0
+  for (int p = 0; p < n; ++p)
+    for (int q = 0; q < n; ++q)
+    {
+      result.col(pyr_idx(p, q, 1))
+          = result.col(pyr_idx(p, q, 0))
+            * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
+    }
 
-//   return poly_set;
-// }
+  for (int r = 1; r < n + 1; ++r)
+    for (int p = 0; p < n - r; ++p)
+      for (int q = 0; q < n - r; ++q)
+      {
+        auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+        result.col(pyr_idx(p, q, r + 1))
+            = result.col(pyr_idx(p, q, r)) * (x.col(2) * ar + br)
+              - result.col(pyr_idx(p, q, r - 1)) * cr;
+      }
+
+  for (int r = 0; r < n + 1; ++r)
+    for (int p = 0; p < n - r + 1; ++p)
+      for (int q = 0; q < n - r + 1; ++q)
+      {
+        result.col(pyr_idx(p, q, r))
+            *= sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
+      }
+
+  return result;
+}
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_polyset_quad(int n,
@@ -304,18 +312,27 @@ tabulate_polyset_hex(int n,
   return result;
 }
 //-----------------------------------------------------------------------------
-// std::vector<Polynomial> create_polyset_prism(int n)
-// {
-//   const std::vector<Polynomial> pxy = create_polyset_triangle(n, 3);
-//   const std::vector<Polynomial> pz = create_polyset_line(n, 2, 3);
-//   std::vector<Polynomial> pxyz;
-//   for (const Polynomial& p : pxy)
-//     for (const Polynomial& q : pz)
-//       pxyz.push_back(p * q);
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+tabulate_polyset_prism(int n,
+                       const Eigen::Array<double, Eigen::Dynamic,
+                                          Eigen::Dynamic, Eigen::RowMajor>& pts)
+{
+  assert(pts.cols() == 3);
+  const int m = (n + 1) * (n + 1) * (n + 2) / 2;
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
+      pts.rows(), m);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pxy
+      = tabulate_polyset_triangle(n, pts.leftCols(2));
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pz
+      = tabulate_polyset_line(n, pts.col(2));
 
-//   return pxyz;
-// }
-//-----------------------------------------------------------------------------
+  int c = 0;
+  for (int i = 0; i < pxy.cols(); ++i)
+    for (int k = 0; k < pz.cols(); ++k)
+      result.col(c++) = pxy.col(i) * pz.col(k);
+
+  return result;
+}
 } // namespace
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -334,6 +351,10 @@ PolynomialSet::tabulate_polynomial_set(
     return tabulate_polyset_quad(n, pts);
   else if (celltype == Cell::Type::hexahedron)
     return tabulate_polyset_hex(n, pts);
+  else if (celltype == Cell::Type::prism)
+    return tabulate_polyset_prism(n, pts);
+  else if (celltype == Cell::Type::pyramid)
+    return tabulate_polyset_pyramid(n, pts);
 
   throw std::runtime_error("Polynomial set: Unsupported cell type");
 }

@@ -19,10 +19,11 @@ def test_quad(order):
             Qpts.append([p[0], q[0]])
             Qwts.append(u*v)
     basis = fiatx.tabulate_polynomial_set(fiatx.CellType.quadrilateral, order, Qpts)
+    ndofs = basis.shape[1]
 
-    mat = np.zeros((basis.shape[1], basis.shape[1]))
-    for i in range(basis.shape[1]):
-        for j in range(basis.shape[1]):
+    mat = np.zeros((ndofs, ndofs))
+    for i in range(ndofs):
+        for j in range(ndofs):
             mat[i, j] = sum(basis[:,i] * basis[:, j] * Qwts)
 
     np.set_printoptions(suppress=True)
@@ -30,10 +31,8 @@ def test_quad(order):
     assert(np.isclose(mat * 4.0, np.eye(mat.shape[0])).all())
 
 
-@pytest.mark.parametrize("order", [1, 2, 3])
-@pytest.mark.xfail
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_pyramid(order):
-    basis = fiatx.compute_polynomial_set(fiatx.CellType.pyramid, order)
     cell = fiatx.Cell(fiatx.CellType.interval)
     pts = cell.create_lattice(1, True)
     Lpts, Lwts = fiatx.make_quadrature(pts, order + 4)
@@ -45,15 +44,13 @@ def test_pyramid(order):
                 sc = (1.0 - r[0])
                 Qpts.append([p[0]*sc, q[0]*sc, r[0]])
                 Qwts.append(u*v*sc*sc*w)
+    basis = fiatx.tabulate_polynomial_set(fiatx.CellType.pyramid, order, Qpts)
+    ndofs = basis.shape[1]
 
-    mat = np.zeros((len(basis), len(basis)))
-    for i, p in enumerate(basis):
-        for j, q in enumerate(basis):
-            w = p.tabulate(Qpts) * q.tabulate(Qpts)
-            s = 0.0
-            for val, wt in zip(w, Qwts):
-                s += val*wt
-            mat[i, j] = s
+    mat = np.zeros((ndofs, ndofs))
+    for i in range(ndofs):
+        for j in range(ndofs):
+            mat[i, j] = sum(basis[:,i] * basis[:, j] * Qwts)
 
     np.set_printoptions(suppress=True, linewidth=220)
     print(mat)
@@ -86,9 +83,7 @@ def test_hex(order):
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
-@pytest.mark.xfail
 def test_prism(order):
-    basis = fiatx.compute_polynomial_set(fiatx.CellType.prism, order)
     tri_cell = fiatx.Cell(fiatx.CellType.triangle)
     pts = tri_cell.create_lattice(1, True)
     Tpts, Twts = fiatx.make_quadrature(pts, order + 2)
@@ -101,15 +96,13 @@ def test_prism(order):
         for q, v in zip(Lpts, Lwts):
             Qpts.append([p[0], p[1], q[0]])
             Qwts.append(u*v)
+    basis = fiatx.tabulate_polynomial_set(fiatx.CellType.prism, order, Qpts)
+    ndofs = basis.shape[1]
 
-    mat = np.zeros((len(basis), len(basis)))
-    for i, p in enumerate(basis):
-        for j, q in enumerate(basis):
-            w = p.tabulate(Qpts) * q.tabulate(Qpts)
-            s = 0.0
-            for val, wt in zip(w, Qwts):
-                s += val*wt
-            mat[i, j] = s
+    mat = np.zeros((ndofs, ndofs))
+    for i in range(ndofs):
+        for j in range(ndofs):
+            mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
     np.set_printoptions(suppress=True)
     print(mat)

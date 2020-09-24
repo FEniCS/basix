@@ -10,6 +10,9 @@ class Nedelec : public FiniteElement
 {
   /// Nedelec element (first kind) of order k
 public:
+  /// Constructor
+  /// @param celltype
+  /// @param k degree
   Nedelec(Cell::Type celltype, int k);
 
   /// Tabulate basis at points

@@ -24,6 +24,7 @@ def test_quadrature_triangle(order):
     w = sum(Qwts)
     assert np.isclose(w, 0.5 * b * h)
 
+
 @pytest.mark.parametrize("order", [1, 2, 4, 20, 40])
 def test_quadrature_tet(order):
     b = 7.0

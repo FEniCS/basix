@@ -18,13 +18,14 @@ def test_quad(order):
         for q, v in zip(Lpts, Lwts):
             Qpts.append([p[0], q[0]])
             Qwts.append(u*v)
-    basis = fiatx.tabulate_polynomial_set(fiatx.CellType.quadrilateral, order, Qpts)
+    basis = fiatx.tabulate_polynomial_set(fiatx.CellType.quadrilateral,
+                                          order, Qpts)
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):
         for j in range(ndofs):
-            mat[i, j] = sum(basis[:,i] * basis[:, j] * Qwts)
+            mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
     np.set_printoptions(suppress=True)
     print(mat, np.eye(mat.shape[0]))
@@ -44,13 +45,14 @@ def test_pyramid(order):
                 sc = (1.0 - r[0])
                 Qpts.append([p[0]*sc, q[0]*sc, r[0]])
                 Qwts.append(u*v*sc*sc*w)
-    basis = fiatx.tabulate_polynomial_set(fiatx.CellType.pyramid, order, Qpts)
+    basis = fiatx.tabulate_polynomial_set(fiatx.CellType.pyramid,
+                                          order, Qpts)
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):
         for j in range(ndofs):
-            mat[i, j] = sum(basis[:,i] * basis[:, j] * Qwts)
+            mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
     np.set_printoptions(suppress=True, linewidth=220)
     print(mat)
@@ -69,7 +71,8 @@ def test_hex(order):
             for r, w in zip(Lpts, Lwts):
                 Qpts.append([p[0], q[0], r[0]])
                 Qwts.append(u*v*w)
-    basis = fiatx.tabulate_polynomial_set(fiatx.CellType.hexahedron, order, Qpts)
+    basis = fiatx.tabulate_polynomial_set(fiatx.CellType.hexahedron,
+                                          order, Qpts)
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))
@@ -109,7 +112,9 @@ def test_prism(order):
     assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
 
 
-@pytest.mark.parametrize("cell_type", [fiatx.CellType.interval, fiatx.CellType.triangle, fiatx.CellType.tetrahedron])
+@pytest.mark.parametrize("cell_type", [fiatx.CellType.interval,
+                                       fiatx.CellType.triangle,
+                                       fiatx.CellType.tetrahedron])
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_cell(cell_type, order):
 

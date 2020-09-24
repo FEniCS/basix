@@ -19,7 +19,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt -y install libeigen3-dev python3-pytest python3-numpy
+        sudo apt -y install libeigen3-dev python3-pytest python3-numpy python3-flake8
         wget -nc --quiet https://github.com/pybind/pybind11/archive/v2.5.0.tar.gz
         tar -xf v2.5.0.tar.gz
         cd pybind11-2.5.0
@@ -53,4 +53,5 @@ jobs:
       run: |
         cd test
         export PYTHONPATH=${{runner.workspace}}/build
+	python3 -m flake8 .
         python3 -m pytest .

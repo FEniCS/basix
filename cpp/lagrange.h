@@ -2,8 +2,8 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "finite-element.h"
 #include "cell.h"
+#include "finite-element.h"
 #include <Eigen/Dense>
 #include <vector>
 
@@ -11,13 +11,18 @@
 
 class Lagrange : public FiniteElement
 {
-  /// Lagrange element of given dimension (1, 2 or 3) and degree.
+  /// Lagrange element
 public:
+  /// Constructor
+  /// Lagrange element on cell with given degree
+  /// @param celltype interval, triangle or tetrahedral celltype
+  /// @param degree
   Lagrange(Cell::Type celltype, int degree);
 
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-tabulate_basis(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-    pts) const;
-
+  /// Tabulate basis at points
+  /// @param pts Points
+  /// @return Basis values at points
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  tabulate_basis(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                    Eigen::RowMajor>& pts) const;
 };

@@ -53,5 +53,5 @@ jobs:
       run: |
         cd test
         export PYTHONPATH=${{runner.workspace}}/build
-	python3 -m flake8 .
+        python3 -m flake8 .
         python3 -m pytest .

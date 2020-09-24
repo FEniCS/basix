@@ -14,9 +14,8 @@ Lagrange::Lagrange(Cell::Type celltype, int degree)
     throw std::runtime_error("Invalid celltype");
 
   // Tabulate basis at nodes
-  Cell c(celltype);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
-      = c.create_lattice(degree, true);
+      = Cell::create_lattice(celltype, degree, true);
 
   Eigen::MatrixXd dualmat
       = PolynomialSet::tabulate_polynomial_set(celltype, degree, pt);
@@ -40,7 +39,7 @@ Lagrange::tabulate_basis(
       basis_at_pts
       = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree, pts);
   const int psize = basis_at_pts.cols();
-  const int ndofs = _new_coeffs.rows();
+  const int ndofs = _coeffs.rows();
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
       pts.rows(), ndofs);
@@ -48,7 +47,7 @@ Lagrange::tabulate_basis(
 
   for (int i = 0; i < ndofs; ++i)
     for (int k = 0; k < psize; ++k)
-      result.col(i) += basis_at_pts.col(k) * _new_coeffs(i, k);
+      result.col(i) += basis_at_pts.col(k) * _coeffs(i, k);
 
   return result;
 }

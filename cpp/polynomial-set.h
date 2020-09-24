@@ -19,15 +19,14 @@ static inline int idx(int p, int q, int r)
          + (q + r) * (q + r + 1) / 2 + r;
 };
 
-class PolynomialSet
+namespace PolynomialSet
 {
-public:
   /// Orthonormal polynomial basis on reference cell
   /// @param celltype Cell type
   /// @param n order
   /// @param pts points
   /// @return Polynomial set tabulated at points
-  static Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   tabulate_polynomial_set(
       Cell::Type celltype, int n,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,

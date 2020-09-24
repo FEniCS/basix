@@ -18,7 +18,6 @@ create_nedelec_2d_space(int degree)
 {
   // Reference triangle
   const int tdim = 2;
-  Cell simplex_cell(Cell::Type::triangle);
 
   // Vector subset
   const int nv = (degree + 1) * (degree + 2) / 2;
@@ -59,7 +58,6 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 create_nedelec_2d_dual(int degree)
 {
   const int tdim = 2;
-  Cell simplex_cell(Cell::Type::triangle);
 
   const int ndofs = 3 * (degree + 1) + degree * (degree + 1);
   auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
@@ -91,7 +89,7 @@ create_nedelec_2d_dual(int degree)
   {
     // FIXME: get edge tangent from the cell class
     Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
-        = simplex_cell.sub_entity_geometry(1, i);
+        = Cell::sub_entity_geometry(Cell::Type::triangle, 1, i);
     Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
 
     // UFC convention?
@@ -151,7 +149,6 @@ create_nedelec_3d_space(int degree)
 {
   // Reference tetrahedron
   const int tdim = 3;
-  Cell simplex_cell(Cell::Type::tetrahedron);
 
   // Vector subset
   const int nv = (degree + 1) * (degree + 2) * (degree + 3) / 6;
@@ -212,7 +209,6 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 create_nedelec_3d_dual(int degree)
 {
   const int tdim = 3;
-  Cell simplex_cell(Cell::Type::tetrahedron);
 
   // Dual space
   auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
@@ -245,7 +241,7 @@ create_nedelec_3d_dual(int degree)
   {
     // FIXME: get tangent from the simplex class
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> edge
-        = simplex_cell.sub_entity_geometry(1, i);
+        = Cell::sub_entity_geometry(Cell::Type::tetrahedron, 1, i);
     Eigen::Vector3d tangent = edge.row(1) - edge.row(0);
 
     // Map quadrature points onto tetrahedron edge
@@ -288,7 +284,7 @@ create_nedelec_3d_dual(int degree)
     for (int i = 0; i < 4; ++i)
     {
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          facet = simplex_cell.sub_entity_geometry(2, i);
+          facet = Cell::sub_entity_geometry(Cell::Type::tetrahedron, 2, i);
       // Face tangents
       Eigen::Vector3d t0 = facet.row(1) - facet.row(0);
       Eigen::Vector3d t1 = facet.row(2) - facet.row(0);
@@ -385,7 +381,7 @@ Nedelec::tabulate_basis(
       Pkp1_at_pts
       = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree + 1, pts);
   const int psize = Pkp1_at_pts.cols();
-  const int ndofs = _new_coeffs.rows();
+  const int ndofs = _coeffs.rows();
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
       pts.rows(), ndofs * tdim);
@@ -395,7 +391,7 @@ Nedelec::tabulate_basis(
     for (int i = 0; i < ndofs; ++i)
       for (int k = 0; k < psize; ++k)
         result.col(i + ndofs * j)
-            += Pkp1_at_pts.col(k) * _new_coeffs(i, k + psize * j);
+            += Pkp1_at_pts.col(k) * _coeffs(i, k + psize * j);
 
   return result;
 }

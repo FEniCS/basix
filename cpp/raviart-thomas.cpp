@@ -16,9 +16,6 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
     throw std::runtime_error("Unsupported cell type");
 
   const int tdim = Cell::topological_dimension(celltype);
-  Cell simplex_cell(celltype);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> simplex
-      = simplex_cell.geometry();
 
   // Vector subsets
   int nv;
@@ -84,7 +81,7 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
   for (int i = 0; i < (tdim + 1); ++i)
   {
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> facet
-        = simplex_cell.sub_entity_geometry(tdim - 1, i);
+        = Cell::sub_entity_geometry(celltype, tdim - 1, i);
 
     // FIXME: get normal from the cell class
     Eigen::VectorXd normal;
@@ -169,7 +166,7 @@ RaviartThomas::tabulate_basis(
       Pkp1_at_pts
       = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree + 1, pts);
   const int psize = Pkp1_at_pts.cols();
-  const int ndofs = _new_coeffs.rows();
+  const int ndofs = _coeffs.rows();
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
       pts.rows(), ndofs * tdim);
@@ -179,7 +176,7 @@ RaviartThomas::tabulate_basis(
     for (int i = 0; i < ndofs; ++i)
       for (int k = 0; k < psize; ++k)
         result.col(i + ndofs * j)
-            += Pkp1_at_pts.col(k) * _new_coeffs(i, k + psize * j);
+            += Pkp1_at_pts.col(k) * _coeffs(i, k + psize * j);
 
   return result;
 }

@@ -10,8 +10,9 @@
 
 class FiniteElement
 {
-  /// Finite element base class, taking the spatial dimension and degree,
-  /// storing basis as a polynomial set.
+  /// Finite element base class, taking the cell type and degree,
+  /// The basis is stored as a set of coefficients, which are applied to the
+  /// underlying expansion set for that cell type, when tabulating.
 
 public:
   /// Element of given dimension (1, 2 or 3) and degree.
@@ -42,6 +43,6 @@ protected:
 
   // Coefficient of expansion sets on cell
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-    _new_coeffs;
+    _coeffs;
 
 };

@@ -9,8 +9,7 @@ import numpy as np
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_quad(order):
-    cell = fiatx.Cell(fiatx.CellType.interval)
-    pts = cell.create_lattice(1, True)
+    pts = fiatx.create_lattice(fiatx.CellType.interval, 1, True)
     Lpts, Lwts = fiatx.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []
@@ -34,8 +33,7 @@ def test_quad(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_pyramid(order):
-    cell = fiatx.Cell(fiatx.CellType.interval)
-    pts = cell.create_lattice(1, True)
+    pts = fiatx.create_lattice(fiatx.CellType.interval, 1, True)
     Lpts, Lwts = fiatx.make_quadrature(pts, order + 4)
     Qwts = []
     Qpts = []
@@ -61,8 +59,7 @@ def test_pyramid(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_hex(order):
-    cell = fiatx.Cell(fiatx.CellType.interval)
-    pts = cell.create_lattice(1, True)
+    pts = fiatx.create_lattice(fiatx.CellType.interval,1, True)
     Lpts, Lwts = fiatx.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []
@@ -87,11 +84,9 @@ def test_hex(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_prism(order):
-    tri_cell = fiatx.Cell(fiatx.CellType.triangle)
-    pts = tri_cell.create_lattice(1, True)
+    pts = fiatx.create_lattice(fiatx.CellType.triangle, 1, True)
     Tpts, Twts = fiatx.make_quadrature(pts, order + 2)
-    line_cell = fiatx.Cell(fiatx.CellType.interval)
-    pts = line_cell.create_lattice(1, True)
+    pts = fiatx.create_lattice(fiatx.CellType.interval, 1, True)
     Lpts, Lwts = fiatx.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []
@@ -118,8 +113,7 @@ def test_prism(order):
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_cell(cell_type, order):
 
-    cell = fiatx.Cell(cell_type)
-    pts = cell.create_lattice(1, True)
+    pts = fiatx.create_lattice(cell_type, 1, True)
     Qpts, Qwts = fiatx.make_quadrature(pts, order + 2)
     basis = fiatx.tabulate_polynomial_set(cell_type, order, Qpts)
     ndofs = basis.shape[1]

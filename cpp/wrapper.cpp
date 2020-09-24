@@ -27,9 +27,7 @@ PYBIND11_MODULE(fiatx, m)
       .value("prism", Cell::Type::prism)
       .value("pyramid", Cell::Type::pyramid);
 
-  py::class_<Cell>(m, "Cell")
-      .def(py::init<Cell::Type>())
-      .def("create_lattice", &Cell::create_lattice);
+  m.def("create_lattice", &Cell::create_lattice);
 
   py::class_<Nedelec>(m, "Nedelec")
       .def(py::init<Cell::Type, int>())

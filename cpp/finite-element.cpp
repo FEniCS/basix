@@ -20,17 +20,17 @@ void FiniteElement::apply_dualmat_to_basis(
 {
   auto A = coeffs * dualmat.transpose();
 
-  _new_coeffs.resize(coeffs.rows(), coeffs.cols());
+  _coeffs.resize(coeffs.rows(), coeffs.cols());
 
   // auto Ainv = A.inverse();
   //  new_coeffs = Ainv * coeffs;
   // faster to use solve()
-  _new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+  _coeffs = A.colPivHouseholderQr().solve(coeffs);
 
 #ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
   std::cout << "Dual matrix = \n[" << dualmat << "]\n";
-  std::cout << "New coeffs = \n[" << _new_coeffs << "]\n";
+  std::cout << "New coeffs = \n[" << _coeffs << "]\n";
 #endif
 }
 //-----------------------------------------------------------------------------

@@ -1,17 +1,19 @@
 import numpy
 import matplotlib.pyplot as plt
-from fiatx import Lagrange, CellType, create_lattice
+from fiatx import TensorProduct, create_lattice, CellType
 
-d = 3
-L = Lagrange(CellType.triangle, d)
-
-pts = create_lattice(CellType.triangle, 50, True)
+d = 4
+L = TensorProduct(CellType.quadrilateral, d)
+pts = create_lattice(CellType.quadrilateral, 50, True)
 
 w = L.tabulate_basis(pts)
 
 ww = 1
-nn = (d + 2) * (d + 1) // 2
-if (nn % 4 == 0 and nn > 4):
+nn = (d + 1) * (d + 1)
+if (nn % 5 == 0 and nn > 5):
+    nn //= 5
+    ww = 5
+elif (nn % 4 == 0 and nn > 4):
     nn //= 4
     ww = 4
 elif (nn % 3 == 0 and nn > 3):

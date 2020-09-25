@@ -18,6 +18,9 @@ public:
   /// Element of given dimension (1, 2 or 3) and degree.
   FiniteElement(Cell::Type cell_type, int degree);
 
+  /// Destructor
+  virtual ~FiniteElement() = default;
+
   /// Compute basis values at set of points. If a vector result is expected, it
   /// will be stacked with all x values, followed by all y-values (and then z,
   /// if any).

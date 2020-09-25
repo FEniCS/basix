@@ -46,6 +46,8 @@ PYBIND11_MODULE(fiatx, m)
       .def("tabulate_basis", &RaviartThomas::tabulate_basis);
 
   m.def("tabulate_polynomial_set", &PolynomialSet::tabulate_polynomial_set);
+  m.def("tabulate_polynomial_set_deriv",
+        &PolynomialSet::tabulate_polynomial_set_deriv);
 
   m.def("compute_jacobi", &compute_jacobi);
   m.def("compute_jacobi_deriv", &compute_jacobi_deriv);

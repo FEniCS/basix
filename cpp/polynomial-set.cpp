@@ -51,6 +51,49 @@ tabulate_polyset_line(int n,
 }
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+tabulate_polyset_deriv_line(
+    int n,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts)
+{
+  assert(pts.cols() == 1);
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x
+      = pts * 2.0 - 1.0;
+
+  const int m = (n + 1);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> P(
+      pts.rows(), m);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Pd(
+      pts.rows(), m);
+
+  P.col(0).fill(1.0);
+  if (n > 0)
+    P.col(1) = x;
+
+  for (int p = 2; p < n + 1; ++p)
+  {
+    double a = 1.0 - 1.0 / static_cast<double>(p);
+    P.col(p) = x * P.col(p - 1) * (a + 1.0) - P.col(p - 2) * a;
+  }
+
+  Pd.col(0).fill(0.0);
+  if (n > 0)
+    Pd.col(1).fill(2.0);
+  for (int p = 2; p < n + 1; ++p)
+  {
+    double a = 1.0 - 1.0 / static_cast<double>(p);
+    Pd.col(p) = (2.0 * P.col(p - 1) + x * Pd.col(p - 1)) * (a + 1.0)
+                - Pd.col(p - 2) * a;
+  }
+
+  for (int p = 0; p < n + 1; ++p)
+    Pd.col(p) *= sqrt(p + 0.5);
+
+  return Pd;
+}
+//-----------------------------------------------------------------------------
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 tabulate_polyset_triangle(
     int n,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
@@ -355,6 +398,18 @@ PolynomialSet::tabulate_polynomial_set(
     return tabulate_polyset_prism(n, pts);
   else if (celltype == Cell::Type::pyramid)
     return tabulate_polyset_pyramid(n, pts);
+
+  throw std::runtime_error("Polynomial set: Unsupported cell type");
+}
+//-----------------------------------------------------------------------------
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+PolynomialSet::tabulate_polynomial_set_deriv(
+    Cell::Type celltype, int n,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts)
+{
+  if (celltype == Cell::Type::interval)
+    return tabulate_polyset_deriv_line(n, pts);
 
   throw std::runtime_error("Polynomial set: Unsupported cell type");
 }

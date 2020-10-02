@@ -20,10 +20,12 @@ std::tuple<double, double, double> jrc(int a, int n)
   return std::tuple<double, double, double>(an, bn, cn);
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-tabulate_polyset_line(int n,
-                      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                         Eigen::RowMajor>& pts)
+std::vector<
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+tabulate_polyset_line_derivs(
+    int n, int nderiv,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts)
 {
   assert(pts.cols() == 1);
 
@@ -31,30 +33,45 @@ tabulate_polyset_line(int n,
       = pts * 2.0 - 1.0;
 
   const int m = (n + 1);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
-      pts.rows(), m);
 
-  result.col(0).fill(1.0);
-  if (n > 0)
-    result.col(1) = x;
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      dresult(nderiv + 1);
 
-  for (int p = 2; p < n + 1; ++p)
+  for (int k = 0; k < nderiv + 1; ++k)
   {
-    double a = 1.0 - 1.0 / static_cast<double>(p);
-    result.col(p) = x * result.col(p - 1) * (a + 1.0) - result.col(p - 2) * a;
+    // Reference to this derivative, and resize
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        result
+        = dresult[k];
+    result.resize(pts.rows(), m);
+
+    if (k == 0)
+      result.col(0).fill(1.0);
+    else
+      result.col(0).setZero();
+
+    for (int p = 1; p < n + 1; ++p)
+    {
+      double a = 1.0 - 1.0 / static_cast<double>(p);
+      result.col(p) = x * result.col(p - 1) * (a + 1.0);
+      if (p > 1)
+        result.col(p) -= result.col(p - 2) * a;
+      if (k > 0)
+        result.col(p) += 2 * k * dresult[k - 1](p - 1);
+    }
+
+    for (int p = 0; p < n + 1; ++p)
+      result.col(p) *= sqrt(p + 0.5);
   }
 
-  for (int p = 0; p < n + 1; ++p)
-    result.col(p) *= sqrt(p + 0.5);
-
-  return result;
+  return dresult;
 }
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-tabulate_polyset_deriv_line(
-    int n,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts)
+tabulate_polyset_line(int n,
+                      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>& pts)
 {
   assert(pts.cols() == 1);
 
@@ -77,20 +94,10 @@ tabulate_polyset_deriv_line(
     P.col(p) = x * P.col(p - 1) * (a + 1.0) - P.col(p - 2) * a;
   }
 
-  Pd.col(0).fill(0.0);
-  if (n > 0)
-    Pd.col(1).fill(2.0);
-  for (int p = 2; p < n + 1; ++p)
-  {
-    double a = 1.0 - 1.0 / static_cast<double>(p);
-    Pd.col(p) = (2.0 * P.col(p - 1) + x * Pd.col(p - 1)) * (a + 1.0)
-                - Pd.col(p - 2) * a;
-  }
-
   for (int p = 0; p < n + 1; ++p)
-    Pd.col(p) *= sqrt(p + 0.5);
+    P.col(p) *= sqrt(p + 0.5);
 
-  return Pd;
+  return P;
 }
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -141,6 +148,73 @@ tabulate_polyset_triangle(
       result.col(idx(p, q)) *= sqrt((p + 0.5) * (p + q + 1));
 
   return result;
+}
+//-----------------------------------------------------------------------------
+std::vector<
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+tabulate_polyset_triangle_derivs(
+    int n, int nderiv,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts)
+
+{
+  assert(pts.cols() == 2);
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x
+      = pts * 2.0 - 1.0;
+
+  const int m = (n + 1) * (n + 2) / 2;
+  const int md = (nderiv + 1) * (nderiv + 2) / 2;
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      dresult(md);
+
+  // f3 = ((1-y)/2)^2
+  const auto f3 = (1.0 - x.col(1)).square() * 0.25;
+
+  // Differentiate wrt x first
+  for (int k = 0; k < nderiv + 1; ++k)
+  {
+    // Get reference to this derivative and resize
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        result
+        = dresult[idx(k, 0)];
+    result.resize(pts.rows(), m);
+
+    if (k == 0)
+      result.col(0).fill(1.0);
+    else
+      result.col(0).setZero();
+
+    for (int p = 1; p < n + 1; ++p)
+    {
+      const double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+      result.col(idx(p, 0))
+          = (x.col(0) + 0.5 * x.col(1) + 0.5) * result.col(idx(p - 1, 0)) * a;
+      if (p > 1)
+        result.col(idx(p, 0)) -= f3 * result.col(idx(p - 2, 0)) * (a - 1.0);
+      if (k > 0)
+        result.col(idx(p, 0)) += 2 * k * a * dresult[k - 1].col(idx(p - 1, 0));
+    }
+
+    for (int p = 0; p < n; ++p)
+    {
+      result.col(idx(p, 1))
+          = result.col(idx(p, 0)) * (x.col(1) * (1.5 + p) + 0.5 + p);
+      for (int q = 1; q < n - p; ++q)
+      {
+        auto [a1, a2, a3] = jrc(2 * p + 1, q);
+        result.col(idx(p, q + 1)) = result.col(idx(p, q)) * (x.col(1) * a1 + a2)
+                                    - result.col(idx(p, q - 1)) * a3;
+      }
+    }
+
+    for (int p = 0; p < n + 1; ++p)
+      for (int q = 0; q < n - p + 1; ++q)
+        result.col(idx(p, q)) *= sqrt((p + 0.5) * (p + q + 1));
+  }
+
+  return dresult;
 }
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -402,14 +476,17 @@ PolynomialSet::tabulate_polynomial_set(
   throw std::runtime_error("Polynomial set: Unsupported cell type");
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+std::vector<
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
 PolynomialSet::tabulate_polynomial_set_deriv(
-    Cell::Type celltype, int n,
+    Cell::Type celltype, int n, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
 {
+  if (celltype == Cell::Type::triangle)
+    return tabulate_polyset_triangle_derivs(n, nderiv, pts);
   if (celltype == Cell::Type::interval)
-    return tabulate_polyset_deriv_line(n, pts);
+    return tabulate_polyset_line_derivs(n, nderiv, pts);
 
   throw std::runtime_error("Polynomial set: Unsupported cell type");
 }

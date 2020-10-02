@@ -126,3 +126,12 @@ def test_cell(cell_type, order):
     print(mat)
     fac = 2 ** pts.shape[0] / 2
     assert(np.isclose(mat * fac, np.eye(mat.shape[0])).all())
+
+
+def test_derivs():
+    cell = fiatx.CellType.triangle
+    pts = fiatx.create_lattice(cell, 10, True)
+    n = 2
+    nderiv = 1
+    w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts)
+    print(w)

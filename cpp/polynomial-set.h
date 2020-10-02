@@ -38,9 +38,9 @@ namespace PolynomialSet
   /// @param n order
   /// @param pts points
   /// @return Polynomial set tabulated at points
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  std::vector<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
   tabulate_polynomial_set_deriv(
-      Cell::Type celltype, int n,
+                                Cell::Type celltype, int n, int nderiv,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& pts);
 };

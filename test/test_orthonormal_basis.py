@@ -128,7 +128,7 @@ def test_cell(cell_type, order):
     assert(np.isclose(mat * fac, np.eye(mat.shape[0])).all())
 
 
-def test_derivs():
+def test_derivs_line():
     cell = fiatx.CellType.interval
     pts0 = fiatx.create_lattice(cell, 10, True)
     eps = 1e-6
@@ -140,4 +140,26 @@ def test_derivs():
     w1 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts1)[0]
     w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
     v = (w2 - w1)/2/eps
-    print(w[1], v)
+    assert(np.isclose(w[1], v).all())
+
+
+def test_derivs_triangle():
+    cell = fiatx.CellType.triangle
+    pts0 = fiatx.create_lattice(cell, 10, True)
+    eps = np.array([1e-6, 0.0])
+    pts1 = pts0 - eps
+    pts2 = pts0 + eps
+    n = 3
+    nderiv = 1
+    w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    w1 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts1)[0]
+    w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
+    v = (w2 - w1)/2/eps[0]
+    assert(np.isclose(w[1], v).all())
+    eps = np.array([0.0, 1e-6])
+    pts1 = pts0 - eps
+    pts2 = pts0 + eps
+    w1 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts1)[0]
+    w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
+    v = (w2 - w1)/2/eps[1]
+    assert(np.isclose(w[2], v).all())

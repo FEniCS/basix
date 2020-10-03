@@ -132,10 +132,6 @@ tabulate_polyset_triangle_derivs(
                                     - result.col(idx(p, q - 1)) * a3;
       }
     }
-
-    for (int p = 0; p < n + 1; ++p)
-      for (int q = 0; q < n - p + 1; ++q)
-        result.col(idx(p, q)) *= sqrt((p + 0.5) * (p + q + 1));
   }
 
   // Now differentiate wrt y
@@ -195,8 +191,6 @@ tabulate_polyset_triangle_derivs(
     for (int p = 0; p < n + 1; ++p)
       for (int q = 0; q < n - p + 1; ++q)
         dresult[j].col(idx(p, q)) *= sqrt((p + 0.5) * (p + q + 1));
-
-    std::cout << "(" << kx << "," << ky << ")\n";
   }
 
   return dresult;

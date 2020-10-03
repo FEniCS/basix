@@ -57,7 +57,7 @@ tabulate_polyset_line_derivs(
       double a = 1.0 - 1.0 / static_cast<double>(p);
       result.col(p) = x * result.col(p - 1) * (a + 1.0);
       if (k > 0)
-        result.col(p) += 2 * k * dresult[k - 1](p - 1) * (a + 1.0);
+        result.col(p) += 2 * k * dresult[k - 1].col(p - 1) * (a + 1.0);
       if (p > 1)
         result.col(p) -= result.col(p - 2) * a;
     }
@@ -187,13 +187,17 @@ tabulate_polyset_triangle_derivs(
                 - result.col(idx(p, q - 1)) * a3;
         }
       }
-
-      for (int p = 0; p < n + 1; ++p)
-        for (int q = 0; q < n - p + 1; ++q)
-          result.col(idx(p, q)) *= sqrt((p + 0.5) * (p + q + 1));
-
-      std::cout << "(" << kx << "," << ky << ")\n";
     }
+
+  for (std::size_t j = 0; j < dresult.size(); ++j)
+  {
+
+    for (int p = 0; p < n + 1; ++p)
+      for (int q = 0; q < n - p + 1; ++q)
+        dresult[j].col(idx(p, q)) *= sqrt((p + 0.5) * (p + q + 1));
+
+    std::cout << "(" << kx << "," << ky << ")\n";
+  }
 
   return dresult;
 }

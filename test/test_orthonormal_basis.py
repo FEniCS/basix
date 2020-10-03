@@ -129,9 +129,15 @@ def test_cell(cell_type, order):
 
 
 def test_derivs():
-    cell = fiatx.CellType.triangle
-    pts = fiatx.create_lattice(cell, 10, True)
-    n = 2
+    cell = fiatx.CellType.interval
+    pts0 = fiatx.create_lattice(cell, 10, True)
+    eps = 1e-6
+    pts1 = pts0 - eps
+    pts2 = pts0 + eps
+    n = 3
     nderiv = 1
-    w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts)
-    print(w)
+    w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    w1 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts1)[0]
+    w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
+    v = (w2 - w1)/2/eps
+    print(w[1], v)

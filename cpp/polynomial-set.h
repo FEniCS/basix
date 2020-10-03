@@ -36,8 +36,10 @@ namespace PolynomialSet
   /// TODO
   /// @param celltype Cell type
   /// @param n order
+  /// @param nderivs Maximum derivative order
   /// @param pts points
-  /// @return Polynomial set tabulated at points
+  /// @return List of polynomial sets, for each derivative.
+  /// tabulated at points. List ordering is triangular using idx()
   std::vector<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
   tabulate_polynomial_set_deriv(
                                 Cell::Type celltype, int n, int nderiv,

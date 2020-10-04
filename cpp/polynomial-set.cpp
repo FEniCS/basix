@@ -214,63 +214,140 @@ tabulate_polyset_tetrahedron_derivs(
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       dresult(md);
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& result
-      = dresult[0];
-  result.resize(pts.rows(), m);
-
-  result.col(0).fill(1.0);
-  if (n > 0)
-    result.col(1) = x.col(0) + 0.5 * (x.col(1) + x.col(2)) + 1.0;
-  else
-    return dresult;
-
   const auto f2 = (x.col(1) + x.col(2)).square() * 0.25;
   const auto f3 = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
   const auto f4 = (1.0 - x.col(2)) * 0.5;
   const auto f5 = f4 * f4;
 
-  for (int p = 1; p < n; ++p)
+  // d/dx first
+  for (int k = 0; k < nderiv + 1; ++k)
   {
-    double a = static_cast<double>(p) / static_cast<double>(p + 1);
-    result.col(idx(p + 1, 0, 0))
-        = result.col(1) * result.col(idx(p, 0, 0)) * (a + 1.0)
-          - f2 * result.col(idx(p - 1, 0, 0)) * a;
-  }
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        result
+        = dresult[idx(k, 0, 0)];
+    result.resize(pts.rows(), m);
 
-  for (int p = 0; p < n; ++p)
-  {
-    result.col(idx(p, 1, 0))
-        = result.col(idx(p, 0, 0))
-          * ((1.0 + x.col(1)) * p + (2.0 + x.col(1) * 3.0 + x.col(2)) * 0.5);
-    for (int q = 1; q < n - p; ++q)
+    if (k == 0)
+      result.col(0).fill(1.0);
+    else
+      result.col(0).setZero();
+
+    for (int p = 1; p < n + 1; ++p)
     {
-      auto [aq, bq, cq] = jrc(2 * p + 1, q);
-      result.col(idx(p, q + 1, 0))
-          = result.col(idx(p, q, 0)) * (f3 * aq + f4 * bq)
-            - result.col(idx(p, q - 1, 0)) * f5 * cq;
+      double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+      result.col(idx(p, 0, 0)) = (x.col(0) + 0.5 * (x.col(1) + x.col(2)) + 1.0)
+                                 * result.col(idx(p - 1, 0, 0)) * a;
+      if (p > 1)
+        result.col(idx(p, 0, 0))
+            -= f2 * result.col(idx(p - 2, 0, 0)) * (a - 1.0);
+      if (k > 0)
+        result.col(idx(p, 0, 0))
+            += 2 * k * a * dresult[idx(k - 1, 0, 0)].col(idx(p - 1, 0, 0));
     }
+
+    for (int p = 0; p < n; ++p)
+    {
+      result.col(idx(p, 1, 0))
+          = result.col(idx(p, 0, 0))
+            * ((1.0 + x.col(1)) * p + (2.0 + x.col(1) * 3.0 + x.col(2)) * 0.5);
+      for (int q = 1; q < n - p; ++q)
+      {
+        auto [aq, bq, cq] = jrc(2 * p + 1, q);
+        result.col(idx(p, q + 1, 0))
+            = result.col(idx(p, q, 0)) * (f3 * aq + f4 * bq)
+              - result.col(idx(p, q - 1, 0)) * f5 * cq;
+      }
+    }
+
+    for (int p = 0; p < n; ++p)
+      for (int q = 0; q < n - p; ++q)
+        result.col(idx(p, q, 1)) = result.col(idx(p, q, 0))
+                                   * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
+
+    for (int p = 0; p < n - 1; ++p)
+      for (int q = 0; q < n - p - 1; ++q)
+        for (int r = 1; r < n - p - q; ++r)
+        {
+          auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+          result.col(idx(p, q, r + 1))
+              = result.col(idx(p, q, r)) * (x.col(2) * ar + br)
+                - result.col(idx(p, q, r - 1)) * cr;
+        }
   }
 
-  for (int p = 0; p < n; ++p)
-    for (int q = 0; q < n - p; ++q)
-      result.col(idx(p, q, 1)) = result.col(idx(p, q, 0))
-                                 * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
+  // Now differentiate wrt y
+  for (int ky = 1; ky < nderiv + 1; ++ky)
+    for (int kx = 0; kx < (nderiv + 1 - ky); ++kx)
+    {
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+          result
+          = dresult[idx(kx, ky, 0)];
+      result.resize(pts.rows(), m);
 
-  for (int p = 0; p < n - 1; ++p)
-    for (int q = 0; q < n - p - 1; ++q)
-      for (int r = 1; r < n - p - q; ++r)
+      result.col(0).setZero();
+
+      for (int p = 1; p < n + 1; ++p)
       {
-        auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
-        result.col(idx(p, q, r + 1))
-            = result.col(idx(p, q, r)) * (x.col(2) * ar + br)
-              - result.col(idx(p, q, r - 1)) * cr;
+        double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+        result.col(idx(p, 0, 0))
+            = (x.col(0) + 0.5 * (x.col(1) + x.col(2)) + 1.0)
+                  * result.col(idx(p - 1, 0, 0)) * a
+              + ky * a * dresult[idx(kx, ky - 1, 0)].col(idx(p - 1, 0, 0));
+        if (p > 1)
+        {
+          result.col(idx(p, 0, 0))
+              -= f2 * result.col(idx(p - 2, 0, 0)) * (a - 1.0)
+                 + ky * (x.col(1) + x.col(2))
+                       * dresult[idx(kx, ky - 1, 0)].col(idx(p - 2, 0, 0))
+                       * (a - 1.0);
+          if (ky > 1)
+            result.col(idx(p, 0, 0))
+                -= ky * (ky - 1)
+                   * dresult[idx(kx, ky - 2, 0)].col(idx(p - 2, 0, 0))
+                   * (a - 1.0);
+        }
       }
 
-  for (int p = 0; p < n + 1; ++p)
-    for (int q = 0; q < n - p + 1; ++q)
-      for (int r = 0; r < n - p - q + 1; ++r)
-        result.col(idx(p, q, r))
-            *= sqrt((p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5));
+      for (int p = 0; p < n; ++p)
+      {
+        result.col(idx(p, 1, 0))
+            = result.col(idx(p, 0, 0))
+                  * (1.0 + p + x.col(1) * (1.5 + p) + x.col(2) * 0.5)
+              + 2 * ky * dresult[idx(kx, ky - 1, 0)].col(idx(p, 0, 0))
+                    * (1.5 + p);
+        for (int q = 1; q < n - p; ++q)
+        {
+          auto [aq, bq, cq] = jrc(2 * p + 1, q);
+          result.col(idx(p, q + 1, 0))
+              = result.col(idx(p, q, 0)) * (f3 * aq + f4 * bq)
+                - result.col(idx(p, q - 1, 0)) * f5 * cq
+                + 2 * ky * dresult[idx(kx, ky - 1, 0)].col(idx(p, q, 0)) * aq;
+        }
+      }
+
+      for (int p = 0; p < n; ++p)
+        for (int q = 0; q < n - p; ++q)
+          result.col(idx(p, q, 1))
+              = result.col(idx(p, q, 0))
+                * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
+
+      for (int p = 0; p < n - 1; ++p)
+        for (int q = 0; q < n - p - 1; ++q)
+          for (int r = 1; r < n - p - q; ++r)
+          {
+            auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+            result.col(idx(p, q, r + 1))
+                = result.col(idx(p, q, r)) * (x.col(2) * ar + br)
+                  - result.col(idx(p, q, r - 1)) * cr;
+          }
+    }
+
+  for (auto& result : dresult)
+    for (int p = 0; p < n + 1; ++p)
+      for (int q = 0; q < n - p + 1; ++q)
+        for (int r = 0; r < n - p - q + 1; ++r)
+          result.col(idx(p, q, r))
+              *= sqrt((p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5));
 
   return dresult;
 }
@@ -525,10 +602,12 @@ PolynomialSet::tabulate_polynomial_set_deriv(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
 {
-  if (celltype == Cell::Type::triangle)
-    return tabulate_polyset_triangle_derivs(n, nderiv, pts);
-  else if (celltype == Cell::Type::interval)
+  if (celltype == Cell::Type::interval)
     return tabulate_polyset_line_derivs(n, nderiv, pts);
+  else if (celltype == Cell::Type::triangle)
+    return tabulate_polyset_triangle_derivs(n, nderiv, pts);
+  else if (celltype == Cell::Type::tetrahedron)
+    return tabulate_polyset_tetrahedron_derivs(n, nderiv, pts);
   else if (celltype == Cell::Type::quadrilateral)
     return tabulate_polyset_quad_derivs(n, nderiv, pts);
   else if (celltype == Cell::Type::hexahedron)

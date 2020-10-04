@@ -177,3 +177,26 @@ def test_derivs_triangle():
     w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
     v = (w2 - w1)/2/eps[1]
     assert(np.isclose(w[2], v).all())
+
+
+def test_derivs_tetrahedron():
+    cell = fiatx.CellType.tetrahedron
+    pts0 = fiatx.create_lattice(cell, 5, True)
+    eps = np.array([1e-7, 0.0, 0.0])
+    pts1 = pts0 - eps
+    pts2 = pts0 + eps
+    n = 7
+    nderiv = 1
+    w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    w1 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts1)[0]
+    w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
+    v = (w2 - w1)/2/eps[0]
+    print((w[1]- v).max())
+    assert(np.isclose(w[1], v).all())
+    eps = np.array([0.0, 1e-6, 0.0])
+    pts1 = pts0 - eps
+    pts2 = pts0 + eps
+    w1 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts1)[0]
+    w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
+    v = (w2 - w1)/2/eps[1]
+    assert(np.isclose(w[2], v).all())

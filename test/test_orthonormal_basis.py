@@ -131,6 +131,8 @@ def test_cell(cell_type, order):
 def test_derivs_line():
     cell = fiatx.CellType.interval
     pts0 = fiatx.create_lattice(cell, 10, True)
+
+    # Test first derivative
     eps = 1e-6
     pts1 = pts0 - eps
     pts2 = pts0 + eps
@@ -142,10 +144,22 @@ def test_derivs_line():
     v = (w2 - w1)/2/eps
     assert(np.isclose(w[1], v).all())
 
+    # Test second derivative
+    eps = 1e-4
+    pts1 = pts0 - eps
+    pts2 = pts0 + eps
+    n = 3
+    nderiv = 2
+    w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    w1 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts1)[0]
+    w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
+    v2 = (w2 + w1 - 2*w[0])/eps/eps
+    assert(np.isclose(w[2], v2).all())
+
 
 def test_derivs_triangle():
     cell = fiatx.CellType.triangle
-    pts0 = fiatx.create_lattice(cell, 10, True)
+    pts0 = fiatx.create_lattice(cell, 5, True)
     eps = np.array([1e-6, 0.0])
     pts1 = pts0 - eps
     pts2 = pts0 + eps

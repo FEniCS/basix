@@ -129,28 +129,6 @@ def test_cell(cell_type, order):
     assert(np.isclose(mat * fac, np.eye(mat.shape[0])).all())
 
 
-def test_derivs_triangle():
-    cell = fiatx.CellType.triangle
-    pts0 = fiatx.create_lattice(cell, 5, True)
-    eps = np.array([1e-6, 0.0])
-    pts1 = pts0 - eps
-    pts2 = pts0 + eps
-    n = 3
-    nderiv = 1
-    w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
-    w1 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts1)[0]
-    w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
-    v = (w2 - w1)/2/eps[0]
-    assert(np.isclose(w[1], v).all())
-    eps = np.array([0.0, 1e-6])
-    pts1 = pts0 - eps
-    pts2 = pts0 + eps
-    w1 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts1)[0]
-    w2 = fiatx.tabulate_polynomial_set_deriv(cell, n, 0, pts2)[0]
-    v = (w2 - w1)/2/eps[1]
-    assert(np.isclose(w[2], v).all())
-
-
 def test_derivs_tetrahedron():
     cell = fiatx.CellType.tetrahedron
     pts0 = fiatx.create_lattice(cell, 5, True)
@@ -213,21 +191,22 @@ def test_symbolic_interval():
         assert(np.isclose(w[k], wsym).all())
 
 
+def jrc(a, n):
+    an = sympy.Rational((a + 2 * n + 1) * (a + 2 * n + 2),
+                        2 * (n + 1) * (a + n + 1))
+    bn = sympy.Rational(a * a * (a + 2 * n + 1),
+                        2 * (n + 1) * (a + n + 1) * (a + 2 * n))
+    cn = sympy.Rational(n * (a + n) * (a + 2 * n + 2),
+                        (n + 1) * (a + n + 1) * (a + 2 * n))
+    return (an, bn, cn)
+
+
 def test_symbolic_triangle():
     n = 5
     nderiv = 4
 
     def idx(p, q):
         return (p + q + 1) * (p + q) // 2 + q
-
-    def jrc(a, n):
-        an = sympy.Rational((a + 2 * n + 1) * (a + 2 * n + 2),
-                            2 * (n + 1) * (a + n + 1))
-        bn = sympy.Rational(a * a * (a + 2 * n + 1),
-                            2 * (n + 1) * (a + n + 1) * (a + 2 * n))
-        cn = sympy.Rational(n * (a + n) * (a + 2 * n + 2),
-                            (n + 1) * (a + n + 1) * (a + 2 * n))
-        return (an, bn, cn)
 
     m = (n + 1) * (n + 2) // 2
     x = sympy.Symbol("x")
@@ -282,3 +261,71 @@ def test_symbolic_triangle():
                     wsym[j, i] = rd[i].subs([(x, p[0]), (y, p[1])])
 
             assert(np.isclose(w[idx(kx, ky)], wsym).all())
+
+
+def test_symbolic_tetrahedron():
+    n = 5
+    nderiv = 0
+
+    def idx(p, q, r):
+        return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6
+                + (q + r) * (q + r + 1) // 2 + r)
+
+    m = (n + 1) * (n + 2) * (n + 3) // 6
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+    x0 = x * sympy.S(2) - sympy.S(1)
+    y0 = y * sympy.S(2) - sympy.S(1)
+    z0 = z * sympy.S(2) - sympy.S(1)
+    f2 = (y0 + z0)**2 / sympy.S(4)
+    f3 = y0 + (sympy.S(1) + z0) / sympy.S(2)
+    f4 = (sympy.S(1) - z0) / sympy.S(2)
+    f5 = f4 * f4
+
+    w = [sympy.S(1) for i in range(m)]
+
+    np.set_printoptions(linewidth=200)
+    for p in range(1, n + 1):
+        a = sympy.Rational(2 * p - 1, p)
+        w[idx(p, 0, 0)] = (x0 + sympy.S(1) + (y0 + z0)/sympy.S(2)) \
+            * w[idx(p - 1, 0, 0)] * a
+        if p > 1:
+            w[idx(p, 0, 0)] -= f2 * w[idx(p - 2, 0, 0)] * (a - sympy.S(1))
+
+    for p in range(n):
+        w[idx(p, 1, 0)] = w[idx(p, 0, 0)] * ((sympy.S(1) + y0)*sympy.S(p) +
+                                             (sympy.S(2) + y0 * sympy.S(3) + z0) / sympy.S(2))
+        for q in range(1, n - p):
+            aq, bq, cq = jrc(2 * p + 1, q)
+            w[idx(p, q + 1, 0)] = w[idx(p, q, 0)] * (f3 * aq + f4 * bq) \
+                - w[idx(p, q - 1, 0)] * f5 * cq
+
+    for p in range(n):
+        for q in range(n - p):
+            w[idx(p, q, 1)] = w[idx(p, q, 0)] * (sympy.S(1 + p + q) + z0 * sympy.S(2 + p + q))
+
+    for p in range(n - 1):
+        for q in range(n - p - 1):
+            for r in range(n - p - q):
+                ar, br, cr = jrc(2 * p + 2 * q + 2, r)
+                w[idx(p, q, r + 1)]  = w[idx(p, q, r)] * (z0 * ar + br) - w[idx(p, q, r - 1)] * cr
+
+    for p in range(n + 1):
+        for q in range(n - p + 1):
+            for r in range(n - p - q + 1):
+                w[idx(p, q, r)] *= sympy.sqrt(sympy.Rational(2 * p + 1, 2)
+                                           * sympy.S(p + q + 1)
+                                           * sympy.Rational(2 * p + 2 * q + 2 * r + 3, 2))
+
+    cell = fiatx.CellType.tetrahedron
+    pts0 = fiatx.create_lattice(cell, 2, True)
+    wtab = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+
+    wsym = np.zeros_like(wtab[0])
+
+    for i in range(m):
+        for j, p in enumerate(pts0):
+            wsym[j, i] = w[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
+
+    assert(np.isclose(wtab[0], wsym).all())

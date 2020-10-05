@@ -95,99 +95,82 @@ tabulate_polyset_triangle_derivs(
   // f3 = ((1-y)/2)^2
   const auto f3 = (1.0 - x.col(1)).square() * 0.25;
 
-  // Differentiate wrt x first
+  // Iterate over derivatives in increasing order
   for (int k = 0; k < nderiv + 1; ++k)
   {
-    // Get reference to this derivative and resize
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        result
-        = dresult[idx(k, 0)];
-    result.resize(pts.rows(), m);
-
-    if (k == 0)
-      result.col(0).fill(1.0);
-    else
-      result.col(0).setZero();
-
-    for (int p = 1; p < n + 1; ++p)
+    for (int kx = 0; kx < k + 1; ++kx)
     {
-      const double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
-      result.col(idx(p, 0))
-          = (x.col(0) + 0.5 * x.col(1) + 0.5) * result.col(idx(p - 1, 0)) * a;
-      if (p > 1)
-        result.col(idx(p, 0)) -= f3 * result.col(idx(p - 2, 0)) * (a - 1.0);
-      if (k > 0)
-        result.col(idx(p, 0))
-            += 2 * k * a * dresult[idx(k - 1, 0)].col(idx(p - 1, 0));
-    }
+      const int ky = k - kx;
 
-    for (int p = 0; p < n; ++p)
-    {
-      result.col(idx(p, 1))
-          = result.col(idx(p, 0)) * (x.col(1) * (1.5 + p) + 0.5 + p);
-      for (int q = 1; q < n - p; ++q)
-      {
-        auto [a1, a2, a3] = jrc(2 * p + 1, q);
-        result.col(idx(p, q + 1)) = result.col(idx(p, q)) * (x.col(1) * a1 + a2)
-                                    - result.col(idx(p, q - 1)) * a3;
-      }
-    }
-  }
-
-  // Now differentiate wrt y
-  for (int ky = 1; ky < nderiv + 1; ++ky)
-    for (int kx = 0; kx < (nderiv + 1 - ky); ++kx)
-    {
       // Get reference to this derivative and resize
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
           result
           = dresult[idx(kx, ky)];
       result.resize(pts.rows(), m);
 
-      result.col(0).setZero();
+      if (kx == 0 and ky == 0)
+        result.col(0).fill(1.0);
+      else
+        result.col(0).setZero();
 
       for (int p = 1; p < n + 1; ++p)
       {
         const double a
             = static_cast<double>(2 * p - 1) / static_cast<double>(p);
         result.col(idx(p, 0))
-            = (x.col(0) + 0.5 * x.col(1) + 0.5) * a * result.col(idx(p - 1, 0))
-              + ky * a * dresult[idx(kx, ky - 1)].col(idx(p - 1, 0));
-
+            = (x.col(0) + 0.5 * x.col(1) + 0.5) * result.col(idx(p - 1, 0)) * a;
+        if (kx > 0)
+          result.col(idx(p, 0))
+              += 2 * kx * a * dresult[idx(kx - 1, ky)].col(idx(p - 1, 0));
+        if (ky > 0)
+          result.col(idx(p, 0))
+              += ky * a * dresult[idx(kx, ky - 1)].col(idx(p - 1, 0));
         if (p > 1)
         {
           // y^2 terms
-          result.col(idx(p, 0))
-              -= f3 * result.col(idx(p - 2, 0)) * (a - 1.0)
-                 + ky * (x.col(1) - 1.0)
-                       * dresult[idx(kx, ky - 1)].col(idx(p - 2, 0))
-                       * (a - 1.0);
+          result.col(idx(p, 0)) -= f3 * result.col(idx(p - 2, 0)) * (a - 1.0);
+
+          if (ky > 0)
+          {
+            result.col(idx(p, 0))
+                -= ky * (x.col(1) - 1.0)
+                   * dresult[idx(kx, ky - 1)].col(idx(p - 2, 0)) * (a - 1.0);
+          }
+
           if (ky > 1)
+          {
             result.col(idx(p, 0))
                 -= ky * (ky - 1) * dresult[idx(kx, ky - 2)].col(idx(p - 2, 0))
                    * (a - 1.0);
+          }
         }
       }
 
       for (int p = 0; p < n; ++p)
       {
         result.col(idx(p, 1))
-            = result.col(idx(p, 0)) * (x.col(1) * (1.5 + p) + 0.5 + p)
-              + 2 * ky * (1.5 + p) * dresult[idx(kx, ky - 1)].col(idx(p, 0));
+            = result.col(idx(p, 0)) * (x.col(1) * (1.5 + p) + 0.5 + p);
+        if (ky > 0)
+          result.col(idx(p, 1))
+              += 2 * ky * (1.5 + p) * dresult[idx(kx, ky - 1)].col(idx(p, 0));
         for (int q = 1; q < n - p; ++q)
         {
           auto [a1, a2, a3] = jrc(2 * p + 1, q);
           result.col(idx(p, q + 1))
               = result.col(idx(p, q)) * (x.col(1) * a1 + a2)
-                + 2 * ky * a1 * dresult[idx(kx, ky - 1)].col(idx(p, q))
                 - result.col(idx(p, q - 1)) * a3;
+          if (ky > 0)
+          {
+            result.col(idx(p, q + 1))
+                += 2 * ky * a1 * dresult[idx(kx, ky - 1)].col(idx(p, q));
+          }
         }
       }
     }
+  }
 
   for (std::size_t j = 0; j < dresult.size(); ++j)
   {
-
     for (int p = 0; p < n + 1; ++p)
       for (int q = 0; q < n - p + 1; ++q)
         dresult[j].col(idx(p, q)) *= sqrt((p + 0.5) * (p + q + 1));

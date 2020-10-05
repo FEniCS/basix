@@ -175,6 +175,8 @@ def test_derivs_tetrahedron():
 
 def test_symbolic_interval():
     n = 7
+    nderiv = 4
+
     x = sympy.Symbol("x")
     x0 = x * sympy.S(2) - sympy.S(1)
     r = [sympy.S(1) for i in range(n + 1)]
@@ -189,7 +191,6 @@ def test_symbolic_interval():
 
     cell = fiatx.CellType.interval
     pts0 = fiatx.create_lattice(cell, 10, True)
-    nderiv = 4
     w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
     wsym = np.zeros_like(w[0])
@@ -213,6 +214,8 @@ def test_symbolic_interval():
 
 
 def test_symbolic_triangle():
+    n = 5
+    nderiv = 4
 
     def idx(p, q):
         return (p + q + 1) * (p + q) // 2 + q
@@ -226,7 +229,6 @@ def test_symbolic_triangle():
                             (n + 1) * (a + n + 1) * (a + 2 * n))
         return (an, bn, cn)
 
-    n = 3
     m = (n + 1) * (n + 2) // 2
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
@@ -257,8 +259,7 @@ def test_symbolic_triangle():
                                        * sympy.S(p + q + 1))
 
     cell = fiatx.CellType.triangle
-    pts0 = fiatx.create_lattice(cell, 1, True)
-    nderiv = 4
+    pts0 = fiatx.create_lattice(cell, 3, True)
     w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
     wsym = np.zeros_like(w[0])
@@ -280,7 +281,4 @@ def test_symbolic_triangle():
                 for j, p in enumerate(pts0):
                     wsym[j, i] = rd[i].subs([(x, p[0]), (y, p[1])])
 
-            print("k = ", kx, " ", ky)
-            print(w[idx(kx, ky)])
-            print(wsym)
             assert(np.isclose(w[idx(kx, ky)], wsym).all())

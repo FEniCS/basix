@@ -324,7 +324,9 @@ def test_symbolic_tetrahedron():
                 for i in range(m):
                     wd += [sympy.diff(w[i], x, kx, y, ky, z, kz)]
                     for j, p in enumerate(pts0):
-                        wsym[j, i] = wd[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
+                        wsym[j, i] = wd[i].subs([(x, p[0]),
+                                                 (y, p[1]),
+                                                 (z, p[2])])
 
                 print(wtab[idx(kx, ky, kz)])
                 print(wsym)

@@ -242,8 +242,8 @@ def test_symbolic_triangle():
 
 
 def test_symbolic_tetrahedron():
-    n = 2
-    nderiv = 1
+    n = 3
+    nderiv = 2
 
     def idx(p, q, r):
         return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6
@@ -263,7 +263,7 @@ def test_symbolic_tetrahedron():
 
     w = [sympy.S(1) for i in range(m)]
 
-    np.set_printoptions(linewidth=200)
+    np.set_printoptions(linewidth=200, suppress=True, precision=3)
     for p in range(1, n + 1):
         a = sympy.Rational(2 * p - 1, p)
         w[idx(p, 0, 0)] = (x0 + sympy.S(1) + (y0 + z0)/sympy.S(2)) \
@@ -312,32 +312,20 @@ def test_symbolic_tetrahedron():
 
     assert(np.isclose(wtab[0], wsym).all())
 
-    # d/dx
-    wd = []
-    wsym = np.zeros_like(wtab[0])
-    for i in range(m):
-        wd += [sympy.diff(w[i], x)]
-        for j, p in enumerate(pts0):
-            wsym[j, i] = wd[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
+    for k in range(nderiv + 1):
+        for q in range(k + 1):
+            for kx in range(q + 1):
+                ky = q - kx
+                kz = k - q
+                print((kx, ky, kz))
 
-    assert(np.isclose(wtab[1], wsym).all())
+                wd = []
+                wsym = np.zeros_like(wtab[0])
+                for i in range(m):
+                    wd += [sympy.diff(w[i], x, kx, y, ky, z, kz)]
+                    for j, p in enumerate(pts0):
+                        wsym[j, i] = wd[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
 
-    # d/dy
-    wd = []
-    wsym = np.zeros_like(wtab[0])
-    for i in range(m):
-        wd += [sympy.diff(w[i], y)]
-        for j, p in enumerate(pts0):
-            wsym[j, i] = wd[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
-
-    assert(np.isclose(wtab[2], wsym).all())
-
-    # d/dz
-    wd = []
-    wsym = np.zeros_like(wtab[0])
-    for i in range(m):
-        wd += [sympy.diff(w[i], z)]
-        for j, p in enumerate(pts0):
-            wsym[j, i] = wd[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
-
-    assert(np.isclose(wtab[3], wsym).all())
+                print(wtab[idx(kx, ky, kz)])
+                print(wsym)
+                print(np.isclose(wtab[idx(kx, ky, kz)], wsym).all())

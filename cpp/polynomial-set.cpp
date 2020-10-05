@@ -273,6 +273,15 @@ tabulate_polyset_tetrahedron_derivs(
                      * dresult[idx(kx, ky, kz - 2)].col(idx(p - 2, 0, 0))
                      * (a - 1.0);
             }
+
+            if (ky > 0 and kz > 0)
+            {
+              // FIXME - check coefficients for higher derivatives
+              result.col(idx(p, 0, 0))
+                  -= 2.0 * kx * kz
+                     * dresult[idx(kx, ky - 1, kz - 1)].col(idx(p - 2, 0, 0))
+                     * (a - 1.0);
+            }
           }
         }
 
@@ -300,6 +309,7 @@ tabulate_polyset_tetrahedron_derivs(
             result.col(idx(p, q + 1, 0))
                 = result.col(idx(p, q, 0)) * (f3 * aq + f4 * bq)
                   - result.col(idx(p, q - 1, 0)) * f5 * cq;
+
             if (ky > 0)
             {
               result.col(idx(p, q + 1, 0))
@@ -316,7 +326,13 @@ tabulate_polyset_tetrahedron_derivs(
                            * dresult[idx(kx, ky, kz - 1)].col(idx(p, q - 1, 0))
                            * cq;
             }
-            // FIXME: quadratic term in z (f5)
+            if (kz > 1)
+            {
+              // Quadratic term in z
+              result.col(idx(p, q + 1, 0))
+                  -= kz * (kz - 1)
+                     * dresult[idx(kx, ky, kz - 2)].col(idx(p, q - 1, 0)) * cq;
+            }
           }
         }
 

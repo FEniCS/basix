@@ -294,8 +294,9 @@ def test_symbolic_tetrahedron():
             w[idx(p, 0, 0)] -= f2 * w[idx(p - 2, 0, 0)] * (a - sympy.S(1))
 
     for p in range(n):
-        w[idx(p, 1, 0)] = w[idx(p, 0, 0)] * ((sympy.S(1) + y0)*sympy.S(p) +
-                                             (sympy.S(2) + y0 * sympy.S(3) + z0) / sympy.S(2))
+        w[idx(p, 1, 0)] = w[idx(p, 0, 0)] * \
+            ((sympy.S(1) + y0)*sympy.S(p) +
+             (sympy.S(2) + y0 * sympy.S(3) + z0) / sympy.S(2))
         for q in range(1, n - p):
             aq, bq, cq = jrc(2 * p + 1, q)
             w[idx(p, q + 1, 0)] = w[idx(p, q, 0)] * (f3 * aq + f4 * bq) \
@@ -303,20 +304,23 @@ def test_symbolic_tetrahedron():
 
     for p in range(n):
         for q in range(n - p):
-            w[idx(p, q, 1)] = w[idx(p, q, 0)] * (sympy.S(1 + p + q) + z0 * sympy.S(2 + p + q))
+            w[idx(p, q, 1)] = w[idx(p, q, 0)] * \
+                (sympy.S(1 + p + q) + z0 * sympy.S(2 + p + q))
 
     for p in range(n - 1):
         for q in range(n - p - 1):
             for r in range(n - p - q):
                 ar, br, cr = jrc(2 * p + 2 * q + 2, r)
-                w[idx(p, q, r + 1)]  = w[idx(p, q, r)] * (z0 * ar + br) - w[idx(p, q, r - 1)] * cr
+                w[idx(p, q, r + 1)] = w[idx(p, q, r)] * \
+                    (z0 * ar + br) - w[idx(p, q, r - 1)] * cr
 
     for p in range(n + 1):
         for q in range(n - p + 1):
             for r in range(n - p - q + 1):
-                w[idx(p, q, r)] *= sympy.sqrt(sympy.Rational(2 * p + 1, 2)
-                                           * sympy.S(p + q + 1)
-                                           * sympy.Rational(2 * p + 2 * q + 2 * r + 3, 2))
+                w[idx(p, q, r)] *= \
+                    sympy.sqrt(sympy.Rational(2 * p + 1, 2)
+                               * sympy.S(p + q + 1)
+                               * sympy.Rational(2 * p + 2 * q + 2 * r + 3, 2))
 
     cell = fiatx.CellType.tetrahedron
     pts0 = fiatx.create_lattice(cell, 2, True)

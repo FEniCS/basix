@@ -242,8 +242,8 @@ def test_symbolic_triangle():
 
 
 def test_symbolic_tetrahedron():
-    n = 3
-    nderiv = 3
+    n = 4
+    nderiv = 4
 
     def idx(p, q, r):
         return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6

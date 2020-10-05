@@ -328,6 +328,4 @@ def test_symbolic_tetrahedron():
                                                  (y, p[1]),
                                                  (z, p[2])])
 
-                print(wtab[idx(kx, ky, kz)])
-                print(wsym)
-                print(np.isclose(wtab[idx(kx, ky, kz)], wsym).all())
+                assert(np.isclose(wtab[idx(kx, ky, kz)], wsym).all())

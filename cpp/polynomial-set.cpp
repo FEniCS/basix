@@ -278,7 +278,7 @@ tabulate_polyset_tetrahedron_derivs(
             {
               // FIXME - check coefficients for higher derivatives
               result.col(idx(p, 0, 0))
-                  -= 2.0 * kx * kz
+                  -= 2.0 * ky * kz
                      * dresult[idx(kx, ky - 1, kz - 1)].col(idx(p - 2, 0, 0))
                      * (a - 1.0);
             }

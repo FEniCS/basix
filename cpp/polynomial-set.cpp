@@ -202,128 +202,156 @@ tabulate_polyset_tetrahedron_derivs(
   const auto f4 = (1.0 - x.col(2)) * 0.5;
   const auto f5 = f4 * f4;
 
-  // d/dx first
+  // Traverse derivatives in increasing order
   for (int k = 0; k < nderiv + 1; ++k)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        result
-        = dresult[idx(k, 0, 0)];
-    result.resize(pts.rows(), m);
-
-    if (k == 0)
-      result.col(0).fill(1.0);
-    else
-      result.col(0).setZero();
-
-    for (int p = 1; p < n + 1; ++p)
+    for (int j = 0; j < k + 1; ++j)
     {
-      double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
-      result.col(idx(p, 0, 0)) = (x.col(0) + 0.5 * (x.col(1) + x.col(2)) + 1.0)
-                                 * result.col(idx(p - 1, 0, 0)) * a;
-      if (p > 1)
-        result.col(idx(p, 0, 0))
-            -= f2 * result.col(idx(p - 2, 0, 0)) * (a - 1.0);
-      if (k > 0)
-        result.col(idx(p, 0, 0))
-            += 2 * k * a * dresult[idx(k - 1, 0, 0)].col(idx(p - 1, 0, 0));
-    }
-
-    for (int p = 0; p < n; ++p)
-    {
-      result.col(idx(p, 1, 0))
-          = result.col(idx(p, 0, 0))
-            * ((1.0 + x.col(1)) * p + (2.0 + x.col(1) * 3.0 + x.col(2)) * 0.5);
-      for (int q = 1; q < n - p; ++q)
+      for (int kx = 0; kx < j + 1; ++kx)
       {
-        auto [aq, bq, cq] = jrc(2 * p + 1, q);
-        result.col(idx(p, q + 1, 0))
-            = result.col(idx(p, q, 0)) * (f3 * aq + f4 * bq)
-              - result.col(idx(p, q - 1, 0)) * f5 * cq;
-      }
-    }
+        const int ky = j - kx;
+        const int kz = k - j;
+        std::cout << "tet (" << kx << ", " << ky << ", " << kz << ")\n";
 
-    for (int p = 0; p < n; ++p)
-      for (int q = 0; q < n - p; ++q)
-        result.col(idx(p, q, 1)) = result.col(idx(p, q, 0))
-                                   * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+            result
+            = dresult[idx(kx, ky, kz)];
+        result.resize(pts.rows(), m);
 
-    for (int p = 0; p < n - 1; ++p)
-      for (int q = 0; q < n - p - 1; ++q)
-        for (int r = 1; r < n - p - q; ++r)
+        if (kx == 0 and ky == 0 and kz == 0)
+          result.col(0).fill(1.0);
+        else
+          result.col(0).setZero();
+
+        for (int p = 1; p < n + 1; ++p)
         {
-          auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
-          result.col(idx(p, q, r + 1))
-              = result.col(idx(p, q, r)) * (x.col(2) * ar + br)
-                - result.col(idx(p, q, r - 1)) * cr;
-        }
-  }
-
-  // Now differentiate wrt y
-  for (int ky = 1; ky < nderiv + 1; ++ky)
-    for (int kx = 0; kx < (nderiv + 1 - ky); ++kx)
-    {
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-          result
-          = dresult[idx(kx, ky, 0)];
-      result.resize(pts.rows(), m);
-
-      result.col(0).setZero();
-
-      for (int p = 1; p < n + 1; ++p)
-      {
-        double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
-        result.col(idx(p, 0, 0))
-            = (x.col(0) + 0.5 * (x.col(1) + x.col(2)) + 1.0)
-                  * result.col(idx(p - 1, 0, 0)) * a
-              + ky * a * dresult[idx(kx, ky - 1, 0)].col(idx(p - 1, 0, 0));
-        if (p > 1)
-        {
+          double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
           result.col(idx(p, 0, 0))
-              -= f2 * result.col(idx(p - 2, 0, 0)) * (a - 1.0)
-                 + ky * (x.col(1) + x.col(2))
-                       * dresult[idx(kx, ky - 1, 0)].col(idx(p - 2, 0, 0))
-                       * (a - 1.0);
-          if (ky > 1)
+              = (x.col(0) + 0.5 * (x.col(1) + x.col(2)) + 1.0)
+                * result.col(idx(p - 1, 0, 0)) * a;
+          if (kx > 0)
             result.col(idx(p, 0, 0))
-                -= ky * (ky - 1)
-                   * dresult[idx(kx, ky - 2, 0)].col(idx(p - 2, 0, 0))
-                   * (a - 1.0);
-        }
-      }
+                += 2 * kx * a
+                   * dresult[idx(kx - 1, ky, kz)].col(idx(p - 1, 0, 0));
+          if (ky > 0)
+            result.col(idx(p, 0, 0))
+                += ky * a * dresult[idx(kx, ky - 1, kz)].col(idx(p - 1, 0, 0));
+          if (kz > 0)
+            result.col(idx(p, 0, 0))
+                += kz * a * dresult[idx(kx, ky, kz - 1)].col(idx(p - 1, 0, 0));
 
-      for (int p = 0; p < n; ++p)
-      {
-        result.col(idx(p, 1, 0))
-            = result.col(idx(p, 0, 0))
-                  * (1.0 + p + x.col(1) * (1.5 + p) + x.col(2) * 0.5)
-              + 2 * ky * dresult[idx(kx, ky - 1, 0)].col(idx(p, 0, 0))
-                    * (1.5 + p);
-        for (int q = 1; q < n - p; ++q)
-        {
-          auto [aq, bq, cq] = jrc(2 * p + 1, q);
-          result.col(idx(p, q + 1, 0))
-              = result.col(idx(p, q, 0)) * (f3 * aq + f4 * bq)
-                - result.col(idx(p, q - 1, 0)) * f5 * cq
-                + 2 * ky * dresult[idx(kx, ky - 1, 0)].col(idx(p, q, 0)) * aq;
-        }
-      }
-
-      for (int p = 0; p < n; ++p)
-        for (int q = 0; q < n - p; ++q)
-          result.col(idx(p, q, 1))
-              = result.col(idx(p, q, 0))
-                * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
-
-      for (int p = 0; p < n - 1; ++p)
-        for (int q = 0; q < n - p - 1; ++q)
-          for (int r = 1; r < n - p - q; ++r)
+          if (p > 1)
           {
-            auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
-            result.col(idx(p, q, r + 1))
-                = result.col(idx(p, q, r)) * (x.col(2) * ar + br)
-                  - result.col(idx(p, q, r - 1)) * cr;
+            result.col(idx(p, 0, 0))
+                -= f2 * result.col(idx(p - 2, 0, 0)) * (a - 1.0);
+            // FIXME: y^2 and z^2 derivs
+            if (ky > 0)
+            {
+              result.col(idx(p, 0, 0))
+                  -= ky * (x.col(1) + x.col(2))
+                     * dresult[idx(kx, ky - 1, kz)].col(idx(p - 2, 0, 0))
+                     * (a - 1.0);
+            }
+            if (ky > 1)
+            {
+              result.col(idx(p, 0, 0))
+                  -= ky * (ky - 1)
+                     * dresult[idx(kx, ky - 2, kz)].col(idx(p - 2, 0, 0))
+                     * (a - 1.0);
+            }
+            if (kz > 0)
+            {
+              result.col(idx(p, 0, 0))
+                  -= kz * (x.col(1) + x.col(2))
+                     * dresult[idx(kx, ky, kz - 1)].col(idx(p - 2, 0, 0))
+                     * (a - 1.0);
+            }
+            if (kz > 1)
+            {
+              result.col(idx(p, 0, 0))
+                  -= kz * (kz - 1)
+                     * dresult[idx(kx, ky, kz - 2)].col(idx(p - 2, 0, 0))
+                     * (a - 1.0);
+            }
           }
+        }
+
+        for (int p = 0; p < n; ++p)
+        {
+          result.col(idx(p, 1, 0))
+              = result.col(idx(p, 0, 0))
+                * ((1.0 + x.col(1)) * p
+                   + (2.0 + x.col(1) * 3.0 + x.col(2)) * 0.5);
+          if (ky > 0)
+          {
+            result.col(idx(p, 1, 0))
+                += 2 * ky * dresult[idx(kx, ky - 1, kz)].col(idx(p, 0, 0))
+                   * (1.5 + p);
+          }
+          if (kz > 0)
+          {
+            result.col(idx(p, 1, 0))
+                += kz * dresult[idx(kx, ky, kz - 1)].col(idx(p, 0, 0));
+          }
+
+          for (int q = 1; q < n - p; ++q)
+          {
+            auto [aq, bq, cq] = jrc(2 * p + 1, q);
+            result.col(idx(p, q + 1, 0))
+                = result.col(idx(p, q, 0)) * (f3 * aq + f4 * bq)
+                  - result.col(idx(p, q - 1, 0)) * f5 * cq;
+            if (ky > 0)
+            {
+              result.col(idx(p, q + 1, 0))
+                  += 2 * ky * dresult[idx(kx, ky - 1, kz)].col(idx(p, q, 0))
+                     * aq;
+            }
+
+            if (kz > 0)
+            {
+              result.col(idx(p, q + 1, 0))
+                  += kz * dresult[idx(kx, ky, kz - 1)].col(idx(p, q, 0))
+                         * (aq - bq)
+                     + kz * (1.0 - x.col(2))
+                           * dresult[idx(kx, ky, kz - 1)].col(idx(p, q - 1, 0))
+                           * cq;
+            }
+            // FIXME: quadratic term in z (f5)
+          }
+        }
+
+        for (int p = 0; p < n; ++p)
+          for (int q = 0; q < n - p; ++q)
+          {
+            result.col(idx(p, q, 1))
+                = result.col(idx(p, q, 0))
+                  * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
+            if (kz > 0)
+            {
+              result.col(idx(p, q, 1))
+                  += 2 * kz * (2.0 + p + q)
+                     * dresult[idx(kx, ky, kz - 1)].col(idx(p, q, 0));
+            }
+          }
+
+        for (int p = 0; p < n - 1; ++p)
+          for (int q = 0; q < n - p - 1; ++q)
+            for (int r = 1; r < n - p - q; ++r)
+            {
+              auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+              result.col(idx(p, q, r + 1))
+                  = result.col(idx(p, q, r)) * (x.col(2) * ar + br)
+                    - result.col(idx(p, q, r - 1)) * cr;
+              if (kz > 0)
+              {
+                result.col(idx(p, q, r + 1))
+                    += 2 * kz * ar
+                       * dresult[idx(kx, ky, kz - 1)].col(idx(p, q, r));
+              }
+            }
+      }
     }
+  }
 
   for (auto& result : dresult)
     for (int p = 0; p < n + 1; ++p)
@@ -452,7 +480,6 @@ tabulate_polyset_quad_derivs(
   for (int kx = 0; kx < nderiv + 1; ++kx)
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
     {
-      std::cout << "(" << kx << "," << ky << ")\n";
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
           result
           = dresult[idx(kx, ky)];
@@ -497,7 +524,6 @@ tabulate_polyset_hex_derivs(
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
-        std::cout << "(" << kx << "," << ky << ", " << kz << ")\n";
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
             result
             = dresult[idx(kx, ky, kz)];
@@ -539,7 +565,6 @@ tabulate_polyset_prism_derivs(
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
-        std::cout << "(" << kx << "," << ky << ", " << kz << ")\n";
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
             result
             = dresult[idx(kx, ky, kz)];

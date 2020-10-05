@@ -242,8 +242,8 @@ def test_symbolic_triangle():
 
 
 def test_symbolic_tetrahedron():
-    n = 5
-    nderiv = 0
+    n = 2
+    nderiv = 1
 
     def idx(p, q, r):
         return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6
@@ -311,3 +311,33 @@ def test_symbolic_tetrahedron():
             wsym[j, i] = w[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
 
     assert(np.isclose(wtab[0], wsym).all())
+
+    # d/dx
+    wd = []
+    wsym = np.zeros_like(wtab[0])
+    for i in range(m):
+        wd += [sympy.diff(w[i], x)]
+        for j, p in enumerate(pts0):
+            wsym[j, i] = wd[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
+
+    assert(np.isclose(wtab[1], wsym).all())
+
+    # d/dy
+    wd = []
+    wsym = np.zeros_like(wtab[0])
+    for i in range(m):
+        wd += [sympy.diff(w[i], y)]
+        for j, p in enumerate(pts0):
+            wsym[j, i] = wd[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
+
+    assert(np.isclose(wtab[2], wsym).all())
+
+    # d/dz
+    wd = []
+    wsym = np.zeros_like(wtab[0])
+    for i in range(m):
+        wd += [sympy.diff(w[i], z)]
+        for j, p in enumerate(pts0):
+            wsym[j, i] = wd[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
+
+    assert(np.isclose(wtab[3], wsym).all())

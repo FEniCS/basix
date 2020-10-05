@@ -51,3 +51,39 @@ Lagrange::tabulate_basis(
 
   return result;
 }
+//-----------------------------------------------------------------------------
+std::vector<
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+Lagrange::tabulate_basis_derivatives(
+    int nderiv,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts) const
+{
+  const int tdim = Cell::topological_dimension(_cell_type);
+  if (pts.cols() != tdim)
+    throw std::runtime_error(
+        "Point dimension does not match element dimension");
+
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      dbasis_at_pts = PolynomialSet::tabulate_polynomial_set_deriv(
+          _cell_type, _degree, nderiv, pts);
+  const int ndofs = _coeffs.rows();
+
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      dresult(dbasis_at_pts.size());
+
+  for (std::size_t p = 0; p < dresult.size(); ++p)
+  {
+    auto& result = dresult[p];
+    result.resize(pts.rows(), ndofs);
+    result.setZero();
+
+    for (int i = 0; i < ndofs; ++i)
+      for (int k = 0; k < dbasis_at_pts[p].cols(); ++k)
+        result.col(i) += dbasis_at_pts[p].col(k) * _coeffs(i, k);
+  }
+
+  return dresult;
+}

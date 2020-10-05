@@ -35,7 +35,8 @@ PYBIND11_MODULE(fiatx, m)
 
   py::class_<Lagrange>(m, "Lagrange")
       .def(py::init<Cell::Type, int>())
-      .def("tabulate_basis", &Lagrange::tabulate_basis);
+      .def("tabulate_basis", &Lagrange::tabulate_basis)
+      .def("tabulate_basis_derivatives", &Lagrange::tabulate_basis_derivatives);
 
   py::class_<TensorProduct>(m, "TensorProduct")
       .def(py::init<Cell::Type, int>())

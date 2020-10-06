@@ -36,19 +36,9 @@ TensorProduct::tabulate_basis(
     throw std::runtime_error(
         "Point dimension does not match element dimension");
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       basis_at_pts
       = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree, pts);
-  const int psize = basis_at_pts.cols();
-  const int ndofs = _coeffs.rows();
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
-      pts.rows(), ndofs);
-  result.setZero();
-
-  for (int i = 0; i < ndofs; ++i)
-    for (int k = 0; k < psize; ++k)
-      result.col(i) += basis_at_pts.col(k) * _coeffs(i, k);
-
-  return result;
+  return basis_at_pts * _coeffs.transpose();
 }

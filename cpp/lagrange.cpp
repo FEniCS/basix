@@ -41,14 +41,8 @@ Lagrange::tabulate_basis(
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       basis_at_pts
       = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree, pts);
-  const int ndofs = _coeffs.rows();
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
-      pts.rows(), ndofs);
-
-  result = basis_at_pts * _coeffs.transpose();
-
-  return result;
+  return basis_at_pts * _coeffs.transpose();
 }
 //-----------------------------------------------------------------------------
 std::vector<

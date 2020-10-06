@@ -133,13 +133,14 @@ def test_symbolic_interval():
     n = 7
     nderiv = 4
 
+    from sympy import S
     x = sympy.Symbol("x")
-    x0 = x * sympy.S(2) - sympy.S(1)
-    r = [sympy.S(1) for i in range(n + 1)]
+    x0 = x * S(2) - S(1)
+    r = [S(1) for i in range(n + 1)]
 
     for p in range(1, n + 1):
-        a = sympy.S(1) - sympy.Rational(1, p)
-        r[p] = x0 * r[p - 1] * (a + sympy.S(1))
+        a = S(1) - sympy.Rational(1, p)
+        r[p] = x0 * r[p - 1] * (a + S(1))
         if p > 1:
             r[p] = r[p] - r[p - 2] * a
     for p in range(n + 1):
@@ -186,21 +187,22 @@ def test_symbolic_triangle():
     def idx(p, q):
         return (p + q + 1) * (p + q) // 2 + q
 
+    from sympy import S
     m = (n + 1) * (n + 2) // 2
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    x0 = x * sympy.S(2) - sympy.S(1)
-    y0 = y * sympy.S(2) - sympy.S(1)
-    f3 = (sympy.S(1) - y0)**2 / sympy.S(4)
-    r = [sympy.S(1) for i in range(m)]
+    x0 = x * S(2) - S(1)
+    y0 = y * S(2) - S(1)
+    f3 = (S(1) - y0)**2 / S(4)
+    r = [S(1) for i in range(m)]
 
     np.set_printoptions(linewidth=200)
     for p in range(1, n + 1):
         a = sympy.Rational(2 * p - 1, p)
-        r[idx(p, 0)] = (x0 + (y0 + sympy.S(1))/sympy.S(2)) \
+        r[idx(p, 0)] = (x0 + (y0 + S(1))/S(2)) \
             * r[idx(p - 1, 0)] * a
         if p > 1:
-            r[idx(p, 0)] -= f3 * r[idx(p - 2, 0)] * (a - sympy.S(1))
+            r[idx(p, 0)] -= f3 * r[idx(p - 2, 0)] * (a - S(1))
 
     for p in range(n):
         r[idx(p, 1)] = r[idx(p, 0)] * (y0 * sympy.Rational(3 + 2 * p, 2)
@@ -213,7 +215,7 @@ def test_symbolic_triangle():
     for p in range(n + 1):
         for q in range(n - p + 1):
             r[idx(p, q)] *= sympy.sqrt(sympy.Rational(2*p + 1, 2)
-                                       * sympy.S(p + q + 1))
+                                       * S(p + q + 1))
 
     cell = fiatx.CellType.triangle
     pts0 = fiatx.create_lattice(cell, 3, True)
@@ -249,32 +251,33 @@ def test_symbolic_tetrahedron():
         return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6
                 + (q + r) * (q + r + 1) // 2 + r)
 
+    from sympy import S
     m = (n + 1) * (n + 2) * (n + 3) // 6
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    x0 = x * sympy.S(2) - sympy.S(1)
-    y0 = y * sympy.S(2) - sympy.S(1)
-    z0 = z * sympy.S(2) - sympy.S(1)
-    f2 = (y0 + z0)**2 / sympy.S(4)
-    f3 = y0 + (sympy.S(1) + z0) / sympy.S(2)
-    f4 = (sympy.S(1) - z0) / sympy.S(2)
+    x0 = x * S(2) - S(1)
+    y0 = y * S(2) - S(1)
+    z0 = z * S(2) - S(1)
+    f2 = (y0 + z0)**2 / S(4)
+    f3 = y0 + (S(1) + z0) / S(2)
+    f4 = (S(1) - z0) / S(2)
     f5 = f4 * f4
 
-    w = [sympy.S(1) for i in range(m)]
+    w = [S(1) for i in range(m)]
 
     np.set_printoptions(linewidth=200, suppress=True, precision=3)
     for p in range(1, n + 1):
         a = sympy.Rational(2 * p - 1, p)
-        w[idx(p, 0, 0)] = (x0 + sympy.S(1) + (y0 + z0)/sympy.S(2)) \
+        w[idx(p, 0, 0)] = (x0 + S(1) + (y0 + z0)/S(2)) \
             * w[idx(p - 1, 0, 0)] * a
         if p > 1:
-            w[idx(p, 0, 0)] -= f2 * w[idx(p - 2, 0, 0)] * (a - sympy.S(1))
+            w[idx(p, 0, 0)] -= f2 * w[idx(p - 2, 0, 0)] * (a - S(1))
 
     for p in range(n):
         w[idx(p, 1, 0)] = w[idx(p, 0, 0)] * \
-            ((sympy.S(1) + y0)*sympy.S(p) +
-             (sympy.S(2) + y0 * sympy.S(3) + z0) / sympy.S(2))
+            ((S(1) + y0)*S(p) +
+             (S(2) + y0 * S(3) + z0) / S(2))
         for q in range(1, n - p):
             aq, bq, cq = jrc(2 * p + 1, q)
             w[idx(p, q + 1, 0)] = w[idx(p, q, 0)] * (f3 * aq + f4 * bq) \
@@ -283,7 +286,7 @@ def test_symbolic_tetrahedron():
     for p in range(n):
         for q in range(n - p):
             w[idx(p, q, 1)] = w[idx(p, q, 0)] * \
-                (sympy.S(1 + p + q) + z0 * sympy.S(2 + p + q))
+                (S(1 + p + q) + z0 * S(2 + p + q))
 
     for p in range(n - 1):
         for q in range(n - p - 1):
@@ -297,7 +300,7 @@ def test_symbolic_tetrahedron():
             for r in range(n - p - q + 1):
                 w[idx(p, q, r)] *= \
                     sympy.sqrt(sympy.Rational(2 * p + 1, 2)
-                               * sympy.S(p + q + 1)
+                               * S(p + q + 1)
                                * sympy.Rational(2 * p + 2 * q + 2 * r + 3, 2))
 
     cell = fiatx.CellType.tetrahedron

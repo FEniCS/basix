@@ -394,18 +394,6 @@ tabulate_polyset_pyramid_derivs(
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       dresult(md);
 
-  // FIXME - add loop for derivs
-  if (nderiv > 0)
-    throw std::runtime_error("Derivs not yet implemented for pyramid");
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& result
-      = dresult[0];
-  result.resize(pts.rows(), m);
-
-  const auto f1x = (1.0 + x.col(0) * 2.0 + x.col(2)) * 0.5;
-  const auto f1y = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
-  const auto f2 = (1.0 - x.col(2)).square() * 0.25;
-
   // Indexing for pyramidal basis functions
   auto pyr_idx = [&n, &m](int p, int q, int r) {
     const int rv = (n - r);
@@ -415,60 +403,110 @@ tabulate_polyset_pyramid_derivs(
     return idx;
   };
 
-  result.col(pyr_idx(0, 0, 0)).fill(1.0);
+  const auto f2 = (1.0 - x.col(2)).square() * 0.25;
 
-  // r = 0
-  for (int p = 1; p < n + 1; ++p)
+  // Traverse derivatives in increasing order
+  for (int k = 0; k < nderiv + 1; ++k)
   {
-    const double a = static_cast<double>(p - 1) / static_cast<double>(p);
-    result.col(pyr_idx(p, 0, 0))
-        = f1x * result.col(pyr_idx(p - 1, 0, 0)) * (a + 1.0);
-    if (p > 1)
-      result.col(pyr_idx(p, 0, 0)) -= f2 * result.col(pyr_idx(p - 2, 0, 0)) * a;
+    for (int j = 0; j < k + 1; ++j)
+    {
+      for (int kx = 0; kx < j + 1; ++kx)
+      {
+        const int ky = j - kx;
+        const int kz = k - j;
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+            result
+            = dresult[idx(kx, ky, kz)];
+        result.resize(pts.rows(), m);
+
+        if (kx == 0 and ky == 0 and kz == 0)
+          result.col(pyr_idx(0, 0, 0)).fill(1.0);
+        else
+          result.col(pyr_idx(0, 0, 0)).setZero();
+
+        // r = 0
+        for (int p = 1; p < n + 1; ++p)
+        {
+          const double a = static_cast<double>(p - 1) / static_cast<double>(p);
+          result.col(pyr_idx(p, 0, 0)) = (0.5 + x.col(0) + x.col(2) * 0.5)
+                                         * result.col(pyr_idx(p - 1, 0, 0))
+                                         * (a + 1.0);
+          if (kx > 0)
+            result.col(pyr_idx(p, 0, 0))
+                += 2.0 * kx
+                   * dresult[idx(kx - 1, ky, kz)].col(pyr_idx(p - 1, 0, 0))
+                   * (a + 1.0);
+          if (kz > 0)
+            result.col(pyr_idx(p, 0, 0))
+                += kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p - 1, 0, 0))
+                   * (a + 1.0);
+
+          if (p > 1)
+            result.col(pyr_idx(p, 0, 0))
+                -= f2 * result.col(pyr_idx(p - 2, 0, 0)) * a;
+        }
+
+        for (int q = 1; q < n + 1; ++q)
+        {
+          const double a = static_cast<double>(q - 1) / static_cast<double>(q);
+          result.col(pyr_idx(0, q, 0)) = (0.5 + x.col(1) + x.col(2) * 0.5)
+                                         * result.col(pyr_idx(0, q - 1, 0))
+                                         * (a + 1.0);
+          if (ky > 0)
+            result.col(pyr_idx(0, q, 0))
+                += 2.0 * ky
+                   * dresult[idx(kx, ky - 1, kz)].col(pyr_idx(0, q - 1, 0))
+                   * (a + 1.0);
+          if (kz > 0)
+            result.col(pyr_idx(0, q, 0))
+                += kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(0, q - 1, 0))
+                   * (a + 1.0);
+          if (q > 1)
+            result.col(pyr_idx(0, q, 0))
+                -= f2 * result.col(pyr_idx(0, q - 2, 0)) * a;
+        }
+
+        for (int p = 1; p < n + 1; ++p)
+          for (int q = 1; q < n + 1; ++q)
+          {
+            result.col(pyr_idx(p, q, 0))
+                = result.col(pyr_idx(p, 0, 0)) * result.col(pyr_idx(0, q, 0));
+          }
+
+        // Extend into r > 0
+        for (int p = 0; p < n; ++p)
+          for (int q = 0; q < n; ++q)
+          {
+            result.col(pyr_idx(p, q, 1))
+                = result.col(pyr_idx(p, q, 0))
+                  * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
+            if (kz > 0)
+              result.col(pyr_idx(p, q, 1))
+                  += 2 * kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q, 0))
+                     * (2.0 + p + q);
+          }
+
+        for (int r = 1; r < n + 1; ++r)
+          for (int p = 0; p < n - r; ++p)
+            for (int q = 0; q < n - r; ++q)
+            {
+              auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+              result.col(pyr_idx(p, q, r + 1))
+                  = result.col(pyr_idx(p, q, r)) * (x.col(2) * ar + br)
+                    - result.col(pyr_idx(p, q, r - 1)) * cr;
+            }
+      }
+    }
   }
 
-  for (int q = 1; q < n + 1; ++q)
-  {
-    const double a = static_cast<double>(q - 1) / static_cast<double>(q);
-    result.col(pyr_idx(0, q, 0))
-        = f1y * result.col(pyr_idx(0, q - 1, 0)) * (a + 1.0);
-    if (q > 1)
-      result.col(pyr_idx(0, q, 0)) -= f2 * result.col(pyr_idx(0, q - 2, 0)) * a;
-  }
-
-  for (int p = 1; p < n + 1; ++p)
-    for (int q = 1; q < n + 1; ++q)
-    {
-      result.col(pyr_idx(p, q, 0))
-          = result.col(pyr_idx(p, 0, 0)) * result.col(pyr_idx(0, q, 0));
-    }
-
-  // Extend into r > 0
-  for (int p = 0; p < n; ++p)
-    for (int q = 0; q < n; ++q)
-    {
-      result.col(pyr_idx(p, q, 1))
-          = result.col(pyr_idx(p, q, 0))
-            * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
-    }
-
-  for (int r = 1; r < n + 1; ++r)
-    for (int p = 0; p < n - r; ++p)
-      for (int q = 0; q < n - r; ++q)
-      {
-        auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
-        result.col(pyr_idx(p, q, r + 1))
-            = result.col(pyr_idx(p, q, r)) * (x.col(2) * ar + br)
-              - result.col(pyr_idx(p, q, r - 1)) * cr;
-      }
-
-  for (int r = 0; r < n + 1; ++r)
-    for (int p = 0; p < n - r + 1; ++p)
-      for (int q = 0; q < n - r + 1; ++q)
-      {
-        result.col(pyr_idx(p, q, r))
-            *= sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
-      }
+  for (auto& result : dresult)
+    for (int r = 0; r < n + 1; ++r)
+      for (int p = 0; p < n - r + 1; ++p)
+        for (int q = 0; q < n - r + 1; ++q)
+        {
+          result.col(pyr_idx(p, q, r))
+              *= sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
+        }
 
   return dresult;
 }
@@ -631,18 +669,23 @@ PolynomialSet::tabulate_polynomial_set_deriv(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
 {
-  if (celltype == Cell::Type::interval)
+  switch (celltype)
+  {
+  case Cell::Type::interval:
     return tabulate_polyset_line_derivs(n, nderiv, pts);
-  else if (celltype == Cell::Type::triangle)
+  case Cell::Type::triangle:
     return tabulate_polyset_triangle_derivs(n, nderiv, pts);
-  else if (celltype == Cell::Type::tetrahedron)
+  case Cell::Type::tetrahedron:
     return tabulate_polyset_tetrahedron_derivs(n, nderiv, pts);
-  else if (celltype == Cell::Type::quadrilateral)
+  case Cell::Type::quadrilateral:
     return tabulate_polyset_quad_derivs(n, nderiv, pts);
-  else if (celltype == Cell::Type::prism)
+  case Cell::Type::prism:
     return tabulate_polyset_prism_derivs(n, 0, pts);
-  else if (celltype == Cell::Type::hexahedron)
+  case Cell::Type::pyramid:
+    return tabulate_polyset_pyramid_derivs(n, 0, pts);
+  case Cell::Type::hexahedron:
     return tabulate_polyset_hex_derivs(n, nderiv, pts);
-
-  throw std::runtime_error("Polynomial set: Unsupported cell type");
+  default:
+    throw std::runtime_error("Polynomial set: Unsupported cell type");
+  }
 }

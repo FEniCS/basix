@@ -16,6 +16,8 @@ public:
   Nedelec(Cell::Type celltype, int k);
 
   /// Tabulate basis at points
+  /// The returned array has one row for each point, and the basis values for
+  /// each component are stacked in the columns, with XXXYYYZZZ ordering.
   /// @param pts Points
   /// @return Basis values at points
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>

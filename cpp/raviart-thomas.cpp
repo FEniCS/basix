@@ -162,7 +162,7 @@ RaviartThomas::tabulate_basis(
     throw std::runtime_error(
         "Point dimension does not match element dimension");
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_pts
       = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree + 1, pts);
   const int psize = Pkp1_at_pts.cols();
@@ -170,13 +170,11 @@ RaviartThomas::tabulate_basis(
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
       pts.rows(), ndofs * tdim);
-  result.setZero();
 
   for (int j = 0; j < tdim; ++j)
-    for (int i = 0; i < ndofs; ++i)
-      for (int k = 0; k < psize; ++k)
-        result.col(i + ndofs * j)
-            += Pkp1_at_pts.col(k) * _coeffs(i, k + psize * j);
+    result.block(0, ndofs * j, pts.rows(), ndofs)
+        = Pkp1_at_pts
+          * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
 
   return result;
 }

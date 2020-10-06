@@ -16,7 +16,7 @@ namespace
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 create_nedelec_2d_space(int degree)
 {
-  // Reference triangle
+  // 2D space on triangle
   const int tdim = 2;
 
   // Vector subset
@@ -26,6 +26,7 @@ create_nedelec_2d_space(int degree)
   const int ns = degree + 1;
   const int ns0 = (degree + 1) * degree / 2;
 
+  // Tabulate P(k+1) at quadrature points
   auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts = PolynomialSet::tabulate_polynomial_set(
@@ -57,8 +58,10 @@ create_nedelec_2d_space(int degree)
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 create_nedelec_2d_dual(int degree)
 {
+  // 2D triangle
   const int tdim = 2;
 
+  // Tabulate P(k+1) at quadrature points
   const int ndofs = 3 * (degree + 1) + degree * (degree + 1);
   auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -157,6 +160,7 @@ create_nedelec_3d_space(int degree)
   const int ns = (degree + 1) * (degree + 2) / 2;
   const int ns0 = degree * (degree + 1) * (degree + 2) / 6;
 
+  // Tabulate P(k+1) at quadrature points
   auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts = PolynomialSet::tabulate_polynomial_set(
@@ -193,7 +197,7 @@ create_nedelec_3d_space(int degree)
               + (degree - 1) * degree * (degree + 1) / 2;
   wcoeffs = svd.matrixV().transpose().topRows(ndofs);
 
-  // Check singular values
+  // Check singular values (should only be ndofs which are significant)
   Eigen::VectorXd s = svd.singularValues();
   for (int i = 0; i < ndofs; ++i)
     if (s[i] < 1e-12)
@@ -210,13 +214,14 @@ create_nedelec_3d_dual(int degree)
 {
   const int tdim = 3;
 
-  // Dual space
+  // Tabulate P(k+1) at quadrature points
   auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts = PolynomialSet::tabulate_polynomial_set(
           Cell::Type::tetrahedron, degree + 1, Qpts);
   const int psize = Pkp1_at_Qpts.cols();
 
+  // Work out number of dofs
   const int ndofs = 6 * (degree + 1) + 4 * degree * (degree + 1)
                     + (degree - 1) * degree * (degree + 1) / 2;
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -377,21 +382,21 @@ Nedelec::tabulate_basis(
     throw std::runtime_error(
         "Point dimension does not match element dimension");
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  // Tabulate expansion basis at points
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_pts
       = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree + 1, pts);
   const int psize = Pkp1_at_pts.cols();
   const int ndofs = _coeffs.rows();
 
+  // Multiply expansion basis by coefficients
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
       pts.rows(), ndofs * tdim);
-  result.setZero();
 
   for (int j = 0; j < tdim; ++j)
-    for (int i = 0; i < ndofs; ++i)
-      for (int k = 0; k < psize; ++k)
-        result.col(i + ndofs * j)
-            += Pkp1_at_pts.col(k) * _coeffs(i, k + psize * j);
+    result.block(0, ndofs * j, pts.rows(), ndofs)
+        = Pkp1_at_pts
+          * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
 
   return result;
 }

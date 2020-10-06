@@ -13,15 +13,18 @@ Lagrange::Lagrange(Cell::Type celltype, int degree)
       and celltype != Cell::Type::tetrahedron)
     throw std::runtime_error("Invalid celltype");
 
-  // Tabulate basis at nodes
+  // Create points at nodes
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
       = Cell::create_lattice(celltype, degree, true);
+  const int ndofs = pt.rows();
 
+  // Coefficients are Identity Matrix
+  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
+
+  // Point evaluation of basis
   Eigen::MatrixXd dualmat
       = PolynomialSet::tabulate_polynomial_set(celltype, degree, pt);
 
-  const int ndofs = pt.rows();
-  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
   apply_dualmat_to_basis(coeffs, dualmat);
 }
 //-----------------------------------------------------------------------------
@@ -35,19 +38,15 @@ Lagrange::tabulate_basis(
     throw std::runtime_error(
         "Point dimension does not match element dimension");
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       basis_at_pts
       = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree, pts);
-  const int psize = basis_at_pts.cols();
   const int ndofs = _coeffs.rows();
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
       pts.rows(), ndofs);
-  result.setZero();
 
-  for (int i = 0; i < ndofs; ++i)
-    for (int k = 0; k < psize; ++k)
-      result.col(i) += basis_at_pts.col(k) * _coeffs(i, k);
+  result = basis_at_pts * _coeffs.transpose();
 
   return result;
 }

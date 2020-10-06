@@ -8,7 +8,7 @@ w = N.tabulate_basis(pts)
 
 nc = w.shape[1]//2
 
-fig, ax = plt.subplots(2, 3)
+fig, ax = plt.subplots(2, 4)
 for j, a in enumerate(ax.flatten()):
     ned_shape_fn_x = w[:, j]
     ned_shape_fn_y = w[:, j + nc]

@@ -5,7 +5,6 @@
 #include "polynomial-set.h"
 #include "cell.h"
 #include <Eigen/Dense>
-#include <iostream>
 
 namespace
 {

@@ -680,9 +680,9 @@ PolynomialSet::tabulate_polynomial_set_deriv(
   case Cell::Type::quadrilateral:
     return tabulate_polyset_quad_derivs(n, nderiv, pts);
   case Cell::Type::prism:
-    return tabulate_polyset_prism_derivs(n, 0, pts);
+    return tabulate_polyset_prism_derivs(n, nderiv, pts);
   case Cell::Type::pyramid:
-    return tabulate_polyset_pyramid_derivs(n, 0, pts);
+    return tabulate_polyset_pyramid_derivs(n, nderiv, pts);
   case Cell::Type::hexahedron:
     return tabulate_polyset_hex_derivs(n, nderiv, pts);
   default:

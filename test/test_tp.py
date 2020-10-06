@@ -7,9 +7,10 @@ import pytest
 import numpy as np
 
 
-@pytest.mark.parametrize("order", [1, 2, 3])
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
 @pytest.mark.parametrize("celltype", [fiatx.CellType.quadrilateral,
                                       fiatx.CellType.hexahedron,
+                                      fiatx.CellType.pyramid,
                                       fiatx.CellType.prism])
 def test_tp(order, celltype):
     np.set_printoptions(suppress=True)

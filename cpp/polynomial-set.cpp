@@ -211,7 +211,6 @@ tabulate_polyset_tetrahedron_derivs(
       {
         const int ky = j - kx;
         const int kz = k - j;
-        std::cout << "tet (" << kx << ", " << ky << ", " << kz << ")\n";
 
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
             result
@@ -276,7 +275,6 @@ tabulate_polyset_tetrahedron_derivs(
 
             if (ky > 0 and kz > 0)
             {
-              // FIXME - check coefficients for higher derivatives
               result.col(idx(p, 0, 0))
                   -= 2.0 * ky * kz
                      * dresult[idx(kx, ky - 1, kz - 1)].col(idx(p - 2, 0, 0))
@@ -379,9 +377,10 @@ tabulate_polyset_tetrahedron_derivs(
   return dresult;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-tabulate_polyset_pyramid(
-    int n,
+std::vector<
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+tabulate_polyset_pyramid_derivs(
+    int n, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
 {
@@ -391,11 +390,21 @@ tabulate_polyset_pyramid(
       = pts * 2.0 - 1.0;
 
   const int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
-      pts.rows(), m);
+  const int md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      dresult(md);
 
-  //  const auto f1x = (1.0 + x.col(0) * 2.0 + x.col(2)) * 0.5;
-  //  const auto f1y = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
+  // FIXME - add loop for derivs
+  if (nderiv > 0)
+    throw std::runtime_error("Derivs not yet implemented for pyramid");
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& result
+      = dresult[0];
+  result.resize(pts.rows(), m);
+
+  const auto f1x = (1.0 + x.col(0) * 2.0 + x.col(2)) * 0.5;
+  const auto f1y = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
   const auto f2 = (1.0 - x.col(2)).square() * 0.25;
 
   // Indexing for pyramidal basis functions
@@ -408,31 +417,24 @@ tabulate_polyset_pyramid(
   };
 
   result.col(pyr_idx(0, 0, 0)).fill(1.0);
-  if (n > 0)
-  {
-    result.col(pyr_idx(1, 0, 0)) = (1.0 + x.col(0) * 2.0 + x.col(2)) * 0.5;
-    result.col(pyr_idx(0, 1, 0)) = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
-  }
-  else
-    return result;
 
   // r = 0
-  for (int p = 1; p < n; ++p)
+  for (int p = 1; p < n + 1; ++p)
   {
-    const double a = static_cast<double>(p) / static_cast<double>(p + 1);
-    result.col(pyr_idx(p + 1, 0, 0))
-        = result.col(pyr_idx(1, 0, 0)) * result.col(pyr_idx(p, 0, 0))
-              * (a + 1.0)
-          - f2 * result.col(pyr_idx(p - 1, 0, 0)) * a;
+    const double a = static_cast<double>(p - 1) / static_cast<double>(p);
+    result.col(pyr_idx(p, 0, 0))
+        = f1x * result.col(pyr_idx(p - 1, 0, 0)) * (a + 1.0);
+    if (p > 1)
+      result.col(pyr_idx(p, 0, 0)) -= f2 * result.col(pyr_idx(p - 2, 0, 0)) * a;
   }
 
-  for (int q = 1; q < n; ++q)
+  for (int q = 1; q < n + 1; ++q)
   {
-    const double a = static_cast<double>(q) / static_cast<double>(q + 1);
-    result.col(pyr_idx(0, q + 1, 0))
-        = result.col(pyr_idx(0, 1, 0)) * result.col(pyr_idx(0, q, 0))
-              * (a + 1.0)
-          - f2 * result.col(pyr_idx(0, q - 1, 0)) * a;
+    const double a = static_cast<double>(q - 1) / static_cast<double>(q);
+    result.col(pyr_idx(0, q, 0))
+        = f1y * result.col(pyr_idx(0, q - 1, 0)) * (a + 1.0);
+    if (q > 1)
+      result.col(pyr_idx(0, q, 0)) -= f2 * result.col(pyr_idx(0, q - 2, 0)) * a;
   }
 
   for (int p = 1; p < n + 1; ++p)
@@ -469,7 +471,7 @@ tabulate_polyset_pyramid(
             *= sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
       }
 
-  return result;
+  return dresult;
 }
 //-----------------------------------------------------------------------------
 std::vector<
@@ -601,23 +603,27 @@ PolynomialSet::tabulate_polynomial_set(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
 {
-  if (celltype == Cell::Type::interval)
+  switch (celltype)
+  {
+  case Cell::Type::interval:
     return tabulate_polyset_line_derivs(n, 0, pts)[0];
-  else if (celltype == Cell::Type::triangle)
+  case Cell::Type::triangle:
     return tabulate_polyset_triangle_derivs(n, 0, pts)[0];
-  else if (celltype == Cell::Type::tetrahedron)
+  case Cell::Type::tetrahedron:
     return tabulate_polyset_tetrahedron_derivs(n, 0, pts)[0];
-  else if (celltype == Cell::Type::quadrilateral)
+  case Cell::Type::quadrilateral:
     return tabulate_polyset_quad_derivs(n, 0, pts)[0];
-  else if (celltype == Cell::Type::hexahedron)
+  case Cell::Type::hexahedron:
     return tabulate_polyset_hex_derivs(n, 0, pts)[0];
-  else if (celltype == Cell::Type::prism)
+  case Cell::Type::prism:
     return tabulate_polyset_prism_derivs(n, 0, pts)[0];
-  else if (celltype == Cell::Type::pyramid)
-    return tabulate_polyset_pyramid(n, pts);
-
-  throw std::runtime_error("Polynomial set: Unsupported cell type");
+  case Cell::Type::pyramid:
+    return tabulate_polyset_pyramid_derivs(n, 0, pts)[0];
+  default:
+    throw std::runtime_error("Polynomial set: Unsupported cell type");
+  }
 }
+
 //-----------------------------------------------------------------------------
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
@@ -634,6 +640,8 @@ PolynomialSet::tabulate_polynomial_set_deriv(
     return tabulate_polyset_tetrahedron_derivs(n, nderiv, pts);
   else if (celltype == Cell::Type::quadrilateral)
     return tabulate_polyset_quad_derivs(n, nderiv, pts);
+  else if (celltype == Cell::Type::prism)
+    return tabulate_polyset_prism_derivs(n, 0, pts);
   else if (celltype == Cell::Type::hexahedron)
     return tabulate_polyset_hex_derivs(n, nderiv, pts);
 

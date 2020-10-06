@@ -61,22 +61,13 @@ Lagrange::tabulate_basis_derivatives(
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       dbasis_at_pts = PolynomialSet::tabulate_polynomial_set_deriv(
           _cell_type, _degree, nderiv, pts);
-  const int ndofs = _coeffs.rows();
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       dresult(dbasis_at_pts.size());
 
   for (std::size_t p = 0; p < dresult.size(); ++p)
-  {
-    auto& result = dresult[p];
-    result.resize(pts.rows(), ndofs);
-    result.setZero();
-
-    for (int i = 0; i < ndofs; ++i)
-      for (int k = 0; k < dbasis_at_pts[p].cols(); ++k)
-        result.col(i) += dbasis_at_pts[p].col(k) * _coeffs(i, k);
-  }
+    dresult[p] = dbasis_at_pts[p].matrix() * _coeffs.transpose();
 
   return dresult;
 }

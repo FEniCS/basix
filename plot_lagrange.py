@@ -6,10 +6,11 @@ d = 3
 L = Lagrange(CellType.triangle, d)
 
 pts = create_lattice(CellType.triangle, 50, True)
-
-for kk in range(3):
-    w = L.tabulate_basis_derivatives(1, pts)[kk]
-
+w0 = L.tabulate_basis_derivatives(2, pts)
+numpy.set_printoptions(linewidth=240)
+for kk in range(6):
+    w = w0[kk]
+    print(w)
 
     ww = 1
     nn = (d + 2) * (d + 1) // 2
@@ -23,11 +24,11 @@ for kk in range(3):
         nn //= 2
         ww = 2
 
-    plt.figure()
+
     fig, ax = plt.subplots(ww, nn)
+    ax[0,0].set_title("w[%d]" % kk)
     for j, a in enumerate(ax.flatten()):
         shape_fn = w[:, j]
-        print(numpy.max(shape_fn), numpy.min(shape_fn))
         a.tricontourf(pts[:, 0], pts[:, 1], shape_fn)
 
 

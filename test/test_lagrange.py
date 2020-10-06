@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import fiatx
+import numpy
 import pytest
 
 
@@ -12,4 +13,7 @@ import pytest
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_lagrange(celltype, order):
     lagrange = fiatx.Lagrange(celltype, order)
-    print(lagrange)
+
+    pts = fiatx.create_lattice(celltype, 6, True)
+    w = lagrange.tabulate_basis(pts)
+    assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())

@@ -307,7 +307,7 @@ Cell::create_lattice(Cell::Type celltype, int n, bool exterior)
     for (int i = b; i < n + 1 - b; ++i)
       for (int j = b; j < n + 1 - i - b; ++j)
         for (int k = b; k < n + 1 - b; ++k)
-          points.row(c++) = hs.row(2) * k + hs.row(1) * j + hs.row(0) * i;
+          points.row(c++) = hs.row(0) * k + hs.row(1) * j + hs.row(2) * i;
   }
   else if (celltype == Cell::Type::pyramid)
   {

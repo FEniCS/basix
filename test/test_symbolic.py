@@ -7,13 +7,9 @@ import fiatx
 import numpy as np
 import pytest
 
-
-def test_symbolic_interval():
-    n = 7
-    nderiv = 4
+def P_interval(n, x):
 
     from sympy import S
-    x = sympy.Symbol("x")
     x0 = x * S(2) - S(1)
     r = [S(1) for i in range(n + 1)]
 
@@ -22,8 +18,18 @@ def test_symbolic_interval():
         r[p] = x0 * r[p - 1] * (a + S(1))
         if p > 1:
             r[p] = r[p] - r[p - 2] * a
+
     for p in range(n + 1):
         r[p] *= sympy.sqrt(p + sympy.Rational(1, 2))
+
+    return r
+
+def test_symbolic_interval():
+    n = 7
+    nderiv = 4
+
+    x = sympy.Symbol("x")
+    r = P_interval(n, x)
 
     cell = fiatx.CellType.interval
     pts0 = fiatx.create_lattice(cell, 10, True)
@@ -47,6 +53,60 @@ def test_symbolic_interval():
                 wsym[j, i] = r[i].subs(x, p[0])
 
         assert(np.isclose(w[k], wsym).all())
+
+
+def test_symbolic_quad():
+    n = 2
+    nderiv = 2
+
+    def idx(p, q):
+        return (p + q + 1) * (p + q) // 2 + q
+
+    x = sympy.Symbol("x")
+    rx = P_interval(n, x)
+    y = sympy.Symbol("y")
+    ry = P_interval(n, y)
+
+    r = []
+    for i in range(n + 1):
+        for j in range(n + 1):
+            r += [rx[i] * ry[j]]
+
+    m = (n + 1)**2
+    cell = fiatx.CellType.quadrilateral
+    pts0 = fiatx.create_lattice(cell, 2, True)
+    w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+
+    wsym = np.zeros_like(w[0])
+
+    for i in range(m):
+        for j, p in enumerate(pts0):
+            wsym[j, i] = r[i].subs([(x, p[0]), (y, p[1])])
+
+    np.set_printoptions(suppress=True, linewidth=200, precision=2)
+    print()
+    print(w[0])
+    print()
+    print(wsym)
+
+    assert(np.isclose(w[0], wsym).all())
+
+    rd = [0.0 for i in range(len(r))]
+    for kx in range(nderiv):
+        for ky in range(0, nderiv - kx):
+            for i in range(m):
+                rd[i] = sympy.diff(r[i], x, kx, y, ky)
+
+            wsym = np.zeros_like(w[0])
+            for i in range(m):
+                for j, p in enumerate(pts0):
+                    wsym[j, i] = rd[i].subs([(x, p[0]), (y, p[1])])
+
+            print(kx, ky)
+            print(w[idx(kx, ky)])
+            print()
+            print(wsym)
+            assert(np.isclose(w[idx(kx, ky)], wsym).all())
 
 
 def jrc(a, n):
@@ -108,7 +168,7 @@ def test_symbolic_triangle():
 
     assert(np.isclose(w[0], wsym).all())
 
-    rd = r.copy()
+    rd = [0.0 for i in range(len(r))]
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
             for i in range(m):
@@ -243,12 +303,12 @@ def test_symbolic_pyramid():
 
     for p in range(1, n + 1):
         a = sympy.Rational(p - 1, p)
-        r[pyr_idx(p, 0, 0)] = (S(0.5) + x0 + z0 * S(0.5)) \
+        r[pyr_idx(p, 0, 0)] = (sympy.Rational(1, 2) + x0 + z0 / S(2)) \
             * r[pyr_idx(p - 1, 0, 0)] * (a + S(1))
         if (p > 1):
             r[pyr_idx(p, 0, 0)] -= f2 * r[pyr_idx(p - 2, 0, 0)] * a
 
-        r[pyr_idx(0, p, 0)] = (S(0.5) + y0 + z0 * S(0.5)) \
+        r[pyr_idx(0, p, 0)] = (sympy.Rational(1, 2) + y0 + z0 / S(2)) \
             * r[pyr_idx(0, p - 1, 0)] * (a + S(1))
         if (p > 1):
             r[pyr_idx(0, p, 0)] -= f2 * r[pyr_idx(0, p - 2, 0)] * a
@@ -270,17 +330,19 @@ def test_symbolic_pyramid():
                     * (z0 * ar + br) - r[pyr_idx(p, q, t - 1)] * cr
 
     for t in range(n+1):
-        for p in range(n - t + 1):
-            for q in range(n - t + 1):
-                r[pyr_idx(p, q, t)] *= sympy.sqrt(S(q + 0.5)
-                                                  * S(p + 0.5)
-                                                  * S(p + q + t + 1.5))
+         for p in range(n - t + 1):
+             for q in range(n - t + 1):
+                 r[pyr_idx(p, q, t)] *= sympy.sqrt(S(2 * q + 1)
+                                                   * S(2 * p + 1)
+                                                   * S(2 * p + 2 * q + 2 * t + 3) /S(8))
 
     cell = fiatx.CellType.pyramid
     pts0 = fiatx.create_lattice(cell, 1, True)
     w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
     wsym = np.zeros_like(w[0])
+    print(r)
+    print(pts0)
 
     for i in range(m):
         for j, p in enumerate(pts0):
@@ -304,6 +366,6 @@ def test_symbolic_pyramid():
                                                  (y, p[1]),
                                                  (z, p[2])])
 
-                print()
+                print(wd)
                 print(w[idx(kx, ky, kz)])
                 print(wsym)

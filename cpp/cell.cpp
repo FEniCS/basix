@@ -328,7 +328,7 @@ Cell::create_lattice(Cell::Type celltype, int n, bool exterior)
     for (int k = 0; k < n + 1; ++k)
       for (int i = 0; i < n + 1 - k; ++i)
         for (int j = 0; j < n + 1 - k; ++j)
-          points.row(c++) = hs.row(2) * k + hs.row(1) * j + hs.row(0) * i;
+          points.row(c++) = hs.row(0) * k + hs.row(1) * j + hs.row(2) * i;
   }
   else
     throw std::runtime_error("Unsupported cell for lattice");

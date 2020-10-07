@@ -7,6 +7,7 @@ import fiatx
 import numpy as np
 import pytest
 
+
 def P_interval(n, x):
 
     from sympy import S
@@ -23,6 +24,7 @@ def P_interval(n, x):
         r[p] *= sympy.sqrt(p + sympy.Rational(1, 2))
 
     return r
+
 
 def test_symbolic_interval():
     n = 7
@@ -330,11 +332,11 @@ def test_symbolic_pyramid():
                     * (z0 * ar + br) - r[pyr_idx(p, q, t - 1)] * cr
 
     for t in range(n+1):
-         for p in range(n - t + 1):
-             for q in range(n - t + 1):
-                 r[pyr_idx(p, q, t)] *= sympy.sqrt(S(2 * q + 1)
-                                                   * S(2 * p + 1)
-                                                   * S(2 * p + 2 * q + 2 * t + 3) /S(8))
+        for p in range(n - t + 1):
+            for q in range(n - t + 1):
+                r[pyr_idx(p, q, t)] *= \
+                    sympy.sqrt(S(2 * q + 1) * S(2 * p + 1)
+                               * S(2 * p + 2 * q + 2 * t + 3) / S(8))
 
     cell = fiatx.CellType.pyramid
     pts0 = fiatx.create_lattice(cell, 1, True)
@@ -369,3 +371,4 @@ def test_symbolic_pyramid():
                 print(wd)
                 print(w[idx(kx, ky, kz)])
                 print(wsym)
+                assert(np.isclose(w[idx(kx, ky, kz)], wsym).all())

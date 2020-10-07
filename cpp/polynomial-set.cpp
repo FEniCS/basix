@@ -555,7 +555,7 @@ tabulate_polyset_quad_derivs(
 {
   assert(pts.cols() == 2);
   const int m = (n + 1) * (n + 1);
-  const int md = (n + 1) * (n + 2) / 2;
+  const int md = (nderiv + 1) * (nderiv + 2) / 2;
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>

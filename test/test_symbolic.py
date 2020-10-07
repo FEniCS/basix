@@ -279,7 +279,7 @@ def test_symbolic_tetrahedron():
 def test_symbolic_pyramid():
     np.set_printoptions(linewidth=200, suppress=True, precision=2)
     n = 2
-    nderiv = 1
+    nderiv = 2
 
     def idx(p, q, r):
         return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6

@@ -445,6 +445,7 @@ tabulate_polyset_pyramid_derivs(
           {
             result.col(pyr_idx(p, 0, 0))
                 -= f2 * result.col(pyr_idx(p - 2, 0, 0)) * a;
+
             if (kz > 0)
               result.col(pyr_idx(p, 0, 0))
                   -= kz * (1.0 - x.col(2))
@@ -482,30 +483,15 @@ tabulate_polyset_pyramid_derivs(
           }
         }
 
+        // FIXME - problem when kz > 0 as both parts of product are functions of
+        // z
+
         for (int p = 1; p < n + 1; ++p)
           for (int q = 1; q < n + 1; ++q)
           {
             result.col(pyr_idx(p, q, 0))
-                = result.col(pyr_idx(p, 0, 0)) * result.col(pyr_idx(0, q, 0));
-
-            if (kx > 0)
-            {
-              result.col(pyr_idx(p, q, 0))
-                  += 2 * kx
-                     * dresult[idx(kx - 1, ky, kz)].col(pyr_idx(p, q, 0));
-            }
-            if (ky > 0)
-            {
-              result.col(pyr_idx(p, q, 0))
-                  += 2 * ky
-                     * dresult[idx(kx, ky - 1, kz)].col(pyr_idx(p, q, 0));
-            }
-            if (kz > 0)
-            {
-              result.col(pyr_idx(p, q, 0))
-                  += kz * (1.0 + 2 * x.col(1)) * (1.0 + 2 * x.col(0))
-                     * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q, 0));
-            }
+                = dresult[idx(kx, 0, kz)].col(pyr_idx(p, 0, 0))
+                  * dresult[idx(0, ky, kz)].col(pyr_idx(0, q, 0));
           }
 
         // Extend into r > 0
@@ -529,6 +515,10 @@ tabulate_polyset_pyramid_derivs(
               result.col(pyr_idx(p, q, r + 1))
                   = result.col(pyr_idx(p, q, r)) * (x.col(2) * ar + br)
                     - result.col(pyr_idx(p, q, r - 1)) * cr;
+              if (kz > 0)
+                result.col(pyr_idx(p, q, r + 1))
+                    += ar * 2 * kz
+                       * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q, r));
             }
       }
     }

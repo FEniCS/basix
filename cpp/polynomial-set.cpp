@@ -418,6 +418,7 @@ tabulate_polyset_pyramid_derivs(
             result
             = dresult[idx(kx, ky, kz)];
         result.resize(pts.rows(), m);
+        result.setZero();
 
         if (kx == 0 and ky == 0 and kz == 0)
           result.col(pyr_idx(0, 0, 0)).fill(1.0);
@@ -425,74 +426,82 @@ tabulate_polyset_pyramid_derivs(
           result.col(pyr_idx(0, 0, 0)).setZero();
 
         // r = 0
-        for (int p = 1; p < n + 1; ++p)
+        for (int p = 0; p < n + 1; ++p)
         {
-          const double a = static_cast<double>(p - 1) / static_cast<double>(p);
-          result.col(pyr_idx(p, 0, 0)) = (0.5 + x.col(0) + x.col(2) * 0.5)
-                                         * result.col(pyr_idx(p - 1, 0, 0))
-                                         * (a + 1.0);
-          if (kx > 0)
-            result.col(pyr_idx(p, 0, 0))
-                += 2.0 * kx
-                   * dresult[idx(kx - 1, ky, kz)].col(pyr_idx(p - 1, 0, 0))
-                   * (a + 1.0);
-          if (kz > 0)
-            result.col(pyr_idx(p, 0, 0))
-                += kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p - 1, 0, 0))
-                   * (a + 1.0);
-
-          if (p > 1)
+          if (p > 0)
           {
-            result.col(pyr_idx(p, 0, 0))
-                -= f2 * result.col(pyr_idx(p - 2, 0, 0)) * a;
-
+            const double a
+                = static_cast<double>(p - 1) / static_cast<double>(p);
+            result.col(pyr_idx(p, 0, 0)) = (0.5 + x.col(0) + x.col(2) * 0.5)
+                                           * result.col(pyr_idx(p - 1, 0, 0))
+                                           * (a + 1.0);
+            if (kx > 0)
+              result.col(pyr_idx(p, 0, 0))
+                  += 2.0 * kx
+                     * dresult[idx(kx - 1, ky, kz)].col(pyr_idx(p - 1, 0, 0))
+                     * (a + 1.0);
             if (kz > 0)
               result.col(pyr_idx(p, 0, 0))
-                  -= kz * (1.0 - x.col(2))
-                     * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p - 2, 0, 0))
-                     * a;
+                  += kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p - 1, 0, 0))
+                     * (a + 1.0);
+
+            if (p > 1)
+            {
+              result.col(pyr_idx(p, 0, 0))
+                  -= f2 * result.col(pyr_idx(p - 2, 0, 0)) * a;
+
+              if (kz > 0)
+                result.col(pyr_idx(p, 0, 0))
+                    += kz * (1.0 - x.col(2))
+                       * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p - 2, 0, 0))
+                       * a;
+              if (kz > 1)
+              {
+                // quadratic term in z
+                result.col(pyr_idx(p, 0, 0))
+                    -= kz * (kz - 1)
+                       * dresult[idx(kx, ky, kz - 2)].col(pyr_idx(p - 2, 0, 0))
+                       * a;
+              }
+            }
           }
-        }
 
-        for (int q = 1; q < n + 1; ++q)
-        {
-          const double a = static_cast<double>(q - 1) / static_cast<double>(q);
-          result.col(pyr_idx(0, q, 0)) = (0.5 + x.col(1) + x.col(2) * 0.5)
-                                         * result.col(pyr_idx(0, q - 1, 0))
-                                         * (a + 1.0);
-          if (ky > 0)
-            result.col(pyr_idx(0, q, 0))
-                += 2.0 * ky
-                   * dresult[idx(kx, ky - 1, kz)].col(pyr_idx(0, q - 1, 0))
-                   * (a + 1.0);
-          if (kz > 0)
-            result.col(pyr_idx(0, q, 0))
-                += kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(0, q - 1, 0))
-                   * (a + 1.0);
-          if (q > 1)
-          {
-
-            result.col(pyr_idx(0, q, 0))
-                -= f2 * result.col(pyr_idx(0, q - 2, 0)) * a;
-
-            if (kz > 0)
-              result.col(pyr_idx(0, q, 0))
-                  -= kz * (1.0 - x.col(2))
-                     * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(0, q - 2, 0))
-                     * a;
-          }
-        }
-
-        // FIXME - problem when kz > 0 as both parts of product are functions of
-        // z
-
-        for (int p = 1; p < n + 1; ++p)
           for (int q = 1; q < n + 1; ++q)
           {
-            result.col(pyr_idx(p, q, 0))
-                = dresult[idx(kx, 0, kz)].col(pyr_idx(p, 0, 0))
-                  * dresult[idx(0, ky, kz)].col(pyr_idx(0, q, 0));
+            const double a
+                = static_cast<double>(q - 1) / static_cast<double>(q);
+            result.col(pyr_idx(p, q, 0)) = (0.5 + x.col(1) + x.col(2) * 0.5)
+                                           * result.col(pyr_idx(p, q - 1, 0))
+                                           * (a + 1.0);
+            if (ky > 0)
+              result.col(pyr_idx(p, q, 0))
+                  += 2.0 * ky
+                     * dresult[idx(kx, ky - 1, kz)].col(pyr_idx(p, q - 1, 0))
+                     * (a + 1.0);
+            if (kz > 0)
+              result.col(pyr_idx(p, q, 0))
+                  += kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q - 1, 0))
+                     * (a + 1.0);
+            if (q > 1)
+            {
+              result.col(pyr_idx(p, q, 0))
+                  -= f2 * result.col(pyr_idx(p, q - 2, 0)) * a;
+
+              if (kz > 0)
+                result.col(pyr_idx(p, q, 0))
+                    += kz * (1.0 - x.col(2))
+                       * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q - 2, 0))
+                       * a;
+              if (kz > 1)
+              {
+                result.col(pyr_idx(p, q, 0))
+                    -= kz * (kz - 1)
+                       * dresult[idx(kx, ky, kz - 2)].col(pyr_idx(p, q - 2, 0))
+                       * a;
+              }
+            }
           }
+        }
 
         // Extend into r > 0
         for (int p = 0; p < n; ++p)

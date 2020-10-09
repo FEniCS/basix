@@ -5,7 +5,6 @@
 import sympy
 import fiatx
 import numpy as np
-import pytest
 
 
 def P_interval(n, x):
@@ -275,11 +274,10 @@ def test_symbolic_tetrahedron():
                 assert(np.isclose(wtab[idx(kx, ky, kz)], wsym).all())
 
 
-@pytest.mark.xfail
 def test_symbolic_pyramid():
     np.set_printoptions(linewidth=200, suppress=True, precision=2)
-    n = 2
-    nderiv = 2
+    n = 3
+    nderiv = 3
 
     def idx(p, q, r):
         return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6
@@ -350,7 +348,7 @@ def test_symbolic_pyramid():
         for j, p in enumerate(pts0):
             wsym[j, i] = r[i].subs([(x, p[0]), (y, p[1]), (z, p[2])])
 
-    assert (np.isclose(w[0], wsym).all())
+    assert(np.isclose(w[0], wsym).all())
 
     for k in range(nderiv + 1):
         for q in range(k + 1):

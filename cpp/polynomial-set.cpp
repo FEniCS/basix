@@ -396,9 +396,9 @@ tabulate_polyset_pyramid_derivs(
 
   // Indexing for pyramidal basis functions
   auto pyr_idx = [&n, &m](int p, int q, int r) {
-    const int rv = (n - r);
-    const int r0 = rv * (rv + 1) * (2 * rv + 1) / 6;
-    const int idx = r0 + p * (rv + 1) + q;
+    const int rv = n - r + 1;
+    const int r0 = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
+    const int idx = r0 + p * rv + q;
     assert(idx < m);
     return idx;
   };

@@ -284,9 +284,9 @@ def test_symbolic_pyramid():
                 + (q + r) * (q + r + 1) // 2 + r)
 
     def pyr_idx(p, q, r):
-        rv = (n - r)
-        r0 = rv * (rv + 1) * (2 * rv + 1) // 6
-        idx = r0 + p * (rv + 1) + q
+        rv = n - r + 1
+        r0 = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r // 6
+        idx = r0 + p * rv + q
         return idx
 
     from sympy import S

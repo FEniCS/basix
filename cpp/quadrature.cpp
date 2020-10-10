@@ -7,64 +7,57 @@
 #include <iostream>
 #include <vector>
 
-// Evaluates the nth jacobi polynomial with weight parameters a,0
-// at a set of points x
-Eigen::ArrayXd compute_jacobi(double a, int n, const Eigen::ArrayXd& x)
-{
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Jn(
-      n + 1, x.rows());
-
-  Jn.row(0).fill(1.0);
-
-  if (n > 0)
-    Jn.row(1) = (x.transpose() * (a + 2.0) + a) * 0.5;
-
-  for (int k = 2; k < n + 1; ++k)
-  {
-    double a1 = 2.0 * k * (k + a) * (2.0 * k + a - 2.0);
-    double a2 = (2.0 * k + a - 1.0) * (a * a);
-    double a3 = (2.0 * k + a - 2.0) * (2.0 * k + a - 1.0) * (2.0 * k + a);
-    double a4 = 2.0 * (k + a - 1.0) * (k - 1.0) * (2.0 * k + a);
-    a2 = a2 / a1;
-    a3 = a3 / a1;
-    a4 = a4 / a1;
-    Jn.row(k) = Jn.row(k - 1) * (x.transpose() * a3 + a2) - Jn.row(k - 2) * a4;
-  }
-
-  return Jn.row(n);
-}
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd compute_jacobi_deriv(double a, int n, const Eigen::ArrayXd& x)
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+compute_jacobi_deriv(double a, int n, int nderiv, const Eigen::ArrayXd& x)
 {
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Jn(
-      n + 1, x.rows());
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Jd(
-      n + 1, x.rows());
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      J(nderiv + 1);
 
-  Jn.row(0).fill(1.0);
-  Jd.row(0).fill(0.0);
-
-  if (n > 0)
+  for (int i = 0; i < nderiv + 1; ++i)
   {
-    Jn.row(1) = (x.transpose() * (a + 2.0) + a) * 0.5;
-    Jd.row(1) = a * 0.5 + 1;
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& Jd
+        = J[i];
+    Jd.resize(n + 1, x.rows());
+
+    if (i == 0)
+      Jd.row(0).fill(1.0);
+    else
+      Jd.row(0).setZero();
+
+    if (n > 0)
+    {
+      if (i == 0)
+        Jd.row(1) = (x.transpose() * (a + 2.0) + a) * 0.5;
+      else if (i == 1)
+        Jd.row(1) = a * 0.5 + 1;
+      else
+        Jd.row(1).setZero();
+    }
+
+    for (int k = 2; k < n + 1; ++k)
+    {
+      double a1 = 2.0 * k * (k + a) * (2.0 * k + a - 2.0);
+      double a2 = (2.0 * k + a - 1.0) * (a * a);
+      double a3 = (2.0 * k + a - 2.0) * (2.0 * k + a - 1.0) * (2.0 * k + a);
+      double a4 = 2.0 * (k + a - 1.0) * (k - 1.0) * (2.0 * k + a);
+      a2 = a2 / a1;
+      a3 = a3 / a1;
+      a4 = a4 / a1;
+      Jd.row(k)
+          = Jd.row(k - 1) * (x.transpose() * a3 + a2) - Jd.row(k - 2) * a4;
+      if (i > 0)
+        Jd.row(k) += i * a3 * J[i - 1].row(k - 1);
+    }
   }
 
-  for (int k = 2; k < n + 1; ++k)
-  {
-    double a1 = 2.0 * k * (k + a) * (2.0 * k + a - 2.0);
-    double a2 = (2.0 * k + a - 1.0) * (a * a);
-    double a3 = (2.0 * k + a - 2.0) * (2.0 * k + a - 1.0) * (2.0 * k + a);
-    double a4 = 2.0 * (k + a - 1.0) * (k - 1.0) * (2.0 * k + a);
-    a2 = a2 / a1;
-    a3 = a3 / a1;
-    a4 = a4 / a1;
-    Jn.row(k) = Jn.row(k - 1) * (x.transpose() * a3 + a2) - Jn.row(k - 2) * a4;
-    Jd.row(k) = Jn.row(k - 1) * a3 + Jd.row(k - 1) * (x.transpose() * a3 + a2)
-                - Jd.row(k - 2) * a4;
-  }
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
+      nderiv + 1, x.rows());
+  for (int i = 0; i < nderiv + 1; ++i)
+    result.row(i) = J[i].row(n);
 
-  return Jd.row(n);
+  return result;
 }
 //-----------------------------------------------------------------------------
 Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
@@ -91,9 +84,8 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
       double s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      double f = compute_jacobi(a, m, x.row(k))[0];
-      double fp = compute_jacobi_deriv(a, m, x.row(k))[0];
-      double delta = f / (fp - f * s);
+      auto f = compute_jacobi_deriv(a, m, 1, x.row(k));
+      double delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
       x[k] -= delta;
 
       if (fabs(delta) < eps)
@@ -110,7 +102,7 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
 {
   // Computes on [-1, 1]
   const Eigen::ArrayXd pts = compute_gauss_jacobi_points(a, m);
-  const Eigen::ArrayXd Jd = compute_jacobi_deriv(a, m, pts);
+  const Eigen::ArrayXd Jd = compute_jacobi_deriv(a, m, 1, pts).row(1);
 
   const double a1 = pow(2.0, a + 1.0);
   const double a3 = tgamma(m + 1.0);
@@ -153,9 +145,8 @@ make_quadrature_triangle_collapsed(int m)
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < m; ++j)
     {
-      const double x = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]);
-      const double y = 0.5 * (1.0 + pty[j]);
-      pts.row(idx) << x, y;
+      pts(idx, 0) = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]);
+      pts(idx, 1) = 0.5 * (1.0 + pty[j]);
       wts[idx] = wx[i] * wy[j] * 0.125;
       ++idx;
     }

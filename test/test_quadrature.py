@@ -46,3 +46,9 @@ def test_quadrature_function():
     b = sum([w * f(pt[0]) for pt, w in zip(Qpts, Qwts)])
 
     assert np.isclose(b, 8.0/3.0)
+
+
+def test_jacobi():
+    pts = np.arange(0, 1, 0.1)
+    f = fiatx.compute_jacobi_deriv(1.0, 4, 5, pts)
+    print(f)

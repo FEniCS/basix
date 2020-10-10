@@ -50,7 +50,6 @@ PYBIND11_MODULE(fiatx, m)
   m.def("tabulate_polynomial_set_deriv",
         &PolynomialSet::tabulate_polynomial_set_deriv);
 
-  m.def("compute_jacobi", &compute_jacobi);
   m.def("compute_jacobi_deriv", &compute_jacobi_deriv);
 
   m.def("make_quadrature",

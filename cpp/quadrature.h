@@ -6,17 +6,14 @@
 
 #pragma once
 
-/// Evaluate the nth jacobi polynomial with weight parameters (a, 0) at points x
-/// @param a Jacobi weight a
-/// @param n Order of polynomial
-/// @param x Points at which to evaluate
-Eigen::ArrayXd compute_jacobi(double a, int n, const Eigen::ArrayXd& x);
 
-/// Evaluate the nth jacobi polynomial derivative with weight parameters (a, 0) at points x
+/// Evaluate the nth Jacobi polynomial and derivatives with weight parameters (a, 0) at points x
 /// @param a Jacobi weight a
 /// @param n Order of polynomial
+/// @param nderiv Number of derivatives (if zero, just compute polynomial itself)
 /// @param x Points at which to evaluate
-Eigen::ArrayXd compute_jacobi_deriv(double a, int n, const Eigen::ArrayXd& x);
+/// @returns Array of polynomial derivative values (rows) at points (columns)
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> compute_jacobi_deriv(double a, int n, int nderiv, const Eigen::ArrayXd& x);
 
 // Computes Gauss-Jacobi quadrature points
 /// Finds the m roots of P_{m}^{a,0} on [-1,1] by Newton's method.

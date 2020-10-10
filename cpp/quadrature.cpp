@@ -38,13 +38,10 @@ compute_jacobi_deriv(double a, int n, int nderiv, const Eigen::ArrayXd& x)
 
     for (int k = 2; k < n + 1; ++k)
     {
-      double a1 = 2.0 * k * (k + a) * (2.0 * k + a - 2.0);
-      double a2 = (2.0 * k + a - 1.0) * (a * a);
-      double a3 = (2.0 * k + a - 2.0) * (2.0 * k + a - 1.0) * (2.0 * k + a);
-      double a4 = 2.0 * (k + a - 1.0) * (k - 1.0) * (2.0 * k + a);
-      a2 = a2 / a1;
-      a3 = a3 / a1;
-      a4 = a4 / a1;
+      double a1 = 2 * k * (k + a) * (2 * k + a - 2);
+      double a2 = (2 * k + a - 1) * (a * a) / a1;
+      double a3 = (2 * k + a - 1) * (2 * k + a) / (2 * k * (k + a));
+      double a4 = 2 * (k + a - 1) * (k - 1) * (2 * k + a) / a1;
       Jd.row(k)
           = Jd.row(k - 1) * (x.transpose() * a3 + a2) - Jd.row(k - 2) * a4;
       if (i > 0)
@@ -84,8 +81,8 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
       double s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      auto f = compute_jacobi_deriv(a, m, 1, x.row(k));
-      double delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
+      Eigen::ArrayXd f = compute_jacobi_deriv(a, m, 1, x.row(k));
+      double delta = f[0] / (f[1] - f[0] * s);
       x[k] -= delta;
 
       if (fabs(delta) < eps)

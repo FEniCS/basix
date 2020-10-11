@@ -20,6 +20,11 @@ std::tuple<double, double, double> jrc(int a, int n)
   return std::tuple<double, double, double>(an, bn, cn);
 }
 //-----------------------------------------------------------------------------
+// Compute the complete set of derivatives from 0 to nderiv, for all the
+// polynomials up to order n on a line segment. The polynomials used are
+// Legendre Polynomials, with the recurrence relation given by
+// n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1, 1]. The
+// range is rescaled here to [0, 1].
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
 tabulate_polyset_line_derivs(
@@ -72,6 +77,13 @@ tabulate_polyset_line_derivs(
   return dresult;
 }
 //-----------------------------------------------------------------------------
+// Compute the complete set of derivatives from 0 to nderiv, for all the
+// polynomials up to order n on a triangle in [0, 1][0, 1].
+// The polynomials P_{pq} are built up in sequence, firstly along q = 0, which
+// is a line segment, as in tabulate_polyset_interval_derivs above, but with a
+// change of variables. The polynomials are then extended in the q direction,
+// using the relation given in Sherwin and Karniadakis 1995
+// (https://doi.org/10.1016/0045-7825(94)00745-9)
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
 tabulate_polyset_triangle_derivs(
@@ -94,7 +106,8 @@ tabulate_polyset_triangle_derivs(
   // f3 = ((1-y)/2)^2
   const auto f3 = (1.0 - x.col(1)).square() * 0.25;
 
-  // Iterate over derivatives in increasing order
+  // Iterate over derivatives in increasing order, since higher derivatives
+  // depend on earlier calculations
   for (int k = 0; k < nderiv + 1; ++k)
   {
     for (int kx = 0; kx < k + 1; ++kx)
@@ -168,6 +181,7 @@ tabulate_polyset_triangle_derivs(
     }
   }
 
+  // Normalisation
   for (std::size_t j = 0; j < dresult.size(); ++j)
   {
     for (int p = 0; p < n + 1; ++p)

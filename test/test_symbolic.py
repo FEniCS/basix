@@ -8,21 +8,11 @@ import numpy as np
 
 
 def P_interval(n, x):
-
     from sympy import S
-    x0 = x * S(2) - S(1)
-    r = [S(1) for i in range(n + 1)]
-
-    for p in range(1, n + 1):
-        a = S(1) - sympy.Rational(1, p)
-        r[p] = x0 * r[p - 1] * (a + S(1))
-        if p > 1:
-            r[p] = r[p] - r[p - 2] * a
-
-    for p in range(n + 1):
-        r[p] *= sympy.sqrt(p + sympy.Rational(1, 2))
-
-    return r
+    r = [sympy.sqrt(p + sympy.Rational(1, 2))
+         * sympy.legendre(p, x * S(2) - S(1))
+         for p in range(n + 1)]
+    return(r)
 
 
 def test_symbolic_interval():
@@ -133,29 +123,17 @@ def test_symbolic_triangle():
     y = sympy.Symbol("y")
     x0 = x * S(2) - S(1)
     y0 = y * S(2) - S(1)
-    f3 = (S(1) - y0)**2 / S(4)
-    r = [S(1) for i in range(m)]
+    r = [0 for i in range(m)]
 
-    np.set_printoptions(linewidth=200)
-    for p in range(1, n + 1):
-        a = sympy.Rational(2 * p - 1, p)
-        r[idx(p, 0)] = (x0 + (y0 + S(1))/S(2)) \
-            * r[idx(p - 1, 0)] * a
-        if p > 1:
-            r[idx(p, 0)] -= f3 * r[idx(p - 2, 0)] * (a - S(1))
-
-    for p in range(n):
-        r[idx(p, 1)] = r[idx(p, 0)] * (y0 * sympy.Rational(3 + 2 * p, 2)
-                                       + sympy.Rational(1 + 2 * p, 2))
-        for q in range(1, n - p):
-            a1, a2, a3 = jrc(2 * p + 1, q)
-            r[idx(p, q + 1)] = r[idx(p, q)] * (y0 * a1 + a2) \
-                - r[idx(p, q - 1)] * a3
-
+    zeta = (S(2)*x0 + y0 + S(1)) / (S(1) - y0)
     for p in range(n + 1):
         for q in range(n - p + 1):
-            r[idx(p, q)] *= sympy.sqrt(sympy.Rational(2*p + 1, 2)
-                                       * S(p + q + 1))
+            r[idx(p, q)] = sympy.sqrt(S(2 * p + 1) * S(p + q + 1) / S(2)) \
+                * sympy.simplify(sympy.legendre(p, zeta)
+                                 * ((S(1) - y0)/S(2))**p) \
+                * sympy.jacobi(S(q), S(2*p + 1), S(0), y0)
+
+    np.set_printoptions(linewidth=200)
 
     cell = fiatx.CellType.triangle
     pts0 = fiatx.create_lattice(cell, 3, True)

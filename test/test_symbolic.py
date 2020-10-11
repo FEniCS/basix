@@ -129,8 +129,8 @@ def test_symbolic_triangle():
     for p in range(n + 1):
         for q in range(n - p + 1):
             r[idx(p, q)] = sympy.sqrt(S(2 * p + 1) * S(p + q + 1) / S(2)) \
-                * sympy.simplify(sympy.legendre(p, zeta)
-                                 * ((S(1) - y0)/S(2))**p) \
+                * sympy.cancel(sympy.legendre(p, zeta)
+                               * ((S(1) - y0)/S(2))**p) \
                 * sympy.jacobi(S(q), S(2*p + 1), S(0), y0)
 
     np.set_printoptions(linewidth=200)
@@ -147,16 +147,13 @@ def test_symbolic_triangle():
 
     assert(np.isclose(w[0], wsym).all())
 
-    rd = [0.0 for i in range(len(r))]
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
-            for i in range(m):
-                rd[i] = sympy.diff(r[i], x, kx, y, ky)
-
             wsym = np.zeros_like(w[0])
             for i in range(m):
+                rd = sympy.diff(r[i], x, kx, y, ky)
                 for j, p in enumerate(pts0):
-                    wsym[j, i] = rd[i].subs([(x, p[0]), (y, p[1])])
+                    wsym[j, i] = rd.subs([(x, p[0]), (y, p[1])])
 
             assert(np.isclose(w[idx(kx, ky)], wsym).all())
 
@@ -177,49 +174,29 @@ def test_symbolic_tetrahedron():
     x0 = x * S(2) - S(1)
     y0 = y * S(2) - S(1)
     z0 = z * S(2) - S(1)
-    f2 = (y0 + z0)**2 / S(4)
-    f3 = y0 + (S(1) + z0) / S(2)
-    f4 = (S(1) - z0) / S(2)
-    f5 = f4 * f4
 
-    w = [S(1) for i in range(m)]
+    w = [0 for i in range(m)]
 
     np.set_printoptions(linewidth=200, suppress=True, precision=3)
-    for p in range(1, n + 1):
-        a = sympy.Rational(2 * p - 1, p)
-        w[idx(p, 0, 0)] = (x0 + S(1) + (y0 + z0)/S(2)) \
-            * w[idx(p - 1, 0, 0)] * a
-        if p > 1:
-            w[idx(p, 0, 0)] -= f2 * w[idx(p - 2, 0, 0)] * (a - S(1))
 
-    for p in range(n):
-        w[idx(p, 1, 0)] = w[idx(p, 0, 0)] * \
-            ((S(1) + y0)*S(p) +
-             (S(2) + y0 * S(3) + z0) / S(2))
-        for q in range(1, n - p):
-            aq, bq, cq = jrc(2 * p + 1, q)
-            w[idx(p, q + 1, 0)] = w[idx(p, q, 0)] * (f3 * aq + f4 * bq) \
-                - w[idx(p, q - 1, 0)] * f5 * cq
-
-    for p in range(n):
-        for q in range(n - p):
-            w[idx(p, q, 1)] = w[idx(p, q, 0)] * \
-                (S(1 + p + q) + z0 * S(2 + p + q))
-
-    for p in range(n - 1):
-        for q in range(n - p - 1):
-            for r in range(n - p - q):
-                ar, br, cr = jrc(2 * p + 2 * q + 2, r)
-                w[idx(p, q, r + 1)] = w[idx(p, q, r)] * \
-                    (z0 * ar + br) - w[idx(p, q, r - 1)] * cr
+    zeta = (S(2) + S(2)*x0 + y0 + z0)/(y0 + z0)
+    xi = (S(2) * y0 + S(1) + z0)/(S(1) - z0)
 
     for p in range(n + 1):
         for q in range(n - p + 1):
             for r in range(n - p - q + 1):
+                w[idx(p, q, r)] = \
+                    sympy.cancel(sympy.legendre(p, zeta)
+                                 * ((y0 + z0) / S(2))**p
+                                 * sympy.jacobi(S(q), S(2 * p + 1), 0, xi)
+                                 * ((S(1) - z0)/S(2))**q
+                                 * sympy.jacobi(S(r),
+                                                S(2 * p + 2 * q + 2),
+                                                0, z0))
                 w[idx(p, q, r)] *= \
-                    sympy.sqrt(sympy.Rational(2 * p + 1, 2)
+                    sympy.sqrt(S(2 * p + 1)
                                * S(p + q + 1)
-                               * sympy.Rational(2 * p + 2 * q + 2 * r + 3, 2))
+                               * S(2 * p + 2 * q + 2 * r + 3))/S(2)
 
     cell = fiatx.CellType.tetrahedron
     pts0 = fiatx.create_lattice(cell, 2, True)
@@ -240,14 +217,13 @@ def test_symbolic_tetrahedron():
                 kz = k - q
                 print((kx, ky, kz))
 
-                wd = []
                 wsym = np.zeros_like(wtab[0])
                 for i in range(m):
-                    wd += [sympy.diff(w[i], x, kx, y, ky, z, kz)]
+                    wd = sympy.diff(w[i], x, kx, y, ky, z, kz)
                     for j, p in enumerate(pts0):
-                        wsym[j, i] = wd[i].subs([(x, p[0]),
-                                                 (y, p[1]),
-                                                 (z, p[2])])
+                        wsym[j, i] = wd.subs([(x, p[0]),
+                                              (y, p[1]),
+                                              (z, p[2])])
 
                 assert(np.isclose(wtab[idx(kx, ky, kz)], wsym).all())
 

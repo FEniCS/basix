@@ -48,102 +48,87 @@ Cell::geometry(Cell::Type celltype)
   return geom;
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-Cell::topology(Cell::Type celltype)
+std::vector<std::vector<std::vector<int>>> Cell::topology(Cell::Type celltype)
 {
-  std::vector<
-      Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      topo;
+  std::vector<std::vector<std::vector<int>>> topo;
 
   switch (celltype)
   {
   case Cell::Type::interval:
     topo.resize(2);
     // Vertices
-    topo[0].resize(2, 1);
-    topo[0] << 0, 1;
+    topo[0] = {{0}, {1}};
     // Cell
-    topo[1].resize(1, 2);
-    topo[1] << 0, 1;
+    topo[1] = {{0, 1}};
     break;
   case Cell::Type::triangle:
     topo.resize(3);
     // Vertices
-    topo[0].resize(3, 1);
-    topo[0] << 0, 1, 2;
+    topo[0] = {{0}, {1}, {2}};
     // Edges
-    topo[1].resize(3, 2);
-    topo[1] << 1, 2, 2, 0, 0, 1;
+    topo[1] = {{1, 2}, {2, 0}, {0, 1}};
     // Cell
-    topo[2].resize(1, 3);
-    topo[2] << 0, 1, 2;
+    topo[2] = {{0, 1, 2}};
     break;
   case Cell::Type::quadrilateral:
     topo.resize(3);
     // FIXME - check all these
     // Vertices
-    topo[0].resize(4, 1);
-    topo[0] << 0, 1, 2, 3;
+    topo[0] = {{0}, {1}, {2}, {3}};
     // Edges
-    topo[1].resize(4, 2);
-    topo[1] << 1, 2, 2, 3, 3, 0, 0, 1;
+    topo[1] = {{1, 2}, {2, 3}, {3, 0}, {0, 1}};
     // Cell
-    topo[2].resize(1, 4);
-    topo[2] << 0, 1, 2, 3;
+    topo[2] = {{0, 1, 2, 3}};
     break;
   case Cell::Type::tetrahedron:
     topo.resize(4);
     // Vertices
-    topo[0].resize(4, 1);
-    topo[0] << 0, 1, 2, 3;
+    topo[0] = {{0}, {1}, {2}, {3}};
     // Edges
-    topo[1].resize(6, 2);
-    topo[1] << 2, 3, 1, 3, 1, 2, 0, 3, 0, 2, 0, 1;
+    topo[1] = {{2, 3}, {1, 3}, {1, 2}, {0, 3}, {0, 2}, {0, 1}};
     // Faces
-    topo[2].resize(4, 3);
-    topo[2] << 1, 2, 3, 2, 3, 0, 3, 0, 1, 0, 1, 2;
+    topo[2] = {{1, 2, 3}, {2, 3, 0}, {3, 0, 1}, {0, 1, 2}};
     // Cell
-    topo[3].resize(1, 4);
-    topo[3] << 0, 1, 2, 3;
+    topo[3] = {{0, 1, 2, 3}};
     break;
   case Cell::Type::prism:
+    // FIXME: check
     topo.resize(4);
     // Vertices
-    topo[0].resize(6, 1);
-    topo[0] << 0, 1, 2, 3, 4, 5;
+    topo[0] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}};
     // Edges
-    topo[1].resize(9, 2);
+    topo[1] = {{0, 1}, {1, 2}, {2, 0}, {0, 3}, {1, 4},
+               {2, 5}, {3, 4}, {4, 5}, {5, 3}};
     // Faces
-    topo[2].resize(5, 4);
+    topo[2] = {{0, 1, 2}, {0, 1, 3, 4}, {1, 2, 4, 5}, {2, 0, 5, 3}, {3, 4, 5}};
     // Cell
-    topo[3].resize(1, 6);
-    topo[3] << 0, 1, 2, 3, 4, 5;
+    topo[3] = {{0, 1, 2, 3, 4, 5}};
     break;
   case Cell::Type::pyramid:
+    // FIXME: check all these
     topo.resize(4);
     // Vertices
-    topo[0].resize(5, 1);
-    topo[0] << 0, 1, 2, 3, 4;
+    topo[0] = {{0}, {1}, {2}, {3}, {4}};
     // Edges
-    topo[1].resize(8, 2);
+    topo[1] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
     // Faces
-    topo[2].resize(5, 4);
+    topo[2] = {{0, 1, 2, 3}, {0, 1, 4}, {1, 2, 4}, {2, 3, 4}, {3, 0, 4}};
     // Cell
-    topo[3].resize(1, 5);
-    topo[3] << 0, 1, 2, 3, 4;
+    topo[3] = {{0, 1, 2, 3, 4}};
     break;
   case Cell::Type::hexahedron:
     topo.resize(4);
+    // FIXME: check over
     // Vertices
-    topo[0].resize(5, 1);
-    topo[0] << 0, 1, 2, 3, 4, 5, 6, 7;
+    topo[0] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}};
     // Edges
-    topo[1].resize(12, 2);
+    topo[1] = {{0, 1}, {1, 2}, {2, 3}, {3, 0}, {0, 4}, {1, 5},
+               {2, 6}, {3, 7}, {4, 5}, {5, 6}, {6, 7}, {7, 4}};
     // Faces
-    topo[2].resize(8, 4);
+    topo[2] = {{0, 1, 2, 3}, {0, 1, 4, 5}, {1, 2, 5, 6},
+               {2, 3, 6, 7}, {3, 0, 7, 4}, {4, 5, 6, 7}};
     // Cell
-    topo[3].resize(1, 5);
-    topo[3] << 0, 1, 2, 3, 4, 5, 6, 7;
+    topo[3] = {{0, 1, 2, 3, 4, 5, 6, 7}};
     break;
   default:
     throw std::runtime_error("Unsupported cell type");
@@ -178,34 +163,31 @@ int Cell::topological_dimension(Cell::Type cell_type)
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 Cell::sub_entity_geometry(Cell::Type celltype, int dim, int index)
 {
-  std::vector<
-      Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      cell_topology = Cell::topology(celltype);
+  std::vector<std::vector<std::vector<int>>> cell_topology
+      = Cell::topology(celltype);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       cell_geometry = Cell::geometry(celltype);
 
   if (dim < 0 or dim >= (int)cell_topology.size())
     throw std::runtime_error("Invalid dimension for sub-entity");
 
-  const Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& t
-      = cell_topology[dim];
+  const std::vector<std::vector<int>>& t = cell_topology[dim];
 
-  if (index < 0 or index >= t.rows())
+  if (index < 0 or index >= (int)t.size())
     throw std::runtime_error("Invalid entity index");
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      sub_entity(t.cols(), cell_geometry.cols());
+      sub_entity(t.size(), cell_geometry.cols());
 
   for (int i = 0; i < sub_entity.rows(); ++i)
-    sub_entity.row(i) = cell_geometry.row(t(index, i));
+    sub_entity.row(i) = cell_geometry.row(t[index][i]);
 
   return sub_entity;
 }
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 Cell::create_lattice(Cell::Type celltype, int n, bool exterior)
 {
-
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> points;
 
   if (celltype == Cell::Type::quadrilateral)
@@ -241,6 +223,11 @@ Cell::create_lattice(Cell::Type celltype, int n, bool exterior)
       for (int j = b; j < n + 1 - b; ++j)
         for (int k = b; k < n + 1 - b; ++k)
           points.row(c++) = hs.row(0) * i + hs.row(1) * j + hs.row(2) * k;
+  }
+  else if (celltype == Cell::Type::point)
+  {
+    points.resize(1, 1);
+    points(0, 0) = 0.0;
   }
   else if (celltype == Cell::Type::interval)
   {
@@ -334,4 +321,21 @@ Cell::create_lattice(Cell::Type celltype, int n, bool exterior)
     throw std::runtime_error("Unsupported cell for lattice");
 
   return points;
+}
+//-----------------------------------------------------------------------------
+Cell::Type Cell::simplex_type(int dim)
+{
+  switch (dim)
+  {
+  case 0:
+    return Cell::Type::point;
+  case 1:
+    return Cell::Type::interval;
+  case 2:
+    return Cell::Type::triangle;
+  case 3:
+    return Cell::Type::tetrahedron;
+  default:
+    throw std::runtime_error("Unsupported dimension");
+  }
 }

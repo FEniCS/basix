@@ -5,6 +5,7 @@
 #include "lagrange.h"
 #include "polynomial-set.h"
 #include <Eigen/Dense>
+#include <iostream>
 
 Lagrange::Lagrange(Cell::Type celltype, int degree)
     : FiniteElement(celltype, degree)
@@ -16,7 +17,38 @@ Lagrange::Lagrange(Cell::Type celltype, int degree)
   // Create points at nodes
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
       = Cell::create_lattice(celltype, degree, true);
-  const int ndofs = pt.rows();
+  int ndofs = pt.rows();
+
+  std::vector<std::vector<std::vector<int>>> topology
+      = Cell::topology(celltype);
+  auto geometry = Cell::geometry(celltype);
+  int c = 0;
+  for (std::size_t dim = 0; dim < topology.size(); ++dim)
+  {
+    for (std::size_t i = 0; i < topology[dim].size(); ++i)
+    {
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          entity_geom(topology[dim][i].size(), geometry.cols());
+      for (std::size_t j = 0; j < topology[dim][i].size(); ++j)
+        entity_geom.row(j) = geometry.row(topology[dim][i][j]);
+
+      Eigen::ArrayXd point = entity_geom.row(0);
+      Cell::Type ct = Cell::simplex_type(dim);
+
+      auto lattice = Cell::create_lattice(ct, degree, false);
+      for (int j = 0; j < lattice.rows(); ++j)
+      {
+        pt.row(c) = entity_geom.row(0);
+        for (int k = 0; k < entity_geom.rows() - 1; ++k)
+          pt.row(c)
+              += (entity_geom.row(k + 1) - entity_geom.row(0)) * lattice(j, k);
+
+        std::cout << "Add point [" << point << "]\n";
+        ++c;
+      }
+    }
+  }
+  std::cout << "Added " << c << "points \n";
 
   // Coefficients are Identity Matrix
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);

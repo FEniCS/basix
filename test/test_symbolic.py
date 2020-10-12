@@ -26,8 +26,8 @@ def test_symbolic_interval():
     pts0 = fiatx.create_lattice(cell, 10, True)
     wtab = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
-    for k in range(5):
-        wsym = np.zeros_like(wtab[0])
+    for k in range(nderiv + 1):
+        wsym = np.zeros_like(wtab[k])
         for i in range(n + 1):
             wd = sympy.diff(w[i], x, k)
             for j, p in enumerate(pts0):
@@ -44,14 +44,14 @@ def test_symbolic_quad():
         return (p + q + 1) * (p + q) // 2 + q
 
     x = sympy.Symbol("x")
-    rx = P_interval(n, x)
+    wx = P_interval(n, x)
     y = sympy.Symbol("y")
-    ry = P_interval(n, y)
+    wy = P_interval(n, y)
 
-    r = []
+    w = []
     for i in range(n + 1):
         for j in range(n + 1):
-            r += [rx[i] * ry[j]]
+            w += [wx[i] * wy[j]]
 
     m = (n + 1)**2
     cell = fiatx.CellType.quadrilateral
@@ -63,9 +63,9 @@ def test_symbolic_quad():
 
             wsym = np.zeros_like(wtab[0])
             for i in range(m):
-                rd = sympy.diff(r[i], x, kx, y, ky)
+                wd = sympy.diff(w[i], x, kx, y, ky)
                 for j, p in enumerate(pts0):
-                    wsym[j, i] = rd.subs([(x, p[0]), (y, p[1])])
+                    wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
 
             print(kx, ky)
             print(wtab[idx(kx, ky)])
@@ -87,12 +87,12 @@ def test_symbolic_triangle():
     y = sympy.Symbol("y")
     x0 = x * S(2) - S(1)
     y0 = y * S(2) - S(1)
-    r = [0 for i in range(m)]
+    w = [None] * m
 
     zeta = (S(2)*x0 + y0 + S(1)) / (S(1) - y0)
     for p in range(n + 1):
         for q in range(n - p + 1):
-            r[idx(p, q)] = sympy.sqrt(S(2 * p + 1) * S(p + q + 1) / S(2)) \
+            w[idx(p, q)] = sympy.sqrt(S(2 * p + 1) * S(p + q + 1) / S(2)) \
                 * sympy.cancel(sympy.legendre(p, zeta)
                                * ((S(1) - y0)/S(2))**p) \
                 * sympy.jacobi(S(q), S(2*p + 1), S(0), y0)
@@ -101,17 +101,17 @@ def test_symbolic_triangle():
 
     cell = fiatx.CellType.triangle
     pts0 = fiatx.create_lattice(cell, 3, True)
-    w = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    wtab = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
-            wsym = np.zeros_like(w[0])
+            wsym = np.zeros_like(wtab[0])
             for i in range(m):
-                rd = sympy.diff(r[i], x, kx, y, ky)
+                wd = sympy.diff(w[i], x, kx, y, ky)
                 for j, p in enumerate(pts0):
-                    wsym[j, i] = rd.subs([(x, p[0]), (y, p[1])])
+                    wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
 
-            assert(np.isclose(w[idx(kx, ky)], wsym).all())
+            assert(np.isclose(wtab[idx(kx, ky)], wsym).all())
 
 
 def test_symbolic_tetrahedron():
@@ -131,7 +131,7 @@ def test_symbolic_tetrahedron():
     y0 = y * S(2) - S(1)
     z0 = z * S(2) - S(1)
 
-    w = [0 for i in range(m)]
+    w = [None] * m
 
     np.set_printoptions(linewidth=200, suppress=True, precision=3)
 

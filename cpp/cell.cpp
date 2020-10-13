@@ -177,7 +177,7 @@ Cell::sub_entity_geometry(Cell::Type celltype, int dim, int index)
     throw std::runtime_error("Invalid entity index");
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      sub_entity(t.size(), cell_geometry.cols());
+      sub_entity(t[index].size(), cell_geometry.cols());
 
   for (int i = 0; i < sub_entity.rows(); ++i)
     sub_entity.row(i) = cell_geometry.row(t[index][i]);

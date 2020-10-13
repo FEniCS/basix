@@ -44,7 +44,9 @@ PYBIND11_MODULE(fiatx, m)
 
   py::class_<RaviartThomas>(m, "RaviartThomas")
       .def(py::init<Cell::Type, int>())
-      .def("tabulate_basis", &RaviartThomas::tabulate_basis);
+      .def("tabulate_basis", &RaviartThomas::tabulate_basis)
+      .def("tabulate_basis_derivatives",
+           &RaviartThomas::tabulate_basis_derivatives);
 
   m.def("tabulate_polynomial_set", &PolynomialSet::tabulate_polynomial_set);
   m.def("tabulate_polynomial_set_deriv",

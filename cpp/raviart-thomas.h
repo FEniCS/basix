@@ -22,4 +22,14 @@ public:
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   tabulate_basis(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>& pts) const;
+
+  /// Tabulate basis derivatives at points
+  /// @param nderiv Derivative order
+  /// @param pts Points
+  /// @return Basis values at points
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  tabulate_basis_derivatives(
+      int nderiv, const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                     Eigen::RowMajor>& pts) const;
 };

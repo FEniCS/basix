@@ -179,3 +179,38 @@ RaviartThomas::tabulate_basis(
   return result;
 }
 //-----------------------------------------------------------------------------
+std::vector<
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+RaviartThomas::tabulate_basis_derivatives(
+    int nderiv,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        pts) const
+{
+  const int tdim = Cell::topological_dimension(_cell_type);
+  if (pts.cols() != tdim)
+    throw std::runtime_error(
+        "Point dimension does not match element dimension");
+
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      Pkp1_at_pts = PolynomialSet::tabulate_polynomial_set_deriv(
+          _cell_type, _degree + 1, nderiv, pts);
+  const int psize = Pkp1_at_pts[0].cols();
+  const int ndofs = _coeffs.rows();
+
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      dresult(Pkp1_at_pts.size());
+
+  for (std::size_t p = 0; p < dresult.size(); ++p)
+  {
+    dresult[p].resize(pts.rows(), ndofs * tdim);
+    for (int j = 0; j < tdim; ++j)
+      dresult[p].block(0, ndofs * j, pts.rows(), ndofs)
+          = Pkp1_at_pts[p].matrix()
+            * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
+  }
+
+  return dresult;
+}
+//-----------------------------------------------------------------------------

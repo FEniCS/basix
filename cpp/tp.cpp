@@ -26,8 +26,10 @@ TensorProduct::TensorProduct(Cell::Type celltype, int degree)
   apply_dualmat_to_basis(coeffs, dualmat);
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-TensorProduct::tabulate_basis(
+std::vector<
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+TensorProduct::tabulate(
+    int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts) const
 {
@@ -36,9 +38,17 @@ TensorProduct::tabulate_basis(
     throw std::runtime_error(
         "Point dimension does not match element dimension");
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      basis_at_pts
-      = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree, pts);
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      dbasis_at_pts = PolynomialSet::tabulate_polynomial_set_deriv(
+          _cell_type, _degree, nderiv, pts);
 
-  return basis_at_pts * _coeffs.transpose();
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      dresult(dbasis_at_pts.size());
+
+  for (std::size_t p = 0; p < dresult.size(); ++p)
+    dresult[p] = dbasis_at_pts[p].matrix() * _coeffs.transpose();
+
+  return dresult;
 }

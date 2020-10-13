@@ -6,7 +6,7 @@ d = 4
 L = TensorProduct(CellType.quadrilateral, d)
 pts = create_lattice(CellType.quadrilateral, 50, True)
 
-w = L.tabulate_basis(pts)
+w = L.tabulate(0, pts)[0]
 
 ww = 1
 nn = (d + 1) * (d + 1)

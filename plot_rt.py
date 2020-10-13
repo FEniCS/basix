@@ -5,7 +5,7 @@ from fiatx import RaviartThomas, create_lattice, CellType
 RT = RaviartThomas(CellType.triangle, 3)
 pts = create_lattice(CellType.triangle, 20, True)
 
-w = RT.tabulate_basis(pts)
+w = RT.tabulate(0, pts)[0]
 nc = w.shape[1]//2
 print(w.shape)
 

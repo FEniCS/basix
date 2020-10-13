@@ -66,7 +66,7 @@ std::vector<std::vector<std::vector<int>>> Cell::topology(Cell::Type celltype)
     // Vertices
     topo[0] = {{0}, {1}, {2}};
     // Edges
-    topo[1] = {{1, 2}, {2, 0}, {0, 1}};
+    topo[1] = {{1, 2}, {0, 2}, {0, 1}};
     // Cell
     topo[2] = {{0, 1, 2}};
     break;
@@ -87,7 +87,7 @@ std::vector<std::vector<std::vector<int>>> Cell::topology(Cell::Type celltype)
     // Edges
     topo[1] = {{2, 3}, {1, 3}, {1, 2}, {0, 3}, {0, 2}, {0, 1}};
     // Faces
-    topo[2] = {{1, 2, 3}, {2, 3, 0}, {3, 0, 1}, {0, 1, 2}};
+    topo[2] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
     // Cell
     topo[3] = {{0, 1, 2, 3}};
     break;

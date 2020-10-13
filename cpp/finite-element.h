@@ -21,12 +21,17 @@ public:
   /// Destructor
   virtual ~FiniteElement() = default;
 
-  /// Compute basis values at set of points. If a vector result is expected, it
-  /// will be stacked with all x values, followed by all y-values (and then z,
-  /// if any).
-  virtual Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  tabulate_basis(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                    Eigen::RowMajor>& pts) const = 0;
+  /// Compute basis values and derivatives at set of points. If no derivatives
+  /// are required, use nderiv=0. Higher derivatives are stored in
+  /// triangular (2D) or tetrahedral (3D) ordering, i.e. for the (x,y)
+  /// derivatives in 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... If
+  /// a vector result is expected, it will be stacked with all x values,
+  /// followed by all y-values (and then z, if any).
+  virtual std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  tabulate(int nderiv,
+           const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                              Eigen::RowMajor>& pts) const = 0;
 
 protected:
   // Applies nodal constraints from dualmat to original coeffs on basis, and
@@ -35,8 +40,7 @@ protected:
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& coeffs,
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-      Eigen::RowMajor>& dualmat);
-
+                          Eigen::RowMajor>& dualmat);
 
   // cell type
   Cell::Type _cell_type;
@@ -46,6 +50,5 @@ protected:
 
   // Coefficient of expansion sets on cell
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-    _coeffs;
-
+      _coeffs;
 };

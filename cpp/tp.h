@@ -17,10 +17,18 @@ public:
   /// @param degree
   TensorProduct(Cell::Type celltype, int degree);
 
-  /// Tabulate basis at points
+  /// Tabulate basis and derivatives at points
+  ///
+  /// Each derivative up to the given order is returned, e.g. in 2D, for
+  /// nderiv=2, 6 tables will be returned, for N, dN/dx, dN/dy, d2N/dx2,
+  /// d2N/dxdy, d2N/dy2.
+  ///
   /// @param pts Points
-  /// @return Basis values at points
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  tabulate_basis(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                    Eigen::RowMajor>& pts) const;
+  /// @param nderiv Number of derivatives
+  /// @return List of basis derivative values at points
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  tabulate(int nderiv,
+           const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                              Eigen::RowMajor>& pts) const;
 };

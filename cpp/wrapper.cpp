@@ -27,26 +27,24 @@ PYBIND11_MODULE(fiatx, m)
       .value("prism", Cell::Type::prism)
       .value("pyramid", Cell::Type::pyramid);
 
+  m.def("simplex_type", &Cell::simplex_type);
   m.def("create_lattice", &Cell::create_lattice);
 
   py::class_<Nedelec>(m, "Nedelec")
       .def(py::init<Cell::Type, int>())
-      .def("tabulate_basis", &Nedelec::tabulate_basis);
+      .def("tabulate", &Nedelec::tabulate);
 
   py::class_<Lagrange>(m, "Lagrange")
       .def(py::init<Cell::Type, int>())
-      .def("tabulate_basis", &Lagrange::tabulate_basis)
-      .def("tabulate_basis_derivatives", &Lagrange::tabulate_basis_derivatives);
+      .def("tabulate", &Lagrange::tabulate);
 
   py::class_<TensorProduct>(m, "TensorProduct")
       .def(py::init<Cell::Type, int>())
-      .def("tabulate_basis", &TensorProduct::tabulate_basis);
+      .def("tabulate", &TensorProduct::tabulate);
 
   py::class_<RaviartThomas>(m, "RaviartThomas")
       .def(py::init<Cell::Type, int>())
-      .def("tabulate_basis", &RaviartThomas::tabulate_basis)
-      .def("tabulate_basis_derivatives",
-           &RaviartThomas::tabulate_basis_derivatives);
+      .def("tabulate", &RaviartThomas::tabulate);
 
   m.def("tabulate_polynomial_set", &PolynomialSet::tabulate_polynomial_set);
   m.def("tabulate_polynomial_set_deriv",

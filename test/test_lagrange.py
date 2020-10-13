@@ -15,5 +15,5 @@ def test_lagrange(celltype, order):
     lagrange = fiatx.Lagrange(celltype, order)
 
     pts = fiatx.create_lattice(celltype, 6, True)
-    w = lagrange.tabulate_basis(pts)
+    w = lagrange.tabulate(0, pts)[0]
     assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())

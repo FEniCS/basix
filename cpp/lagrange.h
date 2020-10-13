@@ -19,15 +19,7 @@ public:
   /// @param degree
   Lagrange(Cell::Type celltype, int degree);
 
-  /// Tabulate basis at points
-  /// The returned array has a row of basis values for each point
-  /// @param pts Points
-  /// @return Basis values at points
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  tabulate_basis(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                    Eigen::RowMajor>& pts) const;
-
-  /// Tabulate basis derivatives at points
+  /// Tabulate basis and derivatives at points
   ///
   /// Each derivative up to the given order is returned, e.g. in 2D, for
   /// nderiv=2, 6 tables will be returned, for N, dN/dx, dN/dy, d2N/dx2,
@@ -38,7 +30,7 @@ public:
   /// @return List of basis derivative values at points
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-  tabulate_basis_derivatives(
-      int nderiv, const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                     Eigen::RowMajor>& pts) const;
+  tabulate(int nderiv,
+           const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                              Eigen::RowMajor>& pts) const;
 };

@@ -74,29 +74,11 @@ Lagrange::Lagrange(Cell::Type celltype, int degree)
   apply_dualmat_to_basis(coeffs, dualmat);
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-Lagrange::tabulate_basis(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts) const
-{
-  const int tdim = Cell::topological_dimension(_cell_type);
-  if (pts.cols() != tdim)
-    throw std::runtime_error(
-        "Point dimension does not match element dimension");
-
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      basis_at_pts
-      = PolynomialSet::tabulate_polynomial_set(_cell_type, _degree, pts);
-
-  return basis_at_pts * _coeffs.transpose();
-}
-//-----------------------------------------------------------------------------
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-Lagrange::tabulate_basis_derivatives(
-    int nderiv,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts) const
+Lagrange::tabulate(int nderiv,
+                   const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                      Eigen::RowMajor>& pts) const
 {
   const int tdim = Cell::topological_dimension(_cell_type);
   if (pts.cols() != tdim)

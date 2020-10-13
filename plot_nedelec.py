@@ -4,7 +4,7 @@ from fiatx import Nedelec, CellType, create_lattice
 N = Nedelec(CellType.triangle, 2)
 
 pts = create_lattice(CellType.triangle, 20, True)
-w = N.tabulate_basis(pts)
+w = N.tabulate(0, pts)[0]
 
 nc = w.shape[1]//2
 

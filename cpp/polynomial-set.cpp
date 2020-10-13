@@ -256,7 +256,6 @@ tabulate_polyset_tetrahedron_derivs(
           {
             result.col(idx(p, 0, 0))
                 -= f2 * result.col(idx(p - 2, 0, 0)) * (a - 1.0);
-            // FIXME: y^2 and z^2 derivs
             if (ky > 0)
             {
               result.col(idx(p, 0, 0))

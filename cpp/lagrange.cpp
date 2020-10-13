@@ -10,47 +10,61 @@
 Lagrange::Lagrange(Cell::Type celltype, int degree)
     : FiniteElement(celltype, degree)
 {
-  if (celltype != Cell::Type::interval and celltype != Cell::Type::triangle
-      and celltype != Cell::Type::tetrahedron)
+  int ndofs = 0;
+  int tdim = 0;
+  if (celltype == Cell::Type::interval)
+  {
+    tdim = 1;
+    ndofs = (degree + 1);
+  }
+  else if (celltype == Cell::Type::triangle)
+  {
+    tdim = 2;
+    ndofs = (degree + 1) * (degree + 2) / 2;
+  }
+  else if (celltype == Cell::Type::tetrahedron)
+  {
+    tdim = 3;
+    ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 6;
+  }
+  else
     throw std::runtime_error("Invalid celltype");
 
-  // Create points at nodes
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
-      = Cell::create_lattice(celltype, degree, true);
-  int ndofs = pt.rows();
+  // Create points at nodes, ordered by topology (vertices first)
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
+      ndofs, tdim);
 
   std::vector<std::vector<std::vector<int>>> topology
       = Cell::topology(celltype);
-  auto geometry = Cell::geometry(celltype);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geometry
+      = Cell::geometry(celltype);
   int c = 0;
   for (std::size_t dim = 0; dim < topology.size(); ++dim)
   {
     for (std::size_t i = 0; i < topology[dim].size(); ++i)
     {
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          entity_geom(topology[dim][i].size(), geometry.cols());
-      for (std::size_t j = 0; j < topology[dim][i].size(); ++j)
-        entity_geom.row(j) = geometry.row(topology[dim][i][j]);
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>
+          entity_geom = Cell::sub_entity_geometry(celltype, dim, i);
 
       Eigen::ArrayXd point = entity_geom.row(0);
       Cell::Type ct = Cell::simplex_type(dim);
 
-      auto lattice = Cell::create_lattice(ct, degree, false);
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>
+          lattice = Cell::create_lattice(ct, degree, false);
       for (int j = 0; j < lattice.rows(); ++j)
       {
         pt.row(c) = entity_geom.row(0);
         for (int k = 0; k < entity_geom.rows() - 1; ++k)
           pt.row(c)
               += (entity_geom.row(k + 1) - entity_geom.row(0)) * lattice(j, k);
-
-        std::cout << "Add point [" << point << "]\n";
         ++c;
       }
     }
   }
-  std::cout << "Added " << c << "points \n";
 
-  // Coefficients are Identity Matrix
+  // Initial coefficients are Identity Matrix
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
 
   // Point evaluation of basis

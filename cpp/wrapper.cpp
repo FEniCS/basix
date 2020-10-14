@@ -13,6 +13,7 @@
 #include "tp.h"
 
 namespace py = pybind11;
+using namespace libtab;
 
 PYBIND11_MODULE(libtab, m)
 {

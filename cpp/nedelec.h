@@ -6,6 +6,8 @@
 
 #pragma once
 
+namespace libtab
+{
 class Nedelec : public FiniteElement
 {
   /// Nedelec element (first kind) of order k
@@ -33,3 +35,4 @@ public:
            const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& pts) const;
 };
+} // namespace libtab

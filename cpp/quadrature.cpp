@@ -9,7 +9,8 @@
 
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-compute_jacobi_deriv(double a, int n, int nderiv, const Eigen::ArrayXd& x)
+libtab::compute_jacobi_deriv(double a, int n, int nderiv,
+                             const Eigen::ArrayXd& x)
 {
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
@@ -57,7 +58,7 @@ compute_jacobi_deriv(double a, int n, int nderiv, const Eigen::ArrayXd& x)
   return result;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
+Eigen::ArrayXd libtab::compute_gauss_jacobi_points(double a, int m)
 {
   /// Computes the m roots of P_{m}^{a,0} on [-1,1] by Newton's method.
   ///    The initial guesses are the Chebyshev points.  Algorithm
@@ -81,7 +82,7 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
       double s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      Eigen::ArrayXd f = compute_jacobi_deriv(a, m, 1, x.row(k));
+      Eigen::ArrayXd f = libtab::compute_jacobi_deriv(a, m, 1, x.row(k));
       double delta = f[0] / (f[1] - f[0] * s);
       x[k] -= delta;
 
@@ -94,12 +95,12 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m)
   return x;
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
-                                                                    int m)
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
+libtab::compute_gauss_jacobi_rule(double a, int m)
 {
   // Computes on [-1, 1]
-  const Eigen::ArrayXd pts = compute_gauss_jacobi_points(a, m);
-  const Eigen::ArrayXd Jd = compute_jacobi_deriv(a, m, 1, pts).row(1);
+  const Eigen::ArrayXd pts = libtab::compute_gauss_jacobi_points(a, m);
+  const Eigen::ArrayXd Jd = libtab::compute_jacobi_deriv(a, m, 1, pts).row(1);
 
   const double a1 = pow(2.0, a + 1.0);
   const double a3 = tgamma(m + 1.0);
@@ -120,9 +121,9 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m)
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> libtab::make_quadrature_line(int m)
 {
-  auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
+  auto [ptx, wx] = libtab::compute_gauss_jacobi_rule(0.0, m);
   Eigen::ArrayXd pts = 0.5 * (ptx + 1.0);
   Eigen::ArrayXd wts = wx * 0.5;
   return {pts, wts};
@@ -130,10 +131,10 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m)
 //-----------------------------------------------------------------------------
 std::pair<Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor>,
           Eigen::ArrayXd>
-make_quadrature_triangle_collapsed(int m)
+libtab::make_quadrature_triangle_collapsed(int m)
 {
-  auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
-  auto [pty, wy] = compute_gauss_jacobi_rule(1.0, m);
+  auto [ptx, wx] = libtab::compute_gauss_jacobi_rule(0.0, m);
+  auto [pty, wy] = libtab::compute_gauss_jacobi_rule(1.0, m);
 
   Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor> pts(m * m, 2);
   Eigen::ArrayXd wts(m * m);
@@ -153,11 +154,11 @@ make_quadrature_triangle_collapsed(int m)
 //-----------------------------------------------------------------------------
 std::pair<Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>,
           Eigen::ArrayXd>
-make_quadrature_tetrahedron_collapsed(int m)
+libtab::make_quadrature_tetrahedron_collapsed(int m)
 {
-  auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
-  auto [pty, wy] = compute_gauss_jacobi_rule(1.0, m);
-  auto [ptz, wz] = compute_gauss_jacobi_rule(2.0, m);
+  auto [ptx, wx] = libtab::compute_gauss_jacobi_rule(0.0, m);
+  auto [pty, wy] = libtab::compute_gauss_jacobi_rule(1.0, m);
+  auto [ptz, wz] = libtab::compute_gauss_jacobi_rule(2.0, m);
 
   Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> pts(m * m * m, 3);
   Eigen::ArrayXd wts(m * m * m);
@@ -181,21 +182,22 @@ make_quadrature_tetrahedron_collapsed(int m)
 //-----------------------------------------------------------------------------
 std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
           Eigen::ArrayXd>
-make_quadrature(int dim, int m)
+libtab::make_quadrature(int dim, int m)
 {
   if (dim == 1)
-    return make_quadrature_line(m);
+    return libtab::make_quadrature_line(m);
   else if (dim == 2)
-    return make_quadrature_triangle_collapsed(m);
+    return libtab::make_quadrature_triangle_collapsed(m);
   else
-    return make_quadrature_tetrahedron_collapsed(m);
+    return libtab::make_quadrature_tetrahedron_collapsed(m);
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
           Eigen::ArrayXd>
-make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>& simplex,
-                int m)
+libtab::make_quadrature(
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        simplex,
+    int m)
 {
   const int dim = simplex.rows() - 1;
   if (dim < 1 or dim > 3)
@@ -215,12 +217,12 @@ make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
   double scale = 1.0;
   if (dim == 1)
   {
-    std::tie(Qpts, Qwts) = make_quadrature_line(m);
+    std::tie(Qpts, Qwts) = libtab::make_quadrature_line(m);
     scale = bvec.norm();
   }
   else if (dim == 2)
   {
-    std::tie(Qpts, Qwts) = make_quadrature_triangle_collapsed(m);
+    std::tie(Qpts, Qwts) = libtab::make_quadrature_triangle_collapsed(m);
     if (bvec.cols() == 2)
       scale = bvec.determinant();
     else
@@ -232,7 +234,7 @@ make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
   }
   else
   {
-    std::tie(Qpts, Qwts) = make_quadrature_tetrahedron_collapsed(m);
+    std::tie(Qpts, Qwts) = libtab::make_quadrature_tetrahedron_collapsed(m);
     assert(bvec.cols() == 3);
     scale = bvec.determinant();
   }

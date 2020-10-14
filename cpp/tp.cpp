@@ -6,6 +6,8 @@
 #include "polynomial-set.h"
 #include <Eigen/Dense>
 
+using namespace libtab;
+
 TensorProduct::TensorProduct(Cell::Type celltype, int degree)
     : FiniteElement(celltype, degree)
 {

@@ -7,6 +7,8 @@
 
 #pragma once
 
+namespace libtab
+{
 namespace Cell
 {
 /// Class holding information about reference cells
@@ -34,8 +36,7 @@ geometry(Cell::Type celltype);
 /// Cell topology
 /// @param celltype Cell Type
 /// @return List of topology (vertex indices) for each dimension (0..tdim)
- std::vector<std::vector<std::vector<int>>>
-topology(Cell::Type celltype);
+std::vector<std::vector<std::vector<int>>> topology(Cell::Type celltype);
 
 /// Sub-entity a cell, given by topological dimension and index
 /// @param dim Dimension of sub-entity
@@ -60,4 +61,5 @@ int topological_dimension(Cell::Type cell_type);
 /// Get the cell type of a simplex of given dimension
 Cell::Type simplex_type(int dim);
 
-}; // namespace Cell
+} // namespace Cell
+} // namespace libtab

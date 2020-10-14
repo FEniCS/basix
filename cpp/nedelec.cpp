@@ -11,6 +11,8 @@
 #include <numeric>
 #include <vector>
 
+using namespace libtab;
+
 namespace
 {
 

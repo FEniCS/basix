@@ -10,6 +10,8 @@
 #include <numeric>
 #include <vector>
 
+using namespace libtab;
+
 RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
     : FiniteElement(celltype, k - 1)
 {

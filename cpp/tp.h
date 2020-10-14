@@ -9,6 +9,8 @@
 
 #pragma once
 
+namespace libtab
+{
 class TensorProduct : public FiniteElement
 {
 public:
@@ -32,3 +34,4 @@ public:
            const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& pts) const;
 };
+} // namespace libtab

@@ -8,6 +8,8 @@
 
 #pragma once
 
+namespace libtab
+{
 // Compute indexing in a 2D triangular array compressed into a 1D array
 static inline int idx(int p, int q) { return (p + q + 1) * (p + q) / 2 + q; }
 
@@ -55,3 +57,4 @@ tabulate_polynomial_set_deriv(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts);
 }; // namespace PolynomialSet
+}

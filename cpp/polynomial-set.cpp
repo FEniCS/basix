@@ -6,6 +6,8 @@
 #include "cell.h"
 #include <Eigen/Dense>
 
+using namespace libtab;
+
 namespace
 {
 // Compute coefficients in the Jacobi Polynomial recurrence relation

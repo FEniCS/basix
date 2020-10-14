@@ -4,6 +4,8 @@
 
 #include "cell.h"
 
+using namespace libtab;
+
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 Cell::geometry(Cell::Type celltype)
 {

@@ -9,6 +9,8 @@
 
 #pragma once
 
+namespace libtab
+{
 class Lagrange : public FiniteElement
 {
   /// Lagrange element
@@ -34,3 +36,4 @@ public:
            const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& pts) const;
 };
+} // namespace libtab

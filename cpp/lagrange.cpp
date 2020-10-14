@@ -7,6 +7,8 @@
 #include <Eigen/Dense>
 #include <iostream>
 
+using namespace libtab;
+
 Lagrange::Lagrange(Cell::Type celltype, int degree)
     : FiniteElement(celltype, degree)
 {

@@ -8,6 +8,9 @@
 
 #pragma once
 
+namespace libtab
+{
+
 class FiniteElement
 {
   /// Finite element base class, taking the cell type and degree,
@@ -34,8 +37,8 @@ public:
                               Eigen::RowMajor>& pts) const = 0;
 
 protected:
-  // Applies nodal constraints from dualmat to original coeffs on basis, and
-  // stores to polynomial set.
+  // Applies nodal constraints from dualmat to original
+  // coeffs on basis, and stores to _coeffs.
   void apply_dualmat_to_basis(
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& coeffs,
@@ -52,3 +55,4 @@ protected:
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       _coeffs;
 };
+} // namespace libtab

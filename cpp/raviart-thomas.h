@@ -7,6 +7,8 @@
 
 #pragma once
 
+namespace libtab
+{
 class RaviartThomas : public FiniteElement
 {
   /// Raviart-Thomas element of order k
@@ -26,3 +28,4 @@ public:
            const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& pts) const;
 };
+} // namespace libtab

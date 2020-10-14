@@ -5,6 +5,8 @@
 #include "finite-element.h"
 #include <iostream>
 
+using namespace libtab;
+
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(Cell::Type cell_type, int degree)
     : _cell_type(cell_type), _degree(degree)
@@ -20,11 +22,7 @@ void FiniteElement::apply_dualmat_to_basis(
 {
   auto A = coeffs * dualmat.transpose();
 
-  _coeffs.resize(coeffs.rows(), coeffs.cols());
-
-  // auto Ainv = A.inverse();
-  //  new_coeffs = Ainv * coeffs;
-  // faster to use solve()
+  // _coeffs = A^-1(coeffs)
   _coeffs = A.colPivHouseholderQr().solve(coeffs);
 
 #ifndef NDEBUG

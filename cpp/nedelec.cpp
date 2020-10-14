@@ -7,6 +7,7 @@
 #include "quadrature.h"
 #include <Eigen/Dense>
 #include <Eigen/SVD>
+#include <iostream>
 #include <numeric>
 #include <vector>
 
@@ -58,16 +59,9 @@ create_nedelec_2d_space(int degree)
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 create_nedelec_2d_dual(int degree)
 {
-  // 2D triangle
-  const int tdim = 2;
-
-  // Tabulate P(k+1) at quadrature points
+  // Number of dofs and size of polynomial set P(k+1)
   const int ndofs = 3 * (degree + 1) + degree * (degree + 1);
-  auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts = PolynomialSet::tabulate_polynomial_set(
-          Cell::Type::triangle, degree + 1, Qpts);
-  const int psize = Pkp1_at_Qpts.cols();
+  const int psize = (degree + 2) * (degree + 3) / 2;
 
   // Dual space
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -214,12 +208,8 @@ create_nedelec_3d_dual(int degree)
 {
   const int tdim = 3;
 
-  // Tabulate P(k+1) at quadrature points
-  auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts = PolynomialSet::tabulate_polynomial_set(
-          Cell::Type::tetrahedron, degree + 1, Qpts);
-  const int psize = Pkp1_at_Qpts.cols();
+  // Size of polynomial set P(k+1)
+  const int psize = (degree + 2) * (degree + 3) * (degree + 4) / 6;
 
   // Work out number of dofs
   const int ndofs = 6 * (degree + 1) + 4 * degree * (degree + 1)

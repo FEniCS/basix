@@ -18,7 +18,7 @@ def test_quad(order):
             Qpts.append([p[0], q[0]])
             Qwts.append(u*v)
     basis = libtab.tabulate_polynomial_set(libtab.CellType.quadrilateral,
-                                          order, Qpts)
+                                           order, Qpts)
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))
@@ -44,7 +44,7 @@ def test_pyramid(order):
                 Qpts.append([p[0]*sc, q[0]*sc, r[0]])
                 Qwts.append(u*v*sc*sc*w)
     basis = libtab.tabulate_polynomial_set(libtab.CellType.pyramid,
-                                          order, Qpts)
+                                           order, Qpts)
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))
@@ -69,7 +69,7 @@ def test_hex(order):
                 Qpts.append([p[0], q[0], r[0]])
                 Qwts.append(u*v*w)
     basis = libtab.tabulate_polynomial_set(libtab.CellType.hexahedron,
-                                          order, Qpts)
+                                           order, Qpts)
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))

@@ -1,5 +1,8 @@
 *~
 *.so
-CmakeCache.txt
-CMakeFiles/*
-cmake_install.cmake
+doc/html/*
+doc/latex/*
+cpp/Makefile
+cpp/CMakeCache.txt
+cpp/CMakeFiles/*
+cpp/cmake_install.cmake

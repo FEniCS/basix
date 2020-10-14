@@ -30,10 +30,10 @@ create_nedelec_2d_space(int degree)
   const int ns0 = (degree + 1) * degree / 2;
 
   // Tabulate P(k+1) at quadrature points
-  auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
+  auto [Qpts, Qwts] = Quadrature::make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts = PolynomialSet::tabulate_polynomial_set(
-          Cell::Type::triangle, degree + 1, Qpts);
+      Pkp1_at_Qpts
+      = PolynomialSet::tabulate(Cell::Type::triangle, degree + 1, 0, Qpts)[0];
 
   const int psize = Pkp1_at_Qpts.cols();
 
@@ -77,12 +77,12 @@ create_nedelec_2d_dual(int degree)
 
   // Create quadrature scheme on the edge
   int quad_deg = 5 * (degree + 1);
-  auto [QptsE, QwtsE] = make_quadrature(1, quad_deg);
+  auto [QptsE, QwtsE] = Quadrature::make_quadrature(1, quad_deg);
 
   // Tabulate a polynomial set on a reference edge
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pq_at_QptsE = PolynomialSet::tabulate_polynomial_set(Cell::Type::interval,
-                                                           degree, QptsE);
+      Pq_at_QptsE
+      = PolynomialSet::tabulate(Cell::Type::interval, degree, 0, QptsE)[0];
   // Iterate over edges
   for (int i = 0; i < 3; ++i)
   {
@@ -100,8 +100,8 @@ create_nedelec_2d_dual(int degree)
 
     // Tabulate Pkp1 at edge quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsE = PolynomialSet::tabulate_polynomial_set(
-                            Cell::Type::triangle, degree + 1, QptsE_scaled)
+        Pkp1_at_QptsE = PolynomialSet::tabulate(Cell::Type::triangle,
+                                                degree + 1, 0, QptsE_scaled)[0]
                             .transpose();
 
     // Compute edge tangent integral moments
@@ -121,13 +121,13 @@ create_nedelec_2d_dual(int degree)
   if (degree > 0)
   {
     // Interior integral moment
-    auto [QptsI, QwtsI] = make_quadrature(2, quad_deg);
+    auto [QptsI, QwtsI] = Quadrature::make_quadrature(2, quad_deg);
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkm1_at_QptsI = PolynomialSet::tabulate_polynomial_set(
-            Cell::Type::triangle, degree - 1, QptsI);
+        Pkm1_at_QptsI = PolynomialSet::tabulate(Cell::Type::triangle,
+                                                degree - 1, 0, QptsI)[0];
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsI = PolynomialSet::tabulate_polynomial_set(
-            Cell::Type::triangle, degree + 1, QptsI);
+        Pkp1_at_QptsI = PolynomialSet::tabulate(Cell::Type::triangle,
+                                                degree + 1, 0, QptsI)[0];
 
     for (int j = 0; j < 2; ++j)
       for (int i = 0; i < Pkm1_at_QptsI.cols(); ++i)
@@ -157,10 +157,10 @@ create_nedelec_3d_space(int degree)
   const int ns0 = degree * (degree + 1) * (degree + 2) / 6;
 
   // Tabulate P(k+1) at quadrature points
-  auto [Qpts, Qwts] = make_quadrature(tdim, 2 * degree + 2);
+  auto [Qpts, Qwts] = Quadrature::make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts = PolynomialSet::tabulate_polynomial_set(
-          Cell::Type::tetrahedron, degree + 1, Qpts);
+      Pkp1_at_Qpts = PolynomialSet::tabulate(Cell::Type::tetrahedron,
+                                             degree + 1, 0, Qpts)[0];
   const int psize = Pkp1_at_Qpts.cols();
 
   // Create initial coefficients of Pkp1.
@@ -229,10 +229,10 @@ create_nedelec_3d_dual(int degree)
 
   // Create quadrature scheme on the edge
   int quad_deg = 5 * (degree + 1);
-  auto [QptsE, QwtsE] = make_quadrature(1, quad_deg);
+  auto [QptsE, QwtsE] = Quadrature::make_quadrature(1, quad_deg);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pq_at_QptsE = PolynomialSet::tabulate_polynomial_set(Cell::Type::interval,
-                                                           degree, QptsE);
+      Pq_at_QptsE
+      = PolynomialSet::tabulate(Cell::Type::interval, degree, 0, QptsE)[0];
   // Iterate over edges
   for (int i = 0; i < 6; ++i)
   {
@@ -250,8 +250,8 @@ create_nedelec_3d_dual(int degree)
 
     // Tabulate Pkp1 at edge quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsE = PolynomialSet::tabulate_polynomial_set(
-                            Cell::Type::tetrahedron, degree + 1, QptsE_scaled)
+        Pkp1_at_QptsE = PolynomialSet::tabulate(Cell::Type::tetrahedron,
+                                                degree + 1, 0, QptsE_scaled)[0]
                             .transpose();
 
     // Compute edge tangent integral moments
@@ -272,11 +272,11 @@ create_nedelec_3d_dual(int degree)
   {
     // Create quadrature scheme on the facet
     int quad_deg = 5 * (degree + 1);
-    auto [QptsF, QwtsF] = make_quadrature(2, quad_deg);
+    auto [QptsF, QwtsF] = Quadrature::make_quadrature(2, quad_deg);
     // Tabulate a polynomial set on a reference facet
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        PqF_at_QptsF = PolynomialSet::tabulate_polynomial_set(
-            Cell::Type::triangle, degree - 1, QptsF);
+        PqF_at_QptsF = PolynomialSet::tabulate(Cell::Type::triangle, degree - 1,
+                                               0, QptsF)[0];
 
     for (int i = 0; i < 4; ++i)
     {
@@ -296,9 +296,10 @@ create_nedelec_3d_dual(int degree)
 
       // Tabulate Pkp1 at facet quadrature points
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          Pkp1_at_QptsF = PolynomialSet::tabulate_polynomial_set(
-                              Cell::Type::tetrahedron, degree + 1, QptsF_scaled)
-                              .transpose();
+          Pkp1_at_QptsF
+          = PolynomialSet::tabulate(Cell::Type::tetrahedron, degree + 1, 0,
+                                    QptsF_scaled)[0]
+                .transpose();
 
       for (int j = 0; j < PqF_at_QptsF.cols(); ++j)
       {
@@ -320,13 +321,13 @@ create_nedelec_3d_dual(int degree)
   if (degree > 1)
   {
     // Interior integral moment
-    auto [QptsI, QwtsI] = make_quadrature(tdim, quad_deg);
+    auto [QptsI, QwtsI] = Quadrature::make_quadrature(tdim, quad_deg);
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkm2_at_QptsI = PolynomialSet::tabulate_polynomial_set(
-            Cell::Type::tetrahedron, degree - 2, QptsI);
+        Pkm2_at_QptsI = PolynomialSet::tabulate(Cell::Type::tetrahedron,
+                                                degree - 2, 0, QptsI)[0];
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsI = PolynomialSet::tabulate_polynomial_set(
-            Cell::Type::tetrahedron, degree + 1, QptsI);
+        Pkp1_at_QptsI = PolynomialSet::tabulate(Cell::Type::tetrahedron,
+                                                degree + 1, 0, QptsI)[0];
 
     for (int j = 0; j < tdim; ++j)
       for (int i = 0; i < Pkm2_at_QptsI.cols(); ++i)
@@ -380,8 +381,8 @@ Nedelec::tabulate(int nderiv,
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      Pkp1_at_pts = PolynomialSet::tabulate_polynomial_set_deriv(
-          _cell_type, _degree + 1, nderiv, pts);
+      Pkp1_at_pts
+      = PolynomialSet::tabulate(_cell_type, _degree + 1, nderiv, pts);
   const int psize = Pkp1_at_pts[0].cols();
   const int ndofs = _coeffs.rows();
 

@@ -70,8 +70,7 @@ Lagrange::Lagrange(Cell::Type celltype, int degree)
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
 
   // Point evaluation of basis
-  Eigen::MatrixXd dualmat
-      = PolynomialSet::tabulate_polynomial_set(celltype, degree, pt);
+  Eigen::MatrixXd dualmat = PolynomialSet::tabulate(celltype, degree, 0, pt)[0];
 
   apply_dualmat_to_basis(coeffs, dualmat);
 }
@@ -89,8 +88,7 @@ Lagrange::tabulate(int nderiv,
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dbasis_at_pts = PolynomialSet::tabulate_polynomial_set_deriv(
-          _cell_type, _degree, nderiv, pts);
+      dbasis_at_pts = PolynomialSet::tabulate(_cell_type, _degree, nderiv, pts);
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>

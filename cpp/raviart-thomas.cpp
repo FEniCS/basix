@@ -38,10 +38,9 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
     ns = (_degree + 1) * (_degree + 2) / 2;
   }
 
-  auto [Qpts, Qwts] = make_quadrature(tdim, 2 * _degree + 2);
+  auto [Qpts, Qwts] = Quadrature::make_quadrature(tdim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts
-      = PolynomialSet::tabulate_polynomial_set(celltype, _degree + 1, Qpts);
+      Pkp1_at_Qpts = PolynomialSet::tabulate(celltype, _degree + 1, 0, Qpts)[0];
 
   const int psize = Pkp1_at_Qpts.cols();
 
@@ -76,10 +75,9 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
       = (tdim == 2) ? Cell::Type::interval : Cell::Type::triangle;
   // Create quadrature scheme on the facet
   int quad_deg = 5 * (_degree + 1);
-  auto [QptsE, QwtsE] = make_quadrature(tdim - 1, quad_deg);
+  auto [QptsE, QwtsE] = Quadrature::make_quadrature(tdim - 1, quad_deg);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pq_at_QptsE
-      = PolynomialSet::tabulate_polynomial_set(facettype, _degree, QptsE);
+      Pq_at_QptsE = PolynomialSet::tabulate(facettype, _degree, 0, QptsE)[0];
 
   for (int i = 0; i < (tdim + 1); ++i)
   {
@@ -112,8 +110,8 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
 
     // Tabulate Pkp1 at facet quadrature points
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsE = PolynomialSet::tabulate_polynomial_set(
-            celltype, _degree + 1, QptsE_scaled);
+        Pkp1_at_QptsE
+        = PolynomialSet::tabulate(celltype, _degree + 1, 0, QptsE_scaled)[0];
 
     // Compute facet normal integral moments by quadrature
     for (int j = 0; j < Pq_at_QptsE.cols(); ++j)
@@ -134,13 +132,13 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
   {
     // Interior integral moment - use 5*(_degree + 1) to match FIAT
     // Could make this an input parameter
-    auto [QptsI, QwtsI] = make_quadrature(tdim, quad_deg);
+    auto [QptsI, QwtsI] = Quadrature::make_quadrature(tdim, quad_deg);
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Pkm1_at_QptsI
-        = PolynomialSet::tabulate_polynomial_set(celltype, _degree - 1, QptsI);
+        = PolynomialSet::tabulate(celltype, _degree - 1, 0, QptsI)[0];
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Pkp1_at_QptsI
-        = PolynomialSet::tabulate_polynomial_set(celltype, _degree + 1, QptsI);
+        = PolynomialSet::tabulate(celltype, _degree + 1, 0, QptsI)[0];
 
     for (int j = 0; j < tdim; ++j)
       for (int i = 0; i < Pkm1_at_QptsI.cols(); ++i)
@@ -171,8 +169,8 @@ RaviartThomas::tabulate(
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      Pkp1_at_pts = PolynomialSet::tabulate_polynomial_set_deriv(
-          _cell_type, _degree + 1, nderiv, pts);
+      Pkp1_at_pts
+      = PolynomialSet::tabulate(_cell_type, _degree + 1, nderiv, pts);
   const int psize = Pkp1_at_pts[0].cols();
   const int ndofs = _coeffs.rows();
 

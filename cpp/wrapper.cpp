@@ -47,14 +47,12 @@ PYBIND11_MODULE(libtab, m)
       .def(py::init<Cell::Type, int>())
       .def("tabulate", &RaviartThomas::tabulate);
 
-  m.def("tabulate_polynomial_set", &PolynomialSet::tabulate_polynomial_set);
-  m.def("tabulate_polynomial_set_deriv",
-        &PolynomialSet::tabulate_polynomial_set_deriv);
+  m.def("tabulate_polynomial_set", &PolynomialSet::tabulate);
 
-  m.def("compute_jacobi_deriv", &compute_jacobi_deriv);
+  m.def("compute_jacobi_deriv", &Quadrature::compute_jacobi_deriv);
 
   m.def("make_quadrature",
         py::overload_cast<const Eigen::Array<double, Eigen::Dynamic,
                                              Eigen::Dynamic, Eigen::RowMajor>&,
-                          int>(&make_quadrature));
+                          int>(&Quadrature::make_quadrature));
 }

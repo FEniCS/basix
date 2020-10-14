@@ -24,7 +24,7 @@ def test_symbolic_interval():
 
     cell = libtab.CellType.interval
     pts0 = libtab.create_lattice(cell, 10, True)
-    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    wtab = libtab.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     for k in range(nderiv + 1):
         wsym = np.zeros_like(wtab[k])
@@ -56,7 +56,7 @@ def test_symbolic_quad():
     m = (n + 1)**2
     cell = libtab.CellType.quadrilateral
     pts0 = libtab.create_lattice(cell, 2, True)
-    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    wtab = libtab.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
@@ -101,7 +101,7 @@ def test_symbolic_triangle():
 
     cell = libtab.CellType.triangle
     pts0 = libtab.create_lattice(cell, 3, True)
-    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    wtab = libtab.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
@@ -154,7 +154,7 @@ def test_symbolic_tetrahedron():
 
     cell = libtab.CellType.tetrahedron
     pts0 = libtab.create_lattice(cell, 2, True)
-    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    wtab = libtab.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     for k in range(nderiv + 1):
         for q in range(k + 1):
@@ -216,7 +216,7 @@ def test_symbolic_pyramid():
 
     cell = libtab.CellType.pyramid
     pts0 = libtab.create_lattice(cell, 1, True)
-    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    wtab = libtab.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     for k in range(nderiv + 1):
         for q in range(k + 1):

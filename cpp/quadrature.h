@@ -6,9 +6,15 @@
 
 #pragma once
 
+/// libtab
+
 namespace libtab
 {
-
+/// Integration using Gauss-Jacobi quadrature on simplices. Other shapes
+/// can be obtained by using a product.
+/// @todo - pyramid
+namespace Quadrature
+{
 /// Evaluate the nth Jacobi polynomial and derivatives with weight parameters
 /// (a, 0) at points x
 /// @param a Jacobi weight a
@@ -21,7 +27,7 @@ Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 compute_jacobi_deriv(double a, int n, int nderiv, const Eigen::ArrayXd& x);
 
 // Computes Gauss-Jacobi quadrature points
-/// Finds the m roots of P_{m}^{a,0} on [-1,1] by Newton's method.
+/// Finds the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's method.
 /// @param a weight in Jacobi (b=0)
 /// @param m order
 /// @return list of points in 1D
@@ -31,7 +37,7 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m);
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
                                                                     int m);
 
-/// Computw line quadrature rule on [0, 1]
+/// Compute line quadrature rule on [0, 1]
 /// @param m order
 /// @returns list of 1D points, list of weights
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m);
@@ -43,7 +49,7 @@ std::pair<Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor>,
           Eigen::ArrayXd>
 make_quadrature_triangle_collapsed(int m);
 
-/// Compute tetrahedrom quadrature rule on [0, 1]x[0, 1]x[0,1]
+/// Compute tetrahedrom quadrature rule on [0, 1]x[0, 1]x[0, 1]
 /// @param m order
 /// @returns list of 3D points, list of weights
 std::pair<Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>,
@@ -51,7 +57,7 @@ std::pair<Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>,
 make_quadrature_tetrahedron_collapsed(int m);
 
 /// Utility for quadrature rule on reference simplex of any dimension
-/// @param dim geometric domensiom
+/// @param dim geometric dimension
 /// @param m order
 /// @returns list of points, list of weights
 std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
@@ -67,4 +73,5 @@ std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
 make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>& simplex,
                 int m);
+} // namespace Quadrature
 } // namespace libtab

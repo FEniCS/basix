@@ -20,8 +20,7 @@ TensorProduct::TensorProduct(Cell::Type celltype, int degree)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
       = Cell::create_lattice(celltype, degree, true);
 
-  Eigen::MatrixXd dualmat
-      = PolynomialSet::tabulate_polynomial_set(celltype, degree, pt);
+  Eigen::MatrixXd dualmat = PolynomialSet::tabulate(celltype, degree, 0, pt)[0];
 
   int ndofs = pt.rows();
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
@@ -42,8 +41,7 @@ TensorProduct::tabulate(
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dbasis_at_pts = PolynomialSet::tabulate_polynomial_set_deriv(
-          _cell_type, _degree, nderiv, pts);
+      dbasis_at_pts = PolynomialSet::tabulate(_cell_type, _degree, nderiv, pts);
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>

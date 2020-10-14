@@ -683,37 +683,9 @@ tabulate_polyset_prism_derivs(
 }
 } // namespace
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-PolynomialSet::tabulate_polynomial_set(
-    Cell::Type celltype, int n,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts)
-{
-  switch (celltype)
-  {
-  case Cell::Type::interval:
-    return tabulate_polyset_line_derivs(n, 0, pts)[0];
-  case Cell::Type::triangle:
-    return tabulate_polyset_triangle_derivs(n, 0, pts)[0];
-  case Cell::Type::tetrahedron:
-    return tabulate_polyset_tetrahedron_derivs(n, 0, pts)[0];
-  case Cell::Type::quadrilateral:
-    return tabulate_polyset_quad_derivs(n, 0, pts)[0];
-  case Cell::Type::hexahedron:
-    return tabulate_polyset_hex_derivs(n, 0, pts)[0];
-  case Cell::Type::prism:
-    return tabulate_polyset_prism_derivs(n, 0, pts)[0];
-  case Cell::Type::pyramid:
-    return tabulate_polyset_pyramid_derivs(n, 0, pts)[0];
-  default:
-    throw std::runtime_error("Polynomial set: Unsupported cell type");
-  }
-}
-
-//-----------------------------------------------------------------------------
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-PolynomialSet::tabulate_polynomial_set_deriv(
+PolynomialSet::tabulate(
     Cell::Type celltype, int n, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)

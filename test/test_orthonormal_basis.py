@@ -94,7 +94,8 @@ def test_prism(order):
         for q, v in zip(Lpts, Lwts):
             Qpts.append([p[0], p[1], q[0]])
             Qwts.append(u*v)
-    basis = libtab.tabulate_polynomial_set(libtab.CellType.prism, order, 0, Qpts)[0]
+    basis = libtab.tabulate_polynomial_set(libtab.CellType.prism,
+                                           order, 0, Qpts)[0]
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))

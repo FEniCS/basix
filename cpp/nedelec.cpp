@@ -133,17 +133,16 @@ create_nedelec_2d_dual(int degree)
         Pkp1_at_QptsI = PolynomialSet::tabulate_polynomial_set(
             Cell::Type::triangle, degree + 1, QptsI);
 
-    for (int i = 0; i < Pkm1_at_QptsI.cols(); ++i)
-    {
-      Eigen::ArrayXd phi = Pkm1_at_QptsI.col(i);
-      Eigen::VectorXd q = phi * QwtsI;
-      Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
-      assert(qcoeffs.size() == psize);
-      dualmat.block(c, 0, 1, psize) = qcoeffs;
-      ++c;
-      dualmat.block(c, psize, 1, psize) = qcoeffs;
-      ++c;
-    }
+    for (int j = 0; j < 2; ++j)
+      for (int i = 0; i < Pkm1_at_QptsI.cols(); ++i)
+      {
+        Eigen::ArrayXd phi = Pkm1_at_QptsI.col(i);
+        Eigen::VectorXd q = phi * QwtsI;
+        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
+        assert(qcoeffs.size() == psize);
+        dualmat.block(c, psize * j, 1, psize) = qcoeffs;
+        ++c;
+      }
   }
   return dualmat;
 }

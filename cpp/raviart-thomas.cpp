@@ -140,18 +140,16 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
         Pkp1_at_QptsI
         = PolynomialSet::tabulate_polynomial_set(celltype, _degree + 1, QptsI);
 
-    for (int i = 0; i < Pkm1_at_QptsI.cols(); ++i)
-    {
-      Eigen::ArrayXd phi = Pkm1_at_QptsI.col(i);
-      Eigen::VectorXd q = phi * QwtsI;
-      Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
-      assert(qcoeffs.size() == psize);
-      for (int j = 0; j < tdim; ++j)
+    for (int j = 0; j < tdim; ++j)
+      for (int i = 0; i < Pkm1_at_QptsI.cols(); ++i)
       {
+        Eigen::ArrayXd phi = Pkm1_at_QptsI.col(i);
+        Eigen::VectorXd q = phi * QwtsI;
+        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
+        assert(qcoeffs.size() == psize);
         dualmat.block(c, psize * j, 1, psize) = qcoeffs;
         ++c;
       }
-    }
   }
 
   apply_dualmat_to_basis(wcoeffs, dualmat);

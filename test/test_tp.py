@@ -2,19 +2,19 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import fiatx
+import libtab
 import pytest
 import numpy as np
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
-@pytest.mark.parametrize("celltype", [fiatx.CellType.quadrilateral,
-                                      fiatx.CellType.hexahedron,
-                                      fiatx.CellType.pyramid,
-                                      fiatx.CellType.prism])
+@pytest.mark.parametrize("celltype", [libtab.CellType.quadrilateral,
+                                      libtab.CellType.hexahedron,
+                                      libtab.CellType.pyramid,
+                                      libtab.CellType.prism])
 def test_tp(order, celltype):
     np.set_printoptions(suppress=True)
-    tp = fiatx.TensorProduct(celltype, order)
-    pts = fiatx.create_lattice(celltype, 5, True)
+    tp = libtab.TensorProduct(celltype, order)
+    pts = libtab.create_lattice(celltype, 5, True)
     w = tp.tabulate(0, pts)[0]
     assert(np.isclose(np.sum(w, axis=1), 1.0).all())

@@ -14,9 +14,9 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(fiatx, m)
+PYBIND11_MODULE(libtab, m)
 {
-  m.doc() = "FIATx/libtab plugin";
+  m.doc() = "libtab plugin";
 
   py::enum_<Cell::Type>(m, "CellType")
       .value("interval", Cell::Type::interval)

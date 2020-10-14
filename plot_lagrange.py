@@ -1,6 +1,6 @@
 import numpy
 import matplotlib.pyplot as plt
-from fiatx import Lagrange, CellType, create_lattice
+from libtab import Lagrange, CellType, create_lattice
 
 d = 3
 L = Lagrange(CellType.triangle, d)

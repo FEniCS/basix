@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import sympy
-import fiatx
+import libtab
 import numpy as np
 
 
@@ -22,9 +22,9 @@ def test_symbolic_interval():
     x = sympy.Symbol("x")
     w = P_interval(n, x)
 
-    cell = fiatx.CellType.interval
-    pts0 = fiatx.create_lattice(cell, 10, True)
-    wtab = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    cell = libtab.CellType.interval
+    pts0 = libtab.create_lattice(cell, 10, True)
+    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
     for k in range(nderiv + 1):
         wsym = np.zeros_like(wtab[k])
@@ -54,9 +54,9 @@ def test_symbolic_quad():
             w += [wx[i] * wy[j]]
 
     m = (n + 1)**2
-    cell = fiatx.CellType.quadrilateral
-    pts0 = fiatx.create_lattice(cell, 2, True)
-    wtab = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    cell = libtab.CellType.quadrilateral
+    pts0 = libtab.create_lattice(cell, 2, True)
+    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
@@ -99,9 +99,9 @@ def test_symbolic_triangle():
 
     np.set_printoptions(linewidth=200)
 
-    cell = fiatx.CellType.triangle
-    pts0 = fiatx.create_lattice(cell, 3, True)
-    wtab = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    cell = libtab.CellType.triangle
+    pts0 = libtab.create_lattice(cell, 3, True)
+    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
@@ -152,9 +152,9 @@ def test_symbolic_tetrahedron():
                     S((2 * p + 1) * (p + q + 1)
                       * (2 * p + 2 * q + 2 * r + 3)))/S(2)
 
-    cell = fiatx.CellType.tetrahedron
-    pts0 = fiatx.create_lattice(cell, 2, True)
-    wtab = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    cell = libtab.CellType.tetrahedron
+    pts0 = libtab.create_lattice(cell, 2, True)
+    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
     for k in range(nderiv + 1):
         for q in range(k + 1):
@@ -214,9 +214,9 @@ def test_symbolic_pyramid():
                     sympy.sqrt(S((2 * q + 1) * (2 * p + 1)
                                  * (2 * p + 2 * q + 2 * r + 3)) / S(8))
 
-    cell = fiatx.CellType.pyramid
-    pts0 = fiatx.create_lattice(cell, 1, True)
-    wtab = fiatx.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
+    cell = libtab.CellType.pyramid
+    pts0 = libtab.create_lattice(cell, 1, True)
+    wtab = libtab.tabulate_polynomial_set_deriv(cell, n, nderiv, pts0)
 
     for k in range(nderiv + 1):
         for q in range(k + 1):

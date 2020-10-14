@@ -32,5 +32,5 @@ add_library(tab SHARED polynomial-set.cpp lagrange.cpp quadrature.cpp nedelec.cp
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
 
-pybind11_add_module(fiatx SHARED wrapper.cpp)
-target_link_libraries(fiatx PRIVATE pybind11::module tab)
+pybind11_add_module(libtab SHARED wrapper.cpp)
+target_link_libraries(libtab PRIVATE pybind11::module tab)

@@ -1,4 +1,4 @@
-# libtab/fiatx
+# libtab
 
 ## Finite Element Tabulation Runtime Library
 

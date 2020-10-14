@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from fiatx import Nedelec, CellType, create_lattice
+from libtab import Nedelec, CellType, create_lattice
 
 N = Nedelec(CellType.triangle, 2)
 

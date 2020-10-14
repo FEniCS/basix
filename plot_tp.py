@@ -1,6 +1,6 @@
 import numpy
 import matplotlib.pyplot as plt
-from fiatx import TensorProduct, create_lattice, CellType
+from libtab import TensorProduct, create_lattice, CellType
 
 d = 4
 L = TensorProduct(CellType.quadrilateral, d)

@@ -329,14 +329,18 @@ create_nedelec_3d_dual(int degree)
   if (degree > 1)
   {
     // Interior integral moment
+    auto [QptsI, QwtsI] = make_quadrature(tdim, quad_deg);
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkm2_at_Qpts = PolynomialSet::tabulate_polynomial_set(
-            Cell::Type::tetrahedron, degree - 2, Qpts);
-    for (int i = 0; i < Pkm2_at_Qpts.cols(); ++i)
+        Pkm2_at_QptsI = PolynomialSet::tabulate_polynomial_set(
+            Cell::Type::tetrahedron, degree - 2, QptsI);
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        Pkp1_at_QptsI = PolynomialSet::tabulate_polynomial_set(
+            Cell::Type::tetrahedron, degree + 1, QptsI);
+    for (int i = 0; i < Pkm2_at_QptsI.cols(); ++i)
     {
-      Eigen::ArrayXd phi = Pkm2_at_Qpts.col(i);
-      Eigen::VectorXd q = phi * Qwts;
-      Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix().transpose() * q;
+      Eigen::ArrayXd phi = Pkm2_at_QptsI.col(i);
+      Eigen::VectorXd q = phi * QwtsI;
+      Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
       assert(qcoeffs.size() == psize);
       for (int j = 0; j < tdim; ++j)
       {

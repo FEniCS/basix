@@ -110,7 +110,7 @@ def test_prism(order):
 @pytest.mark.parametrize("cell_type", [fiatx.CellType.interval,
                                        fiatx.CellType.triangle,
                                        fiatx.CellType.tetrahedron])
-@pytest.mark.parametrize("order", [1, 2, 3, 4])
+@pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_cell(cell_type, order):
 
     pts = fiatx.create_lattice(cell_type, 1, True)

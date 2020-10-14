@@ -125,14 +125,19 @@ create_nedelec_2d_dual(int degree)
   if (degree > 0)
   {
     // Interior integral moment
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkm1_at_Qpts = PolynomialSet::tabulate_polynomial_set(
-            Cell::Type::triangle, degree - 1, Qpts);
-    for (int i = 0; i < Pkm1_at_Qpts.cols(); ++i)
+    auto [QptsI, QwtsI] = make_quadrature(2, quad_deg);
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        Pkm1_at_QptsI = PolynomialSet::tabulate_polynomial_set(
+            Cell::Type::triangle, degree - 1, QptsI);
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        Pkp1_at_QptsI = PolynomialSet::tabulate_polynomial_set(
+            Cell::Type::triangle, degree + 1, QptsI);
+
+    for (int i = 0; i < Pkm1_at_QptsI.cols(); ++i)
     {
-      Eigen::ArrayXd phi = Pkm1_at_Qpts.col(i);
-      Eigen::VectorXd q = phi * Qwts;
-      Eigen::RowVectorXd qcoeffs = Pkp1_at_Qpts.matrix().transpose() * q;
+      Eigen::ArrayXd phi = Pkm1_at_QptsI.col(i);
+      Eigen::VectorXd q = phi * QwtsI;
+      Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
       assert(qcoeffs.size() == psize);
       dualmat.block(c, 0, 1, psize) = qcoeffs;
       ++c;

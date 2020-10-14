@@ -335,18 +335,17 @@ create_nedelec_3d_dual(int degree)
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Pkp1_at_QptsI = PolynomialSet::tabulate_polynomial_set(
             Cell::Type::tetrahedron, degree + 1, QptsI);
-    for (int i = 0; i < Pkm2_at_QptsI.cols(); ++i)
-    {
-      Eigen::ArrayXd phi = Pkm2_at_QptsI.col(i);
-      Eigen::VectorXd q = phi * QwtsI;
-      Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
-      assert(qcoeffs.size() == psize);
-      for (int j = 0; j < tdim; ++j)
+
+    for (int j = 0; j < tdim; ++j)
+      for (int i = 0; i < Pkm2_at_QptsI.cols(); ++i)
       {
+        Eigen::ArrayXd phi = Pkm2_at_QptsI.col(i);
+        Eigen::VectorXd q = phi * QwtsI;
+        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
+        assert(qcoeffs.size() == psize);
         dualmat.block(c, psize * j, 1, psize) = qcoeffs;
         ++c;
       }
-    }
   }
   return dualmat;
 }

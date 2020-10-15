@@ -33,7 +33,8 @@ def test_triangle(order):
             print(tab_libtab[libtab.index(p - q, q)].transpose())
             print()
             assert(np.isclose(tab_fiat[t],
-                              tab_libtab[libtab.index(p - q, q)].transpose()).all())
+                              tab_libtab[libtab.index(p - q, q)].
+                              transpose()).all())
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
@@ -66,7 +67,8 @@ def test_triangle_rt(order):
             print(np.isclose(tab_fiat_cat,
                              tab_libtab[libtab.index(p - q, q)].transpose()))
             assert(np.isclose(tab_fiat_cat,
-                              tab_libtab[libtab.index(p - q, q)].transpose()).all())
+                              tab_libtab[libtab.index(p - q, q)]
+                              .transpose()).all())
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
@@ -99,7 +101,8 @@ def test_triangle_ned(order):
             print(np.isclose(tab_fiat_cat,
                              tab_libtab[libtab.index(p - q, q)].transpose()))
             assert(np.isclose(tab_fiat_cat,
-                              tab_libtab[libtab.index(p - q, q)].transpose()).all())
+                              tab_libtab[libtab.index(p - q, q)].
+                              transpose()).all())
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
@@ -128,4 +131,5 @@ def test_tet(order):
                 print(tab_libtab[libtab.index(*t)].transpose())
                 print()
                 assert(np.isclose(tab_fiat[t],
-                                  tab_libtab[libtab.index(*t)].transpose()).all())
+                                  tab_libtab[libtab.index(*t)]
+                                  .transpose()).all())

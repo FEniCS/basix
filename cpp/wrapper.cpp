@@ -5,6 +5,7 @@
 #include <string>
 
 #include "cell.h"
+#include "indexing.h"
 #include "lagrange.h"
 #include "nedelec.h"
 #include "polynomial-set.h"
@@ -87,4 +88,9 @@ Each element has a `tabulate` function which returns the basis functions and a n
                                              Eigen::Dynamic, Eigen::RowMajor>&,
                           int>(&Quadrature::make_quadrature),
         "Compute quadrature points and weights on a simplex defined by points");
+
+  m.def("index", py::overload_cast<int, int>(&libtab::idx),
+        "Indexing for triangular arrays")
+      .def("index", py::overload_cast<int, int, int>(&libtab::idx),
+           "Indexing for tetrahedral arrays");
 }

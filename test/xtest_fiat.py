@@ -3,16 +3,6 @@ import libtab
 import pytest
 import numpy as np
 
-
-def idx(p, q):
-    return (p + q + 1) * (p + q) // 2 + q
-
-
-def idx3(p, q, r):
-    return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6
-            + (q + r) * (q + r + 1) // 2 + r)
-
-
 """
 Some tests against FIAT. Some may fail due to issues in FIAT
 (e.g. normalisation of orthonormal polynomial sets when n=0)
@@ -38,12 +28,12 @@ def test_triangle(order):
     for p in range(nderivs + 1):
         for q in range(p + 1):
             t = (p - q, q)
-            print("idx = ", idx(p - q, q))
+            print("idx = ", libtab.index(p - q, q))
             print(tab_fiat[t])
-            print(tab_libtab[idx(p - q, q)].transpose())
+            print(tab_libtab[libtab.index(p - q, q)].transpose())
             print()
             assert(np.isclose(tab_fiat[t],
-                              tab_libtab[idx(p - q, q)].transpose()).all())
+                              tab_libtab[libtab.index(p - q, q)].transpose()).all())
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
@@ -65,18 +55,18 @@ def test_triangle_rt(order):
     for p in range(nderivs + 1):
         for q in range(p + 1):
             t = (p - q, q)
-            print("idx = ", idx(p - q, q))
+            print("idx = ", libtab.index(p - q, q))
             tab_fiat_cat = np.vstack((tab_fiat[t][:, 0, :],
                                       tab_fiat[t][:, 1, :]))
 #            print(tab_fiat[t][:,0,:])
 #            print(tab_fiat[t][:,1,:])
             print(tab_fiat_cat)
-            print(tab_libtab[idx(p - q, q)].transpose())
+            print(tab_libtab[libtab.index(p - q, q)].transpose())
             print()
             print(np.isclose(tab_fiat_cat,
-                             tab_libtab[idx(p - q, q)].transpose()))
+                             tab_libtab[libtab.index(p - q, q)].transpose()))
             assert(np.isclose(tab_fiat_cat,
-                              tab_libtab[idx(p - q, q)].transpose()).all())
+                              tab_libtab[libtab.index(p - q, q)].transpose()).all())
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
@@ -98,18 +88,18 @@ def test_triangle_ned(order):
     for p in range(nderivs + 1):
         for q in range(p + 1):
             t = (p-q, q)
-            print("idx = ", idx(p-q, q))
+            print("libtab.index = ", libtab.index(p-q, q))
             tab_fiat_cat = np.vstack((tab_fiat[t][:, 0, :],
                                       tab_fiat[t][:, 1, :]))
 #            print(tab_fiat[t][:,0,:])
 #            print(tab_fiat[t][:,1,:])
             print(tab_fiat_cat)
-            print(tab_libtab[idx(p - q, q)].transpose())
+            print(tab_libtab[libtab.index(p - q, q)].transpose())
             print()
             print(np.isclose(tab_fiat_cat,
-                             tab_libtab[idx(p - q, q)].transpose()))
+                             tab_libtab[libtab.index(p - q, q)].transpose()))
             assert(np.isclose(tab_fiat_cat,
-                              tab_libtab[idx(p - q, q)].transpose()).all())
+                              tab_libtab[libtab.index(p - q, q)].transpose()).all())
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
@@ -133,9 +123,9 @@ def test_tet(order):
         for q in range(p + 1):
             for r in range(q + 1):
                 t = (p - q, q - r, r)
-                print("idx = ", idx3(*t))
+                print("libtab.index = ", libtab.index(*t))
                 print(tab_fiat[t])
-                print(tab_libtab[idx3(*t)].transpose())
+                print(tab_libtab[libtab.index(*t)].transpose())
                 print()
                 assert(np.isclose(tab_fiat[t],
-                                  tab_libtab[idx3(*t)].transpose()).all())
+                                  tab_libtab[libtab.index(*t)].transpose()).all())

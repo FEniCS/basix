@@ -40,8 +40,7 @@ def test_symbolic_quad():
     n = 2
     nderiv = 2
 
-    def idx(p, q):
-        return (p + q + 1) * (p + q) // 2 + q
+    idx = libtab.index
 
     x = sympy.Symbol("x")
     wx = P_interval(n, x)
@@ -78,8 +77,7 @@ def test_symbolic_triangle():
     n = 5
     nderiv = 4
 
-    def idx(p, q):
-        return (p + q + 1) * (p + q) // 2 + q
+    idx = libtab.index
 
     from sympy import S
     m = (n + 1) * (n + 2) // 2
@@ -118,9 +116,7 @@ def test_symbolic_tetrahedron():
     n = 4
     nderiv = 4
 
-    def idx(p, q, r):
-        return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6
-                + (q + r) * (q + r + 1) // 2 + r)
+    idx = libtab.index
 
     from sympy import S
     m = (n + 1) * (n + 2) * (n + 3) // 6
@@ -179,9 +175,7 @@ def test_symbolic_pyramid():
     n = 3
     nderiv = 3
 
-    def idx(p, q, r):
-        return ((p + q + r) * (p + q + r + 1) * (p + q + r + 2) // 6
-                + (q + r) * (q + r + 1) // 2 + r)
+    idx = libtab.index
 
     def pyr_idx(p, q, r):
         rv = n - r + 1

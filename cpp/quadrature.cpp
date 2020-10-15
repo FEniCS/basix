@@ -143,14 +143,14 @@ Quadrature::make_quadrature_triangle_collapsed(int m)
   Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor> pts(m * m, 2);
   Eigen::ArrayXd wts(m * m);
 
-  int idx = 0;
+  int c = 0;
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < m; ++j)
     {
-      pts(idx, 0) = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]);
-      pts(idx, 1) = 0.5 * (1.0 + pty[j]);
-      wts[idx] = wx[i] * wy[j] * 0.125;
-      ++idx;
+      pts(c, 0) = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]);
+      pts(c, 1) = 0.5 * (1.0 + pty[j]);
+      wts[c] = wx[i] * wy[j] * 0.125;
+      ++c;
     }
 
   return {pts, wts};
@@ -167,18 +167,16 @@ Quadrature::make_quadrature_tetrahedron_collapsed(int m)
   Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> pts(m * m * m, 3);
   Eigen::ArrayXd wts(m * m * m);
 
-  int idx = 0;
+  int c = 0;
   for (int i = 0; i < m; ++i)
     for (int j = 0; j < m; ++j)
       for (int k = 0; k < m; ++k)
       {
-        const double x
-            = 0.125 * (1.0 + ptx[i]) * (1.0 - pty[j]) * (1.0 - ptz[k]);
-        const double y = 0.25 * (1. + pty[j]) * (1. - ptz[k]);
-        const double z = 0.5 * (1.0 + ptz[k]);
-        pts.row(idx) << x, y, z;
-        wts[idx] = wx[i] * wy[j] * wz[k] * 0.125 * 0.125;
-        ++idx;
+        pts(c, 0) = 0.125 * (1.0 + ptx[i]) * (1.0 - pty[j]) * (1.0 - ptz[k]);
+        pts(c, 1) = 0.25 * (1. + pty[j]) * (1. - ptz[k]);
+        pts(c, 2) = 0.5 * (1.0 + ptz[k]);
+        wts[c] = wx[i] * wy[j] * wz[k] * 0.125 * 0.125;
+        ++c;
       }
 
   return {pts, wts};

@@ -11,6 +11,7 @@
 #include "polynomial-set.h"
 #include "quadrature.h"
 #include "raviart-thomas.h"
+#include "regge.h"
 #include "tp.h"
 
 namespace py = pybind11;
@@ -64,6 +65,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
   py::class_<Nedelec>(m, "Nedelec", "Nedelec Element (first kind)")
       .def(py::init<Cell::Type, int>(), "Constructor")
       .def("tabulate", &Nedelec::tabulate, tabdoc.c_str());
+
+  py::class_<Regge>(m, "Regge", "Regge Element")
+      .def(py::init<Cell::Type, int>(), "Constructor")
+      .def("tabulate", &Regge::tabulate, tabdoc.c_str());
 
   py::class_<Lagrange>(m, "Lagrange", "Lagrange Element")
       .def(py::init<Cell::Type, int>())

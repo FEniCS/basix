@@ -8,10 +8,10 @@ import numpy as np
 
 def test_regge_tri():
     # Simplest element
-    lagrange = libtab.Regge(libtab.CellType.triangle, 1)
+    regge = libtab.Regge(libtab.CellType.triangle, 1)
     # tabulate at origin
     pts = [[0.0, 0.0]]
-    w = lagrange.tabulate(0, pts)[0]
+    w = regge.tabulate(0, pts)[0]
     w = w.reshape((4, -1)).transpose().reshape(-1, 2, 2)
 
     ref = np.array([[[-0.,  0.5],
@@ -44,12 +44,76 @@ def test_regge_tri():
     assert(np.isclose(ref, w).all())
 
 
+def test_regge_tri2():
+    # Second order
+    regge = libtab.Regge(libtab.CellType.triangle, 2)
+    # tabulate at origin
+    pts = [[0.0, 0.0]]
+    w = regge.tabulate(0, pts)[0]
+    w = w.reshape((4, -1)).transpose().reshape(-1, 2, 2)
+
+    ref = np.array([[[0., -0.5],
+                     [-0.5,  0.]],
+
+                    [[0., -0.5],
+                     [-0.5, -0.]],
+
+                    [[-0., -0.5],
+                     [-0.5,  0.]],
+
+                    [[-0.,  1.5],
+                     [1.5,  3.]],
+
+                    [[0., -1.5],
+                     [-1.5, -3.]],
+
+                    [[-0.,  0.5],
+                     [0.5,  1.]],
+
+                    [[3.,  1.5],
+                     [1.5, -0.]],
+
+                    [[-3., -1.5],
+                     [-1.5,  0.]],
+
+                    [[1.,  0.5],
+                     [0.5, -0.]],
+
+                    [[-0., -0.],
+                     [-0., -0.]],
+
+                    [[0., -0.],
+                     [-0., -0.]],
+
+                    [[0., -3.],
+                     [-3.,  0.]],
+
+                    [[0., -0.],
+                     [-0., -0.]],
+
+                    [[-0., -0.],
+                     [-0.,  0.]],
+
+                    [[-0.,  2.],
+                     [2., -0.]],
+
+                    [[-0.,  0.],
+                     [0.,  0.]],
+
+                    [[0.,  0.],
+                     [0., -0.]],
+
+                    [[0.,  2.],
+                     [2., -0.]]])
+    assert(np.isclose(ref, w).all())
+
+
 def test_regge_tet():
     # Simplest element
-    lagrange = libtab.Regge(libtab.CellType.tetrahedron, 1)
+    regge = libtab.Regge(libtab.CellType.tetrahedron, 1)
     # tabulate at origin
     pts = [[0.0, 0.0, 0.0]]
-    w = lagrange.tabulate(0, pts)[0]
+    w = regge.tabulate(0, pts)[0]
     w = w.reshape((9, -1)).transpose().reshape(-1, 3, 3)
 
     ref = np.array([[[0.,  0.,  0.],

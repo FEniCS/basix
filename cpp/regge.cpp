@@ -28,8 +28,6 @@ create_regge_space(Cell::Type celltype, int degree)
   int ndofs = basis_size * nc;
   int psize = basis_size * tdim * tdim;
 
-  std::cout << "ndofs = " << ndofs << " ps = " << psize << "\n";
-
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs(
       ndofs, psize);
   wcoeffs.setZero();
@@ -99,38 +97,33 @@ create_regge_dual(Cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           basis = PolynomialSet::tabulate(celltype, degree, 0, pts)[0];
 
+      // Store up outer(t, t) for all tangents
       std::vector<int>& vert_ids = topology[dim][i];
       int ntangents = dim * (dim + 1) / 2;
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          edge_ts(ntangents, geometry.cols());
+      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+          vvt(ntangents);
       int c = 0;
       for (std::size_t s = 0; s < dim; ++s)
         for (std::size_t d = s + 1; d < dim + 1; ++d)
-          edge_ts.row(c++)
-              = geometry.row(vert_ids[d]) - geometry.row(vert_ids[s]);
-
-      std::cout << "dim = " << dim << " " << i << "\n";
-      std::cout << "pts = " << pts << "\n";
-      std::cout << "basis = " << basis << "\n";
-
-      std::cout << "tangents = " << edge_ts << "\n";
-
-      for (int j = 0; j < ntangents; ++j)
-      {
-
-        // outer product
-        Eigen::MatrixXd vvt = edge_ts.row(j).transpose() * edge_ts.row(j);
-        Eigen::Map<Eigen::VectorXd> vvt_flat(vvt.data(),
-                                             vvt.rows() * vvt.cols());
-        for (int k = 0; k < pts.rows(); ++k)
         {
-          std::cout << "dof=" << dof << "\n";
-          // outer product, outer(outer(t, t), basis)
+          Eigen::VectorXd edge_t
+              = geometry.row(vert_ids[d]) - geometry.row(vert_ids[s]);
+          // outer product v.v^T
+          vvt[c++] = edge_t * edge_t.transpose();
+        }
+
+      for (int k = 0; k < pts.rows(); ++k)
+      {
+        for (int j = 0; j < ntangents; ++j)
+        {
+          Eigen::Map<Eigen::VectorXd> vvt_flat(vvt[j].data(),
+                                               vvt[j].rows() * vvt[j].cols());
+          // outer product: outer(outer(t, t), basis)
           Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
               vvt_b = vvt_flat * basis.row(k);
           dualmat.row(dof++) = Eigen::Map<Eigen::RowVectorXd>(
               vvt_b.data(), vvt_b.rows() * vvt_b.cols());
-          std::cout << "vvt * basis = " << vvt_b << "\n";
         }
       }
     }

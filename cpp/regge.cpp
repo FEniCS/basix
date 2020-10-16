@@ -124,7 +124,8 @@ create_regge_dual(Cell::Type celltype, int degree)
         {
           std::cout << "dof=" << dof << "\n";
           // outer product, outer(outer(t, t), basis)
-          Eigen::MatrixXd vvt_b = vvt_flat * basis.row(k);
+          Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+              vvt_b = vvt_flat * basis.row(k);
           dualmat.row(dof++) = Eigen::Map<Eigen::RowVectorXd>(
               vvt_b.data(), vvt_b.rows() * vvt_b.cols());
           std::cout << "vvt * basis = " << vvt_b << "\n";

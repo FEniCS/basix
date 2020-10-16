@@ -20,14 +20,17 @@ void FiniteElement::apply_dualmat_to_basis(
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                         Eigen::RowMajor>& dualmat)
 {
+#ifndef NDEBUG
+  std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
+  std::cout << "Dual matrix = \n[" << dualmat << "]\n";
+#endif
+
   auto A = coeffs * dualmat.transpose();
 
   // _coeffs = A^-1(coeffs)
   _coeffs = A.colPivHouseholderQr().solve(coeffs);
 
 #ifndef NDEBUG
-  std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
-  std::cout << "Dual matrix = \n[" << dualmat << "]\n";
   std::cout << "New coeffs = \n[" << _coeffs << "]\n";
 #endif
 }

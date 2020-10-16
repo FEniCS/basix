@@ -28,20 +28,22 @@ create_regge_space(Cell::Type celltype, int degree)
   int ndofs = basis_size * nc;
   int psize = basis_size * tdim * tdim;
 
+  std::cout << "ndofs = " << ndofs << " ps = " << psize << "\n";
+
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs(
       ndofs, psize);
   wcoeffs.setZero();
+  int s = basis_size;
   for (int i = 0; i < tdim; ++i)
-  {
-    std::cout << i << " - " << i * basis_size * (tdim + 1) / 2 << " "
-              << basis_size * tdim * i << "\n";
+    for (int j = 0; j < tdim; ++j)
+    {
+      int xoff = i + tdim * j;
+      int yoff = i + j;
+      if (tdim == 3 and i > 0 and j > 0)
+        ++yoff;
 
-    wcoeffs.block(i * psize / 4, basis_size * tdim * i, basis_size * tdim,
-                  basis_size * tdim)
-        = Eigen::MatrixXd::Identity(basis_size * tdim, basis_size * tdim);
-  }
-
-  std::cout << "\nwoceffs = \n[" << wcoeffs << "]\n";
+      wcoeffs.block(yoff * s, xoff * s, s, s) = Eigen::MatrixXd::Identity(s, s);
+    }
 
   return wcoeffs;
 }
@@ -146,8 +148,6 @@ Regge::Regge(Cell::Type celltype, int k) : FiniteElement(celltype, k)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
       = create_regge_dual(celltype, k);
 
-  std::cout << "\n\ndualmat = \n[" << dualmat << " ]\n";
-
   apply_dualmat_to_basis(wcoeffs, dualmat);
 }
 //-----------------------------------------------------------------------------
@@ -174,13 +174,10 @@ Regge::tabulate(int nderiv,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       dresult(expansion_basis.size());
 
-  // Number of components in symmetric tensor of given dimension
-  int nc = tdim * (tdim + 1) / 2;
-
   for (std::size_t p = 0; p < dresult.size(); ++p)
   {
-    dresult[p].resize(pts.rows(), ndofs * tdim);
-    for (int j = 0; j < nc; ++j)
+    dresult[p].resize(pts.rows(), ndofs * tdim * tdim);
+    for (int j = 0; j < tdim * tdim; ++j)
       dresult[p].block(0, ndofs * j, pts.rows(), ndofs)
           = expansion_basis[p].matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();

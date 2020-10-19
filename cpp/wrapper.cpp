@@ -57,6 +57,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .value("prism", Cell::Type::prism)
       .value("pyramid", Cell::Type::pyramid);
 
+  m.def("topology", &Cell::topology);
+  m.def("geometry", &Cell::geometry);
+  m.def("sub_entity_geometry", &Cell::sub_entity_geometry);
+
   m.def("simplex_type", &Cell::simplex_type,
         "Simplex CellType of given dimension");
   m.def("create_lattice", &Cell::create_lattice,

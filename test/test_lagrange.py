@@ -17,13 +17,17 @@ def sympy_lagrange(celltype, n):
     topology = libtab.topology(celltype)
     geometry = S(libtab.geometry(celltype).astype(int))
     print(geometry)
+    print(topology)
 
     pt = []
     for dim, entities in enumerate(topology):
+        print('dim, entities=', dim, entities)
         for ent in entities:
+            print('ent=', ent)
             entity_geom = numpy.empty((len(ent), geometry.shape[1]), dtype=object)
             for k, t in enumerate(ent):
                 entity_geom[k] = geometry[t]
+            print('egeom=', entity_geom)
 
             point = entity_geom[0]
             if (dim == 0):

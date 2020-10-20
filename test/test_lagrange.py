@@ -16,20 +16,13 @@ def sympy_lagrange(celltype, n):
     from sympy import S
     topology = libtab.topology(celltype)
     geometry = S(libtab.geometry(celltype).astype(int))
-    print(geometry)
-    print(topology)
-
     pt = []
     for dim, entities in enumerate(topology):
-        print('dim, entities=', dim, entities)
         for ent in entities:
-            print('ent=', ent)
             entity_geom = [geometry[t, :] for t in ent]
-            print('egeom=', entity_geom)
 
-            point = entity_geom[0]
             if (dim == 0):
-                pt += [point]
+                pt += [entity_geom[0]]
             elif (dim == 1):
                 for j in range(n - 1):
                     pt += [entity_geom[0]
@@ -49,7 +42,6 @@ def sympy_lagrange(celltype, n):
                                    + sympy.Rational(k + 1, n) * (entity_geom[2] - entity_geom[0])
                                    + sympy.Rational(l + 1, n) * (entity_geom[1] - entity_geom[0])]
 
-    print(pt)
     funcs = []
     if celltype == libtab.CellType.interval:
         for i in range(n + 1):
@@ -80,7 +72,6 @@ def sympy_lagrange(celltype, n):
                 mat[i, j] = f.subs([(x, p[0]), (y, p[1]), (z, p[2])])
 
     mat = sympy.Matrix(mat)
-    print(mat)
     mat = mat.inv()
     g = []
     for r in range(mat.shape[0]):
@@ -93,11 +84,10 @@ def sympy_lagrange(celltype, n):
 def test_line(n):
     celltype = libtab.CellType.interval
     g = sympy_lagrange(celltype, n)
-    print(g)
     x = sympy.Symbol("x")
     lagrange = libtab.Lagrange(celltype, n)
     pts = libtab.create_lattice(celltype, 6, True)
-    nderiv = 1
+    nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
 
     for k in range(nderiv + 1):

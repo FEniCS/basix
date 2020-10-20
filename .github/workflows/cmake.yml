@@ -55,4 +55,4 @@ jobs:
         cd test
         export PYTHONPATH=${{runner.workspace}}/build
         python3 -m flake8 .
-        python3 -m pytest .
+        python3 -m pytest -s -v test_lagrange.py::test_tri

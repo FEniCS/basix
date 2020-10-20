@@ -16,6 +16,7 @@ def sympy_lagrange(celltype, n):
     from sympy import S
     topology = libtab.topology(celltype)
     geometry = S(libtab.geometry(celltype).astype(int))
+    print(geometry)
 
     pt = []
     for dim, entities in enumerate(topology):
@@ -45,6 +46,8 @@ def sympy_lagrange(celltype, n):
                                    + sympy.Rational(j + 1, n) * (entity_geom[3, :] - entity_geom[0, :])
                                    + sympy.Rational(k + 1, n) * (entity_geom[2, :] - entity_geom[0, :])
                                    + sympy.Rational(l + 1, n) * (entity_geom[1, :] - entity_geom[0, :])]
+
+    print(pt)
     funcs = []
     if celltype == libtab.CellType.interval:
         for i in range(n + 1):
@@ -75,6 +78,7 @@ def sympy_lagrange(celltype, n):
                 mat[i, j] = f.subs([(x, p[0]), (y, p[1]), (z, p[2])])
 
     mat = sympy.Matrix(mat)
+    print(mat)
     mat = mat.inv()
     g = []
     for r in range(mat.shape[0]):

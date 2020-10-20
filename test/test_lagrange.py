@@ -108,14 +108,18 @@ def test_tri(order):
     y = sympy.Symbol("y")
     lagrange = libtab.Lagrange(celltype, order)
     pts = libtab.create_lattice(celltype, 6, True)
-    w = lagrange.tabulate(0, pts)[0]
+    nderiv = 3
+    wtab = lagrange.tabulate(nderiv, pts)
 
-    wsym = numpy.zeros_like(w)
-    for i, pt in enumerate(pts):
-        for j, f in enumerate(g):
-            wsym[i, j] = f.subs([(x, pt[0]), (y, pt[1])])
+    for kx in range(nderiv):
+        for ky in range(0, nderiv - kx):
+            wsym = numpy.zeros_like(wtab[0])
+            for i in range(len(g)):
+                wd = sympy.diff(g[i], x, kx, y, ky)
+                for j, p in enumerate(pts):
+                    wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
 
-    assert(numpy.isclose(w, wsym).all())
+            assert(numpy.isclose(wtab[libtab.index(kx, ky)], wsym).all())
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
@@ -127,14 +131,25 @@ def test_tet(order):
     z = sympy.Symbol("z")
     lagrange = libtab.Lagrange(celltype, order)
     pts = libtab.create_lattice(celltype, 6, True)
-    w = lagrange.tabulate(0, pts)[0]
+    nderiv = 1
+    wtab = lagrange.tabulate(nderiv, pts)
 
-    wsym = numpy.zeros_like(w)
-    for i, pt in enumerate(pts):
-        for j, f in enumerate(g):
-            wsym[i, j] = f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
+    for k in range(nderiv + 1):
+        for q in range(k + 1):
+            for kx in range(q + 1):
+                ky = q - kx
+                kz = k - q
+                print((kx, ky, kz))
 
-    assert(numpy.isclose(w, wsym).all())
+                wsym = numpy.zeros_like(wtab[0])
+                for i in range(len(g)):
+                    wd = sympy.diff(g[i], x, kx, y, ky, z, kz)
+                    for j, p in enumerate(pts):
+                        wsym[j, i] = wd.subs([(x, p[0]),
+                                              (y, p[1]),
+                                              (z, p[2])])
+
+                assert(numpy.isclose(wtab[libtab.index(kx, ky, kz)], wsym).all())
 
 
 @pytest.mark.parametrize("celltype", [libtab.CellType.interval,

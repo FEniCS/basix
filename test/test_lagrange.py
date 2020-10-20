@@ -24,9 +24,7 @@ def sympy_lagrange(celltype, n):
         print('dim, entities=', dim, entities)
         for ent in entities:
             print('ent=', ent)
-            entity_geom = numpy.empty((len(ent), geometry.shape[1]), dtype=object)
-            for k, t in enumerate(ent):
-                entity_geom[k] = geometry[t]
+            entity_geom = [geometry[t, :] for t in ent]
             print('egeom=', entity_geom)
 
             point = entity_geom[0]
@@ -34,22 +32,22 @@ def sympy_lagrange(celltype, n):
                 pt += [point]
             elif (dim == 1):
                 for j in range(n - 1):
-                    pt += [entity_geom[0, :]
-                           + sympy.Rational(j + 1, n) * (entity_geom[1, :] - entity_geom[0, :])]
+                    pt += [entity_geom[0]
+                           + sympy.Rational(j + 1, n) * (entity_geom[1] - entity_geom[0])]
             elif (dim == 2):
                 for j in range(n - 2):
                     for k in range(n - 2 - j):
-                        pt += [entity_geom[0, :]
-                               + sympy.Rational(j + 1, n) * (entity_geom[2, :] - entity_geom[0, :])
-                               + sympy.Rational(k + 1, n) * (entity_geom[1, :] - entity_geom[0, :])]
+                        pt += [entity_geom[0]
+                               + sympy.Rational(j + 1, n) * (entity_geom[2] - entity_geom[0])
+                               + sympy.Rational(k + 1, n) * (entity_geom[1] - entity_geom[0])]
             elif (dim == 3):
                 for j in range(n - 3):
                     for k in range(n - 3 - j):
                         for l in range(n - 3 - j - k):
-                            pt += [entity_geom[0, :]
-                                   + sympy.Rational(j + 1, n) * (entity_geom[3, :] - entity_geom[0, :])
-                                   + sympy.Rational(k + 1, n) * (entity_geom[2, :] - entity_geom[0, :])
-                                   + sympy.Rational(l + 1, n) * (entity_geom[1, :] - entity_geom[0, :])]
+                            pt += [entity_geom[0]
+                                   + sympy.Rational(j + 1, n) * (entity_geom[3] - entity_geom[0])
+                                   + sympy.Rational(k + 1, n) * (entity_geom[2] - entity_geom[0])
+                                   + sympy.Rational(l + 1, n) * (entity_geom[1] - entity_geom[0])]
 
     print(pt)
     funcs = []

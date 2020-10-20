@@ -16,7 +16,7 @@ def test_quad(order):
     for p, u in zip(Lpts, Lwts):
         for q, v in zip(Lpts, Lwts):
             Qpts.append([p[0], q[0]])
-            Qwts.append(u*v)
+            Qwts.append(u * v)
     basis = libtab.tabulate_polynomial_set(libtab.CellType.quadrilateral,
                                            order, 0, Qpts)[0]
     ndofs = basis.shape[1]
@@ -41,8 +41,8 @@ def test_pyramid(order):
         for q, v in zip(Lpts, Lwts):
             for r, w in zip(Lpts, Lwts):
                 sc = (1.0 - r[0])
-                Qpts.append([p[0]*sc, q[0]*sc, r[0]])
-                Qwts.append(u*v*sc*sc*w)
+                Qpts.append([p[0] * sc, q[0] * sc, r[0]])
+                Qwts.append(u * v * sc * sc * w)
     basis = libtab.tabulate_polynomial_set(libtab.CellType.pyramid,
                                            order, 0, Qpts)[0]
     ndofs = basis.shape[1]
@@ -67,7 +67,7 @@ def test_hex(order):
         for q, v in zip(Lpts, Lwts):
             for r, w in zip(Lpts, Lwts):
                 Qpts.append([p[0], q[0], r[0]])
-                Qwts.append(u*v*w)
+                Qwts.append(u * v * w)
     basis = libtab.tabulate_polynomial_set(libtab.CellType.hexahedron,
                                            order, 0, Qpts)[0]
     ndofs = basis.shape[1]
@@ -93,7 +93,7 @@ def test_prism(order):
     for p, u in zip(Tpts, Twts):
         for q, v in zip(Lpts, Lwts):
             Qpts.append([p[0], p[1], q[0]])
-            Qwts.append(u*v)
+            Qwts.append(u * v)
     basis = libtab.tabulate_polynomial_set(libtab.CellType.prism,
                                            order, 0, Qpts)[0]
     ndofs = basis.shape[1]

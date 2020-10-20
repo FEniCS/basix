@@ -89,8 +89,8 @@ def test_triangle_ned(order):
     print()
     for p in range(nderivs + 1):
         for q in range(p + 1):
-            t = (p-q, q)
-            print("libtab.index = ", libtab.index(p-q, q))
+            t = (p - q, q)
+            print("libtab.index = ", libtab.index(p - q, q))
             tab_fiat_cat = np.vstack((tab_fiat[t][:, 0, :],
                                       tab_fiat[t][:, 1, :]))
 #            print(tab_fiat[t][:,0,:])

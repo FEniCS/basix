@@ -87,13 +87,13 @@ def test_symbolic_triangle():
     y0 = y * S(2) - S(1)
     w = [None] * m
 
-    zeta = (S(2)*x0 + y0 + S(1)) / (S(1) - y0)
+    zeta = (S(2) * x0 + y0 + S(1)) / (S(1) - y0)
     for p in range(n + 1):
         for q in range(n - p + 1):
             w[idx(p, q)] = sympy.sqrt(S(2 * p + 1) * S(p + q + 1) / S(2)) \
                 * sympy.cancel(sympy.legendre(p, zeta)
-                               * ((S(1) - y0)/S(2))**p) \
-                * sympy.jacobi(S(q), S(2*p + 1), S(0), y0)
+                               * ((S(1) - y0) / S(2))**p) \
+                * sympy.jacobi(S(q), S(2 * p + 1), S(0), y0)
 
     np.set_printoptions(linewidth=200)
 
@@ -131,8 +131,8 @@ def test_symbolic_tetrahedron():
 
     np.set_printoptions(linewidth=200, suppress=True, precision=3)
 
-    zeta = S(2) * (S(1) + x0)/(y0 + z0) + S(1)
-    xi = S(2) * (S(1) + y0)/(S(1) - z0) - S(1)
+    zeta = S(2) * (S(1) + x0) / (y0 + z0) + S(1)
+    xi = S(2) * (S(1) + y0) / (S(1) - z0) - S(1)
 
     for p in range(n + 1):
         for q in range(n - p + 1):
@@ -141,12 +141,12 @@ def test_symbolic_tetrahedron():
                     sympy.legendre(p, zeta) * ((y0 + z0) / S(2))**p)
                 w[idx(p, q, r)] *= sympy.cancel(
                     sympy.jacobi(S(q), S(2 * p + 1), 0, xi)
-                    * ((S(1) - z0)/S(2))**q)
+                    * ((S(1) - z0) / S(2))**q)
                 w[idx(p, q, r)] *= sympy.jacobi(S(r),
                                                 S(2 * p + 2 * q + 2), 0, z0)
                 w[idx(p, q, r)] *= sympy.sqrt(
                     S((2 * p + 1) * (p + q + 1)
-                      * (2 * p + 2 * q + 2 * r + 3)))/S(2)
+                      * (2 * p + 2 * q + 2 * r + 3))) / S(2)
 
     cell = libtab.CellType.tetrahedron
     pts0 = libtab.create_lattice(cell, 2, True)
@@ -199,9 +199,9 @@ def test_symbolic_pyramid():
         for p in range(n - r + 1):
             for q in range(n - r + 1):
                 w[pyr_idx(p, q, r)] = sympy.cancel(
-                    sympy.legendre(p, zetax) * ((S(1) - z0)/S(2))**p)
+                    sympy.legendre(p, zetax) * ((S(1) - z0) / S(2))**p)
                 w[pyr_idx(p, q, r)] *= sympy.cancel(
-                    sympy.legendre(q, zetay) * ((S(1) - z0)/S(2))**q)
+                    sympy.legendre(q, zetay) * ((S(1) - z0) / S(2))**q)
                 w[pyr_idx(p, q, r)] *= \
                     sympy.jacobi(r, S(2 * p + 2 * q + 2), S(0), z0)
                 w[pyr_idx(p, q, r)] *= \

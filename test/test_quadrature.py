@@ -41,11 +41,11 @@ def test_quadrature_function():
     Qpts, Qwts = libtab.make_quadrature(simplex, 3)
 
     def f(x):
-        return x*x
+        return x * x
 
     b = sum([w * f(pt[0]) for pt, w in zip(Qpts, Qwts)])
 
-    assert np.isclose(b, 8.0/3.0)
+    assert np.isclose(b, 8.0 / 3.0)
 
 
 def test_jacobi():

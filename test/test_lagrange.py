@@ -15,24 +15,14 @@ def sympy_lagrange(celltype, n):
 
     from sympy import S
     topology = libtab.topology(celltype)
-    if celltype == libtab.CellType.interval:
-        geometry = numpy.array([[S(0)],
-                                [S(1)]])
-    elif celltype == libtab.CellType.triangle:
-        geometry = numpy.array([[S(0), S(0)],
-                                [S(1), S(0)],
-                                [S(0), S(1)]])
-    elif celltype == libtab.CellType.tetrahedron:
-        geometry = numpy.array([[S(0), S(0), S(0)],
-                                [S(1), S(0), S(0)],
-                                [S(0), S(1), S(0)],
-                                [S(0), S(0), S(1)]])
+    geometry = S(libtab.geometry(celltype).astype(int))
+
     pt = []
-    for dim in range(len(topology)):
-        for i in range(len(topology[dim])):
-            entity_geom = numpy.empty((len(topology[dim][i]), geometry.shape[1]), dtype=object)
-            for k in range(len(topology[dim][i])):
-                entity_geom[k] = geometry[topology[dim][i][k]]
+    for dim, entities in enumerate(topology):
+        for ent in entities:
+            entity_geom = numpy.empty((len(ent), geometry.shape[1]), dtype=object)
+            for k, t in enumerate(ent):
+                entity_geom[k] = geometry[t]
 
             point = entity_geom[0]
             if (dim == 0):

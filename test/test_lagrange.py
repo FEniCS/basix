@@ -7,6 +7,7 @@ import numpy
 import pytest
 import sympy
 
+
 def sympy_lagrange(celltype, n):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
@@ -38,28 +39,31 @@ def sympy_lagrange(celltype, n):
                 pt += [point]
             elif (dim == 1):
                 for j in range(n - 1):
-                    pt += [entity_geom[0,:] + sympy.Rational(j + 1, n) * (entity_geom[1,:] - entity_geom[0,:])]
+                    pt += [entity_geom[0, :]
+                           + sympy.Rational(j + 1, n) * (entity_geom[1, :] - entity_geom[0, :])]
             elif (dim == 2):
                 for j in range(n - 2):
                     for k in range(n - 2 - j):
-                        pt += [entity_geom[0,:] + sympy.Rational(j + 1, n) * (entity_geom[2,:] - entity_geom[0,:])
-                               + sympy.Rational(k + 1, n) * (entity_geom[1,:] - entity_geom[0,:])]
+                        pt += [entity_geom[0, :]
+                               + sympy.Rational(j + 1, n) * (entity_geom[2, :] - entity_geom[0, :])
+                               + sympy.Rational(k + 1, n) * (entity_geom[1, :] - entity_geom[0, :])]
             elif (dim == 3):
                 for j in range(n - 3):
                     for k in range(n - 3 - j):
                         for l in range(n - 3 - j - k):
-                            pt += [entity_geom[0,:] + sympy.Rational(j + 1, n) * (entity_geom[3,:] - entity_geom[0,:])
-                                   + sympy.Rational(k + 1, n) * (entity_geom[2,:] - entity_geom[0,:])
-                                   + sympy.Rational(l + 1, n) * (entity_geom[1,:] - entity_geom[0,:])]
-    funcs=[]
+                            pt += [entity_geom[0, :]
+                                   + sympy.Rational(j + 1, n) * (entity_geom[3, :] - entity_geom[0, :])
+                                   + sympy.Rational(k + 1, n) * (entity_geom[2, :] - entity_geom[0, :])
+                                   + sympy.Rational(l + 1, n) * (entity_geom[1, :] - entity_geom[0, :])]
+    funcs = []
     if celltype == libtab.CellType.interval:
         for i in range(n + 1):
-                funcs += [x**i]
+            funcs += [x**i]
         mat = numpy.empty((len(pt), len(funcs)), dtype=object)
 
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
-                mat[i, j] = f.subs([(x,p[0])])
+                mat[i, j] = f.subs([(x, p[0])])
     elif celltype == libtab.CellType.triangle:
         for i in range(n + 1):
             for j in range(n + 1 - i):
@@ -68,7 +72,7 @@ def sympy_lagrange(celltype, n):
 
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
-                mat[i, j] = f.subs([(x,p[0]), (y, p[1])])
+                mat[i, j] = f.subs([(x, p[0]), (y, p[1])])
     elif celltype == libtab.CellType.tetrahedron:
         for i in range(n + 1):
             for j in range(n + 1 - i):
@@ -78,7 +82,7 @@ def sympy_lagrange(celltype, n):
 
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
-                mat[i, j] = f.subs([(x,p[0]), (y, p[1]), (z, p[2])])
+                mat[i, j] = f.subs([(x, p[0]), (y, p[1]), (z, p[2])])
 
     mat = sympy.Matrix(mat)
     mat = mat.inv()
@@ -128,7 +132,7 @@ def test_tri(order):
     assert(numpy.isclose(w, wsym).all())
 
 
-@pytest.mark.parametrize("order", [1,2,3,4])
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_tet(order):
     celltype = libtab.CellType.tetrahedron
     g = sympy_lagrange(celltype, order)

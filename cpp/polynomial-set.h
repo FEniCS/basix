@@ -40,5 +40,10 @@ std::vector<
 tabulate(Cell::Type celltype, int n, int nderiv,
          const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                             Eigen::RowMajor>& pts);
+
+/// Size of set
+ int size(Cell::Type celltype, int n);
+
+
 }; // namespace PolynomialSet
 } // namespace libtab

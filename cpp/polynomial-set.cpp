@@ -710,3 +710,26 @@ PolynomialSet::tabulate(
     throw std::runtime_error("Polynomial set: Unsupported cell type");
   }
 }
+//-----------------------------------------------------------------------------
+int PolynomialSet::size(Cell::Type celltype, int n)
+{
+  switch (celltype)
+  {
+  case Cell::Type::triangle:
+    return (n + 1) * (n + 2) / 2;
+  case Cell::Type::tetrahedron:
+    return (n + 1) * (n + 2) * (n + 3) / 6;
+  case Cell::Type::prism:
+    return (n + 1) * (n + 1) * (n + 2) / 2;
+  case Cell::Type::pyramid:
+    return (n + 1) * (n + 2) * (2 * n + 3) / 6;
+  case Cell::Type::interval:
+    return (n + 1);
+  case Cell::Type::quadrilateral:
+    return (n + 1) * (n + 1);
+  case Cell::Type::hexahedron:
+    return (n + 1) * (n + 1) * (n + 1);
+  default:
+    return 1;
+  }
+}

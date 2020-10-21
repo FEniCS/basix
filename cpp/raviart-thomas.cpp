@@ -21,22 +21,10 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int k)
   const int tdim = Cell::topological_dimension(celltype);
 
   // Vector subsets
-  int nv;
-  int ns0;
-  int ns;
-  if (tdim == 2)
-  {
-    nv = (_degree + 1) * (_degree + 2) / 2;
-    ns0 = _degree * (_degree + 1) / 2;
-    ns = (_degree + 1);
-  }
-  else
-  {
-    assert(tdim == 3);
-    nv = (_degree + 1) * (_degree + 2) * (_degree + 3) / 6;
-    ns0 = _degree * (_degree + 1) * (_degree + 2) / 6;
-    ns = (_degree + 1) * (_degree + 2) / 2;
-  }
+  const int nv = PolynomialSet::size(celltype, _degree);
+  const int ns0 = PolynomialSet::size(celltype, _degree - 1);
+  const int ns
+      = (tdim == 2) ? (_degree + 1) : (_degree + 1) * (_degree + 2) / 2;
 
   auto [Qpts, Qwts] = Quadrature::make_quadrature(tdim, 2 * _degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>

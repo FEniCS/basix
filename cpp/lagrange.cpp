@@ -12,25 +12,12 @@ using namespace libtab;
 Lagrange::Lagrange(Cell::Type celltype, int degree)
     : FiniteElement(celltype, degree)
 {
-  int ndofs = 0;
-  int tdim = 0;
-  if (celltype == Cell::Type::interval)
-  {
-    tdim = 1;
-    ndofs = (degree + 1);
-  }
-  else if (celltype == Cell::Type::triangle)
-  {
-    tdim = 2;
-    ndofs = (degree + 1) * (degree + 2) / 2;
-  }
-  else if (celltype == Cell::Type::tetrahedron)
-  {
-    tdim = 3;
-    ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 6;
-  }
-  else
+  if (celltype != Cell::Type::interval and celltype != Cell::Type::triangle
+      and celltype != Cell::Type::tetrahedron)
     throw std::runtime_error("Invalid celltype");
+
+  const int ndofs = PolynomialSet::size(celltype, degree);
+  const int tdim = Cell::topological_dimension(celltype);
 
   // Create points at nodes, ordered by topology (vertices first)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(

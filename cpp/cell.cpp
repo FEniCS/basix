@@ -187,6 +187,18 @@ Cell::sub_entity_geometry(Cell::Type celltype, int dim, int index)
   return sub_entity;
 }
 //----------------------------------------------------------------------------
+int Cell::sub_entity_count(Cell::Type celltype, int dim)
+{
+  std::vector<std::vector<std::vector<int>>> cell_topology
+      = Cell::topology(celltype);
+
+  if (dim < 0 or dim >= (int)cell_topology.size())
+    throw std::runtime_error("Invalid dimension for sub-entity");
+
+  const std::vector<std::vector<int>>& t = cell_topology[dim];
+  return (int)t.size();
+}
+//----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 Cell::create_lattice(Cell::Type celltype, int n, bool exterior)
 {
@@ -194,37 +206,54 @@ Cell::create_lattice(Cell::Type celltype, int n, bool exterior)
 
   if (celltype == Cell::Type::quadrilateral)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(2,
-                                                                             2);
-    hs.row(0) << 0.0, 1.0;
-    hs.row(1) << 1.0, 0.0;
-    hs /= static_cast<double>(n);
+    if (n == 0)
+    {
+      points.resize(1, 2);
+      points.row(0) << 0.5, 0.5;
+    }
+    else
+    {
 
-    int b = (exterior == false) ? 1 : 0;
-    int m = (n - 2 * b + 1);
-    points.resize(m * m, 2);
-    int c = 0;
-    for (int i = b; i < n + 1 - b; ++i)
-      for (int j = b; j < n + 1 - b; ++j)
-        points.row(c++) = hs.row(0) * i + hs.row(1) * j;
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
+          2, 2);
+      hs.row(0) << 0.0, 1.0;
+      hs.row(1) << 1.0, 0.0;
+      hs /= static_cast<double>(n);
+
+      int b = (exterior == false) ? 1 : 0;
+      int m = (n - 2 * b + 1);
+      points.resize(m * m, 2);
+      int c = 0;
+      for (int i = b; i < n + 1 - b; ++i)
+        for (int j = b; j < n + 1 - b; ++j)
+          points.row(c++) = hs.row(0) * i + hs.row(1) * j;
+    }
   }
   else if (celltype == Cell::Type::hexahedron)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(3,
-                                                                             3);
-    hs.row(0) << 0.0, 0.0, 1.0;
-    hs.row(1) << 0.0, 1.0, 0.0;
-    hs.row(2) << 1.0, 0.0, 0.0;
-    hs /= static_cast<double>(n);
+    if (n == 0)
+    {
+      points.resize(1, 3);
+      points.row(0) << 0.5, 0.5, 0.5;
+    }
+    else
+    {
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
+          3, 3);
+      hs.row(0) << 0.0, 0.0, 1.0;
+      hs.row(1) << 0.0, 1.0, 0.0;
+      hs.row(2) << 1.0, 0.0, 0.0;
+      hs /= static_cast<double>(n);
 
-    int b = (exterior == false) ? 1 : 0;
-    int m = (n - 2 * b + 1);
-    points.resize(m * m * m, 3);
-    int c = 0;
-    for (int i = b; i < n + 1 - b; ++i)
-      for (int j = b; j < n + 1 - b; ++j)
-        for (int k = b; k < n + 1 - b; ++k)
-          points.row(c++) = hs.row(0) * i + hs.row(1) * j + hs.row(2) * k;
+      int b = (exterior == false) ? 1 : 0;
+      int m = (n - 2 * b + 1);
+      points.resize(m * m * m, 3);
+      int c = 0;
+      for (int i = b; i < n + 1 - b; ++i)
+        for (int j = b; j < n + 1 - b; ++j)
+          for (int k = b; k < n + 1 - b; ++k)
+            points.row(c++) = hs.row(0) * i + hs.row(1) * j + hs.row(2) * k;
+    }
   }
   else if (celltype == Cell::Type::point)
   {
@@ -233,91 +262,135 @@ Cell::create_lattice(Cell::Type celltype, int n, bool exterior)
   }
   else if (celltype == Cell::Type::interval)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(1,
-                                                                             1);
-    hs.row(0) << 1.0 / static_cast<double>(n);
+    if (n == 0)
+    {
+      points.resize(1, 1);
+      points.row(0) << 0.5;
+    }
+    else
+    {
 
-    int b = (exterior == false) ? 1 : 0;
-    int m = (n - 2 * b + 1);
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
+          1, 1);
+      hs.row(0) << 1.0 / static_cast<double>(n);
 
-    points.resize(m, 1);
-    int c = 0;
-    for (int i = b; i < n + 1 - b; ++i)
-      points.row(c++) = hs.row(0) * i;
+      int b = (exterior == false) ? 1 : 0;
+      int m = (n - 2 * b + 1);
+
+      points.resize(m, 1);
+
+      int c = 0;
+      for (int i = b; i < n + 1 - b; ++i)
+        points.row(c++) = hs.row(0) * i;
+    }
   }
   else if (celltype == Cell::Type::triangle)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(2,
-                                                                             2);
-    hs.row(0) << 0.0, 1.0;
-    hs.row(1) << 1.0, 0.0;
-    hs /= static_cast<double>(n);
+    if (n == 0)
+    {
+      points.resize(1, 2);
+      points.row(0) << 1.0 / 3, 1.0 / 3;
+    }
+    else
+    {
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
+          2, 2);
+      hs.row(0) << 0.0, 1.0;
+      hs.row(1) << 1.0, 0.0;
+      hs /= static_cast<double>(n);
 
-    int b = (exterior == false) ? 1 : 0;
-    int m = (n - 3 * b + 1) * (n - 3 * b + 2) / 2;
-    points.resize(m, 2);
-    int c = 0;
-    for (int i = b; i < n + 1 - b; ++i)
-      for (int j = b; j < n + 1 - i - b; ++j)
-        points.row(c++) = hs.row(1) * j + hs.row(0) * i;
+      int b = (exterior == false) ? 1 : 0;
+      int m = (n - 3 * b + 1) * (n - 3 * b + 2) / 2;
+      points.resize(m, 2);
+      int c = 0;
+      for (int i = b; i < n + 1 - b; ++i)
+        for (int j = b; j < n + 1 - i - b; ++j)
+          points.row(c++) = hs.row(1) * j + hs.row(0) * i;
+    }
   }
   else if (celltype == Cell::Type::tetrahedron)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(3,
-                                                                             3);
-    hs.row(0) << 0.0, 0.0, 1.0;
-    hs.row(1) << 0.0, 1.0, 0.0;
-    hs.row(2) << 1.0, 0.0, 0.0;
-    hs /= static_cast<double>(n);
+    if (n == 0)
+    {
+      points.resize(1, 3);
+      points.row(0) << 1.0 / 4, 1.0 / 4, 1.0 / 4;
+    }
+    else
+    {
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
+          3, 3);
+      hs.row(0) << 0.0, 0.0, 1.0;
+      hs.row(1) << 0.0, 1.0, 0.0;
+      hs.row(2) << 1.0, 0.0, 0.0;
+      hs /= static_cast<double>(n);
 
-    int b = (exterior == false) ? 1 : 0;
-    int m = (n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6;
-    points.resize(m, 3);
-    int c = 0;
-    for (int i = b; i < n + 1 - b; ++i)
-      for (int j = b; j < n + 1 - i - b; ++j)
-        for (int k = b; k < n + 1 - i - j - b; ++k)
-          points.row(c++) = hs.row(2) * k + hs.row(1) * j + hs.row(0) * i;
+      int b = (exterior == false) ? 1 : 0;
+      int m = (n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6;
+      points.resize(m, 3);
+      int c = 0;
+      for (int i = b; i < n + 1 - b; ++i)
+        for (int j = b; j < n + 1 - i - b; ++j)
+          for (int k = b; k < n + 1 - i - j - b; ++k)
+            points.row(c++) = hs.row(2) * k + hs.row(1) * j + hs.row(0) * i;
+    }
   }
   else if (celltype == Cell::Type::prism)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(3,
-                                                                             3);
+    if (n == 0)
+    {
+      points.resize(1, 3);
+      points.row(0) << 1.0 / 3, 1.0 / 3, 0.5;
+    }
+    else
+    {
 
-    hs.row(0) << 0.0, 0.0, 1.0;
-    hs.row(1) << 0.0, 1.0, 0.0;
-    hs.row(2) << 1.0, 0.0, 0.0;
-    hs /= static_cast<double>(n);
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
+          3, 3);
 
-    int b = (exterior == false) ? 1 : 0;
-    int m = (n - 2 * b + 1) * (n - 3 * b + 1) * (n - 3 * b + 2) / 2;
-    points.resize(m, 3);
-    int c = 0;
-    for (int i = b; i < n + 1 - b; ++i)
-      for (int j = b; j < n + 1 - i - b; ++j)
-        for (int k = b; k < n + 1 - b; ++k)
-          points.row(c++) = hs.row(0) * k + hs.row(1) * j + hs.row(2) * i;
+      hs.row(0) << 0.0, 0.0, 1.0;
+      hs.row(1) << 0.0, 1.0, 0.0;
+      hs.row(2) << 1.0, 0.0, 0.0;
+      hs /= static_cast<double>(n);
+
+      int b = (exterior == false) ? 1 : 0;
+      int m = (n - 2 * b + 1) * (n - 3 * b + 1) * (n - 3 * b + 2) / 2;
+      points.resize(m, 3);
+      int c = 0;
+      for (int i = b; i < n + 1 - b; ++i)
+        for (int j = b; j < n + 1 - i - b; ++j)
+          for (int k = b; k < n + 1 - b; ++k)
+            points.row(c++) = hs.row(0) * k + hs.row(1) * j + hs.row(2) * i;
+    }
   }
   else if (celltype == Cell::Type::pyramid)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(3,
-                                                                             3);
+    if (n == 0)
+    {
+      points.resize(1, 3);
+      points.row(0) << 0.5, 0.5, 1.0 / 5;
+    }
+    else
+    {
 
-    hs.row(0) << 0.0, 0.0, 1.0;
-    hs.row(1) << 0.0, 1.0, 0.0;
-    hs.row(2) << 1.0, 0.0, 0.0;
-    hs /= static_cast<double>(n);
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
+          3, 3);
 
-    if (exterior == false)
-      throw std::runtime_error("not implemented in pyramid");
+      hs.row(0) << 0.0, 0.0, 1.0;
+      hs.row(1) << 0.0, 1.0, 0.0;
+      hs.row(2) << 1.0, 0.0, 0.0;
+      hs /= static_cast<double>(n);
 
-    int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
-    points.resize(m, 3);
-    int c = 0;
-    for (int k = 0; k < n + 1; ++k)
-      for (int i = 0; i < n + 1 - k; ++i)
-        for (int j = 0; j < n + 1 - k; ++j)
-          points.row(c++) = hs.row(0) * k + hs.row(1) * j + hs.row(2) * i;
+      if (exterior == false)
+        throw std::runtime_error("not implemented in pyramid");
+
+      int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
+      points.resize(m, 3);
+      int c = 0;
+      for (int k = 0; k < n + 1; ++k)
+        for (int i = 0; i < n + 1 - k; ++i)
+          for (int j = 0; j < n + 1 - k; ++j)
+            points.row(c++) = hs.row(0) * k + hs.row(1) * j + hs.row(2) * i;
+    }
   }
   else
     throw std::runtime_error("Unsupported cell for lattice");

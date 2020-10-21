@@ -36,6 +36,10 @@ public:
            const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>& pts) const = 0;
 
+  /// Get the cell type of the space's cell
+  /// @return The cell type
+  Cell::Type cell_type() const { return _cell_type; }
+
 protected:
   // Applies nodal constraints from dualmat to original
   // coeffs on basis, and stores to _coeffs.

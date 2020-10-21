@@ -48,6 +48,12 @@ std::vector<std::vector<std::vector<int>>> topology(Cell::Type celltype);
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 sub_entity_geometry(Cell::Type celltype, int dim, int index);
 
+/// Number of sub-entities of a cell by topological dimension
+/// @param celltype The Cell::Type
+/// @param dim Dimension of sub-entity
+/// @return The number of sub-entities of the given dimension
+int sub_entity_count(Cell::Type celltype, int dim);
+
 /// Create a lattice of points on the cell, equispaced along each edge
 /// optionally including the outer surface points
 /// @param celltype The Cell::Type

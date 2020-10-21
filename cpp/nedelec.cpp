@@ -1,8 +1,10 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
 #include "nedelec.h"
+#include "integral-moments.h"
+#include "lagrange.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
@@ -71,74 +73,21 @@ create_nedelec_2d_dual(int degree)
   dualmat.setZero();
 
   // dof counter
-  int c = 0;
+  int quad_deg = 5 * (degree + 1);
 
   // Integral representation for the boundary (edge) dofs
-
-  // Create quadrature scheme on the edge
-  int quad_deg = 5 * (degree + 1);
-  auto [QptsE, QwtsE] = Quadrature::make_quadrature(1, quad_deg);
-
-  // Tabulate a polynomial set on a reference edge
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pq_at_QptsE
-      = PolynomialSet::tabulate(Cell::Type::interval, degree, 0, QptsE)[0];
-  // Iterate over edges
-  for (int i = 0; i < 3; ++i)
-  {
-    // FIXME: get edge tangent from the cell class
-    Eigen::Array<double, 2, 2, Eigen::RowMajor> edge
-        = Cell::sub_entity_geometry(Cell::Type::triangle, 1, i);
-    Eigen::Vector2d tangent = edge.row(1) - edge.row(0);
-
-    // Map quadrature points onto triangle edge
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        QptsE_scaled(QptsE.rows(), 2);
-    for (int j = 0; j < QptsE.rows(); ++j)
-      QptsE_scaled.row(j)
-          = edge.row(0) + QptsE(j, 0) * (edge.row(1) - edge.row(0));
-
-    // Tabulate Pkp1 at edge quadrature points
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsE = PolynomialSet::tabulate(Cell::Type::triangle,
-                                                degree + 1, 0, QptsE_scaled)[0]
-                            .transpose();
-
-    // Compute edge tangent integral moments
-    for (int j = 0; j < Pq_at_QptsE.cols(); ++j)
-    {
-      Eigen::ArrayXd phi = Pq_at_QptsE.col(j);
-      for (int k = 0; k < 2; ++k)
-      {
-        Eigen::VectorXd q = phi * QwtsE * tangent[k];
-        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE * q;
-        dualmat.block(c, psize * k, 1, psize) = qcoeffs;
-      }
-      ++c;
-    }
-  }
+  Lagrange moment_space_E(Cell::Type::interval, degree);
+  dualmat.block(0, 0, 3 * (degree + 1), psize * 2)
+      = IntegralMoments::make_tangent_integral_moments(
+          moment_space_E, Cell::Type::triangle, 2, degree + 1, quad_deg);
 
   if (degree > 0)
   {
     // Interior integral moment
-    auto [QptsI, QwtsI] = Quadrature::make_quadrature(2, quad_deg);
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkm1_at_QptsI = PolynomialSet::tabulate(Cell::Type::triangle,
-                                                degree - 1, 0, QptsI)[0];
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsI = PolynomialSet::tabulate(Cell::Type::triangle,
-                                                degree + 1, 0, QptsI)[0];
-
-    for (int j = 0; j < 2; ++j)
-      for (int i = 0; i < Pkm1_at_QptsI.cols(); ++i)
-      {
-        Eigen::ArrayXd phi = Pkm1_at_QptsI.col(i);
-        Eigen::VectorXd q = phi * QwtsI;
-        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
-        assert(qcoeffs.size() == psize);
-        dualmat.block(c, psize * j, 1, psize) = qcoeffs;
-        ++c;
-      }
+    Lagrange moment_space_I(Cell::Type::triangle, degree - 1);
+    dualmat.block(3 * (degree + 1), 0, degree * (degree + 1), psize * 2)
+        = IntegralMoments::make_integral_moments(
+            moment_space_I, Cell::Type::triangle, 2, degree + 1, quad_deg);
   }
   return dualmat;
 }
@@ -220,126 +169,34 @@ create_nedelec_3d_dual(int degree)
       dualmat(ndofs, psize * tdim);
   dualmat.setZero();
 
-  // dof counter
-  int c = 0;
-
-  // Integral representation for the boundary dofs
-
-  // Tabulate a polynomial set on a reference edge
-
   // Create quadrature scheme on the edge
   int quad_deg = 5 * (degree + 1);
-  auto [QptsE, QwtsE] = Quadrature::make_quadrature(1, quad_deg);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pq_at_QptsE
-      = PolynomialSet::tabulate(Cell::Type::interval, degree, 0, QptsE)[0];
-  // Iterate over edges
-  for (int i = 0; i < 6; ++i)
-  {
-    // FIXME: get tangent from the simplex class
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> edge
-        = Cell::sub_entity_geometry(Cell::Type::tetrahedron, 1, i);
-    Eigen::Vector3d tangent = edge.row(1) - edge.row(0);
 
-    // Map quadrature points onto tetrahedron edge
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        QptsE_scaled(QptsE.rows(), tdim);
-    for (int j = 0; j < QptsE.rows(); ++j)
-      QptsE_scaled.row(j)
-          = edge.row(0) + QptsE(j, 0) * (edge.row(1) - edge.row(0));
-
-    // Tabulate Pkp1 at edge quadrature points
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsE = PolynomialSet::tabulate(Cell::Type::tetrahedron,
-                                                degree + 1, 0, QptsE_scaled)[0]
-                            .transpose();
-
-    // Compute edge tangent integral moments
-    for (int j = 0; j < Pq_at_QptsE.cols(); ++j)
-    {
-      Eigen::ArrayXd phi = Pq_at_QptsE.col(j);
-      for (int k = 0; k < 3; ++k)
-      {
-        Eigen::VectorXd q = phi * QwtsE * tangent[k];
-        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE * q;
-        dualmat.block(c, psize * k, 1, psize) = qcoeffs;
-      }
-      ++c;
-    }
-  }
+  // Integral representation for the boundary (edge) dofs
+  Lagrange moment_space_E(Cell::Type::interval, degree);
+  dualmat.block(0, 0, 6 * (degree + 1), psize * 3)
+      = IntegralMoments::make_tangent_integral_moments(
+          moment_space_E, Cell::Type::tetrahedron, 3, degree + 1, quad_deg);
 
   if (degree > 0)
   {
-    // Create quadrature scheme on the facet
-    int quad_deg = 5 * (degree + 1);
-    auto [QptsF, QwtsF] = Quadrature::make_quadrature(2, quad_deg);
-    // Tabulate a polynomial set on a reference facet
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        PqF_at_QptsF = PolynomialSet::tabulate(Cell::Type::triangle, degree - 1,
-                                               0, QptsF)[0];
-
-    for (int i = 0; i < 4; ++i)
-    {
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          facet = Cell::sub_entity_geometry(Cell::Type::tetrahedron, 2, i);
-      // Face tangents
-      Eigen::Vector3d t0 = facet.row(1) - facet.row(0);
-      Eigen::Vector3d t1 = facet.row(2) - facet.row(0);
-
-      // Map quadrature points onto tetrahedron facet
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          QptsF_scaled(QptsF.rows(), tdim);
-      for (int j = 0; j < QptsF.rows(); ++j)
-        QptsF_scaled.row(j) = facet.row(0)
-                              + QptsF(j, 0) * (facet.row(1) - facet.row(0))
-                              + QptsF(j, 1) * (facet.row(2) - facet.row(0));
-
-      // Tabulate Pkp1 at facet quadrature points
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          Pkp1_at_QptsF
-          = PolynomialSet::tabulate(Cell::Type::tetrahedron, degree + 1, 0,
-                                    QptsF_scaled)[0]
-                .transpose();
-
-      for (int j = 0; j < PqF_at_QptsF.cols(); ++j)
-      {
-        for (int k = 0; k < tdim; ++k)
-        {
-          // FIXME: check this over
-          Eigen::ArrayXd phi = PqF_at_QptsF.col(j);
-          Eigen::VectorXd q0 = phi * QwtsF * t0[k];
-          Eigen::RowVectorXd qcoeffs0 = Pkp1_at_QptsF * q0;
-          Eigen::VectorXd q1 = phi * QwtsF * t1[k];
-          Eigen::RowVectorXd qcoeffs1 = Pkp1_at_QptsF * q1;
-          dualmat.block(c, psize * k, 1, psize) = qcoeffs0;
-          dualmat.block(c + 1, psize * k, 1, psize) = qcoeffs1;
-        }
-        c += 2;
-      }
-    }
+    // Integral moments on faces
+    Lagrange moment_space_F(Cell::Type::triangle, degree - 1);
+    dualmat.block(6 * (degree + 1), 0, 4 * degree * (degree + 1), psize * 3)
+        = IntegralMoments::make_integral_moments(
+            moment_space_F, Cell::Type::tetrahedron, 3, degree + 1, quad_deg);
   }
+
   if (degree > 1)
   {
     // Interior integral moment
-    auto [QptsI, QwtsI] = Quadrature::make_quadrature(tdim, quad_deg);
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkm2_at_QptsI = PolynomialSet::tabulate(Cell::Type::tetrahedron,
-                                                degree - 2, 0, QptsI)[0];
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsI = PolynomialSet::tabulate(Cell::Type::tetrahedron,
-                                                degree + 1, 0, QptsI)[0];
-
-    for (int j = 0; j < tdim; ++j)
-      for (int i = 0; i < Pkm2_at_QptsI.cols(); ++i)
-      {
-        Eigen::ArrayXd phi = Pkm2_at_QptsI.col(i);
-        Eigen::VectorXd q = phi * QwtsI;
-        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
-        assert(qcoeffs.size() == psize);
-        dualmat.block(c, psize * j, 1, psize) = qcoeffs;
-        ++c;
-      }
+    Lagrange moment_space_I(Cell::Type::tetrahedron, degree - 2);
+    dualmat.block(6 * (degree + 1) + 4 * degree * (degree + 1), 0,
+                  (degree - 1) * degree * (degree + 1) / 2, psize * 3)
+        = IntegralMoments::make_integral_moments(
+            moment_space_I, Cell::Type::tetrahedron, 3, degree + 1, quad_deg);
   }
+
   return dualmat;
 }
 

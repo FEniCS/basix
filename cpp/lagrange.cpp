@@ -23,36 +23,48 @@ Lagrange::Lagrange(Cell::Type celltype, int degree)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
       ndofs, tdim);
 
-  std::vector<std::vector<std::vector<int>>> topology
-      = Cell::topology(celltype);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geometry
-      = Cell::geometry(celltype);
-  int c = 0;
-  for (std::size_t dim = 0; dim < topology.size(); ++dim)
+  if (ndofs == 1)
   {
-    for (std::size_t i = 0; i < topology[dim].size(); ++i)
+    if (tdim == 1)
+      pt.row(0) << 0.5;
+    else if (tdim == 2)
+      pt.row(0) << 1.0 / 3, 1.0 / 3;
+    else if (tdim == 3)
+      pt.row(0) << 0.25, 0.25, 0.25;
+  }
+  else
+  {
+
+    std::vector<std::vector<std::vector<int>>> topology
+        = Cell::topology(celltype);
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        geometry = Cell::geometry(celltype);
+    int c = 0;
+    for (std::size_t dim = 0; dim < topology.size(); ++dim)
     {
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>
-          entity_geom = Cell::sub_entity_geometry(celltype, dim, i);
-
-      Eigen::ArrayXd point = entity_geom.row(0);
-      Cell::Type ct = Cell::simplex_type(dim);
-
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>
-          lattice = Cell::create_lattice(ct, degree, false);
-      for (int j = 0; j < lattice.rows(); ++j)
+      for (std::size_t i = 0; i < topology[dim].size(); ++i)
       {
-        pt.row(c) = entity_geom.row(0);
-        for (int k = 0; k < entity_geom.rows() - 1; ++k)
-          pt.row(c)
-              += (entity_geom.row(k + 1) - entity_geom.row(0)) * lattice(j, k);
-        ++c;
+        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                           Eigen::RowMajor>
+            entity_geom = Cell::sub_entity_geometry(celltype, dim, i);
+
+        Eigen::ArrayXd point = entity_geom.row(0);
+        Cell::Type ct = Cell::simplex_type(dim);
+
+        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                           Eigen::RowMajor>
+            lattice = Cell::create_lattice(ct, degree, false);
+        for (int j = 0; j < lattice.rows(); ++j)
+        {
+          pt.row(c) = entity_geom.row(0);
+          for (int k = 0; k < entity_geom.rows() - 1; ++k)
+            pt.row(c) += (entity_geom.row(k + 1) - entity_geom.row(0))
+                         * lattice(j, k);
+          ++c;
+        }
       }
     }
   }
-
   // Initial coefficients are Identity Matrix
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
 

@@ -7,12 +7,13 @@ import pytest
 import numpy as np
 
 
-@pytest.mark.parametrize("order", [1, 2, 4, 8, 20, 40, 80])
+@pytest.mark.parametrize("order", [1, 2, 4, 5, 8, 20, 40, 80])
 def test_quadrature_interval(order):
-    simplex = [[0], [1]]
+    b = 7.0
+    simplex = [[0], [b]]
     Qpts, Qwts = libtab.make_quadrature(simplex, order)
     w = sum(Qwts)
-    assert np.isclose(w, 1.0)
+    assert np.isclose(w, b)
 
 
 @pytest.mark.parametrize("order", [1, 2, 4, 20, 40])

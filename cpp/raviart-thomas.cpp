@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "raviart-thomas.h"
+#include "lagrange.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
 #include <Eigen/Dense>

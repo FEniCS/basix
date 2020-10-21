@@ -1,3 +1,4 @@
+*.pyc
 *~
 *.so
 doc/html/*
@@ -6,3 +7,6 @@ cpp/Makefile
 cpp/CMakeCache.txt
 cpp/CMakeFiles/*
 cpp/cmake_install.cmake
+build/*
+
+.*.swp

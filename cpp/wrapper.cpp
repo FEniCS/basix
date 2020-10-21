@@ -5,6 +5,7 @@
 #include <string>
 
 #include "cell.h"
+#include "crouzeix-raviart.h"
 #include "indexing.h"
 #include "lagrange.h"
 #include "nedelec.h"
@@ -77,6 +78,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
   py::class_<Lagrange>(m, "Lagrange", "Lagrange Element")
       .def(py::init<Cell::Type, int>())
       .def("tabulate", &Lagrange::tabulate, tabdoc.c_str());
+
+  py::class_<CrouzeixRaviart>(m, "CrouzeixRaviart", "CrouzeixRaviart Element")
+      .def(py::init<Cell::Type, int>())
+      .def("tabulate", &CrouzeixRaviart::tabulate, tabdoc.c_str());
 
   py::class_<TensorProduct>(m, "TensorProduct", "TensorProduct Element")
       .def(py::init<Cell::Type, int>())

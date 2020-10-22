@@ -22,7 +22,7 @@ public:
   FiniteElement(Cell::Type cell_type, int degree);
 
   /// Destructor
-  virtual ~FiniteElement() = default;
+  ~FiniteElement() = default;
 
   /// Compute basis values and derivatives at set of points. If no derivatives
   /// are required, use nderiv=0. Higher derivatives are stored in
@@ -30,11 +30,11 @@ public:
   /// derivatives in 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... If
   /// a vector result is expected, it will be stacked with all x values,
   /// followed by all y-values (and then z, if any).
-  virtual std::vector<
+  std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
   tabulate(int nderiv,
            const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                              Eigen::RowMajor>& pts) const = 0;
+                              Eigen::RowMajor>& pts) const;
 
   /// Get the cell type of the space's cell
   /// @return The cell type
@@ -54,6 +54,9 @@ protected:
 
   // degree
   int _degree;
+
+  // value size
+  int _value_size;
 
   // Coefficient of expansion sets on cell
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>

@@ -203,59 +203,27 @@ create_nedelec_3d_dual(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-Nedelec::Nedelec(Cell::Type celltype, int k) : FiniteElement(celltype, k - 1)
+Nedelec::Nedelec(Cell::Type celltype, int k) : FiniteElement(celltype, k)
 {
+  const int tdim = Cell::topological_dimension(celltype);
+  this->_value_size = tdim;
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs;
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat;
 
   if (celltype == Cell::Type::triangle)
   {
-    wcoeffs = create_nedelec_2d_space(_degree);
-    dualmat = create_nedelec_2d_dual(_degree);
+    wcoeffs = create_nedelec_2d_space(k - 1);
+    dualmat = create_nedelec_2d_dual(k - 1);
   }
   else if (celltype == Cell::Type::tetrahedron)
   {
-    wcoeffs = create_nedelec_3d_space(_degree);
-    dualmat = create_nedelec_3d_dual(_degree);
+    wcoeffs = create_nedelec_3d_space(k - 1);
+    dualmat = create_nedelec_3d_dual(k - 1);
   }
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
   apply_dualmat_to_basis(wcoeffs, dualmat);
-}
-//-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-Nedelec::tabulate(int nderiv,
-                  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                     Eigen::RowMajor>& pts) const
-{
-  const int tdim = Cell::topological_dimension(_cell_type);
-  if (pts.cols() != tdim)
-    throw std::runtime_error(
-        "Point dimension does not match element dimension");
-
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      Pkp1_at_pts
-      = PolynomialSet::tabulate(_cell_type, _degree + 1, nderiv, pts);
-  const int psize = Pkp1_at_pts[0].cols();
-  const int ndofs = _coeffs.rows();
-
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(Pkp1_at_pts.size());
-
-  for (std::size_t p = 0; p < dresult.size(); ++p)
-  {
-    dresult[p].resize(pts.rows(), ndofs * tdim);
-    for (int j = 0; j < tdim; ++j)
-      dresult[p].block(0, ndofs * j, pts.rows(), ndofs)
-          = Pkp1_at_pts[p].matrix()
-            * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
-  }
-
-  return dresult;
 }
 //-----------------------------------------------------------------------------

@@ -136,6 +136,9 @@ create_regge_dual(Cell::Type celltype, int degree)
 
 Regge::Regge(Cell::Type celltype, int k) : FiniteElement(celltype, k)
 {
+  const int tdim = Cell::topological_dimension(celltype);
+  this->_value_size = tdim * tdim;
+
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs
       = create_regge_space(celltype, k);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
@@ -143,39 +146,3 @@ Regge::Regge(Cell::Type celltype, int k) : FiniteElement(celltype, k)
 
   apply_dualmat_to_basis(wcoeffs, dualmat);
 }
-//-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-Regge::tabulate(int nderiv,
-                const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>& pts) const
-{
-  const int tdim = Cell::topological_dimension(_cell_type);
-  if (pts.cols() != tdim)
-    throw std::runtime_error(
-        "Point dimension does not match element dimension");
-
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      expansion_basis
-      = PolynomialSet::tabulate(_cell_type, _degree, nderiv, pts);
-
-  const int psize = expansion_basis[0].cols();
-  const int ndofs = _coeffs.rows();
-
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(expansion_basis.size());
-
-  for (std::size_t p = 0; p < dresult.size(); ++p)
-  {
-    dresult[p].resize(pts.rows(), ndofs * tdim * tdim);
-    for (int j = 0; j < tdim * tdim; ++j)
-      dresult[p].block(0, ndofs * j, pts.rows(), ndofs)
-          = expansion_basis[p].matrix()
-            * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
-  }
-
-  return dresult;
-}
-//-----------------------------------------------------------------------------

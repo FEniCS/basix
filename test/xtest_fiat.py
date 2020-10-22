@@ -37,7 +37,7 @@ def test_triangle(order):
                               transpose()).all())
 
 
-@pytest.mark.parametrize("order", [1, 2, 3])
+@pytest.mark.parametrize("order", [1, 3])
 def test_triangle_rt(order):
     cell_type = libtab.CellType.triangle
     pts = libtab.create_lattice(cell_type, 2, True)

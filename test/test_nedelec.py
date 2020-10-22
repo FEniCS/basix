@@ -135,7 +135,8 @@ def test_tri(order):
 
 
 @pytest.mark.parametrize("order", [1, 2])
-def xtest_tet(order):
+@pytest.mark.xfail
+def test_tet(order):
     celltype = libtab.CellType.tetrahedron
     g = sympy_nedelec(celltype, order)
     x = sympy.Symbol("x")

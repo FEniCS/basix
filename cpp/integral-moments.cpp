@@ -24,6 +24,9 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
   auto [Qpts, Qwts] = Quadrature::make_quadrature(sub_entity_dim, q_deg);
   const int tdim = Cell::topological_dimension(celltype);
 
+  // It this is always true, value_size input can be removed
+  assert(tdim == value_size);
+
   // Evaluate moment space at quadrature points
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
@@ -45,9 +48,11 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Qpts_scaled(Qpts.rows(), tdim);
     // Parametrise entity coordinates
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        entity_coords(sub_entity_dim, tdim);
-    entity_coords.setZero();
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> axes(
+        sub_entity_dim, tdim);
+    axes.setZero();
+
+    double integral_jacobian;
 
     if (sub_entity_dim == 0)
     {
@@ -58,23 +63,48 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
       for (int j = 0; j < Qpts.rows(); ++j)
         Qpts_scaled.row(j) = Qpts.row(j);
       for (int j = 0; j < tdim; ++j)
-        entity_coords(j, j) = 1;
+        axes(j, j) = 1;
     }
     else if (sub_entity_dim == 1)
     {
+      axes.row(0) = entity.row(1) - entity.row(0);
       for (int j = 0; j < Qpts.rows(); ++j)
-        Qpts_scaled.row(j)
-            = entity.row(0) + Qpts(j, 0) * (entity.row(1) - entity.row(0));
-      entity_coords.row(0) = entity.row(1) - entity.row(0);
+        Qpts_scaled.row(j) = entity.row(0) + Qpts(j, 0) * axes.row(0);
     }
     else if (sub_entity_dim == 2)
     {
+      axes.row(0) = entity.row(1) - entity.row(0);
+      axes.row(1) = entity.row(2) - entity.row(0);
       for (int j = 0; j < Qpts.rows(); ++j)
-        Qpts_scaled.row(j) = entity.row(0)
-                             + Qpts(j, 0) * (entity.row(1) - entity.row(0))
-                             + Qpts(j, 1) * (entity.row(2) - entity.row(0));
-      entity_coords.row(0) = entity.row(1) - entity.row(0);
-      entity_coords.row(1) = entity.row(2) - entity.row(0);
+        Qpts_scaled.row(j) = entity.row(0) + Qpts(j, 0) * axes.row(0)
+                             + Qpts(j, 1) * axes.row(1);
+    }
+    if (sub_entity_dim == 1)
+    {
+      Eigen::VectorXd a0 = axes.row(0);
+      integral_jacobian = a0.norm();
+    }
+    else if (sub_entity_dim == 2)
+    {
+      if (tdim == 2)
+      {
+        Eigen::Vector3d a0 = {axes(0, 0), axes(0, 1), 0};
+        Eigen::Vector3d a1 = {axes(1, 0), axes(1, 1), 0};
+        integral_jacobian = a0.cross(a1).norm();
+      }
+      else
+      {
+        Eigen::Vector3d a0 = axes.row(0);
+        Eigen::Vector3d a1 = axes.row(1);
+        integral_jacobian = a0.cross(a1).norm();
+      }
+    }
+    else if (sub_entity_dim == 3)
+    {
+      Eigen::Vector3d a0 = axes.row(0);
+      Eigen::Vector3d a1 = axes.row(1);
+      Eigen::Vector3d a2 = axes.row(2);
+      integral_jacobian = a0.dot(a1.cross(a2));
     }
 
     // Tabulate polynomial set at entity quadrature points
@@ -88,10 +118,11 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
       Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
       for (int d = 0; d < sub_entity_dim; ++d)
       {
-        Eigen::VectorXd axis = entity_coords.row(d);
-        for (int k = 0; k < tdim; ++k)
+        Eigen::VectorXd axis = axes.row(d);
+        for (int k = 0; k < value_size; ++k)
         {
-          Eigen::VectorXd q = phi * Qwts * axis(k) / axis.norm();
+          Eigen::VectorXd q
+              = phi * Qwts * (integral_jacobian * axis(k) / axis.norm());
           Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;
           assert(qcoeffs.size() == psize);
           dualmat.block(c, psize * k, 1, psize) = qcoeffs;
@@ -116,6 +147,9 @@ IntegralMoments::make_tangent_integral_moments(
   auto [Qpts, Qwts] = Quadrature::make_quadrature(1, q_deg);
 
   const int tdim = Cell::topological_dimension(celltype);
+
+  // It this is always true, value_size input can be removed
+  assert(tdim == value_size);
 
   if (sub_entity_dim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
@@ -154,7 +188,7 @@ IntegralMoments::make_tangent_integral_moments(
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
     {
       Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
-      for (int k = 0; k < tdim; ++k)
+      for (int k = 0; k < value_size; ++k)
       {
         Eigen::VectorXd q = phi * Qwts * tangent[k];
         Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;

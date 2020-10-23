@@ -52,8 +52,6 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
         sub_entity_dim, tdim);
     axes.setZero();
 
-    double integral_jacobian;
-
     if (sub_entity_dim == 0)
     {
       throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
@@ -79,6 +77,8 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
         Qpts_scaled.row(j) = entity.row(0) + Qpts(j, 0) * axes.row(0)
                              + Qpts(j, 1) * axes.row(1);
     }
+
+    double integral_jacobian = 0.0;
     if (sub_entity_dim == 1)
     {
       Eigen::VectorXd a0 = axes.row(0);
@@ -110,7 +110,8 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
     // Tabulate polynomial set at entity quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         poly_set_at_Qpts
-        = PolynomialSet::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
+        = PolynomialSet::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
+              .transpose();
 
     // Compute entity integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
@@ -181,9 +182,9 @@ IntegralMoments::make_tangent_integral_moments(
 
     // Tabulate polynomial set at edge quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        poly_set_at_Qpts = PolynomialSet::tabulate(celltype,
-                                                   poly_deg, 0, Qpts_scaled)[0]
-                               .transpose();
+        poly_set_at_Qpts
+        = PolynomialSet::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
+              .transpose();
     // Compute edge tangent integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
     {

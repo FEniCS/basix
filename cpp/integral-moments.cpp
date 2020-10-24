@@ -143,17 +143,16 @@ IntegralMoments::make_tangent_integral_moments(
   const int psize = PolynomialSet::size(celltype, poly_deg);
   const Cell::Type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = Cell::topological_dimension(sub_celltype);
-  const int sub_entity_count = Cell::sub_entity_count(celltype, 1);
-
-  auto [Qpts, Qwts] = Quadrature::make_quadrature(1, q_deg);
-
+  const int sub_entity_count = Cell::sub_entity_count(celltype, sub_entity_dim);
   const int tdim = Cell::topological_dimension(celltype);
-
-  // It this is always true, value_size input can be removed
-  assert(tdim == value_size);
 
   if (sub_entity_dim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
+
+  auto [Qpts, Qwts] = Quadrature::make_quadrature(1, q_deg);
+
+  // It this is always true, value_size input can be removed
+  assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -173,6 +172,9 @@ IntegralMoments::make_tangent_integral_moments(
     Eigen::Array<double, 2, Eigen::Dynamic, Eigen::RowMajor> edge
         = Cell::sub_entity_geometry(celltype, 1, i);
     Eigen::VectorXd tangent = edge.row(1) - edge.row(0);
+    // No need to normalise the tangent, as the size of this is equal to the
+    // integral jacobian
+
     // Map quadrature points onto triangle edge
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Qpts_scaled(Qpts.rows(), tdim);
@@ -198,5 +200,105 @@ IntegralMoments::make_tangent_integral_moments(
       ++c;
     }
   }
+  return dualmat;
+}
+
+Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+IntegralMoments::make_normal_integral_moments(const FiniteElement& moment_space,
+                                              const Cell::Type celltype,
+                                              const int value_size,
+                                              const int poly_deg,
+                                              const int q_deg)
+{
+  const int psize = PolynomialSet::size(celltype, poly_deg);
+  const Cell::Type sub_celltype = moment_space.cell_type();
+  const int sub_entity_dim = Cell::topological_dimension(sub_celltype);
+  const int sub_entity_count = Cell::sub_entity_count(celltype, sub_entity_dim);
+  const int tdim = Cell::topological_dimension(celltype);
+
+  if (sub_entity_dim != tdim - 1)
+    throw std::runtime_error("Normal is only well-defined on a facet.");
+
+  auto [Qpts, Qwts] = Quadrature::make_quadrature(tdim - 1, q_deg);
+
+  // It this is always true, value_size input can be removed
+  assert(tdim == value_size);
+
+  // Evaluate moment space at quadrature points
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      dualmat(moment_space_at_Qpts.cols() * sub_entity_count,
+              psize * value_size);
+
+  int c = 0;
+
+  // Iterate over sub entities
+  for (int i = 0; i < sub_entity_count; ++i)
+  {
+
+    // FIXME: get facet normal from the cell class
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> facet
+        = Cell::sub_entity_geometry(celltype, tdim - 1, i);
+    Eigen::VectorXd normal;
+
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        Qpts_scaled(Qpts.rows(), tdim);
+
+    if (tdim == 2)
+    {
+      Eigen::Vector2d tangent = facet.row(1) - facet.row(0);
+      normal.resize(2);
+      normal << -tangent(1), tangent(0);
+      // No need to normalise the normal, as the size of this is equal to the
+      // integral jacobian
+
+      // Map quadrature points onto facet
+      for (int j = 0; j < Qpts.rows(); ++j)
+        Qpts_scaled.row(j)
+            = facet.row(0) + Qpts(j, 0) * (facet.row(1) - facet.row(0));
+    }
+    else if (tdim == 3)
+    {
+      Eigen::Vector3d t0 = facet.row(1) - facet.row(0);
+      Eigen::Vector3d t1 = facet.row(2) - facet.row(0);
+      normal.resize(3);
+      normal << t0.cross(t1);
+
+      // No need to normalise the normal, as the size of this is equal to the
+      // integral jacobian
+
+      // Map quadrature points onto facet
+      for (int j = 0; j < Qpts.rows(); ++j)
+        Qpts_scaled.row(j) = facet.row(0)
+                             + Qpts(j, 0) * (facet.row(1) - facet.row(0))
+                             + Qpts(j, 1) * (facet.row(2) - facet.row(0));
+    }
+    else
+    {
+      throw std::runtime_error("Normal on this cell cannot be computed.");
+    }
+
+    // Tabulate polynomial set at facet quadrature points
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        poly_set_at_Qpts
+        = PolynomialSet::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
+              .transpose();
+
+    // Compute facet normal integral moments
+    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    {
+      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      for (int k = 0; k < value_size; ++k)
+      {
+        Eigen::VectorXd q = phi * Qwts * normal[k];
+        Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;
+        dualmat.block(c, psize * k, 1, psize) = qcoeffs;
+      }
+      ++c;
+    }
+  }
+
   return dualmat;
 }

@@ -3,11 +3,11 @@
 // SPDX-License-Identifier:    MIT
 
 #include "raviart-thomas.h"
+#include "integral-moments.h"
 #include "lagrange.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
-#include <iostream>
 #include <numeric>
 #include <vector>
 
@@ -51,94 +51,38 @@ RaviartThomas::RaviartThomas(Cell::Type celltype, int degree)
       }
 
   // Dual space
-
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       dualmat(nv * tdim + ns, psize * tdim);
   dualmat.setZero();
 
-  // dof counter
-  int c = 0;
+  // quadrature degree
+  int quad_deg = 5 * _degree;
 
   // Create a polynomial set on a reference facet
   Cell::Type facettype
       = (tdim == 2) ? Cell::Type::interval : Cell::Type::triangle;
-  // Create quadrature scheme on the facet
-  int quad_deg = 5 * _degree;
-  auto [QptsE, QwtsE] = Quadrature::make_quadrature(tdim - 1, quad_deg);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pq_at_QptsE
-      = PolynomialSet::tabulate(facettype, _degree - 1, 0, QptsE)[0];
+  int facet_count = tdim + 1;
 
-  for (int i = 0; i < (tdim + 1); ++i)
-  {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> facet
-        = Cell::sub_entity_geometry(celltype, tdim - 1, i);
+  Lagrange moment_space_facet(facettype, degree - 1);
 
-    // FIXME: get normal from the cell class
-    Eigen::VectorXd normal;
-    if (tdim == 2)
-    {
-      normal.resize(2);
-      normal << facet(1, 1) - facet(0, 1), facet(0, 0) - facet(1, 0);
-    }
-    else if (tdim == 3)
-    {
-      Eigen::Vector3d e0 = facet.row(1) - facet.row(0);
-      Eigen::Vector3d e1 = facet.row(2) - facet.row(0);
-      normal = e1.cross(e0);
-    }
+  const int facet_dofs = (tdim == 2) ? _degree : (_degree * (_degree + 1) / 2);
 
-    // Map reference facet to cell
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        QptsE_scaled(QptsE.rows(), tdim);
-    for (int j = 0; j < QptsE.rows(); ++j)
-    {
-      QptsE_scaled.row(j) = facet.row(0);
-      for (int k = 0; k < (tdim - 1); ++k)
-        QptsE_scaled.row(j) += QptsE(j, k) * (facet.row(k + 1) - facet.row(0));
-    }
-
-    // Tabulate Pkp1 at facet quadrature points
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsE
-        = PolynomialSet::tabulate(celltype, _degree, 0, QptsE_scaled)[0];
-
-    // Compute facet normal integral moments by quadrature
-    for (int j = 0; j < Pq_at_QptsE.cols(); ++j)
-    {
-      Eigen::ArrayXd phi = Pq_at_QptsE.col(j);
-      for (int k = 0; k < tdim; ++k)
-      {
-        Eigen::VectorXd q = phi * QwtsE * normal[k];
-        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsE.matrix().transpose() * q;
-        dualmat.block(c, psize * k, 1, psize) = qcoeffs;
-      }
-      ++c;
-    }
-  }
+  // Add integral moments on facets
+  dualmat.block(0, 0, facet_count * facet_dofs, psize * tdim)
+      = IntegralMoments::make_normal_integral_moments(
+          moment_space_facet, celltype, tdim, _degree, quad_deg);
 
   // Should work for 2D and 3D
   if (_degree > 1)
   {
-    // Interior integral moment - use 5*_degree to match FIAT
-    // Could make this an input parameter
-    auto [QptsI, QwtsI] = Quadrature::make_quadrature(tdim, quad_deg);
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkm1_at_QptsI
-        = PolynomialSet::tabulate(celltype, _degree - 2, 0, QptsI)[0];
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        Pkp1_at_QptsI = PolynomialSet::tabulate(celltype, _degree, 0, QptsI)[0];
-
-    for (int j = 0; j < tdim; ++j)
-      for (int i = 0; i < Pkm1_at_QptsI.cols(); ++i)
-      {
-        Eigen::ArrayXd phi = Pkm1_at_QptsI.col(i);
-        Eigen::VectorXd q = phi * QwtsI;
-        Eigen::RowVectorXd qcoeffs = Pkp1_at_QptsI.matrix().transpose() * q;
-        assert(qcoeffs.size() == psize);
-        dualmat.block(c, psize * j, 1, psize) = qcoeffs;
-        ++c;
-      }
+    const int internal_dofs
+        = (tdim == 2) ? (_degree * (_degree - 1))
+                      : (_degree * (_degree - 1) * (_degree + 1) / 2);
+    // Interior integral moment
+    Lagrange moment_space_interior(celltype, degree - 2);
+    dualmat.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
+        = IntegralMoments::make_integral_moments(
+            moment_space_interior, celltype, tdim, _degree, quad_deg);
   }
 
   apply_dualmat_to_basis(wcoeffs, dualmat);

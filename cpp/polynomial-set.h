@@ -18,7 +18,7 @@ namespace libtab
 ///
 /// The polynomials (and their derivatives) can be tabulated on unit interval,
 /// triangle, tetrahedron, quadrilateral, hexahedron, prism and pyramids.
-namespace PolynomialSet
+namespace polyset
 {
 /// Basis and derivatives of orthonormal polynomials on reference cell at points
 ///
@@ -37,13 +37,12 @@ namespace PolynomialSet
 /// @return List of polynomial sets, for each derivative, tabulated at points.
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-tabulate(Cell::Type celltype, int n, int nderiv,
+tabulate(cell::Type celltype, int n, int nderiv,
          const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                             Eigen::RowMajor>& pts);
 
 /// Size of set
- int size(Cell::Type celltype, int n);
+int size(cell::Type celltype, int n);
 
-
-}; // namespace PolynomialSet
+}; // namespace polyset
 } // namespace libtab

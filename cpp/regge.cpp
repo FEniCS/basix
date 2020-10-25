@@ -12,15 +12,15 @@ namespace
 {
 
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_regge_space(Cell::Type celltype, int degree)
+create_regge_space(cell::Type celltype, int degree)
 {
-  const int tdim = Cell::topological_dimension(celltype);
+  const int tdim = cell::topological_dimension(celltype);
   const int nc = tdim * (tdim + 1) / 2;
   int basis_size;
 
-  if (celltype == Cell::Type::triangle)
+  if (celltype == cell::Type::triangle)
     basis_size = (degree + 1) * (degree + 2) / 2;
-  else if (celltype == Cell::Type::tetrahedron)
+  else if (celltype == cell::Type::tetrahedron)
     basis_size = (degree + 1) * (degree + 2) * (degree + 3) / 6;
   else
     throw std::runtime_error("Unsupported celltype");
@@ -47,15 +47,15 @@ create_regge_space(Cell::Type celltype, int degree)
 }
 
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_regge_dual(Cell::Type celltype, int degree)
+create_regge_dual(cell::Type celltype, int degree)
 {
-  const int tdim = Cell::topological_dimension(celltype);
+  const int tdim = cell::topological_dimension(celltype);
 
   int basis_size;
 
-  if (celltype == Cell::Type::triangle)
+  if (celltype == cell::Type::triangle)
     basis_size = (degree + 1) * (degree + 2) / 2;
-  else if (celltype == Cell::Type::tetrahedron)
+  else if (celltype == cell::Type::tetrahedron)
     basis_size = (degree + 1) * (degree + 2) * (degree + 3) / 6;
   else
     throw std::runtime_error("Unsupported celltype");
@@ -65,8 +65,8 @@ create_regge_dual(Cell::Type celltype, int degree)
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat(
       ndofs, space_size);
-  auto topology = Cell::topology(celltype);
-  auto geometry = Cell::geometry(celltype);
+  auto topology = cell::topology(celltype);
+  auto geometry = cell::geometry(celltype);
 
   // dof counter
   int dof = 0;
@@ -76,13 +76,13 @@ create_regge_dual(Cell::Type celltype, int degree)
     {
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>
-          entity_geom = Cell::sub_entity_geometry(celltype, dim, i);
+          entity_geom = cell::sub_entity_geometry(celltype, dim, i);
 
       Eigen::Array<double, 1, Eigen::Dynamic, Eigen::RowMajor> point
           = entity_geom.row(0);
-      Cell::Type ct = Cell::simplex_type(dim);
+      cell::Type ct = cell::simplex_type(dim);
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          lattice = Cell::create_lattice(ct, degree + 2, false);
+          lattice = cell::create_lattice(ct, degree + 2, false);
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts(
           lattice.rows(), entity_geom.cols());
 
@@ -95,7 +95,7 @@ create_regge_dual(Cell::Type celltype, int degree)
       }
 
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          basis = PolynomialSet::tabulate(celltype, degree, 0, pts)[0];
+          basis = polyset::tabulate(celltype, degree, 0, pts)[0];
 
       // Store up outer(t, t) for all tangents
       std::vector<int>& vert_ids = topology[dim][i];
@@ -134,9 +134,9 @@ create_regge_dual(Cell::Type celltype, int degree)
 
 }; // namespace
 
-Regge::Regge(Cell::Type celltype, int k) : FiniteElement(celltype, k)
+Regge::Regge(cell::Type celltype, int k) : FiniteElement(celltype, k)
 {
-  const int tdim = Cell::topological_dimension(celltype);
+  const int tdim = cell::topological_dimension(celltype);
   this->_value_size = tdim * tdim;
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs

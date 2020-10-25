@@ -49,58 +49,58 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
 )";
 
-  py::enum_<Cell::Type>(m, "CellType")
-      .value("interval", Cell::Type::interval)
-      .value("triangle", Cell::Type::triangle)
-      .value("tetrahedron", Cell::Type::tetrahedron)
-      .value("quadrilateral", Cell::Type::quadrilateral)
-      .value("hexahedron", Cell::Type::hexahedron)
-      .value("prism", Cell::Type::prism)
-      .value("pyramid", Cell::Type::pyramid);
+  py::enum_<cell::Type>(m, "CellType")
+      .value("interval", cell::Type::interval)
+      .value("triangle", cell::Type::triangle)
+      .value("tetrahedron", cell::Type::tetrahedron)
+      .value("quadrilateral", cell::Type::quadrilateral)
+      .value("hexahedron", cell::Type::hexahedron)
+      .value("prism", cell::Type::prism)
+      .value("pyramid", cell::Type::pyramid);
 
-  m.def("topology", &Cell::topology);
-  m.def("geometry", &Cell::geometry);
-  m.def("sub_entity_geometry", &Cell::sub_entity_geometry);
+  m.def("topology", &cell::topology);
+  m.def("geometry", &cell::geometry);
+  m.def("sub_entity_geometry", &cell::sub_entity_geometry);
 
-  m.def("simplex_type", &Cell::simplex_type,
+  m.def("simplex_type", &cell::simplex_type,
         "Simplex CellType of given dimension");
-  m.def("create_lattice", &Cell::create_lattice,
+  m.def("create_lattice", &cell::create_lattice,
         "Create a uniform lattice of points on a reference cell");
 
   py::class_<Nedelec>(m, "Nedelec", "Nedelec Element (first kind)")
-      .def(py::init<Cell::Type, int>(), "Constructor")
+      .def(py::init<cell::Type, int>(), "Constructor")
       .def("tabulate", &Nedelec::tabulate, tabdoc.c_str());
 
   py::class_<Regge>(m, "Regge", "Regge Element")
-      .def(py::init<Cell::Type, int>(), "Constructor")
+      .def(py::init<cell::Type, int>(), "Constructor")
       .def("tabulate", &Regge::tabulate, tabdoc.c_str());
 
   py::class_<Lagrange>(m, "Lagrange", "Lagrange Element")
-      .def(py::init<Cell::Type, int>())
+      .def(py::init<cell::Type, int>())
       .def("tabulate", &Lagrange::tabulate, tabdoc.c_str());
 
   py::class_<CrouzeixRaviart>(m, "CrouzeixRaviart", "CrouzeixRaviart Element")
-      .def(py::init<Cell::Type, int>())
+      .def(py::init<cell::Type, int>())
       .def("tabulate", &CrouzeixRaviart::tabulate, tabdoc.c_str());
 
   py::class_<TensorProduct>(m, "TensorProduct", "TensorProduct Element")
-      .def(py::init<Cell::Type, int>())
+      .def(py::init<cell::Type, int>())
       .def("tabulate", &TensorProduct::tabulate, tabdoc.c_str());
 
   py::class_<RaviartThomas>(m, "RaviartThomas", "Raviart-Thomas Element")
-      .def(py::init<Cell::Type, int>())
+      .def(py::init<cell::Type, int>())
       .def("tabulate", &RaviartThomas::tabulate, tabdoc.c_str());
 
-  m.def("tabulate_polynomial_set", &PolynomialSet::tabulate,
+  m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");
 
-  m.def("compute_jacobi_deriv", &Quadrature::compute_jacobi_deriv,
+  m.def("compute_jacobi_deriv", &quadrature::compute_jacobi_deriv,
         "Compute jacobi polynomial and derivatives at points");
 
   m.def("make_quadrature",
         py::overload_cast<const Eigen::Array<double, Eigen::Dynamic,
                                              Eigen::Dynamic, Eigen::RowMajor>&,
-                          int>(&Quadrature::make_quadrature),
+                          int>(&quadrature::make_quadrature),
         "Compute quadrature points and weights on a simplex defined by points");
 
   m.def("index", py::overload_cast<int, int>(&libtab::idx),

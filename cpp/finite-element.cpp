@@ -9,7 +9,7 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(Cell::Type cell_type, int degree)
+FiniteElement::FiniteElement(cell::Type cell_type, int degree)
     : _cell_type(cell_type), _degree(degree)
 {
   // Do nothing in base class
@@ -43,15 +43,15 @@ FiniteElement::tabulate(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts) const
 {
-  const int tdim = Cell::topological_dimension(_cell_type);
+  const int tdim = cell::topological_dimension(_cell_type);
   if (pts.cols() != tdim)
     throw std::runtime_error(
         "Point dimension does not match element dimension");
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      basis_at_pts = PolynomialSet::tabulate(_cell_type, _degree, nderiv, pts);
-  const int psize = PolynomialSet::size(_cell_type, _degree);
+      basis_at_pts = polyset::tabulate(_cell_type, _degree, nderiv, pts);
+  const int psize = polyset::size(_cell_type, _degree);
   const int ndofs = _coeffs.rows();
 
   std::vector<

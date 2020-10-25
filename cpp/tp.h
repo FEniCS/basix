@@ -17,6 +17,6 @@ public:
   /// Tensor Product element on cell with given degree
   /// @param celltype
   /// @param degree
-  TensorProduct(Cell::Type celltype, int degree);
+  TensorProduct(cell::Type celltype, int degree);
 };
 } // namespace libtab

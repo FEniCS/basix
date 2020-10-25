@@ -13,7 +13,7 @@
 
 using namespace libtab;
 
-CrouzeixRaviart::CrouzeixRaviart(Cell::Type celltype, int k)
+CrouzeixRaviart::CrouzeixRaviart(cell::Type celltype, int k)
     : FiniteElement(celltype, k)
 {
   if (k != 1)
@@ -22,10 +22,10 @@ CrouzeixRaviart::CrouzeixRaviart(Cell::Type celltype, int k)
   this->_value_size = 1;
 
   // Compute facet midpoints
-  int tdim = Cell::topological_dimension(celltype);
-  auto facet_topology = Cell::topology(celltype)[tdim - 1];
+  int tdim = cell::topological_dimension(celltype);
+  auto facet_topology = cell::topology(celltype)[tdim - 1];
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geometry
-      = Cell::geometry(celltype);
+      = cell::geometry(celltype);
 
   const int ndofs = facet_topology.size();
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts(
@@ -45,7 +45,7 @@ CrouzeixRaviart::CrouzeixRaviart(Cell::Type celltype, int k)
   // Initial coefficients are Identity Matrix
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
 
-  Eigen::MatrixXd dualmat = PolynomialSet::tabulate(celltype, 1, 0, pts)[0];
+  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, 1, 0, pts)[0];
 
   apply_dualmat_to_basis(coeffs, dualmat);
 }

@@ -10,19 +10,19 @@
 using namespace libtab;
 
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
-                                       const Cell::Type celltype,
+moments::make_integral_moments(const FiniteElement& moment_space,
+                                       const cell::Type celltype,
                                        const int value_size, const int poly_deg,
                                        const int q_deg)
 {
-  const int psize = PolynomialSet::size(celltype, poly_deg);
+  const int psize = polyset::size(celltype, poly_deg);
 
-  const Cell::Type sub_celltype = moment_space.cell_type();
-  const int sub_entity_dim = Cell::topological_dimension(sub_celltype);
-  const int sub_entity_count = Cell::sub_entity_count(celltype, sub_entity_dim);
+  const cell::Type sub_celltype = moment_space.cell_type();
+  const int sub_entity_dim = cell::topological_dimension(sub_celltype);
+  const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
 
-  auto [Qpts, Qwts] = Quadrature::make_quadrature(sub_entity_dim, q_deg);
-  const int tdim = Cell::topological_dimension(celltype);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(sub_entity_dim, q_deg);
+  const int tdim = cell::topological_dimension(celltype);
 
   // It this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -42,7 +42,7 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
 
     // FIXME: get entity tangent from the cell class
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> entity
-        = Cell::sub_entity_geometry(celltype, sub_entity_dim, i);
+        = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
 
     // Map quadrature points onto entity
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -110,7 +110,7 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
     // Tabulate polynomial set at entity quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         poly_set_at_Qpts
-        = PolynomialSet::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
+        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
               .transpose();
 
     // Compute entity integral moments
@@ -136,20 +136,20 @@ IntegralMoments::make_integral_moments(const FiniteElement& moment_space,
 }
 
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-IntegralMoments::make_tangent_integral_moments(
-    const FiniteElement& moment_space, const Cell::Type celltype,
+moments::make_tangent_integral_moments(
+    const FiniteElement& moment_space, const cell::Type celltype,
     const int value_size, const int poly_deg, const int q_deg)
 {
-  const int psize = PolynomialSet::size(celltype, poly_deg);
-  const Cell::Type sub_celltype = moment_space.cell_type();
-  const int sub_entity_dim = Cell::topological_dimension(sub_celltype);
-  const int sub_entity_count = Cell::sub_entity_count(celltype, sub_entity_dim);
-  const int tdim = Cell::topological_dimension(celltype);
+  const int psize = polyset::size(celltype, poly_deg);
+  const cell::Type sub_celltype = moment_space.cell_type();
+  const int sub_entity_dim = cell::topological_dimension(sub_celltype);
+  const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
+  const int tdim = cell::topological_dimension(celltype);
 
   if (sub_entity_dim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
-  auto [Qpts, Qwts] = Quadrature::make_quadrature(1, q_deg);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(1, q_deg);
 
   // It this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -170,7 +170,7 @@ IntegralMoments::make_tangent_integral_moments(
 
     // FIXME: get edge tangent from the cell class
     Eigen::Array<double, 2, Eigen::Dynamic, Eigen::RowMajor> edge
-        = Cell::sub_entity_geometry(celltype, 1, i);
+        = cell::sub_entity_geometry(celltype, 1, i);
     Eigen::VectorXd tangent = edge.row(1) - edge.row(0);
     // No need to normalise the tangent, as the size of this is equal to the
     // integral jacobian
@@ -185,7 +185,7 @@ IntegralMoments::make_tangent_integral_moments(
     // Tabulate polynomial set at edge quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         poly_set_at_Qpts
-        = PolynomialSet::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
+        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
               .transpose();
     // Compute edge tangent integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
@@ -204,22 +204,22 @@ IntegralMoments::make_tangent_integral_moments(
 }
 
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-IntegralMoments::make_normal_integral_moments(const FiniteElement& moment_space,
-                                              const Cell::Type celltype,
+moments::make_normal_integral_moments(const FiniteElement& moment_space,
+                                              const cell::Type celltype,
                                               const int value_size,
                                               const int poly_deg,
                                               const int q_deg)
 {
-  const int psize = PolynomialSet::size(celltype, poly_deg);
-  const Cell::Type sub_celltype = moment_space.cell_type();
-  const int sub_entity_dim = Cell::topological_dimension(sub_celltype);
-  const int sub_entity_count = Cell::sub_entity_count(celltype, sub_entity_dim);
-  const int tdim = Cell::topological_dimension(celltype);
+  const int psize = polyset::size(celltype, poly_deg);
+  const cell::Type sub_celltype = moment_space.cell_type();
+  const int sub_entity_dim = cell::topological_dimension(sub_celltype);
+  const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
+  const int tdim = cell::topological_dimension(celltype);
 
   if (sub_entity_dim != tdim - 1)
     throw std::runtime_error("Normal is only well-defined on a facet.");
 
-  auto [Qpts, Qwts] = Quadrature::make_quadrature(tdim - 1, q_deg);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim - 1, q_deg);
 
   // It this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -240,7 +240,7 @@ IntegralMoments::make_normal_integral_moments(const FiniteElement& moment_space,
 
     // FIXME: get facet normal from the cell class
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> facet
-        = Cell::sub_entity_geometry(celltype, tdim - 1, i);
+        = cell::sub_entity_geometry(celltype, tdim - 1, i);
     Eigen::VectorXd normal;
 
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -283,7 +283,7 @@ IntegralMoments::make_normal_integral_moments(const FiniteElement& moment_space,
     // Tabulate polynomial set at facet quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         poly_set_at_Qpts
-        = PolynomialSet::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
+        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
               .transpose();
 
     // Compute facet normal integral moments

@@ -32,10 +32,10 @@ create_nedelec_2d_space(int degree)
   const int ns0 = (degree + 1) * degree / 2;
 
   // Tabulate P(k+1) at quadrature points
-  auto [Qpts, Qwts] = Quadrature::make_quadrature(tdim, 2 * degree + 2);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts
-      = PolynomialSet::tabulate(Cell::Type::triangle, degree + 1, 0, Qpts)[0];
+      = polyset::tabulate(cell::Type::triangle, degree + 1, 0, Qpts)[0];
 
   const int psize = Pkp1_at_Qpts.cols();
 
@@ -76,18 +76,18 @@ create_nedelec_2d_dual(int degree)
   int quad_deg = 5 * (degree + 1);
 
   // Integral representation for the boundary (edge) dofs
-  Lagrange moment_space_E(Cell::Type::interval, degree);
+  Lagrange moment_space_E(cell::Type::interval, degree);
   dualmat.block(0, 0, 3 * (degree + 1), psize * 2)
-      = IntegralMoments::make_tangent_integral_moments(
-          moment_space_E, Cell::Type::triangle, 2, degree + 1, quad_deg);
+      = moments::make_tangent_integral_moments(
+          moment_space_E, cell::Type::triangle, 2, degree + 1, quad_deg);
 
   if (degree > 0)
   {
     // Interior integral moment
-    Lagrange moment_space_I(Cell::Type::triangle, degree - 1);
+    Lagrange moment_space_I(cell::Type::triangle, degree - 1);
     dualmat.block(3 * (degree + 1), 0, degree * (degree + 1), psize * 2)
-        = IntegralMoments::make_integral_moments(
-            moment_space_I, Cell::Type::triangle, 2, degree + 1, quad_deg);
+        = moments::make_integral_moments(
+            moment_space_I, cell::Type::triangle, 2, degree + 1, quad_deg);
   }
   return dualmat;
 }
@@ -106,9 +106,9 @@ create_nedelec_3d_space(int degree)
   const int ns0 = degree * (degree + 1) * (degree + 2) / 6;
 
   // Tabulate P(k+1) at quadrature points
-  auto [Qpts, Qwts] = Quadrature::make_quadrature(tdim, 2 * degree + 2);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts = PolynomialSet::tabulate(Cell::Type::tetrahedron,
+      Pkp1_at_Qpts = polyset::tabulate(cell::Type::tetrahedron,
                                              degree + 1, 0, Qpts)[0];
   const int psize = Pkp1_at_Qpts.cols();
 
@@ -173,28 +173,28 @@ create_nedelec_3d_dual(int degree)
   int quad_deg = 5 * (degree + 1);
 
   // Integral representation for the boundary (edge) dofs
-  Lagrange moment_space_E(Cell::Type::interval, degree);
+  Lagrange moment_space_E(cell::Type::interval, degree);
   dualmat.block(0, 0, 6 * (degree + 1), psize * 3)
-      = IntegralMoments::make_tangent_integral_moments(
-          moment_space_E, Cell::Type::tetrahedron, 3, degree + 1, quad_deg);
+      = moments::make_tangent_integral_moments(
+          moment_space_E, cell::Type::tetrahedron, 3, degree + 1, quad_deg);
 
   if (degree > 0)
   {
     // Integral moments on faces
-    Lagrange moment_space_F(Cell::Type::triangle, degree - 1);
+    Lagrange moment_space_F(cell::Type::triangle, degree - 1);
     dualmat.block(6 * (degree + 1), 0, 4 * degree * (degree + 1), psize * 3)
-        = IntegralMoments::make_integral_moments(
-            moment_space_F, Cell::Type::tetrahedron, 3, degree + 1, quad_deg);
+        = moments::make_integral_moments(
+            moment_space_F, cell::Type::tetrahedron, 3, degree + 1, quad_deg);
   }
 
   if (degree > 1)
   {
     // Interior integral moment
-    Lagrange moment_space_I(Cell::Type::tetrahedron, degree - 2);
+    Lagrange moment_space_I(cell::Type::tetrahedron, degree - 2);
     dualmat.block(6 * (degree + 1) + 4 * degree * (degree + 1), 0,
                   (degree - 1) * degree * (degree + 1) / 2, psize * 3)
-        = IntegralMoments::make_integral_moments(
-            moment_space_I, Cell::Type::tetrahedron, 3, degree + 1, quad_deg);
+        = moments::make_integral_moments(
+            moment_space_I, cell::Type::tetrahedron, 3, degree + 1, quad_deg);
   }
 
   return dualmat;
@@ -203,20 +203,20 @@ create_nedelec_3d_dual(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-Nedelec::Nedelec(Cell::Type celltype, int k) : FiniteElement(celltype, k)
+Nedelec::Nedelec(cell::Type celltype, int k) : FiniteElement(celltype, k)
 {
-  const int tdim = Cell::topological_dimension(celltype);
+  const int tdim = cell::topological_dimension(celltype);
   this->_value_size = tdim;
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs;
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat;
 
-  if (celltype == Cell::Type::triangle)
+  if (celltype == cell::Type::triangle)
   {
     wcoeffs = create_nedelec_2d_space(k - 1);
     dualmat = create_nedelec_2d_dual(k - 1);
   }
-  else if (celltype == Cell::Type::tetrahedron)
+  else if (celltype == cell::Type::tetrahedron)
   {
     wcoeffs = create_nedelec_3d_space(k - 1);
     dualmat = create_nedelec_3d_dual(k - 1);

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
+#include <Eigen/Dense>
 #include <vector>
 
 #pragma once

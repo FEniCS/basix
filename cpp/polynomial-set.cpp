@@ -6,13 +6,14 @@
 #include "cell.h"
 #include "indexing.h"
 #include <Eigen/Dense>
+#include <array>
 
 using namespace libtab;
 
 namespace
 {
 // Compute coefficients in the Jacobi Polynomial recurrence relation
-std::tuple<double, double, double> jrc(int a, int n)
+std::array<double, 3> jrc(int a, int n)
 {
   double an = (a + 2 * n + 1) * (a + 2 * n + 2)
               / static_cast<double>(2 * (n + 1) * (a + n + 1));
@@ -20,7 +21,7 @@ std::tuple<double, double, double> jrc(int a, int n)
               / static_cast<double>(2 * (n + 1) * (a + n + 1) * (a + 2 * n));
   double cn = n * (a + n) * (a + 2 * n + 2)
               / static_cast<double>((n + 1) * (a + n + 1) * (a + 2 * n));
-  return std::tuple<double, double, double>(an, bn, cn);
+  return {an, bn, cn};
 }
 //-----------------------------------------------------------------------------
 // Compute the complete set of derivatives from 0 to nderiv, for all the

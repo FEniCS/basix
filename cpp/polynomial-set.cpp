@@ -729,49 +729,48 @@ tabulate_polyset_prism_derivs(
 //-----------------------------------------------------------------------------
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-PolynomialSet::tabulate(
-    Cell::Type celltype, int n, int nderiv,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts)
+polyset::tabulate(cell::Type celltype, int n, int nderiv,
+                  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                     Eigen::RowMajor>& pts)
 {
   switch (celltype)
   {
-  case Cell::Type::interval:
+  case cell::Type::interval:
     return tabulate_polyset_line_derivs(n, nderiv, pts);
-  case Cell::Type::triangle:
+  case cell::Type::triangle:
     return tabulate_polyset_triangle_derivs(n, nderiv, pts);
-  case Cell::Type::tetrahedron:
+  case cell::Type::tetrahedron:
     return tabulate_polyset_tetrahedron_derivs(n, nderiv, pts);
-  case Cell::Type::quadrilateral:
+  case cell::Type::quadrilateral:
     return tabulate_polyset_quad_derivs(n, nderiv, pts);
-  case Cell::Type::prism:
+  case cell::Type::prism:
     return tabulate_polyset_prism_derivs(n, nderiv, pts);
-  case Cell::Type::pyramid:
+  case cell::Type::pyramid:
     return tabulate_polyset_pyramid_derivs(n, nderiv, pts);
-  case Cell::Type::hexahedron:
+  case cell::Type::hexahedron:
     return tabulate_polyset_hex_derivs(n, nderiv, pts);
   default:
     throw std::runtime_error("Polynomial set: Unsupported cell type");
   }
 }
 //-----------------------------------------------------------------------------
-int PolynomialSet::size(Cell::Type celltype, int n)
+int polyset::size(cell::Type celltype, int n)
 {
   switch (celltype)
   {
-  case Cell::Type::triangle:
+  case cell::Type::triangle:
     return (n + 1) * (n + 2) / 2;
-  case Cell::Type::tetrahedron:
+  case cell::Type::tetrahedron:
     return (n + 1) * (n + 2) * (n + 3) / 6;
-  case Cell::Type::prism:
+  case cell::Type::prism:
     return (n + 1) * (n + 1) * (n + 2) / 2;
-  case Cell::Type::pyramid:
+  case cell::Type::pyramid:
     return (n + 1) * (n + 2) * (2 * n + 3) / 6;
-  case Cell::Type::interval:
+  case cell::Type::interval:
     return (n + 1);
-  case Cell::Type::quadrilateral:
+  case cell::Type::quadrilateral:
     return (n + 1) * (n + 1);
-  case Cell::Type::hexahedron:
+  case cell::Type::hexahedron:
     return (n + 1) * (n + 1) * (n + 1);
   default:
     return 1;

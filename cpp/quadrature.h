@@ -13,7 +13,7 @@ namespace libtab
 /// Integration using Gauss-Jacobi quadrature on simplices. Other shapes
 /// can be obtained by using a product.
 /// @todo - pyramid
-namespace Quadrature
+namespace quadrature
 {
 /// Evaluate the nth Jacobi polynomial and derivatives with weight parameters
 /// (a, 0) at points x
@@ -73,5 +73,5 @@ std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
 make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>& simplex,
                 int m);
-} // namespace Quadrature
+} // namespace quadrature
 } // namespace libtab

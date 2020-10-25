@@ -10,7 +10,7 @@ namespace libtab
 /// ## Integral moments
 /// These functions generate dual set matrices for integral moments
 /// against spaces on a subentity of the cell
-namespace IntegralMoments
+namespace moments
 {
 /// Make simple or dot product integral moments
 ///
@@ -28,7 +28,7 @@ namespace IntegralMoments
 /// @param q_deg The quadrature degree used for the integrals
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 make_integral_moments(const FiniteElement& moment_space,
-                      const Cell::Type celltype, const int value_size,
+                      const cell::Type celltype, const int value_size,
                       const int poly_deg, const int q_deg);
 
 /// Make tangential integral moments
@@ -44,7 +44,7 @@ make_integral_moments(const FiniteElement& moment_space,
 /// @param q_deg The quadrature degree used for the integrals
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 make_tangent_integral_moments(const FiniteElement& moment_space,
-                              const Cell::Type celltype, const int value_size,
+                              const cell::Type celltype, const int value_size,
                               const int poly_deg, const int q_deg);
 
 /// Make normal integral moments
@@ -61,8 +61,8 @@ make_tangent_integral_moments(const FiniteElement& moment_space,
 // TODO: Implement this one in integral-moments.cpp
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 make_normal_integral_moments(const FiniteElement& moment_space,
-                             const Cell::Type celltype, const int value_size,
+                             const cell::Type celltype, const int value_size,
                              const int poly_deg, const int q_deg);
 
-}; // namespace IntegralMoments
+}; // namespace moments
 } // namespace libtab

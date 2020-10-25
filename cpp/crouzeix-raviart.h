@@ -15,6 +15,6 @@ public:
   /// Constructor
   /// @param celltype
   /// @param k degree - NB this must be 1 for Crouzeix-Raviart
-  CrouzeixRaviart(Cell::Type celltype, int k);
+  CrouzeixRaviart(cell::Type celltype, int k);
 };
 } // namespace libtab

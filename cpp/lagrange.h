@@ -19,6 +19,6 @@ public:
   /// Lagrange element on cell with given degree
   /// @param celltype interval, triangle or tetrahedral celltype
   /// @param degree
-  Lagrange(Cell::Type celltype, int degree);
+  Lagrange(cell::Type celltype, int degree);
 };
 } // namespace libtab

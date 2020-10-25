@@ -19,7 +19,7 @@ class FiniteElement
 
 public:
   /// Element of given dimension (1, 2 or 3) and degree.
-  FiniteElement(Cell::Type cell_type, int degree);
+  FiniteElement(cell::Type cell_type, int degree);
 
   /// Destructor
   ~FiniteElement() = default;
@@ -38,7 +38,7 @@ public:
 
   /// Get the cell type of the space's cell
   /// @return The cell type
-  Cell::Type cell_type() const { return _cell_type; }
+  cell::Type cell_type() const { return _cell_type; }
 
 protected:
   // Applies nodal constraints from dualmat to original
@@ -50,7 +50,7 @@ protected:
                           Eigen::RowMajor>& dualmat);
 
   // cell type
-  Cell::Type _cell_type;
+  cell::Type _cell_type;
 
   // degree
   int _degree;

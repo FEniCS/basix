@@ -16,6 +16,6 @@ public:
   /// Constructor
   /// @param celltype
   /// @param k degree
-  RaviartThomas(Cell::Type celltype, int k);
+  RaviartThomas(cell::Type celltype, int k);
 };
 } // namespace libtab

@@ -15,6 +15,6 @@ public:
   /// Constructor
   /// @param celltype
   /// @param k degree
-  Nedelec(Cell::Type celltype, int k);
+  Nedelec(cell::Type celltype, int k);
 };
 } // namespace libtab

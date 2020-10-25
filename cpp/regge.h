@@ -15,6 +15,6 @@ public:
   /// Constructor
   /// @param celltype
   /// @param k degree
-  Regge(Cell::Type celltype, int k);
+  Regge(cell::Type celltype, int k);
 };
 } // namespace libtab

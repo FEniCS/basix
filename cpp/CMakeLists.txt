@@ -21,9 +21,9 @@ message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 include_directories(${EIGEN3_INCLUDE_DIRS})
 
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-Wno-comment -Wall -std=c++17" HAVE_NO_MULTLINE)
+CHECK_CXX_COMPILER_FLAG("-Wno-comment -Wall -Werror -std=c++17" HAVE_NO_MULTLINE)
 if (HAVE_NO_MULTLINE)
-  set(CMAKE_CXX_FLAGS "-Wno-comment -Wall -std=c++17 ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "-Wno-comment -Wall -Werror -std=c++17 ${CMAKE_CXX_FLAGS}")
 endif()
 
 # Executable

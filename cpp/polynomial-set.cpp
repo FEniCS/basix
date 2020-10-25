@@ -4,14 +4,16 @@
 
 #include "polynomial-set.h"
 #include "cell.h"
+#include "indexing.h"
 #include <Eigen/Dense>
+#include <array>
 
 using namespace libtab;
 
 namespace
 {
 // Compute coefficients in the Jacobi Polynomial recurrence relation
-std::tuple<double, double, double> jrc(int a, int n)
+std::array<double, 3> jrc(int a, int n)
 {
   double an = (a + 2 * n + 1) * (a + 2 * n + 2)
               / static_cast<double>(2 * (n + 1) * (a + n + 1));
@@ -19,7 +21,7 @@ std::tuple<double, double, double> jrc(int a, int n)
               / static_cast<double>(2 * (n + 1) * (a + n + 1) * (a + 2 * n));
   double cn = n * (a + n) * (a + 2 * n + 2)
               / static_cast<double>((n + 1) * (a + n + 1) * (a + 2 * n));
-  return std::tuple<double, double, double>(an, bn, cn);
+  return {an, bn, cn};
 }
 //-----------------------------------------------------------------------------
 // Compute the complete set of derivatives from 0 to nderiv, for all the
@@ -410,12 +412,10 @@ tabulate_polyset_pyramid_derivs(
       dresult(md);
 
   // Indexing for pyramidal basis functions
-  auto pyr_idx = [&n, &m](int p, int q, int r) {
+  auto pyr_idx = [&n](int p, int q, int r) -> int {
     const int rv = n - r + 1;
     const int r0 = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
-    const int idx = r0 + p * rv + q;
-    assert(idx < m);
-    return idx;
+    return r0 + p * rv + q;
   };
 
   const auto f2 = (1.0 - x.col(2)).square() * 0.25;
@@ -435,10 +435,12 @@ tabulate_polyset_pyramid_derivs(
         result.resize(pts.rows(), m);
         result.setZero();
 
+        const int pyramidal_index = pyr_idx(0, 0, 0);
+        assert(pyramidal_index < m);
         if (kx == 0 and ky == 0 and kz == 0)
-          result.col(pyr_idx(0, 0, 0)).fill(1.0);
+          result.col(pyramidal_index).fill(1.0);
         else
-          result.col(pyr_idx(0, 0, 0)).setZero();
+          result.col(pyramidal_index).setZero();
 
         // r = 0
         for (int p = 0; p < n + 1; ++p)
@@ -451,14 +453,19 @@ tabulate_polyset_pyramid_derivs(
                                            * result.col(pyr_idx(p - 1, 0, 0))
                                            * (a + 1.0);
             if (kx > 0)
+            {
               result.col(pyr_idx(p, 0, 0))
                   += 2.0 * kx
                      * dresult[idx(kx - 1, ky, kz)].col(pyr_idx(p - 1, 0, 0))
                      * (a + 1.0);
+            }
+
             if (kz > 0)
+            {
               result.col(pyr_idx(p, 0, 0))
                   += kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p - 1, 0, 0))
                      * (a + 1.0);
+            }
 
             if (p > 1)
             {
@@ -466,10 +473,13 @@ tabulate_polyset_pyramid_derivs(
                   -= f2 * result.col(pyr_idx(p - 2, 0, 0)) * a;
 
               if (kz > 0)
+              {
                 result.col(pyr_idx(p, 0, 0))
                     += kz * (1.0 - x.col(2))
                        * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p - 2, 0, 0))
                        * a;
+              }
+
               if (kz > 1)
               {
                 // quadratic term in z
@@ -489,24 +499,33 @@ tabulate_polyset_pyramid_derivs(
                                            * result.col(pyr_idx(p, q - 1, 0))
                                            * (a + 1.0);
             if (ky > 0)
+            {
               result.col(pyr_idx(p, q, 0))
                   += 2.0 * ky
                      * dresult[idx(kx, ky - 1, kz)].col(pyr_idx(p, q - 1, 0))
                      * (a + 1.0);
+            }
+
             if (kz > 0)
+            {
               result.col(pyr_idx(p, q, 0))
                   += kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q - 1, 0))
                      * (a + 1.0);
+            }
+
             if (q > 1)
             {
               result.col(pyr_idx(p, q, 0))
                   -= f2 * result.col(pyr_idx(p, q - 2, 0)) * a;
 
               if (kz > 0)
+              {
                 result.col(pyr_idx(p, q, 0))
                     += kz * (1.0 - x.col(2))
                        * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q - 2, 0))
                        * a;
+              }
+
               if (kz > 1)
               {
                 result.col(pyr_idx(p, q, 0))
@@ -520,6 +539,7 @@ tabulate_polyset_pyramid_derivs(
 
         // Extend into r > 0
         for (int p = 0; p < n; ++p)
+        {
           for (int q = 0; q < n; ++q)
           {
             result.col(pyr_idx(p, q, 1))
@@ -530,9 +550,12 @@ tabulate_polyset_pyramid_derivs(
                   += 2 * kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q, 0))
                      * (2.0 + p + q);
           }
+        }
 
         for (int r = 1; r < n + 1; ++r)
+        {
           for (int p = 0; p < n - r; ++p)
+          {
             for (int q = 0; q < n - r; ++q)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
@@ -540,22 +563,33 @@ tabulate_polyset_pyramid_derivs(
                   = result.col(pyr_idx(p, q, r)) * (x.col(2) * ar + br)
                     - result.col(pyr_idx(p, q, r - 1)) * cr;
               if (kz > 0)
+              {
                 result.col(pyr_idx(p, q, r + 1))
                     += ar * 2 * kz
                        * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q, r));
+              }
             }
+          }
+        }
       }
     }
   }
 
   for (auto& result : dresult)
+  {
     for (int r = 0; r < n + 1; ++r)
+    {
       for (int p = 0; p < n - r + 1; ++p)
+
+      {
         for (int q = 0; q < n - r + 1; ++q)
         {
           result.col(pyr_idx(p, q, r))
               *= sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
         }
+      }
+    }
+  }
 
   return dresult;
 }
@@ -582,6 +616,7 @@ tabulate_polyset_quad_derivs(
       py = tabulate_polyset_line_derivs(n, nderiv, pts.col(1));
 
   for (int kx = 0; kx < nderiv + 1; ++kx)
+  {
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
     {
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
@@ -594,6 +629,7 @@ tabulate_polyset_quad_derivs(
         for (int j = 0; j < py[ky].cols(); ++j)
           result.col(c++) = px[kx].col(i) * py[ky].col(j);
     }
+  }
 
   return dresult;
 }
@@ -625,7 +661,9 @@ tabulate_polyset_hex_derivs(
       pz = tabulate_polyset_line_derivs(n, nderiv, pts.col(2));
 
   for (int kx = 0; kx < nderiv + 1; ++kx)
+  {
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
+    {
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
@@ -639,6 +677,8 @@ tabulate_polyset_hex_derivs(
             for (int k = 0; k < pz[kz].cols(); ++k)
               result.col(c++) = px[kx].col(i) * py[ky].col(j) * pz[kz].col(k);
       }
+    }
+  }
 
   return dresult;
 }
@@ -666,7 +706,9 @@ tabulate_polyset_prism_derivs(
       pz = tabulate_polyset_line_derivs(n, nderiv, pts.col(2));
 
   for (int kx = 0; kx < nderiv + 1; ++kx)
+  {
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
+    {
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
@@ -678,6 +720,8 @@ tabulate_polyset_prism_derivs(
           for (int k = 0; k < pz[kz].cols(); ++k)
             result.col(c++) = pxy[idx(kx, ky)].col(i) * pz[kz].col(k);
       }
+    }
+  }
 
   return dresult;
 }
@@ -733,3 +777,4 @@ int PolynomialSet::size(Cell::Type celltype, int n)
     return 1;
   }
 }
+//-----------------------------------------------------------------------------

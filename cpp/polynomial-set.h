@@ -40,6 +40,7 @@ tabulate(Cell::Type celltype, int n, int nderiv,
                             Eigen::RowMajor>& pts);
 
 /// Size of set
+/// @todo What is n?
 int size(Cell::Type celltype, int n);
 
 } // namespace PolynomialSet

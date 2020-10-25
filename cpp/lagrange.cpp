@@ -62,8 +62,10 @@ Lagrange::Lagrange(cell::Type celltype, int degree)
         {
           pt.row(c) = entity_geom.row(0);
           for (int k = 0; k < entity_geom.rows() - 1; ++k)
+          {
             pt.row(c) += (entity_geom.row(k + 1) - entity_geom.row(0))
                          * lattice(j, k);
+          }
           ++c;
         }
       }

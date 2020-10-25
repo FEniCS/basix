@@ -41,10 +41,10 @@ quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
 
     for (int k = 2; k < n + 1; ++k)
     {
-      double a1 = 2 * k * (k + a) * (2 * k + a - 2);
-      double a2 = (2 * k + a - 1) * (a * a) / a1;
-      double a3 = (2 * k + a - 1) * (2 * k + a) / (2 * k * (k + a));
-      double a4 = 2 * (k + a - 1) * (k - 1) * (2 * k + a) / a1;
+      const double a1 = 2 * k * (k + a) * (2 * k + a - 2);
+      const double a2 = (2 * k + a - 1) * (a * a) / a1;
+      const double a3 = (2 * k + a - 1) * (2 * k + a) / (2 * k * (k + a));
+      const double a4 = 2 * (k + a - 1) * (k - 1) * (2 * k + a) / a1;
       Jd.row(k)
           = Jd.row(k - 1) * (x.transpose() * a3 + a2) - Jd.row(k - 2) * a4;
       if (i > 0)
@@ -145,6 +145,7 @@ quadrature::make_quadrature_triangle_collapsed(int m)
 
   int c = 0;
   for (int i = 0; i < m; ++i)
+  {
     for (int j = 0; j < m; ++j)
     {
       pts(c, 0) = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]);
@@ -152,6 +153,7 @@ quadrature::make_quadrature_triangle_collapsed(int m)
       wts[c] = wx[i] * wy[j] * 0.125;
       ++c;
     }
+  }
 
   return {pts, wts};
 }
@@ -169,7 +171,9 @@ quadrature::make_quadrature_tetrahedron_collapsed(int m)
 
   int c = 0;
   for (int i = 0; i < m; ++i)
+  {
     for (int j = 0; j < m; ++j)
+    {
       for (int k = 0; k < m; ++k)
       {
         pts(c, 0) = 0.125 * (1.0 + ptx[i]) * (1.0 - pty[j]) * (1.0 - ptz[k]);
@@ -178,6 +182,8 @@ quadrature::make_quadrature_tetrahedron_collapsed(int m)
         wts[c] = wx[i] * wy[j] * wz[k] * 0.125 * 0.125;
         ++c;
       }
+    }
+  }
 
   return {pts, wts};
 }
@@ -249,7 +255,6 @@ quadrature::make_quadrature(
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Qpts_scaled(Qpts.rows(), bvec.cols());
   Eigen::ArrayXd Qwts_scaled = Qwts * scale;
-
   for (int i = 0; i < Qpts.rows(); ++i)
   {
     Eigen::RowVectorXd s = Qpts.row(i).matrix() * bvec;
@@ -258,3 +263,4 @@ quadrature::make_quadrature(
 
   return {Qpts_scaled, Qwts_scaled};
 }
+//-----------------------------------------------------------------------------

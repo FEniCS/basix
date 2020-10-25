@@ -62,9 +62,11 @@ FiniteElement::tabulate(
   {
     dresult[p].resize(pts.rows(), ndofs * _value_size);
     for (int j = 0; j < _value_size; ++j)
+    {
       dresult[p].block(0, ndofs * j, pts.rows(), ndofs)
           = basis_at_pts[p].matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
+    }
   }
 
   return dresult;

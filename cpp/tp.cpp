@@ -14,7 +14,9 @@ TensorProduct::TensorProduct(cell::Type celltype, int degree)
   if (celltype != cell::Type::quadrilateral and celltype != cell::Type::prism
       and celltype != cell::Type::pyramid
       and celltype != cell::Type::hexahedron)
+  {
     throw std::runtime_error("Invalid celltype");
+  }
 
   this->_value_size = 1;
 

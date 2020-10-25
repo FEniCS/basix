@@ -3,8 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
-#include "indexing.h"
-
+#include <Eigen/Dense>
 #include <vector>
 
 #pragma once
@@ -42,7 +41,8 @@ tabulate(cell::Type celltype, int n, int nderiv,
                             Eigen::RowMajor>& pts);
 
 /// Size of set
-int size(cell::Type celltype, int n);
+/// @todo What is n?
+int size(Cell::Type celltype, int n);
 
-}; // namespace polyset
+} // namespace polyset
 } // namespace libtab

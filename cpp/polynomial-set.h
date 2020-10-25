@@ -42,7 +42,7 @@ tabulate(cell::Type celltype, int n, int nderiv,
 
 /// Size of set
 /// @todo What is n?
-int size(Cell::Type celltype, int n);
+int size(cell::Type celltype, int n);
 
 } // namespace polyset
 } // namespace libtab

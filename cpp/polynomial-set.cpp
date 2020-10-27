@@ -32,38 +32,37 @@ std::array<double, 3> jrc(int a, int n)
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
 tabulate_polyset_line_derivs(
-    int n, int nderiv,
+    int degree, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts)
+        x)
 {
-  assert(pts.cols() == 1);
+  assert(x.cols() == 1);
+  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> X
+      = x * 2.0 - 1.0;
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x
-      = pts * 2.0 - 1.0;
-
-  const int m = (n + 1);
+  const int m = (degree + 1);
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(nderiv + 1);
+      dresult(
+          nderiv + 1,
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              X.rows(), m));
 
   for (int k = 0; k < nderiv + 1; ++k)
   {
-    // Reference to this derivative, and resize
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        result
-        = dresult[k];
-    result.resize(pts.rows(), m);
+    // Get reference to this derivative
+    auto& result = dresult[k];
 
     if (k == 0)
       result.col(0).fill(1.0);
     else
       result.col(0).setZero();
 
-    for (int p = 1; p < n + 1; ++p)
+    for (int p = 1; p < degree + 1; ++p)
     {
-      double a = 1.0 - 1.0 / static_cast<double>(p);
-      result.col(p) = x * result.col(p - 1) * (a + 1.0);
+      const double a = 1.0 - 1.0 / static_cast<double>(p);
+      result.col(p) = X * result.col(p - 1) * (a + 1.0);
       if (k > 0)
         result.col(p) += 2 * k * dresult[k - 1].col(p - 1) * (a + 1.0);
       if (p > 1)
@@ -74,7 +73,7 @@ tabulate_polyset_line_derivs(
   // Normalise
   for (int k = 0; k < nderiv + 1; ++k)
   {
-    for (int p = 0; p < n + 1; ++p)
+    for (int p = 0; p < degree + 1; ++p)
       dresult[k].col(p) *= sqrt(p + 0.5);
   }
 

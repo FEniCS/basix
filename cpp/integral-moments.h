@@ -2,10 +2,13 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "finite-element.h"
+#include "cell.h"
+#include <Eigen/Dense>
 
 namespace libtab
 {
+
+class FiniteElement;
 
 /// ## Integral moments
 /// These functions generate dual set matrices for integral moments
@@ -14,11 +17,11 @@ namespace moments
 {
 /// Make simple or dot product integral moments
 ///
-/// This will compute the integral of each function in the moment space over
-/// each sub entity of the moment space's cell type in a cell with the given
-/// type. For example, if the input cell type is a triangle, and the moment
-/// space is a P1 space on an edge, this will perform two integrals for each of
-/// the 3 edges of the triangle.
+/// This will compute the integral of each function in the moment space
+/// over each sub entity of the moment space's cell type in a cell with
+/// the given type. For example, if the input cell type is a triangle,
+/// and the moment space is a P1 space on an edge, this will perform two
+/// integrals for each of the 3 edges of the triangle.
 ///
 /// @param moment_space The space to compute the integral moments against
 /// @param celltype The cell type of the cell on which the space is being
@@ -33,14 +36,15 @@ make_integral_moments(const FiniteElement& moment_space,
 
 /// Make tangential integral moments
 ///
-/// These can only be used when the moment space is defined on edges
-/// of the cell
+/// These can only be used when the moment space is defined on edges of
+/// the cell
 ///
 /// @param moment_space The space to compute the integral moments against
-/// @param celltype The cell type of the cell on which the space is being
-/// defined
+/// @param celltype The cell type of the cell on which the space is
+/// being defined
 /// @param value_size The value size of the space being defined
-/// @param poly_deg The polynomial degree of the poly set that defines the space
+/// @param poly_deg The polynomial degree of the poly set that defines
+/// the space
 /// @param q_deg The quadrature degree used for the integrals
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 make_tangent_integral_moments(const FiniteElement& moment_space,
@@ -49,14 +53,15 @@ make_tangent_integral_moments(const FiniteElement& moment_space,
 
 /// Make normal integral moments
 ///
-/// These can only be used when the moment space is defined on facets
-/// of the cell
+/// These can only be used when the moment space is defined on facets of
+/// the cell
 ///
 /// @param moment_space The space to compute the integral moments against
-/// @param celltype The cell type of the cell on which the space is being
-/// defined
+/// @param celltype The cell type of the cell on which the space is
+/// being defined
 /// @param value_size The value size of the space being defined
-/// @param poly_deg The polynomial degree of the poly set that defines the space
+/// @param poly_deg The polynomial degree of the poly set that defines
+/// the space
 /// @param q_deg The quadrature degree used for the integrals
 // TODO: Implement this one in integral-moments.cpp
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>

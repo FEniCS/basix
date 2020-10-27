@@ -18,29 +18,37 @@ class FiniteElement
   /// underlying expansion set for that cell type, when tabulating.
 
 public:
-  /// Element of given dimension (1, 2 or 3) and degree.
+  /// A finite element
+  /// @param[in] cell_type The cell type
+  /// @param[in] degree The polynomial degree
   FiniteElement(cell::Type cell_type, int degree);
 
   /// Destructor
   ~FiniteElement() = default;
 
-  /// Compute basis values and derivatives at set of points. If no derivatives
-  /// are required, use nderiv=0. Higher derivatives are stored in
-  /// triangular (2D) or tetrahedral (3D) ordering, i.e. for the (x,y)
-  /// derivatives in 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... If
-  /// a vector result is expected, it will be stacked with all x values,
-  /// followed by all y-values (and then z, if any).
+  /// Compute basis values and derivatives at set of points.
+  ///
+  /// @param[in] nd The order of derivatives, up to and including,
+  /// to compute. Use 0 for the basis functions only.
+  /// @param[in] x The points at which to compute the basis functions.
+  /// The shape of x is (number of points, geometric dimension).
+  /// @return The basis functions (and derivatives). The first index is
+  /// the derivative. Higher derivatives are stored in triangular (2D)
+  /// or tetrahedral (3D) ordering, i.e. for the (x,y) derivatives in
+  /// 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... If a vector
+  /// result is expected, it will be stacked with all x values, followed
+  /// by all y-values (and then z, if any).
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-  tabulate(int nderiv,
-           const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                              Eigen::RowMajor>& pts) const;
+  tabulate(int nd, const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                      Eigen::RowMajor>& x) const;
 
-  /// Get the cell type of the space's cell
+  /// Get the element cell type
   /// @return The cell type
   cell::Type cell_type() const { return _cell_type; }
 
 protected:
+  // FIXME: document better and explain mathematically
   // Applies nodal constraints from dualmat to original
   // coeffs on basis, and stores to _coeffs.
   void apply_dualmat_to_basis(
@@ -49,16 +57,20 @@ protected:
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& dualmat);
 
-  // cell type
+  // Cell type
   cell::Type _cell_type;
 
-  // degree
+  // Degree
   int _degree;
 
-  // value size
+  // Value size
   int _value_size;
 
-  // Coefficient of expansion sets on cell
+  // FIXME: Check shape/layout
+  // Shape function coefficient of expansion sets on cell. If shape
+  // function is given by \psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k},
+  // then _coeffs(i, j) = \alpha^{i}_{k}. I.e., _coeffs.row(i) are the
+  // expansion coefficients for shape function i (\psi_{i}).
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       _coeffs;
 };

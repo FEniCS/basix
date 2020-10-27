@@ -4,6 +4,7 @@
 
 #include "integral-moments.h"
 #include "cell.h"
+#include "finite-element.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
 
@@ -11,9 +12,8 @@ using namespace libtab;
 
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 moments::make_integral_moments(const FiniteElement& moment_space,
-                                       const cell::Type celltype,
-                                       const int value_size, const int poly_deg,
-                                       const int q_deg)
+                               const cell::Type celltype, const int value_size,
+                               const int poly_deg, const int q_deg)
 {
   const int psize = polyset::size(celltype, poly_deg);
 
@@ -110,8 +110,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     // Tabulate polynomial set at entity quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         poly_set_at_Qpts
-        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
-              .transpose();
+        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
 
     // Compute entity integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
@@ -136,9 +135,10 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 }
 
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-moments::make_tangent_integral_moments(
-    const FiniteElement& moment_space, const cell::Type celltype,
-    const int value_size, const int poly_deg, const int q_deg)
+moments::make_tangent_integral_moments(const FiniteElement& moment_space,
+                                       const cell::Type celltype,
+                                       const int value_size, const int poly_deg,
+                                       const int q_deg)
 {
   const int psize = polyset::size(celltype, poly_deg);
   const cell::Type sub_celltype = moment_space.cell_type();
@@ -185,8 +185,7 @@ moments::make_tangent_integral_moments(
     // Tabulate polynomial set at edge quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         poly_set_at_Qpts
-        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
-              .transpose();
+        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
     // Compute edge tangent integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
     {
@@ -205,10 +204,9 @@ moments::make_tangent_integral_moments(
 
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 moments::make_normal_integral_moments(const FiniteElement& moment_space,
-                                              const cell::Type celltype,
-                                              const int value_size,
-                                              const int poly_deg,
-                                              const int q_deg)
+                                      const cell::Type celltype,
+                                      const int value_size, const int poly_deg,
+                                      const int q_deg)
 {
   const int psize = polyset::size(celltype, poly_deg);
   const cell::Type sub_celltype = moment_space.cell_type();
@@ -237,7 +235,6 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-
     // FIXME: get facet normal from the cell class
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> facet
         = cell::sub_entity_geometry(celltype, tdim - 1, i);
@@ -271,20 +268,19 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
 
       // Map quadrature points onto facet
       for (int j = 0; j < Qpts.rows(); ++j)
+      {
         Qpts_scaled.row(j) = facet.row(0)
                              + Qpts(j, 0) * (facet.row(1) - facet.row(0))
                              + Qpts(j, 1) * (facet.row(2) - facet.row(0));
+      }
     }
     else
-    {
       throw std::runtime_error("Normal on this cell cannot be computed.");
-    }
 
     // Tabulate polynomial set at facet quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         poly_set_at_Qpts
-        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0]
-              .transpose();
+        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
 
     // Compute facet normal integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)

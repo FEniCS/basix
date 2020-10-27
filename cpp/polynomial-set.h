@@ -30,15 +30,23 @@ namespace polyset
 /// The ordering is 'triangular' with the lower derivatives appearing first.
 ///
 /// @param celltype Cell type
-/// @param n order
-/// @param nderiv Maximum derivative order
-/// @param pts points
-/// @return List of polynomial sets, for each derivative, tabulated at points.
+/// @param degree Polynomial degree
+/// @param nd Maximum derivative order. Use nd = 0 for the basis only.
+/// @param x Points at which to evaluate the basis. The shape is (number
+/// of points, geometric dimension).
+/// @return List of polynomial sets, for each derivative, tabulated at
+/// points. The first index is the derivative. Higher derivatives are
+/// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for the
+/// (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1), (0,2),
+/// (3,0), ... If a vector result is expected, it will be stacked with
+/// all x values, followed by all y-values (and then z, if any). The
+/// second index is the point, and the third index is the basis function
+/// index.
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-tabulate(cell::Type celltype, int n, int nderiv,
+tabulate(cell::Type celltype, int degree, int nd,
          const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                            Eigen::RowMajor>& pts);
+                            Eigen::RowMajor>& x);
 
 /// Size of set
 /// @todo What is n?

@@ -39,32 +39,32 @@ void FiniteElement::apply_dualmat_to_basis(
 std::vector<
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
 FiniteElement::tabulate(
-    int nderiv,
+    int nd,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        pts) const
+        x) const
 {
   const int tdim = cell::topological_dimension(_cell_type);
-  if (pts.cols() != tdim)
-    throw std::runtime_error(
-        "Point dimension does not match element dimension");
+  if (x.cols() != tdim)
+    throw std::runtime_error("Point dim does not match element dim.");
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      basis_at_pts = polyset::tabulate(_cell_type, _degree, nderiv, pts);
+      basis = polyset::tabulate(_cell_type, _degree, nd, x);
   const int psize = polyset::size(_cell_type, _degree);
   const int ndofs = _coeffs.rows();
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(basis_at_pts.size());
-
+      dresult(
+          basis.size(),
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              x.rows(), ndofs * _value_size));
   for (std::size_t p = 0; p < dresult.size(); ++p)
   {
-    dresult[p].resize(pts.rows(), ndofs * _value_size);
     for (int j = 0; j < _value_size; ++j)
     {
-      dresult[p].block(0, ndofs * j, pts.rows(), ndofs)
-          = basis_at_pts[p].matrix()
+      dresult[p].block(0, ndofs * j, x.rows(), ndofs)
+          = basis[p].matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
     }
   }

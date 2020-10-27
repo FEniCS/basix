@@ -8,6 +8,7 @@
 #include "crouzeix-raviart.h"
 #include "indexing.h"
 #include "lagrange.h"
+#include "nedelec-second-kind.h"
 #include "nedelec.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
@@ -70,6 +71,11 @@ Each element has a `tabulate` function which returns the basis functions and a n
   py::class_<Nedelec>(m, "Nedelec", "Nedelec Element (first kind)")
       .def(py::init<cell::Type, int>(), "Constructor")
       .def("tabulate", &Nedelec::tabulate, tabdoc.c_str());
+
+  py::class_<NedelecSecondKind>(m, "NedelecSecondKind",
+                                "Nedelec Element (second kind)")
+      .def(py::init<cell::Type, int>(), "Constructor")
+      .def("tabulate", &NedelecSecondKind::tabulate, tabdoc.c_str());
 
   py::class_<Regge>(m, "Regge", "Regge Element")
       .def(py::init<cell::Type, int>(), "Constructor")

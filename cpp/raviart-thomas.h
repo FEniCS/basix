@@ -9,13 +9,13 @@
 
 namespace libtab
 {
-class RaviartThomas : public FiniteElement
+class RaviartThomas
 {
   /// Raviart-Thomas element of order k
 public:
   /// Constructor
   /// @param celltype
   /// @param k degree
-  RaviartThomas(cell::Type celltype, int k);
+  static FiniteElement create(cell::Type celltype, int k);
 };
 } // namespace libtab

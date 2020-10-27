@@ -14,13 +14,10 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-CrouzeixRaviart::CrouzeixRaviart(cell::Type celltype, int k)
-    : FiniteElement(celltype, k)
+FiniteElement CrouzeixRaviart::create(cell::Type celltype, int k)
 {
   if (k != 1)
     throw std::runtime_error("Only defined for degree 1");
-
-  this->_value_size = 1;
 
   // Compute facet midpoints
   const int tdim = cell::topological_dimension(celltype);
@@ -49,6 +46,8 @@ CrouzeixRaviart::CrouzeixRaviart(cell::Type celltype, int k)
 
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, 1, 0, pts)[0];
 
-  apply_dualmat_to_basis(coeffs, dualmat);
+  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+  FiniteElement el(celltype, 1, 1, new_coeffs);
+  return el;
 }
 //-----------------------------------------------------------------------------

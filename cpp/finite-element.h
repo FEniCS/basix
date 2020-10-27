@@ -23,6 +23,16 @@ public:
   /// @param[in] degree The polynomial degree
   FiniteElement(cell::Type cell_type, int degree);
 
+  /// A finite element
+  FiniteElement(
+      cell::Type cell_type, int degree, int value_size,
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          coeffs)
+      : _cell_type(cell_type), _degree(degree), _value_size(value_size),
+        _coeffs(coeffs)
+  {
+  }
+
   /// Destructor
   ~FiniteElement() = default;
 
@@ -47,16 +57,17 @@ public:
   /// @return The cell type
   cell::Type cell_type() const { return _cell_type; }
 
-protected:
   // FIXME: document better and explain mathematically
   // Applies nodal constraints from dualmat to original
-  // coeffs on basis, and stores to _coeffs.
-  void apply_dualmat_to_basis(
+  // coeffs on basis, and return new coeffs.
+  static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  apply_dualmat_to_basis(
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& coeffs,
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& dualmat);
 
+private:
   // Cell type
   cell::Type _cell_type;
 

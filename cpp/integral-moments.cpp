@@ -10,6 +10,27 @@
 
 using namespace libtab;
 
+namespace
+{
+double
+integral_jacobian(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                      Eigen::RowMajor>& axes)
+{
+  double jacobian = 0.0;
+  if (axes.rows() == 1)
+    jacobian = axes.row(0).norm();
+  else if (axes.rows() == 2 and axes.cols() == 3)
+  {
+    Eigen::Vector3d a0 = axes.row(0);
+    Eigen::Vector3d a1 = axes.row(1);
+    jacobian = a0.cross(a1).norm();
+  }
+  else
+    jacobian = axes.determinant();
+  return jacobian;
+}
+} // namespace
+
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 moments::make_integral_moments(const FiniteElement& moment_space,
                                const cell::Type celltype, const int value_size,
@@ -19,6 +40,9 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 
   const cell::Type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
+  if (sub_entity_dim == 0)
+    throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
+
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
 
   auto [Qpts, Qwts] = quadrature::make_quadrature(sub_entity_dim, q_deg);
@@ -39,73 +63,23 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-
-    // FIXME: get entity tangent from the cell class
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> entity
         = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
+
+    // Parametrise entity coordinates
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> axes(
+        sub_entity_dim, tdim);
+
+    for (int j = 0; j < sub_entity_dim; ++j)
+      axes.row(j) = entity.row(j + 1) - entity.row(0);
 
     // Map quadrature points onto entity
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Qpts_scaled(Qpts.rows(), tdim);
-    // Parametrise entity coordinates
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> axes(
-        sub_entity_dim, tdim);
-    axes.setZero();
+    Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
+                  + (Qpts.matrix() * axes.matrix()).array();
 
-    if (sub_entity_dim == 0)
-    {
-      throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
-    }
-    else if (sub_entity_dim == tdim)
-    {
-      for (int j = 0; j < Qpts.rows(); ++j)
-        Qpts_scaled.row(j) = Qpts.row(j);
-      for (int j = 0; j < tdim; ++j)
-        axes(j, j) = 1;
-    }
-    else if (sub_entity_dim == 1)
-    {
-      axes.row(0) = entity.row(1) - entity.row(0);
-      for (int j = 0; j < Qpts.rows(); ++j)
-        Qpts_scaled.row(j) = entity.row(0) + Qpts(j, 0) * axes.row(0);
-    }
-    else if (sub_entity_dim == 2)
-    {
-      axes.row(0) = entity.row(1) - entity.row(0);
-      axes.row(1) = entity.row(2) - entity.row(0);
-      for (int j = 0; j < Qpts.rows(); ++j)
-        Qpts_scaled.row(j) = entity.row(0) + Qpts(j, 0) * axes.row(0)
-                             + Qpts(j, 1) * axes.row(1);
-    }
-
-    double integral_jacobian = 0.0;
-    if (sub_entity_dim == 1)
-    {
-      Eigen::VectorXd a0 = axes.row(0);
-      integral_jacobian = a0.norm();
-    }
-    else if (sub_entity_dim == 2)
-    {
-      if (tdim == 2)
-      {
-        Eigen::Vector3d a0 = {axes(0, 0), axes(0, 1), 0};
-        Eigen::Vector3d a1 = {axes(1, 0), axes(1, 1), 0};
-        integral_jacobian = a0.cross(a1).norm();
-      }
-      else
-      {
-        Eigen::Vector3d a0 = axes.row(0);
-        Eigen::Vector3d a1 = axes.row(1);
-        integral_jacobian = a0.cross(a1).norm();
-      }
-    }
-    else if (sub_entity_dim == 3)
-    {
-      Eigen::Vector3d a0 = axes.row(0);
-      Eigen::Vector3d a1 = axes.row(1);
-      Eigen::Vector3d a2 = axes.row(2);
-      integral_jacobian = a0.dot(a1.cross(a2));
-    }
+    const double integral_jac = integral_jacobian(axes);
 
     // Tabulate polynomial set at entity quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -122,7 +96,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
         for (int k = 0; k < value_size; ++k)
         {
           Eigen::VectorXd q
-              = phi * Qwts * (integral_jacobian * axis(k) / axis.norm());
+              = phi * Qwts * (integral_jac * axis(k) / axis.norm());
           Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;
           assert(qcoeffs.size() == psize);
           dualmat.block(c, psize * k, 1, psize) = qcoeffs;
@@ -144,6 +118,9 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
 
   const cell::Type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
+  if (sub_entity_dim == 0)
+    throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
+
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
 
   auto [Qpts, Qwts] = quadrature::make_quadrature(sub_entity_dim, q_deg);
@@ -164,72 +141,23 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    // FIXME: get entity tangent from the cell class
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> entity
         = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
+
+    // Parametrise entity coordinates
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> axes(
+        sub_entity_dim, tdim);
+
+    for (int j = 0; j < sub_entity_dim; ++j)
+      axes.row(j) = entity.row(j + 1) - entity.row(0);
 
     // Map quadrature points onto entity
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Qpts_scaled(Qpts.rows(), tdim);
-    // Parametrise entity coordinates
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> axes(
-        sub_entity_dim, tdim);
-    axes.setZero();
+    Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
+                  + (Qpts.matrix() * axes.matrix()).array();
 
-    double integral_jacobian;
-
-    if (sub_entity_dim == 0)
-    {
-      throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
-    }
-    else if (sub_entity_dim == tdim)
-    {
-      for (int j = 0; j < Qpts.rows(); ++j)
-        Qpts_scaled.row(j) = Qpts.row(j);
-      for (int j = 0; j < tdim; ++j)
-        axes(j, j) = 1;
-    }
-    else if (sub_entity_dim == 1)
-    {
-      axes.row(0) = entity.row(1) - entity.row(0);
-      for (int j = 0; j < Qpts.rows(); ++j)
-        Qpts_scaled.row(j) = entity.row(0) + Qpts(j, 0) * axes.row(0);
-    }
-    else if (sub_entity_dim == 2)
-    {
-      axes.row(0) = entity.row(1) - entity.row(0);
-      axes.row(1) = entity.row(2) - entity.row(0);
-      for (int j = 0; j < Qpts.rows(); ++j)
-        Qpts_scaled.row(j) = entity.row(0) + Qpts(j, 0) * axes.row(0)
-                             + Qpts(j, 1) * axes.row(1);
-    }
-    if (sub_entity_dim == 1)
-    {
-      Eigen::VectorXd a0 = axes.row(0);
-      integral_jacobian = a0.norm();
-    }
-    else if (sub_entity_dim == 2)
-    {
-      if (tdim == 2)
-      {
-        Eigen::Vector3d a0 = {axes(0, 0), axes(0, 1), 0};
-        Eigen::Vector3d a1 = {axes(1, 0), axes(1, 1), 0};
-        integral_jacobian = a0.cross(a1).norm();
-      }
-      else
-      {
-        Eigen::Vector3d a0 = axes.row(0);
-        Eigen::Vector3d a1 = axes.row(1);
-        integral_jacobian = a0.cross(a1).norm();
-      }
-    }
-    else if (sub_entity_dim == 3)
-    {
-      Eigen::Vector3d a0 = axes.row(0);
-      Eigen::Vector3d a1 = axes.row(1);
-      Eigen::Vector3d a2 = axes.row(2);
-      integral_jacobian = a0.dot(a1.cross(a2));
-    }
+    const double integral_jac = integral_jacobian(axes);
 
     // Tabulate polynomial set at entity quadrature points
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -250,7 +178,7 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
               = moment_space_at_Qpts.col(d * moment_space_size + j);
           Eigen::VectorXd axis = axes.row(d);
           Eigen::VectorXd qpart
-              = phi * Qwts * (integral_jacobian * axis(k) / axis.norm());
+              = phi * Qwts * (integral_jac * axis(k) / axis.norm());
           q += qpart;
         }
         Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;
@@ -296,8 +224,6 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-
-    // FIXME: get edge tangent from the cell class
     Eigen::Array<double, 2, Eigen::Dynamic, Eigen::RowMajor> edge
         = cell::sub_entity_geometry(celltype, 1, i);
     Eigen::VectorXd tangent = edge.row(1) - edge.row(0);
@@ -364,10 +290,9 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    // FIXME: get facet normal from the cell class
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> facet
         = cell::sub_entity_geometry(celltype, tdim - 1, i);
-    Eigen::VectorXd normal;
+    Eigen::VectorXd normal(tdim);
 
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         Qpts_scaled(Qpts.rows(), tdim);
@@ -375,7 +300,6 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
     if (tdim == 2)
     {
       Eigen::Vector2d tangent = facet.row(1) - facet.row(0);
-      normal.resize(2);
       normal << -tangent(1), tangent(0);
       // No need to normalise the normal, as the size of this is equal to the
       // integral jacobian
@@ -389,7 +313,6 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
     {
       Eigen::Vector3d t0 = facet.row(1) - facet.row(0);
       Eigen::Vector3d t1 = facet.row(2) - facet.row(0);
-      normal.resize(3);
       normal << t0.cross(t1);
 
       // No need to normalise the normal, as the size of this is equal to the

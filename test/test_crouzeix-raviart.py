@@ -12,7 +12,7 @@ def test_cr2d():
     print(w.shape)
 
 
-def test_nedelec3d():
+def test_cr3d():
     cr3 = libtab.CrouzeixRaviart(libtab.CellType.tetrahedron, 1)
     pts = libtab.create_lattice(libtab.CellType.tetrahedron, 2, True)
     w = cr3.tabulate(0, pts)[0]

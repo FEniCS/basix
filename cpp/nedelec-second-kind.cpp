@@ -59,7 +59,7 @@ create_nedelec_2d_dual(int degree)
   int quad_deg = 5 * (degree + 1);
 
   // Integral representation for the boundary (edge) dofs
-  Lagrange moment_space_E(cell::Type::interval, degree + 1);
+  DiscontinuousLagrange moment_space_E(cell::Type::interval, degree + 1);
   dualmat.block(0, 0, 3 * (degree + 2), psize * 2)
       = moments::make_tangent_integral_moments(
           moment_space_E, cell::Type::triangle, 2, degree + 1, quad_deg);
@@ -121,7 +121,7 @@ create_nedelec_3d_dual(int degree)
   int quad_deg = 5 * (degree + 1);
 
   // Integral representation for the boundary (edge) dofs
-  Lagrange moment_space_E(cell::Type::interval, degree + 1);
+  DiscontinuousLagrange moment_space_E(cell::Type::interval, degree + 1);
   dualmat.block(0, 0, 6 * (degree + 2), psize * 3)
       = moments::make_tangent_integral_moments(
           moment_space_E, cell::Type::tetrahedron, 3, degree + 1, quad_deg);
@@ -138,7 +138,7 @@ create_nedelec_3d_dual(int degree)
   if (degree > 1)
   {
     // Interior integral moment
-    Lagrange moment_space_I(cell::Type::tetrahedron, degree - 1);
+    DiscontinuousLagrange moment_space_I(cell::Type::tetrahedron, degree - 1);
     dualmat.block((6 + 4 * degree) * (degree + 2), 0,
                   (degree + 2) * (degree * degree - 3 * degree - 6) / 2, psize * 3)
         = moments::make_integral_moments(

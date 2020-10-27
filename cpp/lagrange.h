@@ -21,4 +21,15 @@ public:
   /// @param degree
   Lagrange(cell::Type celltype, int degree);
 };
+
+class DiscontinuousLagrange : public FiniteElement
+{
+  /// Discontinuous Lagrange element
+public:
+  /// Constructor
+  /// Discontinuous Lagrange element on cell with given degree
+  /// @param celltype interval, triangle or tetrahedral celltype
+  /// @param degree
+  DiscontinuousLagrange(cell::Type celltype, int degree);
+};
 } // namespace libtab

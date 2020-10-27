@@ -73,7 +73,7 @@ RaviartThomas::RaviartThomas(cell::Type celltype, int degree)
   // Create a polynomial set on a reference facet
   cell::Type facettype
       = (tdim == 2) ? cell::Type::interval : cell::Type::triangle;
-  Lagrange moment_space_facet(facettype, degree - 1);
+  DiscontinuousLagrange moment_space_facet(facettype, degree - 1);
 
   // FIXME: Explain better
   // Add integral moments on facets
@@ -90,7 +90,7 @@ RaviartThomas::RaviartThomas(cell::Type celltype, int degree)
         = (tdim == 2) ? (_degree * (_degree - 1))
                       : (_degree * (_degree - 1) * (_degree + 1) / 2);
     // Interior integral moment
-    Lagrange moment_space_interior(celltype, degree - 2);
+    DiscontinuousLagrange moment_space_interior(celltype, degree - 2);
     dualmat.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
         = moments::make_integral_moments(moment_space_interior, celltype, tdim,
                                          _degree, quad_deg);

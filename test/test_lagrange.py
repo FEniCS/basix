@@ -8,6 +8,65 @@ import pytest
 import sympy
 
 
+def sympy_disc_lagrange(celltype, n):
+    x = sympy.Symbol("x")
+    y = sympy.Symbol("y")
+    z = sympy.Symbol("z")
+
+    topology = libtab.topology(celltype)
+    tdim = len(topology) - 1
+    pt = []
+    if tdim == 1:
+        for i in range(n + 1):
+            pt.append([sympy.Rational(i, n), sympy.Integer(0), sympy.Integer(0)])
+    elif tdim == 2:
+        for j in range(n + 1):
+            for i in range(n + 1 - j):
+                pt.append([sympy.Rational(i, n), sympy.Rational(j, n), sympy.Integer(0)])
+    elif tdim == 3:
+        for k in range(n + 1):
+            for j in range(n + 1 - k):
+                for i in range(n + 1 - k - j):
+                    pt.append([sympy.Rational(i, n), sympy.Rational(j, n), sympy.Rational(k, n)])
+
+    funcs = []
+    if celltype == libtab.CellType.interval:
+        for i in range(n + 1):
+            funcs += [x**i]
+        mat = numpy.empty((len(pt), len(funcs)), dtype=object)
+
+        for i, f in enumerate(funcs):
+            for j, p in enumerate(pt):
+                mat[i, j] = f.subs([(x, p[0])])
+    elif celltype == libtab.CellType.triangle:
+        for i in range(n + 1):
+            for j in range(n + 1 - i):
+                funcs += [x**j * y**i]
+        mat = numpy.empty((len(pt), len(funcs)), dtype=object)
+
+        for i, f in enumerate(funcs):
+            for j, p in enumerate(pt):
+                mat[i, j] = f.subs([(x, p[0]), (y, p[1])])
+    elif celltype == libtab.CellType.tetrahedron:
+        for i in range(n + 1):
+            for j in range(n + 1 - i):
+                for k in range(n + 1 - i - j):
+                    funcs += [x**j * y**i * z**k]
+        mat = numpy.empty((len(pt), len(funcs)), dtype=object)
+
+        for i, f in enumerate(funcs):
+            for j, p in enumerate(pt):
+                mat[i, j] = f.subs([(x, p[0]), (y, p[1]), (z, p[2])])
+
+    mat = sympy.Matrix(mat)
+    mat = mat.inv()
+    g = []
+    for r in range(mat.shape[0]):
+        g += [sum([v * funcs[i] for i, v in enumerate(mat.row(r))])]
+
+    return g
+
+
 def sympy_lagrange(celltype, n):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
@@ -24,23 +83,23 @@ def sympy_lagrange(celltype, n):
             if (dim == 0):
                 pt += [entity_geom[0]]
             elif (dim == 1):
-                for j in range(n - 1):
+                for i in range(n - 1):
                     pt += [entity_geom[0]
-                           + sympy.Rational(j + 1, n) * (entity_geom[1] - entity_geom[0])]
+                           + sympy.Rational(i + 1, n) * (entity_geom[1] - entity_geom[0])]
             elif (dim == 2):
-                for j in range(n - 2):
-                    for k in range(n - 2 - j):
+                for i in range(n - 2):
+                    for j in range(n - 2 - i):
                         pt += [entity_geom[0]
-                               + sympy.Rational(j + 1, n) * (entity_geom[2] - entity_geom[0])
-                               + sympy.Rational(k + 1, n) * (entity_geom[1] - entity_geom[0])]
+                               + sympy.Rational(i + 1, n) * (entity_geom[2] - entity_geom[0])
+                               + sympy.Rational(j + 1, n) * (entity_geom[1] - entity_geom[0])]
             elif (dim == 3):
-                for j in range(n - 3):
-                    for k in range(n - 3 - j):
-                        for l in range(n - 3 - j - k):
+                for i in range(n - 3):
+                    for j in range(n - 3 - i):
+                        for k in range(n - 3 - i - j):
                             pt += [entity_geom[0]
-                                   + sympy.Rational(j + 1, n) * (entity_geom[3] - entity_geom[0])
-                                   + sympy.Rational(k + 1, n) * (entity_geom[2] - entity_geom[0])
-                                   + sympy.Rational(l + 1, n) * (entity_geom[1] - entity_geom[0])]
+                                   + sympy.Rational(i + 1, n) * (entity_geom[3] - entity_geom[0])
+                                   + sympy.Rational(j + 1, n) * (entity_geom[2] - entity_geom[0])
+                                   + sympy.Rational(k + 1, n) * (entity_geom[1] - entity_geom[0])]
 
     funcs = []
     if celltype == libtab.CellType.interval:

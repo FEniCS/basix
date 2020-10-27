@@ -6,7 +6,7 @@ import libtab
 import numpy
 import pytest
 import sympy
-from .test_lagrange import sympy_lagrange
+from .test_lagrange import sympy_disc_lagrange
 
 
 def sympy_nedelec(celltype, n):
@@ -35,7 +35,7 @@ def sympy_nedelec(celltype, n):
         if n == 1:
             edge_basis = [sympy.Integer(1)]
         else:
-            edge_basis = sympy_lagrange(libtab.CellType.interval, n - 1)
+            edge_basis = sympy_disc_lagrange(libtab.CellType.interval, n - 1)
         edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
         for i, f in enumerate(funcs):
             j = 0
@@ -61,7 +61,7 @@ def sympy_nedelec(celltype, n):
             if n == 2:
                 face_basis = [sympy.Integer(1)]
             else:
-                face_basis = sympy_lagrange(libtab.CellType.triangle, n - 2)
+                face_basis = sympy_disc_lagrange(libtab.CellType.triangle, n - 2)
             for i, f in enumerate(funcs):
                 j = n * 3
                 for g in face_basis:
@@ -118,7 +118,7 @@ def sympy_nedelec(celltype, n):
         if n == 1:
             edge_basis = [sympy.Integer(1)]
         else:
-            edge_basis = sympy_lagrange(libtab.CellType.interval, n - 1)
+            edge_basis = sympy_disc_lagrange(libtab.CellType.interval, n - 1)
         edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
         for i, f in enumerate(funcs):
             j = 0
@@ -141,7 +141,7 @@ def sympy_nedelec(celltype, n):
             if n == 2:
                 face_basis = [sympy.Integer(1)]
             else:
-                face_basis = sympy_lagrange(libtab.CellType.triangle, n - 2)
+                face_basis = sympy_disc_lagrange(libtab.CellType.triangle, n - 2)
             face_basis = [a.subs(x, dummy[0]).subs(y, dummy[1]) for a in face_basis]
             for i, f in enumerate(funcs):
                 j = n * 6
@@ -170,7 +170,7 @@ def sympy_nedelec(celltype, n):
             if n == 3:
                 interior_basis = [sympy.Integer(1)]
             else:
-                interior_basis = sympy_lagrange(libtab.CellType.tetrahedron, n - 3)
+                interior_basis = sympy_disc_lagrange(libtab.CellType.tetrahedron, n - 3)
             for i, f in enumerate(funcs):
                 j = n * 6 + 4 * n * (n - 1)
                 for g in interior_basis:

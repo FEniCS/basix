@@ -28,6 +28,16 @@ public:
   {
   }
 
+  /// A finite element
+  FiniteElement(
+      cell::Type cell_type, int degree, int value_size,
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          coeffs)
+      : _cell_type(cell_type), _degree(degree), _value_size(value_size),
+        _coeffs(coeffs)
+  {
+  }
+
   /// Destructor
   ~FiniteElement() = default;
 

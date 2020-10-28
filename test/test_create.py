@@ -9,7 +9,7 @@ def test_create():
     # Point evaluation of polynomial set
     celltype = libtab.CellType.triangle
     degree = 1
-    points = numpy.array([[0,0],[1,0],[0,1]], dtype=numpy.float64)
+    points = numpy.array([[0, 0], [1, 0], [0, 1]], dtype=numpy.float64)
 
     # Create element from space and dual
     dualmat = libtab.tabulate_polynomial_set(celltype, degree, 0, points)[0]
@@ -18,5 +18,5 @@ def test_create():
 
     numpy.set_printoptions(suppress=True, precision=2)
 
-    points = numpy.array([[.5,0],[0,.5],[.5,.5]], dtype=numpy.float64)
+    points = numpy.array([[.5, 0], [0, .5], [.5, .5]], dtype=numpy.float64)
     print(fe.tabulate(0, points))

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
+#include <map>
 
 using namespace libtab;
 
@@ -413,4 +414,23 @@ cell::Type cell::simplex_type(int dim)
   default:
     throw std::runtime_error("Unsupported dimension");
   }
+}
+
+cell::Type cell::str_to_type(std::string name)
+{
+  static const std::map<std::string, cell::Type> name_to_type
+      = {{"point", cell::Type::point},
+         {"interval", cell::Type::interval},
+         {"triangle", cell::Type::triangle},
+         {"tetrahedron", cell::Type::tetrahedron},
+         {"quadrilateral", cell::Type::quadrilateral},
+         {"pyramid", cell::Type::pyramid},
+         {"prism", cell::Type::prism},
+         {"hexahedron", cell::Type::hexahedron}};
+
+  auto it = name_to_type.find(name);
+  if (it == name_to_type.end())
+    throw std::runtime_error("Can't find name " + name);
+
+  return it->second;
 }

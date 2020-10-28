@@ -13,21 +13,11 @@ namespace libtab
 
 class FiniteElement
 {
-  /// Finite element base class, taking the cell type and degree,
+  /// Finite Element
   /// The basis is stored as a set of coefficients, which are applied to the
   /// underlying expansion set for that cell type, when tabulating.
 
 public:
-  /// A finite element
-  FiniteElement(
-      cell::Type cell_type, int degree, int value_size,
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          coeffs)
-      : _cell_type(cell_type), _degree(degree), _value_size(value_size),
-        _coeffs(coeffs)
-  {
-  }
-
   /// A finite element
   FiniteElement(
       cell::Type cell_type, int degree, int value_size,

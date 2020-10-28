@@ -14,11 +14,8 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-FiniteElement CrouzeixRaviart::create(cell::Type celltype, int k)
+FiniteElement CrouzeixRaviart::create(cell::Type celltype)
 {
-  if (k != 1)
-    throw std::runtime_error("Only defined for degree 1");
-
   // Compute facet midpoints
   const int tdim = cell::topological_dimension(celltype);
   const std::vector<std::vector<int>> facet_topology
@@ -36,10 +33,9 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int k)
   {
     for (int i : f)
       pts.row(c) += geometry.row(i);
+    pts.row(c) /= static_cast<double>(f.size());
     ++c;
   }
-
-  pts /= static_cast<double>(tdim);
 
   // Initial coefficients are Identity Matrix
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);

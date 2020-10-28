@@ -10,11 +10,11 @@ namespace libtab
 {
 class Regge
 {
-  /// Regge element of order k
+  /// Regge element
 public:
-  /// Constructor
+  /// Regge element
   /// @param celltype
-  /// @param k degree
-  static FiniteElement create(cell::Type celltype, int k);
+  /// @param degree
+  static FiniteElement create(cell::Type celltype, int degree);
 };
 } // namespace libtab

@@ -71,15 +71,18 @@ Each element has a `tabulate` function which returns the basis functions and a n
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str());
 
-  // Flavours of finite element
-  m.def("Nedelec", &Nedelec::create);
-  m.def("Lagrange", &Lagrange::create);
-  m.def("CrouzeixRaviart", &CrouzeixRaviart::create);
-  m.def("TensorProduct", &TensorProduct::create);
-  m.def("RaviartThomas", &RaviartThomas::create, "Raviart-Thomas Element");
+  // Create FiniteElement of different types
+  m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");
+  m.def("Lagrange", &Lagrange::create, "Create Lagrange Element");
+  m.def("CrouzeixRaviart", &CrouzeixRaviart::create,
+        "Create Crouzeix-Raviart Element");
+  m.def("TensorProduct", &TensorProduct::create,
+        "Create TensorProduct Element");
+  m.def("RaviartThomas", &RaviartThomas::create,
+        "Create Raviart-Thomas Element");
   m.def("NedelecSecondKind", &NedelecSecondKind::create,
-        "Nedelec Element (second kind)");
-  m.def("Regge", &Regge::create, "Regge Element");
+        "Create Nedelec Element (second kind)");
+  m.def("Regge", &Regge::create, "Create Regge Element");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");

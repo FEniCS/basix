@@ -15,7 +15,6 @@ class Lagrange
 {
   /// Lagrange element
 public:
-  /// Constructor
   /// Lagrange element on cell with given degree
   /// @param celltype interval, triangle or tetrahedral celltype
   /// @param degree
@@ -26,7 +25,6 @@ class DiscontinuousLagrange
 {
   /// Discontinuous Lagrange element
 public:
-  /// Constructor
   /// Discontinuous Lagrange element on cell with given degree
   /// @param celltype interval, triangle or tetrahedral celltype
   /// @param degree

@@ -157,7 +157,7 @@ create_nedelec_3d_dual(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-FiniteElement NedelecSecondKind::create(cell::Type celltype, int k)
+FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
@@ -166,19 +166,19 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int k)
 
   if (celltype == cell::Type::triangle)
   {
-    wcoeffs = create_nedelec_2d_space(k - 1);
-    dualmat = create_nedelec_2d_dual(k - 1);
+    wcoeffs = create_nedelec_2d_space(degree - 1);
+    dualmat = create_nedelec_2d_dual(degree - 1);
   }
   else if (celltype == cell::Type::tetrahedron)
   {
-    wcoeffs = create_nedelec_3d_space(k - 1);
-    dualmat = create_nedelec_3d_dual(k - 1);
+    wcoeffs = create_nedelec_3d_space(degree - 1);
+    dualmat = create_nedelec_3d_dual(degree - 1);
   }
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
   auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
-  FiniteElement el(celltype, k, tdim, new_coeffs);
+  FiniteElement el(celltype, degree, tdim, new_coeffs);
   return el;
 }
 //-----------------------------------------------------------------------------

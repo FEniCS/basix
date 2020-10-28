@@ -68,8 +68,20 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("create_lattice", &cell::create_lattice,
         "Create a uniform lattice of points on a reference cell");
 
+  m.def("create_new_element",
+        [](cell::Type celltype, int degree, int value_size,
+           const Eigen::MatrixXd& dualmat,
+           const Eigen::MatrixXd& coeffs) -> FiniteElement {
+          auto new_coeffs
+              = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+          return FiniteElement(celltype, degree, value_size, new_coeffs);
+        });
+
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
-      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str());
+      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
+      .def_property_readonly("degree", &FiniteElement::degree)
+      .def_property_readonly("cell_type", &FiniteElement::cell_type)
+      .def_property_readonly("value_size", &FiniteElement::value_size);
 
   // Create FiniteElement of different types
   m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");

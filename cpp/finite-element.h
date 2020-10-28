@@ -19,11 +19,6 @@ class FiniteElement
 
 public:
   /// A finite element
-  /// @param[in] cell_type The cell type
-  /// @param[in] degree The polynomial degree
-  FiniteElement(cell::Type cell_type, int degree);
-
-  /// A finite element
   FiniteElement(
       cell::Type cell_type, int degree, int value_size,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -56,6 +51,14 @@ public:
   /// Get the element cell type
   /// @return The cell type
   cell::Type cell_type() const { return _cell_type; }
+
+  /// Get the element polynomial degree
+  /// @return Polynomial degree
+  int degree() const { return _degree; }
+
+  /// Get the element value size
+  /// @return Value size
+  int value_size() const { return _value_size; }
 
   // FIXME: document better and explain mathematically
   // Applies nodal constraints from dualmat to original

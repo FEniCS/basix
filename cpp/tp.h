@@ -11,12 +11,12 @@
 
 namespace libtab
 {
-class TensorProduct : public FiniteElement
+class TensorProduct
 {
 public:
   /// Tensor Product element on cell with given degree
   /// @param celltype
   /// @param degree
-  TensorProduct(cell::Type celltype, int degree);
+  static FiniteElement create(cell::Type celltype, int degree);
 };
 } // namespace libtab

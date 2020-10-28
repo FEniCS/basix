@@ -68,34 +68,21 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("create_lattice", &cell::create_lattice,
         "Create a uniform lattice of points on a reference cell");
 
-  py::class_<Nedelec>(m, "Nedelec", "Nedelec Element (first kind)")
-      .def(py::init<cell::Type, int>(), "Constructor")
-      .def("tabulate", &Nedelec::tabulate, tabdoc.c_str());
+  py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
+      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str());
 
-  py::class_<NedelecSecondKind>(m, "NedelecSecondKind",
-                                "Nedelec Element (second kind)")
-      .def(py::init<cell::Type, int>(), "Constructor")
-      .def("tabulate", &NedelecSecondKind::tabulate, tabdoc.c_str());
-
-  py::class_<Regge>(m, "Regge", "Regge Element")
-      .def(py::init<cell::Type, int>(), "Constructor")
-      .def("tabulate", &Regge::tabulate, tabdoc.c_str());
-
-  py::class_<Lagrange>(m, "Lagrange", "Lagrange Element")
-      .def(py::init<cell::Type, int>())
-      .def("tabulate", &Lagrange::tabulate, tabdoc.c_str());
-
-  py::class_<CrouzeixRaviart>(m, "CrouzeixRaviart", "CrouzeixRaviart Element")
-      .def(py::init<cell::Type, int>())
-      .def("tabulate", &CrouzeixRaviart::tabulate, tabdoc.c_str());
-
-  py::class_<TensorProduct>(m, "TensorProduct", "TensorProduct Element")
-      .def(py::init<cell::Type, int>())
-      .def("tabulate", &TensorProduct::tabulate, tabdoc.c_str());
-
-  py::class_<RaviartThomas>(m, "RaviartThomas", "Raviart-Thomas Element")
-      .def(py::init<cell::Type, int>())
-      .def("tabulate", &RaviartThomas::tabulate, tabdoc.c_str());
+  // Create FiniteElement of different types
+  m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");
+  m.def("Lagrange", &Lagrange::create, "Create Lagrange Element");
+  m.def("CrouzeixRaviart", &CrouzeixRaviart::create,
+        "Create Crouzeix-Raviart Element");
+  m.def("TensorProduct", &TensorProduct::create,
+        "Create TensorProduct Element");
+  m.def("RaviartThomas", &RaviartThomas::create,
+        "Create Raviart-Thomas Element");
+  m.def("NedelecSecondKind", &NedelecSecondKind::create,
+        "Create Nedelec Element (second kind)");
+  m.def("Regge", &Regge::create, "Create Regge Element");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");

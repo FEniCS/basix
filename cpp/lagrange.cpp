@@ -9,16 +9,11 @@
 
 using namespace libtab;
 
-Lagrange::Lagrange(cell::Type celltype, int degree)
-    : FiniteElement(celltype, degree)
+FiniteElement Lagrange::create(cell::Type celltype, int degree)
 {
   if (celltype != cell::Type::interval and celltype != cell::Type::triangle
       and celltype != cell::Type::tetrahedron)
     throw std::runtime_error("Invalid celltype");
-
-  // Only tabulate for scalar. Vector spaces can easily be built from the scalar
-  // space.
-  this->_value_size = 1;
 
   const int ndofs = polyset::size(celltype, degree);
   const int tdim = cell::topological_dimension(celltype);
@@ -77,20 +72,20 @@ Lagrange::Lagrange(cell::Type celltype, int degree)
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
-  apply_dualmat_to_basis(coeffs, dualmat);
+  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+
+  FiniteElement el(celltype, degree, 1, new_coeffs);
+  return el;
 }
 //-----------------------------------------------------------------------------
-
-DiscontinuousLagrange::DiscontinuousLagrange(cell::Type celltype, int degree)
-    : FiniteElement(celltype, degree)
+FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
 {
   if (celltype != cell::Type::interval and celltype != cell::Type::triangle
       and celltype != cell::Type::tetrahedron)
     throw std::runtime_error("Invalid celltype");
 
-  // Only tabulate for scalar. Vector spaces can easily be built from the scalar
-  // space.
-  this->_value_size = 1;
+  // Only tabulate for scalar. Vector spaces can easily be built from the
+  // scalar space.
 
   const int ndofs = polyset::size(celltype, degree);
   const int tdim = cell::topological_dimension(celltype);
@@ -131,6 +126,9 @@ DiscontinuousLagrange::DiscontinuousLagrange(cell::Type celltype, int degree)
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
-  apply_dualmat_to_basis(coeffs, dualmat);
+  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+
+  FiniteElement el(celltype, degree, 1, new_coeffs);
+  return el;
 }
 //-----------------------------------------------------------------------------

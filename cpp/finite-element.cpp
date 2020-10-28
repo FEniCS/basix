@@ -9,13 +9,8 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(cell::Type cell_type, int degree)
-    : _cell_type(cell_type), _degree(degree)
-{
-  // Do nothing in base class
-}
-//-----------------------------------------------------------------------------
-void FiniteElement::apply_dualmat_to_basis(
+Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+FiniteElement::apply_dualmat_to_basis(
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                         Eigen::RowMajor>& coeffs,
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
@@ -29,11 +24,13 @@ void FiniteElement::apply_dualmat_to_basis(
   auto A = coeffs * dualmat.transpose();
 
   // _coeffs = A^-1(coeffs)
-  _coeffs = A.colPivHouseholderQr().solve(coeffs);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 
 #ifndef NDEBUG
-  std::cout << "New coeffs = \n[" << _coeffs << "]\n";
+  std::cout << "New coeffs = \n[" << new_coeffs << "]\n";
 #endif
+  return new_coeffs;
 }
 //-----------------------------------------------------------------------------
 std::vector<
@@ -55,8 +52,7 @@ FiniteElement::tabulate(
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(
-          basis.size(),
+  dresult(basis.size(),
           Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
               x.rows(), ndofs * _value_size));
   for (std::size_t p = 0; p < dresult.size(); ++p)

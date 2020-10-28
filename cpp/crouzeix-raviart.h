@@ -8,13 +8,11 @@
 
 namespace libtab
 {
-class CrouzeixRaviart : public FiniteElement
+class CrouzeixRaviart
 {
   /// CrouzeixRaviart element
 public:
-  /// Constructor
   /// @param celltype
-  /// @param k degree - NB this must be 1 for Crouzeix-Raviart
-  CrouzeixRaviart(cell::Type celltype, int k);
+  static FiniteElement create(cell::Type celltype);
 };
 } // namespace libtab

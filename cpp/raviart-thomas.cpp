@@ -13,26 +13,23 @@
 
 using namespace libtab;
 
-RaviartThomas::RaviartThomas(cell::Type celltype, int degree)
-    : FiniteElement(celltype, degree)
+FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
 {
   if (celltype != cell::Type::triangle and celltype != cell::Type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
   const int tdim = cell::topological_dimension(celltype);
-  // FIXME: this is nasty. Should be set in initialiser line
-  this->_value_size = tdim;
 
   // FIXME: Explain
   // Vector subsets
-  const int nv = polyset::size(celltype, _degree - 1);
-  const int ns0 = polyset::size(celltype, _degree - 2);
-  const int ns = (tdim == 2) ? _degree : _degree * (_degree + 1) / 2;
+  const int nv = polyset::size(celltype, degree - 1);
+  const int ns0 = polyset::size(celltype, degree - 2);
+  const int ns = (tdim == 2) ? degree : degree * (degree + 1) / 2;
 
   // FIXME: Explain
-  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * _degree);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts = polyset::tabulate(celltype, _degree, 0, Qpts)[0];
+      Pkp1_at_Qpts = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 
   // FIXME: Explain
   const int psize = Pkp1_at_Qpts.cols();
@@ -68,34 +65,38 @@ RaviartThomas::RaviartThomas(cell::Type celltype, int degree)
                       Eigen::RowMajor>::Zero(nv * tdim + ns, psize * tdim);
 
   // quadrature degree
-  int quad_deg = 5 * _degree;
+  int quad_deg = 5 * degree;
 
   // Create a polynomial set on a reference facet
   cell::Type facettype
       = (tdim == 2) ? cell::Type::interval : cell::Type::triangle;
-  DiscontinuousLagrange moment_space_facet(facettype, degree - 1);
+  FiniteElement moment_space_facet
+      = DiscontinuousLagrange::create(facettype, degree - 1);
 
   // FIXME: Explain better
   // Add integral moments on facets
   const int facet_count = tdim + 1;
-  const int facet_dofs = (tdim == 2) ? _degree : (_degree * (_degree + 1) / 2);
+  const int facet_dofs = (tdim == 2) ? degree : (degree * (degree + 1) / 2);
   dualmat.block(0, 0, facet_count * facet_dofs, psize * tdim)
       = moments::make_normal_integral_moments(moment_space_facet, celltype,
-                                              tdim, _degree, quad_deg);
+                                              tdim, degree, quad_deg);
 
   // Should work for 2D and 3D
-  if (_degree > 1)
+  if (degree > 1)
   {
-    const int internal_dofs
-        = (tdim == 2) ? (_degree * (_degree - 1))
-                      : (_degree * (_degree - 1) * (_degree + 1) / 2);
+    const int internal_dofs = (tdim == 2)
+                                  ? (degree * (degree - 1))
+                                  : (degree * (degree - 1) * (degree + 1) / 2);
     // Interior integral moment
-    DiscontinuousLagrange moment_space_interior(celltype, degree - 2);
+    FiniteElement moment_space_interior
+        = DiscontinuousLagrange::create(celltype, degree - 2);
     dualmat.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
         = moments::make_integral_moments(moment_space_interior, celltype, tdim,
-                                         _degree, quad_deg);
+                                         degree, quad_deg);
   }
 
-  apply_dualmat_to_basis(wcoeffs, dualmat);
+  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
+  FiniteElement el(celltype, degree, tdim, new_coeffs);
+  return el;
 }
 //-----------------------------------------------------------------------------

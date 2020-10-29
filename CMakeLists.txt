@@ -30,4 +30,4 @@ target_link_libraries(libtab PRIVATE pybind11::module tab)
 
 target_compile_definitions(libtab PRIVATE VERSION_INFO=${PROJECT_VERSION})
 
-install(TARGETS libtab DESTINATION .)
+install(TARGETS tab libtab DESTINATION .)

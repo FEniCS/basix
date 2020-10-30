@@ -84,6 +84,23 @@ Each element has a `tabulate` function which returns the basis functions and a n
         "Create Nedelec Element (second kind)");
   m.def("Regge", &Regge::create, "Create Regge Element");
 
+  m.def("create_element", [](std::string family, std::string cell, int degree) {
+    const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
+        create_map = {{"Lagrange", &Lagrange::create},
+                      {"Discontinuous Lagrange", &Lagrange::create}};
+    const std::map<std::string, cell::Type> celltype_map
+        = {{"triangle", cell::Type::triangle}};
+
+    auto create_it = create_map.find(family);
+    if (create_it == create_map.end())
+      throw std::runtime_error("Family not found");
+    auto celltype_it = celltype_map.find(cell);
+    if (celltype_it == celltype_map.end())
+      throw std::runtime_error("Cell not found");
+
+    return create_it->second(celltype_it->second, degree);
+  });
+
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");
 

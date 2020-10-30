@@ -69,7 +69,14 @@ create_lattice(cell::Type celltype, int n, bool exterior);
 int topological_dimension(cell::Type celltype);
 
 /// Get the cell type of a simplex of given dimension
+/// @param dim Topological dimension
+/// @return cell type
 cell::Type simplex_type(int dim);
+
+/// Convert a cell type string to enum
+/// @param name String
+/// @return cell type
+cell::Type str_to_type(std::string name);
 
 } // namespace Cell
 } // namespace libtab

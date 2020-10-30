@@ -87,9 +87,12 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("create_element", [](std::string family, std::string cell, int degree) {
     const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
         create_map = {{"Lagrange", &Lagrange::create},
+                      {"Raviart-Thomas", &RaviartThomas::create},
                       {"Discontinuous Lagrange", &Lagrange::create}};
     const std::map<std::string, cell::Type> celltype_map
-        = {{"triangle", cell::Type::triangle}};
+        = {{"interval", cell::Type::interval},
+           {"triangle", cell::Type::triangle},
+           {"tetrahedron", cell::Type::tetrahedron}};
 
     auto create_it = create_map.find(family);
     if (create_it == create_map.end())

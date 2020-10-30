@@ -101,19 +101,13 @@ Each element has a `tabulate` function which returns the basis functions and a n
         create_map = {{"Lagrange", &Lagrange::create},
                       {"Raviart-Thomas", &RaviartThomas::create},
                       {"Discontinuous Lagrange", &Lagrange::create}};
-    const std::map<std::string, cell::Type> celltype_map
-        = {{"interval", cell::Type::interval},
-           {"triangle", cell::Type::triangle},
-           {"tetrahedron", cell::Type::tetrahedron}};
 
     auto create_it = create_map.find(family);
     if (create_it == create_map.end())
       throw std::runtime_error("Family not found");
-    auto celltype_it = celltype_map.find(cell);
-    if (celltype_it == celltype_map.end())
-      throw std::runtime_error("Cell not found");
 
-    return create_it->second(celltype_it->second, degree);
+    const cell::Type celltype = cell::str_to_type(cell);
+    return create_it->second(celltype, degree);
   });
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,

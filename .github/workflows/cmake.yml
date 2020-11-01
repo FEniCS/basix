@@ -20,7 +20,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get -y install libeigen3-dev ninja-build python3-pytest python3-pytest-xdist python3-numpy python3-flake8 python3-sympy python3-pip
-	sudo python3 -m pip install scikit-build
+        sudo python3 -m pip install scikit-build
         pwd
         wget -nc --quiet https://github.com/pybind/pybind11/archive/v2.5.0.tar.gz
         tar -xf v2.5.0.tar.gz

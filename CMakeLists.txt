@@ -26,6 +26,17 @@ find_package(pybind11 CONFIG REQUIRED)
 add_subdirectory(src)
 
 pybind11_add_module(libtab MODULE src/wrapper.cpp)
+
+set_target_properties(libtab PROPERTIES SKIP_BUILD_RPATH FALSE)
+set_target_properties(libtab PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+set_target_properties(libtab PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+if (APPLE)
+  set_target_properties(libtab PROPERTIES INSTALL_RPATH "@loader_path")
+else()
+  set_target_properties(libtab PROPERTIES INSTALL_RPATH "$ORIGIN")
+endif()
+
 target_link_libraries(libtab PRIVATE pybind11::module tab)
 
 target_compile_definitions(libtab PRIVATE VERSION_INFO=${PROJECT_VERSION})

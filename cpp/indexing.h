@@ -6,6 +6,11 @@
 
 namespace libtab
 {
+/// Compute trivial indexing in a 1D array (for completeness)
+/// @param p Index in x
+/// @return 1D Index
+static inline int idx(int p) { return p; }
+
 /// Compute indexing in a 2D triangular array compressed into a 1D array
 /// @param p Index in x
 /// @param q Index in y

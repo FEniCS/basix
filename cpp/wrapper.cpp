@@ -124,8 +124,9 @@ Each element has a `tabulate` function which returns the basis functions and a n
                           int>(&quadrature::make_quadrature),
         "Compute quadrature points and weights on a simplex defined by points");
 
-  m.def("index", py::overload_cast<int, int>(&libtab::idx),
-        "Indexing for triangular arrays")
+  m.def("index", py::overload_cast<int>(&libtab::idx), "Indexing for 1D arrays")
+      .def("index", py::overload_cast<int, int>(&libtab::idx),
+           "Indexing for triangular arrays")
       .def("index", py::overload_cast<int, int, int>(&libtab::idx),
            "Indexing for tetrahedral arrays");
 }

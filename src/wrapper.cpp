@@ -68,8 +68,22 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("create_lattice", &cell::create_lattice,
         "Create a uniform lattice of points on a reference cell");
 
+  m.def("create_new_element",
+        [](cell::Type celltype, int degree, int value_size,
+           const Eigen::MatrixXd& dualmat,
+           const Eigen::MatrixXd& coeffs) -> FiniteElement {
+          auto new_coeffs
+              = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+          return FiniteElement(celltype, degree, value_size, new_coeffs);
+        });
+
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
-      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str());
+      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
+      .def_property_readonly("degree", &FiniteElement::degree)
+      .def_property_readonly("cell_type", &FiniteElement::cell_type)
+      .def_property_readonly("ndofs", &FiniteElement::ndofs)
+      .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
+      .def_property_readonly("value_size", &FiniteElement::value_size);
 
   // Create FiniteElement of different types
   m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");
@@ -83,6 +97,20 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("NedelecSecondKind", &NedelecSecondKind::create,
         "Create Nedelec Element (second kind)");
   m.def("Regge", &Regge::create, "Create Regge Element");
+
+  m.def("create_element", [](std::string family, std::string cell, int degree) {
+    const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
+        create_map = {{"Lagrange", &Lagrange::create},
+                      {"Raviart-Thomas", &RaviartThomas::create},
+                      {"Discontinuous Lagrange", &Lagrange::create}};
+
+    auto create_it = create_map.find(family);
+    if (create_it == create_map.end())
+      throw std::runtime_error("Family not found");
+
+    const cell::Type celltype = cell::str_to_type(cell);
+    return create_it->second(celltype, degree);
+  });
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");

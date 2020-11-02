@@ -59,23 +59,27 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .value("prism", cell::Type::prism)
       .value("pyramid", cell::Type::pyramid);
 
-  m.def("topology", &cell::topology);
-  m.def("geometry", &cell::geometry);
-  m.def("sub_entity_geometry", &cell::sub_entity_geometry);
+  m.def("topology", &cell::topology,
+        "Topological description of a reference cell");
+  m.def("geometry", &cell::geometry, "Geometric points of a reference cell");
+  m.def("sub_entity_geometry", &cell::sub_entity_geometry,
+        "Points of a sub-entity of a cell");
 
   m.def("simplex_type", &cell::simplex_type,
         "Simplex CellType of given dimension");
   m.def("create_lattice", &cell::create_lattice,
         "Create a uniform lattice of points on a reference cell");
 
-  m.def("create_new_element",
-        [](cell::Type celltype, int degree, int value_size,
-           const Eigen::MatrixXd& dualmat,
-           const Eigen::MatrixXd& coeffs) -> FiniteElement {
-          auto new_coeffs
-              = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
-          return FiniteElement(celltype, degree, value_size, new_coeffs);
-        });
+  m.def(
+      "create_new_element",
+      [](cell::Type celltype, int degree, int value_size,
+         const Eigen::MatrixXd& dualmat,
+         const Eigen::MatrixXd& coeffs) -> FiniteElement {
+        auto new_coeffs
+            = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+        return FiniteElement(celltype, degree, value_size, new_coeffs);
+      },
+      "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
@@ -98,19 +102,28 @@ Each element has a `tabulate` function which returns the basis functions and a n
         "Create Nedelec Element (second kind)");
   m.def("Regge", &Regge::create, "Create Regge Element");
 
-  m.def("create_element", [](std::string family, std::string cell, int degree) {
-    const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
-        create_map = {{"Lagrange", &Lagrange::create},
-                      {"Raviart-Thomas", &RaviartThomas::create},
-                      {"Discontinuous Lagrange", &Lagrange::create}};
+  m.def(
+      "create_element",
+      [](std::string family, std::string cell, int degree) {
+        const std::map<std::string,
+                       std::function<FiniteElement(cell::Type, int)>>
+            create_map
+            = {{"Crouzeix-Raviart", &CrouzeixRaviart::create},
+               {"Discontinuous Lagrange", &Lagrange::create},
+               {"Lagrange", &Lagrange::create},
+               {"Nedelec 1st kind H(curl)", &Nedelec::create},
+               {"Nedelec 2nd kind H(curl)", &NedelecSecondKind::create},
+               {"Raviart-Thomas", &RaviartThomas::create},
+               {"Regge", &Regge::create}};
 
-    auto create_it = create_map.find(family);
-    if (create_it == create_map.end())
-      throw std::runtime_error("Family not found");
+        auto create_it = create_map.find(family);
+        if (create_it == create_map.end())
+          throw std::runtime_error("Family not found: \"" + family + "\"");
 
-    const cell::Type celltype = cell::str_to_type(cell);
-    return create_it->second(celltype, degree);
-  });
+        const cell::Type celltype = cell::str_to_type(cell);
+        return create_it->second(celltype, degree);
+      },
+      "Create a FiniteElement of a given family, celltype and degree");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");

@@ -14,8 +14,11 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-FiniteElement CrouzeixRaviart::create(cell::Type celltype)
+FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
 {
+  if (degree != 1)
+    throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
+
   // Compute facet midpoints
   const int tdim = cell::topological_dimension(celltype);
   const std::vector<std::vector<int>> facet_topology

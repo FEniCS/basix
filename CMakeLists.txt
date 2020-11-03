@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(scikit_build_example VERSION "0.0.1")
+project(libtab VERSION "0.0.1")
 
 # Define CMAKE_INSTALL_xxx: LIBDIR, INCLUDEDIR
 include(GNUInstallDirs)

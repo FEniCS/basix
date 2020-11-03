@@ -19,33 +19,18 @@ jobs:
 
     - name: Install dependencies
       run: |
-        sudo apt-get -y install libeigen3-dev ninja-build python3-pytest python3-pytest-xdist python3-numpy python3-flake8 python3-sympy
+        sudo apt-get -y install libeigen3-dev ninja-build python3-pytest python3-pytest-xdist python3-numpy python3-flake8 python3-sympy python3-pip
+        sudo python3 -m pip install scikit-build
         pwd
         wget -nc --quiet https://github.com/pybind/pybind11/archive/v2.5.0.tar.gz
         tar -xf v2.5.0.tar.gz
         cd pybind11-2.5.0
         mkdir build && cd build
         cmake -DPYBIND11_TEST=off .. && sudo make install
-    - name: Create Build Environment
-      # Some projects don't allow in-source building, so create a separate build directory
-      # We'll use this as our working directory for all subsequent commands
-      run: cmake -E make_directory ${{runner.workspace}}/build
 
-    - name: Configure CMake
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
+    - name: Install
       shell: bash
-      working-directory: ${{runner.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source
-      # and build directories, but this is only available with CMake 3.13 and higher.
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      run: cmake -G Ninja -DCMAKE_BUILD_TYPE=$BUILD_TYPE $GITHUB_WORKSPACE/cpp
-
-    - name: Build
-      working-directory: ${{runner.workspace}}/build
-      shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: cmake --build . --config $BUILD_TYPE
+      run: python3 -m pip install .
 
     - name: Test
       shell: bash

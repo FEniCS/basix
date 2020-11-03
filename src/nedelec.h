@@ -8,13 +8,12 @@
 
 namespace libtab
 {
-class Regge : public FiniteElement
+class Nedelec
 {
-  /// Regge element of order k
+  /// Nedelec element (first kind)
 public:
-  /// Constructor
   /// @param celltype
-  /// @param k degree
-  Regge(cell::Type celltype, int k);
+  /// @param degree
+  static FiniteElement create(cell::Type celltype, int degree);
 };
 } // namespace libtab

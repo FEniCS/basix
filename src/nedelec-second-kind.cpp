@@ -59,7 +59,8 @@ create_nedelec_2d_dual(int degree)
   int quad_deg = 5 * (degree + 1);
 
   // Integral representation for the boundary (edge) dofs
-  DiscontinuousLagrange moment_space_E(cell::Type::interval, degree + 1);
+  FiniteElement moment_space_E
+      = DiscontinuousLagrange::create(cell::Type::interval, degree + 1);
   dualmat.block(0, 0, 3 * (degree + 2), psize * 2)
       = moments::make_tangent_integral_moments(
           moment_space_E, cell::Type::triangle, 2, degree + 1, quad_deg);
@@ -67,7 +68,8 @@ create_nedelec_2d_dual(int degree)
   if (degree > 0)
   {
     // Interior integral moment
-    RaviartThomas moment_space_I(cell::Type::triangle, degree);
+    FiniteElement moment_space_I
+        = RaviartThomas::create(cell::Type::triangle, degree);
     dualmat.block(3 * (degree + 2), 0, degree * (degree + 2), psize * 2)
         = moments::make_dot_integral_moments(
             moment_space_I, cell::Type::triangle, 2, degree + 1, quad_deg);
@@ -121,7 +123,8 @@ create_nedelec_3d_dual(int degree)
   int quad_deg = 5 * (degree + 1);
 
   // Integral representation for the boundary (edge) dofs
-  DiscontinuousLagrange moment_space_E(cell::Type::interval, degree + 1);
+  FiniteElement moment_space_E
+      = DiscontinuousLagrange::create(cell::Type::interval, degree + 1);
   dualmat.block(0, 0, 6 * (degree + 2), psize * 3)
       = moments::make_tangent_integral_moments(
           moment_space_E, cell::Type::tetrahedron, 3, degree + 1, quad_deg);
@@ -129,7 +132,8 @@ create_nedelec_3d_dual(int degree)
   if (degree > 0)
   {
     // Integral moments on faces
-    RaviartThomas moment_space_F(cell::Type::triangle, degree);
+    FiniteElement moment_space_F
+        = RaviartThomas::create(cell::Type::triangle, degree);
     dualmat.block(6 * (degree + 2), 0, 4 * degree * (degree + 2), psize * 3)
         = moments::make_dot_integral_moments(
             moment_space_F, cell::Type::tetrahedron, 3, degree + 1, quad_deg);
@@ -138,9 +142,11 @@ create_nedelec_3d_dual(int degree)
   if (degree > 1)
   {
     // Interior integral moment
-    DiscontinuousLagrange moment_space_I(cell::Type::tetrahedron, degree - 1);
+    FiniteElement moment_space_I
+        = DiscontinuousLagrange::create(cell::Type::tetrahedron, degree - 1);
     dualmat.block((6 + 4 * degree) * (degree + 2), 0,
-                  (degree + 2) * (degree * degree - 3 * degree - 6) / 2, psize * 3)
+                  (degree + 2) * (degree * degree - 3 * degree - 6) / 2,
+                  psize * 3)
         = moments::make_integral_moments(
             moment_space_I, cell::Type::tetrahedron, 3, degree + 1, quad_deg);
   }
@@ -151,28 +157,28 @@ create_nedelec_3d_dual(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-NedelecSecondKind::NedelecSecondKind(cell::Type celltype, int k)
-    : FiniteElement(celltype, k)
+FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
-  this->_value_size = tdim;
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs;
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat;
 
   if (celltype == cell::Type::triangle)
   {
-    wcoeffs = create_nedelec_2d_space(k - 1);
-    dualmat = create_nedelec_2d_dual(k - 1);
+    wcoeffs = create_nedelec_2d_space(degree - 1);
+    dualmat = create_nedelec_2d_dual(degree - 1);
   }
   else if (celltype == cell::Type::tetrahedron)
   {
-    wcoeffs = create_nedelec_3d_space(k - 1);
-    dualmat = create_nedelec_3d_dual(k - 1);
+    wcoeffs = create_nedelec_3d_space(degree - 1);
+    dualmat = create_nedelec_3d_dual(degree - 1);
   }
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
-  apply_dualmat_to_basis(wcoeffs, dualmat);
+  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
+  FiniteElement el(celltype, degree, tdim, new_coeffs);
+  return el;
 }
 //-----------------------------------------------------------------------------

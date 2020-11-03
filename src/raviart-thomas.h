@@ -2,19 +2,19 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include "cell.h"
 #include "finite-element.h"
 
 #pragma once
 
 namespace libtab
 {
-class Nedelec : public FiniteElement
+class RaviartThomas
 {
-  /// Nedelec element (first kind) of order k
+  /// Raviart-Thomas element
 public:
-  /// Constructor
   /// @param celltype
-  /// @param k degree
-  Nedelec(cell::Type celltype, int k);
+  /// @param degree
+  static FiniteElement create(cell::Type celltype, int degree);
 };
 } // namespace libtab

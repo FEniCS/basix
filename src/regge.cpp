@@ -142,16 +142,17 @@ create_regge_dual(cell::Type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-Regge::Regge(cell::Type celltype, int k) : FiniteElement(celltype, k)
+FiniteElement Regge::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
-  this->_value_size = tdim * tdim;
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs
-      = create_regge_space(celltype, k);
+      = create_regge_space(celltype, degree);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
-      = create_regge_dual(celltype, k);
+      = create_regge_dual(celltype, degree);
 
-  apply_dualmat_to_basis(wcoeffs, dualmat);
+  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
+  FiniteElement el(celltype, degree, tdim * tdim, new_coeffs);
+  return el;
 }
 //-----------------------------------------------------------------------------

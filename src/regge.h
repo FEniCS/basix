@@ -2,20 +2,19 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "cell.h"
 #include "finite-element.h"
 
 #pragma once
 
 namespace libtab
 {
-class RaviartThomas : public FiniteElement
+class Regge
 {
-  /// Raviart-Thomas element of order k
+  /// Regge element
 public:
-  /// Constructor
+  /// Regge element
   /// @param celltype
-  /// @param k degree
-  RaviartThomas(cell::Type celltype, int k);
+  /// @param degree
+  static FiniteElement create(cell::Type celltype, int degree);
 };
 } // namespace libtab

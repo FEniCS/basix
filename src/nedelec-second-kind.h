@@ -8,13 +8,12 @@
 
 namespace libtab
 {
-class NedelecSecondKind : public FiniteElement
+class NedelecSecondKind
 {
-  /// Nedelec element (second kind) of order k
+  /// Nedelec element (second kind)
 public:
-  /// Constructor
   /// @param celltype
-  /// @param k degree
-  NedelecSecondKind(cell::Type celltype, int k);
+  /// @param degree
+  static FiniteElement create(cell::Type celltype, int degree);
 };
 } // namespace libtab

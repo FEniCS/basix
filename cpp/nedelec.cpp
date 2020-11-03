@@ -105,7 +105,18 @@ create_nedelec_3d_space(int degree)
 
   // PkH subset
   const int ns = (degree + 1) * (degree + 2) / 2;
+  const int ns_rrr = degree * (degree + 1) / 2;
   const int ns0 = degree * (degree + 1) * (degree + 2) / 6;
+
+  std::cout
+    << ns_rrr << " "
+    << ns_rrr << " "
+    << ns_rrr << " "
+    << ns_rrr << " "
+    << ns_rrr << "\n\n";
+
+  const int ndofs = 6 * (degree + 1) + 4 * degree * (degree + 1)
+                    + (degree - 1) * degree * (degree + 1) / 2;
 
   // Tabulate P(k+1) at quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree + 2);
@@ -116,52 +127,58 @@ create_nedelec_3d_space(int degree)
 
   // Create initial coefficients of Pkp1.
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs((nv + ns) * tdim, psize * tdim);
-  wcoeffs.setZero();
+      wcoeffs(ndofs, psize * tdim);
+   wcoeffs.setZero();
   for (int i = 0; i < tdim; ++i)
   {
+    std::cout << i << " " << nv * i << "," << psize * i << " " << nv << "," << nv
+              << " " << wcoeffs.rows() << "," << wcoeffs.cols() << "\n";
     wcoeffs.block(nv * i, psize * i, nv, nv)
         = Eigen::MatrixXd::Identity(nv, nv);
   }
+
+  std::cout << "A\n";
 
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
     {
-      for (int j = 0; j < tdim; ++j)
-      {
-        const int j1 = (j + 1) % 3;
-        const int j2 = (j + 2) % 3;
-
-        auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
-                 * Pkp1_at_Qpts.col(k);
-        wcoeffs(tdim * nv + i + ns * j1, psize * j2 + k) = -w.sum();
-        wcoeffs(tdim * nv + i + ns * j2, psize * j1 + k) = w.sum();
-      }
+      auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(2)
+               * Pkp1_at_Qpts.col(k);
+      wcoeffs(tdim * nv + i, psize + k) = -w.sum();
+      wcoeffs(tdim * nv + i + ns, k) = w.sum();
     }
   }
 
-  // Remove dependent components from space with SVD
-  Eigen::JacobiSVD<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      svd(wcoeffs, Eigen::ComputeThinU | Eigen::ComputeThinV);
+  std::cout << "B\n";
 
-  int ndofs = 6 * (degree + 1) + 4 * degree * (degree + 1)
-              + (degree - 1) * degree * (degree + 1) / 2;
-  wcoeffs = svd.matrixV().transpose().topRows(ndofs);
+  for (int i = 0; i < ns; ++i)
+  {
+    for (int k = 0; k < psize; ++k)
+    {
+      auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
+               * Pkp1_at_Qpts.col(k);
+      if (i >= ns_rrr)
+        wcoeffs(tdim * nv + i - ns_rrr + ns * 2, k) = -w.sum();
+      wcoeffs(tdim * nv + i, psize * 2 + k) = w.sum();
+    }
+  }
 
-  // Check singular values (should only be ndofs which are significant)
-  Eigen::VectorXd s = svd.singularValues();
-  for (int i = 0; i < ndofs; ++i)
+  std::cout << "C\n";
+
+  for (int i = 0; i < ns; ++i)
   {
-    if (s[i] < 1e-12)
-      throw std::runtime_error("Error in Nedelec3D space");
+    for (int k = 0; k < psize; ++k)
+    {
+      auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(0)
+               * Pkp1_at_Qpts.col(k);
+      wcoeffs(tdim * nv + i + ns, psize * 2 + k) = -w.sum();
+      if (i >= ns_rrr)
+        wcoeffs(tdim * nv + i - ns_rrr + ns * 2, psize + k) = w.sum();
+    }
   }
-  for (int i = ndofs; i < s.size(); ++i)
-  {
-    if (s[i] > 1e-12)
-      throw std::runtime_error("Error in Nedelec3D space");
-  }
+
+  std::cout << "wcoeffs = [\n" << wcoeffs << "\n]\n\n";
 
   return wcoeffs;
 }

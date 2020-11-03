@@ -238,5 +238,10 @@ def test_tet(order):
                         wsym[j, i] = wd.subs([(x, p[0]),
                                               (y, p[1]),
                                               (z, p[2])])
+                for i,j in zip(wtab[libtab.index(kx, ky, kz)], wsym):
+                    print("".join(["=" if numpy.isclose(a,b) else "E" for a,b in zip(i,j)]))
+                    for a,b in zip(i,j):
+                        if not numpy.isclose(a,b):
+                            print(a,b, a/b)
 
                 assert(numpy.isclose(wtab[libtab.index(kx, ky, kz)], wsym).all())

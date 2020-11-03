@@ -73,7 +73,7 @@ public:
   /// Calculates the basis functions of the finite element, in terms of the
   /// polynomial basis.
   ///
-  /// The polynomial basis contains all polynomials up the a chosen degree. The
+  /// The polynomial basis contains all polynomials up to a chosen degree. The
   /// polynomial set is a subset of this basis (often it is equal, but for
   /// example for Nedelec kind spaces it is a smaller set). The polynomial set
   /// is defined by the coeffs input: each row of this gives the coefficients of

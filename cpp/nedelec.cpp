@@ -145,8 +145,9 @@ create_nedelec_3d_space(int degree)
     {
       auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(2)
                * Pkp1_at_Qpts.col(k);
-      wcoeffs(tdim * nv + i, psize + k) = -w.sum();
-      wcoeffs(tdim * nv + i + ns, k) = w.sum();
+      if (i >= ns_rrr)
+        wcoeffs(tdim * nv + i - ns_rrr, psize + k) = -w.sum();
+      wcoeffs(tdim * nv + i + ns - ns_rrr, k) = w.sum();
     }
   }
 
@@ -158,9 +159,9 @@ create_nedelec_3d_space(int degree)
     {
       auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
                * Pkp1_at_Qpts.col(k);
+      wcoeffs(tdim * nv + i + ns * 2 - ns_rrr, k) = -w.sum();
       if (i >= ns_rrr)
-        wcoeffs(tdim * nv + i - ns_rrr + ns * 2, k) = -w.sum();
-      wcoeffs(tdim * nv + i, psize * 2 + k) = w.sum();
+        wcoeffs(tdim * nv + i - ns_rrr, psize * 2 + k) = w.sum();
     }
   }
 
@@ -172,9 +173,8 @@ create_nedelec_3d_space(int degree)
     {
       auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(0)
                * Pkp1_at_Qpts.col(k);
-      wcoeffs(tdim * nv + i + ns, psize * 2 + k) = -w.sum();
-      if (i >= ns_rrr)
-        wcoeffs(tdim * nv + i - ns_rrr + ns * 2, psize + k) = w.sum();
+      wcoeffs(tdim * nv + i + ns - ns_rrr, psize * 2 + k) = -w.sum();
+      wcoeffs(tdim * nv + i + ns * 2 - ns_rrr, psize + k) = w.sum();
     }
   }
 

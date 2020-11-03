@@ -23,14 +23,14 @@ create_nedelec_2d_space(int degree)
   // 2D space on triangle
   const int tdim = 2;
 
-  // Vector subset
+  // Number of order (degree) vector polynomials
   const int nv = (degree + 1) * (degree + 2) / 2;
-
-  // PkH subset
-  const int ns = degree + 1;
+  // Number of order (degree-1) vector polynomials
   const int ns0 = (degree + 1) * degree / 2;
+  // Number of additional polynomials in Nedelec set
+  const int ns = degree + 1;
 
-  // Tabulate P(k+1) at quadrature points
+  // Tabulate polynomial set at quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts
@@ -38,13 +38,14 @@ create_nedelec_2d_space(int degree)
 
   const int psize = Pkp1_at_Qpts.cols();
 
-  // Create initial coefficients of Pkp1.
+  // Create coefficients for order (degree-1) vector polynomials
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       wcoeffs(nv * 2 + ns, psize * 2);
   wcoeffs.setZero();
   wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
   wcoeffs.block(nv, psize, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
 
+  // Create coefficients for the additional Nedelec polynomials
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
@@ -99,43 +100,47 @@ create_nedelec_3d_space(int degree)
   // Reference tetrahedron
   const int tdim = 3;
 
-  // Vector subset
+  // Number of order (degree) vector polynomials
   const int nv = (degree + 1) * (degree + 2) * (degree + 3) / 6;
 
-  // PkH subset
-  const int ns = (degree + 1) * (degree + 2) / 2;
-  const int ns_remove = degree * (degree + 1) / 2;
+  // Number of order (degree-1) vector polynomials
   const int ns0 = degree * (degree + 1) * (degree + 2) / 6;
+  // Number of additional Nedelec polynomials that could be added
+  const int ns = (degree + 1) * (degree + 2) / 2;
+  // Number of polynomials that would be included that are not independent so are removed
+  const int ns_remove = degree * (degree + 1) / 2;
 
+  // Number of dofs in the space, ie size of polynomial set
   const int ndofs = 6 * (degree + 1) + 4 * degree * (degree + 1)
                     + (degree - 1) * degree * (degree + 1) / 2;
 
-  // Tabulate P(k+1) at quadrature points
+  // Tabulate polynomial basis at quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree + 2);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts
       = polyset::tabulate(cell::Type::tetrahedron, degree + 1, 0, Qpts)[0];
   const int psize = Pkp1_at_Qpts.cols();
 
-  // Create initial coefficients of Pkp1.
+  // Create coefficients for order (degree-1) polynomials
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       wcoeffs(ndofs, psize * tdim);
    wcoeffs.setZero();
   for (int i = 0; i < tdim; ++i)
     wcoeffs.block(nv * i, psize * i, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
 
+  // Create coefficients for additional Nedelec polynomials
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
     {
       auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(2)
                * Pkp1_at_Qpts.col(k);
+      // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
         wcoeffs(tdim * nv + i - ns_remove, psize + k) = -w.sum();
       wcoeffs(tdim * nv + i + ns - ns_remove, k) = w.sum();
     }
   }
-
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
@@ -143,11 +148,11 @@ create_nedelec_3d_space(int degree)
       auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
                * Pkp1_at_Qpts.col(k);
       wcoeffs(tdim * nv + i + ns * 2 - ns_remove, k) = -w.sum();
+      // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
         wcoeffs(tdim * nv + i - ns_remove, psize * 2 + k) = w.sum();
     }
   }
-
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)

@@ -48,7 +48,7 @@ create_nedelec_2d_dual(int degree)
 {
   // Number of dofs and size of polynomial set P(k+1)
   const int ndofs = (degree + 1) * (degree + 2);
-  const int psize = (degree + 2) * (degree + 2) / 2;
+  const int psize = (degree + 1) * (degree + 2) / 2;
 
   // Dual space
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>

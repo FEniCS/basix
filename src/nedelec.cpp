@@ -9,7 +9,6 @@
 #include "quadrature.h"
 #include <Eigen/Dense>
 #include <Eigen/SVD>
-#include <iostream>
 #include <numeric>
 #include <vector>
 
@@ -108,15 +107,8 @@ create_nedelec_3d_space(int degree)
 
   // PkH subset
   const int ns = (degree + 1) * (degree + 2) / 2;
-  const int ns_rrr = degree * (degree + 1) / 2;
+  const int ns_remove = degree * (degree + 1) / 2;
   const int ns0 = degree * (degree + 1) * (degree + 2) / 6;
-
-  std::cout
-    << ns_rrr << " "
-    << ns_rrr << " "
-    << ns_rrr << " "
-    << ns_rrr << " "
-    << ns_rrr << "\n\n";
 
   const int ndofs = 6 * (degree + 1) + 4 * degree * (degree + 1)
                     + (degree - 1) * degree * (degree + 1) / 2;
@@ -133,14 +125,7 @@ create_nedelec_3d_space(int degree)
       wcoeffs(ndofs, psize * tdim);
    wcoeffs.setZero();
   for (int i = 0; i < tdim; ++i)
-  {
-    std::cout << i << " " << nv * i << "," << psize * i << " " << nv << "," << nv
-              << " " << wcoeffs.rows() << "," << wcoeffs.cols() << "\n";
-    wcoeffs.block(nv * i, psize * i, nv, nv)
-        = Eigen::MatrixXd::Identity(nv, nv);
-  }
-
-  std::cout << "A\n";
+    wcoeffs.block(nv * i, psize * i, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
 
   for (int i = 0; i < ns; ++i)
   {
@@ -148,12 +133,11 @@ create_nedelec_3d_space(int degree)
     {
       auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(2)
                * Pkp1_at_Qpts.col(k);
-      wcoeffs(tdim * nv + i, psize + k) = -w.sum();
-      wcoeffs(tdim * nv + i + ns, k) = w.sum();
+      if (i >= ns_remove)
+        wcoeffs(tdim * nv + i - ns_remove, psize + k) = -w.sum();
+      wcoeffs(tdim * nv + i + ns - ns_remove, k) = w.sum();
     }
   }
-
-  std::cout << "B\n";
 
   for (int i = 0; i < ns; ++i)
   {
@@ -161,13 +145,11 @@ create_nedelec_3d_space(int degree)
     {
       auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
                * Pkp1_at_Qpts.col(k);
-      if (i >= ns_rrr)
-        wcoeffs(tdim * nv + i - ns_rrr + ns * 2, k) = -w.sum();
-      wcoeffs(tdim * nv + i, psize * 2 + k) = w.sum();
+      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, k) = -w.sum();
+      if (i >= ns_remove)
+        wcoeffs(tdim * nv + i - ns_remove, psize * 2 + k) = w.sum();
     }
   }
-
-  std::cout << "C\n";
 
   for (int i = 0; i < ns; ++i)
   {
@@ -175,13 +157,10 @@ create_nedelec_3d_space(int degree)
     {
       auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(0)
                * Pkp1_at_Qpts.col(k);
-      wcoeffs(tdim * nv + i + ns, psize * 2 + k) = -w.sum();
-      if (i >= ns_rrr)
-        wcoeffs(tdim * nv + i - ns_rrr + ns * 2, psize + k) = w.sum();
+      wcoeffs(tdim * nv + i + ns - ns_remove, psize * 2 + k) = -w.sum();
+      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + k) = w.sum();
     }
   }
-
-  std::cout << "wcoeffs = [\n" << wcoeffs << "\n]\n\n";
 
   return wcoeffs;
 }

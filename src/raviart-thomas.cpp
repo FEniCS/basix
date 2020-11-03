@@ -28,7 +28,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   // Raviart-Thomas
   const int ns = (tdim == 2) ? degree : degree * (degree + 1) / 2;
 
-  // Evaluate the Legendre polynomials at the quadrature points
+  // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts = polyset::tabulate(celltype, degree, 0, Qpts)[0];

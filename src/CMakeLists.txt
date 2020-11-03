@@ -10,6 +10,3 @@ endif()
 
 # Executable
 add_library(tab SHARED polynomial-set.cpp integral-moments.cpp lagrange.cpp quadrature.cpp nedelec.cpp nedelec-second-kind.cpp raviart-thomas.cpp finite-element.cpp tp.cpp cell.cpp regge.cpp crouzeix-raviart.cpp)
-
-find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
-  $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})

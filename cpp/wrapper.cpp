@@ -59,43 +59,71 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .value("prism", cell::Type::prism)
       .value("pyramid", cell::Type::pyramid);
 
-  m.def("topology", &cell::topology);
-  m.def("geometry", &cell::geometry);
-  m.def("sub_entity_geometry", &cell::sub_entity_geometry);
+  m.def("topology", &cell::topology,
+        "Topological description of a reference cell");
+  m.def("geometry", &cell::geometry, "Geometric points of a reference cell");
+  m.def("sub_entity_geometry", &cell::sub_entity_geometry,
+        "Points of a sub-entity of a cell");
 
   m.def("simplex_type", &cell::simplex_type,
         "Simplex CellType of given dimension");
   m.def("create_lattice", &cell::create_lattice,
         "Create a uniform lattice of points on a reference cell");
 
-  py::class_<Nedelec>(m, "Nedelec", "Nedelec Element (first kind)")
-      .def(py::init<cell::Type, int>(), "Constructor")
-      .def("tabulate", &Nedelec::tabulate, tabdoc.c_str());
+  m.def(
+      "create_new_element",
+      [](cell::Type celltype, int degree, int value_size,
+         const Eigen::MatrixXd& dualmat,
+         const Eigen::MatrixXd& coeffs) -> FiniteElement {
+        auto new_coeffs
+            = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+        return FiniteElement(celltype, degree, value_size, new_coeffs);
+      },
+      "Create an element from basic data");
 
-  py::class_<NedelecSecondKind>(m, "NedelecSecondKind",
-                                "Nedelec Element (second kind)")
-      .def(py::init<cell::Type, int>(), "Constructor")
-      .def("tabulate", &NedelecSecondKind::tabulate, tabdoc.c_str());
+  py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
+      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
+      .def_property_readonly("degree", &FiniteElement::degree)
+      .def_property_readonly("cell_type", &FiniteElement::cell_type)
+      .def_property_readonly("ndofs", &FiniteElement::ndofs)
+      .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
+      .def_property_readonly("value_size", &FiniteElement::value_size);
 
-  py::class_<Regge>(m, "Regge", "Regge Element")
-      .def(py::init<cell::Type, int>(), "Constructor")
-      .def("tabulate", &Regge::tabulate, tabdoc.c_str());
+  // Create FiniteElement of different types
+  m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");
+  m.def("Lagrange", &Lagrange::create, "Create Lagrange Element");
+  m.def("CrouzeixRaviart", &CrouzeixRaviart::create,
+        "Create Crouzeix-Raviart Element");
+  m.def("TensorProduct", &TensorProduct::create,
+        "Create TensorProduct Element");
+  m.def("RaviartThomas", &RaviartThomas::create,
+        "Create Raviart-Thomas Element");
+  m.def("NedelecSecondKind", &NedelecSecondKind::create,
+        "Create Nedelec Element (second kind)");
+  m.def("Regge", &Regge::create, "Create Regge Element");
 
-  py::class_<Lagrange>(m, "Lagrange", "Lagrange Element")
-      .def(py::init<cell::Type, int>())
-      .def("tabulate", &Lagrange::tabulate, tabdoc.c_str());
+  m.def(
+      "create_element",
+      [](std::string family, std::string cell, int degree) {
+        const std::map<std::string,
+                       std::function<FiniteElement(cell::Type, int)>>
+            create_map
+            = {{"Crouzeix-Raviart", &CrouzeixRaviart::create},
+               {"Discontinuous Lagrange", &Lagrange::create},
+               {"Lagrange", &Lagrange::create},
+               {"Nedelec 1st kind H(curl)", &Nedelec::create},
+               {"Nedelec 2nd kind H(curl)", &NedelecSecondKind::create},
+               {"Raviart-Thomas", &RaviartThomas::create},
+               {"Regge", &Regge::create}};
 
-  py::class_<CrouzeixRaviart>(m, "CrouzeixRaviart", "CrouzeixRaviart Element")
-      .def(py::init<cell::Type, int>())
-      .def("tabulate", &CrouzeixRaviart::tabulate, tabdoc.c_str());
+        auto create_it = create_map.find(family);
+        if (create_it == create_map.end())
+          throw std::runtime_error("Family not found: \"" + family + "\"");
 
-  py::class_<TensorProduct>(m, "TensorProduct", "TensorProduct Element")
-      .def(py::init<cell::Type, int>())
-      .def("tabulate", &TensorProduct::tabulate, tabdoc.c_str());
-
-  py::class_<RaviartThomas>(m, "RaviartThomas", "Raviart-Thomas Element")
-      .def(py::init<cell::Type, int>())
-      .def("tabulate", &RaviartThomas::tabulate, tabdoc.c_str());
+        const cell::Type celltype = cell::str_to_type(cell);
+        return create_it->second(celltype, degree);
+      },
+      "Create a FiniteElement of a given family, celltype and degree");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");
@@ -109,8 +137,9 @@ Each element has a `tabulate` function which returns the basis functions and a n
                           int>(&quadrature::make_quadrature),
         "Compute quadrature points and weights on a simplex defined by points");
 
-  m.def("index", py::overload_cast<int, int>(&libtab::idx),
-        "Indexing for triangular arrays")
+  m.def("index", py::overload_cast<int>(&libtab::idx), "Indexing for 1D arrays")
+      .def("index", py::overload_cast<int, int>(&libtab::idx),
+           "Indexing for triangular arrays")
       .def("index", py::overload_cast<int, int, int>(&libtab::idx),
            "Indexing for tetrahedral arrays");
 }

@@ -8,8 +8,7 @@
 
 using namespace libtab;
 
-TensorProduct::TensorProduct(cell::Type celltype, int degree)
-    : FiniteElement(celltype, degree)
+FiniteElement TensorProduct::create(cell::Type celltype, int degree)
 {
   if (celltype != cell::Type::quadrilateral and celltype != cell::Type::prism
       and celltype != cell::Type::pyramid
@@ -17,8 +16,6 @@ TensorProduct::TensorProduct(cell::Type celltype, int degree)
   {
     throw std::runtime_error("Invalid celltype");
   }
-
-  this->_value_size = 1;
 
   // Tabulate basis at nodes
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt
@@ -28,5 +25,7 @@ TensorProduct::TensorProduct(cell::Type celltype, int degree)
 
   int ndofs = pt.rows();
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
-  apply_dualmat_to_basis(coeffs, dualmat);
+  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+  FiniteElement el(celltype, degree, 1, new_coeffs);
+  return el;
 }

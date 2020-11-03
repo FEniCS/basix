@@ -69,9 +69,22 @@ public:
   /// @return List
   std::array<int, 4> entity_dofs() const { return _entity_dofs; }
 
-  // FIXME: document better and explain mathematically
-  // Applies nodal constraints from dualmat to original
-  // coeffs on basis, and return new coeffs.
+  /// FIXME: document better and explain mathematically
+  /// Calculates the basis functions of the finite element, in terms of the
+  /// polynomial basis.
+  ///
+  /// The polynomial basis contains all polynomials up the a chosen degree. The
+  /// polynomial set is a subset of this basis (often it is equal, but for
+  /// example for Nedelec kind spaces it is a smaller set). The polynomial set
+  /// is defined by the coeffs input: each row of this gives the coefficients of
+  /// a polynomial in terms of the polynomial basis. The dual matrix contains
+  /// the values obtained when each functional in the dual set is applied to
+  /// each polynomial in the polynomial basis (Note: not the polynomial set).
+  ///
+  /// @param[in] coeffs The coefficients defining the polynomial set
+  /// @param[in] dualmat The values obtained when applying each functional in
+  /// the dual set to each polynomial in the polynomial basis
+  /// @return The coefficients that define the basis of the finite element space
   static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   apply_dualmat_to_basis(
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,

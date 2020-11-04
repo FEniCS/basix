@@ -120,7 +120,7 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   double g2 = J.colPivHouseholderQr().solve(en)[n - 1];
 
   Eigen::ArrayXd alpha_l = alpha;
-  alpha_l[n] = (g1 * xl1 - g2 * xl2) / (g1 - g2);
+  alpha_l[n] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
   Eigen::ArrayXd beta_l = beta;
   beta_l[n] = (xl2 - xl1) / (g1 - g2);
   auto [x, w] = gauss(alpha_l, beta_l);

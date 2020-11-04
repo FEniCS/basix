@@ -86,9 +86,10 @@ public:
   /// of Legendre polynomials
   /// @param[in] dualmat The values obtained when applying each functional in
   /// the dual set to each Legendre polynomial
-  /// @return The coefficients that define the basis of the finite element space
+  /// @return The the expansion coefficients that define the basis of
+  /// the finite element space
   static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  apply_dualmat_to_basis(
+  compute_expansion_coefficents(
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& coeffs,
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,

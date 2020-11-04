@@ -72,54 +72,110 @@ public:
   /// Calculates the basis functions of the finite element, in terms of the
   /// polynomial basis.
   ///
-  /// The polynomial set is a subset of the expansion polynomials (often it is
-  /// equal, but for example for Nedelec kind spaces it is a smaller set). A
-  /// basis of the polynomial set is defined by the coeffs input: each row of
-  /// this gives the coefficients of a polynomial in terms of the Legendre
-  /// polynomials. The dual matrix contains the values obtained when each
-  /// functional in the dual set is applied to each Legendre polynomial (Note:
-  /// not each polynomial in the polynomial basis).
+  /// The basis functions (\phi_i) of a finite element can be represented as
+  /// a linear combination of polynomials (p_j) in an underlying polynomial
+  /// basis that span the space of all d-dimensional polynomials up to order
+  /// k (P_k^d):
+  ///   \phi_i = \sum_j c_{ij} p_j
+  /// This function computed the matrix C = (c_{ij}).
   ///
-  /// This function computes (C * D^t)^-1 * C, where C is span_coeffs and D is
-  /// dualmat.
+  /// In some cases, the basis functions (\phi_i) do not span the full space
+  /// P_k. In these cases, we represent the space spanned by the basis
+  /// functions as the span of some polynomials (q_k). These can be
+  /// represented in terms of the underlying polynomial basis:
+  ///   q_k = \sum_j b_{kj} p_j
+  /// If the basis functions span the full space, then B = (b_{kj}) is simply
+  /// the identity.
   ///
-  /// Example
-  /// -------
-  /// For lowest order Raviart-Thomas elements on a triangle using a Legendre
-  /// expansion basis, the inputs are:
-  /// span_coeffs = [[1,    0,           0,          0,    0, 0         ],
-  ///                [0,    0,           0,          1,    0, 0         ],
-  ///                [1/12, sqrt(6)/48, -sqrt(2)/48, 1/12, 0, sqrt(2)/24]]
-  /// dualmat = [[-sqrt(2)/2, -sqrt(3)/2, -1/2, -sqrt(2)/2, -sqrt(3)/2, -1/2],
-  ///            [-sqrt(2)/2,  sqrt(3)/2, -1/2,  0,          0,          0],
-  ///            [ 0,          0,          0,    sqrt(2)/2,  0,         -1]]
+  /// The basis functions \phi_i are defined by a dual set of functionals
+  /// (f_l). The basis functions are the functions in span{q_k} such that:
+  ///   f_l(\phi_i) = 1 if i=l
+  ///                 0 otherwise
+  /// We can define a matrix D given by applying the functionals to each
+  /// polynomial p_j:
+  ///   D = (d_{lj}), where d_{lj} = f_l(p_j)
   ///
-  /// The Legendre expansion basis in this example is:
-  ///   [(sqrt(2)/2, 0), (sqrt(3)*(2*x + y - 1), 0), (3*y - 1, 0),
-  ///    (0, sqrt(2)/2), (0, sqrt(3)*(2*x + y - 1)), (0, 3*y - 1)]
-  /// Hence the span_coeffs represent the polynomials:
-  ///   [sqrt(2)/2, 0]
-  ///   [0, sqrt(2)/2]
-  ///   [sqrt(2)*x/8, sqrt(2)*y/8]
-  /// Each row is dualmat is the results of applying a fixed functional to each
-  /// polynomial in the Legendre expansion basis. In this case, these
-  /// functionals are the integrals of the normal compenent along an edge.
+  /// This function takes the matrices B (span_coeffs) and D (dualmat) as
+  /// inputs and returns the matrix C. It computed C using:
+  ///   C = (B * D^t)^-1 * B
   ///
-  /// In this example, this function will return:
-  ///   [[-sqrt(2)/2, -sqrt(3)/2, -1/2, -sqrt(2)/2, -sqrt(3)/2, -1/2],
-  ///    [-sqrt(2)/2,  sqrt(3)/2, -1/2,  0,          0,          0],
-  ///    [ 0,          0,          0,    sqrt(2)/2,  0,         -1]
-  /// These are the expansion coefficients of the following basis functions:
+  /// Example: Order 1 Lagrange elements on a triangle
+  /// ------------------------------------------------
+  /// On a triangle, the scalar expansion basis is:
+  ///   p_0 = sqrt(2)/2
+  ///   p_1 = sqrt(3)*(2*x + y - 1)
+  ///   p_2 = 3*y - 1
+  /// These span the space P_1.
+  ///
+  /// Lagrance order 1 elements span the space P_1, so in this example,
+  /// B (span_coeffs) is the identity matrix:
+  ///   span_coeffs = [[1, 0, 0]
+  ///                  [0, 1, 0],
+  ///                  [0, 0, 1]]
+  ///
+  /// The functionals defining the Lagrange order 1 space are point
+  /// evaluations at the three vertices of the triangle. The matrix D
+  /// (dualmat) given by applying these to p_0 to p_2 is:
+  ///   dualmat = [[sqrt(2)/2, -sqrt(3), -1],
+  ///              [sqrt(2)/2,  sqrt(3), -1],
+  ///              [sqrt(2)/2,        0,  2]]
+  ///
+  /// For this example, this function outputs the matrix:
+  ///   C = [[sqrt(2)/3, -sqrt(3)/6, -1/6],
+  ///        [sqrt(2)/3,  sqrt(3)/6, -1/6],
+  ///        [sqrt(2)/3,          0,  1/3]]
+  /// The basis functions of the finite element can be obtained by applying
+  /// the matrix C to the vector [p_0, p_1, p_2], giving:
+  ///   1 - x - y
+  ///   x
+  ///   y
+  ///
+  /// Example: Order 1 Raviart-Thomas on a triangle
+  /// ---------------------------------------------
+  /// On a triangle, the 2D vector expansion basis is:
+  ///   p_0 = (sqrt(2)/2, 0)
+  ///   p_1 = (sqrt(3)*(2*x + y - 1), 0)
+  ///   p_2 = (3*y - 1, 0)
+  ///   p_3 = (0, sqrt(2)/2)
+  ///   p_4 = (0, sqrt(3)*(2*x + y - 1))
+  ///   p_5 = (0, 3*y - 1)
+  /// These span the space P_1^2.
+  ///
+  /// Raviart-Thomas order 1 elements span a space smaller than P_1^2, so
+  /// B (span_coeffs) is not the identity. It is given by:
+  ///   span_coeffs = [[   1,          0,           0,    0, 0,          0],
+  ///                  [   0,          0,           0,    1, 0,          0],
+  ///                  [1/12, sqrt(6)/48, -sqrt(2)/48, 1/12, 0, sqrt(2)/24]]
+  /// Applying the matrix B to the vector [p_0, p_1, ..., p_5] gives the
+  /// basis of the polynomial space for Raviart-Thomas:
+  ///   [[sqrt(2)/2, 0],
+  ///    [0, sqrt(2)/2],
+  ///    [sqrt(2)*x/8, sqrt(2)*y/8]]
+  ///
+  /// The functionals defining the Raviart-Thomas order 1 space are integral
+  /// of the normal components along each edge. The matrix D (dualmat) given
+  /// by applying these to p_0 to p_5 is:
+  ///   dualmat = [[-sqrt(2)/2, -sqrt(3)/2, -1/2, -sqrt(2)/2, -sqrt(3)/2, -1/2],
+  ///              [-sqrt(2)/2,  sqrt(3)/2, -1/2,          0,          0,    0],
+  ///              [         0,          0,    0,  sqrt(2)/2,          0,   -1]]
+  ///
+  /// In this example, this function outputs the matrix:
+  ///   C = [[-sqrt(2)/2, -sqrt(3)/2, -1/2, -sqrt(2)/2, -sqrt(3)/2, -1/2],
+  ///        [-sqrt(2)/2,  sqrt(3)/2, -1/2,          0,          0,    0],
+  ///        [         0,          0,    0,  sqrt(2)/2,          0,   -1]]
+  /// The basis functions of the finite element can be obtained by applying
+  /// the matrix C to the vector [p_0, p_1, ..., p_5], giving:
   ///   [-x, -y]
   ///   [x - 1, y]
   ///   [-x, 1 - y]
   ///
-  /// @param[in] span_coeffs The expansion coefficients defining a polynomial
-  /// basis spanning the polynomial set of for the space
-  /// @param[in] dualmat The values obtained when applying each functional in
-  /// the dual set to each Legendre polynomial
-  /// @return The the expansion coefficients that define the basis of
-  /// the finite element space
+  /// @param[in] span_coeffs The matrix B containing the expansion
+  /// coefficients defining a polynomial basis spanning the polynomial space
+  /// for this element.
+  /// @param[in] dualmat The matrix D of values obtained by applying each
+  /// functional in the dual set to each expansion polynomial
+  /// @return The matrix C of expansion coefficients that define the basis
+  /// functions of the finite element space.
   static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   compute_expansion_coefficents(
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,

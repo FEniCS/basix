@@ -104,20 +104,18 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
 
   int n = alpha.rows() - 1;
 
-  const Eigen::VectorXd bsqrt = beta.segment(1, n - 1).cwiseSqrt();
-  const Eigen::VectorXd a1 = alpha.tail(n) - xl1;
-  const Eigen::VectorXd a2 = alpha.tail(n) - xl2;
+  Eigen::VectorXd bsqrt(n);
+  bsqrt.head(n - 1) = beta.segment(1, n - 1).cwiseSqrt();
+  bsqrt(n - 1) = 1.0;
 
-  Eigen::MatrixXd J = a1.asDiagonal();
-  J.topRightCorner(n - 1, n - 1) += bsqrt.asDiagonal();
-  J.bottomLeftCorner(n - 1, n - 1) += bsqrt.asDiagonal();
-
-  Eigen::VectorXd en(n);
-  en.setZero();
-  en[n - 1] = 1;
-  double g1 = J.colPivHouseholderQr().solve(en)[n - 1];
-  J.diagonal() = a2;
-  double g2 = J.colPivHouseholderQr().solve(en)[n - 1];
+  // Solve tridiagonal system using Thomas algorithm
+  double g1 = bsqrt(0) / (alpha(1) - xl1);
+  double g2 = bsqrt(0) / (alpha(1) - xl2);
+  for (int i = 1; i < bsqrt.rows(); ++i)
+  {
+    g1 = bsqrt(i) / (alpha(i - 1) - xl1 - bsqrt(i - 1) * g1);
+    g2 = bsqrt(i) / (alpha(i - 1) - xl2 - bsqrt(i - 1) * g2);
+  }
 
   Eigen::ArrayXd alpha_l = alpha;
   alpha_l[n] = (g1 * xl2 - g2 * xl1) / (g1 - g2);

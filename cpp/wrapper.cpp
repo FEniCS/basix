@@ -76,7 +76,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const Eigen::MatrixXd& dualmat,
          const Eigen::MatrixXd& coeffs) -> FiniteElement {
         auto new_coeffs
-            = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+            = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
         return FiniteElement(celltype, degree, value_size, new_coeffs);
       },
       "Create an element from basic data");

@@ -95,7 +95,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
                                          degree, quad_deg);
   }
 
-  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
+  auto new_coeffs
+      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
   FiniteElement el(celltype, degree, tdim, new_coeffs);
   return el;
 }

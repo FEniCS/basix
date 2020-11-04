@@ -73,17 +73,50 @@ public:
   /// Calculates the basis functions of the finite element, in terms of the
   /// polynomial basis.
   ///
-  /// The
-  /// polynomial set is a subset of the Legendre polynomials (often it is equal,
-  /// but for example for Nedelec kind spaces it is a smaller set). A basis of
-  /// the polynomial set is defined by the coeffs input: each row of this gives
-  /// the coefficients of a polynomial in terms of the Legendre polynomials. The
-  /// dual matrix contains the values obtained when each functional in the dual
-  /// set is applied to each Legendre polynomial (Note: not each polynomial in
-  /// the polynomial basis).
+  /// The polynomial set is a subset of the expansion polynomials (often it is
+  /// equal, but for example for Nedelec kind spaces it is a smaller set). A
+  /// basis of the polynomial set is defined by the coeffs input: each row of
+  /// this gives the coefficients of a polynomial in terms of the Legendre
+  /// polynomials. The dual matrix contains the values obtained when each
+  /// functional in the dual set is applied to each Legendre polynomial (Note:
+  /// not each polynomial in the polynomial basis).
   ///
-  /// @param[in] coeffs The coefficients defining the polynomial basis in terms
-  /// of Legendre polynomials
+  /// This function computes (C * D^t)^-1 * C, where C is span_coeffs and D is
+  /// dualmat.
+  ///
+  /// Example
+  /// -------
+  /// For lowest order Raviart-Thomas elements on a triangle using a Legendre
+  /// expansion basis, the inputs are:
+  /// span_coeffs = [[1,    0,           0,          0,    0, 0         ],
+  ///                [0,    0,           0,          1,    0, 0         ],
+  ///                [1/12, sqrt(6)/48, -sqrt(2)/48, 1/12, 0, sqrt(2)/24]]
+  /// dualmat = [[-sqrt(2)/2, -sqrt(3)/2, -1/2, -sqrt(2)/2, -sqrt(3)/2, -1/2],
+  ///            [-sqrt(2)/2,  sqrt(3)/2, -1/2,  0,          0,          0],
+  ///            [ 0,          0,          0,    sqrt(2)/2,  0,         -1]]
+  ///
+  /// The Legendre expansion basis in this example is:
+  ///   [(sqrt(2)/2, 0), (sqrt(3)*(2*x + y - 1), 0), (3*y - 1, 0),
+  ///    (0, sqrt(2)/2), (0, sqrt(3)*(2*x + y - 1)), (0, 3*y - 1)]
+  /// Hence the span_coeffs represent the polynomials:
+  ///   [sqrt(2)/2, 0]
+  ///   [0, sqrt(2)/2]
+  ///   [sqrt(2)*x/8, sqrt(2)*y/8]
+  /// Each row is dualmat is the results of applying a fixed functional to each
+  /// polynomial in the Legendre expansion basis. In this case, these
+  /// functionals are the integrals of the normal compenent along an edge.
+  ///
+  /// In this example, this function will return:
+  ///   [[-sqrt(2)/2, -sqrt(3)/2, -1/2, -sqrt(2)/2, -sqrt(3)/2, -1/2],
+  ///    [-sqrt(2)/2,  sqrt(3)/2, -1/2,  0,          0,          0],
+  ///    [ 0,          0,          0,    sqrt(2)/2,  0,         -1]
+  /// These are the expansion coefficients of the following basis functions:
+  ///   [-x, -y]
+  ///   [x - 1, y]
+  ///   [-x, 1 - y]
+  ///
+  /// @param[in] span_coeffs The expansion coefficients defining a polynomial
+  /// basis spanning the polynomial set of for the space
   /// @param[in] dualmat The values obtained when applying each functional in
   /// the dual set to each Legendre polynomial
   /// @return The the expansion coefficients that define the basis of
@@ -91,7 +124,7 @@ public:
   static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
   compute_expansion_coefficents(
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                          Eigen::RowMajor>& coeffs,
+                          Eigen::RowMajor>& span_coeffs,
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& dualmat);
 

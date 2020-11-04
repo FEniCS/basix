@@ -82,7 +82,8 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
-  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+  auto new_coeffs
+      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
 
   FiniteElement el(celltype, degree, 1, new_coeffs);
   return el;
@@ -136,7 +137,8 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
-  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+  auto new_coeffs
+      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
 
   FiniteElement el(celltype, degree, 1, new_coeffs);
   return el;

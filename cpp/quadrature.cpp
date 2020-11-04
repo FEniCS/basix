@@ -112,8 +112,7 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   J.topRightCorner(n - 1, n - 1) += bsqrt.asDiagonal();
   J.bottomLeftCorner(n - 1, n - 1) += bsqrt.asDiagonal();
 
-  Eigen::VectorXd en(n);
-  en.setZero();
+  Eigen::VectorXd en = Eigen::VectorXd::Zero(n);
   en[n - 1] = 1;
   double g1 = J.colPivHouseholderQr().solve(en)[n - 1];
   J.diagonal() = a2;

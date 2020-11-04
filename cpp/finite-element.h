@@ -69,7 +69,6 @@ public:
   /// @return List
   std::array<int, 4> entity_dofs() const { return _entity_dofs; }
 
-  /// FIXME: document better and explain mathematically
   /// Calculates the basis functions of the finite element, in terms of the
   /// polynomial basis.
   ///

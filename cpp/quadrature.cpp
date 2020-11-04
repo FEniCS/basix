@@ -9,6 +9,123 @@
 
 using namespace libtab;
 
+namespace
+{
+//-----------------------------------------------------------
+std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> rec_jacobi(int N, double a, double b)
+{
+  // Generate the recursion coefficients alpha_k, beta_k
+
+  // P_{k+1}(x) = (x-alpha_k)*P_{k}(x) - beta_k P_{k-1}(x)
+
+  // for the Jacobi polynomials which are orthogonal on [-1,1]
+  // with respect to the weight w(x)=[(1-x)^a]*[(1+x)^b]
+
+  // Inputs:
+  // N - polynomial order
+  // a - weight parameter
+  // b - weight parameter
+
+  // Outputs:
+  // alpha - recursion coefficients
+  // beta - recursion coefficients
+
+  // Adapted from the MATLAB code by Dirk Laurie and Walter Gautschi
+  // http://www.cs.purdue.edu/archives/2002/wxg/codes/r_jacobi.m
+
+  double nu = (b - a) / (a + b + 2.0);
+  double mu = pow(2.0, (a + b + 1)) * tgamma(a + 1.0) * tgamma(b + 1.0)
+              / tgamma(a + b + 2.0);
+
+  Eigen::ArrayXd alpha(N), beta(N);
+
+  alpha[0] = nu;
+  beta[0] = mu;
+
+  Eigen::ArrayXd n = Eigen::ArrayXd::LinSpaced(N - 1, 1.0, N - 1);
+  Eigen::ArrayXd nab = 2.0 * n + a + b;
+  alpha.tail(N - 1) = (b * b - a * a) / (nab * (nab + 2.0));
+  beta.tail(N - 1) = 4 * (n + a) * (n + b) * n * (n + a + b)
+                     / (nab * nab * (nab + 1.0) * (nab - 1.0));
+
+  return {alpha, beta};
+}
+//-----------------------------------------------------------------------------
+std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> gauss(const Eigen::ArrayXd& alpha,
+                                                 const Eigen::ArrayXd& beta)
+{
+  // Compute the Gauss nodes and weights from the recursion
+  // coefficients associated with a set of orthogonal polynomials
+  //
+  //  Inputs:
+  //  alpha - recursion coefficients
+  //  beta - recursion coefficients
+  //
+  // Outputs:
+  // x - quadrature nodes
+  // w - quadrature weights
+  //
+  // Adapted from the MATLAB code by Walter Gautschi
+  // http://www.cs.purdue.edu/archives/2002/wxg/codes/gauss.m
+
+  Eigen::MatrixXd A = alpha.matrix().asDiagonal();
+  int nb = beta.rows();
+  assert(nb == A.cols());
+  A.bottomLeftCorner(nb - 1, nb - 1)
+      += beta.cwiseSqrt().tail(nb - 1).matrix().asDiagonal();
+  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(
+      A, Eigen::DecompositionOptions::ComputeEigenvectors);
+  Eigen::ArrayXd x = solver.eigenvalues();
+  Eigen::ArrayXd w = beta[0] * solver.eigenvectors().row(0).array().square();
+  return {x, w};
+}
+//-------------------------------------------------------
+std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
+                                                   const Eigen::ArrayXd& beta,
+                                                   double xl1, double xl2)
+{
+
+  // Compute the Lobatto nodes and weights with the preassigned
+  // nodes xl1,xl2
+  //
+  // Inputs:
+  //   alpha - recursion coefficients
+  //   beta - recursion coefficients
+  //   xl1 - assigned node location
+  //   xl2 - assigned node location
+
+  // Outputs:
+  // x - quadrature nodes
+  // w - quadrature weights
+
+  // Based on the section 7 of the paper
+  // "Some modified matrix eigenvalue problems"
+  // by Gene Golub, SIAM Review Vol 15, No. 2, April 1973, pp.318--334
+
+  int n = alpha.rows() - 1;
+
+  const Eigen::VectorXd bsqrt = beta.segment(1, n - 1).cwiseSqrt();
+  const Eigen::VectorXd a1 = alpha.tail(n) - xl1;
+  const Eigen::VectorXd a2 = alpha.tail(n) - xl2;
+
+  Eigen::MatrixXd J = a1.asDiagonal();
+  J.topRightCorner(n - 1, n - 1) += bsqrt.asDiagonal();
+  J.bottomLeftCorner(n - 1, n - 1) += bsqrt.asDiagonal();
+
+  Eigen::VectorXd en = Eigen::VectorXd::Zero(n);
+  en[n - 1] = 1;
+  double g1 = J.colPivHouseholderQr().solve(en)[n - 1];
+  J.diagonal() = a2;
+  double g2 = J.colPivHouseholderQr().solve(en)[n - 1];
+
+  Eigen::ArrayXd alpha_l = alpha;
+  alpha_l[n] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
+  Eigen::ArrayXd beta_l = beta;
+  beta_l[n] = (xl2 - xl1) / (g1 - g2);
+  auto [x, w] = gauss(alpha_l, beta_l);
+  return {x, w};
+}
+}; // namespace
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
@@ -264,3 +381,24 @@ quadrature::make_quadrature(
   return {Qpts_scaled, Qwts_scaled};
 }
 //-----------------------------------------------------------------------------
+std::tuple<Eigen::ArrayXd, Eigen::ArrayXd>
+quadrature::gauss_lobatto_legendre_line_rule(int m)
+{
+  // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval
+  // using Greg von Winckel's implementation. This facilitates implementing
+  // spectral elements.
+  // The quadrature rule uses m points for a degree of precision of 2m-3.
+
+  if (m < 2)
+    throw std::runtime_error(
+        "Gauss-Labotto-Legendre quadrature invalid for fewer than 2 points");
+
+  // Calculate the recursion coefficients
+  auto [alpha, beta] = rec_jacobi(m, 0, 0);
+  // Compute Lobatto nodes and weights
+  auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
+
+  // TODO: scaling
+
+  return {xs_ref, ws_ref};
+}

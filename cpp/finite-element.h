@@ -39,7 +39,7 @@ public:
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
   /// @return The basis functions (and derivatives). The first index is
-  /// the derivative. Higher derivatives are stored in triangular (2D)
+  /// the basis function. Higher derivatives are stored in triangular (2D)
   /// or tetrahedral (3D) ordering, i.e. for the (x,y) derivatives in
   /// 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... If a vector
   /// result is expected, it will be stacked with all x values, followed
@@ -72,63 +72,63 @@ public:
   /// Calculates the basis functions of the finite element, in terms of the
   /// polynomial basis.
   ///
-  /// The basis functions (\phi_i) of a finite element can be represented as
-  /// a linear combination of polynomials (p_j) in an underlying polynomial
+  /// The basis functions @f$(\phi_i)@f$ of a finite element can be represented as
+  /// a linear combination of polynomials @f$(p_j)@f$ in an underlying polynomial
   /// basis that span the space of all d-dimensional polynomials up to order
-  /// k (P_k^d):
-  ///   \phi_i = \sum_j c_{ij} p_j
-  /// This function computed the matrix C = (c_{ij}).
+  /// @f$k (P_k^d)@f$:
+  /// @f[  \phi_i = \sum_j c_{ij} p_j @f]
+  /// This function computed the matrix @f$C = (c_{ij})@f$.
   ///
-  /// In some cases, the basis functions (\phi_i) do not span the full space
-  /// P_k. In these cases, we represent the space spanned by the basis
-  /// functions as the span of some polynomials (q_k). These can be
+  /// In some cases, the basis functions @f$(\phi_i)@f$ do not span the full space
+  /// @f$P_k@f$. In these cases, we represent the space spanned by the basis
+  /// functions as the span of some polynomials @f$(q_k)@f$. These can be
   /// represented in terms of the underlying polynomial basis:
-  ///   q_k = \sum_j b_{kj} p_j
-  /// If the basis functions span the full space, then B = (b_{kj}) is simply
+  /// @f[  q_k = \sum_j b_{kj} p_j @f]
+  /// If the basis functions span the full space, then @f$B = (b_{kj})@f$ is simply
   /// the identity.
   ///
-  /// The basis functions \phi_i are defined by a dual set of functionals
-  /// (f_l). The basis functions are the functions in span{q_k} such that:
-  ///   f_l(\phi_i) = 1 if i=l
-  ///                 0 otherwise
+  /// The basis functions @f$\phi_i@f$ are defined by a dual set of functionals
+  /// @f$(f_l)@f$. The basis functions are the functions in span{@f$q_k@f$} such that:
+  ///   @f[ f_l(\phi_i) = 1 \mbox{ if } i=l \mbox{ else } 0 @f]
   /// We can define a matrix D given by applying the functionals to each
   /// polynomial p_j:
-  ///   D = (d_{lj}), where d_{lj} = f_l(p_j)
+  ///  @f[ D = (d_{lj}),\mbox{ where } d_{lj} = f_l(p_j) @f]
   ///
   /// This function takes the matrices B (span_coeffs) and D (dualmat) as
   /// inputs and returns the matrix C. It computed C using:
-  ///   C = (B * D^t)^-1 * B
+  ///  @f[ C = (B * D^T)^{-1} * B @f]
   ///
   /// Example: Order 1 Lagrange elements on a triangle
   /// ------------------------------------------------
   /// On a triangle, the scalar expansion basis is:
-  ///   p_0 = sqrt(2)/2
-  ///   p_1 = sqrt(3)*(2*x + y - 1)
-  ///   p_2 = 3*y - 1
-  /// These span the space P_1.
+  ///  @f[ p_0 = \sqrt{2}/2 \qquad
+  ///   p_1 = \sqrt{3}(2x + y - 1) \qquad
+  ///   p_2 = 3y - 1 @f]
+  /// These span the space @f$P_1@f$.
   ///
-  /// Lagrance order 1 elements span the space P_1, so in this example,
+  /// Lagrange order 1 elements span the space P_1, so in this example,
   /// B (span_coeffs) is the identity matrix:
-  ///   span_coeffs = [[1, 0, 0]
-  ///                  [0, 1, 0],
-  ///                  [0, 0, 1]]
+  ///   @f[ \mbox{span_coeffs} = \begin{bmatrix}
+  ///                   1 & 0 & 0 \\
+  ///                   0 & 1 & 0 \\
+  ///                   0 & 0 & 1 \end{bmatrix} @f]
   ///
   /// The functionals defining the Lagrange order 1 space are point
   /// evaluations at the three vertices of the triangle. The matrix D
   /// (dualmat) given by applying these to p_0 to p_2 is:
-  ///   dualmat = [[sqrt(2)/2, -sqrt(3), -1],
-  ///              [sqrt(2)/2,  sqrt(3), -1],
-  ///              [sqrt(2)/2,        0,  2]]
+  ///  @f[ \mbox{dualmat} = \begin{bmatrix}
+  ///              \sqrt{2}/2 &  -\sqrt{3} & -1 \\
+  ///              \sqrt{2}/2 &   \sqrt{3} & -1 \\
+  ///              \sqrt{2}/2 &          0 &  2 \end{bmatrix} @f]
   ///
   /// For this example, this function outputs the matrix:
-  ///   C = [[sqrt(2)/3, -sqrt(3)/6, -1/6],
-  ///        [sqrt(2)/3,  sqrt(3)/6, -1/6],
-  ///        [sqrt(2)/3,          0,  1/3]]
+  ///  @f[ C = \begin{bmatrix}
+  ///            \sqrt{2}/3 & -\sqrt{3}/6 &  -1/6 \\
+  ///            \sqrt{2}/3 & \sqrt{3}/6  &  -1/6 \\
+  ///            \sqrt{2}/3 &          0  &   1/3 \end{bmatrix} @f]
   /// The basis functions of the finite element can be obtained by applying
-  /// the matrix C to the vector [p_0, p_1, p_2], giving:
-  ///   1 - x - y
-  ///   x
-  ///   y
+  /// the matrix C to the vector @f$[p_0, p_1, p_2]@f$, giving:
+  ///   @f[ \begin{bmatrix} 1 - x - y \\ x \\ y \end{bmatrix} @f]
   ///
   /// Example: Order 1 Raviart-Thomas on a triangle
   /// ---------------------------------------------

@@ -84,7 +84,6 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
                                                    const Eigen::ArrayXd& beta,
                                                    double xl1, double xl2)
 {
-
   // Compute the Lobatto nodes and weights with the preassigned
   // nodes xl1,xl2
   //
@@ -102,21 +101,20 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   // "Some modified matrix eigenvalue problems"
   // by Gene Golub, SIAM Review Vol 15, No. 2, April 1973, pp.318--334
 
+  assert(alpha.rows() == beta.rows());
   int n = alpha.rows() - 1;
 
-  const Eigen::VectorXd bsqrt = beta.segment(1, n - 1).cwiseSqrt();
-  const Eigen::VectorXd a1 = alpha.tail(n) - xl1;
-  const Eigen::VectorXd a2 = alpha.tail(n) - xl2;
+  Eigen::VectorXd bsqrt = beta.cwiseSqrt();
+  bsqrt(n) = 1.0;
 
-  Eigen::MatrixXd J = a1.asDiagonal();
-  J.topRightCorner(n - 1, n - 1) += bsqrt.asDiagonal();
-  J.bottomLeftCorner(n - 1, n - 1) += bsqrt.asDiagonal();
-
-  Eigen::VectorXd en = Eigen::VectorXd::Zero(n);
-  en[n - 1] = 1;
-  double g1 = J.colPivHouseholderQr().solve(en)[n - 1];
-  J.diagonal() = a2;
-  double g2 = J.colPivHouseholderQr().solve(en)[n - 1];
+  // Solve tridiagonal system using Thomas algorithm
+  double g1 = 0.0;
+  double g2 = 0.0;
+  for (int i = 1; i < bsqrt.rows(); ++i)
+  {
+    g1 = bsqrt(i) / (alpha(i) - xl1 - bsqrt(i - 1) * g1);
+    g2 = bsqrt(i) / (alpha(i) - xl2 - bsqrt(i - 1) * g2);
+  }
 
   Eigen::ArrayXd alpha_l = alpha;
   alpha_l[n] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
@@ -126,6 +124,7 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   return {x, w};
 }
 }; // namespace
+
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 quadrature::compute_jacobi_deriv(double a, int n, int nderiv,

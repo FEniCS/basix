@@ -118,8 +118,6 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
         = dofperms::triangle_reflection(degree - 2);
     Eigen::Array<int, Eigen::Dynamic, 1> face_rot
         = dofperms::triangle_rotation(degree - 2);
-    std::cout << "face_ref: " << face_ref << "\n";
-    std::cout << "face_rot: " << face_rot << "\n";
     for (int face = 0; face < 4; ++face)
     {
       const int start = 4 + edge_ref.size() * 6 + face_ref.size() * face;

@@ -59,23 +59,3 @@ Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_rotation(int degree)
   }
   return perm;
 }
-
-/*
-
-def triangle_reflection(dofs, sub_block_size=1, reverse_blocks=False):
-    """Reflect the dofs in a triangle."""
-    n = len(dofs) // sub_block_size
-    s = (math.floor(math.sqrt(1 + 8 * n)) - 1) // 2
-    assert s * (s + 1) == 2 * n
-
-    perm = []
-    for st in range(s):
-        dof = st
-        for add in range(s, st, -1):
-            if reverse_blocks:
-                perm += [dof * sub_block_size + k for k in
-range(sub_block_size)][::-1] else: perm += [dof * sub_block_size + k for k in
-range(sub_block_size)] dof += add assert len(perm) == len(dofs)
-
-    return [dofs[i] for i in perm]
-*/

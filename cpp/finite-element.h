@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
+#include "dof-permutations.h"
 #include <Eigen/Dense>
 #include <array>
 #include <vector>
@@ -23,9 +24,27 @@ public:
   FiniteElement(
       cell::Type cell_type, int degree, int value_size,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          coeffs)
+          coeffs,
+      Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          base_permutations)
       : _cell_type(cell_type), _degree(degree), _value_size(value_size),
-        _coeffs(coeffs), _entity_dofs({0})
+        _coeffs(coeffs), _entity_dofs({0}),
+        _base_permutations(base_permutations), _contains_vectors(false)
+  {
+  }
+  FiniteElement(
+      cell::Type cell_type, int degree, int value_size,
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          coeffs,
+      Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          base_permutations,
+      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+          direction_correction)
+      : _cell_type(cell_type), _degree(degree), _value_size(value_size),
+        _coeffs(coeffs), _entity_dofs({0}),
+        _base_permutations(base_permutations), _contains_vectors(true),
+        _direction_correction(direction_correction)
   {
   }
 
@@ -79,6 +98,24 @@ public:
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& dualmat);
 
+  // Base permutations
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  base_permutations() const
+  {
+    return _base_permutations;
+  };
+
+  // Does the space contain vectors
+  bool contains_vectors() const { return _contains_vectors; };
+
+  // Direction correction
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  direction_correction() const
+  {
+    return _direction_correction;
+  };
+
 private:
   // Cell type
   cell::Type _cell_type;
@@ -107,5 +144,17 @@ private:
   // a triangular face with 6 dofs, the edge size is 3. For a hexahedral cell
   // with 8 internal dofs, the value would be 2.
   std::array<int, 4> _entity_dofs;
+
+  // Base permutations
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      _base_permutations;
+
+  // Does the space contain vectors
+  bool _contains_vectors;
+
+  // Direction correction
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      _direction_correction;
 };
 } // namespace libtab

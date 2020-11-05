@@ -25,7 +25,13 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
 
   int ndofs = pt.rows();
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
+
+  // TODO
+  int perm_count = 0;
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      base_permutations(perm_count, ndofs);
+
   auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
-  FiniteElement el(celltype, degree, 1, new_coeffs);
+  FiniteElement el(celltype, degree, 1, new_coeffs, base_permutations);
   return el;
 }

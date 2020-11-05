@@ -24,6 +24,8 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
 
   std::array<int, 4> entity_dofs = {0, 0, 0, 0};
 
+  std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
   if (ndofs == 1)
   {
     if (tdim == 1)
@@ -43,8 +45,6 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     if (tdim > 2 and degree > 2)
       entity_dofs[3] = degree - 3;
 
-    std::vector<std::vector<std::vector<int>>> topology
-        = cell::topology(celltype);
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         geometry = cell::geometry(celltype);
     int c = 0;
@@ -84,7 +84,53 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
 
   auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
 
-  FiniteElement el(celltype, degree, 1, new_coeffs);
+  int perm_count = 0;
+  for (int i = 1; i < tdim; ++i)
+    perm_count += topology[i].size() * i;
+
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      base_permutations(perm_count, ndofs);
+  for (int i = 0; i < ndofs; ++i)
+    base_permutations.col(i) = i;
+
+  if (celltype == cell::Type::triangle)
+  {
+    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
+        = dofperms::interval_reflection(degree - 1);
+    for (int edge = 0; edge < 3; ++edge)
+    {
+      const int start = 3 + edge_ref.size() * edge;
+      for (int i = 0; i < edge_ref.size(); ++i)
+        base_permutations(edge, start + i) = start + edge_ref[i];
+    }
+  }
+  else if (celltype == cell::Type::tetrahedron)
+  {
+    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
+        = dofperms::interval_reflection(degree - 1);
+    for (int edge = 0; edge < 6; ++edge)
+    {
+      const int start = 4 + edge_ref.size() * edge;
+      for (int i = 0; i < edge_ref.size(); ++i)
+        base_permutations(edge, start + i) = start + edge_ref[i];
+    }
+    Eigen::Array<int, Eigen::Dynamic, 1> face_ref
+        = dofperms::triangle_reflection(degree - 2);
+    Eigen::Array<int, Eigen::Dynamic, 1> face_rot
+        = dofperms::triangle_rotation(degree - 2);
+    std::cout << "face_ref: " << face_ref << "\n";
+    std::cout << "face_rot: " << face_rot << "\n";
+    for (int face = 0; face < 4; ++face)
+    {
+      const int start = 4 + edge_ref.size() * 6 + face_ref.size() * face;
+      for (int i = 0; i < face_rot.size(); ++i)
+        base_permutations(6 + 2 * face, start + i) = start + face_rot[i];
+      for (int i = 0; i < face_ref.size(); ++i)
+        base_permutations(6 + 2 * face + 1, start + i) = start + face_ref[i];
+    }
+  }
+
+  FiniteElement el(celltype, degree, 1, new_coeffs, base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------
@@ -138,7 +184,16 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
 
   auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
 
-  FiniteElement el(celltype, degree, 1, new_coeffs);
+  int perm_count = 0;
+  for (int i = 1; i < tdim; ++i)
+    perm_count += topology[i].size();
+
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      base_permutations(perm_count, ndofs);
+  for (int i = 0; i < ndofs; ++i)
+    base_permutations.col(i) = i;
+
+  FiniteElement el(celltype, degree, 1, new_coeffs, base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------

@@ -241,8 +241,14 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
+  // TODO
+  const int ndofs = dualmat.rows();
+  int perm_count = 0;
+  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      base_permutations(perm_count, ndofs);
+
   auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
-  FiniteElement el(celltype, degree, tdim, new_coeffs);
+  FiniteElement el(celltype, degree, tdim, new_coeffs, base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------

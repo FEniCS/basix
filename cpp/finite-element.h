@@ -96,7 +96,7 @@ public:
   ///
   /// This function takes the matrices B (span_coeffs) and D (dualmat) as
   /// inputs and returns the matrix C. It computed C using:
-  ///  @f[ C = (B * D^T)^{-1} * B @f]
+  ///  @f[ C = (B D^T)^{-1} B @f]
   ///
   /// Example: Order 1 Lagrange elements on a triangle
   /// ------------------------------------------------
@@ -108,7 +108,7 @@ public:
   ///
   /// Lagrange order 1 elements span the space P_1, so in this example,
   /// B (span_coeffs) is the identity matrix:
-  ///   @f[ \mbox{span_coeffs} = \begin{bmatrix}
+  ///   @f[ B = \begin{bmatrix}
   ///                   1 & 0 & 0 \\
   ///                   0 & 1 & 0 \\
   ///                   0 & 0 & 1 \end{bmatrix} @f]
@@ -133,41 +133,54 @@ public:
   /// Example: Order 1 Raviart-Thomas on a triangle
   /// ---------------------------------------------
   /// On a triangle, the 2D vector expansion basis is:
-  ///   p_0 = (sqrt(2)/2, 0)
-  ///   p_1 = (sqrt(3)*(2*x + y - 1), 0)
-  ///   p_2 = (3*y - 1, 0)
-  ///   p_3 = (0, sqrt(2)/2)
-  ///   p_4 = (0, sqrt(3)*(2*x + y - 1))
-  ///   p_5 = (0, 3*y - 1)
-  /// These span the space P_1^2.
+  ///  @f[ \begin{matrix}
+  ///   p_0 & = & (\sqrt{2}/2, 0) \\
+  ///   p_1 & = & (\sqrt{3}(2x + y - 1), 0) \\
+  ///   p_2 & = & (3y - 1, 0) \\
+  ///   p_3 & = & (0, \sqrt{2}/2) \\
+  ///   p_4 & = & (0, \sqrt{3}(2x + y - 1)) \\
+  ///   p_5 & = & (0, 3y - 1)
+  ///  \end{matrix}
+  /// @f]
+  /// These span the space @f$ P_1^2 @f$.
   ///
-  /// Raviart-Thomas order 1 elements span a space smaller than P_1^2, so
+  /// Raviart-Thomas order 1 elements span a space smaller than @f$ P_1^2 @f$, so
   /// B (span_coeffs) is not the identity. It is given by:
-  ///   span_coeffs = [[   1,          0,           0,    0, 0,          0],
-  ///                  [   0,          0,           0,    1, 0,          0],
-  ///                  [1/12, sqrt(6)/48, -sqrt(2)/48, 1/12, 0, sqrt(2)/24]]
-  /// Applying the matrix B to the vector [p_0, p_1, ..., p_5] gives the
+  ///   @f[ B = \begin{bmatrix}
+  ///  1 &  0 &  0 &    0 &  0 &   0 \\
+  ///  0 &  0 &  0 &    1 &  0 &     0 \\
+  ///  1/12 &  \sqrt{6}/48 &  -\sqrt{2}/48 &  1/12 &  0 &  \sqrt{2}/24
+  ///  \end{bmatrix}
+  ///  @f]
+  /// Applying the matrix B to the vector @f$[p_0, p_1, ..., p_5]@f$ gives the
   /// basis of the polynomial space for Raviart-Thomas:
-  ///   [[sqrt(2)/2, 0],
-  ///    [0, sqrt(2)/2],
-  ///    [sqrt(2)*x/8, sqrt(2)*y/8]]
+  ///   @f[ \begin{bmatrix}
+  ///  \sqrt{2}/2 &  0 \\
+  ///   0 &  \sqrt{2}/2 \\
+  ///   \sqrt{2}x/8  & \sqrt{2}y/8
+  ///  \end{bmatrix} @f]
   ///
   /// The functionals defining the Raviart-Thomas order 1 space are integral
   /// of the normal components along each edge. The matrix D (dualmat) given
-  /// by applying these to p_0 to p_5 is:
-  ///   dualmat = [[-sqrt(2)/2, -sqrt(3)/2, -1/2, -sqrt(2)/2, -sqrt(3)/2, -1/2],
-  ///              [-sqrt(2)/2,  sqrt(3)/2, -1/2,          0,          0,    0],
-  ///              [         0,          0,    0,  sqrt(2)/2,          0,   -1]]
+  /// by applying these to @f$p_0@f$ to @f$p_5@f$ is:
+  ///   dualmat = @f[ \begin{bmatrix}
+  /// -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
+  /// -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0 &    0 \\
+  ///           0 &         0   &    0 &  \sqrt{2}/2 &          0 &   -1
+  /// \end{bmatrix} @f]
   ///
   /// In this example, this function outputs the matrix:
-  ///   C = [[-sqrt(2)/2, -sqrt(3)/2, -1/2, -sqrt(2)/2, -sqrt(3)/2, -1/2],
-  ///        [-sqrt(2)/2,  sqrt(3)/2, -1/2,          0,          0,    0],
-  ///        [         0,          0,    0,  sqrt(2)/2,          0,   -1]]
+  ///  @f[  C = \begin{bmatrix}
+  ///  -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
+  ///  -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0  &    0 \\
+  ///            0 &          0  &    0 &  \sqrt{2}/2 &          0  &   -1
+  /// \end{bmatrix} @f]
   /// The basis functions of the finite element can be obtained by applying
-  /// the matrix C to the vector [p_0, p_1, ..., p_5], giving:
-  ///   [-x, -y]
-  ///   [x - 1, y]
-  ///   [-x, 1 - y]
+  /// the matrix C to the vector @f$[p_0, p_1, ..., p_5]@f$, giving:
+  ///   @f[ \begin{bmatrix}
+  ///   -x & -y \\
+  ///   x - 1 & y \\
+  ///   -x & 1 - y \end{bmatrix} @f]
   ///
   /// @param[in] span_coeffs The matrix B containing the expansion
   /// coefficients defining a polynomial basis spanning the polynomial space
@@ -193,11 +206,10 @@ private:
   // Value size
   int _value_size;
 
-  // FIXME: Check shape/layout
   // Shape function coefficient of expansion sets on cell. If shape
-  // function is given by \psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k},
-  // then _coeffs(i, j) = \alpha^{i}_{k}. I.e., _coeffs.row(i) are the
-  // expansion coefficients for shape function i (\psi_{i}).
+  // function is given by @f$\psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k}@f$,
+  // then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e., _coeffs.row(i) are the
+  // expansion coefficients for shape function i (@f$\psi_{i}@f$).
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       _coeffs;
 

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
-#include "dof-permutations.h"
 #include <Eigen/Dense>
 #include <array>
 #include <vector>

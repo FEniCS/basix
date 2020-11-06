@@ -10,6 +10,7 @@ Eigen::Array<int, Eigen::Dynamic, 1> dofperms::interval_reflection(int degree)
 {
   if (degree <= 0)
     return {};
+
   Eigen::Array<int, Eigen::Dynamic, 1> perm(degree);
   for (int i = 0; i < degree; ++i)
     perm(i) = degree - 1 - i;
@@ -58,4 +59,16 @@ Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_rotation(int degree)
     st -= i;
   }
   return perm;
+}
+
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+dofperms::interval_reflection_tangent_directions(int degree)
+{
+  if (degree <= 0)
+    return {};
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dirs(degree, degree);
+  for (int i = 0; i < degree; ++i)
+    dirs(i, i) = -1;
+  return dirs;
 }

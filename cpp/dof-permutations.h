@@ -19,5 +19,11 @@ Eigen::Array<int, Eigen::Dynamic, 1> triangle_rotation(int degree);
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
     interval_reflection_tangent_directions(int degree);
 
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+triangle_reflection_tangent_directions(int degree);
+
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+triangle_rotation_tangent_directions(int degree);
+
 }; // namespace dofperms
 } // namespace libtab

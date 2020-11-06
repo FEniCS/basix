@@ -68,7 +68,43 @@ dofperms::interval_reflection_tangent_directions(int degree)
     return {};
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dirs(degree, degree);
+  dirs.setZero();
   for (int i = 0; i < degree; ++i)
     dirs(i, i) = -1;
+  return dirs;
+}
+
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+dofperms::triangle_reflection_tangent_directions(int degree)
+{
+  if (degree <= 0)
+    return {};
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dirs(
+      degree * (degree + 1), degree * (degree + 1));
+  dirs.setZero();
+  for (int i = 0; i < degree * (degree + 1); i += 2)
+  {
+    dirs(i, i + 1) = 1;
+    dirs(i + 1, i) = 1;
+  }
+  return dirs;
+}
+
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+dofperms::triangle_rotation_tangent_directions(int degree)
+{
+  if (degree <= 0)
+    return {};
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dirs(
+      degree * (degree + 1), degree * (degree + 1));
+  dirs.setZero();
+  for (int i = 0; i < degree * (degree + 1); i += 2)
+  {
+    dirs(i, i) = 1;
+    dirs(i, i + 1) = -1;
+    dirs(i + 1, i) = 1;
+  }
   return dirs;
 }

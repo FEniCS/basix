@@ -268,7 +268,22 @@ create_nedelec_3d_base_perms(int degree)
     for (int i = 0; i < edge_ref.size(); ++i)
       base_permutations(edge, start + i) = start + edge_ref[i];
   }
-  // TODO: faces
+  Eigen::Array<int, Eigen::Dynamic, 1> face_rot
+      = dofperms::triangle_rotation(degree - 1);
+  Eigen::Array<int, Eigen::Dynamic, 1> face_ref
+      = dofperms::triangle_reflection(degree - 1);
+  for (int face = 0; face < 4; ++face)
+  {
+    const int start = edge_ref.size() * 6 + face_ref.size() * face;
+    for (int i = 0; i < face_rot.size(); ++i)
+      for (int b = 0; b < 2; ++b)
+        base_permutations(6 + 2 * face, start + 2 * i + b)
+            = start + face_rot[i] * 2 + b;
+    for (int i = 0; i < face_ref.size(); ++i)
+      for (int b = 0; b < 2; ++b)
+        base_permutations(6 + 2 * face + 1, start + 2 * i + b)
+            = start + face_ref[i] * 2 + b;
+  }
   return base_permutations;
 }
 //-----------------------------------------------------------------------------
@@ -279,18 +294,38 @@ create_nedelec_3d_direction_correction(int degree)
                     + (degree - 2) * (degree - 1) * degree / 2;
   std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
     directions(14);
+
+  // Edges
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> edge_ref
+      = dofperms::interval_reflection_tangent_directions(degree);
   for (int edge = 0; edge < 6; ++edge)
   {
     directions[edge] = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    for (int i = degree * edge; i < degree * (edge + 1); ++i)
-      directions[edge](i, i) = -1;
+    directions[edge].block(edge_ref.rows() * edge, edge_ref.cols() * edge,
+                           edge_ref.rows(), edge_ref.cols())
+        = edge_ref;
   }
+
+  // Faces
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> face_ref
+      = dofperms::triangle_reflection_tangent_directions(degree - 1);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> face_rot
+      = dofperms::triangle_rotation_tangent_directions(degree - 1);
   for (int face = 0; face < 4; ++face)
   {
     // Rotate face
     directions[6 + 2 * face] = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    directions[6 + 2 * face].block(edge_ref.rows() * 6 + face_rot.rows() * face,
+                                   edge_ref.cols() * 6 + face_rot.rows() * face,
+                                   face_rot.rows(), face_rot.cols())
+        = face_rot;
     // Reflect face
     directions[6 + 2 * face + 1] = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    directions[6 + 2 * face + 1].block(
+        edge_ref.rows() * 6 + face_ref.rows() * face,
+        edge_ref.cols() * 6 + face_ref.rows() * face, face_ref.rows(),
+        face_ref.cols())
+        = face_ref;
   }
   return directions;
 }

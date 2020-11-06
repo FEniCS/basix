@@ -103,6 +103,9 @@ create_nedelec_2d_base_perms(int degree)
   const int ndofs = degree * (degree + 2);
   Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       base_permutations(3, ndofs);
+  for (int i = 0; i < ndofs; ++i)
+    base_permutations.col(i) = i;
+
   Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
       = dofperms::interval_reflection(degree);
   for (int edge = 0; edge < 3; ++edge)
@@ -260,6 +263,9 @@ create_nedelec_3d_base_perms(int degree)
                     + (degree - 2) * (degree - 1) * degree / 2;
   Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       base_permutations(14, ndofs);
+  for (int i = 0; i < ndofs; ++i)
+    base_permutations.col(i) = i;
+
   Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
       = dofperms::interval_reflection(degree);
   for (int edge = 0; edge < 6; ++edge)
@@ -274,7 +280,7 @@ create_nedelec_3d_base_perms(int degree)
       = dofperms::triangle_reflection(degree - 1);
   for (int face = 0; face < 4; ++face)
   {
-    const int start = edge_ref.size() * 6 + face_ref.size() * face;
+    const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
     for (int i = 0; i < face_rot.size(); ++i)
       for (int b = 0; b < 2; ++b)
         base_permutations(6 + 2 * face, start + 2 * i + b)

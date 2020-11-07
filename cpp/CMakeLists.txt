@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.9)
 
 set(PROJECT_NAME libtab)
-project(${PROJECT_NAME})
+project(${PROJECT_NAME} VERSION "0.0.1")
 
 # Set CMake behavior
 cmake_policy(SET CMP0004 NEW)
@@ -27,7 +27,8 @@ if (HAVE_NO_MULTLINE)
 endif()
 
 # Executable
-add_library(tab SHARED polynomial-set.cpp integral-moments.cpp lagrange.cpp quadrature.cpp nedelec.cpp nedelec-second-kind.cpp raviart-thomas.cpp finite-element.cpp tp.cpp cell.cpp regge.cpp crouzeix-raviart.cpp)
+add_library(tab SHARED defines.cpp polynomial-set.cpp integral-moments.cpp lagrange.cpp quadrature.cpp nedelec.cpp nedelec-second-kind.cpp raviart-thomas.cpp finite-element.cpp tp.cpp cell.cpp regge.cpp crouzeix-raviart.cpp)
+target_compile_definitions(tab PRIVATE LIBTAB_VERSION=${PROJECT_VERSION})
 
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})

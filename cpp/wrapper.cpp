@@ -6,6 +6,7 @@
 
 #include "cell.h"
 #include "crouzeix-raviart.h"
+#include "defines.h"
 #include "indexing.h"
 #include "lagrange.h"
 #include "nedelec-second-kind.h"
@@ -49,6 +50,8 @@ on all cell types, and an error should be thrown if an invalid combination is re
 Each element has a `tabulate` function which returns the basis functions and a number of their derivatives, as desired.
 
 )";
+
+  m.attr("__version__") = libtab::version();
 
   py::enum_<cell::Type>(m, "CellType")
       .value("interval", cell::Type::interval)

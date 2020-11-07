@@ -1,3 +1,7 @@
+// Copyright (c) 2020 Chris Richardson and Matthew Scroggs
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
+
 #include <pybind11/eigen.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>

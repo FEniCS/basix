@@ -7,6 +7,6 @@ setup(
     author="FEniCS Project",
     license="MIT",
     packages=["libtab"],
-    package_dir={"": "src"},
-    cmake_install_dir="src/libtab",
+    package_dir={"": "cpp"},
+    cmake_install_dir="cpp/libtab",
 )

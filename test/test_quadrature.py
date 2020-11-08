@@ -53,3 +53,11 @@ def test_jacobi():
     pts = np.arange(0, 1, 0.1)
     f = libtab.compute_jacobi_deriv(1.0, 4, 5, pts)
     print(f)
+
+
+@pytest.mark.parametrize("m", np.arange(2, 10))
+def test_gll(m):
+    pts, wts = libtab.gauss_lobatto_legendre_line_rule(m)
+    print(pts, wts)
+    assert np.isclose(sum(pts*wts), 0)
+    assert np.isclose(sum(wts), 2)

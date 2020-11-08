@@ -1,3 +1,7 @@
+// Copyright (c) 2020 Chris Richardson and Matthew Scroggs
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
+
 #include <pybind11/eigen.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
@@ -6,6 +10,7 @@
 
 #include "cell.h"
 #include "crouzeix-raviart.h"
+#include "defines.h"
 #include "indexing.h"
 #include "lagrange.h"
 #include "nedelec-second-kind.h"
@@ -49,6 +54,8 @@ on all cell types, and an error should be thrown if an invalid combination is re
 Each element has a `tabulate` function which returns the basis functions and a number of their derivatives, as desired.
 
 )";
+
+  m.attr("__version__") = libtab::version();
 
   py::enum_<cell::Type>(m, "CellType")
       .value("interval", cell::Type::interval)
@@ -136,6 +143,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
                                              Eigen::Dynamic, Eigen::RowMajor>&,
                           int>(&quadrature::make_quadrature),
         "Compute quadrature points and weights on a simplex defined by points");
+
+  m.def("gauss_lobatto_legendre_line_rule",
+        &quadrature::gauss_lobatto_legendre_line_rule,
+        "Compute GLL quadrature points and weights on the interval [-1, 1]");
 
   m.def("index", py::overload_cast<int>(&libtab::idx), "Indexing for 1D arrays")
       .def("index", py::overload_cast<int, int>(&libtab::idx),

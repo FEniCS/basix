@@ -47,13 +47,12 @@ set_target_properties(libtab PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 set_target_properties(libtab PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if (APPLE)
-  set_target_properties(libtab PROPERTIES INSTALL_RPATH "@loader_path")
+  set_target_properties(libtab PROPERTIES INSTALL_RPATH "@loader_path/lib")
 else()
-  set_target_properties(libtab PROPERTIES INSTALL_RPATH "$ORIGIN")
+  set_target_properties(libtab PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
 endif()
 
 target_link_libraries(libtab PRIVATE pybind11::module tab)
 
-target_compile_definitions(libtab PRIVATE VERSION_INFO=${PROJECT_VERSION})
-
-install(TARGETS tab libtab DESTINATION .)
+install(TARGETS libtab DESTINATION .)
+install(TARGETS tab DESTINATION lib)

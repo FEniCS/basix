@@ -1,0 +1,45 @@
+# This workflow will install Python dependencies, run tests and lint
+# with a single version of Python For more information see:
+# https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Libtab CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: [3.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies (non-Python, Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev
+      - name: Install dependencies (non-Python, macOS)
+        if: runner.os == 'macOS'
+        run: brew install eigen
+      - name: Install dependencies (Python)
+        run: |
+          pip install --upgrade pip
+          pip install scikit-build
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          flake8 --statistics test/
+      - name: Install libtab
+        run: |
+          pip install .
+      - name: Run units tests
+        run: |
+          pip install pytest pytest-xdist numpy sympy
+          pytest -n auto test/

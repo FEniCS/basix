@@ -17,31 +17,6 @@ using namespace libtab;
 
 namespace
 {
-
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_nedelec_2d_space(int degree)
-{
-  // 2D space on triangle
-  const int tdim = 2;
-  const int nv = (degree + 1) * (degree + 2) / 2;
-
-  // Tabulate P(k+1) at quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts
-      = polyset::tabulate(cell::Type::triangle, degree, 0, Qpts)[0];
-
-  const int psize = Pkp1_at_Qpts.cols();
-
-  // Create initial coefficients of Pkp1.
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs(nv * 2, psize * 2);
-  wcoeffs.setZero();
-  wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
-  wcoeffs.block(nv, psize, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
-
-  return wcoeffs;
-}
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 create_nedelec_2d_dual(int degree)
@@ -77,34 +52,7 @@ create_nedelec_2d_dual(int degree)
   return dualmat;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_nedelec_3d_space(int degree)
-{
-  // Reference tetrahedron
-  const int tdim = 3;
-
-  // Vector subset
-  const int nv = (degree + 1) * (degree + 2) * (degree + 3) / 6;
-
-  // Tabulate P(k+1) at quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts
-      = polyset::tabulate(cell::Type::tetrahedron, degree, 0, Qpts)[0];
-  const int psize = Pkp1_at_Qpts.cols();
-
-  // Create initial coefficients of Pkp1.
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs(nv * tdim, psize * tdim);
-  wcoeffs.setZero();
-  for (int i = 0; i < tdim; ++i)
-    wcoeffs.block(nv * i, psize * i, nv, nv)
-        = Eigen::MatrixXd::Identity(nv, nv);
-
-  return wcoeffs;
-}
-//-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 create_nedelec_3d_dual(int degree)
 {
   const int tdim = 3;
@@ -134,7 +82,8 @@ create_nedelec_3d_dual(int degree)
     // Integral moments on faces
     FiniteElement moment_space_F
         = RaviartThomas::create(cell::Type::triangle, degree - 1);
-    dualmat.block(6 * (degree + 1), 0, 4 * (degree - 1) * (degree + 1), psize * 3)
+    dualmat.block(6 * (degree + 1), 0, 4 * (degree - 1) * (degree + 1),
+                  psize * 3)
         = moments::make_dot_integral_moments(
             moment_space_F, cell::Type::tetrahedron, 3, degree, quad_deg);
   }
@@ -160,20 +109,17 @@ create_nedelec_3d_dual(int degree)
 FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
+  const int psize = polyset::size(celltype, degree);
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs
+      = Eigen::MatrixXd::Identity(tdim * psize, tdim * psize);
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs;
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat;
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      dualmat;
 
   if (celltype == cell::Type::triangle)
-  {
-    wcoeffs = create_nedelec_2d_space(degree);
     dualmat = create_nedelec_2d_dual(degree);
-  }
   else if (celltype == cell::Type::tetrahedron)
-  {
-    wcoeffs = create_nedelec_3d_space(degree);
     dualmat = create_nedelec_3d_dual(degree);
-  }
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 

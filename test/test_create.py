@@ -14,7 +14,7 @@ def test_create():
     # Create element from space and dual
     dualmat = libtab.tabulate_polynomial_set(celltype, degree, 0, points)[0]
     coeff_space = numpy.identity(points.shape[0])
-    fe = libtab.create_new_element(celltype, degree, 1, dualmat, coeff_space)
+    fe = libtab.create_new_element(celltype, degree, 1, dualmat, coeff_space, [1, 0, 0, 0])
 
     numpy.set_printoptions(suppress=True, precision=2)
 

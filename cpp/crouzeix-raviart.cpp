@@ -47,7 +47,9 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
 
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
-  FiniteElement el(celltype, 1, 1, new_coeffs);
+  std::array<int, 4> entity_dofs = {0};
+  entity_dofs[tdim - 1] = 1;
+  FiniteElement el(celltype, 1, 1, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------

@@ -248,6 +248,12 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
+  for (int& q : entity_dofs[1])
+    q = degree;
+  for (int& q : entity_dofs[2])
+    q = degree * (degree - 1);
+  if (tdim > 2)
+    entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);

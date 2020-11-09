@@ -42,17 +42,20 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   else
   {
     // One dof on each vertex
-    for (int& q : entity_dofs[1])
+    for (int& q : entity_dofs[0])
       q = 1;
     // Degree-1 dofs on each edge
     for (int& q : entity_dofs[1])
       q = degree - 1;
     // Triangle
-    for (int& q : entity_dofs[2])
-      q = (degree - 1) * (degree - 2) / 2;
+    if (tdim > 1)
+    {
+      for (int& q : entity_dofs[2])
+        q = (degree - 1) * (degree - 2) / 2;
+    }
     // Tetrahedron
-    for (int& q : entity_dofs[3])
-      q = (degree - 1) * (degree - 2) * (degree - 3) / 6;
+    if (tdim > 2)
+      entity_dofs[3] = {(degree - 1) * (degree - 2) * (degree - 3) / 6};
 
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         geometry = cell::geometry(celltype);

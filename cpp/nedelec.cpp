@@ -109,7 +109,8 @@ create_nedelec_3d_space(int degree)
   const int ns0 = (degree - 1) * degree * (degree + 1) / 6;
   // Number of additional Nedelec polynomials that could be added
   const int ns = degree * (degree + 1) / 2;
-  // Number of polynomials that would be included that are not independent so are removed
+  // Number of polynomials that would be included that are not independent so
+  // are removed
   const int ns_remove = degree * (degree - 1) / 2;
 
   // Number of dofs in the space, ie size of polynomial set
@@ -126,9 +127,10 @@ create_nedelec_3d_space(int degree)
   // Create coefficients for order (degree-1) polynomials
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       wcoeffs(ndofs, psize * tdim);
-   wcoeffs.setZero();
+  wcoeffs.setZero();
   for (int i = 0; i < tdim; ++i)
-    wcoeffs.block(nv * i, psize * i, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
+    wcoeffs.block(nv * i, psize * i, nv, nv)
+        = Eigen::MatrixXd::Identity(nv, nv);
 
   // Create coefficients for additional Nedelec polynomials
   for (int i = 0; i < ns; ++i)
@@ -228,6 +230,8 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs;
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat;
 
+  std::array<int, 4> entity_dofs = {0};
+
   if (celltype == cell::Type::triangle)
   {
     wcoeffs = create_nedelec_2d_space(degree);
@@ -242,7 +246,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
     throw std::runtime_error("Invalid celltype in Nedelec");
 
   auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
-  FiniteElement el(celltype, degree, tdim, new_coeffs);
+  FiniteElement el(celltype, degree, tdim, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------

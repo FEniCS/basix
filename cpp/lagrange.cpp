@@ -84,7 +84,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
 
   auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
 
-  FiniteElement el(celltype, degree, 1, new_coeffs);
+  FiniteElement el(celltype, degree, 1, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------
@@ -99,6 +99,8 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
 
   const int ndofs = polyset::size(celltype, degree);
   const int tdim = cell::topological_dimension(celltype);
+  std::array<int, 4> entity_dofs = {0};
+  entity_dofs[tdim] = ndofs;
 
   // Create points at nodes, ordered by topology (vertices first)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
@@ -138,7 +140,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
 
   auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
 
-  FiniteElement el(celltype, degree, 1, new_coeffs);
+  FiniteElement el(celltype, degree, 1, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------

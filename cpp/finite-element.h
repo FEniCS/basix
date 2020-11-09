@@ -23,9 +23,10 @@ public:
   FiniteElement(
       cell::Type cell_type, int degree, int value_size,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          coeffs)
+          coeffs,
+      std::array<int, 4> entity_dofs)
       : _cell_type(cell_type), _degree(degree), _value_size(value_size),
-        _coeffs(coeffs), _entity_dofs({0})
+        _coeffs(coeffs), _entity_dofs({entity_dofs})
   {
   }
 

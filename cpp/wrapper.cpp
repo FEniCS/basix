@@ -86,11 +86,9 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
-      .def("base_permutations", &FiniteElement::base_permutations,
-           tabdoc.c_str())
-      .def("contains_vectors", &FiniteElement::contains_vectors, tabdoc.c_str())
-      .def("direction_correction", &FiniteElement::direction_correction,
-           tabdoc.c_str())
+      .def("base_permutations", &FiniteElement::base_permutations)
+      .def("needs_correction", &FiniteElement::needs_correction)
+      .def("direction_correction", &FiniteElement::direction_correction)
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("ndofs", &FiniteElement::ndofs)

@@ -28,7 +28,7 @@ public:
           base_permutations)
       : _cell_type(cell_type), _degree(degree), _value_size(value_size),
         _coeffs(coeffs), _entity_dofs({0}),
-        _base_permutations(base_permutations), _contains_vectors(false)
+        _base_permutations(base_permutations), _needs_correction(false)
   {
   }
   FiniteElement(
@@ -42,7 +42,7 @@ public:
           direction_correction)
       : _cell_type(cell_type), _degree(degree), _value_size(value_size),
         _coeffs(coeffs), _entity_dofs({0}),
-        _base_permutations(base_permutations), _contains_vectors(true),
+        _base_permutations(base_permutations), _needs_correction(true),
         _direction_correction(direction_correction)
   {
   }
@@ -131,7 +131,7 @@ public:
   /// Does the space contain vectors?
   /// If true, the space contains vector-valued functions, so direction
   /// correction will need to be applied.
-  bool contains_vectors() const { return _contains_vectors; };
+  bool needs_correction() const { return _needs_correction; };
 
   /// Direction correction
   /// The direction correction represents the effect of rotating or reflecting
@@ -225,7 +225,7 @@ private:
       _base_permutations;
 
   // Does the space contain vectors
-  bool _contains_vectors;
+  bool _needs_correction;
 
   // Direction correction
   std::vector<

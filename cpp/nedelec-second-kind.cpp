@@ -26,7 +26,8 @@ create_nedelec_2d_space(int degree)
   const int nv = (degree + 1) * (degree + 2) / 2;
 
   // Tabulate P(k+1) at quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree);
+  [[maybe_unused]] auto [Qpts, Qwts]
+      = quadrature::make_quadrature(tdim, 2 * degree);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts
       = polyset::tabulate(cell::Type::triangle, degree, 0, Qpts)[0];
@@ -87,7 +88,8 @@ create_nedelec_3d_space(int degree)
   const int nv = (degree + 1) * (degree + 2) * (degree + 3) / 6;
 
   // Tabulate P(k+1) at quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree);
+  [[maybe_unused]] auto [Qpts, Qwts]
+      = quadrature::make_quadrature(tdim, 2 * degree);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts
       = polyset::tabulate(cell::Type::tetrahedron, degree, 0, Qpts)[0];
@@ -134,7 +136,8 @@ create_nedelec_3d_dual(int degree)
     // Integral moments on faces
     FiniteElement moment_space_F
         = RaviartThomas::create(cell::Type::triangle, degree - 1);
-    dualmat.block(6 * (degree + 1), 0, 4 * (degree - 1) * (degree + 1), psize * 3)
+    dualmat.block(6 * (degree + 1), 0, 4 * (degree - 1) * (degree + 1),
+                  psize * 3)
         = moments::make_dot_integral_moments(
             moment_space_F, cell::Type::tetrahedron, 3, degree, quad_deg);
   }

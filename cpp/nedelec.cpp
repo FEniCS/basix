@@ -245,7 +245,8 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
-  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
+  auto new_coeffs
+      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
   FiniteElement el(celltype, degree, tdim, new_coeffs, entity_dofs);
   return el;
 }

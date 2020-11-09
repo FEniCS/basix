@@ -151,7 +151,8 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
       = create_regge_dual(celltype, degree);
 
-  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
+  auto new_coeffs
+      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
   FiniteElement el(celltype, degree, tdim * tdim, new_coeffs);
   return el;
 }

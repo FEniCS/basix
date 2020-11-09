@@ -45,7 +45,8 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
 
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, 1, 0, pts)[0];
 
-  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+  auto new_coeffs
+      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
   FiniteElement el(celltype, 1, 1, new_coeffs);
   return el;
 }

@@ -28,6 +28,11 @@ jobs:
       - name: Install dependencies (non-Python, macOS)
         if: runner.os == 'macOS'
         run: brew install eigen
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          C:\msys64\usr\bin\wget.exe https://github.com/ros2/choco-packages/releases/download/2020-02-24/eigen.3.3.4.nupkg
+          choco install eigen.3.3.4.nupkg
       - name: Install dependencies (Python)
         run: |
           pip install --upgrade pip

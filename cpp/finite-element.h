@@ -24,9 +24,9 @@ public:
       cell::Type cell_type, int degree, int value_size,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           coeffs,
-      std::array<int, 4> entity_dofs)
+      std::vector<std::vector<int>> entity_dofs)
       : _cell_type(cell_type), _degree(degree), _value_size(value_size),
-        _coeffs(coeffs), _entity_dofs({entity_dofs})
+        _coeffs(coeffs), _entity_dofs(entity_dofs)
   {
   }
 
@@ -68,28 +68,31 @@ public:
 
   /// Get the dofs -> topological dimension mapping
   /// @return List
-  std::array<int, 4> entity_dofs() const { return _entity_dofs; }
+  std::vector<std::vector<int>> entity_dofs() const { return _entity_dofs; }
 
   /// Calculates the basis functions of the finite element, in terms of the
   /// polynomial basis.
   ///
-  /// The basis functions @f$(\phi_i)@f$ of a finite element can be represented as
-  /// a linear combination of polynomials @f$(p_j)@f$ in an underlying polynomial
-  /// basis that span the space of all d-dimensional polynomials up to order
+  /// The basis functions @f$(\phi_i)@f$ of a finite element can be represented
+  /// as a linear combination of polynomials @f$(p_j)@f$ in an underlying
+  /// polynomial basis that span the space of all d-dimensional polynomials up
+  /// to order
   /// @f$k (P_k^d)@f$:
   /// @f[  \phi_i = \sum_j c_{ij} p_j @f]
   /// This function computed the matrix @f$C = (c_{ij})@f$.
   ///
-  /// In some cases, the basis functions @f$(\phi_i)@f$ do not span the full space
+  /// In some cases, the basis functions @f$(\phi_i)@f$ do not span the full
+  /// space
   /// @f$P_k@f$. In these cases, we represent the space spanned by the basis
   /// functions as the span of some polynomials @f$(q_k)@f$. These can be
   /// represented in terms of the underlying polynomial basis:
   /// @f[  q_k = \sum_j b_{kj} p_j @f]
-  /// If the basis functions span the full space, then @f$B = (b_{kj})@f$ is simply
-  /// the identity.
+  /// If the basis functions span the full space, then @f$B = (b_{kj})@f$ is
+  /// simply the identity.
   ///
   /// The basis functions @f$\phi_i@f$ are defined by a dual set of functionals
-  /// @f$(f_l)@f$. The basis functions are the functions in span{@f$q_k@f$} such that:
+  /// @f$(f_l)@f$. The basis functions are the functions in span{@f$q_k@f$} such
+  /// that:
   ///   @f[ f_l(\phi_i) = 1 \mbox{ if } i=l \mbox{ else } 0 @f]
   /// We can define a matrix D given by applying the functionals to each
   /// polynomial p_j:
@@ -145,8 +148,8 @@ public:
   /// @f]
   /// These span the space @f$ P_1^2 @f$.
   ///
-  /// Raviart-Thomas order 1 elements span a space smaller than @f$ P_1^2 @f$, so
-  /// B (span_coeffs) is not the identity. It is given by:
+  /// Raviart-Thomas order 1 elements span a space smaller than @f$ P_1^2 @f$,
+  /// so B (span_coeffs) is not the identity. It is given by:
   ///   @f[ B = \begin{bmatrix}
   ///  1 &  0 &  0 &    0 &  0 &   0 \\
   ///  0 &  0 &  0 &    1 &  0 &     0 \\
@@ -214,15 +217,11 @@ private:
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       _coeffs;
 
-  // Number of dofs in entities
+  // Number of dofs associated each subentity
   // The dofs of an element are associated with entities of different
   // topological dimension (vertices, edges, faces, cells). The dofs are listed
-  // in this order, with vertex dofs first. This array represents the number of
-  // dofs on each entity. e.g. for Lagrange of order 2 on a triangle it is [1,
-  // 1, 0, 0], since each vertex has one dofs, each edge has 1 dof. For faces
-  // and cells, rather than the number of dofs, the edge size is given, e.g. for
-  // a triangular face with 6 dofs, the edge size is 3. For a hexahedral cell
-  // with 8 internal dofs, the value would be 2.
-  std::array<int, 4> _entity_dofs;
+  // in this order, with vertex dofs first. Each entry is the dof count on the
+  // associated entity, as listed by cell::topology.
+  std::vector<std::vector<int>> _entity_dofs;
 };
 } // namespace libtab

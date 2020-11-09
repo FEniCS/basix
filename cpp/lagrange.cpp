@@ -22,7 +22,12 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
       ndofs, tdim);
 
-  std::array<int, 4> entity_dofs = {0, 0, 0, 0};
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::vector<std::vector<int>> entity_dofs(topology.size());
+  for (std::size_t i = 0; i < topology.size(); ++i)
+    entity_dofs[i].resize(topology[i].size(), 0);
 
   if (ndofs == 1)
   {
@@ -32,19 +37,23 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
       pt.row(0) << 1.0 / 3, 1.0 / 3;
     else if (tdim == 3)
       pt.row(0) << 0.25, 0.25, 0.25;
-    entity_dofs[tdim] = 1;
+    entity_dofs[tdim] = {1};
   }
   else
   {
-    entity_dofs[0] = 1;
-    entity_dofs[1] = degree - 1;
-    if (tdim > 1 and degree > 1)
-      entity_dofs[2] = degree - 2;
-    if (tdim > 2 and degree > 2)
-      entity_dofs[3] = degree - 3;
+    // One dof on each vertex
+    for (int& q : entity_dofs[1])
+      q = 1;
+    // Degree-1 dofs on each edge
+    for (int& q : entity_dofs[1])
+      q = degree - 1;
+    // Triangle
+    for (int& q : entity_dofs[2])
+      q = (degree - 1) * (degree - 2) / 2;
+    // Tetrahedron
+    for (int& q : entity_dofs[3])
+      q = (degree - 1) * (degree - 2) * (degree - 3) / 6;
 
-    std::vector<std::vector<std::vector<int>>> topology
-        = cell::topology(celltype);
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         geometry = cell::geometry(celltype);
     int c = 0;
@@ -100,8 +109,6 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
 
   const int ndofs = polyset::size(celltype, degree);
   const int tdim = cell::topological_dimension(celltype);
-  std::array<int, 4> entity_dofs = {0};
-  entity_dofs[tdim] = ndofs;
 
   // Create points at nodes, ordered by topology (vertices first)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
@@ -109,6 +116,12 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
 
   std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
+
+  std::vector<std::vector<int>> entity_dofs(topology.size());
+  for (std::size_t i = 0; i < topology.size(); ++i)
+    entity_dofs[i].resize(topology[i].size(), 0);
+  entity_dofs[tdim][0] = ndofs;
+
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geometry
       = cell::geometry(celltype);
 

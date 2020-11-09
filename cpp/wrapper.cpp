@@ -81,7 +81,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "create_new_element",
       [](cell::Type celltype, int degree, int value_size,
          const Eigen::MatrixXd& dualmat, const Eigen::MatrixXd& coeffs,
-         const std::array<int, 4>& entity_dofs) -> FiniteElement {
+         const std::vector<std::vector<int>>& entity_dofs) -> FiniteElement {
         auto new_coeffs
             = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
         return FiniteElement(celltype, degree, value_size, new_coeffs,

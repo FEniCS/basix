@@ -153,7 +153,7 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
 
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
-  std::array<int, 4> entity_dofs = {0};
+  std::vector<std::vector<int>> entity_dofs;
   FiniteElement el(celltype, degree, tdim * tdim, new_coeffs, entity_dofs);
   return el;
 }

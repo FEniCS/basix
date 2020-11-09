@@ -66,8 +66,6 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
       = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                       Eigen::RowMajor>::Zero(nv * tdim + ns, psize * tdim);
 
-  std::array<int, 4> entity_dofs = {0};
-
   // quadrature degree
   int quad_deg = 5 * degree;
 
@@ -84,15 +82,12 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
       = moments::make_normal_integral_moments(moment_space_facet, celltype,
                                               tdim, degree, quad_deg);
 
-  entity_dofs[tdim - 1] = facet_dofs;
-
   // Add rows to dualmat for integral moments on interior
   if (degree > 1)
   {
     const int internal_dofs = (tdim == 2)
                                   ? (degree * (degree - 1))
                                   : (degree * (degree - 1) * (degree + 1) / 2);
-    entity_dofs[tdim] = internal_dofs;
     // Interior integral moment
     FiniteElement moment_space_interior
         = DiscontinuousLagrange::create(celltype, degree - 2);
@@ -103,6 +98,13 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
 
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
+
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  std::vector<std::vector<int>> entity_dofs(topology.size());
+  for (std::size_t i = 0; i < topology.size(); ++i)
+    entity_dofs[i].resize(topology[i].size(), 0);
+
   FiniteElement el(celltype, degree, tdim, new_coeffs, entity_dofs);
   return el;
 }

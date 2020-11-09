@@ -36,10 +36,6 @@ jobs:
         run: |
           pip install flake8
           flake8 --statistics test/
-      - name: Check documentation style
-        run: |
-          pip install pydocstyle
-          pydocstyle .
       - name: Install libtab
         run: |
           pip install .

@@ -10,7 +10,7 @@ using namespace libtab;
 
 //-----------------------------------------------------------------------------
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-FiniteElement::apply_dualmat_to_basis(
+FiniteElement::compute_expansion_coefficents(
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                         Eigen::RowMajor>& coeffs,
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,

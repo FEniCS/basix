@@ -85,7 +85,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
                             Eigen::RowMajor>& base_permutations)
           -> FiniteElement {
         auto new_coeffs
-            = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+            = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
         return FiniteElement(celltype, degree, value_size, new_coeffs,
                              base_permutations);
       },

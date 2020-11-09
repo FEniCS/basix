@@ -49,7 +49,8 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       base_permutations(perm_count, ndofs);
 
-  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
+  auto new_coeffs
+      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
   FiniteElement el(celltype, 1, 1, new_coeffs, base_permutations);
   return el;
 }

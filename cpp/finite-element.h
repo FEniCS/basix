@@ -191,6 +191,8 @@ public:
   /// for this element.
   /// @param[in] dualmat The matrix D of values obtained by applying each
   /// functional in the dual set to each expansion polynomial
+  /// @param[in] condition_check If set, checks the condition of the matrix
+  /// B.D^T and throws an error if it is ill-conditioned.
   /// @return The matrix C of expansion coefficients that define the basis
   /// functions of the finite element space.
   static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -198,7 +200,8 @@ public:
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& span_coeffs,
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                          Eigen::RowMajor>& dualmat);
+                          Eigen::RowMajor>& dualmat,
+      bool condition_check = false);
 
 private:
   // Cell type

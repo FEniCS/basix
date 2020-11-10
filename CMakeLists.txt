@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 
 project(libtab VERSION "0.0.1")
+set(CMAKE_BUILD_TYPE Debug)
 
 # Define CMAKE_INSTALL_xxx: LIBDIR, INCLUDEDIR
 include(GNUInstallDirs)

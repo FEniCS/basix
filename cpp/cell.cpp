@@ -98,7 +98,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::Type celltype)
     // FIXME: check
     topo.resize(4);
     // Vertices
-    topo[0] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}};
+    topo[0] = {{0}, {1}, {2}, {3}, {4}, {5}};
     // Edges
     topo[1] = {{0, 1}, {1, 2}, {2, 0}, {0, 3}, {1, 4},
                {2, 5}, {3, 4}, {4, 5}, {5, 3}};
@@ -214,7 +214,6 @@ cell::create_lattice(cell::Type celltype, int n, bool exterior)
     }
     else
     {
-
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
           2, 2);
       hs.row(0) << 0.0, 1.0;
@@ -222,7 +221,7 @@ cell::create_lattice(cell::Type celltype, int n, bool exterior)
       hs /= static_cast<double>(n);
 
       int b = (exterior == false) ? 1 : 0;
-      int m = (n - 2 * b + 1);
+      int m = (n + 1 - 2 * b);
       points.resize(m * m, 2);
       int c = 0;
       for (int i = b; i < n + 1 - b; ++i)
@@ -270,7 +269,6 @@ cell::create_lattice(cell::Type celltype, int n, bool exterior)
     }
     else
     {
-
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
           1, 1);
       hs.row(0) << 1.0 / static_cast<double>(n);
@@ -415,7 +413,32 @@ cell::Type cell::simplex_type(int dim)
     throw std::runtime_error("Unsupported dimension");
   }
 }
+//-----------------------------------------------------------------------------
+cell::Type cell::sub_entity_type(cell::Type celltype, int dim, int index)
+{
+  const int tdim = cell::topological_dimension(celltype);
+  assert(dim >= 0 and dim <= tdim);
 
+  if (dim == 0)
+    return cell::Type::point;
+  else if (dim == 1)
+    return cell::Type::interval;
+  else if (dim == tdim)
+    return celltype;
+
+  const std::vector<std::vector<std::vector<int>>> t = cell::topology(celltype);
+  const std::vector<int>& entity = t[dim][index];
+  switch (entity.size())
+  {
+  case 3:
+    return cell::Type::triangle;
+  case 4:
+    return cell::Type::quadrilateral;
+  default:
+    throw std::runtime_error("Error in sub_entity_type");
+  }
+}
+//-----------------------------------------------------------------------------
 cell::Type cell::str_to_type(std::string name)
 {
   static const std::map<std::string, cell::Type> name_to_type

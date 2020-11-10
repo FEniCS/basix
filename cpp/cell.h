@@ -73,10 +73,17 @@ int topological_dimension(cell::Type celltype);
 /// @return cell type
 cell::Type simplex_type(int dim);
 
+/// Get the cell type of a sub-entity of given dimension and index
+/// @param celltype Type of cell
+/// @param dim Topological dimension of sub-entity
+/// @param index Index of sub-entity
+/// @return cell type of sub-entity
+cell::Type sub_entity_type(cell::Type celltype, int dim, int index);
+
 /// Convert a cell type string to enum
 /// @param name String
 /// @return cell type
 cell::Type str_to_type(std::string name);
 
-} // namespace Cell
+} // namespace cell
 } // namespace libtab

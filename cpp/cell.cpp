@@ -370,7 +370,6 @@ cell::create_lattice(cell::Type celltype, int n, bool exterior)
     }
     else
     {
-
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> hs(
           3, 3);
 
@@ -379,8 +378,8 @@ cell::create_lattice(cell::Type celltype, int n, bool exterior)
       hs.row(2) << 1.0, 0.0, 0.0;
       hs /= static_cast<double>(n);
 
-      if (exterior == false)
-        throw std::runtime_error("not implemented in pyramid");
+      int b = (exterior == false) ? 1 : 0;
+      n -= b * 3;
 
       int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
       points.resize(m, 3);
@@ -388,7 +387,8 @@ cell::create_lattice(cell::Type celltype, int n, bool exterior)
       for (int k = 0; k < n + 1; ++k)
         for (int i = 0; i < n + 1 - k; ++i)
           for (int j = 0; j < n + 1 - k; ++j)
-            points.row(c++) = hs.row(0) * k + hs.row(1) * j + hs.row(2) * i;
+            points.row(c++) = hs.row(0) * (k + b) + hs.row(1) * (j + b)
+                              + hs.row(2) * (i + b);
     }
   }
   else

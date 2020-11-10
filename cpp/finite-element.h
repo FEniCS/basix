@@ -23,9 +23,10 @@ public:
   FiniteElement(
       cell::Type cell_type, int degree, int value_size,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          coeffs)
+          coeffs,
+      std::vector<std::vector<int>> entity_dofs)
       : _cell_type(cell_type), _degree(degree), _value_size(value_size),
-        _coeffs(coeffs), _entity_dofs({0})
+        _coeffs(coeffs), _entity_dofs(entity_dofs)
   {
   }
 
@@ -67,7 +68,7 @@ public:
 
   /// Get the dofs -> topological dimension mapping
   /// @return List
-  std::array<int, 4> entity_dofs() const { return _entity_dofs; }
+  std::vector<std::vector<int>> entity_dofs() const { return _entity_dofs; }
 
   /// Calculates the basis functions of the finite element, in terms of the
   /// polynomial basis.
@@ -219,15 +220,11 @@ private:
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       _coeffs;
 
-  // Number of dofs in entities
+  // Number of dofs associated each subentity
   // The dofs of an element are associated with entities of different
   // topological dimension (vertices, edges, faces, cells). The dofs are listed
-  // in this order, with vertex dofs first. This array represents the number of
-  // dofs on each entity. e.g. for Lagrange of order 2 on a triangle it is [1,
-  // 1, 0, 0], since each vertex has one dofs, each edge has 1 dof. For faces
-  // and cells, rather than the number of dofs, the edge size is given, e.g. for
-  // a triangular face with 6 dofs, the edge size is 3. For a hexahedral cell
-  // with 8 internal dofs, the value would be 2.
-  std::array<int, 4> _entity_dofs;
+  // in this order, with vertex dofs first. Each entry is the dof count on the
+  // associated entity, as listed by cell::topology.
+  std::vector<std::vector<int>> _entity_dofs;
 };
 } // namespace libtab

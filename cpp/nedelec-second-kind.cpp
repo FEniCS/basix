@@ -125,7 +125,14 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
 
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
-  FiniteElement el(celltype, degree, tdim, new_coeffs);
+
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  std::vector<std::vector<int>> entity_dofs(topology.size());
+  for (std::size_t i = 0; i < topology.size(); ++i)
+    entity_dofs[i].resize(topology[i].size(), 0);
+
+  FiniteElement el(celltype, degree, tdim, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------

@@ -225,7 +225,7 @@ def test_lagrange(celltype, order):
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_dof_permutations_interval(order):
     lagrange = libtab.Lagrange(libtab.CellType.interval, order)
-    assert lagrange.base_permutations().shape[0] == 0
+    assert len(lagrange.base_permutations) == 0
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
@@ -244,15 +244,19 @@ def test_dof_permutations_triangle(order):
         permuted[1] = {6: 8, 8: 6}
         permuted[2] = {9: 11, 11: 9}
 
-    base_perms = lagrange.base_permutations()
+    base_perms = lagrange.base_permutations
     assert len(base_perms) == 3
 
     for i, perm in enumerate(base_perms):
-        for j, value in enumerate(perm):
+        actual = numpy.zeros_like(perm)
+        for j, row in enumerate(perm):
             if i in permuted and j in permuted[i]:
-                assert value == permuted[i][j]
+                actual[j, permuted[i][j]] = 1
             else:
-                assert value == j
+                actual[j, j] = 1
+        print(actual)
+        print(perm)
+        assert numpy.allclose(perm, actual)
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
@@ -286,13 +290,14 @@ def test_dof_permutations_tetrahedron(order):
         permuted[12] = {31: 33, 32: 31, 33: 32}
         permuted[13] = {32: 33, 33: 32}
 
-    base_perms = lagrange.base_permutations()
+    base_perms = lagrange.base_permutations
     assert len(base_perms) == 14
 
     for i, perm in enumerate(base_perms):
-        print(i, perm)
-        for j, value in enumerate(perm):
+        actual = numpy.zeros_like(perm)
+        for j, row in enumerate(perm):
             if i in permuted and j in permuted[i]:
-                assert value == permuted[i][j]
+                actual[j, permuted[i][j]] = 1
             else:
-                assert value == j
+                actual[j, j] = 1
+        assert numpy.allclose(perm, actual)

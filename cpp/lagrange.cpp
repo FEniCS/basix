@@ -102,7 +102,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
       const int start = 3 + edge_ref.size() * edge;
       for (int i = 0; i < edge_ref.size(); ++i)
       {
-        base_permutations[edge](start + i, i) = 0;
+        base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
     }
@@ -116,7 +116,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
       const int start = 4 + edge_ref.size() * edge;
       for (int i = 0; i < edge_ref.size(); ++i)
       {
-        base_permutations[edge](start + i, i) = 0;
+        base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
     }
@@ -129,9 +129,9 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
       const int start = 4 + edge_ref.size() * 6 + face_ref.size() * face;
       for (int i = 0; i < face_rot.size(); ++i)
       {
-        base_permutations[6 + 2 * face](start + i, i) = 0;
+        base_permutations[6 + 2 * face](start + i, start + i) = 0;
         base_permutations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
-        base_permutations[6 + 2 * face + 1](start + i, i) = 0;
+        base_permutations[6 + 2 * face + 1](start + i, start + i) = 0;
         base_permutations[6 + 2 * face + 1](start + i, start + face_ref[i]) = 1;
       }
     }

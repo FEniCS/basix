@@ -81,8 +81,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "create_new_element",
       [](cell::Type celltype, int degree, int value_size,
          const Eigen::MatrixXd& dualmat, const Eigen::MatrixXd& coeffs,
-         const Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic,
-                            Eigen::RowMajor>& base_permutations)
+         const std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                            Eigen::RowMajor>>& base_permutations)
           -> FiniteElement {
         auto new_coeffs
             = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
@@ -93,9 +93,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
-      .def("base_permutations", &FiniteElement::base_permutations)
-      .def("needs_correction", &FiniteElement::needs_correction)
-      .def("direction_correction", &FiniteElement::direction_correction)
+      .def_property_readonly("base_permutations", &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("ndofs", &FiniteElement::ndofs)

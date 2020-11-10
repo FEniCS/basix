@@ -14,7 +14,8 @@ FiniteElement::compute_expansion_coefficents(
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                         Eigen::RowMajor>& coeffs,
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                        Eigen::RowMajor>& dualmat)
+                        Eigen::RowMajor>& dualmat,
+    bool condition_check)
 {
 #ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
@@ -22,6 +23,14 @@ FiniteElement::compute_expansion_coefficents(
 #endif
 
   auto A = coeffs * dualmat.transpose();
+
+  if (condition_check)
+  {
+    double detA = A.determinant();
+    if (std::fabs(detA) < 1e-6)
+      throw std::runtime_error(
+          "Poorly conditioned B.D^T when computing expansion coefficients");
+  }
 
   // _coeffs = A^-1(coeffs)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -52,7 +61,8 @@ FiniteElement::tabulate(
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-  dresult(basis.size(),
+      dresult(
+          basis.size(),
           Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
               x.rows(), ndofs * _value_size));
   for (std::size_t p = 0; p < dresult.size(); ++p)

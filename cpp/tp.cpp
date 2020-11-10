@@ -41,9 +41,17 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
       Eigen::ArrayXd point = entity_geom.row(0);
       if (dim == 0)
       {
-        pt.row(c) = entity_geom.row(0);
+        pt.row(c++) = entity_geom.row(0);
         entity_dofs[0].push_back(1);
-        ++c;
+      }
+      else if ((int)dim == tdim)
+      {
+        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                           Eigen::RowMajor>
+            lattice = cell::create_lattice(celltype, degree, false);
+        for (int j = 0; j < lattice.rows(); ++j)
+          pt.row(c++) = lattice.row(j);
+        entity_dofs[dim].push_back(lattice.rows());
       }
       else
       {
@@ -52,6 +60,7 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
                            Eigen::RowMajor>
             lattice = cell::create_lattice(ct, degree, false);
         entity_dofs[dim].push_back(lattice.rows());
+
         for (int j = 0; j < lattice.rows(); ++j)
         {
           pt.row(c) = entity_geom.row(0);

@@ -221,6 +221,8 @@ def test_tet(order):
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
     nedelec = libtab.Nedelec(celltype, order)
+    assert(sum([sum(w) for w in nedelec.entity_dofs]) == nedelec.ndofs)
+
     pts = libtab.create_lattice(celltype, 6, True)
     nderiv = 1
     wtab = nedelec.tabulate(nderiv, pts)

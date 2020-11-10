@@ -263,28 +263,24 @@ def test_dof_permutations_triangle(order):
         permuted[1] = {4: 7, 5: 6, 6: 5, 7: 4}
         permuted[2] = {8: 11, 9: 10, 10: 9, 11: 8}
 
-    base_perms = nedelec.base_permutations()
+    base_perms = nedelec.base_permutations
     assert len(base_perms) == 3
 
     for i, perm in enumerate(base_perms):
-        for j, value in enumerate(perm):
-            if i in permuted and j in permuted[i]:
-                assert value == permuted[i][j]
-            else:
-                assert value == j
+        actual = numpy.zeros_like(perm)
 
-    directions = nedelec.direction_correction()
-    assert len(directions) == 3
-    for i, matrix in enumerate(directions):
-        for j in range(matrix.shape[0]):
-            for k in range(matrix.shape[1]):
-                if j == k:
-                    if order * i <= j < order * (i + 1):
-                        assert numpy.isclose(matrix[j, k], -1)
-                    else:
-                        assert numpy.isclose(matrix[j, k], 1)
+        for row in range(perm.shape[0]):
+            for k in range(perm.shape[1]):
+                if i in permuted and k in permuted[i]:
+                    col = permuted[i][k]
                 else:
-                    assert numpy.isclose(matrix[j, k], 0)
+                    col = k
+                if row == k:
+                    if order * i <= row < order * (i + 1):
+                        actual[row, col] = -1
+                    else:
+                        actual[row, col] = 1
+        assert numpy.allclose(perm, actual)
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
@@ -322,29 +318,23 @@ def test_dof_permutations_tetrahedron(order):
                 24 + a + 12 * i: 24 + b + 12 * i for a, b in {
                     2: 6, 3: 7, 4: 10, 5: 11, 6: 2, 7: 3, 10: 4, 11: 5}.items()}
 
-    base_perms = nedelec.base_permutations()
+    base_perms = nedelec.base_permutations
     assert len(base_perms) == 14
 
-    for i, perm in enumerate(base_perms):
-        for j, value in enumerate(perm):
-            if i in permuted and j in permuted[i]:
-                assert value == permuted[i][j]
-            else:
-                assert value == j
-
-    directions = nedelec.direction_correction()
-    assert len(directions) == 14
-
     # Test edge flips
-    for i, matrix in enumerate(directions[:6]):
-        for j in range(matrix.shape[0]):
-            for k in range(matrix.shape[1]):
-                if j == k:
-                    if order * i <= j < order * (i + 1):
-                        assert numpy.isclose(matrix[j, k], -1)
-                    else:
-                        assert numpy.isclose(matrix[j, k], 1)
+    for i, perm in enumerate(base_perms[:6]):
+        actual = numpy.zeros_like(perm)
+        for row in range(perm.shape[0]):
+            for k in range(perm.shape[1]):
+                if i in permuted and k in permuted[i]:
+                    col = permuted[i][k]
                 else:
-                    assert numpy.isclose(matrix[j, k], 0)
+                    col = k
+                if row == k:
+                    if order * i <= row < order * (i + 1):
+                        actual[row, col] = -1
+                    else:
+                        actual[row, col] = 1
+        assert numpy.allclose(perm, actual)
 
     # TODO: write good test for face rotations

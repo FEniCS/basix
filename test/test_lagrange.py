@@ -254,8 +254,6 @@ def test_dof_permutations_triangle(order):
                 actual[j, permuted[i][j]] = 1
             else:
                 actual[j, j] = 1
-        print(actual)
-        print(perm)
         assert numpy.allclose(perm, actual)
 
 

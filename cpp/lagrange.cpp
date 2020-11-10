@@ -90,10 +90,8 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size() * i;
 
-  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      base_permutations(perm_count, ndofs);
-  for (int i = 0; i < ndofs; ++i)
-    base_permutations.col(i) = i;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   if (celltype == cell::Type::triangle)
   {
@@ -103,7 +101,10 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     {
       const int start = 3 + edge_ref.size() * edge;
       for (int i = 0; i < edge_ref.size(); ++i)
-        base_permutations(edge, start + i) = start + edge_ref[i];
+      {
+        base_permutations[edge](start + i, i) = 0;
+        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+      }
     }
   }
   else if (celltype == cell::Type::tetrahedron)
@@ -114,7 +115,10 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     {
       const int start = 4 + edge_ref.size() * edge;
       for (int i = 0; i < edge_ref.size(); ++i)
-        base_permutations(edge, start + i) = start + edge_ref[i];
+      {
+        base_permutations[edge](start + i, i) = 0;
+        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+      }
     }
     Eigen::Array<int, Eigen::Dynamic, 1> face_ref
         = dofperms::triangle_reflection(degree - 2);
@@ -124,9 +128,12 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     {
       const int start = 4 + edge_ref.size() * 6 + face_ref.size() * face;
       for (int i = 0; i < face_rot.size(); ++i)
-        base_permutations(6 + 2 * face, start + i) = start + face_rot[i];
-      for (int i = 0; i < face_ref.size(); ++i)
-        base_permutations(6 + 2 * face + 1, start + i) = start + face_ref[i];
+      {
+        base_permutations[6 + 2 * face](start + i, i) = 0;
+        base_permutations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
+        base_permutations[6 + 2 * face + 1](start + i, i) = 0;
+        base_permutations[6 + 2 * face + 1](start + i, start + face_ref[i]) = 1;
+      }
     }
   }
 
@@ -189,10 +196,8 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size();
 
-  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      base_permutations(perm_count, ndofs);
-  for (int i = 0; i < ndofs; ++i)
-    base_permutations.col(i) = i;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   FiniteElement el(celltype, degree, 1, new_coeffs, base_permutations);
   return el;

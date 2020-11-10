@@ -154,8 +154,8 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   // TODO
   const int ndofs = dualmat.rows();
   int perm_count = 0;
-  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      base_permutations(perm_count, ndofs);
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);

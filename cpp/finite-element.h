@@ -24,28 +24,13 @@ public:
       cell::Type cell_type, int degree, int value_size,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           coeffs,
-      Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      std::vector<
+          Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
           base_permutations)
       : _cell_type(cell_type), _degree(degree), _value_size(value_size),
         _coeffs(coeffs), _entity_dofs({0}),
-        _base_permutations(base_permutations), _needs_correction(false)
-  {
-  }
-  FiniteElement(
-      cell::Type cell_type, int degree, int value_size,
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          coeffs,
-      Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          base_permutations,
-      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-          direction_correction)
-      : _cell_type(cell_type), _degree(degree), _value_size(value_size),
-        _coeffs(coeffs), _entity_dofs({0}),
-        _base_permutations(base_permutations), _needs_correction(true),
-        _direction_correction(direction_correction)
-  {
-  }
+        _base_permutations(base_permutations)
+  {}
 
   /// Destructor
   ~FiniteElement() = default;
@@ -239,7 +224,9 @@ public:
   /// The first row shows the effect of reversing the diagonal edge. The
   /// second row shows the effect of reversing the vertical edge. The third
   /// row shows the effect of reversing the horizontal edge.
-  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  // TODO: combine this documentation with direction correction
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
   base_permutations() const
   {
     return _base_permutations;
@@ -248,7 +235,7 @@ public:
   /// Does the space contain vectors?
   /// If true, the space contains vector-valued functions, so direction
   /// correction will need to be applied.
-  bool needs_correction() const { return _needs_correction; };
+//  bool needs_correction() const { return _needs_correction; };
 
   /// Direction correction
   /// The direction correction represents the effect of rotating or reflecting
@@ -301,12 +288,12 @@ public:
   ///              [ 1, 0]]
   ///   reflection: [[0, 1],
   ///                [1, 0]]
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-  direction_correction() const
-  {
-    return _direction_correction;
-  };
+//  std::vector<
+//      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+//  direction_correction() const
+// {
+//    return _direction_correction;
+//  };
 
 private:
   // Cell type
@@ -337,15 +324,8 @@ private:
   std::array<int, 4> _entity_dofs;
 
   // Base permutations
-  Eigen::Array<int, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      _base_permutations;
-
-  // Does the space contain vectors
-  bool _needs_correction;
-
-  // Direction correction
   std::vector<
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      _direction_correction;
+      _base_permutations;
 };
 } // namespace libtab

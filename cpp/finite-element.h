@@ -72,23 +72,26 @@ public:
   /// Calculates the basis functions of the finite element, in terms of the
   /// polynomial basis.
   ///
-  /// The basis functions @f$(\phi_i)@f$ of a finite element can be represented as
-  /// a linear combination of polynomials @f$(p_j)@f$ in an underlying polynomial
-  /// basis that span the space of all d-dimensional polynomials up to order
+  /// The basis functions @f$(\phi_i)@f$ of a finite element can be represented
+  /// as a linear combination of polynomials @f$(p_j)@f$ in an underlying
+  /// polynomial basis that span the space of all d-dimensional polynomials up
+  /// to order
   /// @f$k (P_k^d)@f$:
   /// @f[  \phi_i = \sum_j c_{ij} p_j @f]
   /// This function computed the matrix @f$C = (c_{ij})@f$.
   ///
-  /// In some cases, the basis functions @f$(\phi_i)@f$ do not span the full space
+  /// In some cases, the basis functions @f$(\phi_i)@f$ do not span the full
+  /// space
   /// @f$P_k@f$. In these cases, we represent the space spanned by the basis
   /// functions as the span of some polynomials @f$(q_k)@f$. These can be
   /// represented in terms of the underlying polynomial basis:
   /// @f[  q_k = \sum_j b_{kj} p_j @f]
-  /// If the basis functions span the full space, then @f$B = (b_{kj})@f$ is simply
-  /// the identity.
+  /// If the basis functions span the full space, then @f$B = (b_{kj})@f$ is
+  /// simply the identity.
   ///
   /// The basis functions @f$\phi_i@f$ are defined by a dual set of functionals
-  /// @f$(f_l)@f$. The basis functions are the functions in span{@f$q_k@f$} such that:
+  /// @f$(f_l)@f$. The basis functions are the functions in span{@f$q_k@f$} such
+  /// that:
   ///   @f[ f_l(\phi_i) = 1 \mbox{ if } i=l \mbox{ else } 0 @f]
   /// We can define a matrix D given by applying the functionals to each
   /// polynomial p_j:
@@ -144,8 +147,8 @@ public:
   /// @f]
   /// These span the space @f$ P_1^2 @f$.
   ///
-  /// Raviart-Thomas order 1 elements span a space smaller than @f$ P_1^2 @f$, so
-  /// B (span_coeffs) is not the identity. It is given by:
+  /// Raviart-Thomas order 1 elements span a space smaller than @f$ P_1^2 @f$,
+  /// so B (span_coeffs) is not the identity. It is given by:
   ///   @f[ B = \begin{bmatrix}
   ///  1 &  0 &  0 &    0 &  0 &   0 \\
   ///  0 &  0 &  0 &    1 &  0 &     0 \\
@@ -187,6 +190,8 @@ public:
   /// for this element.
   /// @param[in] dualmat The matrix D of values obtained by applying each
   /// functional in the dual set to each expansion polynomial
+  /// @param[in] condition_check If set, checks the condition of the matrix
+  /// B.D^T and throws an error if it is ill-conditioned.
   /// @return The matrix C of expansion coefficients that define the basis
   /// functions of the finite element space.
   static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -194,7 +199,8 @@ public:
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& span_coeffs,
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                          Eigen::RowMajor>& dualmat);
+                          Eigen::RowMajor>& dualmat,
+      bool condition_check = false);
 
 private:
   // Cell type

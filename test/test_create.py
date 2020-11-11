@@ -16,8 +16,8 @@ def test_create_simple():
     dualmat = libtab.tabulate_polynomial_set(celltype, degree, 0, points)[0]
     coeff_space = numpy.identity(points.shape[0])
 
-    base_permutations = numpy.array([[0, 1, 2], [0, 1, 2], [0, 1, 2]])
-    fe = libtab.create_new_element(celltype, degree, [1], dualmat, coeff_space, [[1, 1, 1], [0, 0, 0], [0]])
+    fe = libtab.create_new_element(celltype, degree, [1], dualmat, coeff_space, [[1, 1, 1], [0, 0, 0], [0]],
+                                   [numpy.identity(3) for i in range(3)])
 
     numpy.set_printoptions(suppress=True, precision=2)
 
@@ -38,7 +38,8 @@ def test_create_custom():
     dualmat = libtab.tabulate_polynomial_set(celltype, degree, 0, points)[0]
     coeff_space = numpy.identity(points.shape[0])
     fe = libtab.create_new_element(celltype, degree, [1], dualmat, coeff_space,
-                                   [[0, 0, 0], [1, 1, 1], [3]])
+                                   [[0, 0, 0], [1, 1, 1], [3]],
+                                   [numpy.identity(5) for i in range(3)])
 
     numpy.set_printoptions(suppress=True, precision=2)
 
@@ -60,4 +61,5 @@ def test_create_invalid():
     coeff_space = numpy.identity(points.shape[0])
     with pytest.raises(RuntimeError):
         libtab.create_new_element(celltype, degree, [1], dualmat, coeff_space,
-                                  [[0, 0, 0], [2, 2, 2], [0]])
+                                  [[0, 0, 0], [2, 2, 2], [0]],
+                                  [numpy.identity(6) for i in range(3)])

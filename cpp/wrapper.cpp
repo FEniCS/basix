@@ -95,7 +95,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("ndofs", &FiniteElement::ndofs)
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
-      .def_property_readonly("value_size", &FiniteElement::value_size);
+      .def_property_readonly("value_size", &FiniteElement::value_size)
+      .def_property_readonly("value_shape", &FiniteElement::value_shape);
 
   // Create FiniteElement of different types
   m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");

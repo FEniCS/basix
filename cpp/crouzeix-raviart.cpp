@@ -56,7 +56,7 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   for (int& q : entity_dofs[tdim - 1])
     q = 1;
 
-  FiniteElement el(celltype, 1, 1, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, 1, {1}, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------

@@ -58,16 +58,17 @@ FiniteElement::tabulate(
       basis = polyset::tabulate(_cell_type, _degree, nd, x);
   const int psize = polyset::size(_cell_type, _degree);
   const int ndofs = _coeffs.rows();
+  const int vs = value_size();
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       dresult(
           basis.size(),
           Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
-              x.rows(), ndofs * _value_size));
+              x.rows(), ndofs * vs));
   for (std::size_t p = 0; p < dresult.size(); ++p)
   {
-    for (int j = 0; j < _value_size; ++j)
+    for (int j = 0; j < vs; ++j)
     {
       dresult[p].block(0, ndofs * j, x.rows(), ndofs)
           = basis[p].matrix()

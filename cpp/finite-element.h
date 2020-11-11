@@ -24,7 +24,10 @@ public:
       cell::Type cell_type, int degree, std::vector<int> value_shape,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           coeffs,
-      std::vector<std::vector<int>> entity_dofs);
+      std::vector<std::vector<int>> entity_dofs,
+      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+          base_permutations);
 
   /// Destructor
   ~FiniteElement() = default;
@@ -209,6 +212,81 @@ public:
                           Eigen::RowMajor>& dualmat,
       bool condition_check = false);
 
+  /// Get the base permutations
+  /// The base permutations represent the effect of rotating or reflecting
+  /// a subentity of the cell on the numbering and orientation of the DOFs.
+  /// This returns a list of matrices with one matrix for each subentity
+  /// permutation in the following order:
+  ///   Reversing edge 0, reversing edge 1, ...
+  ///   Rotate face 0, reflect face 0, rotate face 1, reflect face 1, ...
+  ///
+  /// Example: Order 3 Lagrange on a triangle
+  /// ---------------------------------------
+  /// This space has 10 dofs arranged like:
+  /// 2
+  /// |\
+  /// 6 4
+  /// |  \
+  /// 5 9 3
+  /// |    \
+  /// 0-7-8-1
+  /// For this element, the base permutations are:
+  ///   [Matrix swapping 3 and 4,
+  ///    Matrix swapping 5 and 6,
+  ///    Matrix swapping 7 and 8]
+  /// The first row shows the effect of reversing the diagonal edge. The
+  /// second row shows the effect of reversing the vertical edge. The third
+  /// row shows the effect of reversing the horizontal edge.
+  ///
+  /// Example: Order 1 Raviart-Thomas on a triangle
+  /// ---------------------------------------------
+  /// This space has 3 dofs arranged like:
+  ///   |\
+  ///   | \
+  ///   |  \
+  /// <-1   0
+  ///   |  / \
+  ///   | L ^ \
+  ///   |   |  \
+  ///    ---2---
+  /// These DOFs are integrals of normal components over the edges: DOFs 0 and 2
+  /// are oriented inward, DOF 1 is oriented outwards.
+  /// For this element, the base permutation matrices are:
+  ///   0: [[-1, 0, 0],
+  ///       [ 0, 1, 0],
+  ///       [ 0, 0, 1]]
+  ///   1: [[1,  0, 0],
+  ///       [0, -1, 0],
+  ///       [0,  0, 1]]
+  ///   2: [[1, 0,  0],
+  ///       [0, 1,  0],
+  ///       [0, 0, -1]]
+  /// The first matrix reverses DOF 0 (as this is on the first edge). The second
+  /// matrix reverses DOF 1 (as this is on the second edge). The third matrix
+  /// reverses DOF 2 (as this is on the third edge).
+  ///
+  /// Example: DOFs on the face of Order 2 Nedelec first kind on a tetrahedron
+  /// ------------------------------------------------------------------------
+  /// On a face of this tetrahedron, this space has two face tangent DOFs:
+  /// |\        |\
+  /// | \       | \
+  /// |  \      | ^\
+  /// |   \     | | \
+  /// | 0->\    | 1  \
+  /// |     \   |     \
+  ///  ------    ------
+  /// For these DOFs, the subblocks of the base permutation matrices are:
+  ///   rotation: [[-1, 1],
+  ///              [ 1, 0]]
+  ///   reflection: [[0, 1],
+  ///                [1, 0]]
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  base_permutations() const
+  {
+    return _base_permutations;
+  };
+
 private:
   // Cell type
   cell::Type _cell_type;
@@ -232,5 +310,10 @@ private:
   // in this order, with vertex dofs first. Each entry is the dof count on the
   // associated entity, as listed by cell::topology.
   std::vector<std::vector<int>> _entity_dofs;
+
+  // Base permutations
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      _base_permutations;
 };
 } // namespace libtab

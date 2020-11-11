@@ -77,8 +77,15 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
 
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
+
+  // TODO
+  int perm_count = 0;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
-  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,
+                   base_permutations);
   return el;
 }

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "nedelec.h"
+#include "dof-permutations.h"
 #include "integral-moments.h"
 #include "lagrange.h"
 #include "polynomial-set.h"
@@ -94,6 +95,39 @@ create_nedelec_2d_dual(int degree)
                                          2, degree, quad_deg);
   }
   return dualmat;
+}
+//-----------------------------------------------------------------------------
+std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+create_nedelec_2d_base_perms(int degree)
+{
+  const int ndofs = degree * (degree + 2);
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(3, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
+      = dofperms::interval_reflection(degree);
+  for (int edge = 0; edge < 3; ++edge)
+  {
+    const int start = edge_ref.size() * edge;
+    for (int i = 0; i < edge_ref.size(); ++i)
+    {
+      base_permutations[edge](start + i, start + i) = 0;
+      base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+    }
+  }
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+    edge_dir = dofperms::interval_reflection_tangent_directions(degree);
+  for (int edge = 0; edge < 3; ++edge)
+  {
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
+                           edge_dir.rows(), edge_dir.cols()) = edge_dir;
+    base_permutations[edge] *= directions;
+
+  }
+  return base_permutations;
 }
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -219,7 +253,80 @@ create_nedelec_3d_dual(int degree)
 
   return dualmat;
 }
+//-----------------------------------------------------------------------------
+std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+create_nedelec_3d_base_perms(int degree)
+{
+  const int ndofs = 6 * degree + 4 * degree * (degree - 1)
+                    + (degree - 2) * (degree - 1) * degree / 2;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(14, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
+  Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
+      = dofperms::interval_reflection(degree);
+  for (int edge = 0; edge < 6; ++edge)
+  {
+    const int start = edge_ref.size() * edge;
+    for (int i = 0; i < edge_ref.size(); ++i)
+    {
+      base_permutations[edge](start + i, start + i) = 0;
+      base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+    }
+  }
+  Eigen::Array<int, Eigen::Dynamic, 1> face_rot
+      = dofperms::triangle_rotation(degree - 1);
+  Eigen::Array<int, Eigen::Dynamic, 1> face_ref
+      = dofperms::triangle_reflection(degree - 1);
+  for (int face = 0; face < 4; ++face)
+  {
+    const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
+    for (int i = 0; i < face_rot.size(); ++i)
+      for (int b = 0; b < 2; ++b)
+      {
+        base_permutations[6 + 2 * face](start + 2 * i + b, start + i * 2 + b) = 0;
+        base_permutations[6 + 2 * face](start + 2 * i + b, start + face_rot[i] * 2 + b) = 1;
+        base_permutations[6 + 2 * face + 1](start + 2 * i + b, start + i * 2 + b) = 0;
+        base_permutations[6 + 2 * face + 1](start + 2 * i + b, start + face_ref[i] * 2 + b) = 1;
+      }
+  }
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> edge_dir
+      = dofperms::interval_reflection_tangent_directions(degree);
+  for (int edge = 0; edge < 6; ++edge)
+  {
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
+                           edge_dir.rows(), edge_dir.cols())
+        = edge_dir;
+    base_permutations[edge] *= directions;
+  }
+
+  // Faces
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> face_dir_ref
+      = dofperms::triangle_reflection_tangent_directions(degree - 1);
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> face_dir_rot
+      = dofperms::triangle_rotation_tangent_directions(degree - 1);
+  for (int face = 0; face < 4; ++face)
+  {
+    // Rotate face
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> rotation = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    rotation.block(edge_dir.rows() * 6 + face_dir_rot.rows() * face,
+                                   edge_dir.cols() * 6 + face_dir_rot.rows() * face,
+                                   face_dir_rot.rows(), face_dir_rot.cols())
+        = face_dir_rot;
+    base_permutations[6 + 2 * face] *= rotation;
+    // Reflect face
+    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    reflection.block(
+        edge_dir.rows() * 6 + face_dir_ref.rows() * face,
+        edge_dir.cols() * 6 + face_dir_ref.rows() * face, face_dir_ref.rows(),
+        face_dir_ref.cols())
+        = face_dir_ref;
+    base_permutations[6 + 2 * face + 1] *= reflection;
+  }
+
+  return base_permutations;
+}
 } // namespace
 
 //-----------------------------------------------------------------------------
@@ -229,16 +336,20 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs;
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> perms;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> directions;
 
   if (celltype == cell::Type::triangle)
   {
     wcoeffs = create_nedelec_2d_space(degree);
     dualmat = create_nedelec_2d_dual(degree);
+    perms = create_nedelec_2d_base_perms(degree);
   }
   else if (celltype == cell::Type::tetrahedron)
   {
     wcoeffs = create_nedelec_3d_space(degree);
     dualmat = create_nedelec_3d_dual(degree);
+    perms = create_nedelec_3d_base_perms(degree);
   }
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
@@ -257,7 +368,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
-  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs, perms);
   return el;
 }
 //-----------------------------------------------------------------------------

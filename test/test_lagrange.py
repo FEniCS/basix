@@ -156,7 +156,7 @@ def test_line(n):
             for j, p in enumerate(pts):
                 wsym[j, i] = wd.subs(x, p[0])
 
-        assert(numpy.isclose(wtab[k], wsym).all())
+        assert numpy.allclose(wtab[k], wsym)
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4, 5])
@@ -178,7 +178,7 @@ def test_tri(order):
                 for j, p in enumerate(pts):
                     wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
 
-            assert(numpy.isclose(wtab[libtab.index(kx, ky)], wsym).all())
+            assert numpy.allclose(wtab[libtab.index(kx, ky)], wsym)
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
@@ -198,7 +198,6 @@ def test_tet(order):
             for kx in range(q + 1):
                 ky = q - kx
                 kz = k - q
-                print((kx, ky, kz))
 
                 wsym = numpy.zeros_like(wtab[0])
                 for i in range(len(g)):
@@ -208,7 +207,7 @@ def test_tet(order):
                                               (y, p[1]),
                                               (z, p[2])])
 
-                assert(numpy.isclose(wtab[libtab.index(kx, ky, kz)], wsym).all())
+                assert numpy.allclose(wtab[libtab.index(kx, ky, kz)], wsym)
 
 
 @pytest.mark.parametrize("celltype", [libtab.CellType.interval,
@@ -224,3 +223,82 @@ def test_lagrange(celltype, order):
 
     # check entity dofs add up
     assert(sum([sum(w) for w in lagrange.entity_dofs]) == lagrange.ndofs)
+
+
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
+def test_dof_permutations_interval(order):
+    lagrange = libtab.Lagrange(libtab.CellType.interval, order)
+    assert len(lagrange.base_permutations) == 0
+
+
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
+def test_dof_permutations_triangle(order):
+    lagrange = libtab.Lagrange(libtab.CellType.triangle, order)
+
+    permuted = {}
+    if order == 3:
+        # Reflect 2 DOFs on edges
+        permuted[0] = {3: 4, 4: 3}
+        permuted[1] = {5: 6, 6: 5}
+        permuted[2] = {7: 8, 8: 7}
+    elif order == 4:
+        # Reflect 3 DOFs on edges
+        permuted[0] = {3: 5, 5: 3}
+        permuted[1] = {6: 8, 8: 6}
+        permuted[2] = {9: 11, 11: 9}
+
+    base_perms = lagrange.base_permutations
+    assert len(base_perms) == 3
+
+    for i, perm in enumerate(base_perms):
+        actual = numpy.zeros_like(perm)
+        for j, row in enumerate(perm):
+            if i in permuted and j in permuted[i]:
+                actual[j, permuted[i][j]] = 1
+            else:
+                actual[j, j] = 1
+        assert numpy.allclose(perm, actual)
+
+
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
+def test_dof_permutations_tetrahedron(order):
+    lagrange = libtab.Lagrange(libtab.CellType.tetrahedron, order)
+
+    permuted = {}
+    if order == 3:
+        # Reflect 2 DOFs on edges
+        permuted[0] = {4: 5, 5: 4}
+        permuted[1] = {6: 7, 7: 6}
+        permuted[2] = {8: 9, 9: 8}
+        permuted[3] = {10: 11, 11: 10}
+        permuted[4] = {12: 13, 13: 12}
+        permuted[5] = {14: 15, 15: 14}
+    elif order == 4:
+        # Reflect 3 DOFs on edges
+        permuted[0] = {4: 6, 6: 4}
+        permuted[1] = {7: 9, 9: 7}
+        permuted[2] = {10: 12, 12: 10}
+        permuted[3] = {13: 15, 15: 13}
+        permuted[4] = {16: 18, 18: 16}
+        permuted[5] = {19: 21, 21: 19}
+        # Rotate and reflect 3 DOFs on faces
+        permuted[6] = {22: 24, 23: 22, 24: 23}
+        permuted[7] = {23: 24, 24: 23}
+        permuted[8] = {25: 27, 26: 25, 27: 26}
+        permuted[9] = {26: 27, 27: 26}
+        permuted[10] = {28: 30, 29: 28, 30: 29}
+        permuted[11] = {29: 30, 30: 29}
+        permuted[12] = {31: 33, 32: 31, 33: 32}
+        permuted[13] = {32: 33, 33: 32}
+
+    base_perms = lagrange.base_permutations
+    assert len(base_perms) == 14
+
+    for i, perm in enumerate(base_perms):
+        actual = numpy.zeros_like(perm)
+        for j, row in enumerate(perm):
+            if i in permuted and j in permuted[i]:
+                actual[j, permuted[i][j]] = 1
+            else:
+                actual[j, j] = 1
+        assert numpy.allclose(perm, actual)

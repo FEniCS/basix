@@ -123,6 +123,12 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
+  // TODO
+  const int ndofs = dualmat.rows();
+  int perm_count = 0;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
@@ -139,7 +145,8 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
-  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs,
+                   base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------

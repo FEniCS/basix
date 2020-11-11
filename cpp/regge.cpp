@@ -140,6 +140,12 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
       = create_regge_dual(celltype, degree);
 
+  // TODO
+  const int ndofs = dualmat.rows();
+  int perm_count = 0;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
@@ -155,7 +161,8 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
-  FiniteElement el(celltype, degree, {tdim, tdim}, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {tdim, tdim}, new_coeffs, entity_dofs,
+                   base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------

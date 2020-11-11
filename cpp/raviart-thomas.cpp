@@ -93,6 +93,12 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
                                          degree, quad_deg);
   }
 
+  // TODO
+  const int ndofs = dualmat.rows();
+  int perm_count = 0;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
@@ -105,7 +111,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     q = ns;
   entity_dofs[tdim] = {ns0 * tdim};
 
-  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs,
+                   base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------

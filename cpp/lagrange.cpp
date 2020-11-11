@@ -1,8 +1,9 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
 #include "lagrange.h"
+#include "dof-permutations.h"
 #include "polynomial-set.h"
 #include <Eigen/Dense>
 #include <iostream>
@@ -97,7 +98,59 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
 
-  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs);
+  int perm_count = 0;
+  for (int i = 1; i < tdim; ++i)
+    perm_count += topology[i].size() * i;
+
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  if (celltype == cell::Type::triangle)
+  {
+    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
+        = dofperms::interval_reflection(degree - 1);
+    for (int edge = 0; edge < 3; ++edge)
+    {
+      const int start = 3 + edge_ref.size() * edge;
+      for (int i = 0; i < edge_ref.size(); ++i)
+      {
+        base_permutations[edge](start + i, start + i) = 0;
+        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+      }
+    }
+  }
+  else if (celltype == cell::Type::tetrahedron)
+  {
+    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
+        = dofperms::interval_reflection(degree - 1);
+    for (int edge = 0; edge < 6; ++edge)
+    {
+      const int start = 4 + edge_ref.size() * edge;
+      for (int i = 0; i < edge_ref.size(); ++i)
+      {
+        base_permutations[edge](start + i, start + i) = 0;
+        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+      }
+    }
+    Eigen::Array<int, Eigen::Dynamic, 1> face_ref
+        = dofperms::triangle_reflection(degree - 2);
+    Eigen::Array<int, Eigen::Dynamic, 1> face_rot
+        = dofperms::triangle_rotation(degree - 2);
+    for (int face = 0; face < 4; ++face)
+    {
+      const int start = 4 + edge_ref.size() * 6 + face_ref.size() * face;
+      for (int i = 0; i < face_rot.size(); ++i)
+      {
+        base_permutations[6 + 2 * face](start + i, start + i) = 0;
+        base_permutations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
+        base_permutations[6 + 2 * face + 1](start + i, start + i) = 0;
+        base_permutations[6 + 2 * face + 1](start + i, start + face_ref[i]) = 1;
+      }
+    }
+  }
+
+  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,
+                   base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------
@@ -117,7 +170,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
       ndofs, tdim);
 
-  std::vector<std::vector<std::vector<int>>> topology
+  const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -158,7 +211,15 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
 
-  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs);
+  int perm_count = 0;
+  for (int i = 1; i < tdim; ++i)
+    perm_count += topology[i].size();
+
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,
+                   base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------

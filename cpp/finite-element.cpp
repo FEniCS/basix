@@ -12,9 +12,13 @@ FiniteElement::FiniteElement(
     cell::Type cell_type, int degree, std::vector<int> value_shape,
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         coeffs,
-    std::vector<std::vector<int>> entity_dofs)
+    std::vector<std::vector<int>> entity_dofs,
+    std::vector<
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+        base_permutations)
     : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
-      _coeffs(coeffs), _entity_dofs(entity_dofs)
+      _coeffs(coeffs), _entity_dofs(entity_dofs),
+      _base_permutations(base_permutations)
 {
   // Check that entity dofs add up to total number of dofs
   int sum = 0;

@@ -24,11 +24,7 @@ public:
       cell::Type cell_type, int degree, std::vector<int> value_shape,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           coeffs,
-      std::vector<std::vector<int>> entity_dofs)
-      : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
-        _coeffs(coeffs), _entity_dofs(entity_dofs)
-  {
-  }
+      std::vector<std::vector<int>> entity_dofs);
 
   /// Destructor
   ~FiniteElement() = default;

@@ -7,7 +7,24 @@
 #include <iostream>
 
 using namespace libtab;
-
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    cell::Type cell_type, int degree, std::vector<int> value_shape,
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        coeffs,
+    std::vector<std::vector<int>> entity_dofs)
+    : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
+      _coeffs(coeffs), _entity_dofs(entity_dofs)
+{
+  // Check that entity dofs add up to total number of dofs
+  int sum = 0;
+  for (const std::vector<int>& q : entity_dofs)
+    for (const int& w : q)
+      sum += w;
+  if (sum != _coeffs.rows())
+    throw std::runtime_error(
+        "Number of entity dofs does not match total number of dofs");
+}
 //-----------------------------------------------------------------------------
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 FiniteElement::compute_expansion_coefficents(
@@ -28,8 +45,8 @@ FiniteElement::compute_expansion_coefficents(
   {
     double detA = A.determinant();
     if (std::fabs(detA) < 1e-6)
-      throw std::runtime_error(
-          "Poorly conditioned B.D^T when computing expansion coefficients");
+      throw std::runtime_error("Poorly conditioned B.D^T when computing "
+                               "expansion coefficients");
   }
 
   // _coeffs = A^-1(coeffs)

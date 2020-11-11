@@ -302,4 +302,3 @@ def test_dof_permutations_tetrahedron(order):
             else:
                 actual[j, j] = 1
         assert numpy.allclose(perm, actual)
-

@@ -214,9 +214,9 @@ public:
 
   /// Get the base permutations
   /// The base permutations represent the effect of rotating or reflecting
-  /// a subentity of the cell on the numbering of the DOFs.
-  /// This returns a matrix with one row for each subentity permutation in
-  /// the following order:
+  /// a subentity of the cell on the numbering and orientation of the DOFs.
+  /// This returns a list of matrices with one matrix for each subentity
+  /// permutation in the following order:
   ///   Reversing edge 0, reversing edge 1, ...
   ///   Rotate face 0, reflect face 0, rotate face 1, reflect face 1, ...
   ///
@@ -231,33 +231,12 @@ public:
   /// |    \
   /// 0-7-8-1
   /// For this element, the base permutations are:
-  ///   [[0, 1, 2, 4, 3, 5, 6, 7, 8, 9],
-  ///    [0, 1, 2, 3, 4, 6, 5, 7, 8, 9]
-  ///    [0, 1, 2, 3, 4, 5, 6, 8, 7, 9]]
+  ///   [Matrix swapping 3 and 4,
+  ///    Matrix swapping 5 and 6,
+  ///    Matrix swapping 7 and 8]
   /// The first row shows the effect of reversing the diagonal edge. The
   /// second row shows the effect of reversing the vertical edge. The third
   /// row shows the effect of reversing the horizontal edge.
-  // TODO: combine this documentation with direction correction
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-  base_permutations() const
-  {
-    return _base_permutations;
-  };
-
-  /// Does the space contain vectors?
-  /// If true, the space contains vector-valued functions, so direction
-  /// correction will need to be applied.
-//  bool needs_correction() const { return _needs_correction; };
-
-  /// Direction correction
-  /// The direction correction represents the effect of rotating or reflecting
-  /// a subentity of the cell on the direction of vector-values DOFs.
-  /// This returns a std::vector of matrices. Each matrix represents the effect
-  /// of a subentity permutation. Ther are contained in the std::vector in the
-  /// following order:
-  ///   Reversing edge 0, reversing edge 1, ...
-  ///   Rotate face 0, reflect face 0, rotate face 1, reflect face 1, ...
   ///
   /// Example: Order 1 Raviart-Thomas on a triangle
   /// ---------------------------------------------
@@ -272,7 +251,7 @@ public:
   ///    ---2---
   /// These DOFs are integrals of normal components over the edges: DOFs 0 and 2
   /// are oriented inward, DOF 1 is oriented outwards.
-  /// For this element, the direction correction matrices are:
+  /// For this element, the base permutation matrices are:
   ///   0: [[-1, 0, 0],
   ///       [ 0, 1, 0],
   ///       [ 0, 0, 1]]
@@ -296,17 +275,17 @@ public:
   /// | 0->\    | 1  \
   /// |     \   |     \
   ///  ------    ------
-  /// For these DOFs, the subblocks of the direction correction matrices are:
+  /// For these DOFs, the subblocks of the base permutation matrices are:
   ///   rotation: [[-1, 1],
   ///              [ 1, 0]]
   ///   reflection: [[0, 1],
   ///                [1, 0]]
-//  std::vector<
-//      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-//  direction_correction() const
-// {
-//    return _direction_correction;
-//  };
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  base_permutations() const
+  {
+    return _base_permutations;
+  };
 
 private:
   // Cell type

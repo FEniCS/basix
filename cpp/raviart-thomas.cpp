@@ -105,7 +105,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     q = ns;
   entity_dofs[tdim] = {ns0 * tdim};
 
-  FiniteElement el(celltype, degree, tdim, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------

@@ -155,7 +155,7 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
-  FiniteElement el(celltype, degree, tdim * tdim, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {tdim, tdim}, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------

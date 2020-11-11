@@ -132,7 +132,7 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
 
-  FiniteElement el(celltype, degree, tdim, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------

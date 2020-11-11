@@ -79,6 +79,6 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
-  FiniteElement el(celltype, degree, 1, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs);
   return el;
 }

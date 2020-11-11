@@ -21,11 +21,11 @@ class FiniteElement
 public:
   /// A finite element
   FiniteElement(
-      cell::Type cell_type, int degree, int value_size,
+      cell::Type cell_type, int degree, std::vector<int> value_shape,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           coeffs,
       std::vector<std::vector<int>> entity_dofs)
-      : _cell_type(cell_type), _degree(degree), _value_size(value_size),
+      : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
         _coeffs(coeffs), _entity_dofs(entity_dofs)
   {
   }
@@ -60,7 +60,17 @@ public:
 
   /// Get the element value size
   /// @return Value size
-  int value_size() const { return _value_size; }
+  int value_size() const
+  {
+    int value_size = 1;
+    for (const int& d : _value_shape)
+      value_size *= d;
+    return value_size;
+  }
+
+  /// Get the element value tensor shape, e.g. returning [1] for scalars.
+  /// @return Value shape
+  const std::vector<int>& value_shape() const { return _value_shape; }
 
   /// Get the number of degrees of freedom
   /// @return Number of degrees of freedom
@@ -210,8 +220,8 @@ private:
   // Degree
   int _degree;
 
-  // Value size
-  int _value_size;
+  // Value shape
+  std::vector<int> _value_shape;
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k}@f$,

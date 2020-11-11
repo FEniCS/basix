@@ -257,7 +257,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
-  FiniteElement el(celltype, degree, tdim, new_coeffs, entity_dofs);
+  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs);
   return el;
 }
 //-----------------------------------------------------------------------------

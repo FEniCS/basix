@@ -79,17 +79,16 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   m.def(
       "create_new_element",
-      [](cell::Type celltype, int degree, int value_size,
+      [](cell::Type celltype, int degree, std::vector<int>& value_shape,
          const Eigen::MatrixXd& dualmat, const Eigen::MatrixXd& coeffs,
-         const std::vector<
-             Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                           const std::vector<std::vector<int>> & entity_dofs,
-                           Eigen::RowMajor>>& base_permutations)
+         const std::vector<std::vector<int>>& entity_dofs,
+         const std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>>& base_permutations)
           -> FiniteElement {
         auto new_coeffs = FiniteElement::compute_expansion_coefficents(
             coeffs, dualmat, true);
-        return FiniteElement(celltype, degree, value_size, new_coeffs,
-                             entity_dofs base_permutations);
+        return FiniteElement(celltype, degree, value_shape, new_coeffs,
+                             entity_dofs, base_permutations);
       },
       "Create an element from basic data");
 

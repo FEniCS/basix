@@ -30,8 +30,6 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
 
-  std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
   if (ndofs == 1)
   {
     if (tdim == 1)
@@ -172,7 +170,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
       ndofs, tdim);
 
-  std::vector<std::vector<std::vector<int>>> topology
+  const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
   std::vector<std::vector<int>> entity_dofs(topology.size());

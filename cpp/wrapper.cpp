@@ -81,24 +81,28 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "create_new_element",
       [](cell::Type celltype, int degree, int value_size,
          const Eigen::MatrixXd& dualmat, const Eigen::MatrixXd& coeffs,
-         const std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                            Eigen::RowMajor>>& base_permutations)
+         const std::vector<
+             Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                           const std::vector<std::vector<int>> & entity_dofs,
+                           Eigen::RowMajor>>& base_permutations)
           -> FiniteElement {
-        auto new_coeffs
-            = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
+        auto new_coeffs = FiniteElement::compute_expansion_coefficents(
+            coeffs, dualmat, true);
         return FiniteElement(celltype, degree, value_size, new_coeffs,
-                             base_permutations);
+                             entity_dofs base_permutations);
       },
       "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
-      .def_property_readonly("base_permutations", &FiniteElement::base_permutations)
+      .def_property_readonly("base_permutations",
+                             &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("ndofs", &FiniteElement::ndofs)
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
-      .def_property_readonly("value_size", &FiniteElement::value_size);
+      .def_property_readonly("value_size", &FiniteElement::value_size)
+      .def_property_readonly("value_shape", &FiniteElement::value_shape);
 
   // Create FiniteElement of different types
   m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");

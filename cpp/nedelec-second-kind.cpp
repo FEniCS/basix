@@ -10,6 +10,7 @@
 #include "raviart-thomas.h"
 #include <Eigen/Dense>
 #include <Eigen/SVD>
+#include <iostream>
 #include <numeric>
 #include <vector>
 
@@ -94,8 +95,7 @@ create_nedelec_3d_dual(int degree)
     FiniteElement moment_space_I
         = DiscontinuousLagrange::create(cell::Type::tetrahedron, degree - 2);
     dualmat.block((6 + 4 * (degree - 1)) * (degree + 1), 0,
-                  (degree + 1) * (degree * degree - 5 * degree - 2) / 2,
-                  psize * 3)
+                  (degree - 1) * (degree - 2) * (degree + 1) / 2, psize * 3)
         = moments::make_integral_moments(
             moment_space_I, cell::Type::tetrahedron, 3, degree, quad_deg);
   }
@@ -131,7 +131,22 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
 
   auto new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
-  FiniteElement el(celltype, degree, tdim, new_coeffs, base_permutations);
+
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::vector<std::vector<int>> entity_dofs(topology.size());
+  for (std::size_t i = 0; i < topology.size(); ++i)
+    entity_dofs[i].resize(topology[i].size(), 0);
+  for (int& q : entity_dofs[1])
+    q = degree + 1;
+  for (int& q : entity_dofs[2])
+    q = (degree + 1) * (degree - 1);
+  if (tdim == 3)
+    entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
+
+  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs,
+                   base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------

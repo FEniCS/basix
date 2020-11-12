@@ -70,8 +70,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
             entity_geom = cell::sub_entity_geometry(celltype, dim, i);
 
         Eigen::ArrayXd point = entity_geom.row(0);
-        cell::Type ct = cell::simplex_type(dim);
-
+        cell::Type ct = cell::sub_entity_type(celltype, dim, i);
         const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                            Eigen::RowMajor>
             lattice = cell::create_lattice(ct, degree, false);
@@ -102,7 +101,8 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size() * i;
 
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   if (celltype == cell::Type::triangle)
@@ -215,7 +215,8 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size();
 
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,

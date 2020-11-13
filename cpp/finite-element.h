@@ -21,13 +21,13 @@ class FiniteElement
 public:
   /// A finite element
   FiniteElement(
-      cell::Type cell_type, int degree, int value_size,
+      cell::Type cell_type, int degree, std::vector<int> value_shape,
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          coeffs)
-      : _cell_type(cell_type), _degree(degree), _value_size(value_size),
-        _coeffs(coeffs), _entity_dofs({0})
-  {
-  }
+          coeffs,
+      std::vector<std::vector<int>> entity_dofs,
+      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+          base_permutations);
 
   /// Destructor
   ~FiniteElement() = default;
@@ -39,7 +39,7 @@ public:
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
   /// @return The basis functions (and derivatives). The first index is
-  /// the derivative. Higher derivatives are stored in triangular (2D)
+  /// the basis function. Higher derivatives are stored in triangular (2D)
   /// or tetrahedral (3D) ordering, i.e. for the (x,y) derivatives in
   /// 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... If a vector
   /// result is expected, it will be stacked with all x values, followed
@@ -59,7 +59,17 @@ public:
 
   /// Get the element value size
   /// @return Value size
-  int value_size() const { return _value_size; }
+  int value_size() const
+  {
+    int value_size = 1;
+    for (const int& d : _value_shape)
+      value_size *= d;
+    return value_size;
+  }
+
+  /// Get the element value tensor shape, e.g. returning [1] for scalars.
+  /// @return Value shape
+  const std::vector<int>& value_shape() const { return _value_shape; }
 
   /// Get the number of degrees of freedom
   /// @return Number of degrees of freedom
@@ -67,17 +77,215 @@ public:
 
   /// Get the dofs -> topological dimension mapping
   /// @return List
-  std::array<int, 4> entity_dofs() const { return _entity_dofs; }
+  std::vector<std::vector<int>> entity_dofs() const { return _entity_dofs; }
 
-  // FIXME: document better and explain mathematically
-  // Applies nodal constraints from dualmat to original
-  // coeffs on basis, and return new coeffs.
+  /// Calculates the basis functions of the finite element, in terms of the
+  /// polynomial basis.
+  ///
+  /// The basis functions @f$(\phi_i)@f$ of a finite element can be represented
+  /// as a linear combination of polynomials @f$(p_j)@f$ in an underlying
+  /// polynomial basis that span the space of all d-dimensional polynomials up
+  /// to order
+  /// @f$k (P_k^d)@f$:
+  /// @f[  \phi_i = \sum_j c_{ij} p_j @f]
+  /// This function computed the matrix @f$C = (c_{ij})@f$.
+  ///
+  /// In some cases, the basis functions @f$(\phi_i)@f$ do not span the full
+  /// space
+  /// @f$P_k@f$. In these cases, we represent the space spanned by the basis
+  /// functions as the span of some polynomials @f$(q_k)@f$. These can be
+  /// represented in terms of the underlying polynomial basis:
+  /// @f[  q_k = \sum_j b_{kj} p_j @f]
+  /// If the basis functions span the full space, then @f$B = (b_{kj})@f$ is
+  /// simply the identity.
+  ///
+  /// The basis functions @f$\phi_i@f$ are defined by a dual set of functionals
+  /// @f$(f_l)@f$. The basis functions are the functions in span{@f$q_k@f$} such
+  /// that:
+  ///   @f[ f_l(\phi_i) = 1 \mbox{ if } i=l \mbox{ else } 0 @f]
+  /// We can define a matrix D given by applying the functionals to each
+  /// polynomial p_j:
+  ///  @f[ D = (d_{lj}),\mbox{ where } d_{lj} = f_l(p_j) @f]
+  ///
+  /// This function takes the matrices B (span_coeffs) and D (dualmat) as
+  /// inputs and returns the matrix C. It computed C using:
+  ///  @f[ C = (B D^T)^{-1} B @f]
+  ///
+  /// Example: Order 1 Lagrange elements on a triangle
+  /// ------------------------------------------------
+  /// On a triangle, the scalar expansion basis is:
+  ///  @f[ p_0 = \sqrt{2}/2 \qquad
+  ///   p_1 = \sqrt{3}(2x + y - 1) \qquad
+  ///   p_2 = 3y - 1 @f]
+  /// These span the space @f$P_1@f$.
+  ///
+  /// Lagrange order 1 elements span the space P_1, so in this example,
+  /// B (span_coeffs) is the identity matrix:
+  ///   @f[ B = \begin{bmatrix}
+  ///                   1 & 0 & 0 \\
+  ///                   0 & 1 & 0 \\
+  ///                   0 & 0 & 1 \end{bmatrix} @f]
+  ///
+  /// The functionals defining the Lagrange order 1 space are point
+  /// evaluations at the three vertices of the triangle. The matrix D
+  /// (dualmat) given by applying these to p_0 to p_2 is:
+  ///  @f[ \mbox{dualmat} = \begin{bmatrix}
+  ///              \sqrt{2}/2 &  -\sqrt{3} & -1 \\
+  ///              \sqrt{2}/2 &   \sqrt{3} & -1 \\
+  ///              \sqrt{2}/2 &          0 &  2 \end{bmatrix} @f]
+  ///
+  /// For this example, this function outputs the matrix:
+  ///  @f[ C = \begin{bmatrix}
+  ///            \sqrt{2}/3 & -\sqrt{3}/6 &  -1/6 \\
+  ///            \sqrt{2}/3 & \sqrt{3}/6  &  -1/6 \\
+  ///            \sqrt{2}/3 &          0  &   1/3 \end{bmatrix} @f]
+  /// The basis functions of the finite element can be obtained by applying
+  /// the matrix C to the vector @f$[p_0, p_1, p_2]@f$, giving:
+  ///   @f[ \begin{bmatrix} 1 - x - y \\ x \\ y \end{bmatrix} @f]
+  ///
+  /// Example: Order 1 Raviart-Thomas on a triangle
+  /// ---------------------------------------------
+  /// On a triangle, the 2D vector expansion basis is:
+  ///  @f[ \begin{matrix}
+  ///   p_0 & = & (\sqrt{2}/2, 0) \\
+  ///   p_1 & = & (\sqrt{3}(2x + y - 1), 0) \\
+  ///   p_2 & = & (3y - 1, 0) \\
+  ///   p_3 & = & (0, \sqrt{2}/2) \\
+  ///   p_4 & = & (0, \sqrt{3}(2x + y - 1)) \\
+  ///   p_5 & = & (0, 3y - 1)
+  ///  \end{matrix}
+  /// @f]
+  /// These span the space @f$ P_1^2 @f$.
+  ///
+  /// Raviart-Thomas order 1 elements span a space smaller than @f$ P_1^2 @f$,
+  /// so B (span_coeffs) is not the identity. It is given by:
+  ///   @f[ B = \begin{bmatrix}
+  ///  1 &  0 &  0 &    0 &  0 &   0 \\
+  ///  0 &  0 &  0 &    1 &  0 &     0 \\
+  ///  1/12 &  \sqrt{6}/48 &  -\sqrt{2}/48 &  1/12 &  0 &  \sqrt{2}/24
+  ///  \end{bmatrix}
+  ///  @f]
+  /// Applying the matrix B to the vector @f$[p_0, p_1, ..., p_5]@f$ gives the
+  /// basis of the polynomial space for Raviart-Thomas:
+  ///   @f[ \begin{bmatrix}
+  ///  \sqrt{2}/2 &  0 \\
+  ///   0 &  \sqrt{2}/2 \\
+  ///   \sqrt{2}x/8  & \sqrt{2}y/8
+  ///  \end{bmatrix} @f]
+  ///
+  /// The functionals defining the Raviart-Thomas order 1 space are integral
+  /// of the normal components along each edge. The matrix D (dualmat) given
+  /// by applying these to @f$p_0@f$ to @f$p_5@f$ is:
+  ///   dualmat = @f[ \begin{bmatrix}
+  /// -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
+  /// -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0 &    0 \\
+  ///           0 &         0   &    0 &  \sqrt{2}/2 &          0 &   -1
+  /// \end{bmatrix} @f]
+  ///
+  /// In this example, this function outputs the matrix:
+  ///  @f[  C = \begin{bmatrix}
+  ///  -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
+  ///  -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0  &    0 \\
+  ///            0 &          0  &    0 &  \sqrt{2}/2 &          0  &   -1
+  /// \end{bmatrix} @f]
+  /// The basis functions of the finite element can be obtained by applying
+  /// the matrix C to the vector @f$[p_0, p_1, ..., p_5]@f$, giving:
+  ///   @f[ \begin{bmatrix}
+  ///   -x & -y \\
+  ///   x - 1 & y \\
+  ///   -x & 1 - y \end{bmatrix} @f]
+  ///
+  /// @param[in] span_coeffs The matrix B containing the expansion
+  /// coefficients defining a polynomial basis spanning the polynomial space
+  /// for this element.
+  /// @param[in] dualmat The matrix D of values obtained by applying each
+  /// functional in the dual set to each expansion polynomial
+  /// @param[in] condition_check If set, checks the condition of the matrix
+  /// B.D^T and throws an error if it is ill-conditioned.
+  /// @return The matrix C of expansion coefficients that define the basis
+  /// functions of the finite element space.
   static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  apply_dualmat_to_basis(
+  compute_expansion_coefficents(
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                          Eigen::RowMajor>& coeffs,
+                          Eigen::RowMajor>& span_coeffs,
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                          Eigen::RowMajor>& dualmat);
+                          Eigen::RowMajor>& dualmat,
+      bool condition_check = false);
+
+  /// Get the base permutations
+  /// The base permutations represent the effect of rotating or reflecting
+  /// a subentity of the cell on the numbering and orientation of the DOFs.
+  /// This returns a list of matrices with one matrix for each subentity
+  /// permutation in the following order:
+  ///   Reversing edge 0, reversing edge 1, ...
+  ///   Rotate face 0, reflect face 0, rotate face 1, reflect face 1, ...
+  ///
+  /// Example: Order 3 Lagrange on a triangle
+  /// ---------------------------------------
+  /// This space has 10 dofs arranged like:
+  /// 2
+  /// |\
+  /// 6 4
+  /// |  \
+  /// 5 9 3
+  /// |    \
+  /// 0-7-8-1
+  /// For this element, the base permutations are:
+  ///   [Matrix swapping 3 and 4,
+  ///    Matrix swapping 5 and 6,
+  ///    Matrix swapping 7 and 8]
+  /// The first row shows the effect of reversing the diagonal edge. The
+  /// second row shows the effect of reversing the vertical edge. The third
+  /// row shows the effect of reversing the horizontal edge.
+  ///
+  /// Example: Order 1 Raviart-Thomas on a triangle
+  /// ---------------------------------------------
+  /// This space has 3 dofs arranged like:
+  ///   |\
+  ///   | \
+  ///   |  \
+  /// <-1   0
+  ///   |  / \
+  ///   | L ^ \
+  ///   |   |  \
+  ///    ---2---
+  /// These DOFs are integrals of normal components over the edges: DOFs 0 and 2
+  /// are oriented inward, DOF 1 is oriented outwards.
+  /// For this element, the base permutation matrices are:
+  ///   0: [[-1, 0, 0],
+  ///       [ 0, 1, 0],
+  ///       [ 0, 0, 1]]
+  ///   1: [[1,  0, 0],
+  ///       [0, -1, 0],
+  ///       [0,  0, 1]]
+  ///   2: [[1, 0,  0],
+  ///       [0, 1,  0],
+  ///       [0, 0, -1]]
+  /// The first matrix reverses DOF 0 (as this is on the first edge). The second
+  /// matrix reverses DOF 1 (as this is on the second edge). The third matrix
+  /// reverses DOF 2 (as this is on the third edge).
+  ///
+  /// Example: DOFs on the face of Order 2 Nedelec first kind on a tetrahedron
+  /// ------------------------------------------------------------------------
+  /// On a face of this tetrahedron, this space has two face tangent DOFs:
+  /// |\        |\
+  /// | \       | \
+  /// |  \      | ^\
+  /// |   \     | | \
+  /// | 0->\    | 1  \
+  /// |     \   |     \
+  ///  ------    ------
+  /// For these DOFs, the subblocks of the base permutation matrices are:
+  ///   rotation: [[-1, 1],
+  ///              [ 1, 0]]
+  ///   reflection: [[0, 1],
+  ///                [1, 0]]
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  base_permutations() const
+  {
+    return _base_permutations;
+  };
 
 private:
   // Cell type
@@ -86,26 +294,26 @@ private:
   // Degree
   int _degree;
 
-  // Value size
-  int _value_size;
+  // Value shape
+  std::vector<int> _value_shape;
 
-  // FIXME: Check shape/layout
   // Shape function coefficient of expansion sets on cell. If shape
-  // function is given by \psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k},
-  // then _coeffs(i, j) = \alpha^{i}_{k}. I.e., _coeffs.row(i) are the
-  // expansion coefficients for shape function i (\psi_{i}).
+  // function is given by @f$\psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k}@f$,
+  // then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e., _coeffs.row(i) are the
+  // expansion coefficients for shape function i (@f$\psi_{i}@f$).
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       _coeffs;
 
-  // Number of dofs in entities
+  // Number of dofs associated each subentity
   // The dofs of an element are associated with entities of different
   // topological dimension (vertices, edges, faces, cells). The dofs are listed
-  // in this order, with vertex dofs first. This array represents the number of
-  // dofs on each entity. e.g. for Lagrange of order 2 on a triangle it is [1,
-  // 1, 0, 0], since each vertex has one dofs, each edge has 1 dof. For faces
-  // and cells, rather than the number of dofs, the edge size is given, e.g. for
-  // a triangular face with 6 dofs, the edge size is 3. For a hexahedral cell
-  // with 8 internal dofs, the value would be 2.
-  std::array<int, 4> _entity_dofs;
+  // in this order, with vertex dofs first. Each entry is the dof count on the
+  // associated entity, as listed by cell::topology.
+  std::vector<std::vector<int>> _entity_dofs;
+
+  // Base permutations
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      _base_permutations;
 };
 } // namespace libtab

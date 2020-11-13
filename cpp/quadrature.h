@@ -73,5 +73,12 @@ std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
 make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>& simplex,
                 int m);
+
+/// Compute GLL quadrature points and weights on the interval [-1, 1]
+/// @param m order
+/// @return Array of points, array of weights
+std::tuple<Eigen::ArrayXd, Eigen::ArrayXd>
+gauss_lobatto_legendre_line_rule(int m);
+
 } // namespace quadrature
 } // namespace libtab

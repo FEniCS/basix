@@ -20,22 +20,26 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
 
   const int tdim = cell::topological_dimension(celltype);
 
-  // FIXME: Explain
-  // Vector subsets
-  const int nv = polyset::size(celltype, degree - 1);
-  const int ns0 = polyset::size(celltype, degree - 2);
-  const int ns = (tdim == 2) ? degree : degree * (degree + 1) / 2;
+  const cell::Type facettype
+      = (tdim == 2) ? cell::Type::interval : cell::Type::triangle;
 
-  // FIXME: Explain
+  // The number of order (degree-1) scalar polynomials
+  const int nv = polyset::size(celltype, degree - 1);
+  // The number of order (degree-2) scalar polynomials
+  const int ns0 = polyset::size(celltype, degree - 2);
+  // The number of additional polnomials in the polynomial basis for
+  // Raviart-Thomas
+  const int ns = polyset::size(facettype, degree - 1);
+
+  // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 
-  // FIXME: Explain
+  // The number of order (degree) polynomials
   const int psize = Pkp1_at_Qpts.cols();
 
-  // FIXME: What is Pkp1?
-  // Create initial coefficients of Pkp1.
+  // Create coefficients for order (degree-1) vector polynomials
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs
       = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                       Eigen::RowMajor>::Zero(nv * tdim + ns, psize * tdim);
@@ -45,7 +49,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
         = Eigen::MatrixXd::Identity(nv, nv);
   }
 
-  // FIXME: Add comment
+  // Create coefficients for additional polynomials in Raviart-Thomas polynomial
+  // basis
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
@@ -67,26 +72,19 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   // quadrature degree
   int quad_deg = 5 * degree;
 
-  // Create a polynomial set on a reference facet
-  cell::Type facettype
-      = (tdim == 2) ? cell::Type::interval : cell::Type::triangle;
+  // Add rows to dualmat for integral moments on facets
   FiniteElement moment_space_facet
       = DiscontinuousLagrange::create(facettype, degree - 1);
-
-  // FIXME: Explain better
-  // Add integral moments on facets
   const int facet_count = tdim + 1;
-  const int facet_dofs = (tdim == 2) ? degree : (degree * (degree + 1) / 2);
+  const int facet_dofs = ns;
   dualmat.block(0, 0, facet_count * facet_dofs, psize * tdim)
       = moments::make_normal_integral_moments(moment_space_facet, celltype,
                                               tdim, degree, quad_deg);
 
-  // Should work for 2D and 3D
+  // Add rows to dualmat for integral moments on interior
   if (degree > 1)
   {
-    const int internal_dofs = (tdim == 2)
-                                  ? (degree * (degree - 1))
-                                  : (degree * (degree - 1) * (degree + 1) / 2);
+    const int internal_dofs = tdim * ns0;
     // Interior integral moment
     FiniteElement moment_space_interior
         = DiscontinuousLagrange::create(celltype, degree - 2);
@@ -95,8 +93,26 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
                                          degree, quad_deg);
   }
 
-  auto new_coeffs = FiniteElement::apply_dualmat_to_basis(wcoeffs, dualmat);
-  FiniteElement el(celltype, degree, tdim, new_coeffs);
+  // TODO
+  const int ndofs = dualmat.rows();
+  int perm_count = 0;
+  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  auto new_coeffs
+      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
+
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  std::vector<std::vector<int>> entity_dofs(topology.size());
+  for (std::size_t i = 0; i < topology.size(); ++i)
+    entity_dofs[i].resize(topology[i].size(), 0);
+  for (int& q : entity_dofs[tdim - 1])
+    q = ns;
+  entity_dofs[tdim] = {ns0 * tdim};
+
+  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs,
+                   base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------

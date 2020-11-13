@@ -1,3 +1,7 @@
+// Copyright (c) 2020 Chris Richardson and Matthew Scroggs
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
+
 #include <pybind11/eigen.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
@@ -6,6 +10,7 @@
 
 #include "cell.h"
 #include "crouzeix-raviart.h"
+#include "defines.h"
 #include "indexing.h"
 #include "lagrange.h"
 #include "nedelec-second-kind.h"
@@ -50,6 +55,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
 )";
 
+  m.attr("__version__") = libtab::version();
+
   py::enum_<cell::Type>(m, "CellType")
       .value("interval", cell::Type::interval)
       .value("triangle", cell::Type::triangle)
@@ -59,31 +66,42 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .value("prism", cell::Type::prism)
       .value("pyramid", cell::Type::pyramid);
 
-  m.def("topology", &cell::topology);
-  m.def("geometry", &cell::geometry);
-  m.def("sub_entity_geometry", &cell::sub_entity_geometry);
+  m.def("topology", &cell::topology,
+        "Topological description of a reference cell");
+  m.def("geometry", &cell::geometry, "Geometric points of a reference cell");
+  m.def("sub_entity_geometry", &cell::sub_entity_geometry,
+        "Points of a sub-entity of a cell");
 
   m.def("simplex_type", &cell::simplex_type,
         "Simplex CellType of given dimension");
   m.def("create_lattice", &cell::create_lattice,
         "Create a uniform lattice of points on a reference cell");
 
-  m.def("create_new_element",
-        [](cell::Type celltype, int degree, int value_size,
-           const Eigen::MatrixXd& dualmat,
-           const Eigen::MatrixXd& coeffs) -> FiniteElement {
-          auto new_coeffs
-              = FiniteElement::apply_dualmat_to_basis(coeffs, dualmat);
-          return FiniteElement(celltype, degree, value_size, new_coeffs);
-        });
+  m.def(
+      "create_new_element",
+      [](cell::Type celltype, int degree, std::vector<int>& value_shape,
+         const Eigen::MatrixXd& dualmat, const Eigen::MatrixXd& coeffs,
+         const std::vector<std::vector<int>>& entity_dofs,
+         const std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>>& base_permutations)
+          -> FiniteElement {
+        auto new_coeffs = FiniteElement::compute_expansion_coefficents(
+            coeffs, dualmat, true);
+        return FiniteElement(celltype, degree, value_shape, new_coeffs,
+                             entity_dofs, base_permutations);
+      },
+      "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
+      .def_property_readonly("base_permutations",
+                             &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("ndofs", &FiniteElement::ndofs)
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
-      .def_property_readonly("value_size", &FiniteElement::value_size);
+      .def_property_readonly("value_size", &FiniteElement::value_size)
+      .def_property_readonly("value_shape", &FiniteElement::value_shape);
 
   // Create FiniteElement of different types
   m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");
@@ -98,19 +116,28 @@ Each element has a `tabulate` function which returns the basis functions and a n
         "Create Nedelec Element (second kind)");
   m.def("Regge", &Regge::create, "Create Regge Element");
 
-  m.def("create_element", [](std::string family, std::string cell, int degree) {
-    const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
-        create_map = {{"Lagrange", &Lagrange::create},
-                      {"Raviart-Thomas", &RaviartThomas::create},
-                      {"Discontinuous Lagrange", &Lagrange::create}};
+  m.def(
+      "create_element",
+      [](std::string family, std::string cell, int degree) {
+        const std::map<std::string,
+                       std::function<FiniteElement(cell::Type, int)>>
+            create_map
+            = {{"Crouzeix-Raviart", &CrouzeixRaviart::create},
+               {"Discontinuous Lagrange", &Lagrange::create},
+               {"Lagrange", &Lagrange::create},
+               {"Nedelec 1st kind H(curl)", &Nedelec::create},
+               {"Nedelec 2nd kind H(curl)", &NedelecSecondKind::create},
+               {"Raviart-Thomas", &RaviartThomas::create},
+               {"Regge", &Regge::create}};
 
-    auto create_it = create_map.find(family);
-    if (create_it == create_map.end())
-      throw std::runtime_error("Family not found");
+        auto create_it = create_map.find(family);
+        if (create_it == create_map.end())
+          throw std::runtime_error("Family not found: \"" + family + "\"");
 
-    const cell::Type celltype = cell::str_to_type(cell);
-    return create_it->second(celltype, degree);
-  });
+        const cell::Type celltype = cell::str_to_type(cell);
+        return create_it->second(celltype, degree);
+      },
+      "Create a FiniteElement of a given family, celltype and degree");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");
@@ -123,6 +150,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
                                              Eigen::Dynamic, Eigen::RowMajor>&,
                           int>(&quadrature::make_quadrature),
         "Compute quadrature points and weights on a simplex defined by points");
+
+  m.def("gauss_lobatto_legendre_line_rule",
+        &quadrature::gauss_lobatto_legendre_line_rule,
+        "Compute GLL quadrature points and weights on the interval [-1, 1]");
 
   m.def("index", py::overload_cast<int>(&libtab::idx), "Indexing for 1D arrays")
       .def("index", py::overload_cast<int, int>(&libtab::idx),

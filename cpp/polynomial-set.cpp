@@ -44,15 +44,13 @@ tabulate_polyset_line_derivs(
 
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(
-          nderiv + 1,
-          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
-              X.rows(), m));
+      dresult(nderiv + 1);
 
   for (int k = 0; k < nderiv + 1; ++k)
   {
     // Get reference to this derivative
-    auto& result = dresult[k];
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+        result(x.rows(), m);
 
     if (k == 0)
       result.col(0).fill(1.0);
@@ -68,6 +66,7 @@ tabulate_polyset_line_derivs(
       if (p > 1)
         result.col(p) -= result.col(p - 2) * a;
     }
+    dresult[k] = result;
   }
 
   // Normalise
@@ -117,11 +116,9 @@ tabulate_polyset_triangle_derivs(
     {
       const int ky = k - kx;
 
-      // Get reference to this derivative and resize
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-          result
-          = dresult[idx(kx, ky)];
-      result.resize(pts.rows(), m);
+      // Create array for this derivative
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          result(pts.rows(), m);
 
       if (kx == 0 and ky == 0)
         result.col(0).fill(1.0);
@@ -181,6 +178,9 @@ tabulate_polyset_triangle_derivs(
           }
         }
       }
+
+      // Store this derivative
+      dresult[idx(kx, ky)] = result;
     }
   }
 
@@ -228,10 +228,8 @@ tabulate_polyset_tetrahedron_derivs(
         const int ky = j - kx;
         const int kz = k - j;
 
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-            result
-            = dresult[idx(kx, ky, kz)];
-        result.resize(pts.rows(), m);
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+            result(pts.rows(), m);
 
         if (kx == 0 and ky == 0 and kz == 0)
           result.col(0).fill(1.0);
@@ -378,6 +376,9 @@ tabulate_polyset_tetrahedron_derivs(
                        * dresult[idx(kx, ky, kz - 1)].col(idx(p, q, r));
               }
             }
+
+        // Store this derivative
+        dresult[idx(kx, ky, kz)] = result;
       }
     }
   }
@@ -428,10 +429,8 @@ tabulate_polyset_pyramid_derivs(
       {
         const int ky = j - kx;
         const int kz = k - j;
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-            result
-            = dresult[idx(kx, ky, kz)];
-        result.resize(pts.rows(), m);
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+            result(pts.rows(), m);
         result.setZero();
 
         const int pyramidal_index = pyr_idx(0, 0, 0);
@@ -570,6 +569,8 @@ tabulate_polyset_pyramid_derivs(
             }
           }
         }
+
+        dresult[idx(kx, ky, kz)] = result;
       }
     }
   }
@@ -618,15 +619,13 @@ tabulate_polyset_quad_derivs(
   {
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
     {
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-          result
-          = dresult[idx(kx, ky)];
-      result.resize(pts.rows(), m);
-
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+          result(pts.rows(), m);
       int c = 0;
       for (int i = 0; i < px[kx].cols(); ++i)
         for (int j = 0; j < py[ky].cols(); ++j)
           result.col(c++) = px[kx].col(i) * py[ky].col(j);
+      dresult[idx(kx, ky)] = result;
     }
   }
 
@@ -665,16 +664,16 @@ tabulate_polyset_hex_derivs(
     {
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-            result
-            = dresult[idx(kx, ky, kz)];
-        result.resize(pts.rows(), m);
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+            result(pts.rows(), m);
 
         int c = 0;
         for (int i = 0; i < px[kx].cols(); ++i)
           for (int j = 0; j < py[ky].cols(); ++j)
             for (int k = 0; k < pz[kz].cols(); ++k)
               result.col(c++) = px[kx].col(i) * py[ky].col(j) * pz[kz].col(k);
+
+        dresult[idx(kx, ky, kz)] = result;
       }
     }
   }
@@ -710,14 +709,14 @@ tabulate_polyset_prism_derivs(
     {
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-            result
-            = dresult[idx(kx, ky, kz)];
-        result.resize(pts.rows(), m);
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+            result(pts.rows(), m);
         int c = 0;
         for (int i = 0; i < pxy[idx(kx, ky)].cols(); ++i)
           for (int k = 0; k < pz[kz].cols(); ++k)
             result.col(c++) = pxy[idx(kx, ky)].col(i) * pz[kz].col(k);
+
+        dresult[idx(kx, ky, kz)] = result;
       }
     }
   }

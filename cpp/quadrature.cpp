@@ -132,13 +132,12 @@ quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
 {
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      J(nderiv + 1);
+      J;
 
   for (int i = 0; i < nderiv + 1; ++i)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>& Jd
-        = J[i];
-    Jd.resize(n + 1, x.rows());
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Jd(
+        n + 1, x.rows());
 
     if (i == 0)
       Jd.row(0).fill(1.0);
@@ -166,6 +165,7 @@ quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
       if (i > 0)
         Jd.row(k) += i * a3 * J[i - 1].row(k - 1);
     }
+    J.push_back(Jd);
   }
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(

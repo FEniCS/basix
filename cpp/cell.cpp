@@ -3,9 +3,33 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
+#include "lagrange.h"
+#include "quadrature.h"
+#include <iostream>
 #include <map>
 
 using namespace libtab;
+
+namespace
+{
+Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
+{
+  [[maybe_unused]] auto [pts, wts]
+      = quadrature::gauss_lobatto_legendre_line_rule(n + 1);
+  pts *= 0.5;
+  for (int i = 0; i < n + 1; ++i)
+    pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
+
+  FiniteElement L = DiscontinuousLagrange::create(cell::Type::interval, n);
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> v
+      = L.tabulate(0, x)[0];
+  Eigen::ArrayXd w(v.rows());
+  w = v * pts.matrix();
+
+  return w;
+}
+
+} // namespace
 
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 cell::geometry(cell::Type celltype)
@@ -456,4 +480,64 @@ cell::Type cell::str_to_type(std::string name)
     throw std::runtime_error("Can't find name " + name);
 
   return it->second;
+}
+//-----------------------------------------------------------------------------
+double cell::warp(int n, double x)
+{
+  Eigen::ArrayXd r(1);
+  r(0) = x;
+  return warp_function(n, r)[0];
+}
+//-----------------------------------------------------------------------------
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+cell::warped_lattice(cell::Type celltype, int n)
+{
+  if (n < 1)
+    throw std::runtime_error("Cannot create warped lattice for n < 1");
+
+  if (celltype == cell::Type::interval)
+  {
+    Eigen::ArrayXd x(n + 1);
+    for (int i = 0; i < n + 1; ++i)
+      x[i] = static_cast<double>(i) / static_cast<double>(n);
+    x += warp_function(n, x);
+    return x;
+  }
+  else if (celltype == cell::Type::triangle)
+  {
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> p(
+        (n + 2) * (n + 1) / 2, 2);
+
+    auto wbar = [&](int k) {
+      double r0 = k / static_cast<double>(n);
+      if (k == n or k == -n)
+        return 0.0;
+      Eigen::ArrayXd r(1);
+      r[0] = (r0 + 1.0) / 2.0;
+      double x = warp_function(n, r)[0];
+      x /= (1 - r0 * r0);
+      return x;
+    };
+
+    int c = 0;
+    for (int i = 0; i < n + 1; ++i)
+      for (int j = 0; j < (n + 1 - i); ++j)
+      {
+        int k = n - j - i;
+        double x = static_cast<double>(i) / static_cast<double>(n);
+        double y = static_cast<double>(j) / static_cast<double>(n);
+        double z = static_cast<double>(k) / static_cast<double>(n);
+
+        double dx = 4 * x * (z * wbar(i - k) - y * wbar(j - i));
+        double dy = 4 * y * (x * wbar(j - i) - z * wbar(k - j));
+        x += dx;
+        y += dy;
+        p(c, 0) = x;
+        p(c, 1) = y;
+        ++c;
+      }
+    return p;
+  }
+  else
+    throw std::runtime_error("Unsupported cell type");
 }

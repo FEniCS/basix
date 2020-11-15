@@ -482,10 +482,44 @@ cell::warped_lattice(cell::Type celltype, int n)
 
   if (celltype == cell::Type::interval)
   {
-    Eigen::ArrayXd x(n + 1);
-    for (int i = 0; i < n + 1; ++i)
-      x[i] = static_cast<double>(i) / static_cast<double>(n);
+    Eigen::ArrayXd x = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     x += warp_function(n, x);
+    return x;
+  }
+  else if (celltype == cell::Type::quadrilateral)
+  {
+    Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
+    r += warp_function(n, r);
+
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x(
+        (n + 1) * (n + 1), 2);
+    int c = 0;
+    for (int i = 0; i < n + 1; ++i)
+      for (int j = 0; j < n + 1; ++j)
+      {
+        x(c, 0) = r[i];
+        x(c, 1) = r[j];
+        ++c;
+      }
+    return x;
+  }
+  else if (celltype == cell::Type::hexahedron)
+  {
+    Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
+    r += warp_function(n, r);
+
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x(
+        (n + 1) * (n + 1) * (n + 1), 3);
+    int c = 0;
+    for (int i = 0; i < n + 1; ++i)
+      for (int j = 0; j < n + 1; ++j)
+        for (int k = 0; k < n + 1; ++k)
+        {
+          x(c, 0) = r[i];
+          x(c, 1) = r[j];
+          x(c, 2) = r[k];
+          ++c;
+        }
     return x;
   }
   else if (celltype == cell::Type::triangle)
@@ -498,9 +532,7 @@ cell::warped_lattice(cell::Type celltype, int n)
         (n + 2) * (n + 1) / 2, 2);
 
     // Displacement from GLL points in 1D, scaled by 1/(r(1-r))
-    Eigen::ArrayXd r(2 * n + 1);
-    for (int i = 0; i < 2 * n + 1; ++i)
-      r[i] = static_cast<double>(i) / static_cast<double>(2 * n);
+    Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(2 * n + 1, 0.0, 1.0);
     Eigen::ArrayXd wbar = warp_function(n, r);
     r[0] = 0.5;
     r[2 * n] = 0.5;
@@ -529,9 +561,7 @@ cell::warped_lattice(cell::Type celltype, int n)
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> p(
         (n + 3) * (n + 2) * (n + 1) / 6, 3);
 
-    Eigen::ArrayXd r(2 * n + 1);
-    for (int i = 0; i < 2 * n + 1; ++i)
-      r[i] = static_cast<double>(i) / static_cast<double>(2 * n);
+    Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(2 * n + 1, 0.0, 1.0);
     Eigen::ArrayXd wbar = warp_function(n, r);
     r[0] = 0.5;
     r[2 * n] = 0.5;

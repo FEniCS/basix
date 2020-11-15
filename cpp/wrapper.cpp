@@ -71,9 +71,6 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("geometry", &cell::geometry, "Geometric points of a reference cell");
   m.def("sub_entity_geometry", &cell::sub_entity_geometry,
         "Points of a sub-entity of a cell");
-
-  m.def("simplex_type", &cell::simplex_type,
-        "Simplex CellType of given dimension");
   m.def("create_lattice", &cell::create_lattice,
         "Create a uniform lattice of points on a reference cell");
   m.def("warped_lattice", &cell::warped_lattice);

@@ -423,23 +423,6 @@ cell::create_lattice(cell::Type celltype, int n, bool exterior)
   return points;
 }
 //-----------------------------------------------------------------------------
-cell::Type cell::simplex_type(int dim)
-{
-  switch (dim)
-  {
-  case 0:
-    return cell::Type::point;
-  case 1:
-    return cell::Type::interval;
-  case 2:
-    return cell::Type::triangle;
-  case 3:
-    return cell::Type::tetrahedron;
-  default:
-    throw std::runtime_error("Unsupported dimension");
-  }
-}
-//-----------------------------------------------------------------------------
 cell::Type cell::sub_entity_type(cell::Type celltype, int dim, int index)
 {
   const int tdim = cell::topological_dimension(celltype);

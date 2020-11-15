@@ -38,12 +38,14 @@ public:
   /// to compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
-  /// @return The basis functions (and derivatives). The first index is
+  /// @return The basis functions (and derivatives). The first entry in the list is
   /// the basis function. Higher derivatives are stored in triangular (2D)
   /// or tetrahedral (3D) ordering, i.e. for the (x,y) derivatives in
-  /// 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... If a vector
-  /// result is expected, it will be stacked with all x values, followed
-  /// by all y-values (and then z, if any).
+  /// 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... The function libtab::idx can be
+  /// used to find the appropriate derivative.
+  /// If a vector result is expected, it will be stacked with all x values, followed
+  /// by all y-values (and then z, if any), likewise tensor-valued results will be
+  /// stacked in index order.
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
   tabulate(int nd, const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
@@ -58,6 +60,7 @@ public:
   int degree() const { return _degree; }
 
   /// Get the element value size
+  /// This is just a convenience function returning product(value_shape)
   /// @return Value size
   int value_size() const
   {
@@ -71,12 +74,16 @@ public:
   /// @return Value shape
   const std::vector<int>& value_shape() const { return _value_shape; }
 
-  /// Get the number of degrees of freedom
+  /// Get the number of degrees of freedom represented in the element
   /// @return Number of degrees of freedom
   int ndofs() const { return _coeffs.rows(); }
 
-  /// Get the dofs -> topological dimension mapping
-  /// @return List
+  /// Get the number of dofs on each topological entity: (vertices, edges,
+  /// faces, cell) in that order. For example, Lagrange degree 2 on a triangle has
+  /// vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]
+  /// The sum of the entity dofs must match the total number of dofs
+  /// reported by FiniteElement::ndofs
+  /// @return List of entity dof counts on each dimension
   std::vector<std::vector<int>> entity_dofs() const { return _entity_dofs; }
 
   /// Calculates the basis functions of the finite element, in terms of the
@@ -223,6 +230,7 @@ public:
   /// Example: Order 3 Lagrange on a triangle
   /// ---------------------------------------
   /// This space has 10 dofs arranged like:
+  /// ~~~~~~~~~~~~~~~~
   /// 2
   /// |\
   /// 6 4
@@ -230,6 +238,7 @@ public:
   /// 5 9 3
   /// |    \
   /// 0-7-8-1
+  /// ~~~~~~~~~~~~~~~~
   /// For this element, the base permutations are:
   ///   [Matrix swapping 3 and 4,
   ///    Matrix swapping 5 and 6,
@@ -241,6 +250,7 @@ public:
   /// Example: Order 1 Raviart-Thomas on a triangle
   /// ---------------------------------------------
   /// This space has 3 dofs arranged like:
+  /// ~~~~~~~~~~~~~~~~
   ///   |\
   ///   | \
   ///   |  \
@@ -249,9 +259,11 @@ public:
   ///   | L ^ \
   ///   |   |  \
   ///    ---2---
+  /// ~~~~~~~~~~~~~~~~
   /// These DOFs are integrals of normal components over the edges: DOFs 0 and 2
   /// are oriented inward, DOF 1 is oriented outwards.
   /// For this element, the base permutation matrices are:
+  /// ~~~~~~~~~~~~~~~~
   ///   0: [[-1, 0, 0],
   ///       [ 0, 1, 0],
   ///       [ 0, 0, 1]]
@@ -261,6 +273,7 @@ public:
   ///   2: [[1, 0,  0],
   ///       [0, 1,  0],
   ///       [0, 0, -1]]
+  /// ~~~~~~~~~~~~~~~~
   /// The first matrix reverses DOF 0 (as this is on the first edge). The second
   /// matrix reverses DOF 1 (as this is on the second edge). The third matrix
   /// reverses DOF 2 (as this is on the third edge).
@@ -268,6 +281,7 @@ public:
   /// Example: DOFs on the face of Order 2 Nedelec first kind on a tetrahedron
   /// ------------------------------------------------------------------------
   /// On a face of this tetrahedron, this space has two face tangent DOFs:
+  /// ~~~~~~~~~~~~~~~~
   /// |\        |\
   /// | \       | \
   /// |  \      | ^\
@@ -275,11 +289,14 @@ public:
   /// | 0->\    | 1  \
   /// |     \   |     \
   ///  ------    ------
+  /// ~~~~~~~~~~~~~~~~
   /// For these DOFs, the subblocks of the base permutation matrices are:
+  /// ~~~~~~~~~~~~~~~~
   ///   rotation: [[-1, 1],
   ///              [ 1, 0]]
   ///   reflection: [[0, 1],
   ///                [1, 0]]
+  /// ~~~~~~~~~~~~~~~~
   std::vector<
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
   base_permutations() const

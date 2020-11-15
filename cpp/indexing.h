@@ -11,7 +11,9 @@ namespace libtab
 /// @return 1D Index
 static inline int idx(int p) { return p; }
 
-/// Compute indexing in a 2D triangular array compressed into a 1D array
+/// Compute indexing in a 2D triangular array compressed into a 1D array.
+/// This can be used to find the index of a derivative returned by `FiniteElement::tabulate`.
+/// For instance to find d2N/dx2, use `FiniteElement::tabulate(2, points)[idx(2, 0)];`
 /// @param p Index in x
 /// @param q Index in y
 /// @return 1D Index

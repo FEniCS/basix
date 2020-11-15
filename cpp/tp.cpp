@@ -80,7 +80,8 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
 
   // TODO
   int perm_count = 0;
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   auto new_coeffs

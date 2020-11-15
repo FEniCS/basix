@@ -72,7 +72,7 @@ create_regge_dual(cell::Type celltype, int degree)
 
       Eigen::Array<double, 1, Eigen::Dynamic, Eigen::RowMajor> point
           = entity_geom.row(0);
-      cell::Type ct = cell::simplex_type(dim);
+      cell::Type ct = cell::sub_entity_type(celltype, dim, i);
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
           lattice = cell::create_lattice(ct, degree + 2, false);
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts(
@@ -143,7 +143,8 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   // TODO
   const int ndofs = dualmat.rows();
   int perm_count = 0;
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   auto new_coeffs

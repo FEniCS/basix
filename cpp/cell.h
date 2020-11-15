@@ -40,7 +40,7 @@ geometry(cell::Type celltype);
 /// @return List of topology (vertex indices) for each dimension (0..tdim)
 std::vector<std::vector<std::vector<int>>> topology(cell::Type celltype);
 
-/// Sub-entity a cell, given by topological dimension and index
+/// Sub-entity of a cell, given by topological dimension and index
 /// @param celltype The cell::Type
 /// @param dim Dimension of sub-entity
 /// @param index Local index of sub-entity
@@ -67,11 +67,6 @@ create_lattice(cell::Type celltype, int n, bool exterior);
 /// @param celltype Cell type
 /// @return the topological dimension
 int topological_dimension(cell::Type celltype);
-
-/// Get the cell type of a simplex of given dimension
-/// @param dim Topological dimension
-/// @return cell type
-cell::Type simplex_type(int dim);
 
 /// Get the cell type of a sub-entity of given dimension and index
 /// @param celltype Type of cell

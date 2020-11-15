@@ -16,6 +16,8 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 {
   [[maybe_unused]] auto [pts, wts]
       = quadrature::gauss_lobatto_legendre_line_rule(n + 1);
+  wts.setZero();
+
   pts *= 0.5;
   for (int i = 0; i < n + 1; ++i)
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
@@ -508,34 +510,71 @@ cell::warped_lattice(cell::Type celltype, int n)
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> p(
         (n + 2) * (n + 1) / 2, 2);
 
-    auto wbar = [&](int k) {
-      double r0 = k / static_cast<double>(n);
-      if (k == n or k == -n)
-        return 0.0;
-      Eigen::ArrayXd r(1);
-      r[0] = (r0 + 1.0) / 2.0;
-      double x = warp_function(n, r)[0];
-      x /= (1 - r0 * r0);
-      return x;
-    };
+    Eigen::ArrayXd r(2 * n + 1);
+    for (int i = 0; i < 2 * n + 1; ++i)
+      r[i] = static_cast<double>(i) / static_cast<double>(2 * n);
+    Eigen::ArrayXd wbar = warp_function(n, r);
+    r[0] = 0.5;
+    r[2 * n] = 0.5;
+    wbar /= (r * (1 - r));
 
     int c = 0;
     for (int i = 0; i < n + 1; ++i)
       for (int j = 0; j < (n + 1 - i); ++j)
       {
-        int k = n - j - i;
+        int l = n - j - i;
         double x = static_cast<double>(i) / static_cast<double>(n);
         double y = static_cast<double>(j) / static_cast<double>(n);
-        double z = static_cast<double>(k) / static_cast<double>(n);
+        double a = static_cast<double>(l) / static_cast<double>(n);
 
-        double dx = 4 * x * (z * wbar(i - k) - y * wbar(j - i));
-        double dy = 4 * y * (x * wbar(j - i) - z * wbar(k - j));
-        x += dx;
-        y += dy;
-        p(c, 0) = x;
-        p(c, 1) = y;
+        double dx = x * (a * wbar(n + i - l) + y * wbar(n + i - j));
+        double dy = y * (a * wbar(n + j - l) + x * wbar(n + j - i));
+
+        p(c, 0) = x + dx;
+        p(c, 1) = y + dy;
         ++c;
       }
+    return p;
+  }
+  else if (celltype == cell::Type::tetrahedron)
+  {
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> p(
+        (n + 3) * (n + 2) * (n + 1) / 6, 3);
+
+    Eigen::ArrayXd r(2 * n + 1);
+    for (int i = 0; i < 2 * n + 1; ++i)
+      r[i] = static_cast<double>(i) / static_cast<double>(2 * n);
+    Eigen::ArrayXd wbar = warp_function(n, r);
+    r[0] = 0.5;
+    r[2 * n] = 0.5;
+    wbar /= (4 * r * (1 - r));
+
+    int c = 0;
+    for (int i = 0; i < n + 1; ++i)
+      for (int j = 0; j < (n + 1 - i); ++j)
+        for (int k = 0; k < (n + 1 - j - i); ++k)
+        {
+          int l = n - k - j - i;
+          double x = static_cast<double>(i) / static_cast<double>(n);
+          double y = static_cast<double>(j) / static_cast<double>(n);
+          double z = static_cast<double>(k) / static_cast<double>(n);
+          double a = static_cast<double>(l) / static_cast<double>(n);
+
+          double dx = 4 * x
+                      * (a * wbar(n + i - l) + y * wbar(n + i - j)
+                         + z * wbar(n + i - k));
+          double dy = 4 * y
+                      * (a * wbar(n + j - l) + z * wbar(n + j - k)
+                         + x * wbar(n + j - i));
+          double dz = 4 * z
+                      * (a * wbar(n + k - l) + x * wbar(n + k - i)
+                         + y * wbar(n + k - j));
+
+          p(c, 0) = x + dx;
+          p(c, 1) = y + dy;
+          p(c, 2) = z + dz;
+          ++c;
+        }
     return p;
   }
   else

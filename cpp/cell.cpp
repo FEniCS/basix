@@ -490,9 +490,14 @@ cell::warped_lattice(cell::Type celltype, int n)
   }
   else if (celltype == cell::Type::triangle)
   {
+    // Warp points: see Hesthaven and Warburton, Nodal Discontinuous Galerkin
+    // Methods, pp. 175-180
+
+    // Points
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> p(
         (n + 2) * (n + 1) / 2, 2);
 
+    // Displacement from GLL points in 1D, scaled by 1/(r(1-r))
     Eigen::ArrayXd r(2 * n + 1);
     for (int i = 0; i < 2 * n + 1; ++i)
       r[i] = static_cast<double>(i) / static_cast<double>(2 * n);
@@ -530,7 +535,7 @@ cell::warped_lattice(cell::Type celltype, int n)
     Eigen::ArrayXd wbar = warp_function(n, r);
     r[0] = 0.5;
     r[2 * n] = 0.5;
-    wbar /= (4 * r * (1 - r));
+    wbar /= (r * (1 - r));
 
     int c = 0;
     for (int i = 0; i < n + 1; ++i)
@@ -543,13 +548,13 @@ cell::warped_lattice(cell::Type celltype, int n)
           double z = static_cast<double>(k) / static_cast<double>(n);
           double a = static_cast<double>(l) / static_cast<double>(n);
 
-          double dx = 4 * x
+          double dx = x
                       * (a * wbar(n + i - l) + y * wbar(n + i - j)
                          + z * wbar(n + i - k));
-          double dy = 4 * y
+          double dy = y
                       * (a * wbar(n + j - l) + z * wbar(n + j - k)
                          + x * wbar(n + j - i));
-          double dz = 4 * z
+          double dz = z
                       * (a * wbar(n + k - l) + x * wbar(n + k - i)
                          + y * wbar(n + k - j));
 

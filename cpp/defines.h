@@ -2,9 +2,9 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include <string>
-
 #pragma once
+
+#include <string>
 
 namespace libtab
 {

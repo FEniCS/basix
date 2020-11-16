@@ -46,8 +46,7 @@ public:
   /// expected, it will be stacked with all x values, followed by all y-values
   /// (and then z, if any), likewise tensor-valued results will be stacked in
   /// index order.
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  std::vector<Eigen::ArrayXXd>
   tabulate(int nd, const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                       Eigen::RowMajor>& x) const;
 
@@ -210,8 +209,7 @@ public:
   /// B.D^T and throws an error if it is ill-conditioned.
   /// @return The matrix C of expansion coefficients that define the basis
   /// functions of the finite element space.
-  static Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  compute_expansion_coefficents(
+  static Eigen::MatrixXd compute_expansion_coefficents(
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                           Eigen::RowMajor>& span_coeffs,
       const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,

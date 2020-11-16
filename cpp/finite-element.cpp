@@ -35,8 +35,7 @@ FiniteElement::FiniteElement(
   }
 }
 //-----------------------------------------------------------------------------
-Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-FiniteElement::compute_expansion_coefficents(
+Eigen::MatrixXd FiniteElement::compute_expansion_coefficents(
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                         Eigen::RowMajor>& coeffs,
     const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
@@ -61,8 +60,7 @@ FiniteElement::compute_expansion_coefficents(
   }
 
   // _coeffs = A^-1(coeffs)
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+  Eigen::ArrayXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 
 #ifndef NDEBUG
   std::cout << "New coeffs = \n[" << new_coeffs << "]\n";
@@ -70,9 +68,7 @@ FiniteElement::compute_expansion_coefficents(
   return new_coeffs;
 }
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-FiniteElement::tabulate(
+std::vector<Eigen::ArrayXXd> FiniteElement::tabulate(
     int nd,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         x) const
@@ -88,12 +84,10 @@ FiniteElement::tabulate(
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(
-          basis.size(),
-          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
-              x.rows(), ndofs * vs));
+  std::vector<Eigen::ArrayXXd> dresult(
+      basis.size(),
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+          x.rows(), ndofs * vs));
   for (std::size_t p = 0; p < dresult.size(); ++p)
   {
     for (int j = 0; j < vs; ++j)

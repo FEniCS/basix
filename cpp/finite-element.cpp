@@ -60,7 +60,7 @@ Eigen::MatrixXd FiniteElement::compute_expansion_coefficents(
   }
 
   // _coeffs = A^-1(coeffs)
-  Eigen::ArrayXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+  Eigen::ArrayXXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 
 #ifndef NDEBUG
   std::cout << "New coeffs = \n[" << new_coeffs << "]\n";

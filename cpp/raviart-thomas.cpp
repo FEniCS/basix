@@ -32,7 +32,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   const int ns = polyset::size(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim, 2 * degree);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(celltype, 2 * degree);
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       Pkp1_at_Qpts = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 
@@ -96,7 +96,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   // TODO
   const int ndofs = dualmat.rows();
   int perm_count = 0;
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   auto new_coeffs

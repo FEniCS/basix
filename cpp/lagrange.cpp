@@ -74,7 +74,8 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
         cell::Type ct = cell::sub_entity_type(celltype, dim, i);
         const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                            Eigen::RowMajor>
-            lattice = lattice::create(ct, degree, false);
+            lattice
+            = lattice::create(ct, degree, lattice::Type::equispaced, false);
         for (int j = 0; j < lattice.rows(); ++j)
         {
           pt.row(c) = entity_geom.row(0);
@@ -194,7 +195,8 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   else
   {
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        lattice = lattice::create(celltype, degree, true);
+        lattice
+        = lattice::create(celltype, degree, lattice::Type::equispaced, true);
 
     for (int j = 0; j < lattice.rows(); ++j)
     {

@@ -15,6 +15,7 @@ import numpy as np
 def test_tp(order, celltype):
     np.set_printoptions(suppress=True)
     tp = libtab.TensorProduct(celltype, order)
-    pts = libtab.create_lattice(celltype, 5, True)
+    pts = libtab.create_lattice(celltype, 5,
+                                libtab.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
     assert(np.isclose(np.sum(w, axis=1), 1.0).all())

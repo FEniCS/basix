@@ -49,7 +49,8 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
       {
         const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                            Eigen::RowMajor>
-            lattice = lattice::create(celltype, degree, false);
+            lattice = lattice::create(celltype, degree,
+                                      lattice::Type::equispaced, false);
         for (int j = 0; j < lattice.rows(); ++j)
           pt.row(c++) = lattice.row(j);
         entity_dofs[dim].push_back(lattice.rows());
@@ -59,7 +60,8 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
         cell::Type ct = cell::sub_entity_type(celltype, dim, i);
         const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                            Eigen::RowMajor>
-            lattice = lattice::create(ct, degree, false);
+            lattice
+            = lattice::create(ct, degree, lattice::Type::equispaced, false);
         entity_dofs[dim].push_back(lattice.rows());
 
         for (int j = 0; j < lattice.rows(); ++j)

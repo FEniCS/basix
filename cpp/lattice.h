@@ -1,8 +1,8 @@
+#pragma once
+
 #include "cell.h"
 #include <Eigen/Dense>
 #include <vector>
-
-#pragma once
 
 namespace libtab
 {

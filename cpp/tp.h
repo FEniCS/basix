@@ -2,12 +2,12 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#pragma once
+
 #include "cell.h"
 #include "finite-element.h"
 #include <Eigen/Dense>
 #include <vector>
-
-#pragma once
 
 namespace libtab
 {

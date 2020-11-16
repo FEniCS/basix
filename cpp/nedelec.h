@@ -2,9 +2,9 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "finite-element.h"
-
 #pragma once
+
+#include "finite-element.h"
 
 namespace libtab
 {

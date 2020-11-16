@@ -23,13 +23,13 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   const int tdim = cell::topological_dimension(celltype);
   const std::vector<std::vector<int>> facet_topology
       = cell::topology(celltype)[tdim - 1];
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geometry
-      = cell::geometry(celltype);
+  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      geometry = cell::geometry(celltype);
 
   const int ndofs = facet_topology.size();
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts(
-      ndofs, tdim);
-  pts.setZero();
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts
+      = Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                     Eigen::RowMajor>::Zero(ndofs, tdim);
 
   int c = 0;
   for (const std::vector<int>& f : facet_topology)
@@ -46,22 +46,26 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, 1, 0, pts)[0];
 
   int perm_count = 0;
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  auto new_coeffs
+  const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      new_coeffs
       = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
 
+  // FIXME: This a bit confusing. Add comment and simplify code
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
-  for (int& q : entity_dofs[tdim - 1])
-    q = 1;
+  // FIXME: Can this loop and the loop above be combined using
+  // appropriate constructor?
+  for (std::size_t i = 0; i < entity_dofs[tdim - 1].size(); ++i)
+    entity_dofs[tdim - 1][i] = 1;
 
-  FiniteElement el(celltype, 1, {1}, new_coeffs, entity_dofs,
-                   base_permutations);
-  return el;
+  return FiniteElement(celltype, 1, {1}, new_coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

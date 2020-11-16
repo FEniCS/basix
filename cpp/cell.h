@@ -10,8 +10,8 @@
 namespace libtab
 {
 
-/// Information about reference cells
-/// including their topological and geometric data.
+/// Information about reference cells including their topological and
+/// geometric data.
 
 namespace cell
 {

@@ -193,14 +193,9 @@ cell::sub_entity_geometry(cell::Type celltype, int dim, int index)
 //----------------------------------------------------------------------------
 int cell::sub_entity_count(cell::Type celltype, int dim)
 {
-  std::vector<std::vector<std::vector<int>>> cell_topology
+  const std::vector<std::vector<std::vector<int>>> cell_topology
       = cell::topology(celltype);
-
-  if (dim < 0 or dim >= (int)cell_topology.size())
-    throw std::runtime_error("Invalid dimension for sub-entity");
-
-  const std::vector<std::vector<int>>& t = cell_topology[dim];
-  return (int)t.size();
+  return cell_topology.at(dim).size();
 }
 //----------------------------------------------------------------------------
 cell::Type cell::sub_entity_type(cell::Type celltype, int dim, int index)

@@ -17,7 +17,7 @@ def P_interval(n, x):
 
 def test_symbolic_interval():
     n = 7
-    nderiv = 4
+    nderiv = 7
 
     x = sympy.Symbol("x")
     w = P_interval(n, x)
@@ -26,13 +26,13 @@ def test_symbolic_interval():
     pts0 = libtab.create_lattice(cell, 10, True)
     wtab = libtab.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
+    wd = [w[i] for i in range(n + 1)]
     for k in range(nderiv + 1):
         wsym = np.zeros_like(wtab[k])
         for i in range(n + 1):
-            wd = sympy.diff(w[i], x, k)
             for j, p in enumerate(pts0):
-                wsym[j, i] = wd.subs(x, p[0])
-
+                wsym[j, i] = wd[i].subs(x, p[0])
+            wd[i] = sympy.diff(wd[i], x)
         assert(np.isclose(wtab[k], wsym).all())
 
 

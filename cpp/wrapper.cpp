@@ -72,10 +72,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("geometry", &cell::geometry, "Geometric points of a reference cell");
   m.def("sub_entity_geometry", &cell::sub_entity_geometry,
         "Points of a sub-entity of a cell");
-  m.def("create_lattice", &cell::create_lattice,
+
+  m.def("create_lattice", &lattice::create,
         "Create a uniform lattice of points on a reference cell");
-  m.def("warped_lattice", &cell::warped_lattice);
-  m.def("warp", &cell::warp);
+  m.def("create_warped_lattice", &lattice::create_warped);
 
   m.def(
       "create_new_element",
@@ -138,8 +138,6 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return create_it->second(celltype, degree);
       },
       "Create a FiniteElement of a given family, celltype and degree");
-
-  m.def("lattice_w", &lattice::create_warped);
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");

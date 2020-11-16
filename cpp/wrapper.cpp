@@ -13,6 +13,7 @@
 #include "defines.h"
 #include "indexing.h"
 #include "lagrange.h"
+#include "lattice.h"
 #include "nedelec-second-kind.h"
 #include "nedelec.h"
 #include "polynomial-set.h"
@@ -71,7 +72,12 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("geometry", &cell::geometry, "Geometric points of a reference cell");
   m.def("sub_entity_geometry", &cell::sub_entity_geometry,
         "Points of a sub-entity of a cell");
-  m.def("create_lattice", &cell::create_lattice,
+
+  py::enum_<lattice::Type>(m, "LatticeType")
+      .value("equispaced", lattice::Type::equispaced)
+      .value("gll_warped", lattice::Type::gll_warped);
+
+  m.def("create_lattice", &lattice::create,
         "Create a uniform lattice of points on a reference cell");
 
   m.def(

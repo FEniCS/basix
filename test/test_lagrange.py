@@ -145,7 +145,7 @@ def test_line(n):
     g = sympy_lagrange(celltype, n)
     x = sympy.Symbol("x")
     lagrange = libtab.Lagrange(celltype, n)
-    pts = libtab.create_lattice(celltype, 6, True)
+    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
 
@@ -166,7 +166,7 @@ def test_tri(order):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     lagrange = libtab.Lagrange(celltype, order)
-    pts = libtab.create_lattice(celltype, 6, True)
+    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)
 
@@ -189,7 +189,8 @@ def test_tet(order):
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
     lagrange = libtab.Lagrange(celltype, order)
-    pts = libtab.create_lattice(celltype, 6, True)
+    pts = libtab.create_lattice(celltype, 6,
+                                libtab.LatticeType.equispaced, True)
     nderiv = 1
     wtab = lagrange.tabulate(nderiv, pts)
 
@@ -217,7 +218,7 @@ def test_tet(order):
 def test_lagrange(celltype, order):
     lagrange = libtab.Lagrange(celltype, order)
 
-    pts = libtab.create_lattice(celltype, 6, True)
+    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
     assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())
 

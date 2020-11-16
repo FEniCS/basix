@@ -198,7 +198,7 @@ def test_tri(order):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     nedelec = libtab.Nedelec(celltype, order)
-    pts = libtab.create_lattice(celltype, 6, True)
+    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
 
@@ -223,7 +223,7 @@ def test_tet(order):
     nedelec = libtab.Nedelec(celltype, order)
     assert(sum([sum(w) for w in nedelec.entity_dofs]) == nedelec.ndofs)
 
-    pts = libtab.create_lattice(celltype, 6, True)
+    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     nderiv = 1
     wtab = nedelec.tabulate(nderiv, pts)
 

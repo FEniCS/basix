@@ -25,8 +25,8 @@ namespace quadrature
 /// itself)
 /// @param x Points at which to evaluate
 /// @returns Array of polynomial derivative values (rows) at points (columns)
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-compute_jacobi_deriv(double a, int n, int nderiv, const Eigen::ArrayXd& x);
+Eigen::ArrayXXd compute_jacobi_deriv(double a, int n, int nderiv,
+                                     const Eigen::ArrayXd& x);
 
 // Computes Gauss-Jacobi quadrature points
 /// Finds the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's method.
@@ -47,31 +47,27 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m);
 /// Compute triangle quadrature rule on [0, 1]x[0, 1]
 /// @param m order
 /// @returns list of 2D points, list of weights
-std::pair<Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor>,
-          Eigen::ArrayXd>
+std::pair<Eigen::ArrayX2d, Eigen::ArrayXd>
 make_quadrature_triangle_collapsed(int m);
 
 /// Compute tetrahedrom quadrature rule on [0, 1]x[0, 1]x[0, 1]
 /// @param m order
 /// @returns list of 3D points, list of weights
-std::pair<Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>,
-          Eigen::ArrayXd>
+std::pair<Eigen::ArrayX3d, Eigen::ArrayXd>
 make_quadrature_tetrahedron_collapsed(int m);
 
 /// Utility for quadrature rule on reference cell
 /// @param celltype
 /// @param m order
 /// @returns list of points, list of weights
-std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
-          Eigen::ArrayXd>
-make_quadrature(cell::Type celltype, int m);
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_quadrature(cell::Type celltype,
+                                                           int m);
 
 /// Scaled quadrature rule on arbitrary simplices
 /// @param simplex Set of vertices describing simplex
 /// @param m order
 /// @returns list of points, list of weights
-std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
-          Eigen::ArrayXd>
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>& simplex,
                 int m);

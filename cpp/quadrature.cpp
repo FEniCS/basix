@@ -124,9 +124,8 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
 }; // namespace
 
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
-                                 const Eigen::ArrayXd& x)
+Eigen::ArrayXXd quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
+                                                 const Eigen::ArrayXd& x)
 {
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
@@ -247,8 +246,7 @@ quadrature::make_quadrature_line(int m)
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor>,
-          Eigen::ArrayXd>
+std::pair<Eigen::ArrayX2d, Eigen::ArrayXd>
 quadrature::make_quadrature_triangle_collapsed(int m)
 {
   auto [ptx, wx] = quadrature::compute_gauss_jacobi_rule(0.0, m);
@@ -272,8 +270,7 @@ quadrature::make_quadrature_triangle_collapsed(int m)
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>,
-          Eigen::ArrayXd>
+std::pair<Eigen::ArrayX3d, Eigen::ArrayXd>
 quadrature::make_quadrature_tetrahedron_collapsed(int m)
 {
   auto [ptx, wx] = quadrature::compute_gauss_jacobi_rule(0.0, m);
@@ -302,8 +299,7 @@ quadrature::make_quadrature_tetrahedron_collapsed(int m)
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
-          Eigen::ArrayXd>
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 quadrature::make_quadrature(cell::Type celltype, int m)
 {
   switch (celltype)
@@ -378,9 +374,7 @@ quadrature::make_quadrature(cell::Type celltype, int m)
   }
 }
 //----------------------------------------------------------------------------
-std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
-          Eigen::ArrayXd>
-quadrature::make_quadrature(
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> quadrature::make_quadrature(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         simplex,
     int m)

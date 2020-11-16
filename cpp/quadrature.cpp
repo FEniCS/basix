@@ -312,6 +312,60 @@ quadrature::make_quadrature(cell::Type celltype, int m)
   {
   case cell::Type::interval:
     return quadrature::make_quadrature_line(m);
+  case cell::Type::quadrilateral:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
+
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts(
+        m * m, 2);
+    Eigen::ArrayXd Qwts(m * m);
+
+    int c = 0;
+    for (int j = 0; j < m; ++j)
+      for (int i = 0; i < m; ++i)
+      {
+        Qpts.row(c) << QptsL(i, 0), QptsL(j, 0);
+        Qwts[c] = QwtsL[i] * QwtsL[j];
+        ++c;
+      }
+    return {Qpts, Qwts};
+  }
+  case cell::Type::hexahedron:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts(
+        m * m * m, 3);
+    Eigen::ArrayXd Qwts(m * m * m);
+    int c = 0;
+    for (int k = 0; k < m; ++k)
+      for (int j = 0; j < m; ++j)
+        for (int i = 0; i < m; ++i)
+        {
+          Qpts.row(c) << QptsL(i, 0), QptsL(j, 0), QptsL(k, 0);
+          Qwts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
+          ++c;
+        }
+    return {Qpts, Qwts};
+  }
+  case cell::Type::prism:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
+    auto [QptsT, QwtsT] = quadrature::make_quadrature_triangle_collapsed(m);
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts(
+        m * QptsT.rows(), 3);
+    Eigen::ArrayXd Qwts(m * QptsT.rows());
+    int c = 0;
+    for (int k = 0; k < m; ++k)
+      for (int i = 0; i < QptsT.rows(); ++i)
+      {
+        Qpts.row(c) << QptsT(i, 0), QptsT(i, 1), QptsL(k, 0);
+        Qwts[c] = QwtsT[i] * QwtsL[k];
+        ++c;
+      }
+    return {Qpts, Qwts};
+  }
+  case cell::Type::pyramid:
+    throw std::runtime_error("Pyramid not yet supported");
   case cell::Type::triangle:
     return quadrature::make_quadrature_triangle_collapsed(m);
   case cell::Type::tetrahedron:

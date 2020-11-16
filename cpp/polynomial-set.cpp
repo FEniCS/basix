@@ -30,9 +30,7 @@ constexpr std::array<double, 3> jrc(int a, int n)
 // Legendre Polynomials, with the recurrence relation given by
 // n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1, 1]. The
 // range is rescaled here to [0, 1].
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-tabulate_polyset_line_derivs(
+std::vector<Eigen::ArrayXXd> tabulate_polyset_line_derivs(
     int degree, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         x)
@@ -43,15 +41,11 @@ tabulate_polyset_line_derivs(
 
   const int m = (degree + 1);
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(nderiv + 1);
-
+  std::vector<Eigen::ArrayXXd> dresult(nderiv + 1);
   for (int k = 0; k < nderiv + 1; ++k)
   {
     // Get reference to this derivative
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        result(x.rows(), m);
+    Eigen::ArrayXXd result(x.rows(), m);
 
     if (k == 0)
       result.col(0).fill(1.0);
@@ -88,9 +82,7 @@ tabulate_polyset_line_derivs(
 // change of variables. The polynomials are then extended in the q direction,
 // using the relation given in Sherwin and Karniadakis 1995
 // (https://doi.org/10.1016/0045-7825(94)00745-9)
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-tabulate_polyset_triangle_derivs(
+std::vector<Eigen::ArrayXXd> tabulate_polyset_triangle_derivs(
     int n, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
@@ -103,9 +95,7 @@ tabulate_polyset_triangle_derivs(
 
   const int m = (n + 1) * (n + 2) / 2;
   const int md = (nderiv + 1) * (nderiv + 2) / 2;
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(md);
+  std::vector<Eigen::ArrayXXd> dresult(md);
 
   // f3 = ((1-y)/2)^2
   const auto f3 = (1.0 - x.col(1)).square() * 0.25;
@@ -119,8 +109,7 @@ tabulate_polyset_triangle_derivs(
       const int ky = k - kx;
 
       // Create array for this derivative
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          result(pts.rows(), m);
+      Eigen::ArrayXXd result(pts.rows(), m);
 
       if (kx == 0 and ky == 0)
         result.col(0).fill(1.0);
@@ -197,9 +186,7 @@ tabulate_polyset_triangle_derivs(
   return dresult;
 }
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-tabulate_polyset_tetrahedron_derivs(
+std::vector<Eigen::ArrayXXd> tabulate_polyset_tetrahedron_derivs(
     int n, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
@@ -211,9 +198,7 @@ tabulate_polyset_tetrahedron_derivs(
 
   const int m = (n + 1) * (n + 2) * (n + 3) / 6;
   const int md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(md);
+  std::vector<Eigen::ArrayXXd> dresult(md);
 
   const auto f2 = (x.col(1) + x.col(2)).square() * 0.25;
   const auto f3 = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
@@ -230,8 +215,7 @@ tabulate_polyset_tetrahedron_derivs(
         const int ky = j - kx;
         const int kz = k - j;
 
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-            result(pts.rows(), m);
+        Eigen::ArrayXXd result(pts.rows(), m);
 
         if (kx == 0 and ky == 0 and kz == 0)
           result.col(0).fill(1.0);
@@ -422,9 +406,7 @@ tabulate_polyset_tetrahedron_derivs(
   return dresult;
 }
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-tabulate_polyset_pyramid_derivs(
+std::vector<Eigen::ArrayXXd> tabulate_polyset_pyramid_derivs(
     int n, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
@@ -436,9 +418,7 @@ tabulate_polyset_pyramid_derivs(
 
   const int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
   const int md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(md);
+  std::vector<Eigen::ArrayXXd> dresult(md);
 
   // Indexing for pyramidal basis functions
   auto pyr_idx = [&n](int p, int q, int r) -> int {
@@ -623,9 +603,7 @@ tabulate_polyset_pyramid_derivs(
   return dresult;
 }
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-tabulate_polyset_quad_derivs(
+std::vector<Eigen::ArrayXXd> tabulate_polyset_quad_derivs(
     int n, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
@@ -634,22 +612,17 @@ tabulate_polyset_quad_derivs(
   const int m = (n + 1) * (n + 1);
   const int md = (nderiv + 1) * (nderiv + 2) / 2;
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(md);
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      px = tabulate_polyset_line_derivs(n, nderiv, pts.col(0));
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      py = tabulate_polyset_line_derivs(n, nderiv, pts.col(1));
+  std::vector<Eigen::ArrayXXd> dresult(md);
+  std::vector<Eigen::ArrayXXd> px
+      = tabulate_polyset_line_derivs(n, nderiv, pts.col(0));
+  std::vector<Eigen::ArrayXXd> py
+      = tabulate_polyset_line_derivs(n, nderiv, pts.col(1));
 
   for (int kx = 0; kx < nderiv + 1; ++kx)
   {
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
     {
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          result(pts.rows(), m);
+      Eigen::ArrayXXd result(pts.rows(), m);
       int c = 0;
       for (int i = 0; i < px[kx].cols(); ++i)
         for (int j = 0; j < py[ky].cols(); ++j)
@@ -661,9 +634,7 @@ tabulate_polyset_quad_derivs(
   return dresult;
 }
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-tabulate_polyset_hex_derivs(
+std::vector<Eigen::ArrayXXd> tabulate_polyset_hex_derivs(
     int n, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
@@ -673,19 +644,14 @@ tabulate_polyset_hex_derivs(
 
   const int md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(md);
+  std::vector<Eigen::ArrayXXd> dresult(md);
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      px = tabulate_polyset_line_derivs(n, nderiv, pts.col(0));
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      py = tabulate_polyset_line_derivs(n, nderiv, pts.col(1));
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      pz = tabulate_polyset_line_derivs(n, nderiv, pts.col(2));
+  std::vector<Eigen::ArrayXXd> px
+      = tabulate_polyset_line_derivs(n, nderiv, pts.col(0));
+  std::vector<Eigen::ArrayXXd> py
+      = tabulate_polyset_line_derivs(n, nderiv, pts.col(1));
+  std::vector<Eigen::ArrayXXd> pz
+      = tabulate_polyset_line_derivs(n, nderiv, pts.col(2));
 
   for (int kx = 0; kx < nderiv + 1; ++kx)
   {
@@ -693,9 +659,7 @@ tabulate_polyset_hex_derivs(
     {
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-            result(pts.rows(), m);
-
+        Eigen::ArrayXXd result(pts.rows(), m);
         int c = 0;
         for (int i = 0; i < px[kx].cols(); ++i)
           for (int j = 0; j < py[ky].cols(); ++j)
@@ -710,9 +674,7 @@ tabulate_polyset_hex_derivs(
   return dresult;
 }
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-tabulate_polyset_prism_derivs(
+std::vector<Eigen::ArrayXXd> tabulate_polyset_prism_derivs(
     int n, int nderiv,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         pts)
@@ -721,16 +683,12 @@ tabulate_polyset_prism_derivs(
   const int m = (n + 1) * (n + 1) * (n + 2) / 2;
   const int md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(md);
+  std::vector<Eigen::ArrayXXd> dresult(md);
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      pxy = tabulate_polyset_triangle_derivs(n, nderiv, pts.leftCols(2));
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      pz = tabulate_polyset_line_derivs(n, nderiv, pts.col(2));
+  std::vector<Eigen::ArrayXXd> pxy
+      = tabulate_polyset_triangle_derivs(n, nderiv, pts.leftCols(2));
+  std::vector<Eigen::ArrayXXd> pz
+      = tabulate_polyset_line_derivs(n, nderiv, pts.col(2));
 
   for (int kx = 0; kx < nderiv + 1; ++kx)
   {
@@ -738,8 +696,7 @@ tabulate_polyset_prism_derivs(
     {
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-            result(pts.rows(), m);
+        Eigen::ArrayXXd result(pts.rows(), m);
         int c = 0;
         for (int i = 0; i < pxy[idx(kx, ky)].cols(); ++i)
           for (int k = 0; k < pz[kz].cols(); ++k)
@@ -754,8 +711,7 @@ tabulate_polyset_prism_derivs(
 }
 } // namespace
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+std::vector<Eigen::ArrayXXd>
 polyset::tabulate(cell::Type celltype, int n, int nderiv,
                   const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                      Eigen::RowMajor>& pts)

@@ -42,8 +42,7 @@ namespace polyset
 /// all x values, followed by all y-values (and then z, if any). The
 /// second index is the point, and the third index is the basis function
 /// index.
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+std::vector<Eigen::ArrayXXd>
 tabulate(cell::Type celltype, int degree, int nd,
          const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                             Eigen::RowMajor>& x);

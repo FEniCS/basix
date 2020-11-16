@@ -77,17 +77,14 @@ std::vector<Eigen::ArrayXXd> FiniteElement::tabulate(
   if (x.cols() != tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      basis = polyset::tabulate(_cell_type, _degree, nd, x);
+  std::vector<Eigen::ArrayXXd> basis
+      = polyset::tabulate(_cell_type, _degree, nd, x);
   const int psize = polyset::size(_cell_type, _degree);
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
-  std::vector<Eigen::ArrayXXd> dresult(
-      basis.size(),
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
-          x.rows(), ndofs * vs));
+  std::vector<Eigen::ArrayXXd> dresult(basis.size(),
+                                       Eigen::ArrayXXd(x.rows(), ndofs * vs));
   for (std::size_t p = 0; p < dresult.size(); ++p)
   {
     for (int j = 0; j < vs; ++j)

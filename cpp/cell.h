@@ -71,10 +71,5 @@ cell::Type sub_entity_type(cell::Type celltype, int dim, int index);
 /// @return cell type
 cell::Type str_to_type(std::string name);
 
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-warped_lattice(cell::Type celltype, int n);
-
-double warp(int n, double x);
-
 } // namespace cell
 } // namespace libtab

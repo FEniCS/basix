@@ -11,7 +11,7 @@ using namespace libtab;
 
 namespace
 {
-
+//-----------------------------------------------------------------------------
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 create_regge_space(cell::Type celltype, int degree)
 {
@@ -149,9 +149,11 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  auto new_coeffs
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
+  // FIXME: Simplify
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -164,8 +166,7 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
-  FiniteElement el(celltype, degree, {tdim, tdim}, new_coeffs, entity_dofs,
-                   base_permutations);
-  return el;
+  return FiniteElement(celltype, degree, {tdim, tdim}, new_coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

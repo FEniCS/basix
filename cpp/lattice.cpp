@@ -8,6 +8,7 @@ using namespace libtab;
 
 namespace
 {
+//-----------------------------------------------------------------------------
 Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 {
   [[maybe_unused]] auto [pts, wts]
@@ -26,6 +27,7 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 
   return w;
 }
+//-----------------------------------------------------------------------------
 
 } // namespace
 
@@ -36,11 +38,12 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
 {
   const double h = 1.0 / static_cast<double>(n);
 
+  // TODO: use switch on cell type, and maybe use anonymous function for
+  // each cell type
+
   if (celltype == cell::Type::point)
-  {
-    Eigen::ArrayXd x = Eigen::ArrayXd::Zero(1, 1);
-    return x;
-  }
+    return Eigen::ArrayXd::Zero(1, 1);
+
   if (celltype == cell::Type::interval)
   {
     if (n == 0)
@@ -55,8 +58,10 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
       x = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     else
       x = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
+
     if (lattice_type == lattice::Type::gll_warped)
       x += warp_function(n, x);
+
     return x;
   }
   else if (celltype == cell::Type::quadrilateral)
@@ -73,13 +78,13 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
       r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     else
       r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
+
     if (lattice_type == lattice::Type::gll_warped)
       r += warp_function(n, r);
 
     const int m = r.size();
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x(
         m * m, 2);
-
     int c = 0;
     for (int j = 0; j < m; ++j)
       for (int i = 0; i < m; ++i)
@@ -222,16 +227,16 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
       x.row(0) << 1.0 / 3.0, 1.0 / 3.0, 0.5;
       return x;
     }
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         tri_pts
         = lattice::create(cell::Type::triangle, n, lattice_type, exterior);
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         line_pts
         = lattice::create(cell::Type::interval, n, lattice_type, exterior);
 
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x(
         tri_pts.rows() * line_pts.rows(), 3);
-
     x.leftCols(2) = tri_pts.replicate(line_pts.rows(), 1);
     for (int i = 0; i < line_pts.rows(); ++i)
       x.block(i * tri_pts.rows(), 2, tri_pts.rows(), 1) = line_pts(i, 0);
@@ -240,12 +245,13 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
   else if (celltype == cell::Type::pyramid)
   {
     if (lattice_type == lattice::Type::gll_warped)
+    {
       throw std::runtime_error(
           "Warped lattice not yet implemented for pyramid");
+    }
 
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         points;
-
     if (n == 0)
     {
       points.resize(1, 3);
@@ -264,8 +270,10 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
           for (int i = 0; i < n + 1 - k; ++i)
             points.row(c++) << h * (i + b), h * (j + b), h * (k + b);
     }
+
     return points;
   }
   else
     throw std::runtime_error("Unsupported cell for lattice");
 }
+//-----------------------------------------------------------------------------

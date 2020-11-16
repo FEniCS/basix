@@ -12,6 +12,7 @@ using namespace libtab;
 
 namespace
 {
+//----------------------------------------------------------------------------
 double
 integral_jacobian(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                       Eigen::RowMajor>& axes)
@@ -27,10 +28,13 @@ integral_jacobian(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
   }
   else
     jacobian = axes.determinant();
+
   return jacobian;
 }
+//----------------------------------------------------------------------------
 } // namespace
 
+//----------------------------------------------------------------------------
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 moments::make_integral_moments(const FiniteElement& moment_space,
                                const cell::Type celltype, const int value_size,
@@ -107,7 +111,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   }
   return dualmat;
 }
-
+//----------------------------------------------------------------------------
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 moments::make_dot_integral_moments(const FiniteElement& moment_space,
                                    const cell::Type celltype,
@@ -190,7 +194,7 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
   }
   return dualmat;
 }
-
+//----------------------------------------------------------------------------
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 moments::make_tangent_integral_moments(const FiniteElement& moment_space,
                                        const cell::Type celltype,
@@ -256,7 +260,7 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   }
   return dualmat;
 }
-
+//----------------------------------------------------------------------------
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 moments::make_normal_integral_moments(const FiniteElement& moment_space,
                                       const cell::Type celltype,
@@ -350,3 +354,4 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
 
   return dualmat;
 }
+//----------------------------------------------------------------------------

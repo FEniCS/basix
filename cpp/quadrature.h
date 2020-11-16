@@ -2,12 +2,10 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include <Eigen/Dense>
 #include "cell.h"
+#include <Eigen/Dense>
 
 #pragma once
-
-/// libtab
 
 namespace libtab
 {
@@ -63,7 +61,7 @@ make_quadrature_tetrahedron_collapsed(int m);
 /// @returns list of points, list of weights
 std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
           Eigen::ArrayXd>
-  make_quadrature(cell::Type celltype, int m);
+make_quadrature(cell::Type celltype, int m);
 
 /// Scaled quadrature rule on arbitrary simplices
 /// @param simplex Set of vertices describing simplex

@@ -23,11 +23,16 @@ FiniteElement::FiniteElement(
   // Check that entity dofs add up to total number of dofs
   int sum = 0;
   for (const std::vector<int>& q : entity_dofs)
+  {
     for (const int& w : q)
       sum += w;
+  }
+
   if (sum != _coeffs.rows())
+  {
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
+  }
 }
 //-----------------------------------------------------------------------------
 Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
@@ -49,8 +54,10 @@ FiniteElement::compute_expansion_coefficents(
   {
     double detA = A.determinant();
     if (std::fabs(detA) < 1e-6)
+    {
       throw std::runtime_error("Poorly conditioned B.D^T when computing "
                                "expansion coefficients");
+    }
   }
 
   // _coeffs = A^-1(coeffs)

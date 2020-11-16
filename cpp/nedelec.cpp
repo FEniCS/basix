@@ -49,13 +49,12 @@ create_nedelec_2d_space(int degree)
   {
     for (int k = 0; k < psize; ++k)
     {
-      auto w0 = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
-                * Pkp1_at_Qpts.col(k);
-      wcoeffs(2 * nv + i, k) = w0.sum();
-
-      auto w1 = -Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(0)
-                * Pkp1_at_Qpts.col(k);
-      wcoeffs(2 * nv + i, k + psize) = w1.sum();
+      wcoeffs(2 * nv + i, k) = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
+                                * Pkp1_at_Qpts.col(k))
+                                   .sum();
+      wcoeffs(2 * nv + i, k + psize) = (-Qwts * Pkp1_at_Qpts.col(ns0 + i)
+                                        * Qpts.col(0) * Pkp1_at_Qpts.col(k))
+                                           .sum();
     }
   }
   return wcoeffs;
@@ -69,12 +68,12 @@ create_nedelec_2d_dual(int degree)
   const int psize = (degree + 1) * (degree + 2) / 2;
 
   // Dual space
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(ndofs, psize * 2);
-  dualmat.setZero();
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
+      = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                      Eigen::RowMajor>::Zero(ndofs, psize * 2);
 
   // dof counter
-  int quad_deg = 5 * degree;
+  const int quad_deg = 5 * degree;
 
   // Integral representation for the boundary (edge) dofs
   FiniteElement moment_space_E
@@ -92,6 +91,7 @@ create_nedelec_2d_dual(int degree)
         = moments::make_integral_moments(moment_space_I, cell::Type::triangle,
                                          2, degree, quad_deg);
   }
+
   return dualmat;
 }
 //-----------------------------------------------------------------------------
@@ -127,6 +127,7 @@ create_nedelec_2d_base_perms(int degree)
         = edge_dir;
     base_permutations[edge] *= directions;
   }
+
   return base_permutations;
 }
 //-----------------------------------------------------------------------------
@@ -164,42 +165,47 @@ create_nedelec_3d_space(int degree)
       wcoeffs(ndofs, psize * tdim);
   wcoeffs.setZero();
   for (int i = 0; i < tdim; ++i)
+  {
     wcoeffs.block(nv * i, psize * i, nv, nv)
         = Eigen::MatrixXd::Identity(nv, nv);
+  }
 
   // Create coefficients for additional Nedelec polynomials
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
     {
-      auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(2)
-               * Pkp1_at_Qpts.col(k);
+      const double w = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(2)
+                        * Pkp1_at_Qpts.col(k))
+                           .sum();
       // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
-        wcoeffs(tdim * nv + i - ns_remove, psize + k) = -w.sum();
-      wcoeffs(tdim * nv + i + ns - ns_remove, k) = w.sum();
+        wcoeffs(tdim * nv + i - ns_remove, psize + k) = -w;
+      wcoeffs(tdim * nv + i + ns - ns_remove, k) = w;
     }
   }
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
     {
-      auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
-               * Pkp1_at_Qpts.col(k);
-      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, k) = -w.sum();
+      const double w = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
+                        * Pkp1_at_Qpts.col(k))
+                           .sum();
+      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, k) = -w;
       // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
-        wcoeffs(tdim * nv + i - ns_remove, psize * 2 + k) = w.sum();
+        wcoeffs(tdim * nv + i - ns_remove, psize * 2 + k) = w;
     }
   }
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
     {
-      auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(0)
-               * Pkp1_at_Qpts.col(k);
-      wcoeffs(tdim * nv + i + ns - ns_remove, psize * 2 + k) = -w.sum();
-      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + k) = w.sum();
+      const double w = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(0)
+                        * Pkp1_at_Qpts.col(k))
+                           .sum();
+      wcoeffs(tdim * nv + i + ns - ns_remove, psize * 2 + k) = -w;
+      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + k) = w;
     }
   }
 
@@ -284,20 +290,18 @@ create_nedelec_3d_base_perms(int degree)
   {
     const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
     for (int i = 0; i < face_rot.size(); ++i)
+    {
       for (int b = 0; b < 2; ++b)
       {
-        base_permutations[6 + 2 * face](start + 2 * i + b, start + i * 2 + b)
-            = 0;
-        base_permutations[6 + 2 * face](start + 2 * i + b,
-                                        start + face_rot[i] * 2 + b)
+        const int p = 6 + 2 * face;
+        base_permutations[p](start + 2 * i + b, start + i * 2 + b) = 0;
+        base_permutations[p](start + 2 * i + b, start + face_rot[i] * 2 + b)
             = 1;
-        base_permutations[6 + 2 * face + 1](start + 2 * i + b,
-                                            start + i * 2 + b)
-            = 0;
-        base_permutations[6 + 2 * face + 1](start + 2 * i + b,
-                                            start + face_ref[i] * 2 + b)
+        base_permutations[p + 1](start + 2 * i + b, start + i * 2 + b) = 0;
+        base_permutations[p + 1](start + 2 * i + b, start + face_ref[i] * 2 + b)
             = 1;
       }
+    }
   }
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> edge_dir
@@ -328,6 +332,7 @@ create_nedelec_3d_base_perms(int degree)
                    face_dir_rot.rows(), face_dir_rot.cols())
         = face_dir_rot;
     base_permutations[6 + 2 * face] *= rotation;
+
     // Reflect face
     Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
         reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
@@ -371,6 +376,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
+  // FIXME: simplify
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -383,9 +389,10 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
-  auto new_coeffs
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
-  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs, perms);
-  return el;
+  return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
+                       perms);
 }
 //-----------------------------------------------------------------------------

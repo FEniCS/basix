@@ -11,6 +11,7 @@
 
 using namespace libtab;
 
+//----------------------------------------------------------------------------
 FiniteElement Lagrange::create(cell::Type celltype, int degree)
 {
   if (celltype != cell::Type::interval and celltype != cell::Type::triangle
@@ -205,6 +206,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
         pt.row(j) += (geometry.row(k + 1) - geometry.row(0)) * lattice(j, k);
     }
   }
+
   // Initial coefficients are Identity Matrix
   Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
 
@@ -222,8 +224,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,
-                   base_permutations);
-  return el;
+  return FiniteElement(celltype, degree, {1}, new_coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

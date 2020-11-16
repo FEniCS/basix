@@ -11,7 +11,7 @@ using namespace libtab;
 
 namespace
 {
-//-----------------------------------------------------------
+//----------------------------------------------------------------------------
 std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> rec_jacobi(int N, double a, double b)
 {
   // Generate the recursion coefficients alpha_k, beta_k
@@ -50,7 +50,7 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> rec_jacobi(int N, double a, double b)
 
   return {alpha, beta};
 }
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> gauss(const Eigen::ArrayXd& alpha,
                                                  const Eigen::ArrayXd& beta)
 {
@@ -79,7 +79,7 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> gauss(const Eigen::ArrayXd& alpha,
   Eigen::ArrayXd w = beta[0] * solver.eigenvectors().row(0).array().square();
   return {x, w};
 }
-//-------------------------------------------------------
+//----------------------------------------------------------------------------
 std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
                                                    const Eigen::ArrayXd& beta,
                                                    double xl1, double xl2)
@@ -315,7 +315,6 @@ quadrature::make_quadrature(cell::Type celltype, int m)
   case cell::Type::quadrilateral:
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts(
         m * m, 2);
     Eigen::ArrayXd Qwts(m * m);
@@ -338,13 +337,17 @@ quadrature::make_quadrature(cell::Type celltype, int m)
     Eigen::ArrayXd Qwts(m * m * m);
     int c = 0;
     for (int k = 0; k < m; ++k)
+    {
       for (int j = 0; j < m; ++j)
+      {
         for (int i = 0; i < m; ++i)
         {
           Qpts.row(c) << QptsL(i, 0), QptsL(j, 0), QptsL(k, 0);
           Qwts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
           ++c;
         }
+      }
+    }
     return {Qpts, Qwts};
   }
   case cell::Type::prism:
@@ -356,12 +359,14 @@ quadrature::make_quadrature(cell::Type celltype, int m)
     Eigen::ArrayXd Qwts(m * QptsT.rows());
     int c = 0;
     for (int k = 0; k < m; ++k)
+    {
       for (int i = 0; i < QptsT.rows(); ++i)
       {
         Qpts.row(c) << QptsT(i, 0), QptsT(i, 1), QptsL(k, 0);
         Qwts[c] = QwtsT[i] * QwtsL[k];
         ++c;
       }
+    }
     return {Qpts, Qwts};
   }
   case cell::Type::pyramid:
@@ -374,7 +379,7 @@ quadrature::make_quadrature(cell::Type celltype, int m)
     throw std::runtime_error("Unsupported celltype for make_quadrature");
   }
 }
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
           Eigen::ArrayXd>
 quadrature::make_quadrature(
@@ -431,10 +436,7 @@ quadrature::make_quadrature(
       Qpts_scaled(Qpts.rows(), bvec.cols());
   Eigen::ArrayXd Qwts_scaled = Qwts * scale;
   for (int i = 0; i < Qpts.rows(); ++i)
-  {
-    Eigen::RowVectorXd s = Qpts.row(i).matrix() * bvec;
-    Qpts_scaled.row(i) = simplex.row(0) + s.array();
-  }
+    Qpts_scaled.row(i) = simplex.row(0) + (Qpts.row(i).matrix() * bvec).array();
 
   return {Qpts_scaled, Qwts_scaled};
 }
@@ -448,8 +450,10 @@ quadrature::gauss_lobatto_legendre_line_rule(int m)
   // The quadrature rule uses m points for a degree of precision of 2m-3.
 
   if (m < 2)
+  {
     throw std::runtime_error(
         "Gauss-Labotto-Legendre quadrature invalid for fewer than 2 points");
+  }
 
   // Calculate the recursion coefficients
   auto [alpha, beta] = rec_jacobi(m, 0, 0);
@@ -460,3 +464,4 @@ quadrature::gauss_lobatto_legendre_line_rule(int m)
 
   return {xs_ref, ws_ref};
 }
+//-----------------------------------------------------------------------------

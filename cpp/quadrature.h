@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include <Eigen/Dense>
+#include "cell.h"
 
 #pragma once
 
@@ -56,13 +57,13 @@ std::pair<Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor>,
           Eigen::ArrayXd>
 make_quadrature_tetrahedron_collapsed(int m);
 
-/// Utility for quadrature rule on reference simplex of any dimension
-/// @param dim geometric dimension
+/// Utility for quadrature rule on reference cell
+/// @param celltype
 /// @param m order
 /// @returns list of points, list of weights
 std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
           Eigen::ArrayXd>
-make_quadrature(int dim, int m);
+  make_quadrature(cell::Type celltype, int m);
 
 /// Scaled quadrature rule on arbitrary simplices
 /// @param simplex Set of vertices describing simplex

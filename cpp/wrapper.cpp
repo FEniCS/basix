@@ -152,7 +152,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
         py::overload_cast<const Eigen::Array<double, Eigen::Dynamic,
                                              Eigen::Dynamic, Eigen::RowMajor>&,
                           int>(&quadrature::make_quadrature),
-        "Compute quadrature points and weights on a simplex defined by points");
+        "Compute quadrature points and weights on a simplex defined by points")
+      .def("make_quadrature",
+           py::overload_cast<cell::Type, int>(&quadrature::make_quadrature),
+           "Compute quadrature points and weights on a reference cell");
 
   m.def("gauss_lobatto_legendre_line_rule",
         &quadrature::gauss_lobatto_legendre_line_rule,

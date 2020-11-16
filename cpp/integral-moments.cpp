@@ -45,7 +45,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature(sub_entity_dim, q_deg);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(sub_celltype, q_deg);
   const int tdim = cell::topological_dimension(celltype);
 
   // If this is always true, value_size input can be removed
@@ -123,7 +123,7 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
 
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature(sub_entity_dim, q_deg);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(sub_celltype, q_deg);
   const int tdim = cell::topological_dimension(celltype);
 
   // If this is always true, value_size input can be removed
@@ -206,7 +206,7 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   if (sub_entity_dim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature(1, q_deg);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(cell::Type::interval, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -272,7 +272,7 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   if (sub_entity_dim != tdim - 1)
     throw std::runtime_error("Normal is only well-defined on a facet.");
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature(tdim - 1, q_deg);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(sub_celltype, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);

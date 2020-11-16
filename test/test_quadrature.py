@@ -7,6 +7,18 @@ import pytest
 import numpy as np
 
 
+@pytest.mark.parametrize("celltype", [(libtab.CellType.quadrilateral, 1.0),
+                                      (libtab.CellType.hexahedron, 1.0),
+                                      (libtab.CellType.prism, 0.5),
+                                      (libtab.CellType.interval, 1.0),
+                                      (libtab.CellType.triangle, 0.5),
+                                      (libtab.CellType.tetrahedron, 1.0/6.0)])
+def test_cell_quadrature(celltype):
+    Qpts, Qwts = libtab.make_quadrature(celltype[0], 3)
+    print(sum(Qwts))
+    assert(np.isclose(sum(Qwts), celltype[1]))
+
+
 @pytest.mark.parametrize("order", [1, 2, 4, 5, 8, 20, 40, 80])
 def test_quadrature_interval(order):
     b = 7.0

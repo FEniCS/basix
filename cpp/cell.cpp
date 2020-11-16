@@ -10,8 +10,6 @@
 
 using namespace libtab;
 
-namespace
-{
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 cell::geometry(cell::Type celltype)
 {

@@ -75,9 +75,8 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> gauss(const Eigen::ArrayXd& alpha,
       += beta.cwiseSqrt().tail(nb - 1).matrix().asDiagonal();
   Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(
       A, Eigen::DecompositionOptions::ComputeEigenvectors);
-  Eigen::ArrayXd x = solver.eigenvalues();
-  Eigen::ArrayXd w = beta[0] * solver.eigenvectors().row(0).array().square();
-  return {x, w};
+  return {solver.eigenvalues(),
+          beta[0] * solver.eigenvectors().row(0).array().square()};
 }
 //----------------------------------------------------------------------------
 std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
@@ -108,8 +107,7 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   bsqrt(n) = 1.0;
 
   // Solve tridiagonal system using Thomas algorithm
-  double g1 = 0.0;
-  double g2 = 0.0;
+  double g1(0.0), g2(0.0);
   for (int i = 1; i < bsqrt.rows(); ++i)
   {
     g1 = bsqrt(i) / (alpha(i) - xl1 - bsqrt(i - 1) * g1);
@@ -120,8 +118,8 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   alpha_l[n] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
   Eigen::ArrayXd beta_l = beta;
   beta_l[n] = (xl2 - xl1) / (g1 - g2);
-  auto [x, w] = gauss(alpha_l, beta_l);
-  return {x, w};
+
+  return gauss(alpha_l, beta_l);
 }
 }; // namespace
 

@@ -6,6 +6,7 @@
 
 using namespace libtab;
 
+//-----------------------------------------------------------------------------
 Eigen::Array<int, Eigen::Dynamic, 1> dofperms::interval_reflection(int degree)
 {
   if (degree <= 0)
@@ -16,7 +17,7 @@ Eigen::Array<int, Eigen::Dynamic, 1> dofperms::interval_reflection(int degree)
     perm(i) = degree - 1 - i;
   return perm;
 }
-
+//-----------------------------------------------------------------------------
 Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_reflection(int degree)
 {
   if (degree <= 0)
@@ -37,7 +38,7 @@ Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_reflection(int degree)
   }
   return perm;
 }
-
+//-----------------------------------------------------------------------------
 Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_rotation(int degree)
 {
   if (degree <= 0)
@@ -60,7 +61,7 @@ Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_rotation(int degree)
   }
   return perm;
 }
-
+//-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 dofperms::interval_reflection_tangent_directions(int degree)
 {
@@ -73,7 +74,7 @@ dofperms::interval_reflection_tangent_directions(int degree)
     dirs(i, i) = -1;
   return dirs;
 }
-
+//-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 dofperms::triangle_reflection_tangent_directions(int degree)
 {
@@ -90,7 +91,7 @@ dofperms::triangle_reflection_tangent_directions(int degree)
   }
   return dirs;
 }
-
+//-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 dofperms::triangle_rotation_tangent_directions(int degree)
 {
@@ -108,3 +109,4 @@ dofperms::triangle_rotation_tangent_directions(int degree)
   }
   return dirs;
 }
+//-----------------------------------------------------------------------------

@@ -306,14 +306,19 @@ quadrature::make_quadrature_tetrahedron_collapsed(int m)
 //-----------------------------------------------------------------------------
 std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,
           Eigen::ArrayXd>
-quadrature::make_quadrature(int dim, int m)
+quadrature::make_quadrature(cell::Type celltype, int m)
 {
-  if (dim == 1)
+  switch (celltype)
+  {
+  case cell::Type::interval:
     return quadrature::make_quadrature_line(m);
-  else if (dim == 2)
+  case cell::Type::triangle:
     return quadrature::make_quadrature_triangle_collapsed(m);
-  else
+  case cell::Type::tetrahedron:
     return quadrature::make_quadrature_tetrahedron_collapsed(m);
+  default:
+    throw std::runtime_error("Unsupported celltype for make_quadrature");
+  }
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>,

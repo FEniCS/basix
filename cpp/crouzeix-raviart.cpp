@@ -23,8 +23,7 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   const int tdim = cell::topological_dimension(celltype);
   const std::vector<std::vector<int>> facet_topology
       = cell::topology(celltype)[tdim - 1];
-  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      geometry = cell::geometry(celltype);
+  const Eigen::ArrayXXd geometry = cell::geometry(celltype);
 
   const int ndofs = facet_topology.size();
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts

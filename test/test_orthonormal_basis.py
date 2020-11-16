@@ -9,7 +9,7 @@ import numpy as np
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_quad(order):
-    pts = libtab.create_lattice(libtab.CellType.interval, 1, True)
+    pts = libtab.create_lattice(libtab.CellType.interval, 1, libtab.LatticeType.equispaced, True)
     Lpts, Lwts = libtab.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []
@@ -33,7 +33,7 @@ def test_quad(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_pyramid(order):
-    pts = libtab.create_lattice(libtab.CellType.interval, 1, True)
+    pts = libtab.create_lattice(libtab.CellType.interval, 1, libtab.LatticeType.equispaced, True)
     Lpts, Lwts = libtab.make_quadrature(pts, order + 4)
     Qwts = []
     Qpts = []
@@ -59,7 +59,7 @@ def test_pyramid(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_hex(order):
-    pts = libtab.create_lattice(libtab.CellType.interval, 1, True)
+    pts = libtab.create_lattice(libtab.CellType.interval, 1, libtab.LatticeType.equispaced, True)
     Lpts, Lwts = libtab.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []
@@ -84,9 +84,9 @@ def test_hex(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_prism(order):
-    pts = libtab.create_lattice(libtab.CellType.triangle, 1, True)
+    pts = libtab.create_lattice(libtab.CellType.triangle, 1, libtab.LatticeType.equispaced, True)
     Tpts, Twts = libtab.make_quadrature(pts, order + 2)
-    pts = libtab.create_lattice(libtab.CellType.interval, 1, True)
+    pts = libtab.create_lattice(libtab.CellType.interval, 1, libtab.LatticeType.equispaced, True)
     Lpts, Lwts = libtab.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []
@@ -114,7 +114,7 @@ def test_prism(order):
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_cell(cell_type, order):
 
-    pts = libtab.create_lattice(cell_type, 1, True)
+    pts = libtab.create_lattice(cell_type, 1, libtab.LatticeType.equispaced, True)
     Qpts, Qwts = libtab.make_quadrature(pts, order + 2)
     basis = libtab.tabulate_polynomial_set(cell_type, order, 0, Qpts)[0]
     ndofs = basis.shape[1]

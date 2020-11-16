@@ -54,15 +54,6 @@ sub_entity_geometry(cell::Type celltype, int dim, int index);
 /// @return The number of sub-entities of the given dimension
 int sub_entity_count(cell::Type celltype, int dim);
 
-/// Create a lattice of points on the cell, equispaced along each edge
-/// optionally including the outer surface points
-/// @param celltype The cell::Type
-/// @param n number of points in each direction
-/// @param exterior If set, includes outer boundaries
-/// @return Set of points
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_lattice(cell::Type celltype, int n, bool exterior);
-
 /// Get the topological dimension for a given cell type
 /// @param celltype Cell type
 /// @return the topological dimension
@@ -79,6 +70,11 @@ cell::Type sub_entity_type(cell::Type celltype, int dim, int index);
 /// @param name String
 /// @return cell type
 cell::Type str_to_type(std::string name);
+
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+warped_lattice(cell::Type celltype, int n);
+
+double warp(int n, double x);
 
 } // namespace cell
 } // namespace libtab

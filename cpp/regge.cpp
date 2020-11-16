@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "regge.h"
+#include "lattice.h"
 #include "polynomial-set.h"
 #include <iostream>
 
@@ -74,7 +75,8 @@ create_regge_dual(cell::Type celltype, int degree)
           = entity_geom.row(0);
       cell::Type ct = cell::sub_entity_type(celltype, dim, i);
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          lattice = cell::create_lattice(ct, degree + 2, false);
+          lattice
+          = lattice::create(ct, degree + 2, lattice::Type::equispaced, false);
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts(
           lattice.rows(), entity_geom.cols());
 

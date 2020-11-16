@@ -13,6 +13,7 @@
 #include "defines.h"
 #include "indexing.h"
 #include "lagrange.h"
+#include "lattice.h"
 #include "nedelec-second-kind.h"
 #include "nedelec.h"
 #include "polynomial-set.h"
@@ -71,7 +72,12 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("geometry", &cell::geometry, "Geometric points of a reference cell");
   m.def("sub_entity_geometry", &cell::sub_entity_geometry,
         "Points of a sub-entity of a cell");
-  m.def("create_lattice", &cell::create_lattice,
+
+  py::enum_<lattice::Type>(m, "LatticeType")
+      .value("equispaced", lattice::Type::equispaced)
+      .value("gll_warped", lattice::Type::gll_warped);
+
+  m.def("create_lattice", &lattice::create,
         "Create a uniform lattice of points on a reference cell");
 
   m.def(
@@ -113,27 +119,28 @@ Each element has a `tabulate` function which returns the basis functions and a n
         "Create Nedelec Element (second kind)");
   m.def("Regge", &Regge::create, "Create Regge Element");
 
-  m.def("create_element",
-        [](std::string family, std::string cell, int degree) {
-          const std::map<std::string,
-                         std::function<FiniteElement(cell::Type, int)>>
-              create_map
-              = {{"Crouzeix-Raviart", &CrouzeixRaviart::create},
-                 {"Discontinuous Lagrange", &Lagrange::create},
-                 {"Lagrange", &Lagrange::create},
-                 {"Nedelec 1st kind H(curl)", &Nedelec::create},
-                 {"Nedelec 2nd kind H(curl)", &NedelecSecondKind::create},
-                 {"Raviart-Thomas", &RaviartThomas::create},
-                 {"Regge", &Regge::create}};
+  m.def(
+      "create_element",
+      [](std::string family, std::string cell, int degree) {
+        const std::map<std::string,
+                       std::function<FiniteElement(cell::Type, int)>>
+            create_map
+            = {{"Crouzeix-Raviart", &CrouzeixRaviart::create},
+               {"Discontinuous Lagrange", &Lagrange::create},
+               {"Lagrange", &Lagrange::create},
+               {"Nedelec 1st kind H(curl)", &Nedelec::create},
+               {"Nedelec 2nd kind H(curl)", &NedelecSecondKind::create},
+               {"Raviart-Thomas", &RaviartThomas::create},
+               {"Regge", &Regge::create}};
 
-          auto create_it = create_map.find(family);
-          if (create_it == create_map.end())
-            throw std::runtime_error("Family not found: \"" + family + "\"");
+        auto create_it = create_map.find(family);
+        if (create_it == create_map.end())
+          throw std::runtime_error("Family not found: \"" + family + "\"");
 
-          const cell::Type celltype = cell::str_to_type(cell);
-          return create_it->second(celltype, degree);
-        },
-        "Create a FiniteElement of a given family, celltype and degree");
+        const cell::Type celltype = cell::str_to_type(cell);
+        return create_it->second(celltype, degree);
+      },
+      "Create a FiniteElement of a given family, celltype and degree");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");

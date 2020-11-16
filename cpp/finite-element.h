@@ -2,12 +2,12 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#pragma once
+
 #include "cell.h"
 #include <Eigen/Dense>
 #include <array>
 #include <vector>
-
-#pragma once
 
 namespace libtab
 {
@@ -38,14 +38,14 @@ public:
   /// to compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
-  /// @return The basis functions (and derivatives). The first entry in the list is
-  /// the basis function. Higher derivatives are stored in triangular (2D)
-  /// or tetrahedral (3D) ordering, i.e. for the (x,y) derivatives in
-  /// 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... The function libtab::idx can be
-  /// used to find the appropriate derivative.
-  /// If a vector result is expected, it will be stacked with all x values, followed
-  /// by all y-values (and then z, if any), likewise tensor-valued results will be
-  /// stacked in index order.
+  /// @return The basis functions (and derivatives). The first entry in the list
+  /// is the basis function. Higher derivatives are stored in triangular (2D) or
+  /// tetrahedral (3D) ordering, i.e. for the (x,y) derivatives in 2D:
+  /// (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... The function libtab::idx can
+  /// be used to find the appropriate derivative. If a vector result is
+  /// expected, it will be stacked with all x values, followed by all y-values
+  /// (and then z, if any), likewise tensor-valued results will be stacked in
+  /// index order.
   std::vector<
       Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
   tabulate(int nd, const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
@@ -79,10 +79,9 @@ public:
   int ndofs() const { return _coeffs.rows(); }
 
   /// Get the number of dofs on each topological entity: (vertices, edges,
-  /// faces, cell) in that order. For example, Lagrange degree 2 on a triangle has
-  /// vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]
-  /// The sum of the entity dofs must match the total number of dofs
-  /// reported by FiniteElement::ndofs
+  /// faces, cell) in that order. For example, Lagrange degree 2 on a triangle
+  /// has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0] The sum of the entity
+  /// dofs must match the total number of dofs reported by FiniteElement::ndofs
   /// @return List of entity dof counts on each dimension
   std::vector<std::vector<int>> entity_dofs() const { return _entity_dofs; }
 

@@ -13,6 +13,7 @@
 
 using namespace libtab;
 
+//----------------------------------------------------------------------------
 FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
 {
   if (celltype != cell::Type::triangle and celltype != cell::Type::tetrahedron)
@@ -49,8 +50,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
         = Eigen::MatrixXd::Identity(nv, nv);
   }
 
-  // Create coefficients for additional polynomials in Raviart-Thomas polynomial
-  // basis
+  // Create coefficients for additional polynomials in Raviart-Thomas
+  // polynomial basis
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
@@ -100,7 +101,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  auto new_coeffs
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
   const std::vector<std::vector<std::vector<int>>> topology
@@ -112,8 +114,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     q = ns;
   entity_dofs[tdim] = {ns0 * tdim};
 
-  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs,
-                   base_permutations);
-  return el;
+  return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

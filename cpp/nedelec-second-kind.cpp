@@ -50,6 +50,7 @@ create_nedelec_2d_dual(int degree)
         = moments::make_dot_integral_moments(
             moment_space_I, cell::Type::triangle, 2, degree, quad_deg);
   }
+
   return dualmat;
 }
 //-----------------------------------------------------------------------------
@@ -126,15 +127,20 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   // TODO
   const int ndofs = dualmat.rows();
   int perm_count = 0;
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  std::vector<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  auto new_coeffs
+  const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
+
+  // FIXME: The below code is confusing, especially with the range-based
+  // loop and references. Simplify.
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
@@ -145,8 +151,7 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
-  FiniteElement el(celltype, degree, {tdim}, new_coeffs, entity_dofs,
-                   base_permutations);
-  return el;
+  return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

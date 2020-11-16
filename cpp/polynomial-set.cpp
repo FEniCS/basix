@@ -7,6 +7,7 @@
 #include "indexing.h"
 #include <Eigen/Dense>
 #include <array>
+#include <cmath>
 
 using namespace libtab;
 
@@ -66,6 +67,7 @@ tabulate_polyset_line_derivs(
       if (p > 1)
         result.col(p) -= result.col(p - 2) * a;
     }
+
     dresult[k] = result;
   }
 
@@ -73,7 +75,7 @@ tabulate_polyset_line_derivs(
   for (int k = 0; k < nderiv + 1; ++k)
   {
     for (int p = 0; p < degree + 1; ++p)
-      dresult[k].col(p) *= sqrt(p + 0.5);
+      dresult[k].col(p) *= std::sqrt(p + 0.5);
   }
 
   return dresult;
@@ -167,7 +169,7 @@ tabulate_polyset_triangle_derivs(
               += 2 * ky * (1.5 + p) * dresult[idx(kx, ky - 1)].col(idx(p, 0));
         for (int q = 1; q < n - p; ++q)
         {
-          auto [a1, a2, a3] = jrc(2 * p + 1, q);
+          const auto [a1, a2, a3] = jrc(2 * p + 1, q);
           result.col(idx(p, q + 1))
               = result.col(idx(p, q)) * (x.col(1) * a1 + a2)
                 - result.col(idx(p, q - 1)) * a3;
@@ -189,7 +191,7 @@ tabulate_polyset_triangle_derivs(
   {
     for (int p = 0; p < n + 1; ++p)
       for (int q = 0; q < n - p + 1; ++q)
-        dresult[j].col(idx(p, q)) *= sqrt((p + 0.5) * (p + q + 1));
+        dresult[j].col(idx(p, q)) *= std::sqrt((p + 0.5) * (p + q + 1));
   }
 
   return dresult;
@@ -243,15 +245,23 @@ tabulate_polyset_tetrahedron_derivs(
               = (x.col(0) + 0.5 * (x.col(1) + x.col(2)) + 1.0)
                 * result.col(idx(p - 1, 0, 0)) * a;
           if (kx > 0)
+          {
             result.col(idx(p, 0, 0))
                 += 2 * kx * a
                    * dresult[idx(kx - 1, ky, kz)].col(idx(p - 1, 0, 0));
+          }
+
           if (ky > 0)
+          {
             result.col(idx(p, 0, 0))
                 += ky * a * dresult[idx(kx, ky - 1, kz)].col(idx(p - 1, 0, 0));
+          }
+
           if (kz > 0)
+          {
             result.col(idx(p, 0, 0))
                 += kz * a * dresult[idx(kx, ky, kz - 1)].col(idx(p - 1, 0, 0));
+          }
 
           if (p > 1)
           {
@@ -264,6 +274,7 @@ tabulate_polyset_tetrahedron_derivs(
                      * dresult[idx(kx, ky - 1, kz)].col(idx(p - 2, 0, 0))
                      * (a - 1.0);
             }
+
             if (ky > 1)
             {
               result.col(idx(p, 0, 0))
@@ -271,6 +282,7 @@ tabulate_polyset_tetrahedron_derivs(
                      * dresult[idx(kx, ky - 2, kz)].col(idx(p - 2, 0, 0))
                      * (a - 1.0);
             }
+
             if (kz > 0)
             {
               result.col(idx(p, 0, 0))
@@ -278,6 +290,7 @@ tabulate_polyset_tetrahedron_derivs(
                      * dresult[idx(kx, ky, kz - 1)].col(idx(p - 2, 0, 0))
                      * (a - 1.0);
             }
+
             if (kz > 1)
             {
               result.col(idx(p, 0, 0))
@@ -308,6 +321,7 @@ tabulate_polyset_tetrahedron_derivs(
                 += 2 * ky * dresult[idx(kx, ky - 1, kz)].col(idx(p, 0, 0))
                    * (1.5 + p);
           }
+
           if (kz > 0)
           {
             result.col(idx(p, 1, 0))
@@ -337,6 +351,7 @@ tabulate_polyset_tetrahedron_derivs(
                            * dresult[idx(kx, ky, kz - 1)].col(idx(p, q - 1, 0))
                            * cq;
             }
+
             if (kz > 1)
             {
               // Quadratic term in z
@@ -348,6 +363,7 @@ tabulate_polyset_tetrahedron_derivs(
         }
 
         for (int p = 0; p < n; ++p)
+        {
           for (int q = 0; q < n - p; ++q)
           {
             result.col(idx(p, q, 1))
@@ -360,9 +376,12 @@ tabulate_polyset_tetrahedron_derivs(
                      * dresult[idx(kx, ky, kz - 1)].col(idx(p, q, 0));
             }
           }
+        }
 
         for (int p = 0; p < n - 1; ++p)
+        {
           for (int q = 0; q < n - p - 1; ++q)
+          {
             for (int r = 1; r < n - p - q; ++r)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
@@ -376,6 +395,8 @@ tabulate_polyset_tetrahedron_derivs(
                        * dresult[idx(kx, ky, kz - 1)].col(idx(p, q, r));
               }
             }
+          }
+        }
 
         // Store this derivative
         dresult[idx(kx, ky, kz)] = result;
@@ -384,11 +405,19 @@ tabulate_polyset_tetrahedron_derivs(
   }
 
   for (auto& result : dresult)
+  {
     for (int p = 0; p < n + 1; ++p)
+    {
       for (int q = 0; q < n - p + 1; ++q)
+      {
         for (int r = 0; r < n - p - q + 1; ++r)
+        {
           result.col(idx(p, q, r))
-              *= sqrt((p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5));
+              *= std::sqrt((p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5));
+        }
+      }
+    }
+  }
 
   return dresult;
 }
@@ -585,7 +614,7 @@ tabulate_polyset_pyramid_derivs(
         for (int q = 0; q < n - r + 1; ++q)
         {
           result.col(pyr_idx(p, q, r))
-              *= sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
+              *= std::sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
         }
       }
     }

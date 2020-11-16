@@ -9,6 +9,7 @@
 
 using namespace libtab;
 
+//-----------------------------------------------------------------------------
 FiniteElement TensorProduct::create(cell::Type celltype, int degree)
 {
   if (celltype != cell::Type::quadrilateral and celltype != cell::Type::prism
@@ -78,8 +79,8 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
     }
   }
 
-  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
-  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
+  const Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
+  const Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
 
   // TODO
   int perm_count = 0;
@@ -87,9 +88,10 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  auto new_coeffs
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      new_coeffs
       = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
-  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,
-                   base_permutations);
-  return el;
+  return FiniteElement(celltype, degree, {1}, new_coeffs, entity_dofs,
+                       base_permutations);
 }
+//-----------------------------------------------------------------------------

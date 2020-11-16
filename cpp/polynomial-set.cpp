@@ -14,7 +14,7 @@ using namespace libtab;
 namespace
 {
 // Compute coefficients in the Jacobi Polynomial recurrence relation
-std::array<double, 3> jrc(int a, int n)
+constexpr std::array<double, 3> jrc(int a, int n)
 {
   double an = (a + 2 * n + 1) * (a + 2 * n + 2)
               / static_cast<double>(2 * (n + 1) * (a + n + 1));

@@ -137,8 +137,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
         if (create_it == create_map.end())
           throw std::runtime_error("Family not found: \"" + family + "\"");
 
-        const cell::Type celltype = cell::str_to_type(cell);
-        return create_it->second(celltype, degree);
+        return create_it->second(cell::str_to_type(cell), degree);
       },
       "Create a FiniteElement of a given family, celltype and degree");
 

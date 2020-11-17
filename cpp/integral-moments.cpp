@@ -13,23 +13,18 @@ using namespace libtab;
 namespace
 {
 //----------------------------------------------------------------------------
-double
-integral_jacobian(const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& axes)
+double integral_jacobian(const Eigen::MatrixXd& axes)
 {
-  double jacobian = 0.0;
   if (axes.rows() == 1)
-    jacobian = axes.row(0).norm();
+    return axes.row(0).norm();
   else if (axes.rows() == 2 and axes.cols() == 3)
   {
     Eigen::Vector3d a0 = axes.row(0);
     Eigen::Vector3d a1 = axes.row(1);
-    jacobian = a0.cross(a1).norm();
+    return a0.cross(a1).norm();
   }
   else
-    jacobian = axes.determinant();
-
-  return jacobian;
+    return axes.determinant();
 }
 //----------------------------------------------------------------------------
 } // namespace

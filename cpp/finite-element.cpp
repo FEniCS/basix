@@ -10,9 +10,7 @@ using namespace libtab;
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     cell::Type cell_type, int degree, std::vector<int> value_shape,
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        coeffs,
-    std::vector<std::vector<int>> entity_dofs,
+    Eigen::ArrayXXd coeffs, std::vector<std::vector<int>> entity_dofs,
     std::vector<
         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
         base_permutations)
@@ -35,12 +33,10 @@ FiniteElement::FiniteElement(
   }
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd FiniteElement::compute_expansion_coefficents(
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                        Eigen::RowMajor>& coeffs,
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                        Eigen::RowMajor>& dualmat,
-    bool condition_check)
+Eigen::MatrixXd
+FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
+                                             const Eigen::MatrixXd& dualmat,
+                                             bool condition_check)
 {
 #ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
@@ -49,6 +45,7 @@ Eigen::MatrixXd FiniteElement::compute_expansion_coefficents(
 
   auto A = coeffs * dualmat.transpose();
 
+  // FIXME: The determinant is not a condition check
   if (condition_check)
   {
     double detA = A.determinant();
@@ -68,10 +65,8 @@ Eigen::MatrixXd FiniteElement::compute_expansion_coefficents(
   return new_coeffs;
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::ArrayXXd> FiniteElement::tabulate(
-    int nd,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        x) const
+std::vector<Eigen::ArrayXXd>
+FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 {
   const int tdim = cell::topological_dimension(_cell_type);
   if (x.cols() != tdim)

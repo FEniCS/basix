@@ -108,9 +108,11 @@ Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
                               Eigen::RowMajor>
               vvt_b = vvt_flat * basis.row(k);
 
-          // FIXME: Do not use Eigen::Map - very error prone here
-          dualmat.row(dof++) = Eigen::Map<const Eigen::RowVectorXd>(
-              vvt_b.data(), vvt_b.rows() * vvt_b.cols());
+          // Copy tensor values row by row into dualmat
+          for (int r = 0; r < vvt_b.rows(); ++r)
+            dualmat.block(dof, r * vvt_b.cols(), 1, vvt_b.cols())
+                = vvt_b.row(r);
+          ++dof;
         }
       }
     }

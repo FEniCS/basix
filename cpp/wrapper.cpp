@@ -20,7 +20,6 @@
 #include "quadrature.h"
 #include "raviart-thomas.h"
 #include "regge.h"
-#include "tp.h"
 
 namespace py = pybind11;
 using namespace libtab;
@@ -112,8 +111,6 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("Lagrange", &Lagrange::create, "Create Lagrange Element");
   m.def("CrouzeixRaviart", &CrouzeixRaviart::create,
         "Create Crouzeix-Raviart Element");
-  m.def("TensorProduct", &TensorProduct::create,
-        "Create TensorProduct Element");
   m.def("RaviartThomas", &RaviartThomas::create,
         "Create Raviart-Thomas Element");
   m.def("NedelecSecondKind", &NedelecSecondKind::create,

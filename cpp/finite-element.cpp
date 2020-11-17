@@ -43,7 +43,7 @@ FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
   std::cout << "Dual matrix = \n[" << dualmat << "]\n";
 #endif
 
-  Eigen::VectorXd new_coeffs;
+  Eigen::MatrixXd new_coeffs;
   const Eigen::MatrixXd A = coeffs * dualmat.transpose();
   if (condition_check)
   {

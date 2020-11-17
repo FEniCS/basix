@@ -53,8 +53,7 @@ Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
 
   Eigen::ArrayXXd dualmat(ndofs, space_size);
   auto topology = cell::topology(celltype);
-  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      geometry = cell::geometry(celltype);
+  const Eigen::ArrayXXd geometry = cell::geometry(celltype);
 
   // dof counter
   int dof = 0;
@@ -136,8 +135,7 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      new_coeffs
+  Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
   // FIXME: Simplify

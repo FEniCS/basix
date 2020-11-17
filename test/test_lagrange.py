@@ -222,9 +222,6 @@ def test_lagrange(celltype, order):
     w = lagrange.tabulate(0, pts)[0]
     assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())
 
-    # check entity dofs add up
-    assert(sum([sum(w) for w in lagrange.entity_dofs]) == lagrange.ndofs)
-
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_dof_permutations_interval(order):

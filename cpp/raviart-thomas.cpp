@@ -104,7 +104,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < tdim - 1; ++i)
+  for (int i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), ns);
   entity_dofs[tdim] = {ns0 * tdim};

@@ -18,8 +18,7 @@ using namespace libtab;
 namespace
 {
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_nedelec_2d_space(int degree)
+Eigen::ArrayXXd create_nedelec_2d_space(int degree)
 {
   // Number of order (degree) vector polynomials
   const int nv = degree * (degree + 1) / 2;
@@ -37,8 +36,7 @@ create_nedelec_2d_space(int degree)
   const int psize = Pkp1_at_Qpts.cols();
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::MatrixXd wcoeffs(nv * 2 + ns, psize * 2);
-  wcoeffs.setZero();
+  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(nv * 2 + ns, psize * 2);
   wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
   wcoeffs.block(nv, psize, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
 
@@ -59,17 +57,14 @@ create_nedelec_2d_space(int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_nedelec_2d_dual(int degree)
+Eigen::ArrayXXd create_nedelec_2d_dual(int degree)
 {
   // Number of dofs and size of polynomial set P(k+1)
   const int ndofs = 3 * degree + degree * (degree - 1);
   const int psize = (degree + 1) * (degree + 2) / 2;
 
   // Dual space
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
-      = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                      Eigen::RowMajor>::Zero(ndofs, psize * 2);
+  Eigen::MatrixXd dualmat = Eigen::MatrixXd::Zero(ndofs, psize * 2);
 
   // dof counter
   const int quad_deg = 5 * degree;
@@ -112,12 +107,11 @@ std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
     }
   }
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> edge_dir
+  Eigen::ArrayXXd edge_dir
       = dofperms::interval_reflection_tangent_directions(degree);
   for (int edge = 0; edge < 3; ++edge)
   {
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
     directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
                      edge_dir.rows(), edge_dir.cols())
         = edge_dir;
@@ -127,8 +121,7 @@ std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
   return base_permutations;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_nedelec_3d_space(int degree)
+Eigen::ArrayXXd create_nedelec_3d_space(int degree)
 {
   // Reference tetrahedron
   const int tdim = 3;
@@ -205,8 +198,7 @@ create_nedelec_3d_space(int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_nedelec_3d_dual(int degree)
+Eigen::ArrayXXd create_nedelec_3d_dual(int degree)
 {
   const int tdim = 3;
 
@@ -216,9 +208,7 @@ create_nedelec_3d_dual(int degree)
   // Work out number of dofs
   const int ndofs = 6 * degree + 4 * degree * (degree - 1)
                     + (degree - 2) * (degree - 1) * degree / 2;
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(ndofs, psize * tdim);
-  dualmat.setZero();
+  Eigen::MatrixXd dualmat = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
 
   // Create quadrature scheme on the edge
   const int quad_deg = 5 * degree;
@@ -284,22 +274,20 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
       for (int b = 0; b < 2; ++b)
       {
         const int p = 6 + 2 * face;
-        base_permutations[p](start + 2 * i + b, start + i * 2 + b) = 0;
-        base_permutations[p](start + 2 * i + b, start + face_rot[i] * 2 + b)
-            = 1;
-        base_permutations[p + 1](start + 2 * i + b, start + i * 2 + b) = 0;
-        base_permutations[p + 1](start + 2 * i + b, start + face_ref[i] * 2 + b)
-            = 1;
+        const int p1 = start + 2 * i + b;
+        base_permutations[p](p1, start + i * 2 + b) = 0;
+        base_permutations[p](p1, start + face_rot[i] * 2 + b) = 1;
+        base_permutations[p + 1](p1, start + i * 2 + b) = 0;
+        base_permutations[p + 1](p1, start + face_ref[i] * 2 + b) = 1;
       }
     }
   }
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> edge_dir
+  Eigen::ArrayXXd edge_dir
       = dofperms::interval_reflection_tangent_directions(degree);
   for (int edge = 0; edge < 6; ++edge)
   {
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
     directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
                      edge_dir.rows(), edge_dir.cols())
         = edge_dir;
@@ -307,16 +295,14 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
   }
 
   // Faces
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      face_dir_ref
+  Eigen::ArrayXXd face_dir_ref
       = dofperms::triangle_reflection_tangent_directions(degree - 1);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      face_dir_rot = dofperms::triangle_rotation_tangent_directions(degree - 1);
+  Eigen::ArrayXXd face_dir_rot
+      = dofperms::triangle_rotation_tangent_directions(degree - 1);
   for (int face = 0; face < 4; ++face)
   {
     // Rotate face
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        rotation = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    Eigen::MatrixXd rotation = Eigen::MatrixXd::Identity(ndofs, ndofs);
     rotation.block(edge_dir.rows() * 6 + face_dir_rot.rows() * face,
                    edge_dir.cols() * 6 + face_dir_rot.rows() * face,
                    face_dir_rot.rows(), face_dir_rot.cols())
@@ -324,8 +310,7 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
     base_permutations[6 + 2 * face] *= rotation;
 
     // Reflect face
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
     reflection.block(edge_dir.rows() * 6 + face_dir_ref.rows() * face,
                      edge_dir.cols() * 6 + face_dir_ref.rows() * face,
                      face_dir_ref.rows(), face_dir_ref.cols())
@@ -342,8 +327,8 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs;
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat;
+  Eigen::ArrayXXd wcoeffs;
+  Eigen::ArrayXXd dualmat;
   std::vector<Eigen::MatrixXd> perms;
   std::vector<Eigen::MatrixXd> directions;
 
@@ -373,8 +358,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      new_coeffs
+  Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
   return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
                        perms);

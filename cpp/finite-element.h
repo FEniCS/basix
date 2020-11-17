@@ -324,4 +324,5 @@ private:
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       _base_permutations;
 };
+
 } // namespace libtab

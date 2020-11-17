@@ -43,4 +43,4 @@ jobs:
         run: |
           pip install pytest pytest-xdist numpy sympy
           # pytest -n auto test/
-          pytest  test/
+          pytest  -s test/

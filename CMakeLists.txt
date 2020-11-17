@@ -55,5 +55,10 @@ endif()
 
 target_link_libraries(libtab PRIVATE pybind11::module tab)
 
+file(GLOB header_files "cpp/*.h")
+set_target_properties(tab PROPERTIES PUBLIC_HEADER "${header_files}")
+
 install(TARGETS libtab DESTINATION .)
-install(TARGETS tab DESTINATION lib)
+install(TARGETS tab
+		LIBRARY DESTINATION lib
+		PUBLIC_HEADER DESTINATION include)

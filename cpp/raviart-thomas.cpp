@@ -105,7 +105,9 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   std::vector<
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-  // TODO: Put -1s in base permutation for DOFs on each facet
+  for (int facet = 0; facet < facet_count; ++facet)
+    for (int dof = facet * facet_dofs; (dof < facet + 1) * facet_dofs; ++dof)
+      base_permutations[facet](dof, dof) = -1;
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       new_coeffs

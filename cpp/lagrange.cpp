@@ -218,7 +218,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
 
   int perm_count = 0;
   for (int i = 1; i < tdim; ++i)
-    perm_count += topology[i].size();
+    perm_count += topology[i].size() * i;
 
   std::vector<
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>

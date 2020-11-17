@@ -21,8 +21,7 @@ enum class Type
 /// @param type Either lattice::Type::equispaced or lattice::Type::gll_warped
 /// @param exterior If set, includes outer boundaries
 /// @return Set of points
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create(cell::Type celltype, int n, Type type, bool exterior);
+Eigen::ArrayXXd create(cell::Type celltype, int n, Type type, bool exterior);
 
 } // namespace lattice
 } // namespace libtab

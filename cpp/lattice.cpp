@@ -20,8 +20,7 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
   FiniteElement L = DiscontinuousLagrange::create(cell::Type::interval, n);
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> v
-      = L.tabulate(0, x)[0];
+  Eigen::MatrixXd v = L.tabulate(0, x)[0];
   Eigen::ArrayXd w(v.rows());
   w = v * pts.matrix();
 
@@ -32,9 +31,8 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 } // namespace
 
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
-                bool exterior)
+Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
+                                lattice::Type lattice_type, bool exterior)
 {
   const double h = 1.0 / static_cast<double>(n);
 
@@ -83,8 +81,7 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
       r += warp_function(n, r);
 
     const int m = r.size();
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x(
-        m * m, 2);
+    Eigen::ArrayXXd x(m * m, 2);
     int c = 0;
     for (int j = 0; j < m; ++j)
       for (int i = 0; i < m; ++i)
@@ -110,9 +107,7 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
       r += warp_function(n, r);
 
     const int m = r.size();
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x(
-        m * m * m, 3);
-
+    Eigen::ArrayXXd x(m * m * m, 3);
     int c = 0;
     for (int k = 0; k < m; ++k)
       for (int j = 0; j < m; ++j)
@@ -136,8 +131,7 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
     const int b = exterior ? 0 : 1;
 
     // Points
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> p(
-        (n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2);
+    Eigen::ArrayXXd p((n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2);
 
     // Displacement from GLL points in 1D, scaled by 1/(r(1-r))
     Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(2 * n + 1, 0.0, 1.0);
@@ -178,8 +172,8 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
 
     const int b = exterior ? 0 : 1;
 
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> p(
-        (n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3);
+    Eigen::ArrayXXd p((n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6,
+                      3);
 
     Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(2 * n + 1, 0.0, 1.0);
     Eigen::ArrayXd wbar = warp_function(n, r);
@@ -188,10 +182,12 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
 
     int c = 0;
     for (int k = b; k < (n - b + 1); ++k)
+    {
       for (int j = b; j < (n - b + 1 - k); ++j)
+      {
         for (int i = b; i < (n - b + 1 - j - k); ++i)
         {
-          int l = n - k - j - i;
+          const int l = n - k - j - i;
           const double x = r[2 * i];
           const double y = r[2 * j];
           const double z = r[2 * k];
@@ -217,6 +213,9 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
 
           ++c;
         }
+      }
+    }
+
     return p;
   }
   else if (celltype == cell::Type::prism)
@@ -228,15 +227,12 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
       return x;
     }
 
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        tri_pts
+    const Eigen::ArrayXXd tri_pts
         = lattice::create(cell::Type::triangle, n, lattice_type, exterior);
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        line_pts
+    const Eigen::ArrayXXd line_pts
         = lattice::create(cell::Type::interval, n, lattice_type, exterior);
 
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x(
-        tri_pts.rows() * line_pts.rows(), 3);
+    Eigen::ArrayXXd x(tri_pts.rows() * line_pts.rows(), 3);
     x.leftCols(2) = tri_pts.replicate(line_pts.rows(), 1);
     for (int i = 0; i < line_pts.rows(); ++i)
       x.block(i * tri_pts.rows(), 2, tri_pts.rows(), 1) = line_pts(i, 0);
@@ -250,8 +246,7 @@ lattice::create(cell::Type celltype, int n, lattice::Type lattice_type,
           "Warped lattice not yet implemented for pyramid");
     }
 
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        points;
+    Eigen::ArrayXXd points;
     if (n == 0)
     {
       points.resize(1, 3);

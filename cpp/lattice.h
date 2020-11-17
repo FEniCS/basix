@@ -27,7 +27,7 @@ enum class Type
 /// are the same as "equispaced" when n<3.
 ///
 /// @param celltype The cell::Type
-/// @param n Size in each direction.
+/// @param n Size in each direction. There are n+1 points along each edge of the cell.
 /// @param type Either lattice::Type::equispaced or lattice::Type::gll_warped
 /// @param exterior If set, includes outer boundaries
 /// @return Set of points

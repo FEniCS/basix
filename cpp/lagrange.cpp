@@ -22,8 +22,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   const int tdim = cell::topological_dimension(celltype);
 
   // Create points at nodes, ordered by topology (vertices first)
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
-      ndofs, tdim);
+  Eigen::ArrayXXd pt(ndofs, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -32,14 +31,9 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
 
-  if (ndofs == 1)
+  if (degree == 0)
   {
-    if (tdim == 1)
-      pt.row(0) << 0.5;
-    else if (tdim == 2)
-      pt.row(0) << 1.0 / 3, 1.0 / 3;
-    else if (tdim == 3)
-      pt.row(0) << 0.25, 0.25, 0.25;
+    pt = lattice::create(celltype, 0, lattice::Type::equispaced, true);
     entity_dofs[tdim] = {1};
   }
   else
@@ -60,22 +54,18 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     if (tdim > 2)
       entity_dofs[3] = {(degree - 1) * (degree - 2) * (degree - 3) / 6};
 
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        geometry = cell::geometry(celltype);
+    Eigen::ArrayXXd geometry = cell::geometry(celltype);
     int c = 0;
     for (std::size_t dim = 0; dim < topology.size(); ++dim)
     {
       for (std::size_t i = 0; i < topology[dim].size(); ++i)
       {
-        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                           Eigen::RowMajor>
-            entity_geom = cell::sub_entity_geometry(celltype, dim, i);
+        const Eigen::ArrayXXd entity_geom
+            = cell::sub_entity_geometry(celltype, dim, i);
 
         Eigen::ArrayXd point = entity_geom.row(0);
         cell::Type ct = cell::sub_entity_type(celltype, dim, i);
-        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                           Eigen::RowMajor>
-            lattice
+        const Eigen::ArrayXXd lattice
             = lattice::create(ct, degree, lattice::Type::equispaced, false);
         for (int j = 0; j < lattice.rows(); ++j)
         {
@@ -170,8 +160,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   const int tdim = cell::topological_dimension(celltype);
 
   // Create points at nodes, ordered by topology (vertices first)
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
-      ndofs, tdim);
+  Eigen::ArrayXXd pt(ndofs, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -181,30 +170,16 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[tdim][0] = ndofs;
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geometry
-      = cell::geometry(celltype);
+  Eigen::ArrayXXd geometry = cell::geometry(celltype);
 
-  if (ndofs == 1)
-  {
-    if (tdim == 1)
-      pt.row(0) << 0.5;
-    else if (tdim == 2)
-      pt.row(0) << 1.0 / 3, 1.0 / 3;
-    else if (tdim == 3)
-      pt.row(0) << 0.25, 0.25, 0.25;
-  }
-  else
-  {
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        lattice
-        = lattice::create(celltype, degree, lattice::Type::equispaced, true);
+  const Eigen::ArrayXXd lattice
+      = lattice::create(celltype, degree, lattice::Type::equispaced, true);
 
-    for (int j = 0; j < lattice.rows(); ++j)
-    {
-      pt.row(j) = geometry.row(0);
-      for (int k = 0; k < geometry.rows() - 1; ++k)
-        pt.row(j) += (geometry.row(k + 1) - geometry.row(0)) * lattice(j, k);
-    }
+  for (int j = 0; j < lattice.rows(); ++j)
+  {
+    pt.row(j) = geometry.row(0);
+    for (int k = 0; k < geometry.rows() - 1; ++k)
+      pt.row(j) += (geometry.row(k + 1) - geometry.row(0)) * lattice(j, k);
   }
 
   // Initial coefficients are Identity Matrix

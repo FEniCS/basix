@@ -5,6 +5,7 @@
 #include "raviart-thomas.h"
 #include "integral-moments.h"
 #include "lagrange.h"
+#include "dof-permutations.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
@@ -105,9 +106,36 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   std::vector<
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-  for (int facet = 0; facet < facet_count; ++facet)
-    for (int dof = facet * facet_dofs; (dof < facet + 1) * facet_dofs; ++dof)
-      base_permutations[facet](dof, dof) = -1;
+  if(tdim == 2) {
+    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
+        = dofperms::interval_reflection(degree - 1);
+    for (int edge = 0; edge < facet_count; ++edge)
+    {
+      const int start = edge_ref.size() * edge;
+      for (int i = 0; i < edge_ref.size(); ++i)
+      {
+        base_permutations[edge](start + i, start + i) = 0;
+        base_permutations[edge](start + i, start + edge_ref[i]) = -1;
+      }
+    }
+  }
+  else if (tdim == 3)
+  {
+    Eigen::Array<int, Eigen::Dynamic, 1> face_ref = dofperms::triangle_reflection(degree - 1);
+    Eigen::Array<int, Eigen::Dynamic, 1> face_rot = dofperms::triangle_rotation(degree - 1);
+
+    for (int face = 0; face < facet_count; ++face)
+    {
+      const int start = face_ref.size() * face;
+      for (int i = 0; i < face_rot.size(); ++i)
+      {
+        base_permutations[2 * face](start + i, start + i) = 0;
+        base_permutations[2 * face](start + i, start + face_rot[i]) = 1;
+        base_permutations[2 * face + 1](start + i, start + i) = 0;
+        base_permutations[2 * face + 1](start + i, start + face_ref[i]) = -1;
+      }
+    }
+  }
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       new_coeffs

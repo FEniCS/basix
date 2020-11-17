@@ -19,17 +19,14 @@ using namespace libtab;
 namespace
 {
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_nedelec_2d_dual(int degree)
+Eigen::ArrayXXd create_nedelec_2d_dual(int degree)
 {
   // Number of dofs and size of polynomial set P(k+1)
   const int ndofs = (degree + 1) * (degree + 2);
   const int psize = (degree + 1) * (degree + 2) / 2;
 
   // Dual space
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(ndofs, psize * 2);
-  dualmat.setZero();
+  Eigen::MatrixXd dualmat = Eigen::MatrixXd::Zero(ndofs, psize * 2);
 
   // dof counter
   int quad_deg = 5 * degree;
@@ -54,8 +51,7 @@ create_nedelec_2d_dual(int degree)
   return dualmat;
 }
 //-----------------------------------------------------------------------------
-Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_nedelec_3d_dual(int degree)
+Eigen::MatrixXd create_nedelec_3d_dual(int degree)
 {
   const int tdim = 3;
 
@@ -65,9 +61,7 @@ create_nedelec_3d_dual(int degree)
   // Work out number of dofs
   int ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 2;
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(ndofs, psize * tdim);
-  dualmat.setZero();
+  Eigen::MatrixXd dualmat = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
 
   // Create quadrature scheme on the edge
   int quad_deg = 5 * degree;
@@ -111,12 +105,10 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
   const int psize = polyset::size(celltype, degree);
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs
+  Eigen::MatrixXd wcoeffs
       = Eigen::MatrixXd::Identity(tdim * psize, tdim * psize);
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat;
-
+  Eigen::MatrixXd dualmat;
   if (celltype == cell::Type::triangle)
     dualmat = create_nedelec_2d_dual(degree);
   else if (celltype == cell::Type::tetrahedron)
@@ -135,8 +127,7 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      new_coeffs
+  const Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
   // FIXME: The below code is confusing, especially with the range-based

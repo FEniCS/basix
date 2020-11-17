@@ -32,8 +32,7 @@ enum class Type
 /// Cell geometry
 /// @param celltype Cell Type
 /// @return Set of vertex points of the cell
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-geometry(cell::Type celltype);
+Eigen::ArrayXXd geometry(cell::Type celltype);
 
 /// Cell topology
 /// @param celltype Cell Type
@@ -45,8 +44,7 @@ std::vector<std::vector<std::vector<int>>> topology(cell::Type celltype);
 /// @param dim Dimension of sub-entity
 /// @param index Local index of sub-entity
 /// @return Set of vertex points of the sub-entity
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-sub_entity_geometry(cell::Type celltype, int dim, int index);
+Eigen::ArrayXXd sub_entity_geometry(cell::Type celltype, int dim, int index);
 
 /// Number of sub-entities of a cell by topological dimension
 /// @param celltype The cell::Type

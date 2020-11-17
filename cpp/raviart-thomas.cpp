@@ -35,16 +35,14 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(celltype, 2 * degree);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts = polyset::tabulate(celltype, degree, 0, Qpts)[0];
+  Eigen::ArrayXXd Pkp1_at_Qpts
+      = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 
   // The number of order (degree) polynomials
   const int psize = Pkp1_at_Qpts.cols();
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs
-      = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                      Eigen::RowMajor>::Zero(nv * tdim + ns, psize * tdim);
+  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(nv * tdim + ns, psize * tdim);
   for (int j = 0; j < tdim; ++j)
   {
     wcoeffs.block(nv * j, psize * j, nv, nv)
@@ -59,17 +57,15 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     {
       for (int j = 0; j < tdim; ++j)
       {
-        auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
-                 * Pkp1_at_Qpts.col(k);
+        Eigen::ArrayXd w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
+                           * Pkp1_at_Qpts.col(k);
         wcoeffs(nv * tdim + i, k + psize * j) = w.sum();
       }
     }
   }
 
   // Dual space
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
-      = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                      Eigen::RowMajor>::Zero(nv * tdim + ns, psize * tdim);
+  Eigen::MatrixXd dualmat = Eigen::MatrixXd::Zero(nv * tdim + ns, psize * tdim);
 
   // quadrature degree
   int quad_deg = 5 * degree;
@@ -137,8 +133,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     }
   }
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      new_coeffs
+  Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
   std::vector<std::vector<int>> entity_dofs(topology.size());

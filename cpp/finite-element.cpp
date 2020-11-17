@@ -10,9 +10,7 @@ using namespace libtab;
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     cell::Type cell_type, int degree, std::vector<int> value_shape,
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        coeffs,
-    std::vector<std::vector<int>> entity_dofs,
+    Eigen::ArrayXXd coeffs, std::vector<std::vector<int>> entity_dofs,
     std::vector<
         Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
         base_permutations)
@@ -35,13 +33,10 @@ FiniteElement::FiniteElement(
   }
 }
 //-----------------------------------------------------------------------------
-Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-FiniteElement::compute_expansion_coefficents(
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                        Eigen::RowMajor>& coeffs,
-    const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                        Eigen::RowMajor>& dualmat,
-    bool condition_check)
+Eigen::MatrixXd
+FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
+                                             const Eigen::MatrixXd& dualmat,
+                                             bool condition_check)
 {
 #ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
@@ -50,6 +45,7 @@ FiniteElement::compute_expansion_coefficents(
 
   auto A = coeffs * dualmat.transpose();
 
+  // FIXME: The determinant is not a condition check
   if (condition_check)
   {
     double detA = A.determinant();
@@ -61,8 +57,7 @@ FiniteElement::compute_expansion_coefficents(
   }
 
   // _coeffs = A^-1(coeffs)
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+  Eigen::ArrayXXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 
 #ifndef NDEBUG
   std::cout << "New coeffs = \n[" << new_coeffs << "]\n";
@@ -70,30 +65,21 @@ FiniteElement::compute_expansion_coefficents(
   return new_coeffs;
 }
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-FiniteElement::tabulate(
-    int nd,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        x) const
+std::vector<Eigen::ArrayXXd>
+FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 {
   const int tdim = cell::topological_dimension(_cell_type);
   if (x.cols() != tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      basis = polyset::tabulate(_cell_type, _degree, nd, x);
+  std::vector<Eigen::ArrayXXd> basis
+      = polyset::tabulate(_cell_type, _degree, nd, x);
   const int psize = polyset::size(_cell_type, _degree);
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      dresult(
-          basis.size(),
-          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
-              x.rows(), ndofs * vs));
+  std::vector<Eigen::ArrayXXd> dresult(basis.size(),
+                                       Eigen::ArrayXXd(x.rows(), ndofs * vs));
   for (std::size_t p = 0; p < dresult.size(); ++p)
   {
     for (int j = 0; j < vs; ++j)

@@ -12,8 +12,7 @@ using namespace libtab;
 namespace
 {
 //-----------------------------------------------------------------------------
-Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_regge_space(cell::Type celltype, int degree)
+Eigen::MatrixXd create_regge_space(cell::Type celltype, int degree)
 {
 
   if (celltype != cell::Type::triangle and celltype != cell::Type::tetrahedron)
@@ -25,9 +24,7 @@ create_regge_space(cell::Type celltype, int degree)
   const int ndofs = basis_size * nc;
   const int psize = basis_size * tdim * tdim;
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs(
-      ndofs, psize);
-  wcoeffs.setZero();
+  Eigen::ArrayXXd wcoeffs = Eigen::ArrayXXd::Zero(ndofs, psize);
   int s = basis_size;
   for (int i = 0; i < tdim; ++i)
   {
@@ -45,8 +42,7 @@ create_regge_space(cell::Type celltype, int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_regge_dual(cell::Type celltype, int degree)
+Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
@@ -55,11 +51,10 @@ create_regge_dual(cell::Type celltype, int degree)
   const int ndofs = basis_size * (tdim + 1) * tdim / 2;
   const int space_size = basis_size * tdim * tdim;
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat(
-      ndofs, space_size);
-  auto topology = cell::topology(celltype);
-  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      geometry = cell::geometry(celltype);
+  Eigen::ArrayXXd dualmat(ndofs, space_size);
+  std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  const Eigen::ArrayXXd geometry = cell::geometry(celltype);
 
   // dof counter
   int dof = 0;
@@ -67,19 +62,14 @@ create_regge_dual(cell::Type celltype, int degree)
   {
     for (std::size_t i = 0; i < topology[dim].size(); ++i)
     {
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>
-          entity_geom = cell::sub_entity_geometry(celltype, dim, i);
+      const Eigen::ArrayXXd entity_geom
+          = cell::sub_entity_geometry(celltype, dim, i);
 
-      Eigen::Array<double, 1, Eigen::Dynamic, Eigen::RowMajor> point
-          = entity_geom.row(0);
+      Eigen::ArrayXd point = entity_geom.row(0);
       cell::Type ct = cell::sub_entity_type(celltype, dim, i);
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          lattice
+      Eigen::ArrayXXd lattice
           = lattice::create(ct, degree + 2, lattice::Type::equispaced, false);
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts(
-          lattice.rows(), entity_geom.cols());
-
+      Eigen::ArrayXXd pts(lattice.rows(), entity_geom.cols());
       for (int j = 0; j < lattice.rows(); ++j)
       {
         pts.row(j) = entity_geom.row(0);
@@ -90,15 +80,12 @@ create_regge_dual(cell::Type celltype, int degree)
         }
       }
 
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          basis = polyset::tabulate(celltype, degree, 0, pts)[0];
+      Eigen::MatrixXd basis = polyset::tabulate(celltype, degree, 0, pts)[0];
 
       // Store up outer(t, t) for all tangents
       std::vector<int>& vert_ids = topology[dim][i];
       int ntangents = dim * (dim + 1) / 2;
-      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-          vvt(ntangents);
+      std::vector<Eigen::MatrixXd> vvt(ntangents);
       int c = 0;
       for (std::size_t s = 0; s < dim; ++s)
       {
@@ -121,8 +108,12 @@ create_regge_dual(cell::Type celltype, int degree)
           const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                               Eigen::RowMajor>
               vvt_b = vvt_flat * basis.row(k);
-          dualmat.row(dof++) = Eigen::Map<const Eigen::RowVectorXd>(
-              vvt_b.data(), vvt_b.rows() * vvt_b.cols());
+
+          // Copy tensor values row by row into dualmat
+          for (int r = 0; r < vvt_b.rows(); ++r)
+            dualmat.block(dof, r * vvt_b.cols(), 1, vvt_b.cols())
+                = vvt_b.row(r);
+          ++dof;
         }
       }
     }
@@ -137,10 +128,8 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs
-      = create_regge_space(celltype, degree);
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
-      = create_regge_dual(celltype, degree);
+  Eigen::MatrixXd wcoeffs = create_regge_space(celltype, degree);
+  Eigen::MatrixXd dualmat = create_regge_dual(celltype, degree);
 
   // TODO
   const int ndofs = dualmat.rows();
@@ -149,8 +138,7 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      new_coeffs
+  Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
   // FIXME: Simplify

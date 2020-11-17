@@ -1,3 +1,7 @@
+// Copyright (c) 2020 Chris Richardson & Garth Wells
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
+
 #include "lattice.h"
 #include "cell.h"
 #include "lagrange.h"

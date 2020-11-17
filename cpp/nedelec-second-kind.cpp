@@ -139,10 +139,6 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
       new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-
-
   // FIXME: The below code is confusing, especially with the range-based
   // loop and references. Simplify.
   std::vector<std::vector<int>> entity_dofs(topology.size());

@@ -124,9 +124,13 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
-  // TODO
+  // TODO: Implement base permutations
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
   const int ndofs = dualmat.rows();
   int perm_count = 0;
+  for (int i = 1; i < tdim; ++i)
+    perm_count += topology[i].size();
   std::vector<
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));

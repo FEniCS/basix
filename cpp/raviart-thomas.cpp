@@ -94,12 +94,15 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
                                          degree, quad_deg);
   }
 
-  // TODO
   const int ndofs = dualmat.rows();
   int perm_count = 0;
+  for (int i = 1; i < tdim; ++i)
+    perm_count += topology[i].size();
+
   std::vector<
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  // TODO: Put -1s in base permutation for DOFs on each facet
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       new_coeffs

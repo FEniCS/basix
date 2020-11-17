@@ -30,6 +30,8 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   if (degree == 0)
   {
     pt = lattice::create(celltype, 0, lattice::Type::equispaced, true);
+    for (int i = 0; i < tdim; ++i)
+      entity_dofs[i].resize(topology[i].size(), 0);
     entity_dofs[tdim] = {1};
   }
   else

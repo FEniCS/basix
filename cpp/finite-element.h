@@ -20,14 +20,12 @@ class FiniteElement
 
 public:
   /// A finite element
-  FiniteElement(
-      cell::Type cell_type, int degree, std::vector<int> value_shape,
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-          coeffs,
-      std::vector<std::vector<int>> entity_dofs,
-      std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-          base_permutations);
+  FiniteElement(cell::Type cell_type, int degree, std::vector<int> value_shape,
+                Eigen::ArrayXXd coeffs,
+                std::vector<std::vector<int>> entity_dofs,
+                std::vector<Eigen::Matrix<double, Eigen::Dynamic,
+                                          Eigen::Dynamic, Eigen::RowMajor>>
+                    base_permutations);
 
   /// Destructor
   ~FiniteElement() = default;
@@ -46,9 +44,7 @@ public:
   /// expected, it will be stacked with all x values, followed by all y-values
   /// (and then z, if any), likewise tensor-valued results will be stacked in
   /// index order.
-  std::vector<Eigen::ArrayXXd>
-  tabulate(int nd, const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& x) const;
+  std::vector<Eigen::ArrayXXd> tabulate(int nd, const Eigen::ArrayXXd& x) const;
 
   /// Get the element cell type
   /// @return The cell type
@@ -209,12 +205,10 @@ public:
   /// B.D^T and throws an error if it is ill-conditioned.
   /// @return The matrix C of expansion coefficients that define the basis
   /// functions of the finite element space.
-  static Eigen::MatrixXd compute_expansion_coefficents(
-      const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                          Eigen::RowMajor>& span_coeffs,
-      const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                          Eigen::RowMajor>& dualmat,
-      bool condition_check = false);
+  static Eigen::MatrixXd
+  compute_expansion_coefficents(const Eigen::MatrixXd& span_coeffs,
+                                const Eigen::MatrixXd& dualmat,
+                                bool condition_check = false);
 
   /// Get the base permutations
   /// The base permutations represent the effect of rotating or reflecting

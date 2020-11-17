@@ -11,7 +11,8 @@
 
 using namespace libtab;
 
-FiniteElement create_element(std::string family, std::string cell, int degree)
+FiniteElement libtab::create_element(std::string family, std::string cell,
+                                     int degree)
 {
   const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
       create_map = {{"Crouzeix-Raviart", &CrouzeixRaviart::create},

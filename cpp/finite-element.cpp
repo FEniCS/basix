@@ -47,7 +47,7 @@ FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
   const Eigen::MatrixXd A = coeffs * dualmat.transpose();
   if (condition_check)
   {
-    Eigen::JacobiSVD svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Eigen::JacobiSVD svd(A);
     const int size = svd.singularValues().size();
     const double kappa
         = svd.singularValues()(0) / svd.singularValues()(size - 1);
@@ -56,10 +56,9 @@ FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
       throw std::runtime_error("Poorly conditioned B.D^T when computing "
                                "expansion coefficients");
     }
-    new_coeffs = svd.solve(coeffs);
   }
-  else
-    new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+
+  new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 
 #ifndef NDEBUG
   std::cout << "New coeffs = \n[" << new_coeffs << "]\n";

@@ -42,5 +42,4 @@ jobs:
       - name: Run units tests
         run: |
           pip install pytest pytest-xdist numpy sympy
-          # pytest -n auto test/
-          pytest  -s test/
+          pytest -n auto test/

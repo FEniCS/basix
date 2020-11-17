@@ -8,12 +8,11 @@
 
 using namespace libtab;
 //-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    cell::Type cell_type, int degree, std::vector<int> value_shape,
-    Eigen::ArrayXXd coeffs, std::vector<std::vector<int>> entity_dofs,
-    std::vector<
-        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        base_permutations)
+FiniteElement::FiniteElement(cell::Type cell_type, int degree,
+                             std::vector<int> value_shape,
+                             Eigen::ArrayXXd coeffs,
+                             std::vector<std::vector<int>> entity_dofs,
+                             std::vector<Eigen::MatrixXd> base_permutations)
     : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
       _coeffs(coeffs), _entity_dofs(entity_dofs),
       _base_permutations(base_permutations)

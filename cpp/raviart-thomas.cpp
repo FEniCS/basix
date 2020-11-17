@@ -93,9 +93,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   // TODO
   const int ndofs = dualmat.rows();
   int perm_count = 0;
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);

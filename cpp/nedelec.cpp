@@ -94,14 +94,11 @@ create_nedelec_2d_dual(int degree)
   return dualmat;
 }
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-create_nedelec_2d_base_perms(int degree)
+std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
 {
   const int ndofs = degree * (degree + 2);
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(3, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      3, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
       = dofperms::interval_reflection(degree);
@@ -257,15 +254,12 @@ create_nedelec_3d_dual(int degree)
   return dualmat;
 }
 //-----------------------------------------------------------------------------
-std::vector<
-    Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-create_nedelec_3d_base_perms(int degree)
+std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
 {
   const int ndofs = 6 * degree + 4 * degree * (degree - 1)
                     + (degree - 2) * (degree - 1) * degree / 2;
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(14, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      14, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
       = dofperms::interval_reflection(degree);
@@ -350,12 +344,8 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> wcoeffs;
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat;
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      perms;
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      directions;
+  std::vector<Eigen::MatrixXd> perms;
+  std::vector<Eigen::MatrixXd> directions;
 
   if (celltype == cell::Type::triangle)
   {

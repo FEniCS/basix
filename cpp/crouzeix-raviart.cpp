@@ -43,9 +43,8 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, 1, 0, pts)[0];
 
   int perm_count = 0;
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   const Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);

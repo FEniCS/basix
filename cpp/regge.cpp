@@ -105,9 +105,7 @@ Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
           Eigen::Map<Eigen::VectorXd> vvt_flat(vvt[j].data(),
                                                vvt[j].rows() * vvt[j].cols());
           // outer product: outer(outer(t, t), basis)
-          const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                              Eigen::RowMajor>
-              vvt_b = vvt_flat * basis.row(k);
+          const Eigen::MatrixXd vvt_b = vvt_flat * basis.row(k);
 
           // Copy tensor values row by row into dualmat
           for (int r = 0; r < vvt_b.rows(); ++r)
@@ -134,9 +132,8 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   // TODO
   const int ndofs = dualmat.rows();
   int perm_count = 0;
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);

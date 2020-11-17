@@ -23,9 +23,7 @@ public:
   FiniteElement(cell::Type cell_type, int degree, std::vector<int> value_shape,
                 Eigen::ArrayXXd coeffs,
                 std::vector<std::vector<int>> entity_dofs,
-                std::vector<Eigen::Matrix<double, Eigen::Dynamic,
-                                          Eigen::Dynamic, Eigen::RowMajor>>
-                    base_permutations);
+                std::vector<Eigen::MatrixXd> base_permutations);
 
   /// Destructor
   ~FiniteElement() = default;
@@ -288,9 +286,7 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-  base_permutations() const
+  std::vector<Eigen::MatrixXd> base_permutations() const
   {
     return _base_permutations;
   };
@@ -309,8 +305,7 @@ private:
   // function is given by @f$\psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k}@f$,
   // then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e., _coeffs.row(i) are the
   // expansion coefficients for shape function i (@f$\psi_{i}@f$).
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      _coeffs;
+  Eigen::MatrixXd _coeffs;
 
   // Number of dofs associated each subentity
   // The dofs of an element are associated with entities of different
@@ -320,8 +315,6 @@ private:
   std::vector<std::vector<int>> _entity_dofs;
 
   // Base permutations
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      _base_permutations;
+  std::vector<Eigen::MatrixXd> _base_permutations;
 };
 } // namespace libtab

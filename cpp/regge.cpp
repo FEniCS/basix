@@ -52,7 +52,8 @@ Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
   const int space_size = basis_size * tdim * tdim;
 
   Eigen::ArrayXXd dualmat(ndofs, space_size);
-  auto topology = cell::topology(celltype);
+  std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
   const Eigen::ArrayXXd geometry = cell::geometry(celltype);
 
   // dof counter

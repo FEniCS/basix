@@ -56,8 +56,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     {
       for (int j = 0; j < tdim; ++j)
       {
-        auto w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
-                 * Pkp1_at_Qpts.col(k);
+        Eigen::ArrayXd w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
+                           * Pkp1_at_Qpts.col(k);
         wcoeffs(nv * tdim + i, k + psize * j) = w.sum();
       }
     }

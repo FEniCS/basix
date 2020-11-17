@@ -7,7 +7,6 @@
 #include "polynomial-set.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
-#include <iostream>
 #include <numeric>
 #include <vector>
 
@@ -54,9 +53,10 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   // Crouzeix-Raviart has one dof on each entity of tdim-1.
   std::vector<std::vector<int>> entity_dofs(topology.size());
   entity_dofs[0].resize(topology[0].size(), 0);
-  entity_dofs[1].resize(topology[1].size(), 0);
-  entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), 1);
-  entity_dofs[tdim].resize(topology[tdim].size(), 0);
+  entity_dofs[1].resize(topology[1].size(), (tdim == 2) ? 1 : 0);
+  entity_dofs[2].resize(topology[2].size(), (tdim == 3) ? 1 : 0);
+  if (tdim == 3)
+    entity_dofs[3] = {0};
 
   return FiniteElement(celltype, 1, {1}, new_coeffs, entity_dofs,
                        base_permutations);

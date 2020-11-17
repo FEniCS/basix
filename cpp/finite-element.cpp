@@ -51,7 +51,7 @@ FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
     const double kappa
         = svd.singularValues()(0)
           / svd.singularValues()(svd.singularValues().size() - 1);
-    if (kappa > 1e-6)
+    if (kappa > 1e6)
     {
       throw std::runtime_error("Poorly conditioned B.D^T when computing "
                                "expansion coefficients");

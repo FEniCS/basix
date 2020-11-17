@@ -8,6 +8,7 @@
 #include "polynomial-set.h"
 #include <Eigen/Dense>
 #include <iostream>
+#include <numeric>
 
 using namespace libtab;
 
@@ -18,20 +19,19 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     throw std::runtime_error("Invalid celltype");
 
   const int ndofs = polyset::size(celltype, degree);
-  const int tdim = cell::topological_dimension(celltype);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
 
   // Create points at nodes, ordered by topology (vertices first)
-  Eigen::ArrayXXd pt(ndofs, tdim);
+  Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
   if (degree == 0)
   {
     pt = lattice::create(celltype, 0, lattice::Type::equispaced, true);
-    for (int i = 0; i < tdim; ++i)
+    for (int i = 0; i < entity_dofs.size(); ++i)
       entity_dofs[i].resize(topology[i].size(), 0);
-    entity_dofs[tdim] = {1};
+    entity_dofs[topology.size() - 1][0] = 1;
   }
   else
   {
@@ -48,7 +48,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
           pt.row(c++) = entity_geom.row(0);
           entity_dofs[0].push_back(1);
         }
-        else if ((int)dim == tdim)
+        else if ((int)dim == topology.size() - 1)
         {
           const Eigen::ArrayXXd lattice = lattice::create(
               celltype, degree, lattice::Type::equispaced, false);
@@ -78,7 +78,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   }
 
   int perm_count = 0;
-  for (int i = 1; i < tdim; ++i)
+  for (std::size_t i = 1; i < topology.size() - 1; ++i)
     perm_count += topology[i].size() * i;
 
   std::vector<Eigen::MatrixXd> base_permutations(
@@ -143,7 +143,6 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   // the scalar space.
 
   const int ndofs = polyset::size(celltype, degree);
-  // const int tdim = cell::topological_dimension(celltype);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -170,12 +169,14 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficents(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
-  int perm_count = 0;
+  // int perm_count = 0;
   // for (int i = 1; i < tdim; ++i)
   //   perm_count += topology[i].size();
-  for (int i = 1; i < topology.size() - 1; ++i)
-    perm_count += topology[i].size();
-  // const int perm_count = std::reduce()
+  // for (int i = 1; i < topology.size() - 1; ++i)
+  //   perm_count += topology[i].size();
+  const int perm_count
+      = std::reduce(topology.begin(), topology.end() - 1, 0,
+                    [](int& init, auto& b) { return init + b.size(); });
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));

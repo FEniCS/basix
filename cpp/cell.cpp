@@ -11,11 +11,9 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-cell::geometry(cell::Type celltype)
+Eigen::ArrayXXd cell::geometry(cell::Type celltype)
 {
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geom;
-
+  Eigen::ArrayXXd geom;
   switch (celltype)
   {
   case cell::Type::interval:
@@ -167,13 +165,12 @@ int cell::topological_dimension(cell::Type cell_type)
   return 0;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-cell::sub_entity_geometry(cell::Type celltype, int dim, int index)
+Eigen::ArrayXXd cell::sub_entity_geometry(cell::Type celltype, int dim,
+                                          int index)
 {
   std::vector<std::vector<std::vector<int>>> cell_topology
       = cell::topology(celltype);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      cell_geometry = cell::geometry(celltype);
+  Eigen::ArrayXXd cell_geometry = cell::geometry(celltype);
 
   if (dim < 0 or dim >= (int)cell_topology.size())
     throw std::runtime_error("Invalid dimension for sub-entity");
@@ -183,9 +180,7 @@ cell::sub_entity_geometry(cell::Type celltype, int dim, int index)
   if (index < 0 or index >= (int)t.size())
     throw std::runtime_error("Invalid entity index");
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      sub_entity(t[index].size(), cell_geometry.cols());
-
+  Eigen::ArrayXXd sub_entity(t[index].size(), cell_geometry.cols());
   for (int i = 0; i < sub_entity.rows(); ++i)
     sub_entity.row(i) = cell_geometry.row(t[index][i]);
 

@@ -31,15 +31,13 @@ create_nedelec_2d_space(int degree)
   // Tabulate polynomial set at quadrature points
   auto [Qpts, Qwts]
       = quadrature::make_quadrature(cell::Type::triangle, 2 * degree);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts
+  Eigen::ArrayXXd Pkp1_at_Qpts
       = polyset::tabulate(cell::Type::triangle, degree, 0, Qpts)[0];
 
   const int psize = Pkp1_at_Qpts.cols();
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs(nv * 2 + ns, psize * 2);
+  Eigen::MatrixXd wcoeffs(nv * 2 + ns, psize * 2);
   wcoeffs.setZero();
   wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
   wcoeffs.block(nv, psize, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
@@ -57,6 +55,7 @@ create_nedelec_2d_space(int degree)
                                            .sum();
     }
   }
+
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
@@ -155,15 +154,12 @@ create_nedelec_3d_space(int degree)
   // Tabulate polynomial basis at quadrature points
   auto [Qpts, Qwts]
       = quadrature::make_quadrature(cell::Type::tetrahedron, 2 * degree);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Pkp1_at_Qpts
+  Eigen::ArrayXXd Pkp1_at_Qpts
       = polyset::tabulate(cell::Type::tetrahedron, degree, 0, Qpts)[0];
   const int psize = Pkp1_at_Qpts.cols();
 
   // Create coefficients for order (degree-1) polynomials
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      wcoeffs(ndofs, psize * tdim);
-  wcoeffs.setZero();
+  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
   for (int i = 0; i < tdim; ++i)
   {
     wcoeffs.block(nv * i, psize * i, nv, nv)

@@ -7,24 +7,18 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-Eigen::Array<int, Eigen::Dynamic, 1> dofperms::interval_reflection(int degree)
+Eigen::ArrayXi dofperms::interval_reflection(int degree)
 {
-  if (degree <= 0)
-    return {};
-
   Eigen::Array<int, Eigen::Dynamic, 1> perm(degree);
   for (int i = 0; i < degree; ++i)
     perm(i) = degree - 1 - i;
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_reflection(int degree)
+Eigen::ArrayXi dofperms::triangle_reflection(int degree)
 {
-  if (degree <= 0)
-    return {};
-
   const int n = degree * (degree + 1) / 2;
-  Eigen::Array<int, Eigen::Dynamic, 1> perm(n);
+  Eigen::ArrayXi perm(n);
   int p = 0;
 
   for (int st = 0; st < degree; ++st)
@@ -36,16 +30,17 @@ Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_reflection(int degree)
       dof += add;
     }
   }
+
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_rotation(int degree)
+Eigen::ArrayXi dofperms::triangle_rotation(int degree)
 {
   if (degree <= 0)
     return {};
 
   const int n = degree * (degree + 1) / 2;
-  Eigen::Array<int, Eigen::Dynamic, 1> perm(n);
+  Eigen::ArrayXi perm(n);
   int p = 0;
 
   int st = n - 1;
@@ -59,54 +54,43 @@ Eigen::Array<int, Eigen::Dynamic, 1> dofperms::triangle_rotation(int degree)
     }
     st -= i;
   }
+
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-dofperms::interval_reflection_tangent_directions(int degree)
+Eigen::ArrayXXd dofperms::interval_reflection_tangent_directions(int degree)
 {
-  if (degree <= 0)
-    return {};
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dirs(degree, degree);
-  dirs.setZero();
+  Eigen::ArrayXXd dirs = Eigen::ArrayXXd::Zero(degree, degree);
   for (int i = 0; i < degree; ++i)
     dirs(i, i) = -1;
+
   return dirs;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-dofperms::triangle_reflection_tangent_directions(int degree)
+Eigen::ArrayXXd dofperms::triangle_reflection_tangent_directions(int degree)
 {
-  if (degree <= 0)
-    return {};
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dirs(
-      degree * (degree + 1), degree * (degree + 1));
-  dirs.setZero();
+  Eigen::ArrayXXd dirs
+      = Eigen::ArrayXXd::Zero(degree * (degree + 1), degree * (degree + 1));
   for (int i = 0; i < degree * (degree + 1); i += 2)
   {
     dirs(i, i + 1) = 1;
     dirs(i + 1, i) = 1;
   }
+
   return dirs;
 }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-dofperms::triangle_rotation_tangent_directions(int degree)
+Eigen::ArrayXXd dofperms::triangle_rotation_tangent_directions(int degree)
 {
-  if (degree <= 0)
-    return {};
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dirs(
-      degree * (degree + 1), degree * (degree + 1));
-  dirs.setZero();
+  Eigen::ArrayXXd dirs
+      = Eigen::ArrayXXd::Zero(degree * (degree + 1), degree * (degree + 1));
   for (int i = 0; i < degree * (degree + 1); i += 2)
   {
     dirs(i, i) = 1;
     dirs(i, i + 1) = -1;
     dirs(i + 1, i) = 1;
   }
+
   return dirs;
 }
 //-----------------------------------------------------------------------------

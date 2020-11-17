@@ -26,19 +26,15 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
   const int ndofs = polyset::size(celltype, degree);
 
   std::vector<std::vector<int>> entity_dofs(tdim + 1);
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
-      ndofs, tdim);
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geometry
-      = cell::geometry(celltype);
+  Eigen::ArrayXXd pt(ndofs, tdim);
+  Eigen::ArrayXXd geometry = cell::geometry(celltype);
   int c = 0;
   for (std::size_t dim = 0; dim < topology.size(); ++dim)
   {
     for (std::size_t i = 0; i < topology[dim].size(); ++i)
     {
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>
-          entity_geom = cell::sub_entity_geometry(celltype, dim, i);
+      const Eigen::ArrayXXd entity_geom
+          = cell::sub_entity_geometry(celltype, dim, i);
 
       Eigen::ArrayXd point = entity_geom.row(0);
       if (dim == 0)
@@ -48,10 +44,8 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
       }
       else if ((int)dim == tdim)
       {
-        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                           Eigen::RowMajor>
-            lattice = lattice::create(celltype, degree,
-                                      lattice::Type::equispaced, false);
+        const Eigen::ArrayXXd lattice = lattice::create(
+            celltype, degree, lattice::Type::equispaced, false);
         for (int j = 0; j < lattice.rows(); ++j)
           pt.row(c++) = lattice.row(j);
         entity_dofs[dim].push_back(lattice.rows());
@@ -59,9 +53,7 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
       else
       {
         cell::Type ct = cell::sub_entity_type(celltype, dim, i);
-        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                           Eigen::RowMajor>
-            lattice
+        const Eigen::ArrayXXd lattice
             = lattice::create(ct, degree, lattice::Type::equispaced, false);
         entity_dofs[dim].push_back(lattice.rows());
 
@@ -88,8 +80,7 @@ FiniteElement TensorProduct::create(cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      new_coeffs
+  Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
   return FiniteElement(celltype, degree, {1}, new_coeffs, entity_dofs,
                        base_permutations);

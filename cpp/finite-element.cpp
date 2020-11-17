@@ -47,20 +47,15 @@ FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
   const Eigen::MatrixXd A = coeffs * dualmat.transpose();
   if (condition_check)
   {
-    Eigen::JacobiSVD svd(A);
-    const int size = svd.singularValues().size() std::cout
-                     << "Num sigma: " << size << std::endl;
-    std::cout << "sigma_0: " << svd.singularValues()[0] << std::endl;
-    std::cout << "sigma_n: " << svd.singularValues()[size - 1] << std::endl;
-
-    // const double kappa
-    //     = svd.singularValues()(0)
-    //       / svd.singularValues()(svd.singularValues().size() - 1);
-    // if (kappa > 1e6)
-    // {
-    //   throw std::runtime_error("Poorly conditioned B.D^T when computing "
-    //                            "expansion coefficients");
-    // }
+    Eigen::JacobiSVD svd(A, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    const int size = svd.singularValues().size();
+    const double kappa
+        = svd.singularValues()(0) / svd.singularValues()(size - 1);
+    if (kappa > 1e6)
+    {
+      throw std::runtime_error("Poorly conditioned B.D^T when computing "
+                               "expansion coefficients");
+    }
     new_coeffs = svd.solve(coeffs);
   }
   else

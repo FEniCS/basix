@@ -92,7 +92,7 @@ tabulate_polyset_triangle_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
   std::vector<Eigen::ArrayXXd> dresult(md);
 
   // f3 = ((1-y)/2)^2
-  const auto f3 = (1.0 - x.col(1)).square() * 0.25;
+  const Eigen::ArrayXd f3 = (1.0 - x.col(1)).square() * 0.25;
 
   // Iterate over derivatives in increasing order, since higher derivatives
   // depend on earlier calculations
@@ -192,10 +192,10 @@ tabulate_polyset_tetrahedron_derivs(int n, int nderiv,
   const int md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
   std::vector<Eigen::ArrayXXd> dresult(md);
 
-  const auto f2 = (x.col(1) + x.col(2)).square() * 0.25;
-  const auto f3 = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
-  const auto f4 = (1.0 - x.col(2)) * 0.5;
-  const auto f5 = f4 * f4;
+  const Eigen::ArrayXd f2 = (x.col(1) + x.col(2)).square() * 0.25;
+  const Eigen::ArrayXd f3 = (1.0 + x.col(1) * 2.0 + x.col(2)) * 0.5;
+  const Eigen::ArrayXd f4 = (1.0 - x.col(2)) * 0.5;
+  const Eigen::ArrayXd f5 = f4 * f4;
 
   // Traverse derivatives in increasing order
   for (int k = 0; k < nderiv + 1; ++k)
@@ -380,7 +380,7 @@ tabulate_polyset_tetrahedron_derivs(int n, int nderiv,
     }
   }
 
-  for (auto& result : dresult)
+  for (Eigen::ArrayXXd& result : dresult)
   {
     for (int p = 0; p < n + 1; ++p)
     {
@@ -416,7 +416,7 @@ tabulate_polyset_pyramid_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
     return r0 + p * rv + q;
   };
 
-  const auto f2 = (1.0 - x.col(2)).square() * 0.25;
+  const Eigen::ArrayXd f2 = (1.0 - x.col(2)).square() * 0.25;
 
   // Traverse derivatives in increasing order
   for (int k = 0; k < nderiv + 1; ++k)
@@ -571,7 +571,7 @@ tabulate_polyset_pyramid_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
     }
   }
 
-  for (auto& result : dresult)
+  for (Eigen::ArrayXXd& result : dresult)
   {
     for (int r = 0; r < n + 1; ++r)
     {

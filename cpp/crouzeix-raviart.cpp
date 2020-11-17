@@ -48,7 +48,7 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   const Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
+      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat, true);
 
   // FIXME: This a bit confusing. Add comment and simplify code
   const std::vector<std::vector<std::vector<int>>> topology

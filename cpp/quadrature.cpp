@@ -127,15 +127,10 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
 Eigen::ArrayXXd quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
                                                  const Eigen::ArrayXd& x)
 {
-  std::vector<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      J;
-
+  std::vector<Eigen::ArrayXXd> J;
   for (int i = 0; i < nderiv + 1; ++i)
   {
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Jd(
-        n + 1, x.rows());
-
+    Eigen::ArrayXXd Jd(n + 1, x.rows());
     if (i == 0)
       Jd.row(0).fill(1.0);
     else
@@ -165,8 +160,7 @@ Eigen::ArrayXXd quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
     J.push_back(Jd);
   }
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> result(
-      nderiv + 1, x.rows());
+  Eigen::ArrayXXd result(nderiv + 1, x.rows());
   for (int i = 0; i < nderiv + 1; ++i)
     result.row(i) = J[i].row(n);
 
@@ -252,9 +246,8 @@ quadrature::make_quadrature_triangle_collapsed(int m)
   auto [ptx, wx] = quadrature::compute_gauss_jacobi_rule(0.0, m);
   auto [pty, wy] = quadrature::compute_gauss_jacobi_rule(1.0, m);
 
-  Eigen::Array<double, Eigen::Dynamic, 2, Eigen::RowMajor> pts(m * m, 2);
+  Eigen::ArrayXXd pts(m * m, 2);
   Eigen::ArrayXd wts(m * m);
-
   int c = 0;
   for (int i = 0; i < m; ++i)
   {
@@ -277,9 +270,8 @@ quadrature::make_quadrature_tetrahedron_collapsed(int m)
   auto [pty, wy] = quadrature::compute_gauss_jacobi_rule(1.0, m);
   auto [ptz, wz] = quadrature::compute_gauss_jacobi_rule(2.0, m);
 
-  Eigen::Array<double, Eigen::Dynamic, 3, Eigen::RowMajor> pts(m * m * m, 3);
+  Eigen::ArrayX3d pts(m * m * m, 3);
   Eigen::ArrayXd wts(m * m * m);
-
   int c = 0;
   for (int i = 0; i < m; ++i)
   {
@@ -309,25 +301,25 @@ quadrature::make_quadrature(cell::Type celltype, int m)
   case cell::Type::quadrilateral:
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts(
-        m * m, 2);
+    Eigen::ArrayXXd Qpts(m * m, 2);
     Eigen::ArrayXd Qwts(m * m);
 
     int c = 0;
     for (int j = 0; j < m; ++j)
+    {
       for (int i = 0; i < m; ++i)
       {
         Qpts.row(c) << QptsL(i, 0), QptsL(j, 0);
         Qwts[c] = QwtsL[i] * QwtsL[j];
         ++c;
       }
+    }
     return {Qpts, Qwts};
   }
   case cell::Type::hexahedron:
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts(
-        m * m * m, 3);
+    Eigen::ArrayXXd Qpts(m * m * m, 3);
     Eigen::ArrayXd Qwts(m * m * m);
     int c = 0;
     for (int k = 0; k < m; ++k)
@@ -348,8 +340,7 @@ quadrature::make_quadrature(cell::Type celltype, int m)
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
     auto [QptsT, QwtsT] = quadrature::make_quadrature_triangle_collapsed(m);
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts(
-        m * QptsT.rows(), 3);
+    Eigen::ArrayXXd Qpts(m * QptsT.rows(), 3);
     Eigen::ArrayXd Qwts(m * QptsT.rows());
     int c = 0;
     for (int k = 0; k < m; ++k)
@@ -374,10 +365,8 @@ quadrature::make_quadrature(cell::Type celltype, int m)
   }
 }
 //----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> quadrature::make_quadrature(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        simplex,
-    int m)
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+quadrature::make_quadrature(const Eigen::ArrayXXd& simplex, int m)
 {
   const int dim = simplex.rows() - 1;
   if (dim < 1 or dim > 3)
@@ -386,12 +375,11 @@ std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> quadrature::make_quadrature(
     throw std::runtime_error("Invalid simplex");
 
   // Compute edge vectors of simplex
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> bvec(
-      dim, simplex.cols());
+  Eigen::MatrixXd bvec(dim, simplex.cols());
   for (int i = 0; i < dim; ++i)
     bvec.row(i) = simplex.row(i + 1) - simplex.row(0);
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> Qpts;
+  Eigen::ArrayXXd Qpts;
   Eigen::ArrayXd Qwts;
 
   double scale = 1.0;
@@ -424,8 +412,7 @@ std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> quadrature::make_quadrature(
   std::cout << "scale = " << scale << "\n";
 #endif
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      Qpts_scaled(Qpts.rows(), bvec.cols());
+  Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), bvec.cols());
   Eigen::ArrayXd Qwts_scaled = Qwts * scale;
   for (int i = 0; i < Qpts.rows(); ++i)
     Qpts_scaled.row(i) = simplex.row(0) + (Qpts.row(i).matrix() * bvec).array();

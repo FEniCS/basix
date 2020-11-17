@@ -68,9 +68,7 @@ std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_quadrature(cell::Type celltype,
 /// @param m order
 /// @returns list of points, list of weights
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-make_quadrature(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>& simplex,
-                int m);
+make_quadrature(const Eigen::ArrayXXd& simplex, int m);
 
 /// Compute GLL quadrature points and weights on the interval [-1, 1]
 /// @param m order

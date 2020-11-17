@@ -148,9 +148,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
         "Compute jacobi polynomial and derivatives at points");
 
   m.def("make_quadrature",
-        py::overload_cast<const Eigen::Array<double, Eigen::Dynamic,
-                                             Eigen::Dynamic, Eigen::RowMajor>&,
-                          int>(&quadrature::make_quadrature),
+        py::overload_cast<const Eigen::ArrayXXd&, int>(
+            &quadrature::make_quadrature),
         "Compute quadrature points and weights on a simplex defined by points")
       .def("make_quadrature",
            py::overload_cast<cell::Type, int>(&quadrature::make_quadrature),

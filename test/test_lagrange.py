@@ -303,3 +303,16 @@ def test_dof_permutations_tetrahedron(order):
             else:
                 actual[j, j] = 1
         assert numpy.allclose(perm, actual)
+
+
+@pytest.mark.parametrize("order", [1, 2, 3, 4])
+@pytest.mark.parametrize("celltype", [libtab.CellType.quadrilateral,
+                                      libtab.CellType.hexahedron,
+                                      libtab.CellType.pyramid,
+                                      libtab.CellType.prism])
+def test_celltypes(order, celltype):
+    tp = libtab.Lagrange(celltype, order)
+    pts = libtab.create_lattice(celltype, 5,
+                                libtab.LatticeType.equispaced, True)
+    w = tp.tabulate(0, pts)[0]
+    assert(numpy.allclose(numpy.sum(w, axis=1), 1.0))

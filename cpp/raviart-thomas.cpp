@@ -103,8 +103,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if(tdim == 2) {
-    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
-        = dofperms::interval_reflection(degree - 1);
+    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < facet_count; ++edge)
     {
       const int start = edge_ref.size() * edge;
@@ -117,8 +116,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   }
   else if (tdim == 3)
   {
-    Eigen::Array<int, Eigen::Dynamic, 1> face_ref = dofperms::triangle_reflection(degree - 1);
-    Eigen::Array<int, Eigen::Dynamic, 1> face_rot = dofperms::triangle_rotation(degree - 1);
+    Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 1);
+    Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 1);
 
     for (int face = 0; face < facet_count; ++face)
     {

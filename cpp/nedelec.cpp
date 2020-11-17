@@ -372,16 +372,14 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
-  // FIXME: simplify
+  // Nedelec has d dofs on each edge, d(d-1) on each face
+  // and d(d-1)(d-2)/2 on the interior in 3D
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < topology.size(); ++i)
-    entity_dofs[i].resize(topology[i].size(), 0);
-  for (int& q : entity_dofs[1])
-    q = degree;
-  for (int& q : entity_dofs[2])
-    q = degree * (degree - 1);
+  entity_dofs[0].resize(topology[0].size(), 0);
+  entity_dofs[1].resize(topology[1].size(), degree);
+  entity_dofs[2].resize(topology[2].size(), degree * (degree - 1));
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 

@@ -94,6 +94,9 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
                                          degree, quad_deg);
   }
 
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
   const int ndofs = dualmat.rows();
   int perm_count = 0;
   for (int i = 1; i < tdim; ++i)
@@ -108,8 +111,6 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
       new_coeffs
       = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
 
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);

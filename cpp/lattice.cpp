@@ -36,13 +36,11 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 {
   const double h = 1.0 / static_cast<double>(n);
 
-  // TODO: use switch on cell type, and maybe use anonymous function for
-  // each cell type
-
-  if (celltype == cell::Type::point)
+  switch (celltype)
+  {
+  case cell::Type::point:
     return Eigen::ArrayXXd::Zero(1, 1);
-
-  if (celltype == cell::Type::interval)
+  case cell::Type::interval:
   {
     if (n == 0)
     {
@@ -62,7 +60,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 
     return x;
   }
-  else if (celltype == cell::Type::quadrilateral)
+  case cell::Type::quadrilateral:
   {
     if (n == 0)
     {
@@ -89,7 +87,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 
     return x;
   }
-  else if (celltype == cell::Type::hexahedron)
+  case cell::Type::hexahedron:
   {
     if (n == 0)
     {
@@ -116,7 +114,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 
     return x;
   }
-  else if (celltype == cell::Type::triangle)
+  case cell::Type::triangle:
   {
     if (n == 0)
     {
@@ -161,7 +159,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
       }
     return p;
   }
-  else if (celltype == cell::Type::tetrahedron)
+  case cell::Type::tetrahedron:
   {
     if (n == 0)
     {
@@ -218,7 +216,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 
     return p;
   }
-  else if (celltype == cell::Type::prism)
+  case cell::Type::prism:
   {
     if (n == 0)
     {
@@ -238,7 +236,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
       x.block(i * tri_pts.rows(), 2, tri_pts.rows(), 1) = line_pts(i, 0);
     return x;
   }
-  else if (celltype == cell::Type::pyramid)
+  case cell::Type::pyramid:
   {
     if (lattice_type == lattice::Type::gll_warped)
     {
@@ -268,7 +266,9 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 
     return points;
   }
-  else
+  default:
     throw std::runtime_error("Unsupported cell for lattice");
+  }
 }
+
 //-----------------------------------------------------------------------------

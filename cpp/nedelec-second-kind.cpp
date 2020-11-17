@@ -129,16 +129,13 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  // FIXME: The below code is confusing, especially with the range-based
-  // loop and references. Simplify.
+  // Nedelec(2nd kind) has (d+1) dofs on each edge, (d+1)(d-1) on each face
+  // and (d-2)(d-1)(d+1)/2 on the interior in 3D
   std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < topology.size(); ++i)
-    entity_dofs[i].resize(topology[i].size(), 0);
-  for (int& q : entity_dofs[1])
-    q = degree + 1;
-  for (int& q : entity_dofs[2])
-    q = (degree + 1) * (degree - 1);
-  if (tdim == 3)
+  entity_dofs[0].resize(topology[0].size(), 0);
+  entity_dofs[1].resize(topology[1].size(), degree + 1);
+  entity_dofs[2].resize(topology[2].size(), (degree + 1) * (degree - 1));
+  if (tdim > 2)
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
   return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,

@@ -107,7 +107,8 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   bsqrt(n) = 1.0;
 
   // Solve tridiagonal system using Thomas algorithm
-  double g1(0.0), g2(0.0);
+  double g1 = 0.0;
+  double g2 = 0.0;
   for (int i = 1; i < bsqrt.rows(); ++i)
   {
     g1 = bsqrt(i) / (alpha(i) - xl1 - bsqrt(i - 1) * g1);

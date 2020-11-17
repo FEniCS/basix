@@ -20,6 +20,7 @@
 #include "quadrature.h"
 #include "raviart-thomas.h"
 #include "regge.h"
+#include "util.h"
 
 namespace py = pybind11;
 using namespace libtab;
@@ -116,27 +117,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
         "Create Nedelec Element (second kind)");
   m.def("Regge", &Regge::create, "Create Regge Element");
 
-  m.def(
-      "create_element",
-      [](std::string family, std::string cell, int degree) {
-        const std::map<std::string,
-                       std::function<FiniteElement(cell::Type, int)>>
-            create_map
-            = {{"Crouzeix-Raviart", &CrouzeixRaviart::create},
-               {"Discontinuous Lagrange", &Lagrange::create},
-               {"Lagrange", &Lagrange::create},
-               {"Nedelec 1st kind H(curl)", &Nedelec::create},
-               {"Nedelec 2nd kind H(curl)", &NedelecSecondKind::create},
-               {"Raviart-Thomas", &RaviartThomas::create},
-               {"Regge", &Regge::create}};
-
-        auto create_it = create_map.find(family);
-        if (create_it == create_map.end())
-          throw std::runtime_error("Family not found: \"" + family + "\"");
-
-        return create_it->second(cell::str_to_type(cell), degree);
-      },
-      "Create a FiniteElement of a given family, celltype and degree");
+  m.def("create_element", &libtab::create_element,
+        "Create a FiniteElement of a given family, celltype and degree");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");

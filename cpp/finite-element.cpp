@@ -5,6 +5,7 @@
 #include "finite-element.h"
 #include "polynomial-set.h"
 #include <iostream>
+#include <map>
 
 using namespace libtab;
 //-----------------------------------------------------------------------------

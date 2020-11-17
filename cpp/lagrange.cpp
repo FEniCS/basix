@@ -29,7 +29,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   if (degree == 0)
   {
     pt = lattice::create(celltype, 0, lattice::Type::equispaced, true);
-    for (int i = 0; i < entity_dofs.size(); ++i)
+    for (std::size_t i = 0; i < entity_dofs.size(); ++i)
       entity_dofs[i].resize(topology[i].size(), 0);
     entity_dofs[topology.size() - 1][0] = 1;
   }
@@ -48,7 +48,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
           pt.row(c++) = entity_geom.row(0);
           entity_dofs[0].push_back(1);
         }
-        else if ((int)dim == topology.size() - 1)
+        else if (dim == topology.size() - 1)
         {
           const Eigen::ArrayXXd lattice = lattice::create(
               celltype, degree, lattice::Type::equispaced, false);
@@ -83,7 +83,6 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-
   if (celltype == cell::Type::triangle)
   {
     Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
@@ -109,6 +108,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
     }
+
     Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 2);
     Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 2);
     for (int face = 0; face < 4; ++face)
@@ -144,7 +144,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
 
   const int ndofs = polyset::size(celltype, degree);
 
-  const std::vector<std::vector<std::vector<int>>> topology
+  std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
@@ -169,14 +169,9 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficents(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
-  // int perm_count = 0;
-  // for (int i = 1; i < tdim; ++i)
-  //   perm_count += topology[i].size();
-  // for (int i = 1; i < topology.size() - 1; ++i)
-  //   perm_count += topology[i].size();
-  const int perm_count
-      = std::reduce(topology.begin(), topology.end() - 1, 0,
-                    [](int& init, auto& b) { return init + b.size(); });
+  int perm_count = 0;
+  for (std::size_t i = 1; i < topology.size() - 1; ++i)
+    perm_count += topology[i].size();
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));

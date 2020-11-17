@@ -36,13 +36,9 @@ Eigen::ArrayXi dofperms::triangle_reflection(int degree)
 //-----------------------------------------------------------------------------
 Eigen::ArrayXi dofperms::triangle_rotation(int degree)
 {
-  if (degree <= 0)
-    return {};
-
   const int n = degree * (degree + 1) / 2;
   Eigen::ArrayXi perm(n);
   int p = 0;
-
   int st = n - 1;
   for (int i = 1; i <= degree; ++i)
   {
@@ -60,11 +56,7 @@ Eigen::ArrayXi dofperms::triangle_rotation(int degree)
 //-----------------------------------------------------------------------------
 Eigen::ArrayXXd dofperms::interval_reflection_tangent_directions(int degree)
 {
-  Eigen::ArrayXXd dirs = Eigen::ArrayXXd::Zero(degree, degree);
-  for (int i = 0; i < degree; ++i)
-    dirs(i, i) = -1;
-
-  return dirs;
+  return -Eigen::MatrixXd::Identity(degree, degree);
 }
 //-----------------------------------------------------------------------------
 Eigen::ArrayXXd dofperms::triangle_reflection_tangent_directions(int degree)

@@ -25,10 +25,7 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 
   FiniteElement L = DiscontinuousLagrange::create(cell::Type::interval, n);
   Eigen::MatrixXd v = L.tabulate(0, x)[0];
-  Eigen::ArrayXd w(v.rows());
-  w = v * pts.matrix();
-
-  return w;
+  return  v * pts.matrix();
 }
 //-----------------------------------------------------------------------------
 

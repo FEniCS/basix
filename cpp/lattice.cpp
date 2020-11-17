@@ -25,7 +25,7 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 
   FiniteElement L = DiscontinuousLagrange::create(cell::Type::interval, n);
   Eigen::MatrixXd v = L.tabulate(0, x)[0];
-  return  v * pts.matrix();
+  return v * pts.matrix();
 }
 //-----------------------------------------------------------------------------
 
@@ -44,11 +44,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   case cell::Type::interval:
   {
     if (n == 0)
-    {
-      Eigen::ArrayXXd x(1, 1);
-      x(0, 0) = 0.5;
-      return x;
-    }
+      return Eigen::ArrayXXd::Constant(1, 1, 0.5);
 
     Eigen::ArrayXd x;
     if (exterior)
@@ -64,11 +60,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   case cell::Type::quadrilateral:
   {
     if (n == 0)
-    {
-      Eigen::ArrayXXd x(1, 2);
-      x.row(0) << 0.5, 0.5;
-      return x;
-    }
+      return Eigen::ArrayXXd::Constant(1, 2, 0.5);
 
     Eigen::ArrayXd r;
     if (exterior)
@@ -80,7 +72,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
       r += warp_function(n, r);
 
     const int m = r.size();
-    Eigen::ArrayXXd x(m * m, 2);
+    Eigen::ArrayX2d x(m * m, 2);
     int c = 0;
     for (int j = 0; j < m; ++j)
       for (int i = 0; i < m; ++i)
@@ -91,11 +83,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   case cell::Type::hexahedron:
   {
     if (n == 0)
-    {
-      Eigen::ArrayXXd x(1, 3);
-      x.row(0) << 0.5, 0.5, 0.5;
-      return x;
-    }
+      return Eigen::ArrayXXd::Constant(1, 3, 0.5);
 
     Eigen::ArrayXd r;
     if (exterior)
@@ -118,11 +106,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   case cell::Type::triangle:
   {
     if (n == 0)
-    {
-      Eigen::ArrayXXd x(1, 2);
-      x.row(0) << 1.0 / 3.0, 1.0 / 3.0;
-      return x;
-    }
+      return Eigen::ArrayXXd::Constant(1, 2, 1.0 / 3.0);
 
     // Warp points: see Hesthaven and Warburton, Nodal Discontinuous Galerkin
     // Methods, pp. 175-180
@@ -130,19 +114,20 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
     const int b = exterior ? 0 : 1;
 
     // Points
-    Eigen::ArrayXXd p((n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2);
+    Eigen::ArrayX2d p((n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2);
 
     // Displacement from GLL points in 1D, scaled by 1/(r(1-r))
     Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(2 * n + 1, 0.0, 1.0);
     Eigen::ArrayXd wbar = warp_function(n, r);
     const auto s = r.segment(1, 2 * n - 1);
-    wbar.segment(1, 2 * n - 1) /= (s * (1 - s));
+    wbar.segment(1, 2 * n - 1) /= s * (1 - s);
 
     int c = 0;
     for (int j = b; j < (n - b + 1); ++j)
+    {
       for (int i = b; i < (n - b + 1 - j); ++i)
       {
-        int l = n - j - i;
+        const int l = n - j - i;
         const double x = r[2 * i];
         const double y = r[2 * j];
         const double a = r[2 * l];
@@ -150,34 +135,29 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
         p.row(c) << x, y;
         if (lattice_type == lattice::Type::gll_warped)
         {
-          const double dx = x * (a * wbar(n + i - l) + y * wbar(n + i - j));
-          const double dy = y * (a * wbar(n + j - l) + x * wbar(n + j - i));
-          p(c, 0) += dx;
-          p(c, 1) += dy;
+          p(c, 0) += x * (a * wbar(n + i - l) + y * wbar(n + i - j));
+          ;
+          p(c, 1) += y * (a * wbar(n + j - l) + x * wbar(n + j - i));
         }
 
         ++c;
       }
+    }
+
     return p;
   }
   case cell::Type::tetrahedron:
   {
     if (n == 0)
-    {
-      Eigen::ArrayXXd x(1, 3);
-      x.row(0) << 0.25, 0.25, 0.25;
-      return x;
-    }
+      return Eigen::ArrayXXd::Constant(1, 3, 0.25);
 
     const int b = exterior ? 0 : 1;
-
-    Eigen::ArrayXXd p((n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6,
+    Eigen::ArrayX3d p((n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6,
                       3);
-
     Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(2 * n + 1, 0.0, 1.0);
     Eigen::ArrayXd wbar = warp_function(n, r);
     const auto s = r.segment(1, 2 * n - 1);
-    wbar.segment(1, 2 * n - 1) /= (s * (1 - s));
+    wbar.segment(1, 2 * n - 1) /= s * (1 - s);
 
     int c = 0;
     for (int k = b; k < (n - b + 1); ++k)
@@ -204,7 +184,6 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
             const double dz = z
                               * (a * wbar(n + k - l) + x * wbar(n + k - i)
                                  + y * wbar(n + k - j));
-
             p(c, 0) += dx;
             p(c, 1) += dy;
             p(c, 2) += dz;
@@ -221,8 +200,8 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   {
     if (n == 0)
     {
-      Eigen::ArrayXXd x(1, 3);
-      x.row(0) << 1.0 / 3.0, 1.0 / 3.0, 0.5;
+      Eigen::ArrayXXd x = Eigen::ArrayXXd::Constant(1, 3, 1.0 / 3.0);
+      x(0, 2) = 0.5;
       return x;
     }
 
@@ -231,7 +210,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
     const Eigen::ArrayXXd line_pts
         = lattice::create(cell::Type::interval, n, lattice_type, exterior);
 
-    Eigen::ArrayXXd x(tri_pts.rows() * line_pts.rows(), 3);
+    Eigen::ArrayX3d x(tri_pts.rows() * line_pts.rows(), 3);
     x.leftCols(2) = tri_pts.replicate(line_pts.rows(), 1);
     for (int i = 0; i < line_pts.rows(); ++i)
       x.block(i * tri_pts.rows(), 2, tri_pts.rows(), 1) = line_pts(i, 0);
@@ -245,27 +224,26 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
           "Warped lattice not yet implemented for pyramid");
     }
 
-    Eigen::ArrayXXd points;
     if (n == 0)
     {
-      points.resize(1, 3);
-      points.row(0) << 0.4, 0.4, 0.2;
+      Eigen::ArrayXXd x = Eigen::ArrayXXd::Constant(1, 3, 0.4);
+      x(0, 2) = 0.2;
+      return x;
     }
     else
     {
       int b = (exterior == false) ? 1 : 0;
       n -= b * 3;
-
       int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
-      points.resize(m, 3);
+      Eigen::ArrayX3d points(m, 3);
       int c = 0;
       for (int k = 0; k < n + 1; ++k)
         for (int j = 0; j < n + 1 - k; ++j)
           for (int i = 0; i < n + 1 - k; ++i)
             points.row(c++) << h * (i + b), h * (j + b), h * (k + b);
-    }
 
-    return points;
+      return points;
+    }
   }
   default:
     throw std::runtime_error("Unsupported cell for lattice");

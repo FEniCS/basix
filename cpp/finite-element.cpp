@@ -48,9 +48,10 @@ FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
   if (condition_check)
   {
     Eigen::JacobiSVD svd(A);
-    std::cout << "Num sigma: " << svd.singularValues().size() << std::endl;
-    std::cout << "sigma_0: " << svd.singularValues().head(1) << std::endl;
-    std::cout << "sigma_n: " << svd.singularValues().tail(1) << std::endl;
+    const int size = svd.singularValues().size() std::cout
+                     << "Num sigma: " << size << std::endl;
+    std::cout << "sigma_0: " << svd.singularValues()[0] << std::endl;
+    std::cout << "sigma_n: " << svd.singularValues()[size - 1] << std::endl;
 
     // const double kappa
     //     = svd.singularValues()(0)

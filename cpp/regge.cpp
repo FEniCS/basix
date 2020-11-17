@@ -139,7 +139,7 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D

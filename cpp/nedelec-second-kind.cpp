@@ -124,7 +124,7 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   const Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);

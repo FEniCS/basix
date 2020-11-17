@@ -385,7 +385,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
       new_coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
   return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
                        perms);
 }

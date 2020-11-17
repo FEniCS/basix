@@ -43,7 +43,6 @@ FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
   std::cout << "Dual matrix = \n[" << dualmat << "]\n";
 #endif
 
-  Eigen::MatrixXd new_coeffs;
   const Eigen::MatrixXd A = coeffs * dualmat.transpose();
   if (condition_check)
   {
@@ -58,8 +57,7 @@ FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
     }
   }
 
-  new_coeffs = A.colPivHouseholderQr().solve(coeffs);
-
+  Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 #ifndef NDEBUG
   std::cout << "New coeffs = \n[" << new_coeffs << "]\n";
 #endif

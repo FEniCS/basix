@@ -40,13 +40,13 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   // each cell type
 
   if (celltype == cell::Type::point)
-    return Eigen::ArrayXd::Zero(1, 1);
+    return Eigen::ArrayXXd::Zero(1, 1);
 
   if (celltype == cell::Type::interval)
   {
     if (n == 0)
     {
-      Eigen::ArrayXd x(1, 1);
+      Eigen::ArrayXXd x(1, 1);
       x(0, 0) = 0.5;
       return x;
     }
@@ -66,7 +66,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   {
     if (n == 0)
     {
-      Eigen::ArrayXd x(1, 2);
+      Eigen::ArrayXXd x(1, 2);
       x.row(0) << 0.5, 0.5;
       return x;
     }
@@ -93,7 +93,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   {
     if (n == 0)
     {
-      Eigen::ArrayXd x(1, 3);
+      Eigen::ArrayXXd x(1, 3);
       x.row(0) << 0.5, 0.5, 0.5;
       return x;
     }
@@ -120,7 +120,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   {
     if (n == 0)
     {
-      Eigen::ArrayXd x(1, 2);
+      Eigen::ArrayXXd x(1, 2);
       x.row(0) << 1.0 / 3.0, 1.0 / 3.0;
       return x;
     }
@@ -165,7 +165,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   {
     if (n == 0)
     {
-      Eigen::ArrayXd x(1, 3);
+      Eigen::ArrayXXd x(1, 3);
       x.row(0) << 0.25, 0.25, 0.25;
       return x;
     }
@@ -222,7 +222,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
   {
     if (n == 0)
     {
-      Eigen::ArrayXd x(1, 3);
+      Eigen::ArrayXXd x(1, 3);
       x.row(0) << 1.0 / 3.0, 1.0 / 3.0, 0.5;
       return x;
     }

@@ -192,11 +192,12 @@ Eigen::ArrayXd quadrature::compute_gauss_jacobi_points(double a, int m)
       double s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      Eigen::ArrayXd f = quadrature::compute_jacobi_deriv(a, m, 1, x.row(k));
+      const Eigen::ArrayXd f
+          = quadrature::compute_jacobi_deriv(a, m, 1, x.row(k));
       double delta = f[0] / (f[1] - f[0] * s);
       x[k] -= delta;
 
-      if (fabs(delta) < eps)
+      if (std::abs(delta) < eps)
         break;
       ++j;
     }
@@ -236,9 +237,7 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
 quadrature::make_quadrature_line(int m)
 {
   auto [ptx, wx] = quadrature::compute_gauss_jacobi_rule(0.0, m);
-  Eigen::ArrayXd pts = 0.5 * (ptx + 1.0);
-  Eigen::ArrayXd wts = wx * 0.5;
-  return {pts, wts};
+  return {0.5 * (ptx + 1.0), wx * 0.5};
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayX2d, Eigen::ArrayXd>
@@ -437,6 +436,7 @@ quadrature::gauss_lobatto_legendre_line_rule(int m)
 
   // Calculate the recursion coefficients
   auto [alpha, beta] = rec_jacobi(m, 0, 0);
+
   // Compute Lobatto nodes and weights
   auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
 

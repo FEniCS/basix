@@ -18,12 +18,14 @@ using namespace libtab;
 namespace
 {
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd create_nedelec_2d_space(int degree)
+Eigen::MatrixXd create_nedelec_2d_space(int degree)
 {
   // Number of order (degree) vector polynomials
   const int nv = degree * (degree + 1) / 2;
+
   // Number of order (degree-1) vector polynomials
   const int ns0 = (degree - 1) * degree / 2;
+
   // Number of additional polynomials in Nedelec set
   const int ns = degree;
 
@@ -64,7 +66,7 @@ Eigen::ArrayXXd create_nedelec_2d_dual(int degree)
   const int psize = (degree + 1) * (degree + 2) / 2;
 
   // Dual space
-  Eigen::MatrixXd dualmat = Eigen::MatrixXd::Zero(ndofs, psize * 2);
+  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * 2);
 
   // dof counter
   const int quad_deg = 5 * degree;
@@ -72,7 +74,7 @@ Eigen::ArrayXXd create_nedelec_2d_dual(int degree)
   // Integral representation for the boundary (edge) dofs
   FiniteElement moment_space_E
       = DiscontinuousLagrange::create(cell::Type::interval, degree - 1);
-  dualmat.block(0, 0, 3 * degree, psize * 2)
+  dual.block(0, 0, 3 * degree, psize * 2)
       = moments::make_tangent_integral_moments(
           moment_space_E, cell::Type::triangle, 2, degree, quad_deg);
 
@@ -81,12 +83,12 @@ Eigen::ArrayXXd create_nedelec_2d_dual(int degree)
     // Interior integral moment
     FiniteElement moment_space_I
         = DiscontinuousLagrange::create(cell::Type::triangle, degree - 2);
-    dualmat.block(3 * degree, 0, degree * (degree - 1), psize * 2)
+    dual.block(3 * degree, 0, degree * (degree - 1), psize * 2)
         = moments::make_integral_moments(moment_space_I, cell::Type::triangle,
                                          2, degree, quad_deg);
   }
 
-  return dualmat;
+  return dual;
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
@@ -95,8 +97,7 @@ std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       3, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
-      = dofperms::interval_reflection(degree);
+  Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
   for (int edge = 0; edge < 3; ++edge)
   {
     const int start = edge_ref.size() * edge;
@@ -170,6 +171,7 @@ Eigen::ArrayXXd create_nedelec_3d_space(int degree)
       wcoeffs(tdim * nv + i + ns - ns_remove, k) = w;
     }
   }
+
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
@@ -183,6 +185,7 @@ Eigen::ArrayXXd create_nedelec_3d_space(int degree)
         wcoeffs(tdim * nv + i - ns_remove, psize * 2 + k) = w;
     }
   }
+
   for (int i = 0; i < ns; ++i)
   {
     for (int k = 0; k < psize; ++k)
@@ -208,7 +211,7 @@ Eigen::ArrayXXd create_nedelec_3d_dual(int degree)
   // Work out number of dofs
   const int ndofs = 6 * degree + 4 * degree * (degree - 1)
                     + (degree - 2) * (degree - 1) * degree / 2;
-  Eigen::MatrixXd dualmat = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
+  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
 
   // Create quadrature scheme on the edge
   const int quad_deg = 5 * degree;
@@ -216,7 +219,7 @@ Eigen::ArrayXXd create_nedelec_3d_dual(int degree)
   // Integral representation for the boundary (edge) dofs
   FiniteElement moment_space_E
       = DiscontinuousLagrange::create(cell::Type::interval, degree - 1);
-  dualmat.block(0, 0, 6 * degree, psize * 3)
+  dual.block(0, 0, 6 * degree, psize * 3)
       = moments::make_tangent_integral_moments(
           moment_space_E, cell::Type::tetrahedron, 3, degree, quad_deg);
 
@@ -225,7 +228,7 @@ Eigen::ArrayXXd create_nedelec_3d_dual(int degree)
     // Integral moments on faces
     FiniteElement moment_space_F
         = DiscontinuousLagrange::create(cell::Type::triangle, degree - 2);
-    dualmat.block(6 * degree, 0, 4 * (degree - 1) * degree, psize * 3)
+    dual.block(6 * degree, 0, 4 * (degree - 1) * degree, psize * 3)
         = moments::make_integral_moments(
             moment_space_F, cell::Type::tetrahedron, 3, degree, quad_deg);
   }
@@ -235,13 +238,13 @@ Eigen::ArrayXXd create_nedelec_3d_dual(int degree)
     // Interior integral moment
     FiniteElement moment_space_I
         = DiscontinuousLagrange::create(cell::Type::tetrahedron, degree - 3);
-    dualmat.block(6 * degree + 4 * degree * (degree - 1), 0,
-                  (degree - 2) * (degree - 1) * degree / 2, psize * 3)
+    dual.block(6 * degree + 4 * degree * (degree - 1), 0,
+               (degree - 2) * (degree - 1) * degree / 2, psize * 3)
         = moments::make_integral_moments(
             moment_space_I, cell::Type::tetrahedron, 3, degree, quad_deg);
   }
 
-  return dualmat;
+  return dual;
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
@@ -328,20 +331,20 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   const int tdim = cell::topological_dimension(celltype);
 
   Eigen::ArrayXXd wcoeffs;
-  Eigen::ArrayXXd dualmat;
+  Eigen::ArrayXXd dual;
   std::vector<Eigen::MatrixXd> perms;
   std::vector<Eigen::MatrixXd> directions;
 
   if (celltype == cell::Type::triangle)
   {
     wcoeffs = create_nedelec_2d_space(degree);
-    dualmat = create_nedelec_2d_dual(degree);
+    dual = create_nedelec_2d_dual(degree);
     perms = create_nedelec_2d_base_perms(degree);
   }
   else if (celltype == cell::Type::tetrahedron)
   {
     wcoeffs = create_nedelec_3d_space(degree);
-    dualmat = create_nedelec_3d_dual(degree);
+    dual = create_nedelec_3d_dual(degree);
     perms = create_nedelec_3d_base_perms(degree);
   }
   else
@@ -358,9 +361,8 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
-  Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
-  return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
-                       perms);
+  Eigen::MatrixXd coeffs
+      = FiniteElement::compute_expansion_coefficents(wcoeffs, dual);
+  return FiniteElement(celltype, degree, {tdim}, coeffs, entity_dofs, perms);
 }
 //-----------------------------------------------------------------------------

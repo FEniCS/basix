@@ -48,25 +48,28 @@ FiniteElement::compute_expansion_coefficents(
   std::cout << "Dual matrix = \n[" << dualmat << "]\n";
 #endif
 
-  auto A = coeffs * dualmat.transpose();
-
+  Eigen::VectorXd new_coeffs;
+  const Eigen::MatrixXd A = coeffs * dualmat.transpose();
   if (condition_check)
   {
-    double detA = A.determinant();
-    if (std::fabs(detA) < 1e-6)
+    Eigen::JacobiSVD svd(A);
+    const double kappa
+        = svd.singularValues()(0)
+          / svd.singularValues()(svd.singularValues().size() - 1);
+    if (kappa < 1e-6)
     {
       throw std::runtime_error("Poorly conditioned B.D^T when computing "
                                "expansion coefficients");
     }
+    new_coeffs = svd.solve(coeffs);
   }
-
-  // _coeffs = A^-1(coeffs)
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+  else
+    new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 
 #ifndef NDEBUG
   std::cout << "New coeffs = \n[" << new_coeffs << "]\n";
 #endif
+
   return new_coeffs;
 }
 //-----------------------------------------------------------------------------

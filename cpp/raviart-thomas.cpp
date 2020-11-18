@@ -57,7 +57,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
       for (int j = 0; j < tdim; ++j)
       {
         const double w_sum = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
-                             * Pkp1_at_Qpts.col(k)).sum();
+                              * Pkp1_at_Qpts.col(k))
+                                 .sum();
         wcoeffs(nv * tdim + i, k + psize * j) = w_sum;
       }
     }
@@ -97,7 +98,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   Eigen::MatrixXd coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dual);
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
 
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the interior
   const std::vector<std::vector<std::vector<int>>> topology

@@ -122,7 +122,7 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   const Eigen::MatrixXd coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dual);
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);

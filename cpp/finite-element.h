@@ -204,9 +204,9 @@ public:
   /// @return The matrix C of expansion coefficients that define the basis
   /// functions of the finite element space.
   static Eigen::MatrixXd
-  compute_expansion_coefficents(const Eigen::MatrixXd& span_coeffs,
-                                const Eigen::MatrixXd& dual,
-                                bool condition_check = false);
+  compute_expansion_coefficients(const Eigen::MatrixXd& span_coeffs,
+                                 const Eigen::MatrixXd& dual,
+                                 bool condition_check = false);
 
   /// Get the base permutations
   /// The base permutations represent the effect of rotating or reflecting

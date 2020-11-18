@@ -34,9 +34,9 @@ FiniteElement::FiniteElement(cell::Type cell_type, int degree,
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd
-FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
-                                             const Eigen::MatrixXd& dual,
-                                             bool condition_check)
+FiniteElement::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
+                                              const Eigen::MatrixXd& dual,
+                                              bool condition_check)
 {
 #ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";

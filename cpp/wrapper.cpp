@@ -88,7 +88,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const std::vector<Eigen::MatrixXd>& base_permutations)
           -> FiniteElement {
         Eigen::MatrixXd new_coeffs
-            = FiniteElement::compute_expansion_coefficents(coeffs, dualmat,
+            = FiniteElement::compute_expansion_coefficients(coeffs, dualmat,
                                                            true);
         return FiniteElement(celltype, degree, value_shape, new_coeffs,
                              entity_dofs, base_permutations);

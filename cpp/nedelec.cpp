@@ -362,7 +362,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
   Eigen::MatrixXd coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dual);
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(celltype, degree, {tdim}, coeffs, entity_dofs, perms);
 }
 //-----------------------------------------------------------------------------

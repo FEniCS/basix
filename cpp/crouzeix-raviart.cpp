@@ -48,7 +48,7 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   const Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
+      = FiniteElement::compute_expansion_coefficients(coeffs, dualmat);
 
   // Crouzeix-Raviart has one dof on each entity of tdim-1.
   std::vector<std::vector<int>> entity_dofs(topology.size());

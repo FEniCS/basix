@@ -18,7 +18,7 @@ using namespace libtab;
 namespace
 {
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd create_nedelec_2d_space(int degree)
+Eigen::MatrixXd create_nedelec_2d_space(int degree)
 {
   // Number of order (degree) vector polynomials
   const int nv = degree * (degree + 1) / 2;
@@ -58,16 +58,15 @@ Eigen::ArrayXXd create_nedelec_2d_space(int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd create_nedelec_2d_dual(int degree)
+Eigen::MatrixXd create_nedelec_2d_dual(int degree)
 {
   // Number of dofs and size of polynomial set P(k+1)
   const int ndofs = 3 * degree + degree * (degree - 1);
   const int psize = (degree + 1) * (degree + 2) / 2;
 
   // Dual space
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> dualmat
-      = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                      Eigen::RowMajor>::Zero(ndofs, psize * 2);
+  Eigen::MatrixXd dualmat
+      = Eigen::MatrixXd::Zero(ndofs, psize * 2);
 
   // dof counter
   const int quad_deg = 5 * degree;
@@ -127,7 +126,7 @@ create_nedelec_2d_base_perms(int degree)
   return base_permutations;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd create_nedelec_3d_space(int degree)
+Eigen::MatrixXd create_nedelec_3d_space(int degree)
 {
   // Reference tetrahedron
   const int tdim = 3;
@@ -204,7 +203,7 @@ Eigen::ArrayXXd create_nedelec_3d_space(int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd create_nedelec_3d_dual(int degree)
+Eigen::MatrixXd create_nedelec_3d_dual(int degree)
 {
   const int tdim = 3;
 
@@ -214,8 +213,7 @@ Eigen::ArrayXXd create_nedelec_3d_dual(int degree)
   // Work out number of dofs
   const int ndofs = 6 * degree + 4 * degree * (degree - 1)
                     + (degree - 2) * (degree - 1) * degree / 2;
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      dualmat(ndofs, psize * tdim);
+  Eigen::MatrixXd dualmat(ndofs, psize * tdim);
   dualmat.setZero();
 
   // Create quadrature scheme on the edge
@@ -339,8 +337,8 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
-  Eigen::ArrayXXd wcoeffs;
-  Eigen::ArrayXXd dualmat;
+  Eigen::MatrixXd wcoeffs;
+  Eigen::MatrixXd dualmat;
   std::vector<
       Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
       perms;
@@ -372,8 +370,9 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
-  Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
+  const Eigen::MatrixXd new_coeffs
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
+
   return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
                        perms);
 }

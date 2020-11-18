@@ -19,7 +19,7 @@ using namespace libtab;
 namespace
 {
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd create_nedelec_2d_dual(int degree)
+Eigen::MatrixXd create_nedelec_2d_dual(int degree)
 {
   // Number of dofs and size of polynomial set P(k+1)
   const int ndofs = (degree + 1) * (degree + 2);
@@ -128,7 +128,7 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
       base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   const Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
 
   // Nedelec(2nd kind) has (d+1) dofs on each edge, (d+1)(d-1) on each face
   // and (d-2)(d-1)(d+1)/2 on the interior in 3D

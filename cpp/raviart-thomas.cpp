@@ -133,7 +133,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   }
 
   Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(wcoeffs, dualmat);
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
 
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the interior
   std::vector<std::vector<int>> entity_dofs(topology.size());

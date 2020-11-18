@@ -71,12 +71,12 @@ def test_gll():
     m = 6
     pts, wts = libtab.gauss_lobatto_legendre_line_rule(m)
     ref_pts = np.array([-1., -0.76505532,
-                        -0.28523152,  0.28523152,
+                        -0.28523152, 0.28523152,
                         0.76505532, 1.])
     assert (np.allclose(pts, ref_pts))
     ref_wts = np.array([0.06666667, 0.37847496,
                         0.55485838, 0.55485838,
-                        0.37847496,       0.06666667])
+                        0.37847496, 0.06666667])
     assert (np.allclose(wts, ref_wts))
     print(pts, wts)
     assert np.isclose(sum(pts*wts), 0)

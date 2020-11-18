@@ -106,16 +106,19 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   // Solve tridiagonal system using Thomas algorithm
   double g1 = 0.0;
   double g2 = 0.0;
-  for (int i = 1; i < bsqrt.rows(); ++i)
+  const int n = alpha.rows();
+  for (int i = 1; i < n - 1; ++i)
   {
     g1 = bsqrt(i) / (alpha(i) - xl1 - bsqrt(i - 1) * g1);
     g2 = bsqrt(i) / (alpha(i) - xl2 - bsqrt(i - 1) * g2);
   }
+  g1 = 1.0 / (alpha(n - 1) - xl1 - bsqrt(n - 2) * g1);
+  g2 = 1.0 / (alpha(n - 1) - xl2 - bsqrt(n - 2) * g2);
 
   Eigen::ArrayXd alpha_l = alpha;
-  alpha_l[alpha.rows() - 1] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
+  alpha_l(n - 1) = (g1 * xl2 - g2 * xl1) / (g1 - g2);
   Eigen::ArrayXd beta_l = beta;
-  beta_l[beta.rows() - 1] = (xl2 - xl1) / (g1 - g2);
+  beta_l(n - 1) = (xl2 - xl1) / (g1 - g2);
 
   return gauss(alpha_l, beta_l);
 }

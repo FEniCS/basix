@@ -123,9 +123,8 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   int perm_count = 0;
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size() * i;
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   const Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);

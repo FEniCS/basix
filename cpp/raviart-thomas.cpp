@@ -99,9 +99,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size() * i;
 
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if(tdim == 2) {
     Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < facet_count; ++edge)

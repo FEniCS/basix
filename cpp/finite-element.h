@@ -317,4 +317,5 @@ private:
   // Base permutations
   std::vector<Eigen::MatrixXd> _base_permutations;
 };
+
 } // namespace libtab

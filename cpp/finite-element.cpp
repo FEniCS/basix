@@ -35,7 +35,7 @@ FiniteElement::FiniteElement(
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd
-FiniteElement::compute_expansion_coefficents(const Eigen::MatrixXd& coeffs,
+FiniteElement::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
                                              const Eigen::MatrixXd& dualmat,
                                              bool condition_check)
 {

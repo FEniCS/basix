@@ -87,7 +87,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
   Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
+      = FiniteElement::compute_expansion_coefficients(coeffs, dualmat);
 
   int perm_count = 0;
   for (int i = 1; i < tdim; ++i)
@@ -188,7 +188,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
   Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
+      = FiniteElement::compute_expansion_coefficients(coeffs, dualmat);
 
   int perm_count = 0;
   for (int i = 1; i < tdim; ++i)

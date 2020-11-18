@@ -23,8 +23,7 @@ public:
   FiniteElement(cell::Type cell_type, int degree, std::vector<int> value_shape,
                 Eigen::ArrayXXd coeffs,
                 std::vector<std::vector<int>> entity_dofs,
-                std::vector<Eigen::Matrix<double, Eigen::Dynamic,
-                                          Eigen::Dynamic, Eigen::RowMajor>>
+                std::vector<Eigen::MatrixXd>
                     base_permutations);
 
   /// Destructor

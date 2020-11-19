@@ -5,6 +5,7 @@
 #include "lagrange.h"
 #include "dof-permutations.h"
 #include "lattice.h"
+#include "libtab.h"
 #include "polynomial-set.h"
 #include <Eigen/Dense>
 #include <iostream>
@@ -13,7 +14,8 @@
 using namespace libtab;
 
 //----------------------------------------------------------------------------
-FiniteElement lagrange::create(cell::Type celltype, int degree)
+FiniteElement libtab::create_lagrange(cell::Type celltype, int degree,
+                                      const std::string& name)
 {
   if (celltype == cell::Type::point)
     throw std::runtime_error("Invalid celltype");
@@ -128,11 +130,12 @@ FiniteElement lagrange::create(cell::Type celltype, int degree)
   Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
-  return FiniteElement(lagrange::family_name, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_permutations);
+  return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------
-FiniteElement dlagrange::create(cell::Type celltype, int degree)
+FiniteElement libtab::create_dlagrange(cell::Type celltype, int degree,
+                                       const std::string& name)
 {
   if (celltype != cell::Type::interval and celltype != cell::Type::triangle
       and celltype != cell::Type::tetrahedron)
@@ -176,7 +179,7 @@ FiniteElement dlagrange::create(cell::Type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  return FiniteElement(dlagrange::family_name, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_permutations);
+  return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

@@ -72,7 +72,7 @@ FiniteElement rt::create(cell::Type celltype, int degree)
   int quad_deg = 5 * degree;
 
   // Add rows to dualmat for integral moments on facets
-  FiniteElement moment_space_facet = dlagrange::create(facettype, degree - 1);
+  FiniteElement moment_space_facet = create_lagrange(facettype, degree - 1);
   const int facet_count = tdim + 1;
   const int facet_dofs = ns;
   dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
@@ -84,8 +84,7 @@ FiniteElement rt::create(cell::Type celltype, int degree)
   {
     const int internal_dofs = tdim * ns0;
     // Interior integral moment
-    FiniteElement moment_space_interior
-        = dlagrange::create(celltype, degree - 2);
+    FiniteElement moment_space_interior = create_lagrange(celltype, degree - 2);
     dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
         = moments::make_integral_moments(moment_space_interior, celltype, tdim,
                                          degree, quad_deg);

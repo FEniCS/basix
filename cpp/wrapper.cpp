@@ -111,12 +111,12 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   // TODO: remove - not part of public interface
   // Create FiniteElement of different types
-  m.def("Nedelec", &nedelec::create, "Create Nedelec Element (first kind)");
-  m.def("Lagrange", &lagrange::create, "Create Lagrange Element");
+  m.def("Nedelec", &create_nedelec, "Create Nedelec Element (first kind)");
+  m.def("NedelecSecondKind", &create_nedelec2,
+        "Create Nedelec Element (second kind)");
+  m.def("Lagrange", &create_lagrange, "Create Lagrange Element");
   m.def("CrouzeixRaviart", &cr::create, "Create Crouzeix-Raviart Element");
   m.def("RaviartThomas", &rt::create, "Create Raviart-Thomas Element");
-  m.def("NedelecSecondKind", &nedelec2::create,
-        "Create Nedelec Element (second kind)");
   m.def("Regge", &regge::create, "Create Regge Element");
 
   // Create FiniteElement

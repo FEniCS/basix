@@ -23,7 +23,7 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
   for (int i = 0; i < n + 1; ++i)
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
-  FiniteElement L = dlagrange::create(cell::Type::interval, n);
+  FiniteElement L = create_dlagrange(cell::Type::interval, n);
   Eigen::MatrixXd v = L.tabulate(0, x)[0];
   return v * pts.matrix();
 }

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "finite-element.h"
+#include "libtab.h"
 
 namespace libtab
 {

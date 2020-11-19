@@ -10,5 +10,5 @@ endif()
 
 # Executable
 add_library(tab SHARED lattice.cpp defines.cpp polynomial-set.cpp dof-permutations.cpp integral-moments.cpp lagrange.cpp libtab.cpp quadrature.cpp
-                       nedelec.cpp raviart-thomas.cpp finite-element.cpp cell.cpp regge.cpp crouzeix-raviart.cpp)
+                       nedelec.cpp raviart-thomas.cpp cell.cpp regge.cpp crouzeix-raviart.cpp)
 target_compile_definitions(tab PRIVATE LIBTAB_VERSION=${PROJECT_VERSION})

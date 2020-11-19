@@ -4,28 +4,27 @@
 
 #pragma once
 
-#include "finite-element.h"
+#include "libtab.h"
+#include <string>
 
 namespace libtab
-{
-namespace nedelec
 {
 /// Create Nedelec element (first kind)
 /// @param celltype
 /// @param degree
-FiniteElement create(cell::Type celltype, int degree);
+FiniteElement create_nedelec(cell::Type celltype, int degree,
+                             const std::string& name = std::string());
 
-static std::string family_name = "Nedelec 1st kind H(curl)";
-} // namespace nedelec
+// static std::string family_name = "Nedelec 1st kind H(curl)";
+// } // namespace libtab
 
-namespace nedelec2
-{
 /// Create Nedelec element (second kind)
 /// @param celltype
 /// @param degree
-FiniteElement create(cell::Type celltype, int degree);
+FiniteElement create_nedelec2(cell::Type celltype, int degree,
+                              const std::string& name = std::string());
 
-static std::string family_name = "Nedelec 2nd kind H(curl)";
-} // namespace nedelec2
+// static std::string family_name = "Nedelec 2nd kind H(curl)";
+// } // namespace nedelec2
 
 } // namespace libtab

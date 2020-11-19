@@ -5,7 +5,7 @@
 #pragma once
 
 #include "cell.h"
-#include "finite-element.h"
+#include "libtab.h"
 
 namespace libtab
 {

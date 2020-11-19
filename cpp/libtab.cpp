@@ -4,13 +4,12 @@
 
 #include "libtab.h"
 #include "crouzeix-raviart.h"
-#include "finite-element.h"
 #include "lagrange.h"
 #include "nedelec.h"
 #include "polynomial-set.h"
 #include "raviart-thomas.h"
 #include "regge.h"
-#include <map>
+#include <iostream>
 
 using namespace libtab;
 
@@ -18,19 +17,137 @@ using namespace libtab;
 libtab::FiniteElement libtab::create_element(std::string family,
                                              std::string cell, int degree)
 {
-  const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
-      create_map = {{cr::family_name, &cr::create},
-                    {dlagrange::family_name, &dlagrange::create},
-                    {lagrange::family_name, &lagrange::create},
-                    {nedelec::family_name, &nedelec::create},
-                    {nedelec2::family_name, &nedelec2::create},
-                    {rt::family_name, &rt::create},
-                    {regge::family_name, &regge::create}};
-
-  auto create_it = create_map.find(family);
-  if (create_it == create_map.end())
+  if (family == "Lagrange")
+    return create_lagrange(cell::str_to_type(cell), degree, family);
+  else if (family == "Discontinuous Lagrange")
+    return create_dlagrange(cell::str_to_type(cell), degree, family);
+  else if (family == "Raviart-Thomas")
+    return rt::create(cell::str_to_type(cell), degree);
+  else if (family == "Nedelec 1st kind H(curl)")
+    return create_nedelec(cell::str_to_type(cell), degree, family);
+  else if (family == "Nedelec 2nd kind H(curl)")
+    return create_nedelec2(cell::str_to_type(cell), degree, family);
+  else if (family == "Regge")
+    return regge::create(cell::str_to_type(cell), degree);
+  else if (family == "Crouzeix-Raviart")
+    return cr::create(cell::str_to_type(cell), degree);
+  else
     throw std::runtime_error("Family not found: \"" + family + "\"");
-
-  return create_it->second(cell::str_to_type(cell), degree);
 }
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    std::string family_name, cell::Type cell_type, int degree,
+    const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
+    const std::vector<std::vector<int>>& entity_dofs,
+    const std::vector<Eigen::MatrixXd>& base_permutations)
+    : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
+      _coeffs(coeffs), _entity_dofs(entity_dofs),
+      _base_permutations(base_permutations), _family_name(family_name)
+{
+  // Check that entity dofs add up to total number of dofs
+  int sum = 0;
+  for (const std::vector<int>& q : entity_dofs)
+  {
+    for (const int& w : q)
+      sum += w;
+  }
+
+  if (sum != _coeffs.rows())
+  {
+    throw std::runtime_error(
+        "Number of entity dofs does not match total number of dofs");
+  }
+}
+//-----------------------------------------------------------------------------
+cell::Type FiniteElement::cell_type() const { return _cell_type; }
+//-----------------------------------------------------------------------------
+int FiniteElement::degree() const { return _degree; }
+//-----------------------------------------------------------------------------
+int FiniteElement::value_size() const
+{
+  int value_size = 1;
+  for (const int& d : _value_shape)
+    value_size *= d;
+  return value_size;
+}
+//-----------------------------------------------------------------------------
+const std::vector<int>& FiniteElement::value_shape() const
+{
+  return _value_shape;
+}
+//-----------------------------------------------------------------------------
+int FiniteElement::ndofs() const { return _coeffs.rows(); }
+//-----------------------------------------------------------------------------
+std::string FiniteElement::family_name() const { return _family_name; }
+//-----------------------------------------------------------------------------
+std::vector<std::vector<int>> FiniteElement::entity_dofs() const
+{
+  return _entity_dofs;
+}
+//-----------------------------------------------------------------------------
+Eigen::MatrixXd
+FiniteElement::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
+                                              const Eigen::MatrixXd& dual,
+                                              bool condition_check)
+{
+#ifndef NDEBUG
+  std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
+  std::cout << "Dual matrix = \n[" << dual << "]\n";
+#endif
+
+  const Eigen::MatrixXd A = coeffs * dual.transpose();
+  if (condition_check)
+  {
+    Eigen::JacobiSVD svd(A);
+    const int size = svd.singularValues().size();
+    const double kappa
+        = svd.singularValues()(0) / svd.singularValues()(size - 1);
+    if (kappa > 1e6)
+    {
+      throw std::runtime_error("Poorly conditioned B.D^T when computing "
+                               "expansion coefficients");
+    }
+  }
+
+  Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+#ifndef NDEBUG
+  std::cout << "New coeffs = \n[" << new_coeffs << "]\n";
+#endif
+
+  return new_coeffs;
+}
+//-----------------------------------------------------------------------------
+std::vector<Eigen::ArrayXXd>
+FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
+{
+  const int tdim = cell::topological_dimension(_cell_type);
+  if (x.cols() != tdim)
+    throw std::runtime_error("Point dim does not match element dim.");
+
+  std::vector<Eigen::ArrayXXd> basis
+      = polyset::tabulate(_cell_type, _degree, nd, x);
+  const int psize = polyset::size(_cell_type, _degree);
+  const int ndofs = _coeffs.rows();
+  const int vs = value_size();
+
+  std::vector<Eigen::ArrayXXd> dresult(basis.size(),
+                                       Eigen::ArrayXXd(x.rows(), ndofs * vs));
+  for (std::size_t p = 0; p < dresult.size(); ++p)
+  {
+    for (int j = 0; j < vs; ++j)
+    {
+      dresult[p].block(0, ndofs * j, x.rows(), ndofs)
+          = basis[p].matrix()
+            * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
+    }
+  }
+
+  return dresult;
+}
+//-----------------------------------------------------------------------------
+std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
+{
+  return _base_permutations;
+};
 //-----------------------------------------------------------------------------

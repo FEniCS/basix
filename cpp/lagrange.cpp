@@ -13,7 +13,7 @@
 using namespace libtab;
 
 //----------------------------------------------------------------------------
-FiniteElement Lagrange::create(cell::Type celltype, int degree)
+FiniteElement lagrange::create(cell::Type celltype, int degree)
 {
   if (celltype == cell::Type::point)
     throw std::runtime_error("Invalid celltype");
@@ -128,11 +128,11 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
-  return FiniteElement(Lagrange::family_name, celltype, degree, {1}, coeffs,
+  return FiniteElement(lagrange::family_name, celltype, degree, {1}, coeffs,
                        entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------
-FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
+FiniteElement dlagrange::create(cell::Type celltype, int degree)
 {
   if (celltype != cell::Type::interval and celltype != cell::Type::triangle
       and celltype != cell::Type::tetrahedron)
@@ -176,7 +176,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  return FiniteElement(DiscontinuousLagrange::family_name, celltype, degree,
-                       {1}, coeffs, entity_dofs, base_permutations);
+  return FiniteElement(dlagrange::family_name, celltype, degree, {1}, coeffs,
+                       entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

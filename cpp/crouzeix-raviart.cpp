@@ -13,7 +13,7 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
+FiniteElement cr::create(cell::Type celltype, int degree)
 {
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
@@ -53,7 +53,7 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3] = {0};
 
-  return FiniteElement(CrouzeixRaviart::family_name, celltype, 1, {1}, coeffs,
-                       entity_dofs, base_permutations);
+  return FiniteElement(cr::family_name, celltype, 1, {1}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

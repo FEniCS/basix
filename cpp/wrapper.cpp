@@ -9,18 +9,19 @@
 #include <string>
 
 #include "cell.h"
-#include "crouzeix-raviart.h"
 #include "defines.h"
 #include "indexing.h"
-#include "lagrange.h"
 #include "lattice.h"
-#include "nedelec-second-kind.h"
-#include "nedelec.h"
+#include "libtab.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
+
+// TODO: remove, not in public interface
+#include "crouzeix-raviart.h"
+#include "lagrange.h"
+#include "nedelec.h"
 #include "raviart-thomas.h"
 #include "regge.h"
-#include "util.h"
 
 namespace py = pybind11;
 using namespace libtab;
@@ -90,7 +91,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
           -> FiniteElement {
         Eigen::MatrixXd new_coeffs
             = FiniteElement::compute_expansion_coefficients(coeffs, dualmat,
-                                                           true);
+                                                            true);
         return FiniteElement(family_name, celltype, degree, value_shape,
                              new_coeffs, entity_dofs, base_permutations);
       },
@@ -108,17 +109,17 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family_name", &FiniteElement::family_name);
 
+  // TODO: remove - not part of public interface
   // Create FiniteElement of different types
-  m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");
-  m.def("Lagrange", &Lagrange::create, "Create Lagrange Element");
-  m.def("CrouzeixRaviart", &CrouzeixRaviart::create,
-        "Create Crouzeix-Raviart Element");
-  m.def("RaviartThomas", &RaviartThomas::create,
-        "Create Raviart-Thomas Element");
-  m.def("NedelecSecondKind", &NedelecSecondKind::create,
+  m.def("Nedelec", &nedelec::create, "Create Nedelec Element (first kind)");
+  m.def("Lagrange", &lagrange::create, "Create Lagrange Element");
+  m.def("CrouzeixRaviart", &cr::create, "Create Crouzeix-Raviart Element");
+  m.def("RaviartThomas", &rt::create, "Create Raviart-Thomas Element");
+  m.def("NedelecSecondKind", &nedelec2::create,
         "Create Nedelec Element (second kind)");
-  m.def("Regge", &Regge::create, "Create Regge Element");
+  m.def("Regge", &regge::create, "Create Regge Element");
 
+  // Create FiniteElement
   m.def("create_element", &libtab::create_element,
         "Create a FiniteElement of a given family, celltype and degree");
 

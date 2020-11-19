@@ -111,10 +111,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
   // TODO: remove - not part of public interface
   // Create FiniteElement of different types
   m.def("Nedelec", [](const std::string& cell, int degree) {
-    return libtab::create_element("Nedelec (first kind)", cell, degree);
+    return libtab::create_element("Nedelec 1st kind H(curl)", cell, degree);
   });
   m.def("NedelecSecondKind", [](const std::string& cell, int degree) {
-    return libtab::create_element("Nedelec (second kind)", cell, degree);
+    return libtab::create_element("Nedelec 2nd kind H(curl)", cell, degree);
   });
   m.def("Lagrange", [](const std::string& cell, int degree) {
     return libtab::create_element("Lagrange", cell, degree);

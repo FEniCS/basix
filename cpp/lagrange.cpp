@@ -8,6 +8,7 @@
 #include "polynomial-set.h"
 #include <Eigen/Dense>
 #include <iostream>
+#include <numeric>
 
 using namespace libtab;
 
@@ -18,21 +19,19 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     throw std::runtime_error("Invalid celltype");
 
   const int ndofs = polyset::size(celltype, degree);
-  const int tdim = cell::topological_dimension(celltype);
-
-  // Create points at nodes, ordered by topology (vertices first)
-  Eigen::ArrayXXd pt(ndofs, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
 
+  // Create points at nodes, ordered by topology (vertices first)
+  Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
   if (degree == 0)
   {
     pt = lattice::create(celltype, 0, lattice::Type::equispaced, true);
-    for (int i = 0; i < tdim; ++i)
+    for (std::size_t i = 0; i < entity_dofs.size(); ++i)
       entity_dofs[i].resize(topology[i].size(), 0);
-    entity_dofs[tdim] = {1};
+    entity_dofs[topology.size() - 1][0] = 1;
   }
   else
   {
@@ -44,13 +43,12 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
         const Eigen::ArrayXXd entity_geom
             = cell::sub_entity_geometry(celltype, dim, i);
 
-        Eigen::ArrayXd point = entity_geom.row(0);
         if (dim == 0)
         {
-          pt.row(c++) = point;
+          pt.row(c++) = entity_geom.row(0);
           entity_dofs[0].push_back(1);
         }
-        else if ((int)dim == tdim)
+        else if (dim == topology.size() - 1)
         {
           const Eigen::ArrayXXd lattice = lattice::create(
               celltype, degree, lattice::Type::equispaced, false);
@@ -64,7 +62,6 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
           const Eigen::ArrayXXd lattice
               = lattice::create(ct, degree, lattice::Type::equispaced, false);
           entity_dofs[dim].push_back(lattice.rows());
-
           for (int j = 0; j < lattice.rows(); ++j)
           {
             pt.row(c) = entity_geom.row(0);
@@ -80,22 +77,12 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     }
   }
 
-  // Initial coefficients are Identity Matrix
-  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
-
-  // Point evaluation of basis
-  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
-
-  Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficients(coeffs, dualmat);
-
   int perm_count = 0;
-  for (int i = 1; i < tdim; ++i)
+  for (std::size_t i = 1; i < topology.size() - 1; ++i)
     perm_count += topology[i].size() * i;
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-
   if (celltype == cell::Type::triangle)
   {
     Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
@@ -136,9 +123,13 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     }
   }
 
-  FiniteElement el(Lagrange::family_name, celltype, degree, {1}, new_coeffs,
-                   entity_dofs, base_permutations);
-  return el;
+  // Point evaluation of basis
+  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
+  Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
+      Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
+
+  return FiniteElement(Lagrange::family_name, celltype, degree, {1}, coeffs,
+                       entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------
 FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
@@ -147,28 +138,24 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
       and celltype != cell::Type::tetrahedron)
     throw std::runtime_error("Invalid celltype");
 
-  // Only tabulate for scalar. Vector spaces can easily be built from the
-  // scalar space.
+  // Only tabulate for scalar. Vector spaces can easily be built from
+  // the scalar space.
 
   const int ndofs = polyset::size(celltype, degree);
-  const int tdim = cell::topological_dimension(celltype);
 
-  // Create points at nodes, ordered by topology (vertices first)
-  Eigen::ArrayXXd pt(ndofs, tdim);
-
-  const std::vector<std::vector<std::vector<int>>> topology
+  std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[tdim][0] = ndofs;
+  entity_dofs[topology.size() - 1][0] = ndofs;
 
   Eigen::ArrayXXd geometry = cell::geometry(celltype);
-
   const Eigen::ArrayXXd lattice
       = lattice::create(celltype, degree, lattice::Type::equispaced, true);
 
+  // Create points at nodes, ordered by topology (vertices first)
+  Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
   for (int j = 0; j < lattice.rows(); ++j)
   {
     pt.row(j) = geometry.row(0);
@@ -176,23 +163,20 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
       pt.row(j) += (geometry.row(k + 1) - geometry.row(0)) * lattice(j, k);
   }
 
-  // Initial coefficients are Identity Matrix
-  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
-
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
-  Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficients(coeffs, dualmat);
+  Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
+      Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   int perm_count = 0;
-  for (int i = 1; i < tdim; ++i)
+  for (std::size_t i = 1; i < topology.size() - 1; ++i)
     perm_count += topology[i].size() * i;
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   return FiniteElement(DiscontinuousLagrange::family_name, celltype, degree,
-                       {1}, new_coeffs, entity_dofs, base_permutations);
+                       {1}, coeffs, entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

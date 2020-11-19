@@ -57,15 +57,16 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     {
       for (int j = 0; j < tdim; ++j)
       {
-        Eigen::ArrayXd w = Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
-                           * Pkp1_at_Qpts.col(k);
-        wcoeffs(nv * tdim + i, k + psize * j) = w.sum();
+        const double w_sum = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
+                              * Pkp1_at_Qpts.col(k))
+                                 .sum();
+        wcoeffs(nv * tdim + i, k + psize * j) = w_sum;
       }
     }
   }
 
   // Dual space
-  Eigen::MatrixXd dualmat = Eigen::MatrixXd::Zero(nv * tdim + ns, psize * tdim);
+  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(nv * tdim + ns, psize * tdim);
 
   // quadrature degree
   int quad_deg = 5 * degree;
@@ -75,7 +76,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
       = DiscontinuousLagrange::create(facettype, degree - 1);
   const int facet_count = tdim + 1;
   const int facet_dofs = ns;
-  dualmat.block(0, 0, facet_count * facet_dofs, psize * tdim)
+  dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
       = moments::make_normal_integral_moments(moment_space_facet, celltype,
                                               tdim, degree, quad_deg);
 
@@ -86,7 +87,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     // Interior integral moment
     FiniteElement moment_space_interior
         = DiscontinuousLagrange::create(celltype, degree - 2);
-    dualmat.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
+    dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
         = moments::make_integral_moments(moment_space_interior, celltype, tdim,
                                          degree, quad_deg);
   }
@@ -94,7 +95,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  const int ndofs = dualmat.rows();
+  const int ndofs = dual.rows();
   int perm_count = 0;
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size() * i;
@@ -131,8 +132,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     }
   }
 
-  Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
+  Eigen::MatrixXd coeffs
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
 
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -142,6 +143,6 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   entity_dofs[tdim] = {ns0 * tdim};
 
   return FiniteElement(RaviartThomas::family_name, celltype, degree, {tdim},
-                       new_coeffs, entity_dofs, base_permutations);
+                       coeffs, entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

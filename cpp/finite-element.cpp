@@ -35,15 +35,15 @@ FiniteElement::FiniteElement(std::string family_name, cell::Type cell_type,
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd
 FiniteElement::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
-                                             const Eigen::MatrixXd& dualmat,
-                                             bool condition_check)
+                                              const Eigen::MatrixXd& dual,
+                                              bool condition_check)
 {
 #ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
-  std::cout << "Dual matrix = \n[" << dualmat << "]\n";
+  std::cout << "Dual matrix = \n[" << dual << "]\n";
 #endif
 
-  const Eigen::MatrixXd A = coeffs * dualmat.transpose();
+  const Eigen::MatrixXd A = coeffs * dual.transpose();
   if (condition_check)
   {
     Eigen::JacobiSVD svd(A);

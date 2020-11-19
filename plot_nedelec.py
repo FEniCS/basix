@@ -1,13 +1,10 @@
 import matplotlib.pyplot as plt
 from libtab import Nedelec, CellType, create_lattice
 
-N = Nedelec(CellType.triangle, 2)
-
+N = Nedelec("triangle", 2)
 pts = create_lattice(CellType.triangle, 20, True)
 w = N.tabulate(0, pts)[0]
-
 nc = w.shape[1]//2
-
 fig, ax = plt.subplots(2, 4)
 for j, a in enumerate(ax.flatten()):
     ned_shape_fn_x = w[:, j]

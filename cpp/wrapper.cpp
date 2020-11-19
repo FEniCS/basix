@@ -110,13 +110,27 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   // TODO: remove - not part of public interface
   // Create FiniteElement of different types
-  m.def("Nedelec", &create_nedelec, "Create Nedelec Element (first kind)");
-  m.def("NedelecSecondKind", &create_nedelec2,
-        "Create Nedelec Element (second kind)");
-  m.def("Lagrange", &create_lagrange, "Create Lagrange Element");
-  m.def("CrouzeixRaviart", &cr::create, "Create Crouzeix-Raviart Element");
-  m.def("RaviartThomas", &rt::create, "Create Raviart-Thomas Element");
-  m.def("Regge", &regge::create, "Create Regge Element");
+  m.def("Nedelec", [](const std::string& cell, int degree) {
+    return libtab::create_element("Nedelec (first kind)", cell, degree);
+  });
+  m.def("NedelecSecondKind", [](const std::string& cell, int degree) {
+    return libtab::create_element("Nedelec (second kind)", cell, degree);
+  });
+  m.def("Lagrange", [](const std::string& cell, int degree) {
+    return libtab::create_element("Lagrange", cell, degree);
+  });
+  m.def("DiscontinuousLagrange", [](const std::string& cell, int degree) {
+    return libtab::create_element("Discontinuous Lagrange", cell, degree);
+  });
+  m.def("CrouzeixRaviart", [](const std::string& cell, int degree) {
+    return libtab::create_element("Crouzeix-Raviart", cell, degree);
+  });
+  m.def("RaviartThomas", [](const std::string& cell, int degree) {
+    return libtab::create_element("Raviart-Thomas", cell, degree);
+  });
+  m.def("Regge", [](const std::string& cell, int degree) {
+    return libtab::create_element("Regge", cell, degree);
+  });
 
   // Create FiniteElement
   m.def("create_element", &libtab::create_element,

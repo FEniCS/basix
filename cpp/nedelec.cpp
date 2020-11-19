@@ -361,7 +361,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   const Eigen::MatrixXd new_coeffs
       = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
 
-  return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
-                       perms);
+  return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs, perms,
+                       "Nedelec 1st kind H(curl)");
 }
 //-----------------------------------------------------------------------------

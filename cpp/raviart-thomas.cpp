@@ -142,6 +142,6 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   entity_dofs[tdim] = {ns0 * tdim};
 
   return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
-                       base_permutations);
+                       base_permutations, "Raviart-Thomas");
 }
 //-----------------------------------------------------------------------------

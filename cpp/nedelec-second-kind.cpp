@@ -139,6 +139,6 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
   return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
-                       base_permutations);
+                       base_permutations, "Nedelec 2nd kind H(curl)");
 }
 //-----------------------------------------------------------------------------

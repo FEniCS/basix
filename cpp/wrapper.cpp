@@ -85,13 +85,13 @@ Each element has a `tabulate` function which returns the basis functions and a n
       [](cell::Type celltype, int degree, std::vector<int>& value_shape,
          const Eigen::MatrixXd& dualmat, const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_permutations)
-          -> FiniteElement {
+         const std::vector<Eigen::MatrixXd>& base_permutations,
+         const std::string family_name) -> FiniteElement {
         Eigen::MatrixXd new_coeffs
             = FiniteElement::compute_expansion_coefficients(coeffs, dualmat,
                                                            true);
         return FiniteElement(celltype, degree, value_shape, new_coeffs,
-                             entity_dofs, base_permutations);
+                             entity_dofs, base_permutations, family_name);
       },
       "Create an element from basic data");
 
@@ -104,7 +104,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("ndofs", &FiniteElement::ndofs)
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("value_size", &FiniteElement::value_size)
-      .def_property_readonly("value_shape", &FiniteElement::value_shape);
+      .def_property_readonly("value_shape", &FiniteElement::value_shape)
+      .def_property_readonly("family_name", &FiniteElement::family_name);
 
   // Create FiniteElement of different types
   m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");

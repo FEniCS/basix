@@ -137,7 +137,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   }
 
   FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,
-                   base_permutations);
+                   base_permutations, "Lagrange");
   return el;
 }
 //-----------------------------------------------------------------------------
@@ -193,6 +193,6 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   return FiniteElement(celltype, degree, {1}, new_coeffs, entity_dofs,
-                       base_permutations);
+                       base_permutations, "Discontinuous Lagrange");
 }
 //-----------------------------------------------------------------------------

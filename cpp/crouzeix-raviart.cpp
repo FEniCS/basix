@@ -58,6 +58,6 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
     entity_dofs[3] = {0};
 
   return FiniteElement(celltype, 1, {1}, new_coeffs, entity_dofs,
-                       base_permutations);
+                       base_permutations, "Crouzeix-Raviart");
 }
 //-----------------------------------------------------------------------------

@@ -170,7 +170,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   int perm_count = 0;
-  for (int i = 1; i < topology.size() - 1; ++i)
+  for (std::size_t i = 1; i < topology.size() - 1; ++i)
     perm_count += topology[i].size() * i;
 
   std::vector<Eigen::MatrixXd> base_permutations(

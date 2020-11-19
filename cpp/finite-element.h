@@ -21,9 +21,10 @@ class FiniteElement
 public:
   /// A finite element
   FiniteElement(std::string family_name, cell::Type cell_type, int degree,
-                std::vector<int> value_shape, Eigen::ArrayXXd coeffs,
-                std::vector<std::vector<int>> entity_dofs,
-                std::vector<Eigen::MatrixXd> base_permutations);
+                const std::vector<int>& value_shape,
+                const Eigen::ArrayXXd& coeffs,
+                const std::vector<std::vector<int>>& entity_dofs,
+                const std::vector<Eigen::MatrixXd>& base_permutations);
 
   /// Destructor
   ~FiniteElement() = default;
@@ -46,41 +47,36 @@ public:
 
   /// Get the element cell type
   /// @return The cell type
-  cell::Type cell_type() const { return _cell_type; }
+  cell::Type cell_type() const;
 
   /// Get the element polynomial degree
   /// @return Polynomial degree
-  int degree() const { return _degree; }
+  int degree() const;
 
   /// Get the element value size
   /// This is just a convenience function returning product(value_shape)
   /// @return Value size
-  int value_size() const
-  {
-    int value_size = 1;
-    for (const int& d : _value_shape)
-      value_size *= d;
-    return value_size;
-  }
+  int value_size() const;
 
   /// Get the element value tensor shape, e.g. returning [1] for scalars.
   /// @return Value shape
-  const std::vector<int>& value_shape() const { return _value_shape; }
+  const std::vector<int>& value_shape() const;
 
   /// Get the number of degrees of freedom represented in the element
   /// @return Number of degrees of freedom
-  int ndofs() const { return _coeffs.rows(); }
+  int ndofs() const;
 
   /// Get the name of the finite element family
   /// @return The family name
-  std::string family_name() const { return _family_name; }
+  std::string family_name() const;
 
-  /// Get the number of dofs on each topological entity: (vertices, edges,
-  /// faces, cell) in that order. For example, Lagrange degree 2 on a triangle
-  /// has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0] The sum of the entity
-  /// dofs must match the total number of dofs reported by FiniteElement::ndofs
+  /// Get the number of dofs on each topological entity: (vertices,
+  /// edges, faces, cell) in that order. For example, Lagrange degree 2
+  /// on a triangle has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]
+  /// The sum of the entity dofs must match the total number of dofs
+  /// reported by FiniteElement::ndofs
   /// @return List of entity dof counts on each dimension
-  std::vector<std::vector<int>> entity_dofs() const { return _entity_dofs; }
+  std::vector<std::vector<int>> entity_dofs() const;
 
   /// Calculates the basis functions of the finite element, in terms of the
   /// polynomial basis.
@@ -290,10 +286,7 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
-  std::vector<Eigen::MatrixXd> base_permutations() const
-  {
-    return _base_permutations;
-  };
+  std::vector<Eigen::MatrixXd> base_permutations() const;
 
 private:
   // Cell type

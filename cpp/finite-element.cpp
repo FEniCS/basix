@@ -8,12 +8,13 @@
 #include <map>
 
 using namespace libtab;
+
 //-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(std::string family_name, cell::Type cell_type,
-                             int degree, std::vector<int> value_shape,
-                             Eigen::ArrayXXd coeffs,
-                             std::vector<std::vector<int>> entity_dofs,
-                             std::vector<Eigen::MatrixXd> base_permutations)
+FiniteElement::FiniteElement(
+    std::string family_name, cell::Type cell_type, int degree,
+    const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
+    const std::vector<std::vector<int>>& entity_dofs,
+    const std::vector<Eigen::MatrixXd>& base_permutations)
     : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
       _coeffs(coeffs), _entity_dofs(entity_dofs),
       _base_permutations(base_permutations), _family_name(family_name)
@@ -31,6 +32,32 @@ FiniteElement::FiniteElement(std::string family_name, cell::Type cell_type,
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
   }
+}
+//-----------------------------------------------------------------------------
+cell::Type FiniteElement::cell_type() const { return _cell_type; }
+//-----------------------------------------------------------------------------
+int FiniteElement::degree() const { return _degree; }
+//-----------------------------------------------------------------------------
+int FiniteElement::value_size() const
+{
+  int value_size = 1;
+  for (const int& d : _value_shape)
+    value_size *= d;
+  return value_size;
+}
+//-----------------------------------------------------------------------------
+const std::vector<int>& FiniteElement::value_shape() const
+{
+  return _value_shape;
+}
+//-----------------------------------------------------------------------------
+int FiniteElement::ndofs() const { return _coeffs.rows(); }
+//-----------------------------------------------------------------------------
+std::string FiniteElement::family_name() const { return _family_name; }
+//-----------------------------------------------------------------------------
+std::vector<std::vector<int>> FiniteElement::entity_dofs() const
+{
+  return _entity_dofs;
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd
@@ -92,4 +119,9 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 
   return dresult;
 }
+//-----------------------------------------------------------------------------
+std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
+{
+  return _base_permutations;
+};
 //-----------------------------------------------------------------------------

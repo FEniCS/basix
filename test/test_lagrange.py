@@ -303,9 +303,9 @@ def test_dof_permutations_tetrahedron(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 @pytest.mark.parametrize("celltype", [(libtab.CellType.quadrilateral, "quadrilateral"),
-                                      (libtab.CellType.hexahedron,"hexahedron"),
-                                      (libtab.CellType.pyramid,"pyramid"),
-                                      (libtab.CellType.prism,"prism") ])
+                                      (libtab.CellType.hexahedron, "hexahedron"),
+                                      (libtab.CellType.pyramid, "pyramid"),
+                                      (libtab.CellType.prism, "prism")])
 def test_celltypes(order, celltype):
     tp = libtab.Lagrange(celltype[1], order)
     pts = libtab.create_lattice(celltype[0], 5,

@@ -53,7 +53,7 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3] = {0};
 
-  return FiniteElement(celltype, 1, {1}, coeffs, entity_dofs,
-                       base_permutations);
+  return FiniteElement(CrouzeixRaviart::family_name, celltype, 1, {1}, coeffs,
+                       entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

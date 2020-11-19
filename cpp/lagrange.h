@@ -19,6 +19,8 @@ public:
   /// @param celltype interval, triangle or tetrahedral celltype
   /// @param degree
   static FiniteElement create(cell::Type celltype, int degree);
+
+  inline static const std::string family_name = "Lagrange";
 };
 
 class DiscontinuousLagrange
@@ -29,5 +31,7 @@ public:
   /// @param celltype interval, triangle or tetrahedral celltype
   /// @param degree
   static FiniteElement create(cell::Type celltype, int degree);
+
+  inline static const std::string family_name = "Discontinuous Lagrange";
 };
 } // namespace libtab

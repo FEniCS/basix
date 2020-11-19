@@ -137,7 +137,7 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
-  return FiniteElement(celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations);
+  return FiniteElement(NedelecSecondKind::family_name, celltype, degree, {tdim},
+                       coeffs, entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

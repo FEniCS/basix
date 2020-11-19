@@ -20,8 +20,8 @@ class FiniteElement
 
 public:
   /// A finite element
-  FiniteElement(cell::Type cell_type, int degree, std::vector<int> value_shape,
-                Eigen::ArrayXXd coeffs,
+  FiniteElement(std::string family_name, cell::Type cell_type, int degree,
+                std::vector<int> value_shape, Eigen::ArrayXXd coeffs,
                 std::vector<std::vector<int>> entity_dofs,
                 std::vector<Eigen::MatrixXd> base_permutations);
 
@@ -70,6 +70,10 @@ public:
   /// Get the number of degrees of freedom represented in the element
   /// @return Number of degrees of freedom
   int ndofs() const { return _coeffs.rows(); }
+
+  /// Get the name of the finite element family
+  /// @return The family name
+  std::string family_name() const { return _family_name; }
 
   /// Get the number of dofs on each topological entity: (vertices, edges,
   /// faces, cell) in that order. For example, Lagrange degree 2 on a triangle
@@ -316,6 +320,9 @@ private:
 
   // Base permutations
   std::vector<Eigen::MatrixXd> _base_permutations;
+
+  // The name of the finite element family
+  std::string _family_name;
 };
 
 } // namespace libtab

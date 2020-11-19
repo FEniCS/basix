@@ -142,7 +142,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), ns);
   entity_dofs[tdim] = {ns0 * tdim};
 
-  return FiniteElement(celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations);
+  return FiniteElement(RaviartThomas::family_name, celltype, degree, {tdim},
+                       coeffs, entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

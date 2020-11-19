@@ -358,6 +358,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 
   const Eigen::MatrixXd coeffs
       = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
-  return FiniteElement(celltype, degree, {tdim}, coeffs, entity_dofs, perms);
+  return FiniteElement(Nedelec::family_name, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, perms);
 }
 //-----------------------------------------------------------------------------

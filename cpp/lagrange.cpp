@@ -93,14 +93,12 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size() * i;
 
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   if (celltype == cell::Type::triangle)
   {
-    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
-        = dofperms::interval_reflection(degree - 1);
+    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 3; ++edge)
     {
       const int start = 3 + edge_ref.size() * edge;
@@ -113,8 +111,7 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
   }
   else if (celltype == cell::Type::tetrahedron)
   {
-    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
-        = dofperms::interval_reflection(degree - 1);
+    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 6; ++edge)
     {
       const int start = 4 + edge_ref.size() * edge;
@@ -124,10 +121,8 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
     }
-    Eigen::Array<int, Eigen::Dynamic, 1> face_ref
-        = dofperms::triangle_reflection(degree - 2);
-    Eigen::Array<int, Eigen::Dynamic, 1> face_rot
-        = dofperms::triangle_rotation(degree - 2);
+    Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 2);
+    Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 2);
     for (int face = 0; face < 4; ++face)
     {
       const int start = 4 + edge_ref.size() * 6 + face_ref.size() * face;
@@ -192,11 +187,10 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
 
   int perm_count = 0;
   for (int i = 1; i < tdim; ++i)
-    perm_count += topology[i].size();
+    perm_count += topology[i].size() * i;
 
-  std::vector<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   return FiniteElement(celltype, degree, {1}, new_coeffs, entity_dofs,
                        base_permutations);

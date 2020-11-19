@@ -16,5 +16,7 @@ public:
   /// @param celltype
   /// @param degree
   static FiniteElement create(cell::Type celltype, int degree);
+
+  inline static const std::string family_name = "Regge";
 };
 } // namespace libtab

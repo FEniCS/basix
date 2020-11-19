@@ -151,7 +151,7 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
-  return FiniteElement(celltype, degree, {tdim, tdim}, new_coeffs, entity_dofs,
-                       base_permutations, "Regge");
+  return FiniteElement(Regge::family_name, celltype, degree, {tdim, tdim},
+                       new_coeffs, entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

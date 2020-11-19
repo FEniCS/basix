@@ -136,8 +136,8 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     }
   }
 
-  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,
-                   base_permutations, "Lagrange");
+  FiniteElement el(Lagrange::family_name, celltype, degree, {1}, new_coeffs,
+                   entity_dofs, base_permutations);
   return el;
 }
 //-----------------------------------------------------------------------------
@@ -192,7 +192,7 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  return FiniteElement(celltype, degree, {1}, new_coeffs, entity_dofs,
-                       base_permutations, "Discontinuous Lagrange");
+  return FiniteElement(DiscontinuousLagrange::family_name, celltype, degree,
+                       {1}, new_coeffs, entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

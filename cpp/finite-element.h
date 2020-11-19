@@ -20,11 +20,10 @@ class FiniteElement
 
 public:
   /// A finite element
-  FiniteElement(cell::Type cell_type, int degree, std::vector<int> value_shape,
-                Eigen::ArrayXXd coeffs,
+  FiniteElement(std::string family_name, cell::Type cell_type, int degree,
+                std::vector<int> value_shape, Eigen::ArrayXXd coeffs,
                 std::vector<std::vector<int>> entity_dofs,
-                std::vector<Eigen::MatrixXd> base_permutations,
-                std::string family_name);
+                std::vector<Eigen::MatrixXd> base_permutations);
 
   /// Destructor
   ~FiniteElement() = default;

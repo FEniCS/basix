@@ -15,13 +15,14 @@ FiniteElement libtab::create_element(std::string family, std::string cell,
                                      int degree)
 {
   const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
-      create_map = {{"Crouzeix-Raviart", &CrouzeixRaviart::create},
-                    {"Discontinuous Lagrange", &DiscontinuousLagrange::create},
-                    {"Lagrange", &Lagrange::create},
-                    {"Nedelec 1st kind H(curl)", &Nedelec::create},
-                    {"Nedelec 2nd kind H(curl)", &NedelecSecondKind::create},
-                    {"Raviart-Thomas", &RaviartThomas::create},
-                    {"Regge", &Regge::create}};
+      create_map
+      = {{CrouzeixRaviart::family_name, &CrouzeixRaviart::create},
+         {DiscontinuousLagrange::family_name, &DiscontinuousLagrange::create},
+         {Lagrange::family_name, &Lagrange::create},
+         {Nedelec::family_name, &Nedelec::create},
+         {NedelecSecondKind::family_name, &NedelecSecondKind::create},
+         {RaviartThomas::family_name, &RaviartThomas::create},
+         {Regge::family_name, &Regge::create}};
 
   auto create_it = create_map.find(family);
   if (create_it == create_map.end())

@@ -211,13 +211,13 @@ def test_tet(order):
                 assert numpy.allclose(wtab[libtab.index(kx, ky, kz)], wsym)
 
 
-@pytest.mark.parametrize("celltype", [libtab.CellType.interval,
-                                      libtab.CellType.triangle,
-                                      libtab.CellType.tetrahedron])
+@pytest.mark.parametrize("celltype", [(libtab.CellType.interval, "interval"),
+                                      (libtab.CellType.triangle, "triangle"),
+                                      (libtab.CellType.tetrahedron, "tetrahedron")])
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
-def xtest_lagrange(celltype, order):
-    lagrange = libtab.Lagrange(celltype, order)
-    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
+def test_lagrange(celltype, order):
+    lagrange = libtab.Lagrange(celltype[1], order)
+    pts = libtab.create_lattice(celltype[0], 6, libtab.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
     assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())
 
@@ -302,13 +302,13 @@ def test_dof_permutations_tetrahedron(order):
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
-@pytest.mark.parametrize("celltype", [libtab.CellType.quadrilateral,
-                                      libtab.CellType.hexahedron,
-                                      libtab.CellType.pyramid,
-                                      libtab.CellType.prism])
-def xtest_celltypes(order, celltype):
-    tp = libtab.Lagrange(celltype, order)
-    pts = libtab.create_lattice(celltype, 5,
+@pytest.mark.parametrize("celltype", [(libtab.CellType.quadrilateral, "quadrilateral"),
+                                      (libtab.CellType.hexahedron,"hexahedron"),
+                                      (libtab.CellType.pyramid,"pyramid"),
+                                      (libtab.CellType.prism,"prism") ])
+def test_celltypes(order, celltype):
+    tp = libtab.Lagrange(celltype[1], order)
+    pts = libtab.create_lattice(celltype[0], 5,
                                 libtab.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
     assert(numpy.allclose(numpy.sum(w, axis=1), 1.0))

@@ -90,7 +90,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
           -> FiniteElement {
         Eigen::MatrixXd new_coeffs
             = FiniteElement::compute_expansion_coefficients(coeffs, dualmat,
-                                                           true);
+                                                            true);
         return FiniteElement(family_name, celltype, degree, value_shape,
                              new_coeffs, entity_dofs, base_permutations);
       },
@@ -111,8 +111,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
   // Create FiniteElement of different types
   m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");
   m.def("Lagrange", &Lagrange::create, "Create Lagrange Element");
-  m.def("CrouzeixRaviart", &CrouzeixRaviart::create,
-        "Create Crouzeix-Raviart Element");
+  m.def("CrouzeixRaviart", &cr::create, "Create Crouzeix-Raviart Element");
   m.def("RaviartThomas", &RaviartThomas::create,
         "Create Raviart-Thomas Element");
   m.def("NedelecSecondKind", &NedelecSecondKind::create,

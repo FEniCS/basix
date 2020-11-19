@@ -16,7 +16,7 @@ FiniteElement libtab::create_element(std::string family, std::string cell,
 {
   const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
       create_map
-      = {{CrouzeixRaviart::family_name, &CrouzeixRaviart::create},
+      = {{cr::family_name, &cr::create},
          {DiscontinuousLagrange::family_name, &DiscontinuousLagrange::create},
          {Lagrange::family_name, &Lagrange::create},
          {Nedelec::family_name, &Nedelec::create},

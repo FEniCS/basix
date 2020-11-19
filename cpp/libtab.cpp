@@ -1,17 +1,22 @@
-#include "util.h"
+// Copyright (c) 2020 Chris Richardson
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
 
+#include "libtab.h"
 #include "crouzeix-raviart.h"
+#include "finite-element.h"
 #include "lagrange.h"
 #include "nedelec.h"
+#include "polynomial-set.h"
 #include "raviart-thomas.h"
 #include "regge.h"
-
 #include <map>
 
 using namespace libtab;
 
-FiniteElement libtab::create_element(std::string family, std::string cell,
-                                     int degree)
+//-----------------------------------------------------------------------------
+libtab::FiniteElement libtab::create_element(std::string family,
+                                             std::string cell, int degree)
 {
   const std::map<std::string, std::function<FiniteElement(cell::Type, int)>>
       create_map = {{cr::family_name, &cr::create},
@@ -28,3 +33,4 @@ FiniteElement libtab::create_element(std::string family, std::string cell,
 
   return create_it->second(cell::str_to_type(cell), degree);
 }
+//-----------------------------------------------------------------------------

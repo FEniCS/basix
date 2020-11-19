@@ -9,17 +9,12 @@
 #include <string>
 
 #include "cell.h"
-#include "crouzeix-raviart.h"
 #include "defines.h"
 #include "indexing.h"
-#include "lagrange.h"
 #include "lattice.h"
-#include "nedelec.h"
+#include "libtab.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
-#include "raviart-thomas.h"
-#include "regge.h"
-#include "util.h"
 
 namespace py = pybind11;
 using namespace libtab;
@@ -108,14 +103,6 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("family_name", &FiniteElement::family_name);
 
   // Create FiniteElement of different types
-  m.def("Nedelec", &nedelec::create, "Create Nedelec Element (first kind)");
-  m.def("Lagrange", &lagrange::create, "Create Lagrange Element");
-  m.def("CrouzeixRaviart", &cr::create, "Create Crouzeix-Raviart Element");
-  m.def("RaviartThomas", &rt::create, "Create Raviart-Thomas Element");
-  m.def("NedelecSecondKind", &nedelec2::create,
-        "Create Nedelec Element (second kind)");
-  m.def("Regge", &regge::create, "Create Regge Element");
-
   m.def("create_element", &libtab::create_element,
         "Create a FiniteElement of a given family, celltype and degree");
 

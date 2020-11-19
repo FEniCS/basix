@@ -143,7 +143,7 @@ def test_tri(order):
     g = sympy_rt(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    rt = libtab.RaviartThomas(celltype, order)
+    rt = libtab.create_element("Raviart-Thomas", "triangle", order)
     pts = libtab.create_lattice(celltype, 1, libtab.LatticeType.equispaced, True)
     nderiv = 3
     wtab = rt.tabulate(nderiv, pts)
@@ -166,7 +166,7 @@ def test_tet(order):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    rt = libtab.RaviartThomas(celltype, order)
+    rt = libtab.create_element("Raviart-Thomas", "tetrahedron", order)
 
     pts = libtab.create_lattice(celltype, 5, libtab.LatticeType.equispaced, True)
     nderiv = 1

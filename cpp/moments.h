@@ -32,7 +32,7 @@ namespace moments
 /// @param poly_deg The polynomial degree of the poly set that defines the space
 /// @param q_deg The quadrature degree used for the integrals
 Eigen::MatrixXd make_integral_moments(const FiniteElement& moment_space,
-                                      const cell::Type celltype,
+                                      const cell::type celltype,
                                       const int value_size, const int poly_deg,
                                       const int q_deg);
 
@@ -51,7 +51,7 @@ Eigen::MatrixXd make_integral_moments(const FiniteElement& moment_space,
 /// @param poly_deg The polynomial degree of the poly set that defines the space
 /// @param q_deg The quadrature degree used for the integrals
 Eigen::MatrixXd make_dot_integral_moments(const FiniteElement& moment_space,
-                                          const cell::Type celltype,
+                                          const cell::type celltype,
                                           const int value_size,
                                           const int poly_deg, const int q_deg);
 
@@ -68,7 +68,7 @@ Eigen::MatrixXd make_dot_integral_moments(const FiniteElement& moment_space,
 /// the space
 /// @param q_deg The quadrature degree used for the integrals
 Eigen::MatrixXd make_tangent_integral_moments(const FiniteElement& moment_space,
-                                              const cell::Type celltype,
+                                              const cell::type celltype,
                                               const int value_size,
                                               const int poly_deg,
                                               const int q_deg);
@@ -87,7 +87,7 @@ Eigen::MatrixXd make_tangent_integral_moments(const FiniteElement& moment_space,
 /// @param q_deg The quadrature degree used for the integrals
 // TODO: Implement this one in integral-moments.cpp
 Eigen::MatrixXd make_normal_integral_moments(const FiniteElement& moment_space,
-                                             const cell::Type celltype,
+                                             const cell::type celltype,
                                              const int value_size,
                                              const int poly_deg,
                                              const int q_deg);

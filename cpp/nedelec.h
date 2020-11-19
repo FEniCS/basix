@@ -12,7 +12,7 @@ namespace libtab
 /// Create Nedelec element (first kind)
 /// @param celltype
 /// @param degree
-FiniteElement create_nedelec(cell::Type celltype, int degree,
+FiniteElement create_nedelec(cell::type celltype, int degree,
                              const std::string& name = std::string());
 
 // static std::string family_name = "Nedelec 1st kind H(curl)";
@@ -21,7 +21,7 @@ FiniteElement create_nedelec(cell::Type celltype, int degree,
 /// Create Nedelec element (second kind)
 /// @param celltype
 /// @param degree
-FiniteElement create_nedelec2(cell::Type celltype, int degree,
+FiniteElement create_nedelec2(cell::type celltype, int degree,
                               const std::string& name = std::string());
 
 // static std::string family_name = "Nedelec 2nd kind H(curl)";

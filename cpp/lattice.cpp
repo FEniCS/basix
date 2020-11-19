@@ -23,7 +23,7 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
   for (int i = 0; i < n + 1; ++i)
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
-  FiniteElement L = create_dlagrange(cell::Type::interval, n);
+  FiniteElement L = create_dlagrange(cell::type::interval, n);
   Eigen::MatrixXd v = L.tabulate(0, x)[0];
   return v * pts.matrix();
 }
@@ -32,16 +32,16 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 } // namespace
 
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
-                                lattice::Type lattice_type, bool exterior)
+Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
+                                lattice::type lattice_type, bool exterior)
 {
   const double h = 1.0 / static_cast<double>(n);
 
   switch (celltype)
   {
-  case cell::Type::point:
+  case cell::type::point:
     return Eigen::ArrayXXd::Zero(1, 1);
-  case cell::Type::interval:
+  case cell::type::interval:
   {
     if (n == 0)
       return Eigen::ArrayXXd::Constant(1, 1, 0.5);
@@ -52,12 +52,12 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
     else
       x = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
 
-    if (lattice_type == lattice::Type::gll_warped)
+    if (lattice_type == lattice::type::gll_warped)
       x += warp_function(n, x);
 
     return x;
   }
-  case cell::Type::quadrilateral:
+  case cell::type::quadrilateral:
   {
     if (n == 0)
       return Eigen::ArrayXXd::Constant(1, 2, 0.5);
@@ -68,7 +68,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
     else
       r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
 
-    if (lattice_type == lattice::Type::gll_warped)
+    if (lattice_type == lattice::type::gll_warped)
       r += warp_function(n, r);
 
     const int m = r.size();
@@ -80,7 +80,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 
     return x;
   }
-  case cell::Type::hexahedron:
+  case cell::type::hexahedron:
   {
     if (n == 0)
       return Eigen::ArrayXXd::Constant(1, 3, 0.5);
@@ -90,7 +90,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
       r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     else
       r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
-    if (lattice_type == lattice::Type::gll_warped)
+    if (lattice_type == lattice::type::gll_warped)
       r += warp_function(n, r);
 
     const int m = r.size();
@@ -103,7 +103,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 
     return x;
   }
-  case cell::Type::triangle:
+  case cell::type::triangle:
   {
     if (n == 0)
       return Eigen::ArrayXXd::Constant(1, 2, 1.0 / 3.0);
@@ -131,12 +131,10 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
         const double x = r[2 * i];
         const double y = r[2 * j];
         const double a = r[2 * l];
-
         p.row(c) << x, y;
-        if (lattice_type == lattice::Type::gll_warped)
+        if (lattice_type == lattice::type::gll_warped)
         {
           p(c, 0) += x * (a * wbar(n + i - l) + y * wbar(n + i - j));
-          ;
           p(c, 1) += y * (a * wbar(n + j - l) + x * wbar(n + j - i));
         }
 
@@ -146,7 +144,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 
     return p;
   }
-  case cell::Type::tetrahedron:
+  case cell::type::tetrahedron:
   {
     if (n == 0)
       return Eigen::ArrayXXd::Constant(1, 3, 0.25);
@@ -158,7 +156,6 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
     Eigen::ArrayXd wbar = warp_function(n, r);
     const auto s = r.segment(1, 2 * n - 1);
     wbar.segment(1, 2 * n - 1) /= s * (1 - s);
-
     int c = 0;
     for (int k = b; k < (n - b + 1); ++k)
     {
@@ -171,9 +168,8 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
           const double y = r[2 * j];
           const double z = r[2 * k];
           const double a = r[2 * l];
-
           p.row(c) << x, y, z;
-          if (lattice_type == lattice::Type::gll_warped)
+          if (lattice_type == lattice::type::gll_warped)
           {
             const double dx = x
                               * (a * wbar(n + i - l) + y * wbar(n + i - j)
@@ -196,7 +192,7 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
 
     return p;
   }
-  case cell::Type::prism:
+  case cell::type::prism:
   {
     if (n == 0)
     {
@@ -206,9 +202,9 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
     }
 
     const Eigen::ArrayXXd tri_pts
-        = lattice::create(cell::Type::triangle, n, lattice_type, exterior);
+        = lattice::create(cell::type::triangle, n, lattice_type, exterior);
     const Eigen::ArrayXXd line_pts
-        = lattice::create(cell::Type::interval, n, lattice_type, exterior);
+        = lattice::create(cell::type::interval, n, lattice_type, exterior);
 
     Eigen::ArrayX3d x(tri_pts.rows() * line_pts.rows(), 3);
     x.leftCols(2) = tri_pts.replicate(line_pts.rows(), 1);
@@ -216,9 +212,9 @@ Eigen::ArrayXXd lattice::create(cell::Type celltype, int n,
       x.block(i * tri_pts.rows(), 2, tri_pts.rows(), 1) = line_pts(i, 0);
     return x;
   }
-  case cell::Type::pyramid:
+  case cell::type::pyramid:
   {
-    if (lattice_type == lattice::Type::gll_warped)
+    if (lattice_type == lattice::type::gll_warped)
     {
       throw std::runtime_error(
           "Warped lattice not yet implemented for pyramid");

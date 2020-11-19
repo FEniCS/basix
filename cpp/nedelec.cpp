@@ -4,9 +4,9 @@
 
 #include "nedelec.h"
 #include "dof-permutations.h"
-#include "integral-moments.h"
+#include "moments.h"
 #include "lagrange.h"
-#include "polynomial-set.h"
+#include "polyset.h"
 #include "quadrature.h"
 #include "raviart-thomas.h"
 #include <Eigen/Dense>
@@ -32,9 +32,9 @@ Eigen::MatrixXd create_nedelec_2d_space(int degree)
 
   // Tabulate polynomial set at quadrature points
   auto [Qpts, Qwts]
-      = quadrature::make_quadrature(cell::Type::triangle, 2 * degree);
+      = quadrature::make_quadrature(cell::type::triangle, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
-      = polyset::tabulate(cell::Type::triangle, degree, 0, Qpts)[0];
+      = polyset::tabulate(cell::type::triangle, degree, 0, Qpts)[0];
 
   const int psize = Pkp1_at_Qpts.cols();
 
@@ -74,18 +74,18 @@ Eigen::MatrixXd create_nedelec_2d_dual(int degree)
 
   // Integral representation for the boundary (edge) dofs
   FiniteElement moment_space_E
-      = create_dlagrange(cell::Type::interval, degree - 1);
+      = create_dlagrange(cell::type::interval, degree - 1);
   dual.block(0, 0, 3 * degree, psize * 2)
       = moments::make_tangent_integral_moments(
-          moment_space_E, cell::Type::triangle, 2, degree, quad_deg);
+          moment_space_E, cell::type::triangle, 2, degree, quad_deg);
 
   if (degree > 1)
   {
     // Interior integral moment
     FiniteElement moment_space_I
-        = create_dlagrange(cell::Type::triangle, degree - 2);
+        = create_dlagrange(cell::type::triangle, degree - 2);
     dual.block(3 * degree, 0, degree * (degree - 1), psize * 2)
-        = moments::make_integral_moments(moment_space_I, cell::Type::triangle,
+        = moments::make_integral_moments(moment_space_I, cell::type::triangle,
                                          2, degree, quad_deg);
   }
 
@@ -145,9 +145,9 @@ Eigen::MatrixXd create_nedelec_3d_space(int degree)
 
   // Tabulate polynomial basis at quadrature points
   auto [Qpts, Qwts]
-      = quadrature::make_quadrature(cell::Type::tetrahedron, 2 * degree);
+      = quadrature::make_quadrature(cell::type::tetrahedron, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
-      = polyset::tabulate(cell::Type::tetrahedron, degree, 0, Qpts)[0];
+      = polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts)[0];
   const int psize = Pkp1_at_Qpts.cols();
 
   // Create coefficients for order (degree-1) polynomials
@@ -219,30 +219,30 @@ Eigen::MatrixXd create_nedelec_3d_dual(int degree)
 
   // Integral representation for the boundary (edge) dofs
   FiniteElement moment_space_E
-      = create_dlagrange(cell::Type::interval, degree - 1);
+      = create_dlagrange(cell::type::interval, degree - 1);
   dual.block(0, 0, 6 * degree, psize * 3)
       = moments::make_tangent_integral_moments(
-          moment_space_E, cell::Type::tetrahedron, 3, degree, quad_deg);
+          moment_space_E, cell::type::tetrahedron, 3, degree, quad_deg);
 
   if (degree > 1)
   {
     // Integral moments on faces
     FiniteElement moment_space_F
-        = create_dlagrange(cell::Type::triangle, degree - 2);
+        = create_dlagrange(cell::type::triangle, degree - 2);
     dual.block(6 * degree, 0, 4 * (degree - 1) * degree, psize * 3)
         = moments::make_integral_moments(
-            moment_space_F, cell::Type::tetrahedron, 3, degree, quad_deg);
+            moment_space_F, cell::type::tetrahedron, 3, degree, quad_deg);
   }
 
   if (degree > 2)
   {
     // Interior integral moment
     FiniteElement moment_space_I
-        = create_dlagrange(cell::Type::tetrahedron, degree - 3);
+        = create_dlagrange(cell::type::tetrahedron, degree - 3);
     dual.block(6 * degree + 4 * degree * (degree - 1), 0,
                (degree - 2) * (degree - 1) * degree / 2, psize * 3)
         = moments::make_integral_moments(
-            moment_space_I, cell::Type::tetrahedron, 3, degree, quad_deg);
+            moment_space_I, cell::type::tetrahedron, 3, degree, quad_deg);
   }
 
   return dual;
@@ -336,18 +336,18 @@ Eigen::MatrixXd create_nedelec2_2d_dual(int degree)
   int quad_deg = 5 * degree;
 
   // Integral representation for the boundary (edge) dofs
-  FiniteElement moment_space_E = create_dlagrange(cell::Type::interval, degree);
+  FiniteElement moment_space_E = create_dlagrange(cell::type::interval, degree);
   dual.block(0, 0, 3 * (degree + 1), psize * 2)
       = moments::make_tangent_integral_moments(
-          moment_space_E, cell::Type::triangle, 2, degree, quad_deg);
+          moment_space_E, cell::type::triangle, 2, degree, quad_deg);
 
   if (degree > 1)
   {
     // Interior integral moment
-    FiniteElement moment_space_I = rt::create(cell::Type::triangle, degree - 1);
+    FiniteElement moment_space_I = rt::create(cell::type::triangle, degree - 1);
     dual.block(3 * (degree + 1), 0, (degree - 1) * (degree + 1), psize * 2)
         = moments::make_dot_integral_moments(
-            moment_space_I, cell::Type::triangle, 2, degree, quad_deg);
+            moment_space_I, cell::type::triangle, 2, degree, quad_deg);
   }
 
   return dual;
@@ -369,29 +369,29 @@ Eigen::MatrixXd create_nedelec2_3d_dual(int degree)
   int quad_deg = 5 * degree;
 
   // Integral representation for the boundary (edge) dofs
-  FiniteElement moment_space_E = create_dlagrange(cell::Type::interval, degree);
+  FiniteElement moment_space_E = create_dlagrange(cell::type::interval, degree);
   dual.block(0, 0, 6 * (degree + 1), psize * 3)
       = moments::make_tangent_integral_moments(
-          moment_space_E, cell::Type::tetrahedron, 3, degree, quad_deg);
+          moment_space_E, cell::type::tetrahedron, 3, degree, quad_deg);
 
   if (degree > 1)
   {
     // Integral moments on faces
-    FiniteElement moment_space_F = rt::create(cell::Type::triangle, degree - 1);
+    FiniteElement moment_space_F = rt::create(cell::type::triangle, degree - 1);
     dual.block(6 * (degree + 1), 0, 4 * (degree - 1) * (degree + 1), psize * 3)
         = moments::make_dot_integral_moments(
-            moment_space_F, cell::Type::tetrahedron, 3, degree, quad_deg);
+            moment_space_F, cell::type::tetrahedron, 3, degree, quad_deg);
   }
 
   if (degree > 2)
   {
     // Interior integral moment
     FiniteElement moment_space_I
-        = create_dlagrange(cell::Type::tetrahedron, degree - 2);
+        = create_dlagrange(cell::type::tetrahedron, degree - 2);
     dual.block((6 + 4 * (degree - 1)) * (degree + 1), 0,
                (degree - 1) * (degree - 2) * (degree + 1) / 2, psize * 3)
         = moments::make_integral_moments(
-            moment_space_I, cell::Type::tetrahedron, 3, degree, quad_deg);
+            moment_space_I, cell::type::tetrahedron, 3, degree, quad_deg);
   }
 
   return dual;
@@ -400,20 +400,20 @@ Eigen::MatrixXd create_nedelec2_3d_dual(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-FiniteElement libtab::create_nedelec(cell::Type celltype, int degree,
+FiniteElement libtab::create_nedelec(cell::type celltype, int degree,
                                      const std::string& name)
 {
   Eigen::MatrixXd wcoeffs;
   Eigen::MatrixXd dual;
   std::vector<Eigen::MatrixXd> perms;
   std::vector<Eigen::MatrixXd> directions;
-  if (celltype == cell::Type::triangle)
+  if (celltype == cell::type::triangle)
   {
     wcoeffs = create_nedelec_2d_space(degree);
     dual = create_nedelec_2d_dual(degree);
     perms = create_nedelec_2d_base_perms(degree);
   }
-  else if (celltype == cell::Type::tetrahedron)
+  else if (celltype == cell::type::tetrahedron)
   {
     wcoeffs = create_nedelec_3d_space(degree);
     dual = create_nedelec_3d_dual(degree);
@@ -440,18 +440,18 @@ FiniteElement libtab::create_nedelec(cell::Type celltype, int degree,
                        perms);
 }
 //-----------------------------------------------------------------------------
-FiniteElement libtab::create_nedelec2(cell::Type celltype, int degree,
+FiniteElement libtab::create_nedelec2(cell::type celltype, int degree,
                                       const std::string& name)
 {
   const int tdim = cell::topological_dimension(celltype);
-  const int psize = polyset::size(celltype, degree);
+  const int psize = polyset::dim(celltype, degree);
   Eigen::MatrixXd wcoeffs
       = Eigen::MatrixXd::Identity(tdim * psize, tdim * psize);
 
   Eigen::MatrixXd dual;
-  if (celltype == cell::Type::triangle)
+  if (celltype == cell::type::triangle)
     dual = create_nedelec2_2d_dual(degree);
-  else if (celltype == cell::Type::tetrahedron)
+  else if (celltype == cell::type::tetrahedron)
     dual = create_nedelec2_3d_dual(degree);
   else
     throw std::runtime_error("Invalid celltype in Nedelec");

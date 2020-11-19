@@ -14,7 +14,7 @@ namespace regge
 /// Create Regge element
 /// @param celltype
 /// @param degree
-FiniteElement create(cell::Type celltype, int degree);
+FiniteElement create(cell::type celltype, int degree);
 
 static std::string family_name = "Regge";
 } // namespace regge

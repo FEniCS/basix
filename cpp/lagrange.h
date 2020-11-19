@@ -15,7 +15,7 @@ namespace libtab
 /// @param[in] degree
 /// @param[in] name Identifier string (optional)
 /// @return A FiniteElemenet
-FiniteElement create_lagrange(cell::Type celltype, int degree,
+FiniteElement create_lagrange(cell::type celltype, int degree,
                               const std::string& name = std::string());
 
 /// Create a Discontinuous Lagrange element on cell with given degree
@@ -23,6 +23,6 @@ FiniteElement create_lagrange(cell::Type celltype, int degree,
 /// @param[in] degree
 /// @param[in] name Identifier string (optional)
 /// @return A FiniteElemenet
-FiniteElement create_dlagrange(cell::Type celltype, int degree,
+FiniteElement create_dlagrange(cell::type celltype, int degree,
                                const std::string& name = std::string());
 } // namespace libtab

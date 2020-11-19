@@ -9,11 +9,10 @@
 #include <string>
 
 #include "cell.h"
-#include "defines.h"
 #include "indexing.h"
 #include "lattice.h"
 #include "libtab.h"
-#include "polynomial-set.h"
+#include "polyset.h"
 #include "quadrature.h"
 
 // TODO: remove, not in public interface
@@ -59,14 +58,14 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   m.attr("__version__") = libtab::version();
 
-  py::enum_<cell::Type>(m, "CellType")
-      .value("interval", cell::Type::interval)
-      .value("triangle", cell::Type::triangle)
-      .value("tetrahedron", cell::Type::tetrahedron)
-      .value("quadrilateral", cell::Type::quadrilateral)
-      .value("hexahedron", cell::Type::hexahedron)
-      .value("prism", cell::Type::prism)
-      .value("pyramid", cell::Type::pyramid);
+  py::enum_<cell::type>(m, "CellType")
+      .value("interval", cell::type::interval)
+      .value("triangle", cell::type::triangle)
+      .value("tetrahedron", cell::type::tetrahedron)
+      .value("quadrilateral", cell::type::quadrilateral)
+      .value("hexahedron", cell::type::hexahedron)
+      .value("prism", cell::type::prism)
+      .value("pyramid", cell::type::pyramid);
 
   m.def("topology", &cell::topology,
         "Topological description of a reference cell");
@@ -74,16 +73,16 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("sub_entity_geometry", &cell::sub_entity_geometry,
         "Points of a sub-entity of a cell");
 
-  py::enum_<lattice::Type>(m, "LatticeType")
-      .value("equispaced", lattice::Type::equispaced)
-      .value("gll_warped", lattice::Type::gll_warped);
+  py::enum_<lattice::type>(m, "LatticeType")
+      .value("equispaced", lattice::type::equispaced)
+      .value("gll_warped", lattice::type::gll_warped);
 
   m.def("create_lattice", &lattice::create,
         "Create a uniform lattice of points on a reference cell");
 
   m.def(
       "create_new_element",
-      [](const std::string family_name, cell::Type celltype, int degree,
+      [](const std::string family_name, cell::type celltype, int degree,
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
@@ -134,7 +133,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
             &quadrature::make_quadrature),
         "Compute quadrature points and weights on a simplex defined by points")
       .def("make_quadrature",
-           py::overload_cast<cell::Type, int>(&quadrature::make_quadrature),
+           py::overload_cast<cell::type, int>(&quadrature::make_quadrature),
            "Compute quadrature points and weights on a reference cell");
 
   m.def("gauss_lobatto_legendre_line_rule",

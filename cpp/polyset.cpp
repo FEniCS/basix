@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "polynomial-set.h"
+#include "polyset.h"
 #include "cell.h"
 #include "indexing.h"
 #include <Eigen/Dense>
@@ -697,48 +697,48 @@ tabulate_polyset_prism_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
 }
 } // namespace
 //-----------------------------------------------------------------------------
-std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::Type celltype, int n,
+std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::type celltype, int n,
                                                int nderiv,
                                                const Eigen::ArrayXXd& pts)
 {
   switch (celltype)
   {
-  case cell::Type::interval:
+  case cell::type::interval:
     return tabulate_polyset_line_derivs(n, nderiv, pts);
-  case cell::Type::triangle:
+  case cell::type::triangle:
     return tabulate_polyset_triangle_derivs(n, nderiv, pts);
-  case cell::Type::tetrahedron:
+  case cell::type::tetrahedron:
     return tabulate_polyset_tetrahedron_derivs(n, nderiv, pts);
-  case cell::Type::quadrilateral:
+  case cell::type::quadrilateral:
     return tabulate_polyset_quad_derivs(n, nderiv, pts);
-  case cell::Type::prism:
+  case cell::type::prism:
     return tabulate_polyset_prism_derivs(n, nderiv, pts);
-  case cell::Type::pyramid:
+  case cell::type::pyramid:
     return tabulate_polyset_pyramid_derivs(n, nderiv, pts);
-  case cell::Type::hexahedron:
+  case cell::type::hexahedron:
     return tabulate_polyset_hex_derivs(n, nderiv, pts);
   default:
     throw std::runtime_error("Polynomial set: Unsupported cell type");
   }
 }
 //-----------------------------------------------------------------------------
-int polyset::size(cell::Type celltype, int n)
+int polyset::dim(cell::type celltype, int n)
 {
   switch (celltype)
   {
-  case cell::Type::triangle:
+  case cell::type::triangle:
     return (n + 1) * (n + 2) / 2;
-  case cell::Type::tetrahedron:
+  case cell::type::tetrahedron:
     return (n + 1) * (n + 2) * (n + 3) / 6;
-  case cell::Type::prism:
+  case cell::type::prism:
     return (n + 1) * (n + 1) * (n + 2) / 2;
-  case cell::Type::pyramid:
+  case cell::type::pyramid:
     return (n + 1) * (n + 2) * (2 * n + 3) / 6;
-  case cell::Type::interval:
+  case cell::type::interval:
     return (n + 1);
-  case cell::Type::quadrilateral:
+  case cell::type::quadrilateral:
     return (n + 1) * (n + 1);
-  case cell::Type::hexahedron:
+  case cell::type::hexahedron:
     return (n + 1) * (n + 1) * (n + 1);
   default:
     return 1;

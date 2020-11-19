@@ -42,12 +42,15 @@ namespace polyset
 /// all x values, followed by all y-values (and then z, if any). The
 /// second index is the point, and the third index is the basis function
 /// index.
-std::vector<Eigen::ArrayXXd> tabulate(cell::Type celltype, int degree, int nd,
+std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int degree, int nd,
                                       const Eigen::ArrayXXd& x);
 
-/// Size of set
-/// @todo What is n?
-int size(cell::Type celltype, int n);
+/// Dimension of a space
+/// @param[in] cellThe cell type
+/// @param[in] n The polynomial degree
+/// @return The number terms in the basis spanning a space of given
+/// degree
+int dim(cell::type cell, int n);
 
 } // namespace polyset
 } // namespace libtab

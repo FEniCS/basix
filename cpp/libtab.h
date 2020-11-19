@@ -19,7 +19,7 @@ class FiniteElement
 
 public:
   /// A finite element
-  FiniteElement(std::string family_name, cell::Type cell_type, int degree,
+  FiniteElement(std::string family_name, cell::type cell_type, int degree,
                 const std::vector<int>& value_shape,
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
@@ -46,7 +46,7 @@ public:
 
   /// Get the element cell type
   /// @return The cell type
-  cell::Type cell_type() const;
+  cell::type cell_type() const;
 
   /// Get the element polynomial degree
   /// @return Polynomial degree
@@ -289,7 +289,7 @@ public:
 
 private:
   // Cell type
-  cell::Type _cell_type;
+  cell::type _cell_type;
 
   // Degree
   int _degree;
@@ -319,5 +319,9 @@ private:
 
 /// Create an element by name
 FiniteElement create_element(std::string family, std::string cell, int degree);
+
+/// Return the version number of libtab across projects
+/// @return version string
+std::string version();
 
 } // namespace libtab

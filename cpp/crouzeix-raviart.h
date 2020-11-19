@@ -15,7 +15,7 @@ namespace cr
 /// @note degree must be 1 for Crouzeix-Raviart
 /// @param celltype
 /// @param degree
-FiniteElement create(cell::Type celltype, int degree);
+FiniteElement create(cell::type celltype, int degree);
 
 static std::string family_name = "Crouzeix-Raviart";
 } // namespace cr

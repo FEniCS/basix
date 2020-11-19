@@ -10,7 +10,7 @@
 
 namespace libtab::lattice
 {
-enum class Type
+enum class type
 {
   equispaced,
   gll_warped
@@ -29,12 +29,13 @@ enum class Type
 /// the Gauss-Lobatto-Legendre quadrature points. These are the same as
 /// "equispaced" when n<3.
 ///
-/// @param celltype The cell::Type
+/// @param celltype The cell::type
 /// @param n Size in each direction. There are n+1 points along each edge of the
 /// cell.
-/// @param type Either lattice::Type::equispaced or lattice::Type::gll_warped
+/// @param type Either lattice::type::equispaced or lattice::type::gll_warped
 /// @param exterior If set, includes outer boundaries
 /// @return Set of points
-Eigen::ArrayXXd create(cell::Type celltype, int n, Type type, bool exterior);
+Eigen::ArrayXXd create(cell::type celltype, int n, lattice::type type,
+                       bool exterior);
 
 } // namespace libtab::lattice

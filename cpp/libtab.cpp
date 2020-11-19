@@ -6,10 +6,13 @@
 #include "crouzeix-raviart.h"
 #include "lagrange.h"
 #include "nedelec.h"
-#include "polynomial-set.h"
+#include "polyset.h"
 #include "raviart-thomas.h"
 #include "regge.h"
 #include <iostream>
+
+#define str_macro(X) #X
+#define str(X) str_macro(X)
 
 using namespace libtab;
 
@@ -37,13 +40,13 @@ libtab::FiniteElement libtab::create_element(std::string family,
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
-    std::string family_name, cell::Type cell_type, int degree,
+    std::string name, cell::type cell_type, int degree,
     const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
     const std::vector<std::vector<int>>& entity_dofs,
     const std::vector<Eigen::MatrixXd>& base_permutations)
     : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
       _coeffs(coeffs), _entity_dofs(entity_dofs),
-      _base_permutations(base_permutations), _family_name(family_name)
+      _base_permutations(base_permutations), _family_name(name)
 {
   // Check that entity dofs add up to total number of dofs
   int sum = 0;
@@ -60,7 +63,7 @@ FiniteElement::FiniteElement(
   }
 }
 //-----------------------------------------------------------------------------
-cell::Type FiniteElement::cell_type() const { return _cell_type; }
+cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }
 //-----------------------------------------------------------------------------
@@ -127,7 +130,7 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 
   std::vector<Eigen::ArrayXXd> basis
       = polyset::tabulate(_cell_type, _degree, nd, x);
-  const int psize = polyset::size(_cell_type, _degree);
+  const int psize = polyset::dim(_cell_type, _degree);
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
@@ -150,4 +153,6 @@ std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
 {
   return _base_permutations;
 };
+//-----------------------------------------------------------------------------
+std::string libtab::version() { return str(LIBTAB_VERSION); }
 //-----------------------------------------------------------------------------

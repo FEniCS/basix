@@ -4,9 +4,9 @@
 
 #include "raviart-thomas.h"
 #include "dof-permutations.h"
-#include "integral-moments.h"
+#include "moments.h"
 #include "lagrange.h"
-#include "polynomial-set.h"
+#include "polyset.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
@@ -15,23 +15,23 @@
 using namespace libtab;
 
 //----------------------------------------------------------------------------
-FiniteElement rt::create(cell::Type celltype, int degree)
+FiniteElement rt::create(cell::type celltype, int degree)
 {
-  if (celltype != cell::Type::triangle and celltype != cell::Type::tetrahedron)
+  if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
   const int tdim = cell::topological_dimension(celltype);
 
-  const cell::Type facettype
-      = (tdim == 2) ? cell::Type::interval : cell::Type::triangle;
+  const cell::type facettype
+      = (tdim == 2) ? cell::type::interval : cell::type::triangle;
 
   // The number of order (degree-1) scalar polynomials
-  const int nv = polyset::size(celltype, degree - 1);
+  const int nv = polyset::dim(celltype, degree - 1);
   // The number of order (degree-2) scalar polynomials
-  const int ns0 = polyset::size(celltype, degree - 2);
+  const int ns0 = polyset::dim(celltype, degree - 2);
   // The number of additional polnomials in the polynomial basis for
   // Raviart-Thomas
-  const int ns = polyset::size(facettype, degree - 1);
+  const int ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(celltype, 2 * degree);

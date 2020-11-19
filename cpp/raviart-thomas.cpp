@@ -72,23 +72,21 @@ FiniteElement rt::create(cell::type celltype, int degree)
   int quad_deg = 5 * degree;
 
   // Add rows to dualmat for integral moments on facets
-  FiniteElement moment_space_facet = create_dlagrange(facettype, degree - 1);
   const int facet_count = tdim + 1;
   const int facet_dofs = ns;
   dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
-      = moments::make_normal_integral_moments(moment_space_facet, celltype,
-                                              tdim, degree, quad_deg);
+      = moments::make_normal_integral_moments(
+          create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
+          quad_deg);
 
   // Add rows to dualmat for integral moments on interior
   if (degree > 1)
   {
     const int internal_dofs = tdim * ns0;
     // Interior integral moment
-    FiniteElement moment_space_interior
-        = create_dlagrange(celltype, degree - 2);
     dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
-        = moments::make_integral_moments(moment_space_interior, celltype, tdim,
-                                         degree, quad_deg);
+        = moments::make_integral_moments(create_dlagrange(celltype, degree - 2),
+                                         celltype, tdim, degree, quad_deg);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

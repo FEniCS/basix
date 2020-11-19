@@ -73,7 +73,7 @@ Eigen::MatrixXd create_nedelec_2d_dual(int degree)
 
   // Integral representation for the boundary (edge) dofs
   FiniteElement moment_space_E
-      = DiscontinuousLagrange::create(cell::Type::interval, degree - 1);
+      = dlagrange::create(cell::Type::interval, degree - 1);
   dual.block(0, 0, 3 * degree, psize * 2)
       = moments::make_tangent_integral_moments(
           moment_space_E, cell::Type::triangle, 2, degree, quad_deg);
@@ -82,7 +82,7 @@ Eigen::MatrixXd create_nedelec_2d_dual(int degree)
   {
     // Interior integral moment
     FiniteElement moment_space_I
-        = DiscontinuousLagrange::create(cell::Type::triangle, degree - 2);
+        = dlagrange::create(cell::Type::triangle, degree - 2);
     dual.block(3 * degree, 0, degree * (degree - 1), psize * 2)
         = moments::make_integral_moments(moment_space_I, cell::Type::triangle,
                                          2, degree, quad_deg);
@@ -218,7 +218,7 @@ Eigen::MatrixXd create_nedelec_3d_dual(int degree)
 
   // Integral representation for the boundary (edge) dofs
   FiniteElement moment_space_E
-      = DiscontinuousLagrange::create(cell::Type::interval, degree - 1);
+      = dlagrange::create(cell::Type::interval, degree - 1);
   dual.block(0, 0, 6 * degree, psize * 3)
       = moments::make_tangent_integral_moments(
           moment_space_E, cell::Type::tetrahedron, 3, degree, quad_deg);
@@ -227,7 +227,7 @@ Eigen::MatrixXd create_nedelec_3d_dual(int degree)
   {
     // Integral moments on faces
     FiniteElement moment_space_F
-        = DiscontinuousLagrange::create(cell::Type::triangle, degree - 2);
+        = dlagrange::create(cell::Type::triangle, degree - 2);
     dual.block(6 * degree, 0, 4 * (degree - 1) * degree, psize * 3)
         = moments::make_integral_moments(
             moment_space_F, cell::Type::tetrahedron, 3, degree, quad_deg);
@@ -237,7 +237,7 @@ Eigen::MatrixXd create_nedelec_3d_dual(int degree)
   {
     // Interior integral moment
     FiniteElement moment_space_I
-        = DiscontinuousLagrange::create(cell::Type::tetrahedron, degree - 3);
+        = dlagrange::create(cell::Type::tetrahedron, degree - 3);
     dual.block(6 * degree + 4 * degree * (degree - 1), 0,
                (degree - 2) * (degree - 1) * degree / 2, psize * 3)
         = moments::make_integral_moments(
@@ -323,7 +323,7 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-FiniteElement Nedelec::create(cell::Type celltype, int degree)
+FiniteElement nedelec::create(cell::Type celltype, int degree)
 {
   Eigen::MatrixXd wcoeffs;
   Eigen::MatrixXd dual;
@@ -358,7 +358,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 
   const Eigen::MatrixXd coeffs
       = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
-  return FiniteElement(Nedelec::family_name, celltype, degree, {tdim}, coeffs,
+  return FiniteElement(nedelec::family_name, celltype, degree, {tdim}, coeffs,
                        entity_dofs, perms);
 }
 //-----------------------------------------------------------------------------

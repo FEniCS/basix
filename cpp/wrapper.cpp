@@ -109,14 +109,13 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("family_name", &FiniteElement::family_name);
 
   // Create FiniteElement of different types
-  m.def("Nedelec", &Nedelec::create, "Create Nedelec Element (first kind)");
-  m.def("Lagrange", &Lagrange::create, "Create Lagrange Element");
+  m.def("Nedelec", &nedelec::create, "Create Nedelec Element (first kind)");
+  m.def("Lagrange", &lagrange::create, "Create Lagrange Element");
   m.def("CrouzeixRaviart", &cr::create, "Create Crouzeix-Raviart Element");
-  m.def("RaviartThomas", &RaviartThomas::create,
-        "Create Raviart-Thomas Element");
-  m.def("NedelecSecondKind", &NedelecSecondKind::create,
+  m.def("RaviartThomas", &rt::create, "Create Raviart-Thomas Element");
+  m.def("NedelecSecondKind", &nedelec2::create,
         "Create Nedelec Element (second kind)");
-  m.def("Regge", &Regge::create, "Create Regge Element");
+  m.def("Regge", &regge::create, "Create Regge Element");
 
   m.def("create_element", &libtab::create_element,
         "Create a FiniteElement of a given family, celltype and degree");

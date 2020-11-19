@@ -8,14 +8,14 @@
 
 namespace libtab
 {
-class NedelecSecondKind
+/// Nedelec element (second kind)
+namespace nedelec2
 {
-  /// Nedelec element (second kind)
-public:
-  /// @param celltype
-  /// @param degree
-  static FiniteElement create(cell::Type celltype, int degree);
+/// Create Nedelec element (second kind)
+/// @param celltype
+/// @param degree
+FiniteElement create(cell::Type celltype, int degree);
 
-  inline static const std::string family_name = "Nedelec 2nd kind H(curl)";
-};
+static std::string family_name = "Nedelec 2nd kind H(curl)";
+} // namespace nedelec2
 } // namespace libtab

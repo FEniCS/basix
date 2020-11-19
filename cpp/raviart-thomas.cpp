@@ -3,9 +3,9 @@
 // SPDX-License-Identifier:    MIT
 
 #include "raviart-thomas.h"
+#include "dof-permutations.h"
 #include "integral-moments.h"
 #include "lagrange.h"
-#include "dof-permutations.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
@@ -15,7 +15,7 @@
 using namespace libtab;
 
 //----------------------------------------------------------------------------
-FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
+FiniteElement rt::create(cell::Type celltype, int degree)
 {
   if (celltype != cell::Type::triangle and celltype != cell::Type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -72,8 +72,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   int quad_deg = 5 * degree;
 
   // Add rows to dualmat for integral moments on facets
-  FiniteElement moment_space_facet
-      = DiscontinuousLagrange::create(facettype, degree - 1);
+  FiniteElement moment_space_facet = dlagrange::create(facettype, degree - 1);
   const int facet_count = tdim + 1;
   const int facet_dofs = ns;
   dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
@@ -86,7 +85,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
     const int internal_dofs = tdim * ns0;
     // Interior integral moment
     FiniteElement moment_space_interior
-        = DiscontinuousLagrange::create(celltype, degree - 2);
+        = dlagrange::create(celltype, degree - 2);
     dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
         = moments::make_integral_moments(moment_space_interior, celltype, tdim,
                                          degree, quad_deg);
@@ -102,7 +101,8 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-  if(tdim == 2) {
+  if (tdim == 2)
+  {
     Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < facet_count; ++edge)
     {
@@ -142,7 +142,7 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), ns);
   entity_dofs[tdim] = {ns0 * tdim};
 
-  return FiniteElement(RaviartThomas::family_name, celltype, degree, {tdim},
-                       coeffs, entity_dofs, base_permutations);
+  return FiniteElement(rt::family_name, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

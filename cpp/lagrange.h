@@ -11,27 +11,25 @@
 
 namespace libtab
 {
-class Lagrange
+/// Lagrange element
+namespace lagrange
 {
-  /// Lagrange element
-public:
-  /// Lagrange element on cell with given degree
-  /// @param celltype interval, triangle or tetrahedral celltype
-  /// @param degree
-  static FiniteElement create(cell::Type celltype, int degree);
+/// Lagrange element on cell with given degree
+/// @param celltype interval, triangle or tetrahedral celltype
+/// @param degree
+FiniteElement create(cell::Type celltype, int degree);
 
-  inline static const std::string family_name = "Lagrange";
-};
+static std::string family_name = "Lagrange";
+} // namespace lagrange
 
-class DiscontinuousLagrange
+/// Discontinuous Lagrange element
+namespace dlagrange
 {
-  /// Discontinuous Lagrange element
-public:
-  /// Discontinuous Lagrange element on cell with given degree
-  /// @param celltype interval, triangle or tetrahedral celltype
-  /// @param degree
-  static FiniteElement create(cell::Type celltype, int degree);
+/// Discontinuous Lagrange element on cell with given degree
+/// @param celltype interval, triangle or tetrahedral celltype
+/// @param degree
+FiniteElement create(cell::Type celltype, int degree);
 
-  inline static const std::string family_name = "Discontinuous Lagrange";
-};
+static std::string family_name = "Discontinuous Lagrange";
+} // namespace dlagrange
 } // namespace libtab

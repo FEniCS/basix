@@ -122,7 +122,7 @@ Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-FiniteElement Regge::create(cell::Type celltype, int degree)
+FiniteElement regge::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
@@ -149,7 +149,7 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
-  return FiniteElement(Regge::family_name, celltype, degree, {tdim, tdim},
+  return FiniteElement(regge::family_name, celltype, degree, {tdim, tdim},
                        coeffs, entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

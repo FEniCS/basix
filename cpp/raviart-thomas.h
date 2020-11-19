@@ -9,14 +9,13 @@
 
 namespace libtab
 {
-class RaviartThomas
+/// Raviart-Thomas element
+namespace rt
 {
-  /// Raviart-Thomas element
-public:
-  /// @param celltype
-  /// @param degree
-  static FiniteElement create(cell::Type celltype, int degree);
+/// @param celltype
+/// @param degree
+FiniteElement create(cell::Type celltype, int degree);
 
-  inline static const std::string family_name = "Raviart-Thomas";
-};
+static std::string family_name = "Raviart-Thomas";
+} // namespace rt
 } // namespace libtab

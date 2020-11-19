@@ -325,8 +325,6 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
 //-----------------------------------------------------------------------------
 FiniteElement Nedelec::create(cell::Type celltype, int degree)
 {
-  const int tdim = cell::topological_dimension(celltype);
-
   Eigen::MatrixXd wcoeffs;
   Eigen::MatrixXd dual;
   std::vector<Eigen::MatrixXd> perms;
@@ -354,6 +352,7 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   entity_dofs[0].resize(topology[0].size(), 0);
   entity_dofs[1].resize(topology[1].size(), degree);
   entity_dofs[2].resize(topology[2].size(), degree * (degree - 1));
+  const int tdim = cell::topological_dimension(celltype);
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 

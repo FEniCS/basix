@@ -14,7 +14,6 @@
 #include "indexing.h"
 #include "lagrange.h"
 #include "lattice.h"
-#include "nedelec-second-kind.h"
 #include "nedelec.h"
 #include "polynomial-set.h"
 #include "quadrature.h"

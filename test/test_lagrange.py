@@ -144,8 +144,8 @@ def test_line(n):
     celltype = libtab.CellType.interval
     g = sympy_lagrange(celltype, n)
     x = sympy.Symbol("x")
-    lagrange = libtab.Lagrange(celltype, n)
-    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
+    lagrange = libtab.Lagrange("interval", n)
+    pts = libtab.create_lattice("interval", 6, libtab.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
 
@@ -165,7 +165,7 @@ def test_tri(order):
     g = sympy_lagrange(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    lagrange = libtab.Lagrange(celltype, order)
+    lagrange = libtab.Lagrange("triangle", order)
     pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)
@@ -188,7 +188,7 @@ def test_tet(order):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    lagrange = libtab.Lagrange(celltype, order)
+    lagrange = libtab.Lagrange("tetrahedron", order)
     pts = libtab.create_lattice(celltype, 6,
                                 libtab.LatticeType.equispaced, True)
     nderiv = 1
@@ -217,7 +217,6 @@ def test_tet(order):
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_lagrange(celltype, order):
     lagrange = libtab.Lagrange(celltype, order)
-
     pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
     assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())

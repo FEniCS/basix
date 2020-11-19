@@ -193,6 +193,7 @@ def sympy_nedelec(celltype, n):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_tri(order):
+    celltype = libtab.CellType.triangle
     g = sympy_nedelec(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")

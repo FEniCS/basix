@@ -61,9 +61,10 @@ public:
   /// @return Value shape
   const std::vector<int>& value_shape() const;
 
-  /// Get the number of degrees of freedom represented in the element
+  /// Dimension of the finite elemeent space (number of degrees of
+  /// freedom for the element)
   /// @return Number of degrees of freedom
-  int ndofs() const;
+  int dim() const;
 
   /// Get the name of the finite element family
   /// @return The family name
@@ -73,7 +74,7 @@ public:
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
   /// on a triangle has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]
   /// The sum of the entity dofs must match the total number of dofs
-  /// reported by FiniteElement::ndofs
+  /// reported by FiniteElement::dim,
   /// @return List of entity dof counts on each dimension
   std::vector<std::vector<int>> entity_dofs() const;
 

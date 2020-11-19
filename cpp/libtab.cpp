@@ -80,7 +80,7 @@ const std::vector<int>& FiniteElement::value_shape() const
   return _value_shape;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::ndofs() const { return _coeffs.rows(); }
+int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
 std::string FiniteElement::family_name() const { return _family_name; }
 //-----------------------------------------------------------------------------

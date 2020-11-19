@@ -118,7 +118,7 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   // TODO: Implement base permutations
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const int ndofs = dualmat.rows();
+  const int ndofs = dual.rows();
   int perm_count = 0;
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size() * i;

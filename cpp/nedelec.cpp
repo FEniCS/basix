@@ -328,10 +328,9 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   const int tdim = cell::topological_dimension(celltype);
 
   Eigen::MatrixXd wcoeffs;
-  Eigen::MatrixXd dualmat;
+  Eigen::MatrixXd dual;
   std::vector<Eigen::MatrixXd> perms;
   std::vector<Eigen::MatrixXd> directions;
-
   if (celltype == cell::Type::triangle)
   {
     wcoeffs = create_nedelec_2d_space(degree);
@@ -358,10 +357,8 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
-  const Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
-
-  return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
-                       perms);
+  const Eigen::MatrixXd coeffs
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
+  return FiniteElement(celltype, degree, {tdim}, coeffs, entity_dofs, perms);
 }
 //-----------------------------------------------------------------------------

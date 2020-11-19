@@ -59,7 +59,7 @@ Eigen::MatrixXd create_nedelec_2d_space(int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd create_nedelec_2d_dual(int degree)
+Eigen::MatrixXd create_nedelec_2d_dual(int degree)
 {
   // Number of dofs and size of polynomial set P(k+1)
   const int ndofs = 3 * degree + degree * (degree - 1);
@@ -122,7 +122,7 @@ std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
   return base_permutations;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd create_nedelec_3d_space(int degree)
+Eigen::MatrixXd create_nedelec_3d_space(int degree)
 {
   // Reference tetrahedron
   const int tdim = 3;
@@ -201,7 +201,7 @@ Eigen::ArrayXXd create_nedelec_3d_space(int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd create_nedelec_3d_dual(int degree)
+Eigen::MatrixXd create_nedelec_3d_dual(int degree)
 {
   const int tdim = 3;
 
@@ -254,8 +254,7 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       14, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
-      = dofperms::interval_reflection(degree);
+  Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
   for (int edge = 0; edge < 6; ++edge)
   {
     const int start = edge_ref.size() * edge;
@@ -265,10 +264,8 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
       base_permutations[edge](start + i, start + edge_ref[i]) = 1;
     }
   }
-  Eigen::Array<int, Eigen::Dynamic, 1> face_rot
-      = dofperms::triangle_rotation(degree - 1);
-  Eigen::Array<int, Eigen::Dynamic, 1> face_ref
-      = dofperms::triangle_reflection(degree - 1);
+  Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 1);
+  Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 1);
   for (int face = 0; face < 4; ++face)
   {
     const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
@@ -330,8 +327,8 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
-  Eigen::ArrayXXd wcoeffs;
-  Eigen::ArrayXXd dual;
+  Eigen::MatrixXd wcoeffs;
+  Eigen::MatrixXd dualmat;
   std::vector<Eigen::MatrixXd> perms;
   std::vector<Eigen::MatrixXd> directions;
 
@@ -361,8 +358,10 @@ FiniteElement Nedelec::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
-  Eigen::MatrixXd coeffs
-      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
-  return FiniteElement(celltype, degree, {tdim}, coeffs, entity_dofs, perms);
+  const Eigen::MatrixXd new_coeffs
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
+
+  return FiniteElement(celltype, degree, {tdim}, new_coeffs, entity_dofs,
+                       perms);
 }
 //-----------------------------------------------------------------------------

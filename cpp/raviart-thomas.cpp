@@ -5,6 +5,7 @@
 #include "raviart-thomas.h"
 #include "integral-moments.h"
 #include "lagrange.h"
+#include "dof-permutations.h"
 #include "polynomial-set.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
@@ -91,18 +92,50 @@ FiniteElement RaviartThomas::create(cell::Type celltype, int degree)
                                          degree, quad_deg);
   }
 
-  // TODO
-  const int ndofs = dual.rows();
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  const int ndofs = dualmat.rows();
   int perm_count = 0;
+  for (int i = 1; i < tdim; ++i)
+    perm_count += topology[i].size() * i;
+
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  if(tdim == 2) {
+    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
+    for (int edge = 0; edge < facet_count; ++edge)
+    {
+      const int start = edge_ref.size() * edge;
+      for (int i = 0; i < edge_ref.size(); ++i)
+      {
+        base_permutations[edge](start + i, start + i) = 0;
+        base_permutations[edge](start + i, start + edge_ref[i]) = -1;
+      }
+    }
+  }
+  else if (tdim == 3)
+  {
+    Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 1);
+    Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 1);
+
+    for (int face = 0; face < facet_count; ++face)
+    {
+      const int start = face_ref.size() * face;
+      for (int i = 0; i < face_rot.size(); ++i)
+      {
+        base_permutations[2 * face](start + i, start + i) = 0;
+        base_permutations[2 * face](start + i, start + face_rot[i]) = 1;
+        base_permutations[2 * face + 1](start + i, start + i) = 0;
+        base_permutations[2 * face + 1](start + i, start + face_ref[i]) = -1;
+      }
+    }
+  }
 
   Eigen::MatrixXd coeffs
       = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
 
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the interior
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (int i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);

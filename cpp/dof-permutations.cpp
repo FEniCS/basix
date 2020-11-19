@@ -9,7 +9,7 @@ using namespace libtab;
 //-----------------------------------------------------------------------------
 Eigen::ArrayXi dofperms::interval_reflection(int degree)
 {
-  Eigen::Array<int, Eigen::Dynamic, 1> perm(degree);
+  Eigen::ArrayXi perm(degree);
   for (int i = 0; i < degree; ++i)
     perm(i) = degree - 1 - i;
   return perm;

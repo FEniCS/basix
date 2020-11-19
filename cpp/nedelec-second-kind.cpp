@@ -115,20 +115,21 @@ FiniteElement NedelecSecondKind::create(cell::Type celltype, int degree)
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
-  // TODO
-  const int ndofs = dual.rows();
+  // TODO: Implement base permutations
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  const int ndofs = dualmat.rows();
   int perm_count = 0;
+  for (int i = 1; i < tdim; ++i)
+    perm_count += topology[i].size() * i;
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   const Eigen::MatrixXd coeffs
       = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
 
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-
-  // Nedelec(2nd kind) has (d+1) dofs on each edge, (d+1)(d-1) on each
-  // face and (d-2)(d-1)(d+1)/2 on the interior in 3D
+  // Nedelec(2nd kind) has (d+1) dofs on each edge, (d+1)(d-1) on each face
+  // and (d-2)(d-1)(d+1)/2 on the interior in 3D
   std::vector<std::vector<int>> entity_dofs(topology.size());
   entity_dofs[0].resize(topology[0].size(), 0);
   entity_dofs[1].resize(topology[1].size(), degree + 1);

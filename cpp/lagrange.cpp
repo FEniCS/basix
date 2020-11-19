@@ -108,7 +108,6 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
     }
-
     Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 2);
     Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 2);
     for (int face = 0; face < 4; ++face)
@@ -171,12 +170,11 @@ FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   int perm_count = 0;
-  for (std::size_t i = 1; i < topology.size() - 1; ++i)
-    perm_count += topology[i].size();
+  for (int i = 1; i < tdim; ++i)
+    perm_count += topology[i].size() * i;
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-
   return FiniteElement(celltype, degree, {1}, coeffs, entity_dofs,
                        base_permutations);
 }

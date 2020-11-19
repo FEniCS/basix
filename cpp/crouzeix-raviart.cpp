@@ -37,17 +37,13 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
     ++c;
   }
 
-  // Initial coefficients are Identity Matrix
-  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
-
-  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, 1, 0, pts)[0];
-
+  Eigen::MatrixXd dual = polyset::tabulate(celltype, 1, 0, pts)[0];
   int perm_count = 0;
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  const Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficients(coeffs, dualmat);
+  const Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
+      Eigen::MatrixXd::Identity(ndofs, ndofs), dual);
 
   // Crouzeix-Raviart has one dof on each entity of tdim-1.
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -57,7 +53,7 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3] = {0};
 
-  return FiniteElement(celltype, 1, {1}, new_coeffs, entity_dofs,
+  return FiniteElement(celltype, 1, {1}, coeffs, entity_dofs,
                        base_permutations);
 }
 //-----------------------------------------------------------------------------

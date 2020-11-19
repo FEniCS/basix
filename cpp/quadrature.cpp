@@ -101,24 +101,24 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   // by Gene Golub, SIAM Review Vol 15, No. 2, April 1973, pp.318--334
 
   assert(alpha.rows() == beta.rows());
-  int n = alpha.rows() - 1;
-
   Eigen::VectorXd bsqrt = beta.cwiseSqrt();
-  bsqrt(n) = 1.0;
 
   // Solve tridiagonal system using Thomas algorithm
   double g1 = 0.0;
   double g2 = 0.0;
-  for (int i = 1; i < bsqrt.rows(); ++i)
+  const int n = alpha.rows();
+  for (int i = 1; i < n - 1; ++i)
   {
     g1 = bsqrt(i) / (alpha(i) - xl1 - bsqrt(i - 1) * g1);
     g2 = bsqrt(i) / (alpha(i) - xl2 - bsqrt(i - 1) * g2);
   }
+  g1 = 1.0 / (alpha(n - 1) - xl1 - bsqrt(n - 2) * g1);
+  g2 = 1.0 / (alpha(n - 1) - xl2 - bsqrt(n - 2) * g2);
 
   Eigen::ArrayXd alpha_l = alpha;
-  alpha_l[n] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
+  alpha_l(n - 1) = (g1 * xl2 - g2 * xl1) / (g1 - g2);
   Eigen::ArrayXd beta_l = beta;
-  beta_l[n] = (xl2 - xl1) / (g1 - g2);
+  beta_l(n - 1) = (xl2 - xl1) / (g1 - g2);
 
   return gauss(alpha_l, beta_l);
 }
@@ -129,9 +129,9 @@ Eigen::ArrayXXd quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
                                                  const Eigen::ArrayXd& x)
 {
   std::vector<Eigen::ArrayXXd> J;
+  Eigen::ArrayXXd Jd(n + 1, x.rows());
   for (int i = 0; i < nderiv + 1; ++i)
   {
-    Eigen::ArrayXXd Jd(n + 1, x.rows());
     if (i == 0)
       Jd.row(0).fill(1.0);
     else
@@ -158,6 +158,7 @@ Eigen::ArrayXXd quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
       if (i > 0)
         Jd.row(k) += i * a3 * J[i - 1].row(k - 1);
     }
+
     J.push_back(Jd);
   }
 
@@ -178,7 +179,6 @@ Eigen::ArrayXd quadrature::compute_gauss_jacobi_points(double a, int m)
   const double eps = 1.e-8;
   const int max_iter = 100;
   Eigen::ArrayXd x(m);
-
   for (int k = 0; k < m; ++k)
   {
     // Initial guess
@@ -192,11 +192,12 @@ Eigen::ArrayXd quadrature::compute_gauss_jacobi_points(double a, int m)
       double s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      Eigen::ArrayXd f = quadrature::compute_jacobi_deriv(a, m, 1, x.row(k));
-      double delta = f[0] / (f[1] - f[0] * s);
+      const Eigen::ArrayXd f
+          = quadrature::compute_jacobi_deriv(a, m, 1, x.row(k));
+      const double delta = f[0] / (f[1] - f[0] * s);
       x[k] -= delta;
 
-      if (fabs(delta) < eps)
+      if (std::abs(delta) < eps)
         break;
       ++j;
     }
@@ -236,9 +237,7 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
 quadrature::make_quadrature_line(int m)
 {
   auto [ptx, wx] = quadrature::compute_gauss_jacobi_rule(0.0, m);
-  Eigen::ArrayXd pts = 0.5 * (ptx + 1.0);
-  Eigen::ArrayXd wts = wx * 0.5;
-  return {pts, wts};
+  return {0.5 * (ptx + 1.0), wx * 0.5};
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayX2d, Eigen::ArrayXd>
@@ -247,7 +246,7 @@ quadrature::make_quadrature_triangle_collapsed(int m)
   auto [ptx, wx] = quadrature::compute_gauss_jacobi_rule(0.0, m);
   auto [pty, wy] = quadrature::compute_gauss_jacobi_rule(1.0, m);
 
-  Eigen::ArrayXXd pts(m * m, 2);
+  Eigen::ArrayX2d pts(m * m, 2);
   Eigen::ArrayXd wts(m * m);
   int c = 0;
   for (int i = 0; i < m; ++i)
@@ -302,9 +301,8 @@ quadrature::make_quadrature(cell::Type celltype, int m)
   case cell::Type::quadrilateral:
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    Eigen::ArrayXXd Qpts(m * m, 2);
+    Eigen::ArrayX2d Qpts(m * m, 2);
     Eigen::ArrayXd Qwts(m * m);
-
     int c = 0;
     for (int j = 0; j < m; ++j)
     {
@@ -320,7 +318,7 @@ quadrature::make_quadrature(cell::Type celltype, int m)
   case cell::Type::hexahedron:
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    Eigen::ArrayXXd Qpts(m * m * m, 3);
+    Eigen::ArrayX3d Qpts(m * m * m, 3);
     Eigen::ArrayXd Qwts(m * m * m);
     int c = 0;
     for (int k = 0; k < m; ++k)
@@ -341,7 +339,7 @@ quadrature::make_quadrature(cell::Type celltype, int m)
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
     auto [QptsT, QwtsT] = quadrature::make_quadrature_triangle_collapsed(m);
-    Eigen::ArrayXXd Qpts(m * QptsT.rows(), 3);
+    Eigen::ArrayX3d Qpts(m * QptsT.rows(), 3);
     Eigen::ArrayXd Qwts(m * QptsT.rows());
     int c = 0;
     for (int k = 0; k < m; ++k)
@@ -382,7 +380,6 @@ quadrature::make_quadrature(const Eigen::ArrayXXd& simplex, int m)
 
   Eigen::ArrayXXd Qpts;
   Eigen::ArrayXd Qwts;
-
   double scale = 1.0;
   if (dim == 1)
   {
@@ -437,6 +434,7 @@ quadrature::gauss_lobatto_legendre_line_rule(int m)
 
   // Calculate the recursion coefficients
   auto [alpha, beta] = rec_jacobi(m, 0, 0);
+
   // Compute Lobatto nodes and weights
   auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
 

@@ -105,9 +105,7 @@ Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
           Eigen::Map<Eigen::VectorXd> vvt_flat(vvt[j].data(),
                                                vvt[j].rows() * vvt[j].cols());
           // outer product: outer(outer(t, t), basis)
-          const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                              Eigen::RowMajor>
-              vvt_b = vvt_flat * basis.row(k);
+          const Eigen::MatrixXd vvt_b = vvt_flat * basis.row(k);
 
           // Copy tensor values row by row into dualmat
           for (int r = 0; r < vvt_b.rows(); ++r)
@@ -129,16 +127,16 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   const int tdim = cell::topological_dimension(celltype);
 
   Eigen::MatrixXd wcoeffs = create_regge_space(celltype, degree);
-  Eigen::MatrixXd dualmat = create_regge_dual(celltype, degree);
+  Eigen::MatrixXd dual = create_regge_dual(celltype, degree);
 
   // TODO
-  const int ndofs = dualmat.rows();
+  const int ndofs = dual.rows();
   int perm_count = 0;
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::MatrixXd new_coeffs
-      = FiniteElement::compute_expansion_coefficients(wcoeffs, dualmat);
+  Eigen::MatrixXd coeffs
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D
@@ -151,7 +149,7 @@ FiniteElement Regge::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
-  return FiniteElement(celltype, degree, {tdim, tdim}, new_coeffs, entity_dofs,
+  return FiniteElement(celltype, degree, {tdim, tdim}, coeffs, entity_dofs,
                        base_permutations);
 }
 //-----------------------------------------------------------------------------

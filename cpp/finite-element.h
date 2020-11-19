@@ -23,8 +23,7 @@ public:
   FiniteElement(cell::Type cell_type, int degree, std::vector<int> value_shape,
                 Eigen::ArrayXXd coeffs,
                 std::vector<std::vector<int>> entity_dofs,
-                std::vector<Eigen::MatrixXd>
-                    base_permutations);
+                std::vector<Eigen::MatrixXd> base_permutations);
 
   /// Destructor
   ~FiniteElement() = default;
@@ -107,7 +106,7 @@ public:
   /// polynomial p_j:
   ///  @f[ D = (d_{lj}),\mbox{ where } d_{lj} = f_l(p_j) @f]
   ///
-  /// This function takes the matrices B (span_coeffs) and D (dualmat) as
+  /// This function takes the matrices B (span_coeffs) and D (dual) as
   /// inputs and returns the matrix C. It computed C using:
   ///  @f[ C = (B D^T)^{-1} B @f]
   ///
@@ -128,8 +127,8 @@ public:
   ///
   /// The functionals defining the Lagrange order 1 space are point
   /// evaluations at the three vertices of the triangle. The matrix D
-  /// (dualmat) given by applying these to p_0 to p_2 is:
-  ///  @f[ \mbox{dualmat} = \begin{bmatrix}
+  /// (dual) given by applying these to p_0 to p_2 is:
+  ///  @f[ \mbox{dual} = \begin{bmatrix}
   ///              \sqrt{2}/2 &  -\sqrt{3} & -1 \\
   ///              \sqrt{2}/2 &   \sqrt{3} & -1 \\
   ///              \sqrt{2}/2 &          0 &  2 \end{bmatrix} @f]
@@ -174,9 +173,9 @@ public:
   ///  \end{bmatrix} @f]
   ///
   /// The functionals defining the Raviart-Thomas order 1 space are integral
-  /// of the normal components along each edge. The matrix D (dualmat) given
+  /// of the normal components along each edge. The matrix D (dual) given
   /// by applying these to @f$p_0@f$ to @f$p_5@f$ is:
-  ///   dualmat = @f[ \begin{bmatrix}
+  ///   dual = @f[ \begin{bmatrix}
   /// -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
   /// -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0 &    0 \\
   ///           0 &         0   &    0 &  \sqrt{2}/2 &          0 &   -1
@@ -198,7 +197,7 @@ public:
   /// @param[in] span_coeffs The matrix B containing the expansion
   /// coefficients defining a polynomial basis spanning the polynomial space
   /// for this element.
-  /// @param[in] dualmat The matrix D of values obtained by applying each
+  /// @param[in] dual The matrix D of values obtained by applying each
   /// functional in the dual set to each expansion polynomial
   /// @param[in] condition_check If set, checks the condition of the matrix
   /// B.D^T and throws an error if it is ill-conditioned.
@@ -206,8 +205,8 @@ public:
   /// functions of the finite element space.
   static Eigen::MatrixXd
   compute_expansion_coefficients(const Eigen::MatrixXd& span_coeffs,
-                                const Eigen::MatrixXd& dualmat,
-                                bool condition_check = false);
+                                 const Eigen::MatrixXd& dual,
+                                 bool condition_check = false);
 
   /// Get the base permutations
   /// The base permutations represent the effect of rotating or reflecting

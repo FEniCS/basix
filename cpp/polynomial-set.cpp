@@ -96,14 +96,12 @@ tabulate_polyset_triangle_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
 
   // Iterate over derivatives in increasing order, since higher derivatives
   // depend on earlier calculations
+  Eigen::ArrayXXd result(pts.rows(), m);
   for (int k = 0; k < nderiv + 1; ++k)
   {
     for (int kx = 0; kx < k + 1; ++kx)
     {
       const int ky = k - kx;
-
-      // Create array for this derivative
-      Eigen::ArrayXXd result(pts.rows(), m);
 
       if (kx == 0 and ky == 0)
         result.col(0).fill(1.0);
@@ -117,11 +115,17 @@ tabulate_polyset_triangle_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
         result.col(idx(p, 0))
             = (x.col(0) + 0.5 * x.col(1) + 0.5) * result.col(idx(p - 1, 0)) * a;
         if (kx > 0)
+        {
           result.col(idx(p, 0))
               += 2 * kx * a * dresult[idx(kx - 1, ky)].col(idx(p - 1, 0));
+        }
+
         if (ky > 0)
+        {
           result.col(idx(p, 0))
               += ky * a * dresult[idx(kx, ky - 1)].col(idx(p - 1, 0));
+        }
+
         if (p > 1)
         {
           // y^2 terms
@@ -148,8 +152,11 @@ tabulate_polyset_triangle_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
         result.col(idx(p, 1))
             = result.col(idx(p, 0)) * (x.col(1) * (1.5 + p) + 0.5 + p);
         if (ky > 0)
+        {
           result.col(idx(p, 1))
               += 2 * ky * (1.5 + p) * dresult[idx(kx, ky - 1)].col(idx(p, 0));
+        }
+
         for (int q = 1; q < n - p; ++q)
         {
           const auto [a1, a2, a3] = jrc(2 * p + 1, q);
@@ -198,6 +205,7 @@ tabulate_polyset_tetrahedron_derivs(int n, int nderiv,
   const Eigen::ArrayXd f5 = f4 * f4;
 
   // Traverse derivatives in increasing order
+  Eigen::ArrayXXd result(pts.rows(), m);
   for (int k = 0; k < nderiv + 1; ++k)
   {
     for (int j = 0; j < k + 1; ++j)
@@ -206,9 +214,6 @@ tabulate_polyset_tetrahedron_derivs(int n, int nderiv,
       {
         const int ky = j - kx;
         const int kz = k - j;
-
-        Eigen::ArrayXXd result(pts.rows(), m);
-
         if (kx == 0 and ky == 0 and kz == 0)
           result.col(0).fill(1.0);
         else
@@ -419,6 +424,7 @@ tabulate_polyset_pyramid_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
   const Eigen::ArrayXd f2 = (1.0 - x.col(2)).square() * 0.25;
 
   // Traverse derivatives in increasing order
+  Eigen::ArrayXXd result(pts.rows(), m);
   for (int k = 0; k < nderiv + 1; ++k)
   {
     for (int j = 0; j < k + 1; ++j)
@@ -427,7 +433,7 @@ tabulate_polyset_pyramid_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
       {
         const int ky = j - kx;
         const int kz = k - j;
-        Eigen::ArrayXXd result = Eigen::ArrayXXd::Zero(pts.rows(), m);
+        result.setZero();
 
         const int pyramidal_index = pyr_idx(0, 0, 0);
         assert(pyramidal_index < m);
@@ -540,9 +546,11 @@ tabulate_polyset_pyramid_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
                 = result.col(pyr_idx(p, q, 0))
                   * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
             if (kz > 0)
+            {
               result.col(pyr_idx(p, q, 1))
                   += 2 * kz * dresult[idx(kx, ky, kz - 1)].col(pyr_idx(p, q, 0))
                      * (2.0 + p + q);
+            }
           }
         }
 
@@ -603,11 +611,11 @@ tabulate_polyset_quad_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
   std::vector<Eigen::ArrayXXd> py
       = tabulate_polyset_line_derivs(n, nderiv, pts.col(1));
 
+  Eigen::ArrayXXd result(pts.rows(), m);
   for (int kx = 0; kx < nderiv + 1; ++kx)
   {
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
     {
-      Eigen::ArrayXXd result(pts.rows(), m);
       int c = 0;
       for (int i = 0; i < px[kx].cols(); ++i)
         for (int j = 0; j < py[ky].cols(); ++j)
@@ -624,10 +632,7 @@ tabulate_polyset_hex_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
 {
   assert(pts.cols() == 3);
   const int m = (n + 1) * (n + 1) * (n + 1);
-
   const int md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
-
-  std::vector<Eigen::ArrayXXd> dresult(md);
 
   std::vector<Eigen::ArrayXXd> px
       = tabulate_polyset_line_derivs(n, nderiv, pts.col(0));
@@ -636,13 +641,14 @@ tabulate_polyset_hex_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
   std::vector<Eigen::ArrayXXd> pz
       = tabulate_polyset_line_derivs(n, nderiv, pts.col(2));
 
+  std::vector<Eigen::ArrayXXd> dresult(md);
+  Eigen::ArrayXXd result(pts.rows(), m);
   for (int kx = 0; kx < nderiv + 1; ++kx)
   {
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
     {
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
-        Eigen::ArrayXXd result(pts.rows(), m);
         int c = 0;
         for (int i = 0; i < px[kx].cols(); ++i)
           for (int j = 0; j < py[ky].cols(); ++j)
@@ -664,20 +670,19 @@ tabulate_polyset_prism_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
   const int m = (n + 1) * (n + 1) * (n + 2) / 2;
   const int md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
-  std::vector<Eigen::ArrayXXd> dresult(md);
-
   std::vector<Eigen::ArrayXXd> pxy
       = tabulate_polyset_triangle_derivs(n, nderiv, pts.leftCols(2));
   std::vector<Eigen::ArrayXXd> pz
       = tabulate_polyset_line_derivs(n, nderiv, pts.col(2));
 
+  std::vector<Eigen::ArrayXXd> dresult(md);
+  Eigen::ArrayXXd result(pts.rows(), m);
   for (int kx = 0; kx < nderiv + 1; ++kx)
   {
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
     {
       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
       {
-        Eigen::ArrayXXd result(pts.rows(), m);
         int c = 0;
         for (int i = 0; i < pxy[idx(kx, ky)].cols(); ++i)
           for (int k = 0; k < pz[kz].cols(); ++k)

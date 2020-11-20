@@ -5,17 +5,14 @@
 #pragma once
 
 #include "cell.h"
-#include "finite-element.h"
+#include "libtab.h"
 
 namespace libtab
 {
-/// Raviart-Thomas element
-namespace rt
-{
+/// Create Raviart-Thomas element
 /// @param celltype
 /// @param degree
-FiniteElement create(cell::Type celltype, int degree);
+FiniteElement create_rt(cell::type celltype, int degree,
+                        const std::string& = std::string());
 
-static std::string family_name = "Raviart-Thomas";
-} // namespace rt
 } // namespace libtab

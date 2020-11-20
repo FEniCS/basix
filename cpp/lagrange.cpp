@@ -5,7 +5,8 @@
 #include "lagrange.h"
 #include "dof-permutations.h"
 #include "lattice.h"
-#include "polynomial-set.h"
+#include "libtab.h"
+#include "polyset.h"
 #include <Eigen/Dense>
 #include <iostream>
 #include <numeric>
@@ -13,12 +14,13 @@
 using namespace libtab;
 
 //----------------------------------------------------------------------------
-FiniteElement lagrange::create(cell::Type celltype, int degree)
+FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
+                                      const std::string& name)
 {
-  if (celltype == cell::Type::point)
+  if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
 
-  const int ndofs = polyset::size(celltype, degree);
+  const int ndofs = polyset::dim(celltype, degree);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -28,7 +30,7 @@ FiniteElement lagrange::create(cell::Type celltype, int degree)
   Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
   if (degree == 0)
   {
-    pt = lattice::create(celltype, 0, lattice::Type::equispaced, true);
+    pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
     for (std::size_t i = 0; i < entity_dofs.size(); ++i)
       entity_dofs[i].resize(topology[i].size(), 0);
     entity_dofs[topology.size() - 1][0] = 1;
@@ -51,16 +53,16 @@ FiniteElement lagrange::create(cell::Type celltype, int degree)
         else if (dim == topology.size() - 1)
         {
           const Eigen::ArrayXXd lattice = lattice::create(
-              celltype, degree, lattice::Type::equispaced, false);
+              celltype, degree, lattice::type::equispaced, false);
           for (int j = 0; j < lattice.rows(); ++j)
             pt.row(c++) = lattice.row(j);
           entity_dofs[dim].push_back(lattice.rows());
         }
         else
         {
-          cell::Type ct = cell::sub_entity_type(celltype, dim, i);
+          cell::type ct = cell::sub_entity_type(celltype, dim, i);
           const Eigen::ArrayXXd lattice
-              = lattice::create(ct, degree, lattice::Type::equispaced, false);
+              = lattice::create(ct, degree, lattice::type::equispaced, false);
           entity_dofs[dim].push_back(lattice.rows());
           for (int j = 0; j < lattice.rows(); ++j)
           {
@@ -83,7 +85,7 @@ FiniteElement lagrange::create(cell::Type celltype, int degree)
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-  if (celltype == cell::Type::triangle)
+  if (celltype == cell::type::triangle)
   {
     Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 3; ++edge)
@@ -96,7 +98,7 @@ FiniteElement lagrange::create(cell::Type celltype, int degree)
       }
     }
   }
-  else if (celltype == cell::Type::tetrahedron)
+  else if (celltype == cell::type::tetrahedron)
   {
     Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 6; ++edge)
@@ -125,23 +127,24 @@ FiniteElement lagrange::create(cell::Type celltype, int degree)
 
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
-  Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
-  return FiniteElement(lagrange::family_name, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_permutations);
+  return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------
-FiniteElement dlagrange::create(cell::Type celltype, int degree)
+FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
+                                       const std::string& name)
 {
-  if (celltype != cell::Type::interval and celltype != cell::Type::triangle
-      and celltype != cell::Type::tetrahedron)
+  if (celltype != cell::type::interval and celltype != cell::type::triangle
+      and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Invalid celltype");
 
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
 
-  const int ndofs = polyset::size(celltype, degree);
+  const int ndofs = polyset::dim(celltype, degree);
 
   std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -152,7 +155,7 @@ FiniteElement dlagrange::create(cell::Type celltype, int degree)
 
   Eigen::ArrayXXd geometry = cell::geometry(celltype);
   const Eigen::ArrayXXd lattice
-      = lattice::create(celltype, degree, lattice::Type::equispaced, true);
+      = lattice::create(celltype, degree, lattice::type::equispaced, true);
 
   // Create points at nodes, ordered by topology (vertices first)
   Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
@@ -166,7 +169,7 @@ FiniteElement dlagrange::create(cell::Type celltype, int degree)
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
-  Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   int perm_count = 0;
@@ -176,7 +179,7 @@ FiniteElement dlagrange::create(cell::Type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  return FiniteElement(dlagrange::family_name, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_permutations);
+  return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

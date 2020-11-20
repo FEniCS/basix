@@ -4,7 +4,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "crouzeix-raviart.h"
-#include "polynomial-set.h"
+#include "polyset.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
@@ -13,7 +13,7 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-FiniteElement cr::create(cell::Type celltype, int degree)
+FiniteElement cr::create(cell::type celltype, int degree)
 {
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
@@ -42,7 +42,7 @@ FiniteElement cr::create(cell::Type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  const Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
+  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dual);
 
   // Crouzeix-Raviart has one dof on each entity of tdim-1.

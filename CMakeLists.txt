@@ -41,24 +41,24 @@ find_package(pybind11 CONFIG REQUIRED)
 
 add_subdirectory(cpp)
 
-pybind11_add_module(libtab MODULE cpp/wrapper.cpp)
+pybind11_add_module(_libtabcpp MODULE cpp/wrapper.cpp)
 
-set_target_properties(libtab PROPERTIES SKIP_BUILD_RPATH FALSE)
-set_target_properties(libtab PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
-set_target_properties(libtab PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+set_target_properties(_libtabcpp PROPERTIES SKIP_BUILD_RPATH FALSE)
+set_target_properties(_libtabcpp PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+set_target_properties(_libtabcpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if (APPLE)
-  set_target_properties(libtab PROPERTIES INSTALL_RPATH "@loader_path/lib")
+  set_target_properties(_libtabcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
 else()
-  set_target_properties(libtab PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+  set_target_properties(_libtabcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
 endif()
 
-target_link_libraries(libtab PRIVATE pybind11::module tab)
+target_link_libraries(_libtabcpp PRIVATE pybind11::module tab)
 
 file(GLOB header_files "cpp/*.h")
 set_target_properties(tab PROPERTIES PUBLIC_HEADER "${header_files}")
 
-install(TARGETS libtab DESTINATION .)
+install(TARGETS _libtabcpp DESTINATION .)
 install(TARGETS tab
 		LIBRARY DESTINATION lib
 		PUBLIC_HEADER DESTINATION include)

@@ -5,31 +5,24 @@
 #pragma once
 
 #include "cell.h"
-#include "finite-element.h"
-#include <Eigen/Dense>
-#include <vector>
+#include "libtab.h"
+#include <string>
 
 namespace libtab
 {
-/// Lagrange element
-namespace lagrange
-{
-/// Lagrange element on cell with given degree
+/// Create a Lagrange element on cell with given degree
+/// @param[in] celltype interval, triangle or tetrahedral celltype
+/// @param[in] degree
+/// @param[in] name Identifier string (optional)
+/// @return A FiniteElemenet
+FiniteElement create_lagrange(cell::type celltype, int degree,
+                              const std::string& name = std::string());
+
+/// Create a Discontinuous Lagrange element on cell with given degree
 /// @param celltype interval, triangle or tetrahedral celltype
-/// @param degree
-FiniteElement create(cell::Type celltype, int degree);
-
-static std::string family_name = "Lagrange";
-} // namespace lagrange
-
-/// Discontinuous Lagrange element
-namespace dlagrange
-{
-/// Discontinuous Lagrange element on cell with given degree
-/// @param celltype interval, triangle or tetrahedral celltype
-/// @param degree
-FiniteElement create(cell::Type celltype, int degree);
-
-static std::string family_name = "Discontinuous Lagrange";
-} // namespace dlagrange
+/// @param[in] degree
+/// @param[in] name Identifier string (optional)
+/// @return A FiniteElemenet
+FiniteElement create_dlagrange(cell::type celltype, int degree,
+                               const std::string& name = std::string());
 } // namespace libtab

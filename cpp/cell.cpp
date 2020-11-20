@@ -11,38 +11,38 @@
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd cell::geometry(cell::Type celltype)
+Eigen::ArrayXXd cell::geometry(cell::type celltype)
 {
   Eigen::ArrayXXd geom;
   switch (celltype)
   {
-  case cell::Type::interval:
+  case cell::type::interval:
     geom.resize(2, 1);
     geom << 0.0, 1.0;
     break;
-  case cell::Type::triangle:
+  case cell::type::triangle:
     geom.resize(3, 2);
     geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0;
     break;
-  case cell::Type::quadrilateral:
+  case cell::type::quadrilateral:
     geom.resize(4, 2);
     geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0;
     break;
-  case cell::Type::tetrahedron:
+  case cell::type::tetrahedron:
     geom.resize(4, 3);
     geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
     break;
-  case cell::Type::prism:
+  case cell::type::prism:
     geom.resize(6, 3);
     geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
         0.0, 1.0, 0.0, 1.0, 1.0;
     break;
-  case cell::Type::pyramid:
+  case cell::type::pyramid:
     geom.resize(5, 3);
     geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
         0.0, 1.0;
     break;
-  case cell::Type::hexahedron:
+  case cell::type::hexahedron:
     geom.resize(8, 3);
     geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
         0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0;
@@ -53,20 +53,20 @@ Eigen::ArrayXXd cell::geometry(cell::Type celltype)
   return geom;
 }
 //-----------------------------------------------------------------------------
-std::vector<std::vector<std::vector<int>>> cell::topology(cell::Type celltype)
+std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
 {
   std::vector<std::vector<std::vector<int>>> topo;
 
   switch (celltype)
   {
-  case cell::Type::interval:
+  case cell::type::interval:
     topo.resize(2);
     // Vertices
     topo[0] = {{0}, {1}};
     // Cell
     topo[1] = {{0, 1}};
     break;
-  case cell::Type::triangle:
+  case cell::type::triangle:
     topo.resize(3);
     // Vertices
     topo[0] = {{0}, {1}, {2}};
@@ -75,7 +75,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::Type celltype)
     // Cell
     topo[2] = {{0, 1, 2}};
     break;
-  case cell::Type::quadrilateral:
+  case cell::type::quadrilateral:
     topo.resize(3);
     // FIXME - check all these
     // Vertices
@@ -85,7 +85,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::Type celltype)
     // Cell
     topo[2] = {{0, 1, 2, 3}};
     break;
-  case cell::Type::tetrahedron:
+  case cell::type::tetrahedron:
     topo.resize(4);
     // Vertices
     topo[0] = {{0}, {1}, {2}, {3}};
@@ -96,7 +96,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::Type celltype)
     // Cell
     topo[3] = {{0, 1, 2, 3}};
     break;
-  case cell::Type::prism:
+  case cell::type::prism:
     // FIXME: check
     topo.resize(4);
     // Vertices
@@ -109,7 +109,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::Type celltype)
     // Cell
     topo[3] = {{0, 1, 2, 3, 4, 5}};
     break;
-  case cell::Type::pyramid:
+  case cell::type::pyramid:
     // FIXME: check all these
     topo.resize(4);
     // Vertices
@@ -121,7 +121,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::Type celltype)
     // Cell
     topo[3] = {{0, 1, 2, 3, 4}};
     break;
-  case cell::Type::hexahedron:
+  case cell::type::hexahedron:
     topo.resize(4);
     // FIXME: check over
     // Vertices
@@ -141,23 +141,23 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::Type celltype)
   return topo;
 }
 //-----------------------------------------------------------------------------
-int cell::topological_dimension(cell::Type cell_type)
+int cell::topological_dimension(cell::type cell_type)
 {
   switch (cell_type)
   {
-  case cell::Type::interval:
+  case cell::type::interval:
     return 1;
-  case cell::Type::triangle:
+  case cell::type::triangle:
     return 2;
-  case cell::Type::quadrilateral:
+  case cell::type::quadrilateral:
     return 2;
-  case cell::Type::tetrahedron:
+  case cell::type::tetrahedron:
     return 3;
-  case cell::Type::hexahedron:
+  case cell::type::hexahedron:
     return 3;
-  case cell::Type::prism:
+  case cell::type::prism:
     return 3;
-  case cell::Type::pyramid:
+  case cell::type::pyramid:
     return 3;
   default:
     throw std::runtime_error("Unsupported cell type");
@@ -165,7 +165,7 @@ int cell::topological_dimension(cell::Type cell_type)
   return 0;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd cell::sub_entity_geometry(cell::Type celltype, int dim,
+Eigen::ArrayXXd cell::sub_entity_geometry(cell::type celltype, int dim,
                                           int index)
 {
   std::vector<std::vector<std::vector<int>>> cell_topology
@@ -187,22 +187,22 @@ Eigen::ArrayXXd cell::sub_entity_geometry(cell::Type celltype, int dim,
   return sub_entity;
 }
 //----------------------------------------------------------------------------
-int cell::sub_entity_count(cell::Type celltype, int dim)
+int cell::sub_entity_count(cell::type celltype, int dim)
 {
   const std::vector<std::vector<std::vector<int>>> cell_topology
       = cell::topology(celltype);
   return cell_topology.at(dim).size();
 }
 //----------------------------------------------------------------------------
-cell::Type cell::sub_entity_type(cell::Type celltype, int dim, int index)
+cell::type cell::sub_entity_type(cell::type celltype, int dim, int index)
 {
   const int tdim = cell::topological_dimension(celltype);
   assert(dim >= 0 and dim <= tdim);
 
   if (dim == 0)
-    return cell::Type::point;
+    return cell::type::point;
   else if (dim == 1)
-    return cell::Type::interval;
+    return cell::type::interval;
   else if (dim == tdim)
     return celltype;
 
@@ -211,25 +211,25 @@ cell::Type cell::sub_entity_type(cell::Type celltype, int dim, int index)
   switch (entity.size())
   {
   case 3:
-    return cell::Type::triangle;
+    return cell::type::triangle;
   case 4:
-    return cell::Type::quadrilateral;
+    return cell::type::quadrilateral;
   default:
     throw std::runtime_error("Error in sub_entity_type");
   }
 }
 //-----------------------------------------------------------------------------
-cell::Type cell::str_to_type(std::string name)
+cell::type cell::str_to_type(std::string name)
 {
-  static const std::map<std::string, cell::Type> name_to_type
-      = {{"point", cell::Type::point},
-         {"interval", cell::Type::interval},
-         {"triangle", cell::Type::triangle},
-         {"tetrahedron", cell::Type::tetrahedron},
-         {"quadrilateral", cell::Type::quadrilateral},
-         {"pyramid", cell::Type::pyramid},
-         {"prism", cell::Type::prism},
-         {"hexahedron", cell::Type::hexahedron}};
+  static const std::map<std::string, cell::type> name_to_type
+      = {{"point", cell::type::point},
+         {"interval", cell::type::interval},
+         {"triangle", cell::type::triangle},
+         {"tetrahedron", cell::type::tetrahedron},
+         {"quadrilateral", cell::type::quadrilateral},
+         {"pyramid", cell::type::pyramid},
+         {"prism", cell::type::prism},
+         {"hexahedron", cell::type::hexahedron}};
 
   auto it = name_to_type.find(name);
   if (it == name_to_type.end())

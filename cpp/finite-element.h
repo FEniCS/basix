@@ -6,7 +6,6 @@
 
 #include "cell.h"
 #include <Eigen/Dense>
-#include <array>
 #include <vector>
 
 namespace libtab

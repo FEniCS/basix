@@ -38,6 +38,38 @@ libtab::FiniteElement libtab::create_element(std::string family,
     throw std::runtime_error("Family not found: \"" + family + "\"");
 }
 //-----------------------------------------------------------------------------
+Eigen::MatrixXd
+libtab::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
+                                       const Eigen::MatrixXd& dual,
+                                       bool condition_check)
+{
+#ifndef NDEBUG
+  std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
+  std::cout << "Dual matrix = \n[" << dual << "]\n";
+#endif
+
+  const Eigen::MatrixXd A = coeffs * dual.transpose();
+  if (condition_check)
+  {
+    Eigen::JacobiSVD svd(A);
+    const int size = svd.singularValues().size();
+    const double kappa
+        = svd.singularValues()(0) / svd.singularValues()(size - 1);
+    if (kappa > 1e6)
+    {
+      throw std::runtime_error("Poorly conditioned B.D^T when computing "
+                               "expansion coefficients");
+    }
+  }
+
+  Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+#ifndef NDEBUG
+  std::cout << "New coeffs = \n[" << new_coeffs << "]\n";
+#endif
+
+  return new_coeffs;
+}
+//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     std::string name, cell::type cell_type, int degree,
@@ -87,38 +119,6 @@ std::string FiniteElement::family_name() const { return _family_name; }
 std::vector<std::vector<int>> FiniteElement::entity_dofs() const
 {
   return _entity_dofs;
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd
-FiniteElement::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
-                                              const Eigen::MatrixXd& dual,
-                                              bool condition_check)
-{
-#ifndef NDEBUG
-  std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
-  std::cout << "Dual matrix = \n[" << dual << "]\n";
-#endif
-
-  const Eigen::MatrixXd A = coeffs * dual.transpose();
-  if (condition_check)
-  {
-    Eigen::JacobiSVD svd(A);
-    const int size = svd.singularValues().size();
-    const double kappa
-        = svd.singularValues()(0) / svd.singularValues()(size - 1);
-    if (kappa > 1e6)
-    {
-      throw std::runtime_error("Poorly conditioned B.D^T when computing "
-                               "expansion coefficients");
-    }
-  }
-
-  Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
-#ifndef NDEBUG
-  std::cout << "New coeffs = \n[" << new_coeffs << "]\n";
-#endif
-
-  return new_coeffs;
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::ArrayXXd>

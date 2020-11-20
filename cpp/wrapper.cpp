@@ -88,11 +88,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const std::vector<std::vector<int>>& entity_dofs,
          const std::vector<Eigen::MatrixXd>& base_permutations)
           -> FiniteElement {
-        Eigen::MatrixXd new_coeffs
-            = FiniteElement::compute_expansion_coefficients(coeffs, dualmat,
-                                                            true);
-        return FiniteElement(family_name, celltype, degree, value_shape,
-                             new_coeffs, entity_dofs, base_permutations);
+        return FiniteElement(
+            family_name, celltype, degree, value_shape,
+            compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
+            base_permutations);
       },
       "Create an element from basic data");
 
@@ -102,7 +101,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
                              &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
-      .def_property_readonly("ndofs", &FiniteElement::dim)
+      .def_property_readonly("dim", &FiniteElement::dim)
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)

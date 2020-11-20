@@ -43,6 +43,7 @@ jobs:
         run: |
           pip install pytest pytest-xdist numpy sympy
           pytest -n auto test/
+
   cmake:
       runs-on: ubuntu-20.04
    steps:

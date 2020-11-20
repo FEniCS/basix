@@ -85,7 +85,7 @@ FiniteElement::FiniteElement(
   int sum = 0;
   for (const std::vector<int>& q : entity_dofs)
     sum += std::accumulate(q.begin(), q.end(), sum);
-u
+
   if (sum != _coeffs.rows())
   {
     throw std::runtime_error(

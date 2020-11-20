@@ -45,7 +45,7 @@ List[numpy.ndarray]
     where `n` is the number of derivatives and `d` is the topological dimension.
 )";
 
-PYBIND11_MODULE(libtab, m)
+PYBIND11_MODULE(_libtabcpp, m)
 {
   m.doc() = R"(
 Libtab provides information about finite elements on the reference cell. It has support for

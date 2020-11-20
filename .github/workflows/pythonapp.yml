@@ -46,11 +46,13 @@ jobs:
 
   cmake:
       runs-on: ubuntu-20.04
-   steps:
-    - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v2
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get -y install cmake libeigen3-dev python3-pip
-        sudo python3 -m pip install scikit-build pybind11
-        sudo cmake --build build --target install
+      - name: Install dependencies
+        run: |
+          sudo apt-get -y install cmake libeigen3-dev python3-pip
+          sudo python3 -m pip install scikit-build pybind11
+      - name: Build with cmake
+        run: |
+          sudo cmake --build build --target install

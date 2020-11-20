@@ -55,22 +55,22 @@ namespace libtab
 /// B (span_coeffs) is the identity matrix:
 ///   @f[ B = \begin{bmatrix}
 ///                   1 & 0 & 0 \\
-  ///                   0 & 1 & 0 \\
-  ///                   0 & 0 & 1 \end{bmatrix} @f]
+///                   0 & 1 & 0 \\
+///                   0 & 0 & 1 \end{bmatrix} @f]
 ///
 /// The functionals defining the Lagrange order 1 space are point
 /// evaluations at the three vertices of the triangle. The matrix D
 /// (dual) given by applying these to p_0 to p_2 is:
 ///  @f[ \mbox{dual} = \begin{bmatrix}
 ///              \sqrt{2}/2 &  -\sqrt{3} & -1 \\
-  ///              \sqrt{2}/2 &   \sqrt{3} & -1 \\
-  ///              \sqrt{2}/2 &          0 &  2 \end{bmatrix} @f]
+///              \sqrt{2}/2 &   \sqrt{3} & -1 \\
+///              \sqrt{2}/2 &          0 &  2 \end{bmatrix} @f]
 ///
 /// For this example, this function outputs the matrix:
 ///  @f[ C = \begin{bmatrix}
 ///            \sqrt{2}/3 & -\sqrt{3}/6 &  -1/6 \\
-  ///            \sqrt{2}/3 & \sqrt{3}/6  &  -1/6 \\
-  ///            \sqrt{2}/3 &          0  &   1/3 \end{bmatrix} @f]
+///            \sqrt{2}/3 & \sqrt{3}/6  &  -1/6 \\
+///            \sqrt{2}/3 &          0  &   1/3 \end{bmatrix} @f]
 /// The basis functions of the finite element can be obtained by applying
 /// the matrix C to the vector @f$[p_0, p_1, p_2]@f$, giving:
 ///   @f[ \begin{bmatrix} 1 - x - y \\ x \\ y \end{bmatrix} @f]
@@ -80,11 +80,11 @@ namespace libtab
 /// On a triangle, the 2D vector expansion basis is:
 ///  @f[ \begin{matrix}
 ///   p_0 & = & (\sqrt{2}/2, 0) \\
-  ///   p_1 & = & (\sqrt{3}(2x + y - 1), 0) \\
-  ///   p_2 & = & (3y - 1, 0) \\
-  ///   p_3 & = & (0, \sqrt{2}/2) \\
-  ///   p_4 & = & (0, \sqrt{3}(2x + y - 1)) \\
-  ///   p_5 & = & (0, 3y - 1)
+///   p_1 & = & (\sqrt{3}(2x + y - 1), 0) \\
+///   p_2 & = & (3y - 1, 0) \\
+///   p_3 & = & (0, \sqrt{2}/2) \\
+///   p_4 & = & (0, \sqrt{3}(2x + y - 1)) \\
+///   p_5 & = & (0, 3y - 1)
 ///  \end{matrix}
 /// @f]
 /// These span the space @f$ P_1^2 @f$.
@@ -93,16 +93,16 @@ namespace libtab
 /// so B (span_coeffs) is not the identity. It is given by:
 ///   @f[ B = \begin{bmatrix}
 ///  1 &  0 &  0 &    0 &  0 &   0 \\
-  ///  0 &  0 &  0 &    1 &  0 &     0 \\
-  ///  1/12 &  \sqrt{6}/48 &  -\sqrt{2}/48 &  1/12 &  0 &  \sqrt{2}/24
+///  0 &  0 &  0 &    1 &  0 &     0 \\
+///  1/12 &  \sqrt{6}/48 &  -\sqrt{2}/48 &  1/12 &  0 &  \sqrt{2}/24
 ///  \end{bmatrix}
 ///  @f]
 /// Applying the matrix B to the vector @f$[p_0, p_1, ..., p_5]@f$ gives the
 /// basis of the polynomial space for Raviart-Thomas:
 ///   @f[ \begin{bmatrix}
 ///  \sqrt{2}/2 &  0 \\
-  ///   0 &  \sqrt{2}/2 \\
-  ///   \sqrt{2}x/8  & \sqrt{2}y/8
+///   0 &  \sqrt{2}/2 \\
+///   \sqrt{2}x/8  & \sqrt{2}y/8
 ///  \end{bmatrix} @f]
 ///
 /// The functionals defining the Raviart-Thomas order 1 space are integral
@@ -110,22 +110,22 @@ namespace libtab
 /// by applying these to @f$p_0@f$ to @f$p_5@f$ is:
 ///   dual = @f[ \begin{bmatrix}
 /// -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
-  /// -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0 &    0 \\
-  ///           0 &         0   &    0 &  \sqrt{2}/2 &          0 &   -1
+/// -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0 &    0 \\
+///           0 &         0   &    0 &  \sqrt{2}/2 &          0 &   -1
 /// \end{bmatrix} @f]
 ///
 /// In this example, this function outputs the matrix:
 ///  @f[  C = \begin{bmatrix}
 ///  -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
-  ///  -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0  &    0 \\
-  ///            0 &          0  &    0 &  \sqrt{2}/2 &          0  &   -1
+///  -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0  &    0 \\
+///            0 &          0  &    0 &  \sqrt{2}/2 &          0  &   -1
 /// \end{bmatrix} @f]
 /// The basis functions of the finite element can be obtained by applying
 /// the matrix C to the vector @f$[p_0, p_1, ..., p_5]@f$, giving:
 ///   @f[ \begin{bmatrix}
 ///   -x & -y \\
-  ///   x - 1 & y \\
-  ///   -x & 1 - y \end{bmatrix} @f]
+///   x - 1 & y \\
+///   -x & 1 - y \end{bmatrix} @f]
 ///
 /// @param[in] span_coeffs The matrix B containing the expansion
 /// coefficients defining a polynomial basis spanning the polynomial space

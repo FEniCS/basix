@@ -10,6 +10,7 @@
 #include "raviart-thomas.h"
 #include "regge.h"
 #include <iostream>
+#include <numeric>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -83,11 +84,8 @@ FiniteElement::FiniteElement(
   // Check that entity dofs add up to total number of dofs
   int sum = 0;
   for (const std::vector<int>& q : entity_dofs)
-  {
-    for (const int& w : q)
-      sum += w;
-  }
-
+    sum += std::accumulate(q.begin(), q.end(), sum);
+u
   if (sum != _coeffs.rows())
   {
     throw std::runtime_error(

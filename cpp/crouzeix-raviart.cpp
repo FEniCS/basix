@@ -42,7 +42,7 @@ FiniteElement cr::create(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  const Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
+  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dual);
 
   // Crouzeix-Raviart has one dof on each entity of tdim-1.

@@ -127,7 +127,7 @@ FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
 
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
-  Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
@@ -169,7 +169,7 @@ FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
-  Eigen::MatrixXd coeffs = FiniteElement::compute_expansion_coefficients(
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   int perm_count = 0;

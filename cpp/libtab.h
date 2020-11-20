@@ -73,7 +73,7 @@ public:
   /// @return Value shape
   const std::vector<int>& value_shape() const;
 
-  /// Dimension of the finite elemeent space (number of degrees of
+  /// Dimension of the finite element space (number of degrees of
   /// freedom for the element)
   /// @return Number of degrees of freedom
   int dim() const;

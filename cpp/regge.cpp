@@ -4,7 +4,7 @@
 
 #include "regge.h"
 #include "lattice.h"
-#include "polynomial-set.h"
+#include "polyset.h"
 #include <iostream>
 
 using namespace libtab;
@@ -12,15 +12,14 @@ using namespace libtab;
 namespace
 {
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd create_regge_space(cell::Type celltype, int degree)
+Eigen::MatrixXd create_regge_space(cell::type celltype, int degree)
 {
-
-  if (celltype != cell::Type::triangle and celltype != cell::Type::tetrahedron)
+  if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported celltype");
 
   const int tdim = cell::topological_dimension(celltype);
   const int nc = tdim * (tdim + 1) / 2;
-  const int basis_size = polyset::size(celltype, degree);
+  const int basis_size = polyset::dim(celltype, degree);
   const int ndofs = basis_size * nc;
   const int psize = basis_size * tdim * tdim;
 
@@ -42,11 +41,11 @@ Eigen::MatrixXd create_regge_space(cell::Type celltype, int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
+Eigen::MatrixXd create_regge_dual(cell::type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
-  const int basis_size = polyset::size(celltype, degree);
+  const int basis_size = polyset::dim(celltype, degree);
 
   const int ndofs = basis_size * (tdim + 1) * tdim / 2;
   const int space_size = basis_size * tdim * tdim;
@@ -66,9 +65,9 @@ Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
           = cell::sub_entity_geometry(celltype, dim, i);
 
       Eigen::ArrayXd point = entity_geom.row(0);
-      cell::Type ct = cell::sub_entity_type(celltype, dim, i);
+      cell::type ct = cell::sub_entity_type(celltype, dim, i);
       Eigen::ArrayXXd lattice
-          = lattice::create(ct, degree + 2, lattice::Type::equispaced, false);
+          = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
       Eigen::ArrayXXd pts(lattice.rows(), entity_geom.cols());
       for (int j = 0; j < lattice.rows(); ++j)
       {
@@ -122,7 +121,8 @@ Eigen::MatrixXd create_regge_dual(cell::Type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-FiniteElement regge::create(cell::Type celltype, int degree)
+FiniteElement libtab::create_regge(cell::type celltype, int degree,
+                                   const std::string& name)
 {
   const int tdim = cell::topological_dimension(celltype);
 
@@ -149,7 +149,7 @@ FiniteElement regge::create(cell::Type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
-  return FiniteElement(regge::family_name, celltype, degree, {tdim, tdim},
-                       coeffs, entity_dofs, base_permutations);
+  return FiniteElement(name, celltype, degree, {tdim, tdim}, coeffs,
+                       entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from libtab import Lagrange, CellType, create_lattice
 
 d = 3
-L = Lagrange(CellType.triangle, d)
+L = Lagrange("triangle", d)
 
 pts = create_lattice(CellType.triangle, 50, True)
 w0 = L.tabulate(2, pts)

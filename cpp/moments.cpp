@@ -2,10 +2,10 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "integral-moments.h"
+#include "moments.h"
 #include "cell.h"
-#include "finite-element.h"
-#include "polynomial-set.h"
+#include "libtab.h"
+#include "polyset.h"
 #include "quadrature.h"
 
 using namespace libtab;
@@ -32,12 +32,12 @@ double integral_jacobian(const Eigen::MatrixXd& axes)
 //----------------------------------------------------------------------------
 Eigen::MatrixXd
 moments::make_integral_moments(const FiniteElement& moment_space,
-                               const cell::Type celltype, const int value_size,
+                               const cell::type celltype, const int value_size,
                                const int poly_deg, const int q_deg)
 {
-  const int psize = polyset::size(celltype, poly_deg);
+  const int psize = polyset::dim(celltype, poly_deg);
 
-  const cell::Type sub_celltype = moment_space.cell_type();
+  const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
   if (sub_entity_dim == 0)
     throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
@@ -103,12 +103,12 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 }
 //----------------------------------------------------------------------------
 Eigen::MatrixXd moments::make_dot_integral_moments(
-    const FiniteElement& moment_space, const cell::Type celltype,
+    const FiniteElement& moment_space, const cell::type celltype,
     const int value_size, const int poly_deg, const int q_deg)
 {
-  const int psize = polyset::size(celltype, poly_deg);
+  const int psize = polyset::dim(celltype, poly_deg);
 
-  const cell::Type sub_celltype = moment_space.cell_type();
+  const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
   if (sub_entity_dim == 0)
     throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
@@ -177,11 +177,11 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
 }
 //----------------------------------------------------------------------------
 Eigen::MatrixXd moments::make_tangent_integral_moments(
-    const FiniteElement& moment_space, const cell::Type celltype,
+    const FiniteElement& moment_space, const cell::type celltype,
     const int value_size, const int poly_deg, const int q_deg)
 {
-  const int psize = polyset::size(celltype, poly_deg);
-  const cell::Type sub_celltype = moment_space.cell_type();
+  const int psize = polyset::dim(celltype, poly_deg);
+  const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
   const int tdim = cell::topological_dimension(celltype);
@@ -189,7 +189,7 @@ Eigen::MatrixXd moments::make_tangent_integral_moments(
   if (sub_entity_dim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature(cell::Type::interval, q_deg);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(cell::type::interval, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -240,11 +240,11 @@ Eigen::MatrixXd moments::make_tangent_integral_moments(
 }
 //----------------------------------------------------------------------------
 Eigen::MatrixXd moments::make_normal_integral_moments(
-    const FiniteElement& moment_space, const cell::Type celltype,
+    const FiniteElement& moment_space, const cell::type celltype,
     const int value_size, const int poly_deg, const int q_deg)
 {
-  const int psize = polyset::size(celltype, poly_deg);
-  const cell::Type sub_celltype = moment_space.cell_type();
+  const int psize = polyset::dim(celltype, poly_deg);
+  const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
   const int tdim = cell::topological_dimension(celltype);

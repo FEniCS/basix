@@ -60,7 +60,7 @@ make_quadrature_tetrahedron_collapsed(int m);
 /// @param celltype
 /// @param m order
 /// @returns list of points, list of weights
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_quadrature(cell::Type celltype,
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_quadrature(cell::type celltype,
                                                            int m);
 
 /// Scaled quadrature rule on arbitrary simplices

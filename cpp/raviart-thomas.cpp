@@ -4,9 +4,9 @@
 
 #include "raviart-thomas.h"
 #include "dof-permutations.h"
-#include "integral-moments.h"
 #include "lagrange.h"
-#include "polynomial-set.h"
+#include "moments.h"
+#include "polyset.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
@@ -15,23 +15,24 @@
 using namespace libtab;
 
 //----------------------------------------------------------------------------
-FiniteElement rt::create(cell::Type celltype, int degree)
+FiniteElement libtab::create_rt(cell::type celltype, int degree,
+                                const std::string& name)
 {
-  if (celltype != cell::Type::triangle and celltype != cell::Type::tetrahedron)
+  if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
   const int tdim = cell::topological_dimension(celltype);
 
-  const cell::Type facettype
-      = (tdim == 2) ? cell::Type::interval : cell::Type::triangle;
+  const cell::type facettype
+      = (tdim == 2) ? cell::type::interval : cell::type::triangle;
 
   // The number of order (degree-1) scalar polynomials
-  const int nv = polyset::size(celltype, degree - 1);
+  const int nv = polyset::dim(celltype, degree - 1);
   // The number of order (degree-2) scalar polynomials
-  const int ns0 = polyset::size(celltype, degree - 2);
+  const int ns0 = polyset::dim(celltype, degree - 2);
   // The number of additional polnomials in the polynomial basis for
   // Raviart-Thomas
-  const int ns = polyset::size(facettype, degree - 1);
+  const int ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(celltype, 2 * degree);
@@ -72,23 +73,21 @@ FiniteElement rt::create(cell::Type celltype, int degree)
   int quad_deg = 5 * degree;
 
   // Add rows to dualmat for integral moments on facets
-  FiniteElement moment_space_facet = dlagrange::create(facettype, degree - 1);
   const int facet_count = tdim + 1;
   const int facet_dofs = ns;
   dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
-      = moments::make_normal_integral_moments(moment_space_facet, celltype,
-                                              tdim, degree, quad_deg);
+      = moments::make_normal_integral_moments(
+          create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
+          quad_deg);
 
   // Add rows to dualmat for integral moments on interior
   if (degree > 1)
   {
     const int internal_dofs = tdim * ns0;
     // Interior integral moment
-    FiniteElement moment_space_interior
-        = dlagrange::create(celltype, degree - 2);
     dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
-        = moments::make_integral_moments(moment_space_interior, celltype, tdim,
-                                         degree, quad_deg);
+        = moments::make_integral_moments(create_dlagrange(celltype, degree - 2),
+                                         celltype, tdim, degree, quad_deg);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
@@ -132,9 +131,6 @@ FiniteElement rt::create(cell::Type celltype, int degree)
     }
   }
 
-  Eigen::MatrixXd coeffs
-      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
-
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (int i = 0; i < tdim - 1; ++i)
@@ -142,7 +138,9 @@ FiniteElement rt::create(cell::Type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), ns);
   entity_dofs[tdim] = {ns0 * tdim};
 
-  return FiniteElement(rt::family_name, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations);
+  Eigen::MatrixXd coeffs
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
+  return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

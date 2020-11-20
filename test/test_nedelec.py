@@ -197,7 +197,7 @@ def test_tri(order):
     g = sympy_nedelec(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    nedelec = libtab.Nedelec(celltype, order)
+    nedelec = libtab.Nedelec("triangle", order)
     pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
@@ -220,7 +220,7 @@ def test_tet(order):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    nedelec = libtab.Nedelec(celltype, order)
+    nedelec = libtab.Nedelec("tetrahedron", order)
 
     pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     nderiv = 1
@@ -245,7 +245,7 @@ def test_tet(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_dof_permutations_triangle(order):
-    nedelec = libtab.Nedelec(libtab.CellType.triangle, order)
+    nedelec = libtab.Nedelec("triangle", order)
 
     permuted = {}
     if order == 2:
@@ -286,7 +286,7 @@ def test_dof_permutations_triangle(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_dof_permutations_tetrahedron(order):
-    nedelec = libtab.Nedelec(libtab.CellType.tetrahedron, order)
+    nedelec = libtab.Nedelec("tetrahedron", order)
 
     permuted = {}
     if order == 2:

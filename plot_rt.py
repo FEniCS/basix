@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from libtab import RaviartThomas, create_lattice, CellType
 
 
-RT = RaviartThomas(CellType.triangle, 3)
+RT = RaviartThomas("triangle", 3)
 pts = create_lattice(CellType.triangle, 20, True)
 
 w = RT.tabulate(0, pts)[0]

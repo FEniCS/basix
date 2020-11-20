@@ -9,11 +9,10 @@
 #include <string>
 
 #include "cell.h"
-#include "defines.h"
 #include "indexing.h"
 #include "lattice.h"
 #include "libtab.h"
-#include "polynomial-set.h"
+#include "polyset.h"
 #include "quadrature.h"
 
 // TODO: remove, not in public interface
@@ -59,14 +58,14 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   m.attr("__version__") = libtab::version();
 
-  py::enum_<cell::Type>(m, "CellType")
-      .value("interval", cell::Type::interval)
-      .value("triangle", cell::Type::triangle)
-      .value("tetrahedron", cell::Type::tetrahedron)
-      .value("quadrilateral", cell::Type::quadrilateral)
-      .value("hexahedron", cell::Type::hexahedron)
-      .value("prism", cell::Type::prism)
-      .value("pyramid", cell::Type::pyramid);
+  py::enum_<cell::type>(m, "CellType")
+      .value("interval", cell::type::interval)
+      .value("triangle", cell::type::triangle)
+      .value("tetrahedron", cell::type::tetrahedron)
+      .value("quadrilateral", cell::type::quadrilateral)
+      .value("hexahedron", cell::type::hexahedron)
+      .value("prism", cell::type::prism)
+      .value("pyramid", cell::type::pyramid);
 
   m.def("topology", &cell::topology,
         "Topological description of a reference cell");
@@ -74,16 +73,16 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("sub_entity_geometry", &cell::sub_entity_geometry,
         "Points of a sub-entity of a cell");
 
-  py::enum_<lattice::Type>(m, "LatticeType")
-      .value("equispaced", lattice::Type::equispaced)
-      .value("gll_warped", lattice::Type::gll_warped);
+  py::enum_<lattice::type>(m, "LatticeType")
+      .value("equispaced", lattice::type::equispaced)
+      .value("gll_warped", lattice::type::gll_warped);
 
   m.def("create_lattice", &lattice::create,
         "Create a uniform lattice of points on a reference cell");
 
   m.def(
       "create_new_element",
-      [](const std::string family_name, cell::Type celltype, int degree,
+      [](const std::string family_name, cell::type celltype, int degree,
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
@@ -103,7 +102,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
                              &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
-      .def_property_readonly("ndofs", &FiniteElement::ndofs)
+      .def_property_readonly("ndofs", &FiniteElement::dim)
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
@@ -111,13 +110,27 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   // TODO: remove - not part of public interface
   // Create FiniteElement of different types
-  m.def("Nedelec", &nedelec::create, "Create Nedelec Element (first kind)");
-  m.def("Lagrange", &lagrange::create, "Create Lagrange Element");
-  m.def("CrouzeixRaviart", &cr::create, "Create Crouzeix-Raviart Element");
-  m.def("RaviartThomas", &rt::create, "Create Raviart-Thomas Element");
-  m.def("NedelecSecondKind", &nedelec2::create,
-        "Create Nedelec Element (second kind)");
-  m.def("Regge", &regge::create, "Create Regge Element");
+  m.def("Nedelec", [](const std::string& cell, int degree) {
+    return libtab::create_element("Nedelec 1st kind H(curl)", cell, degree);
+  });
+  m.def("NedelecSecondKind", [](const std::string& cell, int degree) {
+    return libtab::create_element("Nedelec 2nd kind H(curl)", cell, degree);
+  });
+  m.def("Lagrange", [](const std::string& cell, int degree) {
+    return libtab::create_element("Lagrange", cell, degree);
+  });
+  m.def("DiscontinuousLagrange", [](const std::string& cell, int degree) {
+    return libtab::create_element("Discontinuous Lagrange", cell, degree);
+  });
+  m.def("CrouzeixRaviart", [](const std::string& cell, int degree) {
+    return libtab::create_element("Crouzeix-Raviart", cell, degree);
+  });
+  m.def("RaviartThomas", [](const std::string& cell, int degree) {
+    return libtab::create_element("Raviart-Thomas", cell, degree);
+  });
+  m.def("Regge", [](const std::string& cell, int degree) {
+    return libtab::create_element("Regge", cell, degree);
+  });
 
   // Create FiniteElement
   m.def("create_element", &libtab::create_element,
@@ -134,7 +147,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
             &quadrature::make_quadrature),
         "Compute quadrature points and weights on a simplex defined by points")
       .def("make_quadrature",
-           py::overload_cast<cell::Type, int>(&quadrature::make_quadrature),
+           py::overload_cast<cell::type, int>(&quadrature::make_quadrature),
            "Compute quadrature points and weights on a reference cell");
 
   m.def("gauss_lobatto_legendre_line_rule",

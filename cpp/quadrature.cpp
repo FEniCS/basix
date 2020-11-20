@@ -292,13 +292,13 @@ quadrature::make_quadrature_tetrahedron_collapsed(int m)
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-quadrature::make_quadrature(cell::Type celltype, int m)
+quadrature::make_quadrature(cell::type celltype, int m)
 {
   switch (celltype)
   {
-  case cell::Type::interval:
+  case cell::type::interval:
     return quadrature::make_quadrature_line(m);
-  case cell::Type::quadrilateral:
+  case cell::type::quadrilateral:
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
     Eigen::ArrayX2d Qpts(m * m, 2);
@@ -315,7 +315,7 @@ quadrature::make_quadrature(cell::Type celltype, int m)
     }
     return {Qpts, Qwts};
   }
-  case cell::Type::hexahedron:
+  case cell::type::hexahedron:
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
     Eigen::ArrayX3d Qpts(m * m * m, 3);
@@ -335,7 +335,7 @@ quadrature::make_quadrature(cell::Type celltype, int m)
     }
     return {Qpts, Qwts};
   }
-  case cell::Type::prism:
+  case cell::type::prism:
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
     auto [QptsT, QwtsT] = quadrature::make_quadrature_triangle_collapsed(m);
@@ -353,11 +353,11 @@ quadrature::make_quadrature(cell::Type celltype, int m)
     }
     return {Qpts, Qwts};
   }
-  case cell::Type::pyramid:
+  case cell::type::pyramid:
     throw std::runtime_error("Pyramid not yet supported");
-  case cell::Type::triangle:
+  case cell::type::triangle:
     return quadrature::make_quadrature_triangle_collapsed(m);
-  case cell::Type::tetrahedron:
+  case cell::type::tetrahedron:
     return quadrature::make_quadrature_tetrahedron_collapsed(m);
   default:
     throw std::runtime_error("Unsupported celltype for make_quadrature");

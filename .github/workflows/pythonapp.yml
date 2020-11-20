@@ -55,4 +55,5 @@ jobs:
           sudo python3 -m pip install scikit-build pybind11
       - name: Build with cmake
         run: |
+          mkdir build
           sudo cmake --build build --target install

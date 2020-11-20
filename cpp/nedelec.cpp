@@ -340,7 +340,7 @@ Eigen::MatrixXd create_nedelec2_2d_dual(int degree)
     // Interior integral moment
     dual.block(3 * (degree + 1), 0, (degree - 1) * (degree + 1), psize * 2)
         = moments::make_dot_integral_moments(
-            rt::create(cell::type::triangle, degree - 1), cell::type::triangle,
+            create_rt(cell::type::triangle, degree - 1), cell::type::triangle,
             2, degree, quad_deg);
   }
 
@@ -373,7 +373,7 @@ Eigen::MatrixXd create_nedelec2_3d_dual(int degree)
     // Integral moments on faces
     dual.block(6 * (degree + 1), 0, 4 * (degree - 1) * (degree + 1), psize * 3)
         = moments::make_dot_integral_moments(
-            rt::create(cell::type::triangle, degree - 1),
+            create_rt(cell::type::triangle, degree - 1),
             cell::type::tetrahedron, 3, degree, quad_deg);
   }
 

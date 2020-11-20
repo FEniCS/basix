@@ -9,13 +9,10 @@
 
 namespace libtab
 {
-/// Raviart-Thomas element
-namespace rt
-{
+/// Create Raviart-Thomas element
 /// @param celltype
 /// @param degree
-FiniteElement create(cell::type celltype, int degree);
+FiniteElement create_rt(cell::type celltype, int degree,
+                        const std::string& = std::string());
 
-static std::string family_name = "Raviart-Thomas";
-} // namespace rt
 } // namespace libtab

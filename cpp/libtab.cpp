@@ -25,13 +25,13 @@ libtab::FiniteElement libtab::create_element(std::string family,
   else if (family == "Discontinuous Lagrange")
     return create_dlagrange(cell::str_to_type(cell), degree, family);
   else if (family == "Raviart-Thomas")
-    return rt::create(cell::str_to_type(cell), degree);
+    return create_rt(cell::str_to_type(cell), degree, family);
   else if (family == "Nedelec 1st kind H(curl)")
     return create_nedelec(cell::str_to_type(cell), degree, family);
   else if (family == "Nedelec 2nd kind H(curl)")
     return create_nedelec2(cell::str_to_type(cell), degree, family);
   else if (family == "Regge")
-    return regge::create(cell::str_to_type(cell), degree);
+    return create_regge(cell::str_to_type(cell), degree, family);
   else if (family == "Crouzeix-Raviart")
     return cr::create(cell::str_to_type(cell), degree);
   else

@@ -14,7 +14,6 @@ namespace
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd create_regge_space(cell::type celltype, int degree)
 {
-
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported celltype");
 
@@ -122,7 +121,8 @@ Eigen::MatrixXd create_regge_dual(cell::type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-FiniteElement regge::create(cell::type celltype, int degree)
+FiniteElement libtab::create_regge(cell::type celltype, int degree,
+                                   const std::string& name)
 {
   const int tdim = cell::topological_dimension(celltype);
 
@@ -149,7 +149,7 @@ FiniteElement regge::create(cell::type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
-  return FiniteElement(regge::family_name, celltype, degree, {tdim, tdim},
-                       coeffs, entity_dofs, base_permutations);
+  return FiniteElement(name, celltype, degree, {tdim, tdim}, coeffs,
+                       entity_dofs, base_permutations);
 }
 //-----------------------------------------------------------------------------

@@ -15,7 +15,8 @@
 using namespace libtab;
 
 //----------------------------------------------------------------------------
-FiniteElement rt::create(cell::type celltype, int degree)
+FiniteElement libtab::create_rt(cell::type celltype, int degree,
+                                const std::string& name)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -130,9 +131,6 @@ FiniteElement rt::create(cell::type celltype, int degree)
     }
   }
 
-  Eigen::MatrixXd coeffs
-      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
-
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (int i = 0; i < tdim - 1; ++i)
@@ -140,7 +138,9 @@ FiniteElement rt::create(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), ns);
   entity_dofs[tdim] = {ns0 * tdim};
 
-  return FiniteElement(rt::family_name, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations);
+  Eigen::MatrixXd coeffs
+      = FiniteElement::compute_expansion_coefficients(wcoeffs, dual);
+  return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

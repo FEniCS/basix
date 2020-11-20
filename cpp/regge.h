@@ -8,14 +8,10 @@
 
 namespace libtab
 {
-/// Regge element
-namespace regge
-{
 /// Create Regge element
 /// @param celltype
 /// @param degree
-FiniteElement create(cell::type celltype, int degree);
+FiniteElement create_regge(cell::type celltype, int degree,
+                           const std::string& name = std::string());
 
-static std::string family_name = "Regge";
-} // namespace regge
 } // namespace libtab

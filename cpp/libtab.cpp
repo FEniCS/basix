@@ -84,7 +84,7 @@ FiniteElement::FiniteElement(
   // Check that entity dofs add up to total number of dofs
   int sum = 0;
   for (const std::vector<int>& q : entity_dofs)
-    sum += std::accumulate(q.begin(), q.end(), sum);
+    sum = std::accumulate(q.begin(), q.end(), sum);
 
   if (sum != _coeffs.rows())
   {

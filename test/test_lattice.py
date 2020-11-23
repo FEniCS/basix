@@ -15,6 +15,11 @@ def test_gll_warped_pyramid():
     quad_pts = libtab.create_lattice(libtab.CellType.quadrilateral, n, libtab.LatticeType.gll_warped, True)
     pyr_pts = libtab.create_lattice(libtab.CellType.pyramid, n, libtab.LatticeType.gll_warped, True)
 
+    # Remove any near-zero values to make sorting robust
+    pyr_pts[np.where(abs(pyr_pts) < 1e-12)] = 0.0
+    tri_pts[np.where(abs(tri_pts) < 1e-12)] = 0.0
+    quad_pts[np.where(abs(quad_pts) < 1e-12)] = 0.0
+
     idx = np.where(np.isclose(pyr_pts[:, 0], 0.0))
     pyr_x0 = pyr_pts[idx][:, 1:]
     assert np.allclose(np.sort(tri_pts), np.sort(pyr_x0))
@@ -43,6 +48,9 @@ def test_gll_warped_tetrahedron():
     # triangle
     tri_pts = libtab.create_lattice(libtab.CellType.triangle, n, libtab.LatticeType.gll_warped, True)
     tet_pts = libtab.create_lattice(libtab.CellType.tetrahedron, n, libtab.LatticeType.gll_warped, True)
+
+    tet_pts[np.where(abs(tet_pts) < 1e-12)] = 0.0
+    tri_pts[np.where(abs(tri_pts) < 1e-12)] = 0.0
 
     idx = np.where(np.isclose(tet_pts[:, 0], 0.0))
     tet_x0 = tet_pts[idx][:, 1:]

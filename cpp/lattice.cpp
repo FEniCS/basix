@@ -261,7 +261,7 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
               const double l5 = z;
               const double l6 = 1 - y - z;
 
-              // b1-b6 are the factors for each edge
+              // b1-b6 are the blending factors for each edge
               double b1, f1, f2;
               if (std::fabs(l1) < 1e-12)
               {
@@ -276,6 +276,11 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
                 f2 = l1 / (l1 + l6);
               }
 
+              // r1-r4 are the edge positions for each of the z>0 edges
+              // calculated so that they use the barycentric coordinates
+              // of the triangle, if the point lies on a triangular face.
+              // f1-f4 are face selecting functions, which blend between
+              // adjacent triangular faces
               const double r1 = (l2 - l3) * f1 + (l5 - l6) * (1 - f1);
               const double r2 = (l2 - l3) * f2 + (l5 - l4) * (1 - f2);
 

@@ -225,7 +225,7 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
       // Interpolate warp factor along interval
       std::tuple<Eigen::ArrayXXd, Eigen::ArrayXd> pw
           = quadrature::gauss_lobatto_legendre_line_rule(n + 1);
-      Eigen::ArrayXd pts = std::get<0>(pw) * 0.5;
+      Eigen::VectorXd pts = std::get<0>(pw) * 0.5;
       for (int i = 0; i < n + 1; ++i)
         pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
       FiniteElement L = create_dlagrange(cell::type::interval, n);
@@ -233,9 +233,8 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
       // Get interpolated value at r in range [-1, 1]
       auto w = [&](double r) {
         Eigen::ArrayXd rr = Eigen::ArrayXd::Constant(1, 0.5 * (r + 1.0));
-        Eigen::VectorXd v = L.tabulate(0, rr)[0];
-        double x = v.dot(pts.matrix());
-        return x;
+        Eigen::VectorXd v = L.tabulate(0, rr)[0].row(0);
+        return v.dot(pts);
       };
 
       int b = (exterior == false) ? 1 : 0;

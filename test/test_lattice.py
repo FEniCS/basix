@@ -4,7 +4,6 @@
 
 import libtab
 import numpy as np
-import pytest
 
 
 def test_gll_warped_pyramid():
@@ -30,7 +29,7 @@ def test_gll_warped_pyramid():
 
     idx = np.where(np.isclose(pyr_pts[:, 1] + pyr_pts[:, 2], 1.0))
     pyr_yz = pyr_pts[idx][:, 0::2]
-    assert np.allclose(np.sort(tri_pts), np.sort(pyr_y0))
+    assert np.allclose(np.sort(tri_pts), np.sort(pyr_yz))
 
     idx = np.where(np.isclose(pyr_pts[:, 2], 0.0))
     pyr_z0 = pyr_pts[idx][:, :2]

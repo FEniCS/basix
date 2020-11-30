@@ -21,7 +21,7 @@ using namespace libtab;
 libtab::FiniteElement libtab::create_element(std::string family,
                                              std::string cell, int degree)
 {
-  if (family == "Lagrange")
+  if (family == "Lagrange" or family == "P" or family == "Q")
     return create_lagrange(cell::str_to_type(cell), degree, family);
   else if (family == "Discontinuous Lagrange")
     return create_dlagrange(cell::str_to_type(cell), degree, family);
@@ -76,10 +76,10 @@ FiniteElement::FiniteElement(
     std::string name, cell::type cell_type, int degree,
     const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
     const std::vector<std::vector<int>>& entity_dofs,
-    const std::vector<Eigen::MatrixXd>& base_permutations)
+    const std::vector<Eigen::MatrixXd>& base_permutations, const Eigen::ArrayXXd& points)
     : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
       _coeffs(coeffs), _entity_dofs(entity_dofs),
-      _base_permutations(base_permutations), _family_name(name)
+      _base_permutations(base_permutations), _points(points), _family_name(name)
 {
   // Check that entity dofs add up to total number of dofs
   int sum = 0;
@@ -150,7 +150,12 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
 {
   return _base_permutations;
-};
+}
+//-----------------------------------------------------------------------------
+const Eigen::ArrayXXd& FiniteElement::points() const
+{
+  return _points;
+}
 //-----------------------------------------------------------------------------
 std::string libtab::version() { return str(LIBTAB_VERSION); }
 //-----------------------------------------------------------------------------

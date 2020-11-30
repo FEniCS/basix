@@ -91,7 +91,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return FiniteElement(
             family_name, celltype, degree, value_shape,
             compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
-            base_permutations);
+            base_permutations, {});
       },
       "Create an element from basic data");
 

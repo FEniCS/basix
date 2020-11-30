@@ -149,6 +149,6 @@ FiniteElement libtab::create_regge(cell::type celltype, int degree,
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
   return FiniteElement(name, celltype, degree, {tdim, tdim}, coeffs,
-                       entity_dofs, base_permutations);
+                       entity_dofs, base_permutations, {});
 }
 //-----------------------------------------------------------------------------

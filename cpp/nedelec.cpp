@@ -429,7 +429,7 @@ FiniteElement libtab::create_nedelec(cell::type celltype, int degree,
 
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       perms);
+                       perms,{});
 }
 //-----------------------------------------------------------------------------
 FiniteElement libtab::create_nedelec2(cell::type celltype, int degree,
@@ -470,6 +470,6 @@ FiniteElement libtab::create_nedelec2(cell::type celltype, int degree,
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations);
+                       base_permutations, {});
 }
 //-----------------------------------------------------------------------------

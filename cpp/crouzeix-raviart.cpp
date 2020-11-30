@@ -54,6 +54,6 @@ FiniteElement cr::create(cell::type celltype, int degree)
     entity_dofs[3] = {0};
 
   return FiniteElement(cr::family_name, celltype, 1, {1}, coeffs, entity_dofs,
-                       base_permutations);
+                       base_permutations, {});
 }
 //-----------------------------------------------------------------------------

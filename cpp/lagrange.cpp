@@ -131,7 +131,7 @@ FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
-                       base_permutations);
+                       base_permutations, pt);
 }
 //-----------------------------------------------------------------------------
 FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
@@ -180,6 +180,6 @@ FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
-                       base_permutations);
+                       base_permutations, pt);
 }
 //-----------------------------------------------------------------------------

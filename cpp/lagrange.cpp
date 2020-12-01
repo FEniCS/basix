@@ -125,13 +125,23 @@ FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
     }
   }
 
+  std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayX2d>> interpolation_info;
+  for (int i = 0; i < pt.rows(); ++i)
+  {
+    Eigen::ArrayXd a(1);
+    a(0) = 1;
+    Eigen::ArrayX2d b(1, topology.size() - 1);
+    b.row(0) = pt.row(i);
+    interpolation_info.push_back(std::make_pair(a, b));
+  }
+
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
-                       base_permutations, pt);
+                       base_permutations, pt, interpolation_info);
 }
 //-----------------------------------------------------------------------------
 FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
@@ -166,6 +176,16 @@ FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
       pt.row(j) += (geometry.row(k + 1) - geometry.row(0)) * lattice(j, k);
   }
 
+  std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayX2d>> interpolation_info;
+  for (int i = 0; i < pt.rows(); ++i)
+  {
+    Eigen::ArrayXd a(1);
+    a(0) = 1;
+    Eigen::ArrayX2d b(1, topology.size() - 1);
+    b.row(0) = pt.row(i);
+    interpolation_info.push_back(std::make_pair(a, b));
+  }
+
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
@@ -180,6 +200,6 @@ FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
-                       base_permutations, pt);
+                       base_permutations, pt, interpolation_info);
 }
 //-----------------------------------------------------------------------------

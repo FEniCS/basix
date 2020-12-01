@@ -154,7 +154,8 @@ public:
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
                 const std::vector<Eigen::MatrixXd>& base_permutations,
-                const Eigen::ArrayXXd& points);
+                const Eigen::ArrayXXd& points,
+                const std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayX2d>> interpolation_info={});
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -305,7 +306,10 @@ public:
   /// Currently for backward compatibility with DOLFINx function interpolation
   /// Experimental, may go away.
   const Eigen::ArrayXXd& points() const;
-  
+
+  /// TODO: Document
+  std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayX2d>> interpolation_info() const;
+
 private:
   // Cell type
   cell::type _cell_type;
@@ -336,9 +340,18 @@ private:
   // Experimental - currently used for an implementation of "tabulate_dof_coordinates"
   // Most useful for Lagrange. This may change or go away.
   Eigen::ArrayXXd _points;
-  
+
   // The name of the finite element family
   std::string _family_name;
+
+  /// TODO: Document
+  /// For each dof      std::vector<
+  ///                     std::pair<
+  ///   List of weights     Eigen::ArrayXd,
+  ///   List of points      Eigen::ArrayX2d
+  ///                     >
+  ///                   >
+  std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayX2d>> _interpolation_info;
 };
 
 /// Create an element by name

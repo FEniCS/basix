@@ -12,3 +12,8 @@ import pytest
 def test_interpolation(celltype, n, element_type):
     element = libtab.create_element(element_type, celltype, n)
     assert len(element.interpolation_info) == element.dim
+
+    tdim = len(libtab.topology(element.cell_type)) - 1
+    for weight, points in element.interpolation_info:
+        for p in points:
+            assert len(p) == tdim

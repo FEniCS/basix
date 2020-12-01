@@ -77,7 +77,7 @@ FiniteElement::FiniteElement(
     const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
     const std::vector<std::vector<int>>& entity_dofs,
     const std::vector<Eigen::MatrixXd>& base_permutations, const Eigen::ArrayXXd& points,
-    const std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayX2d>> interpolation_info)
+    const std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayXXd>> interpolation_info)
     : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
       _coeffs(coeffs), _entity_dofs(entity_dofs),
       _base_permutations(base_permutations), _points(points), _family_name(name),
@@ -116,7 +116,7 @@ int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
 std::string FiniteElement::family_name() const { return _family_name; }
 //-----------------------------------------------------------------------------
-std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayX2d>>
+std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayXXd>>
 FiniteElement::interpolation_info() const { return _interpolation_info; }
 //-----------------------------------------------------------------------------
 std::vector<std::vector<int>> FiniteElement::entity_dofs() const

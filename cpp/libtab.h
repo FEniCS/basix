@@ -155,7 +155,7 @@ public:
                 const std::vector<std::vector<int>>& entity_dofs,
                 const std::vector<Eigen::MatrixXd>& base_permutations,
                 const Eigen::ArrayXXd& points,
-                const std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayXXd>> interpolation_info={});
+                const std::pair<Eigen::MatrixXd, Eigen::ArrayXXd> interpolation_info={});
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -308,7 +308,7 @@ public:
   const Eigen::ArrayXXd& points() const;
 
   /// TODO: Document
-  std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayXXd>> interpolation_info() const;
+  std::pair<Eigen::MatrixXd, Eigen::ArrayXXd> interpolation_info() const;
 
 private:
   // Cell type
@@ -351,7 +351,7 @@ private:
   ///   List of points      Eigen::ArrayXXd
   ///                     >
   ///                   >
-  std::vector<std::pair<Eigen::ArrayXd, Eigen::ArrayXXd>> _interpolation_info;
+  std::pair<Eigen::MatrixXd, Eigen::ArrayXXd> _interpolation_info;
 };
 
 /// Create an element by name

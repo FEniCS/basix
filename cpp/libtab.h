@@ -307,7 +307,11 @@ public:
   /// Experimental, may go away.
   const Eigen::ArrayXXd& points() const;
 
-  /// TODO: Document
+  /// Return the weights and points for interpolation
+  /// To interpolate a function in this finite element, the functions should be
+  /// evaluated at each point. These function values should then be multiplied by
+  /// the weight matrix to give the coefficients of the interpolated function.
+  /// This returns the pair (weight matrix, array of points)
   std::pair<Eigen::MatrixXd, Eigen::ArrayXXd> interpolation_info() const;
 
 private:
@@ -344,13 +348,7 @@ private:
   // The name of the finite element family
   std::string _family_name;
 
-  /// TODO: Document
-  /// For each dof      std::vector<
-  ///                     std::pair<
-  ///   List of weights     Eigen::ArrayXd,
-  ///   List of points      Eigen::ArrayXXd
-  ///                     >
-  ///                   >
+  /// The interpolation weights and points
   std::pair<Eigen::MatrixXd, Eigen::ArrayXXd> _interpolation_info;
 };
 

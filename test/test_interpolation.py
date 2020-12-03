@@ -11,6 +11,6 @@ import pytest
 @pytest.mark.parametrize("element_type", ["Lagrange"])
 def test_interpolation(celltype, n, element_type):
     element = libtab.create_element(element_type, celltype, n)
-    assert element.interpolation_info[0].shape[0] == element.dim
-    assert element.interpolation_info[0].shape[1] == element.interpolation_info[1].shape[0]
-    assert element.interpolation_info[1].shape[1] == len(libtab.topology(element.cell_type)) - 1
+    assert element.interpolation_matrix.shape[0] == element.dim
+    assert element.interpolation_matrix.shape[1] == element.points.shape[0]
+    assert element.points.shape[1] == len(libtab.topology(element.cell_type)) - 1

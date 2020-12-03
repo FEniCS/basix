@@ -106,7 +106,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family_name", &FiniteElement::family_name)
-      .def_property_readonly("interpolation_info", &FiniteElement::interpolation_info);
+      .def_property_readonly("points", &FiniteElement::points)
+      .def_property_readonly("interpolation_matrix", &FiniteElement::interpolation_matrix);
 
   // TODO: remove - not part of public interface
   // Create FiniteElement of different types

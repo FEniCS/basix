@@ -154,7 +154,8 @@ public:
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
                 const std::vector<Eigen::MatrixXd>& base_permutations,
-                const Eigen::ArrayXXd& points);
+                const Eigen::ArrayXXd& points,
+                const Eigen::MatrixXd interpolation_matrix={});
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -305,10 +306,20 @@ public:
   /// Currently for backward compatibility with DOLFINx function interpolation
   /// Experimental, may go away.
   const Eigen::ArrayXXd& points() const;
-  
+
+  /// Return a matrix of weights interpolation
+  /// To interpolate a function in this finite element, the functions should be
+  /// evaluated at each point given by FiniteElement::points(). These function
+  /// values should then be multiplied by the weight matrix to give the
+  /// coefficients of the interpolated function.
+  Eigen::MatrixXd interpolation_matrix() const;
+
 private:
   // Cell type
   cell::type _cell_type;
+
+  // The name of the finite element family
+  std::string _family_name;
 
   // Degree
   int _degree;
@@ -335,10 +346,12 @@ private:
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of "tabulate_dof_coordinates"
   // Most useful for Lagrange. This may change or go away.
+  // For non-Lagrange elements, these points will be used in combination with
+  // _interpolation_matrix to perform interpolation
   Eigen::ArrayXXd _points;
-  
-  // The name of the finite element family
-  std::string _family_name;
+
+  /// The interpolation weights and points
+  Eigen::MatrixXd _interpolation_matrix;
 };
 
 /// Create an element by name

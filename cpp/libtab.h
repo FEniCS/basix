@@ -318,6 +318,9 @@ private:
   // Cell type
   cell::type _cell_type;
 
+  // The name of the finite element family
+  std::string _family_name;
+
   // Degree
   int _degree;
 
@@ -346,9 +349,6 @@ private:
   // For non-Lagrange elements, these points will be used in combination with
   // _interpolation_matrix to perform interpolation
   Eigen::ArrayXXd _points;
-
-  // The name of the finite element family
-  std::string _family_name;
 
   /// The interpolation weights and points
   Eigen::MatrixXd _interpolation_matrix;

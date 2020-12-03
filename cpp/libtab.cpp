@@ -76,11 +76,11 @@ FiniteElement::FiniteElement(
     std::string name, cell::type cell_type, int degree,
     const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
     const std::vector<std::vector<int>>& entity_dofs,
-    const std::vector<Eigen::MatrixXd>& base_permutations, const Eigen::ArrayXXd& points,
-    const Eigen::MatrixXd interpolation_matrix)
-    : _cell_type(cell_type), _degree(degree), _value_shape(value_shape),
-      _coeffs(coeffs), _entity_dofs(entity_dofs),
-      _base_permutations(base_permutations), _points(points), _family_name(name),
+    const std::vector<Eigen::MatrixXd>& base_permutations,
+    const Eigen::ArrayXXd& points, const Eigen::MatrixXd interpolation_matrix)
+    : _cell_type(cell_type), _family_name(name), _degree(degree),
+      _value_shape(value_shape), _coeffs(coeffs), _entity_dofs(entity_dofs),
+      _base_permutations(base_permutations), _points(points),
       _interpolation_matrix(interpolation_matrix)
 {
   // Check that entity dofs add up to total number of dofs

@@ -103,14 +103,13 @@ create_nedelec_2d_interpolation(int degree)
           cell::type::triangle, 2, degree, quad_deg);
 
   if (degree == 1)
-    return std::make_pair(points_1d, matrix_1d);
+    return {points_1d, matrix_1d};
 
   Eigen::ArrayXXd points_2d;
   Eigen::MatrixXd matrix_2d;
-  std::tie(points_2d, matrix_2d)
-      = moments::make_dot_integral_moments_interpolation(
-          create_rt(cell::type::triangle, degree - 2), cell::type::triangle, 2,
-          degree, quad_deg);
+  std::tie(points_2d, matrix_2d) = moments::make_integral_moments_interpolation(
+      create_dlagrange(cell::type::triangle, degree - 2), cell::type::triangle,
+      2, degree, quad_deg);
 
   Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows(), 2);
   Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows(),
@@ -127,7 +126,7 @@ create_nedelec_2d_interpolation(int degree)
                matrix_2d.cols())
       = matrix_2d;
 
-  return std::make_pair(points, matrix);
+  return {points, matrix};
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
@@ -297,14 +296,13 @@ create_nedelec_3d_interpolation(int degree)
           cell::type::tetrahedron, 3, degree, quad_deg);
 
   if (degree == 1)
-    return std::make_pair(points_1d, matrix_1d);
+    return {points_1d, matrix_1d};
 
   Eigen::ArrayXXd points_2d;
   Eigen::MatrixXd matrix_2d;
-  std::tie(points_2d, matrix_2d)
-      = moments::make_dot_integral_moments_interpolation(
-          create_rt(cell::type::triangle, degree - 2), cell::type::tetrahedron,
-          3, degree, quad_deg);
+  std::tie(points_2d, matrix_2d) = moments::make_integral_moments_interpolation(
+      create_dlagrange(cell::type::triangle, degree - 2),
+      cell::type::tetrahedron, 3, degree, quad_deg);
 
   if (degree == 2)
   {
@@ -319,15 +317,14 @@ create_nedelec_3d_interpolation(int degree)
                  matrix_2d.cols())
         = matrix_2d;
 
-    return std::make_pair(points, matrix);
+    return {points, matrix};
   }
 
   Eigen::ArrayXXd points_3d;
   Eigen::MatrixXd matrix_3d;
-  std::tie(points_3d, matrix_3d)
-      = moments::make_dot_integral_moments_interpolation(
-          create_dlagrange(cell::type::tetrahedron, degree - 3),
-          cell::type::tetrahedron, 3, degree, quad_deg);
+  std::tie(points_3d, matrix_3d) = moments::make_integral_moments_interpolation(
+      create_dlagrange(cell::type::tetrahedron, degree - 3),
+      cell::type::tetrahedron, 3, degree, quad_deg);
 
   Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows() + points_3d.rows(),
                          3);
@@ -348,7 +345,7 @@ create_nedelec_3d_interpolation(int degree)
                matrix_3d.cols())
       = matrix_3d;
 
-  return std::make_pair(points, matrix);
+  return {points, matrix};
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
@@ -470,7 +467,7 @@ create_nedelec2_2d_interpolation(int degree)
           2, degree, quad_deg);
 
   if (degree == 1)
-    return std::make_pair(points_1d, matrix_1d);
+    return {points_1d, matrix_1d};
 
   Eigen::ArrayXXd points_2d;
   Eigen::MatrixXd matrix_2d;
@@ -494,7 +491,7 @@ create_nedelec2_2d_interpolation(int degree)
                matrix_2d.cols())
       = matrix_2d;
 
-  return std::make_pair(points, matrix);
+  return {points, matrix};
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec2_2d_base_permutations(int degree)
@@ -577,7 +574,7 @@ create_nedelec2_3d_interpolation(int degree)
   // TODO
   Eigen::ArrayXXd points(0, 0);
   Eigen::MatrixXd matrix(0, 0);
-  return std::make_pair(points, matrix);
+  return {points, matrix};
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
@@ -632,7 +629,7 @@ FiniteElement libtab::create_nedelec(cell::type celltype, int degree,
 
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       perms, points, interp_matrix);
+                       perms, points, interp_matrix, "covariant piola");
 }
 //-----------------------------------------------------------------------------
 FiniteElement libtab::create_nedelec2(cell::type celltype, int degree,
@@ -678,6 +675,7 @@ FiniteElement libtab::create_nedelec2(cell::type celltype, int degree,
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, points, interp_matrix);
+                       base_permutations, points, interp_matrix,
+                       "covariant piola");
 }
 //-----------------------------------------------------------------------------

@@ -102,6 +102,76 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   return dual;
 }
 //----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
+                                             const cell::type celltype,
+                                             const int value_size,
+                                             const int poly_deg,
+                                             const int q_deg)
+{
+  const cell::type sub_celltype = moment_space.cell_type();
+  const int sub_entity_dim = cell::topological_dimension(sub_celltype);
+  const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
+  const int tdim = cell::topological_dimension(celltype);
+
+  auto [Qpts, Qwts] = quadrature::make_quadrature(sub_celltype, q_deg);
+
+  // If this is always true, value_size input can be removed
+  assert(tdim == value_size);
+
+  // Evaluate moment space at quadrature points
+  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+
+  Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
+  Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count
+                             * value_size,
+                         sub_entity_count * Qpts.rows() * value_size);
+  matrix.setZero();
+
+  int c = 0;
+
+  // Iterate over sub entities
+  for (int i = 0; i < sub_entity_count; ++i)
+  {
+    Eigen::ArrayXXd entity
+        = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
+
+    // Parametrise entity coordinates
+    Eigen::ArrayXXd axes(sub_entity_dim, tdim);
+    for (int j = 0; j < sub_entity_dim; ++j)
+      axes.row(j) = entity.row(j + 1) - entity.row(0);
+
+    // Map quadrature points onto entity
+    Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
+                                  + (Qpts.matrix() * axes.matrix()).array();
+    points.block(Qpts.rows() * i, 0, Qpts.rows(), tdim)
+        = entity.row(0).replicate(Qpts.rows(), 1)
+          + (Qpts.matrix() * axes.matrix()).array();
+
+    const double integral_jac = integral_jacobian(axes);
+
+    // Compute entity integral moments
+    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    {
+      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      for (int d = 0; d < sub_entity_dim; ++d)
+      {
+        Eigen::VectorXd axis = axes.row(d);
+        for (int k = 0; k < value_size; ++k)
+        {
+          Eigen::VectorXd q
+              = phi * Qwts * (integral_jac * axis(k) / axis.norm());
+          for (int l = 0; l < Qpts.rows(); ++l)
+            matrix(c, (i * value_size + k) * Qpts.rows() + l) = q(l);
+        }
+        ++c;
+      }
+    }
+  }
+
+  return std::make_pair(points, matrix);
+}
+//----------------------------------------------------------------------------
 Eigen::MatrixXd moments::make_dot_integral_moments(
     const FiniteElement& moment_space, const cell::type celltype,
     const int value_size, const int poly_deg, const int q_deg)
@@ -186,7 +256,7 @@ moments::make_dot_integral_moments_interpolation(
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
   const int tdim = cell::topological_dimension(celltype);
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature(cell::type::interval, q_deg);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(celltype, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -214,8 +284,9 @@ moments::make_dot_integral_moments_interpolation(
       axes.row(j) = entity.row(j + 1) - entity.row(0);
 
     // Map quadrature points onto entity
-    Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
-                                  + (Qpts.matrix() * axes.matrix()).array();
+    points.block(Qpts.rows() * i, 0, Qpts.rows(), tdim)
+        = entity.row(0).replicate(Qpts.rows(), 1)
+          + (Qpts.matrix() * axes.matrix()).array();
 
     const double integral_jac = integral_jacobian(axes);
 

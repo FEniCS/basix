@@ -155,7 +155,8 @@ public:
                 const std::vector<std::vector<int>>& entity_dofs,
                 const std::vector<Eigen::MatrixXd>& base_permutations,
                 const Eigen::ArrayXXd& points,
-                const Eigen::MatrixXd interpolation_matrix={});
+                const Eigen::MatrixXd interpolation_matrix = {},
+                const std::string mapping_name = "affine");
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -213,6 +214,10 @@ public:
   /// Get the name of the finite element family
   /// @return The family name
   std::string family_name() const;
+
+  /// Get the mapping used for this element
+  /// @return The mapping
+  std::string mapping_name() const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -326,6 +331,9 @@ private:
 
   // Value shape
   std::vector<int> _value_shape;
+
+  /// The mapping used to map this element from the reference to a cell
+  std::string _mapping_name;
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k}@f$,

@@ -140,6 +140,6 @@ FiniteElement libtab::create_rt(cell::type celltype, int degree,
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {});
+                       base_permutations, {}, {}, "contravariant piola");
 }
 //-----------------------------------------------------------------------------

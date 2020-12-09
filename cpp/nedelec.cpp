@@ -89,6 +89,47 @@ Eigen::MatrixXd create_nedelec_2d_dual(int degree)
   return dual;
 }
 //-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+create_nedelec_2d_interpolation(int degree)
+{
+  // Number of dofs and interpolation points
+  int quad_deg = 5 * degree;
+
+  Eigen::ArrayXXd points_1d;
+  Eigen::MatrixXd matrix_1d;
+  std::tie(points_1d, matrix_1d)
+      = moments::make_tangent_integral_moments_interpolation(
+          create_dlagrange(cell::type::interval, degree - 1),
+          cell::type::triangle, 2, degree, quad_deg);
+
+  if (degree == 1)
+    return std::make_pair(points_1d, matrix_1d);
+
+  Eigen::ArrayXXd points_2d;
+  Eigen::MatrixXd matrix_2d;
+  std::tie(points_2d, matrix_2d)
+      = moments::make_dot_integral_moments_interpolation(
+          create_rt(cell::type::triangle, degree - 2), cell::type::triangle, 2,
+          degree, quad_deg);
+
+  Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows(), 2);
+  Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows(),
+                         matrix_1d.cols() + matrix_2d.cols());
+  matrix.setZero();
+  assert(points_1d.rows() + points_2d.rows() * 2
+         == matrix_1d.cols() + matrix_2d.cols());
+  assert(matrix_1d.rows() + matrix_2d.rows() == (degree + 1) * (degree + 2));
+
+  points.block(0, 0, points_1d.rows(), 2) = points_1d;
+  points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
+  matrix.block(0, 0, matrix_1d.rows(), matrix_1d.cols()) = matrix_1d;
+  matrix.block(matrix_1d.rows(), matrix_1d.cols(), matrix_2d.rows(),
+               matrix_2d.cols())
+      = matrix_2d;
+
+  return std::make_pair(points, matrix);
+}
+//-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
 {
   const int ndofs = degree * (degree + 2);
@@ -242,6 +283,74 @@ Eigen::MatrixXd create_nedelec_3d_dual(int degree)
   return dual;
 }
 //-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+create_nedelec_3d_interpolation(int degree)
+{
+  // Number of dofs and interpolation points
+  int quad_deg = 5 * degree;
+
+  Eigen::ArrayXXd points_1d;
+  Eigen::MatrixXd matrix_1d;
+  std::tie(points_1d, matrix_1d)
+      = moments::make_tangent_integral_moments_interpolation(
+          create_dlagrange(cell::type::interval, degree - 1),
+          cell::type::tetrahedron, 3, degree, quad_deg);
+
+  if (degree == 1)
+    return std::make_pair(points_1d, matrix_1d);
+
+  Eigen::ArrayXXd points_2d;
+  Eigen::MatrixXd matrix_2d;
+  std::tie(points_2d, matrix_2d)
+      = moments::make_dot_integral_moments_interpolation(
+          create_rt(cell::type::triangle, degree - 2), cell::type::tetrahedron,
+          3, degree, quad_deg);
+
+  if (degree == 2)
+  {
+    Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows(), 3);
+    Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows(),
+                           matrix_1d.cols() + matrix_2d.cols());
+    matrix.setZero();
+    points.block(0, 0, points_1d.rows(), 2) = points_1d;
+    points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
+    matrix.block(0, 0, matrix_1d.rows(), matrix_1d.cols()) = matrix_1d;
+    matrix.block(matrix_1d.rows(), matrix_1d.cols(), matrix_2d.rows(),
+                 matrix_2d.cols())
+        = matrix_2d;
+
+    return std::make_pair(points, matrix);
+  }
+
+  Eigen::ArrayXXd points_3d;
+  Eigen::MatrixXd matrix_3d;
+  std::tie(points_3d, matrix_3d)
+      = moments::make_dot_integral_moments_interpolation(
+          create_dlagrange(cell::type::tetrahedron, degree - 3),
+          cell::type::tetrahedron, 3, degree, quad_deg);
+
+  Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows() + points_3d.rows(),
+                         3);
+  Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
+                         matrix_1d.cols() + matrix_2d.cols()
+                             + matrix_3d.cols());
+  matrix.setZero();
+  points.block(0, 0, points_1d.rows(), 2) = points_1d;
+  points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
+  points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), 2)
+      = points_3d;
+  matrix.block(0, 0, matrix_1d.rows(), matrix_1d.cols()) = matrix_1d;
+  matrix.block(matrix_1d.rows(), matrix_1d.cols(), matrix_2d.rows(),
+               matrix_2d.cols())
+      = matrix_2d;
+  matrix.block(matrix_1d.rows() + matrix_2d.rows(),
+               matrix_1d.cols() + matrix_2d.cols(), matrix_3d.rows(),
+               matrix_3d.cols())
+      = matrix_3d;
+
+  return std::make_pair(points, matrix);
+}
+//-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
 {
   const int ndofs = 6 * degree + 4 * degree * (degree - 1)
@@ -347,6 +456,78 @@ Eigen::MatrixXd create_nedelec2_2d_dual(int degree)
   return dual;
 }
 //-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+create_nedelec2_2d_interpolation(int degree)
+{
+  // Number of dofs and interpolation points
+  int quad_deg = 5 * degree;
+
+  Eigen::ArrayXXd points_1d;
+  Eigen::MatrixXd matrix_1d;
+  std::tie(points_1d, matrix_1d)
+      = moments::make_tangent_integral_moments_interpolation(
+          create_dlagrange(cell::type::interval, degree), cell::type::triangle,
+          2, degree, quad_deg);
+
+  if (degree == 1)
+    return std::make_pair(points_1d, matrix_1d);
+
+  Eigen::ArrayXXd points_2d;
+  Eigen::MatrixXd matrix_2d;
+  std::tie(points_2d, matrix_2d)
+      = moments::make_dot_integral_moments_interpolation(
+          create_rt(cell::type::triangle, degree - 1), cell::type::triangle, 2,
+          degree, quad_deg);
+
+  Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows(), 2);
+  Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows(),
+                         matrix_1d.cols() + matrix_2d.cols());
+  matrix.setZero();
+  assert(points_1d.rows() + points_2d.rows() * 2
+         == matrix_1d.cols() + matrix_2d.cols());
+  assert(matrix_1d.rows() + matrix_2d.rows() == (degree + 1) * (degree + 2));
+
+  points.block(0, 0, points_1d.rows(), 2) = points_1d;
+  points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
+  matrix.block(0, 0, matrix_1d.rows(), matrix_1d.cols()) = matrix_1d;
+  matrix.block(matrix_1d.rows(), matrix_1d.cols(), matrix_2d.rows(),
+               matrix_2d.cols())
+      = matrix_2d;
+
+  return std::make_pair(points, matrix);
+}
+//-----------------------------------------------------------------------------
+std::vector<Eigen::MatrixXd> create_nedelec2_2d_base_permutations(int degree)
+{
+  const int ndofs = (degree + 1) * (degree + 2);
+  std::vector<Eigen::MatrixXd> base_permutations(
+      3, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree + 1);
+  for (int edge = 0; edge < 3; ++edge)
+  {
+    const int start = edge_ref.size() * edge;
+    for (int i = 0; i < edge_ref.size(); ++i)
+    {
+      base_permutations[edge](start + i, start + i) = 0;
+      base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+    }
+  }
+
+  Eigen::ArrayXXd edge_dir
+      = dofperms::interval_reflection_tangent_directions(degree + 1);
+  for (int edge = 0; edge < 3; ++edge)
+  {
+    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
+                     edge_dir.rows(), edge_dir.cols())
+        = edge_dir;
+    base_permutations[edge] *= directions;
+  }
+
+  return base_permutations;
+}
+//-----------------------------------------------------------------------------
 Eigen::MatrixXd create_nedelec2_3d_dual(int degree)
 {
   const int tdim = 3;
@@ -389,6 +570,24 @@ Eigen::MatrixXd create_nedelec2_3d_dual(int degree)
 
   return dual;
 }
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+create_nedelec2_3d_interpolation(int degree)
+{
+  // TODO
+  Eigen::ArrayXXd points(0, 0);
+  Eigen::MatrixXd matrix(0, 0);
+  return std::make_pair(points, matrix);
+}
+//-----------------------------------------------------------------------------
+std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
+{
+  // TODO
+  const int ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 2;
+  std::vector<Eigen::MatrixXd> base_permutations(
+      14, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  return base_permutations;
+}
 
 } // namespace
 
@@ -398,17 +597,21 @@ FiniteElement libtab::create_nedelec(cell::type celltype, int degree,
 {
   Eigen::MatrixXd wcoeffs;
   Eigen::MatrixXd dual;
+  Eigen::ArrayXXd points;
+  Eigen::MatrixXd interp_matrix;
   std::vector<Eigen::MatrixXd> perms;
   std::vector<Eigen::MatrixXd> directions;
   if (celltype == cell::type::triangle)
   {
     wcoeffs = create_nedelec_2d_space(degree);
+    std::tie(points, interp_matrix) = create_nedelec_2d_interpolation(degree);
     dual = create_nedelec_2d_dual(degree);
     perms = create_nedelec_2d_base_perms(degree);
   }
   else if (celltype == cell::type::tetrahedron)
   {
     wcoeffs = create_nedelec_3d_space(degree);
+    std::tie(points, interp_matrix) = create_nedelec_3d_interpolation(degree);
     dual = create_nedelec_3d_dual(degree);
     perms = create_nedelec_3d_base_perms(degree);
   }
@@ -429,7 +632,7 @@ FiniteElement libtab::create_nedelec(cell::type celltype, int degree,
 
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       perms,{});
+                       perms, points, interp_matrix);
 }
 //-----------------------------------------------------------------------------
 FiniteElement libtab::create_nedelec2(cell::type celltype, int degree,
@@ -440,23 +643,28 @@ FiniteElement libtab::create_nedelec2(cell::type celltype, int degree,
   Eigen::MatrixXd wcoeffs
       = Eigen::MatrixXd::Identity(tdim * psize, tdim * psize);
 
-  Eigen::MatrixXd dual;
-  if (celltype == cell::type::triangle)
-    dual = create_nedelec2_2d_dual(degree);
-  else if (celltype == cell::type::tetrahedron)
-    dual = create_nedelec2_3d_dual(degree);
-  else
-    throw std::runtime_error("Invalid celltype in Nedelec");
-
-  // TODO: Implement base permutations
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const int ndofs = dual.rows();
-  int perm_count = 0;
-  for (int i = 1; i < tdim; ++i)
-    perm_count += topology[i].size() * i;
-  std::vector<Eigen::MatrixXd> base_permutations(
-      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  Eigen::MatrixXd dual;
+  Eigen::ArrayXXd points;
+  Eigen::MatrixXd interp_matrix;
+  std::vector<Eigen::MatrixXd> base_permutations;
+
+  if (celltype == cell::type::triangle)
+  {
+    dual = create_nedelec2_2d_dual(degree);
+    std::tie(points, interp_matrix) = create_nedelec2_2d_interpolation(degree);
+    base_permutations = create_nedelec2_2d_base_permutations(degree);
+  }
+  else if (celltype == cell::type::tetrahedron)
+  {
+    dual = create_nedelec2_3d_dual(degree);
+    std::tie(points, interp_matrix) = create_nedelec2_3d_interpolation(degree);
+    base_permutations = create_nedelec2_3d_base_permutations(degree);
+  }
+  else
+    throw std::runtime_error("Invalid celltype in Nedelec");
 
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
 
@@ -470,6 +678,6 @@ FiniteElement libtab::create_nedelec2(cell::type celltype, int degree,
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {});
+                       base_permutations, points, interp_matrix);
 }
 //-----------------------------------------------------------------------------

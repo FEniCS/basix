@@ -54,6 +54,11 @@ Eigen::MatrixXd make_dot_integral_moments(const FiniteElement& moment_space,
                                           const cell::type celltype,
                                           const int value_size,
                                           const int poly_deg, const int q_deg);
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+make_dot_integral_moments_interpolation(const FiniteElement& moment_space,
+                                        const cell::type celltype,
+                                        const int value_size,
+                                        const int poly_deg, const int q_deg);
 
 /// Make tangential integral moments
 ///
@@ -72,6 +77,14 @@ Eigen::MatrixXd make_tangent_integral_moments(const FiniteElement& moment_space,
                                               const int value_size,
                                               const int poly_deg,
                                               const int q_deg);
+
+/// Make interpolation points and weights for tangent integral moments
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+make_tangent_integral_moments_interpolation(const FiniteElement& moment_space,
+                                            const cell::type celltype,
+                                            const int value_size,
+                                            const int poly_deg,
+                                            const int q_deg);
 
 /// Make normal integral moments
 ///

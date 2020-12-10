@@ -102,15 +102,26 @@ FiniteElement libtab::create_rt(cell::type celltype, int degree,
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
+    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
     for (int edge = 0; edge < facet_count; ++edge)
     {
       const int start = edge_ref.size() * edge;
       for (int i = 0; i < edge_ref.size(); ++i)
       {
         base_permutations[edge](start + i, start + i) = 0;
-        base_permutations[edge](start + i, start + edge_ref[i]) = -1;
+        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
+    }
+
+    Eigen::ArrayXXd edge_dir
+      = dofperms::interval_reflection_tangent_directions(degree);
+    for (int edge = 0; edge < 3; ++edge)
+    {
+      Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
+      directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
+                       edge_dir.rows(), edge_dir.cols())
+          = edge_dir;
+      base_permutations[edge] *= directions;
     }
   }
   else if (tdim == 3)

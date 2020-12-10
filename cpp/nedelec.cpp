@@ -92,6 +92,10 @@ Eigen::MatrixXd create_nedelec_2d_dual(int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec_2d_interpolation(int degree)
 {
+  // TODO: fix interpolation for higher order elements
+  if (degree > 2)
+    return {{}, {}};
+
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
@@ -121,10 +125,18 @@ create_nedelec_2d_interpolation(int degree)
 
   points.block(0, 0, points_1d.rows(), 2) = points_1d;
   points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
-  matrix.block(0, 0, matrix_1d.rows(), matrix_1d.cols()) = matrix_1d;
-  matrix.block(matrix_1d.rows(), matrix_1d.cols(), matrix_2d.rows(),
-               matrix_2d.cols())
-      = matrix_2d;
+
+  for (int i = 0; i < 2; ++i)
+  {
+    const int r1d = matrix_1d.rows();
+    const int r2d = matrix_2d.rows();
+    const int c1d = matrix_1d.cols() / 2;
+    const int c2d = matrix_2d.cols() / 2;
+    matrix.block(0, i * (c1d + c2d), r1d, c1d)
+        = matrix_1d.block(0, i * c1d, r1d, c1d);
+    matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)
+        = matrix_2d.block(0, i * c2d, r2d, c2d);
+  }
 
   return {points, matrix};
 }
@@ -285,6 +297,10 @@ Eigen::MatrixXd create_nedelec_3d_dual(int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec_3d_interpolation(int degree)
 {
+  // TODO: fix interpolation for higher order elements
+  if (degree > 1)
+    return {{}, {}};
+
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
@@ -310,12 +326,21 @@ create_nedelec_3d_interpolation(int degree)
     Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows(),
                            matrix_1d.cols() + matrix_2d.cols());
     matrix.setZero();
+
     points.block(0, 0, points_1d.rows(), 2) = points_1d;
     points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
-    matrix.block(0, 0, matrix_1d.rows(), matrix_1d.cols()) = matrix_1d;
-    matrix.block(matrix_1d.rows(), matrix_1d.cols(), matrix_2d.rows(),
-                 matrix_2d.cols())
-        = matrix_2d;
+
+    for (int i = 0; i < 3; ++i)
+    {
+      const int r1d = matrix_1d.rows();
+      const int r2d = matrix_2d.rows();
+      const int c1d = matrix_1d.cols() / 3;
+      const int c2d = matrix_2d.cols() / 3;
+      matrix.block(0, i * (c1d + c2d), r1d, c1d)
+          = matrix_1d.block(0, i * c1d, r1d, c1d);
+      matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)
+          = matrix_2d.block(0, i * c2d, r2d, c2d);
+    }
 
     return {points, matrix};
   }
@@ -336,14 +361,22 @@ create_nedelec_3d_interpolation(int degree)
   points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
   points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), 2)
       = points_3d;
-  matrix.block(0, 0, matrix_1d.rows(), matrix_1d.cols()) = matrix_1d;
-  matrix.block(matrix_1d.rows(), matrix_1d.cols(), matrix_2d.rows(),
-               matrix_2d.cols())
-      = matrix_2d;
-  matrix.block(matrix_1d.rows() + matrix_2d.rows(),
-               matrix_1d.cols() + matrix_2d.cols(), matrix_3d.rows(),
-               matrix_3d.cols())
-      = matrix_3d;
+
+  for (int i = 0; i < 3; ++i)
+  {
+    const int r1d = matrix_1d.rows();
+    const int r2d = matrix_2d.rows();
+    const int r3d = matrix_3d.rows();
+    const int c1d = matrix_1d.cols() / 3;
+    const int c2d = matrix_2d.cols() / 3;
+    const int c3d = matrix_3d.cols() / 3;
+    matrix.block(0, i * (c1d + c2d + c3d), r1d, c1d)
+        = matrix_1d.block(0, i * c1d, r1d, c1d);
+    matrix.block(r1d, i * (c1d + c2d + c3d) + c1d, r2d, c2d)
+        = matrix_2d.block(0, i * c2d, r2d, c2d);
+    matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r2d, c2d)
+        = matrix_3d.block(0, i * c3d, r3d, c3d);
+  }
 
   return {points, matrix};
 }
@@ -456,6 +489,10 @@ Eigen::MatrixXd create_nedelec2_2d_dual(int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec2_2d_interpolation(int degree)
 {
+  // TODO: fix interpolation for higher order elements
+  if (degree > 1)
+    return {{}, {}};
+
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
@@ -486,10 +523,18 @@ create_nedelec2_2d_interpolation(int degree)
 
   points.block(0, 0, points_1d.rows(), 2) = points_1d;
   points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
-  matrix.block(0, 0, matrix_1d.rows(), matrix_1d.cols()) = matrix_1d;
-  matrix.block(matrix_1d.rows(), matrix_1d.cols(), matrix_2d.rows(),
-               matrix_2d.cols())
-      = matrix_2d;
+
+  for (int i = 0; i < 2; ++i)
+  {
+    const int r1d = matrix_1d.rows();
+    const int r2d = matrix_2d.rows();
+    const int c1d = matrix_1d.cols() / 2;
+    const int c2d = matrix_2d.cols() / 2;
+    matrix.block(0, i * (c1d + c2d), r1d, c1d)
+        = matrix_1d.block(0, i * c1d, r1d, c1d);
+    matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)
+        = matrix_2d.block(0, i * c2d, r2d, c2d);
+  }
 
   return {points, matrix};
 }

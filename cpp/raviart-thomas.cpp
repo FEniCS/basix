@@ -126,8 +126,8 @@ FiniteElement libtab::create_rt(cell::type celltype, int degree,
   }
   else if (tdim == 3)
   {
-    Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 1);
-    Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 1);
+    Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree);
+    Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree);
 
     for (int face = 0; face < facet_count; ++face)
     {

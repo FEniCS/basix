@@ -131,7 +131,7 @@ FiniteElement libtab::create_regge(cell::type celltype, int degree,
 
   // TODO
   const int ndofs = dual.rows();
-  int perm_count = 0;
+  int perm_count = tdim == 2 ? 3 : 14;
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 

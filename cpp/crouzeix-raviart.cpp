@@ -19,6 +19,9 @@ FiniteElement cr::create(cell::type celltype, int degree)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
 
   const int tdim = cell::topological_dimension(celltype);
+  if (tdim < 2)
+    throw std::runtime_error("Tdim must be 2 or 3 for Crouzeix-Raviart");
+
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::vector<std::vector<int>> facet_topology = topology[tdim - 1];
@@ -38,7 +41,7 @@ FiniteElement cr::create(cell::type celltype, int degree)
   }
 
   Eigen::MatrixXd dual = polyset::tabulate(celltype, 1, 0, pts)[0];
-  int perm_count = 0;
+  int perm_count = tdim == 2 ? 3 : 14;
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 

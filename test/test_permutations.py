@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: MIT
 
 import libtab
-import numpy
 import pytest
 
 

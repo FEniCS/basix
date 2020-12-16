@@ -134,10 +134,10 @@ FiniteElement libtab::create_rt(cell::type celltype, int degree,
       const int start = face_ref.size() * face;
       for (int i = 0; i < face_rot.size(); ++i)
       {
-        base_permutations[2 * face](start + i, start + i) = 0;
-        base_permutations[2 * face](start + i, start + face_rot[i]) = 1;
-        base_permutations[2 * face + 1](start + i, start + i) = 0;
-        base_permutations[2 * face + 1](start + i, start + face_ref[i]) = -1;
+        base_permutations[6 + 2 * face](start + i, start + i) = 0;
+        base_permutations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
+        base_permutations[6 + 2 * face + 1](start + i, start + i) = 0;
+        base_permutations[6 + 2 * face + 1](start + i, start + face_ref[i]) = -1;
       }
     }
   }

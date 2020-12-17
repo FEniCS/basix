@@ -131,7 +131,7 @@ FiniteElement libtab::create_regge(cell::type celltype, int degree,
 
   // TODO
   const int ndofs = dual.rows();
-  int perm_count = 0;
+  int perm_count = tdim == 2 ? 3 : 14;
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
@@ -149,6 +149,6 @@ FiniteElement libtab::create_regge(cell::type celltype, int degree,
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
   return FiniteElement(name, celltype, degree, {tdim, tdim}, coeffs,
-                       entity_dofs, base_permutations, {});
+                       entity_dofs, base_permutations, {}, {}, "double covariant piola");
 }
 //-----------------------------------------------------------------------------

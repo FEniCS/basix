@@ -1,13 +1,13 @@
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
-from libtab import Lagrange, CellType, create_lattice
+from libtab import Lagrange, CellType, create_lattice, LatticeType
 
 d = 3
 L = Lagrange("triangle", d)
 
-pts = create_lattice(CellType.triangle, 50, True)
+pts = create_lattice(CellType.triangle, 50, LatticeType.equispaced, True)
 w0 = L.tabulate(2, pts)
-numpy.set_printoptions(linewidth=240)
+np.set_printoptions(linewidth=240)
 for kk in range(6):
     w = w0[kk]
     print(w)
@@ -28,6 +28,7 @@ for kk in range(6):
     ax[0, 0].set_title("w[%d]" % kk)
     for j, a in enumerate(ax.flatten()):
         shape_fn = w[:, j]
+        shape_fn[np.where(abs(shape_fn)<1e-12)] = 0.0
         a.tricontourf(pts[:, 0], pts[:, 1], shape_fn)
 
 plt.show()

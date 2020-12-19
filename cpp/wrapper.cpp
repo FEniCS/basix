@@ -9,9 +9,9 @@
 #include <string>
 
 #include "cell.h"
+#include "finite-element.h"
 #include "indexing.h"
 #include "lattice.h"
-#include "libtab.h"
 #include "polyset.h"
 #include "quadrature.h"
 
@@ -80,20 +80,19 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("create_lattice", &lattice::create,
         "Create a uniform lattice of points on a reference cell");
 
-  m.def(
-      "create_new_element",
-      [](const std::string family_name, cell::type celltype, int degree,
-         std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
-         const Eigen::MatrixXd& coeffs,
-         const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_permutations)
-          -> FiniteElement {
-        return FiniteElement(
-            family_name, celltype, degree, value_shape,
-            compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
-            base_permutations, {});
-      },
-      "Create an element from basic data");
+  m.def("create_new_element",
+        [](const std::string family_name, cell::type celltype, int degree,
+           std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
+           const Eigen::MatrixXd& coeffs,
+           const std::vector<std::vector<int>>& entity_dofs,
+           const std::vector<Eigen::MatrixXd>& base_permutations)
+            -> FiniteElement {
+          return FiniteElement(
+              family_name, celltype, degree, value_shape,
+              compute_expansion_coefficients(coeffs, dualmat, true),
+              entity_dofs, base_permutations, {});
+        },
+        "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())

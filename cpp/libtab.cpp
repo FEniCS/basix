@@ -11,7 +11,7 @@ std::vector<std::unique_ptr<FiniteElement>> _registry;
 
 void check_handle(int handle)
 {
-  if (handle < 0 or handle >= _registry.size())
+  if (handle < 0 or handle >= (int)_registry.size())
     throw std::range_error("Bad index");
   if (!_registry[handle])
     throw std::runtime_error("Invalid element");

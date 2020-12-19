@@ -238,3 +238,21 @@ cell::type cell::str_to_type(std::string name)
   return it->second;
 }
 //-----------------------------------------------------------------------------
+std::string cell::type_to_str(cell::type type)
+{
+  static const std::map<cell::type, std::string> type_to_name
+      = {{cell::type::point, "point"},
+         {cell::type::interval, "interval"},
+         {cell::type::triangle, "triangle"},
+         {cell::type::tetrahedron, "tetrahedron"},
+         {cell::type::quadrilateral, "quadrilateral"},
+         {cell::type::pyramid, "pyramid"},
+         {cell::type::prism, "prism"},
+         {cell::type::hexahedron, "hexahedron"}};
+
+  auto it = type_to_name.find(type);
+  if (it == type_to_name.end())
+    throw std::runtime_error("Can't find type");
+
+  return it->second;
+}

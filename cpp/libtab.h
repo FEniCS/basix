@@ -5,7 +5,7 @@
 namespace libtab
 {
 
-/// Return handle
+/// Create element in global registry and return handle
 int register_element(std::string family_name, std::string cell_type,
                      int degree);
 
@@ -28,8 +28,10 @@ int value_size(int handle);
 ///  Value shape
 const std::vector<int>& value_shape(int handle);
 
+/// Finite Element dimension
 int dim(int handle);
 
+/// Family name
 std::string family_name(int handle);
 
 std::string mapping_name(int handle);
@@ -42,8 +44,10 @@ const Eigen::ArrayXXd& points(int handle);
 
 const Eigen::MatrixXd& interpolation_matrix(int handle);
 
+/// Cell geometry
 Eigen::ArrayXXd geometry(std::string cell_type);
 
+/// Cell topology
 std::vector<std::vector<std::vector<int>>> topology(std::string cell_type);
 
 } // namespace libtab

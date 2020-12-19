@@ -225,7 +225,7 @@ public:
   /// The sum of the entity dofs must match the total number of dofs
   /// reported by FiniteElement::dim,
   /// @return List of entity dof counts on each dimension
-  std::vector<std::vector<int>> entity_dofs() const;
+  const std::vector<std::vector<int>>& entity_dofs() const;
 
   /// Get the base permutations
   /// The base permutations represent the effect of rotating or reflecting
@@ -317,7 +317,7 @@ public:
   /// evaluated at each point given by FiniteElement::points(). These function
   /// values should then be multiplied by the weight matrix to give the
   /// coefficients of the interpolated function.
-  Eigen::MatrixXd interpolation_matrix() const;
+  const Eigen::MatrixXd& interpolation_matrix() const;
 
 private:
   // Cell type

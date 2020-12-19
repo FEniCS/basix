@@ -119,12 +119,12 @@ std::string FiniteElement::family_name() const { return _family_name; }
 //-----------------------------------------------------------------------------
 std::string FiniteElement::mapping_name() const { return _mapping_name; }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd FiniteElement::interpolation_matrix() const
+const Eigen::MatrixXd& FiniteElement::interpolation_matrix() const
 {
   return _interpolation_matrix;
 }
 //-----------------------------------------------------------------------------
-std::vector<std::vector<int>> FiniteElement::entity_dofs() const
+const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
 {
   return _entity_dofs;
 }

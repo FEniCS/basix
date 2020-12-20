@@ -17,7 +17,7 @@ void check_handle(int handle)
     throw std::runtime_error("Invalid element");
 }
 
-int libtab::register_element(std::string family_name, std::string cell_type,
+int libtab::register_element(const char* family_name, const char* cell_type,
                              int degree)
 {
   _registry.push_back(std::make_unique<FiniteElement>(
@@ -38,10 +38,10 @@ std::vector<Eigen::ArrayXXd> libtab::tabulate(int handle, int nd,
   return _registry[handle]->tabulate(nd, x);
 }
 
-std::string cell_type(int handle)
+const char* cell_type(int handle)
 {
   check_handle(handle);
-  return cell::type_to_str(_registry[handle]->cell_type());
+  return cell::type_to_str(_registry[handle]->cell_type()).c_str();
 }
 
 int libtab::degree(int handle)
@@ -80,14 +80,26 @@ const std::vector<std::vector<int>>& libtab::entity_dofs(int handle)
   return _registry[handle]->entity_dofs();
 }
 
-Eigen::ArrayXXd libtab::geometry(std::string cell_type)
+const char* libtab::family_name(int handle)
+{
+  check_handle(handle);
+  return _registry[handle]->family_name().c_str();
+}
+
+const char* libtab::mapping_name(int handle)
+{
+  check_handle(handle);
+  return _registry[handle]->mapping_name().c_str();
+}
+
+Eigen::ArrayXXd libtab::geometry(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
   return cell::geometry(ct);
 }
 
 std::vector<std::vector<std::vector<int>>>
-libtab::topology(std::string cell_type)
+libtab::topology(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
   return cell::topology(ct);

@@ -1,12 +1,11 @@
 
 #include <Eigen/Core>
-#include <string>
 
 namespace libtab
 {
 
 /// Create element in global registry and return handle
-int register_element(std::string family_name, std::string cell_type,
+int register_element(const char* family_name, const char* cell_type,
                      int degree);
 
 /// Delete from global registry
@@ -17,7 +16,7 @@ std::vector<Eigen::ArrayXXd> tabulate(int handle, int nd,
                                       const Eigen::ArrayXXd& x);
 
 /// Cell type
-std::string cell_type(int handle);
+const char* cell_type(int handle);
 
 /// Degree
 int degree(int handle);
@@ -32,9 +31,9 @@ const std::vector<int>& value_shape(int handle);
 int dim(int handle);
 
 /// Family name
-std::string family_name(int handle);
+const char* family_name(int handle);
 
-std::string mapping_name(int handle);
+const char* mapping_name(int handle);
 
 const std::vector<std::vector<int>>& entity_dofs(int handle);
 
@@ -45,9 +44,9 @@ const Eigen::ArrayXXd& points(int handle);
 const Eigen::MatrixXd& interpolation_matrix(int handle);
 
 /// Cell geometry
-Eigen::ArrayXXd geometry(std::string cell_type);
+Eigen::ArrayXXd geometry(const char* cell_type);
 
 /// Cell topology
-std::vector<std::vector<std::vector<int>>> topology(std::string cell_type);
+std::vector<std::vector<std::vector<int>>> topology(const char* cell_type);
 
 } // namespace libtab

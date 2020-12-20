@@ -16,7 +16,7 @@ std::vector<Eigen::ArrayXXd> tabulate(int handle, int nd,
                                       const Eigen::ArrayXXd& x);
 
 /// Cell type
-const char* cell_type(int handle);
+// const char* cell_type(int handle);
 
 /// Degree
 int degree(int handle);

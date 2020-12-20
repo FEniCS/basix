@@ -238,7 +238,7 @@ cell::type cell::str_to_type(std::string name)
   return it->second;
 }
 //-----------------------------------------------------------------------------
-std::string cell::type_to_str(cell::type type)
+const std::string& cell::type_to_str(cell::type type)
 {
   static const std::map<cell::type, std::string> type_to_name
       = {{cell::type::point, "point"},

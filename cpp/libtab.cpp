@@ -38,11 +38,11 @@ std::vector<Eigen::ArrayXXd> libtab::tabulate(int handle, int nd,
   return _registry[handle]->tabulate(nd, x);
 }
 
-// const char* libtab::cell_type(int handle)
-//{
-//  check_handle(handle);
-//  return cell::type_to_str(_registry[handle]->cell_type()).c_str();
-//}
+const char* libtab::cell_type(int handle)
+{
+  check_handle(handle);
+  return cell::type_to_str(_registry[handle]->cell_type()).c_str();
+}
 
 int libtab::degree(int handle)
 {

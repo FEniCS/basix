@@ -69,7 +69,8 @@ cell::type sub_entity_type(cell::type celltype, int dim, int index);
 /// @return cell type
 cell::type str_to_type(std::string name);
 
- std::string type_to_str(cell::type type);
+/// Convert cell type enum to string
+const std::string& type_to_str(cell::type type);
 
 
 } // namespace cell

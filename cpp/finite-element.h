@@ -213,11 +213,11 @@ public:
 
   /// Get the name of the finite element family
   /// @return The family name
-  std::string family_name() const;
+  const std::string& family_name() const;
 
   /// Get the mapping used for this element
   /// @return The mapping
-  std::string mapping_name() const;
+  const std::string& mapping_name() const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -352,10 +352,10 @@ private:
   std::vector<Eigen::MatrixXd> _base_permutations;
 
   // Set of points used for point evaluation
-  // Experimental - currently used for an implementation of "tabulate_dof_coordinates"
-  // Most useful for Lagrange. This may change or go away.
-  // For non-Lagrange elements, these points will be used in combination with
-  // _interpolation_matrix to perform interpolation
+  // Experimental - currently used for an implementation of
+  // "tabulate_dof_coordinates" Most useful for Lagrange. This may change or go
+  // away. For non-Lagrange elements, these points will be used in combination
+  // with _interpolation_matrix to perform interpolation
   Eigen::ArrayXXd _points;
 
   /// The interpolation weights and points
@@ -367,6 +367,6 @@ FiniteElement create_element(std::string family, std::string cell, int degree);
 
 /// Return the version number of libtab across projects
 /// @return version string
-std::string version();
+const std::string& version();
 
 } // namespace libtab

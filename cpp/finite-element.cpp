@@ -115,9 +115,9 @@ const std::vector<int>& FiniteElement::value_shape() const
 //-----------------------------------------------------------------------------
 int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
-std::string FiniteElement::family_name() const { return _family_name; }
+const std::string& FiniteElement::family_name() const { return _family_name; }
 //-----------------------------------------------------------------------------
-std::string FiniteElement::mapping_name() const { return _mapping_name; }
+const std::string& FiniteElement::mapping_name() const { return _mapping_name; }
 //-----------------------------------------------------------------------------
 const Eigen::MatrixXd& FiniteElement::interpolation_matrix() const
 {
@@ -164,5 +164,9 @@ std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
 //-----------------------------------------------------------------------------
 const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-std::string libtab::version() { return str(LIBTAB_VERSION); }
+const std::string& libtab::version()
+{
+  static const std::string version_str = str(LIBTAB_VERSION);
+  return version_str;
+}
 //-----------------------------------------------------------------------------

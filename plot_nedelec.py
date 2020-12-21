@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
-from libtab import Nedelec, CellType, create_lattice
+from libtab import Nedelec, CellType, LatticeType, create_lattice
 
 N = Nedelec("triangle", 2)
-pts = create_lattice(CellType.triangle, 20, True)
+pts = create_lattice(CellType.triangle, 20, LatticeType.equispaced, True)
 w = N.tabulate(0, pts)[0]
 nc = w.shape[1]//2
 fig, ax = plt.subplots(2, 4)

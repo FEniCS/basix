@@ -5,6 +5,7 @@
 #include "lagrange.h"
 #include "dof-permutations.h"
 #include "lattice.h"
+#include "libtab.h"
 #include "polyset.h"
 #include <Eigen/Dense>
 #include <iostream>
@@ -169,8 +170,8 @@ FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
   }
   else
   {
-    throw std::runtime_error(
-        "Base permutation not implemented for this cell type.");
+    std::cout << "Base permutations not implemented for this cell type."
+              << std::endl;
   }
 
   // Point evaluation of basis

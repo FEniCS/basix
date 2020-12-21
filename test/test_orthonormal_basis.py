@@ -2,23 +2,23 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import libtab
+import basix
 import pytest
 import numpy as np
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_quad(order):
-    pts = libtab.create_lattice(libtab.CellType.interval, 1, libtab.LatticeType.equispaced, True)
-    Lpts, Lwts = libtab.make_quadrature(pts, order + 2)
+    pts = basix.create_lattice(basix.CellType.interval, 1, basix.LatticeType.equispaced, True)
+    Lpts, Lwts = basix.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
         for q, v in zip(Lpts, Lwts):
             Qpts.append([p[0], q[0]])
             Qwts.append(u * v)
-    basis = libtab.tabulate_polynomial_set(libtab.CellType.quadrilateral,
-                                           order, 0, Qpts)[0]
+    basis = basix.tabulate_polynomial_set(basix.CellType.quadrilateral,
+                                          order, 0, Qpts)[0]
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))
@@ -33,8 +33,8 @@ def test_quad(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_pyramid(order):
-    pts = libtab.create_lattice(libtab.CellType.interval, 1, libtab.LatticeType.equispaced, True)
-    Lpts, Lwts = libtab.make_quadrature(pts, order + 4)
+    pts = basix.create_lattice(basix.CellType.interval, 1, basix.LatticeType.equispaced, True)
+    Lpts, Lwts = basix.make_quadrature(pts, order + 4)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -43,8 +43,8 @@ def test_pyramid(order):
                 sc = (1.0 - r[0])
                 Qpts.append([p[0] * sc, q[0] * sc, r[0]])
                 Qwts.append(u * v * sc * sc * w)
-    basis = libtab.tabulate_polynomial_set(libtab.CellType.pyramid,
-                                           order, 0, Qpts)[0]
+    basis = basix.tabulate_polynomial_set(basix.CellType.pyramid,
+                                          order, 0, Qpts)[0]
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))
@@ -59,8 +59,8 @@ def test_pyramid(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_hex(order):
-    pts = libtab.create_lattice(libtab.CellType.interval, 1, libtab.LatticeType.equispaced, True)
-    Lpts, Lwts = libtab.make_quadrature(pts, order + 2)
+    pts = basix.create_lattice(basix.CellType.interval, 1, basix.LatticeType.equispaced, True)
+    Lpts, Lwts = basix.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -68,8 +68,8 @@ def test_hex(order):
             for r, w in zip(Lpts, Lwts):
                 Qpts.append([p[0], q[0], r[0]])
                 Qwts.append(u * v * w)
-    basis = libtab.tabulate_polynomial_set(libtab.CellType.hexahedron,
-                                           order, 0, Qpts)[0]
+    basis = basix.tabulate_polynomial_set(basix.CellType.hexahedron,
+                                          order, 0, Qpts)[0]
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))
@@ -84,18 +84,18 @@ def test_hex(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_prism(order):
-    pts = libtab.create_lattice(libtab.CellType.triangle, 1, libtab.LatticeType.equispaced, True)
-    Tpts, Twts = libtab.make_quadrature(pts, order + 2)
-    pts = libtab.create_lattice(libtab.CellType.interval, 1, libtab.LatticeType.equispaced, True)
-    Lpts, Lwts = libtab.make_quadrature(pts, order + 2)
+    pts = basix.create_lattice(basix.CellType.triangle, 1, basix.LatticeType.equispaced, True)
+    Tpts, Twts = basix.make_quadrature(pts, order + 2)
+    pts = basix.create_lattice(basix.CellType.interval, 1, basix.LatticeType.equispaced, True)
+    Lpts, Lwts = basix.make_quadrature(pts, order + 2)
     Qwts = []
     Qpts = []
     for p, u in zip(Tpts, Twts):
         for q, v in zip(Lpts, Lwts):
             Qpts.append([p[0], p[1], q[0]])
             Qwts.append(u * v)
-    basis = libtab.tabulate_polynomial_set(libtab.CellType.prism,
-                                           order, 0, Qpts)[0]
+    basis = basix.tabulate_polynomial_set(basix.CellType.prism,
+                                          order, 0, Qpts)[0]
     ndofs = basis.shape[1]
 
     mat = np.zeros((ndofs, ndofs))
@@ -108,15 +108,15 @@ def test_prism(order):
     assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
 
 
-@pytest.mark.parametrize("cell_type", [libtab.CellType.interval,
-                                       libtab.CellType.triangle,
-                                       libtab.CellType.tetrahedron])
+@pytest.mark.parametrize("cell_type", [basix.CellType.interval,
+                                       basix.CellType.triangle,
+                                       basix.CellType.tetrahedron])
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_cell(cell_type, order):
 
-    pts = libtab.create_lattice(cell_type, 1, libtab.LatticeType.equispaced, True)
-    Qpts, Qwts = libtab.make_quadrature(pts, order + 2)
-    basis = libtab.tabulate_polynomial_set(cell_type, order, 0, Qpts)[0]
+    pts = basix.create_lattice(cell_type, 1, basix.LatticeType.equispaced, True)
+    Qpts, Qwts = basix.make_quadrature(pts, order + 2)
+    basis = basix.tabulate_polynomial_set(cell_type, order, 0, Qpts)[0]
     ndofs = basis.shape[1]
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):

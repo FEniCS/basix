@@ -2,7 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import libtab
+import basix
 import numpy
 import pytest
 import sympy
@@ -15,12 +15,12 @@ def sympy_rt(celltype, n):
     z = sympy.Symbol("z")
 
     from sympy import S
-    topology = libtab.topology(celltype)
-    geometry = S(libtab.geometry(celltype).astype(int))
+    topology = basix.topology(celltype)
+    geometry = S(basix.geometry(celltype).astype(int))
     dummy = [sympy.Symbol("DUMMY1"), sympy.Symbol("DUMMY2"), sympy.Symbol("DUMMY3")]
 
     funcs = []
-    if celltype == libtab.CellType.triangle:
+    if celltype == basix.CellType.triangle:
         tdim = 2
         for i in range(n):
             for j in range(n - i):
@@ -36,7 +36,7 @@ def sympy_rt(celltype, n):
             if n == 1:
                 edge_basis = [sympy.Integer(1)]
             else:
-                edge_basis = sympy_disc_lagrange(libtab.CellType.interval, n - 1)
+                edge_basis = sympy_disc_lagrange(basix.CellType.interval, n - 1)
             edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
             j = 0
             for edge in topology[1]:
@@ -62,7 +62,7 @@ def sympy_rt(celltype, n):
                 if n == 2:
                     face_basis = [sympy.Integer(1)]
                 else:
-                    face_basis = sympy_disc_lagrange(libtab.CellType.triangle, n - 2)
+                    face_basis = sympy_disc_lagrange(basix.CellType.triangle, n - 2)
 
                 j = n * 3
                 for g in face_basis:
@@ -72,7 +72,7 @@ def sympy_rt(celltype, n):
                         mat[i, j] = integrand.integrate((x, 0, 1 - y)).integrate((y, 0, 1))
                         j += 1
 
-    elif celltype == libtab.CellType.tetrahedron:
+    elif celltype == basix.CellType.tetrahedron:
         tdim = 3
         for i in range(n):
             for j in range(n - i):
@@ -92,7 +92,7 @@ def sympy_rt(celltype, n):
             if n == 1:
                 face_basis = [sympy.Integer(1)]
             else:
-                face_basis = sympy_disc_lagrange(libtab.CellType.triangle, n - 1)
+                face_basis = sympy_disc_lagrange(basix.CellType.triangle, n - 1)
             face_basis = [a.subs(x, dummy[0]).subs(y, dummy[1]) for a in face_basis]
             j = 0
             for face in topology[2]:
@@ -118,7 +118,7 @@ def sympy_rt(celltype, n):
                 if n == 2:
                     interior_basis = [sympy.Integer(1)]
                 else:
-                    interior_basis = sympy_disc_lagrange(libtab.CellType.tetrahedron, n - 2)
+                    interior_basis = sympy_disc_lagrange(basix.CellType.tetrahedron, n - 2)
                 j = 2 * n * (n + 1)
                 for g in interior_basis:
                     for vec in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:
@@ -139,12 +139,12 @@ def sympy_rt(celltype, n):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_tri(order):
-    celltype = libtab.CellType.triangle
+    celltype = basix.CellType.triangle
     g = sympy_rt(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    rt = libtab.create_element("Raviart-Thomas", "triangle", order)
-    pts = libtab.create_lattice(celltype, 1, libtab.LatticeType.equispaced, True)
+    rt = basix.create_element("Raviart-Thomas", "triangle", order)
+    pts = basix.create_lattice(celltype, 1, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = rt.tabulate(nderiv, pts)
 
@@ -156,19 +156,19 @@ def test_tri(order):
                 for j, p in enumerate(pts):
                     wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
 
-            assert(numpy.isclose(wtab[libtab.index(kx, ky)], wsym).all())
+            assert(numpy.isclose(wtab[basix.index(kx, ky)], wsym).all())
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_tet(order):
-    celltype = libtab.CellType.tetrahedron
+    celltype = basix.CellType.tetrahedron
     g = sympy_rt(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    rt = libtab.create_element("Raviart-Thomas", "tetrahedron", order)
+    rt = basix.create_element("Raviart-Thomas", "tetrahedron", order)
 
-    pts = libtab.create_lattice(celltype, 5, libtab.LatticeType.equispaced, True)
+    pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = rt.tabulate(nderiv, pts)
 
@@ -186,4 +186,4 @@ def test_tet(order):
                                               (y, p[1]),
                                               (z, p[2])])
 
-                assert(numpy.isclose(wtab[libtab.index(kx, ky, kz)], wsym).all())
+                assert(numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all())

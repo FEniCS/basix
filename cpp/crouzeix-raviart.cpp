@@ -10,7 +10,7 @@
 #include <numeric>
 #include <vector>
 
-using namespace libtab;
+using namespace basix;
 
 //-----------------------------------------------------------------------------
 FiniteElement cr::create(cell::type celltype, int degree)

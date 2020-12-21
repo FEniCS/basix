@@ -6,7 +6,7 @@
 
 #include <Eigen/Dense>
 
-namespace libtab
+namespace basix
 {
 
 /// Functions to help with the creation of DOF permutation and direction
@@ -56,4 +56,4 @@ Eigen::ArrayXXd triangle_reflection_tangent_directions(int degree);
 Eigen::ArrayXXd triangle_rotation_tangent_directions(int degree);
 
 }; // namespace dofperms
-} // namespace libtab
+} // namespace basix

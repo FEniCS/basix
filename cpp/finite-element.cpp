@@ -15,10 +15,10 @@
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
-using namespace libtab;
+using namespace basix;
 
 //-----------------------------------------------------------------------------
-libtab::FiniteElement libtab::create_element(std::string family,
+basix::FiniteElement basix::create_element(std::string family,
                                              std::string cell, int degree)
 {
   if (family == "Lagrange" or family == "P" or family == "Q")
@@ -40,7 +40,7 @@ libtab::FiniteElement libtab::create_element(std::string family,
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd
-libtab::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
+basix::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
                                        const Eigen::MatrixXd& dual,
                                        bool condition_check)
 {
@@ -164,7 +164,7 @@ std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
 //-----------------------------------------------------------------------------
 const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-const std::string& libtab::version()
+const std::string& basix::version()
 {
   static const std::string version_str = str(LIBTAB_VERSION);
   return version_str;

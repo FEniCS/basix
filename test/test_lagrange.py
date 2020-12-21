@@ -2,7 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import libtab
+import basix
 import numpy
 import pytest
 import sympy
@@ -13,7 +13,7 @@ def sympy_disc_lagrange(celltype, n):
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
 
-    topology = libtab.topology(celltype)
+    topology = basix.topology(celltype)
     tdim = len(topology) - 1
     pt = []
     if tdim == 1:
@@ -30,7 +30,7 @@ def sympy_disc_lagrange(celltype, n):
                     pt.append([sympy.Rational(i, n), sympy.Rational(j, n), sympy.Rational(k, n)])
 
     funcs = []
-    if celltype == libtab.CellType.interval:
+    if celltype == basix.CellType.interval:
         for i in range(n + 1):
             funcs += [x**i]
         mat = numpy.empty((len(pt), len(funcs)), dtype=object)
@@ -38,7 +38,7 @@ def sympy_disc_lagrange(celltype, n):
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
                 mat[i, j] = f.subs([(x, p[0])])
-    elif celltype == libtab.CellType.triangle:
+    elif celltype == basix.CellType.triangle:
         for i in range(n + 1):
             for j in range(n + 1 - i):
                 funcs += [x**j * y**i]
@@ -47,7 +47,7 @@ def sympy_disc_lagrange(celltype, n):
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
                 mat[i, j] = f.subs([(x, p[0]), (y, p[1])])
-    elif celltype == libtab.CellType.tetrahedron:
+    elif celltype == basix.CellType.tetrahedron:
         for i in range(n + 1):
             for j in range(n + 1 - i):
                 for k in range(n + 1 - i - j):
@@ -73,8 +73,8 @@ def sympy_lagrange(celltype, n):
     z = sympy.Symbol("z")
 
     from sympy import S
-    topology = libtab.topology(celltype)
-    geometry = S(libtab.geometry(celltype).astype(int))
+    topology = basix.topology(celltype)
+    geometry = S(basix.geometry(celltype).astype(int))
     pt = []
     for dim, entities in enumerate(topology):
         for ent in entities:
@@ -102,7 +102,7 @@ def sympy_lagrange(celltype, n):
                                    + sympy.Rational(k + 1, n) * (entity_geom[1] - entity_geom[0])]
 
     funcs = []
-    if celltype == libtab.CellType.interval:
+    if celltype == basix.CellType.interval:
         for i in range(n + 1):
             funcs += [x**i]
         mat = numpy.empty((len(pt), len(funcs)), dtype=object)
@@ -110,7 +110,7 @@ def sympy_lagrange(celltype, n):
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
                 mat[i, j] = f.subs([(x, p[0])])
-    elif celltype == libtab.CellType.triangle:
+    elif celltype == basix.CellType.triangle:
         for i in range(n + 1):
             for j in range(n + 1 - i):
                 funcs += [x**j * y**i]
@@ -119,7 +119,7 @@ def sympy_lagrange(celltype, n):
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
                 mat[i, j] = f.subs([(x, p[0]), (y, p[1])])
-    elif celltype == libtab.CellType.tetrahedron:
+    elif celltype == basix.CellType.tetrahedron:
         for i in range(n + 1):
             for j in range(n + 1 - i):
                 for k in range(n + 1 - i - j):
@@ -141,11 +141,11 @@ def sympy_lagrange(celltype, n):
 
 @pytest.mark.parametrize("n", [1, 2, 3, 4, 5])
 def test_line(n):
-    celltype = libtab.CellType.interval
+    celltype = basix.CellType.interval
     g = sympy_lagrange(celltype, n)
     x = sympy.Symbol("x")
-    lagrange = libtab.Lagrange("interval", n)
-    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
+    lagrange = basix.Lagrange("interval", n)
+    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
 
@@ -161,12 +161,12 @@ def test_line(n):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4, 5])
 def test_tri(order):
-    celltype = libtab.CellType.triangle
+    celltype = basix.CellType.triangle
     g = sympy_lagrange(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    lagrange = libtab.Lagrange("triangle", order)
-    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
+    lagrange = basix.Lagrange("triangle", order)
+    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)
 
@@ -178,19 +178,19 @@ def test_tri(order):
                 for j, p in enumerate(pts):
                     wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
 
-            assert numpy.allclose(wtab[libtab.index(kx, ky)], wsym)
+            assert numpy.allclose(wtab[basix.index(kx, ky)], wsym)
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_tet(order):
-    celltype = libtab.CellType.tetrahedron
+    celltype = basix.CellType.tetrahedron
     g = sympy_lagrange(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    lagrange = libtab.Lagrange("tetrahedron", order)
-    pts = libtab.create_lattice(celltype, 6,
-                                libtab.LatticeType.equispaced, True)
+    lagrange = basix.Lagrange("tetrahedron", order)
+    pts = basix.create_lattice(celltype, 6,
+                               basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = lagrange.tabulate(nderiv, pts)
 
@@ -208,29 +208,29 @@ def test_tet(order):
                                               (y, p[1]),
                                               (z, p[2])])
 
-                assert numpy.allclose(wtab[libtab.index(kx, ky, kz)], wsym)
+                assert numpy.allclose(wtab[basix.index(kx, ky, kz)], wsym)
 
 
-@pytest.mark.parametrize("celltype", [(libtab.CellType.interval, "interval"),
-                                      (libtab.CellType.triangle, "triangle"),
-                                      (libtab.CellType.tetrahedron, "tetrahedron")])
+@pytest.mark.parametrize("celltype", [(basix.CellType.interval, "interval"),
+                                      (basix.CellType.triangle, "triangle"),
+                                      (basix.CellType.tetrahedron, "tetrahedron")])
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_lagrange(celltype, order):
-    lagrange = libtab.Lagrange(celltype[1], order)
-    pts = libtab.create_lattice(celltype[0], 6, libtab.LatticeType.equispaced, True)
+    lagrange = basix.Lagrange(celltype[1], order)
+    pts = basix.create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
     assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_dof_permutations_interval(order):
-    lagrange = libtab.Lagrange("interval", order)
+    lagrange = basix.Lagrange("interval", order)
     assert len(lagrange.base_permutations) == 0
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_dof_permutations_triangle(order):
-    lagrange = libtab.Lagrange("triangle", order)
+    lagrange = basix.Lagrange("triangle", order)
 
     permuted = {}
     if order == 3:
@@ -259,7 +259,7 @@ def test_dof_permutations_triangle(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_dof_permutations_tetrahedron(order):
-    lagrange = libtab.Lagrange("tetrahedron", order)
+    lagrange = basix.Lagrange("tetrahedron", order)
 
     permuted = {}
     if order == 3:
@@ -302,13 +302,13 @@ def test_dof_permutations_tetrahedron(order):
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
-@pytest.mark.parametrize("celltype", [(libtab.CellType.quadrilateral, "quadrilateral"),
-                                      (libtab.CellType.hexahedron, "hexahedron"),
-                                      (libtab.CellType.pyramid, "pyramid"),
-                                      (libtab.CellType.prism, "prism")])
+@pytest.mark.parametrize("celltype", [(basix.CellType.quadrilateral, "quadrilateral"),
+                                      (basix.CellType.hexahedron, "hexahedron"),
+                                      (basix.CellType.pyramid, "pyramid"),
+                                      (basix.CellType.prism, "prism")])
 def test_celltypes(order, celltype):
-    tp = libtab.Lagrange(celltype[1], order)
-    pts = libtab.create_lattice(celltype[0], 5,
-                                libtab.LatticeType.equispaced, True)
+    tp = basix.Lagrange(celltype[1], order)
+    pts = basix.create_lattice(celltype[0], 5,
+                               basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
     assert(numpy.allclose(numpy.sum(w, axis=1), 1.0))

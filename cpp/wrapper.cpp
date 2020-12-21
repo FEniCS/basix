@@ -23,7 +23,7 @@
 #include "regge.h"
 
 namespace py = pybind11;
-using namespace libtab;
+using namespace basix;
 
 const std::string tabdoc = R"(
 Tabulate the finite element basis function and derivatives at points.
@@ -45,7 +45,7 @@ List[numpy.ndarray]
     where `n` is the number of derivatives and `d` is the topological dimension.
 )";
 
-PYBIND11_MODULE(_libtabcpp, m)
+PYBIND11_MODULE(_basixcpp, m)
 {
   m.doc() = R"(
 Libtab provides information about finite elements on the reference cell. It has support for
@@ -56,7 +56,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
 )";
 
-  m.attr("__version__") = libtab::version();
+  m.attr("__version__") = basix::version();
 
   py::enum_<cell::type>(m, "CellType")
       .value("interval", cell::type::interval)
@@ -113,29 +113,29 @@ Each element has a `tabulate` function which returns the basis functions and a n
   // TODO: remove - not part of public interface
   // Create FiniteElement of different types
   m.def("Nedelec", [](const std::string& cell, int degree) {
-    return libtab::create_element("Nedelec 1st kind H(curl)", cell, degree);
+    return basix::create_element("Nedelec 1st kind H(curl)", cell, degree);
   });
   m.def("NedelecSecondKind", [](const std::string& cell, int degree) {
-    return libtab::create_element("Nedelec 2nd kind H(curl)", cell, degree);
+    return basix::create_element("Nedelec 2nd kind H(curl)", cell, degree);
   });
   m.def("Lagrange", [](const std::string& cell, int degree) {
-    return libtab::create_element("Lagrange", cell, degree);
+    return basix::create_element("Lagrange", cell, degree);
   });
   m.def("DiscontinuousLagrange", [](const std::string& cell, int degree) {
-    return libtab::create_element("Discontinuous Lagrange", cell, degree);
+    return basix::create_element("Discontinuous Lagrange", cell, degree);
   });
   m.def("CrouzeixRaviart", [](const std::string& cell, int degree) {
-    return libtab::create_element("Crouzeix-Raviart", cell, degree);
+    return basix::create_element("Crouzeix-Raviart", cell, degree);
   });
   m.def("RaviartThomas", [](const std::string& cell, int degree) {
-    return libtab::create_element("Raviart-Thomas", cell, degree);
+    return basix::create_element("Raviart-Thomas", cell, degree);
   });
   m.def("Regge", [](const std::string& cell, int degree) {
-    return libtab::create_element("Regge", cell, degree);
+    return basix::create_element("Regge", cell, degree);
   });
 
   // Create FiniteElement
-  m.def("create_element", &libtab::create_element,
+  m.def("create_element", &basix::create_element,
         "Create a FiniteElement of a given family, celltype and degree");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
@@ -156,9 +156,9 @@ Each element has a `tabulate` function which returns the basis functions and a n
         &quadrature::gauss_lobatto_legendre_line_rule,
         "Compute GLL quadrature points and weights on the interval [-1, 1]");
 
-  m.def("index", py::overload_cast<int>(&libtab::idx), "Indexing for 1D arrays")
-      .def("index", py::overload_cast<int, int>(&libtab::idx),
+  m.def("index", py::overload_cast<int>(&basix::idx), "Indexing for 1D arrays")
+      .def("index", py::overload_cast<int, int>(&basix::idx),
            "Indexing for triangular arrays")
-      .def("index", py::overload_cast<int, int, int>(&libtab::idx),
+      .def("index", py::overload_cast<int, int, int>(&basix::idx),
            "Indexing for tetrahedral arrays");
 }

@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace libtab
+namespace basix
 {
 
 /// Calculates the basis functions of the finite element, in terms of the
@@ -183,7 +183,7 @@ public:
   /// list is the basis function. Higher derivatives are stored in
   /// triangular (2D) or tetrahedral (3D) ordering, i.e. for the (x,y)
   /// derivatives in 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... The
-  /// function libtab::idx can be used to find the appropriate derivative.
+  /// function basix::idx can be used to find the appropriate derivative.
   /// If a vector result is expected, it will be stacked with all x values,
   /// followed by all y-values (and then z, if any), likewise tensor-valued
   /// results will be stacked in index order.
@@ -365,8 +365,8 @@ private:
 /// Create an element by name
 FiniteElement create_element(std::string family, std::string cell, int degree);
 
-/// Return the version number of libtab across projects
+/// Return the version number of basix across projects
 /// @return version string
 const std::string& version();
 
-} // namespace libtab
+} // namespace basix

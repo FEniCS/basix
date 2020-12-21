@@ -2,7 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import libtab
+import basix
 import pytest
 
 
@@ -10,7 +10,7 @@ import pytest
     "Lagrange", "Discontinuous Lagrange"])
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_interval_permutation_size(element_name, order):
-    e = libtab.create_element(element_name, "interval", 1)
+    e = basix.create_element(element_name, "interval", 1)
     assert len(e.base_permutations) == 0
 
 
@@ -23,7 +23,7 @@ def test_triangle_permutation_size(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
 
-    e = libtab.create_element(element_name, "triangle", 1)
+    e = basix.create_element(element_name, "triangle", 1)
     assert len(e.base_permutations) == 3
 
 
@@ -36,5 +36,5 @@ def test_tetrahedron_permutation_size(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
 
-    e = libtab.create_element(element_name, "tetrahedron", 1)
+    e = basix.create_element(element_name, "tetrahedron", 1)
     assert len(e.base_permutations) == 14

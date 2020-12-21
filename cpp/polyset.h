@@ -8,7 +8,7 @@
 #include <Eigen/Dense>
 #include <vector>
 
-namespace libtab
+namespace basix
 {
 
 /// ## Orthonormal polynomial basis on reference cell
@@ -53,4 +53,4 @@ std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int degree, int nd,
 int dim(cell::type cell, int n);
 
 } // namespace polyset
-} // namespace libtab
+} // namespace basix

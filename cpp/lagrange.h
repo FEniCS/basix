@@ -8,7 +8,7 @@
 #include "finite-element.h"
 #include <string>
 
-namespace libtab
+namespace basix
 {
 /// Create a Lagrange element on cell with given degree
 /// @param[in] celltype interval, triangle or tetrahedral celltype
@@ -25,4 +25,4 @@ FiniteElement create_lagrange(cell::type celltype, int degree,
 /// @return A FiniteElemenet
 FiniteElement create_dlagrange(cell::type celltype, int degree,
                                const std::string& name = std::string());
-} // namespace libtab
+} // namespace basix

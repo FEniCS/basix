@@ -2,7 +2,7 @@
 # with a single version of Python For more information see:
 # https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: Libtab CI
+name: Basix CI
 
 on: [push, pull_request]
 
@@ -36,7 +36,7 @@ jobs:
         run: |
           pip install flake8
           flake8 --statistics test/
-      - name: Install libtab
+      - name: Install basix
         run: |
           pip install .
       - name: Run units tests
@@ -70,4 +70,4 @@ jobs:
       - name: Build with setup.py
         run: |
           sudo python3 setup.py install
-          python3 -c "import libtab; print(libtab.__version__)"
+          python3 -c "import basix; print(basix.__version__)"

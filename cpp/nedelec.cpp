@@ -13,7 +13,7 @@
 #include <numeric>
 #include <vector>
 
-using namespace libtab;
+using namespace basix;
 
 namespace
 {
@@ -634,7 +634,7 @@ std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-FiniteElement libtab::create_nedelec(cell::type celltype, int degree,
+FiniteElement basix::create_nedelec(cell::type celltype, int degree,
                                      const std::string& name)
 {
   Eigen::MatrixXd wcoeffs;
@@ -677,7 +677,7 @@ FiniteElement libtab::create_nedelec(cell::type celltype, int degree,
                        perms, points, interp_matrix, "covariant piola");
 }
 //-----------------------------------------------------------------------------
-FiniteElement libtab::create_nedelec2(cell::type celltype, int degree,
+FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
                                       const std::string& name)
 {
   const int tdim = cell::topological_dimension(celltype);

@@ -8,7 +8,7 @@
 #include "quadrature.h"
 #include <Eigen/Dense>
 
-using namespace libtab;
+using namespace basix;
 
 namespace
 {

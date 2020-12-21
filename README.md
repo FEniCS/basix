@@ -1,6 +1,6 @@
-# libtab
+# basix
 
-## Finite Element Tabulation Runtime Library
+## Finite Element Basis Function Definition Runtime Library
 
 * computes FE basis functions and derivatives for the following elements:
   - Lagrange (interval, triangle, tetrahedron, prism, pyramid, quadrilateral, hexahedron)
@@ -15,4 +15,4 @@
 * python wrapper with pybind11
 
 
-![Libtab CI](https://github.com/FEniCS/libtab/workflows/Libtab%20CI/badge.svg)
+![Basix CI](https://github.com/FEniCS/basix/workflows/Basix%20CI/badge.svg)

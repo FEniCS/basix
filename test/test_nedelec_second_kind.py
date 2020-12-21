@@ -2,7 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import libtab
+import basix
 import numpy
 import pytest
 import sympy
@@ -16,12 +16,12 @@ def sympy_nedelec(celltype, n):
     z = sympy.Symbol("z")
 
     from sympy import S
-    topology = libtab.topology(celltype)
-    geometry = S(libtab.geometry(celltype).astype(int))
+    topology = basix.topology(celltype)
+    geometry = S(basix.geometry(celltype).astype(int))
     dummy = [sympy.Symbol("DUMMY1"), sympy.Symbol("DUMMY2"), sympy.Symbol("DUMMY3")]
 
     funcs = []
-    if celltype == libtab.CellType.triangle:
+    if celltype == basix.CellType.triangle:
         tdim = 2
         for i in range(n + 1):
             for j in range(n + 1 - i):
@@ -30,7 +30,7 @@ def sympy_nedelec(celltype, n):
         mat = numpy.empty((len(funcs), len(funcs)), dtype=object)
 
         # edge tangents
-        edge_basis = sympy_disc_lagrange(libtab.CellType.interval, n)
+        edge_basis = sympy_disc_lagrange(basix.CellType.interval, n)
         edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
         for i, f in enumerate(funcs):
             j = 0
@@ -53,7 +53,7 @@ def sympy_nedelec(celltype, n):
 
         # interior dofs
         if n > 1:
-            face_basis = sympy_rt(libtab.CellType.triangle, n - 1)
+            face_basis = sympy_rt(basix.CellType.triangle, n - 1)
             face_basis = list(zip(face_basis[:len(face_basis) // 2], face_basis[len(face_basis) // 2:]))
             for i, f in enumerate(funcs):
                 j = (n + 1) * 3
@@ -63,7 +63,7 @@ def sympy_nedelec(celltype, n):
                     mat[i, j] = integrand.integrate((x, 0, 1 - y)).integrate((y, 0, 1))
                     j += 1
 
-    elif celltype == libtab.CellType.tetrahedron:
+    elif celltype == basix.CellType.tetrahedron:
         tdim = 3
         for i in range(n + 1):
             for j in range(n + 1 - i):
@@ -74,7 +74,7 @@ def sympy_nedelec(celltype, n):
         mat = numpy.empty((len(funcs), len(funcs)), dtype=object)
 
         # edge tangents
-        edge_basis = sympy_disc_lagrange(libtab.CellType.interval, n)
+        edge_basis = sympy_disc_lagrange(basix.CellType.interval, n)
         edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
         for i, f in enumerate(funcs):
             j = 0
@@ -94,7 +94,7 @@ def sympy_nedelec(celltype, n):
 
         # face dofs
         if n > 1:
-            face_basis = sympy_rt(libtab.CellType.triangle, n - 1)
+            face_basis = sympy_rt(basix.CellType.triangle, n - 1)
             face_basis = [a.subs(x, dummy[0]).subs(y, dummy[1]) for a in face_basis]
             face_basis = list(zip(face_basis[:len(face_basis) // 2],
                                   face_basis[len(face_basis) // 2:]))
@@ -124,7 +124,7 @@ def sympy_nedelec(celltype, n):
 
         # interior dofs
         if n > 2:
-            interior_basis = sympy_rt(libtab.CellType.tetrahedron, n - 2)
+            interior_basis = sympy_rt(basix.CellType.tetrahedron, n - 2)
             interior_basis = list(zip(interior_basis[:len(interior_basis) // 3],
                                       interior_basis[len(interior_basis) // 3: 2 * len(interior_basis) // 3],
                                       interior_basis[2 * len(interior_basis) // 3:]))
@@ -149,12 +149,12 @@ def sympy_nedelec(celltype, n):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_tri(order):
-    celltype = libtab.CellType.triangle
+    celltype = basix.CellType.triangle
     g = sympy_nedelec(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    nedelec = libtab.create_element("Nedelec 2nd kind H(curl)", "triangle", order)
-    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
+    nedelec = basix.create_element("Nedelec 2nd kind H(curl)", "triangle", order)
+    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
 
@@ -166,18 +166,18 @@ def test_tri(order):
                 for j, p in enumerate(pts):
                     wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
 
-            assert(numpy.isclose(wtab[libtab.index(kx, ky)], wsym).all())
+            assert(numpy.isclose(wtab[basix.index(kx, ky)], wsym).all())
 
 
 @pytest.mark.parametrize("order", [1, 2])
 def test_tet(order):
-    celltype = libtab.CellType.tetrahedron
+    celltype = basix.CellType.tetrahedron
     g = sympy_nedelec(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    nedelec = libtab.create_element("Nedelec 2nd kind H(curl)", "tetrahedron", order)
-    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
+    nedelec = basix.create_element("Nedelec 2nd kind H(curl)", "tetrahedron", order)
+    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = nedelec.tabulate(nderiv, pts)
 
@@ -195,4 +195,4 @@ def test_tet(order):
                                               (y, p[1]),
                                               (z, p[2])])
 
-                assert(numpy.isclose(wtab[libtab.index(kx, ky, kz)], wsym).all())
+                assert(numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all())

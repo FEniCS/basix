@@ -7,7 +7,7 @@
 #include "polyset.h"
 #include <iostream>
 
-using namespace libtab;
+using namespace basix;
 
 namespace
 {
@@ -121,7 +121,7 @@ Eigen::MatrixXd create_regge_dual(cell::type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-FiniteElement libtab::create_regge(cell::type celltype, int degree,
+FiniteElement basix::create_regge(cell::type celltype, int degree,
                                    const std::string& name)
 {
   const int tdim = cell::topological_dimension(celltype);

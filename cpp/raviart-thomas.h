@@ -7,7 +7,7 @@
 #include "finite-element.h"
 #include "cell.h"
 
-namespace libtab
+namespace basix
 {
 /// Create Raviart-Thomas element
 /// @param celltype
@@ -15,4 +15,4 @@ namespace libtab
 FiniteElement create_rt(cell::type celltype, int degree,
                         const std::string& = std::string());
 
-} // namespace libtab
+} // namespace basix

@@ -4,7 +4,7 @@
 
 #include "dof-permutations.h"
 
-using namespace libtab;
+using namespace basix;
 
 //-----------------------------------------------------------------------------
 Eigen::ArrayXi dofperms::interval_reflection(int degree)

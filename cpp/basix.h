@@ -1,7 +1,7 @@
 
 #include <Eigen/Core>
 
-namespace libtab
+namespace basix
 {
 
 /// Create element in global registry and return handle
@@ -49,4 +49,4 @@ Eigen::ArrayXXd geometry(const char* cell_type);
 /// Cell topology
 std::vector<std::vector<std::vector<int>>> topology(const char* cell_type);
 
-} // namespace libtab
+} // namespace basix

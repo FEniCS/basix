@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.18)
 
-project(libtab VERSION "0.0.1")
+project(basix VERSION "0.0.1")
 # set(CMAKE_BUILD_TYPE Debug)
 
 # Define CMAKE_INSTALL_xxx: LIBDIR, INCLUDEDIR
@@ -41,24 +41,24 @@ find_package(pybind11 CONFIG REQUIRED)
 
 add_subdirectory(cpp)
 
-pybind11_add_module(_libtabcpp MODULE cpp/wrapper.cpp)
+pybind11_add_module(_basixcpp MODULE cpp/wrapper.cpp)
 
-set_target_properties(_libtabcpp PROPERTIES SKIP_BUILD_RPATH FALSE)
-set_target_properties(_libtabcpp PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
-set_target_properties(_libtabcpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+set_target_properties(_basixcpp PROPERTIES SKIP_BUILD_RPATH FALSE)
+set_target_properties(_basixcpp PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
+set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 if (APPLE)
-  set_target_properties(_libtabcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
+  set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
 else()
-  set_target_properties(_libtabcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
+  set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
 endif()
 
-target_link_libraries(_libtabcpp PRIVATE pybind11::module tab)
+target_link_libraries(_basixcpp PRIVATE pybind11::module tab)
 
 file(GLOB header_files "cpp/*.h")
 set_target_properties(tab PROPERTIES PUBLIC_HEADER "${header_files}")
 
-install(TARGETS _libtabcpp DESTINATION .)
+install(TARGETS _basixcpp DESTINATION .)
 install(TARGETS tab
 		LIBRARY DESTINATION lib
 		PUBLIC_HEADER DESTINATION include)

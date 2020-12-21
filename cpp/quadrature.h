@@ -8,9 +8,9 @@
 #include <Eigen/Dense>
 #include <utility>
 
-/// libtab
+/// basix
 
-namespace libtab
+namespace basix
 {
 /// Integration using Gauss-Jacobi quadrature on simplices. Other shapes
 /// can be obtained by using a product.
@@ -77,4 +77,4 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd>
 gauss_lobatto_legendre_line_rule(int m);
 
 } // namespace quadrature
-} // namespace libtab
+} // namespace basix

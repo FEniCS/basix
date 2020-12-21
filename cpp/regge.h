@@ -6,7 +6,7 @@
 
 #include "finite-element.h"
 
-namespace libtab
+namespace basix
 {
 /// Create Regge element
 /// @param celltype
@@ -14,4 +14,4 @@ namespace libtab
 FiniteElement create_regge(cell::type celltype, int degree,
                            const std::string& name = std::string());
 
-} // namespace libtab
+} // namespace basix

@@ -7,7 +7,7 @@
 #include <Eigen/Dense>
 #include <vector>
 
-namespace libtab
+namespace basix
 {
 
 /// Information about reference cells including their topological and
@@ -74,4 +74,4 @@ const std::string& type_to_str(cell::type type);
 
 
 } // namespace cell
-} // namespace libtab
+} // namespace basix

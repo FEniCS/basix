@@ -8,7 +8,7 @@
 #include <iostream>
 #include <map>
 
-using namespace libtab;
+using namespace basix;
 
 //-----------------------------------------------------------------------------
 Eigen::ArrayXXd cell::geometry(cell::type celltype)

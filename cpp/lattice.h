@@ -8,7 +8,7 @@
 #include <Eigen/Dense>
 #include <vector>
 
-namespace libtab::lattice
+namespace basix::lattice
 {
 enum class type
 {
@@ -38,4 +38,4 @@ enum class type
 Eigen::ArrayXXd create(cell::type celltype, int n, lattice::type type,
                        bool exterior);
 
-} // namespace libtab::lattice
+} // namespace basix::lattice

@@ -12,10 +12,10 @@
 #include <numeric>
 #include <vector>
 
-using namespace libtab;
+using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement libtab::create_rt(cell::type celltype, int degree,
+FiniteElement basix::create_rt(cell::type celltype, int degree,
                                 const std::string& name)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)

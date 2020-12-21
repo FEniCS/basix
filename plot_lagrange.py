@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from libtab import Lagrange, CellType, create_lattice, LatticeType
+from basix import Lagrange, CellType, create_lattice, LatticeType
 
 d = 3
 L = Lagrange("triangle", d)

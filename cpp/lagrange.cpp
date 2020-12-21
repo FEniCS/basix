@@ -11,10 +11,10 @@
 #include <iostream>
 #include <numeric>
 
-using namespace libtab;
+using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
+FiniteElement basix::create_lagrange(cell::type celltype, int degree,
                                       const std::string& name)
 {
   if (celltype == cell::type::point)
@@ -184,7 +184,7 @@ FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
                        Eigen::MatrixXd::Identity(ndofs, ndofs));
 }
 //-----------------------------------------------------------------------------
-FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
+FiniteElement basix::create_dlagrange(cell::type celltype, int degree,
                                        const std::string& name)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from

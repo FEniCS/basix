@@ -9,7 +9,7 @@
 #include <array>
 #include <cmath>
 
-using namespace libtab;
+using namespace basix;
 
 namespace
 {

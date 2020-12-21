@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from libtab import RaviartThomas, create_lattice, CellType, LatticeType
+from basix import RaviartThomas, create_lattice, CellType, LatticeType
 
 
 RT = RaviartThomas("triangle", 3)

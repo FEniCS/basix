@@ -190,7 +190,7 @@ def test_tet(order):
     z = sympy.Symbol("z")
     lagrange = basix.Lagrange("tetrahedron", order)
     pts = basix.create_lattice(celltype, 6,
-                                basix.LatticeType.equispaced, True)
+                               basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = lagrange.tabulate(nderiv, pts)
 
@@ -309,6 +309,6 @@ def test_dof_permutations_tetrahedron(order):
 def test_celltypes(order, celltype):
     tp = basix.Lagrange(celltype[1], order)
     pts = basix.create_lattice(celltype[0], 5,
-                                basix.LatticeType.equispaced, True)
+                               basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
     assert(numpy.allclose(numpy.sum(w, axis=1), 1.0))

@@ -6,7 +6,7 @@
 
 #include "finite-element.h"
 
-namespace libtab
+namespace basix
 {
 
 /// Crouzeix-Raviart element
@@ -19,4 +19,4 @@ FiniteElement create(cell::type celltype, int degree);
 
 static std::string family_name = "Crouzeix-Raviart";
 } // namespace cr
-} // namespace libtab
+} // namespace basix

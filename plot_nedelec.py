@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from libtab import Nedelec, CellType, LatticeType, create_lattice
+from basix import Nedelec, CellType, LatticeType, create_lattice
 
 N = Nedelec("triangle", 2)
 pts = create_lattice(CellType.triangle, 20, LatticeType.equispaced, True)

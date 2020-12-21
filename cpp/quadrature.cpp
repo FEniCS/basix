@@ -7,7 +7,7 @@
 #include <iostream>
 #include <vector>
 
-using namespace libtab;
+using namespace basix;
 
 namespace
 {

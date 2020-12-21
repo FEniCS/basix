@@ -8,7 +8,7 @@
 #include "polyset.h"
 #include "quadrature.h"
 
-using namespace libtab;
+using namespace basix;
 
 namespace
 {

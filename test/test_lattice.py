@@ -2,7 +2,7 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
-import libtab
+import basix
 import numpy as np
 
 
@@ -11,9 +11,9 @@ def test_gll_warped_pyramid():
 
     # Check that all the surface points of the pyramid match up with the same points on
     # quad and triangle
-    tri_pts = libtab.create_lattice(libtab.CellType.triangle, n, libtab.LatticeType.gll_warped, True)
-    quad_pts = libtab.create_lattice(libtab.CellType.quadrilateral, n, libtab.LatticeType.gll_warped, True)
-    pyr_pts = libtab.create_lattice(libtab.CellType.pyramid, n, libtab.LatticeType.gll_warped, True)
+    tri_pts = basix.create_lattice(basix.CellType.triangle, n, basix.LatticeType.gll_warped, True)
+    quad_pts = basix.create_lattice(basix.CellType.quadrilateral, n, basix.LatticeType.gll_warped, True)
+    pyr_pts = basix.create_lattice(basix.CellType.pyramid, n, basix.LatticeType.gll_warped, True)
 
     # Remove any near-zero values to make sorting robust
     pyr_pts[np.where(abs(pyr_pts) < 1e-12)] = 0.0
@@ -46,8 +46,8 @@ def test_gll_warped_tetrahedron():
 
     # Check that all the surface points of the tet match up with the same points on
     # triangle
-    tri_pts = libtab.create_lattice(libtab.CellType.triangle, n, libtab.LatticeType.gll_warped, True)
-    tet_pts = libtab.create_lattice(libtab.CellType.tetrahedron, n, libtab.LatticeType.gll_warped, True)
+    tri_pts = basix.create_lattice(basix.CellType.triangle, n, basix.LatticeType.gll_warped, True)
+    tet_pts = basix.create_lattice(basix.CellType.tetrahedron, n, basix.LatticeType.gll_warped, True)
 
     tet_pts[np.where(abs(tet_pts) < 1e-12)] = 0.0
     tri_pts[np.where(abs(tri_pts) < 1e-12)] = 0.0

@@ -7,7 +7,7 @@
 #include "cell.h"
 #include <Eigen/Dense>
 
-namespace libtab
+namespace basix
 {
 
 class FiniteElement;
@@ -155,4 +155,4 @@ make_normal_integral_moments_interpolation(const FiniteElement& moment_space,
                                            const int poly_deg, const int q_deg);
 
 }; // namespace moments
-} // namespace libtab
+} // namespace basix

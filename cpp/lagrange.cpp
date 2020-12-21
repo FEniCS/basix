@@ -5,7 +5,6 @@
 #include "lagrange.h"
 #include "dof-permutations.h"
 #include "lattice.h"
-#include "libtab.h"
 #include "polyset.h"
 #include <Eigen/Dense>
 #include <iostream>
@@ -180,7 +179,8 @@ FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
-                       base_permutations, pt, Eigen::MatrixXd::Identity(ndofs, ndofs));
+                       base_permutations, pt,
+                       Eigen::MatrixXd::Identity(ndofs, ndofs));
 }
 //-----------------------------------------------------------------------------
 FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
@@ -216,6 +216,7 @@ FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
-                       base_permutations, pt, Eigen::MatrixXd::Identity(ndofs, ndofs));
+                       base_permutations, pt,
+                       Eigen::MatrixXd::Identity(ndofs, ndofs));
 }
 //-----------------------------------------------------------------------------

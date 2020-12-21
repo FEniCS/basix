@@ -4,7 +4,7 @@
 
 #include "moments.h"
 #include "cell.h"
-#include "libtab.h"
+#include "finite-element.h"
 #include "polyset.h"
 #include "quadrature.h"
 

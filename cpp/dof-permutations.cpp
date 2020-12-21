@@ -54,6 +54,32 @@ Eigen::ArrayXi dofperms::triangle_rotation(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
+Eigen::ArrayXi dofperms::quadrilateral_reflection(int degree)
+{
+  const int n = degree * degree;
+  Eigen::ArrayXi perm(n);
+  int p = 0;
+
+  for (int st = 0; st < degree; ++st)
+    for (int i = 0; i < degree; ++i)
+      perm(p++) = st + i * degree;
+
+  return perm;
+}
+//-----------------------------------------------------------------------------
+Eigen::ArrayXi dofperms::quadrilateral_rotation(int degree)
+{
+  const int n = degree * degree;
+  Eigen::ArrayXi perm(n);
+  int p = 0;
+
+  for (int st = degree - 1; st >= 0; --st)
+    for (int i = 0; i < degree; ++i)
+      perm(p++) = st + degree * i;
+
+  return perm;
+}
+//-----------------------------------------------------------------------------
 Eigen::ArrayXXd dofperms::interval_reflection_tangent_directions(int degree)
 {
   return -Eigen::MatrixXd::Identity(degree, degree);

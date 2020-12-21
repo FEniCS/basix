@@ -85,10 +85,27 @@ FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-  if (celltype == cell::type::triangle)
+  if (celltype == cell::type::interval)
+  {
+    assert(perm_count == 0);
+  }
+  else if (celltype == cell::type::triangle)
   {
     Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 3; ++edge)
+    {
+      const int start = 3 + edge_ref.size() * edge;
+      for (int i = 0; i < edge_ref.size(); ++i)
+      {
+        base_permutations[edge](start + i, start + i) = 0;
+        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+      }
+    }
+  }
+  else if (celltype == cell::type::quadrilateral)
+  {
+    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
+    for (int edge = 0; edge < 4; ++edge)
     {
       const int start = 3 + edge_ref.size() * edge;
       for (int i = 0; i < edge_ref.size(); ++i)
@@ -124,6 +141,38 @@ FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
       }
     }
   }
+  else if (celltype == cell::type::hexahedron)
+  {
+    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
+    for (int edge = 0; edge < 12; ++edge)
+    {
+      const int start = 8 + edge_ref.size() * edge;
+      for (int i = 0; i < edge_ref.size(); ++i)
+      {
+        base_permutations[edge](start + i, start + i) = 0;
+        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+      }
+    }
+    Eigen::ArrayXi face_ref = dofperms::quadrilateral_reflection(degree - 1);
+    Eigen::ArrayXi face_rot = dofperms::quadrilateral_rotation(degree - 1);
+    for (int face = 0; face < 6; ++face)
+    {
+      const int start = 8 + edge_ref.size() * 12 + face_ref.size() * face;
+      for (int i = 0; i < face_rot.size(); ++i)
+      {
+        base_permutations[12 + 2 * face](start + i, start + i) = 0;
+        base_permutations[12 + 2 * face](start + i, start + face_rot[i]) = 1;
+        base_permutations[12 + 2 * face + 1](start + i, start + i) = 0;
+        base_permutations[12 + 2 * face + 1](start + i, start + face_ref[i])
+            = 1;
+      }
+    }
+  }
+  else
+  {
+    throw std::runtime_error(
+        "Base permutation not implemented for this cell type.");
+  }
 
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
@@ -137,10 +186,6 @@ FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
 FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
                                        const std::string& name)
 {
-  if (celltype != cell::type::interval and celltype != cell::type::triangle
-      and celltype != cell::type::tetrahedron)
-    throw std::runtime_error("Invalid celltype");
-
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
 
@@ -154,17 +199,8 @@ FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
   entity_dofs[topology.size() - 1][0] = ndofs;
 
   Eigen::ArrayXXd geometry = cell::geometry(celltype);
-  const Eigen::ArrayXXd lattice
+  const Eigen::ArrayXXd pt
       = lattice::create(celltype, degree, lattice::type::equispaced, true);
-
-  // Create points at nodes, ordered by topology (vertices first)
-  Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
-  for (int j = 0; j < lattice.rows(); ++j)
-  {
-    pt.row(j) = geometry.row(0);
-    for (int k = 0; k < geometry.rows() - 1; ++k)
-      pt.row(j) += (geometry.row(k + 1) - geometry.row(0)) * lattice(j, k);
-  }
 
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];

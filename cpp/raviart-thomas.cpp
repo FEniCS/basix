@@ -154,7 +154,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
                        base_permutations, {}, {}, "contravariant piola");
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::triangle_rt_reflection(int degree)
+Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
 {
   const int n = degree * (degree + 2);
   Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
@@ -162,19 +162,18 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_reflection(int degree)
   // Permute RT functions on edges
   for (int i = 0; i < degree; ++i)
   {
-    perm(i, 2 * degree - 1 - i) = 1;
-    perm(degree + i, 3 * degree - 1 - i) = 1;
+    perm(i, 2 * degree - 1 - i) = -1;
+    perm(degree + i, 3 * degree - 1 - i) = -1;
     perm(2 * degree + i, i) = 1;
   }
+
+  return perm;
 
   // Rotate face
   const int face_start = 3 * degree;
   Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 1);
   Eigen::ArrayXXd face_dir_rot
       = dofperms::triangle_rotation_tangent_directions(degree - 1);
-
-  assert(face_start + face_dir_rot.rows() == n);
-  assert(face_dir_rot.rows() == face_dir_rot.cols());
 
   for (int i = 0; i < face_rot.size(); ++i)
   {
@@ -190,7 +189,7 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_reflection(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
+Eigen::MatrixXd basix::dofperms::triangle_rt_reflection(int degree)
 {
   const int n = degree * (degree + 2);
   Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
@@ -199,8 +198,8 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
   for (int i = 0; i < degree; ++i)
   {
     perm(i, degree - 1 - i) = 1;
-    perm(degree + i, 2 * degree + i) = 1;
-    perm(2 * degree + i, degree + i) = 1;
+    perm(degree + i, 2 * degree + i) = -1;
+    perm(2 * degree + i, degree + i) = -1;
   }
 
   // reflect face
@@ -208,9 +207,6 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
   Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 1);
   Eigen::ArrayXXd face_dir_ref
       = dofperms::triangle_reflection_tangent_directions(degree - 1);
-
-  assert(face_start + face_dir_ref.rows() == n);
-  assert(face_dir_ref.rows() == face_dir_ref.cols());
 
   for (int i = 0; i < face_ref.size(); ++i)
   {

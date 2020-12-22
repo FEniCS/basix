@@ -5,7 +5,6 @@
 #include "lagrange.h"
 #include "dof-permutations.h"
 #include "lattice.h"
-#include "basix.h"
 #include "polyset.h"
 #include <Eigen/Dense>
 #include <iostream>

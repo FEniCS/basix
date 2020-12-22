@@ -240,5 +240,5 @@ def test_n2curl_tetrahedron_permutations(order):
     else:
         raise NotImplementedError()
 
-    assert np.allclose(e.base_permutations, perms)
+    assert numpy.allclose(e.base_permutations, perms)
 

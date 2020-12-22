@@ -4,14 +4,15 @@
 
 #pragma once
 
-#include "finite-element.h"
 #include "cell.h"
+#include "finite-element.h"
 
 namespace basix
 {
 /// Create Raviart-Thomas element
 /// @param celltype
 /// @param degree
+/// @param name
 FiniteElement create_rt(cell::type celltype, int degree,
                         const std::string& = std::string());
 

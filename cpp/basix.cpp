@@ -18,21 +18,23 @@ void check_handle(int handle)
 }
 
 int basix::register_element(const char* family_name, const char* cell_type,
-                             int degree)
+                            int degree)
 {
   _registry.push_back(std::make_unique<FiniteElement>(
       create_element(family_name, cell_type, degree)));
   return _registry.size() - 1;
 }
 
-void basix::deregister_element(int handle)
+void basix::release_element(int handle)
 {
   check_handle(handle);
   _registry[handle].reset();
+  while (!_registry.empty() and !_registry.back())
+    _registry.pop_back();
 }
 
 std::vector<Eigen::ArrayXXd> basix::tabulate(int handle, int nd,
-                                              const Eigen::ArrayXXd& x)
+                                             const Eigen::ArrayXXd& x)
 {
   check_handle(handle);
   return _registry[handle]->tabulate(nd, x);

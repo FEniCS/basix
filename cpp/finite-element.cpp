@@ -166,7 +166,7 @@ const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
 const std::string& basix::version()
 {
-  static const std::string version_str = str(LIBTAB_VERSION);
+  static const std::string version_str = str(BASIX_VERSION);
   return version_str;
 }
 //-----------------------------------------------------------------------------

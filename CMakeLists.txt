@@ -53,12 +53,12 @@ else()
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
 endif()
 
-target_link_libraries(_basixcpp PRIVATE pybind11::module tab)
+target_link_libraries(_basixcpp PRIVATE pybind11::module basix)
 
 file(GLOB header_files "cpp/*.h")
-set_target_properties(tab PROPERTIES PUBLIC_HEADER "${header_files}")
+set_target_properties(basix PROPERTIES PUBLIC_HEADER "${header_files}")
 
 install(TARGETS _basixcpp DESTINATION .)
-install(TARGETS tab
+install(TARGETS basix
 		LIBRARY DESTINATION lib
 		PUBLIC_HEADER DESTINATION include)

@@ -609,7 +609,6 @@ create_nedelec2_3d_interpolation(int degree)
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
 {
-  // TODO
   const int ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 2;
   std::vector<Eigen::MatrixXd> base_permutations(
       14, Eigen::MatrixXd::Identity(ndofs, ndofs));
@@ -637,7 +636,7 @@ std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
   Eigen::MatrixXd face_ref = dofperms::triangle_rt_reflection(degree - 1);
   for (int face = 0; face < 4; ++face)
   {
-    const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
+    const int start = edge_ref.size() * 6 + face_ref.size() * face;
     const int p = 6 + 2 * face;
     base_permutations[p].block(start, start, face_rot.rows(), face_rot.cols())
         = face_rot;

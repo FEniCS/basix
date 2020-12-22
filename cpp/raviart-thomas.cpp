@@ -173,6 +173,9 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_reflection(int degree)
   Eigen::ArrayXXd face_dir_rot
       = dofperms::triangle_rotation_tangent_directions(degree - 1);
 
+  assert(face_start + face_dir_rot.rows() == n);
+  assert(face_dir_rot.rows() == face_dir_rot.cols());
+
   for (int i = 0; i < face_rot.size(); ++i)
   {
     for (int b = 0; b < 2; ++b)
@@ -205,6 +208,9 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
   Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 1);
   Eigen::ArrayXXd face_dir_ref
       = dofperms::triangle_reflection_tangent_directions(degree - 1);
+
+  assert(face_start + face_dir_ref.rows() == n);
+  assert(face_dir_ref.rows() == face_dir_ref.cols());
 
   for (int i = 0; i < face_ref.size(); ++i)
   {

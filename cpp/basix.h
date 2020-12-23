@@ -9,7 +9,7 @@ int register_element(const char* family_name, const char* cell_type,
                      int degree);
 
 /// Delete from global registry
-void deregister_element(int handle);
+void release_element(int handle);
 
 /// Tabulate
 std::vector<Eigen::ArrayXXd> tabulate(int handle, int nd,

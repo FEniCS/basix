@@ -55,8 +55,7 @@ endif()
 
 target_link_libraries(_basixcpp PRIVATE pybind11::module basix)
 
-file(GLOB header_files "cpp/*.h")
-set_target_properties(basix PROPERTIES PUBLIC_HEADER "${header_files}")
+set_target_properties(basix PROPERTIES PUBLIC_HEADER "cpp/basix.h")
 
 install(TARGETS _basixcpp DESTINATION .)
 install(TARGETS basix

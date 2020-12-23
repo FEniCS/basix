@@ -127,7 +127,7 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_gauss_jacobi_quadrature(cell::type celltype, int m)
 {
-  
+
   switch (celltype)
   {
   case cell::type::interval:
@@ -197,7 +197,84 @@ make_gauss_jacobi_quadrature(cell::type celltype, int m)
     throw std::runtime_error("Unsupported celltype for make_quadrature");
   }
 }
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_triangle_quadrature(int m)
+{
+  if (m == 0 or m == 1)
+  {
+    // Scheme from Zienkiewicz and Taylor, 1 point, degree of precision 1
+    return {Eigen::ArrayXXd::Constant(1, 2, 1.0 / 3.0),
+            Eigen::ArrayXd::Constant(1, 0.5)};
+  }
+  else if (m == 2)
+  {
+    // Scheme from Strang and Fix, 3 points, degree of precision 2
+    Eigen::ArrayXXd x(3, 2);
+    x << 1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0, 2.0 / 3.0, 1.0 / 6.0;
+    return {x, Eigen::ArrayXd::Constant(3, 1.0 / 6.0)};
+  }
+  else if (m == 3)
+  {
+    // Scheme from Strang and Fix, 6 points, degree of precision 3
+    Eigen::ArrayXXd x(6, 2);
+    x << 0.659027622374092, 0.231933368553031, 0.659027622374092,
+        0.109039009072877, 0.231933368553031, 0.659027622374092,
+        0.231933368553031, 0.109039009072877, 0.109039009072877,
+        0.659027622374092, 0.109039009072877, 0.231933368553031;
+    return {x, Eigen::ArrayXd::Constant(6, 1.0 / 12.0)};
+  }
+  else if (m == 4)
+  {
+    // Scheme from Strang and Fix, 6 points, degree of precision 4
+    Eigen::ArrayXXd x(6, 2);
+    x << 0.816847572980459, 0.091576213509771, 0.091576213509771,
+        0.816847572980459, 0.091576213509771, 0.091576213509771,
+        0.108103018168070, 0.445948490915965, 0.445948490915965,
+        0.108103018168070, 0.445948490915965, 0.445948490915965;
+    Eigen::ArrayXd w(6);
+    w << 0.109951743655322, 0.109951743655322, 0.109951743655322,
+        0.223381589678011, 0.223381589678011, 0.223381589678011;
+    w /= 2.0;
+    return {x, w};
+  }
+  else if (m == 5)
+  {
+    // Scheme from Strang and Fix, 7 points, degree of precision 5
+    Eigen::ArrayXXd x(7, 2);
+    x << 0.33333333333333333, 0.33333333333333333, 0.79742698535308720,
+        0.10128650732345633, 0.10128650732345633, 0.79742698535308720,
+        0.10128650732345633, 0.10128650732345633, 0.05971587178976981,
+        0.47014206410511505, 0.47014206410511505, 0.05971587178976981,
+        0.47014206410511505, 0.47014206410511505;
 
+    Eigen::ArrayXd w(7);
+    w << 0.22500000000000000, 0.12593918054482717, 0.12593918054482717,
+        0.12593918054482717, 0.13239415278850616, 0.13239415278850616,
+        0.13239415278850616;
+    w = w / 2.0;
+    return {x, w};
+  }
+  else if (m == 6)
+  {
+    // Scheme from Strang and Fix, 12 points, degree of precision 6
+    Eigen::ArrayXXd x(12, 2);
+    x << 0.873821971016996, 0.063089014491502, 0.063089014491502,
+        0.873821971016996, 0.063089014491502, 0.063089014491502,
+        0.501426509658179, 0.249286745170910, 0.249286745170910,
+        0.501426509658179, 0.249286745170910, 0.249286745170910,
+        0.636502499121399, 0.310352451033785, 0.636502499121399,
+        0.053145049844816, 0.310352451033785, 0.636502499121399,
+        0.310352451033785, 0.053145049844816, 0.053145049844816,
+        0.636502499121399, 0.053145049844816, 0.310352451033785;
+    Eigen::ArrayXd w(12);
+    w << 0.050844906370207, 0.050844906370207, 0.050844906370207,
+        0.116786275726379, 0.116786275726379, 0.116786275726379,
+        0.082851075618374, 0.082851075618374, 0.082851075618374,
+        0.082851075618374, 0.082851075618374, 0.082851075618374;
+    w = w / 2.0;
+  }
+  return quadrature::make_quadrature_triangle_collapsed(m);
+}
 
 }; // namespace
 
@@ -371,14 +448,20 @@ quadrature::make_quadrature_tetrahedron_collapsed(int m)
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
 {
-  if (rule=="" or rule=="default")
-    return make_gauss_jacobi_quadrature(celltype, m);
+  if (rule == "" or rule == "default")
+  {
+    if (celltype == cell::type::triangle)
+      return make_triangle_quadrature(m);
+    else
+      return make_gauss_jacobi_quadrature(celltype, m);
+  }
+  else if (rule == "gll" and celltype == cell::type::interval)
+    return quadrature::gauss_lobatto_legendre_line_rule(m);
 
   throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");
-  
 }
 //-----------------------------------------------------------------------------
-std::tuple<Eigen::ArrayXd, Eigen::ArrayXd>
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
 quadrature::gauss_lobatto_legendre_line_rule(int m)
 {
   // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval

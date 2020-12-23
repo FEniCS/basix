@@ -60,13 +60,13 @@ make_quadrature_tetrahedron_collapsed(int m);
 /// @param celltype
 /// @param m order
 /// @returns list of points, list of weights
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_quadrature(const std::string& rule, cell::type celltype,
-                                                           int m);
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+make_quadrature(const std::string& rule, cell::type celltype, int m);
 
 /// Compute GLL quadrature points and weights on the interval [-1, 1]
 /// @param m order
 /// @return Array of points, array of weights
-std::tuple<Eigen::ArrayXd, Eigen::ArrayXd>
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
 gauss_lobatto_legendre_line_rule(int m);
 
 } // namespace quadrature

@@ -31,9 +31,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
   const int npoly = polyset::dim(celltype, degree);
   const int ndofs = npoly * tdim;
 
-  // The number of order (degree) polynomials
-  const int psize = Pkp1_at_Qpts.cols();
-
   // Create coefficients for order (degree-1) vector polynomials
   Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
 
@@ -46,19 +43,22 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
   // Add rows to dualmat for integral moments on facets
   const int facet_count = tdim + 1;
   const int facet_dofs = polyset::dim(facettype, degree);
-  dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
+
+  dual.block(0, 0, facet_count * facet_dofs, ndofs)
       = moments::make_normal_integral_moments(
           create_dlagrange(facettype, degree), celltype, tdim, degree,
           quad_deg);
 
   const int internal_dofs = ndofs - facet_count * facet_dofs;
+
   // Add rows to dualmat for integral moments on interior
   if (degree > 1)
   {
     // Interior integral moment
-    dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
-        = moments::make_integral_moments(create_nedelec(celltype, degree - 1),
-                                         celltype, tdim, degree, quad_deg);
+    dual.block(facet_count * facet_dofs, 0, internal_dofs, ndofs)
+        = moments::make_dot_integral_moments(
+            create_nedelec(celltype, degree - 1), celltype, tdim, degree,
+            quad_deg);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

@@ -196,3 +196,48 @@ def test_tet(order):
                                               (z, p[2])])
 
                 assert(numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all())
+
+
+@pytest.mark.parametrize("order", [1, 2])
+def test_n2curl_tetrahedron_permutations(order):
+    e = basix.create_element("Nedelec 2nd kind H(curl)", "tetrahedron", order)
+    if order == 1:
+        perms = [[
+            [1 if i == j else 0 for j in range(12)] for i in range(12)]
+            for k in range(14)]
+        for edge in range(6):
+            perms[edge][2 * edge][2 * edge] = 0
+            perms[edge][2 * edge + 1][2 * edge + 1] = 0
+            perms[edge][2 * edge][2 * edge + 1] = -1
+            perms[edge][2 * edge + 1][2 * edge] = -1
+
+    elif order == 2:
+        perms = [[
+            [1 if i == j else 0 for j in range(30)] for i in range(30)]
+            for k in range(14)]
+        for edge in range(6):
+            perms[edge][3 * edge][3 * edge] = 0
+            perms[edge][3 * edge + 1][3 * edge + 1] = 0
+            perms[edge][3 * edge + 2][3 * edge + 2] = 0
+            perms[edge][3 * edge][3 * edge + 2] = -1
+            perms[edge][3 * edge + 1][3 * edge + 1] = -1
+            perms[edge][3 * edge + 2][3 * edge] = -1
+
+        for face in range(4):
+            perms[6 + 2 * face][18 + 3 * face][18 + 3 * face] = 0
+            perms[6 + 2 * face][18 + 3 * face + 1][18 + 3 * face + 1] = 0
+            perms[6 + 2 * face][18 + 3 * face + 2][18 + 3 * face + 2] = 0
+            perms[6 + 2 * face][18 + 3 * face][18 + 3 * face + 1] = -1
+            perms[6 + 2 * face][18 + 3 * face + 1][18 + 3 * face + 2] = -1
+            perms[6 + 2 * face][18 + 3 * face + 2][18 + 3 * face] = 1
+
+            perms[6 + 2 * face + 1][18 + 3 * face][18 + 3 * face] = 1
+            perms[6 + 2 * face + 1][18 + 3 * face + 1][18 + 3 * face + 1] = 0
+            perms[6 + 2 * face + 1][18 + 3 * face + 2][18 + 3 * face + 2] = 0
+            perms[6 + 2 * face + 1][18 + 3 * face + 1][18 + 3 * face + 2] = -1
+            perms[6 + 2 * face + 1][18 + 3 * face + 2][18 + 3 * face + 1] = -1
+
+    else:
+        raise NotImplementedError()
+
+    assert numpy.allclose(e.base_permutations, perms)

@@ -106,7 +106,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
     Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 4; ++edge)
     {
-      const int start = 3 + edge_ref.size() * edge;
+      const int start = 4 + edge_ref.size() * edge;
       for (int i = 0; i < edge_ref.size(); ++i)
       {
         base_permutations[edge](start + i, start + i) = 0;

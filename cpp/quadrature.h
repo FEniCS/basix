@@ -60,7 +60,7 @@ make_quadrature_tetrahedron_collapsed(int m);
 /// @param celltype
 /// @param m order
 /// @returns list of points, list of weights
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_quadrature(cell::type celltype,
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_quadrature(const std::string& rule, cell::type celltype,
                                                            int m);
 
 /// Compute GLL quadrature points and weights on the interval [-1, 1]

@@ -15,13 +15,13 @@ import numpy as np
                                       (basix.CellType.tetrahedron, 1.0/6.0)])
 @pytest.mark.parametrize("order", [1, 2, 4, 8])
 def test_cell_quadrature(celltype, order):
-    Qpts, Qwts = basix.make_quadrature(celltype[0], order)
+    Qpts, Qwts = basix.make_quadrature("default", celltype[0], order)
     print(sum(Qwts))
     assert(np.isclose(sum(Qwts), celltype[1]))
 
 
 def test_quadrature_function():
-    Qpts, Qwts = basix.make_quadrature(basix.CellType.interval, 3)
+    Qpts, Qwts = basix.make_quadrature("default", basix.CellType.interval, 3)
     # Scale to interval [0.0, 2.0]
     Qpts *= 2.0
     Qwts *= 2.0

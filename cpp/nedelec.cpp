@@ -31,7 +31,7 @@ Eigen::MatrixXd create_nedelec_2d_space(int degree)
 
   // Tabulate polynomial set at quadrature points
   auto [Qpts, Qwts]
-      = quadrature::make_quadrature(cell::type::triangle, 2 * degree);
+      = quadrature::make_quadrature("default", cell::type::triangle, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
       = polyset::tabulate(cell::type::triangle, degree, 0, Qpts)[0];
 
@@ -190,7 +190,7 @@ Eigen::MatrixXd create_nedelec_3d_space(int degree)
 
   // Tabulate polynomial basis at quadrature points
   auto [Qpts, Qwts]
-      = quadrature::make_quadrature(cell::type::tetrahedron, 2 * degree);
+    = quadrature::make_quadrature("default", cell::type::tetrahedron, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
       = polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts)[0];
   const int psize = Pkp1_at_Qpts.cols();

@@ -122,6 +122,83 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
 
   return gauss(alpha_l, beta_l);
 }
+
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+make_gauss_jacobi_quadrature(cell::type celltype, int m)
+{
+  
+  switch (celltype)
+  {
+  case cell::type::interval:
+    return quadrature::make_quadrature_line(m);
+  case cell::type::quadrilateral:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
+    Eigen::ArrayX2d Qpts(m * m, 2);
+    Eigen::ArrayXd Qwts(m * m);
+    int c = 0;
+    for (int j = 0; j < m; ++j)
+    {
+      for (int i = 0; i < m; ++i)
+      {
+        Qpts.row(c) << QptsL(i, 0), QptsL(j, 0);
+        Qwts[c] = QwtsL[i] * QwtsL[j];
+        ++c;
+      }
+    }
+    return {Qpts, Qwts};
+  }
+  case cell::type::hexahedron:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
+    Eigen::ArrayX3d Qpts(m * m * m, 3);
+    Eigen::ArrayXd Qwts(m * m * m);
+    int c = 0;
+    for (int k = 0; k < m; ++k)
+    {
+      for (int j = 0; j < m; ++j)
+      {
+        for (int i = 0; i < m; ++i)
+        {
+          Qpts.row(c) << QptsL(i, 0), QptsL(j, 0), QptsL(k, 0);
+          Qwts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
+          ++c;
+        }
+      }
+    }
+    return {Qpts, Qwts};
+  }
+  case cell::type::prism:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
+    auto [QptsT, QwtsT] = quadrature::make_quadrature_triangle_collapsed(m);
+    Eigen::ArrayX3d Qpts(m * QptsT.rows(), 3);
+    Eigen::ArrayXd Qwts(m * QptsT.rows());
+    int c = 0;
+    for (int k = 0; k < m; ++k)
+    {
+      for (int i = 0; i < QptsT.rows(); ++i)
+      {
+        Qpts.row(c) << QptsT(i, 0), QptsT(i, 1), QptsL(k, 0);
+        Qwts[c] = QwtsT[i] * QwtsL[k];
+        ++c;
+      }
+    }
+    return {Qpts, Qwts};
+  }
+  case cell::type::pyramid:
+    throw std::runtime_error("Pyramid not yet supported");
+  case cell::type::triangle:
+    return quadrature::make_quadrature_triangle_collapsed(m);
+  case cell::type::tetrahedron:
+    return quadrature::make_quadrature_tetrahedron_collapsed(m);
+  default:
+    throw std::runtime_error("Unsupported celltype for make_quadrature");
+  }
+}
+
+
 }; // namespace
 
 //-----------------------------------------------------------------------------
@@ -292,76 +369,13 @@ quadrature::make_quadrature_tetrahedron_collapsed(int m)
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-quadrature::make_quadrature(cell::type celltype, int m)
+quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
 {
-  switch (celltype)
-  {
-  case cell::type::interval:
-    return quadrature::make_quadrature_line(m);
-  case cell::type::quadrilateral:
-  {
-    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    Eigen::ArrayX2d Qpts(m * m, 2);
-    Eigen::ArrayXd Qwts(m * m);
-    int c = 0;
-    for (int j = 0; j < m; ++j)
-    {
-      for (int i = 0; i < m; ++i)
-      {
-        Qpts.row(c) << QptsL(i, 0), QptsL(j, 0);
-        Qwts[c] = QwtsL[i] * QwtsL[j];
-        ++c;
-      }
-    }
-    return {Qpts, Qwts};
-  }
-  case cell::type::hexahedron:
-  {
-    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    Eigen::ArrayX3d Qpts(m * m * m, 3);
-    Eigen::ArrayXd Qwts(m * m * m);
-    int c = 0;
-    for (int k = 0; k < m; ++k)
-    {
-      for (int j = 0; j < m; ++j)
-      {
-        for (int i = 0; i < m; ++i)
-        {
-          Qpts.row(c) << QptsL(i, 0), QptsL(j, 0), QptsL(k, 0);
-          Qwts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
-          ++c;
-        }
-      }
-    }
-    return {Qpts, Qwts};
-  }
-  case cell::type::prism:
-  {
-    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    auto [QptsT, QwtsT] = quadrature::make_quadrature_triangle_collapsed(m);
-    Eigen::ArrayX3d Qpts(m * QptsT.rows(), 3);
-    Eigen::ArrayXd Qwts(m * QptsT.rows());
-    int c = 0;
-    for (int k = 0; k < m; ++k)
-    {
-      for (int i = 0; i < QptsT.rows(); ++i)
-      {
-        Qpts.row(c) << QptsT(i, 0), QptsT(i, 1), QptsL(k, 0);
-        Qwts[c] = QwtsT[i] * QwtsL[k];
-        ++c;
-      }
-    }
-    return {Qpts, Qwts};
-  }
-  case cell::type::pyramid:
-    throw std::runtime_error("Pyramid not yet supported");
-  case cell::type::triangle:
-    return quadrature::make_quadrature_triangle_collapsed(m);
-  case cell::type::tetrahedron:
-    return quadrature::make_quadrature_tetrahedron_collapsed(m);
-  default:
-    throw std::runtime_error("Unsupported celltype for make_quadrature");
-  }
+  if (rule=="" or rule=="default")
+    return make_gauss_jacobi_quadrature(celltype, m);
+
+  throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");
+  
 }
 //-----------------------------------------------------------------------------
 std::tuple<Eigen::ArrayXd, Eigen::ArrayXd>

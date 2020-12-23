@@ -141,11 +141,11 @@ compute_expansion_coefficients(const Eigen::MatrixXd& span_coeffs,
                                const Eigen::MatrixXd& dual,
                                bool condition_check = false);
 
+/// Finite Element
+/// The basis is stored as a set of coefficients, which are applied to the
+/// underlying expansion set for that cell type, when tabulating.
 class FiniteElement
 {
-  /// Finite Element
-  /// The basis is stored as a set of coefficients, which are applied to the
-  /// underlying expansion set for that cell type, when tabulating.
 
 public:
   /// A finite element

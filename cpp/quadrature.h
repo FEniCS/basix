@@ -57,6 +57,7 @@ std::pair<Eigen::ArrayX3d, Eigen::ArrayXd>
 make_quadrature_tetrahedron_collapsed(int m);
 
 /// Utility for quadrature rule on reference cell
+/// @param rule Name of quadrature rule (or use "default")
 /// @param celltype
 /// @param m order
 /// @returns list of points, list of weights

@@ -33,14 +33,19 @@ int dim(int handle);
 /// Family name
 const char* family_name(int handle);
 
+/// Mapping name (affine, piola etc.)
 const char* mapping_name(int handle);
 
+/// Number of dofs per entity, ordered from vertex, edge, facet, cell
 const std::vector<std::vector<int>>& entity_dofs(int handle);
 
+/// Base permutations
 const std::vector<Eigen::MatrixXd>& base_permutations(int handle);
 
+/// Interpolation points
 const Eigen::ArrayXXd& points(int handle);
 
+/// Interpolation matrix
 const Eigen::MatrixXd& interpolation_matrix(int handle);
 
 /// Cell geometry

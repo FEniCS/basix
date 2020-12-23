@@ -12,6 +12,7 @@ namespace basix
 /// Create Nedelec element (first kind)
 /// @param celltype
 /// @param degree
+/// @param name
 FiniteElement create_nedelec(cell::type celltype, int degree,
                              const std::string& name = std::string());
 
@@ -21,6 +22,7 @@ FiniteElement create_nedelec(cell::type celltype, int degree,
 /// Create Nedelec element (second kind)
 /// @param celltype
 /// @param degree
+/// @param name
 FiniteElement create_nedelec2(cell::type celltype, int degree,
                               const std::string& name = std::string());
 

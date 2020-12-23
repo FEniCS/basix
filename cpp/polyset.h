@@ -46,7 +46,7 @@ std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int degree, int nd,
                                       const Eigen::ArrayXXd& x);
 
 /// Dimension of a space
-/// @param[in] cellThe cell type
+/// @param[in] cell The cell type
 /// @param[in] n The polynomial degree
 /// @return The number terms in the basis spanning a space of given
 /// degree

@@ -12,6 +12,7 @@ namespace basix
 /// Create BDM element
 /// @param celltype
 /// @param degree
+/// @param name
 FiniteElement create_bdm(cell::type celltype, int degree,
                          const std::string& name = std::string());
 

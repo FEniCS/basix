@@ -13,7 +13,7 @@ import numpy as np
                                       (basix.CellType.interval, 1.0),
                                       (basix.CellType.triangle, 0.5),
                                       (basix.CellType.tetrahedron, 1.0/6.0)])
-@pytest.mark.parametrize("order", [1, 2, 4, 8])
+@pytest.mark.parametrize("order", [1, 2, 3, 4, 5, 6, 7, 8])
 def test_cell_quadrature(celltype, order):
     Qpts, Qwts = basix.make_quadrature("default", celltype[0], order)
     print(sum(Qwts))

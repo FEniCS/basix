@@ -31,14 +31,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
   const int npoly = polyset::dim(celltype, degree);
   const int ndofs = npoly * tdim;
 
-  // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(celltype, 2 * degree);
-  Eigen::ArrayXXd Pkp1_at_Qpts
-      = polyset::tabulate(celltype, degree, 0, Qpts)[0];
-
   // The number of order (degree) polynomials
   const int psize = Pkp1_at_Qpts.cols();
-  assert(npoly == psize);
 
   // Create coefficients for order (degree-1) vector polynomials
   Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);

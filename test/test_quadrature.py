@@ -13,45 +13,18 @@ import numpy as np
                                       (basix.CellType.interval, 1.0),
                                       (basix.CellType.triangle, 0.5),
                                       (basix.CellType.tetrahedron, 1.0/6.0)])
-def test_cell_quadrature(celltype):
-    Qpts, Qwts = basix.make_quadrature(celltype[0], 3)
+@pytest.mark.parametrize("order", [1, 2, 4, 8])
+def test_cell_quadrature(celltype, order):
+    Qpts, Qwts = basix.make_quadrature(celltype[0], order)
     print(sum(Qwts))
     assert(np.isclose(sum(Qwts), celltype[1]))
 
 
-@pytest.mark.parametrize("order", [1, 2, 4, 5, 8, 20, 40, 80])
-def test_quadrature_interval(order):
-    b = 7.0
-    simplex = [[0], [b]]
-    Qpts, Qwts = basix.make_quadrature(simplex, order)
-    w = sum(Qwts)
-    assert np.isclose(w, b)
-
-
-@pytest.mark.parametrize("order", [1, 2, 4, 20, 40])
-def test_quadrature_triangle(order):
-    b = 7.0
-    h = 5.0
-    simplex = [[0, 0], [b, 0], [0, h]]
-    Qpts, Qwts = basix.make_quadrature(simplex, order)
-    w = sum(Qwts)
-    assert np.isclose(w, 0.5 * b * h)
-
-
-@pytest.mark.parametrize("order", [1, 2, 4, 20, 40])
-def test_quadrature_tet(order):
-    b = 7.0
-    h = 5.0
-    x = 3.0
-    simplex = [[0, 0, 0], [b, 0, 0], [0, h, 0], [0, 0, x]]
-    Qpts, Qwts = basix.make_quadrature(simplex, order)
-    w = sum(Qwts)
-    assert np.isclose(w, b * h * x / 6.0)
-
-
 def test_quadrature_function():
-    simplex = [[0.0], [2.0]]
-    Qpts, Qwts = basix.make_quadrature(simplex, 3)
+    Qpts, Qwts = basix.make_quadrature(basix.CellType.interval, 3)
+    # Scale to interval [0.0, 2.0]
+    Qpts *= 2.0
+    Qwts *= 2.0
 
     def f(x):
         return x * x
@@ -79,5 +52,5 @@ def test_gll():
                         0.37847496, 0.06666667])
     assert (np.allclose(wts, ref_wts))
     print(pts, wts)
-    assert np.isclose(sum(pts*wts), 0)
+    assert np.isclose(sum(pts * wts), 0)
     assert np.isclose(sum(wts), 2)

@@ -63,13 +63,6 @@ make_quadrature_tetrahedron_collapsed(int m);
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_quadrature(cell::type celltype,
                                                            int m);
 
-/// Scaled quadrature rule on arbitrary simplices
-/// @param simplex Set of vertices describing simplex
-/// @param m order
-/// @returns list of points, list of weights
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-make_quadrature(const Eigen::ArrayXXd& simplex, int m);
-
 /// Compute GLL quadrature points and weights on the interval [-1, 1]
 /// @param m order
 /// @return Array of points, array of weights

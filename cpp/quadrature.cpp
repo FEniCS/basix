@@ -363,60 +363,6 @@ quadrature::make_quadrature(cell::type celltype, int m)
     throw std::runtime_error("Unsupported celltype for make_quadrature");
   }
 }
-//----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-quadrature::make_quadrature(const Eigen::ArrayXXd& simplex, int m)
-{
-  const int dim = simplex.rows() - 1;
-  if (dim < 1 or dim > 3)
-    throw std::runtime_error("Unsupported dim");
-  if (simplex.cols() < dim)
-    throw std::runtime_error("Invalid simplex");
-
-  // Compute edge vectors of simplex
-  Eigen::MatrixXd bvec(dim, simplex.cols());
-  for (int i = 0; i < dim; ++i)
-    bvec.row(i) = simplex.row(i + 1) - simplex.row(0);
-
-  Eigen::ArrayXXd Qpts;
-  Eigen::ArrayXd Qwts;
-  double scale = 1.0;
-  if (dim == 1)
-  {
-    std::tie(Qpts, Qwts) = quadrature::make_quadrature_line(m);
-    scale = bvec.norm();
-  }
-  else if (dim == 2)
-  {
-    std::tie(Qpts, Qwts) = quadrature::make_quadrature_triangle_collapsed(m);
-    if (bvec.cols() == 2)
-      scale = bvec.determinant();
-    else
-    {
-      Eigen::Vector3d a = bvec.row(0);
-      Eigen::Vector3d b = bvec.row(1);
-      scale = a.cross(b).norm();
-    }
-  }
-  else
-  {
-    std::tie(Qpts, Qwts) = quadrature::make_quadrature_tetrahedron_collapsed(m);
-    assert(bvec.cols() == 3);
-    scale = bvec.determinant();
-  }
-
-#ifndef NDEBUG
-  std::cout << "vecs = \n[" << bvec << "]\n";
-  std::cout << "scale = " << scale << "\n";
-#endif
-
-  Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), bvec.cols());
-  Eigen::ArrayXd Qwts_scaled = Qwts * scale;
-  for (int i = 0; i < Qpts.rows(); ++i)
-    Qpts_scaled.row(i) = simplex.row(0) + (Qpts.row(i).matrix() * bvec).array();
-
-  return {Qpts_scaled, Qwts_scaled};
-}
 //-----------------------------------------------------------------------------
 std::tuple<Eigen::ArrayXd, Eigen::ArrayXd>
 quadrature::gauss_lobatto_legendre_line_rule(int m)

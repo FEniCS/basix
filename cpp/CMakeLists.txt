@@ -10,5 +10,5 @@ endif()
 
 # Executable
 add_library(basix SHARED lattice.cpp polyset.cpp dof-permutations.cpp moments.cpp lagrange.cpp finite-element.cpp quadrature.cpp
-                       nedelec.cpp raviart-thomas.cpp cell.cpp regge.cpp crouzeix-raviart.cpp basix.cpp)
+            brezzi-douglas-marini.cpp nedelec.cpp raviart-thomas.cpp cell.cpp regge.cpp crouzeix-raviart.cpp basix.cpp)
 target_compile_definitions(basix PRIVATE BASIX_VERSION=${PROJECT_VERSION})

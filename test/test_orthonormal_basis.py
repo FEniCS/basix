@@ -9,8 +9,7 @@ import numpy as np
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_quad(order):
-    pts = basix.create_lattice(basix.CellType.interval, 1, basix.LatticeType.equispaced, True)
-    Lpts, Lwts = basix.make_quadrature(pts, order + 2)
+    Lpts, Lwts = basix.make_quadrature(basix.CellType.interval, order + 2)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -33,8 +32,7 @@ def test_quad(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_pyramid(order):
-    pts = basix.create_lattice(basix.CellType.interval, 1, basix.LatticeType.equispaced, True)
-    Lpts, Lwts = basix.make_quadrature(pts, order + 4)
+    Lpts, Lwts = basix.make_quadrature(basix.CellType.interval, order + 4)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -59,8 +57,7 @@ def test_pyramid(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_hex(order):
-    pts = basix.create_lattice(basix.CellType.interval, 1, basix.LatticeType.equispaced, True)
-    Lpts, Lwts = basix.make_quadrature(pts, order + 2)
+    Lpts, Lwts = basix.make_quadrature(basix.CellType.interval, order + 2)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -84,10 +81,8 @@ def test_hex(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_prism(order):
-    pts = basix.create_lattice(basix.CellType.triangle, 1, basix.LatticeType.equispaced, True)
-    Tpts, Twts = basix.make_quadrature(pts, order + 2)
-    pts = basix.create_lattice(basix.CellType.interval, 1, basix.LatticeType.equispaced, True)
-    Lpts, Lwts = basix.make_quadrature(pts, order + 2)
+    Tpts, Twts = basix.make_quadrature(basix.CellType.triangle, order + 2)
+    Lpts, Lwts = basix.make_quadrature(basix.CellType.interval, order + 2)
     Qwts = []
     Qpts = []
     for p, u in zip(Tpts, Twts):
@@ -113,9 +108,7 @@ def test_prism(order):
                                        basix.CellType.tetrahedron])
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_cell(cell_type, order):
-
-    pts = basix.create_lattice(cell_type, 1, basix.LatticeType.equispaced, True)
-    Qpts, Qwts = basix.make_quadrature(pts, order + 2)
+    Qpts, Qwts = basix.make_quadrature(cell_type, order + 2)
     basis = basix.tabulate_polynomial_set(cell_type, order, 0, Qpts)[0]
     ndofs = basis.shape[1]
     mat = np.zeros((ndofs, ndofs))
@@ -125,5 +118,7 @@ def test_cell(cell_type, order):
 
     np.set_printoptions(suppress=True)
     print(mat)
+
+    pts = basix.create_lattice(cell_type, 1, basix.LatticeType.equispaced, True)
     fac = 2 ** pts.shape[0] / 2
     assert(np.isclose(mat * fac, np.eye(mat.shape[0])).all())

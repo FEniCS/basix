@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
+#include "brezzi-douglas-marini.h"
 #include "crouzeix-raviart.h"
 #include "lagrange.h"
 #include "nedelec.h"
@@ -25,6 +26,8 @@ basix::FiniteElement basix::create_element(std::string family,
     return create_lagrange(cell::str_to_type(cell), degree, family);
   else if (family == "Discontinuous Lagrange")
     return create_dlagrange(cell::str_to_type(cell), degree, family);
+  else if (family == "Brezzi-Douglas-Marini")
+    return create_bdm(cell::str_to_type(cell), degree, family);
   else if (family == "Raviart-Thomas")
     return create_rt(cell::str_to_type(cell), degree, family);
   else if (family == "Nedelec 1st kind H(curl)")

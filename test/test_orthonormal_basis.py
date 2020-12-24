@@ -9,7 +9,7 @@ import numpy as np
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_quad(order):
-    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, order + 2)
+    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, 2*order + 1)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -32,7 +32,7 @@ def test_quad(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_pyramid(order):
-    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, order + 4)
+    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, 4*order + 2)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -57,7 +57,7 @@ def test_pyramid(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_hex(order):
-    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, order + 2)
+    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, 2*order + 1)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):

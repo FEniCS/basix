@@ -75,7 +75,7 @@ Eigen::ArrayXi dofperms::quadrilateral_rotation(int degree)
 
   for (int st = degree - 1; st >= 0; --st)
     for (int i = 0; i < degree; ++i)
-      perm(p++) = st + degree * i;
+      perm(st + degree * i) = p++;
 
   return perm;
 }

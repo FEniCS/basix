@@ -336,7 +336,8 @@ make_default_tetrahedron_quadrature(int m)
     w /= 6.0;
     return {x, w};
   }
-  return quadrature::make_quadrature_tetrahedron_collapsed(m);
+  const int np = (m + 2) / 2;
+  return quadrature::make_quadrature_tetrahedron_collapsed(np);
 }
 
 //-----------------------------------------------------------------------------
@@ -416,7 +417,8 @@ make_default_triangle_quadrature(int m)
         0.082851075618374, 0.082851075618374, 0.082851075618374;
     w = w / 2.0;
   }
-  return quadrature::make_quadrature_triangle_collapsed(m);
+  const int np = (m + 2) / 2;
+  return quadrature::make_quadrature_triangle_collapsed(np);
 }
 
 }; // namespace
@@ -598,11 +600,17 @@ quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
     else if (celltype == cell::type::tetrahedron)
       return make_default_tetrahedron_quadrature(m);
     else
-      return make_gauss_jacobi_quadrature(celltype, m);
+    {
+      const int np = (m + 2) / 2;
+      return make_gauss_jacobi_quadrature(celltype, np);
+    }
   }
-  else if (rule == "gauss_jacobi")
-    return make_gauss_jacobi_quadrature(celltype, m);
-  else if (rule == "gll" and celltype == cell::type::interval)
+  else if (rule == "Gauss-Jacobi")
+  {
+    const int np = (m + 2) / 2;
+    return make_gauss_jacobi_quadrature(celltype, np);
+  }
+  else if (rule == "GLL" and celltype == cell::type::interval)
   {
     // GLL points and weights on [-1, 1]
     auto [x, w] = quadrature::gauss_lobatto_legendre_line_rule(m);

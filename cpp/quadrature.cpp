@@ -416,6 +416,7 @@ make_default_triangle_quadrature(int m)
         0.082851075618374, 0.082851075618374, 0.082851075618374,
         0.082851075618374, 0.082851075618374, 0.082851075618374;
     w = w / 2.0;
+    return {x, w};
   }
   const int np = (m + 2) / 2;
   return quadrature::make_quadrature_triangle_collapsed(np);
@@ -613,7 +614,8 @@ quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
   else if (rule == "GLL" and celltype == cell::type::interval)
   {
     // GLL points and weights on [-1, 1]
-    auto [x, w] = quadrature::gauss_lobatto_legendre_line_rule(m);
+    const int np = (m + 4) / 2;
+    auto [x, w] = quadrature::gauss_lobatto_legendre_line_rule(np);
     // Rescale to [0, 1]
     x = x * 0.5 + 0.5;
     w *= 0.5;
@@ -641,8 +643,6 @@ quadrature::gauss_lobatto_legendre_line_rule(int m)
 
   // Compute Lobatto nodes and weights
   auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
-
-  // TODO: scaling
 
   return {xs_ref, ws_ref};
 }

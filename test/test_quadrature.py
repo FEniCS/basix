@@ -7,6 +7,7 @@ import pytest
 import numpy as np
 import sympy
 
+
 @pytest.mark.parametrize("celltype", [(basix.CellType.quadrilateral, 1.0),
                                       (basix.CellType.hexahedron, 1.0),
                                       (basix.CellType.prism, 0.5),
@@ -21,7 +22,7 @@ def test_cell_quadrature(celltype, order):
 
 
 @pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
-@pytest.mark.parametrize("scheme", ['default','GLL'])
+@pytest.mark.parametrize("scheme", ['default', 'GLL'])
 def test_qorder_line(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.interval, m)
     x = sympy.Symbol('x')
@@ -29,38 +30,38 @@ def test_qorder_line(m, scheme):
     print(f)
     q = sympy.integrate(f, (x, 0, (1)))
     s = 0.0
-    for (pt,wt) in zip(Qpts, Qwts):
+    for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0])])
     print(len(Qwts))
     assert(np.isclose(float(q), float(s)))
 
 
 @pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
-@pytest.mark.parametrize("scheme", ['default','Gauss-Jacobi'])
+@pytest.mark.parametrize("scheme", ['default', 'Gauss-Jacobi'])
 def test_qorder_tri(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.triangle, m)
     x = sympy.Symbol('x')
     y = sympy.Symbol('y')
     f = x**m + y**m
-    q = sympy.integrate(sympy.integrate(f, (x, 0, (1-y))), (y, 0, 1))
+    q = sympy.integrate(sympy.integrate(f, (x, 0, (1 - y))), (y, 0, 1))
     s = 0.0
-    for (pt,wt) in zip(Qpts, Qwts):
+    for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1])])
     print(len(Qwts))
     assert(np.isclose(float(q), float(s)))
 
 
 @pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
-@pytest.mark.parametrize("scheme", ['default','Gauss-Jacobi'])
+@pytest.mark.parametrize("scheme", ['default', 'Gauss-Jacobi'])
 def test_qorder_tet(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.tetrahedron, m)
     x = sympy.Symbol('x')
     y = sympy.Symbol('y')
     z = sympy.Symbol('z')
     f = x**m + y**m + z**m
-    q = sympy.integrate(sympy.integrate(sympy.integrate(f, (x, 0, (1-y-z))), (y, 0, 1-z)), (z, 0, 1))
+    q = sympy.integrate(sympy.integrate(sympy.integrate(f, (x, 0, (1 - y - z))), (y, 0, 1 - z)), (z, 0, 1))
     s = 0.0
-    for (pt,wt) in zip(Qpts, Qwts):
+    for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
     print(len(Qwts))
     assert(np.isclose(float(q), float(s)))

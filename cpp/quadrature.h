@@ -59,7 +59,8 @@ make_quadrature_tetrahedron_collapsed(int m);
 /// Utility for quadrature rule on reference cell
 /// @param rule Name of quadrature rule (or use "default")
 /// @param celltype
-/// @param m Degree of quadrature
+/// @param m Maximum degree of polynomial that this quadrature rule
+///          will integrate exactly
 /// @returns list of points, list of weights
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_quadrature(const std::string& rule, cell::type celltype, int m);

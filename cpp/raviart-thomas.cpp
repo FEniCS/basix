@@ -35,7 +35,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
   const int ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(celltype, 2 * degree);
+  auto [Qpts, Qwts] = quadrature::make_quadrature("default", celltype, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
       = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 

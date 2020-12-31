@@ -69,7 +69,7 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> gauss(const Eigen::ArrayXd& alpha,
   // http://www.cs.purdue.edu/archives/2002/wxg/codes/gauss.m
 
   Eigen::MatrixXd A = alpha.matrix().asDiagonal();
-  int nb = beta.rows();
+  const int nb = beta.rows();
   assert(nb == A.cols());
   A.bottomLeftCorner(nb - 1, nb - 1)
       += beta.cwiseSqrt().tail(nb - 1).matrix().asDiagonal();
@@ -122,6 +122,306 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
 
   return gauss(alpha_l, beta_l);
 }
+
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+make_gauss_jacobi_quadrature(cell::type celltype, int m)
+{
+  switch (celltype)
+  {
+  case cell::type::interval:
+    return quadrature::make_quadrature_line(m);
+  case cell::type::quadrilateral:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
+    Eigen::ArrayX2d Qpts(m * m, 2);
+    Eigen::ArrayXd Qwts(m * m);
+    int c = 0;
+    for (int j = 0; j < m; ++j)
+    {
+      for (int i = 0; i < m; ++i)
+      {
+        Qpts.row(c) << QptsL(i, 0), QptsL(j, 0);
+        Qwts[c] = QwtsL[i] * QwtsL[j];
+        ++c;
+      }
+    }
+    return {Qpts, Qwts};
+  }
+  case cell::type::hexahedron:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
+    Eigen::ArrayX3d Qpts(m * m * m, 3);
+    Eigen::ArrayXd Qwts(m * m * m);
+    int c = 0;
+    for (int k = 0; k < m; ++k)
+    {
+      for (int j = 0; j < m; ++j)
+      {
+        for (int i = 0; i < m; ++i)
+        {
+          Qpts.row(c) << QptsL(i, 0), QptsL(j, 0), QptsL(k, 0);
+          Qwts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
+          ++c;
+        }
+      }
+    }
+    return {Qpts, Qwts};
+  }
+  case cell::type::prism:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
+    auto [QptsT, QwtsT] = quadrature::make_quadrature_triangle_collapsed(m);
+    Eigen::ArrayX3d Qpts(m * QptsT.rows(), 3);
+    Eigen::ArrayXd Qwts(m * QptsT.rows());
+    int c = 0;
+    for (int k = 0; k < m; ++k)
+    {
+      for (int i = 0; i < QptsT.rows(); ++i)
+      {
+        Qpts.row(c) << QptsT(i, 0), QptsT(i, 1), QptsL(k, 0);
+        Qwts[c] = QwtsT[i] * QwtsL[k];
+        ++c;
+      }
+    }
+    return {Qpts, Qwts};
+  }
+  case cell::type::pyramid:
+    throw std::runtime_error("Pyramid not yet supported");
+  case cell::type::triangle:
+    return quadrature::make_quadrature_triangle_collapsed(m);
+  case cell::type::tetrahedron:
+    return quadrature::make_quadrature_tetrahedron_collapsed(m);
+  default:
+    throw std::runtime_error("Unsupported celltype for make_quadrature");
+  }
+}
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+make_default_tetrahedron_quadrature(int m)
+{
+
+  if (m == 0 or m == 1)
+  {
+    // Scheme from Zienkiewicz and Taylor, 1 point, degree of precision 1
+    return {Eigen::ArrayXXd::Constant(1, 3, 0.25),
+            Eigen::ArrayXd::Constant(1, 1.0 / 6.0)};
+  }
+  else if (m == 2)
+  {
+    // Scheme from Zienkiewicz and Taylor, 4 points, degree of precision 2
+    const double a = 0.585410196624969, b = 0.138196601125011;
+    Eigen::ArrayXXd x(4, 3);
+    x << a, b, b, b, a, b, b, b, a, b, b, b;
+    return {x, Eigen::ArrayXd::Constant(4, 1.0 / 24.0)};
+  }
+  else if (m == 3)
+  {
+    // Scheme from Zienkiewicz and Taylor, 5 points, degree of precision 3
+    // Note : this scheme has a negative weight
+    Eigen::ArrayXXd x(5, 3);
+    x << 0.2500000000000000, 0.2500000000000000, 0.2500000000000000,
+        0.5000000000000000, 0.1666666666666666, 0.1666666666666666,
+        0.1666666666666666, 0.5000000000000000, 0.1666666666666666,
+        0.1666666666666666, 0.1666666666666666, 0.5000000000000000,
+        0.1666666666666666, 0.1666666666666666, 0.1666666666666666;
+    Eigen::ArrayXd w(5);
+    w << -0.8, 0.45, 0.45, 0.45, 0.45;
+    w /= 6.0;
+    return {x, w};
+  }
+  else if (m == 4)
+  {
+    // Keast rule, 14 points, degree of precision 4
+    // Values taken from
+    // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
+    // (KEAST5)
+    Eigen::ArrayXXd x(14, 3);
+    x << 0.0000000000000000, 0.5000000000000000, 0.5000000000000000,
+        0.5000000000000000, 0.0000000000000000, 0.5000000000000000,
+        0.5000000000000000, 0.5000000000000000, 0.0000000000000000,
+        0.5000000000000000, 0.0000000000000000, 0.0000000000000000,
+        0.0000000000000000, 0.5000000000000000, 0.0000000000000000,
+        0.0000000000000000, 0.0000000000000000, 0.5000000000000000,
+        0.6984197043243866, 0.1005267652252045, 0.1005267652252045,
+        0.1005267652252045, 0.1005267652252045, 0.1005267652252045,
+        0.1005267652252045, 0.1005267652252045, 0.6984197043243866,
+        0.1005267652252045, 0.6984197043243866, 0.1005267652252045,
+        0.0568813795204234, 0.3143728734931922, 0.3143728734931922,
+        0.3143728734931922, 0.3143728734931922, 0.3143728734931922,
+        0.3143728734931922, 0.3143728734931922, 0.0568813795204234,
+        0.3143728734931922, 0.0568813795204234, 0.3143728734931922;
+    Eigen::ArrayXd w(14);
+    w << 0.0190476190476190, 0.0190476190476190, 0.0190476190476190,
+        0.0190476190476190, 0.0190476190476190, 0.0190476190476190,
+
+        0.0885898247429807, 0.0885898247429807, 0.0885898247429807,
+        0.0885898247429807, 0.1328387466855907, 0.1328387466855907,
+        0.1328387466855907, 0.1328387466855907;
+    w /= 6.0;
+    return {x, w};
+  }
+  else if (m == 5)
+  {
+    // Keast rule, 15 points, degree of precision 5
+    // Values taken from
+    // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
+    // (KEAST6)
+    Eigen::ArrayXXd x(15, 3);
+    x << 0.2500000000000000, 0.2500000000000000, 0.2500000000000000,
+        0.0000000000000000, 0.3333333333333333, 0.3333333333333333,
+        0.3333333333333333, 0.3333333333333333, 0.3333333333333333,
+        0.3333333333333333, 0.3333333333333333, 0.0000000000000000,
+        0.3333333333333333, 0.0000000000000000, 0.3333333333333333,
+        0.7272727272727273, 0.0909090909090909, 0.0909090909090909,
+        0.0909090909090909, 0.0909090909090909, 0.0909090909090909,
+        0.0909090909090909, 0.0909090909090909, 0.7272727272727273,
+        0.0909090909090909, 0.7272727272727273, 0.0909090909090909,
+        0.4334498464263357, 0.0665501535736643, 0.0665501535736643,
+        0.0665501535736643, 0.4334498464263357, 0.0665501535736643,
+        0.0665501535736643, 0.0665501535736643, 0.4334498464263357,
+        0.0665501535736643, 0.4334498464263357, 0.4334498464263357,
+        0.4334498464263357, 0.0665501535736643, 0.4334498464263357,
+        0.4334498464263357, 0.4334498464263357, 0.0665501535736643;
+    Eigen::ArrayXd w(15);
+    w << 0.1817020685825351, 0.0361607142857143, 0.0361607142857143,
+        0.0361607142857143, 0.0361607142857143, 0.0698714945161738,
+        0.0698714945161738, 0.0698714945161738, 0.0698714945161738,
+        0.0656948493683187, 0.0656948493683187, 0.0656948493683187,
+        0.0656948493683187, 0.0656948493683187, 0.0656948493683187;
+    w /= 6.0;
+    return {x, w};
+  }
+  else if (m == 6)
+  {
+    // Keast rule, 24 points, degree of precision 6
+    // Values taken from
+    // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
+    // (KEAST7)
+    Eigen::ArrayXXd x(24, 3);
+    x << 0.3561913862225449, 0.2146028712591517, 0.2146028712591517,
+        0.2146028712591517, 0.2146028712591517, 0.2146028712591517,
+        0.2146028712591517, 0.2146028712591517, 0.3561913862225449,
+        0.2146028712591517, 0.3561913862225449, 0.2146028712591517,
+        0.8779781243961660, 0.0406739585346113, 0.0406739585346113,
+        0.0406739585346113, 0.0406739585346113, 0.0406739585346113,
+        0.0406739585346113, 0.0406739585346113, 0.8779781243961660,
+        0.0406739585346113, 0.8779781243961660, 0.0406739585346113,
+        0.0329863295731731, 0.3223378901422757, 0.3223378901422757,
+        0.3223378901422757, 0.3223378901422757, 0.3223378901422757,
+        0.3223378901422757, 0.3223378901422757, 0.0329863295731731,
+        0.3223378901422757, 0.0329863295731731, 0.3223378901422757,
+        0.2696723314583159, 0.0636610018750175, 0.0636610018750175,
+        0.0636610018750175, 0.2696723314583159, 0.0636610018750175,
+        0.0636610018750175, 0.0636610018750175, 0.2696723314583159,
+        0.6030056647916491, 0.0636610018750175, 0.0636610018750175,
+        0.0636610018750175, 0.6030056647916491, 0.0636610018750175,
+        0.0636610018750175, 0.0636610018750175, 0.6030056647916491,
+        0.0636610018750175, 0.2696723314583159, 0.6030056647916491,
+        0.2696723314583159, 0.6030056647916491, 0.0636610018750175,
+        0.6030056647916491, 0.0636610018750175, 0.2696723314583159,
+        0.0636610018750175, 0.6030056647916491, 0.2696723314583159,
+        0.2696723314583159, 0.0636610018750175, 0.6030056647916491,
+        0.6030056647916491, 0.2696723314583159, 0.0636610018750175;
+
+    Eigen::ArrayXd w(24);
+    w << 0.0399227502581679, 0.0399227502581679, 0.0399227502581679,
+        0.0399227502581679, 0.0100772110553207, 0.0100772110553207,
+        0.0100772110553207, 0.0100772110553207, 0.0553571815436544,
+        0.0553571815436544, 0.0553571815436544, 0.0553571815436544,
+        0.0482142857142857, 0.0482142857142857, 0.0482142857142857,
+        0.0482142857142857, 0.0482142857142857, 0.0482142857142857,
+        0.0482142857142857, 0.0482142857142857, 0.0482142857142857,
+        0.0482142857142857, 0.0482142857142857, 0.0482142857142857;
+    w /= 6.0;
+    return {x, w};
+  }
+  const int np = (m + 2) / 2;
+  return quadrature::make_quadrature_tetrahedron_collapsed(np);
+}
+
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+make_default_triangle_quadrature(int m)
+{
+  if (m == 0 or m == 1)
+  {
+    // Scheme from Zienkiewicz and Taylor, 1 point, degree of precision 1
+    return {Eigen::ArrayXXd::Constant(1, 2, 1.0 / 3.0),
+            Eigen::ArrayXd::Constant(1, 0.5)};
+  }
+  else if (m == 2)
+  {
+    // Scheme from Strang and Fix, 3 points, degree of precision 2
+    Eigen::ArrayXXd x(3, 2);
+    x << 1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0, 2.0 / 3.0, 1.0 / 6.0;
+    return {x, Eigen::ArrayXd::Constant(3, 1.0 / 6.0)};
+  }
+  else if (m == 3)
+  {
+    // Scheme from Strang and Fix, 6 points, degree of precision 3
+    Eigen::ArrayXXd x(6, 2);
+    x << 0.659027622374092, 0.231933368553031, 0.659027622374092,
+        0.109039009072877, 0.231933368553031, 0.659027622374092,
+        0.231933368553031, 0.109039009072877, 0.109039009072877,
+        0.659027622374092, 0.109039009072877, 0.231933368553031;
+    return {x, Eigen::ArrayXd::Constant(6, 1.0 / 12.0)};
+  }
+  else if (m == 4)
+  {
+    // Scheme from Strang and Fix, 6 points, degree of precision 4
+    Eigen::ArrayXXd x(6, 2);
+    x << 0.816847572980459, 0.091576213509771, 0.091576213509771,
+        0.816847572980459, 0.091576213509771, 0.091576213509771,
+        0.108103018168070, 0.445948490915965, 0.445948490915965,
+        0.108103018168070, 0.445948490915965, 0.445948490915965;
+    Eigen::ArrayXd w(6);
+    w << 0.109951743655322, 0.109951743655322, 0.109951743655322,
+        0.223381589678011, 0.223381589678011, 0.223381589678011;
+    w /= 2.0;
+    return {x, w};
+  }
+  else if (m == 5)
+  {
+    // Scheme from Strang and Fix, 7 points, degree of precision 5
+    Eigen::ArrayXXd x(7, 2);
+    x << 0.33333333333333333, 0.33333333333333333, 0.79742698535308720,
+        0.10128650732345633, 0.10128650732345633, 0.79742698535308720,
+        0.10128650732345633, 0.10128650732345633, 0.05971587178976981,
+        0.47014206410511505, 0.47014206410511505, 0.05971587178976981,
+        0.47014206410511505, 0.47014206410511505;
+
+    Eigen::ArrayXd w(7);
+    w << 0.22500000000000000, 0.12593918054482717, 0.12593918054482717,
+        0.12593918054482717, 0.13239415278850616, 0.13239415278850616,
+        0.13239415278850616;
+    w = w / 2.0;
+    return {x, w};
+  }
+  else if (m == 6)
+  {
+    // Scheme from Strang and Fix, 12 points, degree of precision 6
+    Eigen::ArrayXXd x(12, 2);
+    x << 0.873821971016996, 0.063089014491502, 0.063089014491502,
+        0.873821971016996, 0.063089014491502, 0.063089014491502,
+        0.501426509658179, 0.249286745170910, 0.249286745170910,
+        0.501426509658179, 0.249286745170910, 0.249286745170910,
+        0.636502499121399, 0.310352451033785, 0.636502499121399,
+        0.053145049844816, 0.310352451033785, 0.636502499121399,
+        0.310352451033785, 0.053145049844816, 0.053145049844816,
+        0.636502499121399, 0.053145049844816, 0.310352451033785;
+    Eigen::ArrayXd w(12);
+    w << 0.050844906370207, 0.050844906370207, 0.050844906370207,
+        0.116786275726379, 0.116786275726379, 0.116786275726379,
+        0.082851075618374, 0.082851075618374, 0.082851075618374,
+        0.082851075618374, 0.082851075618374, 0.082851075618374;
+    w = w / 2.0;
+    return {x, w};
+  }
+  const int np = (m + 2) / 2;
+  return quadrature::make_quadrature_triangle_collapsed(np);
+}
+
 }; // namespace
 
 //-----------------------------------------------------------------------------
@@ -292,133 +592,41 @@ quadrature::make_quadrature_tetrahedron_collapsed(int m)
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-quadrature::make_quadrature(cell::type celltype, int m)
+quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
 {
-  switch (celltype)
+  if (rule == "" or rule == "default")
   {
-  case cell::type::interval:
-    return quadrature::make_quadrature_line(m);
-  case cell::type::quadrilateral:
-  {
-    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    Eigen::ArrayX2d Qpts(m * m, 2);
-    Eigen::ArrayXd Qwts(m * m);
-    int c = 0;
-    for (int j = 0; j < m; ++j)
-    {
-      for (int i = 0; i < m; ++i)
-      {
-        Qpts.row(c) << QptsL(i, 0), QptsL(j, 0);
-        Qwts[c] = QwtsL[i] * QwtsL[j];
-        ++c;
-      }
-    }
-    return {Qpts, Qwts};
-  }
-  case cell::type::hexahedron:
-  {
-    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    Eigen::ArrayX3d Qpts(m * m * m, 3);
-    Eigen::ArrayXd Qwts(m * m * m);
-    int c = 0;
-    for (int k = 0; k < m; ++k)
-    {
-      for (int j = 0; j < m; ++j)
-      {
-        for (int i = 0; i < m; ++i)
-        {
-          Qpts.row(c) << QptsL(i, 0), QptsL(j, 0), QptsL(k, 0);
-          Qwts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
-          ++c;
-        }
-      }
-    }
-    return {Qpts, Qwts};
-  }
-  case cell::type::prism:
-  {
-    auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
-    auto [QptsT, QwtsT] = quadrature::make_quadrature_triangle_collapsed(m);
-    Eigen::ArrayX3d Qpts(m * QptsT.rows(), 3);
-    Eigen::ArrayXd Qwts(m * QptsT.rows());
-    int c = 0;
-    for (int k = 0; k < m; ++k)
-    {
-      for (int i = 0; i < QptsT.rows(); ++i)
-      {
-        Qpts.row(c) << QptsT(i, 0), QptsT(i, 1), QptsL(k, 0);
-        Qwts[c] = QwtsT[i] * QwtsL[k];
-        ++c;
-      }
-    }
-    return {Qpts, Qwts};
-  }
-  case cell::type::pyramid:
-    throw std::runtime_error("Pyramid not yet supported");
-  case cell::type::triangle:
-    return quadrature::make_quadrature_triangle_collapsed(m);
-  case cell::type::tetrahedron:
-    return quadrature::make_quadrature_tetrahedron_collapsed(m);
-  default:
-    throw std::runtime_error("Unsupported celltype for make_quadrature");
-  }
-}
-//----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-quadrature::make_quadrature(const Eigen::ArrayXXd& simplex, int m)
-{
-  const int dim = simplex.rows() - 1;
-  if (dim < 1 or dim > 3)
-    throw std::runtime_error("Unsupported dim");
-  if (simplex.cols() < dim)
-    throw std::runtime_error("Invalid simplex");
-
-  // Compute edge vectors of simplex
-  Eigen::MatrixXd bvec(dim, simplex.cols());
-  for (int i = 0; i < dim; ++i)
-    bvec.row(i) = simplex.row(i + 1) - simplex.row(0);
-
-  Eigen::ArrayXXd Qpts;
-  Eigen::ArrayXd Qwts;
-  double scale = 1.0;
-  if (dim == 1)
-  {
-    std::tie(Qpts, Qwts) = quadrature::make_quadrature_line(m);
-    scale = bvec.norm();
-  }
-  else if (dim == 2)
-  {
-    std::tie(Qpts, Qwts) = quadrature::make_quadrature_triangle_collapsed(m);
-    if (bvec.cols() == 2)
-      scale = bvec.determinant();
+    if (celltype == cell::type::triangle)
+      return make_default_triangle_quadrature(m);
+    else if (celltype == cell::type::tetrahedron)
+      return make_default_tetrahedron_quadrature(m);
     else
     {
-      Eigen::Vector3d a = bvec.row(0);
-      Eigen::Vector3d b = bvec.row(1);
-      scale = a.cross(b).norm();
+      const int np = (m + 2) / 2;
+      return make_gauss_jacobi_quadrature(celltype, np);
     }
   }
-  else
+  else if (rule == "Gauss-Jacobi")
   {
-    std::tie(Qpts, Qwts) = quadrature::make_quadrature_tetrahedron_collapsed(m);
-    assert(bvec.cols() == 3);
-    scale = bvec.determinant();
+    const int np = (m + 2) / 2;
+    return make_gauss_jacobi_quadrature(celltype, np);
   }
-
-#ifndef NDEBUG
-  std::cout << "vecs = \n[" << bvec << "]\n";
-  std::cout << "scale = " << scale << "\n";
-#endif
-
-  Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), bvec.cols());
-  Eigen::ArrayXd Qwts_scaled = Qwts * scale;
-  for (int i = 0; i < Qpts.rows(); ++i)
-    Qpts_scaled.row(i) = simplex.row(0) + (Qpts.row(i).matrix() * bvec).array();
-
-  return {Qpts_scaled, Qwts_scaled};
+  else if (rule == "GLL" and celltype == cell::type::interval)
+  {
+    // GLL points and weights on [-1, 1]
+    const int np = (m + 4) / 2;
+    auto [x, w] = quadrature::gauss_lobatto_legendre_line_rule(np);
+    // Rescale to [0, 1]
+    x = x * 0.5 + 0.5;
+    w *= 0.5;
+    return {x, w};
+  }
+  throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");
 }
 //-----------------------------------------------------------------------------
-std::tuple<Eigen::ArrayXd, Eigen::ArrayXd>
+
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
 quadrature::gauss_lobatto_legendre_line_rule(int m)
 {
   // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval
@@ -437,8 +645,6 @@ quadrature::gauss_lobatto_legendre_line_rule(int m)
 
   // Compute Lobatto nodes and weights
   auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
-
-  // TODO: scaling
 
   return {xs_ref, ws_ref};
 }

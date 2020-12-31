@@ -57,23 +57,18 @@ std::pair<Eigen::ArrayX3d, Eigen::ArrayXd>
 make_quadrature_tetrahedron_collapsed(int m);
 
 /// Utility for quadrature rule on reference cell
+/// @param rule Name of quadrature rule (or use "default")
 /// @param celltype
-/// @param m order
-/// @returns list of points, list of weights
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd> make_quadrature(cell::type celltype,
-                                                           int m);
-
-/// Scaled quadrature rule on arbitrary simplices
-/// @param simplex Set of vertices describing simplex
-/// @param m order
+/// @param m Maximum degree of polynomial that this quadrature rule
+///          will integrate exactly
 /// @returns list of points, list of weights
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-make_quadrature(const Eigen::ArrayXXd& simplex, int m);
+make_quadrature(const std::string& rule, cell::type celltype, int m);
 
 /// Compute GLL quadrature points and weights on the interval [-1, 1]
 /// @param m order
 /// @return Array of points, array of weights
-std::tuple<Eigen::ArrayXd, Eigen::ArrayXd>
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
 gauss_lobatto_legendre_line_rule(int m);
 
 } // namespace quadrature

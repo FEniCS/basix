@@ -1,5 +1,7 @@
 
 #include <Eigen/Core>
+#include <utility>
+#include <vector>
 
 namespace basix
 {
@@ -53,5 +55,9 @@ Eigen::ArrayXXd geometry(const char* cell_type);
 
 /// Cell topology
 std::vector<std::vector<std::vector<int>>> topology(const char* cell_type);
+
+/// Create quadrature points and weights
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+make_quadrature(const char* rule, const char* cell_type, int order);
 
 } // namespace basix

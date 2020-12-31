@@ -2,6 +2,7 @@
 #include "basix.h"
 #include "cell.h"
 #include "finite-element.h"
+#include "quadrature.h"
 #include <memory>
 #include <vector>
 
@@ -105,4 +106,11 @@ basix::topology(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
   return cell::topology(ct);
+}
+
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+basix::make_quadrature(const char* rule, const char* cell_type, int order)
+{
+  cell::type ct = cell::str_to_type(cell_type);
+  return basix::quadrature::make_quadrature(rule, ct, order);
 }

@@ -624,6 +624,8 @@ quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
   throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");
 }
 //-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
 quadrature::gauss_lobatto_legendre_line_rule(int m)
 {

@@ -51,5 +51,4 @@ def test_non_zero(cell_name, element_name, order):
 
     for perm in e.base_permutations:
         for row in perm:
-            print(row)
             assert max(abs(i) for i in row) > 1e-6

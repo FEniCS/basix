@@ -167,8 +167,6 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
     perm(2 * degree + i, i) = 1;
   }
 
-  return perm;
-
   // Rotate face
   const int face_start = 3 * degree;
   Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 1);

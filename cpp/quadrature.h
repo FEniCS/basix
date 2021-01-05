@@ -50,7 +50,7 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m);
 std::pair<Eigen::ArrayX2d, Eigen::ArrayXd>
 make_quadrature_triangle_collapsed(int m);
 
-/// Compute tetrahedrom quadrature rule on [0, 1]x[0, 1]x[0, 1]
+/// Compute tetrahedron quadrature rule on [0, 1]x[0, 1]x[0, 1]
 /// @param m order
 /// @returns list of 3D points, list of weights
 std::pair<Eigen::ArrayX3d, Eigen::ArrayXd>

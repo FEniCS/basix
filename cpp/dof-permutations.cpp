@@ -106,11 +106,7 @@ Eigen::ArrayXXd dofperms::triangle_rotation_tangent_directions(int degree)
   {
     dirs(i, i + 1) = -1;
     dirs(i + 1, i) = 1;
-    dirs(i + 1, i + 1) = -1;
-
-//    dirs(i, i + 1) = 1;
-//    dirs(i + 1, i) = -1;
-//    dirs(i, i) = -1;
+    dirs(i, i) = -1;
   }
 
   return dirs;

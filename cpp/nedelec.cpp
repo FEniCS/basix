@@ -412,11 +412,11 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
   for (int face = 0; face < 4; ++face)
   {
     const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
+    const int p = 6 + 2 * face;
     for (int i = 0; i < face_rot.size(); ++i)
     {
       for (int b = 0; b < 2; ++b)
       {
-        const int p = 6 + 2 * face;
         const int p1 = start + 2 * i + b;
         base_permutations[p](p1, start + i * 2 + b) = 0;
         base_permutations[p](p1, start + face_rot[i] * 2 + b) = 1;
@@ -430,7 +430,7 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
                    edge_dir.cols() * 6 + face_dir_rot.rows() * face,
                    face_dir_rot.rows(), face_dir_rot.cols())
         = face_dir_rot;
-    base_permutations[6 + 2 * face] *= rotation;
+    base_permutations[p] *= rotation;
 
     // Reflect face
     Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
@@ -438,7 +438,7 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
                      edge_dir.cols() * 6 + face_dir_ref.rows() * face,
                      face_dir_ref.rows(), face_dir_ref.cols())
         = face_dir_ref;
-    base_permutations[6 + 2 * face + 1] *= reflection;
+    base_permutations[p + 1] *= reflection;
   }
 
   return base_permutations;

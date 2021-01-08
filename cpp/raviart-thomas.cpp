@@ -162,9 +162,6 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
   // Permute RT functions on edges
   for (int i = 0; i < degree; ++i)
   {
-//    perm(i, 2 * degree - 1 - i) = -1;
-//    perm(degree + i, 3 * degree - 1 - i) = -1;
-//    perm(2 * degree + i, i) = 1;
     perm(i, 2 * degree + i) = 1;
     perm(2 * degree - 1 - i, i) = -1;
     perm(3 * degree - 1 - i, degree + i) = -1;

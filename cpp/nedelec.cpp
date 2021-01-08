@@ -591,7 +591,7 @@ Eigen::MatrixXd create_nedelec2_3d_dual(int degree)
     dual.block((6 + 4 * (degree - 1)) * (degree + 1), 0,
                (degree - 1) * (degree - 2) * (degree + 1) / 2, psize * 3)
         = moments::make_integral_moments(
-            create_dlagrange(cell::type::tetrahedron, degree - 2),
+            create_rt(cell::type::tetrahedron, degree - 2),
             cell::type::tetrahedron, 3, degree, quad_deg);
   }
 

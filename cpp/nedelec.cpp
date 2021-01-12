@@ -272,7 +272,7 @@ Eigen::MatrixXd create_nedelec_3d_dual(int degree)
   {
     // Integral moments on faces
     dual.block(6 * degree, 0, 4 * (degree - 1) * degree, psize * 3)
-        = moments::make_integral_moments(
+        = moments::make_integral_moments_cross_normal(
             create_dlagrange(cell::type::triangle, degree - 2),
             cell::type::tetrahedron, 3, degree, quad_deg);
   }

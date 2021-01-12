@@ -138,6 +138,16 @@ def sympy_nedelec(celltype, n):
 
         # face dofs
         if n > 1:
+
+            def dot(a, b):
+                return sum(i * j for i, j in zip(a, b))
+
+            def cross(a, b):
+                assert len(a) == 3 and len(b) == 3
+                return [a[1] * b[2] - a[2] * b[1],
+                        a[2] * b[0] - a[0] * b[2],
+                        a[0] * b[1] - a[1] * b[0]]
+
             if n == 2:
                 face_basis = [sympy.Integer(1)]
             else:
@@ -148,18 +158,19 @@ def sympy_nedelec(celltype, n):
                 for face in topology[2]:
                     face_geom = [geometry[t, :] for t in face]
                     axes = [face_geom[1] - face_geom[0], face_geom[2] - face_geom[0]]
-                    norm = sympy.sqrt(sum(i**2 for i in
-                                      [axes[0][1] * axes[1][2] - axes[0][2] * axes[1][1],
-                                       axes[0][2] * axes[1][0] - axes[0][0] * axes[1][2],
-                                       axes[0][0] * axes[1][1] - axes[0][1] * axes[1][0]]))
+                    normal = cross(axes[0], axes[1])
+                    norm = sympy.sqrt(sum(i**2 for i in normal))
+                    unit_normal = [i / norm for i in normal]
+
                     scaled_axes = []
                     for a in axes:
                         axisnorm = sympy.sqrt(sum(k**2 for k in a))
                         scaled_axes.append([k / axisnorm for k in a])
+
                     param = [a + dummy[0] * b + dummy[1] * c for a, b, c in zip(face_geom[0], *axes)]
                     for g in face_basis:
                         for vec in scaled_axes:
-                            integrand = sum(f_i * v_i for f_i, v_i in zip(f, vec))
+                            integrand = dot(cross(vec, f), unit_normal)
                             integrand = integrand.subs(x, param[0]).subs(y, param[1]).subs(z, param[2])
                             integrand *= g * norm
 

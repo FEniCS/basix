@@ -172,6 +172,90 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
   return std::make_pair(points, matrix);
 }
 //----------------------------------------------------------------------------
+Eigen::MatrixXd
+moments::make_integral_moments_cross_normal(const FiniteElement& moment_space,
+                               const cell::type celltype, const int value_size,
+                               const int poly_deg, const int q_deg)
+{
+  const int psize = polyset::dim(celltype, poly_deg);
+
+  const cell::type sub_celltype = moment_space.cell_type();
+  const int sub_entity_dim = cell::topological_dimension(sub_celltype);
+  if (sub_entity_dim == 0)
+    throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
+
+  const int tdim = cell::topological_dimension(celltype);
+  if (sub_entity_dim != tdim - 1)
+    throw std::runtime_error("Cannot find the normal of a non-facet.");
+  if (tdim != 3)
+    throw std::runtime_error("Crossing with normal currently only implemented in 3D.");
+
+  const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
+
+  auto [Qpts, Qwts] = quadrature::make_quadrature("default", sub_celltype, q_deg);
+
+  // If this is always true, value_size input can be removed
+  assert(tdim == value_size);
+
+  // Evaluate moment space at quadrature points
+  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+
+  Eigen::MatrixXd dual(moment_space_at_Qpts.cols() * sub_entity_dim
+                           * sub_entity_count,
+                       psize * value_size);
+
+  int c = 0;
+  // Iterate over sub entities
+  for (int i = 0; i < sub_entity_count; ++i)
+  {
+    Eigen::ArrayXXd entity
+        = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
+
+    // Parametrise entity coordinates
+    Eigen::ArrayXXd axes(sub_entity_dim, tdim);
+
+    for (int j = 0; j < sub_entity_dim; ++j)
+      axes.row(j) = entity.row(j + 1) - entity.row(0);
+
+    Eigen::Vector3d axis0 = axes.row(0);
+    Eigen::Vector3d axis1 = axes.row(1);
+    Eigen::Vector3d normal = axis0.cross(axis1);
+    normal /= normal.norm();
+
+    // Map quadrature points onto entity
+    Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
+                                  + (Qpts.matrix() * axes.matrix()).array();
+
+    const double integral_jac = integral_jacobian(axes);
+
+    // Tabulate polynomial set at entity quadrature points
+    Eigen::MatrixXd poly_set_at_Qpts
+        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
+
+    // Compute entity integral moments
+    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    {
+      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      for (int d = 0; d < sub_entity_dim; ++d)
+      {
+        Eigen::Vector3d axis = axes.row(d);
+        axis = normal.cross(axis) / axis.norm();
+        for (int k = 0; k < value_size; ++k)
+        {
+          Eigen::VectorXd q
+              = phi * Qwts * (integral_jac * axis(k));
+          Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;
+          assert(qcoeffs.size() == psize);
+          dual.block(c, psize * k, 1, psize) = qcoeffs;
+        }
+        ++c;
+      }
+    }
+  }
+
+  return dual;
+}
+//----------------------------------------------------------------------------
 Eigen::MatrixXd moments::make_dot_integral_moments(
     const FiniteElement& moment_space, const cell::type celltype,
     const int value_size, const int poly_deg, const int q_deg)

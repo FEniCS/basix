@@ -158,19 +158,16 @@ def sympy_nedelec(celltype, n):
                 for face in topology[2]:
                     face_geom = [geometry[t, :] for t in face]
                     axes = [face_geom[1] - face_geom[0], face_geom[2] - face_geom[0]]
-                    normal = cross(axes[0], axes[1])
-                    norm = sympy.sqrt(sum(i**2 for i in normal))
-                    unit_normal = [i / norm for i in normal]
+                    norm = sympy.sqrt(sum(i**2 for i in cross(axes[0], axes[1])))
 
                     scaled_axes = []
                     for a in axes:
-                        axisnorm = sympy.sqrt(sum(k**2 for k in a))
-                        scaled_axes.append([k / axisnorm for k in a])
+                        scaled_axes.append([k / norm for k in a])
 
                     param = [a + dummy[0] * b + dummy[1] * c for a, b, c in zip(face_geom[0], *axes)]
                     for g in face_basis:
                         for vec in scaled_axes:
-                            integrand = dot(cross(vec, f), unit_normal)
+                            integrand = dot(vec, f)
                             integrand = integrand.subs(x, param[0]).subs(y, param[1]).subs(z, param[2])
                             integrand *= g * norm
 

@@ -91,8 +91,8 @@ Eigen::ArrayXXd dofperms::triangle_reflection_tangent_directions(int degree)
       = Eigen::ArrayXXd::Zero(degree * (degree + 1), degree * (degree + 1));
   for (int i = 0; i < degree * (degree + 1); i += 2)
   {
-    dirs(i, i + 1) = 1;
-    dirs(i + 1, i) = 1;
+    dirs(i, i + 1) = -1;
+    dirs(i + 1, i) = -1;
   }
 
   return dirs;

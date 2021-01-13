@@ -109,8 +109,7 @@ def sympy_nedelec(celltype, n):
                                        axes[0][0] * axes[1][1] - axes[0][1] * axes[1][0]]))
                     scaled_axes = []
                     for a in axes:
-                        axisnorm = sympy.sqrt(sum(k**2 for k in a))
-                        scaled_axes.append([k / axisnorm for k in a])
+                        scaled_axes.append([k / norm for k in a])
                     param = [a + dummy[0] * b + dummy[1] * c for a, b, c in zip(face_geom[0], *axes)]
                     this_face_basis = [[a[0] * b + a[1] * c for b, c in zip(*scaled_axes)] for a in face_basis]
 

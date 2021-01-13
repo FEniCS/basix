@@ -73,7 +73,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
                                   + (Qpts.matrix() * axes.matrix()).array();
 
-    const double integral_jac = integral_jacobian(axes);
+    // const double integral_jac = integral_jacobian(axes);
 
     // Tabulate polynomial set at entity quadrature points
     Eigen::MatrixXd poly_set_at_Qpts
@@ -89,7 +89,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
         for (int k = 0; k < value_size; ++k)
         {
           Eigen::VectorXd q
-              = phi * Qwts * (integral_jac * axis(k) / axis.norm());
+              = phi * Qwts * axis(k);
           Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;
           assert(qcoeffs.size() == psize);
           dual.block(c, psize * k, 1, psize) = qcoeffs;
@@ -214,8 +214,6 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
     Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
                                   + (Qpts.matrix() * axes.matrix()).array();
 
-    const double integral_jac = integral_jacobian(axes);
-
     // Tabulate polynomial set at entity quadrature points
     Eigen::MatrixXd poly_set_at_Qpts
         = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
@@ -232,7 +230,7 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
               = moment_space_at_Qpts.col(d * moment_space_size + j);
           Eigen::VectorXd axis = axes.row(d);
           Eigen::VectorXd qpart
-              = phi * Qwts * (integral_jac * axis(k) / axis.norm());
+              = phi * Qwts * axis(k);
           q += qpart;
         }
         Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;

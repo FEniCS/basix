@@ -138,6 +138,16 @@ def sympy_nedelec(celltype, n):
 
         # face dofs
         if n > 1:
+
+            def dot(a, b):
+                return sum(i * j for i, j in zip(a, b))
+
+            def cross(a, b):
+                assert len(a) == 3 and len(b) == 3
+                return [a[1] * b[2] - a[2] * b[1],
+                        a[2] * b[0] - a[0] * b[2],
+                        a[0] * b[1] - a[1] * b[0]]
+
             if n == 2:
                 face_basis = [sympy.Integer(1)]
             else:
@@ -148,18 +158,16 @@ def sympy_nedelec(celltype, n):
                 for face in topology[2]:
                     face_geom = [geometry[t, :] for t in face]
                     axes = [face_geom[1] - face_geom[0], face_geom[2] - face_geom[0]]
-                    norm = sympy.sqrt(sum(i**2 for i in
-                                      [axes[0][1] * axes[1][2] - axes[0][2] * axes[1][1],
-                                       axes[0][2] * axes[1][0] - axes[0][0] * axes[1][2],
-                                       axes[0][0] * axes[1][1] - axes[0][1] * axes[1][0]]))
+                    norm = sympy.sqrt(sum(i**2 for i in cross(axes[0], axes[1])))
+
                     scaled_axes = []
                     for a in axes:
-                        axisnorm = sympy.sqrt(sum(k**2 for k in a))
-                        scaled_axes.append([k / axisnorm for k in a])
+                        scaled_axes.append([k / norm for k in a])
+
                     param = [a + dummy[0] * b + dummy[1] * c for a, b, c in zip(face_geom[0], *axes)]
                     for g in face_basis:
                         for vec in scaled_axes:
-                            integrand = sum(f_i * v_i for f_i, v_i in zip(f, vec))
+                            integrand = dot(vec, f)
                             integrand = integrand.subs(x, param[0]).subs(y, param[1]).subs(z, param[2])
                             integrand *= g * norm
 
@@ -241,101 +249,3 @@ def test_tet(order):
                                               (z, p[2])])
 
                 assert(numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all())
-
-
-@pytest.mark.parametrize("order", [1, 2, 3, 4])
-def test_dof_permutations_triangle(order):
-    nedelec = basix.Nedelec("triangle", order)
-
-    permuted = {}
-    if order == 2:
-        # Reflect 2 DOFs on edges
-        permuted[0] = {0: 1, 1: 0}
-        permuted[1] = {2: 3, 3: 2}
-        permuted[2] = {4: 5, 5: 4}
-    elif order == 3:
-        # Reflect 3 DOFs on edges
-        permuted[0] = {0: 2, 2: 0}
-        permuted[1] = {3: 5, 5: 3}
-        permuted[2] = {6: 8, 8: 6}
-    elif order == 4:
-        # Reflect 4 DOFs on edges
-        permuted[0] = {0: 3, 1: 2, 2: 1, 3: 0}
-        permuted[1] = {4: 7, 5: 6, 6: 5, 7: 4}
-        permuted[2] = {8: 11, 9: 10, 10: 9, 11: 8}
-
-    base_perms = nedelec.base_permutations
-    assert len(base_perms) == 3
-
-    for i, perm in enumerate(base_perms):
-        actual = numpy.zeros_like(perm)
-
-        for row in range(perm.shape[0]):
-            for k in range(perm.shape[1]):
-                if i in permuted and k in permuted[i]:
-                    col = permuted[i][k]
-                else:
-                    col = k
-                if row == k:
-                    if order * i <= row < order * (i + 1):
-                        actual[row, col] = -1
-                    else:
-                        actual[row, col] = 1
-        assert numpy.allclose(perm, actual)
-
-
-@pytest.mark.parametrize("order", [1, 2, 3, 4])
-def test_dof_permutations_tetrahedron(order):
-    nedelec = basix.Nedelec("tetrahedron", order)
-
-    permuted = {}
-    if order == 2:
-        # Reflect 2 DOFs on edges
-        for i in range(6):
-            permuted[i] = {2 * i: 2 * i + 1, 2 * i + 1: 2 * i}
-    elif order == 3:
-        # Reflect 3 DOFs on edges
-        for i in range(6):
-            permuted[i] = {3 * i: 3 * i + 2, 3 * i + 2: 3 * i}
-        # Rotate and reflect 3*2 DOFs on faces
-        for i in range(4):
-            permuted[6 + 2 * i] = {
-                18 + 6 * i: 22 + 6 * i, 19 + 6 * i: 23 + 6 * i, 20 + 6 * i: 18 + 6 * i,
-                21 + 6 * i: 19 + 6 * i, 22 + 6 * i: 20 + 6 * i, 23 + 6 * i: 21 + 6 * i}
-            permuted[7 + 2 * i] = {
-                20 + 6 * i: 22 + 6 * i, 21 + 6 * i: 23 + 6 * i,
-                22 + 6 * i: 20 + 6 * i, 23 + 6 * i: 21 + 6 * i}
-    elif order == 4:
-        # Reflect 3 DOFs on edges
-        for i in range(6):
-            permuted[i] = {4 * i + j: 4 * i + 3 - j for j in range(4)}
-        # Rotate and reflect 6*2 DOFs on faces
-        for i in range(4):
-            permuted[6 + 2 * i] = {
-                24 + a + 12 * i: 24 + b + 12 * i for a, b in {
-                    0: 10, 1: 11, 2: 6, 3: 7, 4: 0, 5: 1, 6: 8,
-                    7: 9, 8: 2, 9: 3, 10: 4, 11: 5}.items()}
-            permuted[7 + 2 * i] = {
-                24 + a + 12 * i: 24 + b + 12 * i for a, b in {
-                    2: 6, 3: 7, 4: 10, 5: 11, 6: 2, 7: 3, 10: 4, 11: 5}.items()}
-
-    base_perms = nedelec.base_permutations
-    assert len(base_perms) == 14
-
-    # Test edge flips
-    for i, perm in enumerate(base_perms[:6]):
-        actual = numpy.zeros_like(perm)
-        for row in range(perm.shape[0]):
-            for k in range(perm.shape[1]):
-                if i in permuted and k in permuted[i]:
-                    col = permuted[i][k]
-                else:
-                    col = k
-                if row == k:
-                    if order * i <= row < order * (i + 1):
-                        actual[row, col] = -1
-                    else:
-                        actual[row, col] = 1
-        assert numpy.allclose(perm, actual)
-
-    # TODO: write good test for face rotations

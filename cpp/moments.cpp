@@ -26,6 +26,25 @@ double integral_jacobian(const Eigen::MatrixXd& axes)
   else
     return axes.determinant();
 }
+std::vector<int> axis_points(const cell::type celltype)
+{
+  switch (celltype)
+  {
+  case cell::type::interval:
+    return {1};
+  case cell::type::triangle:
+    return {1, 2};
+  case cell::type::quadrilateral:
+    return {1, 2};
+  case cell::type::tetrahedron:
+    return {1, 2, 3};
+  case cell::type::hexahedron:
+    return {1, 2, 4};
+  default:
+    throw std::runtime_error(
+        "Integrals of this entity type not yet implemented.");
+  }
+}
 //----------------------------------------------------------------------------
 } // namespace
 
@@ -57,6 +76,8 @@ moments::make_integral_moments(const FiniteElement& moment_space,
                            * sub_entity_count,
                        psize * value_size);
 
+  std::vector<int> axis_pts = axis_points(celltype);
+
   int c = 0;
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
@@ -67,7 +88,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     // Parametrise entity coordinates
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
     for (int j = 0; j < sub_entity_dim; ++j)
-      axes.row(j) = entity.row(j + 1) - entity.row(0);
+      axes.row(j) = entity.row(axis_pts[j]) - entity.row(0);
 
     // Map quadrature points onto entity
     Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
@@ -130,6 +151,8 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
 
   int c = 0;
 
+  std::vector<int> axis_pts = axis_points(celltype);
+
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
@@ -139,7 +162,7 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
     // Parametrise entity coordinates
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
     for (int j = 0; j < sub_entity_dim; ++j)
-      axes.row(j) = entity.row(j + 1) - entity.row(0);
+      axes.row(j) = entity.row(axis_pts[j]) - entity.row(0);
 
     // Map quadrature points onto entity
     Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
@@ -198,6 +221,8 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
   Eigen::MatrixXd dual(moment_space_size * sub_entity_count,
                        psize * value_size);
 
+  std::vector<int> axis_pts = axis_points(celltype);
+
   int c = 0;
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
@@ -208,7 +233,7 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
     // Parametrise entity coordinates
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
     for (int j = 0; j < sub_entity_dim; ++j)
-      axes.row(j) = entity.row(j + 1) - entity.row(0);
+      axes.row(j) = entity.row(axis_pts[j]) - entity.row(0);
 
     // Map quadrature points onto entity
     Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
@@ -268,8 +293,9 @@ moments::make_dot_integral_moments_interpolation(
                          sub_entity_count * Qpts.rows() * value_size);
   matrix.setZero();
 
-  int c = 0;
+  std::vector<int> axis_pts = axis_points(celltype);
 
+  int c = 0;
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
@@ -279,7 +305,7 @@ moments::make_dot_integral_moments_interpolation(
     // Parametrise entity coordinates
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
     for (int j = 0; j < sub_entity_dim; ++j)
-      axes.row(j) = entity.row(j + 1) - entity.row(0);
+      axes.row(j) = entity.row(axis_pts[j]) - entity.row(0);
 
     // Map quadrature points onto entity
     points.block(Qpts.rows() * i, 0, Qpts.rows(), tdim)

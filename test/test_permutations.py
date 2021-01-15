@@ -15,8 +15,8 @@ tetrahedron_elements = [
     "Lagrange", "Discontinuous Lagrange",
     "Nedelec 1st kind H(curl)", "Nedelec 2nd kind H(curl)",
     "Raviart-Thomas", "Regge", "Crouzeix-Raviart"]
-quadrilateral_elements = ["Q"]
-hexahedron_elements = ["Q"]
+quadrilateral_elements = ["Q", "Qdiv", "Qcurl"]
+hexahedron_elements = ["Q", "Qdiv", "Qcurl"]
 
 all_elements = [(cell, e) for cell, elements in [
     ("interval", interval_elements),
@@ -167,10 +167,12 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):
-                reflected_values[i][::e.dim] *= -1
+                for j in range(e.dim):
+                    reflected_values[i][j] *= -1
         elif e.mapping_name == "contravariant piola":
             for i, r in enumerate(reflected_values):
-                reflected_values[i][1::e.dim] *= -1
+                for j in range(e.dim):
+                    reflected_values[i][e.dim + j] *= -1
         elif e.mapping_name == "double covariant piola":
             pytest.skip()  # TODO: implement double covariant piola
         else:

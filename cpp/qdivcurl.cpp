@@ -132,11 +132,11 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-  /*
   if (tdim == 2)
   {
-    // TODO
     Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
+    Eigen::ArrayXXd edge_dir
+        = dofperms::interval_reflection_tangent_directions(degree);
     for (int edge = 0; edge < facet_count; ++edge)
     {
       const int start = edge_ref.size() * edge;
@@ -145,12 +145,6 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
         base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
-    }
-
-    Eigen::ArrayXXd edge_dir
-        = dofperms::interval_reflection_tangent_directions(degree);
-    for (int edge = 0; edge < 3; ++edge)
-    {
       Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
       directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
                        edge_dir.rows(), edge_dir.cols())
@@ -160,6 +154,7 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
   }
   else if (tdim == 3)
   {
+    /*
     // TODO
     Eigen::ArrayXi face_ref = dofperms::quadrilateral_reflection(degree);
     Eigen::ArrayXi face_rot = dofperms::quadrilateral_rotation(degree);
@@ -176,8 +171,8 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
             = -1;
       }
     }
+    */
   }
-  */
 
   // Qdiv has ns dofs on each facet, and ns0*tdim^2 in the interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -346,6 +341,26 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
+  Eigen::ArrayXXd edge_dir
+      = dofperms::interval_reflection_tangent_directions(degree);
+
+  for (int edge = 0; edge < edge_count; ++edge)
+  {
+    const int start = edge_ref.size() * edge;
+    for (int i = 0; i < edge_ref.size(); ++i)
+    {
+      base_permutations[edge](start + i, start + i) = 0;
+      base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+    }
+    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
+    directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
+                     edge_dir.rows(), edge_dir.cols())
+        = edge_dir;
+    base_permutations[edge] *= directions;
+  }
+
   /*
   if (tdim == 2)
   {

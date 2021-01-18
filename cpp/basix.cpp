@@ -3,6 +3,8 @@
 #include "cell.h"
 #include "finite-element.h"
 #include "quadrature.h"
+#include <algorithm>
+#include <iterator>
 #include <memory>
 #include <vector>
 
@@ -34,11 +36,17 @@ void basix::release_element(int handle)
     _registry.pop_back();
 }
 
-std::vector<Eigen::ArrayXXd> basix::tabulate(int handle, int nd,
-                                             const Eigen::ArrayXXd& x)
+void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
+                     int npoints, int tdim)
 {
   check_handle(handle);
-  return _registry[handle]->tabulate(nd, x);
+
+  Eigen::Map<const Eigen::ArrayXXd> _x(x, npoints, tdim);
+  std::vector<Eigen::ArrayXXd> values = _registry[handle]->tabulate(nd, _x);
+
+  const int m = values[0].rows() * values[0].cols();
+  for (std::size_t i = 0; i < values.size(); ++i)
+    std::copy(values[i].data(), values[i].data() + m, basis_values + i * m);
 }
 
 const char* basix::cell_type(int handle)
@@ -53,16 +61,17 @@ int basix::degree(int handle)
   return _registry[handle]->degree();
 }
 
-int basix::value_size(int handle)
+int basix::value_rank(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->value_size();
+  return _registry[handle]->value_shape().size();
 }
 
-const std::vector<int>& basix::value_shape(int handle)
+void basix::value_shape(int handle, int* dimensions)
 {
   check_handle(handle);
-  return _registry[handle]->value_shape();
+  std::vector<int> dims = _registry[handle]->value_shape();
+  std::copy(dims.begin(), dims.end(), dimensions);
 }
 
 const Eigen::ArrayXXd& basix::points(int handle)
@@ -77,10 +86,11 @@ const Eigen::MatrixXd& basix::interpolation_matrix(int handle)
   return _registry[handle]->interpolation_matrix();
 }
 
-const std::vector<std::vector<int>>& basix::entity_dofs(int handle)
+void basix::entity_dofs(int handle, int dim, int* num_dofs)
 {
   check_handle(handle);
-  return _registry[handle]->entity_dofs();
+  std::vector<std::vector<int>> dof_counts = _registry[handle]->entity_dofs();
+  std::copy(dof_counts[dim].begin(), dof_counts[dim].end(), num_dofs);
 }
 
 const char* basix::family_name(int handle)
@@ -95,10 +105,23 @@ const char* basix::mapping_name(int handle)
   return _registry[handle]->mapping_name().c_str();
 }
 
-Eigen::ArrayXXd basix::geometry(const char* cell_type)
+int basix::cell_geometry_num_points(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
-  return cell::geometry(ct);
+  return cell::geometry(ct).rows();
+}
+
+int basix::cell_geometry_dimension(const char* cell_type)
+{
+  cell::type ct = cell::str_to_type(cell_type);
+  return cell::geometry(ct).cols();
+}
+
+void basix::geometry(const char* cell_type, double* points)
+{
+  cell::type ct = cell::str_to_type(cell_type);
+  Eigen::ArrayXXd pts = cell::geometry(ct);
+  std::copy(pts.data(), pts.data() + pts.rows() * pts.cols(), points);
 }
 
 std::vector<std::vector<std::vector<int>>>

@@ -35,6 +35,16 @@ Eigen::MatrixXd quadrilateral_qdiv_reflection(int degree);
 /// @return A reordering of DOFs of a Qdiv space of the given degree
 Eigen::MatrixXd quadrilateral_qdiv_rotation(int degree);
 
+/// Reflect the DOFs of a Qcurl space on a quadrilateral
+/// @param degree The degree of the Qcurl space
+/// @return A reordering of DOFs of a Qcurl space of the given degree
+Eigen::MatrixXd quadrilateral_qcurl_reflection(int degree);
+
+/// Rotate the DOFs of a Qcurl space on a quadrilateral
+/// @param degree The number of DOFs along one side of the quadrilateral
+/// @return A reordering of DOFs of a Qcurl space of the given degree
+Eigen::MatrixXd quadrilateral_qcurl_rotation(int degree);
+
 } // namespace dofperms
 
 } // namespace basix

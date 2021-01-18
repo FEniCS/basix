@@ -67,7 +67,6 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
   }
 
   // Create coefficients for additional polynomials in the div space
-  assert(dof == nv * tdim);
   for (int i = 0; i < pow(degree, tdim - 1); ++i)
   {
     std::vector<int> indices(tdim - 1);
@@ -234,7 +233,6 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
                 = 1;
   }
 
-  assert(dof == nv * tdim);
   // Create coefficients for additional polynomials in the curl space
   if (tdim == 2)
   {

@@ -6,9 +6,9 @@
 #include "brezzi-douglas-marini.h"
 #include "crouzeix-raviart.h"
 #include "lagrange.h"
+#include "nc-rtc.h"
 #include "nedelec.h"
 #include "polyset.h"
-#include "qdivcurl.h"
 #include "raviart-thomas.h"
 #include "regge.h"
 #include <iostream>
@@ -37,10 +37,10 @@ basix::FiniteElement basix::create_element(std::string family,
     return create_nedelec2(cell::str_to_type(cell), degree, family);
   else if (family == "Regge")
     return create_regge(cell::str_to_type(cell), degree, family);
-  else if (family == "Qdiv")
-    return create_qdiv(cell::str_to_type(cell), degree, family);
-  else if (family == "Qcurl")
-    return create_qcurl(cell::str_to_type(cell), degree, family);
+  else if (family == "RTC")
+    return create_rtc(cell::str_to_type(cell), degree, family);
+  else if (family == "NC")
+    return create_nc(cell::str_to_type(cell), degree, family);
   else if (family == "Crouzeix-Raviart")
     return cr::create(cell::str_to_type(cell), degree);
   else

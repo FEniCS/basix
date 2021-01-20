@@ -2,13 +2,13 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "qdivcurl.h"
+#include "nc-rtc.h"
 #include "dof-permutations.h"
 #include "lagrange.h"
+#include "log.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include "log.h"
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>
@@ -16,8 +16,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_qdiv(cell::type celltype, int degree,
-                                 const std::string& name)
+FiniteElement basix::create_rtc(cell::type celltype, int degree,
+                                const std::string& name)
 {
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -26,7 +26,7 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
   if (degree > 4)
   {
     // TODO: suggest alternative with non-uniform points once implemented
-    LOG(WARNING) << "Qdiv spaces with high degree using equally spaced"
+    LOG(WARNING) << "RTC spaces with high degree using equally spaced"
                  << " points are unstable.";
   }
 
@@ -126,7 +126,7 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
   {
     // Interior integral moment
     dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
-        = moments::make_dot_integral_moments(create_qcurl(celltype, degree - 1),
+        = moments::make_dot_integral_moments(create_nc(celltype, degree - 1),
                                              celltype, tdim, degree, quad_deg);
   }
 
@@ -189,8 +189,8 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
                        base_permutations, {}, {}, "contravariant piola");
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_qcurl(cell::type celltype, int degree,
-                                  const std::string& name)
+FiniteElement basix::create_nc(cell::type celltype, int degree,
+                               const std::string& name)
 {
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -199,7 +199,7 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
   if (degree > 4)
   {
     // TODO: suggest alternative with non-uniform points once implemented
-    LOG(WARNING) << "Qcurl spaces with high degree using equally spaced"
+    LOG(WARNING) << "NC spaces with high degree using equally spaced"
                  << " points are unstable.";
   }
 
@@ -328,7 +328,7 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
     // Face integral moment
     dual.block(edge_count * edge_dofs, 0, face_count * face_dofs, psize * tdim)
         = moments::make_dot_integral_moments(
-            create_qdiv(cell::type::quadrilateral, degree - 1), celltype, tdim,
+            create_rtc(cell::type::quadrilateral, degree - 1), celltype, tdim,
             degree, quad_deg);
 
     if (tdim == 3)
@@ -337,7 +337,7 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
       dual.block(edge_count * edge_dofs + face_count * face_dofs, 0,
                  volume_dofs, psize * tdim)
           = moments::make_dot_integral_moments(
-              create_qdiv(cell::type::hexahedron, degree - 1), celltype, tdim,
+              create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
               degree, quad_deg);
     }
   }
@@ -373,9 +373,8 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
   if (tdim == 3 and degree > 1)
   {
     Eigen::MatrixXd face_ref
-        = dofperms::quadrilateral_qdiv_reflection(degree - 1);
-    Eigen::MatrixXd face_rot
-        = dofperms::quadrilateral_qdiv_rotation(degree - 1);
+        = dofperms::quadrilateral_rtc_reflection(degree - 1);
+    Eigen::MatrixXd face_rot = dofperms::quadrilateral_rtc_rotation(degree - 1);
 
     for (int face = 0; face < face_count; ++face)
     {
@@ -402,7 +401,7 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
                        base_permutations, {}, {}, "covariant piola");
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_qdiv_rotation(int degree)
+Eigen::MatrixXd basix::dofperms::quadrilateral_rtc_rotation(int degree)
 {
   const int n = 2 * degree * (degree + 1);
   Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
@@ -417,11 +416,11 @@ Eigen::MatrixXd basix::dofperms::quadrilateral_qdiv_rotation(int degree)
   }
   if (degree > 1)
     perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_qcurl_rotation(degree - 1);
+        = quadrilateral_nc_rotation(degree - 1);
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_qcurl_rotation(int degree)
+Eigen::MatrixXd basix::dofperms::quadrilateral_nc_rotation(int degree)
 {
   const int n = 2 * degree * (degree + 1);
   Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
@@ -436,11 +435,11 @@ Eigen::MatrixXd basix::dofperms::quadrilateral_qcurl_rotation(int degree)
   }
   if (degree > 1)
     perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_qdiv_rotation(degree - 1);
+        = quadrilateral_rtc_rotation(degree - 1);
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_qdiv_reflection(int degree)
+Eigen::MatrixXd basix::dofperms::quadrilateral_rtc_reflection(int degree)
 {
   const int n = 2 * degree * (degree + 1);
   Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
@@ -455,12 +454,12 @@ Eigen::MatrixXd basix::dofperms::quadrilateral_qdiv_reflection(int degree)
   }
   if (degree > 1)
     perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_qcurl_reflection(degree - 1);
+        = quadrilateral_nc_reflection(degree - 1);
 
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_qcurl_reflection(int degree)
+Eigen::MatrixXd basix::dofperms::quadrilateral_nc_reflection(int degree)
 {
   const int n = 2 * degree * (degree + 1);
   Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
@@ -475,7 +474,7 @@ Eigen::MatrixXd basix::dofperms::quadrilateral_qcurl_reflection(int degree)
   }
   if (degree > 1)
     perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_qdiv_reflection(degree - 1);
+        = quadrilateral_rtc_reflection(degree - 1);
 
   return perm;
 }

@@ -9,14 +9,14 @@
 
 namespace basix
 {
-/// Create RTC element
+/// Create RTC H(div) element
 /// @param celltype
 /// @param degree
 /// @param name
 FiniteElement create_rtc(cell::type celltype, int degree,
                          const std::string& = std::string());
 
-/// Create NC element
+/// Create NC H(curl) element
 /// @param celltype
 /// @param degree
 /// @param name

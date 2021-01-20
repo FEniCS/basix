@@ -314,7 +314,7 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):
-                reflected_values[i][:e.dim] = -r[:e.dim]
+                reflected_values[i][:e.dim] *= -1
         elif e.mapping_name == "contravariant piola":
             for i, r in enumerate(reflected_values):
                 reflected_values[i][1::e.dim] *= -1

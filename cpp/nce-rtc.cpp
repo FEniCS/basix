@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "nc-rtc.h"
+#include "nce-rtc.h"
 #include "dof-permutations.h"
 #include "lagrange.h"
 #include "log.h"

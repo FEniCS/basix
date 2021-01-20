@@ -27,7 +27,7 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
   {
     // TODO: suggest alternative with non-uniform points once implemented
     LOG(WARNING) << "Qdiv spaces with high degree using equally spaced"
-                 << " points are unstable.".
+                 << " points are unstable.";
   }
 
   const int tdim = cell::topological_dimension(celltype);

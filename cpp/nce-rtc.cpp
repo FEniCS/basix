@@ -126,7 +126,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree,
   {
     // Interior integral moment
     dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
-        = moments::make_dot_integral_moments(create_nc(celltype, degree - 1),
+        = moments::make_dot_integral_moments(create_nce(celltype, degree - 1),
                                              celltype, tdim, degree, quad_deg);
   }
 
@@ -189,8 +189,8 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree,
                        base_permutations, {}, {}, "contravariant piola");
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_nc(cell::type celltype, int degree,
-                               const std::string& name)
+FiniteElement basix::create_nce(cell::type celltype, int degree,
+                                const std::string& name)
 {
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -416,11 +416,11 @@ Eigen::MatrixXd basix::dofperms::quadrilateral_rtc_rotation(int degree)
   }
   if (degree > 1)
     perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_nc_rotation(degree - 1);
+        = quadrilateral_nce_rotation(degree - 1);
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_nc_rotation(int degree)
+Eigen::MatrixXd basix::dofperms::quadrilateral_nce_rotation(int degree)
 {
   const int n = 2 * degree * (degree + 1);
   Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
@@ -454,12 +454,12 @@ Eigen::MatrixXd basix::dofperms::quadrilateral_rtc_reflection(int degree)
   }
   if (degree > 1)
     perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_nc_reflection(degree - 1);
+        = quadrilateral_nce_reflection(degree - 1);
 
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_nc_reflection(int degree)
+Eigen::MatrixXd basix::dofperms::quadrilateral_nce_reflection(int degree)
 {
   const int n = 2 * degree * (degree + 1);
   Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);

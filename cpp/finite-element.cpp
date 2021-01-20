@@ -6,7 +6,7 @@
 #include "brezzi-douglas-marini.h"
 #include "crouzeix-raviart.h"
 #include "lagrange.h"
-#include "nc-rtc.h"
+#include "nce-rtc.h"
 #include "nedelec.h"
 #include "polyset.h"
 #include "raviart-thomas.h"
@@ -21,7 +21,7 @@ using namespace basix;
 
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family,
-                                             std::string cell, int degree)
+                                           std::string cell, int degree)
 {
   if (family == "Lagrange" or family == "P" or family == "Q")
     return create_lagrange(cell::str_to_type(cell), degree, family);
@@ -40,7 +40,7 @@ basix::FiniteElement basix::create_element(std::string family,
   else if (family == "RTC")
     return create_rtc(cell::str_to_type(cell), degree, family);
   else if (family == "NC")
-    return create_nc(cell::str_to_type(cell), degree, family);
+    return create_nce(cell::str_to_type(cell), degree, family);
   else if (family == "Crouzeix-Raviart")
     return cr::create(cell::str_to_type(cell), degree);
   else

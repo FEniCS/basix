@@ -8,6 +8,7 @@
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include "log.h"
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>
@@ -21,6 +22,13 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
     throw std::runtime_error("Unsupported cell type");
+
+  if (degree > 4)
+  {
+    // TODO: suggest alternative with non-uniform points once implemented
+    LOG(WARNING) << "Qdiv spaces with high degree using equally spaced"
+                 << " points are unstable.".
+  }
 
   const int tdim = cell::topological_dimension(celltype);
 
@@ -187,6 +195,13 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
     throw std::runtime_error("Unsupported cell type");
+
+  if (degree > 4)
+  {
+    // TODO: suggest alternative with non-uniform points once implemented
+    LOG(WARNING) << "Qcurl spaces with high degree using equally spaced"
+                 << " points are unstable.";
+  }
 
   const int tdim = cell::topological_dimension(celltype);
 

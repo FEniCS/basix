@@ -294,8 +294,11 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
 
 
 @pytest.mark.parametrize("element_name", hexahedron_elements)
-@pytest.mark.parametrize("order", range(1, 5))
+@pytest.mark.parametrize("order", range(1, 6))
 def test_permutation_of_tabulated_data_hexahedron(element_name, order):
+    if order > 4 and element_name in ["Qdiv", "Qcurl"]:
+        pytest.xfail("High order Qdiv and Qcurl with equally spaced points are unstable.")
+
     e = basix.create_element(element_name, "hexahedron", order)
 
     N = 4

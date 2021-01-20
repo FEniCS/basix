@@ -362,7 +362,7 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
     Eigen::MatrixXd face_rot
         = dofperms::quadrilateral_qdiv_rotation(degree - 1);
 
-    for (int face = 0; face < 4; ++face)
+    for (int face = 0; face < face_count; ++face)
     {
       const int start = edge_ref.size() * edge_count + face_ref.rows() * face;
       const int p = edge_count + 2 * face;

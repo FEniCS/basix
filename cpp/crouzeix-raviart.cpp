@@ -4,6 +4,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "crouzeix-raviart.h"
+#include "element-families.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
@@ -13,7 +14,7 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-FiniteElement cr::create(cell::type celltype, int degree)
+FiniteElement create_cr(cell::type celltype, int degree)
 {
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
@@ -56,7 +57,7 @@ FiniteElement cr::create(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3] = {0};
 
-  return FiniteElement(cr::family_name, celltype, 1, {1}, coeffs, entity_dofs,
-                       base_permutations, {});
+  return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
+                       entity_dofs, base_permutations, {});
 }
 //-----------------------------------------------------------------------------

@@ -4,6 +4,7 @@
 
 #include "raviart-thomas.h"
 #include "dof-permutations.h"
+#include "element-families.h"
 #include "lagrange.h"
 #include "moments.h"
 #include "polyset.h"
@@ -15,8 +16,7 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_rt(cell::type celltype, int degree,
-                                const std::string& name)
+FiniteElement basix::create_rt(cell::type celltype, int degree)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -150,8 +150,9 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
   entity_dofs[tdim] = {ns0 * tdim};
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
-  return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {}, {}, "contravariant piola");
+  return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, base_permutations, {}, {},
+                       "contravariant piola");
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)

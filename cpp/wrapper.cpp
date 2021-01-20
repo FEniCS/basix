@@ -9,6 +9,7 @@
 #include <string>
 
 #include "cell.h"
+#include "element-families.h"
 #include "finite-element.h"
 #include "indexing.h"
 #include "lattice.h"
@@ -82,7 +83,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   m.def(
       "create_new_element",
-      [](const std::string family_name, cell::type celltype, int degree,
+      [](element::family family_name, cell::type celltype, int degree,
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
@@ -111,33 +112,14 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("interpolation_matrix",
                              &FiniteElement::interpolation_matrix);
 
-  // TODO: remove - not part of public interface
-  // Create FiniteElement of different types
-  m.def("Nedelec", [](const std::string& cell, int degree) {
-    return basix::create_element("Nedelec 1st kind H(curl)", cell, degree);
-  });
-  m.def("NedelecSecondKind", [](const std::string& cell, int degree) {
-    return basix::create_element("Nedelec 2nd kind H(curl)", cell, degree);
-  });
-  m.def("Lagrange", [](const std::string& cell, int degree) {
-    return basix::create_element("Lagrange", cell, degree);
-  });
-  m.def("DiscontinuousLagrange", [](const std::string& cell, int degree) {
-    return basix::create_element("Discontinuous Lagrange", cell, degree);
-  });
-  m.def("CrouzeixRaviart", [](const std::string& cell, int degree) {
-    return basix::create_element("Crouzeix-Raviart", cell, degree);
-  });
-  m.def("RaviartThomas", [](const std::string& cell, int degree) {
-    return basix::create_element("Raviart-Thomas", cell, degree);
-  });
-  m.def("Regge", [](const std::string& cell, int degree) {
-    return basix::create_element("Regge", cell, degree);
-  });
-
   // Create FiniteElement
-  m.def("create_element", &basix::create_element,
-        "Create a FiniteElement of a given family, celltype and degree");
+  m.def(
+      "create_element",
+      [](const std::string family_name, const std::string cell_name,
+         int degree) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree);
+      },
+      "Create a FiniteElement of a given family, celltype and degree");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");

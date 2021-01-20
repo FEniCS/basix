@@ -39,7 +39,7 @@ basix::FiniteElement basix::create_element(std::string family,
     return create_regge(cell::str_to_type(cell), degree, family);
   else if (family == "RTC")
     return create_rtc(cell::str_to_type(cell), degree, family);
-  else if (family == "NC")
+  else if (family == "NCE")
     return create_nce(cell::str_to_type(cell), degree, family);
   else if (family == "Crouzeix-Raviart")
     return cr::create(cell::str_to_type(cell), degree);

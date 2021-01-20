@@ -29,7 +29,7 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts]
-      = quadrature::make_quadrature("default", celltype, 2 * pow(degree, tdim));
+      = quadrature::make_quadrature("default", celltype, 2 * degree);
   Eigen::ArrayXXd polyset_at_Qpts
       = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 
@@ -105,7 +105,7 @@ FiniteElement basix::create_qdiv(cell::type celltype, int degree,
   Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
 
   // quadrature degree
-  int quad_deg = 2 * pow(degree, tdim);
+  int quad_deg = 2 * degree;
 
   // Add rows to dualmat for integral moments on facets
   dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
@@ -192,7 +192,7 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts]
-      = quadrature::make_quadrature("default", celltype, 2 * pow(degree, tdim));
+      = quadrature::make_quadrature("default", celltype, 2 * degree);
   Eigen::ArrayXXd polyset_at_Qpts
       = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 
@@ -299,7 +299,7 @@ FiniteElement basix::create_qcurl(cell::type celltype, int degree,
   Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
 
   // quadrature degree
-  int quad_deg = 2 * pow(degree, tdim);
+  int quad_deg = 2 * degree;
 
   // Add rows to dualmat for integral moments on facets
   dual.block(0, 0, edge_count * edge_dofs, psize * tdim)

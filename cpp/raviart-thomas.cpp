@@ -30,7 +30,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
   const int nv = polyset::dim(celltype, degree - 1);
   // The number of order (degree-2) scalar polynomials
   const int ns0 = polyset::dim(celltype, degree - 2);
-  // The number of additional polnomials in the polynomial basis for
+  // The number of additional polynomials in the polynomial basis for
   // Raviart-Thomas
   const int ns = polyset::dim(facettype, degree - 1);
 

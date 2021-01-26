@@ -4,7 +4,6 @@ import numpy
 
 
 def test_create_simple():
-    pytest.xfail()
     # Creates Lagrange P1 element on triangle
 
     # Point evaluation of polynomial set
@@ -26,7 +25,6 @@ def test_create_simple():
 
 
 def test_create_custom():
-    pytest.xfail()
     # Creates second order element on triangle
 
     # Point evaluation of polynomial set
@@ -48,8 +46,6 @@ def test_create_custom():
 
 
 def test_create_invalid():
-    pytest.xfail()
-
     celltype = basix.CellType.triangle
     degree = 2
     # Try to create an invalid element of order 2

@@ -89,6 +89,14 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .value("doubleContravariantPiola", mapping::type::doubleContravariantPiola);
 
   m.def(
+      "mapping_to_str",
+      [](mapping::type mapping_type)
+          -> const std::string& {
+        return mapping::type_to_str(mapping_type);
+      },
+      "Convert a mapping type to a string.");
+
+  m.def(
       "create_new_element",
       [](const std::string family_name, cell::type celltype, int degree,
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,

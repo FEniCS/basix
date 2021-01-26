@@ -17,7 +17,8 @@ def test_create_simple():
     coeff_space = numpy.identity(points.shape[0])
 
     fe = basix.create_new_element("Custom element", celltype, degree, [1], dualmat, coeff_space,
-                                  [[1, 1, 1], [0, 0, 0], [0]], [numpy.identity(3) for i in range(3)])
+                                  [[1, 1, 1], [0, 0, 0], [0]], [numpy.identity(3) for i in range(3)],
+                                  basix.MappingType.identity)
 
     numpy.set_printoptions(suppress=True, precision=2)
 
@@ -39,7 +40,8 @@ def test_create_custom():
     coeff_space = numpy.identity(points.shape[0])
     fe = basix.create_new_element("Custom element", celltype, degree, [1], dualmat, coeff_space,
                                   [[0, 0, 0], [1, 1, 1], [3]],
-                                  [numpy.identity(5) for i in range(3)])
+                                  [numpy.identity(5) for i in range(3)],
+                                  basix.MappingType.identity)
 
     numpy.set_printoptions(suppress=True, precision=2)
 
@@ -62,4 +64,4 @@ def test_create_invalid():
     with pytest.raises(RuntimeError):
         basix.create_new_element("Custom element", celltype, degree, [1], dualmat, coeff_space,
                                  [[0, 0, 0], [2, 2, 2], [0]],
-                                 [numpy.identity(6) for i in range(3)])
+                                 [numpy.identity(6) for i in range(3)], basix.MappingType.identity)

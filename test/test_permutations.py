@@ -15,8 +15,8 @@ tetrahedron_elements = [
     "Lagrange", "Discontinuous Lagrange",
     "Nedelec 1st kind H(curl)", "Nedelec 2nd kind H(curl)",
     "Raviart-Thomas", "Regge", "Crouzeix-Raviart"]
-quadrilateral_elements = ["Q"]
-hexahedron_elements = ["Q"]
+quadrilateral_elements = ["Lagrange"]
+hexahedron_elements = ["Lagrange"]
 
 all_elements = [(cell, e) for cell, elements in [
     ("interval", interval_elements),

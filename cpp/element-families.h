@@ -24,10 +24,10 @@ enum class family
 };
 
 /// Convert string to a family
-element::family str_to_family(std::string family);
+element::family str_to_family(std::string name);
 
 // Convert family to string
-std::string family_to_str(element::family family);
+const std::string& family_to_str(element::family type);
 
 } // namespace element
 

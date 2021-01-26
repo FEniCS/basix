@@ -1,3 +1,6 @@
+// Copyright (c) 2020 Chris Richardson
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
 
 #include "basix.h"
 #include "cell.h"
@@ -86,7 +89,7 @@ const std::vector<std::vector<int>>& basix::entity_dofs(int handle)
 const char* basix::family_name(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->family_name().c_str();
+  return element::family_to_str(_registry[handle]->family()).c_str();
 }
 
 const char* basix::mapping_name(int handle)

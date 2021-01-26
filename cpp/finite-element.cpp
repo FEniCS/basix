@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -136,9 +136,9 @@ const std::vector<int>& FiniteElement::value_shape() const
 //-----------------------------------------------------------------------------
 int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
-const std::string FiniteElement::family_name() const
+element::family FiniteElement::family() const
 {
-  return element::family_to_str(_family);
+  return _family;
 }
 //-----------------------------------------------------------------------------
 const std::string& FiniteElement::mapping_name() const { return _mapping_name; }

@@ -1,3 +1,7 @@
+// Copyright (c) 2020 Chris Richardson
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
+
 // FIXME: just include everything for now
 // Need to define public API
 
@@ -212,9 +216,9 @@ public:
   /// @return Number of degrees of freedom
   int dim() const;
 
-  /// Get the name of the finite element family
-  /// @return The family name
-  const std::string family_name() const;
+  /// Get the finite element family
+  /// @return The family
+  element::family family() const;
 
   /// Get the mapping used for this element
   /// @return The mapping

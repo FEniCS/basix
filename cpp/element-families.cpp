@@ -1,54 +1,49 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
 #include "element-families.h"
 #include <stdexcept>
+#include <map>
 
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-element::family element::str_to_family(std::string family)
+element::family element::str_to_family(std::string name)
 {
-  if (family == "Lagrange" or family == "P" or family == "Q")
-    return element::family::P;
-  else if (family == "Discontinuous Lagrange")
-    return element::family::DP;
-  else if (family == "Brezzi-Douglas-Marini")
-    return element::family::BDM;
-  else if (family == "Raviart-Thomas")
-    return element::family::RT;
-  else if (family == "Nedelec 1st kind H(curl)")
-    return element::family::N1E;
-  else if (family == "Nedelec 2nd kind H(curl)")
-    return element::family::N2E;
-  else if (family == "Regge")
-    return element::family::Regge;
-  else if (family == "Crouzeix-Raviart")
-    return element::family::CR;
-  else
-    throw std::runtime_error("Family not found: \"" + family + "\"");
+  static const std::map<std::string, element::family> name_to_type
+      = {{"Lagrange", element::family::P},
+         {"Discontinuous Lagrange", element::family::DP},
+         {"Brezzi-Douglas-Marini", element::family::BDM},
+         {"Raviart-Thomas", element::family::RT},
+         {"Nedelec 1st kind H(curl)", element::family::N1E},
+         {"Nedelec 2nd kind H(curl)", element::family::N2E},
+         {"Regge", element::family::Regge},
+         {"Crouzeix-Raviart", element::family::CR}};
+
+  auto it = name_to_type.find(name);
+  if (it == name_to_type.end())
+    throw std::runtime_error("Can't find name " + name);
+
+  return it->second;
 }
 //-----------------------------------------------------------------------------
-std::string element::family_to_str(element::family family)
+const std::string& element::family_to_str(element::family type)
 {
-  if (family == element::family::P)
-    return "Lagrange";
-  else if (family == element::family::DP)
-    return "Discontinuous Lagrange";
-  else if (family == element::family::BDM)
-    return "BDM";
-  else if (family == element::family::RT)
-    return "RT";
-  else if (family == element::family::N1E)
-    return "N1E";
-  else if (family == element::family::N2E)
-    return "N2E";
-  else if (family == element::family::Regge)
-    return "Regge";
-  else if (family == element::family::CR)
-    return "Crouzeix-Raviart";
-  else
-    throw std::runtime_error("Family not found");
+  static const std::map<element::family, std::string> name_to_type
+      = {{element::family::P, "Lagrange"},
+         {element::family::DP, "Discontinuous Lagrange"},
+         {element::family::BDM, "Brezzi-Douglas-Marini"},
+         {element::family::RT, "Raviart-Thomas"},
+         {element::family::N1E, "Nedelec 1st kind H(curl)"},
+         {element::family::N2E, "Nedelec 2nd kind H(curl)"},
+         {element::family::Regge, "Regge"},
+         {element::family::CR, "Crouzeix-Raviart"}};
+
+  auto it = name_to_type.find(type);
+  if (it == name_to_type.end())
+    throw std::runtime_error("Can't find type");
+
+  return it->second;
 }
 //-----------------------------------------------------------------------------

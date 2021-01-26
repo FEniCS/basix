@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson and Matthew Scroggs
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -106,7 +106,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
-      .def_property_readonly("family_name", &FiniteElement::family_name)
+      .def_property_readonly("family", &FiniteElement::family)
       .def_property_readonly("mapping_name", &FiniteElement::mapping_name)
       .def_property_readonly("points", &FiniteElement::points)
       .def_property_readonly("interpolation_matrix",

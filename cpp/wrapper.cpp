@@ -102,7 +102,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
                                        const Eigen::MatrixXd& J, double detJ,
                                        const Eigen::MatrixXd& K,
                                        mapping::type mapping_type,
-                                        std::vector<int> value_shape={1})
+                                        std::vector<int> value_shape)
         -> Eigen::ArrayXd {
             return mapping::apply_mapping(order, reference_data, J, detJ, K, mapping_type, value_shape);
         },

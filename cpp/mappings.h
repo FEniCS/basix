@@ -6,6 +6,7 @@
 
 #include <string>
 #include <Eigen/Dense>
+#include <vector>
 
 namespace basix
 {
@@ -39,7 +40,7 @@ Eigen::ArrayXd apply_mapping(int order, const Eigen::ArrayXd& reference_data,
                               const Eigen::MatrixXd& J, double detJ,
                               const Eigen::MatrixXd& K,
                               mapping::type mapping_type,
-                                       const std::vector<int> value_shape);
+                              const std::vector<int> value_shape);
 
 /// Convert mapping type enum to string
 const std::string& type_to_str(mapping::type type);

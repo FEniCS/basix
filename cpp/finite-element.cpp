@@ -81,9 +81,9 @@ FiniteElement::FiniteElement(
     const std::vector<std::vector<int>>& entity_dofs,
     const std::vector<Eigen::MatrixXd>& base_permutations,
     const Eigen::ArrayXXd& points, const Eigen::MatrixXd interpolation_matrix,
-    const std::string mapping_name)
+    mapping::type mapping_type)
     : _cell_type(cell_type), _family_name(name), _degree(degree),
-      _value_shape(value_shape), _mapping_name(mapping_name), _coeffs(coeffs),
+      _value_shape(value_shape), _mapping_type(mapping_type), _coeffs(coeffs),
       _entity_dofs(entity_dofs), _base_permutations(base_permutations),
       _points(points), _interpolation_matrix(interpolation_matrix)
 {
@@ -120,7 +120,7 @@ int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
 const std::string& FiniteElement::family_name() const { return _family_name; }
 //-----------------------------------------------------------------------------
-const std::string& FiniteElement::mapping_name() const { return _mapping_name; }
+const mapping::type FiniteElement::mapping_type() const { return _mapping_type; }
 //-----------------------------------------------------------------------------
 const Eigen::MatrixXd& FiniteElement::interpolation_matrix() const
 {

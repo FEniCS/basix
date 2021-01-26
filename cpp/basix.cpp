@@ -2,6 +2,7 @@
 #include "basix.h"
 #include "cell.h"
 #include "finite-element.h"
+#include "mappings.h"
 #include "quadrature.h"
 #include <memory>
 #include <vector>
@@ -92,7 +93,7 @@ const char* basix::family_name(int handle)
 const char* basix::mapping_name(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->mapping_name().c_str();
+  return mapping::type_to_str(_registry[handle]->mapping_type()).c_str();
 }
 
 Eigen::ArrayXXd basix::geometry(const char* cell_type)

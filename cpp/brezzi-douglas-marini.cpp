@@ -5,6 +5,7 @@
 #include "brezzi-douglas-marini.h"
 #include "dof-permutations.h"
 #include "lagrange.h"
+#include "mappings.h"
 #include "moments.h"
 #include "nedelec.h"
 #include "polyset.h"
@@ -120,6 +121,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
 
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {}, {}, "contravariant piola");
+                       base_permutations, {}, {}, mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

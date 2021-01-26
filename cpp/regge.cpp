@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "regge.h"
+#include "mappings.h"
 #include "lattice.h"
 #include "polyset.h"
 #include <iostream>
@@ -149,6 +150,6 @@ FiniteElement basix::create_regge(cell::type celltype, int degree,
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
   return FiniteElement(name, celltype, degree, {tdim, tdim}, coeffs,
-                       entity_dofs, base_permutations, {}, {}, "double covariant piola");
+                       entity_dofs, base_permutations, {}, {}, mapping::type::doubleCovariantPiola);
 }
 //-----------------------------------------------------------------------------

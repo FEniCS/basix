@@ -4,6 +4,7 @@
 #pragma once
 
 #include "cell.h"
+#include "mappings.h"
 #include <Eigen/Dense>
 #include <string>
 #include <vector>
@@ -156,7 +157,7 @@ public:
                 const std::vector<Eigen::MatrixXd>& base_permutations,
                 const Eigen::ArrayXXd& points,
                 const Eigen::MatrixXd interpolation_matrix = {},
-                const std::string mapping_name = "identity");
+                mapping::type mapping_type = mapping::type::identity);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -217,7 +218,7 @@ public:
 
   /// Get the mapping used for this element
   /// @return The mapping
-  const std::string& mapping_name() const;
+  const mapping::type mapping_type() const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -333,7 +334,7 @@ private:
   std::vector<int> _value_shape;
 
   /// The mapping used to map this element from the reference to a cell
-  std::string _mapping_name;
+  mapping::type _mapping_type;
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k}@f$,

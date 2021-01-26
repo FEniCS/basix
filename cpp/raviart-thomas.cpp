@@ -5,6 +5,7 @@
 #include "raviart-thomas.h"
 #include "dof-permutations.h"
 #include "lagrange.h"
+#include "mappings.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
@@ -151,7 +152,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {}, {}, "contravariant piola");
+                       base_permutations, {}, {}, mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)

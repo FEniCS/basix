@@ -5,6 +5,7 @@
 #include "nedelec.h"
 #include "dof-permutations.h"
 #include "lagrange.h"
+#include "mappings.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
@@ -692,7 +693,7 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree,
 
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       perms, points, interp_matrix, "covariant piola");
+                       perms, points, interp_matrix, mapping::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
@@ -739,6 +740,6 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
 
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
                        base_permutations, points, interp_matrix,
-                       "covariant piola");
+                       mapping::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

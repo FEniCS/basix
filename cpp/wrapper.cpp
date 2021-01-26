@@ -12,6 +12,7 @@
 #include "finite-element.h"
 #include "indexing.h"
 #include "lattice.h"
+#include "mappings.h"
 #include "polyset.h"
 #include "quadrature.h"
 
@@ -80,18 +81,26 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def("create_lattice", &lattice::create,
         "Create a uniform lattice of points on a reference cell");
 
+  py::enum_<mapping::type>(m, "MappingType")
+      .value("identity", mapping::type::identity)
+      .value("covariantPiola", mapping::type::covariantPiola)
+      .value("contravariantPiola", mapping::type::contravariantPiola)
+      .value("doubleCovariantPiola", mapping::type::doubleCovariantPiola)
+      .value("doubleContravariantPiola", mapping::type::doubleContravariantPiola);
+
   m.def(
       "create_new_element",
       [](const std::string family_name, cell::type celltype, int degree,
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_permutations)
+         const std::vector<Eigen::MatrixXd>& base_permutations,
+         mapping::type mapping_type=mapping::type::identity)
           -> FiniteElement {
         return FiniteElement(
             family_name, celltype, degree, value_shape,
             compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
-            base_permutations, {});
+            base_permutations, {}, {}, mapping_type);
       },
       "Create an element from basic data");
 
@@ -106,7 +115,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family_name", &FiniteElement::family_name)
-      .def_property_readonly("mapping_name", &FiniteElement::mapping_name)
+      .def_property_readonly("mapping_type", &FiniteElement::mapping_type)
       .def_property_readonly("points", &FiniteElement::points)
       .def_property_readonly("interpolation_matrix",
                              &FiniteElement::interpolation_matrix);

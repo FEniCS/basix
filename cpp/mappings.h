@@ -1,8 +1,11 @@
-// Copyright (c) 2020 Matthew Scroggs
+// Copyright (c) 2021 Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
 #pragma once
+
+#include <string>
+#include <Eigen/Dense>
 
 namespace basix
 {
@@ -26,12 +29,12 @@ enum class type
 /// @param data The data to apply the mapping to
 /// @param mapping_type Mapping type
 /// @param value_size The value size of the data
-/// @return Set of vertex points of the cell
+/// @return The mapped data
 // TODO: should data be in/out?
 Eigen::ArrayXXd apply_mapping(Eigen::ArrayXXd data, mapping::type mapping_type, int value_size);
 
 /// Convert mapping type enum to string
-const std::string& type_to_str(cell::type type);
+const std::string& type_to_str(mapping::type type);
 
 } // namespace mapping
 } // namespace basix

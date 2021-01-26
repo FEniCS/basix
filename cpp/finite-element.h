@@ -214,7 +214,7 @@ public:
 
   /// Get the name of the finite element family
   /// @return The family name
-  const std::string& family_name() const;
+  const std::string family_name() const;
 
   /// Get the mapping used for this element
   /// @return The mapping

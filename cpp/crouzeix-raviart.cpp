@@ -14,7 +14,7 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-FiniteElement create_cr(cell::type celltype, int degree)
+FiniteElement basix::create_cr(cell::type celltype, int degree)
 {
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");

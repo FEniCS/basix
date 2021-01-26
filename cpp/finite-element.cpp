@@ -136,7 +136,7 @@ const std::vector<int>& FiniteElement::value_shape() const
 //-----------------------------------------------------------------------------
 int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
-const std::string& FiniteElement::family_name() const
+const std::string FiniteElement::family_name() const
 {
   return element::family_to_str(_family);
 }

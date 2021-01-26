@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "element-families.h"
+#include <stdexcept>
 
 using namespace basix;
 
@@ -29,14 +30,14 @@ element::family element::str_to_family(std::string family)
     throw std::runtime_error("Family not found: \"" + family + "\"");
 }
 //-----------------------------------------------------------------------------
-const std::string& element::family_to_str(element::family family)
+std::string element::family_to_str(element::family family)
 {
   if (family == element::family::P)
     return "Lagrange";
   else if (family == element::family::DP)
-    return "Discontinuous Lagrange" else if (family
-                                             == element::family::
-                                                 BDM) return "BDM";
+    return "Discontinuous Lagrange";
+  else if (family == element::family::BDM)
+    return "BDM";
   else if (family == element::family::RT)
     return "RT";
   else if (family == element::family::N1E)

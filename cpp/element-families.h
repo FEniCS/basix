@@ -27,7 +27,7 @@ enum class family
 element::family str_to_family(std::string family);
 
 // Convert family to string
-const std::string& family_to_str(element::family family);
+std::string family_to_str(element::family family);
 
 } // namespace element
 

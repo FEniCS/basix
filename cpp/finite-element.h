@@ -156,7 +156,7 @@ public:
                 const std::vector<Eigen::MatrixXd>& base_permutations,
                 const Eigen::ArrayXXd& points,
                 const Eigen::MatrixXd interpolation_matrix = {},
-                const std::string mapping_name = "affine");
+                const std::string mapping_name = "identity");
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;

@@ -35,7 +35,7 @@ int dim(int handle);
 /// Family name
 const char* family_name(int handle);
 
-/// Mapping name (affine, piola etc.)
+/// Mapping name (identity, piola etc.)
 const char* mapping_name(int handle);
 
 /// Number of dofs per entity, ordered from vertex, edge, facet, cell

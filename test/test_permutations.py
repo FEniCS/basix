@@ -124,7 +124,7 @@ def test_permutation_of_tabulated_data_triangle(element_name, order):
         reflected_points = np.array([[p[1], p[0]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
+        if e.mapping_name == "identity":
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):
@@ -163,7 +163,7 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
         reflected_points = np.array([[1 - p[0], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
+        if e.mapping_name == "identity":
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):
@@ -204,7 +204,7 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
+        if e.mapping_name == "identity":
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):
@@ -234,7 +234,7 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
-        if e.mapping_name == "affine":
+        if e.mapping_name == "identity":
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(rotated_values):
@@ -261,7 +261,7 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
+        if e.mapping_name == "identity":
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):
@@ -302,7 +302,7 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         reflected_points = np.array([[1 - p[0], p[1], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
+        if e.mapping_name == "identity":
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):
@@ -330,7 +330,7 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         rotated_points = np.array([[1 - p[1], p[0], p[2]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
-        if e.mapping_name == "affine":
+        if e.mapping_name == "identity":
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(rotated_values):
@@ -361,7 +361,7 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
+        if e.mapping_name == "identity":
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):

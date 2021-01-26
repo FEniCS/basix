@@ -97,6 +97,18 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Convert a mapping type to a string.");
 
   m.def(
+      "apply_mapping",
+      [](int order, const Eigen::ArrayXd& reference_data,
+                                       const Eigen::MatrixXd& J, double detJ,
+                                       const Eigen::MatrixXd& K,
+                                       mapping::type mapping_type,
+                                        std::vector<int> value_shape={1})
+        -> Eigen::ArrayXd {
+            return mapping::apply_mapping(order, reference_data, J, detJ, K, mapping_type, value_shape);
+        },
+        "Apply a mapping to a piece of data.");
+
+  m.def(
       "create_new_element",
       [](const std::string family_name, cell::type celltype, int degree,
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,

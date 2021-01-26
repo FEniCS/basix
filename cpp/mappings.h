@@ -31,7 +31,11 @@ enum class type
 /// @param value_size The value size of the data
 /// @return The mapped data
 // TODO: should data be in/out?
-Eigen::ArrayXXd apply_mapping(Eigen::ArrayXXd data, mapping::type mapping_type, int value_size);
+Eigen::ArrayXd apply_mapping(int order, const Eigen::ArrayXd& reference_data,
+                              const Eigen::MatrixXd& J, double detJ,
+                              const Eigen::MatrixXd& K,
+                              mapping::type mapping_type,
+                                       const std::vector<int> value_shape={1});
 
 /// Convert mapping type enum to string
 const std::string& type_to_str(mapping::type type);

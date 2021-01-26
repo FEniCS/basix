@@ -3,7 +3,6 @@ import os
 # Public interface
 from ._basixcpp import __version__
 from ._basixcpp import create_element, CellType, MappingType, mapping_to_str
-from ._basixcpp import apply_mapping
 
 
 # To possibly be removed

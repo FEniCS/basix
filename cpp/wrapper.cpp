@@ -46,6 +46,10 @@ List[numpy.ndarray]
     where `n` is the number of derivatives and `d` is the topological dimension.
 )";
 
+const std::string mapdoc = R"(
+TODO: document
+)";
+
 PYBIND11_MODULE(_basixcpp, m)
 {
   m.doc() = R"(
@@ -97,17 +101,6 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Convert a mapping type to a string.");
 
   m.def(
-      "apply_mapping",
-      [](int order, const Eigen::ArrayXd& reference_data,
-         const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K,
-         mapping::type mapping_type,
-         std::vector<int> value_shape) -> Eigen::ArrayXd {
-        return mapping::apply_mapping(order, reference_data, J, detJ, K,
-                                      mapping_type, value_shape);
-      },
-      "Apply a mapping to a piece of data.");
-
-  m.def(
       "create_new_element",
       [](const std::string family_name, cell::type celltype, int degree,
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
@@ -125,6 +118,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
+      .def("apply_mapping", &FiniteElement::apply_mapping, mapdoc.c_str())
       .def_property_readonly("base_permutations",
                              &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)

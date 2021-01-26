@@ -170,6 +170,31 @@ std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
 //-----------------------------------------------------------------------------
 const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
+Eigen::ArrayXd
+FiniteElement::apply_mapping(int order, const Eigen::ArrayXd& reference_data,
+                             const Eigen::MatrixXd& J, double detJ,
+                             const Eigen::MatrixXd& K) const
+{
+  // Temporary data storage
+  const int vs = value_size();
+  const int d = dim();
+  Eigen::ArrayXd value(vs);
+  Eigen::ArrayXd result(vs);
+
+  // Apply mapping to each tabulated value
+  Eigen::ArrayXd mapped_data(reference_data.size());
+  for (int i = 0; i < d; ++i)
+  {
+    for (int j = 0; j < vs; ++j)
+      value[j] = reference_data(i + j * d);
+    result = mapping::apply_mapping(order, value, J, detJ, K, _mapping_type,
+                                    _value_shape);
+    for (int j = 0; j < vs; ++j)
+      mapped_data(i + j * d) = result[j];
+  }
+  return mapped_data;
+}
+//-----------------------------------------------------------------------------
 const std::string& basix::version()
 {
   static const std::string version_str = str(BASIX_VERSION);

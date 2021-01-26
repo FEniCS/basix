@@ -220,6 +220,11 @@ public:
   /// @return The mapping
   const mapping::type mapping_type() const;
 
+  /// Apply mapping
+  Eigen::ArrayXd apply_mapping(int order, const Eigen::ArrayXd& reference_data,
+                               const Eigen::MatrixXd& J, double detJ,
+                               const Eigen::MatrixXd& K) const;
+
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
   /// on a triangle has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]

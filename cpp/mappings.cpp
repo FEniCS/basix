@@ -9,11 +9,12 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd mapping::apply_mapping(int order, const Eigen::ArrayXd& reference_data,
-                                       const Eigen::MatrixXd& J, double detJ,
-                                       const Eigen::MatrixXd& K,
-                                       mapping::type mapping_type,
-                                       const std::vector<int> value_shape)
+Eigen::ArrayXd mapping::apply_mapping(int order,
+                                      const Eigen::ArrayXd& reference_data,
+                                      const Eigen::MatrixXd& J, double detJ,
+                                      const Eigen::MatrixXd& K,
+                                      mapping::type mapping_type,
+                                      const std::vector<int> value_shape)
 {
   switch (mapping_type)
   {
@@ -25,14 +26,17 @@ Eigen::ArrayXd mapping::apply_mapping(int order, const Eigen::ArrayXd& reference
     return 1 / detJ * J * reference_data.matrix();
   case mapping::type::doubleCovariantPiola:
   {
-    Eigen::Map<const Eigen::MatrixXd> data_matrix(reference_data.data(), value_shape[0], value_shape[1]);
+    Eigen::Map<const Eigen::MatrixXd> data_matrix(
+        reference_data.data(), value_shape[0], value_shape[1]);
     Eigen::MatrixXd result = K.transpose() * data_matrix * K;
     return Eigen::Map<Eigen::ArrayXd>(result.data(), reference_data.size());
   }
   case mapping::type::doubleContravariantPiola:
   {
-    Eigen::Map<const Eigen::MatrixXd> data_matrix(reference_data.data(), value_shape[0], value_shape[1]);
-    Eigen::MatrixXd result = 1 / (detJ * detJ) * J * data_matrix * J.transpose();
+    Eigen::Map<const Eigen::MatrixXd> data_matrix(
+        reference_data.data(), value_shape[0], value_shape[1]);
+    Eigen::MatrixXd result
+        = 1 / (detJ * detJ) * J * data_matrix * J.transpose();
     return Eigen::Map<Eigen::ArrayXd>(result.data(), reference_data.size());
   }
   default:
@@ -42,12 +46,12 @@ Eigen::ArrayXd mapping::apply_mapping(int order, const Eigen::ArrayXd& reference
 //-----------------------------------------------------------------------------
 const std::string& mapping::type_to_str(mapping::type type)
 {
-  static const std::map<mapping::type, std::string> type_to_name
-      = {{mapping::type::identity, "identity"},
-         {mapping::type::covariantPiola, "covariant Piola"},
-         {mapping::type::contravariantPiola, "contravariant Piola"},
-         {mapping::type::doubleCovariantPiola, "double covariant Piola"},
-         {mapping::type::doubleContravariantPiola, "double contravariant Piola"}};
+  static const std::map<mapping::type, std::string> type_to_name = {
+      {mapping::type::identity, "identity"},
+      {mapping::type::covariantPiola, "covariant Piola"},
+      {mapping::type::contravariantPiola, "contravariant Piola"},
+      {mapping::type::doubleCovariantPiola, "double covariant Piola"},
+      {mapping::type::doubleContravariantPiola, "double contravariant Piola"}};
 
   auto it = type_to_name.find(type);
   if (it == type_to_name.end())

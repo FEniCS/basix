@@ -121,6 +121,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
 
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {}, {}, mapping::type::contravariantPiola);
+                       base_permutations, {}, {},
+                       mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

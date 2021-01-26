@@ -17,7 +17,7 @@ using namespace basix;
 
 //----------------------------------------------------------------------------
 FiniteElement basix::create_rt(cell::type celltype, int degree,
-                                const std::string& name)
+                               const std::string& name)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -36,7 +36,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
   const int ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature("default", celltype, 2 * degree);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", celltype, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
       = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 
@@ -115,7 +116,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
     }
 
     Eigen::ArrayXXd edge_dir
-      = dofperms::interval_reflection_tangent_directions(degree);
+        = dofperms::interval_reflection_tangent_directions(degree);
     for (int edge = 0; edge < 3; ++edge)
     {
       Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
@@ -138,7 +139,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
         base_permutations[6 + 2 * face](start + i, start + i) = 0;
         base_permutations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
         base_permutations[6 + 2 * face + 1](start + i, start + i) = 0;
-        base_permutations[6 + 2 * face + 1](start + i, start + face_ref[i]) = -1;
+        base_permutations[6 + 2 * face + 1](start + i, start + face_ref[i])
+            = -1;
       }
     }
   }
@@ -152,7 +154,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {}, {}, mapping::type::contravariantPiola);
+                       base_permutations, {}, {},
+                       mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)

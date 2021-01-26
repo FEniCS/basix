@@ -14,7 +14,7 @@ using namespace basix;
 
 //----------------------------------------------------------------------------
 FiniteElement basix::create_lagrange(cell::type celltype, int degree,
-                                      const std::string& name)
+                                     const std::string& name)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
@@ -184,7 +184,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dlagrange(cell::type celltype, int degree,
-                                       const std::string& name)
+                                      const std::string& name)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.

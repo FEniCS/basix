@@ -19,8 +19,8 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(std::string family,
-                                             std::string cell, int degree)
+basix::FiniteElement basix::create_element(std::string family, std::string cell,
+                                           int degree)
 {
   if (family == "Lagrange" or family == "P" or family == "Q")
     return create_lagrange(cell::str_to_type(cell), degree, family);
@@ -44,8 +44,8 @@ basix::FiniteElement basix::create_element(std::string family,
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd
 basix::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
-                                       const Eigen::MatrixXd& dual,
-                                       bool condition_check)
+                                      const Eigen::MatrixXd& dual,
+                                      bool condition_check)
 {
 #ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
@@ -120,7 +120,10 @@ int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
 const std::string& FiniteElement::family_name() const { return _family_name; }
 //-----------------------------------------------------------------------------
-const mapping::type FiniteElement::mapping_type() const { return _mapping_type; }
+const mapping::type FiniteElement::mapping_type() const
+{
+  return _mapping_type;
+}
 //-----------------------------------------------------------------------------
 const Eigen::MatrixXd& FiniteElement::interpolation_matrix() const
 {

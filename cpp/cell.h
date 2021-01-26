@@ -72,6 +72,5 @@ cell::type str_to_type(std::string name);
 /// Convert cell type enum to string
 const std::string& type_to_str(cell::type type);
 
-
 } // namespace cell
 } // namespace basix

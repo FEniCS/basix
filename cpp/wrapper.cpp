@@ -86,12 +86,12 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .value("covariantPiola", mapping::type::covariantPiola)
       .value("contravariantPiola", mapping::type::contravariantPiola)
       .value("doubleCovariantPiola", mapping::type::doubleCovariantPiola)
-      .value("doubleContravariantPiola", mapping::type::doubleContravariantPiola);
+      .value("doubleContravariantPiola",
+             mapping::type::doubleContravariantPiola);
 
   m.def(
       "mapping_to_str",
-      [](mapping::type mapping_type)
-          -> const std::string& {
+      [](mapping::type mapping_type) -> const std::string& {
         return mapping::type_to_str(mapping_type);
       },
       "Convert a mapping type to a string.");
@@ -99,14 +99,13 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "apply_mapping",
       [](int order, const Eigen::ArrayXd& reference_data,
-                                       const Eigen::MatrixXd& J, double detJ,
-                                       const Eigen::MatrixXd& K,
-                                       mapping::type mapping_type,
-                                        std::vector<int> value_shape)
-        -> Eigen::ArrayXd {
-            return mapping::apply_mapping(order, reference_data, J, detJ, K, mapping_type, value_shape);
-        },
-        "Apply a mapping to a piece of data.");
+         const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K,
+         mapping::type mapping_type,
+         std::vector<int> value_shape) -> Eigen::ArrayXd {
+        return mapping::apply_mapping(order, reference_data, J, detJ, K,
+                                      mapping_type, value_shape);
+      },
+      "Apply a mapping to a piece of data.");
 
   m.def(
       "create_new_element",
@@ -115,8 +114,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const std::vector<Eigen::MatrixXd>& base_permutations,
-         mapping::type mapping_type=mapping::type::identity)
-          -> FiniteElement {
+         mapping::type mapping_type
+         = mapping::type::identity) -> FiniteElement {
         return FiniteElement(
             family_name, celltype, degree, value_shape,
             compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,

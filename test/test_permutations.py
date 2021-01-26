@@ -160,12 +160,10 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
         J = np.array([[-1, 0], [0, 1]])
         detJ = np.linalg.det(J)
         K = np.linalg.inv(J)
-
         mapped_values = np.zeros_like(reflected_values)
         for i, value in enumerate(reflected_values):
-            for j in range(e.dim):
-                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
-                                                                 e.value_shape)
+            mapped_values[i] = e.apply_mapping(1, value, J, detJ, K)
+
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -199,12 +197,10 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
         detJ = np.linalg.det(J)
         K = np.linalg.inv(J)
-
         mapped_values = np.zeros_like(reflected_values)
         for i, value in enumerate(reflected_values):
-            for j in range(e.dim):
-                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
-                                                                 e.value_shape)
+            mapped_values[i] = e.apply_mapping(1, value, J, detJ, K)
+
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -222,12 +218,10 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         J = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
         detJ = np.linalg.det(J)
         K = np.linalg.inv(J)
-
         mapped_values = np.zeros_like(rotated_values)
         for i, value in enumerate(rotated_values):
-            for j in range(e.dim):
-                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
-                                                                 e.value_shape)
+            mapped_values[i] = e.apply_mapping(1, value, J, detJ, K)
+
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -243,12 +237,10 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
         detJ = np.linalg.det(J)
         K = np.linalg.inv(J)
-
         mapped_values = np.zeros_like(reflected_values)
         for i, value in enumerate(reflected_values):
-            for j in range(e.dim):
-                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
-                                                                 e.value_shape)
+            mapped_values[i] = e.apply_mapping(1, value, J, detJ, K)
+
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -277,12 +269,10 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         J = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
         detJ = np.linalg.det(J)
         K = np.linalg.inv(J)
-
         mapped_values = np.zeros_like(reflected_values)
         for i, value in enumerate(reflected_values):
-            for j in range(e.dim):
-                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
-                                                                 e.value_shape)
+            mapped_values[i] = e.apply_mapping(1, value, J, detJ, K)
+
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -300,12 +290,10 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         J = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
         detJ = np.linalg.det(J)
         K = np.linalg.inv(J)
-
         mapped_values = np.zeros_like(rotated_values)
         for i, value in enumerate(rotated_values):
-            for j in range(e.dim):
-                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
-                                                                 e.value_shape)
+            mapped_values[i] = e.apply_mapping(1, value, J, detJ, K)
+
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -321,12 +309,10 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
         detJ = np.linalg.det(J)
         K = np.linalg.inv(J)
-
         mapped_values = np.zeros_like(reflected_values)
         for i, value in enumerate(reflected_values):
-            for j in range(e.dim):
-                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
-                                                                 e.value_shape)
+            mapped_values[i] = e.apply_mapping(1, value, J, detJ, K)
+
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]

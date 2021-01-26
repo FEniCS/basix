@@ -110,6 +110,8 @@ def test_hexahedron_permutation_orders(element_name, order):
 def test_permutation_of_tabulated_data_triangle(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
+    if element_name == "Regge":
+        pytest.skip("Permutations not yet implemented for Regge elements.")
 
     e = basix.create_element(element_name, "triangle", order)
 
@@ -124,22 +126,16 @@ def test_permutation_of_tabulated_data_triangle(element_name, order):
         reflected_points = np.array([[p[1], p[0]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_type == basix.MappingType.identity:
-            pass
-        elif e.mapping_type == basix.MappingType.covariantPiola:
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j::e.dim] = r[j::e.dim][::-1]
-        elif e.mapping_type == basix.MappingType.contravariantPiola:
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j::e.dim] = -r[j::e.dim][::-1]
-        elif e.mapping_type == basix.MappingType.doubleCovariantPiola:
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_type}")
+        J = np.array([[0, 1], [1, 0]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
 
-        for i, j in zip(values, reflected_values):
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
+                                                                 e.value_shape)
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -163,20 +159,16 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
         reflected_points = np.array([[1 - p[0], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_type == basix.MappingType.identity:
-            pass
-        elif e.mapping_type == basix.MappingType.covariantPiola:
-            for i, r in enumerate(reflected_values):
-                reflected_values[i][::e.dim] *= -1
-        elif e.mapping_type == basix.MappingType.contravariantPiola:
-            for i, r in enumerate(reflected_values):
-                reflected_values[i][1::e.dim] *= -1
-        elif e.mapping_type == basix.MappingType.doubleCovariantPiola:
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_type}")
+        J = np.array([[-1, 0], [0, 1]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
 
-        for i, j in zip(values, reflected_values):
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
+                                                                 e.value_shape)
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -189,6 +181,8 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
 def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
+    if element_name == "Regge":
+        pytest.skip("Permutations not yet implemented for Regge elements.")
 
     e = basix.create_element(element_name, "tetrahedron", order)
 
@@ -204,23 +198,16 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_type == basix.MappingType.identity:
-            pass
-        elif e.mapping_type == basix.MappingType.covariantPiola:
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j + e.dim::e.dim] = r[j + e.dim::e.dim][::-1]
-        elif e.mapping_type == basix.MappingType.contravariantPiola:
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j] = -r[j]
-                    reflected_values[i][j + e.dim::e.dim] = -r[j + e.dim::e.dim][::-1]
-        elif e.mapping_type == basix.MappingType.doubleCovariantPiola:
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_type}")
+        J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
 
-        for i, j in zip(values, reflected_values):
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
+                                                                 e.value_shape)
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -234,22 +221,16 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
-        if e.mapping_type == basix.MappingType.identity:
-            pass
-        elif e.mapping_type == basix.MappingType.covariantPiola:
-            for i, r in enumerate(rotated_values):
-                for j in range(e.dim):
-                    rotated_values[i][j::e.dim] = (r[j + e.dim], r[j + 2 * e.dim], r[j])
-        elif e.mapping_type == basix.MappingType.contravariantPiola:
-            for i, r in enumerate(rotated_values):
-                for j in range(e.dim):
-                    rotated_values[i][j::e.dim] = (r[j + e.dim], r[j + 2 * e.dim], r[j])
-        elif e.mapping_type == basix.MappingType.doubleCovariantPiola:
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_type}")
+        J = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
 
-        for i, j in zip(values, rotated_values):
+        mapped_values = np.zeros_like(rotated_values)
+        for i, value in enumerate(rotated_values):
+            for j in range(e.dim):
+                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
+                                                                 e.value_shape)
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -261,23 +242,16 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_type == basix.MappingType.identity:
-            pass
-        elif e.mapping_type == basix.MappingType.covariantPiola:
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j + e.dim::e.dim] = r[j + e.dim::e.dim][::-1]
-        elif e.mapping_type == basix.MappingType.contravariantPiola:
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j] = -r[j]
-                    reflected_values[i][j + e.dim::e.dim] = -r[j + e.dim::e.dim][::-1]
-        elif e.mapping_type == basix.MappingType.doubleCovariantPiola:
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_type}")
+        J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
 
-        for i, j in zip(values, reflected_values):
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
+                                                                 e.value_shape)
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -302,21 +276,16 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         reflected_points = np.array([[1 - p[0], p[1], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_type == basix.MappingType.identity:
-            pass
-        elif e.mapping_type == basix.MappingType.covariantPiola:
-            for i, r in enumerate(reflected_values):
-                reflected_values[i][::e.dim] *= -1
-        elif e.mapping_type == basix.MappingType.contravariantPiola:
-            for i, r in enumerate(reflected_values):
-                reflected_values[i][1::e.dim] *= -1
-                reflected_values[i][2::e.dim] *= -1
-        elif e.mapping_type == basix.MappingType.doubleCovariantPiola:
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_type}")
+        J = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
 
-        for i, j in zip(values, reflected_values):
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
+                                                                 e.value_shape)
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -330,26 +299,16 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         rotated_points = np.array([[1 - p[1], p[0], p[2]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
-        if e.mapping_type == basix.MappingType.identity:
-            pass
-        elif e.mapping_type == basix.MappingType.covariantPiola:
-            for i, r in enumerate(rotated_values):
-                for j in range(e.dim):
-                    (rotated_values[i][j],
-                     rotated_values[i][j + e.dim],
-                     rotated_values[i][j + 2 * e.dim]) = (r[j + e.dim], r[j + 2 * e.dim], r[j])
-        elif e.mapping_type == basix.MappingType.contravariantPiola:
-            for i, r in enumerate(rotated_values):
-                for j in range(e.dim):
-                    (rotated_values[i][j],
-                     rotated_values[i][j + e.dim],
-                     rotated_values[i][j + 2 * e.dim]) = (r[j + e.dim], r[j + 2 * e.dim], r[j])
-        elif e.mapping_type == basix.MappingType.doubleCovariantPiola:
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_type}")
+        J = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
 
-        for i, j in zip(values, rotated_values):
+        mapped_values = np.zeros_like(rotated_values)
+        for i, value in enumerate(rotated_values):
+            for j in range(e.dim):
+                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
+                                                                 e.value_shape)
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -361,23 +320,16 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_type == basix.MappingType.identity:
-            pass
-        elif e.mapping_type == basix.MappingType.covariantPiola:
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j:-e.dim:e.dim] = r[j:-e.dim:e.dim][::-1]
-        elif e.mapping_type == basix.MappingType.contravariantPiola:
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j + 2 * e.dim] *= -1
-                    reflected_values[i][j:-e.dim:e.dim] = -r[j:-e.dim:e.dim][::-1]
-        elif e.mapping_type == basix.MappingType.doubleCovariantPiola:
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_type}")
+        J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
 
-        for i, j in zip(values, reflected_values):
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i][j::e.dim] = basix.apply_mapping(1, value[j::e.dim], J, detJ, K, e.mapping_type,
+                                                                 e.value_shape)
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]

@@ -42,6 +42,15 @@ std::vector<Eigen::ArrayXXd> basix::tabulate(int handle, int nd,
   return _registry[handle]->tabulate(nd, x);
 }
 
+Eigen::ArrayXXd basix::apply_mapping(int handle,
+                                     const Eigen::ArrayXd& reference_data,
+                                     const Eigen::MatrixXd& J, double detJ,
+                                     const Eigen::MatrixXd& K)
+{
+  check_handle(handle);
+  return _registry[handle]->apply_mapping(reference_data, J, detJ, K);
+}
+
 const char* basix::cell_type(int handle)
 {
   check_handle(handle);

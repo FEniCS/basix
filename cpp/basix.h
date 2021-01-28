@@ -17,6 +17,11 @@ void release_element(int handle);
 std::vector<Eigen::ArrayXXd> tabulate(int handle, int nd,
                                       const Eigen::ArrayXXd& x);
 
+/// Apply mapping
+Eigen::ArrayXXd apply_mapping(int handle, const Eigen::ArrayXd& reference_data,
+                              const Eigen::MatrixXd& J, double detJ,
+                              const Eigen::MatrixXd& K);
+
 /// Cell type
 const char* cell_type(int handle);
 

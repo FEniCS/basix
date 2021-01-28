@@ -27,7 +27,6 @@ enum class type
 };
 
 /// Apply mapping
-/// @param order TODO: is this needed?
 /// @param reference_data The data to apply the mapping to
 /// @param J The Jacobian
 /// @param detJ The determinant of the Jacobian
@@ -36,7 +35,7 @@ enum class type
 /// @param value_shape The value shape of the data
 /// @return The mapped data
 // TODO: should data be in/out?
-Eigen::ArrayXd apply_mapping(int order, const Eigen::ArrayXd& reference_data,
+Eigen::ArrayXd apply_mapping(const Eigen::ArrayXd& reference_data,
                              const Eigen::MatrixXd& J, double detJ,
                              const Eigen::MatrixXd& K,
                              mapping::type mapping_type,

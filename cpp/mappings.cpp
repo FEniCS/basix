@@ -9,8 +9,7 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd mapping::apply_mapping(int order,
-                                      const Eigen::ArrayXd& reference_data,
+Eigen::ArrayXd mapping::apply_mapping(const Eigen::ArrayXd& reference_data,
                                       const Eigen::MatrixXd& J, double detJ,
                                       const Eigen::MatrixXd& K,
                                       mapping::type mapping_type,

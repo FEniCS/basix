@@ -177,25 +177,6 @@ FiniteElement::apply_mapping(const Eigen::ArrayXd& reference_data,
 {
   return mapping::apply_mapping(reference_data, J, detJ, K, _mapping_type,
                                 _value_shape);
-
-  // Temporary data storage
-  const int vs = value_size();
-  const int d = dim();
-  Eigen::ArrayXd value(vs);
-  Eigen::ArrayXd result(vs);
-
-  // Apply mapping to each tabulated value
-  Eigen::ArrayXd mapped_data(reference_data.size());
-  for (int i = 0; i < d; ++i)
-  {
-    for (int j = 0; j < vs; ++j)
-      value[j] = reference_data(i + j * d);
-    result = mapping::apply_mapping(value, J, detJ, K, _mapping_type,
-                                    _value_shape);
-    for (int j = 0; j < vs; ++j)
-      mapped_data(i + j * d) = result[j];
-  }
-  return mapped_data;
 }
 //-----------------------------------------------------------------------------
 const std::string& basix::version()

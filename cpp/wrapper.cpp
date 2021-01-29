@@ -47,7 +47,43 @@ List[numpy.ndarray]
 )";
 
 const std::string mapdoc = R"(
-TODO: document
+Map a function value from the reference to a cell
+
+Parameters
+==========
+reference_data : numpy.array
+    The function value on the reference
+J : np.ndarray
+    The Jacobian of the mapping
+detJ : int
+    The determinant of the Jacobian of the mapping
+K : np.ndarray
+    The inverse of the Jacobian of the mapping
+
+Returns
+=======
+numpy.ndarray
+    The function value on the cell
+)";
+
+const std::string invmapdoc = R"(
+Map a function value from a cell to the reference
+
+Parameters
+==========
+physical_data : numpy.array
+    The function value on the cell
+J : np.ndarray
+    The Jacobian of the mapping
+detJ : int
+    The determinant of the Jacobian of the mapping
+K : np.ndarray
+    The inverse of the Jacobian of the mapping
+
+Returns
+=======
+numpy.ndarray
+    The function value on the reference
 )";
 
 PYBIND11_MODULE(_basixcpp, m)
@@ -119,6 +155,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
       .def("apply_mapping", &FiniteElement::apply_mapping, mapdoc.c_str())
+      .def("apply_inverse_mapping", &FiniteElement::apply_inverse_mapping,
+           invmapdoc.c_str())
       .def_property_readonly("base_permutations",
                              &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)

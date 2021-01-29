@@ -41,6 +41,21 @@ Eigen::ArrayXd apply_mapping(const Eigen::ArrayXd& reference_data,
                              mapping::type mapping_type,
                              const std::vector<int> value_shape);
 
+/// Apply inverse mapping
+/// @param physical_data The data to apply the inverse mapping to
+/// @param J The Jacobian
+/// @param detJ The determinant of the Jacobian
+/// @param K The inverse of the Jacobian
+/// @param mapping_type Mapping type
+/// @param value_shape The value shape of the data
+/// @return The mapped data
+// TODO: should data be in/out?
+Eigen::ArrayXd apply_inverse_mapping(const Eigen::ArrayXd& physical_data,
+                                     const Eigen::MatrixXd& J, double detJ,
+                                     const Eigen::MatrixXd& K,
+                                     mapping::type mapping_type,
+                                     const std::vector<int> value_shape);
+
 /// Convert mapping type enum to string
 const std::string& type_to_str(mapping::type type);
 

@@ -179,6 +179,15 @@ FiniteElement::apply_mapping(const Eigen::ArrayXd& reference_data,
                                 _value_shape);
 }
 //-----------------------------------------------------------------------------
+Eigen::ArrayXd
+FiniteElement::apply_inverse_mapping(const Eigen::ArrayXd& physical_data,
+                                     const Eigen::MatrixXd& J, double detJ,
+                                     const Eigen::MatrixXd& K) const
+{
+  return mapping::apply_inverse_mapping(physical_data, J, detJ, K,
+                                        _mapping_type, _value_shape);
+}
+//-----------------------------------------------------------------------------
 const std::string& basix::version()
 {
   static const std::string version_str = str(BASIX_VERSION);

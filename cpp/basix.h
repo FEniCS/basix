@@ -17,7 +17,7 @@ void release_element(int handle);
 std::vector<Eigen::ArrayXXd> tabulate(int handle, int nd,
                                       const Eigen::ArrayXXd& x);
 
-/// Push reference data forward to the physical cell
+/// Map a function value from the reference to a physical cell
 /// @param[in] handle The handle of the basix element
 /// @param[in] reference_data The reference data at a single point
 /// @param[in] J The Jacobian of the map to the cell (evaluated at the point)
@@ -31,7 +31,7 @@ Eigen::ArrayXXd map_push_forward(int handle,
                                  const Eigen::MatrixXd& J, double detJ,
                                  const Eigen::MatrixXd& K);
 
-/// Pull physical data back to the reference element
+/// Map a function value from a physical cell to the reference
 /// @param[in] handle The handle of the basix element
 /// @param[in] physical_data The physical data at a single point
 /// @param[in] J The Jacobian of the map to the cell (evaluated at the point)

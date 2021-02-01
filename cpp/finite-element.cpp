@@ -6,6 +6,7 @@
 #include "brezzi-douglas-marini.h"
 #include "crouzeix-raviart.h"
 #include "lagrange.h"
+#include "nce-rtc.h"
 #include "nedelec.h"
 #include "polyset.h"
 #include "raviart-thomas.h"
@@ -38,17 +39,17 @@ basix::FiniteElement basix::create_element(element::family family,
     return create_bdm(cell, degree);
   else if (family == element::family::RT)
   {
-    //  if (cell == cell::type::quadrilateral or cell == cell::type::hexahedron)
-    //    return create_rtc(cell, degree);
-    //  else
-    return create_rt(cell, degree);
+    if (cell == cell::type::quadrilateral or cell == cell::type::hexahedron)
+      return create_rtc(cell, degree);
+    else
+      return create_rt(cell, degree);
   }
   else if (family == element::family::N1E)
   {
-    //  if (cell == cell::type::quadrilateral or cell == cell::type::hexahedron)
-    //    return create_nce(cell, degree);
-    //  else
-    return create_nedelec(cell, degree);
+    if (cell == cell::type::quadrilateral or cell == cell::type::hexahedron)
+      return create_nce(cell, degree);
+    else
+      return create_nedelec(cell, degree);
   }
   else if (family == element::family::N2E)
     return create_nedelec2(cell, degree);

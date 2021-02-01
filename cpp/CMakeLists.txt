@@ -11,7 +11,7 @@ endif()
 # Executable
 add_library(basix SHARED lattice.cpp polyset.cpp dof-permutations.cpp
                           moments.cpp lagrange.cpp finite-element.cpp
-                          element-families.cpp log.cpp nce-rte.cpp
+                          element-families.cpp log.cpp nce-rtc.cpp
                           quadrature.cpp brezzi-douglas-marini.cpp
                           nedelec.cpp raviart-thomas.cpp cell.cpp regge.cpp
                           crouzeix-raviart.cpp basix.cpp)

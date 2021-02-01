@@ -93,5 +93,5 @@ jobs:
           python3 -m pip install scikit-build pybind11 cmake
       - name: Build with setup.py
         run: |
-          python3 setup.py install
+          sudo python3 setup.py install
           python3 -c "import basix; print(basix.__version__)"

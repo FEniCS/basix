@@ -15,8 +15,8 @@ tetrahedron_elements = [
     "Lagrange", "Discontinuous Lagrange",
     "Nedelec 1st kind H(curl)", "Nedelec 2nd kind H(curl)",
     "Raviart-Thomas", "Regge", "Crouzeix-Raviart"]
-quadrilateral_elements = ["Q"]
-hexahedron_elements = ["Q"]
+quadrilateral_elements = ["Q", "RTC", "NCE"]
+hexahedron_elements = ["Q", "RTC", "NCE"]
 
 all_elements = [(cell, e) for cell, elements in [
     ("interval", interval_elements),
@@ -110,6 +110,8 @@ def test_hexahedron_permutation_orders(element_name, order):
 def test_permutation_of_tabulated_data_triangle(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
+    if element_name == "Regge":
+        pytest.skip("DOF permutations not yet implemented for Regge elements.")
 
     e = basix.create_element(element_name, "triangle", order)
 
@@ -135,7 +137,9 @@ def test_permutation_of_tabulated_data_triangle(element_name, order):
                 for j in range(e.dim):
                     reflected_values[i][j::e.dim] = -r[j::e.dim][::-1]
         elif e.mapping_name == "double covariant piola":
-            pytest.skip()  # TODO: implement double covariant piola
+            for i, r in enumerate(reflected_values):
+                for j in range(e.dim):
+                    reflected_values[i][j::e.dim] = r[j::e.dim][::-1]
         else:
             raise ValueError(f"Unknown mapping: {e.mapping_name}")
 
@@ -167,10 +171,12 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):
-                reflected_values[i][::e.dim] *= -1
+                for j in range(e.dim):
+                    reflected_values[i][j] *= -1
         elif e.mapping_name == "contravariant piola":
             for i, r in enumerate(reflected_values):
-                reflected_values[i][1::e.dim] *= -1
+                for j in range(e.dim):
+                    reflected_values[i][e.dim + j] *= -1
         elif e.mapping_name == "double covariant piola":
             pytest.skip()  # TODO: implement double covariant piola
         else:
@@ -189,6 +195,8 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
 def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
+    if element_name == "Regge":
+        pytest.skip("DOF permutations not yet implemented for Regge elements.")
 
     e = basix.create_element(element_name, "tetrahedron", order)
 
@@ -288,6 +296,9 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
 @pytest.mark.parametrize("element_name", hexahedron_elements)
 @pytest.mark.parametrize("order", range(1, 6))
 def test_permutation_of_tabulated_data_hexahedron(element_name, order):
+    if order > 4 and element_name in ["RTC", "NCE"]:
+        pytest.xfail("High order RTC and NCE with equally spaced points are unstable.")
+
     e = basix.create_element(element_name, "hexahedron", order)
 
     N = 4
@@ -306,13 +317,11 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
             pass
         elif e.mapping_name == "covariant piola":
             for i, r in enumerate(reflected_values):
-                reflected_values[i][::e.dim] *= -1
+                reflected_values[i][:e.dim] *= -1
         elif e.mapping_name == "contravariant piola":
             for i, r in enumerate(reflected_values):
                 reflected_values[i][1::e.dim] *= -1
                 reflected_values[i][2::e.dim] *= -1
-        elif e.mapping_name == "double covariant piola":
-            pytest.skip()  # TODO: implement double covariant piola
         else:
             raise ValueError(f"Unknown mapping: {e.mapping_name}")
 
@@ -336,16 +345,12 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
             for i, r in enumerate(rotated_values):
                 for j in range(e.dim):
                     (rotated_values[i][j],
-                     rotated_values[i][j + e.dim],
-                     rotated_values[i][j + 2 * e.dim]) = (r[j + e.dim], r[j + 2 * e.dim], r[j])
+                     rotated_values[i][j + e.dim]) = (r[j + e.dim], -r[j])
         elif e.mapping_name == "contravariant piola":
             for i, r in enumerate(rotated_values):
                 for j in range(e.dim):
                     (rotated_values[i][j],
-                     rotated_values[i][j + e.dim],
-                     rotated_values[i][j + 2 * e.dim]) = (r[j + e.dim], r[j + 2 * e.dim], r[j])
-        elif e.mapping_name == "double covariant piola":
-            pytest.skip()  # TODO: implement double covariant piola
+                     rotated_values[i][j + e.dim]) = (-r[j + e.dim], r[j])
         else:
             raise ValueError(f"Unknown mapping: {e.mapping_name}")
 

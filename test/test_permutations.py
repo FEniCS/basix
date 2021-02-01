@@ -391,4 +391,3 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
                 assert np.allclose((e.base_permutations[13].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
-

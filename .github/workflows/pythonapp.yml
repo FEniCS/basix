@@ -25,7 +25,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libeigen3-dev doxygen
-      - name: Build documentation
+      - name: Build documentation (Linux)
+        if: runner.os == 'Linux'
         run: |
           cd doc && doxygen
       - name: Install dependencies (non-Python, macOS)
@@ -47,14 +48,14 @@ jobs:
           pip install pytest pytest-xdist numpy sympy
           pytest -n auto test/
       - name: Checkout FEniCS/docs
-        if: ${{ github.repository == 'FEniCS/basix' && github.ref == 'refs/heads/main'}}
+        if: ${{ github.repository == 'FEniCS/basix' && github.ref == 'refs/heads/main' && runner.os == 'Linux' }}
         uses: actions/checkout@v2
         with:
           repository: "FEniCS/docs"
           path: "docs"
           ssh-key: "${{ secrets.SSH_GITHUB_DOCS_PRIVATE_KEY }}"
       - name: Push documentation to repository FEniCS/docs
-        if: ${{ github.repository == 'FEniCS/basix' && github.ref == 'refs/heads/main'}}
+        if: ${{ github.repository == 'FEniCS/basix' && github.ref == 'refs/heads/main' && runner.os == 'Linux' }}
         run: |
           cd docs
           git config --global user.email "fenics@github.com"

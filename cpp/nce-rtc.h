@@ -12,13 +12,11 @@ namespace basix
 /// Create RTC H(div) element
 /// @param celltype
 /// @param degree
-/// @param name
 FiniteElement create_rtc(cell::type celltype, int degree);
 
 /// Create NC H(curl) element
 /// @param celltype
 /// @param degree
-/// @param name
 FiniteElement create_nce(cell::type celltype, int degree);
 
 namespace dofperms

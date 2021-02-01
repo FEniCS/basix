@@ -51,6 +51,15 @@ Eigen::ArrayXXd basix::map_push_forward(int handle,
   return _registry[handle]->map_push_forward(reference_data, J, detJ, K);
 }
 
+Eigen::ArrayXXd basix::map_pull_back(int handle,
+                                     const Eigen::ArrayXd& physical_data,
+                                     const Eigen::MatrixXd& J, double detJ,
+                                     const Eigen::MatrixXd& K)
+{
+  check_handle(handle);
+  return _registry[handle]->map_pull_back(physical_data, J, detJ, K);
+}
+
 const char* basix::cell_type(int handle)
 {
   check_handle(handle);

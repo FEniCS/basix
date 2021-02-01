@@ -17,11 +17,32 @@ void release_element(int handle);
 std::vector<Eigen::ArrayXXd> tabulate(int handle, int nd,
                                       const Eigen::ArrayXXd& x);
 
-/// Apply mapping to push reference data to the physical cell
+/// Push reference data forward to the physical cell
+/// @param[in] handle The handle of the basix element
+/// @param[in] reference_data The reference data at a single point
+/// @param[in] J The Jacobian of the map to the cell (evaluated at the point)
+/// @param[in] detJ The determinant of the Jacobian of the map to the cell
+/// (evaluated at the point)
+/// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
+/// at the point)
+/// @return The data on the physical cell at the corresponding point
 Eigen::ArrayXXd map_push_forward(int handle,
                                  const Eigen::ArrayXd& reference_data,
                                  const Eigen::MatrixXd& J, double detJ,
                                  const Eigen::MatrixXd& K);
+
+/// Pull physical data back to the reference element
+/// @param[in] handle The handle of the basix element
+/// @param[in] physical_data The physical data at a single point
+/// @param[in] J The Jacobian of the map to the cell (evaluated at the point)
+/// @param[in] detJ The determinant of the Jacobian of the map to the cell
+/// (evaluated at the point)
+/// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
+/// at the point)
+/// @return The data on the reference element at the corresponding point
+Eigen::ArrayXXd map_pull_back(int handle, const Eigen::ArrayXd& physical_data,
+                              const Eigen::MatrixXd& J, double detJ,
+                              const Eigen::MatrixXd& K);
 
 /// Cell type
 const char* cell_type(int handle);

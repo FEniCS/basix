@@ -23,8 +23,8 @@ jobs:
       - name: Install dependencies (non-Python, Linux)
         if: runner.os == 'Linux'
         run: |
-          apt-get update
-          apt-get install -y libeigen3-dev doxygen
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev doxygen
       - name: Build documentation
         run: |
           cd doc && doxygen
@@ -73,12 +73,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          apt-get -y install libeigen3-dev python3-pip
-          python3 -m pip install scikit-build pybind11 cmake
+          sudo apt-get -y install libeigen3-dev python3-pip
+          sudo python3 -m pip install scikit-build pybind11 cmake
       - name: Build with cmake
         run: |
           cmake .
-          make -j 2 install
+          make -j 2
+          sudo make install
 
   setup-py:
     runs-on: ubuntu-20.04
@@ -87,7 +88,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          apt-get -y install libeigen3-dev python3-pip
+          sudo apt-get -y install libeigen3-dev python3-pip
           python3 -m pip install scikit-build pybind11 cmake
       - name: Build with setup.py
         run: |

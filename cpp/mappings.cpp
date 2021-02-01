@@ -9,11 +9,11 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd mapping::apply_mapping(const Eigen::ArrayXd& reference_data,
-                                      const Eigen::MatrixXd& J, double detJ,
-                                      const Eigen::MatrixXd& K,
-                                      mapping::type mapping_type,
-                                      const std::vector<int> value_shape)
+Eigen::ArrayXd mapping::map_push_forward(const Eigen::ArrayXd& reference_data,
+                                         const Eigen::MatrixXd& J, double detJ,
+                                         const Eigen::MatrixXd& K,
+                                         mapping::type mapping_type,
+                                         const std::vector<int> value_shape)
 {
   switch (mapping_type)
   {
@@ -43,10 +43,11 @@ Eigen::ArrayXd mapping::apply_mapping(const Eigen::ArrayXd& reference_data,
   }
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd mapping::apply_inverse_mapping(
-    const Eigen::ArrayXd& physical_data, const Eigen::MatrixXd& J, double detJ,
-    const Eigen::MatrixXd& K, mapping::type mapping_type,
-    const std::vector<int> value_shape)
+Eigen::ArrayXd mapping::map_pull_back(const Eigen::ArrayXd& physical_data,
+                                      const Eigen::MatrixXd& J, double detJ,
+                                      const Eigen::MatrixXd& K,
+                                      mapping::type mapping_type,
+                                      const std::vector<int> value_shape)
 {
   switch (mapping_type)
   {

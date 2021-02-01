@@ -154,9 +154,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
-      .def("apply_mapping", &FiniteElement::apply_mapping, mapdoc.c_str())
-      .def("apply_inverse_mapping", &FiniteElement::apply_inverse_mapping,
-           invmapdoc.c_str())
+      .def("map_push_forward", &FiniteElement::map_push_forward, mapdoc.c_str())
+      .def("map_pull_back", &FiniteElement::map_pull_back, invmapdoc.c_str())
       .def_property_readonly("base_permutations",
                              &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)

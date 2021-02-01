@@ -9,10 +9,11 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-element::family element::str_to_family(std::string name)
+element::family element::str_to_type(std::string name)
 {
   static const std::map<std::string, element::family> name_to_type
-      = {{"Lagrange", element::family::P},
+      = {{"Custom element", element::family::custom},
+         {"Lagrange", element::family::P},
          {"Discontinuous Lagrange", element::family::DP},
          {"Brezzi-Douglas-Marini", element::family::BDM},
          {"Raviart-Thomas", element::family::RT},
@@ -28,10 +29,11 @@ element::family element::str_to_family(std::string name)
   return it->second;
 }
 //-----------------------------------------------------------------------------
-const std::string& element::family_to_str(element::family type)
+const std::string& element::type_to_str(element::family type)
 {
   static const std::map<element::family, std::string> name_to_type
-      = {{element::family::P, "Lagrange"},
+      = {{element::family::custom, "Custom element"},
+         {element::family::P, "Lagrange"},
          {element::family::DP, "Discontinuous Lagrange"},
          {element::family::BDM, "Brezzi-Douglas-Marini"},
          {element::family::RT, "Raviart-Thomas"},

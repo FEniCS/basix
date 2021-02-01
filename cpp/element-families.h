@@ -13,6 +13,7 @@ namespace element
 /// Enum of available element families
 enum class family
 {
+  custom,
   P,
   RT,
   N1E,
@@ -24,10 +25,10 @@ enum class family
 };
 
 /// Convert string to a family
-element::family str_to_family(std::string name);
+element::family str_to_type(std::string name);
 
 // Convert family to string
-const std::string& family_to_str(element::family type);
+const std::string& type_to_str(element::family type);
 
 } // namespace element
 

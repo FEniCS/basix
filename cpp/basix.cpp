@@ -89,7 +89,7 @@ const std::vector<std::vector<int>>& basix::entity_dofs(int handle)
 const char* basix::family_name(int handle)
 {
   check_handle(handle);
-  return element::family_to_str(_registry[handle]->family()).c_str();
+  return element::type_to_str(_registry[handle]->family()).c_str();
 }
 
 const char* basix::mapping_name(int handle)

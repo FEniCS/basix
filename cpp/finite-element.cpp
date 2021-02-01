@@ -22,7 +22,7 @@ using namespace basix;
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
                                            int degree)
 {
-  return basix::create_element(element::str_to_family(family),
+  return basix::create_element(element::str_to_type(family),
                                cell::str_to_type(cell), degree);
 }
 //-----------------------------------------------------------------------------

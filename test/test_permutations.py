@@ -15,8 +15,8 @@ tetrahedron_elements = [
     "Lagrange", "Discontinuous Lagrange",
     "Nedelec 1st kind H(curl)", "Nedelec 2nd kind H(curl)",
     "Raviart-Thomas", "Regge", "Crouzeix-Raviart"]
-quadrilateral_elements = ["Q"]
-hexahedron_elements = ["Q"]
+quadrilateral_elements = ["Q", "RTC", "NCE"]
+hexahedron_elements = ["Q", "RTC", "NCE"]
 
 all_elements = [(cell, e) for cell, elements in [
     ("interval", interval_elements),
@@ -111,7 +111,7 @@ def test_permutation_of_tabulated_data_triangle(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
     if element_name == "Regge":
-        pytest.skip("Permutations not yet implemented for Regge elements.")
+        pytest.skip("DOF permutations not yet implemented for Regge elements.")
 
     e = basix.create_element(element_name, "triangle", order)
 
@@ -180,7 +180,7 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
     if element_name == "Regge":
-        pytest.skip("Permutations not yet implemented for Regge elements.")
+        pytest.skip("DOF permutations not yet implemented for Regge elements.")
 
     e = basix.create_element(element_name, "tetrahedron", order)
 
@@ -257,6 +257,9 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
 @pytest.mark.parametrize("element_name", hexahedron_elements)
 @pytest.mark.parametrize("order", range(1, 6))
 def test_permutation_of_tabulated_data_hexahedron(element_name, order):
+    if order > 4 and element_name in ["RTC", "NCE"]:
+        pytest.xfail("High order RTC and NCE with equally spaced points are unstable.")
+
     e = basix.create_element(element_name, "hexahedron", order)
 
     N = 4

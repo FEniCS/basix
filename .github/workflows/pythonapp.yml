@@ -20,11 +20,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install dependencies (non-Python, Linux) and Doxygen
+      - name: Install dependencies (non-Python, Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libeigen3-dev doxygen
+      - name: Build documentation (Linux)
+        if: runner.os == 'Linux'
+        run: |
           cd doc && doxygen
       - name: Install dependencies (non-Python, macOS)
         if: runner.os == 'macOS'
@@ -44,6 +47,25 @@ jobs:
         run: |
           pip install pytest pytest-xdist numpy sympy
           pytest -n auto test/
+      - name: Checkout FEniCS/docs
+        if: ${{ github.repository == 'FEniCS/basix' && github.ref == 'refs/heads/main' && runner.os == 'Linux' }}
+        uses: actions/checkout@v2
+        with:
+          repository: "FEniCS/docs"
+          path: "docs"
+          ssh-key: "${{ secrets.SSH_GITHUB_DOCS_PRIVATE_KEY }}"
+      - name: Push documentation to repository FEniCS/docs
+        if: ${{ github.repository == 'FEniCS/basix' && github.ref == 'refs/heads/main' && runner.os == 'Linux' }}
+        run: |
+          cd docs
+          git config --global user.email "fenics@github.com"
+          git config --global user.name "FEniCS GitHub Actions"
+          git rm -r basix/main/cpp
+          mkdir -p basix/main/cpp
+          cp -r ../doc/html/* basix/main/cpp
+          git add -all
+          git commit --allow-empty -m "C++ FEniCS/basix@${{ github.sha }}"
+          git push
 
   cmake:
     runs-on: ubuntu-20.04
@@ -56,9 +78,10 @@ jobs:
           sudo python3 -m pip install scikit-build pybind11 cmake
       - name: Build with cmake
         run: |
-          sudo cmake .
-          sudo make -j 2 install
-  
+          cmake .
+          make -j 2
+          sudo make install
+
   setup-py:
     runs-on: ubuntu-20.04
     steps:

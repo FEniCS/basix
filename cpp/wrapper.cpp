@@ -137,6 +137,17 @@ Each element has a `tabulate` function which returns the basis functions and a n
       },
       "Convert a mapping type to a string.");
 
+  py::enum_<element::family>(m, "ElementFamily")
+      .value("custom", element::family::custom)
+      .value("P", element::family::P)
+      .value("DP", element::family::DP)
+      .value("BDM", element::family::BDM)
+      .value("RT", element::family::RT)
+      .value("N1E", element::family::N1E)
+      .value("N2E", element::family::N2E)
+      .value("Regge", element::family::Regge)
+      .value("CR", element::family::CR);
+
   m.def(
       "family_to_str",
       [](element::family family_type) -> const std::string& {

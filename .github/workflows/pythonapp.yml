@@ -63,7 +63,7 @@ jobs:
           git rm -r basix/main/cpp
           mkdir -p basix/main/cpp
           cp -r ../doc/html/* basix/main/cpp
-          git add -all
+          git add --all
           git commit --allow-empty -m "C++ FEniCS/basix@${{ github.sha }}"
           git push
 

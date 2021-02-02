@@ -2,7 +2,7 @@ import os
 
 # Public interface
 from ._basixcpp import __version__
-from ._basixcpp import create_element, CellType, mapping_to_str, family_to_str
+from ._basixcpp import create_element, CellType, mapping_to_str, family_to_str, MappingType
 
 
 # To possibly be removed

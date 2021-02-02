@@ -1,7 +1,11 @@
+// Copyright (c) 2020 Chris Richardson
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
 
 #include "basix.h"
 #include "cell.h"
 #include "finite-element.h"
+#include "mappings.h"
 #include "quadrature.h"
 #include <algorithm>
 #include <iterator>
@@ -47,6 +51,24 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
   const int m = values[0].rows() * values[0].cols();
   for (std::size_t i = 0; i < values.size(); ++i)
     std::copy(values[i].data(), values[i].data() + m, basis_values + i * m);
+}
+
+Eigen::ArrayXXd basix::map_push_forward(int handle,
+                                        const Eigen::ArrayXd& reference_data,
+                                        const Eigen::MatrixXd& J, double detJ,
+                                        const Eigen::MatrixXd& K)
+{
+  check_handle(handle);
+  return _registry[handle]->map_push_forward(reference_data, J, detJ, K);
+}
+
+Eigen::ArrayXXd basix::map_pull_back(int handle,
+                                     const Eigen::ArrayXd& physical_data,
+                                     const Eigen::MatrixXd& J, double detJ,
+                                     const Eigen::MatrixXd& K)
+{
+  check_handle(handle);
+  return _registry[handle]->map_pull_back(physical_data, J, detJ, K);
 }
 
 const char* basix::cell_type(int handle)
@@ -96,13 +118,13 @@ void basix::entity_dofs(int handle, int dim, int* num_dofs)
 const char* basix::family_name(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->family_name().c_str();
+  return element::type_to_str(_registry[handle]->family()).c_str();
 }
 
 const char* basix::mapping_name(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->mapping_name().c_str();
+  return mapping::type_to_str(_registry[handle]->mapping_type()).c_str();
 }
 
 int basix::cell_geometry_num_points(const char* cell_type)

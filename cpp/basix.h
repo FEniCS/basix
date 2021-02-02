@@ -1,3 +1,6 @@
+// Copyright (c) 2020 Chris Richardson
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
 
 #include <Eigen/Core>
 #include <utility>
@@ -16,6 +19,33 @@ void release_element(int handle);
 /// Tabulate
 void tabulate(int handle, double* basis_values, int nd, const double* x,
               int npoints, int tdim);
+
+/// Map a function value from the reference to a physical cell
+/// @param[in] handle The handle of the basix element
+/// @param[in] reference_data The reference data at a single point
+/// @param[in] J The Jacobian of the map to the cell (evaluated at the point)
+/// @param[in] detJ The determinant of the Jacobian of the map to the cell
+/// (evaluated at the point)
+/// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
+/// at the point)
+/// @return The data on the physical cell at the corresponding point
+Eigen::ArrayXXd map_push_forward(int handle,
+                                 const Eigen::ArrayXd& reference_data,
+                                 const Eigen::MatrixXd& J, double detJ,
+                                 const Eigen::MatrixXd& K);
+
+/// Map a function value from a physical cell to the reference
+/// @param[in] handle The handle of the basix element
+/// @param[in] physical_data The physical data at a single point
+/// @param[in] J The Jacobian of the map to the cell (evaluated at the point)
+/// @param[in] detJ The determinant of the Jacobian of the map to the cell
+/// (evaluated at the point)
+/// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
+/// at the point)
+/// @return The data on the reference element at the corresponding point
+Eigen::ArrayXXd map_pull_back(int handle, const Eigen::ArrayXd& physical_data,
+                              const Eigen::MatrixXd& J, double detJ,
+                              const Eigen::MatrixXd& K);
 
 /// Cell type
 const char* cell_type(int handle);
@@ -39,7 +69,7 @@ int dim(int handle);
 /// Family name
 const char* family_name(int handle);
 
-/// Mapping name (affine, piola etc.)
+/// Mapping name (identity, piola etc.)
 const char* mapping_name(int handle);
 
 /// Number of dofs per entity of given dimension

@@ -13,16 +13,12 @@ namespace basix
 /// Create a Lagrange element on cell with given degree
 /// @param[in] celltype interval, triangle or tetrahedral celltype
 /// @param[in] degree
-/// @param[in] name Identifier string (optional)
-/// @return A FiniteElemenet
-FiniteElement create_lagrange(cell::type celltype, int degree,
-                              const std::string& name = std::string());
+/// @return A FiniteElement
+FiniteElement create_lagrange(cell::type celltype, int degree);
 
 /// Create a Discontinuous Lagrange element on cell with given degree
 /// @param celltype interval, triangle or tetrahedral celltype
 /// @param[in] degree
-/// @param[in] name Identifier string (optional)
-/// @return A FiniteElemenet
-FiniteElement create_dlagrange(cell::type celltype, int degree,
-                               const std::string& name = std::string());
+/// @return A FiniteElement
+FiniteElement create_dlagrange(cell::type celltype, int degree);
 } // namespace basix

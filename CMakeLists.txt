@@ -34,7 +34,7 @@ list(APPEND CMAKE_PREFIX_PATH "${_tmp_cmake_dir}")
 
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
-include_directories(${EIGEN3_INCLUDE_DIRS})
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 
 # Now we can find pybind11
 find_package(pybind11 CONFIG REQUIRED)

@@ -1,9 +1,15 @@
+// Copyright (c) 2020 Chris Richardson
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
+
 // FIXME: just include everything for now
 // Need to define public API
 
 #pragma once
 
 #include "cell.h"
+#include "mappings.h"
+#include "element-families.h"
 #include <Eigen/Dense>
 #include <string>
 #include <vector>
@@ -149,14 +155,14 @@ class FiniteElement
 
 public:
   /// A finite element
-  FiniteElement(std::string family_name, cell::type cell_type, int degree,
+  FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<int>& value_shape,
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
                 const std::vector<Eigen::MatrixXd>& base_permutations,
                 const Eigen::ArrayXXd& points,
                 const Eigen::MatrixXd interpolation_matrix = {},
-                const std::string mapping_name = "affine");
+                mapping::type mapping_type = mapping::type::identity);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -211,13 +217,33 @@ public:
   /// @return Number of degrees of freedom
   int dim() const;
 
-  /// Get the name of the finite element family
-  /// @return The family name
-  const std::string& family_name() const;
+  /// Get the finite element family
+  /// @return The family
+  element::family family() const;
 
-  /// Get the mapping used for this element
+  /// Get the mapping type used for this element
   /// @return The mapping
-  const std::string& mapping_name() const;
+  const mapping::type mapping_type() const;
+
+  /// Map a function value from the reference to a physical cell
+  /// @param reference_data The function value on the reference
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @return The function value on the cell
+  Eigen::ArrayXd map_push_forward(const Eigen::ArrayXd& reference_data,
+                                  const Eigen::MatrixXd& J, double detJ,
+                                  const Eigen::MatrixXd& K) const;
+
+  /// Map a function value from a physical cell to the reference
+  /// @param physical_data The function value on the cell
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @return The function value on the reference
+  Eigen::ArrayXd map_pull_back(const Eigen::ArrayXd& physical_data,
+                               const Eigen::MatrixXd& J, double detJ,
+                               const Eigen::MatrixXd& K) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -324,7 +350,7 @@ private:
   cell::type _cell_type;
 
   // The name of the finite element family
-  std::string _family_name;
+  element::family _family;
 
   // Degree
   int _degree;
@@ -333,7 +359,7 @@ private:
   std::vector<int> _value_shape;
 
   /// The mapping used to map this element from the reference to a cell
-  std::string _mapping_name;
+  mapping::type _mapping_type;
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k}@f$,
@@ -364,6 +390,10 @@ private:
 
 /// Create an element by name
 FiniteElement create_element(std::string family, std::string cell, int degree);
+
+/// Create an element by name
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree);
 
 /// Return the version number of basix across projects
 /// @return version string

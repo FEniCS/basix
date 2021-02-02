@@ -11,8 +11,6 @@ namespace basix
 /// Create Regge element
 /// @param celltype
 /// @param degree
-/// @param name
-FiniteElement create_regge(cell::type celltype, int degree,
-                           const std::string& name = std::string());
+FiniteElement create_regge(cell::type celltype, int degree);
 
 } // namespace basix

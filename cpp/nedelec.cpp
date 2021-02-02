@@ -93,10 +93,6 @@ Eigen::MatrixXd create_nedelec_2d_dual(int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec_2d_interpolation(int degree)
 {
-  // TODO: fix interpolation for higher order elements
-  if (degree > 2)
-    return {{}, {}};
-
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
@@ -294,10 +290,6 @@ Eigen::MatrixXd create_nedelec_3d_dual(int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec_3d_interpolation(int degree)
 {
-  // TODO: fix interpolation for higher order elements
-  if (degree > 1)
-    return {{}, {}};
-
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
@@ -324,8 +316,8 @@ create_nedelec_3d_interpolation(int degree)
                            matrix_1d.cols() + matrix_2d.cols());
     matrix.setZero();
 
-    points.block(0, 0, points_1d.rows(), 2) = points_1d;
-    points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
+    points.block(0, 0, points_1d.rows(), 3) = points_1d;
+    points.block(points_1d.rows(), 0, points_2d.rows(), 3) = points_2d;
 
     for (int i = 0; i < 3; ++i)
     {
@@ -479,10 +471,6 @@ Eigen::MatrixXd create_nedelec2_2d_dual(int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec2_2d_interpolation(int degree)
 {
-  // TODO: fix interpolation for higher order elements
-  if (degree > 1)
-    return {{}, {}};
-
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 

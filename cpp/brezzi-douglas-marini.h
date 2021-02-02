@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -12,8 +12,6 @@ namespace basix
 /// Create BDM element
 /// @param celltype
 /// @param degree
-/// @param name
-FiniteElement create_bdm(cell::type celltype, int degree,
-                         const std::string& name = std::string());
+FiniteElement create_bdm(cell::type celltype, int degree);
 
 } // namespace basix

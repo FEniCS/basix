@@ -15,8 +15,10 @@ tetrahedron_elements = [
     "Lagrange", "Discontinuous Lagrange",
     "Nedelec 1st kind H(curl)", "Nedelec 2nd kind H(curl)",
     "Raviart-Thomas", "Regge", "Crouzeix-Raviart"]
-quadrilateral_elements = ["Q", "RTC", "NCE"]
-hexahedron_elements = ["Q", "RTC", "NCE"]
+quadrilateral_elements = [
+    "Lagrange", "Raviart-Thomas", "Nedelec 1st kind H(curl)"]
+hexahedron_elements = [
+    "Lagrange", "Raviart-Thomas", "Nedelec 1st kind H(curl)"]
 
 all_elements = [(cell, e) for cell, elements in [
     ("interval", interval_elements),
@@ -257,8 +259,9 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
 @pytest.mark.parametrize("element_name", hexahedron_elements)
 @pytest.mark.parametrize("order", range(1, 6))
 def test_permutation_of_tabulated_data_hexahedron(element_name, order):
-    if order > 4 and element_name in ["RTC", "NCE"]:
-        pytest.xfail("High order RTC and NCE with equally spaced points are unstable.")
+    if order > 4 and element_name in ["Raviart-Thomas", "Nedelec 1st kind H(curl)"]:
+        pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "
+                     "Lagrange spaces equally spaced points are unstable.")
 
     e = basix.create_element(element_name, "hexahedron", order)
 

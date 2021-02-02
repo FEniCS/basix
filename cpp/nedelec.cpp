@@ -4,6 +4,7 @@
 
 #include "nedelec.h"
 #include "dof-permutations.h"
+#include "element-families.h"
 #include "lagrange.h"
 #include "mappings.h"
 #include "moments.h"
@@ -641,8 +642,7 @@ std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_nedelec(cell::type celltype, int degree,
-                                    const std::string& name)
+FiniteElement basix::create_nedelec(cell::type celltype, int degree)
 {
   Eigen::MatrixXd wcoeffs;
   Eigen::MatrixXd dual;
@@ -680,13 +680,12 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree,
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
-  return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       perms, points, interp_matrix,
+  return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, perms, points, interp_matrix,
                        mapping::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
-                                     const std::string& name)
+FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
   const int psize = polyset::dim(celltype, degree);
@@ -727,8 +726,8 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
   if (tdim > 2)
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
-  return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, points, interp_matrix,
+  return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, base_permutations, points, interp_matrix,
                        mapping::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

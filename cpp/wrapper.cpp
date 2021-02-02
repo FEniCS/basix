@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson and Matthew Scroggs
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -9,6 +9,7 @@
 #include <string>
 
 #include "cell.h"
+#include "element-families.h"
 #include "finite-element.h"
 #include "indexing.h"
 #include "lattice.h"
@@ -136,9 +137,27 @@ Each element has a `tabulate` function which returns the basis functions and a n
       },
       "Convert a mapping type to a string.");
 
+  py::enum_<element::family>(m, "ElementFamily")
+      .value("custom", element::family::custom)
+      .value("P", element::family::P)
+      .value("DP", element::family::DP)
+      .value("BDM", element::family::BDM)
+      .value("RT", element::family::RT)
+      .value("N1E", element::family::N1E)
+      .value("N2E", element::family::N2E)
+      .value("Regge", element::family::Regge)
+      .value("CR", element::family::CR);
+
+  m.def(
+      "family_to_str",
+      [](element::family family_type) -> const std::string& {
+        return element::type_to_str(family_type);
+      },
+      "Convert a family type to a string.");
+
   m.def(
       "create_new_element",
-      [](const std::string family_name, cell::type celltype, int degree,
+      [](element::family family_type, cell::type celltype, int degree,
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
@@ -146,7 +165,24 @@ Each element has a `tabulate` function which returns the basis functions and a n
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
         return FiniteElement(
-            family_name, celltype, degree, value_shape,
+            family_type, celltype, degree, value_shape,
+            compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
+            base_permutations, {}, {}, mapping_type);
+      },
+      "Create an element from basic data");
+
+  m.def(
+      "create_new_element",
+      [](std::string family_name, std::string cell_name, int degree,
+         std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
+         const Eigen::MatrixXd& coeffs,
+         const std::vector<std::vector<int>>& entity_dofs,
+         const std::vector<Eigen::MatrixXd>& base_permutations,
+         mapping::type mapping_type
+         = mapping::type::identity) -> FiniteElement {
+        return FiniteElement(
+            element::str_to_type(family_name), cell::str_to_type(cell_name),
+            degree, value_shape,
             compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
             base_permutations, {}, {}, mapping_type);
       },
@@ -164,39 +200,20 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
-      .def_property_readonly("family_name", &FiniteElement::family_name)
+      .def_property_readonly("family", &FiniteElement::family)
       .def_property_readonly("mapping_type", &FiniteElement::mapping_type)
       .def_property_readonly("points", &FiniteElement::points)
       .def_property_readonly("interpolation_matrix",
                              &FiniteElement::interpolation_matrix);
 
-  // TODO: remove - not part of public interface
-  // Create FiniteElement of different types
-  m.def("Nedelec", [](const std::string& cell, int degree) {
-    return basix::create_element("Nedelec 1st kind H(curl)", cell, degree);
-  });
-  m.def("NedelecSecondKind", [](const std::string& cell, int degree) {
-    return basix::create_element("Nedelec 2nd kind H(curl)", cell, degree);
-  });
-  m.def("Lagrange", [](const std::string& cell, int degree) {
-    return basix::create_element("Lagrange", cell, degree);
-  });
-  m.def("DiscontinuousLagrange", [](const std::string& cell, int degree) {
-    return basix::create_element("Discontinuous Lagrange", cell, degree);
-  });
-  m.def("CrouzeixRaviart", [](const std::string& cell, int degree) {
-    return basix::create_element("Crouzeix-Raviart", cell, degree);
-  });
-  m.def("RaviartThomas", [](const std::string& cell, int degree) {
-    return basix::create_element("Raviart-Thomas", cell, degree);
-  });
-  m.def("Regge", [](const std::string& cell, int degree) {
-    return basix::create_element("Regge", cell, degree);
-  });
-
   // Create FiniteElement
-  m.def("create_element", &basix::create_element,
-        "Create a FiniteElement of a given family, celltype and degree");
+  m.def(
+      "create_element",
+      [](const std::string family_name, const std::string cell_name,
+         int degree) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree);
+      },
+      "Create a FiniteElement of a given family, celltype and degree");
 
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");

@@ -1,9 +1,10 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
 #include "raviart-thomas.h"
 #include "dof-permutations.h"
+#include "element-families.h"
 #include "lagrange.h"
 #include "mappings.h"
 #include "moments.h"
@@ -16,8 +17,7 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_rt(cell::type celltype, int degree,
-                               const std::string& name)
+FiniteElement basix::create_rt(cell::type celltype, int degree)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -153,8 +153,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
   entity_dofs[tdim] = {ns0 * tdim};
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
-  return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {}, {},
+  return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, base_permutations, {}, {},
                        mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

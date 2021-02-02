@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -23,28 +23,42 @@ using namespace basix;
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
                                            int degree)
 {
-  if (family == "Lagrange" or family == "P" or family == "Q")
-    return create_lagrange(cell::str_to_type(cell), degree, family);
-  else if (family == "Discontinuous Lagrange")
-    return create_dlagrange(cell::str_to_type(cell), degree, family);
-  else if (family == "Brezzi-Douglas-Marini")
-    return create_bdm(cell::str_to_type(cell), degree, family);
-  else if (family == "Raviart-Thomas")
-    return create_rt(cell::str_to_type(cell), degree, family);
-  else if (family == "Nedelec 1st kind H(curl)")
-    return create_nedelec(cell::str_to_type(cell), degree, family);
-  else if (family == "Nedelec 2nd kind H(curl)")
-    return create_nedelec2(cell::str_to_type(cell), degree, family);
-  else if (family == "Regge")
-    return create_regge(cell::str_to_type(cell), degree, family);
-  else if (family == "RTC")
-    return create_rtc(cell::str_to_type(cell), degree, family);
-  else if (family == "NCE")
-    return create_nce(cell::str_to_type(cell), degree, family);
-  else if (family == "Crouzeix-Raviart")
-    return cr::create(cell::str_to_type(cell), degree);
+  return basix::create_element(element::str_to_type(family),
+                               cell::str_to_type(cell), degree);
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree)
+{
+
+  if (family == element::family::P)
+    return create_lagrange(cell, degree);
+  else if (family == element::family::DP)
+    return create_dlagrange(cell, degree);
+  else if (family == element::family::BDM)
+    return create_bdm(cell, degree);
+  else if (family == element::family::RT)
+  {
+    if (cell == cell::type::quadrilateral or cell == cell::type::hexahedron)
+      return create_rtc(cell, degree);
+    else
+      return create_rt(cell, degree);
+  }
+  else if (family == element::family::N1E)
+  {
+    if (cell == cell::type::quadrilateral or cell == cell::type::hexahedron)
+      return create_nce(cell, degree);
+    else
+      return create_nedelec(cell, degree);
+  }
+  else if (family == element::family::N2E)
+    return create_nedelec2(cell, degree);
+  else if (family == element::family::Regge)
+    return create_regge(cell, degree);
+  else if (family == element::family::CR)
+    return create_cr(cell, degree);
   else
-    throw std::runtime_error("Family not found: \"" + family + "\"");
+    throw std::runtime_error("Family not found");
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd
@@ -81,13 +95,13 @@ basix::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
-    std::string name, cell::type cell_type, int degree,
+    element::family family, cell::type cell_type, int degree,
     const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
     const std::vector<std::vector<int>>& entity_dofs,
     const std::vector<Eigen::MatrixXd>& base_permutations,
     const Eigen::ArrayXXd& points, const Eigen::MatrixXd interpolation_matrix,
     mapping::type mapping_type)
-    : _cell_type(cell_type), _family_name(name), _degree(degree),
+    : _cell_type(cell_type), _family(family), _degree(degree),
       _value_shape(value_shape), _mapping_type(mapping_type), _coeffs(coeffs),
       _entity_dofs(entity_dofs), _base_permutations(base_permutations),
       _points(points), _interpolation_matrix(interpolation_matrix)
@@ -123,7 +137,10 @@ const std::vector<int>& FiniteElement::value_shape() const
 //-----------------------------------------------------------------------------
 int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
-const std::string& FiniteElement::family_name() const { return _family_name; }
+element::family FiniteElement::family() const
+{
+  return _family;
+}
 //-----------------------------------------------------------------------------
 const mapping::type FiniteElement::mapping_type() const
 {

@@ -11,11 +11,6 @@ from ._basixcpp import (topology, geometry, tabulate_polynomial_set,
                          make_quadrature, compute_jacobi_deriv,
                          gauss_lobatto_legendre_line_rule)
 
-# To be removed
-from ._basixcpp import (Nedelec, NedelecSecondKind, Lagrange,
-                         DiscontinuousLagrange, CrouzeixRaviart, RaviartThomas,
-                         Regge)
-
 _prefix_dir = os.path.dirname(os.path.abspath(__file__))
 
 

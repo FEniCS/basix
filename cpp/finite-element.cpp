@@ -63,8 +63,8 @@ basix::FiniteElement basix::create_element(element::family family,
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd
 basix::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
-                                       const Eigen::MatrixXd& dual,
-                                       bool condition_check)
+                                      const Eigen::MatrixXd& dual,
+                                      bool condition_check)
 {
 #ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
@@ -100,9 +100,9 @@ FiniteElement::FiniteElement(
     const std::vector<std::vector<int>>& entity_dofs,
     const std::vector<Eigen::MatrixXd>& base_permutations,
     const Eigen::ArrayXXd& points, const Eigen::MatrixXd interpolation_matrix,
-    const std::string mapping_name)
+    mapping::type mapping_type)
     : _cell_type(cell_type), _family(family), _degree(degree),
-      _value_shape(value_shape), _mapping_name(mapping_name), _coeffs(coeffs),
+      _value_shape(value_shape), _mapping_type(mapping_type), _coeffs(coeffs),
       _entity_dofs(entity_dofs), _base_permutations(base_permutations),
       _points(points), _interpolation_matrix(interpolation_matrix)
 {
@@ -142,7 +142,10 @@ element::family FiniteElement::family() const
   return _family;
 }
 //-----------------------------------------------------------------------------
-const std::string& FiniteElement::mapping_name() const { return _mapping_name; }
+const mapping::type FiniteElement::mapping_type() const
+{
+  return _mapping_type;
+}
 //-----------------------------------------------------------------------------
 const Eigen::MatrixXd& FiniteElement::interpolation_matrix() const
 {
@@ -188,6 +191,24 @@ std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
 }
 //-----------------------------------------------------------------------------
 const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
+//-----------------------------------------------------------------------------
+Eigen::ArrayXd
+FiniteElement::map_push_forward(const Eigen::ArrayXd& reference_data,
+                                const Eigen::MatrixXd& J, double detJ,
+                                const Eigen::MatrixXd& K) const
+{
+  return mapping::map_push_forward(reference_data, J, detJ, K, _mapping_type,
+                                   _value_shape);
+}
+//-----------------------------------------------------------------------------
+Eigen::ArrayXd FiniteElement::map_pull_back(const Eigen::ArrayXd& physical_data,
+                                            const Eigen::MatrixXd& J,
+                                            double detJ,
+                                            const Eigen::MatrixXd& K) const
+{
+  return mapping::map_pull_back(physical_data, J, detJ, K, _mapping_type,
+                                _value_shape);
+}
 //-----------------------------------------------------------------------------
 const std::string& basix::version()
 {

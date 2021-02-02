@@ -6,6 +6,7 @@
 #include "dof-permutations.h"
 #include "element-families.h"
 #include "lagrange.h"
+#include "mappings.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
@@ -31,8 +32,8 @@ Eigen::MatrixXd create_nedelec_2d_space(int degree)
   const int ns = degree;
 
   // Tabulate polynomial set at quadrature points
-  auto [Qpts, Qwts]
-      = quadrature::make_quadrature("default", cell::type::triangle, 2 * degree);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(
+      "default", cell::type::triangle, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
       = polyset::tabulate(cell::type::triangle, degree, 0, Qpts)[0];
 
@@ -190,8 +191,8 @@ Eigen::MatrixXd create_nedelec_3d_space(int degree)
                     + (degree - 2) * (degree - 1) * degree / 2;
 
   // Tabulate polynomial basis at quadrature points
-  auto [Qpts, Qwts]
-    = quadrature::make_quadrature("default", cell::type::tetrahedron, 2 * degree);
+  auto [Qpts, Qwts] = quadrature::make_quadrature(
+      "default", cell::type::tetrahedron, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
       = polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts)[0];
   const int psize = Pkp1_at_Qpts.cols();
@@ -693,7 +694,7 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, perms, points, interp_matrix,
-                       "covariant piola");
+                       mapping::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
@@ -739,6 +740,6 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
 
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, points, interp_matrix,
-                       "covariant piola");
+                       mapping::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

@@ -128,24 +128,15 @@ def test_permutation_of_tabulated_data_triangle(element_name, order):
         reflected_points = np.array([[p[1], p[0]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
-            pass
-        elif e.mapping_name == "covariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j::e.dim] = r[j::e.dim][::-1]
-        elif e.mapping_name == "contravariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j::e.dim] = -r[j::e.dim][::-1]
-        elif e.mapping_name == "double covariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j::e.dim] = r[j::e.dim][::-1]
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_name}")
+        J = np.array([[0, 1], [1, 0]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i, j::e.dim] = e.map_push_forward(value[j::e.dim], J, detJ, K)
 
-        for i, j in zip(values, reflected_values):
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -169,22 +160,15 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
         reflected_points = np.array([[1 - p[0], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
-            pass
-        elif e.mapping_name == "covariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j] *= -1
-        elif e.mapping_name == "contravariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][e.dim + j] *= -1
-        elif e.mapping_name == "double covariant piola":
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_name}")
+        J = np.array([[-1, 0], [0, 1]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i, j::e.dim] = e.map_push_forward(value[j::e.dim], J, detJ, K)
 
-        for i, j in zip(values, reflected_values):
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -214,23 +198,15 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
-            pass
-        elif e.mapping_name == "covariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j + e.dim::e.dim] = r[j + e.dim::e.dim][::-1]
-        elif e.mapping_name == "contravariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j] = -r[j]
-                    reflected_values[i][j + e.dim::e.dim] = -r[j + e.dim::e.dim][::-1]
-        elif e.mapping_name == "double covariant piola":
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_name}")
+        J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i, j::e.dim] = e.map_push_forward(value[j::e.dim], J, detJ, K)
 
-        for i, j in zip(values, reflected_values):
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -244,22 +220,15 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
-        if e.mapping_name == "affine":
-            pass
-        elif e.mapping_name == "covariant piola":
-            for i, r in enumerate(rotated_values):
-                for j in range(e.dim):
-                    rotated_values[i][j::e.dim] = (r[j + e.dim], r[j + 2 * e.dim], r[j])
-        elif e.mapping_name == "contravariant piola":
-            for i, r in enumerate(rotated_values):
-                for j in range(e.dim):
-                    rotated_values[i][j::e.dim] = (r[j + e.dim], r[j + 2 * e.dim], r[j])
-        elif e.mapping_name == "double covariant piola":
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_name}")
+        J = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
+        mapped_values = np.zeros_like(rotated_values)
+        for i, value in enumerate(rotated_values):
+            for j in range(e.dim):
+                mapped_values[i, j::e.dim] = e.map_push_forward(value[j::e.dim], J, detJ, K)
 
-        for i, j in zip(values, rotated_values):
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -271,23 +240,15 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
-            pass
-        elif e.mapping_name == "covariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j + e.dim::e.dim] = r[j + e.dim::e.dim][::-1]
-        elif e.mapping_name == "contravariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j] = -r[j]
-                    reflected_values[i][j + e.dim::e.dim] = -r[j + e.dim::e.dim][::-1]
-        elif e.mapping_name == "double covariant piola":
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_name}")
+        J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i, j::e.dim] = e.map_push_forward(value[j::e.dim], J, detJ, K)
 
-        for i, j in zip(values, reflected_values):
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -316,19 +277,15 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         reflected_points = np.array([[1 - p[0], p[1], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
-            pass
-        elif e.mapping_name == "covariant piola":
-            for i, r in enumerate(reflected_values):
-                reflected_values[i][:e.dim] *= -1
-        elif e.mapping_name == "contravariant piola":
-            for i, r in enumerate(reflected_values):
-                reflected_values[i][1::e.dim] *= -1
-                reflected_values[i][2::e.dim] *= -1
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_name}")
+        J = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i, j::e.dim] = e.map_push_forward(value[j::e.dim], J, detJ, K)
 
-        for i, j in zip(values, reflected_values):
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -342,22 +299,15 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         rotated_points = np.array([[1 - p[1], p[0], p[2]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
-        if e.mapping_name == "affine":
-            pass
-        elif e.mapping_name == "covariant piola":
-            for i, r in enumerate(rotated_values):
-                for j in range(e.dim):
-                    (rotated_values[i][j],
-                     rotated_values[i][j + e.dim]) = (r[j + e.dim], -r[j])
-        elif e.mapping_name == "contravariant piola":
-            for i, r in enumerate(rotated_values):
-                for j in range(e.dim):
-                    (rotated_values[i][j],
-                     rotated_values[i][j + e.dim]) = (-r[j + e.dim], r[j])
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_name}")
+        J = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
+        mapped_values = np.zeros_like(rotated_values)
+        for i, value in enumerate(rotated_values):
+            for j in range(e.dim):
+                mapped_values[i, j::e.dim] = e.map_push_forward(value[j::e.dim], J, detJ, K)
 
-        for i, j in zip(values, rotated_values):
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
@@ -369,23 +319,15 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        if e.mapping_name == "affine":
-            pass
-        elif e.mapping_name == "covariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j:-e.dim:e.dim] = r[j:-e.dim:e.dim][::-1]
-        elif e.mapping_name == "contravariant piola":
-            for i, r in enumerate(reflected_values):
-                for j in range(e.dim):
-                    reflected_values[i][j + 2 * e.dim] *= -1
-                    reflected_values[i][j:-e.dim:e.dim] = -r[j:-e.dim:e.dim][::-1]
-        elif e.mapping_name == "double covariant piola":
-            pytest.skip()  # TODO: implement double covariant piola
-        else:
-            raise ValueError(f"Unknown mapping: {e.mapping_name}")
+        J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+        detJ = np.linalg.det(J)
+        K = np.linalg.inv(J)
+        mapped_values = np.zeros_like(reflected_values)
+        for i, value in enumerate(reflected_values):
+            for j in range(e.dim):
+                mapped_values[i, j::e.dim] = e.map_push_forward(value[j::e.dim], J, detJ, K)
 
-        for i, j in zip(values, reflected_values):
+        for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]

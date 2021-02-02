@@ -63,7 +63,8 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature("default", sub_celltype, q_deg);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", sub_celltype, q_deg);
   const int tdim = cell::topological_dimension(celltype);
 
   // If this is always true, value_size input can be removed
@@ -109,8 +110,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
         Eigen::VectorXd axis = axes.row(d);
         for (int k = 0; k < value_size; ++k)
         {
-          Eigen::VectorXd q
-              = phi * Qwts * axis(k);
+          Eigen::VectorXd q = phi * Qwts * axis(k);
           Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;
           assert(qcoeffs.size() == psize);
           dual.block(c, psize * k, 1, psize) = qcoeffs;
@@ -135,7 +135,8 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
   const int tdim = cell::topological_dimension(celltype);
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature("default", sub_celltype, q_deg);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", sub_celltype, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -208,7 +209,8 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
 
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature("default", sub_celltype, q_deg);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", sub_celltype, q_deg);
   const int tdim = cell::topological_dimension(celltype);
 
   // If this is always true, value_size input can be removed
@@ -254,8 +256,7 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
           Eigen::ArrayXd phi
               = moment_space_at_Qpts.col(d * moment_space_size + j);
           Eigen::VectorXd axis = axes.row(d);
-          Eigen::VectorXd qpart
-              = phi * Qwts * axis(k);
+          Eigen::VectorXd qpart = phi * Qwts * axis(k);
           q += qpart;
         }
         Eigen::RowVectorXd qcoeffs = poly_set_at_Qpts * q;
@@ -351,7 +352,8 @@ Eigen::MatrixXd moments::make_tangent_integral_moments(
   if (sub_entity_dim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature("default", cell::type::interval, q_deg);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", cell::type::interval, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -414,7 +416,8 @@ moments::make_tangent_integral_moments_interpolation(
   if (sub_entity_dim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature("default", cell::type::interval, q_deg);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", cell::type::interval, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -478,7 +481,8 @@ Eigen::MatrixXd moments::make_normal_integral_moments(
   if (sub_entity_dim != tdim - 1)
     throw std::runtime_error("Normal is only well-defined on a facet.");
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature("default", sub_celltype, q_deg);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", sub_celltype, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -565,7 +569,8 @@ moments::make_normal_integral_moments_interpolation(
   if (sub_entity_dim != tdim - 1)
     throw std::runtime_error("Normal is only well-defined on a facet.");
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature("default", sub_celltype, q_deg);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", sub_celltype, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);

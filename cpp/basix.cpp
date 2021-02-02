@@ -5,6 +5,7 @@
 #include "basix.h"
 #include "cell.h"
 #include "finite-element.h"
+#include "mappings.h"
 #include "quadrature.h"
 #include <memory>
 #include <vector>
@@ -42,6 +43,24 @@ std::vector<Eigen::ArrayXXd> basix::tabulate(int handle, int nd,
 {
   check_handle(handle);
   return _registry[handle]->tabulate(nd, x);
+}
+
+Eigen::ArrayXXd basix::map_push_forward(int handle,
+                                        const Eigen::ArrayXd& reference_data,
+                                        const Eigen::MatrixXd& J, double detJ,
+                                        const Eigen::MatrixXd& K)
+{
+  check_handle(handle);
+  return _registry[handle]->map_push_forward(reference_data, J, detJ, K);
+}
+
+Eigen::ArrayXXd basix::map_pull_back(int handle,
+                                     const Eigen::ArrayXd& physical_data,
+                                     const Eigen::MatrixXd& J, double detJ,
+                                     const Eigen::MatrixXd& K)
+{
+  check_handle(handle);
+  return _registry[handle]->map_pull_back(physical_data, J, detJ, K);
 }
 
 const char* basix::cell_type(int handle)
@@ -95,7 +114,7 @@ const char* basix::family_name(int handle)
 const char* basix::mapping_name(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->mapping_name().c_str();
+  return mapping::type_to_str(_registry[handle]->mapping_type()).c_str();
 }
 
 Eigen::ArrayXXd basix::geometry(const char* cell_type)

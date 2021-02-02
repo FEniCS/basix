@@ -6,6 +6,7 @@
 #include "dof-permutations.h"
 #include "element-families.h"
 #include "lagrange.h"
+#include "mappings.h"
 #include "moments.h"
 #include "nedelec.h"
 #include "polyset.h"
@@ -121,6 +122,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, {}, {},
-                       "contravariant piola");
+                       mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

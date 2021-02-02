@@ -5,6 +5,7 @@
 #include "regge.h"
 #include "element-families.h"
 #include "lattice.h"
+#include "mappings.h"
 #include "polyset.h"
 #include <iostream>
 
@@ -150,6 +151,6 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
                        coeffs, entity_dofs, base_permutations, {}, {},
-                       "double covariant piola");
+                       mapping::type::doubleCovariantPiola);
 }
 //-----------------------------------------------------------------------------

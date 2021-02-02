@@ -7,6 +7,7 @@
 #include "element-families.h"
 #include "lagrange.h"
 #include "log.h"
+#include "mappings.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
@@ -187,7 +188,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, {}, {},
-                       "contravariant piola");
+                       mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nce(cell::type celltype, int degree)
@@ -399,7 +400,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, {}, {},
-                       "covariant piola");
+                       mapping::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd basix::dofperms::quadrilateral_rtc_rotation(int degree)

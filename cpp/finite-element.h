@@ -8,6 +8,7 @@
 #pragma once
 
 #include "cell.h"
+#include "mappings.h"
 #include "element-families.h"
 #include <Eigen/Dense>
 #include <string>
@@ -161,7 +162,7 @@ public:
                 const std::vector<Eigen::MatrixXd>& base_permutations,
                 const Eigen::ArrayXXd& points,
                 const Eigen::MatrixXd interpolation_matrix = {},
-                const std::string mapping_name = "affine");
+                mapping::type mapping_type = mapping::type::identity);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -220,9 +221,29 @@ public:
   /// @return The family
   element::family family() const;
 
-  /// Get the mapping used for this element
+  /// Get the mapping type used for this element
   /// @return The mapping
-  const std::string& mapping_name() const;
+  const mapping::type mapping_type() const;
+
+  /// Map a function value from the reference to a physical cell
+  /// @param reference_data The function value on the reference
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @return The function value on the cell
+  Eigen::ArrayXd map_push_forward(const Eigen::ArrayXd& reference_data,
+                                  const Eigen::MatrixXd& J, double detJ,
+                                  const Eigen::MatrixXd& K) const;
+
+  /// Map a function value from a physical cell to the reference
+  /// @param physical_data The function value on the cell
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @return The function value on the reference
+  Eigen::ArrayXd map_pull_back(const Eigen::ArrayXd& physical_data,
+                               const Eigen::MatrixXd& J, double detJ,
+                               const Eigen::MatrixXd& K) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -338,7 +359,7 @@ private:
   std::vector<int> _value_shape;
 
   /// The mapping used to map this element from the reference to a cell
-  std::string _mapping_name;
+  mapping::type _mapping_type;
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k}@f$,

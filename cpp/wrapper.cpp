@@ -138,6 +138,13 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Convert a mapping type to a string.");
 
   m.def(
+      "family_to_str",
+      [](element::family family_type) -> const std::string& {
+        return element::type_to_str(family_type);
+      },
+      "Convert a family type to a string.");
+
+  m.def(
       "create_new_element",
       [](element::family family_type, cell::type celltype, int degree,
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
@@ -149,7 +156,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return FiniteElement(
             family_type, celltype, degree, value_shape,
             compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
-            base_permutations, {});
+            base_permutations, {}, {}, mapping_type);
       },
       "Create an element from basic data");
 
@@ -159,8 +166,9 @@ Each element has a `tabulate` function which returns the basis functions and a n
          std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_permutations)
-          -> FiniteElement {
+         const std::vector<Eigen::MatrixXd>& base_permutations,
+         mapping::type mapping_type
+         = mapping::type::identity) -> FiniteElement {
         return FiniteElement(
             element::str_to_type(family_name), cell::str_to_type(cell_name),
             degree, value_shape,

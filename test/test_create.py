@@ -4,7 +4,6 @@ import numpy
 
 
 def test_create_simple():
-
     # Creates Lagrange P1 element on triangle
 
     # Point evaluation of polynomial set
@@ -16,7 +15,7 @@ def test_create_simple():
     dualmat = basix.tabulate_polynomial_set(celltype, degree, 0, points)[0]
     coeff_space = numpy.identity(points.shape[0])
 
-    fe = basix.create_new_element("Custom element", celltype, degree, [1], dualmat, coeff_space,
+    fe = basix.create_new_element("Custom element", "triangle", degree, [1], dualmat, coeff_space,
                                   [[1, 1, 1], [0, 0, 0], [0]], [numpy.identity(3) for i in range(3)])
 
     numpy.set_printoptions(suppress=True, precision=2)
@@ -26,7 +25,6 @@ def test_create_simple():
 
 
 def test_create_custom():
-
     # Creates second order element on triangle
 
     # Point evaluation of polynomial set
@@ -37,7 +35,7 @@ def test_create_custom():
     # Create element from space and dual
     dualmat = basix.tabulate_polynomial_set(celltype, degree, 0, points)[0]
     coeff_space = numpy.identity(points.shape[0])
-    fe = basix.create_new_element("Custom element", celltype, degree, [1], dualmat, coeff_space,
+    fe = basix.create_new_element("Custom element", "triangle", degree, [1], dualmat, coeff_space,
                                   [[0, 0, 0], [1, 1, 1], [3]],
                                   [numpy.identity(5) for i in range(3)])
 
@@ -48,7 +46,6 @@ def test_create_custom():
 
 
 def test_create_invalid():
-
     celltype = basix.CellType.triangle
     degree = 2
     # Try to create an invalid element of order 2
@@ -60,6 +57,6 @@ def test_create_invalid():
     print(dualmat)
     coeff_space = numpy.identity(points.shape[0])
     with pytest.raises(RuntimeError):
-        basix.create_new_element("Custom element", celltype, degree, [1], dualmat, coeff_space,
+        basix.create_new_element("Custom element", "triangle", degree, [1], dualmat, coeff_space,
                                  [[0, 0, 0], [2, 2, 2], [0]],
                                  [numpy.identity(6) for i in range(3)])

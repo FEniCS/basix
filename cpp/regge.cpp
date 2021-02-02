@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "regge.h"
+#include "element-families.h"
 #include "lattice.h"
 #include "polyset.h"
 #include <iostream>
@@ -121,8 +122,7 @@ Eigen::MatrixXd create_regge_dual(cell::type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_regge(cell::type celltype, int degree,
-                                   const std::string& name)
+FiniteElement basix::create_regge(cell::type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
@@ -148,7 +148,8 @@ FiniteElement basix::create_regge(cell::type celltype, int degree,
   if (tdim > 2)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
-  return FiniteElement(name, celltype, degree, {tdim, tdim}, coeffs,
-                       entity_dofs, base_permutations, {}, {}, "double covariant piola");
+  return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
+                       coeffs, entity_dofs, base_permutations, {}, {},
+                       "double covariant piola");
 }
 //-----------------------------------------------------------------------------

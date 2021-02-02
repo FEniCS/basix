@@ -1,9 +1,10 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
 #include "brezzi-douglas-marini.h"
 #include "dof-permutations.h"
+#include "element-families.h"
 #include "lagrange.h"
 #include "moments.h"
 #include "nedelec.h"
@@ -16,8 +17,7 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_bdm(cell::type celltype, int degree,
-                                const std::string& name)
+FiniteElement basix::create_bdm(cell::type celltype, int degree)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -119,7 +119,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
 
-  return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {}, {}, "contravariant piola");
+  return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, base_permutations, {}, {},
+                       "contravariant piola");
 }
 //-----------------------------------------------------------------------------

@@ -11,8 +11,9 @@ endif()
 # Executable
 add_library(basix SHARED lattice.cpp polyset.cpp dof-permutations.cpp
                           moments.cpp lagrange.cpp finite-element.cpp
-                          log.cpp quadrature.cpp brezzi-douglas-marini.cpp
-                          nedelec.cpp raviart-thomas.cpp cell.cpp nce-rtc.cpp
-                          regge.cpp crouzeix-raviart.cpp basix.cpp)
+                          element-families.cpp log.cpp nce-rtc.cpp
+                          quadrature.cpp brezzi-douglas-marini.cpp
+                          nedelec.cpp raviart-thomas.cpp cell.cpp regge.cpp
+                          crouzeix-raviart.cpp basix.cpp)
 target_compile_definitions(basix PRIVATE BASIX_VERSION=${PROJECT_VERSION})
 target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32)

@@ -1,9 +1,14 @@
+// Copyright (c) 2020 Chris Richardson
+// FEniCS Project
+// SPDX-License-Identifier:    MIT
+
 // FIXME: just include everything for now
 // Need to define public API
 
 #pragma once
 
 #include "cell.h"
+#include "element-families.h"
 #include <Eigen/Dense>
 #include <string>
 #include <vector>
@@ -149,7 +154,7 @@ class FiniteElement
 
 public:
   /// A finite element
-  FiniteElement(std::string family_name, cell::type cell_type, int degree,
+  FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<int>& value_shape,
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
@@ -211,9 +216,9 @@ public:
   /// @return Number of degrees of freedom
   int dim() const;
 
-  /// Get the name of the finite element family
-  /// @return The family name
-  const std::string& family_name() const;
+  /// Get the finite element family
+  /// @return The family
+  element::family family() const;
 
   /// Get the mapping used for this element
   /// @return The mapping
@@ -324,7 +329,7 @@ private:
   cell::type _cell_type;
 
   // The name of the finite element family
-  std::string _family_name;
+  element::family _family;
 
   // Degree
   int _degree;
@@ -364,6 +369,10 @@ private:
 
 /// Create an element by name
 FiniteElement create_element(std::string family, std::string cell, int degree);
+
+/// Create an element by name
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree);
 
 /// Return the version number of basix across projects
 /// @return version string

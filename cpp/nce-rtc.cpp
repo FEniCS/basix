@@ -4,6 +4,7 @@
 
 #include "nce-rtc.h"
 #include "dof-permutations.h"
+#include "element-families.h"
 #include "lagrange.h"
 #include "log.h"
 #include "moments.h"
@@ -16,8 +17,7 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_rtc(cell::type celltype, int degree,
-                                const std::string& name)
+FiniteElement basix::create_rtc(cell::type celltype, int degree)
 {
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -185,12 +185,12 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree,
   entity_dofs[tdim] = {internal_dofs};
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
-  return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {}, {}, "contravariant piola");
+  return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, base_permutations, {}, {},
+                       "contravariant piola");
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_nce(cell::type celltype, int degree,
-                                const std::string& name)
+FiniteElement basix::create_nce(cell::type celltype, int degree)
 {
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -397,8 +397,9 @@ FiniteElement basix::create_nce(cell::type celltype, int degree,
     entity_dofs[3].resize(topology[3].size(), volume_dofs);
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
-  return FiniteElement(name, celltype, degree, {tdim}, coeffs, entity_dofs,
-                       base_permutations, {}, {}, "covariant piola");
+  return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, base_permutations, {}, {},
+                       "covariant piola");
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd basix::dofperms::quadrilateral_rtc_rotation(int degree)

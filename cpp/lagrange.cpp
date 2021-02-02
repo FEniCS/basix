@@ -4,6 +4,7 @@
 
 #include "lagrange.h"
 #include "dof-permutations.h"
+#include "element-families.h"
 #include "lattice.h"
 #include "polyset.h"
 #include <Eigen/Dense>
@@ -13,8 +14,7 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_lagrange(cell::type celltype, int degree,
-                                      const std::string& name)
+FiniteElement basix::create_lagrange(cell::type celltype, int degree)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
@@ -178,13 +178,12 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
-  return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
-                       base_permutations, pt,
+  return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
+                       entity_dofs, base_permutations, pt,
                        Eigen::MatrixXd::Identity(ndofs, ndofs));
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_dlagrange(cell::type celltype, int degree,
-                                       const std::string& name)
+FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
@@ -215,8 +214,8 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree,
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
-                       base_permutations, pt,
+  return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
+                       entity_dofs, base_permutations, pt,
                        Eigen::MatrixXd::Identity(ndofs, ndofs));
 }
 //-----------------------------------------------------------------------------

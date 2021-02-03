@@ -503,12 +503,12 @@ create_nedelec2_2d_interpolation(int degree)
   points.block(0, 0, points_1d.rows(), 2) = points_1d;
   points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
 
+  const int r1d = matrix_1d.rows();
+  const int r2d = matrix_2d.rows();
+  const int c1d = matrix_1d.cols() / 2;
+  const int c2d = matrix_2d.cols() / 2;
   for (int i = 0; i < 2; ++i)
   {
-    const int r1d = matrix_1d.rows();
-    const int r2d = matrix_2d.rows();
-    const int c1d = matrix_1d.cols() / 2;
-    const int c2d = matrix_2d.cols() / 2;
     matrix.block(0, i * (c1d + c2d), r1d, c1d)
         = matrix_1d.block(0, i * c1d, r1d, c1d);
     matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)

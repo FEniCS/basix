@@ -13,19 +13,6 @@ using namespace basix;
 namespace
 {
 //----------------------------------------------------------------------------
-double integral_jacobian(const Eigen::MatrixXd& axes)
-{
-  if (axes.rows() == 1)
-    return axes.row(0).norm();
-  else if (axes.rows() == 2 and axes.cols() == 3)
-  {
-    Eigen::Vector3d a0 = axes.row(0);
-    Eigen::Vector3d a1 = axes.row(1);
-    return a0.cross(a1).norm();
-  }
-  else
-    return axes.determinant();
-}
 std::vector<int> axis_points(const cell::type celltype)
 {
   switch (celltype)
@@ -94,8 +81,6 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     // Map quadrature points onto entity
     Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
                                   + (Qpts.matrix() * axes.matrix()).array();
-
-    // const double integral_jac = integral_jacobian(axes);
 
     // Tabulate polynomial set at entity quadrature points
     Eigen::MatrixXd poly_set_at_Qpts
@@ -309,21 +294,18 @@ moments::make_dot_integral_moments_interpolation(
         = entity.row(0).replicate(Qpts.rows(), 1)
           + (Qpts.matrix() * axes.matrix()).array();
 
-    const double integral_jac = integral_jacobian(axes);
-
     // Compute entity integral moments
     for (int j = 0; j < moment_space_size; ++j)
     {
       for (int k = 0; k < value_size; ++k)
       {
-        Eigen::VectorXd q = Eigen::VectorXd::Zero(Qwts.rows());
+        Eigen::RowVectorXd q = Eigen::VectorXd::Zero(Qwts.rows());
         for (int d = 0; d < sub_entity_dim; ++d)
         {
           Eigen::ArrayXd phi
               = moment_space_at_Qpts.col(d * moment_space_size + j);
-          Eigen::VectorXd axis = axes.row(d);
-          Eigen::VectorXd qpart
-              = phi * Qwts * (integral_jac * axis(k) / axis.norm());
+          Eigen::RowVectorXd axis = axes.row(d);
+          Eigen::RowVectorXd qpart = phi * Qwts * axis(k);
           q += qpart;
         }
         matrix.block(c, (k * sub_entity_count + i) * Qpts.rows(), 1,

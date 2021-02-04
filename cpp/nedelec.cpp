@@ -94,10 +94,6 @@ Eigen::MatrixXd create_nedelec_2d_dual(int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec_2d_interpolation(int degree)
 {
-  // TODO: fix interpolation for higher order elements
-  if (degree > 2)
-    return {{}, {}};
-
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
@@ -295,10 +291,6 @@ Eigen::MatrixXd create_nedelec_3d_dual(int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec_3d_interpolation(int degree)
 {
-  // TODO: fix interpolation for higher order elements
-  if (degree > 1)
-    return {{}, {}};
-
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
@@ -325,15 +317,15 @@ create_nedelec_3d_interpolation(int degree)
                            matrix_1d.cols() + matrix_2d.cols());
     matrix.setZero();
 
-    points.block(0, 0, points_1d.rows(), 2) = points_1d;
-    points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
+    points.block(0, 0, points_1d.rows(), 3) = points_1d;
+    points.block(points_1d.rows(), 0, points_2d.rows(), 3) = points_2d;
 
+    const int r1d = matrix_1d.rows();
+    const int r2d = matrix_2d.rows();
+    const int c1d = matrix_1d.cols() / 3;
+    const int c2d = matrix_2d.cols() / 3;
     for (int i = 0; i < 3; ++i)
     {
-      const int r1d = matrix_1d.rows();
-      const int r2d = matrix_2d.rows();
-      const int c1d = matrix_1d.cols() / 3;
-      const int c2d = matrix_2d.cols() / 3;
       matrix.block(0, i * (c1d + c2d), r1d, c1d)
           = matrix_1d.block(0, i * c1d, r1d, c1d);
       matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)
@@ -355,24 +347,24 @@ create_nedelec_3d_interpolation(int degree)
                          matrix_1d.cols() + matrix_2d.cols()
                              + matrix_3d.cols());
   matrix.setZero();
-  points.block(0, 0, points_1d.rows(), 2) = points_1d;
-  points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
-  points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), 2)
+  points.block(0, 0, points_1d.rows(), 3) = points_1d;
+  points.block(points_1d.rows(), 0, points_2d.rows(), 3) = points_2d;
+  points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), 3)
       = points_3d;
 
+  const int r1d = matrix_1d.rows();
+  const int r2d = matrix_2d.rows();
+  const int r3d = matrix_3d.rows();
+  const int c1d = matrix_1d.cols() / 3;
+  const int c2d = matrix_2d.cols() / 3;
+  const int c3d = matrix_3d.cols() / 3;
   for (int i = 0; i < 3; ++i)
   {
-    const int r1d = matrix_1d.rows();
-    const int r2d = matrix_2d.rows();
-    const int r3d = matrix_3d.rows();
-    const int c1d = matrix_1d.cols() / 3;
-    const int c2d = matrix_2d.cols() / 3;
-    const int c3d = matrix_3d.cols() / 3;
     matrix.block(0, i * (c1d + c2d + c3d), r1d, c1d)
         = matrix_1d.block(0, i * c1d, r1d, c1d);
     matrix.block(r1d, i * (c1d + c2d + c3d) + c1d, r2d, c2d)
         = matrix_2d.block(0, i * c2d, r2d, c2d);
-    matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r2d, c2d)
+    matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r3d, c3d)
         = matrix_3d.block(0, i * c3d, r3d, c3d);
   }
 
@@ -480,10 +472,6 @@ Eigen::MatrixXd create_nedelec2_2d_dual(int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec2_2d_interpolation(int degree)
 {
-  // TODO: fix interpolation for higher order elements
-  if (degree > 1)
-    return {{}, {}};
-
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
@@ -515,12 +503,12 @@ create_nedelec2_2d_interpolation(int degree)
   points.block(0, 0, points_1d.rows(), 2) = points_1d;
   points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
 
+  const int r1d = matrix_1d.rows();
+  const int r2d = matrix_2d.rows();
+  const int c1d = matrix_1d.cols() / 2;
+  const int c2d = matrix_2d.cols() / 2;
   for (int i = 0; i < 2; ++i)
   {
-    const int r1d = matrix_1d.rows();
-    const int r2d = matrix_2d.rows();
-    const int c1d = matrix_1d.cols() / 2;
-    const int c2d = matrix_2d.cols() / 2;
     matrix.block(0, i * (c1d + c2d), r1d, c1d)
         = matrix_1d.block(0, i * c1d, r1d, c1d);
     matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)

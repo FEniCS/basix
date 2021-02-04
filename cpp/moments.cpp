@@ -13,19 +13,6 @@ using namespace basix;
 namespace
 {
 //----------------------------------------------------------------------------
-double integral_jacobian(const Eigen::MatrixXd& axes)
-{
-  if (axes.rows() == 1)
-    return axes.row(0).norm();
-  else if (axes.rows() == 2 and axes.cols() == 3)
-  {
-    Eigen::Vector3d a0 = axes.row(0);
-    Eigen::Vector3d a1 = axes.row(1);
-    return a0.cross(a1).norm();
-  }
-  else
-    return axes.determinant();
-}
 std::vector<int> axis_points(const cell::type celltype)
 {
   switch (celltype)
@@ -95,8 +82,6 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
                                   + (Qpts.matrix() * axes.matrix()).array();
 
-    // const double integral_jac = integral_jacobian(axes);
-
     // Tabulate polynomial set at entity quadrature points
     Eigen::MatrixXd poly_set_at_Qpts
         = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
@@ -132,6 +117,8 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
+  if (sub_entity_dim == 0)
+    throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
   const int tdim = cell::topological_dimension(celltype);
 
@@ -150,10 +137,9 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
                          sub_entity_count * Qpts.rows() * value_size);
   matrix.setZero();
 
-  int c = 0;
-
   std::vector<int> axis_pts = axis_points(celltype);
 
+  int c = 0;
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
@@ -164,15 +150,10 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
     for (int j = 0; j < sub_entity_dim; ++j)
       axes.row(j) = entity.row(axis_pts[j]) - entity.row(0);
-
     // Map quadrature points onto entity
-    Eigen::ArrayXXd Qpts_scaled = entity.row(0).replicate(Qpts.rows(), 1)
-                                  + (Qpts.matrix() * axes.matrix()).array();
     points.block(Qpts.rows() * i, 0, Qpts.rows(), tdim)
         = entity.row(0).replicate(Qpts.rows(), 1)
           + (Qpts.matrix() * axes.matrix()).array();
-
-    const double integral_jac = integral_jacobian(axes);
 
     // Compute entity integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
@@ -183,10 +164,10 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
         Eigen::VectorXd axis = axes.row(d);
         for (int k = 0; k < value_size; ++k)
         {
-          Eigen::VectorXd q
-              = phi * Qwts * (integral_jac * axis(k) / axis.norm());
-          for (int l = 0; l < Qpts.rows(); ++l)
-            matrix(c, (i * value_size + k) * Qpts.rows() + l) = q(l);
+          Eigen::RowVectorXd q = phi * Qwts * axis(k);
+          matrix.block(c, (k * sub_entity_count + i) * Qpts.rows(), 1,
+                       Qpts.rows())
+              = q;
         }
         ++c;
       }
@@ -313,24 +294,23 @@ moments::make_dot_integral_moments_interpolation(
         = entity.row(0).replicate(Qpts.rows(), 1)
           + (Qpts.matrix() * axes.matrix()).array();
 
-    const double integral_jac = integral_jacobian(axes);
-
     // Compute entity integral moments
     for (int j = 0; j < moment_space_size; ++j)
     {
       for (int k = 0; k < value_size; ++k)
       {
-        Eigen::VectorXd q = Eigen::VectorXd::Zero(Qwts.rows());
+        Eigen::RowVectorXd q = Eigen::VectorXd::Zero(Qwts.rows());
         for (int d = 0; d < sub_entity_dim; ++d)
         {
           Eigen::ArrayXd phi
               = moment_space_at_Qpts.col(d * moment_space_size + j);
-          Eigen::VectorXd axis = axes.row(d);
-          Eigen::VectorXd qpart
-              = phi * Qwts * (integral_jac * axis(k) / axis.norm());
+          Eigen::RowVectorXd axis = axes.row(d);
+          Eigen::RowVectorXd qpart = phi * Qwts * axis(k);
           q += qpart;
         }
-        matrix.block(c, (i * value_size + k) * Qpts.rows(), 1, Qpts.rows()) = q;
+        matrix.block(c, (k * sub_entity_count + i) * Qpts.rows(), 1,
+                     Qpts.rows())
+            = q;
       }
       ++c;
     }
@@ -454,12 +434,10 @@ moments::make_tangent_integral_moments_interpolation(
       Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
       for (int k = 0; k < value_size; ++k)
       {
-        Eigen::ArrayXd data = phi * Qwts * tangent[k];
-        for (int l = 0; l < data.rows(); ++l)
-          // matrix(c, i * value_size * Qpts.rows() + l * value_size + k) =
-          // data(l);
-          matrix(c, k * sub_entity_count * Qpts.rows() + i * Qpts.rows() + l)
-              = data(l);
+        Eigen::RowVectorXd data = phi * Qwts * tangent[k];
+        matrix.block(c, k * sub_entity_count * Qpts.rows() + i * Qpts.rows(), 1,
+                     Qpts.rows())
+            = data;
       }
       ++c;
     }
@@ -635,10 +613,10 @@ moments::make_normal_integral_moments_interpolation(
       Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
       for (int k = 0; k < value_size; ++k)
       {
-        Eigen::VectorXd q = phi * Qwts * normal[k];
-        for (int l = 0; l < q.rows(); ++l)
-          matrix(c, k * sub_entity_count * Qpts.rows() + i * Qpts.rows() + l)
-              = q(l);
+        Eigen::RowVectorXd q = phi * Qwts * normal[k];
+        matrix.block(c, k * sub_entity_count * Qpts.rows() + i * Qpts.rows(), 1,
+                     Qpts.rows())
+            = q;
       }
       ++c;
     }

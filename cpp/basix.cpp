@@ -41,10 +41,12 @@ void basix::release_element(int handle)
 }
 
 void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
-                     int npoints, int gdim)
+                     int npoints)
 {
   check_handle(handle);
 
+  // gdim and tdim are the same for all cells in basix
+  const int gdim = cell::topological_dimension(_registry[handle]->cell_type());
   Eigen::Map<const Eigen::ArrayXXd> _x(x, npoints, gdim);
   std::vector<Eigen::ArrayXXd> values = _registry[handle]->tabulate(nd, _x);
 
@@ -139,7 +141,7 @@ int basix::cell_geometry_dimension(const char* cell_type)
   return cell::geometry(ct).cols();
 }
 
-void basix::geometry(const char* cell_type, double* points)
+void basix::cell_geometry(const char* cell_type, double* points)
 {
   cell::type ct = cell::str_to_type(cell_type);
   Eigen::ArrayXXd pts = cell::geometry(ct);

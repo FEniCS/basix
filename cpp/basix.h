@@ -22,20 +22,18 @@ void release_element(int handle);
 /// for the points x.
 /// The memory for "basis_values" must be allocated by the user, and is a three
 /// dimensional ndarray with the following dimensions:
-/// [npoints x dim x (nd+tdim)!/nd!tdim!] where "npoints" and "nd" are
+/// [npoints * dim * (nd+tdim)!/nd!tdim!] where "npoints" and "nd" are
 /// defined below and tdim is the topological dimension of the cell for this
 /// element. "dim" is the dimension of the finite element (See `dim()`).
 ///
 /// @param [in] handle The handle for the basix element
 /// @param [out] basis_values Block of memory to be filled with basis data
 /// @param [in] nd Number of derivatives
-/// @param [in] x Points at which to evaluate
+/// @param [in] x Points at which to evaluate (of size [npoints * tdim])
 /// @param [in] npoints Number of points
-/// @param [in] gdim Geometric dimension of points... FIXME: this is known
-/// beforehand.
 ///
 void tabulate(int handle, double* basis_values, int nd, const double* x,
-              int npoints, int gdim);
+              int npoints);
 
 /// Map a function value from the reference to a physical cell
 /// @param[in] handle The handle of the basix element

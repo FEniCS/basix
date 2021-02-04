@@ -41,11 +41,11 @@ void basix::release_element(int handle)
 }
 
 void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
-                     int npoints, int tdim)
+                     int npoints, int gdim)
 {
   check_handle(handle);
 
-  Eigen::Map<const Eigen::ArrayXXd> _x(x, npoints, tdim);
+  Eigen::Map<const Eigen::ArrayXXd> _x(x, npoints, gdim);
   std::vector<Eigen::ArrayXXd> values = _registry[handle]->tabulate(nd, _x);
 
   const int m = values[0].rows() * values[0].cols();

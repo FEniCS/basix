@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include <Eigen/Core>
+#include <complex>
 #include <utility>
 #include <vector>
 
@@ -29,10 +30,13 @@ std::vector<Eigen::ArrayXXd> tabulate(int handle, int nd,
 /// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
 /// at the point)
 /// @return The data on the physical cell at the corresponding point
-Eigen::ArrayXXd map_push_forward(int handle,
-                                 const Eigen::ArrayXd& reference_data,
-                                 const Eigen::MatrixXd& J, double detJ,
-                                 const Eigen::MatrixXd& K);
+Eigen::Array<double, Eigen::Dynamic, 1> map_push_forward_real(
+    int handle, const Eigen::Array<double, Eigen::Dynamic, 1>& reference_data,
+    const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K);
+Eigen::Array<std::complex<double>, Eigen::Dynamic, 1> map_push_forward_complex(
+    int handle,
+    const Eigen::Array<std::complex<double>, Eigen::Dynamic, 1>& reference_data,
+    const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K);
 
 /// Map a function value from a physical cell to the reference
 /// @param[in] handle The handle of the basix element
@@ -43,9 +47,13 @@ Eigen::ArrayXXd map_push_forward(int handle,
 /// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
 /// at the point)
 /// @return The data on the reference element at the corresponding point
-Eigen::ArrayXXd map_pull_back(int handle, const Eigen::ArrayXd& physical_data,
-                              const Eigen::MatrixXd& J, double detJ,
-                              const Eigen::MatrixXd& K);
+Eigen::Array<double, Eigen::Dynamic, 1> map_pull_back_real(
+    int handle, const Eigen::Array<double, Eigen::Dynamic, 1>& physical_data,
+    const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K);
+Eigen::Array<std::complex<double>, Eigen::Dynamic, 1> map_pull_back_complex(
+    int handle,
+    const Eigen::Array<std::complex<double>, Eigen::Dynamic, 1>& physical_data,
+    const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K);
 
 /// Cell type
 const char* cell_type(int handle);

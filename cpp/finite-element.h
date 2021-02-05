@@ -231,9 +231,15 @@ public:
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @return The function value on the cell
-  Eigen::ArrayXd map_push_forward(const Eigen::ArrayXd& reference_data,
-                                  const Eigen::MatrixXd& J, double detJ,
-                                  const Eigen::MatrixXd& K) const;
+  template <typename T>
+  Eigen::Array<T, Eigen::Dynamic, 1>
+  map_push_forward(const Eigen::Array<T, Eigen::Dynamic, 1>& reference_data,
+                   const Eigen::MatrixXd& J, double detJ,
+                   const Eigen::MatrixXd& K) const
+  {
+    return mapping::map_push_forward<T>(reference_data, J, detJ, K,
+                                        _mapping_type, _value_shape);
+  }
 
   /// Map a function value from a physical cell to the reference
   /// @param physical_data The function value on the cell
@@ -241,9 +247,15 @@ public:
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @return The function value on the reference
-  Eigen::ArrayXd map_pull_back(const Eigen::ArrayXd& physical_data,
-                               const Eigen::MatrixXd& J, double detJ,
-                               const Eigen::MatrixXd& K) const;
+  template <typename T>
+  Eigen::Array<T, Eigen::Dynamic, 1>
+  map_pull_back(const Eigen::Array<T, Eigen::Dynamic, 1>& physical_data,
+                const Eigen::MatrixXd& J, double detJ,
+                const Eigen::MatrixXd& K) const
+  {
+    return mapping::map_pull_back<T>(physical_data, J, detJ, K, _mapping_type,
+                                     _value_shape);
+  }
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2

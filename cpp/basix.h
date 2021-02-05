@@ -33,6 +33,16 @@ std::vector<Eigen::ArrayXXd> tabulate(int handle, int nd,
 Eigen::Array<double, Eigen::Dynamic, 1> map_push_forward_real(
     int handle, const Eigen::Array<double, Eigen::Dynamic, 1>& reference_data,
     const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K);
+
+/// Map a function value from the reference to a physical cell
+/// @param[in] handle The handle of the basix element
+/// @param[in] reference_data The reference data at a single point
+/// @param[in] J The Jacobian of the map to the cell (evaluated at the point)
+/// @param[in] detJ The determinant of the Jacobian of the map to the cell
+/// (evaluated at the point)
+/// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
+/// at the point)
+/// @return The data on the physical cell at the corresponding point
 Eigen::Array<std::complex<double>, Eigen::Dynamic, 1> map_push_forward_complex(
     int handle,
     const Eigen::Array<std::complex<double>, Eigen::Dynamic, 1>& reference_data,
@@ -50,6 +60,16 @@ Eigen::Array<std::complex<double>, Eigen::Dynamic, 1> map_push_forward_complex(
 Eigen::Array<double, Eigen::Dynamic, 1> map_pull_back_real(
     int handle, const Eigen::Array<double, Eigen::Dynamic, 1>& physical_data,
     const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K);
+
+/// Map a function value from a physical cell to the reference
+/// @param[in] handle The handle of the basix element
+/// @param[in] physical_data The physical data at a single point
+/// @param[in] J The Jacobian of the map to the cell (evaluated at the point)
+/// @param[in] detJ The determinant of the Jacobian of the map to the cell
+/// (evaluated at the point)
+/// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
+/// at the point)
+/// @return The data on the reference element at the corresponding point
 Eigen::Array<std::complex<double>, Eigen::Dynamic, 1> map_pull_back_complex(
     int handle,
     const Eigen::Array<std::complex<double>, Eigen::Dynamic, 1>& physical_data,

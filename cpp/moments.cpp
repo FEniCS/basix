@@ -261,7 +261,8 @@ moments::make_dot_integral_moments_interpolation(
   const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
   const int tdim = cell::topological_dimension(celltype);
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature("default", celltype, q_deg);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", sub_celltype, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);

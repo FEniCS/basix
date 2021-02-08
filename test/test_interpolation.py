@@ -17,14 +17,22 @@ def test_interpolation(cellname, n, element_name):
     assert element.points.shape[1] == len(basix.topology(element.cell_type)) - 1
 
 
-@pytest.mark.parametrize("n", range(1, 6))
+@pytest.mark.parametrize("order", range(1, 6))
 @pytest.mark.parametrize("cellname, element_name", [
     ("interval", "Lagrange"), ("triangle", "Lagrange"), ("tetrahedron", "Lagrange"),
     ("quadrilateral", "Lagrange"), ("hexahedron", "Lagrange"),
     ("triangle", "Nedelec 1st kind H(curl)"), ("tetrahedron", "Nedelec 1st kind H(curl)"),
+    ("quadrilateral", "Nedelec 1st kind H(curl)"), ("hexahedron", "Nedelec 1st kind H(curl)"),
 ])
-def test_interpolation_matrix(cellname, n, element_name):
-    element = basix.create_element(element_name, cellname, n)
+def test_interpolation_matrix(cellname, order, element_name):
+    if order > 4:
+        if cellname in ["quadrilateral", "hexahedron"] and element_name in [
+            "Raviart-Thomas", "Nedelec 1st kind H(curl)"
+        ]:
+            pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "
+                         "Lagrange spaces with equally spaced points are unstable.")
+
+    element = basix.create_element(element_name, cellname, order)
 
     i_m = element.interpolation_matrix
     tabulated = element.tabulate(0, element.points)[0]

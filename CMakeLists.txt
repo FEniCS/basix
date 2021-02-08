@@ -23,14 +23,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Get pybind11 CMake dir
-execute_process(
-  COMMAND
-    "${Python_EXECUTABLE}" -c
-    "import pybind11; print(pybind11.get_cmake_dir())"
-  OUTPUT_VARIABLE _tmp_cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
-  ECHO_ERROR_VARIABLE)
-list(APPEND CMAKE_PREFIX_PATH "${_tmp_cmake_dir}")
+if (SKBUILD)
+    execute_process(
+      COMMAND
+        "${Python_EXECUTABLE}" -c
+        "import pybind11; print(pybind11.get_cmake_dir())"
+      OUTPUT_VARIABLE _tmp_cmake_dir
+      OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
+      ECHO_ERROR_VARIABLE)
+    list(APPEND CMAKE_PREFIX_PATH "${_tmp_cmake_dir}")
+endif()
 
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")

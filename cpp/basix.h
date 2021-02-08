@@ -78,8 +78,8 @@ int degree(int handle);
 int value_rank(int handle);
 
 /// Value shape
-/// @param [in] handle Identifier
-/// @param[in/out] dimensions Array of value_rank size
+/// @param[in] handle Identifier
+/// @param[in,out] dimensions Array of value_rank size
 void value_shape(int handle, int* dimensions);
 
 /// Value size

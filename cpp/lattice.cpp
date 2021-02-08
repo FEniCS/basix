@@ -35,7 +35,7 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
                                 lattice::type lattice_type, bool exterior)
 {
-  const double h = 1.0 / static_cast<double>(n);
+  const double h = n == 0 ? 1 : 1.0 / static_cast<double>(n);
 
   switch (celltype)
   {

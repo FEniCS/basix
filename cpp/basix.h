@@ -102,7 +102,7 @@ const char* mapping_name(int handle);
 /// Number of dofs per entity of given dimension
 /// @param handle Identifier
 /// @param dim Entity dimension
-/// @param[in/out] num_dofs Number of dofs on each entity
+/// @param[in,out] num_dofs Number of dofs on each entity
 void entity_dofs(int handle, int dim, int* num_dofs);
 
 /// Number of interpolation points

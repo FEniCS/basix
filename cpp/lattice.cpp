@@ -35,8 +35,6 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
                                 lattice::type lattice_type, bool exterior)
 {
-  const double h = n == 0 ? 1 : 1.0 / static_cast<double>(n);
-
   switch (celltype)
   {
   case cell::type::point:
@@ -50,7 +48,10 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     if (exterior)
       x = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     else
+    {
+      const double h = 1.0 / static_cast<double>(n);
       x = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
+    }
 
     if (lattice_type == lattice::type::gll_warped)
       x += warp_function(n, x);
@@ -66,7 +67,10 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     if (exterior)
       r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     else
+    {
+      const double h = 1.0 / static_cast<double>(n);
       r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
+    }
 
     if (lattice_type == lattice::type::gll_warped)
       r += warp_function(n, r);
@@ -89,7 +93,10 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     if (exterior)
       r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     else
+    {
+      const double h = 1.0 / static_cast<double>(n);
       r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
+    }
     if (lattice_type == lattice::type::gll_warped)
       r += warp_function(n, r);
 
@@ -242,6 +249,7 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
       int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
       Eigen::ArrayX3d points(m, 3);
       int c = 0;
+      const double h = 1.0 / static_cast<double>(n);
       for (int k = 0; k < n + 1; ++k)
         for (int j = 0; j < n + 1 - k; ++j)
           for (int i = 0; i < n + 1 - k; ++i)

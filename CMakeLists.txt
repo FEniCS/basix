@@ -34,12 +34,18 @@ if (SKBUILD)
     list(APPEND CMAKE_PREFIX_PATH "${_tmp_cmake_dir}")
 endif()
 
+# Now we can find pybind11
+find_package(pybind11 CONFIG REQUIRED)
+
+if(SKBUILD)
+   set(BASIX_PYTHON_INSTALL_PATH ".")
+else()
+   set(BASIX_PYTHON_INSTALL_PATH "${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/basix")
+endif()
+
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
-
-# Now we can find pybind11
-find_package(pybind11 CONFIG REQUIRED)
 
 add_subdirectory(cpp)
 
@@ -59,7 +65,10 @@ target_link_libraries(_basixcpp PRIVATE pybind11::module basix)
 
 set_target_properties(basix PROPERTIES PUBLIC_HEADER "cpp/basix.h")
 
-install(TARGETS _basixcpp DESTINATION .)
+install(TARGETS _basixcpp LIBRARY DESTINATION ${BASIX_PYTHON_INSTALL_PATH})
+if(NOT SKBUILD)
+    install(FILES cpp/basix/__init__.py DESTINATION ${BASIX_PYTHON_INSTALL_PATH})
+endif()
 install(TARGETS basix
 		LIBRARY DESTINATION lib
 		PUBLIC_HEADER DESTINATION include)

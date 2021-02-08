@@ -229,6 +229,8 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     }
     else
     {
+      const double h = 1.0 / static_cast<double>(n);
+
       // Interpolate warp factor along interval
       std::tuple<Eigen::ArrayXXd, Eigen::ArrayXd> pw
           = quadrature::gauss_lobatto_legendre_line_rule(n + 1);
@@ -249,7 +251,6 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
       int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
       Eigen::ArrayX3d points(m, 3);
       int c = 0;
-      const double h = 1.0 / static_cast<double>(n);
       for (int k = 0; k < n + 1; ++k)
         for (int j = 0; j < n + 1 - k; ++j)
           for (int i = 0; i < n + 1 - k; ++i)

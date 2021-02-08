@@ -82,11 +82,6 @@ int value_rank(int handle);
 /// @param[in,out] dimensions Array of value_rank size
 void value_shape(int handle, int* dimensions);
 
-/// Value size
-/// @param [in] handle Identifier
-/// @return The value size
-int value_size(int handle);
-
 /// Finite Element dimension
 /// @param [in] handle Identifier
 int dim(int handle);

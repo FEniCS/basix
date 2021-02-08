@@ -104,12 +104,6 @@ void basix::value_shape(int handle, int* dimensions)
   std::copy(dims.begin(), dims.end(), dimensions);
 }
 
-int basix::value_size(int handle)
-{
-  check_handle(handle);
-  return _registry[handle]->value_size();
-}
-
 int basix::interpolation_num_points(int handle)
 {
   check_handle(handle);
@@ -129,7 +123,7 @@ void basix::interpolation_matrix(int handle, double* matrix)
   check_handle(handle);
   Eigen::Map<Eigen::MatrixXd>(matrix, dim(handle),
                               interpolation_num_points(handle)
-                                  * value_size(handle))
+                                  * _registry[handle]->value_size())
       = _registry[handle]->interpolation_matrix();
 }
 

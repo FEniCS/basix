@@ -74,8 +74,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get -y install libeigen3-dev python3-pip
-          sudo python3 -m pip install scikit-build pybind11 cmake
+          sudo apt-get -y install libeigen3-dev python3-pip pybind11-dev
+          sudo python3 -m pip install scikit-build cmake
       - name: Build with cmake
         run: |
           cmake .
@@ -89,8 +89,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get -y install libeigen3-dev python3-pip
-          sudo python3 -m pip install scikit-build pybind11 cmake
+          sudo apt-get -y install libeigen3-dev python3-pip pybind11-dev
+          sudo python3 -m pip install scikit-build cmake
       - name: Build with setup.py
         run: |
           sudo python3 setup.py install

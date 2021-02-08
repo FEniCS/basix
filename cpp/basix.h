@@ -98,16 +98,18 @@ const char* mapping_name(int handle);
 /// @param[in/out] num_dofs Number of dofs on each entity
 void entity_dofs(int handle, int dim, int* num_dofs);
 
-/// Base permutations
+/// Number of interpolation points
 /// @param [in] handle Identifier
-const std::vector<Eigen::MatrixXd>& base_permutations(int handle);
+const int interpolation_num_points(int handle);
 
 /// Interpolation points
 /// @param [in] handle Identifier
-const Eigen::ArrayXXd& points(int handle);
+// TODO: replace Eigen with double*
+const Eigen::ArrayXXd& interpolation_points(int handle);
 
 /// Interpolation matrix
 /// @param [in] handle Identifier
+// TODO: replace Eigen with double*
 const Eigen::MatrixXd& interpolation_matrix(int handle);
 
 /// Cell geometry number of points (npoints)
@@ -127,9 +129,5 @@ void cell_geometry(const char* cell_type, double* points);
 
 /// Cell topology
 std::vector<std::vector<std::vector<int>>> topology(const char* cell_type);
-
-/// Create quadrature points and weights
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-make_quadrature(const char* rule, const char* cell_type, int order);
 
 } // namespace basix

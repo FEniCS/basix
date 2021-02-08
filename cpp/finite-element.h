@@ -333,10 +333,11 @@ public:
   /// ~~~~~~~~~~~~~~~~
   std::vector<Eigen::MatrixXd> base_permutations() const;
 
-  /// Return a set of evaluation points
-  /// Currently for backward compatibility with DOLFINx function interpolation
-  /// Experimental, may go away.
+  /// Return a set of interpolation points
   const Eigen::ArrayXXd& points() const;
+
+  /// Return the number of interpolation points
+  int num_points() const;
 
   /// Return a matrix of weights interpolation
   /// To interpolate a function in this finite element, the functions should be

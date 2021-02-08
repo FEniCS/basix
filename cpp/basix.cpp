@@ -85,6 +85,12 @@ int basix::degree(int handle)
   return _registry[handle]->degree();
 }
 
+int basix::dim(int handle)
+{
+  check_handle(handle);
+  return _registry[handle]->dim();
+}
+
 int basix::value_rank(int handle)
 {
   check_handle(handle);
@@ -98,16 +104,33 @@ void basix::value_shape(int handle, int* dimensions)
   std::copy(dims.begin(), dims.end(), dimensions);
 }
 
-const Eigen::ArrayXXd& basix::points(int handle)
+int basix::value_size(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->points();
+  return _registry[handle]->value_size();
 }
 
-const Eigen::MatrixXd& basix::interpolation_matrix(int handle)
+int basix::interpolation_num_points(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->interpolation_matrix();
+  return _registry[handle]->num_points();
+}
+
+void basix::interpolation_points(int handle, double* points)
+{
+  check_handle(handle);
+  Eigen::Map<Eigen::ArrayXXd>(points, interpolation_num_points(handle),
+                              cell_geometry_dimension(cell_type(handle)))
+      = _registry[handle]->points();
+}
+
+void basix::interpolation_matrix(int handle, double* matrix)
+{
+  check_handle(handle);
+  Eigen::Map<Eigen::MatrixXd>(matrix, dim(handle),
+                              interpolation_num_points(handle)
+                                  * value_size(handle))
+      = _registry[handle]->interpolation_matrix();
 }
 
 void basix::entity_dofs(int handle, int dim, int* num_dofs)
@@ -153,11 +176,4 @@ basix::topology(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
   return cell::topology(ct);
-}
-
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-basix::make_quadrature(const char* rule, const char* cell_type, int order)
-{
-  cell::type ct = cell::str_to_type(cell_type);
-  return basix::quadrature::make_quadrature(rule, ct, order);
 }

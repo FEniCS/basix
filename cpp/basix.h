@@ -44,6 +44,7 @@ void tabulate(int handle, double* basis_values, int nd, const double* x,
 /// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
 /// at the point)
 /// @return The data on the physical cell at the corresponding point
+// TODO: remove Eigen from public interface
 Eigen::ArrayXXd map_push_forward(int handle,
                                  const Eigen::ArrayXd& reference_data,
                                  const Eigen::MatrixXd& J, double detJ,
@@ -58,6 +59,7 @@ Eigen::ArrayXXd map_push_forward(int handle,
 /// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
 /// at the point)
 /// @return The data on the reference element at the corresponding point
+// TODO: remove Eigen from public interface
 Eigen::ArrayXXd map_pull_back(int handle, const Eigen::ArrayXd& physical_data,
                               const Eigen::MatrixXd& J, double detJ,
                               const Eigen::MatrixXd& K);
@@ -80,6 +82,11 @@ int value_rank(int handle);
 /// @param[in/out] dimensions Array of value_rank size
 void value_shape(int handle, int* dimensions);
 
+/// Value size
+/// @param [in] handle Identifier
+/// @return The value size
+int value_size(int handle);
+
 /// Finite Element dimension
 /// @param [in] handle Identifier
 int dim(int handle);
@@ -100,17 +107,17 @@ void entity_dofs(int handle, int dim, int* num_dofs);
 
 /// Number of interpolation points
 /// @param [in] handle Identifier
-const int interpolation_num_points(int handle);
+int interpolation_num_points(int handle);
 
 /// Interpolation points
 /// @param [in] handle Identifier
-// TODO: replace Eigen with double*
-const Eigen::ArrayXXd& interpolation_points(int handle);
+/// @param [in,out] points The interpolation points
+void interpolation_points(int handle, double* points);
 
 /// Interpolation matrix
 /// @param [in] handle Identifier
-// TODO: replace Eigen with double*
-const Eigen::MatrixXd& interpolation_matrix(int handle);
+/// @param [in,out] matrix The interpolation matrix
+void interpolation_matrix(int handle, double* matrix);
 
 /// Cell geometry number of points (npoints)
 /// @param [in] cell_type

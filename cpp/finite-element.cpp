@@ -190,6 +190,8 @@ std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
   return _base_permutations;
 }
 //-----------------------------------------------------------------------------
+int FiniteElement::num_points() const { return _points.rows(); }
+//-----------------------------------------------------------------------------
 const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
 Eigen::ArrayXd

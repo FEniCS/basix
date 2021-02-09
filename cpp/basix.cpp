@@ -47,7 +47,9 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
 
   // gdim and tdim are the same for all cells in basix
   const int gdim = cell::topological_dimension(_registry[handle]->cell_type());
-  Eigen::Map<const Eigen::ArrayXXd> _x(x, npoints, gdim);
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _x(x, npoints, gdim);
   std::vector<Eigen::ArrayXXd> values = _registry[handle]->tabulate(nd, _x);
 
   const int m = values[0].rows() * values[0].cols();
@@ -113,8 +115,10 @@ int basix::interpolation_num_points(int handle)
 void basix::interpolation_points(int handle, double* points)
 {
   check_handle(handle);
-  Eigen::Map<Eigen::ArrayXXd>(points, interpolation_num_points(handle),
-                              cell_geometry_dimension(cell_type(handle)))
+  Eigen::Map<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+      points, interpolation_num_points(handle),
+      cell_geometry_dimension(cell_type(handle)))
       = _registry[handle]->points();
 }
 

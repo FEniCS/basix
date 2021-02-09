@@ -16,9 +16,6 @@ elements = [
 
 
 def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
-    print(K @ J)
-    assert np.allclose(K @ J, np.identity(J.shape[1]))
-
     tdim = len(basix.topology(e.cell_type)) - 1
     N = 5
     if tdim == 1:

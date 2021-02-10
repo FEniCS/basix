@@ -40,7 +40,12 @@ find_package(pybind11 CONFIG REQUIRED)
 if(SKBUILD)
    set(BASIX_PYTHON_INSTALL_PATH ".")
 else()
-   set(BASIX_PYTHON_INSTALL_PATH "${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/basix")
+   set(SITE_PACKAGES "${CMAKE_INSTALL_LIBDIR}/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages")
+   set(BASIX_PYTHON_INSTALL_PATH "${SITE_PACKAGES}/basix")
+   message(STATUS "Generate egg-info")
+   execute_process(
+       COMMAND
+           ${Python_EXECUTABLE} "setup.py" "egg_info" "-e" ${CMAKE_BINARY_DIR} WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} COMMAND_ECHO STDOUT)
 endif()
 
 find_package(Eigen3 REQUIRED)
@@ -70,6 +75,7 @@ set_target_properties(basix PROPERTIES PUBLIC_HEADER "cpp/basix.h")
 install(TARGETS _basixcpp LIBRARY DESTINATION ${BASIX_PYTHON_INSTALL_PATH})
 if(NOT SKBUILD)
     install(FILES cpp/basix/__init__.py DESTINATION ${BASIX_PYTHON_INSTALL_PATH})
+    install(DIRECTORY ${CMAKE_BINARY_DIR}/fenics_basix.egg-info DESTINATION ${SITE_PACKAGES})
 endif()
 install(TARGETS basix
 		LIBRARY DESTINATION lib

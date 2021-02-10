@@ -125,9 +125,10 @@ void basix::interpolation_points(int handle, double* points)
 void basix::interpolation_matrix(int handle, double* matrix)
 {
   check_handle(handle);
-  Eigen::Map<Eigen::MatrixXd>(matrix, dim(handle),
-                              interpolation_num_points(handle)
-                                  * _registry[handle]->value_size())
+  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(matrix,
+                              dim(handle),
+                              interpolation_num_points(handle) * _registry[handle]->value_size()
+                              )
       = _registry[handle]->interpolation_matrix();
 }
 

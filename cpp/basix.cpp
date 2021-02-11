@@ -51,7 +51,8 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
                                 Eigen::RowMajor>>
       _x(x, npoints, gdim);
 
-  _registry[handle]->tabulate_to_memory(nd, x, basis_values);
+  _registry[handle]->tabulate_to_memory(nd, _x, basis_values);
+
   // std::vector<Eigen::ArrayXXd> values = _registry[handle]->tabulate(nd, _x);
 
   // const int m = values[0].rows() * values[0].cols();

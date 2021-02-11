@@ -195,7 +195,10 @@ public:
   /// results will be stacked in index order.
   std::vector<Eigen::ArrayXXd> tabulate(int nd, const Eigen::ArrayXXd& x) const;
 
-  // Direct to memory block tabulation
+  /// Direct to memory block tabulation
+  /// @param nd Number of derivatives
+  /// @param x Points
+  /// @param basis_data Memory location to fill
   void tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
                           double* basis_data) const;
 

@@ -158,26 +158,22 @@ std::vector<Eigen::ArrayXXd>
 FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 {
   const int tdim = cell::topological_dimension(_cell_type);
-  if (x.cols() != tdim)
-    throw std::runtime_error("Point dim does not match element dim.");
+  int ndsize = 1;
+  for (int i = 1; i <= nd; ++i)
+    ndsize *= (tdim + i);
+  for (int i = 1; i <= nd; ++i)
+    ndsize /= i;
 
-  std::vector<Eigen::ArrayXXd> basis
-      = polyset::tabulate(_cell_type, _degree, nd, x);
-  const int psize = polyset::dim(_cell_type, _degree);
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
-  std::vector<Eigen::ArrayXXd> dresult(basis.size(),
-                                       Eigen::ArrayXXd(x.rows(), ndofs * vs));
-  for (std::size_t p = 0; p < dresult.size(); ++p)
-  {
-    for (int j = 0; j < vs; ++j)
-    {
-      dresult[p].block(0, ndofs * j, x.rows(), ndofs)
-          = basis[p].matrix()
-            * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
-    }
-  }
+  std::vector<double> basis_data(ndsize * x.rows() * ndofs * vs);
+  tabulate_to_memory(nd, x, basis_data.data());
+
+  std::vector<Eigen::ArrayXXd> dresult;
+  for (int p = 0; p < ndsize; ++p)
+    dresult.push_back(Eigen::Map<Eigen::ArrayXXd>(
+        basis_data.data() + p * x.rows() * ndofs * vs, x.rows(), ndofs * vs));
 
   return dresult;
 }

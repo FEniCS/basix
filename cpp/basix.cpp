@@ -7,6 +7,8 @@
 #include "finite-element.h"
 #include "mappings.h"
 #include "quadrature.h"
+#include <algorithm>
+#include <iterator>
 #include <memory>
 #include <vector>
 
@@ -38,29 +40,67 @@ void basix::release_element(int handle)
     _registry.pop_back();
 }
 
-std::vector<Eigen::ArrayXXd> basix::tabulate(int handle, int nd,
-                                             const Eigen::ArrayXXd& x)
+void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
+                     int npoints)
 {
   check_handle(handle);
-  return _registry[handle]->tabulate(nd, x);
+
+  // gdim and tdim are the same for all cells in basix
+  const int gdim = cell::topological_dimension(_registry[handle]->cell_type());
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _x(x, npoints, gdim);
+
+  _registry[handle]->tabulate_to_memory(nd, _x, basis_values);
+
+  // std::vector<Eigen::ArrayXXd> values = _registry[handle]->tabulate(nd, _x);
+
+  // const int m = values[0].rows() * values[0].cols();
+  // for (std::size_t i = 0; i < values.size(); ++i)
+  //   std::copy(values[i].data(), values[i].data() + m, basis_values + i * m);
 }
 
-Eigen::ArrayXXd basix::map_push_forward(int handle,
-                                        const Eigen::ArrayXd& reference_data,
-                                        const Eigen::MatrixXd& J, double detJ,
-                                        const Eigen::MatrixXd& K)
+void basix::map_push_forward(int handle, double* physical_data,
+                             const double* reference_data, const double* J,
+                             const double detJ, const double* K,
+                             const int physical_dim,
+                             const int physical_value_size, const int nresults)
 {
   check_handle(handle);
-  return _registry[handle]->map_push_forward(reference_data, J, detJ, K);
+  const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
+  const int vs = _registry[handle]->value_size();
+  Eigen::Map<Eigen::ArrayXXd>(physical_data, physical_value_size, nresults)
+      = _registry[handle]->map_push_forward(
+          Eigen::Map<const Eigen::ArrayXXd>(reference_data, vs, nresults),
+          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>>(J, physical_dim,
+                                                           tdim),
+          detJ,
+          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>>(K, tdim,
+                                                           physical_dim));
 }
 
-Eigen::ArrayXXd basix::map_pull_back(int handle,
-                                     const Eigen::ArrayXd& physical_data,
-                                     const Eigen::MatrixXd& J, double detJ,
-                                     const Eigen::MatrixXd& K)
+void basix::map_pull_back(int handle, double* reference_data,
+                          const double* physical_data, const double* J,
+                          const double detJ, const double* K,
+                          const int physical_dim, const int physical_value_size,
+                          const int nresults)
 {
   check_handle(handle);
-  return _registry[handle]->map_pull_back(physical_data, J, detJ, K);
+  const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
+  const int vs = _registry[handle]->value_size();
+  Eigen::Map<Eigen::ArrayXXd>(reference_data, vs, nresults)
+      = _registry[handle]->map_push_forward(
+          Eigen::Map<const Eigen::ArrayXXd>(physical_data, physical_value_size,
+                                            nresults),
+          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>>(J, physical_dim,
+                                                           tdim),
+          detJ,
+          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>>(K, tdim,
+                                                           physical_dim));
 }
 
 const char* basix::cell_type(int handle)
@@ -75,34 +115,56 @@ int basix::degree(int handle)
   return _registry[handle]->degree();
 }
 
-int basix::value_size(int handle)
+int basix::dim(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->value_size();
+  return _registry[handle]->dim();
 }
 
-const std::vector<int>& basix::value_shape(int handle)
+int basix::value_rank(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->value_shape();
+  return _registry[handle]->value_shape().size();
 }
 
-const Eigen::ArrayXXd& basix::points(int handle)
+void basix::value_shape(int handle, int* dimensions)
 {
   check_handle(handle);
-  return _registry[handle]->points();
+  std::vector<int> dims = _registry[handle]->value_shape();
+  std::copy(dims.begin(), dims.end(), dimensions);
 }
 
-const Eigen::MatrixXd& basix::interpolation_matrix(int handle)
+int basix::interpolation_num_points(int handle)
 {
   check_handle(handle);
-  return _registry[handle]->interpolation_matrix();
+  return _registry[handle]->num_points();
 }
 
-const std::vector<std::vector<int>>& basix::entity_dofs(int handle)
+void basix::interpolation_points(int handle, double* points)
 {
   check_handle(handle);
-  return _registry[handle]->entity_dofs();
+  Eigen::Map<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+      points, interpolation_num_points(handle),
+      cell_geometry_dimension(cell_type(handle)))
+      = _registry[handle]->points();
+}
+
+void basix::interpolation_matrix(int handle, double* matrix)
+{
+  check_handle(handle);
+  Eigen::Map<
+      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+      matrix, dim(handle),
+      interpolation_num_points(handle) * _registry[handle]->value_size())
+      = _registry[handle]->interpolation_matrix();
+}
+
+void basix::entity_dofs(int handle, int dim, int* num_dofs)
+{
+  check_handle(handle);
+  std::vector<std::vector<int>> dof_counts = _registry[handle]->entity_dofs();
+  std::copy(dof_counts[dim].begin(), dof_counts[dim].end(), num_dofs);
 }
 
 const char* basix::family_name(int handle)
@@ -117,10 +179,23 @@ const char* basix::mapping_name(int handle)
   return mapping::type_to_str(_registry[handle]->mapping_type()).c_str();
 }
 
-Eigen::ArrayXXd basix::geometry(const char* cell_type)
+int basix::cell_geometry_num_points(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
-  return cell::geometry(ct);
+  return cell::geometry(ct).rows();
+}
+
+int basix::cell_geometry_dimension(const char* cell_type)
+{
+  cell::type ct = cell::str_to_type(cell_type);
+  return cell::geometry(ct).cols();
+}
+
+void basix::cell_geometry(const char* cell_type, double* points)
+{
+  cell::type ct = cell::str_to_type(cell_type);
+  Eigen::ArrayXXd pts = cell::geometry(ct);
+  std::copy(pts.data(), pts.data() + pts.rows() * pts.cols(), points);
 }
 
 std::vector<std::vector<std::vector<int>>>
@@ -128,11 +203,4 @@ basix::topology(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
   return cell::topology(ct);
-}
-
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-basix::make_quadrature(const char* rule, const char* cell_type, int order)
-{
-  cell::type ct = cell::str_to_type(cell_type);
-  return basix::quadrature::make_quadrature(rule, ct, order);
 }

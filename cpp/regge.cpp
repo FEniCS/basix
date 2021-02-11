@@ -7,7 +7,6 @@
 #include "lattice.h"
 #include "mappings.h"
 #include "polyset.h"
-#include <iostream>
 
 using namespace basix;
 

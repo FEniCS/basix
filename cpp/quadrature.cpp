@@ -4,7 +4,6 @@
 
 #include "quadrature.h"
 #include <cmath>
-#include <iostream>
 #include <vector>
 
 using namespace basix;

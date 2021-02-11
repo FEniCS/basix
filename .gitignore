@@ -10,3 +10,7 @@ cpp/cmake_install.cmake
 build/*
 
 .*.swp
+
+*.egg-info
+_skbuild/*
+dist/*

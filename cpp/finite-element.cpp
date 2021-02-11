@@ -187,12 +187,9 @@ void FiniteElement::tabulate(
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
-  if (result.size() != basis.size())
-    throw std::runtime_error("ERRORR 1");
-  if (result[0].rows() != x.rows())
-    throw std::runtime_error("ERRORR 2");
-  if (result[0].cols() != ndofs * vs)
-    throw std::runtime_error("ERRORR 3");
+  assert(result.size() == basis.size());
+  assert(result[0].rows() == x.rows());
+  assert(result[0].cols() == ndofs * vs);
 
   for (std::size_t p = 0; p < basis.size(); ++p)
   {

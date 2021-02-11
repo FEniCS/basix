@@ -2,7 +2,6 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include <Eigen/Core>
 #include <utility>
 #include <vector>
 

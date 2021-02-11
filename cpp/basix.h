@@ -70,7 +70,8 @@ void tabulate(int handle, double* basis_values, int nd, const double* x,
 void map_push_forward(int handle, double* physical_data,
                       const double* reference_data, const double* J,
                       const double detJ, const double* K,
-                      const int physical_dim, const int physical_value_size);
+                      const int physical_dim, const int physical_value_size,
+                      int nresults);
 
 /// Map a function value from a physical cell to the reference
 /// @param[in] handle The handle of the basix element

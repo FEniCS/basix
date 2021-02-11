@@ -179,8 +179,6 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
       dresult[p].block(0, ndofs * j, x.rows(), ndofs)
           = basis[p].matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
-      std::cout << "[" << dresult[p].block(0, ndofs * j, x.rows(), ndofs)
-                << "]\n";
     }
   }
 
@@ -196,25 +194,23 @@ int FiniteElement::num_points() const { return _points.rows(); }
 //-----------------------------------------------------------------------------
 const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd
-FiniteElement::map_push_forward(const Eigen::ArrayXd& reference_data,
+Eigen::ArrayXXd
+FiniteElement::map_push_forward(const Eigen::ArrayXXd& reference_data,
                                 const Eigen::MatrixXd& J, double detJ,
                                 const Eigen::MatrixXd& K) const
 {
-  if (reference_data.cols() != 1)
-    throw std::runtime_error("ERRORR 1");
   if (reference_data.rows() != value_size())
-    throw std::runtime_error("ERRORR 2");
+    throw std::runtime_error("ERRORR 1");
   if (J.cols() != K.rows())
     throw std::runtime_error("ERRORR 3");
   if (K.cols() != J.rows())
     throw std::runtime_error("ERRORR 3");
-  std::cout << "basix -> {\n"
-            << mapping::map_push_forward(reference_data, J, detJ, K,
-                                         _mapping_type, _value_shape)
-            << "\n}\n";
-  return mapping::map_push_forward(reference_data, J, detJ, K, _mapping_type,
-                                   _value_shape);
+
+  Eigen::ArrayXXd result(value_size(), reference_data.cols());
+  for (int i = 0; i < reference_data.cols(); ++i)
+    result.col(i) = mapping::map_push_forward(reference_data.col(i), J, detJ, K,
+                                              _mapping_type, _value_shape);
+  return result;
 }
 //-----------------------------------------------------------------------------
 Eigen::ArrayXd FiniteElement::map_pull_back(const Eigen::ArrayXd& physical_data,

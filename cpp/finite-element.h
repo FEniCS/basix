@@ -231,9 +231,9 @@ public:
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @return The function value on the cell
-  Eigen::ArrayXd map_push_forward(const Eigen::ArrayXd& reference_data,
-                                  const Eigen::MatrixXd& J, double detJ,
-                                  const Eigen::MatrixXd& K) const;
+  Eigen::ArrayXXd map_push_forward(const Eigen::ArrayXXd& reference_data,
+                                   const Eigen::MatrixXd& J, double detJ,
+                                   const Eigen::MatrixXd& K) const;
 
   /// Map a function value from a physical cell to the reference
   /// @param physical_data The function value on the cell

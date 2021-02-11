@@ -20,11 +20,16 @@ void release_element(int handle);
 
 /// Tabulate basis values into the memory at "basis_values" with nd derivatives
 /// for the points x.
-/// The memory for "basis_values" must be allocated by the user, and is a three
-/// dimensional ndarray with the following dimensions:
-/// [npoints * dim * (nd+tdim)!/nd!tdim!] where "npoints" and "nd" are
-/// defined below and tdim is the topological dimension of the cell for this
-/// element. "dim" is the dimension of the finite element (See `dim()`).
+/// The memory for "basis_values" must be allocated by the user, and is a four
+/// dimensional (row-major) ndarray with dimensions
+/// [(nd+tdim)!/nd!tdim!, value_size, dim, npoints]
+/// where "npoints" and "nd" are defined below, "tdim" is the topological dimension of the cell for this
+/// element, "dim" is the dimension of the finite element (See `dim()`), and
+/// "value_size" is the value size of the finite element (the product of the
+/// values in `value_shape()`).
+/// "x" points to the memory for a two dimensional (row-major) ndarray with
+/// dimensions [npoints, tdim] where "npoints" is defined below, and "tdim" is
+/// the topological dimension of the reference element.
 ///
 /// @param [in] handle The handle for the basix element
 /// @param [out] basis_values Block of memory to be filled with basis data
@@ -125,6 +130,11 @@ int cell_geometry_num_points(const char* cell_type);
 int cell_geometry_dimension(const char* cell_type);
 
 /// Cell points
+/// The memory for "x" must be allocated by the user, and is a two
+/// dimensional (row-major) ndarray with dimensions [gdim, npoints]
+/// where "npoints" is the number of vertices of the cell, and "gdim"
+/// is the geometric dimension of the cell.
+///
 /// @param [in] cell_type
 /// @param [out] points Array of size [npoints x gdim]
 void cell_geometry(const char* cell_type, double* points);

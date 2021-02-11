@@ -70,7 +70,8 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
   for (int i = 0; i < deriv_size(nd, gdim); ++i)
     _bv.push_back(Eigen::Map<Eigen::Array<double, Eigen::Dynamic,
                                           Eigen::Dynamic, Eigen::RowMajor>>(
-        basis_values + i * npoints * dim(handle), dim(handle), npoints));
+        basis_values + i * npoints * dim(handle), npoints,
+        _registry[handle]->dim() * _registry[handle]->value_size()));
 
   _registry[handle]->tabulate(_bv, nd, _x);
 

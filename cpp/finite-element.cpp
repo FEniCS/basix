@@ -206,6 +206,7 @@ FiniteElement::map_push_forward(const Eigen::ArrayXXd& reference_data,
   if (K.cols() != J.rows())
     throw std::runtime_error("ERRORR 3");
 
+
   Eigen::ArrayXXd result(value_size(), reference_data.cols());
   for (int i = 0; i < reference_data.cols(); ++i)
     result.col(i) = mapping::map_push_forward(reference_data.col(i), J, detJ, K,

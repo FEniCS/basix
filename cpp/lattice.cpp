@@ -24,8 +24,14 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
   FiniteElement L = create_dlagrange(cell::type::interval, n);
-  Eigen::MatrixXd v = L.tabulate(0, x)[0];
-  return v * pts.matrix();
+
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      v(1,
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+            x.rows(), L.dim() * L.value_size()));
+  L.tabulate(v, 0, x);
+  return v[0].matrix() * pts.matrix();
 }
 //-----------------------------------------------------------------------------
 
@@ -141,7 +147,6 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
         ++c;
       }
     }
-
     return p;
   }
   case cell::type::tetrahedron:
@@ -233,7 +238,12 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
       // Get interpolated value at r in range [-1, 1]
       auto w = [&](double r) {
         Eigen::ArrayXd rr = Eigen::ArrayXd::Constant(1, 0.5 * (r + 1.0));
-        Eigen::VectorXd v = L.tabulate(0, rr)[0].row(0);
+        std::vector<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                 Eigen::RowMajor>>
+            data(1, Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                 Eigen::RowMajor>(1, L.dim()));
+        L.tabulate(data, 0, rr);
+        Eigen::VectorXd v = data[0].row(0);
         return v.dot(pts);
       };
 

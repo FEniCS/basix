@@ -189,7 +189,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
-      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
+      .def("tabulate", &FiniteElement::tabulate_legacy, tabdoc.c_str())
       .def("map_push_forward", &FiniteElement::map_push_forward, mapdoc.c_str())
       .def("map_pull_back", &FiniteElement::map_pull_back, invmapdoc.c_str())
       .def_property_readonly("base_permutations",

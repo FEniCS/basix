@@ -17,6 +17,19 @@
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
+namespace
+{
+int deriv_size(int nd, int tdim)
+{
+  int out = 1;
+  for (int i = 1; i <= nd; ++i)
+    out *= (tdim + i);
+  for (int i = 1; i <= nd; ++i)
+    out /= i;
+  return out;
+}
+} // namespace
+
 using namespace basix;
 
 //-----------------------------------------------------------------------------
@@ -157,8 +170,12 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
   return _entity_dofs;
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::ArrayXXd>
-FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
+void FiniteElement::tabulate(
+    std::vector<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                             Eigen::RowMajor>>& result,
+    int nd,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        x) const
 {
   const int tdim = cell::topological_dimension(_cell_type);
   if (x.cols() != tdim)
@@ -170,19 +187,39 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
-  std::vector<Eigen::ArrayXXd> dresult(basis.size(),
-                                       Eigen::ArrayXXd(x.rows(), ndofs * vs));
-  for (std::size_t p = 0; p < dresult.size(); ++p)
+  if (result.size() != basis.size())
+    throw std::runtime_error("ERRORR 1");
+  if (result[0].rows() != x.rows())
+    throw std::runtime_error("ERRORR 2");
+  if (result[0].cols() != ndofs * vs)
+    throw std::runtime_error("ERRORR 3");
+
+  for (std::size_t p = 0; p < basis.size(); ++p)
   {
     for (int j = 0; j < vs; ++j)
     {
-      dresult[p].block(0, ndofs * j, x.rows(), ndofs)
+      result[p].block(0, ndofs * j, x.rows(), ndofs)
           = basis[p].matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
     }
   }
-
-  return dresult;
+}
+//-----------------------------------------------------------------------------
+std::vector<
+    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+FiniteElement::tabulate_legacy(
+    int nd,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        x) const
+{
+  const int tdim = cell::topological_dimension(_cell_type);
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      out(deriv_size(nd, tdim),
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              x.rows(), dim() * value_size()));
+  tabulate(out, nd, x);
+  return out;
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const

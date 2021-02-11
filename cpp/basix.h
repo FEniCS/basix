@@ -21,16 +21,18 @@ void release_element(int handle);
 /// Tabulate basis values into the memory at "basis_values" with nd derivatives
 /// for the points x.
 /// The memory for "basis_values" must be allocated by the user, and is a three
-/// dimensional ndarray with the following dimensions:
-/// [npoints * dim * (nd+tdim)!/nd!tdim!] where "npoints" and "nd" are
-/// defined below and tdim is the topological dimension of the cell for this
-/// element. "dim" is the dimension of the finite element (See `dim()`).
+/// dimensional row-major ndarray with the dimensions
+/// [(nd+tdim)!/nd!tdim, dim*value_size, npoints]
+/// where "npoints" and "nd" are inputs defined below, "tdim" is the topological
+/// dimension of the cell for this element, "dim" is the dimension of the finite
+/// element (See `dim()`), and "value_size" is the value size of the element
+/// (the product of the values in `value_shape()`).
 ///
-/// @param [in] handle The handle for the basix element
-/// @param [out] basis_values Block of memory to be filled with basis data
-/// @param [in] nd Number of derivatives
-/// @param [in] x Points at which to evaluate (of size [npoints * tdim])
-/// @param [in] npoints Number of points
+/// @param[in] handle The handle for the basix element
+/// @param[out] basis_values Block of memory to be filled with basis data
+/// @param[in] nd Number of derivatives
+/// @param[in] x Points at which to evaluate (of size [npoints * tdim])
+/// @param[in] npoints Number of points
 ///
 void tabulate(int handle, double* basis_values, int nd, const double* x,
               int npoints);

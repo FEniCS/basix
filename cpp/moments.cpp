@@ -58,9 +58,15 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      moment_space_at_Qpts(
+          1,
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              Qpts.rows(), moment_space.dim() * moment_space.value_size()));
+  moment_space.tabulate(moment_space_at_Qpts, 0, Qpts);
 
-  Eigen::MatrixXd dual(moment_space_at_Qpts.cols() * sub_entity_dim
+  Eigen::MatrixXd dual(moment_space_at_Qpts[0].cols() * sub_entity_dim
                            * sub_entity_count,
                        psize * value_size);
 
@@ -87,9 +93,9 @@ moments::make_integral_moments(const FiniteElement& moment_space,
         = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
 
     // Compute entity integral moments
-    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    for (int j = 0; j < moment_space_at_Qpts[0].cols(); ++j)
     {
-      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      Eigen::ArrayXd phi = moment_space_at_Qpts[0].col(j);
       for (int d = 0; d < sub_entity_dim; ++d)
       {
         Eigen::VectorXd axis = axes.row(d);
@@ -129,10 +135,16 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      moment_space_at_Qpts(
+          1,
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              Qpts.rows(), moment_space.dim() * moment_space.value_size()));
+  moment_space.tabulate(moment_space_at_Qpts, 0, Qpts);
 
   Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
-  Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count
+  Eigen::MatrixXd matrix(moment_space_at_Qpts[0].cols() * sub_entity_count
                              * sub_entity_dim,
                          sub_entity_count * Qpts.rows() * value_size);
   matrix.setZero();
@@ -156,9 +168,9 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
           + (Qpts.matrix() * axes.matrix()).array();
 
     // Compute entity integral moments
-    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    for (int j = 0; j < moment_space_at_Qpts[0].cols(); ++j)
     {
-      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      Eigen::ArrayXd phi = moment_space_at_Qpts[0].col(j);
       for (int d = 0; d < sub_entity_dim; ++d)
       {
         Eigen::VectorXd axis = axes.row(d);
@@ -198,9 +210,15 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      moment_space_at_Qpts(
+          1,
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              Qpts.rows(), moment_space.dim() * moment_space.value_size()));
+  moment_space.tabulate(moment_space_at_Qpts, 0, Qpts);
 
-  const int moment_space_size = moment_space_at_Qpts.cols() / sub_entity_dim;
+  const int moment_space_size = moment_space_at_Qpts[0].cols() / sub_entity_dim;
   Eigen::MatrixXd dual(moment_space_size * sub_entity_count,
                        psize * value_size);
 
@@ -235,7 +253,7 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
         for (int d = 0; d < sub_entity_dim; ++d)
         {
           Eigen::ArrayXd phi
-              = moment_space_at_Qpts.col(d * moment_space_size + j);
+              = moment_space_at_Qpts[0].col(d * moment_space_size + j);
           Eigen::VectorXd axis = axes.row(d);
           Eigen::VectorXd qpart = phi * Qwts * axis(k);
           q += qpart;
@@ -268,8 +286,15 @@ moments::make_dot_integral_moments_interpolation(
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
-  const int moment_space_size = moment_space_at_Qpts.cols() / sub_entity_dim;
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      moment_space_at_Qpts(
+          1,
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              Qpts.rows(), moment_space.dim() * moment_space.value_size()));
+  moment_space.tabulate(moment_space_at_Qpts, 0, Qpts);
+
+  const int moment_space_size = moment_space_at_Qpts[0].cols() / sub_entity_dim;
 
   Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
   Eigen::MatrixXd matrix(moment_space_size * sub_entity_count,
@@ -304,7 +329,7 @@ moments::make_dot_integral_moments_interpolation(
         for (int d = 0; d < sub_entity_dim; ++d)
         {
           Eigen::ArrayXd phi
-              = moment_space_at_Qpts.col(d * moment_space_size + j);
+              = moment_space_at_Qpts[0].col(d * moment_space_size + j);
           Eigen::RowVectorXd axis = axes.row(d);
           Eigen::RowVectorXd qpart = phi * Qwts * axis(k);
           q += qpart;
@@ -340,9 +365,15 @@ Eigen::MatrixXd moments::make_tangent_integral_moments(
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      moment_space_at_Qpts(
+          1,
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              Qpts.rows(), moment_space.dim() * moment_space.value_size()));
+  moment_space.tabulate(moment_space_at_Qpts, 0, Qpts);
 
-  Eigen::MatrixXd dual(moment_space_at_Qpts.cols() * sub_entity_count,
+  Eigen::MatrixXd dual(moment_space_at_Qpts[0].cols() * sub_entity_count,
                        psize * value_size);
 
   int c = 0;
@@ -368,9 +399,9 @@ Eigen::MatrixXd moments::make_tangent_integral_moments(
         = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
 
     // Compute edge tangent integral moments
-    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    for (int j = 0; j < moment_space_at_Qpts[0].cols(); ++j)
     {
-      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      Eigen::ArrayXd phi = moment_space_at_Qpts[0].col(j);
       for (int k = 0; k < value_size; ++k)
       {
         Eigen::VectorXd q = phi * Qwts * tangent[k];
@@ -404,10 +435,16 @@ moments::make_tangent_integral_moments_interpolation(
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      moment_space_at_Qpts(
+          1,
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              Qpts.rows(), moment_space.dim() * moment_space.value_size()));
+  moment_space.tabulate(moment_space_at_Qpts, 0, Qpts);
 
   Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
-  Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count,
+  Eigen::MatrixXd matrix(moment_space_at_Qpts[0].cols() * sub_entity_count,
                          sub_entity_count * Qpts.rows() * value_size);
   matrix.setZero();
 
@@ -430,9 +467,9 @@ moments::make_tangent_integral_moments_interpolation(
     }
 
     // Compute edge tangent integral moments
-    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    for (int j = 0; j < moment_space_at_Qpts[0].cols(); ++j)
     {
-      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      Eigen::ArrayXd phi = moment_space_at_Qpts[0].col(j);
       for (int k = 0; k < value_size; ++k)
       {
         Eigen::RowVectorXd data = phi * Qwts * tangent[k];
@@ -467,9 +504,15 @@ Eigen::MatrixXd moments::make_normal_integral_moments(
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      moment_space_at_Qpts(
+          1,
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              Qpts.rows(), moment_space.dim() * moment_space.value_size()));
+  moment_space.tabulate(moment_space_at_Qpts, 0, Qpts);
 
-  Eigen::MatrixXd dual(moment_space_at_Qpts.cols() * sub_entity_count,
+  Eigen::MatrixXd dual(moment_space_at_Qpts[0].cols() * sub_entity_count,
                        psize * value_size);
 
   int c = 0;
@@ -519,9 +562,9 @@ Eigen::MatrixXd moments::make_normal_integral_moments(
         = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
 
     // Compute facet normal integral moments
-    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    for (int j = 0; j < moment_space_at_Qpts[0].cols(); ++j)
     {
-      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      Eigen::ArrayXd phi = moment_space_at_Qpts[0].col(j);
       for (int k = 0; k < value_size; ++k)
       {
         Eigen::VectorXd q = phi * Qwts * normal[k];
@@ -555,10 +598,16 @@ moments::make_normal_integral_moments_interpolation(
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      moment_space_at_Qpts(
+          1,
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>(
+              Qpts.rows(), moment_space.dim() * moment_space.value_size()));
+  moment_space.tabulate(moment_space_at_Qpts, 0, Qpts);
 
   Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
-  Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count,
+  Eigen::MatrixXd matrix(moment_space_at_Qpts[0].cols() * sub_entity_count,
                          sub_entity_count * Qpts.rows() * value_size);
   matrix.setZero();
 
@@ -609,9 +658,9 @@ moments::make_normal_integral_moments_interpolation(
         = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
 
     // Compute facet normal integral moments
-    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    for (int j = 0; j < moment_space_at_Qpts[0].cols(); ++j)
     {
-      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      Eigen::ArrayXd phi = moment_space_at_Qpts[0].col(j);
       for (int k = 0; k < value_size; ++k)
       {
         Eigen::RowVectorXd q = phi * Qwts * normal[k];

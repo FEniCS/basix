@@ -12,6 +12,19 @@
 #include <memory>
 #include <vector>
 
+namespace
+{
+int deriv_size(int nd, int tdim)
+{
+  int out = 1;
+  for (int i = 1; i <= nd; ++i)
+    out *= (tdim + i);
+  for (int i = 1; i <= nd; ++i)
+    out /= i;
+  return out;
+}
+} // namespace
+
 using namespace basix;
 
 std::vector<std::unique_ptr<FiniteElement>> _registry;
@@ -50,11 +63,24 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
   Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                 Eigen::RowMajor>>
       _x(x, npoints, gdim);
-  std::vector<Eigen::ArrayXXd> values = _registry[handle]->tabulate(nd, _x);
 
-  const int m = values[0].rows() * values[0].cols();
-  for (std::size_t i = 0; i < values.size(); ++i)
-    std::copy(values[i].data(), values[i].data() + m, basis_values + i * m);
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      _bv;
+  for (int i = 0; i < deriv_size(nd, gdim); ++i)
+    _bv.push_back(Eigen::Map<Eigen::Array<double, Eigen::Dynamic,
+                                          Eigen::Dynamic, Eigen::RowMajor>>(
+        basis_values + i * npoints * dim(handle), dim(handle), npoints));
+
+  _registry[handle]->tabulate(_bv, nd, _x);
+
+  /*  std::vector<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+    Eigen::RowMajor>> values = _registry[handle]->tabulate(nd, _x);
+
+    const int m = values[0].rows() * values[0].cols();
+    for (std::size_t i = 0; i < values.size(); ++i)
+      std::copy(values[i].data(), values[i].data() + m, basis_values + i * m);
+  */
 }
 
 Eigen::ArrayXXd basix::map_push_forward(int handle,

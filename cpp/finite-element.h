@@ -181,6 +181,26 @@ public:
 
   /// Compute basis values and derivatives at set of points.
   ///
+  /// @param[out] result The basis functions (and derivatives). The first entry
+  /// in the list is the basis function. Higher derivatives are stored in
+  /// triangular (2D) or tetrahedral (3D) ordering, i.e. for the (x,y)
+  /// derivatives in 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... The
+  /// function basix::idx can be used to find the appropriate derivative.
+  /// If a vector result is expected, it will be stacked with all x values,
+  /// followed by all y-values (and then z, if any), likewise tensor-valued
+  /// results will be stacked in index order.
+  /// @param[in] nd The order of derivatives, up to and including,
+  /// to compute. Use 0 for the basis functions only.
+  /// @param[in] x The points at which to compute the basis functions.
+  /// The shape of x is (number of points, geometric dimension).
+  void tabulate(std::vector<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>>& result,
+                int nd,
+                const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>& x) const;
+
+  /// Compute basis values and derivatives at set of points.
+  ///
   /// @param[in] nd The order of derivatives, up to and including,
   /// to compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions.
@@ -193,7 +213,12 @@ public:
   /// If a vector result is expected, it will be stacked with all x values,
   /// followed by all y-values (and then z, if any), likewise tensor-valued
   /// results will be stacked in index order.
-  std::vector<Eigen::ArrayXXd> tabulate(int nd, const Eigen::ArrayXXd& x) const;
+  // TODO: Remove this and put something similar in wrapper.cpp
+  std::vector<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+  tabulate_legacy(int nd,
+                  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                     Eigen::RowMajor>& x) const;
 
   /// Get the element cell type
   /// @return The cell type

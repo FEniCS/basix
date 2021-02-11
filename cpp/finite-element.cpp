@@ -206,13 +206,16 @@ FiniteElement::map_push_forward(const Eigen::ArrayXXd& reference_data,
   return result;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd FiniteElement::map_pull_back(const Eigen::ArrayXd& physical_data,
-                                            const Eigen::MatrixXd& J,
-                                            double detJ,
-                                            const Eigen::MatrixXd& K) const
+Eigen::ArrayXXd
+FiniteElement::map_pull_back(const Eigen::ArrayXXd& physical_data,
+                             const Eigen::MatrixXd& J, double detJ,
+                             const Eigen::MatrixXd& K) const
 {
-  return mapping::map_pull_back(physical_data, J, detJ, K, _mapping_type,
-                                _value_shape);
+  Eigen::ArrayXXd result(J.rows(), physical_data.cols());
+  for (int i = 0; i < physical_data.cols(); ++i)
+    result.col(i) = mapping::map_push_forward(physical_data.col(i), J, detJ, K,
+                                              _mapping_type, _value_shape);
+  return result;
 }
 //-----------------------------------------------------------------------------
 const std::string& basix::version()

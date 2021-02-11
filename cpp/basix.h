@@ -79,21 +79,46 @@ void map_push_forward(int handle, double* physical_data,
                       const double* reference_data, const double* J,
                       const double detJ, const double* K,
                       const int physical_dim, const int physical_value_size,
-                      int nresults);
+                      const int nresults);
 
 /// Map a function value from a physical cell to the reference
+///
+/// The memory for "reference_data" must be allocated by the user, and is a two
+/// dimensional (row-major) ndarray with dimensions
+/// [nresults, value_size]
+/// where "nresults" is given as a function input, and
+/// "value_size" is the value size of the finite element (the product of the
+/// values in `value_shape()`).
+///
+/// "reference_data" points to the memory for
+/// a two dimensional (row-major) ndarray with dimensions [nresults,
+/// physical_value_size] where "physical_value_size" and "nresults" are given as
+/// function inputs.
+///
+/// "J" points to the memory for a two dimensional (row-major) ndarray with
+/// dimensions [physical_dim, tdim], where "physical_dim" is given as a function
+/// input, and "tdim" is the topological dimension of the cell for this element.
+///
+/// "K" points
+/// to the memory for a two dimensional (row-major) ndarray with dimensions
+/// [tdim, physical_dim].
+///
 /// @param[in] handle The handle of the basix element
-/// @param[in] physical_data The physical data at a single point
+/// @param[out] reference_data The data on the physical cell at the
+/// corresponding point
+/// @param[in] physical_data The reference data at a single point
 /// @param[in] J The Jacobian of the map to the cell (evaluated at the point)
 /// @param[in] detJ The determinant of the Jacobian of the map to the cell
 /// (evaluated at the point)
 /// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
 /// at the point)
-/// @return The data on the reference element at the corresponding point
-// TODO: remove Eigen from public interface
-Eigen::ArrayXXd map_pull_back(int handle, const Eigen::ArrayXd& physical_data,
-                              const Eigen::MatrixXd& J, double detJ,
-                              const Eigen::MatrixXd& K);
+/// @param[in] physical_dim The geometric dimension of the physical domain
+/// @param[in] physical_value_size The value size of the physical element
+/// @param[in] nresults The number of data points
+void map_pull_back(int handle, double* reference_data,
+                   const double* physical_data, const double* J,
+                   const double detJ, const double* K, const int physical_dim,
+                   const int physical_value_size, const int nresults);
 
 /// String representation of the cell type of the finite element
 /// @param handle

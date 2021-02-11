@@ -225,25 +225,25 @@ public:
   /// @return The mapping
   const mapping::type mapping_type() const;
 
-  /// Map a function value from the reference to a physical cell
-  /// @param reference_data The function value on the reference
+  /// Map function values from the reference to a physical cell
+  /// @param reference_data The function values on the reference
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
-  /// @return The function value on the cell
+  /// @return The function values on the cell
   Eigen::ArrayXXd map_push_forward(const Eigen::ArrayXXd& reference_data,
                                    const Eigen::MatrixXd& J, double detJ,
                                    const Eigen::MatrixXd& K) const;
 
-  /// Map a function value from a physical cell to the reference
-  /// @param physical_data The function value on the cell
+  /// Map function values from a physical cell to the reference
+  /// @param physical_data The function values on the cell
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
-  /// @return The function value on the reference
-  Eigen::ArrayXd map_pull_back(const Eigen::ArrayXd& physical_data,
-                               const Eigen::MatrixXd& J, double detJ,
-                               const Eigen::MatrixXd& K) const;
+  /// @return The function values on the reference
+  Eigen::ArrayXXd map_pull_back(const Eigen::ArrayXXd& physical_data,
+                                const Eigen::MatrixXd& J, double detJ,
+                                const Eigen::MatrixXd& K) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2

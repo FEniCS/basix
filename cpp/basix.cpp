@@ -61,7 +61,7 @@ void basix::map_push_forward(int handle, double* physical_data,
                              const double* reference_data, const double* J,
                              const double detJ, const double* K,
                              const int physical_dim,
-                             const int physical_value_size, int nresults)
+                             const int physical_value_size, const int nresults)
 {
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
@@ -78,13 +78,26 @@ void basix::map_push_forward(int handle, double* physical_data,
                                                            physical_dim));
 }
 
-Eigen::ArrayXXd basix::map_pull_back(int handle,
-                                     const Eigen::ArrayXd& physical_data,
-                                     const Eigen::MatrixXd& J, double detJ,
-                                     const Eigen::MatrixXd& K)
+void basix::map_pull_back(int handle, double* reference_data,
+                          const double* physical_data, const double* J,
+                          const double detJ, const double* K,
+                          const int physical_dim, const int physical_value_size,
+                          const int nresults)
 {
   check_handle(handle);
-  return _registry[handle]->map_pull_back(physical_data, J, detJ, K);
+  const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
+  const int vs = _registry[handle]->value_size();
+  Eigen::Map<Eigen::ArrayXXd>(reference_data, vs, nresults)
+      = _registry[handle]->map_push_forward(
+          Eigen::Map<const Eigen::ArrayXXd>(physical_data, physical_value_size,
+                                            nresults),
+          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>>(J, physical_dim,
+                                                           tdim),
+          detJ,
+          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                         Eigen::RowMajor>>(K, tdim,
+                                                           physical_dim));
 }
 
 const char* basix::cell_type(int handle)

@@ -137,10 +137,7 @@ const std::vector<int>& FiniteElement::value_shape() const
 //-----------------------------------------------------------------------------
 int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
-element::family FiniteElement::family() const
-{
-  return _family;
-}
+element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 const mapping::type FiniteElement::mapping_type() const
 {
@@ -161,6 +158,30 @@ std::vector<Eigen::ArrayXXd>
 FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 {
   const int tdim = cell::topological_dimension(_cell_type);
+  int ndsize = 1;
+  for (int i = 1; i <= nd; ++i)
+    ndsize *= (tdim + i);
+  for (int i = 1; i <= nd; ++i)
+    ndsize /= i;
+
+  const int ndofs = _coeffs.rows();
+  const int vs = value_size();
+
+  std::vector<double> basis_data(ndsize * x.rows() * ndofs * vs);
+  tabulate_to_memory(nd, x, basis_data.data());
+
+  std::vector<Eigen::ArrayXXd> dresult;
+  for (int p = 0; p < ndsize; ++p)
+    dresult.push_back(Eigen::Map<Eigen::ArrayXXd>(
+        basis_data.data() + p * x.rows() * ndofs * vs, x.rows(), ndofs * vs));
+
+  return dresult;
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
+                                       double* basis_data) const
+{
+  const int tdim = cell::topological_dimension(_cell_type);
   if (x.cols() != tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
@@ -170,19 +191,18 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
-  std::vector<Eigen::ArrayXXd> dresult(basis.size(),
-                                       Eigen::ArrayXXd(x.rows(), ndofs * vs));
-  for (std::size_t p = 0; p < dresult.size(); ++p)
+  for (std::size_t p = 0; p < basis.size(); ++p)
   {
+    // Map block for current derivative
+    Eigen::Map<Eigen::ArrayXXd> dresult(basis_data + p * x.rows() * ndofs * vs,
+                                        x.rows(), ndofs * vs);
     for (int j = 0; j < vs; ++j)
     {
-      dresult[p].block(0, ndofs * j, x.rows(), ndofs)
+      dresult.block(0, ndofs * j, x.rows(), ndofs)
           = basis[p].matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
     }
   }
-
-  return dresult;
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const

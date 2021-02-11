@@ -40,20 +40,37 @@ void release_element(int handle);
 void tabulate(int handle, double* basis_values, int nd, const double* x,
               int npoints);
 
-/// Map a function value from the reference to a physical cell
+/// Map a function value from the reference to a physical cell.
+/// The memory for "physical_data" must be allocated by the user, and is a two
+/// dimensional (row-major) ndarray with dimensions
+/// [physical_value_size, dim]
+/// where "physical_value_size" is defined below, and "dim" is the dimension of
+/// the finite element (See `dim()`). "reference_data" points to the memory for
+/// a two dimensional (row-major) ndarray with dimensions [value_size, dim]
+/// where "dim" is the dimension of the finite element (See `dim()`), and
+/// "value_size" is the value size of the finite element (the product of the
+/// values in `value_shape()`).
+/// "J" points to the memory for a two dimensional (row-major) ndarray with
+/// dimensions [tdim, physical_dim], where "physical_dim" is defined below, and
+/// "tdim" is the topological dimension of the cell for this element. "K" points
+/// to the memory for a two dimensional (row-major) ndarray with dimensions
+/// [physical_dim, tdim].
+///
 /// @param[in] handle The handle of the basix element
+/// @param[out] physical_data The data on the physical cell at the corresponding
+/// point
 /// @param[in] reference_data The reference data at a single point
 /// @param[in] J The Jacobian of the map to the cell (evaluated at the point)
 /// @param[in] detJ The determinant of the Jacobian of the map to the cell
 /// (evaluated at the point)
 /// @param[in] K The inverse of the Jacobian of the map to the cell (evaluated
 /// at the point)
-/// @return The data on the physical cell at the corresponding point
-// TODO: remove Eigen from public interface
-Eigen::ArrayXXd map_push_forward(int handle,
-                                 const Eigen::ArrayXd& reference_data,
-                                 const Eigen::MatrixXd& J, double detJ,
-                                 const Eigen::MatrixXd& K);
+/// @param[in] physical_dim The geometric dimension of the physical domain
+/// @param[in] physical_value_size The value size of the physical element
+void map_push_forward(int handle, double* physical_data,
+                      const double* reference_data, const double* J,
+                      const double detJ, const double* K,
+                      const int physical_dim, const int physical_value_size);
 
 /// Map a function value from a physical cell to the reference
 /// @param[in] handle The handle of the basix element

@@ -179,6 +179,8 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
       dresult[p].block(0, ndofs * j, x.rows(), ndofs)
           = basis[p].matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
+      std::cout << "[" << dresult[p].block(0, ndofs * j, x.rows(), ndofs)
+                << "]\n";
     }
   }
 
@@ -199,6 +201,18 @@ FiniteElement::map_push_forward(const Eigen::ArrayXd& reference_data,
                                 const Eigen::MatrixXd& J, double detJ,
                                 const Eigen::MatrixXd& K) const
 {
+  if (reference_data.cols() != 1)
+    throw std::runtime_error("ERRORR 1");
+  if (reference_data.rows() != value_size())
+    throw std::runtime_error("ERRORR 2");
+  if (J.cols() != K.rows())
+    throw std::runtime_error("ERRORR 3");
+  if (K.cols() != J.rows())
+    throw std::runtime_error("ERRORR 3");
+  std::cout << "basix -> {\n"
+            << mapping::map_push_forward(reference_data, J, detJ, K,
+                                         _mapping_type, _value_shape)
+            << "\n}\n";
   return mapping::map_push_forward(reference_data, J, detJ, K, _mapping_type,
                                    _value_shape);
 }

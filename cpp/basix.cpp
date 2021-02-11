@@ -8,6 +8,7 @@
 #include "mappings.h"
 #include "quadrature.h"
 #include <algorithm>
+#include <iostream>
 #include <iterator>
 #include <memory>
 #include <vector>
@@ -55,15 +56,23 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
   const int m = values[0].rows() * values[0].cols();
   for (std::size_t i = 0; i < values.size(); ++i)
     std::copy(values[i].data(), values[i].data() + m, basis_values + i * m);
+  std::cout << "basix --> {\n" << values[0] << "\n}\n";
 }
 
-Eigen::ArrayXXd basix::map_push_forward(int handle,
-                                        const Eigen::ArrayXd& reference_data,
-                                        const Eigen::MatrixXd& J, double detJ,
-                                        const Eigen::MatrixXd& K)
+void basix::map_push_forward(int handle, double* physical_data,
+                             const double* reference_data, const double* J,
+                             const double detJ, const double* K,
+                             const int physical_dim,
+                             const int physical_value_size)
 {
   check_handle(handle);
-  return _registry[handle]->map_push_forward(reference_data, J, detJ, K);
+  const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
+  const int vs = _registry[handle]->value_size();
+  Eigen::Map<Eigen::ArrayXd>(physical_data, physical_value_size)
+      = _registry[handle]->map_push_forward(
+          Eigen::Map<const Eigen::ArrayXd>(reference_data, vs),
+          Eigen::Map<const Eigen::MatrixXd>(J, physical_dim, tdim), detJ,
+          Eigen::Map<const Eigen::MatrixXd>(K, tdim, physical_dim));
 }
 
 Eigen::ArrayXXd basix::map_pull_back(int handle,

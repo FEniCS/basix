@@ -8,8 +8,8 @@
 #pragma once
 
 #include "cell.h"
-#include "mappings.h"
 #include "element-families.h"
+#include "mappings.h"
 #include <Eigen/Dense>
 #include <string>
 #include <vector>
@@ -194,6 +194,10 @@ public:
   /// followed by all y-values (and then z, if any), likewise tensor-valued
   /// results will be stacked in index order.
   std::vector<Eigen::ArrayXXd> tabulate(int nd, const Eigen::ArrayXXd& x) const;
+
+  // Direct to memory block tabulation
+  void tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
+                          double* basis_data) const;
 
   /// Get the element cell type
   /// @return The cell type

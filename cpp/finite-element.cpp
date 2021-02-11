@@ -137,10 +137,7 @@ const std::vector<int>& FiniteElement::value_shape() const
 //-----------------------------------------------------------------------------
 int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
-element::family FiniteElement::family() const
-{
-  return _family;
-}
+element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 const mapping::type FiniteElement::mapping_type() const
 {
@@ -183,6 +180,33 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
   }
 
   return dresult;
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
+                                       double* basis_data) const
+{
+  const int tdim = cell::topological_dimension(_cell_type);
+  if (x.cols() != tdim)
+    throw std::runtime_error("Point dim does not match element dim.");
+
+  std::vector<Eigen::ArrayXXd> basis
+      = polyset::tabulate(_cell_type, _degree, nd, x);
+  const int psize = polyset::dim(_cell_type, _degree);
+  const int ndofs = _coeffs.rows();
+  const int vs = value_size();
+
+  for (std::size_t p = 0; p < basis.size(); ++p)
+  {
+    // Map block for current derivative
+    Eigen::Map<Eigen::ArrayXXd> dresult(basis_data + p * x.rows() * ndofs * vs,
+                                        x.rows(), ndofs * vs);
+    for (int j = 0; j < vs; ++j)
+    {
+      dresult.block(0, ndofs * j, x.rows(), ndofs)
+          = basis[p].matrix()
+            * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
+    }
+  }
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const

@@ -128,9 +128,10 @@ def test_permutation_of_tabulated_data_triangle(element_name, order):
         reflected_points = np.array([[p[1], p[0]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        J = np.array([[0, 1], [1, 0]])
-        detJ = np.linalg.det(J)
-        K = np.linalg.inv(J)
+        _J = np.array([[0, 1], [1, 0]])
+        J = np.array([_J.reshape(4) for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J).reshape(4) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):
@@ -157,9 +158,10 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
         reflected_points = np.array([[1 - p[0], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        J = np.array([[-1, 0], [0, 1]])
-        detJ = np.linalg.det(J)
-        K = np.linalg.inv(J)
+        _J = np.array([[-1, 0], [0, 1]])
+        J = np.array([_J.reshape(4) for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J).reshape(4) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):
@@ -192,9 +194,10 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
-        detJ = np.linalg.det(J)
-        K = np.linalg.inv(J)
+        _J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        J = np.array([_J.reshape(9) for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J).reshape(9) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):
@@ -211,9 +214,10 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
-        J = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
-        detJ = np.linalg.det(J)
-        K = np.linalg.inv(J)
+        _J = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
+        J = np.array([_J.reshape(9) for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J).reshape(9) for p in points])
         mapped_values = e.map_push_forward(rotated_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):
@@ -228,9 +232,10 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
-        detJ = np.linalg.det(J)
-        K = np.linalg.inv(J)
+        _J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
+        J = np.array([_J.reshape(9) for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J).reshape(9) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):
@@ -262,9 +267,10 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         reflected_points = np.array([[1 - p[0], p[1], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        J = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        detJ = np.linalg.det(J)
-        K = np.linalg.inv(J)
+        _J = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        J = np.array([_J.reshape(9) for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J).reshape(9) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):
@@ -281,9 +287,10 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         rotated_points = np.array([[1 - p[1], p[0], p[2]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
-        J = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
-        detJ = np.linalg.det(J)
-        K = np.linalg.inv(J)
+        _J = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+        J = np.array([_J.reshape(9) for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J).reshape(9) for p in points])
         mapped_values = e.map_push_forward(rotated_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):
@@ -298,9 +305,10 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
         reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
-        J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
-        detJ = np.linalg.det(J)
-        K = np.linalg.inv(J)
+        _J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+        J = np.array([_J.reshape(9) for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J).reshape(9) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):

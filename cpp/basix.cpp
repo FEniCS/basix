@@ -62,9 +62,10 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
 
 void basix::map_push_forward(int handle, double* physical_data,
                              const double* reference_data, const double* J,
-                             const double detJ, const double* K,
+                             const double* detJ, const double* K,
                              const int physical_dim,
-                             const int physical_value_size, const int nresults)
+                             const int physical_value_size, const int nresults,
+                             const int npoints)
 {
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
@@ -72,20 +73,20 @@ void basix::map_push_forward(int handle, double* physical_data,
   Eigen::Map<Eigen::ArrayXXd>(physical_data, physical_value_size, nresults)
       = _registry[handle]->map_push_forward(
           Eigen::Map<const Eigen::ArrayXXd>(reference_data, vs, nresults),
-          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                         Eigen::RowMajor>>(J, physical_dim,
-                                                           tdim),
-          detJ,
-          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                         Eigen::RowMajor>>(K, tdim,
-                                                           physical_dim));
+          Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                        Eigen::RowMajor>>(J, npoints,
+                                                          physical_dim * tdim),
+          Eigen::Map<const Eigen::ArrayXd>(detJ, npoints),
+          Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                        Eigen::RowMajor>>(K, npoints,
+                                                          physical_dim * tdim));
 }
 
 void basix::map_pull_back(int handle, double* reference_data,
                           const double* physical_data, const double* J,
-                          const double detJ, const double* K,
+                          const double* detJ, const double* K,
                           const int physical_dim, const int physical_value_size,
-                          const int nresults)
+                          const int nresults, const int npoints)
 {
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
@@ -94,13 +95,13 @@ void basix::map_pull_back(int handle, double* reference_data,
       = _registry[handle]->map_push_forward(
           Eigen::Map<const Eigen::ArrayXXd>(physical_data, physical_value_size,
                                             nresults),
-          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                         Eigen::RowMajor>>(J, physical_dim,
-                                                           tdim),
-          detJ,
-          Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                         Eigen::RowMajor>>(K, tdim,
-                                                           physical_dim));
+          Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                        Eigen::RowMajor>>(J, npoints,
+                                                          physical_dim * tdim),
+          Eigen::Map<const Eigen::ArrayXd>(detJ, npoints),
+          Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                        Eigen::RowMajor>>(K, npoints,
+                                                          physical_dim * tdim));
 }
 
 const char* basix::cell_type(int handle)

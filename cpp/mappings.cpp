@@ -42,38 +42,6 @@ Eigen::ArrayXd mapping::map_push_forward(const Eigen::ArrayXd& reference_data,
   }
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd mapping::map_pull_back(const Eigen::ArrayXd& physical_data,
-                                      const Eigen::MatrixXd& J, double detJ,
-                                      const Eigen::MatrixXd& K,
-                                      mapping::type mapping_type)
-{
-  switch (mapping_type)
-  {
-  case mapping::type::identity:
-    return physical_data;
-  case mapping::type::covariantPiola:
-    return J.transpose() * physical_data.matrix();
-  case mapping::type::contravariantPiola:
-    return detJ * K * physical_data.matrix();
-  case mapping::type::doubleCovariantPiola:
-  {
-    Eigen::Map<const Eigen::MatrixXd> data_matrix(physical_data.data(),
-                                                  J.rows(), J.rows());
-    Eigen::MatrixXd result = J.transpose() * data_matrix * J;
-    return Eigen::Map<Eigen::ArrayXd>(result.data(), J.cols() * J.cols());
-  }
-  case mapping::type::doubleContravariantPiola:
-  {
-    Eigen::Map<const Eigen::MatrixXd> data_matrix(physical_data.data(),
-                                                  J.rows(), J.rows());
-    Eigen::MatrixXd result = detJ * detJ * K * data_matrix * K.transpose();
-    return Eigen::Map<Eigen::ArrayXd>(result.data(), J.cols() * J.cols());
-  }
-  default:
-    throw std::runtime_error("Mapping not yet implemented");
-  }
-}
-//-----------------------------------------------------------------------------
 const std::string& mapping::type_to_str(mapping::type type)
 {
   static const std::map<mapping::type, std::string> type_to_name = {

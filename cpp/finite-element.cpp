@@ -244,8 +244,8 @@ FiniteElement::map_push_forward(const Eigen::ArrayXXd& reference_data,
   const int physical_value_size = compute_value_size(_mapping_type, J);
   Eigen::ArrayXXd physical_data(physical_value_size, reference_data.cols());
   for (int i = 0; i < reference_data.cols(); ++i)
-    physical_data.col(i) = mapping::map_push_forward(reference_data.col(i), J, detJ, K,
-                                              _mapping_type);
+    physical_data.col(i) = mapping::map_push_forward(reference_data.col(i), J,
+                                                     detJ, K, _mapping_type);
   return physical_data;
 }
 //-----------------------------------------------------------------------------
@@ -256,8 +256,8 @@ FiniteElement::map_pull_back(const Eigen::ArrayXXd& physical_data,
 {
   Eigen::ArrayXXd reference_data(value_size(), physical_data.cols());
   for (int i = 0; i < physical_data.cols(); ++i)
-    reference_data.col(i) = mapping::map_pull_back(physical_data.col(i), J, detJ, K,
-                                              _mapping_type);
+    reference_data.col(i) = mapping::map_pull_back(physical_data.col(i), J,
+                                                   detJ, K, _mapping_type);
   return reference_data;
 }
 //-----------------------------------------------------------------------------

@@ -236,28 +236,63 @@ int FiniteElement::num_points() const { return _points.rows(); }
 //-----------------------------------------------------------------------------
 const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd
-FiniteElement::map_push_forward(const Eigen::ArrayXXd& reference_data,
-                                const Eigen::MatrixXd& J, double detJ,
-                                const Eigen::MatrixXd& K) const
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+FiniteElement::map_push_forward(
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        reference_data,
+    const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K) const
 {
   const int physical_value_size = compute_value_size(_mapping_type, J);
-  Eigen::ArrayXXd physical_data(physical_value_size, reference_data.cols());
-  for (int i = 0; i < reference_data.cols(); ++i)
-    physical_data.col(i) = mapping::map_push_forward(reference_data.col(i), J,
-                                                     detJ, K, _mapping_type);
+  const int reference_value_size = value_size();
+  const int nresults = reference_data.cols() / reference_value_size;
+  const int npoints = reference_data.rows();
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      physical_data(npoints, physical_value_size * nresults);
+  for (int pt = 0; pt < npoints; ++pt)
+  {
+    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                  Eigen::RowMajor>>
+        reference_block(reference_data.row(pt).data(), reference_value_size,
+                        nresults);
+    Eigen::Map<
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+        physical_block(physical_data.row(pt).data(), physical_value_size,
+                       nresults);
+    for (int i = 0; i < reference_block.cols(); ++i)
+      physical_block.col(i) = mapping::map_push_forward(
+          reference_block.col(i), J, detJ, K, _mapping_type);
+  }
   return physical_data;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd
-FiniteElement::map_pull_back(const Eigen::ArrayXXd& physical_data,
-                             const Eigen::MatrixXd& J, double detJ,
-                             const Eigen::MatrixXd& K) const
+Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+FiniteElement::map_pull_back(
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        physical_data,
+    const Eigen::MatrixXd& J, double detJ, const Eigen::MatrixXd& K) const
 {
-  Eigen::ArrayXXd reference_data(value_size(), physical_data.cols());
-  for (int i = 0; i < physical_data.cols(); ++i)
-    reference_data.col(i) = mapping::map_push_forward(
-        physical_data.col(i), K, 1 / detJ, J, _mapping_type);
+  const int physical_value_size = compute_value_size(_mapping_type, J);
+  const int reference_value_size = value_size();
+  const int nresults = physical_data.cols() / physical_value_size;
+  const int npoints = physical_data.rows();
+
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+      reference_data(npoints, reference_value_size * nresults);
+  for (int pt = 0; pt < npoints; ++pt)
+  {
+    Eigen::Map<
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+        reference_block(reference_data.row(pt).data(), reference_value_size,
+                        nresults);
+    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                  Eigen::RowMajor>>
+        physical_block(physical_data.row(pt).data(), physical_value_size,
+                       nresults);
+    for (int i = 0; i < physical_block.cols(); ++i)
+      reference_block.col(i) = mapping::map_push_forward(
+          physical_block.col(i), K, 1 / detJ, J, _mapping_type);
+  }
   return reference_data;
 }
 //-----------------------------------------------------------------------------

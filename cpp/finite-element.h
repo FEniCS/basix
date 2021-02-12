@@ -436,6 +436,11 @@ private:
 
   /// The interpolation weights and points
   Eigen::MatrixXd _interpolation_matrix;
+
+  // The mapping that maps values on the reference to values on a physical cell
+  std::function<Eigen::ArrayXd(const Eigen::ArrayXd&, const Eigen::MatrixXd&,
+                               const double, const Eigen::MatrixXd&)>
+      _map_push_forward;
 };
 
 /// Create an element by name

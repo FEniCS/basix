@@ -26,18 +26,12 @@ enum class type
   doubleContravariantPiola,
 };
 
-/// Apply mapping
-/// @param reference_data The data to apply the mapping to
-/// @param J The Jacobian
-/// @param detJ The determinant of the Jacobian
-/// @param K The inverse of the Jacobian
+/// Get the function that maps data from the reference to the physical cell.
 /// @param mapping_type Mapping type
-/// @return The mapped data
-// TODO: should data be in/out?
-Eigen::ArrayXd map_push_forward(const Eigen::ArrayXd& reference_data,
-                                const Eigen::MatrixXd& J, double detJ,
-                                const Eigen::MatrixXd& K,
-                                mapping::type mapping_type);
+/// @return The mapping function
+std::function<Eigen::ArrayXd(const Eigen::ArrayXd&, const Eigen::MatrixXd&,
+                             const double, const Eigen::MatrixXd&)>
+get_forward_map(mapping::type mapping_type);
 
 /// Convert mapping type enum to string
 const std::string& type_to_str(mapping::type type);

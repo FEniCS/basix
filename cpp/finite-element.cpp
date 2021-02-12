@@ -138,6 +138,7 @@ FiniteElement::FiniteElement(
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
   }
+  _map_push_forward = mapping::get_forward_map(mapping_type);
 }
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
@@ -273,9 +274,8 @@ FiniteElement::map_push_forward(
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
     for (int i = 0; i < reference_block.cols(); ++i)
-      physical_block.col(i)
-          = mapping::map_push_forward(reference_block.col(i), current_J,
-                                      detJ[pt], current_K, _mapping_type);
+      physical_block.col(i) = _map_push_forward(reference_block.col(i),
+                                                current_J, detJ[pt], current_K);
   }
   return physical_data;
 }
@@ -315,9 +315,8 @@ void FiniteElement::map_push_forward_to_memory(
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
     for (int i = 0; i < reference_block.cols(); ++i)
-      physical_block.col(i)
-          = mapping::map_push_forward(reference_block.col(i), current_J,
-                                      detJ[pt], current_K, _mapping_type);
+      physical_block.col(i) = _map_push_forward(reference_block.col(i),
+                                                current_J, detJ[pt], current_K);
   }
 }
 //-----------------------------------------------------------------------------
@@ -358,9 +357,8 @@ FiniteElement::map_pull_back(
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
     for (int i = 0; i < physical_block.cols(); ++i)
-      reference_block.col(i)
-          = mapping::map_push_forward(physical_block.col(i), current_K,
-                                      1 / detJ[pt], current_J, _mapping_type);
+      reference_block.col(i) = _map_push_forward(
+          physical_block.col(i), current_K, 1 / detJ[pt], current_J);
   }
   return reference_data;
 }
@@ -400,9 +398,8 @@ void FiniteElement::map_pull_back_to_memory(
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
     for (int i = 0; i < physical_block.cols(); ++i)
-      reference_block.col(i)
-          = mapping::map_push_forward(physical_block.col(i), current_K,
-                                      1 / detJ[pt], current_J, _mapping_type);
+      reference_block.col(i) = _map_push_forward(
+          physical_block.col(i), current_K, 1 / detJ[pt], current_J);
   }
 }
 //-----------------------------------------------------------------------------

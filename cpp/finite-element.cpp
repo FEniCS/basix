@@ -19,6 +19,28 @@
 
 using namespace basix;
 
+namespace
+{
+  int compute_value_size(const mapping::type mapping_type, const Eigen::MatrixXd& J)
+  {
+    switch (mapping_type)
+    {
+    case mapping::type::identity:
+      return 1;
+    case mapping::type::covariantPiola:
+      return J.rows();
+    case mapping::type::contravariantPiola:
+      return J.rows();
+    case mapping::type::doubleCovariantPiola:
+      return J.rows() * J.rows();
+    case mapping::type::doubleContravariantPiola:
+      return J.rows() * J.rows();
+    default:
+      throw std::runtime_error("Mapping not yet implemented");
+    }
+  }
+} // namespace
+
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
                                            int degree)
@@ -219,11 +241,12 @@ FiniteElement::map_push_forward(const Eigen::ArrayXXd& reference_data,
                                 const Eigen::MatrixXd& J, double detJ,
                                 const Eigen::MatrixXd& K) const
 {
-  Eigen::ArrayXXd result(value_size(), reference_data.cols());
+  const int physical_value_size = compute_value_size(_mapping_type, J);
+  Eigen::ArrayXXd physical_data(physical_value_size, reference_data.cols());
   for (int i = 0; i < reference_data.cols(); ++i)
-    result.col(i) = mapping::map_push_forward(reference_data.col(i), J, detJ, K,
-                                              _mapping_type, _value_shape);
-  return result;
+    physical_data.col(i) = mapping::map_push_forward(reference_data.col(i), J,
+                                                     detJ, K, _mapping_type);
+  return physical_data;
 }
 //-----------------------------------------------------------------------------
 Eigen::ArrayXXd
@@ -231,11 +254,11 @@ FiniteElement::map_pull_back(const Eigen::ArrayXXd& physical_data,
                              const Eigen::MatrixXd& J, double detJ,
                              const Eigen::MatrixXd& K) const
 {
-  Eigen::ArrayXXd result(J.rows(), physical_data.cols());
+  Eigen::ArrayXXd reference_data(value_size(), physical_data.cols());
   for (int i = 0; i < physical_data.cols(); ++i)
-    result.col(i) = mapping::map_push_forward(physical_data.col(i), J, detJ, K,
-                                              _mapping_type, _value_shape);
-  return result;
+    reference_data.col(i) = mapping::map_push_forward(
+        physical_data.col(i), K, 1 / detJ, J, _mapping_type);
+  return reference_data;
 }
 //-----------------------------------------------------------------------------
 const std::string& basix::version()

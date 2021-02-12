@@ -28,12 +28,12 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
     values = e.tabulate(0, points)[0]
 
     for value in values:
-        for j in range(e.dim):
-            assert len(value[j::e.dim]) == reference_value_size
-            mapped = e.map_push_forward(value[j::e.dim], J, detJ, K)
-            assert len(mapped) == physical_value_size
-            unmapped = e.map_pull_back(mapped, J, detJ, K)
-            assert np.allclose(value[j::e.dim], unmapped)
+        assert len(value) == reference_value_size * e.dim
+        mapped = e.map_push_forward(value.reshape((reference_value_size, e.dim)), J, detJ, K)
+        assert mapped.shape[0] == physical_value_size
+        assert mapped.shape[1] == e.dim
+        unmapped = e.map_pull_back(mapped, J, detJ, K).reshape(reference_value_size * e.dim)
+        assert np.allclose(value, unmapped)
 
 
 @pytest.mark.parametrize("element_name", elements)

@@ -19,6 +19,28 @@
 
 using namespace basix;
 
+namespace
+{
+  int compute_value_size(const mapping::type mapping_type, const Eigen::MatrixXd& J)
+  {
+    switch (mapping_type)
+    {
+    case mapping::type::identity:
+      return 1;
+    case mapping::type::covariantPiola:
+      return J.rows();
+    case mapping::type::contravariantPiola:
+      return J.rows();
+    case mapping::type::doubleCovariantPiola:
+      return J.rows() * J.rows();
+    case mapping::type::doubleContravariantPiola:
+      return J.rows() * J.rows();
+    default:
+      throw std::runtime_error("Mapping not yet implemented");
+    }
+  }
+} // namespace
+
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
                                            int degree)
@@ -137,10 +159,7 @@ const std::vector<int>& FiniteElement::value_shape() const
 //-----------------------------------------------------------------------------
 int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
-element::family FiniteElement::family() const
-{
-  return _family;
-}
+element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 const mapping::type FiniteElement::mapping_type() const
 {
@@ -161,6 +180,30 @@ std::vector<Eigen::ArrayXXd>
 FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 {
   const int tdim = cell::topological_dimension(_cell_type);
+  int ndsize = 1;
+  for (int i = 1; i <= nd; ++i)
+    ndsize *= (tdim + i);
+  for (int i = 1; i <= nd; ++i)
+    ndsize /= i;
+
+  const int ndofs = _coeffs.rows();
+  const int vs = value_size();
+
+  std::vector<double> basis_data(ndsize * x.rows() * ndofs * vs);
+  tabulate_to_memory(nd, x, basis_data.data());
+
+  std::vector<Eigen::ArrayXXd> dresult;
+  for (int p = 0; p < ndsize; ++p)
+    dresult.push_back(Eigen::Map<Eigen::ArrayXXd>(
+        basis_data.data() + p * x.rows() * ndofs * vs, x.rows(), ndofs * vs));
+
+  return dresult;
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
+                                       double* basis_data) const
+{
+  const int tdim = cell::topological_dimension(_cell_type);
   if (x.cols() != tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
@@ -170,19 +213,18 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
-  std::vector<Eigen::ArrayXXd> dresult(basis.size(),
-                                       Eigen::ArrayXXd(x.rows(), ndofs * vs));
-  for (std::size_t p = 0; p < dresult.size(); ++p)
+  for (std::size_t p = 0; p < basis.size(); ++p)
   {
+    // Map block for current derivative
+    Eigen::Map<Eigen::ArrayXXd> dresult(basis_data + p * x.rows() * ndofs * vs,
+                                        x.rows(), ndofs * vs);
     for (int j = 0; j < vs; ++j)
     {
-      dresult[p].block(0, ndofs * j, x.rows(), ndofs)
+      dresult.block(0, ndofs * j, x.rows(), ndofs)
           = basis[p].matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
     }
   }
-
-  return dresult;
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
@@ -190,22 +232,33 @@ std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
   return _base_permutations;
 }
 //-----------------------------------------------------------------------------
+int FiniteElement::num_points() const { return _points.rows(); }
+//-----------------------------------------------------------------------------
 const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd
-FiniteElement::map_push_forward(const Eigen::ArrayXd& reference_data,
+Eigen::ArrayXXd
+FiniteElement::map_push_forward(const Eigen::ArrayXXd& reference_data,
                                 const Eigen::MatrixXd& J, double detJ,
                                 const Eigen::MatrixXd& K) const
 {
-  return mapping::map_push_forward(reference_data, J, detJ, K, _mapping_type);
+  const int physical_value_size = compute_value_size(_mapping_type, J);
+  Eigen::ArrayXXd physical_data(physical_value_size, reference_data.cols());
+  for (int i = 0; i < reference_data.cols(); ++i)
+    physical_data.col(i) = mapping::map_push_forward(reference_data.col(i), J, detJ, K,
+                                              _mapping_type);
+  return physical_data;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd FiniteElement::map_pull_back(const Eigen::ArrayXd& physical_data,
-                                            const Eigen::MatrixXd& J,
-                                            double detJ,
-                                            const Eigen::MatrixXd& K) const
+Eigen::ArrayXXd
+FiniteElement::map_pull_back(const Eigen::ArrayXXd& physical_data,
+                             const Eigen::MatrixXd& J, double detJ,
+                             const Eigen::MatrixXd& K) const
 {
-  return mapping::map_pull_back(physical_data, J, detJ, K, _mapping_type);
+  Eigen::ArrayXXd reference_data(value_size(), physical_data.cols());
+  for (int i = 0; i < physical_data.cols(); ++i)
+    reference_data.col(i) = mapping::map_pull_back(physical_data.col(i), J, detJ, K,
+                                              _mapping_type);
+  return reference_data;
 }
 //-----------------------------------------------------------------------------
 const std::string& basix::version()

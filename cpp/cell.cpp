@@ -5,7 +5,6 @@
 #include "cell.h"
 #include "lagrange.h"
 #include "quadrature.h"
-#include <iostream>
 #include <map>
 
 using namespace basix;

@@ -41,26 +41,28 @@ void release_element(int handle);
 void tabulate(int handle, double* basis_values, int nd, const double* x,
               int npoints);
 
-/// Map a function value from the reference to a physical cell.
+/// Map function values from the reference to a physical cell.
 ///
-/// The memory for "physical_data" must be allocated by the user, and is a two
+/// The memory for "physical_data" must be allocated by the user, and is a three
 /// dimensional (row-major) ndarray with dimensions
-/// [nresults, physical_value_size]
-/// where "physical_value_size" and "nresults" are given as function inputs.
+/// [npoints, nresults, physical_value_size]
+/// where "physical_value_size", "nresults", and "npoints" are given as function
+/// inputs.
 ///
 /// "reference_data" points to the memory for
-/// a two dimensional (row-major) ndarray with dimensions [nresults, value_size]
-/// where "nresults" is given as a function input, and
+/// a three dimensional (row-major) ndarray with dimensions [npoints, nresults,
+/// value_size] where "nresults" and "npoints" are given as function inputs, and
 /// "value_size" is the value size of the finite element (the product of the
 /// values in `value_shape()`).
 ///
-/// "J" points to the memory for a two dimensional (row-major) ndarray with
-/// dimensions [physical_dim, tdim], where "physical_dim" is given as a function
-/// input, and "tdim" is the topological dimension of the cell for this element.
+/// "J" points to the memory for a three dimensional (row-major) ndarray with
+/// dimensions [npoints, physical_dim, tdim], where "npoints" and "physical_dim"
+/// are given as function inputs, and "tdim" is the topological dimension of the
+/// cell for this element.
 ///
 /// "K" points
-/// to the memory for a two dimensional (row-major) ndarray with dimensions
-/// [tdim, physical_dim].
+/// to the memory for a three dimensional (row-major) ndarray with dimensions
+/// [npoints, tdim, physical_dim].
 ///
 /// @param[in] handle The handle of the basix element
 /// @param[out] physical_data The data on the physical cell at the corresponding
@@ -73,34 +75,35 @@ void tabulate(int handle, double* basis_values, int nd, const double* x,
 /// at the point)
 /// @param[in] physical_dim The geometric dimension of the physical domain
 /// @param[in] physical_value_size The value size of the physical element
-/// @param[in] nresults The number of data points
+/// @param[in] nresults The number of data values per point
+/// @param[in] npoints The number of points
 void map_push_forward(int handle, double* physical_data,
                       const double* reference_data, const double* J,
-                      const double detJ, const double* K,
+                      const double* detJ, const double* K,
                       const int physical_dim, const int physical_value_size,
-                      const int nresults);
+                      const int nresults, const int npoints);
 
-/// Map a function value from a physical cell to the reference
+/// Map function values from a physical cell to the reference
 ///
-/// The memory for "reference_data" must be allocated by the user, and is a two
-/// dimensional (row-major) ndarray with dimensions
-/// [nresults, value_size]
-/// where "nresults" is given as a function input, and
+/// The memory for "reference_data" must be allocated by the user, and is a
+/// three dimensional (row-major) ndarray with dimensions [npoints, nresults,
+/// value_size] where "npoints" and "nresults" are given as function inputs, and
 /// "value_size" is the value size of the finite element (the product of the
 /// values in `value_shape()`).
 ///
 /// "reference_data" points to the memory for
-/// a two dimensional (row-major) ndarray with dimensions [nresults,
-/// physical_value_size] where "physical_value_size" and "nresults" are given as
-/// function inputs.
+/// a three dimensional (row-major) ndarray with dimensions [npoints, nresults,
+/// physical_value_size] where "physical_value_size", "nresults", and "npoints"
+/// are given as function inputs.
 ///
-/// "J" points to the memory for a two dimensional (row-major) ndarray with
-/// dimensions [physical_dim, tdim], where "physical_dim" is given as a function
-/// input, and "tdim" is the topological dimension of the cell for this element.
+/// "J" points to the memory for a three dimensional (row-major) ndarray with
+/// dimensions [npoints, physical_dim, tdim], where "physical_dim" and "npoints"
+/// are given as function inputs, and "tdim" is the topological dimension of the
+/// cell for this element.
 ///
 /// "K" points
 /// to the memory for a two dimensional (row-major) ndarray with dimensions
-/// [tdim, physical_dim].
+/// [npoints, tdim, physical_dim].
 ///
 /// @param[in] handle The handle of the basix element
 /// @param[out] reference_data The data on the physical cell at the
@@ -113,11 +116,13 @@ void map_push_forward(int handle, double* physical_data,
 /// at the point)
 /// @param[in] physical_dim The geometric dimension of the physical domain
 /// @param[in] physical_value_size The value size of the physical element
-/// @param[in] nresults The number of data points
+/// @param[in] nresults The number of data values per point
+/// @param[in] npoints The number of points
 void map_pull_back(int handle, double* reference_data,
                    const double* physical_data, const double* J,
-                   const double detJ, const double* K, const int physical_dim,
-                   const int physical_value_size, const int nresults);
+                   const double* detJ, const double* K, const int physical_dim,
+                   const int physical_value_size, const int nresults,
+                   const int npoints);
 
 /// String representation of the cell type of the finite element
 /// @param handle

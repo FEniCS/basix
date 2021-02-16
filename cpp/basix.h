@@ -2,6 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include <complex>
 #include <utility>
 #include <vector>
 
@@ -77,11 +78,12 @@ void tabulate(int handle, double* basis_values, int nd, const double* x,
 /// @param[in] physical_value_size The value size of the physical element
 /// @param[in] nresults The number of data values per point
 /// @param[in] npoints The number of points
-void map_push_forward(int handle, double* physical_data,
-                      const double* reference_data, const double* J,
-                      const double* detJ, const double* K,
-                      const int physical_dim, const int physical_value_size,
-                      const int nresults, const int npoints);
+void map_push_forward_real(int handle, double* physical_data,
+                           const double* reference_data, const double* J,
+                           const double* detJ, const double* K,
+                           const int physical_dim,
+                           const int physical_value_size, const int nresults,
+                           const int npoints);
 
 /// Map function values from a physical cell to the reference
 ///
@@ -118,11 +120,31 @@ void map_push_forward(int handle, double* physical_data,
 /// @param[in] physical_value_size The value size of the physical element
 /// @param[in] nresults The number of data values per point
 /// @param[in] npoints The number of points
-void map_pull_back(int handle, double* reference_data,
-                   const double* physical_data, const double* J,
-                   const double* detJ, const double* K, const int physical_dim,
-                   const int physical_value_size, const int nresults,
-                   const int npoints);
+void map_pull_back_real(int handle, double* reference_data,
+                        const double* physical_data, const double* J,
+                        const double* detJ, const double* K,
+                        const int physical_dim, const int physical_value_size,
+                        const int nresults, const int npoints);
+
+/// Map function values from the reference to a physical cell.
+///
+/// See `map_push_forward_real()`.
+void map_push_forward_complex(int handle, std::complex<double>* physical_data,
+                              const std::complex<double>* reference_data,
+                              const double* J, const double* detJ,
+                              const double* K, const int physical_dim,
+                              const int physical_value_size, const int nresults,
+                              const int npoints);
+
+/// Map function values from a physical cell to the reference
+///
+/// See `map_pull_back_real()`.
+void map_pull_back_complex(int handle, std::complex<double>* reference_data,
+                           const std::complex<double>* physical_data,
+                           const double* J, const double* detJ, const double* K,
+                           const int physical_dim,
+                           const int physical_value_size, const int nresults,
+                           const int npoints);
 
 /// String representation of the cell type of the finite element
 /// @param handle

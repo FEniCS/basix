@@ -112,7 +112,7 @@ def test_gll():
     ref_wts2 = np.array([w1*w2 for w1 in ref_wts for w2 in ref_wts])
     assert (np.allclose(wts, ref_wts2))
     assert np.isclose((pts * wts.reshape(-1, 1)).sum(), 0)
-    assert np.isclose(sum(wts), 4)    
+    assert np.isclose(sum(wts), 4)
 
     # 3D hex
     pts, wts = basix.make_quadrature("GLL", basix.CellType.hexahedron, m+1)

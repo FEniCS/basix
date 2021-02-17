@@ -39,10 +39,18 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m);
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
                                                                     int m);
 
+/// GLL quadrature rule (points and weights)
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gll_rule(double a, int m);
+
 /// Compute line quadrature rule on [0, 1]
 /// @param m order
 /// @returns list of 1D points, list of weights
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m);
+
+/// Compute GLL line quadrature rule on [0, 1]
+/// @param m order
+/// @returns list of 1D points, list of weights
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_gll_line(int m);
 
 /// Compute triangle quadrature rule on [0, 1]x[0, 1]
 /// @param m order
@@ -64,12 +72,6 @@ make_quadrature_tetrahedron_collapsed(int m);
 /// @returns list of points, list of weights
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_quadrature(const std::string& rule, cell::type celltype, int m);
-
-/// Compute GLL quadrature points and weights on the interval [-1, 1]
-/// @param m order
-/// @return Array of points, array of weights
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
-gauss_lobatto_legendre_line_rule(int m);
 
 } // namespace quadrature
 } // namespace basix

@@ -16,7 +16,7 @@ namespace
 Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 {
   [[maybe_unused]] auto [pts, wts]
-      = quadrature::gauss_lobatto_legendre_line_rule(n + 1);
+      = quadrature::compute_gll_rule(0.0,  n + 1);
   wts.setZero();
 
   pts *= 0.5;
@@ -233,7 +233,7 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
 
       // Interpolate warp factor along interval
       std::tuple<Eigen::ArrayXXd, Eigen::ArrayXd> pw
-          = quadrature::gauss_lobatto_legendre_line_rule(n + 1);
+          = quadrature::compute_gll_rule(0.0, n + 1);
       Eigen::VectorXd pts = std::get<0>(pw) * 0.5;
       for (int i = 0; i < n + 1; ++i)
         pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));

@@ -5,6 +5,7 @@
 #include "quadrature.h"
 #include <cmath>
 #include <vector>
+#include <iostream>
 
 using namespace basix;
 
@@ -121,7 +122,6 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
 
   return gauss(alpha_l, beta_l);
 }
-
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_gauss_jacobi_quadrature(cell::type celltype, int m)
@@ -184,6 +184,65 @@ make_gauss_jacobi_quadrature(cell::type celltype, int m)
       }
     }
     return {Qpts, Qwts};
+  }
+  case cell::type::pyramid:
+    throw std::runtime_error("Pyramid not yet supported");
+  case cell::type::triangle:
+    return quadrature::make_quadrature_triangle_collapsed(m);
+  case cell::type::tetrahedron:
+    return quadrature::make_quadrature_tetrahedron_collapsed(m);
+  default:
+    throw std::runtime_error("Unsupported celltype for make_quadrature");
+  }
+}
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+make_gll_quadrature(cell::type celltype, int m)
+{
+  switch (celltype)
+  {
+  case cell::type::interval:
+    return quadrature::make_gll_line(m);
+  case cell::type::quadrilateral:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_gll_line(m);
+    Eigen::ArrayX2d Qpts(m * m, 2);
+    Eigen::ArrayXd Qwts(m * m);
+    int c = 0;
+    for (int j = 0; j < m; ++j)
+    {
+      for (int i = 0; i < m; ++i)
+      {
+        Qpts.row(c) << QptsL(i, 0), QptsL(j, 0);
+        Qwts[c] = QwtsL[i] * QwtsL[j];
+        ++c;
+      }
+    }
+    return {Qpts, Qwts};
+  }
+  case cell::type::hexahedron:
+  {
+    auto [QptsL, QwtsL] = quadrature::make_gll_line(m);
+    Eigen::ArrayX3d Qpts(m * m * m, 3);
+    Eigen::ArrayXd Qwts(m * m * m);
+    int c = 0;
+    for (int k = 0; k < m; ++k)
+    {
+      for (int j = 0; j < m; ++j)
+      {
+        for (int i = 0; i < m; ++i)
+        {
+          Qpts.row(c) << QptsL(i, 0), QptsL(j, 0), QptsL(k, 0);
+          Qwts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
+          ++c;
+        }
+      }
+    }
+    return {Qpts, Qwts};
+  }
+  case cell::type::prism:
+  {
+    throw std::runtime_error("Prism not yet supported");
   }
   case cell::type::pyramid:
     throw std::runtime_error("Pyramid not yet supported");
@@ -338,7 +397,6 @@ make_default_tetrahedron_quadrature(int m)
   const int np = (m + 2) / 2;
   return quadrature::make_quadrature_tetrahedron_collapsed(np);
 }
-
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_default_triangle_quadrature(int m)
@@ -422,7 +480,6 @@ make_default_triangle_quadrature(int m)
 }
 
 }; // namespace
-
 //-----------------------------------------------------------------------------
 Eigen::ArrayXXd quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
                                                  const Eigen::ArrayXd& x)
@@ -533,9 +590,39 @@ quadrature::compute_gauss_jacobi_rule(double a, int m)
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
+quadrature::compute_gll_rule(double a, int m)
+{
+  // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval
+  // using Greg von Winckel's implementation. This facilitates implementing
+  // spectral elements
+  // The quadrature rule uses m points for a degree of precision of 2m-3.
+
+  if (m < 2)
+  {
+    throw std::runtime_error(
+      "Gauss-Lobatto-Legendre quadrature invalid for fewer than 2 points");
+  }
+
+  // Calculate the recursion coefficients
+  auto [alpha, beta] = rec_jacobi(m, 0.0, 0.0);
+
+  // Compute Lobatto nodes and weights
+  auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
+
+  return {xs_ref, ws_ref};
+}
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
 quadrature::make_quadrature_line(int m)
 {
   auto [ptx, wx] = quadrature::compute_gauss_jacobi_rule(0.0, m);
+  return {0.5 * (ptx + 1.0), wx * 0.5};
+}
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
+quadrature::make_gll_line(int m)
+{
+  auto [ptx, wx] = quadrature::compute_gll_rule(0.0, m);
   return {0.5 * (ptx + 1.0), wx * 0.5};
 }
 //-----------------------------------------------------------------------------
@@ -610,41 +697,11 @@ quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
     const int np = (m + 2) / 2;
     return make_gauss_jacobi_quadrature(celltype, np);
   }
-  else if (rule == "GLL" and celltype == cell::type::interval)
+  else if (rule == "GLL")
   {
-    // GLL points and weights on [-1, 1]
     const int np = (m + 4) / 2;
-    auto [x, w] = quadrature::gauss_lobatto_legendre_line_rule(np);
-    // Rescale to [0, 1]
-    x = x * 0.5 + 0.5;
-    w *= 0.5;
-    return {x, w};
+    return make_gll_quadrature(celltype, np);
   }
   throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");
-}
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
-quadrature::gauss_lobatto_legendre_line_rule(int m)
-{
-  // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval
-  // using Greg von Winckel's implementation. This facilitates implementing
-  // spectral elements.
-  // The quadrature rule uses m points for a degree of precision of 2m-3.
-
-  if (m < 2)
-  {
-    throw std::runtime_error(
-        "Gauss-Labotto-Legendre quadrature invalid for fewer than 2 points");
-  }
-
-  // Calculate the recursion coefficients
-  auto [alpha, beta] = rec_jacobi(m, 0, 0);
-
-  // Compute Lobatto nodes and weights
-  auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
-
-  return {xs_ref, ws_ref};
 }
 //-----------------------------------------------------------------------------

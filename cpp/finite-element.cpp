@@ -408,8 +408,7 @@ FiniteElement::map_pull_back(
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::map_pull_back_to_memory_real(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        physical_data,
+    const Eigen::ArrayXXd& physical_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
     const Eigen::ArrayXd& detJ,
@@ -445,8 +444,8 @@ void FiniteElement::map_pull_back_to_memory_real(
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::map_pull_back_to_memory_complex(
-    const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic,
-                       Eigen::RowMajor>& physical_data,
+    const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>&
+        physical_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
     const Eigen::ArrayXd& detJ,

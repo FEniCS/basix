@@ -120,7 +120,7 @@ void basix::map_push_forward_complex(int handle,
   const int vs = _registry[handle]->value_size();
   _registry[handle]->map_push_forward_to_memory_complex(
       Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
-                                    Eigen::Dynamic, Eigen::ColMajor>>(
+                                    Eigen::Dynamic, Eigen::RowMajor>>(
           reference_data, npoints * nresults, vs),
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(J, npoints,
@@ -144,7 +144,7 @@ void basix::map_pull_back_complex(int handle,
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
   _registry[handle]->map_pull_back_to_memory_complex(
       Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
-                                    Eigen::Dynamic, Eigen::RowMajor>>(
+                                    Eigen::Dynamic, Eigen::ColMajor>>(
           physical_data, npoints, physical_value_size * nresults),
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(J, npoints,

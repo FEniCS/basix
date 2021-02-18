@@ -95,8 +95,8 @@ void basix::map_pull_back_real(int handle, double* reference_data,
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
   _registry[handle]->map_pull_back_to_memory_real(
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                    Eigen::RowMajor>>(
-          physical_data, npoints, physical_value_size * nresults),
+                                    Eigen::ColMajor>>(
+          physical_data, npoints * nresults, physical_value_size),
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(J, npoints,
                                                       physical_dim * tdim),
@@ -120,8 +120,8 @@ void basix::map_push_forward_complex(int handle,
   const int vs = _registry[handle]->value_size();
   _registry[handle]->map_push_forward_to_memory_complex(
       Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
-                                    Eigen::Dynamic, Eigen::RowMajor>>(
-          reference_data, npoints, vs * nresults),
+                                    Eigen::Dynamic, Eigen::ColMajor>>(
+          reference_data, npoints * nresults, vs),
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(J, npoints,
                                                       physical_dim * tdim),

@@ -425,25 +425,22 @@ void FiniteElement::map_pull_back_to_memory_real(
   const int nresults = physical_data.cols() / physical_value_size;
   const int npoints = physical_data.rows();
 
+  Eigen::Map<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
+      reference_array(reference_data, nresults * npoints, reference_value_size);
+
   for (int pt = 0; pt < npoints; ++pt)
   {
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-        reference_block(reference_data + pt * reference_value_size * nresults,
-                        reference_value_size, nresults);
-    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::ColMajor>>
-        physical_block(physical_data.row(pt).data(), physical_value_size,
-                       nresults);
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_J(J.row(pt).data(), physical_dim, reference_dim);
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < physical_block.cols(); ++i)
-      reference_block.col(i) = _map_push_forward(
-          physical_block.col(i), current_K, 1 / detJ[pt], current_J);
+    for (int i = 0; i < nresults; ++i)
+      reference_array.row(pt * nresults + i)
+          = _map_push_forward(physical_data.row(pt * nresults + i), current_K,
+                              1 / detJ[pt], current_J);
   }
 }
 //-----------------------------------------------------------------------------
@@ -465,28 +462,26 @@ void FiniteElement::map_pull_back_to_memory_complex(
   const int nresults = physical_data.cols() / physical_value_size;
   const int npoints = physical_data.rows();
 
+  Eigen::Map<Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic,
+                          Eigen::ColMajor>>
+      reference_array(reference_data, nresults * npoints, reference_value_size);
+
   for (int pt = 0; pt < npoints; ++pt)
   {
-    Eigen::Map<Eigen::Array<std::complex<double>, Eigen::Dynamic,
-                            Eigen::Dynamic, Eigen::ColMajor>>
-        reference_block(reference_data + pt * reference_value_size * nresults,
-                        reference_value_size, nresults);
-    Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
-                                  Eigen::Dynamic, Eigen::ColMajor>>
-        physical_block(physical_data.row(pt).data(), physical_value_size,
-                       nresults);
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_J(J.row(pt).data(), physical_dim, reference_dim);
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < physical_block.cols(); ++i)
+    for (int i = 0; i < nresults; ++i)
     {
-      reference_block.col(i).real() = _map_push_forward(
-          physical_block.col(i).real(), current_K, 1 / detJ[pt], current_J);
-      reference_block.col(i).imag() = _map_push_forward(
-          physical_block.col(i).imag(), current_K, 1 / detJ[pt], current_J);
+      reference_array.row(pt * nresults + i).real()
+          = _map_push_forward(physical_data.row(pt * nresults + i).real(),
+                              current_K, 1 / detJ[pt], current_J);
+      reference_array.row(pt * nresults + i).imag()
+          = _map_push_forward(physical_data.row(pt * nresults + i).imag(),
+                              current_K, 1 / detJ[pt], current_J);
     }
   }
 }

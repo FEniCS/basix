@@ -85,17 +85,22 @@ void map_push_forward_real(int handle, double* physical_data,
                            const int physical_value_size, const int nresults,
                            const int npoints);
 
+// FIXME: Currently pull_back's data is the transpose of push_forward's data.
+// This should be made consistent. See
+// https://github.com/FEniCS/basix/issues/120
+//
 /// Map function values from a physical cell to the reference
 ///
+///
 /// The memory for "reference_data" must be allocated by the user, and is a
-/// three dimensional (row-major) ndarray with dimensions [npoints, nresults,
-/// value_size] where "npoints" and "nresults" are given as function inputs, and
+/// three dimensional (row-major) ndarray with dimensions [value_size, nresults,
+/// npoints] where "npoints" and "nresults" are given as function inputs, and
 /// "value_size" is the value size of the finite element (the product of the
 /// values in `value_shape()`).
 ///
 /// "reference_data" points to the memory for
-/// a three dimensional (row-major) ndarray with dimensions [npoints, nresults,
-/// physical_value_size] where "physical_value_size", "nresults", and "npoints"
+/// a three dimensional (row-major) ndarray with dimensions [value_size,
+/// nresults, npoints] where "physical_value_size", "nresults", and "npoints"
 /// are given as function inputs.
 ///
 /// "J" points to the memory for a three dimensional (row-major) ndarray with

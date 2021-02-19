@@ -3,10 +3,10 @@
 // SPDX-License-Identifier:    MIT
 
 #include "basix.h"
-#include "cell.h"
-#include "finite-element.h"
-#include "mappings.h"
-#include "quadrature.h"
+#include "core/cell.h"
+#include "core/finite-element.h"
+#include "core/mappings.h"
+#include "core/quadrature.h"
 #include <algorithm>
 #include <iterator>
 #include <memory>

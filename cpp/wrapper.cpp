@@ -8,21 +8,14 @@
 #include <pybind11/stl.h>
 #include <string>
 
-#include "cell.h"
-#include "element-families.h"
-#include "finite-element.h"
-#include "indexing.h"
-#include "lattice.h"
-#include "mappings.h"
-#include "polyset.h"
-#include "quadrature.h"
-
-// TODO: remove, not in public interface
-#include "crouzeix-raviart.h"
-#include "lagrange.h"
-#include "nedelec.h"
-#include "raviart-thomas.h"
-#include "regge.h"
+#include "core/cell.h"
+#include "core/element-families.h"
+#include "core/finite-element.h"
+#include "core/indexing.h"
+#include "core/lattice.h"
+#include "core/mappings.h"
+#include "core/polyset.h"
+#include "core/quadrature.h"
 
 namespace py = pybind11;
 using namespace basix;

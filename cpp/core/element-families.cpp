@@ -3,8 +3,8 @@
 // SPDX-License-Identifier:    MIT
 
 #include "element-families.h"
-#include <stdexcept>
 #include <map>
+#include <stdexcept>
 
 using namespace basix;
 

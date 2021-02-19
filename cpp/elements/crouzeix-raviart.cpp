@@ -3,10 +3,10 @@
 // SPDX-License-Identifier:    MIT
 
 #include "crouzeix-raviart.h"
-#include "element-families.h"
-#include "mappings.h"
-#include "polyset.h"
-#include "quadrature.h"
+#include "core/element-families.h"
+#include "core/mappings.h"
+#include "core/polyset.h"
+#include "core/quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>

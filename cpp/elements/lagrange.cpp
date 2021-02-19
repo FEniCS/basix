@@ -3,11 +3,11 @@
 // SPDX-License-Identifier:    MIT
 
 #include "lagrange.h"
-#include "dof-permutations.h"
-#include "element-families.h"
-#include "lattice.h"
-#include "mappings.h"
-#include "polyset.h"
+#include "core/dof-permutations.h"
+#include "core/element-families.h"
+#include "core/lattice.h"
+#include "core/mappings.h"
+#include "core/polyset.h"
 #include <Eigen/Dense>
 #include <iostream>
 #include <numeric>

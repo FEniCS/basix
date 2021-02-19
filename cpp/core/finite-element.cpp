@@ -3,14 +3,14 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
-#include "brezzi-douglas-marini.h"
-#include "crouzeix-raviart.h"
-#include "lagrange.h"
-#include "nce-rtc.h"
-#include "nedelec.h"
+#include "elements/brezzi-douglas-marini.h"
+#include "elements/crouzeix-raviart.h"
+#include "elements/lagrange.h"
+#include "elements/nce-rtc.h"
+#include "elements/nedelec.h"
+#include "elements/raviart-thomas.h"
+#include "elements/regge.h"
 #include "polyset.h"
-#include "raviart-thomas.h"
-#include "regge.h"
 #include <iostream>
 #include <numeric>
 
@@ -38,7 +38,7 @@ int compute_value_size(const mapping::type mapping_type, const int dim)
   default:
     throw std::runtime_error("Mapping not yet implemented");
   }
-  }
+}
 } // namespace
 
 //-----------------------------------------------------------------------------

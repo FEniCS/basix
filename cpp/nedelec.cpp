@@ -679,7 +679,8 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
-  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
+  const Eigen::MatrixXd coeffs
+      = compute_expansion_coefficients_legacy(wcoeffs, dual);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, perms, points, interp_matrix,
                        mapping::type::covariantPiola);
@@ -715,7 +716,8 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
-  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
+  const Eigen::MatrixXd coeffs
+      = compute_expansion_coefficients_legacy(wcoeffs, dual);
 
   // Nedelec(2nd kind) has (d+1) dofs on each edge, (d+1)(d-1) on each face
   // and (d-2)(d-1)(d+1)/2 on the interior in 3D

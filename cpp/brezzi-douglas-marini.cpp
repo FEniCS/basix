@@ -118,7 +118,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients_legacy(wcoeffs, dual);
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, {}, {},

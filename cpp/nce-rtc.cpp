@@ -185,7 +185,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients_legacy(wcoeffs, dual);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, {}, {},
                        mapping::type::contravariantPiola);
@@ -477,7 +477,10 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3].resize(topology[3].size(), volume_dofs);
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
+  //  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  //      celltype, wcoeffs, matrix, points, degree);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients_legacy(wcoeffs, dual);
+
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, points, matrix,
                        mapping::type::covariantPiola);

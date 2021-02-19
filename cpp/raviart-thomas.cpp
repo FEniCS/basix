@@ -152,7 +152,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), ns);
   entity_dofs[tdim] = {ns0 * tdim};
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients_legacy(wcoeffs, dual);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, {}, {},
                        mapping::type::contravariantPiola);

@@ -84,9 +84,9 @@ basix::FiniteElement basix::create_element(element::family family,
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd
-basix::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
-                                      const Eigen::MatrixXd& dual,
-                                      bool condition_check)
+basix::compute_expansion_coefficients_legacy(const Eigen::MatrixXd& coeffs,
+                                             const Eigen::MatrixXd& dual,
+                                             bool condition_check)
 {
 #ifndef NDEBUG
   std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
@@ -115,6 +115,33 @@ basix::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
   return new_coeffs;
 }
 //-----------------------------------------------------------------------------
+Eigen::MatrixXd basix::compute_expansion_coefficients(
+    cell::type celltype, const Eigen::MatrixXd& coeffs,
+    const Eigen::MatrixXd& interpolation_matrix,
+    const Eigen::ArrayXXd& interpolation_points, const int order,
+    bool condition_check)
+{
+  const Eigen::MatrixXd tabulation
+      = polyset::tabulate(celltype, order, 0, interpolation_points)[0];
+  const Eigen::MatrixXd A
+      = coeffs * tabulation.transpose() * interpolation_matrix.transpose();
+  if (condition_check)
+  {
+    Eigen::JacobiSVD svd(A);
+    const int size = svd.singularValues().size();
+    const double kappa
+        = svd.singularValues()(0) / svd.singularValues()(size - 1);
+    if (kappa > 1e6)
+    {
+      throw std::runtime_error("Poorly conditioned B.D^T when computing "
+                               "expansion coefficients");
+    }
+  }
+
+  Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+
+  return new_coeffs;
+}
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,

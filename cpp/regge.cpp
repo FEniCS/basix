@@ -135,7 +135,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients_legacy(wcoeffs, dual);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D

@@ -143,9 +143,16 @@ namespace basix
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space.
 Eigen::MatrixXd
-compute_expansion_coefficients(const Eigen::MatrixXd& span_coeffs,
-                               const Eigen::MatrixXd& dual,
-                               bool condition_check = false);
+compute_expansion_coefficients_legacy(const Eigen::MatrixXd& span_coeffs,
+                                      const Eigen::MatrixXd& dual,
+                                      bool condition_check = false);
+
+Eigen::MatrixXd
+compute_expansion_coefficients(cell::type cell_type,
+                               const Eigen::MatrixXd& span_coeffs,
+                               const Eigen::MatrixXd& interpolation_matrix,
+                               const Eigen::ArrayXXd& interpolation_points,
+                               const int order, bool condition_check = false);
 
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the

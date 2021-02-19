@@ -6,6 +6,7 @@
 #include "dof-permutations.h"
 #include "element-families.h"
 #include "lattice.h"
+#include "mappings.h"
 #include "polyset.h"
 #include <Eigen/Dense>
 #include <iostream>
@@ -173,14 +174,14 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
               << std::endl;
   }
 
-  // Point evaluation of basis
-  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
+      celltype, Eigen::MatrixXd::Identity(ndofs, ndofs),
+      Eigen::MatrixXd::Identity(ndofs, ndofs), pt, degree);
 
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
                        entity_dofs, base_permutations, pt,
-                       Eigen::MatrixXd::Identity(ndofs, ndofs));
+                       Eigen::MatrixXd::Identity(ndofs, ndofs),
+                       mapping::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
@@ -201,12 +202,6 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   const Eigen::ArrayXXd pt
       = lattice::create(celltype, degree, lattice::type::equispaced, true);
 
-  // Point evaluation of basis
-  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
-
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
-
   int perm_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     perm_count += topology[i].size() * i;
@@ -214,8 +209,13 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, Eigen::MatrixXd::Identity(ndofs, ndofs),
+      Eigen::MatrixXd::Identity(ndofs, ndofs), pt, degree);
+
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
                        entity_dofs, base_permutations, pt,
-                       Eigen::MatrixXd::Identity(ndofs, ndofs));
+                       Eigen::MatrixXd::Identity(ndofs, ndofs),
+                       mapping::type::identity);
 }
 //-----------------------------------------------------------------------------

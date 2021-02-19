@@ -166,8 +166,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
          = mapping::type::identity) -> FiniteElement {
         return FiniteElement(
             family_type, celltype, degree, value_shape,
-            compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
-            base_permutations, {}, {}, mapping_type);
+            compute_expansion_coefficients_legacy(coeffs, dualmat, true),
+            entity_dofs, base_permutations, {}, {}, mapping_type);
       },
       "Create an element from basic data");
 
@@ -183,8 +183,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return FiniteElement(
             element::str_to_type(family_name), cell::str_to_type(cell_name),
             degree, value_shape,
-            compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
-            base_permutations, {}, {}, mapping_type);
+            compute_expansion_coefficients_legacy(coeffs, dualmat, true),
+            entity_dofs, base_permutations, {}, {}, mapping_type);
       },
       "Create an element from basic data");
 

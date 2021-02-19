@@ -13,7 +13,7 @@ Eigen::ArrayXd identity(const Eigen::ArrayXd& reference_data,
                         const Eigen::MatrixXd& J, const double detJ,
                         const Eigen::MatrixXd& K)
 {
-    return reference_data;
+  return reference_data;
 }
 Eigen::ArrayXd covariant_piola(const Eigen::ArrayXd& reference_data,
                                const Eigen::MatrixXd& J, const double detJ,
@@ -46,32 +46,32 @@ Eigen::ArrayXd double_contravariant_piola(const Eigen::ArrayXd& reference_data,
                                                 J.cols());
   Eigen::MatrixXd result = 1 / (detJ * detJ) * J * data_matrix * J.transpose();
   return Eigen::Map<Eigen::ArrayXd>(result.data(), J.rows() * J.rows());
-  }
-  } // namespace
+}
+} // namespace
 
-  using namespace basix;
+using namespace basix;
 
-  //-----------------------------------------------------------------------------
-  std::function<Eigen::ArrayXd(const Eigen::ArrayXd&, const Eigen::MatrixXd&,
-                               const double, const Eigen::MatrixXd&)>
-  mapping::get_forward_map(mapping::type mapping_type)
+//-----------------------------------------------------------------------------
+std::function<Eigen::ArrayXd(const Eigen::ArrayXd&, const Eigen::MatrixXd&,
+                             const double, const Eigen::MatrixXd&)>
+mapping::get_forward_map(mapping::type mapping_type)
+{
+  switch (mapping_type)
   {
-    switch (mapping_type)
-    {
-    case mapping::type::identity:
-      return identity;
-    case mapping::type::covariantPiola:
-      return covariant_piola;
-    case mapping::type::contravariantPiola:
-      return contravariant_piola;
-    case mapping::type::doubleCovariantPiola:
-      return double_covariant_piola;
-    case mapping::type::doubleContravariantPiola:
-      return double_contravariant_piola;
-    default:
-      throw std::runtime_error("Mapping not yet implemented");
-    }
+  case mapping::type::identity:
+    return identity;
+  case mapping::type::covariantPiola:
+    return covariant_piola;
+  case mapping::type::contravariantPiola:
+    return contravariant_piola;
+  case mapping::type::doubleCovariantPiola:
+    return double_covariant_piola;
+  case mapping::type::doubleContravariantPiola:
+    return double_contravariant_piola;
+  default:
+    throw std::runtime_error("Mapping not yet implemented");
   }
+}
 //-----------------------------------------------------------------------------
 const std::string& mapping::type_to_str(mapping::type type)
 {

@@ -2,6 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include <complex>
 #include <utility>
 #include <vector>
 
@@ -77,23 +78,29 @@ void tabulate(int handle, double* basis_values, int nd, const double* x,
 /// @param[in] physical_value_size The value size of the physical element
 /// @param[in] nresults The number of data values per point
 /// @param[in] npoints The number of points
-void map_push_forward(int handle, double* physical_data,
-                      const double* reference_data, const double* J,
-                      const double* detJ, const double* K,
-                      const int physical_dim, const int physical_value_size,
-                      const int nresults, const int npoints);
+void map_push_forward_real(int handle, double* physical_data,
+                           const double* reference_data, const double* J,
+                           const double* detJ, const double* K,
+                           const int physical_dim,
+                           const int physical_value_size, const int nresults,
+                           const int npoints);
 
+// FIXME: Currently pull_back's data is the transpose of push_forward's data.
+// This should be made consistent. See
+// https://github.com/FEniCS/basix/issues/120
+//
 /// Map function values from a physical cell to the reference
 ///
+///
 /// The memory for "reference_data" must be allocated by the user, and is a
-/// three dimensional (row-major) ndarray with dimensions [npoints, nresults,
-/// value_size] where "npoints" and "nresults" are given as function inputs, and
+/// three dimensional (row-major) ndarray with dimensions [value_size, nresults,
+/// npoints] where "npoints" and "nresults" are given as function inputs, and
 /// "value_size" is the value size of the finite element (the product of the
 /// values in `value_shape()`).
 ///
 /// "reference_data" points to the memory for
-/// a three dimensional (row-major) ndarray with dimensions [npoints, nresults,
-/// physical_value_size] where "physical_value_size", "nresults", and "npoints"
+/// a three dimensional (row-major) ndarray with dimensions [value_size,
+/// nresults, npoints] where "physical_value_size", "nresults", and "npoints"
 /// are given as function inputs.
 ///
 /// "J" points to the memory for a three dimensional (row-major) ndarray with
@@ -118,11 +125,31 @@ void map_push_forward(int handle, double* physical_data,
 /// @param[in] physical_value_size The value size of the physical element
 /// @param[in] nresults The number of data values per point
 /// @param[in] npoints The number of points
-void map_pull_back(int handle, double* reference_data,
-                   const double* physical_data, const double* J,
-                   const double* detJ, const double* K, const int physical_dim,
-                   const int physical_value_size, const int nresults,
-                   const int npoints);
+void map_pull_back_real(int handle, double* reference_data,
+                        const double* physical_data, const double* J,
+                        const double* detJ, const double* K,
+                        const int physical_dim, const int physical_value_size,
+                        const int nresults, const int npoints);
+
+/// Map function values from the reference to a physical cell.
+///
+/// See `map_push_forward_real()`.
+void map_push_forward_complex(int handle, std::complex<double>* physical_data,
+                              const std::complex<double>* reference_data,
+                              const double* J, const double* detJ,
+                              const double* K, const int physical_dim,
+                              const int physical_value_size, const int nresults,
+                              const int npoints);
+
+/// Map function values from a physical cell to the reference
+///
+/// See `map_pull_back_real()`.
+void map_pull_back_complex(int handle, std::complex<double>* reference_data,
+                           const std::complex<double>* physical_data,
+                           const double* J, const double* detJ, const double* K,
+                           const int physical_dim,
+                           const int physical_value_size, const int nresults,
+                           const int npoints);
 
 /// String representation of the cell type of the finite element
 /// @param handle

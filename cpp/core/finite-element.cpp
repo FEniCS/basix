@@ -123,8 +123,13 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
 {
   const Eigen::MatrixXd tabulation
       = polyset::tabulate(celltype, order, 0, interpolation_points)[0];
-  const Eigen::MatrixXd A
-      = coeffs * tabulation.transpose() * interpolation_matrix.transpose();
+  const int value_size = coeffs.cols() / tabulation.cols();
+  Eigen::MatrixXd A(coeffs.rows(), interpolation_matrix.rows());
+  A.setZero();
+  for (int i = 0; i < value_size; ++i)
+    A += coeffs.block(i * tabulation.cols(), 0, tabulation.cols(),
+                      coeffs.rows())
+         * tabulation.transpose() * interpolation_matrix.transpose();
   if (condition_check)
   {
     Eigen::JacobiSVD svd(A);
@@ -137,7 +142,6 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
                                "expansion coefficients");
     }
   }
-
   Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 
   return new_coeffs;

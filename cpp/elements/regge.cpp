@@ -3,11 +3,10 @@
 // SPDX-License-Identifier:    MIT
 
 #include "regge.h"
-#include "element-families.h"
-#include "lattice.h"
-#include "mappings.h"
-#include "polyset.h"
-#include <iostream>
+#include "core/element-families.h"
+#include "core/lattice.h"
+#include "core/mappings.h"
+#include "core/polyset.h"
 
 using namespace basix;
 

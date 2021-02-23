@@ -8,8 +8,8 @@
 #pragma once
 
 #include "cell.h"
-#include "mappings.h"
 #include "element-families.h"
+#include "mappings.h"
 #include <Eigen/Dense>
 #include <string>
 #include <vector>
@@ -195,6 +195,13 @@ public:
   /// results will be stacked in index order.
   std::vector<Eigen::ArrayXXd> tabulate(int nd, const Eigen::ArrayXXd& x) const;
 
+  /// Direct to memory block tabulation
+  /// @param nd Number of derivatives
+  /// @param x Points
+  /// @param basis_data Memory location to fill
+  void tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
+                          double* basis_data) const;
+
   /// Get the element cell type
   /// @return The cell type
   cell::type cell_type() const;
@@ -225,25 +232,98 @@ public:
   /// @return The mapping
   const mapping::type mapping_type() const;
 
-  /// Map a function value from the reference to a physical cell
-  /// @param reference_data The function value on the reference
+  /// Map function values from the reference to a physical cell
+  /// @param reference_data The function values on the reference
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
-  /// @return The function value on the cell
-  Eigen::ArrayXd map_push_forward(const Eigen::ArrayXd& reference_data,
-                                  const Eigen::MatrixXd& J, double detJ,
-                                  const Eigen::MatrixXd& K) const;
+  /// @return The function values on the cell
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  map_push_forward(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                      Eigen::RowMajor>& reference_data,
+                   const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                      Eigen::RowMajor>& J,
+                   const Eigen::ArrayXd& detJ,
+                   const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                      Eigen::RowMajor>& K) const;
 
-  /// Map a function value from a physical cell to the reference
-  /// @param physical_data The function value on the cell
+  /// Direct to memory push forward
+  /// @param reference_data The function values on the reference
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
-  /// @return The function value on the reference
-  Eigen::ArrayXd map_pull_back(const Eigen::ArrayXd& physical_data,
-                               const Eigen::MatrixXd& J, double detJ,
-                               const Eigen::MatrixXd& K) const;
+  /// @param physical_data Memory location to fill
+  void map_push_forward_to_memory_real(
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& reference_data,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& J,
+      const Eigen::ArrayXd& detJ,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& K,
+      double* physical_data) const;
+
+  /// Direct to memory push forward
+  /// @param reference_data The function values on the reference
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @param physical_data Memory location to fill
+  void map_push_forward_to_memory_complex(
+      const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& reference_data,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& J,
+      const Eigen::ArrayXd& detJ,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& K,
+      std::complex<double>* physical_data) const;
+
+  /// Map function values from a physical cell to the reference
+  /// @param physical_data The function values on the cell
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @return The function values on the reference
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+  map_pull_back(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>& physical_data,
+                const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>& J,
+                const Eigen::ArrayXd& detJ,
+                const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>& K) const;
+
+  /// Map function values from a physical cell to the reference
+  /// @param physical_data The function values on the cell
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @param reference_data Memory location to fill
+  void map_pull_back_to_memory_real(
+      const Eigen::ArrayXXd& physical_data,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& J,
+      const Eigen::ArrayXd& detJ,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& K,
+      double* reference_data) const;
+
+  /// Map function values from a physical cell to the reference
+  /// @param physical_data The function values on the cell
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @param reference_data Memory location to fill
+  void map_pull_back_to_memory_complex(
+      const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>&
+          physical_data,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& J,
+      const Eigen::ArrayXd& detJ,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& K,
+      std::complex<double>* reference_data) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -333,10 +413,11 @@ public:
   /// ~~~~~~~~~~~~~~~~
   std::vector<Eigen::MatrixXd> base_permutations() const;
 
-  /// Return a set of evaluation points
-  /// Currently for backward compatibility with DOLFINx function interpolation
-  /// Experimental, may go away.
+  /// Return a set of interpolation points
   const Eigen::ArrayXXd& points() const;
+
+  /// Return the number of interpolation points
+  int num_points() const;
 
   /// Return a matrix of weights interpolation
   /// To interpolate a function in this finite element, the functions should be
@@ -386,6 +467,11 @@ private:
 
   /// The interpolation weights and points
   Eigen::MatrixXd _interpolation_matrix;
+
+  // The mapping that maps values on the reference to values on a physical cell
+  std::function<Eigen::ArrayXd(const Eigen::ArrayXd&, const Eigen::MatrixXd&,
+                               const double, const Eigen::MatrixXd&)>
+      _map_push_forward;
 };
 
 /// Create an element by name

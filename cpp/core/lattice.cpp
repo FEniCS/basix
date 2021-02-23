@@ -4,7 +4,7 @@
 
 #include "lattice.h"
 #include "cell.h"
-#include "lagrange.h"
+#include "elements/lagrange.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
 
@@ -35,8 +35,6 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
                                 lattice::type lattice_type, bool exterior)
 {
-  const double h = 1.0 / static_cast<double>(n);
-
   switch (celltype)
   {
   case cell::type::point:
@@ -50,7 +48,10 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     if (exterior)
       x = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     else
+    {
+      const double h = 1.0 / static_cast<double>(n);
       x = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
+    }
 
     if (lattice_type == lattice::type::gll_warped)
       x += warp_function(n, x);
@@ -66,7 +67,10 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     if (exterior)
       r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     else
+    {
+      const double h = 1.0 / static_cast<double>(n);
       r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
+    }
 
     if (lattice_type == lattice::type::gll_warped)
       r += warp_function(n, r);
@@ -89,7 +93,10 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     if (exterior)
       r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
     else
+    {
+      const double h = 1.0 / static_cast<double>(n);
       r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
+    }
     if (lattice_type == lattice::type::gll_warped)
       r += warp_function(n, r);
 
@@ -222,6 +229,8 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     }
     else
     {
+      const double h = 1.0 / static_cast<double>(n);
+
       // Interpolate warp factor along interval
       std::tuple<Eigen::ArrayXXd, Eigen::ArrayXd> pw
           = quadrature::gauss_lobatto_legendre_line_rule(n + 1);

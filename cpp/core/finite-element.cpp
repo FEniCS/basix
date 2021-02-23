@@ -123,13 +123,25 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
 {
   const Eigen::MatrixXd tabulation
       = polyset::tabulate(celltype, order, 0, interpolation_points)[0];
-  const int value_size = coeffs.cols() / tabulation.cols();
+
+  const int scalar_coeff_size = tabulation.cols();
+  const int value_size = coeffs.cols() / scalar_coeff_size;
+  const int scalar_interpolation_size
+      = interpolation_matrix.cols() / value_size;
   Eigen::MatrixXd A(coeffs.rows(), interpolation_matrix.rows());
   A.setZero();
-  for (int i = 0; i < value_size; ++i)
-    A += coeffs.block(i * tabulation.cols(), 0, tabulation.cols(),
-                      coeffs.rows())
-         * tabulation.transpose() * interpolation_matrix.transpose();
+  for (int row = 0; row < coeffs.rows(); ++row)
+    for (int i = 0; i < value_size; ++i)
+    {
+      A.row(row)
+          += coeffs.block(row, scalar_coeff_size * i, 1, scalar_coeff_size)
+             * tabulation.transpose()
+             * interpolation_matrix
+                   .block(0, i * scalar_interpolation_size,
+                          interpolation_matrix.rows(),
+                          scalar_interpolation_size)
+                   .transpose();
+    }
   if (condition_check)
   {
     Eigen::JacobiSVD svd(A);
@@ -145,6 +157,43 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
   Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
 
   return new_coeffs;
+}
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(
+    const Eigen::ArrayXXd& points_1d, const Eigen::ArrayXXd& points_2d,
+    const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,
+    const Eigen::MatrixXd& matrix_2d, const Eigen::MatrixXd& matrix_3d,
+    const int tdim, const int value_size)
+{
+  Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows() + points_3d.rows(),
+                         tdim);
+
+  points.block(0, 0, points_1d.rows(), tdim) = points_1d;
+  points.block(points_1d.rows(), 0, points_2d.rows(), tdim) = points_2d;
+  points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), tdim)
+      = points_3d;
+
+  Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
+                         matrix_1d.cols() + matrix_2d.cols()
+                             + matrix_3d.cols());
+  matrix.setZero();
+
+  const int r1d = matrix_1d.rows();
+  const int r2d = matrix_2d.rows();
+  const int r3d = matrix_3d.rows();
+  const int c1d = matrix_1d.cols() / value_size;
+  const int c2d = matrix_2d.cols() / value_size;
+  const int c3d = matrix_3d.cols() / value_size;
+  for (int i = 0; i < value_size; ++i)
+  {
+    matrix.block(0, i * (c1d + c2d + c3d), r1d, c1d)
+        = matrix_1d.block(0, i * c1d, r1d, c1d);
+    matrix.block(r1d, i * (c1d + c2d + c3d) + c1d, r2d, c2d)
+        = matrix_2d.block(0, i * c2d, r2d, c2d);
+    matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r3d, c3d)
+        = matrix_3d.block(0, i * c3d, r3d, c3d);
+  }
+  return std::make_pair(points, matrix);
 }
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(

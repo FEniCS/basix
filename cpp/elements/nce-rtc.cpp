@@ -310,19 +310,8 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
     }
   }
 
-  // Dual space
-  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
-  Eigen::ArrayXXd points;
-  Eigen::MatrixXd matrix;
-
   // quadrature degree
   int quad_deg = 2 * degree;
-
-  // Add rows to dualmat for integral moments on facets
-  dual.block(0, 0, edge_count * edge_dofs, psize * tdim)
-      = moments::make_tangent_integral_moments(
-          create_dlagrange(cell::type::interval, degree - 1), celltype, tdim,
-          degree, quad_deg);
 
   Eigen::ArrayXXd points_1d;
   Eigen::MatrixXd matrix_1d;
@@ -331,96 +320,37 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
           create_dlagrange(cell::type::interval, degree - 1), celltype, tdim,
           degree, quad_deg);
 
-  if (degree == 1)
-  {
-    points = points_1d;
-    matrix = matrix_1d;
-  }
-
-  // Add rows to dualmat for integral moments on interior
+  Eigen::ArrayXXd points_2d(0, tdim);
+  Eigen::MatrixXd matrix_2d(0, 0);
+  Eigen::ArrayXXd points_3d(0, tdim);
+  Eigen::MatrixXd matrix_3d(0, 0);
+  // Add integral moments on interior
   if (degree > 1)
   {
     // Face integral moment
-    dual.block(edge_count * edge_dofs, 0, face_count * face_dofs, psize * tdim)
-        = moments::make_dot_integral_moments(
-            create_rtc(cell::type::quadrilateral, degree - 1), celltype, tdim,
-            degree, quad_deg);
-
-    Eigen::ArrayXXd points_2d;
-    Eigen::MatrixXd matrix_2d;
     std::tie(points_2d, matrix_2d)
         = moments::make_dot_integral_moments_interpolation(
             create_rtc(cell::type::quadrilateral, degree - 1), celltype, tdim,
             degree, quad_deg);
 
-    if (tdim == 2)
-    {
-      points.resize(points_1d.rows() + points_2d.rows(), tdim);
-      matrix.resize(matrix_1d.rows() + matrix_2d.rows(),
-                    matrix_1d.cols() + matrix_2d.cols());
-      matrix.setZero();
-
-      points.block(0, 0, points_1d.rows(), tdim) = points_1d;
-      points.block(points_1d.rows(), 0, points_2d.rows(), tdim) = points_2d;
-
-      const int r1d = matrix_1d.rows();
-      const int r2d = matrix_2d.rows();
-      const int c1d = matrix_1d.cols() / tdim;
-      const int c2d = matrix_2d.cols() / tdim;
-      for (int i = 0; i < tdim; ++i)
-      {
-        matrix.block(0, i * (c1d + c2d), r1d, c1d)
-            = matrix_1d.block(0, i * c1d, r1d, c1d);
-        matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)
-            = matrix_2d.block(0, i * c2d, r2d, c2d);
-      }
-    }
-
     if (tdim == 3)
     {
       // Interior integral moment
-      dual.block(edge_count * edge_dofs + face_count * face_dofs, 0,
-                 volume_dofs, psize * tdim)
-          = moments::make_dot_integral_moments(
-              create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
-              degree, quad_deg);
-
-      Eigen::ArrayXXd points_3d;
-      Eigen::MatrixXd matrix_3d;
       std::tie(points_3d, matrix_3d)
           = moments::make_dot_integral_moments_interpolation(
               create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
               degree, quad_deg);
 
-      points.resize(points_1d.rows() + points_2d.rows() + points_3d.rows(),
-                    tdim);
-      matrix.resize(matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
-                    matrix_1d.cols() + matrix_2d.cols() + matrix_3d.cols());
-      matrix.setZero();
-
-      points.block(0, 0, points_1d.rows(), tdim) = points_1d;
-      points.block(points_1d.rows(), 0, points_2d.rows(), tdim) = points_2d;
-      points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(),
-                   tdim)
-          = points_3d;
-
-      const int r1d = matrix_1d.rows();
-      const int r2d = matrix_2d.rows();
-      const int r3d = matrix_3d.rows();
-      const int c1d = matrix_1d.cols() / tdim;
-      const int c2d = matrix_2d.cols() / tdim;
-      const int c3d = matrix_3d.cols() / tdim;
-      for (int i = 0; i < tdim; ++i)
-      {
-        matrix.block(0, i * (c1d + c2d + c3d), r1d, c1d)
-            = matrix_1d.block(0, i * c1d, r1d, c1d);
-        matrix.block(r1d, i * (c1d + c2d + c3d) + c1d, r2d, c2d)
-            = matrix_2d.block(0, i * c2d, r2d, c2d);
-        matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r3d, c3d)
-            = matrix_3d.block(0, i * c3d, r3d, c3d);
-      }
     }
   }
+
+  // Interpolation points and matrix
+  Eigen::ArrayXXd points;
+  Eigen::MatrixXd matrix;
+
+  std::tie(points, matrix)
+      = combine_interpolation_data(points_1d, points_2d, points_3d, matrix_1d,
+                                   matrix_2d, matrix_3d, tdim, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -477,9 +407,8 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3].resize(topology[3].size(), volume_dofs);
 
-  //  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-  //      celltype, wcoeffs, matrix, points, degree);
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients_legacy(wcoeffs, dual);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, matrix, points, degree);
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, points, matrix,

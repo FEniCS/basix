@@ -154,6 +154,12 @@ compute_expansion_coefficients(cell::type cell_type,
                                const Eigen::ArrayXXd& interpolation_points,
                                const int order, bool condition_check = false);
 
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> combine_interpolation_data(
+    const Eigen::ArrayXXd& points_1d, const Eigen::ArrayXXd& points_2d,
+    const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,
+    const Eigen::MatrixXd& matrix_2d, const Eigen::MatrixXd& matrix_3d,
+    const int tdim, const int value_size);
+
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the
 /// underlying expansion set for that cell type, when tabulating.

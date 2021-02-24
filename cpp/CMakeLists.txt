@@ -2,10 +2,12 @@
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+# Note: -Wno-comment is added to avoid warning/errors for LaTeX code
+# with backslashes on Doxygen comments
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-Wall -Werror" HAVE_EXTRA_FLAGS)
+CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wno-comment" HAVE_EXTRA_FLAGS)
 if (HAVE_EXTRA_FLAGS)
-  set(CMAKE_CXX_FLAGS "-Wall -Werror ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "-Wall -Werror -Wno-comment ${CMAKE_CXX_FLAGS}")
 endif()
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})

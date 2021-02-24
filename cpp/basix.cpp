@@ -70,7 +70,7 @@ void basix::map_push_forward_real(int handle, double* physical_data,
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
   const int vs = _registry[handle]->value_size();
-  _registry[handle]->map_push_forward_to_memory_real(
+  _registry[handle]->map_push_forward_m<double>(
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(reference_data, npoints,
                                                       vs * nresults),
@@ -93,7 +93,7 @@ void basix::map_pull_back_real(int handle, double* reference_data,
 {
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
-  _registry[handle]->map_pull_back_to_memory_real(
+  _registry[handle]->map_pull_back_m<double>(
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::ColMajor>>(
           physical_data, npoints * nresults, physical_value_size),
@@ -118,7 +118,7 @@ void basix::map_push_forward_complex(int handle,
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
   const int vs = _registry[handle]->value_size();
-  _registry[handle]->map_push_forward_to_memory_complex(
+  _registry[handle]->map_push_forward_m<std::complex<double>>(
       Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
                                     Eigen::Dynamic, Eigen::RowMajor>>(
           reference_data, npoints * nresults, vs),
@@ -142,7 +142,7 @@ void basix::map_pull_back_complex(int handle,
 {
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
-  _registry[handle]->map_pull_back_to_memory_complex(
+  _registry[handle]->map_pull_back_m<std::complex<double>>(
       Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
                                     Eigen::Dynamic, Eigen::ColMajor>>(
           physical_data, npoints, physical_value_size * nresults),

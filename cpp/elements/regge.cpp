@@ -42,7 +42,8 @@ Eigen::MatrixXd create_regge_space(cell::type celltype, int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd create_regge_dual(cell::type celltype, int degree)
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+create_regge_interpolation(cell::type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
 
@@ -51,12 +52,22 @@ Eigen::MatrixXd create_regge_dual(cell::type celltype, int degree)
   const int ndofs = basis_size * (tdim + 1) * tdim / 2;
   const int space_size = basis_size * tdim * tdim;
 
+  const int npoints = tdim == 2
+                          ? 3 * (degree + 1) + degree * (degree + 1) / 2
+                          : 6 * (degree + 1) + 4 * degree * (degree + 1) / 2
+                                + degree * (degree + 1) * (degree + 2) / 6;
+
+  Eigen::ArrayXXd points(npoints, tdim);
+  Eigen::ArrayXXd matrix(ndofs, npoints * tdim * tdim);
+  matrix.setZero();
+
   Eigen::ArrayXXd dualmat(ndofs, space_size);
   std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const Eigen::ArrayXXd geometry = cell::geometry(celltype);
 
-  // dof counter
+  // point and dof counters
+  int point_n = 0;
   int dof = 0;
   for (std::size_t dim = 1; dim < topology.size(); ++dim)
   {
@@ -69,18 +80,19 @@ Eigen::MatrixXd create_regge_dual(cell::type celltype, int degree)
       cell::type ct = cell::sub_entity_type(celltype, dim, i);
       Eigen::ArrayXXd lattice
           = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
-      Eigen::ArrayXXd pts(lattice.rows(), entity_geom.cols());
       for (int j = 0; j < lattice.rows(); ++j)
       {
-        pts.row(j) = entity_geom.row(0);
+        points.row(point_n + j) = entity_geom.row(0);
         for (int k = 0; k < entity_geom.rows() - 1; ++k)
         {
-          pts.row(j)
+          points.row(point_n + j)
               += (entity_geom.row(k + 1) - entity_geom.row(0)) * lattice(j, k);
         }
       }
 
-      Eigen::MatrixXd basis = polyset::tabulate(celltype, degree, 0, pts)[0];
+      Eigen::MatrixXd basis = polyset::tabulate(
+          celltype, degree, 0,
+          points.block(point_n, 0, lattice.rows(), tdim))[0];
 
       // Store up outer(t, t) for all tangents
       std::vector<int>& vert_ids = topology[dim][i];
@@ -98,26 +110,24 @@ Eigen::MatrixXd create_regge_dual(cell::type celltype, int degree)
         }
       }
 
-      for (int k = 0; k < pts.rows(); ++k)
+      for (int k = 0; k < lattice.rows(); ++k)
       {
         for (int j = 0; j < ntangents; ++j)
         {
           Eigen::Map<Eigen::VectorXd> vvt_flat(vvt[j].data(),
                                                vvt[j].rows() * vvt[j].cols());
-          // outer product: outer(outer(t, t), basis)
-          const Eigen::MatrixXd vvt_b = vvt_flat * basis.row(k);
-
-          // Copy tensor values row by row into dualmat
-          for (int r = 0; r < vvt_b.rows(); ++r)
-            dualmat.block(dof, r * vvt_b.cols(), 1, vvt_b.cols())
-                = vvt_b.row(r);
+          for (int i = 0; i < tdim * tdim; ++i)
+            matrix(dof, point_n + i * npoints) = vvt_flat(i);
+          Eigen::Map<Eigen::RowVectorXd>(vvt[j].data(),
+                                         vvt[j].rows() * vvt[j].cols());
           ++dof;
         }
+        ++point_n;
       }
     }
   }
 
-  return dualmat;
+  return std::make_pair(points, matrix);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -125,17 +135,24 @@ Eigen::MatrixXd create_regge_dual(cell::type celltype, int degree)
 FiniteElement basix::create_regge(cell::type celltype, int degree)
 {
   const int tdim = cell::topological_dimension(celltype);
+  const int basis_size = polyset::dim(celltype, degree);
+  const int ndofs = basis_size * (tdim + 1) * tdim / 2;
 
   Eigen::MatrixXd wcoeffs = create_regge_space(celltype, degree);
-  Eigen::MatrixXd dual = create_regge_dual(celltype, degree);
+
+  Eigen::ArrayXXd points;
+  Eigen::MatrixXd matrix;
+
+  std::tie(points, matrix) = create_regge_interpolation(celltype, degree);
 
   // TODO
-  const int ndofs = dual.rows();
+
   int perm_count = tdim == 2 ? 3 : 14;
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients_legacy(wcoeffs, dual);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, matrix, points, degree);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D
@@ -149,7 +166,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
-                       coeffs, entity_dofs, base_permutations, {}, {},
+                       coeffs, entity_dofs, base_permutations, points, matrix,
                        mapping::type::doubleCovariantPiola);
 }
 //-----------------------------------------------------------------------------

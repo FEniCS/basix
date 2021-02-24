@@ -5,6 +5,7 @@
 import basix
 import pytest
 import numpy as np
+from .utils import parametrize_over_elements
 
 interval_elements = ["Lagrange", "Discontinuous Lagrange"]
 triangle_elements = [
@@ -28,19 +29,8 @@ all_elements = [(cell, e) for cell, elements in [
     ("hexahedron", hexahedron_elements)] for e in elements]
 
 
-@pytest.mark.parametrize("element_name", interval_elements)
-@pytest.mark.parametrize("order", range(1, 6))
-def test_interval_permutation_size(element_name, order):
-    e = basix.create_element(element_name, "interval", order)
-    assert len(e.base_permutations) == 0
-
-
-@pytest.mark.parametrize("cell_name, element_name", all_elements)
-@pytest.mark.parametrize("order", range(1, 6))
+@parametrize_over_elements(5)
 def test_non_zero(cell_name, element_name, order):
-    if element_name == "Crouzeix-Raviart" and order != 1:
-        pytest.xfail()
-
     e = basix.create_element(element_name, cell_name, order)
 
     for perm in e.base_permutations:
@@ -48,8 +38,13 @@ def test_non_zero(cell_name, element_name, order):
             assert max(abs(i) for i in row) > 1e-6
 
 
-@pytest.mark.parametrize("element_name", triangle_elements)
-@pytest.mark.parametrize("order", range(1, 6))
+@parametrize_over_elements(5, "interval")
+def test_interval_permutation_size(element_name, order):
+    e = basix.create_element(element_name, "interval", order)
+    assert len(e.base_permutations) == 0
+
+
+@parametrize_over_elements(5, "triangle")
 def test_triangle_permutation_orders(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
@@ -64,8 +59,7 @@ def test_triangle_permutation_orders(element_name, order):
             identity)
 
 
-@pytest.mark.parametrize("element_name", tetrahedron_elements)
-@pytest.mark.parametrize("order", range(1, 6))
+@parametrize_over_elements(5, "tetrahedron")
 def test_tetrahedron_permutation_orders(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
@@ -80,8 +74,7 @@ def test_tetrahedron_permutation_orders(element_name, order):
             identity)
 
 
-@pytest.mark.parametrize("element_name", quadrilateral_elements)
-@pytest.mark.parametrize("order", range(1, 6))
+@parametrize_over_elements(5, "quadrilateral")
 def test_quadrilateral_permutation_orders(element_name, order):
     e = basix.create_element(element_name, "quadrilateral", order)
     assert len(e.base_permutations) == 4
@@ -93,8 +86,7 @@ def test_quadrilateral_permutation_orders(element_name, order):
             identity)
 
 
-@pytest.mark.parametrize("element_name", hexahedron_elements)
-@pytest.mark.parametrize("order", range(1, 6))
+@parametrize_over_elements(5, "hexahedron")
 def test_hexahedron_permutation_orders(element_name, order):
     e = basix.create_element(element_name, "hexahedron", order)
     assert len(e.base_permutations) == 24
@@ -107,8 +99,7 @@ def test_hexahedron_permutation_orders(element_name, order):
             identity)
 
 
-@pytest.mark.parametrize("element_name", triangle_elements)
-@pytest.mark.parametrize("order", range(1, 6))
+@parametrize_over_elements(5, "triangle")
 def test_permutation_of_tabulated_data_triangle(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
@@ -142,8 +133,7 @@ def test_permutation_of_tabulated_data_triangle(element_name, order):
                                    j_slice[start: start + ndofs])
 
 
-@pytest.mark.parametrize("element_name", quadrilateral_elements)
-@pytest.mark.parametrize("order", range(1, 6))
+@parametrize_over_elements(5, "quadrilateral")
 def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
     e = basix.create_element(element_name, "quadrilateral", order)
 
@@ -172,11 +162,8 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
                                    j_slice[start: start + ndofs])
 
 
-@pytest.mark.parametrize("element_name", tetrahedron_elements)
-@pytest.mark.parametrize("order", range(1, 6))
+@parametrize_over_elements(5, "tetrahedron")
 def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
-    if element_name == "Crouzeix-Raviart" and order != 1:
-        pytest.xfail()
     if element_name == "Regge":
         pytest.skip("DOF permutations not yet implemented for Regge elements.")
 
@@ -246,8 +233,7 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
                                    j_slice[start: start + ndofs])
 
 
-@pytest.mark.parametrize("element_name", hexahedron_elements)
-@pytest.mark.parametrize("order", range(1, 6))
+@parametrize_over_elements(5, "hexahedron")
 def test_permutation_of_tabulated_data_hexahedron(element_name, order):
     if order > 4 and element_name in ["Raviart-Thomas", "Nedelec 1st kind H(curl)"]:
         pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "

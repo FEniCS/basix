@@ -110,26 +110,37 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
     }
   }
 
-  // Dual space
-  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
-
   // quadrature degree
   int quad_deg = 2 * degree;
 
-  // Add rows to dualmat for integral moments on facets
-  dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
-      = moments::make_normal_integral_moments(
+  Eigen::ArrayXXd points_facet;
+  Eigen::MatrixXd matrix_facet;
+  std::tie(points_facet, matrix_facet)
+      = moments::make_normal_integral_moments_interpolation(
           create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
           quad_deg);
 
-  // Add rows to dualmat for integral moments on interior
+  Eigen::ArrayXXd points_cell(0, tdim);
+  Eigen::MatrixXd matrix_cell(0, 0);
+  // Add integral moments on interior
   if (degree > 1)
   {
     // Interior integral moment
-    dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
-        = moments::make_dot_integral_moments(create_nce(celltype, degree - 1),
-                                             celltype, tdim, degree, quad_deg);
+    std::tie(points_cell, matrix_cell)
+        = moments::make_dot_integral_moments_interpolation(
+            create_nce(celltype, degree - 1), celltype, tdim, degree, quad_deg);
   }
+
+  Eigen::ArrayXXd points_null(0, tdim);
+  Eigen::MatrixXd matrix_null(0, 0);
+
+  // Interpolation points and matrix
+  Eigen::ArrayXXd points;
+  Eigen::MatrixXd matrix;
+
+  std::tie(points, matrix) = combine_interpolation_data(
+      points_facet, points_cell, points_null, matrix_facet, matrix_cell,
+      matrix_null, tdim, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -185,9 +196,10 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients_legacy(wcoeffs, dual);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, matrix, points, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations, {}, {},
+                       entity_dofs, base_permutations, points, matrix,
                        mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

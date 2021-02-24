@@ -7,7 +7,6 @@ def test_create_simple():
     # Creates Lagrange P1 element on triangle
 
     # Point evaluation of polynomial set
-    celltype = basix.CellType.triangle
     degree = 1
     points = numpy.array([[0, 0], [1, 0], [0, 1]], dtype=numpy.float64)
     matrix = numpy.identity(points.shape[0])
@@ -29,7 +28,6 @@ def test_create_custom():
     # Creates second order element on triangle
 
     # Point evaluation of polynomial set
-    celltype = basix.CellType.triangle
     degree = 2
     points = numpy.array([[0, .5], [0.5, 0], [0.5, 0.5], [0.25, 0.25], [0.25, 0.5], [0.5, 0.25]], dtype=numpy.float64)
     matrix = numpy.identity(points.shape[0])
@@ -48,7 +46,6 @@ def test_create_custom():
 
 
 def test_create_invalid():
-    celltype = basix.CellType.triangle
     degree = 2
     # Try to create an invalid element of order 2
     points = numpy.array([[0, 0.25], [0, 0.75], [0.25, 0.75], [0.75, 0.25],

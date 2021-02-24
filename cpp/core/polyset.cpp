@@ -91,7 +91,7 @@ Eigen::ArrayXXd tabulate_polyset_triangle_derivs(int n, int nderiv,
   Eigen::ArrayXXd result(pts.rows(), m * md);
 
   // f3 = ((1-y)/2)^2
-  const Eigen::ArrayXd f3 = pts.col(1).square();
+  const Eigen::ArrayXd f3 = (1.0 - x.col(1)).square() * 0.25;
 
   // Iterate over derivatives in increasing order, since higher derivatives
   // depend on earlier calculations

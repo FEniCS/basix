@@ -164,8 +164,6 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
 
 @parametrize_over_elements(5, "tetrahedron")
 def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
-    if element_name == "Crouzeix-Raviart" and order != 1:
-        pytest.xfail()
     if element_name == "Regge":
         pytest.skip("DOF permutations not yet implemented for Regge elements.")
 

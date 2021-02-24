@@ -136,17 +136,13 @@ namespace basix
 /// @param[in] span_coeffs The matrix B containing the expansion
 /// coefficients defining a polynomial basis spanning the polynomial space
 /// for this element.
-/// @param[in] dual The matrix D of values obtained by applying each
-/// functional in the dual set to each expansion polynomial
+/// @param[in] interpolation_matrix The interpolation matrix
+/// @param[in] interpolation_points The interpolation points
+/// @param[in] order The degree of the polynomial set
 /// @param[in] condition_check If set, checks the condition of the matrix
 /// B.D^T and throws an error if it is ill-conditioned.
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space.
-Eigen::MatrixXd
-compute_expansion_coefficients_legacy(const Eigen::MatrixXd& span_coeffs,
-                                      const Eigen::MatrixXd& dual,
-                                      bool condition_check = false);
-
 Eigen::MatrixXd
 compute_expansion_coefficients(cell::type cell_type,
                                const Eigen::MatrixXd& span_coeffs,
@@ -154,6 +150,21 @@ compute_expansion_coefficients(cell::type cell_type,
                                const Eigen::ArrayXXd& interpolation_points,
                                const int order, bool condition_check = false);
 
+/// Combines interpolation data
+///
+/// When the value size is not 1, the matrices are split up into
+/// `value_size` parts, then recombined so that the columns of the
+/// matrix that is output is ordered correctly.
+///
+/// @param[in] points_1d The interpolation points for a 1d entity
+/// @param[in] points_2d The interpolation points for a 2d entity
+/// @param[in] points_3d The interpolation points for a 3d entity
+/// @param[in] matrix_1d The interpolation matrix for a 1d entity
+/// @param[in] matrix_2d The interpolation matrix for a 2d entity
+/// @param[in] matrix_3d The interpolation matrix for a 3d entity
+/// @param[in] tdim The toplogical dimension
+/// @param[in] value_size Value size
+/// @return The interpolation points and matrix
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> combine_interpolation_data(
     const Eigen::ArrayXXd& points_1d, const Eigen::ArrayXXd& points_2d,
     const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,

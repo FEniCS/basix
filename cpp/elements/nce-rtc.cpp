@@ -129,16 +129,12 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
         create_nce(celltype, degree - 1), celltype, tdim, degree, quad_deg);
   }
 
-  Eigen::ArrayXXd points_null(0, tdim);
-  Eigen::MatrixXd matrix_null(0, 0);
-
   // Interpolation points and matrix
   Eigen::ArrayXXd points;
   Eigen::MatrixXd matrix;
 
   std::tie(points, matrix) = combine_interpolation_data(
-      points_facet, points_cell, points_null, matrix_facet, matrix_cell,
-      matrix_null, tdim, tdim);
+      points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);

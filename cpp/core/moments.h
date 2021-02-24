@@ -31,10 +31,11 @@ namespace moments
 /// @param value_size The value size of the space being defined
 /// @param poly_deg The polynomial degree of the poly set that defines the space
 /// @param q_deg The quadrature degree used for the integrals
-Eigen::MatrixXd make_integral_moments(const FiniteElement& moment_space,
-                                      const cell::type celltype,
-                                      const int value_size, const int poly_deg,
-                                      const int q_deg);
+Eigen::MatrixXd make_integral_moments_legacy(const FiniteElement& moment_space,
+                                             const cell::type celltype,
+                                             const int value_size,
+                                             const int poly_deg,
+                                             const int q_deg);
 
 /// Make interpolation points and weights for simple integral moments
 ///
@@ -44,9 +45,10 @@ Eigen::MatrixXd make_integral_moments(const FiniteElement& moment_space,
 /// @param value_size The value size of the space being defined
 /// @param poly_deg The polynomial degree of the poly set that defines the space
 /// @param q_deg The quadrature degree used for the integrals
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> make_integral_moments_interpolation(
-    const FiniteElement& moment_space, const cell::type celltype,
-    const int value_size, const int poly_deg, const int q_deg);
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+make_integral_moments(const FiniteElement& moment_space,
+                      const cell::type celltype, const int value_size,
+                      const int poly_deg, const int q_deg);
 
 /// Make dot product integral moments
 ///
@@ -62,10 +64,9 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> make_integral_moments_interpolation(
 /// @param value_size The value size of the space being defined
 /// @param poly_deg The polynomial degree of the poly set that defines the space
 /// @param q_deg The quadrature degree used for the integrals
-Eigen::MatrixXd make_dot_integral_moments(const FiniteElement& moment_space,
-                                          const cell::type celltype,
-                                          const int value_size,
-                                          const int poly_deg, const int q_deg);
+Eigen::MatrixXd make_dot_integral_moments_legacy(
+    const FiniteElement& moment_space, const cell::type celltype,
+    const int value_size, const int poly_deg, const int q_deg);
 
 /// Make interpolation points and weights for dot product integral moments
 ///
@@ -76,10 +77,9 @@ Eigen::MatrixXd make_dot_integral_moments(const FiniteElement& moment_space,
 /// @param poly_deg The polynomial degree of the poly set that defines the space
 /// @param q_deg The quadrature degree used for the integrals
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-make_dot_integral_moments_interpolation(const FiniteElement& moment_space,
-                                        const cell::type celltype,
-                                        const int value_size,
-                                        const int poly_deg, const int q_deg);
+make_dot_integral_moments(const FiniteElement& moment_space,
+                          const cell::type celltype, const int value_size,
+                          const int poly_deg, const int q_deg);
 
 /// Make tangential integral moments
 ///
@@ -93,11 +93,9 @@ make_dot_integral_moments_interpolation(const FiniteElement& moment_space,
 /// @param poly_deg The polynomial degree of the poly set that defines
 /// the space
 /// @param q_deg The quadrature degree used for the integrals
-Eigen::MatrixXd make_tangent_integral_moments(const FiniteElement& moment_space,
-                                              const cell::type celltype,
-                                              const int value_size,
-                                              const int poly_deg,
-                                              const int q_deg);
+Eigen::MatrixXd make_tangent_integral_moments_legacy(
+    const FiniteElement& moment_space, const cell::type celltype,
+    const int value_size, const int poly_deg, const int q_deg);
 
 /// Make interpolation points and weights for tangent integral moments
 ///
@@ -112,11 +110,9 @@ Eigen::MatrixXd make_tangent_integral_moments(const FiniteElement& moment_space,
 /// the space
 /// @param q_deg The quadrature degree used for the integrals
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-make_tangent_integral_moments_interpolation(const FiniteElement& moment_space,
-                                            const cell::type celltype,
-                                            const int value_size,
-                                            const int poly_deg,
-                                            const int q_deg);
+make_tangent_integral_moments(const FiniteElement& moment_space,
+                              const cell::type celltype, const int value_size,
+                              const int poly_deg, const int q_deg);
 
 /// Make normal integral moments
 ///
@@ -130,11 +126,9 @@ make_tangent_integral_moments_interpolation(const FiniteElement& moment_space,
 /// @param poly_deg The polynomial degree of the poly set that defines
 /// the space
 /// @param q_deg The quadrature degree used for the integrals
-Eigen::MatrixXd make_normal_integral_moments(const FiniteElement& moment_space,
-                                             const cell::type celltype,
-                                             const int value_size,
-                                             const int poly_deg,
-                                             const int q_deg);
+Eigen::MatrixXd make_normal_integral_moments_legacy(
+    const FiniteElement& moment_space, const cell::type celltype,
+    const int value_size, const int poly_deg, const int q_deg);
 
 /// Make interpolation points and weights for normal integral moments
 ///
@@ -149,10 +143,9 @@ Eigen::MatrixXd make_normal_integral_moments(const FiniteElement& moment_space,
 /// the space
 /// @param q_deg The quadrature degree used for the integrals
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-make_normal_integral_moments_interpolation(const FiniteElement& moment_space,
-                                           const cell::type celltype,
-                                           const int value_size,
-                                           const int poly_deg, const int q_deg);
+make_normal_integral_moments(const FiniteElement& moment_space,
+                             const cell::type celltype, const int value_size,
+                             const int poly_deg, const int q_deg);
 
 }; // namespace moments
 } // namespace basix

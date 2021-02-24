@@ -36,10 +36,9 @@ std::vector<int> axis_points(const cell::type celltype)
 } // namespace
 
 //----------------------------------------------------------------------------
-Eigen::MatrixXd
-moments::make_integral_moments(const FiniteElement& moment_space,
-                               const cell::type celltype, const int value_size,
-                               const int poly_deg, const int q_deg)
+Eigen::MatrixXd moments::make_integral_moments_legacy(
+    const FiniteElement& moment_space, const cell::type celltype,
+    const int value_size, const int poly_deg, const int q_deg)
 {
   const int psize = polyset::dim(celltype, poly_deg);
 
@@ -109,11 +108,9 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 }
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
-                                             const cell::type celltype,
-                                             const int value_size,
-                                             const int poly_deg,
-                                             const int q_deg)
+moments::make_integral_moments(const FiniteElement& moment_space,
+                               const cell::type celltype, const int value_size,
+                               const int poly_deg, const int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -177,7 +174,7 @@ moments::make_integral_moments_interpolation(const FiniteElement& moment_space,
   return std::make_pair(points, matrix);
 }
 //----------------------------------------------------------------------------
-Eigen::MatrixXd moments::make_dot_integral_moments(
+Eigen::MatrixXd moments::make_dot_integral_moments_legacy(
     const FiniteElement& moment_space, const cell::type celltype,
     const int value_size, const int poly_deg, const int q_deg)
 {
@@ -251,8 +248,7 @@ Eigen::MatrixXd moments::make_dot_integral_moments(
   return dual;
 }
 //----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-moments::make_dot_integral_moments_interpolation(
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> moments::make_dot_integral_moments(
     const FiniteElement& moment_space, const cell::type celltype,
     const int value_size, const int poly_deg, const int q_deg)
 {
@@ -320,7 +316,7 @@ moments::make_dot_integral_moments_interpolation(
   return std::make_pair(points, matrix);
 }
 //----------------------------------------------------------------------------
-Eigen::MatrixXd moments::make_tangent_integral_moments(
+Eigen::MatrixXd moments::make_tangent_integral_moments_legacy(
     const FiniteElement& moment_space, const cell::type celltype,
     const int value_size, const int poly_deg, const int q_deg)
 {
@@ -385,9 +381,10 @@ Eigen::MatrixXd moments::make_tangent_integral_moments(
 }
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-moments::make_tangent_integral_moments_interpolation(
-    const FiniteElement& moment_space, const cell::type celltype,
-    const int value_size, const int poly_deg, const int q_deg)
+moments::make_tangent_integral_moments(const FiniteElement& moment_space,
+                                       const cell::type celltype,
+                                       const int value_size, const int poly_deg,
+                                       const int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -447,7 +444,7 @@ moments::make_tangent_integral_moments_interpolation(
   return std::make_pair(points, matrix);
 }
 //----------------------------------------------------------------------------
-Eigen::MatrixXd moments::make_normal_integral_moments(
+Eigen::MatrixXd moments::make_normal_integral_moments_legacy(
     const FiniteElement& moment_space, const cell::type celltype,
     const int value_size, const int poly_deg, const int q_deg)
 {
@@ -536,9 +533,10 @@ Eigen::MatrixXd moments::make_normal_integral_moments(
 }
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-moments::make_normal_integral_moments_interpolation(
-    const FiniteElement& moment_space, const cell::type celltype,
-    const int value_size, const int poly_deg, const int q_deg)
+moments::make_normal_integral_moments(const FiniteElement& moment_space,
+                                      const cell::type celltype,
+                                      const int value_size, const int poly_deg,
+                                      const int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);

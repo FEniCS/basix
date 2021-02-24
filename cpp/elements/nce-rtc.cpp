@@ -115,10 +115,9 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points_facet;
   Eigen::MatrixXd matrix_facet;
-  std::tie(points_facet, matrix_facet)
-      = moments::make_normal_integral_moments_interpolation(
-          create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
-          quad_deg);
+  std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
+      create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
+      quad_deg);
 
   Eigen::ArrayXXd points_cell(0, tdim);
   Eigen::MatrixXd matrix_cell(0, 0);
@@ -126,9 +125,8 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_cell, matrix_cell)
-        = moments::make_dot_integral_moments_interpolation(
-            create_nce(celltype, degree - 1), celltype, tdim, degree, quad_deg);
+    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
+        create_nce(celltype, degree - 1), celltype, tdim, degree, quad_deg);
   }
 
   Eigen::ArrayXXd points_null(0, tdim);
@@ -327,10 +325,9 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points_1d;
   Eigen::MatrixXd matrix_1d;
-  std::tie(points_1d, matrix_1d)
-      = moments::make_tangent_integral_moments_interpolation(
-          create_dlagrange(cell::type::interval, degree - 1), celltype, tdim,
-          degree, quad_deg);
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
+      create_dlagrange(cell::type::interval, degree - 1), celltype, tdim,
+      degree, quad_deg);
 
   Eigen::ArrayXXd points_2d(0, tdim);
   Eigen::MatrixXd matrix_2d(0, 0);
@@ -340,19 +337,16 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   if (degree > 1)
   {
     // Face integral moment
-    std::tie(points_2d, matrix_2d)
-        = moments::make_dot_integral_moments_interpolation(
-            create_rtc(cell::type::quadrilateral, degree - 1), celltype, tdim,
-            degree, quad_deg);
+    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
+        create_rtc(cell::type::quadrilateral, degree - 1), celltype, tdim,
+        degree, quad_deg);
 
     if (tdim == 3)
     {
       // Interior integral moment
-      std::tie(points_3d, matrix_3d)
-          = moments::make_dot_integral_moments_interpolation(
-              create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
-              degree, quad_deg);
-
+      std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
+          create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
+          degree, quad_deg);
     }
   }
 

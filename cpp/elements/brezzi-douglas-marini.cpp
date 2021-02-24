@@ -46,7 +46,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const int facet_dofs = polyset::dim(facettype, degree);
 
   dual.block(0, 0, facet_count * facet_dofs, ndofs)
-      = moments::make_normal_integral_moments(
+      = moments::make_normal_integral_moments_legacy(
           create_dlagrange(facettype, degree), celltype, tdim, degree,
           quad_deg);
 
@@ -57,7 +57,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   {
     // Interior integral moment
     dual.block(facet_count * facet_dofs, 0, internal_dofs, ndofs)
-        = moments::make_dot_integral_moments(
+        = moments::make_dot_integral_moments_legacy(
             create_nedelec(celltype, degree - 1), celltype, tdim, degree,
             quad_deg);
   }

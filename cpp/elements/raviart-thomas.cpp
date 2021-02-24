@@ -78,7 +78,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const int facet_count = tdim + 1;
   const int facet_dofs = ns;
   dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
-      = moments::make_normal_integral_moments(
+      = moments::make_normal_integral_moments_legacy(
           create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
           quad_deg);
 
@@ -88,8 +88,9 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     const int internal_dofs = tdim * ns0;
     // Interior integral moment
     dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
-        = moments::make_integral_moments(create_dlagrange(celltype, degree - 2),
-                                         celltype, tdim, degree, quad_deg);
+        = moments::make_integral_moments_legacy(
+            create_dlagrange(celltype, degree - 2), celltype, tdim, degree,
+            quad_deg);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

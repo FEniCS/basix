@@ -68,35 +68,39 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     }
   }
 
-  // Dual space
-  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(nv * tdim + ns, psize * tdim);
-
   // quadrature degree
   int quad_deg = 5 * degree;
 
-  // Add rows to dualmat for integral moments on facets
-  const int facet_count = tdim + 1;
-  const int facet_dofs = ns;
-  dual.block(0, 0, facet_count * facet_dofs, psize * tdim)
-      = moments::make_normal_integral_moments_legacy(
-          create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
-          quad_deg);
+  // Add integral moments on facets
+  Eigen::ArrayXXd points_facet;
+  Eigen::MatrixXd matrix_facet;
+  std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
+      create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
+      quad_deg);
 
-  // Add rows to dualmat for integral moments on interior
+  Eigen::ArrayXXd points_cell(0, tdim);
+  Eigen::MatrixXd matrix_cell(0, 0);
+  // Add integral moments on interior
   if (degree > 1)
   {
-    const int internal_dofs = tdim * ns0;
     // Interior integral moment
-    dual.block(facet_count * facet_dofs, 0, internal_dofs, psize * tdim)
-        = moments::make_integral_moments_legacy(
-            create_dlagrange(celltype, degree - 2), celltype, tdim, degree,
-            quad_deg);
+    std::tie(points_cell, matrix_cell)
+        = moments::make_integral_moments(create_dlagrange(celltype, degree - 2),
+                                         celltype, tdim, degree, quad_deg);
   }
+
+  // Interpolation points and matrix
+  Eigen::ArrayXXd points;
+  Eigen::MatrixXd matrix;
+
+  std::tie(points, matrix) = combine_interpolation_data(
+      points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  const int ndofs = dual.rows();
+  const int facet_count = tdim + 1;
+  const int ndofs = nv * tdim + ns;
   int perm_count = 0;
   for (int i = 1; i < tdim; ++i)
     perm_count += topology[i].size() * i;
@@ -153,9 +157,10 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), ns);
   entity_dofs[tdim] = {ns0 * tdim};
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients_legacy(wcoeffs, dual);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, matrix, points, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations, {}, {},
+                       entity_dofs, base_permutations, points, matrix,
                        mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

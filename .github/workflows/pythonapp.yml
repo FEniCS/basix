@@ -31,7 +31,10 @@ jobs:
           cd doc && doxygen
       - name: Install dependencies (non-Python, macOS)
         if: runner.os == 'macOS'
-        run: brew install eigen
+        run: |
+          which c++
+          c++ -v
+          brew install eigen
       - name: Install dependencies (Python)
         run: |
           pip install --upgrade pip

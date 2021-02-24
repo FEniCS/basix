@@ -35,7 +35,7 @@ Eigen::MatrixXd create_nedelec_2d_space(int degree)
   auto [Qpts, Qwts] = quadrature::make_quadrature(
       "default", cell::type::triangle, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
-      = polyset::tabulate(cell::type::triangle, degree, 0, Qpts)[0];
+      = polyset::tabulate(cell::type::triangle, degree, 0, Qpts);
 
   const int psize = Pkp1_at_Qpts.cols();
 
@@ -139,7 +139,7 @@ Eigen::MatrixXd create_nedelec_3d_space(int degree)
   auto [Qpts, Qwts] = quadrature::make_quadrature(
       "default", cell::type::tetrahedron, 2 * degree);
   Eigen::ArrayXXd Pkp1_at_Qpts
-      = polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts)[0];
+      = polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts);
   const int psize = Pkp1_at_Qpts.cols();
 
   // Create coefficients for order (degree-1) polynomials

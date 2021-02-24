@@ -307,7 +307,7 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
 
     // Tabulate polynomial set at facet quadrature points
     Eigen::MatrixXd poly_set_at_Qpts
-        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
+        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled).transpose();
 
     // Compute facet normal integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)

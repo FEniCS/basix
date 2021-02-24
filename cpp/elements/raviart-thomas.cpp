@@ -38,8 +38,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
-  Eigen::ArrayXXd Pkp1_at_Qpts
-      = polyset::tabulate(celltype, degree, 0, Qpts)[0];
+  Eigen::ArrayXXd Pkp1_at_Qpts = polyset::tabulate(celltype, degree, 0, Qpts);
 
   // The number of order (degree) polynomials
   const int psize = Pkp1_at_Qpts.cols();

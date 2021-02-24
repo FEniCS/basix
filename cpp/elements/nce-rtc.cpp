@@ -40,7 +40,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   auto [Qpts, Qwts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
   Eigen::ArrayXXd polyset_at_Qpts
-      = polyset::tabulate(celltype, degree, 0, Qpts)[0];
+      = polyset::tabulate(celltype, degree, 0, Qpts);
 
   // The number of order (degree) polynomials
   const int psize = polyset_at_Qpts.cols();
@@ -216,7 +216,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   auto [Qpts, Qwts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
   Eigen::ArrayXXd polyset_at_Qpts
-      = polyset::tabulate(celltype, degree, 0, Qpts)[0];
+      = polyset::tabulate(celltype, degree, 0, Qpts);
 
   // The number of order (degree) polynomials
   const int psize = polyset_at_Qpts.cols();

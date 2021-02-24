@@ -90,7 +90,7 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
     bool condition_check)
 {
   const Eigen::MatrixXd tabulation
-      = polyset::tabulate(celltype, order, 0, interpolation_points)[0];
+      = polyset::tabulate(celltype, order, 0, interpolation_points);
 
   const int scalar_coeff_size = tabulation.cols();
   const int value_size = coeffs.cols() / scalar_coeff_size;
@@ -256,13 +256,13 @@ void FiniteElement::tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
   if (x.cols() != tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
-  std::vector<Eigen::ArrayXXd> basis
-      = polyset::tabulate(_cell_type, _degree, nd, x);
+  Eigen::ArrayXXd basis = polyset::tabulate(_cell_type, _degree, nd, x);
   const int psize = polyset::dim(_cell_type, _degree);
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
 
-  for (std::size_t p = 0; p < basis.size(); ++p)
+  // FIXME: higher derivs
+  for (std::size_t p = 0; p < 1; ++p)
   {
     // Map block for current derivative
     Eigen::Map<Eigen::ArrayXXd> dresult(basis_data + p * x.rows() * ndofs * vs,
@@ -270,7 +270,7 @@ void FiniteElement::tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
     for (int j = 0; j < vs; ++j)
     {
       dresult.block(0, ndofs * j, x.rows(), ndofs)
-          = basis[p].matrix()
+          = basis.matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
     }
   }

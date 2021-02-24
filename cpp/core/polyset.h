@@ -42,8 +42,8 @@ namespace polyset
 /// all x values, followed by all y-values (and then z, if any). The
 /// second index is the point, and the third index is the basis function
 /// index.
-std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int degree, int nd,
-                                      const Eigen::ArrayXXd& x);
+Eigen::ArrayXXd tabulate(cell::type celltype, int degree, int nd,
+                         const Eigen::ArrayXXd& x);
 
 /// Dimension of a space
 /// @param[in] cell The cell type

@@ -41,7 +41,7 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
     ++c;
   }
 
-  Eigen::MatrixXd dual = polyset::tabulate(celltype, 1, 0, pts)[0];
+  Eigen::MatrixXd dual = polyset::tabulate(celltype, 1, 0, pts);
   int perm_count = tdim == 2 ? 3 : 14;
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));

@@ -91,8 +91,7 @@ create_regge_interpolation(cell::type celltype, int degree)
       }
 
       Eigen::MatrixXd basis = polyset::tabulate(
-          celltype, degree, 0,
-          points.block(point_n, 0, lattice.rows(), tdim))[0];
+          celltype, degree, 0, points.block(point_n, 0, lattice.rows(), tdim));
 
       // Store up outer(t, t) for all tangents
       std::vector<int>& vert_ids = topology[dim][i];

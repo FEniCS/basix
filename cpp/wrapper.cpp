@@ -151,23 +151,30 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "create_new_element",
       [](element::family family_type, cell::type celltype, int degree,
-         std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
+         std::vector<int>& value_shape,
+         const Eigen::ArrayXXd interpolation_points,
+         const Eigen::MatrixXd& interpolation_matrix,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const std::vector<Eigen::MatrixXd>& base_permutations,
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
-        return FiniteElement(
-            family_type, celltype, degree, value_shape,
-            compute_expansion_coefficients_legacy(coeffs, dualmat, true),
-            entity_dofs, base_permutations, {}, {}, mapping_type);
+        return FiniteElement(family_type, celltype, degree, value_shape,
+                             compute_expansion_coefficients(
+                                 celltype, coeffs, interpolation_matrix,
+                                 interpolation_points, degree, true),
+                             entity_dofs, base_permutations,
+                             interpolation_points, interpolation_matrix,
+                             mapping_type);
       },
       "Create an element from basic data");
 
   m.def(
       "create_new_element",
       [](std::string family_name, std::string cell_name, int degree,
-         std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
+         std::vector<int>& value_shape,
+         const Eigen::ArrayXXd interpolation_points,
+         const Eigen::MatrixXd& interpolation_matrix,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const std::vector<Eigen::MatrixXd>& base_permutations,
@@ -176,8 +183,11 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return FiniteElement(
             element::str_to_type(family_name), cell::str_to_type(cell_name),
             degree, value_shape,
-            compute_expansion_coefficients_legacy(coeffs, dualmat, true),
-            entity_dofs, base_permutations, {}, {}, mapping_type);
+            compute_expansion_coefficients(cell::str_to_type(cell_name), coeffs,
+                                           interpolation_matrix,
+                                           interpolation_points, degree, true),
+            entity_dofs, base_permutations, interpolation_points,
+            interpolation_matrix, mapping_type);
       },
       "Create an element from basic data");
 

@@ -55,7 +55,7 @@ create_regge_interpolation(cell::type celltype, int degree)
   const int npoints = tdim == 2
                           ? 3 * (degree + 1) + degree * (degree + 1) / 2
                           : 6 * (degree + 1) + 4 * degree * (degree + 1) / 2
-                                + degree * (degree + 1) * (degree + 2) / 6;
+                                + degree * (degree + 1) * (degree - 1) / 6;
 
   Eigen::ArrayXXd points(npoints, tdim);
   Eigen::ArrayXXd matrix(ndofs, npoints * tdim * tdim);

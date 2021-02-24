@@ -10,12 +10,12 @@ def test_create_simple():
     celltype = basix.CellType.triangle
     degree = 1
     points = numpy.array([[0, 0], [1, 0], [0, 1]], dtype=numpy.float64)
+    matrix = numpy.identity(points.shape[0])
 
     # Create element from space and dual
-    dualmat = basix.tabulate_polynomial_set(celltype, degree, 0, points)[0]
     coeff_space = numpy.identity(points.shape[0])
 
-    fe = basix.create_new_element("Custom element", "triangle", degree, [1], dualmat, coeff_space,
+    fe = basix.create_new_element("Custom element", "triangle", degree, [1], points, matrix, coeff_space,
                                   [[1, 1, 1], [0, 0, 0], [0]], [numpy.identity(3) for i in range(3)],
                                   basix.MappingType.identity)
 
@@ -32,11 +32,11 @@ def test_create_custom():
     celltype = basix.CellType.triangle
     degree = 2
     points = numpy.array([[0, .5], [0.5, 0], [0.5, 0.5], [0.25, 0.25], [0.25, 0.5], [0.5, 0.25]], dtype=numpy.float64)
+    matrix = numpy.identity(points.shape[0])
 
     # Create element from space and dual
-    dualmat = basix.tabulate_polynomial_set(celltype, degree, 0, points)[0]
     coeff_space = numpy.identity(points.shape[0])
-    fe = basix.create_new_element("Custom element", "triangle", degree, [1], dualmat, coeff_space,
+    fe = basix.create_new_element("Custom element", "triangle", degree, [1], points, matrix, coeff_space,
                                   [[0, 0, 0], [1, 1, 1], [3]],
                                   [numpy.identity(5) for i in range(3)],
                                   basix.MappingType.identity)
@@ -53,12 +53,11 @@ def test_create_invalid():
     # Try to create an invalid element of order 2
     points = numpy.array([[0, 0.25], [0, 0.75], [0.25, 0.75], [0.75, 0.25],
                           [0.25, 0.0], [0.75, 0.0]], dtype=numpy.float64)
+    matrix = numpy.identity(points.shape[0])
 
     # Create element from space and dual
-    dualmat = basix.tabulate_polynomial_set(celltype, degree, 0, points)[0]
-    print(dualmat)
     coeff_space = numpy.identity(points.shape[0])
     with pytest.raises(RuntimeError):
-        basix.create_new_element("Custom element", "triangle", degree, [1], dualmat, coeff_space,
+        basix.create_new_element("Custom element", "triangle", degree, [1], points, matrix, coeff_space,
                                  [[0, 0, 0], [2, 2, 2], [0]],
                                  [numpy.identity(6) for i in range(3)], basix.MappingType.identity)

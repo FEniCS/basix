@@ -58,6 +58,4 @@ target_link_libraries(_basixcpp PRIVATE pybind11::module basix)
 set_target_properties(basix PROPERTIES PUBLIC_HEADER "cpp/basix.h")
 
 install(TARGETS _basixcpp DESTINATION .)
-install(TARGETS basix
-		LIBRARY DESTINATION lib
-		PUBLIC_HEADER DESTINATION include)
+install(TARGETS basix LIBRARY DESTINATION lib PUBLIC_HEADER DESTINATION include)

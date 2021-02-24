@@ -122,7 +122,7 @@ Eigen::ArrayXXd tabulate_polyset_triangle_derivs(int n, int nderiv,
 
         if (ky > 0)
         {
-          result.col(idx(p, 0))
+          result.col(base_col + idx(p, 0))
               += ky * a * result.col(idx(kx, ky - 1) * m + idx(p - 1, 0));
         }
 

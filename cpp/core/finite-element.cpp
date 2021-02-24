@@ -262,7 +262,10 @@ void FiniteElement::tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
   const int vs = value_size();
 
   // FIXME: higher derivs
-  for (std::size_t p = 0; p < 1; ++p)
+  assert(basis.cols() % psize == 0);
+  int nder = basis.cols() / psize;
+
+  for (int p = 0; p < nder; ++p)
   {
     // Map block for current derivative
     Eigen::Map<Eigen::ArrayXXd> dresult(basis_data + p * x.rows() * ndofs * vs,
@@ -270,7 +273,7 @@ void FiniteElement::tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
     for (int j = 0; j < vs; ++j)
     {
       dresult.block(0, ndofs * j, x.rows(), ndofs)
-          = basis.matrix()
+          = basis.block(0, psize * p, x.rows(), psize).matrix()
             * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
     }
   }

@@ -25,15 +25,16 @@ def test_symbolic_interval():
     cell = basix.CellType.interval
     pts0 = basix.create_lattice(cell, 10, basix.LatticeType.equispaced, True)
     wtab = basix.tabulate_polynomial_set(cell, n, nderiv, pts0)
+    psize = wtab.shape[1]//(nderiv + 1)
 
     wd = [w[i] for i in range(n + 1)]
     for k in range(nderiv + 1):
-        wsym = np.zeros_like(wtab[k])
+        wsym = np.zeros((pts0.shape[0], psize))
         for i in range(n + 1):
             for j, p in enumerate(pts0):
                 wsym[j, i] = wd[i].subs(x, p[0])
             wd[i] = sympy.diff(wd[i], x)
-        assert(np.isclose(wtab[k], wsym).all())
+        assert(np.isclose(wtab[:, k*psize:(k+1)*psize], wsym).all())
 
 
 def test_symbolic_quad():

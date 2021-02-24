@@ -310,38 +310,6 @@ public:
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @param reference_data Memory location to fill
-  //   void map_pull_back_to_memory_real(
-  //       const Eigen::ArrayXXd& physical_data,
-  //       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                          Eigen::RowMajor>& J,
-  //       const Eigen::ArrayXd& detJ,
-  //       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                          Eigen::RowMajor>& K,
-  //       double* reference_data) const;
-
-  //   /// Map function values from a physical cell to the reference
-  //   /// @param physical_data The function values on the cell
-  //   /// @param J The Jacobian of the mapping
-  //   /// @param detJ The determinant of the Jacobian of the mapping
-  //   /// @param K The inverse of the Jacobian of the mapping
-  //   /// @param reference_data Memory location to fill
-  //   void map_pull_back_to_memory_complex(
-  //       const Eigen::Array<std::complex<double>, Eigen::Dynamic,
-  //       Eigen::Dynamic>&
-  //           physical_data,
-  //       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                          Eigen::RowMajor>& J,
-  //       const Eigen::ArrayXd& detJ,
-  //       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                          Eigen::RowMajor>& K,
-  //       std::complex<double>* reference_data) const;
-
-  /// Map function values from a physical cell to the reference
-  /// @param physical_data The function values on the cell
-  /// @param J The Jacobian of the mapping
-  /// @param detJ The determinant of the Jacobian of the mapping
-  /// @param K The inverse of the Jacobian of the mapping
-  /// @param reference_data Memory location to fill
   template <typename T>
   void map_pull_back_m(
       const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>& physical_data,
@@ -447,10 +415,11 @@ public:
   int num_points() const;
 
   /// Return a matrix of weights interpolation
-  /// To interpolate a function in this finite element, the functions should be
-  /// evaluated at each point given by FiniteElement::points(). These function
-  /// values should then be multiplied by the weight matrix to give the
-  /// coefficients of the interpolated function.
+  /// To interpolate a function in this finite element, the functions
+  /// should be evaluated at each point given by
+  /// FiniteElement::points(). These function values should then be
+  /// multiplied by the weight matrix to give the coefficients of the
+  /// interpolated function.
   const Eigen::MatrixXd& interpolation_matrix() const;
 
 private:
@@ -472,16 +441,18 @@ private:
   mapping::type _mapping_type;
 
   // Shape function coefficient of expansion sets on cell. If shape
-  // function is given by @f$\psi_i = \sum_{k} \phi_{k} \alpha^{i}_{k}@f$,
-  // then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e., _coeffs.row(i) are the
-  // expansion coefficients for shape function i (@f$\psi_{i}@f$).
+  // function is given by @f$\psi_i = \sum_{k} \phi_{k}
+  // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e.,
+  // _coeffs.row(i) are the expansion coefficients for shape function i
+  // (@f$\psi_{i}@f$).
   Eigen::MatrixXd _coeffs;
 
   // Number of dofs associated each subentity
+  //
   // The dofs of an element are associated with entities of different
-  // topological dimension (vertices, edges, faces, cells). The dofs are listed
-  // in this order, with vertex dofs first. Each entry is the dof count on the
-  // associated entity, as listed by cell::topology.
+  // topological dimension (vertices, edges, faces, cells). The dofs are
+  // listed in this order, with vertex dofs first. Each entry is the dof
+  // count on the associated entity, as listed by cell::topology.
   std::vector<std::vector<int>> _entity_dofs;
 
   // Base permutations
@@ -497,7 +468,8 @@ private:
   /// The interpolation weights and points
   Eigen::MatrixXd _interpolation_matrix;
 
-  // The mapping that maps values on the reference to values on a physical cell
+  // The mapping that maps values on the reference to values on a
+  // physical cell
   std::function<Eigen::ArrayXd(const Eigen::ArrayXd&, const Eigen::MatrixXd&,
                                const double, const Eigen::MatrixXd&)>
       _map_push_forward;
@@ -616,6 +588,6 @@ FiniteElement create_element(element::family family, cell::type cell,
 
 /// Return the version number of basix across projects
 /// @return version string
-const std::string& version();
+std::string version();
 
 } // namespace basix

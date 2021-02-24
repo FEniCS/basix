@@ -19,28 +19,6 @@
 
 using namespace basix;
 
-// namespace
-// {
-int FiniteElement::compute_value_size(mapping::type mapping_type, int dim)
-{
-  switch (mapping_type)
-  {
-  case mapping::type::identity:
-    return 1;
-  case mapping::type::covariantPiola:
-    return dim;
-  case mapping::type::contravariantPiola:
-    return dim;
-  case mapping::type::doubleCovariantPiola:
-    return dim * dim;
-  case mapping::type::doubleContravariantPiola:
-    return dim * dim;
-  default:
-    throw std::runtime_error("Mapping not yet implemented");
-  }
-}
-// } // namespace
-
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
                                            int degree)
@@ -371,9 +349,28 @@ FiniteElement::map_pull_back(
   return reference_data;
 }
 //-----------------------------------------------------------------------------
-const std::string& basix::version()
+std::string basix::version()
 {
   static const std::string version_str = str(BASIX_VERSION);
   return version_str;
+}
+//-----------------------------------------------------------------------------
+int FiniteElement::compute_value_size(mapping::type mapping_type, int dim)
+{
+  switch (mapping_type)
+  {
+  case mapping::type::identity:
+    return 1;
+  case mapping::type::covariantPiola:
+    return dim;
+  case mapping::type::contravariantPiola:
+    return dim;
+  case mapping::type::doubleCovariantPiola:
+    return dim * dim;
+  case mapping::type::doubleContravariantPiola:
+    return dim * dim;
+  default:
+    throw std::runtime_error("Mapping not yet implemented");
+  }
 }
 //-----------------------------------------------------------------------------

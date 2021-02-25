@@ -5,7 +5,6 @@
 #pragma once
 
 #include "cell.h"
-#include "span.hpp"
 #include <Eigen/Dense>
 #include <utility>
 
@@ -27,7 +26,7 @@ namespace quadrature
 /// @param x Points at which to evaluate
 /// @returns Array of polynomial derivative values (rows) at points (columns)
 Eigen::ArrayXXd compute_jacobi_deriv(double a, int n, int nderiv,
-                                     const tcb::span<const double>& x);
+                                     const Eigen::ArrayXd& x);
 
 // Computes Gauss-Jacobi quadrature points
 /// Finds the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's method.

@@ -424,12 +424,11 @@ make_default_triangle_quadrature(int m)
 }; // namespace
 
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd
-quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
-                                 const tcb::span<const double>& x)
+Eigen::ArrayXXd quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
+                                                 const Eigen::ArrayXd& x)
 {
   std::vector<Eigen::ArrayXXd> J;
-  Eigen::ArrayXXd Jd(n + 1, x.size());
+  Eigen::ArrayXXd Jd(n + 1, x.rows());
   for (int i = 0; i < nderiv + 1; ++i)
   {
     if (i == 0)
@@ -440,16 +439,9 @@ quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
     if (n > 0)
     {
       if (i == 0)
-      {
-        std::transform(x.begin(), x.end(), Jd.row(1).data(),
-                       [a](double x) { return (x * (a + 2.0) + a) * 0.5; });
-        // Jd.row(1) = (x.transpose() * (a + 2.0) + a) * 0.5;
-      }
+        Jd.row(1) = (x.transpose() * (a + 2.0) + a) * 0.5;
       else if (i == 1)
-      {
-        std::fill_n(Jd.row(1).data(), Jd.cols(), a * 0.5 + 1);
-        // Jd.row(1) = a * 0.5 + 1;
-      }
+        Jd.row(1) = a * 0.5 + 1;
       else
         Jd.row(1).setZero();
     }
@@ -460,11 +452,8 @@ quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
       const double a2 = (2 * k + a - 1) * (a * a) / a1;
       const double a3 = (2 * k + a - 1) * (2 * k + a) / (2 * k * (k + a));
       const double a4 = 2 * (k + a - 1) * (k - 1) * (2 * k + a) / a1;
-
-      for (std::size_t p = 0; p < x.size(); ++p)
-        Jd(k, p) = Jd(k - 1, p) * (x[p] * a3 + a2) - Jd(k - 2, p) * a4;
-      // Jd.row(k)
-      //     = Jd.row(k - 1) * (x.transpose() * a3 + a2) - Jd.row(k - 2) * a4;
+      Jd.row(k)
+          = Jd.row(k - 1) * (x.transpose() * a3 + a2) - Jd.row(k - 2) * a4;
       if (i > 0)
         Jd.row(k) += i * a3 * J[i - 1].row(k - 1);
     }
@@ -472,7 +461,7 @@ quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
     J.push_back(Jd);
   }
 
-  Eigen::ArrayXXd result(nderiv + 1, x.size());
+  Eigen::ArrayXXd result(nderiv + 1, x.rows());
   for (int i = 0; i < nderiv + 1; ++i)
     result.row(i) = J[i].row(n);
 

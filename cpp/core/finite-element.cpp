@@ -263,48 +263,48 @@ int FiniteElement::num_points() const { return _points.rows(); }
 //-----------------------------------------------------------------------------
 const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-FiniteElement::map_push_forward(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        reference_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const Eigen::ArrayXd& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
-  const int reference_value_size = value_size();
-  const int nresults = reference_data.cols() / reference_value_size;
-  const int npoints = reference_data.rows();
+// Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+// FiniteElement::map_push_forward(
+//     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+//         reference_data,
+//     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+//         J,
+//     const Eigen::ArrayXd& detJ,
+//     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+//         K) const
+// {
+//   const int reference_dim = cell::topological_dimension(_cell_type);
+//   const int physical_dim = J.cols() / reference_dim;
+//   const int physical_value_size
+//       = compute_value_size(_mapping_type, physical_dim);
+//   const int reference_value_size = value_size();
+//   const int nresults = reference_data.cols() / reference_value_size;
+//   const int npoints = reference_data.rows();
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      physical_data(npoints, physical_value_size * nresults);
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>>
-        reference_block(reference_data.row(pt).data(), reference_value_size,
-                        nresults);
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        physical_block(physical_data.row(pt).data(), physical_value_size,
-                       nresults);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_J(J.row(pt).data(), physical_dim, reference_dim);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < reference_block.cols(); ++i)
-      physical_block.col(i) = _map_push_forward(reference_block.col(i),
-                                                current_J, detJ[pt], current_K);
-  }
-  return physical_data;
-}
+//   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
+//       physical_data(npoints, physical_value_size * nresults);
+//   for (int pt = 0; pt < npoints; ++pt)
+//   {
+//     Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+//                                   Eigen::RowMajor>>
+//         reference_block(reference_data.row(pt).data(), reference_value_size,
+//                         nresults);
+//     Eigen::Map<
+//         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+//         physical_block(physical_data.row(pt).data(), physical_value_size,
+//                        nresults);
+//     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+//                                    Eigen::RowMajor>>
+//         current_J(J.row(pt).data(), physical_dim, reference_dim);
+//     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+//                                    Eigen::RowMajor>>
+//         current_K(K.row(pt).data(), reference_dim, physical_dim);
+//     for (int i = 0; i < reference_block.cols(); ++i)
+//       physical_block.col(i) = _map_push_forward(reference_block.col(i),
+//                                                 current_J, detJ[pt], current_K);
+//   }
+//   return physical_data;
+// }
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 FiniteElement::map_pull_back(

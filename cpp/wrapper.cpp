@@ -193,7 +193,33 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
-      .def("map_push_forward", &FiniteElement::map_push_forward, mapdoc.c_str())
+      .def(
+          "map_push_forward",
+          [](const FiniteElement& self,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& reference_data,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& J,
+             const Eigen::ArrayXd& detJ,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& K) {
+            const int reference_dim
+                = cell::topological_dimension(self.cell_type());
+            const int physical_dim = J.cols() / reference_dim;
+            const int physical_value_size = FiniteElement::compute_value_size(
+                self.map_type(), physical_dim);
+
+            const int npoints = reference_data.rows();
+            const int reference_value_size = self.value_size();
+            const int nresults = reference_data.cols() / reference_value_size;
+            Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>
+                physical_data(npoints, physical_value_size * nresults);
+            self.map_push_forward_m(reference_data, J, detJ, K,
+                                    physical_data.data());
+            return physical_data;
+          },
+          mapdoc.c_str())
       .def("map_pull_back", &FiniteElement::map_pull_back, invmapdoc.c_str())
       .def_property_readonly("base_permutations",
                              &FiniteElement::base_permutations)

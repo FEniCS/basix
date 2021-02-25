@@ -323,8 +323,9 @@ FiniteElement::map_push_forward(
         current_K(K.row(pt).data(), reference_dim, physical_dim);
     for (int i = 0; i < reference_block.cols(); ++i)
     {
-      std::vector<double> u = _map_push_forward(reference_block.col(i),
-                                                current_J, detJ[pt], current_K);
+      Eigen::ArrayXd col = reference_block.col(i);
+      std::vector<double> u
+          = _map_push_forward(col, current_J, detJ[pt], current_K);
       for (std::size_t j = 0; j < u.size(); ++j)
         physical_block(j, i) = u[j];
     }
@@ -369,8 +370,9 @@ void FiniteElement::map_push_forward_to_memory_real(
         current_K(K.row(pt).data(), reference_dim, physical_dim);
     for (int i = 0; i < reference_block.cols(); ++i)
     {
-      std::vector<double> u = _map_push_forward(reference_block.col(i),
-                                                current_J, detJ[pt], current_K);
+      Eigen::ArrayXd col = reference_block.col(i);
+      std::vector<double> u
+          = _map_push_forward(col, current_J, detJ[pt], current_K);
       for (std::size_t j = 0; j < u.size(); ++j)
         physical_block(j, i) = u[j];
     }
@@ -463,8 +465,9 @@ FiniteElement::map_pull_back(
         current_K(K.row(pt).data(), reference_dim, physical_dim);
     for (int i = 0; i < physical_block.cols(); ++i)
     {
-      std::vector<double> U = _map_push_forward(
-          physical_block.col(i), current_K, 1 / detJ[pt], current_J);
+      Eigen::ArrayXd col = physical_block.col(i);
+      std::vector<double> U
+          = _map_push_forward(col, current_K, 1 / detJ[pt], current_J);
       for (std::size_t j = 0; j < U.size(); ++j)
         reference_block(j, i) = U[j];
     }

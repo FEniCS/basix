@@ -218,8 +218,19 @@ Each element has a `tabulate` function which returns the basis functions and a n
       },
       "Create a FiniteElement of a given family, celltype and degree");
 
-  m.def("tabulate_polynomial_set", &polyset::tabulate,
-        "Tabulate orthonormal polynomial expansion set");
+  m.def(
+      "tabulate_polynomial_set",
+      [](cell::type cell_type, int d, int nderiv, Eigen::ArrayXXd x) {
+        Eigen::ArrayXXd basis = polyset::tabulate(cell_type, d, nderiv, x);
+        int dim = polyset::dim(cell_type, d);
+        int nd = basis.cols() / dim;
+        std::vector<Eigen::ArrayXXd> basis_derivs(nd);
+        for (int i = 0; i < nd; ++i)
+          basis_derivs[i] = Eigen::Map<Eigen::ArrayXXd>(
+              basis.data() + basis.rows() * dim * i, basis.rows(), dim);
+        return basis_derivs;
+      },
+      "Tabulate orthonormal polynomial expansion set");
 
   m.def("compute_jacobi_deriv", &quadrature::compute_jacobi_deriv,
         "Compute jacobi polynomial and derivatives at points");

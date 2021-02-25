@@ -414,7 +414,7 @@ Eigen::ArrayXXd tabulate_polyset_pyramid_derivs(int n, int nderiv,
 
   const int m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
   const int md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
-  Eigen::ArrayXXd dresult(x.rows(), md * m);
+  Eigen::ArrayXXd result(x.rows(), md * m);
 
   // Indexing for pyramidal basis functions
   auto pyr_idx = [&n](int p, int q, int r) -> int {
@@ -434,17 +434,14 @@ Eigen::ArrayXXd tabulate_polyset_pyramid_derivs(int n, int nderiv,
       {
         const int ky = j - kx;
         const int kz = k - j;
-
-        Eigen::Map<Eigen::ArrayXXd> result(
-            dresult.data() + idx(kx, ky, kz) * pts.rows() * m, pts.rows(), m);
-        result.setZero();
+        const int base_col = idx(kx, ky, kz) * m;
 
         const int pyramidal_index = pyr_idx(0, 0, 0);
         assert(pyramidal_index < m);
         if (kx == 0 and ky == 0 and kz == 0)
-          result.col(pyramidal_index).fill(1.0);
+          result.col(base_col + pyramidal_index).fill(1.0);
         else
-          result.col(pyramidal_index).setZero();
+          result.col(base_col + pyramidal_index).setZero();
 
         // r = 0
         for (int p = 0; p < n + 1; ++p)
@@ -453,48 +450,48 @@ Eigen::ArrayXXd tabulate_polyset_pyramid_derivs(int n, int nderiv,
           {
             const double a
                 = static_cast<double>(p - 1) / static_cast<double>(p);
-            result.col(pyr_idx(p, 0, 0)) = (0.5 + x.col(0) + x.col(2) * 0.5)
-                                           * result.col(pyr_idx(p - 1, 0, 0))
-                                           * (a + 1.0);
+            result.col(base_col + pyr_idx(p, 0, 0))
+                = (0.5 + x.col(0) + x.col(2) * 0.5)
+                  * result.col(base_col + pyr_idx(p - 1, 0, 0)) * (a + 1.0);
             if (kx > 0)
             {
-              result.col(pyr_idx(p, 0, 0))
+              result.col(base_col + pyr_idx(p, 0, 0))
                   += 2.0 * kx
-                     * dresult.col(idx(kx - 1, ky, kz) * m
-                                   + pyr_idx(p - 1, 0, 0))
+                     * result.col(idx(kx - 1, ky, kz) * m
+                                  + pyr_idx(p - 1, 0, 0))
                      * (a + 1.0);
             }
 
             if (kz > 0)
             {
-              result.col(pyr_idx(p, 0, 0))
+              result.col(base_col + pyr_idx(p, 0, 0))
                   += kz
-                     * dresult.col(idx(kx, ky, kz - 1) * m
-                                   + pyr_idx(p - 1, 0, 0))
+                     * result.col(idx(kx, ky, kz - 1) * m
+                                  + pyr_idx(p - 1, 0, 0))
                      * (a + 1.0);
             }
 
             if (p > 1)
             {
-              result.col(pyr_idx(p, 0, 0))
-                  -= f2 * result.col(pyr_idx(p - 2, 0, 0)) * a;
+              result.col(base_col + pyr_idx(p, 0, 0))
+                  -= f2 * result.col(base_col + pyr_idx(p - 2, 0, 0)) * a;
 
               if (kz > 0)
               {
-                result.col(pyr_idx(p, 0, 0))
+                result.col(base_col + pyr_idx(p, 0, 0))
                     += kz * (1.0 - x.col(2))
-                       * dresult.col(idx(kx, ky, kz - 1) * m
-                                     + pyr_idx(p - 2, 0, 0))
+                       * result.col(idx(kx, ky, kz - 1) * m
+                                    + pyr_idx(p - 2, 0, 0))
                        * a;
               }
 
               if (kz > 1)
               {
                 // quadratic term in z
-                result.col(pyr_idx(p, 0, 0))
+                result.col(base_col + pyr_idx(p, 0, 0))
                     -= kz * (kz - 1)
-                       * dresult.col(idx(kx, ky, kz - 2) * m
-                                     + pyr_idx(p - 2, 0, 0))
+                       * result.col(idx(kx, ky, kz - 2) * m
+                                    + pyr_idx(p - 2, 0, 0))
                        * a;
               }
             }
@@ -504,47 +501,47 @@ Eigen::ArrayXXd tabulate_polyset_pyramid_derivs(int n, int nderiv,
           {
             const double a
                 = static_cast<double>(q - 1) / static_cast<double>(q);
-            result.col(pyr_idx(p, q, 0)) = (0.5 + x.col(1) + x.col(2) * 0.5)
-                                           * result.col(pyr_idx(p, q - 1, 0))
-                                           * (a + 1.0);
+            result.col(base_col + pyr_idx(p, q, 0))
+                = (0.5 + x.col(1) + x.col(2) * 0.5)
+                  * result.col(base_col + pyr_idx(p, q - 1, 0)) * (a + 1.0);
             if (ky > 0)
             {
-              result.col(pyr_idx(p, q, 0))
+              result.col(base_col + pyr_idx(p, q, 0))
                   += 2.0 * ky
-                     * dresult.col(idx(kx, ky - 1, kz) * m
-                                   + pyr_idx(p, q - 1, 0))
+                     * result.col(idx(kx, ky - 1, kz) * m
+                                  + pyr_idx(p, q - 1, 0))
                      * (a + 1.0);
             }
 
             if (kz > 0)
             {
-              result.col(pyr_idx(p, q, 0))
+              result.col(base_col + pyr_idx(p, q, 0))
                   += kz
-                     * dresult.col(idx(kx, ky, kz - 1) * m
-                                   + pyr_idx(p, q - 1, 0))
+                     * result.col(idx(kx, ky, kz - 1) * m
+                                  + pyr_idx(p, q - 1, 0))
                      * (a + 1.0);
             }
 
             if (q > 1)
             {
-              result.col(pyr_idx(p, q, 0))
-                  -= f2 * result.col(pyr_idx(p, q - 2, 0)) * a;
+              result.col(base_col + pyr_idx(p, q, 0))
+                  -= f2 * result.col(base_col + pyr_idx(p, q - 2, 0)) * a;
 
               if (kz > 0)
               {
-                result.col(pyr_idx(p, q, 0))
+                result.col(base_col + pyr_idx(p, q, 0))
                     += kz * (1.0 - x.col(2))
-                       * dresult.col(idx(kx, ky, kz - 1) * m
-                                     + pyr_idx(p, q - 2, 0))
+                       * result.col(idx(kx, ky, kz - 1) * m
+                                    + pyr_idx(p, q - 2, 0))
                        * a;
               }
 
               if (kz > 1)
               {
-                result.col(pyr_idx(p, q, 0))
+                result.col(base_col + pyr_idx(p, q, 0))
                     -= kz * (kz - 1)
-                       * dresult.col(idx(kx, ky, kz - 2) * m
-                                     + pyr_idx(p, q - 2, 0))
+                       * result.col(idx(kx, ky, kz - 2) * m
+                                    + pyr_idx(p, q - 2, 0))
                        * a;
               }
             }
@@ -556,14 +553,14 @@ Eigen::ArrayXXd tabulate_polyset_pyramid_derivs(int n, int nderiv,
         {
           for (int q = 0; q < n; ++q)
           {
-            result.col(pyr_idx(p, q, 1))
-                = result.col(pyr_idx(p, q, 0))
+            result.col(base_col + pyr_idx(p, q, 1))
+                = result.col(base_col + pyr_idx(p, q, 0))
                   * ((1.0 + p + q) + x.col(2) * (2.0 + p + q));
             if (kz > 0)
             {
-              result.col(pyr_idx(p, q, 1))
+              result.col(base_col + pyr_idx(p, q, 1))
                   += 2 * kz
-                     * dresult.col(idx(kx, ky, kz - 1) * m + pyr_idx(p, q, 0))
+                     * result.col(idx(kx, ky, kz - 1) * m + pyr_idx(p, q, 0))
                      * (2.0 + p + q);
             }
           }
@@ -576,15 +573,15 @@ Eigen::ArrayXXd tabulate_polyset_pyramid_derivs(int n, int nderiv,
             for (int q = 0; q < n - r; ++q)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
-              result.col(pyr_idx(p, q, r + 1))
-                  = result.col(pyr_idx(p, q, r)) * (x.col(2) * ar + br)
-                    - result.col(pyr_idx(p, q, r - 1)) * cr;
+              result.col(base_col + pyr_idx(p, q, r + 1))
+                  = result.col(base_col + pyr_idx(p, q, r))
+                        * (x.col(2) * ar + br)
+                    - result.col(base_col + pyr_idx(p, q, r - 1)) * cr;
               if (kz > 0)
               {
-                result.col(pyr_idx(p, q, r + 1))
+                result.col(base_col + pyr_idx(p, q, r + 1))
                     += ar * 2 * kz
-                       * dresult.col(idx(kx, ky, kz - 1) * m
-                                     + pyr_idx(p, q, r));
+                       * result.col(idx(kx, ky, kz - 1) * m + pyr_idx(p, q, r));
               }
             }
           }
@@ -598,18 +595,17 @@ Eigen::ArrayXXd tabulate_polyset_pyramid_derivs(int n, int nderiv,
     for (int r = 0; r < n + 1; ++r)
     {
       for (int p = 0; p < n - r + 1; ++p)
-
       {
         for (int q = 0; q < n - r + 1; ++q)
         {
-          dresult.col(i * md + pyr_idx(p, q, r))
+          result.col(i * md + pyr_idx(p, q, r))
               *= std::sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
         }
       }
     }
   }
 
-  return dresult;
+  return result;
 }
 //-----------------------------------------------------------------------------
 Eigen::ArrayXXd tabulate_polyset_quad_derivs(int n, int nderiv,
@@ -629,8 +625,8 @@ Eigen::ArrayXXd tabulate_polyset_quad_derivs(int n, int nderiv,
     {
       const int base_col = idx(kx, ky) * m;
       int c = 0;
-      for (int i = 0; i < px.cols(); ++i)
-        for (int j = 0; j < py.cols(); ++j)
+      for (int i = 0; i < (n + 1); ++i)
+        for (int j = 0; j < (n + 1); ++j)
           result.col(base_col + c++)
               = px.col(kx * (n + 1) + i) * py.col(ky * (n + 1) + j);
     }
@@ -659,9 +655,9 @@ Eigen::ArrayXXd tabulate_polyset_hex_derivs(int n, int nderiv,
       {
         const int base_col = idx(kx, ky, kz) * m;
         int c = 0;
-        for (int i = 0; i < px.cols(); ++i)
-          for (int j = 0; j < py.cols(); ++j)
-            for (int k = 0; k < pz.cols(); ++k)
+        for (int i = 0; i < (n + 1); ++i)
+          for (int j = 0; j < (n + 1); ++j)
+            for (int k = 0; k < (n + 1); ++k)
               result.col(base_col + c++) = px.col(kx * (n + 1) + i)
                                            * py.col(ky * (n + 1) + j)
                                            * pz.col(kz * (n + 1) + k);
@@ -692,10 +688,11 @@ Eigen::ArrayXXd tabulate_polyset_prism_derivs(int n, int nderiv,
       {
         const int base_col = idx(kx, ky, kz) * m;
         int c = 0;
-        for (int i = 0; i < pxy.cols(); ++i)
-          for (int k = 0; k < pz.cols(); ++k)
+        for (int i = 0; i < (n + 1) * (n + 2) / 2; ++i)
+          for (int k = 0; k < (n + 1); ++k)
             result.col(base_col + c++)
-                = pxy.col(idx(kx, ky) * m + i) * pz.col(kz * (n + 1) + k);
+                = pxy.col(idx(kx, ky) * (n + 1) * (n + 2) / 2 + i)
+                  * pz.col(kz * (n + 1) + k);
       }
     }
   }

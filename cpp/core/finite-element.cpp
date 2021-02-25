@@ -506,7 +506,7 @@ void FiniteElement::map_pull_back_to_memory_real(
     {
       std::vector<double> U
           = _map_push_forward(physical_data.row(pt * nresults + i), current_K,
-                              1 / detJ[pt], current_K);
+                              1 / detJ[pt], current_J);
       for (std::size_t j = 0; j < U.size(); ++j)
         reference_array(pt * nresults + i, j) = U[j];
     }

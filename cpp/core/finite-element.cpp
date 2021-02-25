@@ -4,6 +4,7 @@
 
 #include "finite-element.h"
 #include "elements/brezzi-douglas-marini.h"
+#include "elements/bubble.h"
 #include "elements/crouzeix-raviart.h"
 #include "elements/lagrange.h"
 #include "elements/nce-rtc.h"
@@ -57,6 +58,8 @@ basix::FiniteElement basix::create_element(element::family family,
     return create_regge(cell, degree);
   else if (family == element::family::CR)
     return create_cr(cell, degree);
+  else if (family == element::family::Bubble)
+    return create_bubble(cell, degree);
   else
     throw std::runtime_error("Family not found");
 }

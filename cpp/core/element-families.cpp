@@ -20,7 +20,8 @@ element::family element::str_to_type(std::string name)
          {"Nedelec 1st kind H(curl)", element::family::N1E},
          {"Nedelec 2nd kind H(curl)", element::family::N2E},
          {"Regge", element::family::Regge},
-         {"Crouzeix-Raviart", element::family::CR}};
+         {"Crouzeix-Raviart", element::family::CR},
+         {"Bubble", element::family::Bubble}};
 
   auto it = name_to_type.find(name);
   if (it == name_to_type.end())
@@ -40,7 +41,8 @@ const std::string& element::type_to_str(element::family type)
          {element::family::N1E, "Nedelec 1st kind H(curl)"},
          {element::family::N2E, "Nedelec 2nd kind H(curl)"},
          {element::family::Regge, "Regge"},
-         {element::family::CR, "Crouzeix-Raviart"}};
+         {element::family::CR, "Crouzeix-Raviart"},
+         {element::family::Bubble, "Bubble"}};
 
   auto it = name_to_type.find(type);
   if (it == name_to_type.end())

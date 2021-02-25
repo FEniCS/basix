@@ -257,27 +257,12 @@ public:
   /// @return The mapping
   const mapping::type mapping_type() const;
 
-  /// Map function values from the reference to a physical cell
-  /// @param reference_data The function values on the reference
-  /// @param J The Jacobian of the mapping
-  /// @param detJ The determinant of the Jacobian of the mapping
-  /// @param K The inverse of the Jacobian of the mapping
-  /// @return The function values on the cell
-  // Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  // map_push_forward(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                                     Eigen::RowMajor>& reference_data,
-  //                  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                                     Eigen::RowMajor>& J,
-  //                  const Eigen::ArrayXd& detJ,
-  //                  const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                                     Eigen::RowMajor>& K) const;
-
   /// Direct to memory push forward
-  /// @param reference_data The function values on the reference
-  /// @param J The Jacobian of the mapping
-  /// @param detJ The determinant of the Jacobian of the mapping
-  /// @param K The inverse of the Jacobian of the mapping
-  /// @param physical_data Memory location to fill
+  /// @param[in] reference_data The function values on the reference
+  /// @param[in] J The Jacobian of the mapping
+  /// @param[in] detJ The determinant of the Jacobian of the mapping
+  /// @param[in] K The inverse of the Jacobian of the mapping
+  /// @param[out] physical_data Memory location to fill
   template <typename T>
   void
   map_push_forward_m(const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic,
@@ -421,9 +406,6 @@ public:
   /// multiplied by the weight matrix to give the coefficients of the
   /// interpolated function.
   const Eigen::MatrixXd& interpolation_matrix() const;
-
-  /// @todo Document
-  mapping::type map_type() const { return _mapping_type; }
 
   /// @todo Use better name and document
   static int compute_value_size(mapping::type mapping_type, int dim);

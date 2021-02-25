@@ -207,7 +207,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
                 = cell::topological_dimension(self.cell_type());
             const int physical_dim = J.cols() / reference_dim;
             const int physical_value_size = FiniteElement::compute_value_size(
-                self.map_type(), physical_dim);
+                self.mapping_type(), physical_dim);
 
             const int npoints = reference_data.rows();
             const int reference_value_size = self.value_size();

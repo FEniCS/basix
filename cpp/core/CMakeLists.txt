@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 set(HEADERS_core
+  ${CMAKE_CURRENT_SOURCE_DIR}/array2d.h
   ${CMAKE_CURRENT_SOURCE_DIR}/lattice.h
   ${CMAKE_CURRENT_SOURCE_DIR}/polyset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dof-permutations.h
@@ -13,6 +14,7 @@ set(HEADERS_core
   ${CMAKE_CURRENT_SOURCE_DIR}/log.h
   ${CMAKE_CURRENT_SOURCE_DIR}/quadrature.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cell.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/span.hpp
   PARENT_SCOPE)
 
 set(CPP_core

@@ -7,6 +7,7 @@
 #include "core/finite-element.h"
 #include "core/mappings.h"
 #include "core/quadrature.h"
+#include "core/span.hpp"
 #include <algorithm>
 #include <iterator>
 #include <memory>
@@ -77,7 +78,7 @@ void basix::map_push_forward_real(int handle, double* physical_data,
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(J, npoints,
                                                       physical_dim * tdim),
-      Eigen::Map<const Eigen::ArrayXd>(detJ, npoints),
+      tcb::span(detJ, npoints),
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(K, npoints,
                                                       physical_dim * tdim),

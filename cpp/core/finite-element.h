@@ -10,6 +10,7 @@
 #include "cell.h"
 #include "element-families.h"
 #include "mappings.h"
+#include "span.hpp"
 #include <Eigen/Dense>
 #include <string>
 #include <vector>
@@ -268,7 +269,7 @@ public:
                                       Eigen::RowMajor>& reference_data,
                    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                       Eigen::RowMajor>& J,
-                   const Eigen::ArrayXd& detJ,
+                   const tcb::span<const double>& detJ,
                    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                       Eigen::RowMajor>& K) const;
 
@@ -283,7 +284,7 @@ public:
                          Eigen::RowMajor>& reference_data,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& J,
-      const Eigen::ArrayXd& detJ,
+      const tcb::span<const double>& detJ,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& K,
       double* physical_data) const;
@@ -299,7 +300,7 @@ public:
                          Eigen::RowMajor>& reference_data,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& J,
-      const Eigen::ArrayXd& detJ,
+      const tcb::span<const double>& detJ,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& K,
       std::complex<double>* physical_data) const;
@@ -315,7 +316,7 @@ public:
                                    Eigen::RowMajor>& physical_data,
                 const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>& J,
-                const Eigen::ArrayXd& detJ,
+                const tcb::span<const double>& detJ,
                 const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>& K) const;
 
@@ -329,7 +330,7 @@ public:
       const Eigen::ArrayXXd& physical_data,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& J,
-      const Eigen::ArrayXd& detJ,
+      const tcb::span<const double>& detJ,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& K,
       double* reference_data) const;
@@ -345,7 +346,7 @@ public:
           physical_data,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& J,
-      const Eigen::ArrayXd& detJ,
+      const tcb::span<const double>& detJ,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& K,
       std::complex<double>* reference_data) const;

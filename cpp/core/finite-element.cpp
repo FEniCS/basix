@@ -291,7 +291,7 @@ FiniteElement::map_push_forward(
         reference_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K) const
 {
@@ -333,7 +333,7 @@ void FiniteElement::map_push_forward_to_memory_real(
         reference_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K,
     double* physical_data) const
@@ -373,7 +373,7 @@ void FiniteElement::map_push_forward_to_memory_complex(
                        Eigen::RowMajor>& reference_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K,
     std::complex<double>* physical_data) const
@@ -418,7 +418,7 @@ FiniteElement::map_pull_back(
         physical_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K) const
 {
@@ -459,7 +459,7 @@ void FiniteElement::map_pull_back_to_memory_real(
     const Eigen::ArrayXXd& physical_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K,
     double* reference_data) const
@@ -496,7 +496,7 @@ void FiniteElement::map_pull_back_to_memory_complex(
         physical_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K,
     std::complex<double>* reference_data) const

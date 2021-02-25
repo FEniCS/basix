@@ -1,6 +1,6 @@
 // Copyright (C) 2021 Igor Baratta
 //
-// This file is part of DOLFINX (https://www.fenicsproject.org)
+// This file is part of Basix (https://www.fenicsproject.org)
 //
 // SPDX-License-Identifier:    LGPL-3.0-or-later
 
@@ -11,7 +11,7 @@
 #include <cassert>
 #include <vector>
 
-namespace dolfinx
+namespace basix
 {
 
 /// This class provides a dynamic 2-dimensional row-wise array data
@@ -159,4 +159,4 @@ public:
 private:
   std::vector<T, Allocator> _storage;
 };
-} // namespace dolfinx
+} // namespace basix

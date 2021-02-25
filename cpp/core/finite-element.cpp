@@ -508,7 +508,7 @@ void FiniteElement::map_pull_back_to_memory_real(
           = _map_push_forward(physical_data.row(pt * nresults + i), current_K,
                               1 / detJ[pt], current_K);
       for (std::size_t j = 0; j < U.size(); ++j)
-        reference_array.row(pt * nresults + i) = U[j];
+        reference_array(pt * nresults + i, j) = U[j];
     }
   }
 }
@@ -552,7 +552,7 @@ void FiniteElement::map_pull_back_to_memory_complex(
       std::vector<double> Ui
           = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_K);
       for (std::size_t j = 0; j < Ur.size(); ++j)
-        reference_array.row(pt * nresults + i) = std::complex(Ur[j], Ui[j]);
+        reference_array(pt * nresults + i, j) = std::complex(Ur[j], Ui[j]);
     }
   }
 }

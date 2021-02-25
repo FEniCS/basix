@@ -32,6 +32,11 @@ def parametrize_over_elements(order, reference=None):
     elementlist += [(c, "Regge", o)
                     for c in ["triangle", "tetrahedron"]
                     for o in range(1, order + 1)]
+    elementlist += [("interval", "Bubble", o) for o in range(2, order + 1)]
+    elementlist += [("triangle", "Bubble", o) for o in range(3, order + 1)]
+    elementlist += [("tetrahedron", "Bubble", o) for o in range(4, order + 1)]
+    elementlist += [("quadrilateral", "Bubble", o) for o in range(2, order + 1)]
+    elementlist += [("hexahedron", "Bubble", o) for o in range(2, order + 1)]
 
     if reference is None:
         return pytest.mark.parametrize("cell_name, element_name, order", elementlist)

@@ -464,7 +464,7 @@ FiniteElement::map_pull_back(
     for (int i = 0; i < physical_block.cols(); ++i)
     {
       std::vector<double> U = _map_push_forward(
-          physical_block.col(i), current_K, 1 / detJ[pt], current_K);
+          physical_block.col(i), current_K, 1 / detJ[pt], current_J);
       for (std::size_t j = 0; j < U.size(); ++j)
         reference_block(j, i) = U[j];
     }

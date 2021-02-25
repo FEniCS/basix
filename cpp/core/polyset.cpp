@@ -598,7 +598,7 @@ Eigen::ArrayXXd tabulate_polyset_pyramid_derivs(int n, int nderiv,
       {
         for (int q = 0; q < n - r + 1; ++q)
         {
-          result.col(i * md + pyr_idx(p, q, r))
+          result.col(i * m + pyr_idx(p, q, r))
               *= std::sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
         }
       }

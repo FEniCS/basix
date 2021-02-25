@@ -548,9 +548,9 @@ void FiniteElement::map_pull_back_to_memory_complex(
       Eigen::ArrayXd tmp_r = physical_data.row(pt * nresults + i).real();
       Eigen::ArrayXd tmp_c = physical_data.row(pt * nresults + i).imag();
       std::vector<double> Ur
-          = _map_push_forward(tmp_r, current_K, 1 / detJ[pt], current_K);
+          = _map_push_forward(tmp_r, current_K, 1 / detJ[pt], current_J);
       std::vector<double> Ui
-          = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_K);
+          = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_J);
       for (std::size_t j = 0; j < Ur.size(); ++j)
         reference_array(pt * nresults + i, j) = std::complex(Ur[j], Ui[j]);
     }

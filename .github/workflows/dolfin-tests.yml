@@ -13,7 +13,7 @@ jobs:
       CC: clang-10
       CXX: clang++-10
 
-      PETSC_ARCH: linux-gnu-${{ matrix.petsc_arch }}-${{ matrix.petsc_int_type }}
+      PETSC_ARCH: linux-gnu-complex-32
       OMPI_ALLOW_RUN_AS_ROOT: 1
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
       OMPI_MCA_rmaps_base_oversubscribe: 1
@@ -22,13 +22,12 @@ jobs:
       OMPI_MCA_mpi_yield_when_idle: 1
       OMPI_MCA_hwloc_base_binding_policy: none
 
-    strategy:
-      matrix:
-        petsc_arch: [real, complex]
-        petsc_int_type: [32]
-
     steps:
       - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
       - name: Install dependencies (Python)
         run: |
           pip install --upgrade pip

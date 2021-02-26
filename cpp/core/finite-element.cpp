@@ -31,37 +31,50 @@ basix::FiniteElement basix::create_element(std::string family, std::string cell,
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree)
 {
-
-  if (family == element::family::P)
+  switch (family)
+  {
+  case element::family::P:
     return create_lagrange(cell, degree);
-  else if (family == element::family::DP)
+  case element::family::DP:
     return create_dlagrange(cell, degree);
-  else if (family == element::family::BDM)
+  case element::family::BDM:
     return create_bdm(cell, degree);
-  else if (family == element::family::RT)
+  case element::family::RT:
   {
-    if (cell == cell::type::quadrilateral or cell == cell::type::hexahedron)
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
       return create_rtc(cell, degree);
-    else
+    case cell::type::hexahedron:
+      return create_rtc(cell, degree);
+    default:
       return create_rt(cell, degree);
+    }
   }
-  else if (family == element::family::N1E)
+  case element::family::N1E:
   {
-    if (cell == cell::type::quadrilateral or cell == cell::type::hexahedron)
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
       return create_nce(cell, degree);
-    else
+    case cell::type::hexahedron:
+      return create_nce(cell, degree);
+    default:
       return create_nedelec(cell, degree);
+      return create_rt(cell, degree);
+    }
   }
-  else if (family == element::family::N2E)
+  case element::family::N2E:
     return create_nedelec2(cell, degree);
-  else if (family == element::family::Regge)
+  case element::family::Regge:
     return create_regge(cell, degree);
-  else if (family == element::family::CR)
+  case element::family::CR:
     return create_cr(cell, degree);
-  else if (family == element::family::Bubble)
+  case element::family::Bubble:
     return create_bubble(cell, degree);
-  else
+  default:
     throw std::runtime_error("Family not found");
+  }
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd basix::compute_expansion_coefficients(

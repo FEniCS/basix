@@ -303,8 +303,11 @@ FiniteElement::map_push_forward(
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
     for (int i = 0; i < reference_block.cols(); ++i)
-      physical_block.col(i) = _map_push_forward(reference_block.col(i),
-                                                current_J, detJ[pt], current_K);
+    {
+      Eigen::ArrayXd col = reference_block.col(i);
+      physical_block.col(i)
+          = _map_push_forward(col, current_J, detJ[pt], current_K);
+    }
   }
   return physical_data;
 }
@@ -346,8 +349,11 @@ FiniteElement::map_pull_back(
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
     for (int i = 0; i < physical_block.cols(); ++i)
-      reference_block.col(i) = _map_push_forward(
-          physical_block.col(i), current_K, 1 / detJ[pt], current_J);
+    {
+      Eigen::ArrayXd col = physical_block.col(i);
+      reference_block.col(i)
+          = _map_push_forward(col, current_K, 1 / detJ[pt], current_J);
+    }
   }
   return reference_data;
 }

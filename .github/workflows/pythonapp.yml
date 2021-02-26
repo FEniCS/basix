@@ -8,6 +8,7 @@ on: [push, pull_request]
 
 jobs:
   build:
+    name: Build and test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

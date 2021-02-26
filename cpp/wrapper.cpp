@@ -162,7 +162,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return FiniteElement(family_type, celltype, degree, value_shape,
                              compute_expansion_coefficients(
                                  celltype, coeffs, interpolation_matrix,
-                                 interpolation_points, degree, true),
+                                 interpolation_points, degree, 1.0e6),
                              entity_dofs, base_permutations,
                              interpolation_points, interpolation_matrix,
                              mapping_type);
@@ -185,14 +185,17 @@ Each element has a `tabulate` function which returns the basis functions and a n
             degree, value_shape,
             compute_expansion_coefficients(cell::str_to_type(cell_name), coeffs,
                                            interpolation_matrix,
-                                           interpolation_points, degree, true),
+                                           interpolation_points, degree, 1.0e6),
             entity_dofs, base_permutations, interpolation_points,
             interpolation_matrix, mapping_type);
       },
       "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
-      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
+      .def("tabulate",
+           py::overload_cast<int, const Eigen::ArrayXXd&>(
+               &FiniteElement::tabulate, py::const_),
+           tabdoc.c_str())
       .def("map_push_forward", &FiniteElement::map_push_forward, mapdoc.c_str())
       .def("map_pull_back", &FiniteElement::map_pull_back, invmapdoc.c_str())
       .def_property_readonly("base_permutations",

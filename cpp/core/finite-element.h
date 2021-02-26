@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+/// Placeholder
 namespace basix
 {
 
@@ -133,23 +134,23 @@ namespace basix
 ///   x - 1 & y \\
 ///   -x & 1 - y \end{bmatrix} @f]
 ///
-/// @param[in] cell_type The cells shape.
-/// @param[in] span_coeffs The matrix B containing the expansion
-/// coefficients defining a polynomial basis spanning the polynomial
-/// space for this element.
-/// @param[in] interpolation_matrix The interpolation matrix
-/// @param[in] interpolation_points The interpolation points
-/// @param[in] order The degree of the polynomial set
-/// @param[in] condition_check If set, checks the condition of the
-/// matrix B.D^T and throws an error if it is ill-conditioned.
+/// @param[in] cell_type The cells shape
+/// @param[in] B The matrix containing the expansion coefficients
+/// defining a polynomial basis spanning the polynomial space for this
+/// element
+/// @param[in] M The interpolation matrix, such that the dual matrix
+/// \f$D\f$ is computed by \f$D = MP\f$
+/// @param[in] x The interpolation points
+/// @param[in] degree The degree of the polynomial set
+/// @param[in] kappa_tol If positive, the condition number is computed
+/// and an error thrown if the condition number of \f$B D^{T}\f$ is
+/// greater than @p kappa_tol. If @p kappa_tol is less than 1 the
+/// condition number is not checked.
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space.
-Eigen::MatrixXd
-compute_expansion_coefficients(cell::type cell_type,
-                               const Eigen::MatrixXd& span_coeffs,
-                               const Eigen::MatrixXd& interpolation_matrix,
-                               const Eigen::ArrayXXd& interpolation_points,
-                               const int order, bool condition_check = false);
+Eigen::MatrixXd compute_expansion_coefficients(
+    cell::type cell_type, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
+    const Eigen::ArrayXXd& x, int degree, double kappa_tol = 0.0);
 
 /// Combines interpolation data
 ///
@@ -179,15 +180,25 @@ class FiniteElement
 {
 
 public:
+  /// @todo Document
   /// A finite element
+  /// @param[in] family
+  /// @param[in] cell_type
+  /// @param[in] degree
+  /// @param[in] value_shape
+  /// @param[in] coeffs
+  /// @param[in] entity_dofs
+  /// @param[in] base_perms Base permutations
+  /// @param[in] points
+  /// @param[in] M The interpolation matrix
+  /// @param[in] map_type
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<int>& value_shape,
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
-                const std::vector<Eigen::MatrixXd>& base_permutations,
-                const Eigen::ArrayXXd& points,
-                const Eigen::MatrixXd interpolation_matrix = {},
-                mapping::type mapping_type = mapping::type::identity);
+                const std::vector<Eigen::MatrixXd>& base_perms,
+                const Eigen::ArrayXXd& points, const Eigen::MatrixXd M = {},
+                mapping::type map_type = mapping::type::identity);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -224,8 +235,7 @@ public:
   /// @param nd Number of derivatives
   /// @param x Points
   /// @param basis_data Memory location to fill
-  void tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
-                          double* basis_data) const;
+  void tabulate(int nd, const Eigen::ArrayXXd& x, double* basis_data) const;
 
   /// Get the element cell type
   /// @return The cell type
@@ -423,7 +433,7 @@ public:
   const Eigen::MatrixXd& interpolation_matrix() const;
 
 private:
-  static int compute_value_size(mapping::type mapping_type, int dim);
+  static int compute_value_size(mapping::type map_type, int dim);
 
   // Cell type
   cell::type _cell_type;
@@ -438,7 +448,7 @@ private:
   std::vector<int> _value_shape;
 
   /// The mapping used to map this element from the reference to a cell
-  mapping::type _mapping_type;
+  mapping::type _map_type;
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k}
@@ -456,7 +466,7 @@ private:
   std::vector<std::vector<int>> _entity_dofs;
 
   // Base permutations
-  std::vector<Eigen::MatrixXd> _base_permutations;
+  std::vector<Eigen::MatrixXd> _base_perms;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of
@@ -466,7 +476,7 @@ private:
   Eigen::ArrayXXd _points;
 
   /// The interpolation weights and points
-  Eigen::MatrixXd _interpolation_matrix;
+  Eigen::MatrixXd _matM;
 
   // The mapping that maps values on the reference to values on a
   // physical cell
@@ -488,8 +498,7 @@ void FiniteElement::map_push_forward_m(
 {
   const int reference_dim = cell::topological_dimension(_cell_type);
   const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
+  const int physical_value_size = compute_value_size(_map_type, physical_dim);
   const int reference_value_size = value_size();
   const int npoints = J.rows();
   const int nresults = reference_data.rows() / npoints;
@@ -509,25 +518,25 @@ void FiniteElement::map_push_forward_m(
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
-      if constexpr (std::is_same<T, double>::value)
+    if constexpr (std::is_same<T, double>::value)
+    {
+      for (int i = 0; i < reference_block.cols(); ++i)
       {
-        for (int i = 0; i < reference_block.cols(); ++i)
-        {
-          Eigen::ArrayXd col = reference_block.col(i);
-          physical_block.col(i)
-              = _map_push_forward(col, current_J, detJ[pt], current_K);
-        }
+        Eigen::ArrayXd col = reference_block.col(i);
+        physical_block.col(i)
+            = _map_push_forward(col, current_J, detJ[pt], current_K);
       }
-      else
+    }
+    else
+    {
+      for (int i = 0; i < reference_block.cols(); ++i)
       {
-        for (int i = 0; i < reference_block.cols(); ++i)
-        {
-          physical_block.col(i).real() = _map_push_forward(
-              reference_block.col(i).real(), current_J, detJ[pt], current_K);
-          physical_block.col(i).imag() = _map_push_forward(
-              reference_block.col(i).imag(), current_J, detJ[pt], current_K);
-        }
+        physical_block.col(i).real() = _map_push_forward(
+            reference_block.col(i).real(), current_J, detJ[pt], current_K);
+        physical_block.col(i).imag() = _map_push_forward(
+            reference_block.col(i).imag(), current_J, detJ[pt], current_K);
       }
+    }
   }
 }
 //-----------------------------------------------------------------------------
@@ -558,27 +567,26 @@ void FiniteElement::map_pull_back_m(
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
-      if constexpr (std::is_same<T, double>::value)
+    if constexpr (std::is_same<T, double>::value)
+    {
+      for (int i = 0; i < nresults; ++i)
       {
-        for (int i = 0; i < nresults; ++i)
-        {
-          Eigen::ArrayXd row = physical_data.row(pt * nresults + i);
-
-          reference_array.row(pt * nresults + i)
-              = _map_push_forward(row, current_K, 1 / detJ[pt], current_J);
-        }
+        Eigen::ArrayXd row = physical_data.row(pt * nresults + i);
+        reference_array.row(pt * nresults + i)
+            = _map_push_forward(row, current_K, 1 / detJ[pt], current_J);
       }
-      else
+    }
+    else
+    {
+      for (int i = 0; i < nresults; ++i)
       {
-        for (int i = 0; i < nresults; ++i)
-        {
-          reference_array.row(pt * nresults + i).real()
-              = _map_push_forward(physical_data.row(pt * nresults + i).real(),
-                                  current_K, 1 / detJ[pt], current_J);
-          reference_array.row(pt * nresults + i).imag()
-              = _map_push_forward(physical_data.row(pt * nresults + i).imag(),
-                                  current_K, 1 / detJ[pt], current_J);
-        }
+        reference_array.row(pt * nresults + i).real()
+            = _map_push_forward(physical_data.row(pt * nresults + i).real(),
+                                current_K, 1 / detJ[pt], current_J);
+        reference_array.row(pt * nresults + i).imag()
+            = _map_push_forward(physical_data.row(pt * nresults + i).imag(),
+                                current_K, 1 / detJ[pt], current_J);
+      }
     }
   }
 }

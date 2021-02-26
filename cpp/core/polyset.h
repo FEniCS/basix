@@ -8,30 +8,28 @@
 #include <Eigen/Dense>
 #include <vector>
 
-namespace basix
-{
-
 /// ## Orthonormal polynomial basis on reference cell
 /// These are the underlying "expansion sets" for all finite elements, which
 /// when multiplied by a set of "coefficients" give the FE basis functions.
 ///
 /// The polynomials (and their derivatives) can be tabulated on unit interval,
 /// triangle, tetrahedron, quadrilateral, hexahedron, prism and pyramids.
-namespace polyset
+namespace basix::polyset
 {
 /// Basis and derivatives of orthonormal polynomials on reference cell at points
 ///
-/// Compute all derivatives up to given order.
-/// If derivatives are not required, use n=0. For example, order n=2 for a 2D
-/// cell, will compute the basis \f$N, dN/dx, dN/dy, d^2N/dx^2, d^2N/dxdy,
-/// d^2N/dy^2\f$ in that order. For an interval cell there are (nderiv + 1)
-/// derivatives, for a 2D cell, there are (nderiv + 1)(nderiv + 2)/2
-/// derivatives, and in 3D, there are (nderiv + 1)(nderiv + 2)(nderiv + 3)/6.
-/// The ordering is 'triangular' with the lower derivatives appearing first.
+/// Compute all derivatives up to given order. If derivatives are not
+/// required, use n=0. For example, order n=2 for a 2D cell, will
+/// compute the basis \f$N, dN/dx, dN/dy, d^2N/dx^2, d^2N/dxdy,
+/// d^2N/dy^2\f$ in that order. For an interval cell there are (nderiv +
+/// 1) derivatives, for a 2D cell, there are (nderiv + 1)(nderiv + 2)/2
+/// derivatives, and in 3D, there are (nderiv + 1)(nderiv + 2)(nderiv +
+/// 3)/6. The ordering is 'triangular' with the lower derivatives
+/// appearing first.
 ///
 /// @param[in] celltype Cell type
-/// @param[in] degree Polynomial degree
-/// @param[in] nd Maximum derivative order. Use nd = 0 for the basis only.
+/// @param[in] d Polynomial degree
+/// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// (number of points, geometric dimension).
 /// @return List of polynomial sets, for each derivative, tabulated at
@@ -42,15 +40,14 @@ namespace polyset
 /// stacked with all x values, followed by all y-values (and then z, if
 /// any). The second index is the point, and the third index is the
 /// basis function index.
-std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int degree, int nd,
+std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int d, int n,
                                       const Eigen::ArrayXXd& x);
 
-/// Dimension of a space
+/// Dimension of a polynomial space
 /// @param[in] cell The cell type
-/// @param[in] n The polynomial degree
-/// @return The number terms in the basis spanning a space of given
-/// degree
-int dim(cell::type cell, int n);
+/// @param[in] d The polynomial degree
+/// @return The number terms in the basis spanning a space of
+/// polynomial degree @p d
+int dim(cell::type cell, int d);
 
-} // namespace polyset
-} // namespace basix
+} // namespace basix::polyset

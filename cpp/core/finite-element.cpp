@@ -20,28 +20,6 @@
 
 using namespace basix;
 
-namespace
-{
-int compute_value_size(const mapping::type mapping_type, const int dim)
-{
-  switch (mapping_type)
-  {
-  case mapping::type::identity:
-    return 1;
-  case mapping::type::covariantPiola:
-    return dim;
-  case mapping::type::contravariantPiola:
-    return dim;
-  case mapping::type::doubleCovariantPiola:
-    return dim * dim;
-  case mapping::type::doubleContravariantPiola:
-    return dim * dim;
-  default:
-    throw std::runtime_error("Mapping not yet implemented");
-  }
-}
-} // namespace
-
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
                                            int degree)
@@ -331,90 +309,6 @@ FiniteElement::map_push_forward(
   return physical_data;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::map_push_forward_to_memory_real(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        reference_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const Eigen::ArrayXd& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K,
-    double* physical_data) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
-  const int reference_value_size = value_size();
-  const int nresults = reference_data.cols() / reference_value_size;
-  const int npoints = reference_data.rows();
-
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::ColMajor>>
-        reference_block(reference_data.row(pt).data(), reference_value_size,
-                        nresults);
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-        physical_block(physical_data + pt * physical_value_size * nresults,
-                       physical_value_size, nresults);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_J(J.row(pt).data(), physical_dim, reference_dim);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < reference_block.cols(); ++i)
-      physical_block.col(i) = _map_push_forward(reference_block.col(i),
-                                                current_J, detJ[pt], current_K);
-  }
-}
-//-----------------------------------------------------------------------------
-void FiniteElement::map_push_forward_to_memory_complex(
-    const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic,
-                       Eigen::RowMajor>& reference_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const Eigen::ArrayXd& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K,
-    std::complex<double>* physical_data) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
-  const int reference_value_size = value_size();
-  const int nresults = reference_data.cols() / reference_value_size;
-  const int npoints = reference_data.rows();
-
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
-                                  Eigen::Dynamic, Eigen::ColMajor>>
-        reference_block(reference_data.row(pt).data(), reference_value_size,
-                        nresults);
-    Eigen::Map<Eigen::Array<std::complex<double>, Eigen::Dynamic,
-                            Eigen::Dynamic, Eigen::ColMajor>>
-        physical_block(physical_data + pt * physical_value_size * nresults,
-                       physical_value_size, nresults);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_J(J.row(pt).data(), physical_dim, reference_dim);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < reference_block.cols(); ++i)
-    {
-      physical_block.col(i).real() = _map_push_forward(
-          reference_block.col(i).real(), current_J, detJ[pt], current_K);
-      physical_block.col(i).imag() = _map_push_forward(
-          reference_block.col(i).imag(), current_J, detJ[pt], current_K);
-    }
-  }
-}
-//-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 FiniteElement::map_pull_back(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
@@ -458,87 +352,28 @@ FiniteElement::map_pull_back(
   return reference_data;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::map_pull_back_to_memory_real(
-    const Eigen::ArrayXXd& physical_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const Eigen::ArrayXd& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K,
-    double* reference_data) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
-  const int reference_value_size = value_size();
-  const int nresults = physical_data.cols() / physical_value_size;
-  const int npoints = physical_data.rows();
-
-  Eigen::Map<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-      reference_array(reference_data, nresults * npoints, reference_value_size);
-
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_J(J.row(pt).data(), physical_dim, reference_dim);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < nresults; ++i)
-      reference_array.row(pt * nresults + i)
-          = _map_push_forward(physical_data.row(pt * nresults + i), current_K,
-                              1 / detJ[pt], current_J);
-  }
-}
-//-----------------------------------------------------------------------------
-void FiniteElement::map_pull_back_to_memory_complex(
-    const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>&
-        physical_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const Eigen::ArrayXd& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K,
-    std::complex<double>* reference_data) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
-  const int reference_value_size = value_size();
-  const int nresults = physical_data.cols() / physical_value_size;
-  const int npoints = physical_data.rows();
-
-  Eigen::Map<Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic,
-                          Eigen::ColMajor>>
-      reference_array(reference_data, nresults * npoints, reference_value_size);
-
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_J(J.row(pt).data(), physical_dim, reference_dim);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < nresults; ++i)
-    {
-      reference_array.row(pt * nresults + i).real()
-          = _map_push_forward(physical_data.row(pt * nresults + i).real(),
-                              current_K, 1 / detJ[pt], current_J);
-      reference_array.row(pt * nresults + i).imag()
-          = _map_push_forward(physical_data.row(pt * nresults + i).imag(),
-                              current_K, 1 / detJ[pt], current_J);
-    }
-  }
-}
-//-----------------------------------------------------------------------------
-const std::string& basix::version()
+std::string basix::version()
 {
   static const std::string version_str = str(BASIX_VERSION);
   return version_str;
+}
+//-----------------------------------------------------------------------------
+int FiniteElement::compute_value_size(mapping::type mapping_type, int dim)
+{
+  switch (mapping_type)
+  {
+  case mapping::type::identity:
+    return 1;
+  case mapping::type::covariantPiola:
+    return dim;
+  case mapping::type::contravariantPiola:
+    return dim;
+  case mapping::type::doubleCovariantPiola:
+    return dim * dim;
+  case mapping::type::doubleContravariantPiola:
+    return dim * dim;
+  default:
+    throw std::runtime_error("Mapping not yet implemented");
+  }
 }
 //-----------------------------------------------------------------------------

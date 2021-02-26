@@ -150,7 +150,7 @@ namespace basix
 /// functions of the finite element space.
 Eigen::MatrixXd compute_expansion_coefficients(
     cell::type cell_type, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
-    const Eigen::ArrayXXd& x, int order, double kappa_tol = 0.0);
+    const Eigen::ArrayXXd& x, int degree, double kappa_tol = 0.0);
 
 /// Combines interpolation data
 ///
@@ -182,6 +182,16 @@ class FiniteElement
 public:
   /// @todo Document
   /// A finite element
+  /// @param[in] family
+  /// @param[in] cell_type
+  /// @param[in] degree
+  /// @param[in] value_shape
+  /// @param[in] coeffs
+  /// @param[in] entity_dofs
+  /// @param[in] base_permutations
+  /// @param[in] points
+  /// @param[in] interpolation_matrix
+  /// @param[in] mapping_type
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<int>& value_shape,
                 const Eigen::ArrayXXd& coeffs,
@@ -226,8 +236,7 @@ public:
   /// @param nd Number of derivatives
   /// @param x Points
   /// @param basis_data Memory location to fill
-  void tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
-                          double* basis_data) const;
+  void tabulate(int nd, const Eigen::ArrayXXd& x, double* basis_data) const;
 
   /// Get the element cell type
   /// @return The cell type
@@ -468,7 +477,7 @@ private:
   Eigen::ArrayXXd _points;
 
   /// The interpolation weights and points
-  Eigen::MatrixXd _interpolation_matrix;
+  Eigen::MatrixXd _matM;
 
   // The mapping that maps values on the reference to values on a
   // physical cell

@@ -125,10 +125,9 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(
   points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), tdim)
       = points_3d;
 
-  Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
-                         matrix_1d.cols() + matrix_2d.cols()
-                             + matrix_3d.cols());
-  matrix.setZero();
+  Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(
+      matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
+      matrix_1d.cols() + matrix_2d.cols() + matrix_3d.cols());
 
   const int r1d = matrix_1d.rows();
   const int r2d = matrix_2d.rows();
@@ -158,7 +157,7 @@ FiniteElement::FiniteElement(
     : _cell_type(cell_type), _family(family), _degree(degree),
       _value_shape(value_shape), _mapping_type(mapping_type), _coeffs(coeffs),
       _entity_dofs(entity_dofs), _base_permutations(base_permutations),
-      _points(points), _interpolation_matrix(interpolation_matrix)
+      _points(points), _matM(interpolation_matrix)
 {
   // Check that entity dofs add up to total number of dofs
   int sum = 0;
@@ -201,7 +200,7 @@ const mapping::type FiniteElement::mapping_type() const
 //-----------------------------------------------------------------------------
 const Eigen::MatrixXd& FiniteElement::interpolation_matrix() const
 {
-  return _interpolation_matrix;
+  return _matM;
 }
 //-----------------------------------------------------------------------------
 const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
@@ -223,18 +222,20 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
   const int vs = value_size();
 
   std::vector<double> basis_data(ndsize * x.rows() * ndofs * vs);
-  tabulate_to_memory(nd, x, basis_data.data());
+  tabulate(nd, x, basis_data.data());
 
   std::vector<Eigen::ArrayXXd> dresult;
   for (int p = 0; p < ndsize; ++p)
+  {
     dresult.push_back(Eigen::Map<Eigen::ArrayXXd>(
         basis_data.data() + p * x.rows() * ndofs * vs, x.rows(), ndofs * vs));
+  }
 
   return dresult;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate_to_memory(int nd, const Eigen::ArrayXXd& x,
-                                       double* basis_data) const
+void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
+                             double* basis_data) const
 {
   const int tdim = cell::topological_dimension(_cell_type);
   if (x.cols() != tdim)

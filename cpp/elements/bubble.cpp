@@ -45,7 +45,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   auto [Qpts, Qwts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
   Eigen::ArrayXXd polyset_at_Qpts
-      = polyset::tabulate(celltype, degree, 0, Qpts)[0];
+      = polyset::tabulate(celltype, degree, 0, Qpts);
 
   // The number of order (degree) polynomials
   const int psize = polyset_at_Qpts.cols();
@@ -61,28 +61,28 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   Eigen::ArrayXd bubble;
   if (celltype == cell::type::interval)
   {
-    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 2, 0, Qpts)[0];
+    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 2, 0, Qpts);
     bubble = Qpts.col(0) * (1 - Qpts.col(0));
   }
   else if (celltype == cell::type::triangle)
   {
-    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 3, 0, Qpts)[0];
+    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 3, 0, Qpts);
     bubble = Qpts.col(0) * Qpts.col(1) * (1 - Qpts.col(0) - Qpts.col(1));
   }
   else if (celltype == cell::type::tetrahedron)
   {
-    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 4, 0, Qpts)[0];
+    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 4, 0, Qpts);
     bubble = Qpts.col(0) * Qpts.col(1) * Qpts.col(2)
              * (1 - Qpts.col(0) - Qpts.col(1) - Qpts.col(2));
   }
   else if (celltype == cell::type::quadrilateral)
   {
-    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 2, 0, Qpts)[0];
+    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 2, 0, Qpts);
     bubble = Qpts.col(0) * (1 - Qpts.col(0)) * Qpts.col(1) * (1 - Qpts.col(1));
   }
   else if (celltype == cell::type::hexahedron)
   {
-    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 2, 0, Qpts)[0];
+    lower_polyset_at_Qpts = polyset::tabulate(celltype, degree - 2, 0, Qpts);
     bubble = Qpts.col(0) * (1 - Qpts.col(0)) * Qpts.col(1) * (1 - Qpts.col(1))
              * Qpts.col(2) * (1 - Qpts.col(2));
   }

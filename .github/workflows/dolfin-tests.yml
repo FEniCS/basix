@@ -46,4 +46,4 @@ jobs:
           python3 -m pip -v install --global-option build --global-option --debug python/
 
       - name: Run DOLFINx unit tests
-        run: python3 -m pytest dolfin/python/test/unit
+        run: python3 -m pytest dolfinx/python/test/unit

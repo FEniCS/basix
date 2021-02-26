@@ -492,8 +492,8 @@ void FiniteElement::map_push_forward_m(
   const int physical_value_size
       = compute_value_size(_mapping_type, physical_dim);
   const int reference_value_size = value_size();
-  const int nresults = reference_data.cols() / reference_value_size;
-  const int npoints = reference_data.rows();
+  const int npoints = J.rows();
+  const int nresults = reference_data.rows() / npoints;
 
   for (int pt = 0; pt < npoints; ++pt)
   {
@@ -510,8 +510,6 @@ void FiniteElement::map_push_forward_m(
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < reference_block.cols(); ++i)
-    {
       if constexpr (std::is_same<T, double>::value)
       {
         Eigen::ArrayXd col = reference_block.col(i);
@@ -519,9 +517,6 @@ void FiniteElement::map_push_forward_m(
             = _map_push_forward(col, current_J, detJ[pt], current_K);
         for (std::size_t j = 0; j < u.size(); ++j)
           physical_block(j, i) = u[j];
-        // for (int i = 0; i < reference_block.cols(); ++i)
-        //   physical_block.col(i) = _map_push_forward(
-        //       reference_block.col(i), current_J, detJ[pt], current_K);
       }
       else
       {
@@ -533,13 +528,7 @@ void FiniteElement::map_push_forward_m(
             = _map_push_forward(tmp_c, current_J, detJ[pt], current_K);
         for (std::size_t j = 0; j < ur.size(); ++j)
           physical_block(j, i) = std::complex(ur[j], uc[j]);
-
-        // physical_block.col(i).real() = _map_push_forward(
-        //     reference_block.col(i).real(), current_J, detJ[pt], current_K);
-        // physical_block.col(i).imag() = _map_push_forward(
-        //     reference_block.col(i).imag(), current_J, detJ[pt], current_K);
       }
-    }
   }
 }
 //-----------------------------------------------------------------------------
@@ -555,11 +544,9 @@ void FiniteElement::map_pull_back_m(
 {
   const int reference_dim = cell::topological_dimension(_cell_type);
   const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
   const int reference_value_size = value_size();
-  const int nresults = physical_data.cols() / physical_value_size;
-  const int npoints = physical_data.rows();
+  const int npoints = J.rows();
+  const int nresults = physical_data.rows() / npoints;
 
   Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
       reference_array(reference_data, nresults * npoints, reference_value_size);
@@ -572,8 +559,6 @@ void FiniteElement::map_pull_back_m(
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < nresults; ++i)
-    {
       if constexpr (std::is_same<T, double>::value)
       {
         Eigen::ArrayXd tmp = physical_data.row(pt * nresults + i);

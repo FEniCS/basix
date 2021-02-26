@@ -61,7 +61,6 @@ basix::FiniteElement basix::create_element(element::family family,
       return create_nce(cell, degree);
     default:
       return create_nedelec(cell, degree);
-      return create_rt(cell, degree);
     }
   }
   case element::family::N2E:

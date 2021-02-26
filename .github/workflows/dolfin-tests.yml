@@ -24,17 +24,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.x
       - name: Install dependencies (Python)
         run: |
-          pip install --upgrade pip
-          pip install scikit-build
+          python3 -m pip install --upgrade pip
+          python3 -m pip install scikit-build
       - name: Install basix
         run: |
-          pip install .
+          python3 -m pip install .
       - name: Install FEniCS Python components
         run: |
           python3 -m pip install git+https://github.com/FEniCS/ufl.git

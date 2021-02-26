@@ -1,0 +1,57 @@
+# This workflow will install Python dependencies, run tests and lint
+# with a single version of Python For more information see:
+# https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Run DOLFINx tests
+
+on: pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: fenicsproject/test-env:openmpi
+
+   env:
+      CC: clang-10
+      CXX: clang++-10
+
+      PETSC_ARCH: linux-gnu-${{ matrix.petsc_arch }}-${{ matrix.petsc_int_type }}
+      OMPI_ALLOW_RUN_AS_ROOT: 1
+      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+      OMPI_MCA_rmaps_base_oversubscribe: 1
+      OMPI_MCA_plm: isolated
+      OMPI_MCA_btl_vader_single_copy_mechanism: none
+      OMPI_MCA_mpi_yield_when_idle: 1
+      OMPI_MCA_hwloc_base_binding_policy: none
+
+   strategy:
+      matrix:
+        petsc_arch: [real, complex]
+        petsc_int_type: [32, 64]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies (Python)
+        run: |
+          pip install --upgrade pip
+          pip install scikit-build
+      - name: Install basix
+        run: |
+          pip install .
+      - name: Install FEniCS Python components
+        run: |
+          python3 -m pip install git+https://github.com/FEniCS/basix.git@mscroggs/eigen
+          python3 -m pip install git+https://github.com/FEniCS/ufl.git
+          python3 -m pip install git+https://github.com/FEniCS/ffcx.git
+
+      - name: Clone and install dDOLFINx
+        run: |
+          git clone https://github.com/FEniCS/dolfinx.git
+          cd dolfinx
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S cpp/
+          cmake --build build
+          cmake --install build
+          python3 -m pip -v install --global-option build --global-option --debug python/
+
+      - name: Run DOLFINx unit tests
+        run: python3 -m pytest dolfin/python/test/unit

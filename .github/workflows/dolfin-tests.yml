@@ -36,7 +36,7 @@ jobs:
           python3 -m pip install git+https://github.com/FEniCS/ufl.git
           python3 -m pip install git+https://github.com/FEniCS/ffcx.git
 
-      - name: Clone and install dDOLFINx
+      - name: Clone and install DOLFINx
         run: |
           git clone https://github.com/FEniCS/dolfinx.git
           cd dolfinx
@@ -46,4 +46,4 @@ jobs:
           python3 -m pip -v install --global-option build --global-option --debug python/
 
       - name: Run DOLFINx unit tests
-        run: python3 -m pytest dolfinx/python/test/unit
+        run: python3 -m pytest -n=auto dolfinx/python/test/unit

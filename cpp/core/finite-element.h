@@ -545,7 +545,7 @@ void FiniteElement::map_pull_back_m(
   const int physical_dim = J.cols() / reference_dim;
   const int reference_value_size = value_size();
   const int npoints = J.rows();
-  const int nresults = physical_data.cols() / npoints;
+  const int nresults = physical_data.rows() / npoints;
 
   Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
       reference_array(reference_data, nresults * npoints, reference_value_size);
@@ -558,24 +558,27 @@ void FiniteElement::map_pull_back_m(
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < nresults; ++i)
-    {
       if constexpr (std::is_same<T, double>::value)
       {
-        Eigen::ArrayXd row = physical_data.row(pt * nresults + i);
+        for (int i = 0; i < nresults; ++i)
+        {
+          Eigen::ArrayXd row = physical_data.row(pt * nresults + i);
 
-        reference_array.row(pt * nresults + i)
-            = _map_push_forward(row, current_K, 1 / detJ[pt], current_J);
+          reference_array.row(pt * nresults + i)
+              = _map_push_forward(row, current_K, 1 / detJ[pt], current_J);
+        }
       }
       else
       {
-        reference_array.row(pt * nresults + i).real()
-            = _map_push_forward(physical_data.row(pt * nresults + i).real(),
-                                current_K, 1 / detJ[pt], current_J);
-        reference_array.row(pt * nresults + i).imag()
-            = _map_push_forward(physical_data.row(pt * nresults + i).imag(),
-                                current_K, 1 / detJ[pt], current_J);
-      }
+        for (int i = 0; i < nresults; ++i)
+        {
+          reference_array.row(pt * nresults + i).real()
+              = _map_push_forward(physical_data.row(pt * nresults + i).real(),
+                                  current_K, 1 / detJ[pt], current_J);
+          reference_array.row(pt * nresults + i).imag()
+              = _map_push_forward(physical_data.row(pt * nresults + i).imag(),
+                                  current_K, 1 / detJ[pt], current_J);
+        }
     }
   }
 }

@@ -147,17 +147,17 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(
   return std::make_pair(points, matrix);
 }
 //-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
-    const std::vector<std::vector<int>>& entity_dofs,
-    const std::vector<Eigen::MatrixXd>& base_permutations,
-    const Eigen::ArrayXXd& points, const Eigen::MatrixXd interpolation_matrix,
-    mapping::type mapping_type)
+FiniteElement::FiniteElement(element::family family, cell::type cell_type,
+                             int degree, const std::vector<int>& value_shape,
+                             const Eigen::ArrayXXd& coeffs,
+                             const std::vector<std::vector<int>>& entity_dofs,
+                             const std::vector<Eigen::MatrixXd>& base_perms,
+                             const Eigen::ArrayXXd& points,
+                             const Eigen::MatrixXd M, mapping::type map_type)
     : _cell_type(cell_type), _family(family), _degree(degree),
-      _value_shape(value_shape), _mapping_type(mapping_type), _coeffs(coeffs),
-      _entity_dofs(entity_dofs), _base_permutations(base_permutations),
-      _points(points), _matM(interpolation_matrix)
+      _value_shape(value_shape), _map_type(map_type), _coeffs(coeffs),
+      _entity_dofs(entity_dofs), _base_perms(base_perms), _points(points),
+      _matM(M)
 {
   // Check that entity dofs add up to total number of dofs
   int sum = 0;
@@ -169,7 +169,7 @@ FiniteElement::FiniteElement(
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
   }
-  _map_push_forward = mapping::get_forward_map(mapping_type);
+  _map_push_forward = mapping::get_forward_map(map_type);
 }
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
@@ -179,7 +179,7 @@ int FiniteElement::degree() const { return _degree; }
 int FiniteElement::value_size() const
 {
   int value_size = 1;
-  for (const int& d : _value_shape)
+  for (int d : _value_shape)
     value_size *= d;
   return value_size;
 }
@@ -193,10 +193,7 @@ int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
-const mapping::type FiniteElement::mapping_type() const
-{
-  return _mapping_type;
-}
+const mapping::type FiniteElement::mapping_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
 const Eigen::MatrixXd& FiniteElement::interpolation_matrix() const
 {
@@ -246,7 +243,6 @@ void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
   const int psize = polyset::dim(_cell_type, _degree);
   const int ndofs = _coeffs.rows();
   const int vs = value_size();
-
   for (std::size_t p = 0; p < basis.size(); ++p)
   {
     // Map block for current derivative
@@ -263,7 +259,7 @@ void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
 {
-  return _base_permutations;
+  return _base_perms;
 }
 //-----------------------------------------------------------------------------
 int FiniteElement::num_points() const { return _points.rows(); }
@@ -282,8 +278,7 @@ FiniteElement::map_push_forward(
 {
   const int reference_dim = cell::topological_dimension(_cell_type);
   const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
+  const int physical_value_size = compute_value_size(_map_type, physical_dim);
   const int reference_value_size = value_size();
   const int nresults = reference_data.cols() / reference_value_size;
   const int npoints = reference_data.rows();
@@ -325,8 +320,7 @@ FiniteElement::map_pull_back(
 {
   const int reference_dim = cell::topological_dimension(_cell_type);
   const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
+  const int physical_value_size = compute_value_size(_map_type, physical_dim);
   const int reference_value_size = value_size();
   const int nresults = physical_data.cols() / physical_value_size;
   const int npoints = physical_data.rows();
@@ -362,9 +356,9 @@ std::string basix::version()
   return version_str;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::compute_value_size(mapping::type mapping_type, int dim)
+int FiniteElement::compute_value_size(mapping::type map_type, int dim)
 {
-  switch (mapping_type)
+  switch (map_type)
   {
   case mapping::type::identity:
     return 1;

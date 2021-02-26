@@ -188,18 +188,17 @@ public:
   /// @param[in] value_shape
   /// @param[in] coeffs
   /// @param[in] entity_dofs
-  /// @param[in] base_permutations
+  /// @param[in] base_perms Base permutations
   /// @param[in] points
-  /// @param[in] interpolation_matrix
-  /// @param[in] mapping_type
+  /// @param[in] M The interpolation matrix
+  /// @param[in] map_type
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<int>& value_shape,
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
-                const std::vector<Eigen::MatrixXd>& base_permutations,
-                const Eigen::ArrayXXd& points,
-                const Eigen::MatrixXd interpolation_matrix = {},
-                mapping::type mapping_type = mapping::type::identity);
+                const std::vector<Eigen::MatrixXd>& base_perms,
+                const Eigen::ArrayXXd& points, const Eigen::MatrixXd M = {},
+                mapping::type map_type = mapping::type::identity);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -434,7 +433,7 @@ public:
   const Eigen::MatrixXd& interpolation_matrix() const;
 
 private:
-  static int compute_value_size(mapping::type mapping_type, int dim);
+  static int compute_value_size(mapping::type map_type, int dim);
 
   // Cell type
   cell::type _cell_type;
@@ -449,7 +448,7 @@ private:
   std::vector<int> _value_shape;
 
   /// The mapping used to map this element from the reference to a cell
-  mapping::type _mapping_type;
+  mapping::type _map_type;
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k}
@@ -467,7 +466,7 @@ private:
   std::vector<std::vector<int>> _entity_dofs;
 
   // Base permutations
-  std::vector<Eigen::MatrixXd> _base_permutations;
+  std::vector<Eigen::MatrixXd> _base_perms;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of
@@ -499,8 +498,7 @@ void FiniteElement::map_push_forward_m(
 {
   const int reference_dim = cell::topological_dimension(_cell_type);
   const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
+  const int physical_value_size = compute_value_size(_map_type, physical_dim);
   const int reference_value_size = value_size();
   const int nresults = reference_data.cols() / reference_value_size;
   const int npoints = reference_data.rows();
@@ -551,8 +549,7 @@ void FiniteElement::map_pull_back_m(
 {
   const int reference_dim = cell::topological_dimension(_cell_type);
   const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size
-      = compute_value_size(_mapping_type, physical_dim);
+  const int physical_value_size = compute_value_size(_map_type, physical_dim);
   const int reference_value_size = value_size();
   const int nresults = physical_data.cols() / physical_value_size;
   const int npoints = physical_data.rows();

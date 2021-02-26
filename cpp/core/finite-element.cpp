@@ -65,32 +65,24 @@ basix::FiniteElement basix::create_element(element::family family,
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd basix::compute_expansion_coefficients(
-    cell::type celltype, const Eigen::MatrixXd& coeffs,
-    const Eigen::MatrixXd& interpolation_matrix,
-    const Eigen::ArrayXXd& interpolation_points, const int order,
-    bool condition_check)
+    cell::type celltype, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
+    const Eigen::ArrayXXd& x, int order, bool condition_check)
 {
-  const Eigen::MatrixXd tabulation
-      = polyset::tabulate(celltype, order, 0, interpolation_points)[0];
+  const Eigen::MatrixXd P = polyset::tabulate(celltype, order, 0, x)[0];
 
-  const int scalar_coeff_size = tabulation.cols();
-  const int value_size = coeffs.cols() / scalar_coeff_size;
-  const int scalar_interpolation_size
-      = interpolation_matrix.cols() / value_size;
-  Eigen::MatrixXd A(coeffs.rows(), interpolation_matrix.rows());
-  A.setZero();
-  for (int row = 0; row < coeffs.rows(); ++row)
+  const int coeff_size = P.cols();
+  const int value_size = B.cols() / coeff_size;
+  const int m_size = M.cols() / value_size;
+  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(B.rows(), M.rows());
+  for (int row = 0; row < B.rows(); ++row)
+  {
     for (int i = 0; i < value_size; ++i)
     {
-      A.row(row)
-          += coeffs.block(row, scalar_coeff_size * i, 1, scalar_coeff_size)
-             * tabulation.transpose()
-             * interpolation_matrix
-                   .block(0, i * scalar_interpolation_size,
-                          interpolation_matrix.rows(),
-                          scalar_interpolation_size)
-                   .transpose();
+      A.row(row) += B.block(row, coeff_size * i, 1, coeff_size) * P.transpose()
+                    * M.block(0, i * m_size, M.rows(), m_size).transpose();
     }
+  }
+
   if (condition_check)
   {
     Eigen::JacobiSVD svd(A);
@@ -103,7 +95,7 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
                                "expansion coefficients");
     }
   }
-  Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
+  Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(B);
 
   return new_coeffs;
 }

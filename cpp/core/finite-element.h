@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+/// Placeholder
 namespace basix
 {
 
@@ -133,23 +134,22 @@ namespace basix
 ///   x - 1 & y \\
 ///   -x & 1 - y \end{bmatrix} @f]
 ///
-/// @param[in] cell_type The cells shape.
-/// @param[in] span_coeffs The matrix B containing the expansion
-/// coefficients defining a polynomial basis spanning the polynomial
-/// space for this element.
-/// @param[in] interpolation_matrix The interpolation matrix
-/// @param[in] interpolation_points The interpolation points
+/// @param[in] cell_type The cells shape
+/// @param[in] B The matrix containing the expansion coefficients
+/// defining a polynomial basis spanning the polynomial space for this
+/// element
+/// @param[in] M The interpolation matrix, such that the dual matrix
+/// \f$D\f$ is computed by \f$D = MP\f$
+/// @param[in] x The interpolation points
 /// @param[in] order The degree of the polynomial set
-/// @param[in] condition_check If set, checks the condition of the
-/// matrix B.D^T and throws an error if it is ill-conditioned.
+/// @param[in] condition_check If true, checks the condition number of
+/// the matrix \f$B D^{T}\f$ and throws an error if it is
+/// ill-conditioned
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space.
-Eigen::MatrixXd
-compute_expansion_coefficients(cell::type cell_type,
-                               const Eigen::MatrixXd& span_coeffs,
-                               const Eigen::MatrixXd& interpolation_matrix,
-                               const Eigen::ArrayXXd& interpolation_points,
-                               const int order, bool condition_check = false);
+Eigen::MatrixXd compute_expansion_coefficients(
+    cell::type cell_type, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
+    const Eigen::ArrayXXd& x, int order, bool condition_check = false);
 
 /// Combines interpolation data
 ///

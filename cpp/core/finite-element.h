@@ -584,6 +584,9 @@ void FiniteElement::map_pull_back_m(
 //-----------------------------------------------------------------------------
 
 /// Create an element by name
+FiniteElement create_element(std::string family, std::string cell, int degree);
+
+/// Create an element by name
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree);
 

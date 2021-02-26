@@ -272,7 +272,7 @@ FiniteElement::map_push_forward(
         reference_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K) const
 {
@@ -304,10 +304,13 @@ FiniteElement::map_push_forward(
     for (int i = 0; i < reference_block.cols(); ++i)
     {
       Eigen::ArrayXd col = reference_block.col(i);
-      physical_block.col(i)
+      std::vector<double> u
           = _map_push_forward(col, current_J, detJ[pt], current_K);
+      for (std::size_t j = 0; j < u.size(); ++j)
+        physical_block(j, i) = u[j];
     }
   }
+
   return physical_data;
 }
 //-----------------------------------------------------------------------------
@@ -317,7 +320,7 @@ FiniteElement::map_pull_back(
         physical_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K) const
 {
@@ -349,10 +352,13 @@ FiniteElement::map_pull_back(
     for (int i = 0; i < physical_block.cols(); ++i)
     {
       Eigen::ArrayXd col = physical_block.col(i);
-      reference_block.col(i)
+      std::vector<double> U
           = _map_push_forward(col, current_K, 1 / detJ[pt], current_J);
+      for (std::size_t j = 0; j < U.size(); ++j)
+        reference_block(j, i) = U[j];
     }
   }
+
   return reference_data;
 }
 //-----------------------------------------------------------------------------

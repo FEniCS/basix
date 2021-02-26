@@ -10,6 +10,7 @@
 #include "cell.h"
 #include "element-families.h"
 #include "mappings.h"
+#include "span.hpp"
 #include <Eigen/Core>
 #include <string>
 #include <vector>
@@ -278,7 +279,7 @@ public:
                                       Eigen::RowMajor>& reference_data,
                    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                       Eigen::RowMajor>& J,
-                   const Eigen::ArrayXd& detJ,
+                   const tcb::span<const double>& detJ,
                    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                       Eigen::RowMajor>& K) const;
 
@@ -294,7 +295,7 @@ public:
                                         Eigen::RowMajor>& reference_data,
                      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                         Eigen::RowMajor>& J,
-                     const Eigen::ArrayXd& detJ,
+                     const tcb::span<const double>& detJ,
                      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                         Eigen::RowMajor>& K,
                      T* physical_data) const;
@@ -310,7 +311,7 @@ public:
                                    Eigen::RowMajor>& physical_data,
                 const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>& J,
-                const Eigen::ArrayXd& detJ,
+                const tcb::span<const double>& detJ,
                 const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>& K) const;
 
@@ -325,7 +326,7 @@ public:
       const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>& physical_data,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& J,
-      const Eigen::ArrayXd& detJ,
+      const tcb::span<const double>& detJ,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& K,
       T* reference_data) const;
@@ -478,10 +479,10 @@ private:
   /// The interpolation weights and points
   Eigen::MatrixXd _matM;
 
-  // The mapping that maps values on the reference to values on a
-  // physical cell
-  std::function<Eigen::ArrayXd(const Eigen::ArrayXd&, const Eigen::MatrixXd&,
-                               const double, const Eigen::MatrixXd&)>
+  // The mapping that maps values on the reference to values on a physical cell
+  std::function<std::vector<double>(const tcb::span<const double>&,
+                                    const Eigen::MatrixXd&, const double,
+                                    const Eigen::MatrixXd&)>
       _map_push_forward;
 };
 
@@ -491,7 +492,7 @@ void FiniteElement::map_push_forward_m(
         reference_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K,
     T* physical_data) const
@@ -523,18 +524,24 @@ void FiniteElement::map_push_forward_m(
       for (int i = 0; i < reference_block.cols(); ++i)
       {
         Eigen::ArrayXd col = reference_block.col(i);
-        physical_block.col(i)
+        std::vector<double> u
             = _map_push_forward(col, current_J, detJ[pt], current_K);
+        for (std::size_t j = 0; j < u.size(); ++j)
+          physical_block(j, i) = u[j];
       }
     }
     else
     {
       for (int i = 0; i < reference_block.cols(); ++i)
       {
-        physical_block.col(i).real() = _map_push_forward(
-            reference_block.col(i).real(), current_J, detJ[pt], current_K);
-        physical_block.col(i).imag() = _map_push_forward(
-            reference_block.col(i).imag(), current_J, detJ[pt], current_K);
+        Eigen::ArrayXd tmp_r = reference_block.col(i).real();
+        Eigen::ArrayXd tmp_c = reference_block.col(i).imag();
+        std::vector<double> ur
+            = _map_push_forward(tmp_r, current_J, detJ[pt], current_K);
+        std::vector<double> uc
+            = _map_push_forward(tmp_c, current_J, detJ[pt], current_K);
+        for (std::size_t j = 0; j < ur.size(); ++j)
+          physical_block(j, i) = std::complex(ur[j], uc[j]);
       }
     }
   }
@@ -545,7 +552,7 @@ void FiniteElement::map_pull_back_m(
     const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>& physical_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
-    const Eigen::ArrayXd& detJ,
+    const tcb::span<const double>& detJ,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         K,
     T* reference_data) const
@@ -571,21 +578,31 @@ void FiniteElement::map_pull_back_m(
     {
       for (int i = 0; i < nresults; ++i)
       {
-        Eigen::ArrayXd row = physical_data.row(pt * nresults + i);
-        reference_array.row(pt * nresults + i)
-            = _map_push_forward(row, current_K, 1 / detJ[pt], current_J);
+        for (int i = 0; i < nresults; ++i)
+        {
+          Eigen::ArrayXd tmp = physical_data.row(pt * nresults + i);
+          std::vector<double> U
+              = _map_push_forward(tmp, current_K, 1 / detJ[pt], current_J);
+          for (std::size_t j = 0; j < U.size(); ++j)
+            reference_array(pt * nresults + i, j) = U[j];
+        }
       }
     }
     else
     {
       for (int i = 0; i < nresults; ++i)
       {
-        reference_array.row(pt * nresults + i).real()
-            = _map_push_forward(physical_data.row(pt * nresults + i).real(),
-                                current_K, 1 / detJ[pt], current_J);
-        reference_array.row(pt * nresults + i).imag()
-            = _map_push_forward(physical_data.row(pt * nresults + i).imag(),
-                                current_K, 1 / detJ[pt], current_J);
+        for (int i = 0; i < nresults; ++i)
+        {
+          Eigen::ArrayXd tmp_r = physical_data.row(pt * nresults + i).real();
+          Eigen::ArrayXd tmp_c = physical_data.row(pt * nresults + i).imag();
+          std::vector<double> Ur
+              = _map_push_forward(tmp_r, current_K, 1 / detJ[pt], current_J);
+          std::vector<double> Uc
+              = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_J);
+          for (std::size_t j = 0; j < Ur.size(); ++j)
+            reference_array(pt * nresults + i, j) = std::complex(Ur[j], Uc[j]);
+        }
       }
     }
   }

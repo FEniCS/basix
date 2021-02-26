@@ -7,6 +7,7 @@
 #include "core/finite-element.h"
 #include "core/mappings.h"
 #include "core/quadrature.h"
+#include "core/span.hpp"
 #include <algorithm>
 #include <iterator>
 #include <memory>
@@ -42,7 +43,7 @@ void _map_push_forward(int handle, T* physical_data, const T* reference_data,
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(J, npoints,
                                                       physical_dim * tdim),
-      Eigen::Map<const Eigen::ArrayXd>(detJ, npoints),
+      tcb::span(detJ, npoints),
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(K, npoints,
                                                       physical_dim * tdim),
@@ -64,7 +65,7 @@ void _map_pull_back(int handle, T* reference_data, const T* physical_data,
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(J, npoints,
                                                       physical_dim * tdim),
-      Eigen::Map<const Eigen::ArrayXd>(detJ, npoints),
+      tcb::span(detJ, npoints),
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(K, npoints,
                                                       physical_dim * tdim),

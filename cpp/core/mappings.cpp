@@ -9,51 +9,68 @@
 
 namespace
 {
-Eigen::ArrayXd identity(const Eigen::ArrayXd& reference_data,
-                        const Eigen::MatrixXd& J, const double detJ,
-                        const Eigen::MatrixXd& K)
+//-----------------------------------------------------------------------------
+std::vector<double> identity(const tcb::span<const double>& reference_data,
+                             const Eigen::MatrixXd& J, const double detJ,
+                             const Eigen::MatrixXd& K)
 {
-  return reference_data;
+  return std::vector<double>(reference_data.begin(), reference_data.end());
 }
-Eigen::ArrayXd covariant_piola(const Eigen::ArrayXd& reference_data,
-                               const Eigen::MatrixXd& J, const double detJ,
-                               const Eigen::MatrixXd& K)
+//-----------------------------------------------------------------------------
+std::vector<double>
+covariant_piola(const tcb::span<const double>& reference_data,
+                const Eigen::MatrixXd& J, const double detJ,
+                const Eigen::MatrixXd& K)
 {
-  return K.transpose() * reference_data.matrix();
+  Eigen::Map<const Eigen::VectorXd> _reference_data(reference_data.data(),
+                                                    reference_data.size());
+  Eigen::ArrayXd r = K.transpose() * _reference_data;
+  return std::vector<double>(r.data(), r.data() + r.size());
 }
-Eigen::ArrayXd contravariant_piola(const Eigen::ArrayXd& reference_data,
-                                   const Eigen::MatrixXd& J, const double detJ,
-                                   const Eigen::MatrixXd& K)
+//-----------------------------------------------------------------------------
+std::vector<double>
+contravariant_piola(const tcb::span<const double>& reference_data,
+                    const Eigen::MatrixXd& J, const double detJ,
+                    const Eigen::MatrixXd& K)
 {
-  return 1 / detJ * J * reference_data.matrix();
+  Eigen::Map<const Eigen::VectorXd> _reference_data(reference_data.data(),
+                                                    reference_data.size());
+  Eigen::ArrayXd r = 1 / detJ * J * _reference_data;
+  return std::vector<double>(r.data(), r.data() + r.size());
 }
-Eigen::ArrayXd double_covariant_piola(const Eigen::ArrayXd& reference_data,
-                                      const Eigen::MatrixXd& J,
-                                      const double detJ,
-                                      const Eigen::MatrixXd& K)
+//-----------------------------------------------------------------------------
+std::vector<double>
+double_covariant_piola(const tcb::span<const double>& reference_data,
+                       const Eigen::MatrixXd& J, const double detJ,
+                       const Eigen::MatrixXd& K)
 {
   Eigen::Map<const Eigen::MatrixXd> data_matrix(reference_data.data(), J.cols(),
                                                 J.cols());
   Eigen::MatrixXd result = K.transpose() * data_matrix * K;
-  return Eigen::Map<Eigen::ArrayXd>(result.data(), J.rows() * J.rows());
+  return std::vector<double>(result.data(),
+                             result.data() + J.rows() * J.rows());
 }
-Eigen::ArrayXd double_contravariant_piola(const Eigen::ArrayXd& reference_data,
-                                          const Eigen::MatrixXd& J,
-                                          const double detJ,
-                                          const Eigen::MatrixXd& K)
+//-----------------------------------------------------------------------------
+std::vector<double>
+double_contravariant_piola(const tcb::span<const double>& reference_data,
+                           const Eigen::MatrixXd& J, const double detJ,
+                           const Eigen::MatrixXd& K)
 {
   Eigen::Map<const Eigen::MatrixXd> data_matrix(reference_data.data(), J.cols(),
                                                 J.cols());
   Eigen::MatrixXd result = 1 / (detJ * detJ) * J * data_matrix * J.transpose();
-  return Eigen::Map<Eigen::ArrayXd>(result.data(), J.rows() * J.rows());
+  return std::vector<double>(result.data(),
+                             result.data() + J.rows() * J.rows());
 }
+//-----------------------------------------------------------------------------
 } // namespace
 
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-std::function<Eigen::ArrayXd(const Eigen::ArrayXd&, const Eigen::MatrixXd&,
-                             const double, const Eigen::MatrixXd&)>
+std::function<std::vector<double>(const tcb::span<const double>&,
+                                  const Eigen::MatrixXd&, const double,
+                                  const Eigen::MatrixXd&)>
 mapping::get_forward_map(mapping::type mapping_type)
 {
   switch (mapping_type)
@@ -88,3 +105,4 @@ const std::string& mapping::type_to_str(mapping::type type)
 
   return it->second;
 }
+//-----------------------------------------------------------------------------

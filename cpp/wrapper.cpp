@@ -16,6 +16,7 @@
 #include "core/mappings.h"
 #include "core/polyset.h"
 #include "core/quadrature.h"
+#include "core/span.hpp"
 
 namespace py = pybind11;
 using namespace basix;
@@ -196,8 +197,34 @@ Each element has a `tabulate` function which returns the basis functions and a n
            py::overload_cast<int, const Eigen::ArrayXXd&>(
                &FiniteElement::tabulate, py::const_),
            tabdoc.c_str())
-      .def("map_push_forward", &FiniteElement::map_push_forward, mapdoc.c_str())
-      .def("map_pull_back", &FiniteElement::map_pull_back, invmapdoc.c_str())
+      .def(
+          "map_push_forward",
+          [](const FiniteElement& self,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& reference_data,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& J,
+             const py::array_t<double, py::array::c_style>& detJ,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& K) {
+            return self.map_push_forward(
+                reference_data, J, tcb::span(detJ.data(), detJ.size()), K);
+          },
+          mapdoc.c_str())
+      .def(
+          "map_pull_back",
+          [](const FiniteElement& self,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& physical_data,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& J,
+             const py::array_t<double, py::array::c_style>& detJ,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& K) {
+            return self.map_pull_back(physical_data, J,
+                                      tcb::span(detJ.data(), detJ.size()), K);
+          },
+          invmapdoc.c_str())
       .def_property_readonly("base_permutations",
                              &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)

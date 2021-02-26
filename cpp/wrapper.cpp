@@ -162,7 +162,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return FiniteElement(family_type, celltype, degree, value_shape,
                              compute_expansion_coefficients(
                                  celltype, coeffs, interpolation_matrix,
-                                 interpolation_points, degree, true),
+                                 interpolation_points, degree, 1.0e6),
                              entity_dofs, base_permutations,
                              interpolation_points, interpolation_matrix,
                              mapping_type);
@@ -185,7 +185,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
             degree, value_shape,
             compute_expansion_coefficients(cell::str_to_type(cell_name), coeffs,
                                            interpolation_matrix,
-                                           interpolation_points, degree, true),
+                                           interpolation_points, degree, 1.0e6),
             entity_dofs, base_permutations, interpolation_points,
             interpolation_matrix, mapping_type);
       },

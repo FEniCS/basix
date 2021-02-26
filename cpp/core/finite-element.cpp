@@ -66,9 +66,9 @@ basix::FiniteElement basix::create_element(element::family family,
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd basix::compute_expansion_coefficients(
     cell::type celltype, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
-    const Eigen::ArrayXXd& x, int order, bool condition_check)
+    const Eigen::ArrayXXd& x, int degree, double kappa_tol)
 {
-  const Eigen::MatrixXd P = polyset::tabulate(celltype, order, 0, x)[0];
+  const Eigen::MatrixXd P = polyset::tabulate(celltype, degree, 0, x)[0];
 
   const int coeff_size = P.cols();
   const int value_size = B.cols() / coeff_size;
@@ -83,21 +83,20 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
     }
   }
 
-  if (condition_check)
+  if (kappa_tol >= 1.0)
   {
     Eigen::JacobiSVD svd(A);
     const int size = svd.singularValues().size();
     const double kappa
         = svd.singularValues()(0) / svd.singularValues()(size - 1);
-    if (kappa > 1e6)
+    if (kappa > kappa_tol)
     {
-      throw std::runtime_error("Poorly conditioned B.D^T when computing "
-                               "expansion coefficients");
+      throw std::runtime_error("Condition number of B.D^T when computing "
+                               "expansion coefficients exceeds tolerance.");
     }
   }
-  Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(B);
 
-  return new_coeffs;
+  return A.colPivHouseholderQr().solve(B);
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(

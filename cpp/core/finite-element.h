@@ -570,10 +570,10 @@ void FiniteElement::map_pull_back_m(
         for (int i = 0; i < nresults; ++i)
         {
           Eigen::ArrayXd tmp = physical_data.row(pt * nresults + i);
-        std::vector<double> U
-            = _map_push_forward(tmp, current_K, 1 / detJ[pt], current_J);
-        for (std::size_t j = 0; j < U.size(); ++j)
-          reference_array(pt * nresults + i, j) = U[j];
+          std::vector<double> U
+              = _map_push_forward(tmp, current_K, 1 / detJ[pt], current_J);
+          for (std::size_t j = 0; j < U.size(); ++j)
+            reference_array(pt * nresults + i, j) = U[j];
         }
       }
       else
@@ -591,8 +591,7 @@ void FiniteElement::map_pull_back_m(
         }
     }
 }
-  }
-}
+} // class FiniteElement
 //-----------------------------------------------------------------------------
 
 /// Create an element by name

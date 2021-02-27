@@ -34,24 +34,8 @@ Eigen::ArrayXd compute_gauss_jacobi_points(double a, int m);
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
                                                                     int m);
 
-/// GLL quadrature rule (points and weights)
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gll_rule(double a, int m);
-
 /// Compute line quadrature rule on [0, 1]
 /// @param m order
-/// @returns list of 1D points, list of weights
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m);
-
-/// Compute GLL line quadrature rule on [0, 1]
-/// @param m order
-/// @returns list of 1D points, list of weights
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_gll_line(int m);
-
-/// Compute triangle quadrature rule on [0, 1]x[0, 1]
-/// @param m order
-/// @returns list of 2D points, list of weights
-/// Compute line quadrature rule on [0, 1]
-/// @param[in] m order
 /// @returns list of points, list of weights
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m);
 
@@ -62,8 +46,6 @@ std::pair<Eigen::ArrayX2d, Eigen::ArrayXd>
 make_quadrature_triangle_collapsed(int m);
 
 /// Compute tetrahedron quadrature rule on [0, 1]x[0, 1]x[0, 1]
-/// @param m order
-/// @returns list of 3D points, list of weights
 /// @param[in] m order
 /// @returns List of points, list of weights. The number of points
 /// arrays has shape (num points, gdim)
@@ -71,12 +53,21 @@ std::pair<Eigen::ArrayX3d, Eigen::ArrayXd>
 make_quadrature_tetrahedron_collapsed(int m);
 
 /// Utility for quadrature rule on reference cell
-/// @param rule Name of quadrature rule (or use "default")
-/// @param celltype
-/// @param m Maximum degree of polynomial that this quadrature rule
-///          will integrate exactly
-/// @returns list of points, list of weights
+/// @param[in] rule Name of quadrature rule (or use "default")
+/// @param[in] celltype
+/// @param[in] m Maximum degree of polynomial that this quadrature rule
+/// will integrate exactly
+/// @returns List of points and list of weights. The number of points
+/// arrays has shape (num points, gdim)
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_quadrature(const std::string& rule, cell::type celltype, int m);
+
+/// Compute GLL line quadrature rule on [0, 1]
+/// @param m order
+/// @returns list of 1D points, list of weights
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_gll_line(int m);
+
+/// GLL quadrature rule (points and weights)
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gll_rule(double a, int m);
 
 } // namespace basix::quadrature

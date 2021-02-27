@@ -30,7 +30,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
   if (degree == 0)
   {
-    pt = lattice::create(celltype, 0, lattice::type::gll_warped, true);
+    pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
     for (std::size_t i = 0; i < entity_dofs.size(); ++i)
       entity_dofs[i].resize(topology[i].size(), 0);
     entity_dofs[topology.size() - 1][0] = 1;
@@ -53,7 +53,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         else if (dim == topology.size() - 1)
         {
           const Eigen::ArrayXXd lattice = lattice::create(
-              celltype, degree, lattice::type::gll_warped, false);
+              celltype, degree, lattice::type::equispaced, false);
           for (int j = 0; j < lattice.rows(); ++j)
             pt.row(c++) = lattice.row(j);
           entity_dofs[dim].push_back(lattice.rows());
@@ -62,7 +62,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, i);
           const Eigen::ArrayXXd lattice
-              = lattice::create(ct, degree, lattice::type::gll_warped, false);
+              = lattice::create(ct, degree, lattice::type::equispaced, false);
           entity_dofs[dim].push_back(lattice.rows());
           for (int j = 0; j < lattice.rows(); ++j)
           {

@@ -81,21 +81,4 @@ make_quadrature_tetrahedron_collapsed(int m);
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_quadrature(const std::string& rule, cell::type celltype, int m);
 
-} // namespace quadrature
-} // namespace basix
-/// @param[in] rule Name of quadrature rule (or use "default")
-/// @param[in] celltype
-/// @param[in] m Maximum degree of polynomial that this quadrature rule
-/// will integrate exactly
-/// @returns List of points and list of weights. The number of points
-/// arrays has shape (num points, gdim)
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-make_quadrature(const std::string& rule, cell::type celltype, int m);
-
-/// Compute GLL quadrature points and weights on the interval [-1, 1]
-/// @param[in] m order
-/// @return Array of points, array of weights
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
-gauss_lobatto_legendre_line_rule(int m);
-
 } // namespace basix::quadrature

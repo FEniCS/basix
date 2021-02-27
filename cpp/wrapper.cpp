@@ -8,14 +8,21 @@
 #include <pybind11/stl.h>
 #include <string>
 
-#include "core/cell.h"
-#include "core/element-families.h"
-#include "core/finite-element.h"
-#include "core/indexing.h"
-#include "core/lattice.h"
-#include "core/mappings.h"
-#include "core/polyset.h"
-#include "core/quadrature.h"
+#include "cell.h"
+#include "element-families.h"
+#include "finite-element.h"
+#include "indexing.h"
+#include "lattice.h"
+#include "mappings.h"
+#include "polyset.h"
+#include "quadrature.h"
+
+// TODO: remove, not in public interface
+#include "crouzeix-raviart.h"
+#include "lagrange.h"
+#include "nedelec.h"
+#include "raviart-thomas.h"
+#include "regge.h"
 
 namespace py = pybind11;
 using namespace basix;
@@ -151,30 +158,23 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "create_new_element",
       [](element::family family_type, cell::type celltype, int degree,
-         std::vector<int>& value_shape,
-         const Eigen::ArrayXXd interpolation_points,
-         const Eigen::MatrixXd& interpolation_matrix,
+         std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const std::vector<Eigen::MatrixXd>& base_permutations,
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
-        return FiniteElement(family_type, celltype, degree, value_shape,
-                             compute_expansion_coefficients(
-                                 celltype, coeffs, interpolation_matrix,
-                                 interpolation_points, degree, true),
-                             entity_dofs, base_permutations,
-                             interpolation_points, interpolation_matrix,
-                             mapping_type);
+        return FiniteElement(
+            family_type, celltype, degree, value_shape,
+            compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
+            base_permutations, {}, {}, mapping_type);
       },
       "Create an element from basic data");
 
   m.def(
       "create_new_element",
       [](std::string family_name, std::string cell_name, int degree,
-         std::vector<int>& value_shape,
-         const Eigen::ArrayXXd interpolation_points,
-         const Eigen::MatrixXd& interpolation_matrix,
+         std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const std::vector<Eigen::MatrixXd>& base_permutations,
@@ -183,11 +183,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return FiniteElement(
             element::str_to_type(family_name), cell::str_to_type(cell_name),
             degree, value_shape,
-            compute_expansion_coefficients(cell::str_to_type(cell_name), coeffs,
-                                           interpolation_matrix,
-                                           interpolation_points, degree, true),
-            entity_dofs, base_permutations, interpolation_points,
-            interpolation_matrix, mapping_type);
+            compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
+            base_permutations, {}, {}, mapping_type);
       },
       "Create an element from basic data");
 

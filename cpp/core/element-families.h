@@ -21,7 +21,8 @@ enum class family
   N2E,
   CR,
   Regge,
-  DP
+  DP,
+  Bubble
 };
 
 /// Convert string to a family

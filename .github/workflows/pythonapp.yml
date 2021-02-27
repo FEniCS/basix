@@ -8,6 +8,7 @@ on: [push, pull_request]
 
 jobs:
   build:
+    name: Build and test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -46,7 +47,7 @@ jobs:
       - name: Run units tests
         run: |
           pip install pytest pytest-xdist numpy sympy
-          pytest -n auto test/
+          pytest -v -n auto test/
       - name: Checkout FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && github.ref == 'refs/heads/main' && runner.os == 'Linux' }}
         uses: actions/checkout@v2

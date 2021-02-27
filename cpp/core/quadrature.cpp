@@ -5,7 +5,6 @@
 #include "quadrature.h"
 #include <cmath>
 #include <vector>
-#include <iostream>
 
 using namespace basix;
 
@@ -701,7 +700,39 @@ quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
   {
     const int np = (m + 4)/2;
     return make_gll_quadrature(celltype, np);
+  else if (rule == "GLL" and celltype == cell::type::interval)
+  {
+    // GLL points and weights on [-1, 1]
+    const int np = (m + 4) / 2;
+    auto [x, w] = quadrature::gauss_lobatto_legendre_line_rule(np);
+    // Rescale to [0, 1]
+    x = x * 0.5 + 0.5;
+    w *= 0.5;
+    return {x, w};
   }
   throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");
 }
 //-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
+quadrature::gauss_lobatto_legendre_line_rule(int m)
+{
+  // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval
+  // using Greg von Winckel's implementation. This facilitates implementing
+  // spectral elements.
+  // The quadrature rule uses m points for a degree of precision of 2m-3.
+
+  if (m < 2)
+  {
+    throw std::runtime_error(
+        "Gauss-Labotto-Legendre quadrature invalid for fewer than 2 points");
+  }
+
+  // Calculate the recursion coefficients
+  auto [alpha, beta] = rec_jacobi(m, 0, 0);
+
+  // Compute Lobatto nodes and weights
+  auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
+
+  return {xs_ref, ws_ref};
+}
+

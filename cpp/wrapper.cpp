@@ -8,21 +8,15 @@
 #include <pybind11/stl.h>
 #include <string>
 
-#include "cell.h"
-#include "element-families.h"
-#include "finite-element.h"
-#include "indexing.h"
-#include "lattice.h"
-#include "mappings.h"
-#include "polyset.h"
-#include "quadrature.h"
-
-// TODO: remove, not in public interface
-#include "crouzeix-raviart.h"
-#include "lagrange.h"
-#include "nedelec.h"
-#include "raviart-thomas.h"
-#include "regge.h"
+#include "core/cell.h"
+#include "core/element-families.h"
+#include "core/finite-element.h"
+#include "core/indexing.h"
+#include "core/lattice.h"
+#include "core/mappings.h"
+#include "core/polyset.h"
+#include "core/quadrature.h"
+#include "core/span.hpp"
 
 namespace py = pybind11;
 using namespace basix;
@@ -158,23 +152,30 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "create_new_element",
       [](element::family family_type, cell::type celltype, int degree,
-         std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
+         std::vector<int>& value_shape,
+         const Eigen::ArrayXXd interpolation_points,
+         const Eigen::MatrixXd& interpolation_matrix,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const std::vector<Eigen::MatrixXd>& base_permutations,
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
-        return FiniteElement(
-            family_type, celltype, degree, value_shape,
-            compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
-            base_permutations, {}, {}, mapping_type);
+        return FiniteElement(family_type, celltype, degree, value_shape,
+                             compute_expansion_coefficients(
+                                 celltype, coeffs, interpolation_matrix,
+                                 interpolation_points, degree, 1.0e6),
+                             entity_dofs, base_permutations,
+                             interpolation_points, interpolation_matrix,
+                             mapping_type);
       },
       "Create an element from basic data");
 
   m.def(
       "create_new_element",
       [](std::string family_name, std::string cell_name, int degree,
-         std::vector<int>& value_shape, const Eigen::MatrixXd& dualmat,
+         std::vector<int>& value_shape,
+         const Eigen::ArrayXXd interpolation_points,
+         const Eigen::MatrixXd& interpolation_matrix,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const std::vector<Eigen::MatrixXd>& base_permutations,
@@ -183,15 +184,47 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return FiniteElement(
             element::str_to_type(family_name), cell::str_to_type(cell_name),
             degree, value_shape,
-            compute_expansion_coefficients(coeffs, dualmat, true), entity_dofs,
-            base_permutations, {}, {}, mapping_type);
+            compute_expansion_coefficients(cell::str_to_type(cell_name), coeffs,
+                                           interpolation_matrix,
+                                           interpolation_points, degree, 1.0e6),
+            entity_dofs, base_permutations, interpolation_points,
+            interpolation_matrix, mapping_type);
       },
       "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
-      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
-      .def("map_push_forward", &FiniteElement::map_push_forward, mapdoc.c_str())
-      .def("map_pull_back", &FiniteElement::map_pull_back, invmapdoc.c_str())
+      .def("tabulate",
+           py::overload_cast<int, const Eigen::ArrayXXd&>(
+               &FiniteElement::tabulate, py::const_),
+           tabdoc.c_str())
+      .def(
+          "map_push_forward",
+          [](const FiniteElement& self,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& reference_data,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& J,
+             const py::array_t<double, py::array::c_style>& detJ,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& K) {
+            return self.map_push_forward(
+                reference_data, J, tcb::span(detJ.data(), detJ.size()), K);
+          },
+          mapdoc.c_str())
+      .def(
+          "map_pull_back",
+          [](const FiniteElement& self,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& physical_data,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& J,
+             const py::array_t<double, py::array::c_style>& detJ,
+             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>& K) {
+            return self.map_pull_back(physical_data, J,
+                                      tcb::span(detJ.data(), detJ.size()), K);
+          },
+          invmapdoc.c_str())
       .def_property_readonly("base_permutations",
                              &FiniteElement::base_permutations)
       .def_property_readonly("degree", &FiniteElement::degree)

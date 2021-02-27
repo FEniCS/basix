@@ -3,14 +3,14 @@
 // SPDX-License-Identifier:    MIT
 
 #include "brezzi-douglas-marini.h"
-#include "dof-permutations.h"
-#include "element-families.h"
+#include "core/dof-permutations.h"
+#include "core/element-families.h"
+#include "core/mappings.h"
+#include "core/moments.h"
+#include "core/polyset.h"
+#include "core/quadrature.h"
 #include "lagrange.h"
-#include "mappings.h"
-#include "moments.h"
 #include "nedelec.h"
-#include "polyset.h"
-#include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>
@@ -35,32 +35,35 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   // Create coefficients for order (degree-1) vector polynomials
   Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
 
-  // Dual space
-  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, ndofs);
-
   // quadrature degree
   int quad_deg = 5 * degree;
 
-  // Add rows to dualmat for integral moments on facets
+  // Add integral moments on facets
   const int facet_count = tdim + 1;
   const int facet_dofs = polyset::dim(facettype, degree);
-
-  dual.block(0, 0, facet_count * facet_dofs, ndofs)
-      = moments::make_normal_integral_moments(
-          create_dlagrange(facettype, degree), celltype, tdim, degree,
-          quad_deg);
-
   const int internal_dofs = ndofs - facet_count * facet_dofs;
 
-  // Add rows to dualmat for integral moments on interior
+  Eigen::ArrayXXd points_facet;
+  Eigen::MatrixXd matrix_facet;
+  std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
+      create_dlagrange(facettype, degree), celltype, tdim, degree, quad_deg);
+
+  Eigen::ArrayXXd points_cell;
+  Eigen::MatrixXd matrix_cell;
+  // Add integral moments on interior
   if (degree > 1)
   {
     // Interior integral moment
-    dual.block(facet_count * facet_dofs, 0, internal_dofs, ndofs)
-        = moments::make_dot_integral_moments(
-            create_nedelec(celltype, degree - 1), celltype, tdim, degree,
-            quad_deg);
+    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
+        create_nedelec(celltype, degree - 1), celltype, tdim, degree, quad_deg);
   }
+
+  // Interpolation points and matrix
+  Eigen::ArrayXXd points;
+  Eigen::MatrixXd matrix;
+
+  std::tie(points, matrix) = combine_interpolation_data(
+      points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -118,10 +121,11 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, matrix, points, degree);
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations, {}, {},
+                       entity_dofs, base_permutations, points, matrix,
                        mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

@@ -3,10 +3,10 @@
 // SPDX-License-Identifier:    MIT
 
 #include "basix.h"
-#include "cell.h"
-#include "finite-element.h"
-#include "mappings.h"
-#include "quadrature.h"
+#include "core/cell.h"
+#include "core/finite-element.h"
+#include "core/mappings.h"
+#include "core/quadrature.h"
 #include <algorithm>
 #include <iterator>
 #include <memory>
@@ -60,17 +60,17 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
   //   std::copy(values[i].data(), values[i].data() + m, basis_values + i * m);
 }
 
-void basix::map_push_forward(int handle, double* physical_data,
-                             const double* reference_data, const double* J,
-                             const double* detJ, const double* K,
-                             const int physical_dim,
-                             const int physical_value_size, const int nresults,
-                             const int npoints)
+void basix::map_push_forward_real(int handle, double* physical_data,
+                                  const double* reference_data, const double* J,
+                                  const double* detJ, const double* K,
+                                  const int physical_dim,
+                                  const int physical_value_size,
+                                  const int nresults, const int npoints)
 {
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
   const int vs = _registry[handle]->value_size();
-  _registry[handle]->map_push_forward_to_memory(
+  _registry[handle]->map_push_forward_to_memory_real(
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(reference_data, npoints,
                                                       vs * nresults),
@@ -84,17 +84,67 @@ void basix::map_push_forward(int handle, double* physical_data,
       physical_data);
 }
 
-void basix::map_pull_back(int handle, double* reference_data,
-                          const double* physical_data, const double* J,
-                          const double* detJ, const double* K,
-                          const int physical_dim, const int physical_value_size,
-                          const int nresults, const int npoints)
+void basix::map_pull_back_real(int handle, double* reference_data,
+                               const double* physical_data, const double* J,
+                               const double* detJ, const double* K,
+                               const int physical_dim,
+                               const int physical_value_size,
+                               const int nresults, const int npoints)
 {
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
-  _registry[handle]->map_pull_back_to_memory(
+  _registry[handle]->map_pull_back_to_memory_real(
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                    Eigen::RowMajor>>(
+                                    Eigen::ColMajor>>(
+          physical_data, npoints * nresults, physical_value_size),
+      Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                    Eigen::RowMajor>>(J, npoints,
+                                                      physical_dim * tdim),
+      Eigen::Map<const Eigen::ArrayXd>(detJ, npoints),
+      Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                    Eigen::RowMajor>>(K, npoints,
+                                                      physical_dim * tdim),
+      reference_data);
+}
+
+void basix::map_push_forward_complex(int handle,
+                                     std::complex<double>* physical_data,
+                                     const std::complex<double>* reference_data,
+                                     const double* J, const double* detJ,
+                                     const double* K, const int physical_dim,
+                                     const int physical_value_size,
+                                     const int nresults, const int npoints)
+{
+  check_handle(handle);
+  const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
+  const int vs = _registry[handle]->value_size();
+  _registry[handle]->map_push_forward_to_memory_complex(
+      Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
+                                    Eigen::Dynamic, Eigen::RowMajor>>(
+          reference_data, npoints * nresults, vs),
+      Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                    Eigen::RowMajor>>(J, npoints,
+                                                      physical_dim * tdim),
+      Eigen::Map<const Eigen::ArrayXd>(detJ, npoints),
+      Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                    Eigen::RowMajor>>(K, npoints,
+                                                      physical_dim * tdim),
+      physical_data);
+}
+
+void basix::map_pull_back_complex(int handle,
+                                  std::complex<double>* reference_data,
+                                  const std::complex<double>* physical_data,
+                                  const double* J, const double* detJ,
+                                  const double* K, const int physical_dim,
+                                  const int physical_value_size,
+                                  const int nresults, const int npoints)
+{
+  check_handle(handle);
+  const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
+  _registry[handle]->map_pull_back_to_memory_complex(
+      Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
+                                    Eigen::Dynamic, Eigen::ColMajor>>(
           physical_data, npoints, physical_value_size * nresults),
       Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                     Eigen::RowMajor>>(J, npoints,

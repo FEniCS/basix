@@ -3,14 +3,14 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
-#include "brezzi-douglas-marini.h"
-#include "crouzeix-raviart.h"
-#include "lagrange.h"
-#include "nce-rtc.h"
-#include "nedelec.h"
+#include "elements/brezzi-douglas-marini.h"
+#include "elements/crouzeix-raviart.h"
+#include "elements/lagrange.h"
+#include "elements/nce-rtc.h"
+#include "elements/nedelec.h"
+#include "elements/raviart-thomas.h"
+#include "elements/regge.h"
 #include "polyset.h"
-#include "raviart-thomas.h"
-#include "regge.h"
 #include <iostream>
 #include <numeric>
 
@@ -38,7 +38,7 @@ int compute_value_size(const mapping::type mapping_type, const int dim)
   default:
     throw std::runtime_error("Mapping not yet implemented");
   }
-  }
+}
 } // namespace
 
 //-----------------------------------------------------------------------------
@@ -83,17 +83,33 @@ basix::FiniteElement basix::create_element(element::family family,
     throw std::runtime_error("Family not found");
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd
-basix::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
-                                      const Eigen::MatrixXd& dual,
-                                      bool condition_check)
+Eigen::MatrixXd basix::compute_expansion_coefficients(
+    cell::type celltype, const Eigen::MatrixXd& coeffs,
+    const Eigen::MatrixXd& interpolation_matrix,
+    const Eigen::ArrayXXd& interpolation_points, const int order,
+    bool condition_check)
 {
-#ifndef NDEBUG
-  std::cout << "Initial coeffs = \n[" << coeffs << "]\n";
-  std::cout << "Dual matrix = \n[" << dual << "]\n";
-#endif
+  const Eigen::MatrixXd tabulation
+      = polyset::tabulate(celltype, order, 0, interpolation_points)[0];
 
-  const Eigen::MatrixXd A = coeffs * dual.transpose();
+  const int scalar_coeff_size = tabulation.cols();
+  const int value_size = coeffs.cols() / scalar_coeff_size;
+  const int scalar_interpolation_size
+      = interpolation_matrix.cols() / value_size;
+  Eigen::MatrixXd A(coeffs.rows(), interpolation_matrix.rows());
+  A.setZero();
+  for (int row = 0; row < coeffs.rows(); ++row)
+    for (int i = 0; i < value_size; ++i)
+    {
+      A.row(row)
+          += coeffs.block(row, scalar_coeff_size * i, 1, scalar_coeff_size)
+             * tabulation.transpose()
+             * interpolation_matrix
+                   .block(0, i * scalar_interpolation_size,
+                          interpolation_matrix.rows(),
+                          scalar_interpolation_size)
+                   .transpose();
+    }
   if (condition_check)
   {
     Eigen::JacobiSVD svd(A);
@@ -106,15 +122,47 @@ basix::compute_expansion_coefficients(const Eigen::MatrixXd& coeffs,
                                "expansion coefficients");
     }
   }
-
   Eigen::MatrixXd new_coeffs = A.colPivHouseholderQr().solve(coeffs);
-#ifndef NDEBUG
-  std::cout << "New coeffs = \n[" << new_coeffs << "]\n";
-#endif
 
   return new_coeffs;
 }
 //-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(
+    const Eigen::ArrayXXd& points_1d, const Eigen::ArrayXXd& points_2d,
+    const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,
+    const Eigen::MatrixXd& matrix_2d, const Eigen::MatrixXd& matrix_3d,
+    const int tdim, const int value_size)
+{
+  Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows() + points_3d.rows(),
+                         tdim);
+
+  points.block(0, 0, points_1d.rows(), tdim) = points_1d;
+  points.block(points_1d.rows(), 0, points_2d.rows(), tdim) = points_2d;
+  points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), tdim)
+      = points_3d;
+
+  Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
+                         matrix_1d.cols() + matrix_2d.cols()
+                             + matrix_3d.cols());
+  matrix.setZero();
+
+  const int r1d = matrix_1d.rows();
+  const int r2d = matrix_2d.rows();
+  const int r3d = matrix_3d.rows();
+  const int c1d = matrix_1d.cols() / value_size;
+  const int c2d = matrix_2d.cols() / value_size;
+  const int c3d = matrix_3d.cols() / value_size;
+  for (int i = 0; i < value_size; ++i)
+  {
+    matrix.block(0, i * (c1d + c2d + c3d), r1d, c1d)
+        = matrix_1d.block(0, i * c1d, r1d, c1d);
+    matrix.block(r1d, i * (c1d + c2d + c3d) + c1d, r2d, c2d)
+        = matrix_2d.block(0, i * c2d, r2d, c2d);
+    matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r3d, c3d)
+        = matrix_3d.block(0, i * c3d, r3d, c3d);
+  }
+  return std::make_pair(points, matrix);
+}
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
@@ -280,7 +328,7 @@ FiniteElement::map_push_forward(
   return physical_data;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::map_push_forward_to_memory(
+void FiniteElement::map_push_forward_to_memory_real(
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         reference_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
@@ -317,6 +365,50 @@ void FiniteElement::map_push_forward_to_memory(
     for (int i = 0; i < reference_block.cols(); ++i)
       physical_block.col(i) = _map_push_forward(reference_block.col(i),
                                                 current_J, detJ[pt], current_K);
+  }
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::map_push_forward_to_memory_complex(
+    const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic,
+                       Eigen::RowMajor>& reference_data,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        J,
+    const Eigen::ArrayXd& detJ,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        K,
+    std::complex<double>* physical_data) const
+{
+  const int reference_dim = cell::topological_dimension(_cell_type);
+  const int physical_dim = J.cols() / reference_dim;
+  const int physical_value_size
+      = compute_value_size(_mapping_type, physical_dim);
+  const int reference_value_size = value_size();
+  const int nresults = reference_data.cols() / reference_value_size;
+  const int npoints = reference_data.rows();
+
+  for (int pt = 0; pt < npoints; ++pt)
+  {
+    Eigen::Map<const Eigen::Array<std::complex<double>, Eigen::Dynamic,
+                                  Eigen::Dynamic, Eigen::ColMajor>>
+        reference_block(reference_data.row(pt).data(), reference_value_size,
+                        nresults);
+    Eigen::Map<Eigen::Array<std::complex<double>, Eigen::Dynamic,
+                            Eigen::Dynamic, Eigen::ColMajor>>
+        physical_block(physical_data + pt * physical_value_size * nresults,
+                       physical_value_size, nresults);
+    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>>
+        current_J(J.row(pt).data(), physical_dim, reference_dim);
+    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>>
+        current_K(K.row(pt).data(), reference_dim, physical_dim);
+    for (int i = 0; i < reference_block.cols(); ++i)
+    {
+      physical_block.col(i).real() = _map_push_forward(
+          reference_block.col(i).real(), current_J, detJ[pt], current_K);
+      physical_block.col(i).imag() = _map_push_forward(
+          reference_block.col(i).imag(), current_J, detJ[pt], current_K);
+    }
   }
 }
 //-----------------------------------------------------------------------------
@@ -363,9 +455,8 @@ FiniteElement::map_pull_back(
   return reference_data;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::map_pull_back_to_memory(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        physical_data,
+void FiniteElement::map_pull_back_to_memory_real(
+    const Eigen::ArrayXXd& physical_data,
     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
         J,
     const Eigen::ArrayXd& detJ,
@@ -381,25 +472,64 @@ void FiniteElement::map_pull_back_to_memory(
   const int nresults = physical_data.cols() / physical_value_size;
   const int npoints = physical_data.rows();
 
+  Eigen::Map<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
+      reference_array(reference_data, nresults * npoints, reference_value_size);
+
   for (int pt = 0; pt < npoints; ++pt)
   {
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-        reference_block(reference_data + pt * reference_value_size * nresults,
-                        reference_value_size, nresults);
-    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::ColMajor>>
-        physical_block(physical_data.row(pt).data(), physical_value_size,
-                       nresults);
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_J(J.row(pt).data(), physical_dim, reference_dim);
     Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>>
         current_K(K.row(pt).data(), reference_dim, physical_dim);
-    for (int i = 0; i < physical_block.cols(); ++i)
-      reference_block.col(i) = _map_push_forward(
-          physical_block.col(i), current_K, 1 / detJ[pt], current_J);
+    for (int i = 0; i < nresults; ++i)
+      reference_array.row(pt * nresults + i)
+          = _map_push_forward(physical_data.row(pt * nresults + i), current_K,
+                              1 / detJ[pt], current_J);
+  }
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::map_pull_back_to_memory_complex(
+    const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>&
+        physical_data,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        J,
+    const Eigen::ArrayXd& detJ,
+    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
+        K,
+    std::complex<double>* reference_data) const
+{
+  const int reference_dim = cell::topological_dimension(_cell_type);
+  const int physical_dim = J.cols() / reference_dim;
+  const int physical_value_size
+      = compute_value_size(_mapping_type, physical_dim);
+  const int reference_value_size = value_size();
+  const int nresults = physical_data.cols() / physical_value_size;
+  const int npoints = physical_data.rows();
+
+  Eigen::Map<Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic,
+                          Eigen::ColMajor>>
+      reference_array(reference_data, nresults * npoints, reference_value_size);
+
+  for (int pt = 0; pt < npoints; ++pt)
+  {
+    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>>
+        current_J(J.row(pt).data(), physical_dim, reference_dim);
+    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
+                                   Eigen::RowMajor>>
+        current_K(K.row(pt).data(), reference_dim, physical_dim);
+    for (int i = 0; i < nresults; ++i)
+    {
+      reference_array.row(pt * nresults + i).real()
+          = _map_push_forward(physical_data.row(pt * nresults + i).real(),
+                              current_K, 1 / detJ[pt], current_J);
+      reference_array.row(pt * nresults + i).imag()
+          = _map_push_forward(physical_data.row(pt * nresults + i).imag(),
+                              current_K, 1 / detJ[pt], current_J);
+    }
   }
 }
 //-----------------------------------------------------------------------------

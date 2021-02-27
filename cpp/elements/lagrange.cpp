@@ -3,10 +3,11 @@
 // SPDX-License-Identifier:    MIT
 
 #include "lagrange.h"
-#include "dof-permutations.h"
-#include "element-families.h"
-#include "lattice.h"
-#include "polyset.h"
+#include "core/dof-permutations.h"
+#include "core/element-families.h"
+#include "core/lattice.h"
+#include "core/mappings.h"
+#include "core/polyset.h"
 #include <Eigen/Dense>
 #include <iostream>
 #include <numeric>
@@ -29,7 +30,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
   if (degree == 0)
   {
-    pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
+    pt = lattice::create(celltype, 0, lattice::type::gll_warped, true);
     for (std::size_t i = 0; i < entity_dofs.size(); ++i)
       entity_dofs[i].resize(topology[i].size(), 0);
     entity_dofs[topology.size() - 1][0] = 1;
@@ -52,7 +53,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         else if (dim == topology.size() - 1)
         {
           const Eigen::ArrayXXd lattice = lattice::create(
-              celltype, degree, lattice::type::equispaced, false);
+              celltype, degree, lattice::type::gll_warped, false);
           for (int j = 0; j < lattice.rows(); ++j)
             pt.row(c++) = lattice.row(j);
           entity_dofs[dim].push_back(lattice.rows());
@@ -61,7 +62,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, i);
           const Eigen::ArrayXXd lattice
-              = lattice::create(ct, degree, lattice::type::equispaced, false);
+              = lattice::create(ct, degree, lattice::type::gll_warped, false);
           entity_dofs[dim].push_back(lattice.rows());
           for (int j = 0; j < lattice.rows(); ++j)
           {
@@ -173,14 +174,14 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
               << std::endl;
   }
 
-  // Point evaluation of basis
-  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
+      celltype, Eigen::MatrixXd::Identity(ndofs, ndofs),
+      Eigen::MatrixXd::Identity(ndofs, ndofs), pt, degree);
 
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
                        entity_dofs, base_permutations, pt,
-                       Eigen::MatrixXd::Identity(ndofs, ndofs));
+                       Eigen::MatrixXd::Identity(ndofs, ndofs),
+                       mapping::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
@@ -201,12 +202,6 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   const Eigen::ArrayXXd pt
       = lattice::create(celltype, degree, lattice::type::equispaced, true);
 
-  // Point evaluation of basis
-  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
-
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
-
   int perm_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     perm_count += topology[i].size() * i;
@@ -214,8 +209,13 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, Eigen::MatrixXd::Identity(ndofs, ndofs),
+      Eigen::MatrixXd::Identity(ndofs, ndofs), pt, degree);
+
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
                        entity_dofs, base_permutations, pt,
-                       Eigen::MatrixXd::Identity(ndofs, ndofs));
+                       Eigen::MatrixXd::Identity(ndofs, ndofs),
+                       mapping::type::identity);
 }
 //-----------------------------------------------------------------------------

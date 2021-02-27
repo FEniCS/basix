@@ -5,6 +5,7 @@
 #include "quadrature.h"
 #include <cmath>
 #include <vector>
+#include <iostream>
 
 using namespace basix;
 
@@ -698,7 +699,7 @@ quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
   }
   else if (rule == "GLL")
   {
-    const int np = (m + 4) / 2;
+    const int np = (m + 4)/2;
     return make_gll_quadrature(celltype, np);
   }
   throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");

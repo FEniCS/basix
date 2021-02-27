@@ -3,9 +3,10 @@
 // SPDX-License-Identifier:    MIT
 
 #include "crouzeix-raviart.h"
-#include "element-families.h"
-#include "polyset.h"
-#include "quadrature.h"
+#include "core/element-families.h"
+#include "core/mappings.h"
+#include "core/polyset.h"
+#include "core/quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>
@@ -45,9 +46,6 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      Eigen::MatrixXd::Identity(ndofs, ndofs), dual);
-
   // Crouzeix-Raviart has one dof on each entity of tdim-1.
   std::vector<std::vector<int>> entity_dofs(topology.size());
   entity_dofs[0].resize(topology[0].size(), 0);
@@ -56,7 +54,13 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3] = {0};
 
+  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, Eigen::MatrixXd::Identity(ndofs, ndofs),
+      Eigen::MatrixXd::Identity(ndofs, ndofs), pts, degree);
+
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
-                       entity_dofs, base_permutations, {});
+                       entity_dofs, base_permutations, pts,
+                       Eigen::MatrixXd::Identity(ndofs, ndofs),
+                       mapping::type::identity);
 }
 //-----------------------------------------------------------------------------

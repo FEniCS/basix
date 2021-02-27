@@ -3,13 +3,13 @@
 // SPDX-License-Identifier:    MIT
 
 #include "nedelec.h"
-#include "dof-permutations.h"
-#include "element-families.h"
+#include "core/dof-permutations.h"
+#include "core/element-families.h"
+#include "core/mappings.h"
+#include "core/moments.h"
+#include "core/polyset.h"
+#include "core/quadrature.h"
 #include "lagrange.h"
-#include "mappings.h"
-#include "moments.h"
-#include "polyset.h"
-#include "quadrature.h"
 #include "raviart-thomas.h"
 #include <Eigen/Dense>
 #include <numeric>
@@ -61,82 +61,31 @@ Eigen::MatrixXd create_nedelec_2d_space(int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd create_nedelec_2d_dual(int degree)
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+create_nedelec_2d_interpolation(int degree)
 {
-  // Number of dofs and size of polynomial set P(k+1)
-  const int ndofs = 3 * degree + degree * (degree - 1);
-  const int psize = (degree + 1) * (degree + 2) / 2;
-
-  // Dual space
-  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * 2);
-
   // dof counter
   const int quad_deg = 5 * degree;
 
   // Integral representation for the boundary (edge) dofs
-  dual.block(0, 0, 3 * degree, psize * 2)
-      = moments::make_tangent_integral_moments(
-          create_dlagrange(cell::type::interval, degree - 1),
-          cell::type::triangle, 2, degree, quad_deg);
+  Eigen::ArrayXXd points_1d;
+  Eigen::MatrixXd matrix_1d;
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
+      create_dlagrange(cell::type::interval, degree - 1), cell::type::triangle,
+      2, degree, quad_deg);
 
+  Eigen::ArrayXXd points_2d(0, 2);
+  Eigen::MatrixXd matrix_2d(0, 0);
   if (degree > 1)
   {
     // Interior integral moment
-    dual.block(3 * degree, 0, degree * (degree - 1), psize * 2)
-        = moments::make_integral_moments(
-            create_dlagrange(cell::type::triangle, degree - 2),
-            cell::type::triangle, 2, degree, quad_deg);
+    std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
+        create_dlagrange(cell::type::triangle, degree - 2),
+        cell::type::triangle, 2, degree, quad_deg);
   }
 
-  return dual;
-}
-//-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-create_nedelec_2d_interpolation(int degree)
-{
-  // Number of dofs and interpolation points
-  int quad_deg = 5 * degree;
-
-  Eigen::ArrayXXd points_1d;
-  Eigen::MatrixXd matrix_1d;
-  std::tie(points_1d, matrix_1d)
-      = moments::make_tangent_integral_moments_interpolation(
-          create_dlagrange(cell::type::interval, degree - 1),
-          cell::type::triangle, 2, degree, quad_deg);
-
-  if (degree == 1)
-    return {points_1d, matrix_1d};
-
-  Eigen::ArrayXXd points_2d;
-  Eigen::MatrixXd matrix_2d;
-  std::tie(points_2d, matrix_2d) = moments::make_integral_moments_interpolation(
-      create_dlagrange(cell::type::triangle, degree - 2), cell::type::triangle,
-      2, degree, quad_deg);
-
-  Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows(), 2);
-  Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows(),
-                         matrix_1d.cols() + matrix_2d.cols());
-  matrix.setZero();
-  assert(points_1d.rows() + points_2d.rows() * 2
-         == matrix_1d.cols() + matrix_2d.cols());
-  assert(matrix_1d.rows() + matrix_2d.rows() == (degree + 1) * (degree + 2));
-
-  points.block(0, 0, points_1d.rows(), 2) = points_1d;
-  points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
-
-  for (int i = 0; i < 2; ++i)
-  {
-    const int r1d = matrix_1d.rows();
-    const int r2d = matrix_2d.rows();
-    const int c1d = matrix_1d.cols() / 2;
-    const int c2d = matrix_2d.cols() / 2;
-    matrix.block(0, i * (c1d + c2d), r1d, c1d)
-        = matrix_1d.block(0, i * c1d, r1d, c1d);
-    matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)
-        = matrix_2d.block(0, i * c2d, r2d, c2d);
-  }
-
-  return {points, matrix};
+  return combine_interpolation_data(points_1d, points_2d, {}, matrix_1d,
+                                    matrix_2d, {}, 2, 2);
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
@@ -245,49 +194,6 @@ Eigen::MatrixXd create_nedelec_3d_space(int degree)
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd create_nedelec_3d_dual(int degree)
-{
-  const int tdim = 3;
-
-  // Size of polynomial set P(k+1)
-  const int psize = (degree + 1) * (degree + 2) * (degree + 3) / 6;
-
-  // Work out number of dofs
-  const int ndofs = 6 * degree + 4 * degree * (degree - 1)
-                    + (degree - 2) * (degree - 1) * degree / 2;
-  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
-
-  // Create quadrature scheme on the edge
-  const int quad_deg = 5 * degree;
-
-  // Integral representation for the boundary (edge) dofs
-  dual.block(0, 0, 6 * degree, psize * 3)
-      = moments::make_tangent_integral_moments(
-          create_dlagrange(cell::type::interval, degree - 1),
-          cell::type::tetrahedron, 3, degree, quad_deg);
-
-  if (degree > 1)
-  {
-    // Integral moments on faces
-    dual.block(6 * degree, 0, 4 * (degree - 1) * degree, psize * 3)
-        = moments::make_integral_moments(
-            create_dlagrange(cell::type::triangle, degree - 2),
-            cell::type::tetrahedron, 3, degree, quad_deg);
-  }
-
-  if (degree > 2)
-  {
-    // Interior integral moment
-    dual.block(6 * degree + 4 * degree * (degree - 1), 0,
-               (degree - 2) * (degree - 1) * degree / 2, psize * 3)
-        = moments::make_integral_moments(
-            create_dlagrange(cell::type::tetrahedron, degree - 3),
-            cell::type::tetrahedron, 3, degree, quad_deg);
-  }
-
-  return dual;
-}
-//-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec_3d_interpolation(int degree)
 {
@@ -296,79 +202,30 @@ create_nedelec_3d_interpolation(int degree)
 
   Eigen::ArrayXXd points_1d;
   Eigen::MatrixXd matrix_1d;
-  std::tie(points_1d, matrix_1d)
-      = moments::make_tangent_integral_moments_interpolation(
-          create_dlagrange(cell::type::interval, degree - 1),
-          cell::type::tetrahedron, 3, degree, quad_deg);
-
-  if (degree == 1)
-    return {points_1d, matrix_1d};
-
-  Eigen::ArrayXXd points_2d;
-  Eigen::MatrixXd matrix_2d;
-  std::tie(points_2d, matrix_2d) = moments::make_integral_moments_interpolation(
-      create_dlagrange(cell::type::triangle, degree - 2),
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
+      create_dlagrange(cell::type::interval, degree - 1),
       cell::type::tetrahedron, 3, degree, quad_deg);
 
-  if (degree == 2)
+  Eigen::ArrayXXd points_2d(0, 3);
+  Eigen::MatrixXd matrix_2d(0, 0);
+  if (degree > 1)
   {
-    Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows(), 3);
-    Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows(),
-                           matrix_1d.cols() + matrix_2d.cols());
-    matrix.setZero();
-
-    points.block(0, 0, points_1d.rows(), 3) = points_1d;
-    points.block(points_1d.rows(), 0, points_2d.rows(), 3) = points_2d;
-
-    const int r1d = matrix_1d.rows();
-    const int r2d = matrix_2d.rows();
-    const int c1d = matrix_1d.cols() / 3;
-    const int c2d = matrix_2d.cols() / 3;
-    for (int i = 0; i < 3; ++i)
-    {
-      matrix.block(0, i * (c1d + c2d), r1d, c1d)
-          = matrix_1d.block(0, i * c1d, r1d, c1d);
-      matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)
-          = matrix_2d.block(0, i * c2d, r2d, c2d);
-    }
-
-    return {points, matrix};
+    std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
+        create_dlagrange(cell::type::triangle, degree - 2),
+        cell::type::tetrahedron, 3, degree, quad_deg);
   }
 
-  Eigen::ArrayXXd points_3d;
-  Eigen::MatrixXd matrix_3d;
-  std::tie(points_3d, matrix_3d) = moments::make_integral_moments_interpolation(
-      create_dlagrange(cell::type::tetrahedron, degree - 3),
-      cell::type::tetrahedron, 3, degree, quad_deg);
-
-  Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows() + points_3d.rows(),
-                         3);
-  Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
-                         matrix_1d.cols() + matrix_2d.cols()
-                             + matrix_3d.cols());
-  matrix.setZero();
-  points.block(0, 0, points_1d.rows(), 3) = points_1d;
-  points.block(points_1d.rows(), 0, points_2d.rows(), 3) = points_2d;
-  points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), 3)
-      = points_3d;
-
-  const int r1d = matrix_1d.rows();
-  const int r2d = matrix_2d.rows();
-  const int r3d = matrix_3d.rows();
-  const int c1d = matrix_1d.cols() / 3;
-  const int c2d = matrix_2d.cols() / 3;
-  const int c3d = matrix_3d.cols() / 3;
-  for (int i = 0; i < 3; ++i)
+  Eigen::ArrayXXd points_3d(0, 3);
+  Eigen::MatrixXd matrix_3d(0, 0);
+  if (degree > 2)
   {
-    matrix.block(0, i * (c1d + c2d + c3d), r1d, c1d)
-        = matrix_1d.block(0, i * c1d, r1d, c1d);
-    matrix.block(r1d, i * (c1d + c2d + c3d) + c1d, r2d, c2d)
-        = matrix_2d.block(0, i * c2d, r2d, c2d);
-    matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r3d, c3d)
-        = matrix_3d.block(0, i * c3d, r3d, c3d);
+    std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
+        create_dlagrange(cell::type::tetrahedron, degree - 3),
+        cell::type::tetrahedron, 3, degree, quad_deg);
   }
 
-  return {points, matrix};
+  return combine_interpolation_data(points_1d, points_2d, points_3d, matrix_1d,
+                                    matrix_2d, matrix_3d, 3, 3);
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
@@ -439,36 +296,6 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
 }
 
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd create_nedelec2_2d_dual(int degree)
-{
-  // Number of dofs and size of polynomial set P(k+1)
-  const int ndofs = (degree + 1) * (degree + 2);
-  const int psize = (degree + 1) * (degree + 2) / 2;
-
-  // Dual space
-  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * 2);
-
-  // dof counter
-  int quad_deg = 5 * degree;
-
-  // Integral representation for the boundary (edge) dofs
-  dual.block(0, 0, 3 * (degree + 1), psize * 2)
-      = moments::make_tangent_integral_moments(
-          create_dlagrange(cell::type::interval, degree), cell::type::triangle,
-          2, degree, quad_deg);
-
-  if (degree > 1)
-  {
-    // Interior integral moment
-    dual.block(3 * (degree + 1), 0, (degree - 1) * (degree + 1), psize * 2)
-        = moments::make_dot_integral_moments(
-            create_rt(cell::type::triangle, degree - 1), cell::type::triangle,
-            2, degree, quad_deg);
-  }
-
-  return dual;
-}
-//-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec2_2d_interpolation(int degree)
 {
@@ -477,45 +304,21 @@ create_nedelec2_2d_interpolation(int degree)
 
   Eigen::ArrayXXd points_1d;
   Eigen::MatrixXd matrix_1d;
-  std::tie(points_1d, matrix_1d)
-      = moments::make_tangent_integral_moments_interpolation(
-          create_dlagrange(cell::type::interval, degree), cell::type::triangle,
-          2, degree, quad_deg);
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
+      create_dlagrange(cell::type::interval, degree), cell::type::triangle, 2,
+      degree, quad_deg);
 
-  if (degree == 1)
-    return {points_1d, matrix_1d};
-
-  Eigen::ArrayXXd points_2d;
-  Eigen::MatrixXd matrix_2d;
-  std::tie(points_2d, matrix_2d)
-      = moments::make_dot_integral_moments_interpolation(
-          create_rt(cell::type::triangle, degree - 1), cell::type::triangle, 2,
-          degree, quad_deg);
-
-  Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows(), 2);
-  Eigen::MatrixXd matrix(matrix_1d.rows() + matrix_2d.rows(),
-                         matrix_1d.cols() + matrix_2d.cols());
-  matrix.setZero();
-  assert(points_1d.rows() + points_2d.rows() * 2
-         == matrix_1d.cols() + matrix_2d.cols());
-  assert(matrix_1d.rows() + matrix_2d.rows() == (degree + 1) * (degree + 2));
-
-  points.block(0, 0, points_1d.rows(), 2) = points_1d;
-  points.block(points_1d.rows(), 0, points_2d.rows(), 2) = points_2d;
-
-  const int r1d = matrix_1d.rows();
-  const int r2d = matrix_2d.rows();
-  const int c1d = matrix_1d.cols() / 2;
-  const int c2d = matrix_2d.cols() / 2;
-  for (int i = 0; i < 2; ++i)
+  Eigen::ArrayXXd points_2d(0, 2);
+  Eigen::MatrixXd matrix_2d(0, 0);
+  if (degree > 1)
   {
-    matrix.block(0, i * (c1d + c2d), r1d, c1d)
-        = matrix_1d.block(0, i * c1d, r1d, c1d);
-    matrix.block(r1d, i * (c1d + c2d) + c1d, r2d, c2d)
-        = matrix_2d.block(0, i * c2d, r2d, c2d);
+    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
+        create_rt(cell::type::triangle, degree - 1), cell::type::triangle, 2,
+        degree, quad_deg);
   }
 
-  return {points, matrix};
+  return combine_interpolation_data(points_1d, points_2d, {}, matrix_1d,
+                                    matrix_2d, {}, 2, 2);
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec2_2d_base_permutations(int degree)
@@ -545,56 +348,42 @@ std::vector<Eigen::MatrixXd> create_nedelec2_2d_base_permutations(int degree)
   return base_permutations;
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd create_nedelec2_3d_dual(int degree)
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+create_nedelec2_3d_interpolation(int degree)
 {
-  const int tdim = 3;
-
-  // Size of polynomial set P(k+1)
-  const int psize = (degree + 1) * (degree + 2) * (degree + 3) / 6;
-
-  // Work out number of dofs
-  const int ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 2;
-
-  Eigen::MatrixXd dual = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
-
   // Create quadrature scheme on the edge
   int quad_deg = 5 * degree;
 
   // Integral representation for the boundary (edge) dofs
-  dual.block(0, 0, 6 * (degree + 1), psize * 3)
-      = moments::make_tangent_integral_moments(
-          create_dlagrange(cell::type::interval, degree),
-          cell::type::tetrahedron, 3, degree, quad_deg);
+  Eigen::ArrayXXd points_1d;
+  Eigen::MatrixXd matrix_1d;
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
+      create_dlagrange(cell::type::interval, degree), cell::type::tetrahedron,
+      3, degree, quad_deg);
+
+  Eigen::ArrayXXd points_2d(0, 3);
+  Eigen::MatrixXd matrix_2d(0, 0);
 
   if (degree > 1)
   {
     // Integral moments on faces
-    dual.block(6 * (degree + 1), 0, 4 * (degree - 1) * (degree + 1), psize * 3)
-        = moments::make_dot_integral_moments(
-            create_rt(cell::type::triangle, degree - 1),
-            cell::type::tetrahedron, 3, degree, quad_deg);
+    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
+        create_rt(cell::type::triangle, degree - 1), cell::type::tetrahedron, 3,
+        degree, quad_deg);
   }
 
+  Eigen::ArrayXXd points_3d(0, 3);
+  Eigen::MatrixXd matrix_3d(0, 0);
   if (degree > 2)
   {
     // Interior integral moment
-    dual.block((6 + 4 * (degree - 1)) * (degree + 1), 0,
-               (degree - 1) * (degree - 2) * (degree + 1) / 2, psize * 3)
-        = moments::make_dot_integral_moments(
-            create_rt(cell::type::tetrahedron, degree - 2),
-            cell::type::tetrahedron, 3, degree, quad_deg);
+    std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
+        create_rt(cell::type::tetrahedron, degree - 2), cell::type::tetrahedron,
+        3, degree, quad_deg);
   }
 
-  return dual;
-}
-//-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-create_nedelec2_3d_interpolation(int degree)
-{
-  // TODO
-  Eigen::ArrayXXd points(0, 0);
-  Eigen::MatrixXd matrix(0, 0);
-  return {points, matrix};
+  return combine_interpolation_data(points_1d, points_2d, points_3d, matrix_1d,
+                                    matrix_2d, matrix_3d, 3, 3);
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
@@ -645,7 +434,6 @@ std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
 FiniteElement basix::create_nedelec(cell::type celltype, int degree)
 {
   Eigen::MatrixXd wcoeffs;
-  Eigen::MatrixXd dual;
   Eigen::ArrayXXd points;
   Eigen::MatrixXd interp_matrix;
   std::vector<Eigen::MatrixXd> perms;
@@ -654,14 +442,12 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   {
     wcoeffs = create_nedelec_2d_space(degree);
     std::tie(points, interp_matrix) = create_nedelec_2d_interpolation(degree);
-    dual = create_nedelec_2d_dual(degree);
     perms = create_nedelec_2d_base_perms(degree);
   }
   else if (celltype == cell::type::tetrahedron)
   {
     wcoeffs = create_nedelec_3d_space(degree);
     std::tie(points, interp_matrix) = create_nedelec_3d_interpolation(degree);
-    dual = create_nedelec_3d_dual(degree);
     perms = create_nedelec_3d_base_perms(degree);
   }
   else
@@ -679,7 +465,8 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
-  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
+  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, interp_matrix, points, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, perms, points, interp_matrix,
                        mapping::type::covariantPiola);
@@ -695,27 +482,22 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  Eigen::MatrixXd dual;
   Eigen::ArrayXXd points;
   Eigen::MatrixXd interp_matrix;
   std::vector<Eigen::MatrixXd> base_permutations;
 
   if (celltype == cell::type::triangle)
   {
-    dual = create_nedelec2_2d_dual(degree);
     std::tie(points, interp_matrix) = create_nedelec2_2d_interpolation(degree);
     base_permutations = create_nedelec2_2d_base_permutations(degree);
   }
   else if (celltype == cell::type::tetrahedron)
   {
-    dual = create_nedelec2_3d_dual(degree);
     std::tie(points, interp_matrix) = create_nedelec2_3d_interpolation(degree);
     base_permutations = create_nedelec2_3d_base_permutations(degree);
   }
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
-
-  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(wcoeffs, dual);
 
   // Nedelec(2nd kind) has (d+1) dofs on each edge, (d+1)(d-1) on each face
   // and (d-2)(d-1)(d+1)/2 on the interior in 3D
@@ -726,6 +508,8 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
+  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, interp_matrix, points, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_permutations, points, interp_matrix,
                        mapping::type::covariantPiola);

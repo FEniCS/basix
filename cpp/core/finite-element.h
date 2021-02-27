@@ -133,19 +133,44 @@ namespace basix
 ///   x - 1 & y \\
 ///   -x & 1 - y \end{bmatrix} @f]
 ///
+/// @param[in] cell_type The cells shape.
 /// @param[in] span_coeffs The matrix B containing the expansion
-/// coefficients defining a polynomial basis spanning the polynomial space
-/// for this element.
-/// @param[in] dual The matrix D of values obtained by applying each
-/// functional in the dual set to each expansion polynomial
-/// @param[in] condition_check If set, checks the condition of the matrix
-/// B.D^T and throws an error if it is ill-conditioned.
+/// coefficients defining a polynomial basis spanning the polynomial
+/// space for this element.
+/// @param[in] interpolation_matrix The interpolation matrix
+/// @param[in] interpolation_points The interpolation points
+/// @param[in] order The degree of the polynomial set
+/// @param[in] condition_check If set, checks the condition of the
+/// matrix B.D^T and throws an error if it is ill-conditioned.
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space.
 Eigen::MatrixXd
-compute_expansion_coefficients(const Eigen::MatrixXd& span_coeffs,
-                               const Eigen::MatrixXd& dual,
-                               bool condition_check = false);
+compute_expansion_coefficients(cell::type cell_type,
+                               const Eigen::MatrixXd& span_coeffs,
+                               const Eigen::MatrixXd& interpolation_matrix,
+                               const Eigen::ArrayXXd& interpolation_points,
+                               const int order, bool condition_check = false);
+
+/// Combines interpolation data
+///
+/// When the value size is not 1, the matrices are split up into
+/// `value_size` parts, then recombined so that the columns of the
+/// matrix that is output is ordered correctly.
+///
+/// @param[in] points_1d The interpolation points for a 1d entity
+/// @param[in] points_2d The interpolation points for a 2d entity
+/// @param[in] points_3d The interpolation points for a 3d entity
+/// @param[in] matrix_1d The interpolation matrix for a 1d entity
+/// @param[in] matrix_2d The interpolation matrix for a 2d entity
+/// @param[in] matrix_3d The interpolation matrix for a 3d entity
+/// @param[in] tdim The toplogical dimension
+/// @param[in] value_size Value size
+/// @return The interpolation points and matrix
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> combine_interpolation_data(
+    const Eigen::ArrayXXd& points_1d, const Eigen::ArrayXXd& points_2d,
+    const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,
+    const Eigen::MatrixXd& matrix_2d, const Eigen::MatrixXd& matrix_3d,
+    const int tdim, const int value_size);
 
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the
@@ -181,18 +206,18 @@ public:
 
   /// Compute basis values and derivatives at set of points.
   ///
-  /// @param[in] nd The order of derivatives, up to and including,
-  /// to compute. Use 0 for the basis functions only.
+  /// @param[in] nd The order of derivatives, up to and including, to
+  /// compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
-  /// @return The basis functions (and derivatives). The first entry in the
-  /// list is the basis function. Higher derivatives are stored in
+  /// @return The basis functions (and derivatives). The first entry in
+  /// the list is the basis function. Higher derivatives are stored in
   /// triangular (2D) or tetrahedral (3D) ordering, i.e. for the (x,y)
-  /// derivatives in 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)... The
-  /// function basix::idx can be used to find the appropriate derivative.
-  /// If a vector result is expected, it will be stacked with all x values,
-  /// followed by all y-values (and then z, if any), likewise tensor-valued
-  /// results will be stacked in index order.
+  /// derivatives in 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)...
+  /// The function basix::idx can be used to find the appropriate
+  /// derivative. If a vector result is expected, it will be stacked
+  /// with all x values, followed by all y-values (and then z, if any),
+  /// likewise tensor-valued results will be stacked in index order.
   std::vector<Eigen::ArrayXXd> tabulate(int nd, const Eigen::ArrayXXd& x) const;
 
   /// Direct to memory block tabulation
@@ -253,7 +278,7 @@ public:
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @param physical_data Memory location to fill
-  void map_push_forward_to_memory(
+  void map_push_forward_to_memory_real(
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& reference_data,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
@@ -262,6 +287,22 @@ public:
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& K,
       double* physical_data) const;
+
+  /// Direct to memory push forward
+  /// @param reference_data The function values on the reference
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @param physical_data Memory location to fill
+  void map_push_forward_to_memory_complex(
+      const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& reference_data,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& J,
+      const Eigen::ArrayXd& detJ,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& K,
+      std::complex<double>* physical_data) const;
 
   /// Map function values from a physical cell to the reference
   /// @param physical_data The function values on the cell
@@ -284,15 +325,30 @@ public:
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @param reference_data Memory location to fill
-  void map_pull_back_to_memory(
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>& physical_data,
+  void map_pull_back_to_memory_real(
+      const Eigen::ArrayXXd& physical_data,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& J,
       const Eigen::ArrayXd& detJ,
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& K,
       double* reference_data) const;
+
+  /// Map function values from a physical cell to the reference
+  /// @param physical_data The function values on the cell
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @param reference_data Memory location to fill
+  void map_pull_back_to_memory_complex(
+      const Eigen::Array<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic>&
+          physical_data,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& J,
+      const Eigen::ArrayXd& detJ,
+      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                         Eigen::RowMajor>& K,
+      std::complex<double>* reference_data) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2

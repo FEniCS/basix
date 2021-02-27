@@ -25,8 +25,6 @@ Eigen::ArrayXXd compute_jacobi_deriv(double a, int n, int nderiv,
 
 // Computes Gauss-Jacobi quadrature points
 /// Finds the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's method.
-/// @param a weight in Jacobi (b=0)
-/// @param m order
 /// @param[in] a weight in Jacobi (b=0)
 /// @param[in] m order
 /// @return list of points in 1D

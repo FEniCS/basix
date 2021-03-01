@@ -246,9 +246,9 @@ make_gll_quadrature(cell::type celltype, int m)
   case cell::type::pyramid:
     throw std::runtime_error("Pyramid not yet supported");
   case cell::type::triangle:
-    return quadrature::make_quadrature_triangle_collapsed(m);
+    throw std::runtime_error("Triangle not yet supported");
   case cell::type::tetrahedron:
-    return quadrature::make_quadrature_tetrahedron_collapsed(m);
+    throw std::runtime_error("Tetrahedron not yet supported");
   default:
     throw std::runtime_error("Unsupported celltype for make_quadrature");
   }

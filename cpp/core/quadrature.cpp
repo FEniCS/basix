@@ -589,7 +589,7 @@ quadrature::compute_gauss_jacobi_rule(double a, int m)
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
-quadrature::compute_gll_rule(double a, int m)
+quadrature::compute_gll_rule(int m)
 {
   // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval
   // using Greg von Winckel's implementation. This facilitates implementing
@@ -621,7 +621,7 @@ quadrature::make_quadrature_line(int m)
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
 quadrature::make_gll_line(int m)
 {
-  auto [ptx, wx] = quadrature::compute_gll_rule(0.0, m);
+  auto [ptx, wx] = quadrature::compute_gll_rule(m);
   return {0.5 * (ptx + 1.0), wx * 0.5};
 }
 //-----------------------------------------------------------------------------

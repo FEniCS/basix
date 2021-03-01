@@ -5,11 +5,14 @@
 #pragma once
 
 #include "cell.h"
-#include <Eigen/Dense>
+#include <Eigen/Core>
 #include <utility>
 
 /// basix
 
+/// Integration using Gauss-Jacobi quadrature on simplices. Other shapes
+/// can be obtained by using a product.
+/// @todo - pyramid
 namespace basix::quadrature
 {
 /// Evaluate the nth Jacobi polynomial and derivatives with weight
@@ -68,6 +71,6 @@ make_quadrature(const std::string& rule, cell::type celltype, int m);
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_gll_line(int m);
 
 /// GLL quadrature rule (points and weights)
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gll_rule(double a, int m);
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gll_rule(int m);
 
 } // namespace basix::quadrature

@@ -11,6 +11,7 @@
 #include "elements/nedelec.h"
 #include "elements/raviart-thomas.h"
 #include "elements/regge.h"
+#include "elements/serendipity.h"
 #include "polyset.h"
 #include <iostream>
 #include <numeric>
@@ -71,6 +72,8 @@ basix::FiniteElement basix::create_element(element::family family,
     return create_cr(cell, degree);
   case element::family::Bubble:
     return create_bubble(cell, degree);
+  case element::family::Serendipity:
+    return create_serendipity(cell, degree);
   default:
     throw std::runtime_error("Family not found");
   }

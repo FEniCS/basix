@@ -84,18 +84,29 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     // Compute entity integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
     {
-      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
-      for (int d = 0; d < sub_entity_dim; ++d)
+      if (value_size == 1)
       {
-        Eigen::VectorXd axis = axes.row(d);
-        for (int k = 0; k < value_size; ++k)
-        {
-          Eigen::RowVectorXd q = phi * Qwts * axis(k);
-          matrix.block(c, (k * sub_entity_count + i) * Qpts.rows(), 1,
-                       Qpts.rows())
-              = q;
-        }
+        Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+        Eigen::RowVectorXd q = phi * Qwts;
+        matrix.block(c, i * Qpts.rows(), 1, Qpts.rows()) = q;
         ++c;
+      }
+      else
+      {
+        // FIXME: This assumed that the moment space has a certain mapping type
+        Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+        for (int d = 0; d < sub_entity_dim; ++d)
+        {
+          Eigen::VectorXd axis = axes.row(d);
+          for (int k = 0; k < value_size; ++k)
+          {
+            Eigen::RowVectorXd q = phi * Qwts * axis(k);
+            matrix.block(c, (k * sub_entity_count + i) * Qpts.rows(), 1,
+                         Qpts.rows())
+                = q;
+          }
+          ++c;
+        }
       }
     }
   }
@@ -157,6 +168,8 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> moments::make_dot_integral_moments(
           Eigen::ArrayXd phi
               = moment_space_at_Qpts.col(d * moment_space_size + j);
           Eigen::RowVectorXd axis = axes.row(d);
+          // FIXME: This assumed that the moment space has a certain mapping
+          // type
           Eigen::RowVectorXd qpart = phi * Qwts * axis(k);
           q += qpart;
         }

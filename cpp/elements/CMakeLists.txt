@@ -11,6 +11,7 @@ set(HEADERS_elements
   ${CMAKE_CURRENT_SOURCE_DIR}/regge.h
   ${CMAKE_CURRENT_SOURCE_DIR}/crouzeix-raviart.h
   ${CMAKE_CURRENT_SOURCE_DIR}/bubble.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/serendipity.h
   PARENT_SCOPE)
 
 set(CPP_elements
@@ -22,4 +23,5 @@ set(CPP_elements
   ${CMAKE_CURRENT_SOURCE_DIR}/regge.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/crouzeix-raviart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/bubble.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/serendipity.cpp
   PARENT_SCOPE)

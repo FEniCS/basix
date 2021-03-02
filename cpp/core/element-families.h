@@ -22,7 +22,8 @@ enum class family
   CR,
   Regge,
   DP,
-  Bubble
+  Bubble,
+  Serendipity
 };
 
 /// Convert string to a family

@@ -6,6 +6,7 @@
 #include "core/dof-permutations.h"
 #include "core/element-families.h"
 #include "core/lattice.h"
+#include "core/log.h"
 #include "core/mappings.h"
 #include "core/moments.h"
 #include "core/polyset.h"
@@ -21,7 +22,7 @@ namespace
 //----------------------------------------------------------------------------
 Eigen::MatrixXd make_serendipity_space_2d(const int degree)
 {
-  const int ndofs = degree == 1 ? 4 : (degree + 1) * (degree + 2) / 2 + 2;
+  const int ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(
@@ -171,7 +172,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   if (degree >= 2)
   {
     std::tie(points_1d, matrix_1d) = moments::make_integral_moments(
-        create_dlagrange(cell::type::interval, degree - 2), celltype, 1, degree,
+        create_dpc(cell::type::interval, degree - 2), celltype, 1, degree,
         quad_deg);
   }
 
@@ -180,7 +181,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   if (tdim >= 2 and degree >= 4)
   {
     std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
-        create_dlagrange(cell::type::triangle, degree - 4), celltype, 1, degree,
+        create_dpc(cell::type::quadrilateral, degree - 4), celltype, 1, degree,
         quad_deg);
   }
 
@@ -189,8 +190,8 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   if (tdim == 3 and degree >= 6)
   {
     std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
-        create_dlagrange(cell::type::tetrahedron, degree - 6), celltype, 1,
-        degree, quad_deg);
+        create_dpc(cell::type::hexahedron, degree - 6), celltype, 1, degree,
+        quad_deg);
   }
 
   const int vertex_count = cell::sub_entity_count(celltype, 0);
@@ -198,10 +199,9 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   Eigen::ArrayXXd interpolation_points(
       vertex_count + points_1d.rows() + points_2d.rows() + points_3d.rows(),
       tdim);
-  Eigen::MatrixXd interpolation_matrix(
+  Eigen::MatrixXd interpolation_matrix = Eigen::MatrixXd::Zero(
       vertex_count + matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
       vertex_count + matrix_1d.cols() + matrix_2d.cols() + matrix_3d.cols());
-  interpolation_matrix.setZero();
 
   interpolation_points.block(0, 0, vertex_count, tdim)
       = cell::geometry(celltype);
@@ -256,6 +256,63 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
 
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  if (tdim == 2)
+  {
+    int dof = 4;
+    for (int edge = 0; edge < 4; ++edge)
+    {
+      for (int i = 0; i < degree - 1; ++i)
+      {
+        base_permutations[edge](dof + i, dof + i) = 0;
+        base_permutations[edge](dof + i, dof + degree - 2 - i) = 1;
+      }
+      dof += degree - 1;
+    }
+  }
+  else if (tdim == 3)
+  {
+    int dof = 8;
+    for (int edge = 0; edge < 12; ++edge)
+    {
+      for (int i = 0; i < degree - 1; ++i)
+      {
+        base_permutations[edge](dof + i, dof + i) = 0;
+        base_permutations[edge](dof + i, dof + degree - 2 - i) = 1;
+      }
+      dof += degree - 1;
+    }
+    if (degree > 5)
+      LOG(WARNING) << "Base permutations not implemented for degree > 5.";
+    if (degree == 5)
+    {
+      for (int face = 0; face < 6; ++face)
+      {
+        // TODO: GENERALISE THIS
+        base_permutations[12 + 2 * face](dof, dof) = 0;
+        base_permutations[12 + 2 * face](dof, dof + 1) = 0;
+        base_permutations[12 + 2 * face](dof, dof + 2) = 1;
+        base_permutations[12 + 2 * face](dof + 1, dof) = 1;
+        base_permutations[12 + 2 * face](dof + 1, dof + 1) = 0;
+        base_permutations[12 + 2 * face](dof + 1, dof + 2) = 0;
+        base_permutations[12 + 2 * face](dof + 2, dof) = -1;
+        base_permutations[12 + 2 * face](dof + 2, dof + 1) = 1;
+        base_permutations[12 + 2 * face](dof + 2, dof + 2) = 1;
+
+        base_permutations[12 + 2 * face + 1](dof, dof) = 1;
+        base_permutations[12 + 2 * face + 1](dof, dof + 1) = 0;
+        base_permutations[12 + 2 * face + 1](dof, dof + 2) = 0;
+        base_permutations[12 + 2 * face + 1](dof + 1, dof) = 0;
+        base_permutations[12 + 2 * face + 1](dof + 1, dof + 1) = 0;
+        base_permutations[12 + 2 * face + 1](dof + 1, dof + 2) = 1;
+        base_permutations[12 + 2 * face + 1](dof + 2, dof) = 0;
+        base_permutations[12 + 2 * face + 1](dof + 2, dof + 1) = 1;
+        base_permutations[12 + 2 * face + 1](dof + 2, dof + 2) = 0;
+
+        dof += 3;
+      }
+    }
+  }
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, interpolation_matrix, interpolation_points, degree);

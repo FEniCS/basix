@@ -13,7 +13,6 @@
 #include "elements/regge.h"
 #include "elements/serendipity.h"
 #include "polyset.h"
-#include <iostream>
 #include <numeric>
 
 #define str_macro(X) #X
@@ -74,6 +73,8 @@ basix::FiniteElement basix::create_element(element::family family,
     return create_bubble(cell, degree);
   case element::family::Serendipity:
     return create_serendipity(cell, degree);
+  case element::family::DPC:
+    return create_dpc(cell, degree);
   default:
     throw std::runtime_error("Family not found");
   }

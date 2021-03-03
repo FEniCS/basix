@@ -6,10 +6,11 @@
 #include "core/dof-permutations.h"
 #include "core/element-families.h"
 #include "core/lattice.h"
+#include "core/log.h"
 #include "core/mappings.h"
 #include "core/polyset.h"
+#include "core/quadrature.h"
 #include <Eigen/Dense>
-#include <iostream>
 #include <numeric>
 
 using namespace basix;
@@ -170,8 +171,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   }
   else
   {
-    std::cout << "Base permutations not implemented for this cell type."
-              << std::endl;
+    LOG(WARNING) << "Base permutations not implemented for this cell type.";
   }
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
@@ -214,6 +214,65 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
       Eigen::MatrixXd::Identity(ndofs, ndofs), pt, degree);
 
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
+                       entity_dofs, base_permutations, pt,
+                       Eigen::MatrixXd::Identity(ndofs, ndofs),
+                       mapping::type::identity);
+}
+//-----------------------------------------------------------------------------
+FiniteElement basix::create_dpc(cell::type celltype, int degree)
+{
+  // Only tabulate for scalar. Vector spaces can easily be built from
+  // the scalar space.
+
+  cell::type simplex_type;
+  if (celltype == cell::type::interval)
+    simplex_type = cell::type::interval;
+  else if (celltype == cell::type::quadrilateral)
+    simplex_type = cell::type::triangle;
+  else if (celltype == cell::type::hexahedron)
+    simplex_type = cell::type::tetrahedron;
+  else
+    throw std::runtime_error("Invalid cell type");
+
+  const int ndofs = polyset::dim(simplex_type, degree);
+  const int psize = polyset::dim(celltype, degree);
+
+  auto [Qpts, Qwts] = quadrature::make_quadrature(
+      "default", cell::type::quadrilateral, 2 * degree);
+  Eigen::ArrayXXd quad_polyset_at_Qpts
+      = polyset::tabulate(celltype, degree, 0, Qpts)[0];
+  Eigen::ArrayXXd polyset_at_Qpts
+      = polyset::tabulate(simplex_type, degree, 0, Qpts)[0];
+
+  // Create coefficients for order (degree-1) vector polynomials
+  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize);
+  for (int i = 0; i < ndofs; ++i)
+    for (int k = 0; k < psize; ++k)
+      wcoeffs(i, k)
+          = (Qwts * polyset_at_Qpts.col(i) * quad_polyset_at_Qpts.col(k)).sum();
+
+  std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  std::vector<std::vector<int>> entity_dofs(topology.size());
+  for (std::size_t i = 0; i < topology.size(); ++i)
+    entity_dofs[i].resize(topology[i].size(), 0);
+  entity_dofs[topology.size() - 1][0] = ndofs;
+
+  Eigen::ArrayXXd geometry = cell::geometry(celltype);
+  const Eigen::ArrayXXd pt
+      = lattice::create(simplex_type, degree, lattice::type::equispaced, true);
+
+  int perm_count = 0;
+  for (std::size_t i = 1; i < topology.size() - 1; ++i)
+    perm_count += topology[i].size() * i;
+
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, Eigen::MatrixXd::Identity(ndofs, ndofs), pt, degree);
+
+  return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
                        entity_dofs, base_permutations, pt,
                        Eigen::MatrixXd::Identity(ndofs, ndofs),
                        mapping::type::identity);

@@ -22,6 +22,7 @@ enum class family
   CR,
   Regge,
   DP,
+  DPC,
   Bubble,
   Serendipity
 };

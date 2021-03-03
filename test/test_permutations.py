@@ -7,27 +7,6 @@ import pytest
 import numpy as np
 from .utils import parametrize_over_elements
 
-interval_elements = ["Lagrange", "Discontinuous Lagrange"]
-triangle_elements = [
-    "Lagrange", "Discontinuous Lagrange",
-    "Nedelec 1st kind H(curl)", "Nedelec 2nd kind H(curl)",
-    "Raviart-Thomas", "Regge", "Crouzeix-Raviart"]
-tetrahedron_elements = [
-    "Lagrange", "Discontinuous Lagrange",
-    "Nedelec 1st kind H(curl)", "Nedelec 2nd kind H(curl)",
-    "Raviart-Thomas", "Regge", "Crouzeix-Raviart"]
-quadrilateral_elements = [
-    "Lagrange", "Raviart-Thomas", "Nedelec 1st kind H(curl)"]
-hexahedron_elements = [
-    "Lagrange", "Raviart-Thomas", "Nedelec 1st kind H(curl)"]
-
-all_elements = [(cell, e) for cell, elements in [
-    ("interval", interval_elements),
-    ("triangle", triangle_elements),
-    ("quadrilateral", quadrilateral_elements),
-    ("tetrahedron", tetrahedron_elements),
-    ("hexahedron", hexahedron_elements)] for e in elements]
-
 
 @parametrize_over_elements(5)
 def test_non_zero(cell_name, element_name, order):

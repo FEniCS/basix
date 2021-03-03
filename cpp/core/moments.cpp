@@ -59,7 +59,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 
   Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
   Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count
-                             * sub_entity_dim,
+                             * (value_size == 1 ? 1 : sub_entity_dim),
                          sub_entity_count * Qpts.rows() * value_size);
   matrix.setZero();
 
@@ -84,9 +84,9 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     // Compute entity integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
     {
+      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
       if (value_size == 1)
       {
-        Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
         Eigen::RowVectorXd q = phi * Qwts;
         matrix.block(c, i * Qpts.rows(), 1, Qpts.rows()) = q;
         ++c;
@@ -94,7 +94,6 @@ moments::make_integral_moments(const FiniteElement& moment_space,
       else
       {
         // FIXME: This assumed that the moment space has a certain mapping type
-        Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
         for (int d = 0; d < sub_entity_dim; ++d)
         {
           Eigen::VectorXd axis = axes.row(d);

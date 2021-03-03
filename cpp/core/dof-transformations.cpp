@@ -2,12 +2,12 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "dof-permutations.h"
+#include "dof-transformations.h"
 
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-Eigen::ArrayXi dofperms::interval_reflection(int degree)
+Eigen::ArrayXi doftransforms::interval_reflection(int degree)
 {
   Eigen::ArrayXi perm(degree);
   for (int i = 0; i < degree; ++i)
@@ -15,7 +15,7 @@ Eigen::ArrayXi dofperms::interval_reflection(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXi dofperms::triangle_reflection(int degree)
+Eigen::ArrayXi doftransforms::triangle_reflection(int degree)
 {
   const int n = degree * (degree + 1) / 2;
   Eigen::ArrayXi perm(n);
@@ -34,7 +34,7 @@ Eigen::ArrayXi dofperms::triangle_reflection(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXi dofperms::triangle_rotation(int degree)
+Eigen::ArrayXi doftransforms::triangle_rotation(int degree)
 {
   const int n = degree * (degree + 1) / 2;
   Eigen::ArrayXi perm(n);
@@ -54,7 +54,7 @@ Eigen::ArrayXi dofperms::triangle_rotation(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXi dofperms::quadrilateral_reflection(int degree)
+Eigen::ArrayXi doftransforms::quadrilateral_reflection(int degree)
 {
   const int n = degree * degree;
   Eigen::ArrayXi perm(n);
@@ -67,7 +67,7 @@ Eigen::ArrayXi dofperms::quadrilateral_reflection(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXi dofperms::quadrilateral_rotation(int degree)
+Eigen::ArrayXi doftransforms::quadrilateral_rotation(int degree)
 {
   const int n = degree * degree;
   Eigen::ArrayXi perm(n);
@@ -80,12 +80,14 @@ Eigen::ArrayXi dofperms::quadrilateral_rotation(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd dofperms::interval_reflection_tangent_directions(int degree)
+Eigen::ArrayXXd
+doftransforms::interval_reflection_tangent_directions(int degree)
 {
   return -Eigen::MatrixXd::Identity(degree, degree);
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd dofperms::triangle_reflection_tangent_directions(int degree)
+Eigen::ArrayXXd
+doftransforms::triangle_reflection_tangent_directions(int degree)
 {
   Eigen::ArrayXXd dirs
       = Eigen::ArrayXXd::Zero(degree * (degree + 1), degree * (degree + 1));
@@ -98,7 +100,7 @@ Eigen::ArrayXXd dofperms::triangle_reflection_tangent_directions(int degree)
   return dirs;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd dofperms::triangle_rotation_tangent_directions(int degree)
+Eigen::ArrayXXd doftransforms::triangle_rotation_tangent_directions(int degree)
 {
   Eigen::ArrayXXd dirs
       = Eigen::ArrayXXd::Zero(degree * (degree + 1), degree * (degree + 1));

@@ -189,7 +189,7 @@ public:
   /// @param[in] value_shape
   /// @param[in] coeffs
   /// @param[in] entity_dofs
-  /// @param[in] base_perms Base permutations
+  /// @param[in] base_transformations Base transformations
   /// @param[in] points
   /// @param[in] M The interpolation matrix
   /// @param[in] map_type
@@ -197,7 +197,7 @@ public:
                 const std::vector<int>& value_shape,
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
-                const std::vector<Eigen::MatrixXd>& base_perms,
+                const std::vector<Eigen::MatrixXd>& base_transformations,
                 const Eigen::ArrayXXd& points, const Eigen::MatrixXd M = {},
                 mapping::type map_type = mapping::type::identity);
 
@@ -339,8 +339,8 @@ public:
   /// @return List of entity dof counts on each dimension
   const std::vector<std::vector<int>>& entity_dofs() const;
 
-  /// Get the base permutations
-  /// The base permutations represent the effect of rotating or reflecting
+  /// Get the base transformations
+  /// The base transformations represent the effect of rotating or reflecting
   /// a subentity of the cell on the numbering and orientation of the DOFs.
   /// This returns a list of matrices with one matrix for each subentity
   /// permutation in the following order:
@@ -359,7 +359,7 @@ public:
   /// |    \
   /// 0-7-8-1
   /// ~~~~~~~~~~~~~~~~
-  /// For this element, the base permutations are:
+  /// For this element, the base transformations are:
   ///   [Matrix swapping 3 and 4,
   ///    Matrix swapping 5 and 6,
   ///    Matrix swapping 7 and 8]
@@ -382,7 +382,7 @@ public:
   /// ~~~~~~~~~~~~~~~~
   /// These DOFs are integrals of normal components over the edges: DOFs 0 and 2
   /// are oriented inward, DOF 1 is oriented outwards.
-  /// For this element, the base permutation matrices are:
+  /// For this element, the base transformation matrices are:
   /// ~~~~~~~~~~~~~~~~
   ///   0: [[-1, 0, 0],
   ///       [ 0, 1, 0],
@@ -410,7 +410,7 @@ public:
   /// |     \   |     \
   ///  ------    ------
   /// ~~~~~~~~~~~~~~~~
-  /// For these DOFs, the subblocks of the base permutation matrices are:
+  /// For these DOFs, the subblocks of the base transformation matrices are:
   /// ~~~~~~~~~~~~~~~~
   ///   rotation: [[-1, 1],
   ///              [ 1, 0]]
@@ -466,8 +466,8 @@ private:
   // count on the associated entity, as listed by cell::topology.
   std::vector<std::vector<int>> _entity_dofs;
 
-  // Base permutations
-  std::vector<Eigen::MatrixXd> _base_perms;
+  // Base transformations
+  std::vector<Eigen::MatrixXd> _base_transformations;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of

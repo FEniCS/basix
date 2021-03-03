@@ -14,7 +14,7 @@ namespace basix
 /// @param degree
 FiniteElement create_rt(cell::type celltype, int degree);
 
-namespace dofperms
+namespace doftransforms
 {
 /// Reflect the DOFs of a RT space on a triangle
 /// @param degree The degree of the RT space
@@ -26,6 +26,6 @@ Eigen::MatrixXd triangle_rt_reflection(int degree);
 /// @return A reordering of DOFs of a RT space of the given degree
 Eigen::MatrixXd triangle_rt_rotation(int degree);
 
-} // namespace dofperms
+} // namespace doftransforms
 
 } // namespace basix

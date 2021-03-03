@@ -3,7 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "serendipity.h"
-#include "core/dof-permutations.h"
+#include "core/dof-transformations.h"
 #include "core/element-families.h"
 #include "core/lattice.h"
 #include "core/log.h"
@@ -250,12 +250,12 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
 
   const int ndofs = interpolation_matrix.rows();
 
-  int perm_count = 0;
+  int transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
-    perm_count += topology[i].size() * i;
+    transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_permutations(
-      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_transformations(
+      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   if (tdim == 2)
   {
@@ -264,8 +264,8 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     {
       for (int i = 0; i < degree - 1; ++i)
       {
-        base_permutations[edge](dof + i, dof + i) = 0;
-        base_permutations[edge](dof + i, dof + degree - 2 - i) = 1;
+        base_transformations[edge](dof + i, dof + i) = 0;
+        base_transformations[edge](dof + i, dof + degree - 2 - i) = 1;
       }
       dof += degree - 1;
     }
@@ -277,37 +277,37 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     {
       for (int i = 0; i < degree - 1; ++i)
       {
-        base_permutations[edge](dof + i, dof + i) = 0;
-        base_permutations[edge](dof + i, dof + degree - 2 - i) = 1;
+        base_transformations[edge](dof + i, dof + i) = 0;
+        base_transformations[edge](dof + i, dof + degree - 2 - i) = 1;
       }
       dof += degree - 1;
     }
     if (degree > 5)
-      LOG(WARNING) << "Base permutations not implemented for degree > 5.";
+      LOG(WARNING) << "Base transformations not implemented for degree > 5.";
     if (degree == 5)
     {
       for (int face = 0; face < 6; ++face)
       {
         // TODO: GENERALISE THIS
-        base_permutations[12 + 2 * face](dof, dof) = 0;
-        base_permutations[12 + 2 * face](dof, dof + 1) = 0;
-        base_permutations[12 + 2 * face](dof, dof + 2) = 1;
-        base_permutations[12 + 2 * face](dof + 1, dof) = 1;
-        base_permutations[12 + 2 * face](dof + 1, dof + 1) = 0;
-        base_permutations[12 + 2 * face](dof + 1, dof + 2) = 0;
-        base_permutations[12 + 2 * face](dof + 2, dof) = -1;
-        base_permutations[12 + 2 * face](dof + 2, dof + 1) = 1;
-        base_permutations[12 + 2 * face](dof + 2, dof + 2) = 1;
+        base_transformations[12 + 2 * face](dof, dof) = 0;
+        base_transformations[12 + 2 * face](dof, dof + 1) = 0;
+        base_transformations[12 + 2 * face](dof, dof + 2) = 1;
+        base_transformations[12 + 2 * face](dof + 1, dof) = 1;
+        base_transformations[12 + 2 * face](dof + 1, dof + 1) = 0;
+        base_transformations[12 + 2 * face](dof + 1, dof + 2) = 0;
+        base_transformations[12 + 2 * face](dof + 2, dof) = -1;
+        base_transformations[12 + 2 * face](dof + 2, dof + 1) = 1;
+        base_transformations[12 + 2 * face](dof + 2, dof + 2) = 1;
 
-        base_permutations[12 + 2 * face + 1](dof, dof) = 1;
-        base_permutations[12 + 2 * face + 1](dof, dof + 1) = 0;
-        base_permutations[12 + 2 * face + 1](dof, dof + 2) = 0;
-        base_permutations[12 + 2 * face + 1](dof + 1, dof) = 0;
-        base_permutations[12 + 2 * face + 1](dof + 1, dof + 1) = 0;
-        base_permutations[12 + 2 * face + 1](dof + 1, dof + 2) = 1;
-        base_permutations[12 + 2 * face + 1](dof + 2, dof) = 0;
-        base_permutations[12 + 2 * face + 1](dof + 2, dof + 1) = 1;
-        base_permutations[12 + 2 * face + 1](dof + 2, dof + 2) = 0;
+        base_transformations[12 + 2 * face + 1](dof, dof) = 1;
+        base_transformations[12 + 2 * face + 1](dof, dof + 1) = 0;
+        base_transformations[12 + 2 * face + 1](dof, dof + 2) = 0;
+        base_transformations[12 + 2 * face + 1](dof + 1, dof) = 0;
+        base_transformations[12 + 2 * face + 1](dof + 1, dof + 1) = 0;
+        base_transformations[12 + 2 * face + 1](dof + 1, dof + 2) = 1;
+        base_transformations[12 + 2 * face + 1](dof + 2, dof) = 0;
+        base_transformations[12 + 2 * face + 1](dof + 2, dof + 1) = 1;
+        base_transformations[12 + 2 * face + 1](dof + 2, dof + 2) = 0;
 
         dof += 3;
       }
@@ -318,7 +318,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
       celltype, wcoeffs, interpolation_matrix, interpolation_points, degree);
 
   return FiniteElement(element::family::Serendipity, celltype, degree, {1},
-                       coeffs, entity_dofs, base_permutations,
+                       coeffs, entity_dofs, base_transformations,
                        interpolation_points, interpolation_matrix,
                        mapping::type::identity);
 }

@@ -42,9 +42,9 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   }
 
   Eigen::MatrixXd dual = polyset::tabulate(celltype, 1, 0, pts)[0];
-  int perm_count = tdim == 2 ? 3 : 14;
-  std::vector<Eigen::MatrixXd> base_permutations(
-      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  int transform_count = tdim == 2 ? 3 : 14;
+  std::vector<Eigen::MatrixXd> base_transformations(
+      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   // Crouzeix-Raviart has one dof on each entity of tdim-1.
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -59,7 +59,7 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
       Eigen::MatrixXd::Identity(ndofs, ndofs), pts, degree);
 
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
-                       entity_dofs, base_permutations, pts,
+                       entity_dofs, base_transformations, pts,
                        Eigen::MatrixXd::Identity(ndofs, ndofs),
                        mapping::type::identity);
 }

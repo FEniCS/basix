@@ -3,7 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "brezzi-douglas-marini.h"
-#include "core/dof-permutations.h"
+#include "core/dof-transformations.h"
 #include "core/element-families.h"
 #include "core/mappings.h"
 #include "core/moments.h"
@@ -68,46 +68,46 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  int perm_count = 0;
+  int transform_count = 0;
   for (int i = 1; i < tdim; ++i)
-    perm_count += topology[i].size() * i;
+    transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_permutations(
-      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_transformations(
+      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree + 1);
+    Eigen::ArrayXi edge_ref = doftransforms::interval_reflection(degree + 1);
     Eigen::ArrayXXd edge_dir
-        = dofperms::interval_reflection_tangent_directions(degree + 1);
+        = doftransforms::interval_reflection_tangent_directions(degree + 1);
     for (int edge = 0; edge < facet_count; ++edge)
     {
       const int start = edge_ref.size() * edge;
       for (int i = 0; i < edge_ref.size(); ++i)
       {
-        base_permutations[edge](start + i, start + i) = 0;
-        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
+        base_transformations[edge](start + i, start + i) = 0;
+        base_transformations[edge](start + i, start + edge_ref[i]) = 1;
       }
       Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
       directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
                        edge_dir.rows(), edge_dir.cols())
           = edge_dir;
-      base_permutations[edge] *= directions;
+      base_transformations[edge] *= directions;
     }
   }
   else if (tdim == 3)
   {
-    Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree + 1);
-    Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree + 1);
+    Eigen::ArrayXi face_ref = doftransforms::triangle_reflection(degree + 1);
+    Eigen::ArrayXi face_rot = doftransforms::triangle_rotation(degree + 1);
 
     for (int face = 0; face < facet_count; ++face)
     {
       const int start = face_ref.size() * face;
       for (int i = 0; i < face_rot.size(); ++i)
       {
-        base_permutations[6 + 2 * face](start + i, start + i) = 0;
-        base_permutations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
-        base_permutations[6 + 2 * face + 1](start + i, start + i) = 0;
-        base_permutations[6 + 2 * face + 1](start + i, start + face_ref[i])
+        base_transformations[6 + 2 * face](start + i, start + i) = 0;
+        base_transformations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
+        base_transformations[6 + 2 * face + 1](start + i, start + i) = 0;
+        base_transformations[6 + 2 * face + 1](start + i, start + face_ref[i])
             = -1;
       }
     }
@@ -125,7 +125,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       celltype, wcoeffs, matrix, points, degree);
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations, points, matrix,
+                       entity_dofs, base_transformations, points, matrix,
                        mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

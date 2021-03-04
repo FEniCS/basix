@@ -80,9 +80,12 @@ std::vector<int> dofperms::quadrilateral_rotation(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd dofperms::interval_reflection_tangent_directions(int degree)
+ndarray<double, 2> dofperms::interval_reflection_tangent_directions(int degree)
 {
-  return -Eigen::MatrixXd::Identity(degree, degree);
+  ndarray<double, 2> r(degree, degree, 0.0);
+  for (int i = 0; i < degree; ++i)
+    r(i, i) = -1;
+  return r;
 }
 //-----------------------------------------------------------------------------
 Eigen::ArrayXXd dofperms::triangle_reflection_tangent_directions(int degree)

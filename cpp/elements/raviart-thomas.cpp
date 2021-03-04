@@ -120,14 +120,17 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
       }
     }
 
-    Eigen::ArrayXXd edge_dir
+    ndarray<double, 2> edge_dir
         = dofperms::interval_reflection_tangent_directions(degree);
+    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                  Eigen::RowMajor>>
+        _edge_dir(edge_dir.data(), edge_dir.shape[0], edge_dir.shape[1]);
     for (int edge = 0; edge < 3; ++edge)
     {
       Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-      directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
-                       edge_dir.rows(), edge_dir.cols())
-          = edge_dir;
+      directions.block(_edge_dir.rows() * edge, _edge_dir.cols() * edge,
+                       _edge_dir.rows(), _edge_dir.cols())
+          = _edge_dir;
       base_permutations[edge] *= directions;
     }
   }

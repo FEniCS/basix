@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ndarray.h"
 #include <Eigen/Dense>
 #include <vector>
 
@@ -52,7 +53,7 @@ std::vector<int> quadrilateral_rotation(int degree);
 /// @param degree The number of DOFs on the interval
 /// @return A matrix representing the effect of reversing the edge on the DOF
 /// values
-Eigen::ArrayXXd interval_reflection_tangent_directions(int degree);
+ndarray<double, 2> interval_reflection_tangent_directions(int degree);
 
 /// Generate a matrix to correct the direction of tangent vector-values DOFs on
 /// a triangle when that triangle is reflected

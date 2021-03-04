@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "quadrature.h"
+#include <Eigen/Dense>
 #include <cmath>
 #include <vector>
 
@@ -588,8 +589,7 @@ quadrature::compute_gauss_jacobi_rule(double a, int m)
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
-quadrature::compute_gll_rule(int m)
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> quadrature::compute_gll_rule(int m)
 {
   // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval
   // using Greg von Winckel's implementation. This facilitates implementing
@@ -599,7 +599,7 @@ quadrature::compute_gll_rule(int m)
   if (m < 2)
   {
     throw std::runtime_error(
-      "Gauss-Lobatto-Legendre quadrature invalid for fewer than 2 points");
+        "Gauss-Lobatto-Legendre quadrature invalid for fewer than 2 points");
   }
 
   // Calculate the recursion coefficients
@@ -618,8 +618,7 @@ quadrature::make_quadrature_line(int m)
   return {0.5 * (ptx + 1.0), wx * 0.5};
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
-quadrature::make_gll_line(int m)
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> quadrature::make_gll_line(int m)
 {
   auto [ptx, wx] = quadrature::compute_gll_rule(m);
   return {0.5 * (ptx + 1.0), wx * 0.5};
@@ -698,7 +697,7 @@ quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
   }
   else if (rule == "GLL")
   {
-    const int np = (m + 4)/2;
+    const int np = (m + 4) / 2;
     return make_gll_quadrature(celltype, np);
   }
   throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");

@@ -10,46 +10,62 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd cell::geometry(cell::type celltype)
+ndarray<double, 2> cell::geometry(cell::type celltype)
 {
-  Eigen::ArrayXXd geom;
   switch (celltype)
   {
   case cell::type::interval:
-    geom.resize(2, 1);
-    geom << 0.0, 1.0;
-    break;
+    // geom.resize(2, 1);
+    // geom << 0.0, 1.0;
+    return ndarray<double, 2>({2, 1}, std::vector<double>({0.0, 1.0}));
   case cell::type::triangle:
-    geom.resize(3, 2);
-    geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0;
-    break;
+    // geom.resize(3, 2);
+    // geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0;
+    return ndarray<double, 2>(
+        {3, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0, 0.0, 1.0}));
+    // break;
   case cell::type::quadrilateral:
-    geom.resize(4, 2);
-    geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0;
-    break;
+    // geom.resize(4, 2);
+    // geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0;
+    // break;
+    return ndarray<double, 2>(
+        {4, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0}));
   case cell::type::tetrahedron:
-    geom.resize(4, 3);
-    geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
-    break;
+    // geom.resize(4, 3);
+    // geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+    // break;
+    return ndarray<double, 2>(
+        {4, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+                                     0.0, 0.0, 0.0, 1.0}));
   case cell::type::prism:
-    geom.resize(6, 3);
-    geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
-        0.0, 1.0, 0.0, 1.0, 1.0;
-    break;
+    // geom.resize(6, 3);
+    // geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
+    //     0.0, 1.0, 0.0, 1.0, 1.0;
+    // break;
+    return ndarray<double, 2>(
+        {6, 3},
+        std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+                             0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0}));
   case cell::type::pyramid:
-    geom.resize(5, 3);
-    geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
-        0.0, 1.0;
-    break;
+    // geom.resize(5, 3);
+    // geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
+    //     0.0, 1.0;
+    // // break;
+    return ndarray<double, 2>(
+        {5, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+                                     0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0}));
   case cell::type::hexahedron:
-    geom.resize(8, 3);
-    geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
-        0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0;
-    break;
+    // geom.resize(8, 3);
+    // geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
+    //     0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0;
+    // break;
+    return ndarray<double, 2>(
+        {8, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+                                     0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
+                                     0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0}));
   default:
     throw std::runtime_error("Unsupported cell type");
   }
-  return geom;
 }
 //-----------------------------------------------------------------------------
 std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
@@ -164,12 +180,12 @@ int cell::topological_dimension(cell::type cell_type)
   return 0;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd cell::sub_entity_geometry(cell::type celltype, int dim,
-                                          int index)
+ndarray<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
+                                             int index)
 {
   std::vector<std::vector<std::vector<int>>> cell_topology
       = cell::topology(celltype);
-  Eigen::ArrayXXd cell_geometry = cell::geometry(celltype);
+  const ndarray<double, 2> cell_geometry = cell::geometry(celltype);
 
   if (dim < 0 or dim >= (int)cell_topology.size())
     throw std::runtime_error("Invalid dimension for sub-entity");
@@ -179,9 +195,13 @@ Eigen::ArrayXXd cell::sub_entity_geometry(cell::type celltype, int dim,
   if (index < 0 or index >= (int)t.size())
     throw std::runtime_error("Invalid entity index");
 
-  Eigen::ArrayXXd sub_entity(t[index].size(), cell_geometry.cols());
-  for (int i = 0; i < sub_entity.rows(); ++i)
-    sub_entity.row(i) = cell_geometry.row(t[index][i]);
+  ndarray<double, 2> sub_entity(t[index].size(), cell_geometry.shape[1]);
+  for (std::size_t i = 0; i < sub_entity.shape[0]; ++i)
+  {
+    std::copy(cell_geometry.row(t[index][i]).begin(),
+              cell_geometry.row(t[index][i]).end(), sub_entity.row(i).begin());
+  }
+  // sub_entity.row(i) = cell_geometry.row(t[index][i]);
 
   return sub_entity;
 }

@@ -237,20 +237,20 @@ const char* basix::mapping_name(int handle)
 int basix::cell_geometry_num_points(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
-  return cell::geometry(ct).rows();
+  return cell::geometry(ct).shape[0];
 }
 
 int basix::cell_geometry_dimension(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
-  return cell::geometry(ct).cols();
+  return cell::geometry(ct).shape[1];
 }
 
 void basix::cell_geometry(const char* cell_type, double* points)
 {
   cell::type ct = cell::str_to_type(cell_type);
-  Eigen::ArrayXXd pts = cell::geometry(ct);
-  std::copy(pts.data(), pts.data() + pts.rows() * pts.cols(), points);
+  ndarray<double, 2> pts = cell::geometry(ct);
+  std::copy(pts.data(), pts.data() + pts.size(), points);
 }
 
 std::vector<std::vector<std::vector<int>>>

@@ -113,7 +113,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     for (int edge = 0; edge < facet_count; ++edge)
     {
       const int start = edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
+      for (std::size_t i = 0; i < edge_ref.size(); ++i)
       {
         base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;

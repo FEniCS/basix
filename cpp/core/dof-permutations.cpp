@@ -7,11 +7,11 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-Eigen::ArrayXi dofperms::interval_reflection(int degree)
+std::vector<int> dofperms::interval_reflection(int degree)
 {
-  Eigen::ArrayXi perm(degree);
+  std::vector<int> perm(degree);
   for (int i = 0; i < degree; ++i)
-    perm(i) = degree - 1 - i;
+    perm[i] = degree - 1 - i;
   return perm;
 }
 //-----------------------------------------------------------------------------

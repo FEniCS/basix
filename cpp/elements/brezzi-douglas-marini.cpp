@@ -76,13 +76,13 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree + 1);
+    const std::vector<int> edge_ref = dofperms::interval_reflection(degree + 1);
     Eigen::ArrayXXd edge_dir
         = dofperms::interval_reflection_tangent_directions(degree + 1);
     for (int edge = 0; edge < facet_count; ++edge)
     {
       const int start = edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
+      for (std::size_t i = 0; i < edge_ref.size(); ++i)
       {
         base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;

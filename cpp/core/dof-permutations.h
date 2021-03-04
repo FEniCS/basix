@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <vector>
 
 namespace basix
 {
@@ -18,7 +19,7 @@ namespace dofperms
 /// @param degree The number of DOFs on the interval
 /// @return A reordering of the numbers 0 to degree-1 representing the
 /// permutation
-Eigen::ArrayXi interval_reflection(int degree);
+std::vector<int> interval_reflection(int degree);
 
 /// Reflect the DOFs on a triangle
 /// @param degree The number of DOFs along one side of the triangle

@@ -109,7 +109,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
+    const std::vector<int> edge_ref = dofperms::interval_reflection(degree);
     for (int edge = 0; edge < facet_count; ++edge)
     {
       const int start = edge_ref.size() * edge;

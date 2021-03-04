@@ -95,11 +95,11 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   }
   else if (celltype == cell::type::triangle)
   {
-    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
+    const std::vector<int> edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 3; ++edge)
     {
       const int start = 3 + edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
+      for (std::size_t i = 0; i < edge_ref.size(); ++i)
       {
         base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
@@ -108,11 +108,11 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   }
   else if (celltype == cell::type::quadrilateral)
   {
-    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
+    const std::vector<int> edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 4; ++edge)
     {
       const int start = 4 + edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
+      for (std::size_t i = 0; i < edge_ref.size(); ++i)
       {
         base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
@@ -121,11 +121,11 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   }
   else if (celltype == cell::type::tetrahedron)
   {
-    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
+    const std::vector<int> edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 6; ++edge)
     {
       const int start = 4 + edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
+      for (std::size_t i = 0; i < edge_ref.size(); ++i)
       {
         base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
@@ -147,11 +147,11 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   }
   else if (celltype == cell::type::hexahedron)
   {
-    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
+    const std::vector<int> edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 12; ++edge)
     {
       const int start = 8 + edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
+      for (std::size_t i = 0; i < edge_ref.size(); ++i)
       {
         base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;

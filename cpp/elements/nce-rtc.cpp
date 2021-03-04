@@ -147,13 +147,13 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
+    std::vector<int> edge_ref = dofperms::interval_reflection(degree);
     Eigen::ArrayXXd edge_dir
         = dofperms::interval_reflection_tangent_directions(degree);
     for (int edge = 0; edge < facet_count; ++edge)
     {
       const int start = edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
+      for (std::size_t i = 0; i < edge_ref.size(); ++i)
       {
         base_permutations[edge](start + i, start + i) = 0;
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
@@ -364,14 +364,14 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
+  const std::vector<int> edge_ref = dofperms::interval_reflection(degree);
   Eigen::ArrayXXd edge_dir
       = dofperms::interval_reflection_tangent_directions(degree);
 
   for (int edge = 0; edge < edge_count; ++edge)
   {
     const int start = edge_ref.size() * edge;
-    for (int i = 0; i < edge_ref.size(); ++i)
+    for (std::size_t i = 0; i < edge_ref.size(); ++i)
     {
       base_permutations[edge](start + i, start + i) = 0;
       base_permutations[edge](start + i, start + edge_ref[i]) = 1;

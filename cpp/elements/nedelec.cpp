@@ -94,13 +94,13 @@ std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       3, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
+  std::vector<int> edge_ref = dofperms::interval_reflection(degree);
   Eigen::ArrayXXd edge_dir
       = dofperms::interval_reflection_tangent_directions(degree);
   for (int edge = 0; edge < 3; ++edge)
   {
     const int start = edge_ref.size() * edge;
-    for (int i = 0; i < edge_ref.size(); ++i)
+    for (std::size_t i = 0; i < edge_ref.size(); ++i)
     {
       base_permutations[edge](start + i, start + i) = 0;
       base_permutations[edge](start + i, start + edge_ref[i]) = 1;
@@ -235,13 +235,13 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       14, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree);
+  std::vector<int> edge_ref = dofperms::interval_reflection(degree);
   Eigen::ArrayXXd edge_dir
       = dofperms::interval_reflection_tangent_directions(degree);
   for (int edge = 0; edge < 6; ++edge)
   {
     const int start = edge_ref.size() * edge;
-    for (int i = 0; i < edge_ref.size(); ++i)
+    for (std::size_t i = 0; i < edge_ref.size(); ++i)
     {
       base_permutations[edge](start + i, start + i) = 0;
       base_permutations[edge](start + i, start + edge_ref[i]) = 1;
@@ -327,13 +327,13 @@ std::vector<Eigen::MatrixXd> create_nedelec2_2d_base_permutations(int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       3, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree + 1);
+  const std::vector<int> edge_ref = dofperms::interval_reflection(degree + 1);
   Eigen::ArrayXXd edge_dir
       = dofperms::interval_reflection_tangent_directions(degree + 1);
   for (int edge = 0; edge < 3; ++edge)
   {
     const int start = edge_ref.size() * edge;
-    for (int i = 0; i < edge_ref.size(); ++i)
+    for (std::size_t i = 0; i < edge_ref.size(); ++i)
     {
       base_permutations[edge](start + i, start + i) = 0;
       base_permutations[edge](start + i, start + edge_ref[i]) = 1;
@@ -392,13 +392,13 @@ std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
   std::vector<Eigen::MatrixXd> base_permutations(
       14, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree + 1);
+  const std::vector<int> edge_ref = dofperms::interval_reflection(degree + 1);
   Eigen::ArrayXXd edge_dir
       = dofperms::interval_reflection_tangent_directions(degree + 1);
   for (int edge = 0; edge < 6; ++edge)
   {
     const int start = edge_ref.size() * edge;
-    for (int i = 0; i < edge_ref.size(); ++i)
+    for (std::size_t i = 0; i < edge_ref.size(); ++i)
     {
       base_permutations[edge](start + i, start + i) = 0;
       base_permutations[edge](start + i, start + edge_ref[i]) = 1;

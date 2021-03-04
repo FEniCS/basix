@@ -44,30 +44,5 @@ Eigen::ArrayXi quadrilateral_reflection(int degree);
 /// transformation
 Eigen::ArrayXi quadrilateral_rotation(int degree);
 
-//-----------------------------------------------------------------------------
-
-/// Generate a matrix to correct the direction of tangent vector-values DOFs on
-/// an interval when that interval is reflected
-/// @param degree The number of DOFs on the interval
-/// @return A matrix representing the effect of reversing the edge on the DOF
-/// values
-Eigen::ArrayXXd interval_reflection_tangent_directions(int degree);
-
-/// Generate a matrix to correct the direction of tangent vector-values DOFs on
-/// a triangle when that triangle is reflected
-/// @param degree The number of DOFs along one side of the triangle
-/// @return A matrix representing the effect of reflecting the triangle edge on
-/// the DOF values
-Eigen::ArrayXXd triangle_reflection_tangent_directions(int degree);
-
-/// Generate a matrix to correct the direction of tangent vector-values DOFs on
-/// a triangle when that triangle is rotated
-/// @param degree The number of DOFs along one side of the triangle
-/// @return A matrix representing the effect of rotating the triangle edge on
-/// the DOF values
-Eigen::ArrayXXd triangle_rotation_tangent_directions(int degree);
-
-// TODO: quad tangent directions
-
 }; // namespace doftransforms
 } // namespace basix

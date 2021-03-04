@@ -8,6 +8,8 @@
 #include <Eigen/Core>
 #include <utility>
 
+/// basix
+
 /// Integration using Gauss-Jacobi quadrature on simplices. Other shapes
 /// can be obtained by using a product.
 /// @todo - pyramid
@@ -36,7 +38,7 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gauss_jacobi_rule(double a,
                                                                     int m);
 
 /// Compute line quadrature rule on [0, 1]
-/// @param[in] m order
+/// @param m order
 /// @returns list of points, list of weights
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_quadrature_line(int m);
 
@@ -63,10 +65,12 @@ make_quadrature_tetrahedron_collapsed(int m);
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_quadrature(const std::string& rule, cell::type celltype, int m);
 
-/// Compute GLL quadrature points and weights on the interval [-1, 1]
-/// @param[in] m order
-/// @return Array of points, array of weights
-std::pair<Eigen::ArrayXd, Eigen::ArrayXd>
-gauss_lobatto_legendre_line_rule(int m);
+/// Compute GLL line quadrature rule on [0, 1]
+/// @param m order
+/// @returns list of 1D points, list of weights
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> make_gll_line(int m);
+
+/// GLL quadrature rule (points and weights)
+std::pair<Eigen::ArrayXd, Eigen::ArrayXd> compute_gll_rule(int m);
 
 } // namespace basix::quadrature

@@ -179,7 +179,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
         moment_space, celltype, 1, degree, quad_deg);
     if (tdim > 1)
       edge_transforms
-          = moments::create_moment_dof_transformations(moment_space);
+          = moments::create_dot_moment_dof_transformations(moment_space);
   }
 
   Eigen::ArrayXXd points_2d(0, tdim);
@@ -192,7 +192,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
         moment_space, celltype, 1, degree, quad_deg);
     if (tdim > 2)
       face_transforms
-          = moments::create_moment_dof_transformations(moment_space);
+          = moments::create_dot_moment_dof_transformations(moment_space);
   }
 
   Eigen::ArrayXXd points_3d(0, tdim);

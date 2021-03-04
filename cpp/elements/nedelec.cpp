@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "nedelec.h"
-#include "core/dof-transformations.h"
 #include "core/element-families.h"
 #include "core/mappings.h"
 #include "core/moments.h"
@@ -242,42 +241,20 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_transforms(int degree)
   // Faces
   if (degree > 1)
   {
-    Eigen::ArrayXi face_rot = doftransforms::triangle_rotation(degree - 1);
-    Eigen::ArrayXi face_ref = doftransforms::triangle_reflection(degree - 1);
-    Eigen::ArrayXXd face_dir_ref
-        = doftransforms::triangle_reflection_tangent_directions(degree - 1);
-    Eigen::ArrayXXd face_dir_rot
-        = doftransforms::triangle_rotation_tangent_directions(degree - 1);
+    std::vector<Eigen::MatrixXd> face_transforms
+        = moments::create_moment_dof_transformations(
+            create_dlagrange(cell::type::triangle, degree - 2));
 
-    const int face_dofs = face_dir_rot.rows();
+    const int face_dofs = face_transforms[0].rows();
     for (int face = 0; face < 4; ++face)
     {
-      const int start = edge_dofs * 6 + face_ref.size() * 2 * face;
-      const int p = 6 + 2 * face;
-      for (int i = 0; i < face_rot.size(); ++i)
-      {
-        for (int b = 0; b < 2; ++b)
-        {
-          const int p1 = start + 2 * i + b;
-          base_transformations[p](p1, start + i * 2 + b) = 0;
-          base_transformations[p](p1, start + face_rot[i] * 2 + b) = 1;
-          base_transformations[p + 1](p1, start + i * 2 + b) = 0;
-          base_transformations[p + 1](p1, start + face_ref[i] * 2 + b) = 1;
-        }
-      }
-      // Rotate face
-      Eigen::MatrixXd rotation = Eigen::MatrixXd::Identity(ndofs, ndofs);
-      rotation.block(edge_dofs * 6 + face_dofs * face,
-                     edge_dofs * 6 + face_dofs * face, face_dofs, face_dofs)
-          = face_dir_rot;
-      base_transformations[p] *= rotation;
-
-      // Reflect face
-      Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
-      reflection.block(edge_dofs * 6 + face_dofs * face,
-                       edge_dofs * 6 + face_dofs * face, face_dofs, face_dofs)
-          = face_dir_ref;
-      base_transformations[p + 1] *= reflection;
+      const int start = edge_dofs * 6 + face_dofs * face;
+      base_transformations[6 + 2 * face].block(start, start, face_dofs,
+                                               face_dofs)
+          = face_transforms[0];
+      base_transformations[6 + 2 * face + 1].block(start, start, face_dofs,
+                                                   face_dofs)
+          = face_transforms[1];
     }
   }
   return base_transformations;

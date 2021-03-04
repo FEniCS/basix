@@ -36,8 +36,8 @@ std::vector<int> axis_points(const cell::type celltype)
 } // namespace
 
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd>
-moments::create_moment_dof_transformations(const FiniteElement& moment_space)
+std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
+    const FiniteElement& moment_space)
 {
   cell::type celltype = moment_space.cell_type();
 
@@ -207,17 +207,58 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   return out;
 }
 //----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
-    const FiniteElement& moment_space)
+std::vector<Eigen::MatrixXd>
+moments::create_moment_dof_transformations(const FiniteElement& moment_space)
 {
-  return create_moment_dof_transformations(moment_space);
+  std::vector<Eigen::MatrixXd> t
+      = create_dot_moment_dof_transformations(moment_space);
+  if (moment_space.cell_type() == cell::type::interval)
+    return t;
+
+  Eigen::Matrix2d rot;
+  Eigen::Matrix2d ref;
+  if (moment_space.cell_type() == cell::type::triangle)
+  {
+    rot << -1, -1, 1, 0;
+    ref << 0, 1, 1, 0;
+  }
+  else if (moment_space.cell_type() == cell::type::quadrilateral)
+  {
+    // TODO: check that these are correct
+    rot << 0, -1, 1, 0;
+    ref << 0, 1, 1, 0;
+  }
+
+  const int scalar_dofs = t[0].rows();
+
+  std::vector<Eigen::MatrixXd> out;
+  {
+    Eigen::MatrixXd M(scalar_dofs * 2, scalar_dofs * 2);
+    for (int i = 0; i < scalar_dofs; ++i)
+      for (int j = 0; j < scalar_dofs; ++j)
+      {
+        M.block(2 * i, 2 * j, 2, 2) = t[0](i, j) * rot;
+      }
+    out.push_back(M);
+  }
+  {
+    Eigen::MatrixXd M(scalar_dofs * 2, scalar_dofs * 2);
+    for (int i = 0; i < scalar_dofs; ++i)
+      for (int j = 0; j < scalar_dofs; ++j)
+      {
+        M.block(2 * i, 2 * j, 2, 2) = t[1](i, j) * ref;
+      }
+    out.push_back(M);
+  }
+
+  return out;
 }
 //----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> moments::create_normal_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
   std::vector<Eigen::MatrixXd> t
-      = create_moment_dof_transformations(moment_space);
+      = create_dot_moment_dof_transformations(moment_space);
   const int tdim = cell::topological_dimension(moment_space.cell_type());
   if (tdim == 1)
     t[0] *= -1;
@@ -230,12 +271,12 @@ std::vector<Eigen::MatrixXd> moments::create_tangent_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
   std::vector<Eigen::MatrixXd> t
-      = create_moment_dof_transformations(moment_space);
+      = create_dot_moment_dof_transformations(moment_space);
   const int tdim = cell::topological_dimension(moment_space.cell_type());
   if (tdim == 1)
     t[0] *= -1;
   if (tdim == 2)
-    throw std::runtime_error("Not implemented yet.");
+    throw std::runtime_error("Tangent is only well-defined on an edge.");
   return t;
 }
 //----------------------------------------------------------------------------

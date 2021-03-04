@@ -131,12 +131,13 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
     }
-    Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 2);
-    Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 2);
+
+    const std::vector<int> face_ref = dofperms::triangle_reflection(degree - 2);
+    const std::vector<int> face_rot = dofperms::triangle_rotation(degree - 2);
     for (int face = 0; face < 4; ++face)
     {
       const int start = 4 + edge_ref.size() * 6 + face_ref.size() * face;
-      for (int i = 0; i < face_rot.size(); ++i)
+      for (std::size_t i = 0; i < face_rot.size(); ++i)
       {
         base_permutations[6 + 2 * face](start + i, start + i) = 0;
         base_permutations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
@@ -157,12 +158,15 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
     }
-    Eigen::ArrayXi face_ref = dofperms::quadrilateral_reflection(degree - 1);
-    Eigen::ArrayXi face_rot = dofperms::quadrilateral_rotation(degree - 1);
+
+    const std::vector<int> face_ref
+        = dofperms::quadrilateral_reflection(degree - 1);
+    const std::vector<int> face_rot
+        = dofperms::quadrilateral_rotation(degree - 1);
     for (int face = 0; face < 6; ++face)
     {
       const int start = 8 + edge_ref.size() * 12 + face_ref.size() * face;
-      for (int i = 0; i < face_rot.size(); ++i)
+      for (std::size_t i = 0; i < face_rot.size(); ++i)
       {
         base_permutations[12 + 2 * face](start + i, start + i) = 0;
         base_permutations[12 + 2 * face](start + i, start + face_rot[i]) = 1;

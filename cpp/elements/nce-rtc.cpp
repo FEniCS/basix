@@ -167,9 +167,9 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   }
   else if (tdim == 3)
   {
-    Eigen::ArrayXi face_ref = dofperms::quadrilateral_reflection(degree);
-    Eigen::ArrayXi face_rot = dofperms::quadrilateral_rotation(degree);
-
+    const std::vector<int> face_ref
+        = dofperms::quadrilateral_reflection(degree);
+    const std::vector<int> face_rot = dofperms::quadrilateral_rotation(degree);
     for (int face = 0; face < facet_count; ++face)
     {
       const int start = face_ref.size() * face;

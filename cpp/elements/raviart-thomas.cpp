@@ -133,13 +133,12 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   }
   else if (tdim == 3)
   {
-    Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree);
-    Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree);
-
+    const std::vector<int> face_ref = dofperms::triangle_reflection(degree);
+    const std::vector<int> face_rot = dofperms::triangle_rotation(degree);
     for (int face = 0; face < facet_count; ++face)
     {
       const int start = face_ref.size() * face;
-      for (int i = 0; i < face_rot.size(); ++i)
+      for (std::size_t i = 0; i < face_rot.size(); ++i)
       {
         base_permutations[6 + 2 * face](start + i, start + i) = 0;
         base_permutations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
@@ -179,7 +178,7 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
 
   // Rotate face
   const int face_start = 3 * degree;
-  Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 1);
+  const std::vector<int> face_rot = dofperms::triangle_rotation(degree - 1);
   Eigen::ArrayXXd face_dir_rot
       = dofperms::triangle_rotation_tangent_directions(degree - 1);
 
@@ -212,11 +211,10 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_reflection(int degree)
 
   // reflect face
   const int face_start = 3 * degree;
-  Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 1);
+  const std::vector<int> face_ref = dofperms::triangle_reflection(degree - 1);
   Eigen::ArrayXXd face_dir_ref
       = dofperms::triangle_reflection_tangent_directions(degree - 1);
-
-  for (int i = 0; i < face_ref.size(); ++i)
+  for (std::size_t i = 0; i < face_ref.size(); ++i)
   {
     for (int b = 0; b < 2; ++b)
       perm(face_start + i * 2 + b, face_start + face_ref[i] * 2 + b) = 1;

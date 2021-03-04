@@ -254,8 +254,8 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
   }
 
   // Faces
-  Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 1);
-  Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 1);
+  const std::vector<int> face_rot = dofperms::triangle_rotation(degree - 1);
+  const std::vector<int> face_ref = dofperms::triangle_reflection(degree - 1);
   Eigen::ArrayXXd face_dir_ref
       = dofperms::triangle_reflection_tangent_directions(degree - 1);
   Eigen::ArrayXXd face_dir_rot

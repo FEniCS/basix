@@ -25,25 +25,25 @@ std::vector<int> interval_reflection(int degree);
 /// @param degree The number of DOFs along one side of the triangle
 /// @return A reordering of the numbers 0 to (degree)*(degree+1)/2-1
 /// representing the permutation
-Eigen::ArrayXi triangle_reflection(int degree);
+std::vector<int> triangle_reflection(int degree);
 
 /// Rotate the DOFs on a triangle
 /// @param degree The number of DOFs along one side of the triangle
 /// @return A reordering of the numbers 0 to (degree)*(degree+1)/2-1
 /// representing the permutation
-Eigen::ArrayXi triangle_rotation(int degree);
+std::vector<int> triangle_rotation(int degree);
 
 /// Reflect the DOFs on a quadrilateral
 /// @param degree The number of DOFs along one side of the quadrilateral
 /// @return A reordering of the numbers 0 to degree*degree-1 representing the
 /// permutation
-Eigen::ArrayXi quadrilateral_reflection(int degree);
+std::vector<int> quadrilateral_reflection(int degree);
 
 /// Rotate the DOFs on a quadrilateral
 /// @param degree The number of DOFs along one side of the quadrilateral
 /// @return A reordering of the numbers 0 to degree*degree-1 representing the
 /// permutation
-Eigen::ArrayXi quadrilateral_rotation(int degree);
+std::vector<int> quadrilateral_rotation(int degree);
 
 //-----------------------------------------------------------------------------
 

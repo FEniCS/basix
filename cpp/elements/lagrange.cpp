@@ -48,7 +48,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         if (dim == 0)
         {
           for (std::size_t k = 0; k < entity_geom.shape[1]; ++k)
-            pt(k, c) = entity_geom(0, c);
+            pt(c, k) = entity_geom(0, c);
           c++;
           entity_dofs[0].push_back(1);
         }

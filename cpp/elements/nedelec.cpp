@@ -262,10 +262,18 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
   // Faces
   const std::vector<int> face_rot = dofperms::triangle_rotation(degree - 1);
   const std::vector<int> face_ref = dofperms::triangle_reflection(degree - 1);
-  Eigen::ArrayXXd face_dir_ref
+  ndarray<double, 2> face_dir_ref
       = dofperms::triangle_reflection_tangent_directions(degree - 1);
-  Eigen::ArrayXXd face_dir_rot
+  ndarray<double, 2> face_dir_rot
       = dofperms::triangle_rotation_tangent_directions(degree - 1);
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _face_dir_ref(face_dir_ref.data(), face_dir_ref.shape[0],
+                    face_dir_ref.shape[1]);
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _face_dir_rot(face_dir_rot.data(), face_dir_rot.shape[0],
+                    face_dir_rot.shape[1]);
   for (int face = 0; face < 4; ++face)
   {
     const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
@@ -283,18 +291,18 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
     }
     // Rotate face
     Eigen::MatrixXd rotation = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    rotation.block(_edge_dir.rows() * 6 + face_dir_rot.rows() * face,
-                   _edge_dir.cols() * 6 + face_dir_rot.rows() * face,
-                   face_dir_rot.rows(), face_dir_rot.cols())
-        = face_dir_rot;
+    rotation.block(_edge_dir.rows() * 6 + _face_dir_rot.rows() * face,
+                   _edge_dir.cols() * 6 + _face_dir_rot.rows() * face,
+                   _face_dir_rot.rows(), _face_dir_rot.cols())
+        = _face_dir_rot;
     base_permutations[p] *= rotation;
 
     // Reflect face
     Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    reflection.block(_edge_dir.rows() * 6 + face_dir_ref.rows() * face,
-                     _edge_dir.cols() * 6 + face_dir_ref.rows() * face,
-                     face_dir_ref.rows(), face_dir_ref.cols())
-        = face_dir_ref;
+    reflection.block(_edge_dir.rows() * 6 + _face_dir_ref.rows() * face,
+                     _edge_dir.cols() * 6 + _face_dir_ref.rows() * face,
+                     _face_dir_ref.rows(), _face_dir_ref.cols())
+        = _face_dir_ref;
     base_permutations[p + 1] *= reflection;
   }
 

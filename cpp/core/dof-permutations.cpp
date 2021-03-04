@@ -88,10 +88,9 @@ ndarray<double, 2> dofperms::interval_reflection_tangent_directions(int degree)
   return r;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd dofperms::triangle_reflection_tangent_directions(int degree)
+ndarray<double, 2> dofperms::triangle_reflection_tangent_directions(int degree)
 {
-  Eigen::ArrayXXd dirs
-      = Eigen::ArrayXXd::Zero(degree * (degree + 1), degree * (degree + 1));
+  ndarray<double, 2> dirs(degree * (degree + 1), degree * (degree + 1), 0.0);
   for (int i = 0; i < degree * (degree + 1); i += 2)
   {
     dirs(i, i + 1) = 1;
@@ -101,10 +100,9 @@ Eigen::ArrayXXd dofperms::triangle_reflection_tangent_directions(int degree)
   return dirs;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXXd dofperms::triangle_rotation_tangent_directions(int degree)
+ndarray<double, 2> dofperms::triangle_rotation_tangent_directions(int degree)
 {
-  Eigen::ArrayXXd dirs
-      = Eigen::ArrayXXd::Zero(degree * (degree + 1), degree * (degree + 1));
+  ndarray<double, 2> dirs(degree * (degree + 1), degree * (degree + 1), 0.0);
   for (int i = 0; i < degree * (degree + 1); i += 2)
   {
     dirs(i, i + 1) = -1;

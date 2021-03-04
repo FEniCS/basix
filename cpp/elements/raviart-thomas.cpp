@@ -182,18 +182,21 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
   // Rotate face
   const int face_start = 3 * degree;
   const std::vector<int> face_rot = dofperms::triangle_rotation(degree - 1);
-  Eigen::ArrayXXd face_dir_rot
+  ndarray<double, 2> face_dir_rot
       = dofperms::triangle_rotation_tangent_directions(degree - 1);
-
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _face_dir_rot(face_dir_rot.data(), face_dir_rot.shape[0],
+                    face_dir_rot.shape[1]);
   for (std::size_t i = 0; i < face_rot.size(); ++i)
   {
     for (int b = 0; b < 2; ++b)
       perm(face_start + i * 2 + b, face_start + face_rot[i] * 2 + b) = 1;
   }
   Eigen::MatrixXd rotation = Eigen::MatrixXd::Identity(n, n);
-  rotation.block(face_start, face_start, face_dir_rot.rows(),
-                 face_dir_rot.cols())
-      = face_dir_rot;
+  rotation.block(face_start, face_start, _face_dir_rot.rows(),
+                 _face_dir_rot.cols())
+      = _face_dir_rot;
   perm *= rotation;
 
   return perm;
@@ -215,17 +218,21 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_reflection(int degree)
   // reflect face
   const int face_start = 3 * degree;
   const std::vector<int> face_ref = dofperms::triangle_reflection(degree - 1);
-  Eigen::ArrayXXd face_dir_ref
+  ndarray<double, 2> face_dir_ref
       = dofperms::triangle_reflection_tangent_directions(degree - 1);
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _face_dir_ref(face_dir_ref.data(), face_dir_ref.shape[0],
+                    face_dir_ref.shape[1]);
   for (std::size_t i = 0; i < face_ref.size(); ++i)
   {
     for (int b = 0; b < 2; ++b)
       perm(face_start + i * 2 + b, face_start + face_ref[i] * 2 + b) = 1;
   }
   Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(n, n);
-  reflection.block(face_start, face_start, face_dir_ref.rows(),
-                   face_dir_ref.cols())
-      = face_dir_ref;
+  reflection.block(face_start, face_start, _face_dir_ref.rows(),
+                   _face_dir_ref.cols())
+      = _face_dir_ref;
   perm *= reflection;
 
   return perm;

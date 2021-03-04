@@ -60,14 +60,14 @@ ndarray<double, 2> interval_reflection_tangent_directions(int degree);
 /// @param degree The number of DOFs along one side of the triangle
 /// @return A matrix representing the effect of reflecting the triangle edge on
 /// the DOF values
-Eigen::ArrayXXd triangle_reflection_tangent_directions(int degree);
+ndarray<double, 2> triangle_reflection_tangent_directions(int degree);
 
 /// Generate a matrix to correct the direction of tangent vector-values DOFs on
 /// a triangle when that triangle is rotated
 /// @param degree The number of DOFs along one side of the triangle
 /// @return A matrix representing the effect of rotating the triangle edge on
 /// the DOF values
-Eigen::ArrayXXd triangle_rotation_tangent_directions(int degree);
+ndarray<double, 2> triangle_rotation_tangent_directions(int degree);
 
 // TODO: quad tangent directions
 

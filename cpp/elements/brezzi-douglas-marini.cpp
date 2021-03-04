@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "brezzi-douglas-marini.h"
-#include "core/dof-transformations.h"
 #include "core/element-families.h"
 #include "core/mappings.h"
 #include "core/moments.h"
@@ -45,8 +44,12 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points_facet;
   Eigen::MatrixXd matrix_facet;
+  FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
-      create_dlagrange(facettype, degree), celltype, tdim, degree, quad_deg);
+      facet_moment_space, celltype, tdim, degree, quad_deg);
+
+  std::vector<Eigen::MatrixXd> facet_transforms
+      = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
   Eigen::ArrayXXd points_cell;
   Eigen::MatrixXd matrix_cell;
@@ -76,40 +79,24 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    Eigen::ArrayXi edge_ref = doftransforms::interval_reflection(degree + 1);
-    Eigen::ArrayXXd edge_dir
-        = doftransforms::interval_reflection_tangent_directions(degree + 1);
     for (int edge = 0; edge < facet_count; ++edge)
     {
-      const int start = edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
-      {
-        base_transformations[edge](start + i, start + i) = 0;
-        base_transformations[edge](start + i, start + edge_ref[i]) = 1;
-      }
-      Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-      directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
-                       edge_dir.rows(), edge_dir.cols())
-          = edge_dir;
-      base_transformations[edge] *= directions;
+      const int start = facet_dofs * edge;
+      base_transformations[edge].block(start, start, facet_dofs, facet_dofs)
+          = facet_transforms[0];
     }
   }
   else if (tdim == 3)
   {
-    Eigen::ArrayXi face_ref = doftransforms::triangle_reflection(degree + 1);
-    Eigen::ArrayXi face_rot = doftransforms::triangle_rotation(degree + 1);
-
     for (int face = 0; face < facet_count; ++face)
     {
-      const int start = face_ref.size() * face;
-      for (int i = 0; i < face_rot.size(); ++i)
-      {
-        base_transformations[6 + 2 * face](start + i, start + i) = 0;
-        base_transformations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
-        base_transformations[6 + 2 * face + 1](start + i, start + i) = 0;
-        base_transformations[6 + 2 * face + 1](start + i, start + face_ref[i])
-            = -1;
-      }
+      const int start = facet_dofs * face;
+      base_transformations[6 + 2 * face].block(start, start, facet_dofs,
+                                               facet_dofs)
+          = facet_transforms[0];
+      base_transformations[6 + 2 * face + 1].block(start, start, facet_dofs,
+                                                   facet_dofs)
+          = facet_transforms[1];
     }
   }
 

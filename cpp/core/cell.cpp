@@ -15,50 +15,27 @@ ndarray<double, 2> cell::geometry(cell::type celltype)
   switch (celltype)
   {
   case cell::type::interval:
-    // geom.resize(2, 1);
-    // geom << 0.0, 1.0;
     return ndarray<double, 2>({2, 1}, std::vector<double>({0.0, 1.0}));
   case cell::type::triangle:
-    // geom.resize(3, 2);
-    // geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0;
     return ndarray<double, 2>(
         {3, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0, 0.0, 1.0}));
-    // break;
   case cell::type::quadrilateral:
-    // geom.resize(4, 2);
-    // geom << 0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0;
-    // break;
     return ndarray<double, 2>(
         {4, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0}));
   case cell::type::tetrahedron:
-    // geom.resize(4, 3);
-    // geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
-    // break;
     return ndarray<double, 2>(
         {4, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
                                      0.0, 0.0, 0.0, 1.0}));
   case cell::type::prism:
-    // geom.resize(6, 3);
-    // geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
-    //     0.0, 1.0, 0.0, 1.0, 1.0;
-    // break;
     return ndarray<double, 2>(
         {6, 3},
         std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
                              0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0}));
   case cell::type::pyramid:
-    // geom.resize(5, 3);
-    // geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
-    //     0.0, 1.0;
-    // // break;
     return ndarray<double, 2>(
         {5, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
                                      0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0}));
   case cell::type::hexahedron:
-    // geom.resize(8, 3);
-    // geom << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
-    //     0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0;
-    // break;
     return ndarray<double, 2>(
         {8, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
                                      0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
@@ -201,7 +178,6 @@ ndarray<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
     std::copy(cell_geometry.row(t[index][i]).begin(),
               cell_geometry.row(t[index][i]).end(), sub_entity.row(i).begin());
   }
-  // sub_entity.row(i) = cell_geometry.row(t[index][i]);
 
   return sub_entity;
 }
@@ -275,3 +251,4 @@ const std::string& cell::type_to_str(cell::type type)
 
   return it->second;
 }
+//-----------------------------------------------------------------------------

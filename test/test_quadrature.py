@@ -88,16 +88,38 @@ def test_jacobi():
 
 
 def test_gll():
-    m = 6
-    pts, wts = basix.gauss_lobatto_legendre_line_rule(m)
-    ref_pts = np.array([-1., -0.76505532,
-                        -0.28523152, 0.28523152,
-                        0.76505532, 1.])
-    assert (np.allclose(pts, ref_pts))
-    ref_wts = np.array([0.06666667, 0.37847496,
-                        0.55485838, 0.55485838,
-                        0.37847496, 0.06666667])
+    m = 5
+
+    # 1D interval
+    pts, wts = basix.make_quadrature("GLL", basix.CellType.interval, m+1)
+    pts, wts = 2*pts.flatten()-1, 2*wts.flatten()
+    ref_pts = np.array([-1., -np.sqrt(3/7),
+                        0.0, np.sqrt(3/7),
+                        1.])
+    assert (np.allclose(pts.flatten(), ref_pts))
+    ref_wts = np.array([1/10, 49/90,
+                        32/45, 49/90,
+                        1/10])
     assert (np.allclose(wts, ref_wts))
-    print(pts, wts)
     assert np.isclose(sum(pts * wts), 0)
     assert np.isclose(sum(wts), 2)
+
+    # 2D quad
+    pts, wts = basix.make_quadrature("GLL", basix.CellType.quadrilateral, m+1)
+    pts, wts = 2*pts-1, 4*wts
+    ref_pts2 = np.array([[x, y] for y in ref_pts for x in ref_pts])
+    assert (np.allclose(pts, ref_pts2))
+    ref_wts2 = np.array([w1*w2 for w1 in ref_wts for w2 in ref_wts])
+    assert (np.allclose(wts, ref_wts2))
+    assert np.isclose((pts * wts.reshape(-1, 1)).sum(), 0)
+    assert np.isclose(sum(wts), 4)
+
+    # 3D hex
+    pts, wts = basix.make_quadrature("GLL", basix.CellType.hexahedron, m+1)
+    pts, wts = 2*pts-1, 8*wts
+    ref_pts3 = np.array([[x, y, z] for z in ref_pts for y in ref_pts for x in ref_pts])
+    assert (np.allclose(pts, ref_pts3))
+    ref_wts3 = np.array([w1*w2*w3 for w1 in ref_wts for w2 in ref_wts for w3 in ref_wts])
+    assert (np.allclose(wts, ref_wts3))
+    assert np.isclose((pts * wts.reshape(-1, 1)).sum(), 0)
+    assert np.isclose(sum(wts), 8)

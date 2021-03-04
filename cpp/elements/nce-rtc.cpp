@@ -178,7 +178,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
     for (int face = 0; face < facet_count; ++face)
     {
       const int start = face_ref.size() * face;
-      for (int i = 0; i < face_rot.size(); ++i)
+      for (std::size_t i = 0; i < face_rot.size(); ++i)
       {
         base_permutations[12 + 2 * face](start + i, start + i) = 0;
         base_permutations[12 + 2 * face](start + i, start + face_rot[i]) = 1;

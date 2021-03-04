@@ -270,7 +270,7 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
   {
     const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
     const int p = 6 + 2 * face;
-    for (int i = 0; i < face_rot.size(); ++i)
+    for (std::size_t i = 0; i < face_rot.size(); ++i)
     {
       for (int b = 0; b < 2; ++b)
       {

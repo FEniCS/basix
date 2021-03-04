@@ -185,7 +185,7 @@ Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
   Eigen::ArrayXXd face_dir_rot
       = dofperms::triangle_rotation_tangent_directions(degree - 1);
 
-  for (int i = 0; i < face_rot.size(); ++i)
+  for (std::size_t i = 0; i < face_rot.size(); ++i)
   {
     for (int b = 0; b < 2; ++b)
       perm(face_start + i * 2 + b, face_start + face_rot[i] * 2 + b) = 1;

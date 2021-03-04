@@ -79,7 +79,6 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
     for (int j = 0; j < sub_entity_dim; ++j)
       axes.row(j) = _entity.row(axis_pts[j]) - _entity.row(0);
-
     // Map quadrature points onto entity
     points.block(Qpts.rows() * i, 0, Qpts.rows(), tdim)
         = _entity.row(0).replicate(Qpts.rows(), 1)
@@ -282,8 +281,8 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   for (int i = 0; i < sub_entity_count; ++i)
   {
     ndarray<double, 2> facet = cell::sub_entity_geometry(celltype, tdim - 1, i);
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                  Eigen::RowMajor>>
         _facet(facet.data(), facet.shape[0], facet.shape[1]);
 
     if (tdim == 2)

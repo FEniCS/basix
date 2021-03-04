@@ -44,12 +44,14 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
       {
         const ndarray<double, 2> entity_geom
             = cell::sub_entity_geometry(celltype, dim, i);
+        Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                      Eigen::RowMajor>>
+            _entity_geom(entity_geom.data(), entity_geom.shape[0],
+                         entity_geom.shape[1]);
 
         if (dim == 0)
         {
-          for (std::size_t k = 0; k < entity_geom.shape[1]; ++k)
-            pt(c, k) = entity_geom(0, c);
-          c++;
+          pt.row(c++) = _entity_geom.row(0);
           entity_dofs[0].push_back(1);
         }
         else if (dim == topology.size() - 1)
@@ -68,18 +70,11 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
           entity_dofs[dim].push_back(lattice.rows());
           for (int j = 0; j < lattice.rows(); ++j)
           {
-            // pt.row(c) = entity_geom.row(0);
-            for (std::size_t k = 0; k < entity_geom.shape[1]; ++k)
-              pt(c, k) = entity_geom(0, k);
+            pt.row(c) = _entity_geom.row(0);
             for (int k = 0; k < lattice.cols(); ++k)
             {
-              for (std::size_t p = 0; p < entity_geom.shape[1]; ++p)
-              {
-                pt(c, p) += (entity_geom(k + 1, p) - entity_geom(0, p))
-                            * lattice(j, k);
-              }
-              // pt.row(c) += (entity_geom.row(k + 1) - entity_geom.row(0))
-              //              * lattice(j, k);
+              pt.row(c) += (_entity_geom.row(k + 1) - _entity_geom.row(0))
+                           * lattice(j, k);
             }
             ++c;
           }
@@ -207,7 +202,7 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[topology.size() - 1][0] = ndofs;
 
-  // ndarray<double, 2> geometry = cell::geometry(celltype);
+  // Eigen::ArrayXXd geometry = cell::geometry(celltype);
   const Eigen::ArrayXXd pt
       = lattice::create(celltype, degree, lattice::type::equispaced, true);
 

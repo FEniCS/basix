@@ -333,7 +333,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
     if (tdim == 3)
     {
       face_transforms
-          = moments::create_moment_dof_transformations(moment_space);
+          = moments::create_dot_moment_dof_transformations(moment_space);
 
       // Interior integral moment
       std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(

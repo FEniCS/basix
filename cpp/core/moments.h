@@ -23,6 +23,10 @@ create_moment_dof_transformations(const FiniteElement& moment_space);
 
 /// TODO
 std::vector<Eigen::MatrixXd>
+create_dot_moment_dof_transformations(const FiniteElement& moment_space);
+
+/// TODO
+std::vector<Eigen::MatrixXd>
 create_normal_moment_dof_transformations(const FiniteElement& moment_space);
 
 /// TODO

@@ -74,9 +74,13 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   // Add integral moments on facets
   Eigen::ArrayXXd points_facet;
   Eigen::MatrixXd matrix_facet;
+  FiniteElement facet_moment_space = create_dlagrange(facettype, degree - 1);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
-      create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
-      quad_deg);
+      facet_moment_space, celltype, tdim, degree, quad_deg);
+  std::vector<Eigen::MatrixXd> facet_transforms
+      = moments::create_normal_moment_dof_transformations(facet_moment_space);
+
+  const int facet_dofs = facet_transforms[0].rows();
 
   Eigen::ArrayXXd points_cell(0, tdim);
   Eigen::MatrixXd matrix_cell(0, 0);
@@ -109,44 +113,24 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
       transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    Eigen::ArrayXi edge_ref = doftransforms::interval_reflection(degree);
     for (int edge = 0; edge < facet_count; ++edge)
     {
-      const int start = edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
-      {
-        base_transformations[edge](start + i, start + i) = 0;
-        base_transformations[edge](start + i, start + edge_ref[i]) = 1;
-      }
-    }
-
-    Eigen::ArrayXXd edge_dir
-        = doftransforms::interval_reflection_tangent_directions(degree);
-    for (int edge = 0; edge < 3; ++edge)
-    {
-      Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-      directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
-                       edge_dir.rows(), edge_dir.cols())
-          = edge_dir;
-      base_transformations[edge] *= directions;
+      const int start = facet_dofs * edge;
+      base_transformations[edge].block(start, start, facet_dofs, facet_dofs)
+          = facet_transforms[0];
     }
   }
   else if (tdim == 3)
   {
-    Eigen::ArrayXi face_ref = doftransforms::triangle_reflection(degree);
-    Eigen::ArrayXi face_rot = doftransforms::triangle_rotation(degree);
-
     for (int face = 0; face < facet_count; ++face)
     {
-      const int start = face_ref.size() * face;
-      for (int i = 0; i < face_rot.size(); ++i)
-      {
-        base_transformations[6 + 2 * face](start + i, start + i) = 0;
-        base_transformations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
-        base_transformations[6 + 2 * face + 1](start + i, start + i) = 0;
-        base_transformations[6 + 2 * face + 1](start + i, start + face_ref[i])
-            = -1;
-      }
+      const int start = facet_dofs * face;
+      base_transformations[6 + 2 * face].block(start, start, facet_dofs,
+                                               facet_dofs)
+          = facet_transforms[0];
+      base_transformations[6 + 2 * face + 1].block(start, start, facet_dofs,
+                                                   facet_dofs)
+          = facet_transforms[1];
     }
   }
 
@@ -154,7 +138,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (int i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), ns);
+  entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {ns0 * tdim};
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
@@ -162,71 +146,5 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
                        mapping::type::contravariantPiola);
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::doftransforms::triangle_rt_rotation(int degree)
-{
-  const int n = degree * (degree + 2);
-  Eigen::MatrixXd transform = Eigen::MatrixXd::Zero(n, n);
-
-  // Transform RT functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    transform(i, 2 * degree + i) = 1;
-    transform(2 * degree - 1 - i, i) = -1;
-    transform(3 * degree - 1 - i, degree + i) = -1;
-  }
-
-  // Rotate face
-  const int face_start = 3 * degree;
-  Eigen::ArrayXi face_rot = doftransforms::triangle_rotation(degree - 1);
-  Eigen::ArrayXXd face_dir_rot
-      = doftransforms::triangle_rotation_tangent_directions(degree - 1);
-
-  for (int i = 0; i < face_rot.size(); ++i)
-  {
-    for (int b = 0; b < 2; ++b)
-      transform(face_start + i * 2 + b, face_start + face_rot[i] * 2 + b) = 1;
-  }
-  Eigen::MatrixXd rotation = Eigen::MatrixXd::Identity(n, n);
-  rotation.block(face_start, face_start, face_dir_rot.rows(),
-                 face_dir_rot.cols())
-      = face_dir_rot;
-  transform *= rotation;
-
-  return transform;
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::doftransforms::triangle_rt_reflection(int degree)
-{
-  const int n = degree * (degree + 2);
-  Eigen::MatrixXd transform = Eigen::MatrixXd::Zero(n, n);
-
-  // Transform RT functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    transform(i, degree - 1 - i) = 1;
-    transform(degree + i, 2 * degree + i) = -1;
-    transform(2 * degree + i, degree + i) = -1;
-  }
-
-  // reflect face
-  const int face_start = 3 * degree;
-  Eigen::ArrayXi face_ref = doftransforms::triangle_reflection(degree - 1);
-  Eigen::ArrayXXd face_dir_ref
-      = doftransforms::triangle_reflection_tangent_directions(degree - 1);
-
-  for (int i = 0; i < face_ref.size(); ++i)
-  {
-    for (int b = 0; b < 2; ++b)
-      transform(face_start + i * 2 + b, face_start + face_ref[i] * 2 + b) = 1;
-  }
-  Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(n, n);
-  reflection.block(face_start, face_start, face_dir_ref.rows(),
-                   face_dir_ref.cols())
-      = face_dir_ref;
-  transform *= reflection;
-
-  return transform;
 }
 //-----------------------------------------------------------------------------

@@ -76,7 +76,55 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   }
   else if (celltype == cell::type::triangle)
   {
-    throw std::runtime_error("Not implemented yet.");
+    Eigen::ArrayXXd rotated_points(points.rows(), points.cols());
+    for (int i = 0; i < points.rows(); ++i)
+    {
+      rotated_points(i, 0) = points(i, 1);
+      rotated_points(i, 1) = 1 - points(i, 0) - points(i, 1);
+    }
+    transformed_pointsets.push_back(rotated_points);
+
+    {
+      Eigen::ArrayXXd J_part(points.rows(), 4);
+      J_part.col(0) = 0;
+      J_part.col(1) = 1;
+      J_part.col(2) = -1;
+      J_part.col(3) = -1;
+      J.push_back(J_part);
+      Eigen::ArrayXXd K_part(points.rows(), 4);
+      K_part.col(0) = -1;
+      K_part.col(1) = -1;
+      K_part.col(2) = 1;
+      K_part.col(3) = 0;
+      K.push_back(K_part);
+      std::vector<double> detJ_part(points.rows(), 1);
+      detJ.push_back(detJ_part);
+    }
+
+    Eigen::ArrayXXd reflected_points(points.rows(), points.cols());
+    for (int i = 0; i < points.rows(); ++i)
+    {
+      reflected_points(i, 0) = points(i, 1);
+      reflected_points(i, 1) = points(i, 0);
+    }
+    transformed_pointsets.push_back(reflected_points);
+
+    {
+      Eigen::ArrayXXd J_part(points.rows(), 4);
+      J_part.col(0) = 0;
+      J_part.col(1) = 1;
+      J_part.col(2) = 1;
+      J_part.col(3) = 0;
+      J.push_back(J_part);
+      Eigen::ArrayXXd K_part(points.rows(), 4);
+      K_part.col(0) = 0;
+      K_part.col(1) = 1;
+      K_part.col(2) = 1;
+      K_part.col(3) = 0;
+      K.push_back(K_part);
+      std::vector<double> detJ_part(points.rows(), 1);
+      detJ.push_back(detJ_part);
+    }
   }
   else if (celltype == cell::type::quadrilateral)
   {
@@ -157,6 +205,12 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   }
 
   return out;
+}
+//----------------------------------------------------------------------------
+std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
+    const FiniteElement& moment_space)
+{
+  return create_moment_dof_transformations(moment_space);
 }
 //----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> moments::create_normal_moment_dof_transformations(

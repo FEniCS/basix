@@ -282,34 +282,21 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
       }
       dof += degree - 1;
     }
-    if (degree > 5)
-      LOG(WARNING) << "Base transformations not implemented for degree > 5.";
-    if (degree == 5)
+    if (degree >= 5)
     {
+      std::vector<Eigen::MatrixXd> face_transforms
+          = moments::create_moment_dof_transformations(
+              create_dpc(cell::type::quadrilateral, degree - 4));
       for (int face = 0; face < 6; ++face)
       {
-        // TODO: GENERALISE THIS
-        base_transformations[12 + 2 * face](dof, dof) = 0;
-        base_transformations[12 + 2 * face](dof, dof + 1) = 0;
-        base_transformations[12 + 2 * face](dof, dof + 2) = 1;
-        base_transformations[12 + 2 * face](dof + 1, dof) = 1;
-        base_transformations[12 + 2 * face](dof + 1, dof + 1) = 0;
-        base_transformations[12 + 2 * face](dof + 1, dof + 2) = 0;
-        base_transformations[12 + 2 * face](dof + 2, dof) = -1;
-        base_transformations[12 + 2 * face](dof + 2, dof + 1) = 1;
-        base_transformations[12 + 2 * face](dof + 2, dof + 2) = 1;
+        base_transformations[12 + 2 * face].block(
+            dof, dof, face_transforms[0].rows(), face_transforms[0].cols())
+            = face_transforms[0];
+        base_transformations[12 + 2 * face + 1].block(
+            dof, dof, face_transforms[1].rows(), face_transforms[1].cols())
+            = face_transforms[1];
 
-        base_transformations[12 + 2 * face + 1](dof, dof) = 1;
-        base_transformations[12 + 2 * face + 1](dof, dof + 1) = 0;
-        base_transformations[12 + 2 * face + 1](dof, dof + 2) = 0;
-        base_transformations[12 + 2 * face + 1](dof + 1, dof) = 0;
-        base_transformations[12 + 2 * face + 1](dof + 1, dof + 1) = 0;
-        base_transformations[12 + 2 * face + 1](dof + 1, dof + 2) = 1;
-        base_transformations[12 + 2 * face + 1](dof + 2, dof) = 0;
-        base_transformations[12 + 2 * face + 1](dof + 2, dof + 1) = 1;
-        base_transformations[12 + 2 * face + 1](dof + 2, dof + 2) = 0;
-
-        dof += 3;
+        dof += face_transforms[0].rows();
       }
     }
   }

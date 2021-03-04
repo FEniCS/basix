@@ -17,6 +17,10 @@ class FiniteElement;
 /// against spaces on a subentity of the cell
 namespace moments
 {
+/// TODO
+std::vector<Eigen::MatrixXd>
+create_moment_dof_transformations(const FiniteElement& moment_space);
+
 /// Make interpolation points and weights for simple integral moments
 ///
 /// These will represent the integral of each function in the moment space

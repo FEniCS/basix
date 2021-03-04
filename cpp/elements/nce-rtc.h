@@ -19,28 +19,4 @@ FiniteElement create_rtc(cell::type celltype, int degree);
 /// @param degree
 FiniteElement create_nce(cell::type celltype, int degree);
 
-namespace doftransforms
-{
-/// Reflect the DOFs of a RTC H(div) space on a quadrilateral
-/// @param degree The degree of the RTC H(div) space
-/// @return A reordering of DOFs of a RTC H(div) space of the given degree
-Eigen::MatrixXd quadrilateral_rtc_reflection(int degree);
-
-/// Rotate the DOFs of a RTC H(div) space on a quadrilateral
-/// @param degree The number of DOFs along one side of the quadrilateral
-/// @return A reordering of DOFs of a RTC H(div) space of the given degree
-Eigen::MatrixXd quadrilateral_rtc_rotation(int degree);
-
-/// Reflect the DOFs of a NC H(curl) space on a quadrilateral
-/// @param degree The degree of the NC H(curl) space
-/// @return A reordering of DOFs of a NC H(curl) space of the given degree
-Eigen::MatrixXd quadrilateral_nce_reflection(int degree);
-
-/// Rotate the DOFs of a NC H(curl) space on a quadrilateral
-/// @param degree The number of DOFs along one side of the quadrilateral
-/// @return A reordering of DOFs of a NC H(curl) space of the given degree
-Eigen::MatrixXd quadrilateral_nce_rotation(int degree);
-
-} // namespace doftransforms
-
 } // namespace basix

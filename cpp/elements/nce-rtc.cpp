@@ -167,20 +167,22 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   }
   else if (tdim == 3)
   {
-    Eigen::ArrayXi face_ref = doftransforms::quadrilateral_reflection(degree);
-    Eigen::ArrayXi face_rot = doftransforms::quadrilateral_rotation(degree);
+    const int edge_count = 12;
+    std::vector<Eigen::MatrixXd> face_transforms
+        = moments::create_moment_dof_transformations(
+            create_dlagrange(facettype, degree - 1));
 
     for (int face = 0; face < facet_count; ++face)
     {
-      const int start = face_ref.size() * face;
-      for (int i = 0; i < face_rot.size(); ++i)
-      {
-        base_transformations[12 + 2 * face](start + i, start + i) = 0;
-        base_transformations[12 + 2 * face](start + i, start + face_rot[i]) = 1;
-        base_transformations[12 + 2 * face + 1](start + i, start + i) = 0;
-        base_transformations[12 + 2 * face + 1](start + i, start + face_ref[i])
-            = -1;
-      }
+      const int start = face_transforms[0].rows() * face;
+      const int p = edge_count + 2 * face;
+
+      base_transformations[p].block(start, start, face_transforms[0].rows(),
+                                    face_transforms[0].cols())
+          = face_transforms[0];
+      base_transformations[p + 1].block(start, start, face_transforms[1].rows(),
+                                        face_transforms[1].cols())
+          = -face_transforms[1];
     }
   }
 
@@ -385,22 +387,22 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
 
   if (tdim == 3 and degree > 1)
   {
-    Eigen::MatrixXd face_ref
-        = doftransforms::quadrilateral_rtc_reflection(degree - 1);
-    Eigen::MatrixXd face_rot
-        = doftransforms::quadrilateral_rtc_rotation(degree - 1);
+    std::vector<Eigen::MatrixXd> face_transforms
+        = moments::create_moment_dof_transformations(
+            create_rtc(cell::type::quadrilateral, degree - 1));
 
     for (int face = 0; face < face_count; ++face)
     {
-      const int start = edge_ref.size() * edge_count + face_ref.rows() * face;
+      const int start
+          = edge_ref.size() * edge_count + face_transforms[0].rows() * face;
       const int p = edge_count + 2 * face;
 
-      base_transformations[p].block(start, start, face_rot.rows(),
-                                    face_rot.cols())
-          = face_rot;
-      base_transformations[p + 1].block(start, start, face_ref.rows(),
-                                        face_ref.cols())
-          = face_ref;
+      base_transformations[p].block(start, start, face_transforms[0].rows(),
+                                    face_transforms[0].cols())
+          = face_transforms[0];
+      base_transformations[p + 1].block(start, start, face_transforms[1].rows(),
+                                        face_transforms[1].cols())
+          = face_transforms[1];
     }
   }
 
@@ -417,83 +419,5 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
                        mapping::type::covariantPiola);
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::doftransforms::quadrilateral_rtc_rotation(int degree)
-{
-  const int n = 2 * degree * (degree + 1);
-  Eigen::MatrixXd transform = Eigen::MatrixXd::Zero(n, n);
-
-  // Transform functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    transform(i, 2 * degree - 1 - i) = -1;
-    transform(degree + i, 3 * degree + i) = 1;
-    transform(2 * degree + i, i) = 1;
-    transform(3 * degree + i, 3 * degree - 1 - i) = -1;
-  }
-  if (degree > 1)
-    transform.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_nce_rotation(degree - 1);
-  return transform;
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::doftransforms::quadrilateral_nce_rotation(int degree)
-{
-  const int n = 2 * degree * (degree + 1);
-  Eigen::MatrixXd transform = Eigen::MatrixXd::Zero(n, n);
-
-  // Transform functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    transform(i, 2 * degree - 1 - i) = -1;
-    transform(degree + i, 3 * degree + i) = 1;
-    transform(2 * degree + i, i) = 1;
-    transform(3 * degree + i, 3 * degree - 1 - i) = -1;
-  }
-  if (degree > 1)
-    transform.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_rtc_rotation(degree - 1);
-  return transform;
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::doftransforms::quadrilateral_rtc_reflection(int degree)
-{
-  const int n = 2 * degree * (degree + 1);
-  Eigen::MatrixXd transform = Eigen::MatrixXd::Zero(n, n);
-
-  // Transform functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    transform(i, degree + i) = -1;
-    transform(degree + i, i) = -1;
-    transform(2 * degree + i, 3 * degree + i) = -1;
-    transform(3 * degree + i, 2 * degree + i) = -1;
-  }
-  if (degree > 1)
-    transform.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_nce_reflection(degree - 1);
-
-  return transform;
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::doftransforms::quadrilateral_nce_reflection(int degree)
-{
-  const int n = 2 * degree * (degree + 1);
-  Eigen::MatrixXd transform = Eigen::MatrixXd::Zero(n, n);
-
-  // Transform functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    transform(i, degree + i) = 1;
-    transform(degree + i, i) = 1;
-    transform(2 * degree + i, 3 * degree + i) = 1;
-    transform(3 * degree + i, 2 * degree + i) = 1;
-  }
-  if (degree > 1)
-    transform.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_rtc_reflection(degree - 1);
-
-  return transform;
 }
 //-----------------------------------------------------------------------------

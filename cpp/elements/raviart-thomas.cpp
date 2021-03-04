@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "raviart-thomas.h"
-#include "core/dof-transformations.h"
 #include "core/element-families.h"
 #include "core/mappings.h"
 #include "core/moments.h"

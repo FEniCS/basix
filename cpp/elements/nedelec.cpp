@@ -94,22 +94,15 @@ std::vector<Eigen::MatrixXd> create_nedelec_2d_base_transforms(int degree)
   std::vector<Eigen::MatrixXd> base_transformations(
       3, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::ArrayXi edge_ref = doftransforms::interval_reflection(degree);
-  Eigen::ArrayXXd edge_dir
-      = doftransforms::interval_reflection_tangent_directions(degree);
+  std::vector<Eigen::MatrixXd> edge_transforms
+      = moments::create_tangent_moment_dof_transformations(
+          create_dlagrange(cell::type::interval, degree - 1));
+  const int edge_dofs = edge_transforms[0].rows();
   for (int edge = 0; edge < 3; ++edge)
   {
-    const int start = edge_ref.size() * edge;
-    for (int i = 0; i < edge_ref.size(); ++i)
-    {
-      base_transformations[edge](start + i, start + i) = 0;
-      base_transformations[edge](start + i, start + edge_ref[i]) = 1;
-    }
-    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
-                     edge_dir.rows(), edge_dir.cols())
-        = edge_dir;
-    base_transformations[edge] *= directions;
+    const int start = edge_dofs * edge;
+    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
+        = edge_transforms[0];
   }
 
   return base_transformations;
@@ -235,63 +228,58 @@ std::vector<Eigen::MatrixXd> create_nedelec_3d_base_transforms(int degree)
   std::vector<Eigen::MatrixXd> base_transformations(
       14, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::ArrayXi edge_ref = doftransforms::interval_reflection(degree);
-  Eigen::ArrayXXd edge_dir
-      = doftransforms::interval_reflection_tangent_directions(degree);
+  std::vector<Eigen::MatrixXd> edge_transforms
+      = moments::create_tangent_moment_dof_transformations(
+          create_dlagrange(cell::type::interval, degree - 1));
+  const int edge_dofs = edge_transforms[0].rows();
   for (int edge = 0; edge < 6; ++edge)
   {
-    const int start = edge_ref.size() * edge;
-    for (int i = 0; i < edge_ref.size(); ++i)
-    {
-      base_transformations[edge](start + i, start + i) = 0;
-      base_transformations[edge](start + i, start + edge_ref[i]) = 1;
-    }
-    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
-                     edge_dir.rows(), edge_dir.cols())
-        = edge_dir;
-    base_transformations[edge] *= directions;
+    const int start = edge_dofs * edge;
+    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
+        = edge_transforms[0];
   }
 
   // Faces
-  Eigen::ArrayXi face_rot = doftransforms::triangle_rotation(degree - 1);
-  Eigen::ArrayXi face_ref = doftransforms::triangle_reflection(degree - 1);
-  Eigen::ArrayXXd face_dir_ref
-      = doftransforms::triangle_reflection_tangent_directions(degree - 1);
-  Eigen::ArrayXXd face_dir_rot
-      = doftransforms::triangle_rotation_tangent_directions(degree - 1);
-  for (int face = 0; face < 4; ++face)
+  if (degree > 1)
   {
-    const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
-    const int p = 6 + 2 * face;
-    for (int i = 0; i < face_rot.size(); ++i)
+    Eigen::ArrayXi face_rot = doftransforms::triangle_rotation(degree - 1);
+    Eigen::ArrayXi face_ref = doftransforms::triangle_reflection(degree - 1);
+    Eigen::ArrayXXd face_dir_ref
+        = doftransforms::triangle_reflection_tangent_directions(degree - 1);
+    Eigen::ArrayXXd face_dir_rot
+        = doftransforms::triangle_rotation_tangent_directions(degree - 1);
+
+    const int face_dofs = face_dir_rot.rows();
+    for (int face = 0; face < 4; ++face)
     {
-      for (int b = 0; b < 2; ++b)
+      const int start = edge_dofs * 6 + face_ref.size() * 2 * face;
+      const int p = 6 + 2 * face;
+      for (int i = 0; i < face_rot.size(); ++i)
       {
-        const int p1 = start + 2 * i + b;
-        base_transformations[p](p1, start + i * 2 + b) = 0;
-        base_transformations[p](p1, start + face_rot[i] * 2 + b) = 1;
-        base_transformations[p + 1](p1, start + i * 2 + b) = 0;
-        base_transformations[p + 1](p1, start + face_ref[i] * 2 + b) = 1;
+        for (int b = 0; b < 2; ++b)
+        {
+          const int p1 = start + 2 * i + b;
+          base_transformations[p](p1, start + i * 2 + b) = 0;
+          base_transformations[p](p1, start + face_rot[i] * 2 + b) = 1;
+          base_transformations[p + 1](p1, start + i * 2 + b) = 0;
+          base_transformations[p + 1](p1, start + face_ref[i] * 2 + b) = 1;
+        }
       }
+      // Rotate face
+      Eigen::MatrixXd rotation = Eigen::MatrixXd::Identity(ndofs, ndofs);
+      rotation.block(edge_dofs * 6 + face_dofs * face,
+                     edge_dofs * 6 + face_dofs * face, face_dofs, face_dofs)
+          = face_dir_rot;
+      base_transformations[p] *= rotation;
+
+      // Reflect face
+      Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
+      reflection.block(edge_dofs * 6 + face_dofs * face,
+                       edge_dofs * 6 + face_dofs * face, face_dofs, face_dofs)
+          = face_dir_ref;
+      base_transformations[p + 1] *= reflection;
     }
-    // Rotate face
-    Eigen::MatrixXd rotation = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    rotation.block(edge_dir.rows() * 6 + face_dir_rot.rows() * face,
-                   edge_dir.cols() * 6 + face_dir_rot.rows() * face,
-                   face_dir_rot.rows(), face_dir_rot.cols())
-        = face_dir_rot;
-    base_transformations[p] *= rotation;
-
-    // Reflect face
-    Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    reflection.block(edge_dir.rows() * 6 + face_dir_ref.rows() * face,
-                     edge_dir.cols() * 6 + face_dir_ref.rows() * face,
-                     face_dir_ref.rows(), face_dir_ref.cols())
-        = face_dir_ref;
-    base_transformations[p + 1] *= reflection;
   }
-
   return base_transformations;
 }
 

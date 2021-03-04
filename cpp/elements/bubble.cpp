@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "bubble.h"
-#include "core/dof-transformations.h"
 #include "core/element-families.h"
 #include "core/lattice.h"
 #include "core/mappings.h"

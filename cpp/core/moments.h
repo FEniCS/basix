@@ -21,6 +21,14 @@ namespace moments
 std::vector<Eigen::MatrixXd>
 create_moment_dof_transformations(const FiniteElement& moment_space);
 
+/// TODO
+std::vector<Eigen::MatrixXd>
+create_normal_moment_dof_transformations(const FiniteElement& moment_space);
+
+/// TODO
+std::vector<Eigen::MatrixXd>
+create_tangent_moment_dof_transformations(const FiniteElement& moment_space);
+
 /// Make interpolation points and weights for simple integral moments
 ///
 /// These will represent the integral of each function in the moment space

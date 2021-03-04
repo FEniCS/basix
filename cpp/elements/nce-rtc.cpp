@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "nce-rtc.h"
-#include "core/dof-transformations.h"
 #include "core/element-families.h"
 #include "core/log.h"
 #include "core/mappings.h"
@@ -115,9 +114,11 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points_facet;
   Eigen::MatrixXd matrix_facet;
+  FiniteElement moment_space = create_dlagrange(facettype, degree - 1);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
-      create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
-      quad_deg);
+      moment_space, celltype, tdim, degree, quad_deg);
+  std::vector<Eigen::MatrixXd> facet_transforms
+      = moments::create_normal_moment_dof_transformations(moment_space);
 
   Eigen::ArrayXXd points_cell(0, tdim);
   Eigen::MatrixXd matrix_cell(0, 0);
@@ -147,42 +148,26 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
       transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    Eigen::ArrayXi edge_ref = doftransforms::interval_reflection(degree);
-    Eigen::ArrayXXd edge_dir
-        = doftransforms::interval_reflection_tangent_directions(degree);
     for (int edge = 0; edge < facet_count; ++edge)
     {
-      const int start = edge_ref.size() * edge;
-      for (int i = 0; i < edge_ref.size(); ++i)
-      {
-        base_transformations[edge](start + i, start + i) = 0;
-        base_transformations[edge](start + i, start + edge_ref[i]) = 1;
-      }
-      Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-      directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
-                       edge_dir.rows(), edge_dir.cols())
-          = edge_dir;
-      base_transformations[edge] *= directions;
+      const int start = facet_dofs * edge;
+      base_transformations[edge].block(start, start, facet_dofs, facet_dofs)
+          = facet_transforms[0];
     }
   }
   else if (tdim == 3)
   {
     const int edge_count = 12;
-    std::vector<Eigen::MatrixXd> face_transforms
-        = moments::create_moment_dof_transformations(
-            create_dlagrange(facettype, degree - 1));
 
     for (int face = 0; face < facet_count; ++face)
     {
-      const int start = face_transforms[0].rows() * face;
+      const int start = facet_dofs * face;
       const int p = edge_count + 2 * face;
 
-      base_transformations[p].block(start, start, face_transforms[0].rows(),
-                                    face_transforms[0].cols())
-          = face_transforms[0];
-      base_transformations[p + 1].block(start, start, face_transforms[1].rows(),
-                                        face_transforms[1].cols())
-          = -face_transforms[1];
+      base_transformations[p].block(start, start, facet_dofs, facet_dofs)
+          = facet_transforms[0];
+      base_transformations[p + 1].block(start, start, facet_dofs, facet_dofs)
+          = facet_transforms[1];
     }
   }
 
@@ -323,24 +308,33 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points_1d;
   Eigen::MatrixXd matrix_1d;
+  FiniteElement edge_moment_space
+      = create_dlagrange(cell::type::interval, degree - 1);
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
-      create_dlagrange(cell::type::interval, degree - 1), celltype, tdim,
-      degree, quad_deg);
+      edge_moment_space, celltype, tdim, degree, quad_deg);
+  std::vector<Eigen::MatrixXd> edge_transforms
+      = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
   Eigen::ArrayXXd points_2d(0, tdim);
   Eigen::MatrixXd matrix_2d(0, 0);
   Eigen::ArrayXXd points_3d(0, tdim);
   Eigen::MatrixXd matrix_3d(0, 0);
+
+  std::vector<Eigen::MatrixXd> face_transforms;
   // Add integral moments on interior
   if (degree > 1)
   {
     // Face integral moment
+    FiniteElement moment_space
+        = create_rtc(cell::type::quadrilateral, degree - 1);
     std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
-        create_rtc(cell::type::quadrilateral, degree - 1), celltype, tdim,
-        degree, quad_deg);
+        moment_space, celltype, tdim, degree, quad_deg);
 
     if (tdim == 3)
     {
+      face_transforms
+          = moments::create_moment_dof_transformations(moment_space);
+
       // Interior integral moment
       std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
           create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
@@ -366,42 +360,23 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_transformations(
       transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  Eigen::ArrayXi edge_ref = doftransforms::interval_reflection(degree);
-  Eigen::ArrayXXd edge_dir
-      = doftransforms::interval_reflection_tangent_directions(degree);
-
   for (int edge = 0; edge < edge_count; ++edge)
   {
-    const int start = edge_ref.size() * edge;
-    for (int i = 0; i < edge_ref.size(); ++i)
-    {
-      base_transformations[edge](start + i, start + i) = 0;
-      base_transformations[edge](start + i, start + edge_ref[i]) = 1;
-    }
-    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    directions.block(edge_dir.rows() * edge, edge_dir.cols() * edge,
-                     edge_dir.rows(), edge_dir.cols())
-        = edge_dir;
-    base_transformations[edge] *= directions;
+    const int start = edge_dofs * edge;
+    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
+        = edge_transforms[0];
   }
 
   if (tdim == 3 and degree > 1)
   {
-    std::vector<Eigen::MatrixXd> face_transforms
-        = moments::create_moment_dof_transformations(
-            create_rtc(cell::type::quadrilateral, degree - 1));
-
     for (int face = 0; face < face_count; ++face)
     {
-      const int start
-          = edge_ref.size() * edge_count + face_transforms[0].rows() * face;
+      const int start = edge_dofs * edge_count + face_dofs * face;
       const int p = edge_count + 2 * face;
 
-      base_transformations[p].block(start, start, face_transforms[0].rows(),
-                                    face_transforms[0].cols())
+      base_transformations[p].block(start, start, face_dofs, face_dofs)
           = face_transforms[0];
-      base_transformations[p + 1].block(start, start, face_transforms[1].rows(),
-                                        face_transforms[1].cols())
+      base_transformations[p + 1].block(start, start, face_dofs, face_dofs)
           = face_transforms[1];
     }
   }

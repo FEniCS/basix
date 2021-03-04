@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "serendipity.h"
-#include "core/dof-transformations.h"
 #include "core/element-families.h"
 #include "core/lattice.h"
 #include "core/log.h"
@@ -169,20 +168,31 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points_1d(0, tdim);
   Eigen::MatrixXd matrix_1d(0, 0);
+
+  std::vector<Eigen::MatrixXd> edge_transforms;
+  std::vector<Eigen::MatrixXd> face_transforms;
+
   if (degree >= 2)
   {
+    FiniteElement moment_space = create_dpc(cell::type::interval, degree - 2);
     std::tie(points_1d, matrix_1d) = moments::make_integral_moments(
-        create_dpc(cell::type::interval, degree - 2), celltype, 1, degree,
-        quad_deg);
+        moment_space, celltype, 1, degree, quad_deg);
+    if (tdim > 1)
+      edge_transforms
+          = moments::create_moment_dof_transformations(moment_space);
   }
 
   Eigen::ArrayXXd points_2d(0, tdim);
   Eigen::MatrixXd matrix_2d(0, 0);
   if (tdim >= 2 and degree >= 4)
   {
+    FiniteElement moment_space
+        = create_dpc(cell::type::quadrilateral, degree - 4);
     std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
-        create_dpc(cell::type::quadrilateral, degree - 4), celltype, 1, degree,
-        quad_deg);
+        moment_space, celltype, 1, degree, quad_deg);
+    if (tdim > 2)
+      face_transforms
+          = moments::create_moment_dof_transformations(moment_space);
   }
 
   Eigen::ArrayXXd points_3d(0, tdim);
@@ -257,46 +267,31 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_transformations(
       transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  if (tdim == 2)
+  if (tdim >= 2 and degree >= 2)
   {
-    int dof = 4;
-    for (int edge = 0; edge < 4; ++edge)
+    const int edge_dofs = degree - 1;
+    const int num_vertices = topology[0].size();
+    const int num_edges = topology[1].size();
+    for (int edge = 0; edge < num_edges; ++edge)
     {
-      for (int i = 0; i < degree - 1; ++i)
-      {
-        base_transformations[edge](dof + i, dof + i) = 0;
-        base_transformations[edge](dof + i, dof + degree - 2 - i) = 1;
-      }
-      dof += degree - 1;
+      const int start = num_vertices + edge_dofs * edge;
+      base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
+          = edge_transforms[0];
     }
-  }
-  else if (tdim == 3)
-  {
-    int dof = 8;
-    for (int edge = 0; edge < 12; ++edge)
+    if (tdim == 3 and degree >= 4)
     {
-      for (int i = 0; i < degree - 1; ++i)
+      const int face_dofs = face_transforms[0].rows();
+      const int num_faces = topology[2].size();
+      for (int face = 0; face < num_faces; ++face)
       {
-        base_transformations[edge](dof + i, dof + i) = 0;
-        base_transformations[edge](dof + i, dof + degree - 2 - i) = 1;
-      }
-      dof += degree - 1;
-    }
-    if (degree >= 5)
-    {
-      std::vector<Eigen::MatrixXd> face_transforms
-          = moments::create_moment_dof_transformations(
-              create_dpc(cell::type::quadrilateral, degree - 4));
-      for (int face = 0; face < 6; ++face)
-      {
-        base_transformations[12 + 2 * face].block(
-            dof, dof, face_transforms[0].rows(), face_transforms[0].cols())
+        const int start
+            = num_vertices + num_edges * edge_dofs + face * face_dofs;
+        base_transformations[num_edges + 2 * face].block(start, start,
+                                                         face_dofs, face_dofs)
             = face_transforms[0];
-        base_transformations[12 + 2 * face + 1].block(
-            dof, dof, face_transforms[1].rows(), face_transforms[1].cols())
+        base_transformations[num_edges + 2 * face + 1].block(
+            start, start, face_dofs, face_dofs)
             = face_transforms[1];
-
-        dof += face_transforms[0].rows();
       }
     }
   }

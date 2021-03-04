@@ -50,7 +50,35 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   std::vector<Eigen::ArrayXXd> K;
   std::vector<std::vector<double>> detJ;
 
-  if (celltype == cell::type::quadrilateral)
+  if (celltype == cell::type::point)
+  {
+    return {};
+  }
+  else if (celltype == cell::type::interval)
+  {
+    Eigen::ArrayXXd reflected_points(points.rows(), points.cols());
+    for (int i = 0; i < points.rows(); ++i)
+    {
+      reflected_points(i, 0) = 1 - points(i, 0);
+    }
+    transformed_pointsets.push_back(reflected_points);
+
+    {
+      Eigen::ArrayXXd J_part(points.rows(), 1);
+      J_part.col(0) = -1;
+      J.push_back(J_part);
+      Eigen::ArrayXXd K_part(points.rows(), 1);
+      K_part.col(0) = -1;
+      K.push_back(K_part);
+      std::vector<double> detJ_part(points.rows(), 1);
+      detJ.push_back(detJ_part);
+    }
+  }
+  else if (celltype == cell::type::triangle)
+  {
+    throw std::runtime_error("Not implemented yet.");
+  }
+  else if (celltype == cell::type::quadrilateral)
   {
     Eigen::ArrayXXd rotated_points(points.rows(), points.cols());
     for (int i = 0; i < points.rows(); ++i)
@@ -103,9 +131,8 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
     }
   }
   else
-  {
-    throw std::runtime_error("Not implemented yet.");
-  }
+    throw std::runtime_error(
+        "DOF transformations only implemented for tdim <= 2.");
 
   std::vector<Eigen::MatrixXd> out;
   for (std::size_t i = 0; i < transformed_pointsets.size(); ++i)
@@ -130,6 +157,32 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   }
 
   return out;
+}
+//----------------------------------------------------------------------------
+std::vector<Eigen::MatrixXd> moments::create_normal_moment_dof_transformations(
+    const FiniteElement& moment_space)
+{
+  std::vector<Eigen::MatrixXd> t
+      = create_moment_dof_transformations(moment_space);
+  const int tdim = cell::topological_dimension(moment_space.cell_type());
+  if (tdim == 1)
+    t[0] *= -1;
+  if (tdim == 2)
+    t[1] *= -1;
+  return t;
+}
+//----------------------------------------------------------------------------
+std::vector<Eigen::MatrixXd> moments::create_tangent_moment_dof_transformations(
+    const FiniteElement& moment_space)
+{
+  std::vector<Eigen::MatrixXd> t
+      = create_moment_dof_transformations(moment_space);
+  const int tdim = cell::topological_dimension(moment_space.cell_type());
+  if (tdim == 1)
+    t[0] *= -1;
+  if (tdim == 2)
+    throw std::runtime_error("Not implemented yet.");
+  return t;
 }
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>

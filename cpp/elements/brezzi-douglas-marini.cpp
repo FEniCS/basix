@@ -100,8 +100,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     }
   }
 
-  // BDM has facet_dofs dofs on each facet, and ndofs-facet_count*facet_dofs in
-  // the interior
+  // BDM has facet_dofs dofs on each facet, and
+  // ndofs-facet_count*facet_dofs in the interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (int i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);

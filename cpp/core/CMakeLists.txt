@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 set(HEADERS_core
-  ${CMAKE_CURRENT_SOURCE_DIR}/array2d.h
   ${CMAKE_CURRENT_SOURCE_DIR}/lattice.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ndarray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/polyset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dof-transformations.h
   ${CMAKE_CURRENT_SOURCE_DIR}/moments.h

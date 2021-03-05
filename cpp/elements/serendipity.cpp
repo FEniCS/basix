@@ -213,8 +213,11 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
       vertex_count + matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
       vertex_count + matrix_1d.cols() + matrix_2d.cols() + matrix_3d.cols());
 
-  interpolation_points.block(0, 0, vertex_count, tdim)
-      = cell::geometry(celltype);
+  const ndarray<double, 2> geometry = cell::geometry(celltype);
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _geometry(geometry.data(), geometry.shape[0], geometry.shape[1]);
+  interpolation_points.block(0, 0, vertex_count, tdim) = _geometry;
   interpolation_points.block(vertex_count, 0, points_1d.rows(), tdim)
       = points_1d;
   interpolation_points.block(vertex_count + points_1d.rows(), 0,

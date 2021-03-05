@@ -69,16 +69,19 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    Eigen::ArrayXXd entity
+    ndarray<double, 2> entity
         = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
+    Eigen::Map<
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+        _entity(entity.data(), entity.shape[0], entity.shape[1]);
 
     // Parametrise entity coordinates
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
     for (int j = 0; j < sub_entity_dim; ++j)
-      axes.row(j) = entity.row(axis_pts[j]) - entity.row(0);
+      axes.row(j) = _entity.row(axis_pts[j]) - _entity.row(0);
     // Map quadrature points onto entity
     points.block(Qpts.rows() * i, 0, Qpts.rows(), tdim)
-        = entity.row(0).replicate(Qpts.rows(), 1)
+        = _entity.row(0).replicate(Qpts.rows(), 1)
           + (Qpts.matrix() * axes.matrix()).array();
 
     // Compute entity integral moments
@@ -133,17 +136,20 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> moments::make_dot_integral_moments(
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    Eigen::ArrayXXd entity
+    ndarray<double, 2> entity
         = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
+    Eigen::Map<
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+        _entity(entity.data(), entity.shape[0], entity.shape[1]);
 
     // Parametrise entity coordinates
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
     for (int j = 0; j < sub_entity_dim; ++j)
-      axes.row(j) = entity.row(axis_pts[j]) - entity.row(0);
+      axes.row(j) = _entity.row(axis_pts[j]) - _entity.row(0);
 
     // Map quadrature points onto entity
     points.block(Qpts.rows() * i, 0, Qpts.rows(), tdim)
-        = entity.row(0).replicate(Qpts.rows(), 1)
+        = _entity.row(0).replicate(Qpts.rows(), 1)
           + (Qpts.matrix() * axes.matrix()).array();
 
     // Compute entity integral moments
@@ -204,8 +210,12 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    Eigen::Array2Xd edge = cell::sub_entity_geometry(celltype, 1, i);
-    Eigen::VectorXd tangent = edge.row(1) - edge.row(0);
+    ndarray<double, 2> edge = cell::sub_entity_geometry(celltype, 1, i);
+    Eigen::Map<
+        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+        _edge(edge.data(), edge.shape[0], edge.shape[1]);
+
+    Eigen::VectorXd tangent = _edge.row(1) - _edge.row(0);
     // No need to normalise the tangent, as the size of this is equal to the
     // integral jacobian
 
@@ -214,7 +224,7 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
     for (int j = 0; j < Qpts.rows(); ++j)
     {
       points.row(i * Qpts.rows() + j)
-          = edge.row(0) + Qpts(j, 0) * (edge.row(1) - edge.row(0));
+          = _edge.row(0) + Qpts(j, 0) * (_edge.row(1) - _edge.row(0));
     }
 
     // Compute edge tangent integral moments
@@ -270,10 +280,14 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), tdim);
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    Eigen::ArrayXXd facet = cell::sub_entity_geometry(celltype, tdim - 1, i);
+    ndarray<double, 2> facet = cell::sub_entity_geometry(celltype, tdim - 1, i);
+    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                  Eigen::RowMajor>>
+        _facet(facet.data(), facet.shape[0], facet.shape[1]);
+
     if (tdim == 2)
     {
-      Eigen::Vector2d tangent = facet.row(1) - facet.row(0);
+      Eigen::Vector2d tangent = _facet.row(1) - _facet.row(0);
       normal << -tangent(1), tangent(0);
       // No need to normalise the normal, as the size of this is equal to the
       // integral jacobian
@@ -282,13 +296,13 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
       for (int j = 0; j < Qpts.rows(); ++j)
       {
         points.row(i * Qpts.rows() + j)
-            = facet.row(0) + Qpts(j, 0) * (facet.row(1) - facet.row(0));
+            = _facet.row(0) + Qpts(j, 0) * (_facet.row(1) - _facet.row(0));
       }
     }
     else if (tdim == 3)
     {
-      Eigen::Vector3d t0 = facet.row(1) - facet.row(0);
-      Eigen::Vector3d t1 = facet.row(2) - facet.row(0);
+      Eigen::Vector3d t0 = _facet.row(1) - _facet.row(0);
+      Eigen::Vector3d t1 = _facet.row(2) - _facet.row(0);
       normal = t0.cross(t1);
 
       // No need to normalise the normal, as the size of this is equal to the
@@ -298,8 +312,8 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
       for (int j = 0; j < Qpts.rows(); ++j)
       {
         points.row(i * Qpts.rows() + j)
-            = facet.row(0) + Qpts(j, 0) * (facet.row(1) - facet.row(0))
-              + Qpts(j, 1) * (facet.row(2) - facet.row(0));
+            = _facet.row(0) + Qpts(j, 0) * (_facet.row(1) - _facet.row(0))
+              + Qpts(j, 1) * (_facet.row(2) - _facet.row(0));
       }
     }
     else

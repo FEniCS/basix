@@ -11,8 +11,8 @@
 #include "elements/nedelec.h"
 #include "elements/raviart-thomas.h"
 #include "elements/regge.h"
+#include "elements/serendipity.h"
 #include "polyset.h"
-#include <iostream>
 #include <numeric>
 
 #define str_macro(X) #X
@@ -71,6 +71,10 @@ basix::FiniteElement basix::create_element(element::family family,
     return create_cr(cell, degree);
   case element::family::Bubble:
     return create_bubble(cell, degree);
+  case element::family::Serendipity:
+    return create_serendipity(cell, degree);
+  case element::family::DPC:
+    return create_dpc(cell, degree);
   default:
     throw std::runtime_error("Family not found");
   }
@@ -147,17 +151,17 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(
   return std::make_pair(points, matrix);
 }
 //-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(element::family family, cell::type cell_type,
-                             int degree, const std::vector<int>& value_shape,
-                             const Eigen::ArrayXXd& coeffs,
-                             const std::vector<std::vector<int>>& entity_dofs,
-                             const std::vector<Eigen::MatrixXd>& base_perms,
-                             const Eigen::ArrayXXd& points,
-                             const Eigen::MatrixXd M, mapping::type map_type)
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
+    const std::vector<std::vector<int>>& entity_dofs,
+    const std::vector<Eigen::MatrixXd>& base_transformations,
+    const Eigen::ArrayXXd& points, const Eigen::MatrixXd M,
+    mapping::type map_type)
     : _cell_type(cell_type), _family(family), _degree(degree),
       _value_shape(value_shape), _map_type(map_type), _coeffs(coeffs),
-      _entity_dofs(entity_dofs), _base_perms(base_perms), _points(points),
-      _matM(M)
+      _entity_dofs(entity_dofs), _base_transformations(base_transformations),
+      _points(points), _matM(M)
 {
   // Check that entity dofs add up to total number of dofs
   int sum = 0;
@@ -259,7 +263,7 @@ void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
 {
-  return _base_perms;
+  return _base_transformations;
 }
 //-----------------------------------------------------------------------------
 int FiniteElement::num_points() const { return _points.rows(); }

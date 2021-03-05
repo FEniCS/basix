@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "nce-rtc.h"
-#include "core/dof-permutations.h"
 #include "core/element-families.h"
 #include "core/log.h"
 #include "core/mappings.h"
@@ -115,9 +114,11 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points_facet;
   Eigen::MatrixXd matrix_facet;
+  FiniteElement moment_space = create_dlagrange(facettype, degree - 1);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
-      create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
-      quad_deg);
+      moment_space, celltype, tdim, degree, quad_deg);
+  std::vector<Eigen::MatrixXd> facet_transforms
+      = moments::create_normal_moment_dof_transformations(moment_space);
 
   Eigen::ArrayXXd points_cell(0, tdim);
   Eigen::MatrixXd matrix_cell(0, 0);
@@ -139,53 +140,34 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  int perm_count = 0;
+  int transform_count = 0;
   for (int i = 1; i < tdim; ++i)
-    perm_count += topology[i].size() * i;
+    transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_permutations(
-      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_transformations(
+      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    const std::vector<int> edge_ref = dofperms::interval_reflection(degree);
-    const ndarray<double, 2> edge_dir
-        = dofperms::interval_reflection_tangent_directions(degree);
-    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>>
-        _edge_dir(edge_dir.data(), edge_dir.shape[0], edge_dir.shape[1]);
-
     for (int edge = 0; edge < facet_count; ++edge)
     {
-      const int start = edge_ref.size() * edge;
-      for (std::size_t i = 0; i < edge_ref.size(); ++i)
-      {
-        base_permutations[edge](start + i, start + i) = 0;
-        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
-      }
-
-      Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-      directions.block(_edge_dir.rows() * edge, _edge_dir.cols() * edge,
-                       _edge_dir.rows(), _edge_dir.cols())
-          = _edge_dir;
-      base_permutations[edge] *= directions;
+      const int start = facet_dofs * edge;
+      base_transformations[edge].block(start, start, facet_dofs, facet_dofs)
+          = facet_transforms[0];
     }
   }
   else if (tdim == 3)
   {
-    const std::vector<int> face_ref
-        = dofperms::quadrilateral_reflection(degree);
-    const std::vector<int> face_rot = dofperms::quadrilateral_rotation(degree);
+    const int edge_count = 12;
+
     for (int face = 0; face < facet_count; ++face)
     {
-      const int start = face_ref.size() * face;
-      for (std::size_t i = 0; i < face_rot.size(); ++i)
-      {
-        base_permutations[12 + 2 * face](start + i, start + i) = 0;
-        base_permutations[12 + 2 * face](start + i, start + face_rot[i]) = 1;
-        base_permutations[12 + 2 * face + 1](start + i, start + i) = 0;
-        base_permutations[12 + 2 * face + 1](start + i, start + face_ref[i])
-            = -1;
-      }
+      const int start = facet_dofs * face;
+      const int p = edge_count + 2 * face;
+
+      base_transformations[p].block(start, start, facet_dofs, facet_dofs)
+          = facet_transforms[0];
+      base_transformations[p + 1].block(start, start, facet_dofs, facet_dofs)
+          = facet_transforms[1];
     }
   }
 
@@ -198,7 +180,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations, points, matrix,
+                       entity_dofs, base_transformations, points, matrix,
                        mapping::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
@@ -326,24 +308,33 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points_1d;
   Eigen::MatrixXd matrix_1d;
+  FiniteElement edge_moment_space
+      = create_dlagrange(cell::type::interval, degree - 1);
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
-      create_dlagrange(cell::type::interval, degree - 1), celltype, tdim,
-      degree, quad_deg);
+      edge_moment_space, celltype, tdim, degree, quad_deg);
+  std::vector<Eigen::MatrixXd> edge_transforms
+      = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
   Eigen::ArrayXXd points_2d(0, tdim);
   Eigen::MatrixXd matrix_2d(0, 0);
   Eigen::ArrayXXd points_3d(0, tdim);
   Eigen::MatrixXd matrix_3d(0, 0);
+
+  std::vector<Eigen::MatrixXd> face_transforms;
   // Add integral moments on interior
   if (degree > 1)
   {
     // Face integral moment
+    FiniteElement moment_space
+        = create_rtc(cell::type::quadrilateral, degree - 1);
     std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
-        create_rtc(cell::type::quadrilateral, degree - 1), celltype, tdim,
-        degree, quad_deg);
+        moment_space, celltype, tdim, degree, quad_deg);
 
     if (tdim == 3)
     {
+      face_transforms
+          = moments::create_dot_moment_dof_transformations(moment_space);
+
       // Interior integral moment
       std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
           create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
@@ -362,50 +353,31 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  int perm_count = 0;
+  int transform_count = 0;
   for (int i = 1; i < tdim; ++i)
-    perm_count += topology[i].size() * i;
+    transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_permutations(
-      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_transformations(
+      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  const std::vector<int> edge_ref = dofperms::interval_reflection(degree);
-  const ndarray<double, 2> edge_dir
-      = dofperms::interval_reflection_tangent_directions(degree);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _edge_dir(edge_dir.data(), edge_dir.shape[0], edge_dir.shape[1]);
   for (int edge = 0; edge < edge_count; ++edge)
   {
-    const int start = edge_ref.size() * edge;
-    for (std::size_t i = 0; i < edge_ref.size(); ++i)
-    {
-      base_permutations[edge](start + i, start + i) = 0;
-      base_permutations[edge](start + i, start + edge_ref[i]) = 1;
-    }
-    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    directions.block(_edge_dir.rows() * edge, _edge_dir.cols() * edge,
-                     _edge_dir.rows(), _edge_dir.cols())
-        = _edge_dir;
-    base_permutations[edge] *= directions;
+    const int start = edge_dofs * edge;
+    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
+        = edge_transforms[0];
   }
 
   if (tdim == 3 and degree > 1)
   {
-    Eigen::MatrixXd face_ref
-        = dofperms::quadrilateral_rtc_reflection(degree - 1);
-    Eigen::MatrixXd face_rot = dofperms::quadrilateral_rtc_rotation(degree - 1);
-
     for (int face = 0; face < face_count; ++face)
     {
-      const int start = edge_ref.size() * edge_count + face_ref.rows() * face;
+      const int start = edge_dofs * edge_count + face_dofs * face;
       const int p = edge_count + 2 * face;
 
-      base_permutations[p].block(start, start, face_rot.rows(), face_rot.cols())
-          = face_rot;
-      base_permutations[p + 1].block(start, start, face_ref.rows(),
-                                     face_ref.cols())
-          = face_ref;
+      base_transformations[p].block(start, start, face_dofs, face_dofs)
+          = face_transforms[0];
+      base_transformations[p + 1].block(start, start, face_dofs, face_dofs)
+          = face_transforms[1];
     }
   }
 
@@ -420,85 +392,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
       celltype, wcoeffs, matrix, points, degree);
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations, points, matrix,
+                       entity_dofs, base_transformations, points, matrix,
                        mapping::type::covariantPiola);
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_rtc_rotation(int degree)
-{
-  const int n = 2 * degree * (degree + 1);
-  Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
-
-  // Permute functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    perm(i, 2 * degree - 1 - i) = -1;
-    perm(degree + i, 3 * degree + i) = 1;
-    perm(2 * degree + i, i) = 1;
-    perm(3 * degree + i, 3 * degree - 1 - i) = -1;
-  }
-  if (degree > 1)
-    perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_nce_rotation(degree - 1);
-  return perm;
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_nce_rotation(int degree)
-{
-  const int n = 2 * degree * (degree + 1);
-  Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
-
-  // Permute functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    perm(i, 2 * degree - 1 - i) = -1;
-    perm(degree + i, 3 * degree + i) = 1;
-    perm(2 * degree + i, i) = 1;
-    perm(3 * degree + i, 3 * degree - 1 - i) = -1;
-  }
-  if (degree > 1)
-    perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_rtc_rotation(degree - 1);
-  return perm;
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_rtc_reflection(int degree)
-{
-  const int n = 2 * degree * (degree + 1);
-  Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
-
-  // Permute functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    perm(i, degree + i) = -1;
-    perm(degree + i, i) = -1;
-    perm(2 * degree + i, 3 * degree + i) = -1;
-    perm(3 * degree + i, 2 * degree + i) = -1;
-  }
-  if (degree > 1)
-    perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_nce_reflection(degree - 1);
-
-  return perm;
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::quadrilateral_nce_reflection(int degree)
-{
-  const int n = 2 * degree * (degree + 1);
-  Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
-
-  // Permute functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    perm(i, degree + i) = 1;
-    perm(degree + i, i) = 1;
-    perm(2 * degree + i, 3 * degree + i) = 1;
-    perm(3 * degree + i, 2 * degree + i) = 1;
-  }
-  if (degree > 1)
-    perm.block(4 * degree, 4 * degree, n - 4 * degree, n - 4 * degree)
-        = quadrilateral_rtc_reflection(degree - 1);
-
-  return perm;
 }
 //-----------------------------------------------------------------------------

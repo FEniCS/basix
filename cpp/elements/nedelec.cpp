@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "nedelec.h"
-#include "core/dof-permutations.h"
 #include "core/element-families.h"
 #include "core/mappings.h"
 #include "core/moments.h"
@@ -88,34 +87,24 @@ create_nedelec_2d_interpolation(int degree)
                                     matrix_2d, {}, 2, 2);
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> create_nedelec_2d_base_perms(int degree)
+std::vector<Eigen::MatrixXd> create_nedelec_2d_base_transforms(int degree)
 {
   const int ndofs = degree * (degree + 2);
-  std::vector<Eigen::MatrixXd> base_permutations(
+  std::vector<Eigen::MatrixXd> base_transformations(
       3, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  std::vector<int> edge_ref = dofperms::interval_reflection(degree);
-  ndarray<double, 2> edge_dir
-      = dofperms::interval_reflection_tangent_directions(degree);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _edge_dir(edge_dir.data(), edge_dir.shape[0], edge_dir.shape[1]);
+  std::vector<Eigen::MatrixXd> edge_transforms
+      = moments::create_tangent_moment_dof_transformations(
+          create_dlagrange(cell::type::interval, degree - 1));
+  const int edge_dofs = edge_transforms[0].rows();
   for (int edge = 0; edge < 3; ++edge)
   {
-    const int start = edge_ref.size() * edge;
-    for (std::size_t i = 0; i < edge_ref.size(); ++i)
-    {
-      base_permutations[edge](start + i, start + i) = 0;
-      base_permutations[edge](start + i, start + edge_ref[i]) = 1;
-    }
-    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    directions.block(_edge_dir.rows() * edge, _edge_dir.cols() * edge,
-                     _edge_dir.rows(), _edge_dir.cols())
-        = _edge_dir;
-    base_permutations[edge] *= directions;
+    const int start = edge_dofs * edge;
+    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
+        = edge_transforms[0];
   }
 
-  return base_permutations;
+  return base_transformations;
 }
 //-----------------------------------------------------------------------------
 Eigen::MatrixXd create_nedelec_3d_space(int degree)
@@ -231,82 +220,44 @@ create_nedelec_3d_interpolation(int degree)
                                     matrix_2d, matrix_3d, 3, 3);
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> create_nedelec_3d_base_perms(int degree)
+std::vector<Eigen::MatrixXd> create_nedelec_3d_base_transforms(int degree)
 {
   const int ndofs = 6 * degree + 4 * degree * (degree - 1)
                     + (degree - 2) * (degree - 1) * degree / 2;
-  std::vector<Eigen::MatrixXd> base_permutations(
+  std::vector<Eigen::MatrixXd> base_transformations(
       14, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  std::vector<int> edge_ref = dofperms::interval_reflection(degree);
-  ndarray<double, 2> edge_dir
-      = dofperms::interval_reflection_tangent_directions(degree);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _edge_dir(edge_dir.data(), edge_dir.shape[0], edge_dir.shape[1]);
+  std::vector<Eigen::MatrixXd> edge_transforms
+      = moments::create_tangent_moment_dof_transformations(
+          create_dlagrange(cell::type::interval, degree - 1));
+  const int edge_dofs = edge_transforms[0].rows();
   for (int edge = 0; edge < 6; ++edge)
   {
-    const int start = edge_ref.size() * edge;
-    for (std::size_t i = 0; i < edge_ref.size(); ++i)
-    {
-      base_permutations[edge](start + i, start + i) = 0;
-      base_permutations[edge](start + i, start + edge_ref[i]) = 1;
-    }
-    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    directions.block(_edge_dir.rows() * edge, _edge_dir.cols() * edge,
-                     _edge_dir.rows(), _edge_dir.cols())
-        = _edge_dir;
-    base_permutations[edge] *= directions;
+    const int start = edge_dofs * edge;
+    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
+        = edge_transforms[0];
   }
 
   // Faces
-  const std::vector<int> face_rot = dofperms::triangle_rotation(degree - 1);
-  const std::vector<int> face_ref = dofperms::triangle_reflection(degree - 1);
-  ndarray<double, 2> face_dir_ref
-      = dofperms::triangle_reflection_tangent_directions(degree - 1);
-  ndarray<double, 2> face_dir_rot
-      = dofperms::triangle_rotation_tangent_directions(degree - 1);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _face_dir_ref(face_dir_ref.data(), face_dir_ref.shape[0],
-                    face_dir_ref.shape[1]);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _face_dir_rot(face_dir_rot.data(), face_dir_rot.shape[0],
-                    face_dir_rot.shape[1]);
-  for (int face = 0; face < 4; ++face)
+  if (degree > 1)
   {
-    const int start = edge_ref.size() * 6 + face_ref.size() * 2 * face;
-    const int p = 6 + 2 * face;
-    for (std::size_t i = 0; i < face_rot.size(); ++i)
+    std::vector<Eigen::MatrixXd> face_transforms
+        = moments::create_moment_dof_transformations(
+            create_dlagrange(cell::type::triangle, degree - 2));
+
+    const int face_dofs = face_transforms[0].rows();
+    for (int face = 0; face < 4; ++face)
     {
-      for (int b = 0; b < 2; ++b)
-      {
-        const int p1 = start + 2 * i + b;
-        base_permutations[p](p1, start + i * 2 + b) = 0;
-        base_permutations[p](p1, start + face_rot[i] * 2 + b) = 1;
-        base_permutations[p + 1](p1, start + i * 2 + b) = 0;
-        base_permutations[p + 1](p1, start + face_ref[i] * 2 + b) = 1;
-      }
+      const int start = edge_dofs * 6 + face_dofs * face;
+      base_transformations[6 + 2 * face].block(start, start, face_dofs,
+                                               face_dofs)
+          = face_transforms[0];
+      base_transformations[6 + 2 * face + 1].block(start, start, face_dofs,
+                                                   face_dofs)
+          = face_transforms[1];
     }
-    // Rotate face
-    Eigen::MatrixXd rotation = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    rotation.block(_edge_dir.rows() * 6 + _face_dir_rot.rows() * face,
-                   _edge_dir.cols() * 6 + _face_dir_rot.rows() * face,
-                   _face_dir_rot.rows(), _face_dir_rot.cols())
-        = _face_dir_rot;
-    base_permutations[p] *= rotation;
-
-    // Reflect face
-    Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    reflection.block(_edge_dir.rows() * 6 + _face_dir_ref.rows() * face,
-                     _edge_dir.cols() * 6 + _face_dir_ref.rows() * face,
-                     _face_dir_ref.rows(), _face_dir_ref.cols())
-        = _face_dir_ref;
-    base_permutations[p + 1] *= reflection;
   }
-
-  return base_permutations;
+  return base_transformations;
 }
 
 //-----------------------------------------------------------------------------
@@ -335,34 +286,24 @@ create_nedelec2_2d_interpolation(int degree)
                                     matrix_2d, {}, 2, 2);
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> create_nedelec2_2d_base_permutations(int degree)
+std::vector<Eigen::MatrixXd> create_nedelec2_2d_base_transformations(int degree)
 {
   const int ndofs = (degree + 1) * (degree + 2);
-  std::vector<Eigen::MatrixXd> base_permutations(
+  std::vector<Eigen::MatrixXd> base_transformations(
       3, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  const std::vector<int> edge_ref = dofperms::interval_reflection(degree + 1);
-  ndarray<double, 2> edge_dir
-      = dofperms::interval_reflection_tangent_directions(degree + 1);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _edge_dir(edge_dir.data(), edge_dir.shape[0], edge_dir.shape[1]);
+  std::vector<Eigen::MatrixXd> edge_transforms
+      = moments::create_tangent_moment_dof_transformations(
+          create_dlagrange(cell::type::interval, degree));
+  const int edge_dofs = edge_transforms[0].rows();
   for (int edge = 0; edge < 3; ++edge)
   {
-    const int start = edge_ref.size() * edge;
-    for (std::size_t i = 0; i < edge_ref.size(); ++i)
-    {
-      base_permutations[edge](start + i, start + i) = 0;
-      base_permutations[edge](start + i, start + edge_ref[i]) = 1;
-    }
-    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    directions.block(_edge_dir.rows() * edge, _edge_dir.cols() * edge,
-                     _edge_dir.rows(), _edge_dir.cols())
-        = _edge_dir;
-    base_permutations[edge] *= directions;
+    const int start = edge_dofs * edge;
+    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
+        = edge_transforms[0];
   }
 
-  return base_permutations;
+  return base_transformations;
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
@@ -403,49 +344,43 @@ create_nedelec2_3d_interpolation(int degree)
                                     matrix_2d, matrix_3d, 3, 3);
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_permutations(int degree)
+std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_transformations(int degree)
 {
   const int ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 2;
-  std::vector<Eigen::MatrixXd> base_permutations(
+  std::vector<Eigen::MatrixXd> base_transformations(
       14, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  const std::vector<int> edge_ref = dofperms::interval_reflection(degree + 1);
-  ndarray<double, 2> edge_dir
-      = dofperms::interval_reflection_tangent_directions(degree + 1);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _edge_dir(edge_dir.data(), edge_dir.shape[0], edge_dir.shape[1]);
+  std::vector<Eigen::MatrixXd> edge_transforms
+      = moments::create_tangent_moment_dof_transformations(
+          create_dlagrange(cell::type::interval, degree));
+  const int edge_dofs = edge_transforms[0].rows();
   for (int edge = 0; edge < 6; ++edge)
   {
-    const int start = edge_ref.size() * edge;
-    for (std::size_t i = 0; i < edge_ref.size(); ++i)
-    {
-      base_permutations[edge](start + i, start + i) = 0;
-      base_permutations[edge](start + i, start + edge_ref[i]) = 1;
-    }
-    Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-    directions.block(_edge_dir.rows() * edge, _edge_dir.cols() * edge,
-                     _edge_dir.rows(), _edge_dir.cols())
-        = _edge_dir;
-    base_permutations[edge] *= directions;
+    const int start = edge_dofs * edge;
+    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
+        = edge_transforms[0];
   }
 
   // Faces
-  Eigen::MatrixXd face_rot = dofperms::triangle_rt_rotation(degree - 1);
-  Eigen::MatrixXd face_ref = dofperms::triangle_rt_reflection(degree - 1);
-  for (int face = 0; face < 4; ++face)
+  if (degree > 1)
   {
-    const int start = edge_ref.size() * 6 + face_ref.rows() * face;
-    const int p = 6 + 2 * face;
-
-    base_permutations[p].block(start, start, face_rot.rows(), face_rot.cols())
-        = face_rot;
-    base_permutations[p + 1].block(start, start, face_ref.rows(),
-                                   face_ref.cols())
-        = face_ref;
+    std::vector<Eigen::MatrixXd> face_transforms
+        = moments::create_dot_moment_dof_transformations(
+            create_rt(cell::type::triangle, degree - 1));
+    const int face_dofs = face_transforms[0].rows();
+    for (int face = 0; face < 4; ++face)
+    {
+      const int start = edge_dofs * 6 + face_dofs * face;
+      base_transformations[6 + 2 * face].block(start, start, face_dofs,
+                                               face_dofs)
+          = face_transforms[0];
+      base_transformations[6 + 2 * face + 1].block(start, start, face_dofs,
+                                                   face_dofs)
+          = face_transforms[1];
+    }
   }
 
-  return base_permutations;
+  return base_transformations;
 }
 
 } // namespace
@@ -456,19 +391,19 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   Eigen::MatrixXd wcoeffs;
   Eigen::ArrayXXd points;
   Eigen::MatrixXd interp_matrix;
-  std::vector<Eigen::MatrixXd> perms;
+  std::vector<Eigen::MatrixXd> transforms;
   std::vector<Eigen::MatrixXd> directions;
   if (celltype == cell::type::triangle)
   {
     wcoeffs = create_nedelec_2d_space(degree);
     std::tie(points, interp_matrix) = create_nedelec_2d_interpolation(degree);
-    perms = create_nedelec_2d_base_perms(degree);
+    transforms = create_nedelec_2d_base_transforms(degree);
   }
   else if (celltype == cell::type::tetrahedron)
   {
     wcoeffs = create_nedelec_3d_space(degree);
     std::tie(points, interp_matrix) = create_nedelec_3d_interpolation(degree);
-    perms = create_nedelec_3d_base_perms(degree);
+    transforms = create_nedelec_3d_base_transforms(degree);
   }
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
@@ -488,7 +423,7 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, interp_matrix, points, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, perms, points, interp_matrix,
+                       entity_dofs, transforms, points, interp_matrix,
                        mapping::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------
@@ -504,17 +439,17 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points;
   Eigen::MatrixXd interp_matrix;
-  std::vector<Eigen::MatrixXd> base_permutations;
+  std::vector<Eigen::MatrixXd> base_transformations;
 
   if (celltype == cell::type::triangle)
   {
     std::tie(points, interp_matrix) = create_nedelec2_2d_interpolation(degree);
-    base_permutations = create_nedelec2_2d_base_permutations(degree);
+    base_transformations = create_nedelec2_2d_base_transformations(degree);
   }
   else if (celltype == cell::type::tetrahedron)
   {
     std::tie(points, interp_matrix) = create_nedelec2_3d_interpolation(degree);
-    base_permutations = create_nedelec2_3d_base_permutations(degree);
+    base_transformations = create_nedelec2_3d_base_transformations(degree);
   }
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
@@ -531,7 +466,7 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, interp_matrix, points, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations, points, interp_matrix,
+                       entity_dofs, base_transformations, points, interp_matrix,
                        mapping::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

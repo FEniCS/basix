@@ -17,6 +17,42 @@ class FiniteElement;
 /// against spaces on a subentity of the cell
 namespace moments
 {
+/// Create the dof transformations for an integral moment.
+///
+/// If the moment space is an interval, this returns one matrix representing the
+/// reversal of the interval. If the moment space is a face, this returns two
+/// matrices: one representing a rotation, the other a reflection
+///
+/// @param[in] moment_space The finite element space that the integral moment is
+/// taken against
+/// @return A list of dof transformations
+std::vector<Eigen::MatrixXd>
+create_moment_dof_transformations(const FiniteElement& moment_space);
+
+/// Create the dof transformations for a dot integral moment.
+///
+/// @param[in] moment_space The finite element space that the integral moment is
+/// taken against
+/// @return A list of dof transformations
+std::vector<Eigen::MatrixXd>
+create_dot_moment_dof_transformations(const FiniteElement& moment_space);
+
+/// Create the dof transformations for a normal integral moment.
+///
+/// @param[in] moment_space The finite element space that the integral moment is
+/// taken against
+/// @return A list of dof transformations
+std::vector<Eigen::MatrixXd>
+create_normal_moment_dof_transformations(const FiniteElement& moment_space);
+
+/// Create the dof transformations for a tangential integral moment.
+///
+/// @param[in] moment_space The finite element space that the integral moment is
+/// taken against
+/// @return A list of dof transformations
+std::vector<Eigen::MatrixXd>
+create_tangent_moment_dof_transformations(const FiniteElement& moment_space);
+
 /// Make interpolation points and weights for simple integral moments
 ///
 /// These will represent the integral of each function in the moment space

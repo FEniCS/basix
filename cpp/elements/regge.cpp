@@ -159,9 +159,9 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   // TODO
 
-  int perm_count = tdim == 2 ? 3 : 14;
-  std::vector<Eigen::MatrixXd> base_permutations(
-      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  int transform_count = tdim == 2 ? 3 : 14;
+  std::vector<Eigen::MatrixXd> base_transformations(
+      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
@@ -178,7 +178,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
     entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
-                       coeffs, entity_dofs, base_permutations, points, matrix,
-                       mapping::type::doubleCovariantPiola);
+                       coeffs, entity_dofs, base_transformations, points,
+                       matrix, mapping::type::doubleCovariantPiola);
 }
 //-----------------------------------------------------------------------------

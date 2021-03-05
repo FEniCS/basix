@@ -6,7 +6,7 @@ set(HEADERS_core
   ${CMAKE_CURRENT_SOURCE_DIR}/lattice.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ndarray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/polyset.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/dof-permutations.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/dof-transformations.h
   ${CMAKE_CURRENT_SOURCE_DIR}/moments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/finite-element.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mappings.h
@@ -20,7 +20,7 @@ set(HEADERS_core
 set(CPP_core
   ${CMAKE_CURRENT_SOURCE_DIR}/lattice.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/polyset.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/dof-permutations.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/dof-transformations.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/moments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/finite-element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mappings.cpp

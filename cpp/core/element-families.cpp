@@ -15,13 +15,15 @@ element::family element::str_to_type(std::string name)
       = {{"Custom element", element::family::custom},
          {"Lagrange", element::family::P},
          {"Discontinuous Lagrange", element::family::DP},
+         {"DPC", element::family::DPC},
          {"Brezzi-Douglas-Marini", element::family::BDM},
          {"Raviart-Thomas", element::family::RT},
          {"Nedelec 1st kind H(curl)", element::family::N1E},
          {"Nedelec 2nd kind H(curl)", element::family::N2E},
          {"Regge", element::family::Regge},
          {"Crouzeix-Raviart", element::family::CR},
-         {"Bubble", element::family::Bubble}};
+         {"Bubble", element::family::Bubble},
+         {"Serendipity", element::family::Serendipity}};
 
   auto it = name_to_type.find(name);
   if (it == name_to_type.end())
@@ -36,13 +38,15 @@ const std::string& element::type_to_str(element::family type)
       = {{element::family::custom, "Custom element"},
          {element::family::P, "Lagrange"},
          {element::family::DP, "Discontinuous Lagrange"},
+         {element::family::DPC, "DPC"},
          {element::family::BDM, "Brezzi-Douglas-Marini"},
          {element::family::RT, "Raviart-Thomas"},
          {element::family::N1E, "Nedelec 1st kind H(curl)"},
          {element::family::N2E, "Nedelec 2nd kind H(curl)"},
          {element::family::Regge, "Regge"},
          {element::family::CR, "Crouzeix-Raviart"},
-         {element::family::Bubble, "Bubble"}};
+         {element::family::Bubble, "Bubble"},
+         {element::family::Serendipity, "Serendipity"}};
 
   auto it = name_to_type.find(type);
   if (it == name_to_type.end())

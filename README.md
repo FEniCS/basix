@@ -15,3 +15,6 @@ Basix currently supports the following finite elements:
   - Brezzi-Douglas-Marini (triangle, tetrahedron)
   - Regge (triangle, tetrahedron)
   - Crouzeix-Raviart (triangle, tetrahedron)
+  - Bubble (interval, triangle, tetrahedron, quadrilateral, hexahedron)
+  - DPC (interval, quadrilateral, hexahedron)
+  - Serendipity (interval, quadrilateral, hexahedron)

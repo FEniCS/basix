@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "raviart-thomas.h"
-#include "core/dof-permutations.h"
 #include "core/element-families.h"
 #include "core/mappings.h"
 #include "core/moments.h"
@@ -74,9 +73,13 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   // Add integral moments on facets
   Eigen::ArrayXXd points_facet;
   Eigen::MatrixXd matrix_facet;
+  FiniteElement facet_moment_space = create_dlagrange(facettype, degree - 1);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
-      create_dlagrange(facettype, degree - 1), celltype, tdim, degree,
-      quad_deg);
+      facet_moment_space, celltype, tdim, degree, quad_deg);
+  std::vector<Eigen::MatrixXd> facet_transforms
+      = moments::create_normal_moment_dof_transformations(facet_moment_space);
+
+  const int facet_dofs = facet_transforms[0].rows();
 
   Eigen::ArrayXXd points_cell(0, tdim);
   Eigen::MatrixXd matrix_cell(0, 0);
@@ -101,54 +104,32 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
 
   const int facet_count = tdim + 1;
   const int ndofs = nv * tdim + ns;
-  int perm_count = 0;
+  int transform_count = 0;
   for (int i = 1; i < tdim; ++i)
-    perm_count += topology[i].size() * i;
+    transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_permutations(
-      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_transformations(
+      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (tdim == 2)
   {
-    const std::vector<int> edge_ref = dofperms::interval_reflection(degree);
     for (int edge = 0; edge < facet_count; ++edge)
     {
-      const int start = edge_ref.size() * edge;
-      for (std::size_t i = 0; i < edge_ref.size(); ++i)
-      {
-        base_permutations[edge](start + i, start + i) = 0;
-        base_permutations[edge](start + i, start + edge_ref[i]) = 1;
-      }
-    }
-
-    ndarray<double, 2> edge_dir
-        = dofperms::interval_reflection_tangent_directions(degree);
-    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>>
-        _edge_dir(edge_dir.data(), edge_dir.shape[0], edge_dir.shape[1]);
-    for (int edge = 0; edge < 3; ++edge)
-    {
-      Eigen::MatrixXd directions = Eigen::MatrixXd::Identity(ndofs, ndofs);
-      directions.block(_edge_dir.rows() * edge, _edge_dir.cols() * edge,
-                       _edge_dir.rows(), _edge_dir.cols())
-          = _edge_dir;
-      base_permutations[edge] *= directions;
+      const int start = facet_dofs * edge;
+      base_transformations[edge].block(start, start, facet_dofs, facet_dofs)
+          = facet_transforms[0];
     }
   }
   else if (tdim == 3)
   {
-    const std::vector<int> face_ref = dofperms::triangle_reflection(degree);
-    const std::vector<int> face_rot = dofperms::triangle_rotation(degree);
     for (int face = 0; face < facet_count; ++face)
     {
-      const int start = face_ref.size() * face;
-      for (std::size_t i = 0; i < face_rot.size(); ++i)
-      {
-        base_permutations[6 + 2 * face](start + i, start + i) = 0;
-        base_permutations[6 + 2 * face](start + i, start + face_rot[i]) = 1;
-        base_permutations[6 + 2 * face + 1](start + i, start + i) = 0;
-        base_permutations[6 + 2 * face + 1](start + i, start + face_ref[i])
-            = -1;
-      }
+      const int start = facet_dofs * face;
+      base_transformations[6 + 2 * face].block(start, start, facet_dofs,
+                                               facet_dofs)
+          = facet_transforms[0];
+      base_transformations[6 + 2 * face + 1].block(start, start, facet_dofs,
+                                                   facet_dofs)
+          = facet_transforms[1];
     }
   }
 
@@ -156,85 +137,13 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (int i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), ns);
+  entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {ns0 * tdim};
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_permutations, points, matrix,
+                       entity_dofs, base_transformations, points, matrix,
                        mapping::type::contravariantPiola);
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::triangle_rt_rotation(int degree)
-{
-  const int n = degree * (degree + 2);
-  Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
-
-  // Permute RT functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    perm(i, 2 * degree + i) = 1;
-    perm(2 * degree - 1 - i, i) = -1;
-    perm(3 * degree - 1 - i, degree + i) = -1;
-  }
-
-  // Rotate face
-  const int face_start = 3 * degree;
-  const std::vector<int> face_rot = dofperms::triangle_rotation(degree - 1);
-  ndarray<double, 2> face_dir_rot
-      = dofperms::triangle_rotation_tangent_directions(degree - 1);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _face_dir_rot(face_dir_rot.data(), face_dir_rot.shape[0],
-                    face_dir_rot.shape[1]);
-  for (std::size_t i = 0; i < face_rot.size(); ++i)
-  {
-    for (int b = 0; b < 2; ++b)
-      perm(face_start + i * 2 + b, face_start + face_rot[i] * 2 + b) = 1;
-  }
-  Eigen::MatrixXd rotation = Eigen::MatrixXd::Identity(n, n);
-  rotation.block(face_start, face_start, _face_dir_rot.rows(),
-                 _face_dir_rot.cols())
-      = _face_dir_rot;
-  perm *= rotation;
-
-  return perm;
-}
-//-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::dofperms::triangle_rt_reflection(int degree)
-{
-  const int n = degree * (degree + 2);
-  Eigen::MatrixXd perm = Eigen::MatrixXd::Zero(n, n);
-
-  // Permute RT functions on edges
-  for (int i = 0; i < degree; ++i)
-  {
-    perm(i, degree - 1 - i) = 1;
-    perm(degree + i, 2 * degree + i) = -1;
-    perm(2 * degree + i, degree + i) = -1;
-  }
-
-  // reflect face
-  const int face_start = 3 * degree;
-  const std::vector<int> face_ref = dofperms::triangle_reflection(degree - 1);
-  ndarray<double, 2> face_dir_ref
-      = dofperms::triangle_reflection_tangent_directions(degree - 1);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _face_dir_ref(face_dir_ref.data(), face_dir_ref.shape[0],
-                    face_dir_ref.shape[1]);
-  for (std::size_t i = 0; i < face_ref.size(); ++i)
-  {
-    for (int b = 0; b < 2; ++b)
-      perm(face_start + i * 2 + b, face_start + face_ref[i] * 2 + b) = 1;
-  }
-  Eigen::MatrixXd reflection = Eigen::MatrixXd::Identity(n, n);
-  reflection.block(face_start, face_start, _face_dir_ref.rows(),
-                   _face_dir_ref.cols())
-      = _face_dir_ref;
-  perm *= reflection;
-
-  return perm;
 }
 //-----------------------------------------------------------------------------

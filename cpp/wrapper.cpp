@@ -168,14 +168,14 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const Eigen::MatrixXd& interpolation_matrix,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_permutations,
+         const std::vector<Eigen::MatrixXd>& base_transformations,
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
         return FiniteElement(family_type, celltype, degree, value_shape,
                              compute_expansion_coefficients(
                                  celltype, coeffs, interpolation_matrix,
                                  interpolation_points, degree, 1.0e6),
-                             entity_dofs, base_permutations,
+                             entity_dofs, base_transformations,
                              interpolation_points, interpolation_matrix,
                              mapping_type);
       },
@@ -189,7 +189,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const Eigen::MatrixXd& interpolation_matrix,
          const Eigen::MatrixXd& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_permutations,
+         const std::vector<Eigen::MatrixXd>& base_transformations,
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
         return FiniteElement(
@@ -198,7 +198,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
             compute_expansion_coefficients(cell::str_to_type(cell_name), coeffs,
                                            interpolation_matrix,
                                            interpolation_points, degree, 1.0e6),
-            entity_dofs, base_permutations, interpolation_points,
+            entity_dofs, base_transformations, interpolation_points,
             interpolation_matrix, mapping_type);
       },
       "Create an element from basic data");

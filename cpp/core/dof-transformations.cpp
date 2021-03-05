@@ -2,12 +2,12 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "dof-permutations.h"
+#include "dof-transformations.h"
 
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-std::vector<int> dofperms::interval_reflection(int degree)
+std::vector<int> doftransforms::interval_reflection(int degree)
 {
   std::vector<int> perm(degree);
   for (int i = 0; i < degree; ++i)
@@ -15,7 +15,7 @@ std::vector<int> dofperms::interval_reflection(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-std::vector<int> dofperms::triangle_reflection(int degree)
+std::vector<int> doftransforms::triangle_reflection(int degree)
 {
   const int n = degree * (degree + 1) / 2;
   std::vector<int> perm(n);
@@ -34,7 +34,7 @@ std::vector<int> dofperms::triangle_reflection(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-std::vector<int> dofperms::triangle_rotation(int degree)
+std::vector<int> doftransforms::triangle_rotation(int degree)
 {
   const int n = degree * (degree + 1) / 2;
   std::vector<int> perm(n);
@@ -54,7 +54,7 @@ std::vector<int> dofperms::triangle_rotation(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-std::vector<int> dofperms::quadrilateral_reflection(int degree)
+std::vector<int> doftransforms::quadrilateral_reflection(int degree)
 {
   const int n = degree * degree;
   std::vector<int> perm(n);
@@ -67,7 +67,7 @@ std::vector<int> dofperms::quadrilateral_reflection(int degree)
   return perm;
 }
 //-----------------------------------------------------------------------------
-std::vector<int> dofperms::quadrilateral_rotation(int degree)
+std::vector<int> doftransforms::quadrilateral_rotation(int degree)
 {
   const int n = degree * degree;
   std::vector<int> perm(n);
@@ -78,38 +78,5 @@ std::vector<int> dofperms::quadrilateral_rotation(int degree)
       perm[st + degree * i] = p++;
 
   return perm;
-}
-//-----------------------------------------------------------------------------
-ndarray<double, 2> dofperms::interval_reflection_tangent_directions(int degree)
-{
-  ndarray<double, 2> r(degree, degree, 0.0);
-  for (int i = 0; i < degree; ++i)
-    r(i, i) = -1;
-  return r;
-}
-//-----------------------------------------------------------------------------
-ndarray<double, 2> dofperms::triangle_reflection_tangent_directions(int degree)
-{
-  ndarray<double, 2> dirs(degree * (degree + 1), degree * (degree + 1), 0.0);
-  for (int i = 0; i < degree * (degree + 1); i += 2)
-  {
-    dirs(i, i + 1) = 1;
-    dirs(i + 1, i) = 1;
-  }
-
-  return dirs;
-}
-//-----------------------------------------------------------------------------
-ndarray<double, 2> dofperms::triangle_rotation_tangent_directions(int degree)
-{
-  ndarray<double, 2> dirs(degree * (degree + 1), degree * (degree + 1), 0.0);
-  for (int i = 0; i < degree * (degree + 1); i += 2)
-  {
-    dirs(i, i + 1) = -1;
-    dirs(i + 1, i) = 1;
-    dirs(i, i) = -1;
-  }
-
-  return dirs;
 }
 //-----------------------------------------------------------------------------

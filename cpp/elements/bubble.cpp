@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "bubble.h"
-#include "core/dof-permutations.h"
 #include "core/element-families.h"
 #include "core/lattice.h"
 #include "core/mappings.h"
@@ -103,19 +102,19 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
       entity_dofs[i].push_back(0);
   entity_dofs[tdim].push_back(points.rows());
 
-  int perm_count = 0;
+  int transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
-    perm_count += topology[i].size() * i;
+    transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_permutations(
-      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_transformations(
+      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, Eigen::MatrixXd::Identity(ndofs, ndofs), points,
       degree);
 
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_permutations, points,
+                       entity_dofs, base_transformations, points,
                        Eigen::MatrixXd::Identity(ndofs, ndofs),
                        mapping::type::identity);
 }

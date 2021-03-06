@@ -26,13 +26,13 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y doxygen libeigen3-dev
-          wget https://github.com/xtensor-stack/xtl/archive/0.7.2.tar.gz -o xtl-0.7.2.tar.gz
+          wget https://github.com/xtensor-stack/xtl/archive/0.7.2.tar.gz -O xtl-0.7.2.tar.gz
           tar xf xtl-0.7.2.tar.gz
           cd xtl-0.7.2
           cmake .
           cmake install
           cd ../
-          wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -o xtensor-0.23.1.tar.gz
+          wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
           tar xf xtensor-0.23.1.tar.gz
           cd xtensor-0.23.1
           cmake .

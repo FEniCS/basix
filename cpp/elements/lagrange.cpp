@@ -61,7 +61,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         {
           const auto lattice = lattice::create(
               celltype, degree, lattice::type::equispaced, false);
-          for (int j = 0; j < lattice.shape()[0]; ++j)
+          for (std::size_t j = 0; j < lattice.shape()[0]; ++j)
             xt::row(pt, c++) = xt::row(lattice, j);
           entity_dofs[dim].push_back(lattice.shape()[0]);
         }
@@ -71,7 +71,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
           const auto lattice
               = lattice::create(ct, degree, lattice::type::equispaced, false);
           entity_dofs[dim].push_back(lattice.shape()[0]);
-          for (int j = 0; j < lattice.shape()[0]; ++j)
+          for (std::size_t j = 0; j < lattice.shape()[0]; ++j)
           {
             xt::row(pt, c) = xt::row(entity_geom, 0);
             for (int k = 0; k < lattice.shape()[1]; ++k)

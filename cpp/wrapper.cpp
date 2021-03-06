@@ -141,8 +141,6 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return py::array_t<double>(l.shape(), strides, l.data());
       },
       "Create a uniform lattice of points on a reference cell");
-  //   m.def("create_lattice", &lattice::create,
-  //         "Create a uniform lattice of points on a reference cell");
 
   py::enum_<mapping::type>(m, "MappingType")
       .value("identity", mapping::type::identity)

@@ -25,7 +25,12 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y doxygen libeigen3-dev xtensor-dev
+          sudo apt-get install -y doxygen libeigen3-dev
+          wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz
+          tar xf 0.23.1.tar.gz
+          cd  0.23.1
+          cmake .
+          cmake install
       - name: Build documentation (Linux)
         if: runner.os == 'Linux'
         run: |

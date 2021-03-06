@@ -28,9 +28,10 @@ jobs:
           sudo apt-get install -y doxygen libeigen3-dev
           wget https://github.com/xtensor-stack/xtl/archive/0.7.2.tar.gz -O xtl-0.7.2.tar.gz
           tar xf xtl-0.7.2.tar.gz
+          ls
           mkdir build-xtl
           cd build-xtl
-          cmake ../xtl-0.7.2.
+          cmake ../xtl-0.7.2
           echo "Finished confi"
           sudo make install
           echo "Installed"

@@ -35,6 +35,7 @@ jobs:
           echo "Finished confi"
           sudo make install
           echo "Installed"
+          cd ../
           # cmake -B build-xtl -S xtl-0.7.2
           # cmake --build xtl-0.7.2
           # sudo cmake --install xtl-0.7.2
@@ -42,10 +43,12 @@ jobs:
           # cd xtl-0.7.2
           # mkdir build-xtl && cd build && cmake ../ && sudo cmake install
           # cd ../../
-          # wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
-          # tar xf xtensor-0.23.1.tar.gz
-          # cd xtensor-0.23.1
-          # mkdir build && cd build && cmake ../ && sudo cmake install
+          wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
+          tar xf xtensor-0.23.1.tar.gz
+          mkdir build-xtensor
+          cd build-xtensor
+          cmake ../xtensor-0.23.1
+          sudo make install
       - name: Build documentation (Linux)
         if: runner.os == 'Linux'
         run: |

@@ -131,8 +131,18 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .value("equispaced", lattice::type::equispaced)
       .value("gll_warped", lattice::type::gll_warped);
 
-  m.def("create_lattice", &lattice::create,
-        "Create a uniform lattice of points on a reference cell");
+  m.def(
+      "create_lattice",
+      [](cell::type celltype, int n, lattice::type type, bool exterior) {
+        auto l = lattice::create(celltype, n, type, exterior);
+        auto strides = l.strides();
+        for (auto& s : strides)
+          s *= sizeof(double);
+        return py::array_t<double>(l.shape(), strides, l.data());
+      },
+      "Create a uniform lattice of points on a reference cell");
+  //   m.def("create_lattice", &lattice::create,
+  //         "Create a uniform lattice of points on a reference cell");
 
   py::enum_<mapping::type>(m, "MappingType")
       .value("identity", mapping::type::identity)

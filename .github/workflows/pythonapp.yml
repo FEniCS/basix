@@ -29,7 +29,7 @@ jobs:
           wget https://github.com/xtensor-stack/xtl/archive/0.7.2.tar.gz -O xtl-0.7.2.tar.gz
           tar xf xtl-0.7.2.tar.gz
           cmake -B build-xtl -S xtl-0.7.2
-          cmake --build xtl-0.7.2
+          # cmake --build xtl-0.7.2
           cmake --install xtl-0.7.2
 
           # cd xtl-0.7.2

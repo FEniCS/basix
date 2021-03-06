@@ -91,9 +91,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_transformations(
       transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   if (celltype == cell::type::interval)
-  {
     assert(transform_count == 0);
-  }
   else if (celltype == cell::type::triangle)
   {
     const std::vector<int> edge_ref

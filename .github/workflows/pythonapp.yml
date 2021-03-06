@@ -29,14 +29,12 @@ jobs:
           wget https://github.com/xtensor-stack/xtl/archive/0.7.2.tar.gz -O xtl-0.7.2.tar.gz
           tar xf xtl-0.7.2.tar.gz
           cd xtl-0.7.2
-          cmake .
-          sudo cmake install
-          cd ../
-          wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
-          tar xf xtensor-0.23.1.tar.gz
-          cd xtensor-0.23.1
-          cmake .
-          sudo cmake install
+          mkdir build && cd build && cmake ../ && sudo cmake install
+          # cd ../../
+          # wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
+          # tar xf xtensor-0.23.1.tar.gz
+          # cd xtensor-0.23.1
+          # mkdir build && cd build && cmake ../ && sudo cmake install
       - name: Build documentation (Linux)
         if: runner.os == 'Linux'
         run: |

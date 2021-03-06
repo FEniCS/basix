@@ -137,7 +137,7 @@ create_regge_interpolation(cell::type celltype, int degree)
         {
           Eigen::Map<Eigen::VectorXd> vvt_flat(vvt[j].data(),
                                                vvt[j].rows() * vvt[j].cols());
-          for (int i = 0; i < tdim * tdim; ++i)
+          for (std::size_t i = 0; i < tdim * tdim; ++i)
             matrix(dof, point_n + i * npoints) = vvt_flat(i);
           Eigen::Map<Eigen::RowVectorXd>(vvt[j].data(),
                                          vvt[j].rows() * vvt[j].cols());

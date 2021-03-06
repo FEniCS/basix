@@ -17,7 +17,6 @@ namespace
 Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 {
   [[maybe_unused]] auto [pts, wts] = quadrature::compute_gll_rule(n + 1);
-  wts.setZero();
 
   pts *= 0.5;
   for (int i = 0; i < n + 1; ++i)

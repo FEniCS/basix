@@ -10,36 +10,64 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-ndarray<double, 2> cell::geometry(cell::type celltype)
+xt::xtensor<double, 2> cell::geometry(cell::type celltype)
 {
   switch (celltype)
   {
   case cell::type::interval:
-    return ndarray<double, 2>({2, 1}, std::vector<double>({0.0, 1.0}));
+    return xt::xtensor<double, 2>({{0.0}, {1.0}});
+    // return ndarray<double, 2>({2, 1}, std::vector<double>({0.0, 1.0}));
   case cell::type::triangle:
-    return ndarray<double, 2>(
-        {3, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0, 0.0, 1.0}));
+    return xt::xtensor<double, 2>({{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}});
+    // return ndarray<double, 2>(
+    //     {3, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0, 0.0, 1.0}));
   case cell::type::quadrilateral:
-    return ndarray<double, 2>(
-        {4, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0}));
+    return xt::xtensor<double, 2>(
+        {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}});
+    // return ndarray<double, 2>(
+    //     {4, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0,
+    //     0.0, 1.0, 1.0, 1.0}));
   case cell::type::tetrahedron:
-    return ndarray<double, 2>(
-        {4, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-                                     0.0, 0.0, 0.0, 1.0}));
+    return xt::xtensor<double, 2>(
+        {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}});
+    // return ndarray<double, 2>(
+    //     {4, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+    //                                  0.0, 0.0, 0.0, 1.0}));
   case cell::type::prism:
-    return ndarray<double, 2>(
-        {6, 3},
-        std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-                             0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0}));
+    return xt::xtensor<double, 2>({{0.0, 0.0, 0.0},
+                                   {1.0, 0.0, 0.0},
+                                   {0.0, 1.0, 0.0},
+                                   {0.0, 0.0, 1.0},
+                                   {1.0, 0.0, 1.0},
+                                   {0.0, 1.0, 1.0}});
+    // return ndarray<double, 2>(
+    //     {6, 3},
+    //     std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+    //     0.0,
+    //                          0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0}));
   case cell::type::pyramid:
-    return ndarray<double, 2>(
-        {5, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-                                     0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0}));
+    return xt::xtensor<double, 2>({{0.0, 0.0, 0.0},
+                                   {1.0, 0.0, 0.0},
+                                   {0.0, 1.0, 0.0},
+                                   {1.0, 1.0, 0.0},
+                                   {0.0, 0.0, 1.0}});
+    // return ndarray<double, 2>(
+    //     {5, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+    //                                  0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0}));
   case cell::type::hexahedron:
-    return ndarray<double, 2>(
-        {8, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-                                     0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
-                                     0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0}));
+    return xt::xtensor<double, 2>({{0.0, 0.0, 0.0},
+                                   {1.0, 0.0, 0.0},
+                                   {0.0, 1.0, 0.0},
+                                   {1.0, 1.0, 0.0},
+                                   {0.0, 0.0, 1.0},
+                                   {1.0, 0.0, 1.0},
+                                   {0.0, 1.0, 1.0},
+                                   {1.0, 1.0, 1.0}});
+    // return ndarray<double, 2>(
+    //     {8, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
+    //                                  0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
+    //                                  0.0, 1.0,
+    //                                  0.0, 1.0, 1.0, 1.0, 1.0, 1.0}));
   default:
     throw std::runtime_error("Unsupported cell type");
   }
@@ -157,12 +185,12 @@ int cell::topological_dimension(cell::type cell_type)
   return 0;
 }
 //-----------------------------------------------------------------------------
-ndarray<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
-                                             int index)
+xt::xtensor<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
+                                                 int index)
 {
   std::vector<std::vector<std::vector<int>>> cell_topology
       = cell::topology(celltype);
-  const ndarray<double, 2> cell_geometry = cell::geometry(celltype);
+  const xt::xtensor<double, 2> cell_geometry = cell::geometry(celltype);
 
   if (dim < 0 or dim >= (int)cell_topology.size())
     throw std::runtime_error("Invalid dimension for sub-entity");
@@ -172,12 +200,10 @@ ndarray<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
   if (index < 0 or index >= (int)t.size())
     throw std::runtime_error("Invalid entity index");
 
-  ndarray<double, 2> sub_entity(t[index].size(), cell_geometry.shape[1]);
-  for (std::size_t i = 0; i < sub_entity.shape[0]; ++i)
-  {
-    std::copy(cell_geometry.row(t[index][i]).begin(),
-              cell_geometry.row(t[index][i]).end(), sub_entity.row(i).begin());
-  }
+  xt::xtensor<double, 2> sub_entity(
+      {t[index].size(), cell_geometry.shape()[1]});
+  for (std::size_t i = 0; i < sub_entity.shape()[0]; ++i)
+    sub_entity[i] = cell_geometry[t[index][i]];
 
   return sub_entity;
 }

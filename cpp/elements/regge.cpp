@@ -64,7 +64,7 @@ create_regge_interpolation(cell::type celltype, int degree)
   Eigen::ArrayXXd dualmat(ndofs, space_size);
   std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const ndarray<double, 2> geometry = cell::geometry(celltype);
+  const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
 
   // point and dof counters
   int point_n = 0;
@@ -73,7 +73,7 @@ create_regge_interpolation(cell::type celltype, int degree)
   {
     for (std::size_t i = 0; i < topology[dim].size(); ++i)
     {
-      const ndarray<double, 2> entity_geom
+      const xt::xtensor<double, 2> entity_geom
           = cell::sub_entity_geometry(celltype, dim, i);
 
       // Eigen::ArrayXd point = entity_geom.row(0);
@@ -82,12 +82,12 @@ create_regge_interpolation(cell::type celltype, int degree)
           = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
       for (int j = 0; j < lattice.rows(); ++j)
       {
-        for (std::size_t p = 0; p < entity_geom.shape[1]; ++p)
+        for (std::size_t p = 0; p < entity_geom.shape()[1]; ++p)
           points(point_n + j, p) = entity_geom(0, p);
         // points.row(point_n + j) = entity_geom.row(0);
-        for (std::size_t k = 0; k < entity_geom.shape[0] - 1; ++k)
+        for (std::size_t k = 0; k < entity_geom.shape()[0] - 1; ++k)
         {
-          for (std::size_t p = 0; p < entity_geom.shape[1]; ++p)
+          for (std::size_t p = 0; p < entity_geom.shape()[1]; ++p)
           {
             points(point_n + j, p)
                 += (entity_geom(k + 1, p) - entity_geom(0, p)) * lattice(j, k);
@@ -111,8 +111,8 @@ create_regge_interpolation(cell::type celltype, int degree)
       {
         for (std::size_t d = s + 1; d < dim + 1; ++d)
         {
-          Eigen::VectorXd edge_t(geometry.shape[1]);
-          for (std::size_t p = 0; p < geometry.shape[1]; ++p)
+          Eigen::VectorXd edge_t(geometry.shape()[1]);
+          for (std::size_t p = 0; p < geometry.shape()[1]; ++p)
             edge_t[p] = geometry(vert_ids[d], p) - geometry(vert_ids[s], p);
           // const Eigen::VectorXd edge_t
           //     = geometry.row(vert_ids[d]) - geometry.row(vert_ids[s]);

@@ -36,6 +36,10 @@ find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 
+find_package(xtensor REQUIRED)
+# target_include_directories(your_target PUBLIC ${xtensor_INCLUDE_DIRS})
+# target_link_libraries(your_target PUBLIC xtensor)
+
 # Now we can find pybind11
 find_package(pybind11 CONFIG REQUIRED)
 
@@ -46,6 +50,10 @@ pybind11_add_module(_basixcpp MODULE cpp/wrapper.cpp)
 set_target_properties(_basixcpp PROPERTIES SKIP_BUILD_RPATH FALSE)
 set_target_properties(_basixcpp PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+target_include_directories(basix PRIVATE ${xtensor_INCLUDE_DIRS})
+target_include_directories(_basixcpp PRIVATE ${xtensor_INCLUDE_DIRS})
+
 
 if (APPLE)
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")

@@ -6,6 +6,7 @@
 
 #include "ndarray.h"
 #include <vector>
+#include <xtensor/xtensor.hpp>
 
 namespace basix
 {
@@ -32,7 +33,7 @@ enum class type
 /// Cell geometry
 /// @param celltype Cell Type
 /// @return Set of vertex points of the cell
-ndarray<double, 2> geometry(cell::type celltype);
+xt::xtensor<double, 2> geometry(cell::type celltype);
 
 /// Cell topology
 /// @param celltype Cell Type
@@ -44,7 +45,8 @@ std::vector<std::vector<std::vector<int>>> topology(cell::type celltype);
 /// @param dim Dimension of sub-entity
 /// @param index Local index of sub-entity
 /// @return Set of vertex points of the sub-entity
-ndarray<double, 2> sub_entity_geometry(cell::type celltype, int dim, int index);
+xt::xtensor<double, 2> sub_entity_geometry(cell::type celltype, int dim,
+                                           int index);
 
 /// Number of sub-entities of a cell by topological dimension
 /// @param celltype The cell::type

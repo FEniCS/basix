@@ -43,12 +43,12 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     {
       for (std::size_t i = 0; i < topology[dim].size(); ++i)
       {
-        const ndarray<double, 2> entity_geom
+        const xt::xtensor<double, 2> entity_geom
             = cell::sub_entity_geometry(celltype, dim, i);
         Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                       Eigen::RowMajor>>
-            _entity_geom(entity_geom.data(), entity_geom.shape[0],
-                         entity_geom.shape[1]);
+            _entity_geom(entity_geom.data(), entity_geom.shape()[0],
+                         entity_geom.shape()[1]);
 
         if (dim == 0)
         {

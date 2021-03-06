@@ -108,15 +108,16 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "geometry",
       [](cell::type celltype) {
-        ndarray<double, 2> g = cell::geometry(celltype);
-        return py::array_t<double>(g.shape, g.strides(), g.data());
+        xt::xtensor<double, 2> g = cell::geometry(celltype);
+        return py::array_t<double>(g.shape(), g.strides(), g.data());
       },
       "Geometric points of a reference cell");
   m.def(
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index) {
-        ndarray<double, 2> g = cell::sub_entity_geometry(celltype, dim, index);
-        return py::array_t<double>(g.shape, g.strides(), g.data());
+        xt::xtensor<double, 2> g
+            = cell::sub_entity_geometry(celltype, dim, index);
+        return py::array_t<double>(g.shape(), g.strides(), g.data());
       },
       "Points of a sub-entity of a cell");
 

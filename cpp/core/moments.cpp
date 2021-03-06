@@ -313,11 +313,11 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    ndarray<double, 2> entity
+    xt::xtensor<double, 2> entity
         = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
     Eigen::Map<
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        _entity(entity.data(), entity.shape[0], entity.shape[1]);
+        _entity(entity.data(), entity.shape()[0], entity.shape()[1]);
 
     // Parametrise entity coordinates
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
@@ -390,11 +390,11 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> moments::make_dot_integral_moments(
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    ndarray<double, 2> entity
+    xt::xtensor<double, 2> entity
         = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
     Eigen::Map<
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        _entity(entity.data(), entity.shape[0], entity.shape[1]);
+        _entity(entity.data(), entity.shape()[0], entity.shape()[1]);
 
     // Parametrise entity coordinates
     Eigen::ArrayXXd axes(sub_entity_dim, tdim);
@@ -466,10 +466,10 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   // Iterate over sub entities
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    ndarray<double, 2> edge = cell::sub_entity_geometry(celltype, 1, i);
+    xt::xtensor<double, 2> edge = cell::sub_entity_geometry(celltype, 1, i);
     Eigen::Map<
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        _edge(edge.data(), edge.shape[0], edge.shape[1]);
+        _edge(edge.data(), edge.shape()[0], edge.shape()[1]);
 
     Eigen::VectorXd tangent = _edge.row(1) - _edge.row(0);
     // No need to normalise the tangent, as the size of this is equal to the
@@ -536,10 +536,10 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), tdim);
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    ndarray<double, 2> facet = cell::sub_entity_geometry(celltype, tdim - 1, i);
+    xt::xtensor<double, 2> facet = cell::sub_entity_geometry(celltype, tdim - 1, i);
     Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                   Eigen::RowMajor>>
-        _facet(facet.data(), facet.shape[0], facet.shape[1]);
+        _facet(facet.data(), facet.shape()[0], facet.shape()[1]);
 
     if (tdim == 2)
     {

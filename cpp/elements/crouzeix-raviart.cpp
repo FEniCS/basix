@@ -26,7 +26,7 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::vector<std::vector<int>> facet_topology = topology[tdim - 1];
-  const ndarray<double, 2> geometry = cell::geometry(celltype);
+  const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
 
   const int ndofs = facet_topology.size();
   Eigen::ArrayXXd pts = Eigen::ArrayXXd::Zero(ndofs, tdim);
@@ -37,12 +37,12 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   {
     for (int i : f)
     {
-      for (std::size_t j = 0; j < geometry.shape[1]; ++j)
+      for (std::size_t j = 0; j < geometry.shape()[1]; ++j)
         pts(c, j) += geometry(i, j);
       // pts.row(c) += geometry.row(i);
     }
 
-    for (std::size_t j = 0; j < geometry.shape[1]; ++j)
+    for (std::size_t j = 0; j < geometry.shape()[1]; ++j)
       pts(c, j) /= static_cast<double>(f.size());
     // pts.row(c) /= static_cast<double>(f.size());
     ++c;

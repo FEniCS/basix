@@ -37,10 +37,12 @@ message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 
 find_package(xtensor REQUIRED)
-# target_include_directories(your_target PUBLIC ${xtensor_INCLUDE_DIRS})
-# target_link_libraries(your_target PUBLIC xtensor)
+# find_package(xtensor-blas HINTS ${XTENSOR_BLAS_ROOT} $ENV{XTENSOR_BLAS_ROOT} REQUIRED)
+# find_package(BLAS)
+# find_package(LAPACK)
 
-# Now we can find pybind11
+
+
 find_package(pybind11 CONFIG REQUIRED)
 
 add_subdirectory(cpp)
@@ -52,9 +54,16 @@ set_target_properties(_basixcpp PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 target_include_directories(basix PRIVATE ${xtensor_INCLUDE_DIRS})
+target_include_directories(basix PRIVATE ${xtensor_blas_INCLUDE_DIRS})
+# target_link_libraries(basix PRIVATE BLAS::BLAS)
+# target_link_libraries(basix PRIVATE LAPACK::LAPACK)
+
 target_include_directories(_basixcpp PRIVATE ${xtensor_INCLUDE_DIRS})
+# target_link_libraries(_basixcpp PRIVATE BLAS::BLAS)
+# target_link_libraries(_basixcpp PRIVATE LAPACK::LAPACK)
 
 
+# Why is this here?
 if (APPLE)
   set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
 else()
@@ -62,7 +71,6 @@ else()
 endif()
 
 target_link_libraries(_basixcpp PRIVATE pybind11::module basix)
-
 set_target_properties(basix PROPERTIES PUBLIC_HEADER "cpp/basix.h")
 
 install(TARGETS _basixcpp DESTINATION .)

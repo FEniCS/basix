@@ -7,14 +7,44 @@
 #include "elements/lagrange.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
+
 #include <xtensor/xadapt.hpp>
+#include <xtensor/xio.hpp>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
 namespace
 {
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
+xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
+{
+  [[maybe_unused]] auto [_pts, wts] = quadrature::compute_gll_rule(n + 1);
+  _pts *= 0.5;
+  for (int i = 0; i < n + 1; ++i)
+    _pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
+  std::array<std::size_t, 1> shape0 = {(std::size_t)_pts.size()};
+  xt::xtensor<double, 1> pts
+      = xt::adapt(_pts.data(), _pts.size(), xt::no_ownership(), shape0);
+
+  FiniteElement L = create_dlagrange(cell::type::interval, n);
+  Eigen::ArrayXd _x = Eigen::Map<const Eigen::ArrayXd>(x.data(), x.size());
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _v
+      = L.tabulate(0, _x)[0];
+
+  std::array<std::size_t, 2> shape
+      = {(std::size_t)_v.rows(), (std::size_t)_v.cols()};
+  auto v = xt::adapt(_v.data(), _v.size(), xt::no_ownership(), shape);
+
+  xt::xtensor<double, 1> tmp = xt::zeros<double>({v.shape()[0]});
+  for (std::size_t i = 0; i < v.shape()[0]; ++i)
+    for (std::size_t j = 0; j < v.shape()[1]; ++j)
+      tmp[i] += v(i, j) * pts[j];
+
+  return tmp;
+}
+//-----------------------------------------------------------------------------
+Eigen::ArrayXd warp_function(int n, const Eigen::ArrayXd& x)
 {
   [[maybe_unused]] auto [pts, wts] = quadrature::compute_gll_rule(n + 1);
 
@@ -27,13 +57,108 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
   return v * pts.matrix();
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_interval(int n, lattice::type lattice_type,
+                                       bool exterior)
+{
+  if (n == 0)
+    return {{0.5}};
+
+  xt::xtensor<double, 2> x;
+  if (exterior)
+    x = xt::linspace<double>(0.0, 1.0, n + 1);
+  else
+  {
+    const double h = 1.0 / static_cast<double>(n);
+    x = xt::linspace<double>(h, 1.0 - h, n - 1);
+  }
+
+  if (lattice_type == lattice::type::gll_warped)
+    x += warp_function_new(n, x);
+
+  return x;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
+                                   bool exterior)
+{
+  if (n == 0)
+    return {{0.5, 0.5}};
+
+  xt::xtensor<double, 1> r;
+  if (exterior)
+    r = xt::linspace<double>(0.0, 1.0, n + 1);
+  else
+  {
+    const double h = 1.0 / static_cast<double>(n);
+    r = xt::linspace<double>(h, 1.0 - h, n - 1);
+  }
+
+  if (lattice_type == lattice::type::gll_warped)
+    r += warp_function_new(n, r);
+
+  const std::size_t m = r.shape()[0];
+  xt::xtensor<double, 2> x({m * m, 2});
+  std::size_t c = 0;
+  for (std::size_t j = 0; j < m; ++j)
+  {
+    for (std::size_t i = 0; i < m; ++i)
+    {
+      x(c, 0) = r(i);
+      x(c, 1) = r(j);
+      c++;
+    }
+  }
+
+  return x;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
+                                  bool exterior)
+{
+  if (n == 0)
+    return {{1.0 / 3.0, 1.0 / 3.0}};
+
+  // Warp points: see Hesthaven and Warburton, Nodal Discontinuous
+  // Galerkin Methods, pp. 175-180
+
+  const std::size_t b = exterior ? 0 : 1;
+
+  // Displacement from GLL points in 1D, scaled by 1 /(r * (1 - r))
+  xt::xtensor<double, 1> r = xt::linspace<double>(0.0, 1.0, 2 * n + 1);
+  xt::xtensor<double, 1> wbar = warp_function_new(n, r);
+  auto s = xt::view(r, xt::range(1, 2 * n - 1));
+  xt::view(wbar, xt::range(1, 2 * n - 1)) /= (s * (1 - s));
+
+  // Points
+  xt::xtensor<double, 2> p({(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2});
+  int c = 0;
+  for (std::size_t j = b; j < (n - b + 1); ++j)
+  {
+    for (std::size_t i = b; i < (n - b + 1 - j); ++i)
+    {
+      const std::size_t l = n - j - i;
+      const double x = r[2 * i];
+      const double y = r[2 * j];
+      const double a = r[2 * l];
+      p(c, 0) = x;
+      p(c, 1) = y;
+      if (lattice_type == lattice::type::gll_warped)
+      {
+        p(c, 0) += x * (a * wbar(n + i - l) + y * wbar(n + i - j));
+        p(c, 1) += y * (a * wbar(n + j - l) + x * wbar(n + j - i));
+      }
+      ++c;
+    }
+  }
+
+  return p;
+}
+//-----------------------------------------------------------------------------
 Eigen::ArrayXXd _create(cell::type celltype, int n, lattice::type lattice_type,
                         bool exterior)
 {
   switch (celltype)
   {
-  case cell::type::point:
-    return Eigen::ArrayXXd::Zero(1, 1);
   case cell::type::interval:
   {
     if (n == 0)
@@ -104,47 +229,6 @@ Eigen::ArrayXXd _create(cell::type celltype, int n, lattice::type lattice_type,
           x.row(c++) << r[i], r[j], r[k];
 
     return x;
-  }
-  case cell::type::triangle:
-  {
-    if (n == 0)
-      return Eigen::ArrayXXd::Constant(1, 2, 1.0 / 3.0);
-
-    // Warp points: see Hesthaven and Warburton, Nodal Discontinuous Galerkin
-    // Methods, pp. 175-180
-
-    const int b = exterior ? 0 : 1;
-
-    // Points
-    Eigen::ArrayX2d p((n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2);
-
-    // Displacement from GLL points in 1D, scaled by 1/(r(1-r))
-    Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(2 * n + 1, 0.0, 1.0);
-    Eigen::ArrayXd wbar = warp_function(n, r);
-    const auto s = r.segment(1, 2 * n - 1);
-    wbar.segment(1, 2 * n - 1) /= s * (1 - s);
-
-    int c = 0;
-    for (int j = b; j < (n - b + 1); ++j)
-    {
-      for (int i = b; i < (n - b + 1 - j); ++i)
-      {
-        const int l = n - j - i;
-        const double x = r[2 * i];
-        const double y = r[2 * j];
-        const double a = r[2 * l];
-        p.row(c) << x, y;
-        if (lattice_type == lattice::type::gll_warped)
-        {
-          p(c, 0) += x * (a * wbar(n + i - l) + y * wbar(n + i - j));
-          p(c, 1) += y * (a * wbar(n + j - l) + x * wbar(n + j - i));
-        }
-
-        ++c;
-      }
-    }
-
-    return p;
   }
   case cell::type::tetrahedron:
   {
@@ -354,10 +438,41 @@ Eigen::ArrayXXd _create(cell::type celltype, int n, lattice::type lattice_type,
 xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
                                        lattice::type type, bool exterior)
 {
+  switch (celltype)
+  {
+  case cell::type::point:
+    return {{0.0}};
+  case cell::type::interval:
+    return create_interval(n, type, exterior);
+  case cell::type::triangle:
+    return create_tri(n, type, exterior);
+  case cell::type::quadrilateral:
+    return create_quad(n, type, exterior);
+  default:
+    break;
+  }
+
+  // if (celltype == cell::type::triangle)
+  //   return create_tri(n, type, exterior);
+  // if (celltype == cell::type::quadrilateral)
+  // {
+  //   std::cout << "test (a): " << n << ", " << exterior << std::endl;
+  //   xt::xtensor<double, 2> tmp = create_quad(n, type, exterior);
+  //   std::cout << tmp << std::endl;
+  // }
+
   Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x
       = _create(celltype, n, type, exterior);
   std::vector<std::size_t> shape
       = {(std::size_t)x.rows(), (std::size_t)x.cols()};
+
+  // if (celltype == cell::type::quadrilateral)
+  // {
+  //   std::cout << "test (b)" << std::endl;
+  //   std::cout << xt::adapt(x.data(), x.size(), xt::no_ownership(), shape)
+  //             << std::endl;
+  // }
+
   return xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
 }
 //-----------------------------------------------------------------------------

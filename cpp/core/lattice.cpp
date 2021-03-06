@@ -9,6 +9,7 @@
 #include <Eigen/Dense>
 
 #include <xtensor/xadapt.hpp>
+#include <xtensor/xbuilder.hpp>
 #include <xtensor/xio.hpp>
 #include <xtensor/xview.hpp>
 
@@ -57,13 +58,13 @@ Eigen::ArrayXd warp_function(int n, const Eigen::ArrayXd& x)
   return v * pts.matrix();
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_interval(int n, lattice::type lattice_type,
+xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
                                        bool exterior)
 {
   if (n == 0)
-    return {{0.5}};
+    return {0.5};
 
-  xt::xtensor<double, 2> x;
+  xt::xtensor<double, 1> x;
   if (exterior)
     x = xt::linspace<double>(0.0, 1.0, n + 1);
   else
@@ -106,6 +107,43 @@ xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
       x(c, 0) = r(i);
       x(c, 1) = r(j);
       c++;
+    }
+  }
+
+  return x;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
+                                  bool exterior)
+{
+  if (n == 0)
+    return {{0.5, 0.5, 0.5}};
+
+  xt::xtensor<double, 1> r;
+  if (exterior)
+    r = xt::linspace<double>(0.0, 1.0, n + 1);
+  else
+  {
+    const double h = 1.0 / static_cast<double>(n);
+    r = xt::linspace<double>(h, 1.0 - h, n - 1);
+  }
+  if (lattice_type == lattice::type::gll_warped)
+    r += warp_function(n, r);
+
+  const std::size_t m = r.size();
+  xt::xtensor<double, 2> x({m * m * m, 3});
+  int c = 0;
+  for (std::size_t k = 0; k < m; ++k)
+  {
+    for (std::size_t j = 0; j < m; ++j)
+    {
+      for (std::size_t i = 0; i < m; ++i)
+      {
+        x(c, 0) = r[i];
+        x(c, 1) = r[j];
+        x(c, 2) = r[k];
+        c++;
+      }
     }
   }
 
@@ -159,77 +197,32 @@ Eigen::ArrayXXd _create(cell::type celltype, int n, lattice::type lattice_type,
 {
   switch (celltype)
   {
-  case cell::type::interval:
-  {
-    if (n == 0)
-      return Eigen::ArrayXXd::Constant(1, 1, 0.5);
+  // case cell::type::hexahedron:
+  // {
+  //   if (n == 0)
+  //     return Eigen::ArrayXXd::Constant(1, 3, 0.5);
 
-    Eigen::ArrayXd x;
-    if (exterior)
-      x = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
-    else
-    {
-      const double h = 1.0 / static_cast<double>(n);
-      x = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
-    }
+  //   Eigen::ArrayXd r;
+  //   if (exterior)
+  //     r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
+  //   else
+  //   {
+  //     const double h = 1.0 / static_cast<double>(n);
+  //     r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
+  //   }
+  //   if (lattice_type == lattice::type::gll_warped)
+  //     r += warp_function(n, r);
 
-    if (lattice_type == lattice::type::gll_warped)
-      x += warp_function(n, x);
+  //   const int m = r.size();
+  //   Eigen::ArrayXXd x(m * m * m, 3);
+  //   int c = 0;
+  //   for (int k = 0; k < m; ++k)
+  //     for (int j = 0; j < m; ++j)
+  //       for (int i = 0; i < m; ++i)
+  //         x.row(c++) << r[i], r[j], r[k];
 
-    return x;
-  }
-  case cell::type::quadrilateral:
-  {
-    if (n == 0)
-      return Eigen::ArrayXXd::Constant(1, 2, 0.5);
-
-    Eigen::ArrayXd r;
-    if (exterior)
-      r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
-    else
-    {
-      const double h = 1.0 / static_cast<double>(n);
-      r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
-    }
-
-    if (lattice_type == lattice::type::gll_warped)
-      r += warp_function(n, r);
-
-    const int m = r.size();
-    Eigen::ArrayX2d x(m * m, 2);
-    int c = 0;
-    for (int j = 0; j < m; ++j)
-      for (int i = 0; i < m; ++i)
-        x.row(c++) << r[i], r[j];
-
-    return x;
-  }
-  case cell::type::hexahedron:
-  {
-    if (n == 0)
-      return Eigen::ArrayXXd::Constant(1, 3, 0.5);
-
-    Eigen::ArrayXd r;
-    if (exterior)
-      r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
-    else
-    {
-      const double h = 1.0 / static_cast<double>(n);
-      r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
-    }
-    if (lattice_type == lattice::type::gll_warped)
-      r += warp_function(n, r);
-
-    const int m = r.size();
-    Eigen::ArrayXXd x(m * m * m, 3);
-    int c = 0;
-    for (int k = 0; k < m; ++k)
-      for (int j = 0; j < m; ++j)
-        for (int i = 0; i < m; ++i)
-          x.row(c++) << r[i], r[j], r[k];
-
-    return x;
-  }
+  //   return x;
+  // }
   case cell::type::tetrahedron:
   {
     if (n == 0)
@@ -443,11 +436,17 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
   case cell::type::point:
     return {{0.0}};
   case cell::type::interval:
-    return create_interval(n, type, exterior);
+  {
+    xt::xtensor<double, 1> x = create_interval(n, type, exterior);
+    std::array<std::size_t, 2> s = {x.shape()[0], 1};
+    return xt::reshape_view(x, s);
+  }
   case cell::type::triangle:
     return create_tri(n, type, exterior);
   case cell::type::quadrilateral:
     return create_quad(n, type, exterior);
+  case cell::type::hexahedron:
+    return create_hex(n, type, exterior);
   default:
     break;
   }

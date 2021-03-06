@@ -95,6 +95,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.attr("__version__") = basix::version();
 
   py::enum_<cell::type>(m, "CellType")
+      .value("point", cell::type::point)
       .value("interval", cell::type::interval)
       .value("triangle", cell::type::triangle)
       .value("tetrahedron", cell::type::tetrahedron)

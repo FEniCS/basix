@@ -7,7 +7,7 @@
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -pedantic -Wno-comment" HAVE_EXTRA_FLAGS)
 if (HAVE_EXTRA_FLAGS)
-  set(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra -pedantic -Wno-comment ${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra -pedantic -Wno-comment -DDEBUG ${CMAKE_CXX_FLAGS}")
 endif()
 
 include_directories(${CMAKE_CURRENT_LIST_DIR})

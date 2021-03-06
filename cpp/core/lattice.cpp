@@ -11,6 +11,7 @@
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xio.hpp>
+#include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
@@ -45,18 +46,18 @@ xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
   return tmp;
 }
 //-----------------------------------------------------------------------------
-Eigen::ArrayXd warp_function(int n, const Eigen::ArrayXd& x)
-{
-  [[maybe_unused]] auto [pts, wts] = quadrature::compute_gll_rule(n + 1);
+// Eigen::ArrayXd warp_function(int n, const Eigen::ArrayXd& x)
+// {
+//   [[maybe_unused]] auto [pts, wts] = quadrature::compute_gll_rule(n + 1);
 
-  pts *= 0.5;
-  for (int i = 0; i < n + 1; ++i)
-    pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
+//   pts *= 0.5;
+//   for (int i = 0; i < n + 1; ++i)
+//     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
-  FiniteElement L = create_dlagrange(cell::type::interval, n);
-  Eigen::MatrixXd v = L.tabulate(0, x)[0];
-  return v * pts.matrix();
-}
+//   FiniteElement L = create_dlagrange(cell::type::interval, n);
+//   Eigen::MatrixXd v = L.tabulate(0, x)[0];
+//   return v * pts.matrix();
+// }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
                                        bool exterior)
@@ -128,7 +129,7 @@ xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
     r = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
   if (lattice_type == lattice::type::gll_warped)
-    r += warp_function(n, r);
+    r += warp_function_new(n, r);
 
   const std::size_t m = r.size();
   xt::xtensor<double, 2> x({m * m * m, 3});
@@ -192,85 +193,97 @@ xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
   return p;
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
+                                  bool exterior)
+{
+  if (n == 0)
+    return {{0.25, 0.25, 0.25}};
+
+  const std::size_t b = exterior ? 0 : 1;
+  xt::xtensor<double, 2> p(
+      {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
+  auto r = xt::linspace<double>(0.0, 1.0, 2 * n + 1);
+  auto wbar = warp_function_new(n, r);
+  auto s = xt::view(r, xt::range(1, 2 * n - 1));
+  xt::view(wbar, xt::range(1, 2 * n - 1)) /= s * (1 - s);
+
+  std::size_t c = 0;
+  for (std::size_t k = b; k < (n - b + 1); ++k)
+  {
+    for (std::size_t j = b; j < (n - b + 1 - k); ++j)
+    {
+      for (std::size_t i = b; i < (n - b + 1 - j - k); ++i)
+      {
+        const std::size_t l = n - k - j - i;
+        const double x = r[2 * i];
+        const double y = r[2 * j];
+        const double z = r[2 * k];
+        const double a = r[2 * l];
+        p(c, 0) = x;
+        p(c, 1) = y;
+        p(c, 2) = z;
+        if (lattice_type == lattice::type::gll_warped)
+        {
+          const double dx = x
+                            * (a * wbar(n + i - l) + y * wbar(n + i - j)
+                               + z * wbar(n + i - k));
+          const double dy = y
+                            * (a * wbar(n + j - l) + z * wbar(n + j - k)
+                               + x * wbar(n + j - i));
+          const double dz = z
+                            * (a * wbar(n + k - l) + x * wbar(n + k - i)
+                               + y * wbar(n + k - j));
+          p(c, 0) += dx;
+          p(c, 1) += dy;
+          p(c, 2) += dz;
+        }
+
+        ++c;
+      }
+    }
+  }
+
+  return p;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
+                                    bool exterior)
+{
+  if (n == 0)
+    return {{1.0 / 3.0, 1.0 / 3.0, 0.5}};
+
+  const xt::xtensor<double, 2> tri_pts = create_tri(n, lattice_type, exterior);
+  const xt::xtensor<double, 1> line_pts
+      = create_interval(n, lattice_type, exterior);
+
+  xt::xtensor<double, 2> x({tri_pts.shape()[0] * line_pts.shape()[0], 3});
+
+  std::array<std::size_t, 2> reps = {tri_pts.shape()[0], 1};
+  xt::view(x, xt::all(), xt::range(0, 2)) = xt::tile(tri_pts, reps);
+
+  // Eigen::ArrayX3d x(tri_pts.rows() * line_pts.rows(), 3);
+
+  // x.leftCols(2) = tri_pts.replicate(line_pts.rows(), 1);
+
+  // for (int i = 0; i < line_pts.rows(); ++i)
+  //   x.block(i * tri_pts.rows(), 2, tri_pts.rows(), 1) = line_pts(i, 0);
+  for (std::size_t i = 0; i < line_pts.shape()[0]; ++i)
+  {
+    xt::view(x,
+             xt::range(i * tri_pts.shape()[0],
+                       i * tri_pts.shape()[0] + tri_pts.shape()[0]),
+             xt::range(2, 3))
+        = line_pts(i);
+  }
+
+  return x;
+}
+//-----------------------------------------------------------------------------
 Eigen::ArrayXXd _create(cell::type celltype, int n, lattice::type lattice_type,
                         bool exterior)
 {
   switch (celltype)
   {
-  // case cell::type::hexahedron:
-  // {
-  //   if (n == 0)
-  //     return Eigen::ArrayXXd::Constant(1, 3, 0.5);
-
-  //   Eigen::ArrayXd r;
-  //   if (exterior)
-  //     r = Eigen::VectorXd::LinSpaced(n + 1, 0.0, 1.0);
-  //   else
-  //   {
-  //     const double h = 1.0 / static_cast<double>(n);
-  //     r = Eigen::VectorXd::LinSpaced(n - 1, h, 1.0 - h);
-  //   }
-  //   if (lattice_type == lattice::type::gll_warped)
-  //     r += warp_function(n, r);
-
-  //   const int m = r.size();
-  //   Eigen::ArrayXXd x(m * m * m, 3);
-  //   int c = 0;
-  //   for (int k = 0; k < m; ++k)
-  //     for (int j = 0; j < m; ++j)
-  //       for (int i = 0; i < m; ++i)
-  //         x.row(c++) << r[i], r[j], r[k];
-
-  //   return x;
-  // }
-  case cell::type::tetrahedron:
-  {
-    if (n == 0)
-      return Eigen::ArrayXXd::Constant(1, 3, 0.25);
-
-    const int b = exterior ? 0 : 1;
-    Eigen::ArrayX3d p((n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6,
-                      3);
-    Eigen::ArrayXd r = Eigen::VectorXd::LinSpaced(2 * n + 1, 0.0, 1.0);
-    Eigen::ArrayXd wbar = warp_function(n, r);
-    const auto s = r.segment(1, 2 * n - 1);
-    wbar.segment(1, 2 * n - 1) /= s * (1 - s);
-    int c = 0;
-    for (int k = b; k < (n - b + 1); ++k)
-    {
-      for (int j = b; j < (n - b + 1 - k); ++j)
-      {
-        for (int i = b; i < (n - b + 1 - j - k); ++i)
-        {
-          const int l = n - k - j - i;
-          const double x = r[2 * i];
-          const double y = r[2 * j];
-          const double z = r[2 * k];
-          const double a = r[2 * l];
-          p.row(c) << x, y, z;
-          if (lattice_type == lattice::type::gll_warped)
-          {
-            const double dx = x
-                              * (a * wbar(n + i - l) + y * wbar(n + i - j)
-                                 + z * wbar(n + i - k));
-            const double dy = y
-                              * (a * wbar(n + j - l) + z * wbar(n + j - k)
-                                 + x * wbar(n + j - i));
-            const double dz = z
-                              * (a * wbar(n + k - l) + x * wbar(n + k - i)
-                                 + y * wbar(n + k - j));
-            p(c, 0) += dx;
-            p(c, 1) += dy;
-            p(c, 2) += dz;
-          }
-
-          ++c;
-        }
-      }
-    }
-
-    return p;
-  }
   case cell::type::prism:
   {
     if (n == 0)
@@ -443,10 +456,14 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
   }
   case cell::type::triangle:
     return create_tri(n, type, exterior);
+  case cell::type::tetrahedron:
+    return create_tet(n, type, exterior);
   case cell::type::quadrilateral:
     return create_quad(n, type, exterior);
   case cell::type::hexahedron:
     return create_hex(n, type, exterior);
+  case cell::type::prism:
+    return create_prism(n, type, exterior);
   default:
     break;
   }

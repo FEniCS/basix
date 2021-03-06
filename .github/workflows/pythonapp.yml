@@ -28,7 +28,7 @@ jobs:
           sudo apt-get install -y doxygen libeigen3-dev
           wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz
           tar xf 0.23.1.tar.gz
-          cd  0.23.1
+          cd xtensor-0.23.1
           cmake .
           cmake install
       - name: Build documentation (Linux)

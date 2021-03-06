@@ -74,7 +74,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
           for (std::size_t j = 0; j < lattice.shape()[0]; ++j)
           {
             xt::row(pt, c) = xt::row(entity_geom, 0);
-            for (int k = 0; k < lattice.shape()[1]; ++k)
+            for (std::size_t k = 0; k < lattice.shape()[1]; ++k)
             {
               xt::row(pt, c)
                   += (xt::row(entity_geom, k + 1) - xt::row(entity_geom, 0))

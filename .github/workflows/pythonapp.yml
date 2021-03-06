@@ -30,28 +30,10 @@ jobs:
           tar xf xtl-0.7.2.tar.gz
           cmake -B build-xlt -S xtl-0.7.2/
           sudo cmake --install build-xlt
-
-          # ls
-          # mkdir build-xtl
-          # cd build-xtl
-          # cmake ../xtl-0.7.2
-          # echo "Finished confi"
-          # sudo make install
-          # echo "Installed"
-          # cd ../
-          # cmake -B build-xtl -S xtl-0.7.2
-          # cmake --build xtl-0.7.2
-          # sudo cmake --install xtl-0.7.2
-
-          # cd xtl-0.7.2
-          # mkdir build-xtl && cd build && cmake ../ && sudo cmake install
-          # cd ../../
           wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
           tar xf xtensor-0.23.1.tar.gz
-          mkdir build-xtensor
-          cd build-xtensor
-          cmake ../xtensor-0.23.1
-          sudo make install
+          cmake -B build-xtensor -S xtensor-0.23.1/
+          sudo cmake --install build-xtensor
       - name: Build documentation (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -93,12 +75,10 @@ jobs:
           git add --all
           git commit --allow-empty -m "C++ FEniCS/basix@${{ github.sha }}"
           git push
-
   # cmake:
   #   runs-on: ubuntu-20.04
   #   steps:
   #     - uses: actions/checkout@v2
-
   #     - name: Install dependencies
   #       run: |
   #         sudo apt-get -y install libeigen3-dev python3-pip
@@ -108,12 +88,10 @@ jobs:
   #         cmake .
   #         make -j 2
   #         sudo make install
-
   # setup-py:
   #   runs-on: ubuntu-20.04
   #   steps:
   #     - uses: actions/checkout@v2
-
   #     - name: Install dependencies
   #       run: |
   #         sudo apt-get -y install libeigen3-dev python3-pip

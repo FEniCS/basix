@@ -39,6 +39,14 @@ include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 find_package(xtensor REQUIRED)
 # target_include_directories(your_target PUBLIC ${xtensor_INCLUDE_DIRS})
 # target_link_libraries(your_target PUBLIC xtensor)
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wno-comment" HAVE_EXTRA_FLAGS)
+if (HAVE_EXTRA_FLAGS)
+  set(CMAKE_CXX_FLAGS "-Wall -Werror -Wno-comment ${CMAKE_CXX_FLAGS}")
+endif()
+
+
+
 
 # Now we can find pybind11
 find_package(pybind11 CONFIG REQUIRED)

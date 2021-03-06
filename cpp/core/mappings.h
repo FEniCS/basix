@@ -27,7 +27,7 @@ enum class type
 /// @param mapping_type Mapping type
 /// @return The mapping function
 std::function<std::vector<double>(const tcb::span<const double>&,
-                                  const Eigen::MatrixXd&, const double,
+                                  const Eigen::MatrixXd&, double,
                                   const Eigen::MatrixXd&)>
 get_forward_map(mapping::type mapping_type);
 

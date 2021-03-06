@@ -266,7 +266,7 @@ public:
 
   /// Get the mapping type used for this element
   /// @return The mapping
-  const mapping::type mapping_type() const;
+  mapping::type mapping_type() const;
 
   /// Map function values from the reference to a physical cell
   /// @param reference_data The function values on the reference

@@ -30,8 +30,9 @@ namespace
 template <typename T>
 void _map_push_forward(int handle, T* physical_data, const T* reference_data,
                        const double* J, const double* detJ, const double* K,
-                       const int physical_dim, const int physical_value_size,
-                       const int nresults, const int npoints)
+                       const int physical_dim,
+                       const int /*physical_value_size*/, const int nresults,
+                       const int npoints)
 {
   check_handle(handle);
   const int tdim = cell::topological_dimension(_registry[handle]->cell_type());

@@ -282,8 +282,8 @@ std::vector<Eigen::MatrixXd> moments::create_tangent_moment_dof_transformations(
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 moments::make_integral_moments(const FiniteElement& moment_space,
-                               const cell::type celltype, const int value_size,
-                               const int poly_deg, const int q_deg)
+                               cell::type celltype, int value_size,
+                               int /*poly_deg*/, int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -361,9 +361,10 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   return std::make_pair(points, matrix);
 }
 //----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> moments::make_dot_integral_moments(
-    const FiniteElement& moment_space, const cell::type celltype,
-    const int value_size, const int poly_deg, const int q_deg)
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+moments::make_dot_integral_moments(const FiniteElement& moment_space,
+                                   cell::type celltype, int value_size,
+                                   int /*poly_deg*/, int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -436,9 +437,8 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> moments::make_dot_integral_moments(
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 moments::make_tangent_integral_moments(const FiniteElement& moment_space,
-                                       const cell::type celltype,
-                                       const int value_size, const int poly_deg,
-                                       const int q_deg)
+                                       cell::type celltype, int value_size,
+                                       int /*poly_deg*/, int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -537,7 +537,8 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), tdim);
   for (int i = 0; i < sub_entity_count; ++i)
   {
-    xt::xtensor<double, 2> facet = cell::sub_entity_geometry(celltype, tdim - 1, i);
+    xt::xtensor<double, 2> facet
+        = cell::sub_entity_geometry(celltype, tdim - 1, i);
     Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                   Eigen::RowMajor>>
         _facet(facet.data(), facet.shape()[0], facet.shape()[1]);

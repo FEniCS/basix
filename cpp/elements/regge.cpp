@@ -81,7 +81,7 @@ create_regge_interpolation(cell::type celltype, int degree)
       cell::type ct = cell::sub_entity_type(celltype, dim, i);
       auto lattice
           = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
-      for (int j = 0; j < lattice.shape()[0]; ++j)
+      for (std::size_t j = 0; j < lattice.shape()[0]; ++j)
       {
         // for (std::size_t p = 0; p < entity_geom.shape()[1]; ++p)
         //   points(point_n + j, p) = entity_geom(0, p);
@@ -131,7 +131,7 @@ create_regge_interpolation(cell::type celltype, int degree)
         }
       }
 
-      for (int k = 0; k < lattice.shape()[0]; ++k)
+      for (std::size_t k = 0; k < lattice.shape()[0]; ++k)
       {
         for (int j = 0; j < ntangents; ++j)
         {

@@ -197,7 +197,7 @@ int FiniteElement::dim() const { return _coeffs.rows(); }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
-const mapping::type FiniteElement::mapping_type() const { return _map_type; }
+mapping::type FiniteElement::mapping_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
 const Eigen::MatrixXd& FiniteElement::interpolation_matrix() const
 {

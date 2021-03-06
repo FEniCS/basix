@@ -257,23 +257,12 @@ xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
       = create_interval(n, lattice_type, exterior);
 
   xt::xtensor<double, 2> x({tri_pts.shape()[0] * line_pts.shape()[0], 3});
-
-  std::array<std::size_t, 2> reps = {tri_pts.shape()[0], 1};
+  std::array<std::size_t, 2> reps = {line_pts.shape()[0], 1};
   xt::view(x, xt::all(), xt::range(0, 2)) = xt::tile(tri_pts, reps);
-
-  // Eigen::ArrayX3d x(tri_pts.rows() * line_pts.rows(), 3);
-
-  // x.leftCols(2) = tri_pts.replicate(line_pts.rows(), 1);
-
-  // for (int i = 0; i < line_pts.rows(); ++i)
-  //   x.block(i * tri_pts.rows(), 2, tri_pts.rows(), 1) = line_pts(i, 0);
   for (std::size_t i = 0; i < line_pts.shape()[0]; ++i)
   {
-    xt::view(x,
-             xt::range(i * tri_pts.shape()[0],
-                       i * tri_pts.shape()[0] + tri_pts.shape()[0]),
-             xt::range(2, 3))
-        = line_pts(i);
+    auto rows = xt::range(i * tri_pts.shape()[0], (i + 1) * tri_pts.shape()[0]);
+    xt::view(x, rows, xt::range(2, 3)) = line_pts(i);
   }
 
   return x;

@@ -124,5 +124,5 @@ make_normal_integral_moments(const FiniteElement& moment_space,
                              cell::type celltype, int value_size, int poly_deg,
                              int q_deg);
 
-}; // namespace moments
+} // namespace moments
 } // namespace basix

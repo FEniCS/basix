@@ -6,12 +6,9 @@
 
 #include <vector>
 
-namespace basix
-{
-
-/// Functions to help with the creation of DOF transformation and direction
-/// correction.
-namespace doftransforms
+/// Functions to help with the creation of DOF transformation and
+/// direction correction.
+namespace basix::doftransforms
 {
 
 /// Reflect the DOFs on an interval
@@ -44,5 +41,4 @@ std::vector<int> quadrilateral_reflection(int degree);
 /// transformation
 std::vector<int> quadrilateral_rotation(int degree);
 
-}; // namespace doftransforms
-} // namespace basix
+} // namespace basix::doftransforms

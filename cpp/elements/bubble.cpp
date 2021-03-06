@@ -50,10 +50,10 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   const int psize = polyset_at_Qpts.cols();
 
   // Create points at nodes on interior
-  const Eigen::ArrayXXd points
+  const auto points
       = lattice::create(celltype, degree, lattice::type::equispaced, false);
 
-  const int ndofs = points.rows();
+  const int ndofs = points.shape()[0];
 
   // Create coefficients for order (degree-1) vector polynomials
   Eigen::ArrayXXd lower_polyset_at_Qpts;
@@ -100,7 +100,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   for (int i = 0; i < tdim; ++i)
     for (std::size_t j = 0; j < topology[i].size(); ++j)
       entity_dofs[i].push_back(0);
-  entity_dofs[tdim].push_back(points.rows());
+  entity_dofs[tdim].push_back(points.shape()[0]);
 
   int transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
@@ -109,12 +109,15 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_transformations(
       transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _pt(points.data(), points.shape()[0], points.shape()[1]);
+
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, Eigen::MatrixXd::Identity(ndofs, ndofs), points,
-      degree);
+      celltype, wcoeffs, Eigen::MatrixXd::Identity(ndofs, ndofs), _pt, degree);
 
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, points,
+                       entity_dofs, base_transformations, _pt,
                        Eigen::MatrixXd::Identity(ndofs, ndofs),
                        mapping::type::identity);
 }

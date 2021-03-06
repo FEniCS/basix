@@ -5,8 +5,8 @@
 #pragma once
 
 #include "cell.h"
-#include <Eigen/Dense>
 #include <vector>
+#include <xtensor/xtensor.hpp>
 
 namespace basix::lattice
 {
@@ -35,7 +35,7 @@ enum class type
 /// @param type Either lattice::type::equispaced or lattice::type::gll_warped
 /// @param exterior If set, includes outer boundaries
 /// @return Set of points
-Eigen::ArrayXXd create(cell::type celltype, int n, lattice::type type,
-                       bool exterior);
+xt::xtensor<double, 2> create(cell::type celltype, int n, lattice::type type,
+                              bool exterior);
 
 } // namespace basix::lattice

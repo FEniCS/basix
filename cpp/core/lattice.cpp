@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson & Garth Wells
+// Copyright (c) 2020 Chris Richardson and Garth N. Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -7,6 +7,7 @@
 #include "elements/lagrange.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
+#include <xtensor/xadapt.hpp>
 
 using namespace basix;
 
@@ -15,8 +16,7 @@ namespace
 //-----------------------------------------------------------------------------
 Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
 {
-  [[maybe_unused]] auto [pts, wts]
-      = quadrature::compute_gll_rule(n + 1);
+  [[maybe_unused]] auto [pts, wts] = quadrature::compute_gll_rule(n + 1);
   wts.setZero();
 
   pts *= 0.5;
@@ -28,12 +28,8 @@ Eigen::ArrayXd warp_function(int n, Eigen::ArrayXd& x)
   return v * pts.matrix();
 }
 //-----------------------------------------------------------------------------
-
-} // namespace
-
-//-----------------------------------------------------------------------------
-Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
-                                lattice::type lattice_type, bool exterior)
+Eigen::ArrayXXd _create(cell::type celltype, int n, lattice::type lattice_type,
+                        bool exterior)
 {
   switch (celltype)
   {
@@ -209,9 +205,9 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     }
 
     const Eigen::ArrayXXd tri_pts
-        = lattice::create(cell::type::triangle, n, lattice_type, exterior);
+        = _create(cell::type::triangle, n, lattice_type, exterior);
     const Eigen::ArrayXXd line_pts
-        = lattice::create(cell::type::interval, n, lattice_type, exterior);
+        = _create(cell::type::interval, n, lattice_type, exterior);
 
     Eigen::ArrayX3d x(tri_pts.rows() * line_pts.rows(), 3);
     x.leftCols(2) = tri_pts.replicate(line_pts.rows(), 1);
@@ -354,5 +350,15 @@ Eigen::ArrayXXd lattice::create(cell::type celltype, int n,
     throw std::runtime_error("Unsupported cell for lattice");
   }
 }
-
+} // namespace
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
+                                       lattice::type type, bool exterior)
+{
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> x
+      = _create(celltype, n, type, exterior);
+  std::vector<std::size_t> shape
+      = {(std::size_t)x.rows(), (std::size_t)x.cols()};
+  return xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
+}
 //-----------------------------------------------------------------------------

@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "ndarray.h"
 #include <vector>
 #include <xtensor/xtensor.hpp>
 

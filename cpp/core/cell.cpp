@@ -6,6 +6,7 @@
 #include "elements/lagrange.h"
 #include "quadrature.h"
 #include <map>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -16,23 +17,14 @@ xt::xtensor<double, 2> cell::geometry(cell::type celltype)
   {
   case cell::type::interval:
     return xt::xtensor<double, 2>({{0.0}, {1.0}});
-    // return ndarray<double, 2>({2, 1}, std::vector<double>({0.0, 1.0}));
   case cell::type::triangle:
     return xt::xtensor<double, 2>({{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}});
-    // return ndarray<double, 2>(
-    //     {3, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0, 0.0, 1.0}));
   case cell::type::quadrilateral:
     return xt::xtensor<double, 2>(
         {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}});
-    // return ndarray<double, 2>(
-    //     {4, 2}, std::vector<double>({0.0, 0.0, 1.0, 0.0,
-    //     0.0, 1.0, 1.0, 1.0}));
   case cell::type::tetrahedron:
     return xt::xtensor<double, 2>(
         {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}});
-    // return ndarray<double, 2>(
-    //     {4, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-    //                                  0.0, 0.0, 0.0, 1.0}));
   case cell::type::prism:
     return xt::xtensor<double, 2>({{0.0, 0.0, 0.0},
                                    {1.0, 0.0, 0.0},
@@ -40,20 +32,12 @@ xt::xtensor<double, 2> cell::geometry(cell::type celltype)
                                    {0.0, 0.0, 1.0},
                                    {1.0, 0.0, 1.0},
                                    {0.0, 1.0, 1.0}});
-    // return ndarray<double, 2>(
-    //     {6, 3},
-    //     std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-    //     0.0,
-    //                          0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0}));
   case cell::type::pyramid:
     return xt::xtensor<double, 2>({{0.0, 0.0, 0.0},
                                    {1.0, 0.0, 0.0},
                                    {0.0, 1.0, 0.0},
                                    {1.0, 1.0, 0.0},
                                    {0.0, 0.0, 1.0}});
-    // return ndarray<double, 2>(
-    //     {5, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-    //                                  0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0}));
   case cell::type::hexahedron:
     return xt::xtensor<double, 2>({{0.0, 0.0, 0.0},
                                    {1.0, 0.0, 0.0},
@@ -63,11 +47,6 @@ xt::xtensor<double, 2> cell::geometry(cell::type celltype)
                                    {1.0, 0.0, 1.0},
                                    {0.0, 1.0, 1.0},
                                    {1.0, 1.0, 1.0}});
-    // return ndarray<double, 2>(
-    //     {8, 3}, std::vector<double>({0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0,
-    //                                  0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
-    //                                  0.0, 1.0,
-    //                                  0.0, 1.0, 1.0, 1.0, 1.0, 1.0}));
   default:
     throw std::runtime_error("Unsupported cell type");
   }
@@ -188,23 +167,19 @@ int cell::topological_dimension(cell::type cell_type)
 xt::xtensor<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
                                                  int index)
 {
-  std::vector<std::vector<std::vector<int>>> cell_topology
+  const std::vector<std::vector<std::vector<int>>> cell_topology
       = cell::topology(celltype);
-  const xt::xtensor<double, 2> cell_geometry = cell::geometry(celltype);
-
   if (dim < 0 or dim >= (int)cell_topology.size())
     throw std::runtime_error("Invalid dimension for sub-entity");
-
+  const xt::xtensor<double, 2> cell_geometry = cell::geometry(celltype);
   const std::vector<std::vector<int>>& t = cell_topology[dim];
-
   if (index < 0 or index >= (int)t.size())
     throw std::runtime_error("Invalid entity index");
 
   xt::xtensor<double, 2> sub_entity(
       {t[index].size(), cell_geometry.shape()[1]});
   for (std::size_t i = 0; i < sub_entity.shape()[0]; ++i)
-    sub_entity[i] = cell_geometry[t[index][i]];
-
+    xt::row(sub_entity, i) = xt::row(cell_geometry, t[index][i]);
   return sub_entity;
 }
 //----------------------------------------------------------------------------

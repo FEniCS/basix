@@ -7,6 +7,7 @@
 #include "core/lattice.h"
 #include "core/mappings.h"
 #include "core/polyset.h"
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -45,19 +46,19 @@ Eigen::MatrixXd create_regge_space(cell::type celltype, int degree)
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_regge_interpolation(cell::type celltype, int degree)
 {
-  const int tdim = cell::topological_dimension(celltype);
+  const std::size_t tdim = cell::topological_dimension(celltype);
 
   const int basis_size = polyset::dim(celltype, degree);
 
   const int ndofs = basis_size * (tdim + 1) * tdim / 2;
   const int space_size = basis_size * tdim * tdim;
 
-  const int npoints = tdim == 2
-                          ? 3 * (degree + 1) + degree * (degree + 1) / 2
-                          : 6 * (degree + 1) + 4 * degree * (degree + 1) / 2
-                                + degree * (degree + 1) * (degree - 1) / 6;
+  const std::size_t npoints
+      = tdim == 2 ? 3 * (degree + 1) + degree * (degree + 1) / 2
+                  : 6 * (degree + 1) + 4 * degree * (degree + 1) / 2
+                        + degree * (degree + 1) * (degree - 1) / 6;
 
-  Eigen::ArrayXXd points(npoints, tdim);
+  xt::xtensor<double, 2> points({npoints, tdim});
   Eigen::ArrayXXd matrix(ndofs, npoints * tdim * tdim);
   matrix.setZero();
 
@@ -78,29 +79,37 @@ create_regge_interpolation(cell::type celltype, int degree)
 
       // Eigen::ArrayXd point = entity_geom.row(0);
       cell::type ct = cell::sub_entity_type(celltype, dim, i);
-      Eigen::ArrayXXd lattice
+      auto lattice
           = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
-      for (int j = 0; j < lattice.rows(); ++j)
+      for (int j = 0; j < lattice.shape()[0]; ++j)
       {
-        for (std::size_t p = 0; p < entity_geom.shape()[1]; ++p)
-          points(point_n + j, p) = entity_geom(0, p);
-        // points.row(point_n + j) = entity_geom.row(0);
+        // for (std::size_t p = 0; p < entity_geom.shape()[1]; ++p)
+        //   points(point_n + j, p) = entity_geom(0, p);
+        xt::row(points, point_n + j) = xt::row(entity_geom, 0);
         for (std::size_t k = 0; k < entity_geom.shape()[0] - 1; ++k)
         {
-          for (std::size_t p = 0; p < entity_geom.shape()[1]; ++p)
-          {
-            points(point_n + j, p)
-                += (entity_geom(k + 1, p) - entity_geom(0, p)) * lattice(j, k);
-          }
+          // for (std::size_t p = 0; p < entity_geom.shape()[1]; ++p)
+          // {
+          //   points(point_n + j, p)
+          //       += (entity_geom(k + 1, p) - entity_geom(0, p)) * lattice(j,
+          //       k);
+          //
+          xt::row(points, point_n + j)
+              += (xt::row(entity_geom, k + 1) - xt::row(entity_geom, 0))
+                 * lattice(j, k);
           // points.row(point_n + j)
           //     += (entity_geom.row(k + 1) - entity_geom.row(0)) * lattice(j,
           //     k);
         }
       }
 
+      Eigen::Map<
+          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+          _pt(points.data(), points.shape()[0], points.shape()[1]);
+
       Eigen::MatrixXd basis = polyset::tabulate(
           celltype, degree, 0,
-          points.block(point_n, 0, lattice.rows(), tdim))[0];
+          _pt.block(point_n, 0, lattice.shape()[0], tdim))[0];
 
       // Store up outer(t, t) for all tangents
       std::vector<int>& vert_ids = topology[dim][i];
@@ -122,7 +131,7 @@ create_regge_interpolation(cell::type celltype, int degree)
         }
       }
 
-      for (int k = 0; k < lattice.rows(); ++k)
+      for (int k = 0; k < lattice.shape()[0]; ++k)
       {
         for (int j = 0; j < ntangents; ++j)
         {
@@ -139,7 +148,10 @@ create_regge_interpolation(cell::type celltype, int degree)
     }
   }
 
-  return std::make_pair(points, matrix);
+  Eigen::Map<
+      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
+      _pt(points.data(), points.shape()[0], points.shape()[1]);
+  return std::make_pair(_pt, matrix);
 }
 //-----------------------------------------------------------------------------
 } // namespace

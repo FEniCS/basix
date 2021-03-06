@@ -12,6 +12,7 @@
 #include "core/quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -21,14 +22,14 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
 
-  const int ndofs = polyset::dim(celltype, degree);
+  const std::size_t ndofs = polyset::dim(celltype, degree);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
 
   // Create points at nodes, ordered by topology (vertices first)
-  Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
+  xt::xtensor<double, 2> pt({ndofs, topology.size() - 1});
   if (degree == 0)
   {
     pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
@@ -45,37 +46,39 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
       {
         const xt::xtensor<double, 2> entity_geom
             = cell::sub_entity_geometry(celltype, dim, i);
-        Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>>
-            _entity_geom(entity_geom.data(), entity_geom.shape()[0],
-                         entity_geom.shape()[1]);
+        // Eigen::Map < const Eigen::Array < double, Eigen::Dynamic,
+        //     Eigen::Dynamic,
+        //                           Eigen::RowMajor>>
+        // _entity_geom(entity_geom.data(), entity_geom.shape()[0],
+        //              entity_geom.shape()[1]);
 
         if (dim == 0)
         {
-          pt.row(c++) = _entity_geom.row(0);
+          xt::row(pt, c++) = xt::row(entity_geom, 0);
           entity_dofs[0].push_back(1);
         }
         else if (dim == topology.size() - 1)
         {
-          const Eigen::ArrayXXd lattice = lattice::create(
+          const auto lattice = lattice::create(
               celltype, degree, lattice::type::equispaced, false);
-          for (int j = 0; j < lattice.rows(); ++j)
-            pt.row(c++) = lattice.row(j);
-          entity_dofs[dim].push_back(lattice.rows());
+          for (int j = 0; j < lattice.shape()[0]; ++j)
+            xt::row(pt, c++) = xt::row(lattice, j);
+          entity_dofs[dim].push_back(lattice.shape()[0]);
         }
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, i);
-          const Eigen::ArrayXXd lattice
+          const auto lattice
               = lattice::create(ct, degree, lattice::type::equispaced, false);
-          entity_dofs[dim].push_back(lattice.rows());
-          for (int j = 0; j < lattice.rows(); ++j)
+          entity_dofs[dim].push_back(lattice.shape()[0]);
+          for (int j = 0; j < lattice.shape()[0]; ++j)
           {
-            pt.row(c) = _entity_geom.row(0);
-            for (int k = 0; k < lattice.cols(); ++k)
+            xt::row(pt, c) = xt::row(entity_geom, 0);
+            for (int k = 0; k < lattice.shape()[1]; ++k)
             {
-              pt.row(c) += (_entity_geom.row(k + 1) - _entity_geom.row(0))
-                           * lattice(j, k);
+              xt::row(pt, c)
+                  += (xt::row(entity_geom, k + 1) - xt::row(entity_geom, 0))
+                     * lattice(j, k);
             }
             ++c;
           }
@@ -186,12 +189,17 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     LOG(WARNING) << "Base transformations not implemented for this cell type.";
   }
 
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _pt
+      = Eigen::Map<Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>(pt.data(), pt.shape()[0],
+                                                  pt.shape()[1]);
+
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, Eigen::MatrixXd::Identity(ndofs, ndofs),
-      Eigen::MatrixXd::Identity(ndofs, ndofs), pt, degree);
+      Eigen::MatrixXd::Identity(ndofs, ndofs), _pt, degree);
 
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, pt,
+                       entity_dofs, base_transformations, _pt,
                        Eigen::MatrixXd::Identity(ndofs, ndofs),
                        mapping::type::identity);
 }
@@ -210,7 +218,7 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[topology.size() - 1][0] = ndofs;
 
-  const Eigen::ArrayXXd pt
+  const auto pt
       = lattice::create(celltype, degree, lattice::type::equispaced, true);
 
   int transform_count = 0;
@@ -220,12 +228,17 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_transformations(
       transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _pt
+      = Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                      Eigen::RowMajor>>(
+          pt.data(), pt.shape()[0], pt.shape()[1]);
+
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, Eigen::MatrixXd::Identity(ndofs, ndofs),
-      Eigen::MatrixXd::Identity(ndofs, ndofs), pt, degree);
+      Eigen::MatrixXd::Identity(ndofs, ndofs), _pt, degree);
 
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, pt,
+                       entity_dofs, base_transformations, _pt,
                        Eigen::MatrixXd::Identity(ndofs, ndofs),
                        mapping::type::identity);
 }
@@ -269,7 +282,7 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[topology.size() - 1][0] = ndofs;
 
-  const Eigen::ArrayXXd pt
+  const auto pt
       = lattice::create(simplex_type, degree, lattice::type::equispaced, true);
 
   int transform_count = 0;
@@ -279,11 +292,16 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   std::vector<Eigen::MatrixXd> base_transformations(
       transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
+  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _pt
+      = Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                      Eigen::RowMajor>>(
+          pt.data(), pt.shape()[0], pt.shape()[1]);
+
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, Eigen::MatrixXd::Identity(ndofs, ndofs), pt, degree);
+      celltype, wcoeffs, Eigen::MatrixXd::Identity(ndofs, ndofs), _pt, degree);
 
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, pt,
+                       entity_dofs, base_transformations, _pt,
                        Eigen::MatrixXd::Identity(ndofs, ndofs),
                        mapping::type::identity);
 }

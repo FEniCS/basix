@@ -479,7 +479,7 @@ make_default_triangle_quadrature(int m)
   return quadrature::make_quadrature_triangle_collapsed(np);
 }
 
-}; // namespace
+} // namespace
 //-----------------------------------------------------------------------------
 Eigen::ArrayXXd quadrature::compute_jacobi_deriv(double a, int n, int nderiv,
                                                  const Eigen::ArrayXd& x)

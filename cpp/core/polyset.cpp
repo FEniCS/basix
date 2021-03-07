@@ -77,14 +77,10 @@ tabulate_polyset_line_derivs(std::size_t degree, std::size_t nderiv,
 // above, but with a change of variables. The polynomials are then
 // extended in the q direction, using the relation given in Sherwin and
 // Karniadakis 1995 (https://doi.org/10.1016/0045-7825(94)00745-9).
-template <typename Mat>
-xt::xtensor<double, 3> tabulate_polyset_triangle_derivs(int n, int nderiv,
-                                                        const Mat& pts)
-// xt::xtensor<double, 3>
-// tabulate_polyset_triangle_derivs(int n, int nderiv,
-//                                  const xt::xtensor<double, 2>& pts)
+xt::xtensor<double, 3>
+tabulate_polyset_triangle_derivs(int n, int nderiv,
+                                 const xt::xtensor<double, 2>& pts)
 {
-  // std::cout << "Tri 0" << std::endl;
   assert(pts.shape()[1] == 2);
 
   const auto x = pts * 2.0 - 1.0;
@@ -197,21 +193,17 @@ xt::xtensor<double, 3> tabulate_polyset_triangle_derivs(int n, int nderiv,
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3>
-tabulate_polyset_tetrahedron_derivs(std::size_t n, std::size_t nderiv,
+tabulate_polyset_tetrahedron_derivs(int n, std::size_t nderiv,
                                     const xt::xtensor<double, 2>& pts)
 {
-  std::cout << "Start tet case" << std::endl;
   assert(pts.shape()[1] == 3);
   const std::size_t m = (n + 1) * (n + 2) * (n + 3) / 6;
   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
   auto x = pts * 2.0 - 1.0;
-  // const auto x0 = xt::col(x, 0);
-  // const auto x1 = xt::col(x, 1);
-  // const auto x2 = xt::col(x, 2);
-  const xt::xtensor<double, 1> x0 = xt::col(x, 0);
-  const xt::xtensor<double, 1> x1 = xt::col(x, 1);
-  const xt::xtensor<double, 1> x2 = xt::col(x, 2);
+  const auto x0 = xt::col(x, 0);
+  const auto x1 = xt::col(x, 1);
+  const auto x2 = xt::col(x, 2);
 
   auto f2 = 0.25 * xt::square(x1 + x2);
   auto f3 = 0.5 * (1.0 + x1 * 2.0 + x2);
@@ -221,11 +213,11 @@ tabulate_polyset_tetrahedron_derivs(std::size_t n, std::size_t nderiv,
   // Traverse derivatives in increasing order
   xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
   xt::xtensor<double, 2> result({pts.shape()[0], m});
-  for (std::size_t k = 0; k < nderiv + 1; ++k)
+  for (std::size_t k = 0; k <= nderiv; ++k)
   {
-    for (std::size_t j = 0; j < k + 1; ++j)
+    for (std::size_t j = 0; j <= k; ++j)
     {
-      for (std::size_t kx = 0; kx < j + 1; ++kx)
+      for (std::size_t kx = 0; kx <= j; ++kx)
       {
         const std::size_t ky = j - kx;
         const std::size_t kz = k - j;
@@ -234,7 +226,7 @@ tabulate_polyset_tetrahedron_derivs(std::size_t n, std::size_t nderiv,
         else
           xt::col(result, 0) = 0.0;
 
-        for (std::size_t p = 1; p < n + 1; ++p)
+        for (int p = 1; p <= n; ++p)
         {
           auto p00 = xt::col(result, idx(p, 0, 0));
           double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
@@ -306,7 +298,7 @@ tabulate_polyset_tetrahedron_derivs(std::size_t n, std::size_t nderiv,
           }
         }
 
-        for (std::size_t p = 0; p < n; ++p)
+        for (int p = 0; p < n; ++p)
         {
           auto p10 = xt::col(result, idx(p, 1, 0));
           p10 = xt::col(result, idx(p, 0, 0))
@@ -326,7 +318,7 @@ tabulate_polyset_tetrahedron_derivs(std::size_t n, std::size_t nderiv,
                               idx(p, 0, 0));
           }
 
-          for (std::size_t q = 1; q < n - p; ++q)
+          for (int q = 1; q < n - p; ++q)
           {
             auto [aq, bq, cq] = jrc(2 * p + 1, q);
             auto pq1 = xt::col(result, idx(p, q + 1, 0));
@@ -364,9 +356,9 @@ tabulate_polyset_tetrahedron_derivs(std::size_t n, std::size_t nderiv,
           }
         }
 
-        for (std::size_t p = 0; p < n; ++p)
+        for (int p = 0; p < n; ++p)
         {
-          for (std::size_t q = 0; q < n - p; ++q)
+          for (int q = 0; q < n - p; ++q)
           {
             auto pq = xt::col(result, idx(p, q, 1));
             pq = xt::col(result, idx(p, q, 0))
@@ -380,11 +372,11 @@ tabulate_polyset_tetrahedron_derivs(std::size_t n, std::size_t nderiv,
           }
         }
 
-        for (std::size_t p = 0; p < n - 1; ++p)
+        for (int p = 0; p < n - 1; ++p)
         {
-          for (std::size_t q = 0; q < n - p - 1; ++q)
+          for (int q = 0; q < n - p - 1; ++q)
           {
-            for (std::size_t r = 1; r < n - p - q; ++r)
+            for (int r = 1; r < n - p - q; ++r)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
               xt::col(result, idx(p, q, r + 1))
@@ -410,11 +402,11 @@ tabulate_polyset_tetrahedron_derivs(std::size_t n, std::size_t nderiv,
   for (std::size_t i = 0; i < dresult.shape()[0]; ++i)
   {
     auto result = xt::view(dresult, i, xt::all(), xt::all());
-    for (std::size_t p = 0; p < n + 1; ++p)
+    for (int p = 0; p < n + 1; ++p)
     {
-      for (std::size_t q = 0; q < n - p + 1; ++q)
+      for (int q = 0; q < n + 1 - p; ++q)
       {
-        for (std::size_t r = 0; r < n - p - q + 1; ++r)
+        for (int r = 0; r < n + 1 - p - q; ++r)
         {
           xt::col(result, idx(p, q, r))
               *= std::sqrt((p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5));
@@ -423,13 +415,11 @@ tabulate_polyset_tetrahedron_derivs(std::size_t n, std::size_t nderiv,
     }
   }
 
-  std::cout << "End tet case" << std::endl;
-
   return dresult;
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3>
-tabulate_polyset_pyramid_derivs(std::size_t n, std::size_t nderiv,
+tabulate_polyset_pyramid_derivs(int n, std::size_t nderiv,
                                 const xt::xtensor<double, 2>& pts)
 {
   assert(pts.shape()[1] == 3);
@@ -471,7 +461,7 @@ tabulate_polyset_pyramid_derivs(std::size_t n, std::size_t nderiv,
           xt::col(result, pyramidal_index) = 0.0;
 
         // r = 0
-        for (std::size_t p = 0; p < n + 1; ++p)
+        for (int p = 0; p < n + 1; ++p)
         {
           if (p > 0)
           {
@@ -520,7 +510,7 @@ tabulate_polyset_pyramid_derivs(std::size_t n, std::size_t nderiv,
             }
           }
 
-          for (std::size_t q = 1; q < n + 1; ++q)
+          for (int q = 1; q < n + 1; ++q)
           {
             const double a
                 = static_cast<double>(q - 1) / static_cast<double>(q);
@@ -567,9 +557,9 @@ tabulate_polyset_pyramid_derivs(std::size_t n, std::size_t nderiv,
         }
 
         // Extend into r > 0
-        for (std::size_t p = 0; p < n; ++p)
+        for (int p = 0; p < n; ++p)
         {
-          for (std::size_t q = 0; q < n; ++q)
+          for (int q = 0; q < n; ++q)
           {
             auto r_pq1 = xt::col(result, pyr_idx(p, q, 1));
             r_pq1 = xt::col(result, pyr_idx(p, q, 0))
@@ -584,11 +574,11 @@ tabulate_polyset_pyramid_derivs(std::size_t n, std::size_t nderiv,
           }
         }
 
-        for (std::size_t r = 1; r < n + 1; ++r)
+        for (int r = 1; r < n + 1; ++r)
         {
-          for (std::size_t p = 0; p < n - r; ++p)
+          for (int p = 0; p < n - r; ++p)
           {
-            for (std::size_t q = 0; q < n - r; ++q)
+            for (int q = 0; q < n - r; ++q)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
               auto r_pqr = xt::col(result, pyr_idx(p, q, r + 1));
@@ -612,11 +602,11 @@ tabulate_polyset_pyramid_derivs(std::size_t n, std::size_t nderiv,
   for (std::size_t i = 0; i < dresult.shape()[0]; ++i)
   {
     auto result = xt::view(dresult, i, xt::all(), xt::all());
-    for (std::size_t r = 0; r < n + 1; ++r)
+    for (int r = 0; r < n + 1; ++r)
     {
-      for (std::size_t p = 0; p < n - r + 1; ++p)
+      for (int p = 0; p < n - r + 1; ++p)
       {
-        for (std::size_t q = 0; q < n - r + 1; ++q)
+        for (int q = 0; q < n - r + 1; ++q)
         {
           xt::col(result, pyr_idx(p, q, r))
               *= std::sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));

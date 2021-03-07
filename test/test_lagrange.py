@@ -298,12 +298,13 @@ def test_dof_permutations_tetrahedron(order):
         assert numpy.allclose(perm, actual)
 
 
-@pytest.mark.parametrize("order", [1, 2, 3, 4])
+# @pytest.mark.parametrize("order", [1, 2, 3, 4])
+@pytest.mark.parametrize("order", [1])
 @pytest.mark.parametrize("celltype", [
     (basix.CellType.quadrilateral, "quadrilateral"),
-    (basix.CellType.hexahedron, "hexahedron"),
-    (basix.CellType.pyramid, "pyramid"),
-    (basix.CellType.prism, "prism")
+    # (basix.CellType.hexahedron, "hexahedron"),
+    # (basix.CellType.pyramid, "pyramid"),
+    # (basix.CellType.prism, "prism")
 ])
 def test_celltypes(order, celltype):
     tp = basix.create_element("Lagrange", celltype[1], order)

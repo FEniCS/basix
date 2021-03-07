@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 
 project(basix VERSION "0.0.1")
 # set(CMAKE_BUILD_TYPE Debug)
@@ -25,19 +25,20 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Get pybind11 CMake dir
-execute_process(
-  COMMAND
-    "${Python_EXECUTABLE}" -c
-    "import pybind11; print(pybind11.get_cmake_dir())"
-  OUTPUT_VARIABLE _tmp_cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
-  ECHO_ERROR_VARIABLE)
-list(APPEND CMAKE_PREFIX_PATH "${_tmp_cmake_dir}")
+# execute_process(
+#   COMMAND
+#     "${Python_EXECUTABLE}" -c
+#     "import pybind11; print(pybind11.get_cmake_dir())"
+#   OUTPUT_VARIABLE _tmp_cmake_dir
+#   OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
+#   ECHO_ERROR_VARIABLE)
+# list(APPEND CMAKE_PREFIX_PATH "${_tmp_cmake_dir}")
 
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 
+find_package(xtl REQUIRED)
 find_package(xtensor REQUIRED)
 # find_package(xtensor-blas HINTS ${XTENSOR_BLAS_ROOT} $ENV{XTENSOR_BLAS_ROOT} REQUIRED)
 # find_package(BLAS)
@@ -55,12 +56,13 @@ set_target_properties(_basixcpp PROPERTIES SKIP_BUILD_RPATH FALSE)
 set_target_properties(_basixcpp PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
 set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-target_include_directories(basix PRIVATE ${xtensor_INCLUDE_DIRS})
-target_include_directories(basix PRIVATE ${xtensor_blas_INCLUDE_DIRS})
+target_include_directories(basix SYSTEM PRIVATE ${xtensor_INCLUDE_DIRS})
+target_include_directories(basix SYSTEM PRIVATE ${xtl_INCLUDE_DIRS})
 # target_link_libraries(basix PRIVATE BLAS::BLAS)
 # target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
-target_include_directories(_basixcpp PRIVATE ${xtensor_INCLUDE_DIRS})
+target_include_directories(_basixcpp SYSTEM PRIVATE ${xtensor_INCLUDE_DIRS})
+target_include_directories(_basixcpp SYSTEM PRIVATE ${xtl_INCLUDE_DIRS})
 # target_link_libraries(_basixcpp PRIVATE BLAS::BLAS)
 # target_link_libraries(_basixcpp PRIVATE LAPACK::LAPACK)
 

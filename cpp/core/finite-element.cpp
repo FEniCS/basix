@@ -124,10 +124,17 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(
   Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows() + points_3d.rows(),
                          tdim);
 
-  points.block(0, 0, points_1d.rows(), tdim) = points_1d;
-  points.block(points_1d.rows(), 0, points_2d.rows(), tdim) = points_2d;
-  points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), tdim)
-      = points_3d;
+  if (points_1d.cols() > 0)
+    points.block(0, 0, points_1d.rows(), tdim) = points_1d;
+
+  if (points_2d.cols() > 0)
+    points.block(points_1d.rows(), 0, points_2d.rows(), tdim) = points_2d;
+
+  if (points_3d.cols() > 0)
+  {
+    points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), tdim)
+        = points_3d;
+  }
 
   Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(
       matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),

@@ -803,7 +803,7 @@ std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::type celltype, int d,
   {
   case cell::type::interval:
   {
-    assert(x.cols() == -2);
+    assert(x.cols() == 1);
     std::cout << "1D Start 0: " << x.rows() << ", " << x.cols() << std::endl;
     std::array<std::size_t, 1> s = {(std::size_t)x.rows()};
     auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), s);

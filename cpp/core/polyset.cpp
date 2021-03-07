@@ -729,13 +729,15 @@ tabulate_polyset_prism_derivs(std::size_t n, std::size_t nderiv,
 
   return dresult;
 }
+} // namespace
 //-----------------------------------------------------------------------------
-// xt::xtensor<double, 3> _tabulate(cell::type celltype, int d, int n,
-//                                  const xt::xtensor<double, 2>& x)
+// xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
+//                                          const xt::xarray<double>& x)
 // {
 //   switch (celltype)
 //   {
 //   case cell::type::interval:
+//     assert(x.shape().size() == 1);
 //     return tabulate_polyset_line_derivs(d, n, x);
 //   case cell::type::triangle:
 //     return tabulate_polyset_triangle_derivs(d, n, x);
@@ -753,7 +755,6 @@ tabulate_polyset_prism_derivs(std::size_t n, std::size_t nderiv,
 //     throw std::runtime_error("Polynomial set: Unsupported cell type");
 //   }
 // }
-} // namespace
 //-----------------------------------------------------------------------------
 std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::type celltype, int d,
                                                int n, const Eigen::ArrayXXd& x)
@@ -812,7 +813,6 @@ std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::type celltype, int d,
       t.push_back(mat);
     }
     return t;
-    // return tabulate_polyset_tetrahedron_derivs_old(d, n, x);
   }
   case cell::type::quadrilateral:
   {
@@ -889,21 +889,6 @@ std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::type celltype, int d,
   default:
     throw std::runtime_error("Polynomial set: Unsupported cell type");
   }
-
-  // std::array<std::size_t> s = {x.cols(), x.rows()};
-  // xt::xtensor<double, 2> _x
-  //     = xt::transpose(xt::adapt(x.data(), x.size(), shape));
-  // auto tab = _tabulate(celltype, d, n, _x);
-
-  // std::vector<Eigen::ArrayXXd> t;
-  // for (std::size_t i = 0; i < tab.shape()[0]; ++i)
-  // {
-  //   Eigen::ArrayXXd mat(tab.shape()[1], tab.shape()[2]);
-  //   for (std::size_t j = 0; j < tab.shape()[1]; ++j)
-  //     for (std::size_t k = 0; k < tab.shape()[2]; ++k)
-  //       mat(j, k) = tab(i, j, k);
-  //   t.push_back(mat);
-  // }
 }
 //-----------------------------------------------------------------------------
 int polyset::dim(cell::type celltype, int d)

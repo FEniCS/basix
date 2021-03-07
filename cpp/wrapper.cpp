@@ -18,6 +18,8 @@
 #include "core/quadrature.h"
 #include "core/span.hpp"
 
+#include <xtensor/xadapt.hpp>
+
 namespace py = pybind11;
 using namespace basix;
 
@@ -275,6 +277,24 @@ Each element has a `tabulate` function which returns the basis functions and a n
       },
       "Create a FiniteElement of a given family, celltype and degree");
 
+  //   m.def(
+  //       "tabulate_polynomial_set",
+  //       [](cell::type celltype, int d, int n, py::array_t<double> x) {
+  //         std::vector<std::size_t> shape;
+  //         if (x.ndim() == 2 and x.shape(1) == 1)
+  //           shape.push_back(x.shape(0));
+  //         else
+  //         {
+  //           for (std::size_t i = 0; i < x.ndim(); ++i)
+  //             shape.push_back(x.shape(i));
+  //         }
+  //         auto _x
+  //             = xt::adapt(x.mutable_data(), x.size(), xt::no_ownership(),
+  //             shape);
+  //         xt::xtensor<double, 3> P = polyset::tabulate(celltype, d, n, _x);
+  //         return py::array_t<double>(P.shape(), P.data());
+  //       },
+  //       "Tabulate orthonormal polynomial expansion set");
   m.def("tabulate_polynomial_set", &polyset::tabulate,
         "Tabulate orthonormal polynomial expansion set");
 

@@ -15,6 +15,8 @@
 #include "polyset.h"
 #include <numeric>
 
+#include <xtensor/xadapt.hpp>
+
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -84,6 +86,16 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
     cell::type celltype, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
     const Eigen::ArrayXXd& x, int degree, double kappa_tol)
 {
+  // std::vector<std::size_t> shape = {(std::size_t)x.rows()};
+  // if (x.cols() > 1)
+  //   shape.push_back(x.cols());
+  // auto _x = xt::adapt<xt::layout_type::column_major>(x.data(), x.size(),
+  //                                                    xt::no_ownership(), shape);
+  // const xt::xtensor<double, 3> PP = polyset::tabulate(celltype, degree, 0, _x);
+  // Eigen::MatrixXd P(PP.shape()[1], PP.shape()[2]);
+  // for (std::size_t i = 0; i < PP.shape()[1]; ++i)
+  //   for (std::size_t j = 0; j < PP.shape()[2]; ++j)
+  //     P(i, j) = PP(0, i, j);
   const Eigen::MatrixXd P = polyset::tabulate(celltype, degree, 0, x)[0];
 
   const int coeff_size = P.cols();

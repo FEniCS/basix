@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(basix VERSION "0.0.1")
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Define CMAKE_INSTALL_xxx: LIBDIR, INCLUDEDIR
 include(GNUInstallDirs)
@@ -30,8 +30,13 @@ execute_process(
     "${Python_EXECUTABLE}" -c
     "import pybind11; print(pybind11.get_cmake_dir())"
   OUTPUT_VARIABLE _tmp_cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
-  ECHO_ERROR_VARIABLE)
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  # COMMAND
+  #   "${Python_EXECUTABLE}" -c
+  #   "import pybind11; print(pybind11.get_cmake_dir())"
+  # OUTPUT_VARIABLE _tmp_cmake_dir
+  # OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
+  # ECHO_ERROR_VARIABLE)
 list(APPEND CMAKE_PREFIX_PATH "${_tmp_cmake_dir}")
 
 find_package(Eigen3 REQUIRED)

@@ -37,6 +37,7 @@ xt::xtensor<double, 3>
 tabulate_polyset_line_derivs(std::size_t degree, std::size_t nderiv,
                              const xt::xtensor<double, 2>& x)
 {
+  assert(x.shape()[0] > 0);
   assert(x.shape()[1] == 1);
   const auto X = xt::col(x, 0) * 2.0 - 1.0;
   const std::size_t m = (degree + 1);
@@ -607,35 +608,87 @@ tabulate_polyset_pyramid_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
   return dresult;
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::ArrayXXd>
-tabulate_polyset_quad_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
-{
-  assert(pts.cols() == 2);
-  const int m = (n + 1) * (n + 1);
-  const int md = (nderiv + 1) * (nderiv + 2) / 2;
+// std::vector<Eigen::ArrayXXd>
+// tabulate_polyset_quad_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
+// {
+//   assert(pts.cols() == 2);
+//   const int m = (n + 1) * (n + 1);
+//   const int md = (nderiv + 1) * (nderiv + 2) / 2;
 
-  std::vector<Eigen::ArrayXXd> dresult(md);
+//   std::vector<Eigen::ArrayXXd> dresult(md);
+//   // std::vector<Eigen::ArrayXXd> px
+//   //     = tabulate_polyset_line_derivs(n, nderiv, pts.col(0));
+//   // std::vector<Eigen::ArrayXXd> py
+//   //     = tabulate_polyset_line_derivs(n, nderiv, pts.col(1));
+//   std::vector<Eigen::ArrayXXd> px
+//       = polyset::tabulate(cell::type::interval, n, nderiv, pts.col(0));
+//   std::vector<Eigen::ArrayXXd> py
+//       = polyset::tabulate(cell::type::interval, n, nderiv, pts.col(1));
+
+//   Eigen::ArrayXXd result(pts.rows(), m);
+//   for (int kx = 0; kx < nderiv + 1; ++kx)
+//   {
+//     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
+//     {
+//       int c = 0;
+//       for (int i = 0; i < px[kx].cols(); ++i)
+//         for (int j = 0; j < py[ky].cols(); ++j)
+//           result.col(c++) = px[kx].col(i) * py[ky].col(j);
+//       dresult[idx(kx, ky)] = result;
+//     }
+//   }
+
+//   return dresult;
+// }
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 3>
+tabulate_polyset_quad_derivs(int n, int nderiv,
+                             const xt::xtensor<double, 2>& pts)
+{
+  std::cout << "Call quad 0 \n " << pts << std::endl;
+  assert(pts.shape()[1]);
+  const std::size_t m = (n + 1) * (n + 1);
+  const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
+
+  const auto x0 = xt::col(pts, 0);
+  const auto x1 = xt::col(pts, 1);
+  // std::vector<Eigen::ArrayXXd> dresult(md);
   // std::vector<Eigen::ArrayXXd> px
   //     = tabulate_polyset_line_derivs(n, nderiv, pts.col(0));
   // std::vector<Eigen::ArrayXXd> py
   //     = tabulate_polyset_line_derivs(n, nderiv, pts.col(1));
-  std::vector<Eigen::ArrayXXd> px
-      = polyset::tabulate(cell::type::interval, n, nderiv, pts.col(0));
-  std::vector<Eigen::ArrayXXd> py
-      = polyset::tabulate(cell::type::interval, n, nderiv, pts.col(1));
+  std::cout << "Call quad 1: " << x0.shape()[0] << ", " << x0.shape()[1]
+            << std::endl;
+  std::cout << "x0: \n " << x0 << std::endl;
+  std::cout << "Call 1d tab " << x0.shape().size() << std::endl;
 
-  Eigen::ArrayXXd result(pts.rows(), m);
+  std::array<std::size_t, 2> s = {x0.shape()[0], 1};
+  // const xt::xtensor<double, 2> _x0 = xt::reshape_view(x0, s);
+  const xt::xtensor<double, 2> _x1 = xt::reshape_view(x1, s);
+  xt::xtensor<double, 3> px
+      = tabulate_polyset_line_derivs(n, nderiv, xt::reshape_view(x0, s));
+  xt::xtensor<double, 3> py = tabulate_polyset_line_derivs(n, nderiv, _x1);
+
+  std::cout << "Call quad 2" << std::endl;
+
+  // Eigen::ArrayXXd result(pts.rows(), m);
+  xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
   for (int kx = 0; kx < nderiv + 1; ++kx)
   {
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
     {
+      auto result = xt::view(dresult, idx(kx, ky), xt::all(), xt::all());
+      auto p0 = xt::view(px, kx, xt::all(), xt::all());
+      auto p1 = xt::view(py, ky, xt::all(), xt::all());
       int c = 0;
-      for (int i = 0; i < px[kx].cols(); ++i)
-        for (int j = 0; j < py[ky].cols(); ++j)
-          result.col(c++) = px[kx].col(i) * py[ky].col(j);
-      dresult[idx(kx, ky)] = result;
+      for (std::size_t i = 0; i < p0.shape()[1]; ++i)
+        for (std::size_t j = 0; j < p0.shape()[1]; ++j)
+          xt::col(result, c++) = xt::col(p0, i) * xt::col(p1, j);
+      // xt::col(result, c++) = px[kx].col(i) * py[ky].col(j);
+      // dresult[idx(kx, ky)] = result;
     }
   }
+  std::cout << "Call quad 3" << std::endl;
 
   return dresult;
 }
@@ -790,7 +843,24 @@ std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::type celltype, int d,
   case cell::type::tetrahedron:
     return tabulate_polyset_tetrahedron_derivs(d, n, x);
   case cell::type::quadrilateral:
-    return tabulate_polyset_quad_derivs(d, n, x);
+  {
+    std::array<std::size_t, 2> s
+        = {(std::size_t)x.rows(), (std::size_t)x.cols()};
+    auto _x = xt::adapt<xt::layout_type::column_major>(x.data(), x.size(),
+                                                       xt::no_ownership(), s);
+    auto tab = tabulate_polyset_quad_derivs(d, n, _x);
+    std::vector<Eigen::ArrayXXd> t;
+    for (std::size_t i = 0; i < tab.shape()[0]; ++i)
+    {
+      Eigen::ArrayXXd mat(tab.shape()[1], tab.shape()[2]);
+      for (std::size_t j = 0; j < tab.shape()[1]; ++j)
+        for (std::size_t k = 0; k < tab.shape()[2]; ++k)
+          mat(j, k) = tab(i, j, k);
+      t.push_back(mat);
+    }
+    return t;
+  }
+    // return tabulate_polyset_quad_derivs(d, n, x);
   case cell::type::prism:
     return tabulate_polyset_prism_derivs(d, n, x);
   case cell::type::pyramid:

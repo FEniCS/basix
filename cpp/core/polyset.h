@@ -45,7 +45,7 @@ namespace basix::polyset
 xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
                                 const xt::xarray<double>& x);
 
-// TMP
+/// @todo Remove this interface
 std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int d, int n,
                                       const Eigen::ArrayXXd& x);
 

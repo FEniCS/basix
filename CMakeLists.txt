@@ -6,7 +6,7 @@ project(basix VERSION "0.0.1")
 # Define CMAKE_INSTALL_xxx: LIBDIR, INCLUDEDIR
 include(GNUInstallDirs)
 
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Debug)
 
 # Currently, Scikit-build does not support FindPython, so we convert the
 # provided hints ourselves.

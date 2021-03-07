@@ -212,7 +212,8 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
                                    j_slice[start: start + ndofs])
 
 
-@parametrize_over_elements(5, "hexahedron")
+# @parametrize_over_elements(5, "hexahedron")
+@parametrize_over_elements(2, "hexahedron")
 def test_permutation_of_tabulated_data_hexahedron(element_name, order):
     if order > 4 and element_name in ["Raviart-Thomas", "Nedelec 1st kind H(curl)"]:
         pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "

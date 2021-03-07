@@ -623,10 +623,10 @@ tabulate_polyset_quad_derivs(int n, int nderiv,
   xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
   for (int kx = 0; kx < nderiv + 1; ++kx)
   {
+    auto p0 = xt::view(px, kx, xt::all(), xt::all());
     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
     {
       auto result = xt::view(dresult, idx(kx, ky), xt::all(), xt::all());
-      auto p0 = xt::view(px, kx, xt::all(), xt::all());
       auto p1 = xt::view(py, ky, xt::all(), xt::all());
       int c = 0;
       for (std::size_t i = 0; i < p0.shape()[1]; ++i)
@@ -651,8 +651,10 @@ tabulate_polyset_hex_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
   //     = tabulate_polyset_line_derivs(n, nderiv, pts.col(1));
   // std::vector<Eigen::ArrayXXd> pz
   //     = tabulate_polyset_line_derivs(n, nderiv, pts.col(2));
+  std::cout << "Call interval" << std::endl;
   std::vector<Eigen::ArrayXXd> px
       = polyset::tabulate(cell::type::interval, n, nderiv, pts.col(0));
+  std::cout << "Post interval" << std::endl;
   std::vector<Eigen::ArrayXXd> py
       = polyset::tabulate(cell::type::interval, n, nderiv, pts.col(1));
   std::vector<Eigen::ArrayXXd> pz
@@ -679,6 +681,57 @@ tabulate_polyset_hex_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
 
   return dresult;
 }
+// //-----------------------------------------------------------------------------
+// xt::xtensor<double, 3>
+// tabulate_polyset_hex_derivs(std::size_t n, std::size_t nderiv,
+//                             const xt::xtensor<double, 2>& x)
+// {
+//   assert(pts.shape()[1] == 3);
+//   const std::size_t m = (n + 1) * (n + 1) * (n + 1);
+//   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
+
+//   // Compute 1D basis
+//   const xt::xtensor<double, 1> x0 = xt::col(pts, 0);
+//   const xt::xtensor<double, 1> x1 = xt::col(pts, 1);
+//   const xt::xtensor<double, 1> x2 = xt::col(pts, 2);
+//   xt::xtensor<double, 3> px = tabulate_polyset_line_derivs(n, nderiv, x0);
+//   xt::xtensor<double, 3> py = tabulate_polyset_line_derivs(n, nderiv, x1);
+//   xt::xtensor<double, 3> pz = tabulate_polyset_line_derivs(n, nderiv, x2);
+
+//   xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
+//   // std::vector<Eigen::ArrayXXd> dresult(md);
+//   // Eigen::ArrayXXd result(pts.rows(), m);
+//   for (int kx = 0; kx < nderiv + 1; ++kx)
+//   {
+//     auto p0 = xt::view(px, kx, xt::all(), xt::all());
+//     for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
+//     {
+//       auto p1 = xt::view(py, ky, xt::all(), xt::all());
+//       for (int kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
+//       {
+//         auto result = xt::view(dresult, idx(kx, ky, kz), xt::all(),
+//         xt::all()); auto p2 = xt::view(pz, kz, xt::all(), xt::all()); int c =
+//         0; for (int i = 0; i < px[kx].cols(); ++i)
+//         {
+//           for (int j = 0; j < py[ky].cols(); ++j)
+//           {
+//             for (int k = 0; k < pz[kz].cols(); ++k)
+//             {
+//               xt::col(result, c++)
+//                   = xt::col(p0, i) * xt::col(p1, j) * xt::col(p2, k);
+//             }
+//           }
+//         }
+//         // result.col(c++) = px[kx].col(i) * py[ky].col(j) * pz[kz].col(k);
+//         // result.col(c++) = px[kx].col(i) * py[ky].col(j) * pz[kz].col(k);
+
+//         // dresult[idx(kx, ky, kz)] = result;
+//       }
+//     }
+//   }
+
+//   return dresult;
+// }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::ArrayXXd>
 tabulate_polyset_prism_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
@@ -750,9 +803,12 @@ std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::type celltype, int d,
   {
   case cell::type::interval:
   {
+    assert(x.cols() == -2);
+    std::cout << "1D Start 0: " << x.rows() << ", " << x.cols() << std::endl;
     std::array<std::size_t, 1> s = {(std::size_t)x.rows()};
     auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), s);
     auto tab = tabulate_polyset_line_derivs(d, n, _x);
+    std::cout << "1D End: " << x.rows() << ", " << x.cols() << std::endl;
     std::vector<Eigen::ArrayXXd> t;
     for (std::size_t i = 0; i < tab.shape()[0]; ++i)
     {
@@ -809,7 +865,25 @@ std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::type celltype, int d,
   case cell::type::pyramid:
     return tabulate_polyset_pyramid_derivs(d, n, x);
   case cell::type::hexahedron:
+  {
+    // std::array<std::size_t, 2> s
+    //     = {(std::size_t)x.rows(), (std::size_t)x.cols()};
+    // auto _x = xt::adapt<xt::layout_type::column_major>(x.data(), x.size(),
+    //                                                    xt::no_ownership(),
+    //                                                    s);
+    // auto tab = tabulate_polyset_quad_derivs(d, n, _x);
+    // std::vector<Eigen::ArrayXXd> t;
+    // for (std::size_t i = 0; i < tab.shape()[0]; ++i)
+    // {
+    //   Eigen::ArrayXXd mat(tab.shape()[1], tab.shape()[2]);
+    //   for (std::size_t j = 0; j < tab.shape()[1]; ++j)
+    //     for (std::size_t k = 0; k < tab.shape()[2]; ++k)
+    //       mat(j, k) = tab(i, j, k);
+    //   t.push_back(mat);
+    // }
+    // return t;
     return tabulate_polyset_hex_derivs(d, n, x);
+  }
   default:
     throw std::runtime_error("Polynomial set: Unsupported cell type");
   }

@@ -40,6 +40,8 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
   cell::type celltype = moment_space.cell_type();
+  if (celltype == cell::type::point)
+    return {};
 
   Eigen::ArrayXXd points = moment_space.points();
   Eigen::MatrixXd matrix = moment_space.interpolation_matrix();
@@ -50,29 +52,21 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
   std::vector<Eigen::ArrayXXd> K;
   std::vector<std::vector<double>> detJ;
 
-  if (celltype == cell::type::point)
-  {
-    return {};
-  }
-  else if (celltype == cell::type::interval)
+  if (celltype == cell::type::interval)
   {
     Eigen::ArrayXXd reflected_points(points.rows(), points.cols());
     for (int i = 0; i < points.rows(); ++i)
-    {
       reflected_points(i, 0) = 1 - points(i, 0);
-    }
     transformed_pointsets.push_back(reflected_points);
 
-    {
-      Eigen::ArrayXXd J_part(points.rows(), 1);
-      J_part.col(0) = -1;
-      J.push_back(J_part);
-      Eigen::ArrayXXd K_part(points.rows(), 1);
-      K_part.col(0) = -1;
-      K.push_back(K_part);
-      std::vector<double> detJ_part(points.rows(), 1);
-      detJ.push_back(detJ_part);
-    }
+    Eigen::ArrayXXd J_part(points.rows(), 1);
+    J_part.col(0) = -1;
+    J.push_back(J_part);
+    Eigen::ArrayXXd K_part(points.rows(), 1);
+    K_part.col(0) = -1;
+    K.push_back(K_part);
+    std::vector<double> detJ_part(points.rows(), 1);
+    detJ.push_back(detJ_part);
   }
   else if (celltype == cell::type::triangle)
   {
@@ -84,22 +78,20 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
     }
     transformed_pointsets.push_back(rotated_points);
 
-    {
-      Eigen::ArrayXXd J_part(points.rows(), 4);
-      J_part.col(0) = 0;
-      J_part.col(1) = 1;
-      J_part.col(2) = -1;
-      J_part.col(3) = -1;
-      J.push_back(J_part);
-      Eigen::ArrayXXd K_part(points.rows(), 4);
-      K_part.col(0) = -1;
-      K_part.col(1) = -1;
-      K_part.col(2) = 1;
-      K_part.col(3) = 0;
-      K.push_back(K_part);
-      std::vector<double> detJ_part(points.rows(), 1);
-      detJ.push_back(detJ_part);
-    }
+    Eigen::ArrayXXd J_part(points.rows(), 4);
+    J_part.col(0) = 0;
+    J_part.col(1) = 1;
+    J_part.col(2) = -1;
+    J_part.col(3) = -1;
+    J.push_back(J_part);
+    Eigen::ArrayXXd K_part(points.rows(), 4);
+    K_part.col(0) = -1;
+    K_part.col(1) = -1;
+    K_part.col(2) = 1;
+    K_part.col(3) = 0;
+    K.push_back(K_part);
+    std::vector<double> detJ_part(points.rows(), 1);
+    detJ.push_back(detJ_part);
 
     Eigen::ArrayXXd reflected_points(points.rows(), points.cols());
     for (int i = 0; i < points.rows(); ++i)
@@ -179,8 +171,10 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
     }
   }
   else
+  {
     throw std::runtime_error(
         "DOF transformations only implemented for tdim <= 2.");
+  }
 
   std::vector<Eigen::MatrixXd> out;
   for (std::size_t i = 0; i < transformed_pointsets.size(); ++i)
@@ -191,16 +185,17 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
         = moment_space.tabulate(0, transformed_points)[0];
     Eigen::ArrayXXd pulled
         = moment_space.map_pull_back(moment_space_at_pts, J[i], detJ[i], K[i]);
-
     Eigen::MatrixXd result
         = Eigen::MatrixXd::Zero(moment_space.dim(), moment_space.dim());
-
     for (int v = 0; v < moment_space.value_size(); ++v)
+    {
       result += matrix.block(0, v * pulled.rows(), matrix.rows(), pulled.rows())
                 * pulled
                       .block(0, moment_space.dim() * v, pulled.rows(),
                              moment_space.dim())
                       .matrix();
+    }
+
     out.push_back(result);
   }
 
@@ -236,18 +231,16 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
     Eigen::MatrixXd M(scalar_dofs * 2, scalar_dofs * 2);
     for (int i = 0; i < scalar_dofs; ++i)
       for (int j = 0; j < scalar_dofs; ++j)
-      {
         M.block(2 * i, 2 * j, 2, 2) = t[0](i, j) * rot;
-      }
+
     out.push_back(M);
   }
   {
     Eigen::MatrixXd M(scalar_dofs * 2, scalar_dofs * 2);
     for (int i = 0; i < scalar_dofs; ++i)
       for (int j = 0; j < scalar_dofs; ++j)
-      {
         M.block(2 * i, 2 * j, 2, 2) = t[1](i, j) * ref;
-      }
+
     out.push_back(M);
   }
 
@@ -300,7 +293,6 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 
   // Evaluate moment space at quadrature points
   Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
-
   Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
   Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count
                              * (value_size == 1 ? 1 : sub_entity_dim),
@@ -382,9 +374,9 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
   const int moment_space_size = moment_space_at_Qpts.cols() / sub_entity_dim;
 
   Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
-  Eigen::MatrixXd matrix(moment_space_size * sub_entity_count,
-                         sub_entity_count * Qpts.rows() * value_size);
-  matrix.setZero();
+  Eigen::MatrixXd matrix
+      = Eigen::MatrixXd::Zero(moment_space_size * sub_entity_count,
+                              sub_entity_count * Qpts.rows() * value_size);
 
   std::vector<int> axis_pts = axis_points(celltype);
 

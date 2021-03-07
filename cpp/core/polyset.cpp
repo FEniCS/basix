@@ -83,6 +83,8 @@ tabulate_polyset_triangle_derivs(int n, int nderiv,
 {
   assert(pts.shape()[1] == 2);
 
+  std::cout << "x poly\n" << pts << std::endl;
+
   const auto x = pts * 2.0 - 1.0;
   auto x0 = xt::col(x, 0);
   auto x1 = xt::col(x, 1);
@@ -731,30 +733,30 @@ tabulate_polyset_prism_derivs(std::size_t n, std::size_t nderiv,
 }
 } // namespace
 //-----------------------------------------------------------------------------
-// xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
-//                                          const xt::xarray<double>& x)
-// {
-//   switch (celltype)
-//   {
-//   case cell::type::interval:
-//     assert(x.shape().size() == 1);
-//     return tabulate_polyset_line_derivs(d, n, x);
-//   case cell::type::triangle:
-//     return tabulate_polyset_triangle_derivs(d, n, x);
-//   case cell::type::tetrahedron:
-//     return tabulate_polyset_tetrahedron_derivs(d, n, x);
-//   case cell::type::quadrilateral:
-//     return tabulate_polyset_quad_derivs(d, n, x);
-//   case cell::type::prism:
-//     return tabulate_polyset_prism_derivs(d, n, x);
-//   case cell::type::pyramid:
-//     return tabulate_polyset_pyramid_derivs(d, n, x);
-//   case cell::type::hexahedron:
-//     return tabulate_polyset_hex_derivs(d, n, x);
-//   default:
-//     throw std::runtime_error("Polynomial set: Unsupported cell type");
-//   }
-// }
+xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
+                                         const xt::xarray<double>& x)
+{
+  switch (celltype)
+  {
+  case cell::type::interval:
+    assert(x.shape().size() == 1);
+    return tabulate_polyset_line_derivs(d, n, x);
+  case cell::type::triangle:
+    return tabulate_polyset_triangle_derivs(d, n, x);
+  case cell::type::tetrahedron:
+    return tabulate_polyset_tetrahedron_derivs(d, n, x);
+  case cell::type::quadrilateral:
+    return tabulate_polyset_quad_derivs(d, n, x);
+  case cell::type::prism:
+    return tabulate_polyset_prism_derivs(d, n, x);
+  case cell::type::pyramid:
+    return tabulate_polyset_pyramid_derivs(d, n, x);
+  case cell::type::hexahedron:
+    return tabulate_polyset_hex_derivs(d, n, x);
+  default:
+    throw std::runtime_error("Polynomial set: Unsupported cell type");
+  }
+}
 //-----------------------------------------------------------------------------
 std::vector<Eigen::ArrayXXd> polyset::tabulate(cell::type celltype, int d,
                                                int n, const Eigen::ArrayXXd& x)

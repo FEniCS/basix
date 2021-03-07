@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 import basix
-import pytest
 import numpy as np
+import pytest
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
@@ -103,13 +103,17 @@ def test_prism(order):
     assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
 
 
-@pytest.mark.parametrize("cell_type", [basix.CellType.interval,
-                                       basix.CellType.triangle,
-                                       basix.CellType.tetrahedron])
-@pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
+@pytest.mark.parametrize("cell_type", [
+    basix.CellType.interval,
+    basix.CellType.triangle,
+    basix.CellType.tetrahedron
+])
+# @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
+@pytest.mark.parametrize("order", [1])
 def test_cell(cell_type, order):
     Qpts, Qwts = basix.make_quadrature("default", cell_type, 2*order + 1)
     basis = basix.tabulate_polynomial_set(cell_type, order, 0, Qpts)[0]
+
     ndofs = basis.shape[1]
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):

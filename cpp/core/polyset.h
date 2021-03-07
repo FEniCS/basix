@@ -42,8 +42,8 @@ namespace basix::polyset
 /// stacked with all x values, followed by all y-values (and then z, if
 /// any). The second index is the point, and the third index is the
 /// basis function index.
-// xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
-//                                 const xt::xarray<double>& x);
+xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
+                                const xt::xarray<double>& x);
 
 // TMP
 std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int d, int n,

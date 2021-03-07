@@ -71,12 +71,12 @@ tabulate_polyset_line_derivs(std::size_t degree, std::size_t nderiv,
 }
 //-----------------------------------------------------------------------------
 // Compute the complete set of derivatives from 0 to nderiv, for all the
-// polynomials up to order n on a triangle in [0, 1][0, 1].
-// The polynomials P_{pq} are built up in sequence, firstly along q = 0, which
-// is a line segment, as in tabulate_polyset_interval_derivs above, but with a
-// change of variables. The polynomials are then extended in the q direction,
-// using the relation given in Sherwin and Karniadakis 1995
-// (https://doi.org/10.1016/0045-7825(94)00745-9)
+// polynomials up to order n on a triangle in [0, 1][0, 1]. The
+// polynomials P_{pq} are built up in sequence, firstly along q = 0,
+// which is a line segment, as in tabulate_polyset_interval_derivs
+// above, but with a change of variables. The polynomials are then
+// extended in the q direction, using the relation given in Sherwin and
+// Karniadakis 1995 (https://doi.org/10.1016/0045-7825(94)00745-9).
 template <typename Mat>
 xt::xtensor<double, 3> tabulate_polyset_triangle_derivs(int n, int nderiv,
                                                         const Mat& pts)
@@ -84,33 +84,29 @@ xt::xtensor<double, 3> tabulate_polyset_triangle_derivs(int n, int nderiv,
 // tabulate_polyset_triangle_derivs(int n, int nderiv,
 //                                  const xt::xtensor<double, 2>& pts)
 {
+  // std::cout << "Tri 0" << std::endl;
   assert(pts.shape()[1] == 2);
 
-  xt::xtensor<double, 2> x = pts * 2.0 - 1.0;
-
-  const std::size_t m = (n + 1) * (n + 2) / 2;
-  const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
-  // std::vector<Eigen::ArrayXXd> dresult(md);
-  xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
-
-  // f3 = ((1-y)/2)^2
-  const xt::xtensor<double, 1> f3 = xt::square(1.0 - xt::col(x, 1)) * 0.25;
-
-  // Iterate over derivatives in increasing order, since higher derivatives
-  // depend on earlier calculations
-  // Eigen::ArrayXXd result(pts.rows(), m);
+  const auto x = pts * 2.0 - 1.0;
   auto x0 = xt::col(x, 0);
   auto x1 = xt::col(x, 1);
 
-  for (int k = 0; k < nderiv + 1; ++k)
+  const std::size_t m = (n + 1) * (n + 2) / 2;
+  const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
+  xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
+
+  // f3 = ((1 - y) / 2)^2
+  const auto f3 = xt::square(1.0 - x1) * 0.25;
+
+  // Iterate over derivatives in increasing order, since higher derivatives
+
+  // Depend on earlier calculations
+  xt::xtensor<double, 2> result({pts.shape()[0], m});
+  for (int k = 0; k <= nderiv; ++k)
   {
-    // auto result = xt::view(dresult, k, xt::all(), xt::all());
-    for (int kx = 0; kx < k + 1; ++kx)
+    for (int kx = 0; kx <= k; ++kx)
     {
       const int ky = k - kx;
-      // dresult[idx(kx, ky)] = result;
-      auto result = xt::view(dresult, idx(kx, ky), xt::all(), xt::all());
-
       if (kx == 0 and ky == 0)
         xt::col(result, 0) = 1.0;
       else
@@ -158,8 +154,8 @@ xt::xtensor<double, 3> tabulate_polyset_triangle_derivs(int n, int nderiv,
 
       for (int p = 0; p < n; ++p)
       {
-        auto p1 = xt::col(result, idx(p, 1));
         auto p0 = xt::col(result, idx(p, 0));
+        auto p1 = xt::col(result, idx(p, 1));
         p1 = p0 * (x1 * (1.5 + p) + 0.5 + p);
         if (ky > 0)
         {
@@ -183,17 +179,17 @@ xt::xtensor<double, 3> tabulate_polyset_triangle_derivs(int n, int nderiv,
         }
       }
 
-      // Store this derivative
-      // dresult[idx(kx, ky)] = result;
+      // Store
+      xt::view(dresult, idx(kx, ky), xt::all(), xt::all()) = result;
     }
   }
 
   // Normalisation
-  for (std::size_t j = 0; j < dresult.size(); ++j)
+  for (std::size_t j = 0; j < dresult.shape()[0]; ++j)
   {
     auto result = xt::view(dresult, j, xt::all(), xt::all());
-    for (int p = 0; p < n + 1; ++p)
-      for (int q = 0; q < n - p + 1; ++q)
+    for (int p = 0; p <= n; ++p)
+      for (int q = 0; q <= n - p; ++q)
         xt::col(result, idx(p, q)) *= std::sqrt((p + 0.5) * (p + q + 1));
   }
 
@@ -696,7 +692,7 @@ tabulate_polyset_prism_derivs(int n, int nderiv, const Eigen::ArrayXXd& pts)
   std::vector<Eigen::ArrayXXd> pxy
       = polyset::tabulate(cell::type::triangle, n, nderiv, pts.leftCols(2));
   std::vector<Eigen::ArrayXXd> pz
-      = polyset::tabulate(cell::type::triangle, n, nderiv, pts.col(2));
+      = polyset::tabulate(cell::type::interval, n, nderiv, pts.col(2));
 
   // std::vector<Eigen::ArrayXXd> pxy
   //     = tabulate_polyset_triangle_derivs(n, nderiv, pts.leftCols(2));

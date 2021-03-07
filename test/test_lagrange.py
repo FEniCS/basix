@@ -105,8 +105,8 @@ def sympy_lagrange(celltype, n):
     if celltype == basix.CellType.interval:
         for i in range(n + 1):
             funcs += [x**i]
-        mat = numpy.empty((len(pt), len(funcs)), dtype=object)
 
+        mat = numpy.empty((len(pt), len(funcs)), dtype=object)
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
                 mat[i, j] = f.subs([(x, p[0])])
@@ -114,8 +114,8 @@ def sympy_lagrange(celltype, n):
         for i in range(n + 1):
             for j in range(n + 1 - i):
                 funcs += [x**j * y**i]
-        mat = numpy.empty((len(pt), len(funcs)), dtype=object)
 
+        mat = numpy.empty((len(pt), len(funcs)), dtype=object)
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
                 mat[i, j] = f.subs([(x, p[0]), (y, p[1])])
@@ -124,8 +124,8 @@ def sympy_lagrange(celltype, n):
             for j in range(n + 1 - i):
                 for k in range(n + 1 - i - j):
                     funcs += [x**j * y**i * z**k]
-        mat = numpy.empty((len(pt), len(funcs)), dtype=object)
 
+        mat = numpy.empty((len(pt), len(funcs)), dtype=object)
         for i, f in enumerate(funcs):
             for j, p in enumerate(pt):
                 mat[i, j] = f.subs([(x, p[0]), (y, p[1]), (z, p[2])])
@@ -148,7 +148,6 @@ def test_line(n):
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
-
     for k in range(nderiv + 1):
         wsym = numpy.zeros_like(wtab[k])
         for i in range(n + 1):
@@ -193,13 +192,11 @@ def test_tet(order):
                                basix.LatticeType.equispaced, True)
     nderiv = 1
     wtab = lagrange.tabulate(nderiv, pts)
-
     for k in range(nderiv + 1):
         for q in range(k + 1):
             for kx in range(q + 1):
                 ky = q - kx
                 kz = k - q
-
                 wsym = numpy.zeros_like(wtab[0])
                 for i in range(len(g)):
                     wd = sympy.diff(g[i], x, kx, y, ky, z, kz)
@@ -302,10 +299,12 @@ def test_dof_permutations_tetrahedron(order):
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
-@pytest.mark.parametrize("celltype", [(basix.CellType.quadrilateral, "quadrilateral"),
-                                      (basix.CellType.hexahedron, "hexahedron"),
-                                      (basix.CellType.pyramid, "pyramid"),
-                                      (basix.CellType.prism, "prism")])
+@pytest.mark.parametrize("celltype", [
+    (basix.CellType.quadrilateral, "quadrilateral"),
+    (basix.CellType.hexahedron, "hexahedron"),
+    (basix.CellType.pyramid, "pyramid"),
+    (basix.CellType.prism, "prism")
+])
 def test_celltypes(order, celltype):
     tp = basix.create_element("Lagrange", celltype[1], order)
     pts = basix.create_lattice(celltype[0], 5,

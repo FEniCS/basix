@@ -10,7 +10,6 @@
 
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
-#include <xtensor/xio.hpp>
 #include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>
 
@@ -175,14 +174,14 @@ xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
   {
     for (std::size_t i = b; i < (n - b + 1 - j); ++i)
     {
-      const std::size_t l = n - j - i;
       const double x = r[2 * i];
       const double y = r[2 * j];
-      const double a = r[2 * l];
       p(c, 0) = x;
       p(c, 1) = y;
       if (lattice_type == lattice::type::gll_warped)
       {
+        const std::size_t l = n - j - i;
+        const double a = r[2 * l];
         p(c, 0) += x * (a * wbar(n + i - l) + y * wbar(n + i - j));
         p(c, 1) += y * (a * wbar(n + j - l) + x * wbar(n + j - i));
       }
@@ -279,21 +278,20 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
   // Interpolate warp factor along interval
   std::tuple<Eigen::ArrayXXd, Eigen::ArrayXd> pw
       = quadrature::compute_gll_rule(n + 1);
-  Eigen::VectorXd pts = std::get<0>(pw) * 0.5;
+  Eigen::VectorXd pts = std::get<0>(pw);
   pts *= 0.5;
-
   for (int i = 0; i < n + 1; ++i)
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
   // Get interpolated value at r in range [-1, 1]
   FiniteElement L = create_dlagrange(cell::type::interval, n);
-  auto w = [&](double r) {
+  auto w = [&](double r) -> double {
     Eigen::ArrayXd rr = Eigen::ArrayXd::Constant(1, 0.5 * (r + 1.0));
     Eigen::VectorXd v = L.tabulate(0, rr)[0].row(0);
     return v.dot(pts);
   };
 
-  const std::size_t b = exterior == false ? 1 : 0;
+  const std::size_t b = (exterior == false) ? 1 : 0;
   n -= b * 3;
   std::size_t m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
   xt::xtensor<double, 2> points({m, 3});

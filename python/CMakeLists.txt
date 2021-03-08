@@ -22,9 +22,9 @@ target_include_directories(cpp PRIVATE ${EIGEN3_INCLUDE_DIRS} "../cpp")
 
 # Add srict compiler flags
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wno-error=comment -pedantic" HAVE_PEDANTIC)
+CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wno-comment -pedantic" HAVE_PEDANTIC)
 if (HAVE_PEDANTIC)
-  target_compile_options(cpp PRIVATE -Wall;-Werror;-pedantic)
+  target_compile_options(cpp PRIVATE -Wall;-Werror;-Wno-comment;-pedantic)
 endif()
 
 # In Debug mode override pybind11 symbols visibility

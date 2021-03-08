@@ -50,9 +50,9 @@ jobs:
           flake8 --statistics test/
       - name: Install basix C++
         run: |
-          cmake -G Ninja .
-          ninja
-          sudo ninja install
+          cmake -G Ninja -B build-dir -S .
+          cmake --build build-dir
+          cmake --install build-dir
       - name: Build basix Python
         run: |
           cd python

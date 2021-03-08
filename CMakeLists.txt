@@ -9,17 +9,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
-# TODO: Replace hardwiring
-# Configure compiler
-# Note: -Wno-comment is added to avoid warning/errors for LaTeX code
-# with backslashes on Doxygen comments
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wno-comment" HAVE_EXTRA_FLAGS)
-if (HAVE_EXTRA_FLAGS)
-  set(CMAKE_CXX_FLAGS "-Wall -Werror -Wno-comment ${CMAKE_CXX_FLAGS}")
-endif()
-
 # Options
 include(FeatureSummary)
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
@@ -117,9 +106,20 @@ get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
 
 
-# # Temp fix
-# target_compile_definitions(basix PUBLIC NDEBUG)
+# TODO: Replace hardwiring
+# Configure compiler
+# Note: -Wno-comment is added to avoid warning/errors for LaTeX code
+# with backslashes on Doxygen comments
+# include(CheckCXXCompilerFlag)
+# CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_EXTRA_FLAGS)
+# if (HAVE_EXTRA_FLAGS)
+#   set(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra -Wno-comment -pedantic ${CMAKE_CXX_FLAGS}")
+# endif()
 
+# Set debug definitions (private)
+list(APPEND basix_compiler_flags "-Wall -Werror -Wextra -pedantic")
+target_compile_options(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>)
+target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 
 # Install the Basix library
 install(TARGETS basix

@@ -30,6 +30,22 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 
+# find_package(xtl REQUIRED)
+# find_package(xtensor REQUIRED)
+# include(FetchContent)
+# FetchContent_Declare(
+#   xlt
+#   GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
+#   GIT_TAG        0.7.2
+# )
+# FetchContent_Declare(
+#   xtensor
+#   GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
+#   GIT_TAG        0.23.1
+# )
+# FetchContent_MakeAvailable(xlt)
+# FetchContent_MakeAvailable(xtensor)
+
 feature_summary(WHAT ALL)
 
 # --Source files
@@ -95,6 +111,7 @@ target_include_directories(basix PRIVATE ${EIGEN3_INCLUDE_DIRS})
 # Install the Basix library
 install(TARGETS basix
   EXPORT BasixTargets
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)

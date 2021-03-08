@@ -5,14 +5,16 @@ PROJECT(basix_pybind11)
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 
+find_package(xtl REQUIRED)
+find_package(xtensor REQUIRED)
 find_package(Basix REQUIRED)
-include(FetchContent)
-FetchContent_Declare(
-  basixcpp
-  GIT_REPOSITORY https://github.com/FEniCS/basix.git
-  GIT_TAG        cmake-improve
-)
-FetchContent_MakeAvailable(basixcpp)
+# include(FetchContent)
+# FetchContent_Declare(
+#   basixcpp
+#   GIT_REPOSITORY https://github.com/FEniCS/basix.git
+#   GIT_TAG        cmake-improve
+# )
+# FetchContent_MakeAvailable(basixcpp)
 
 # Set C++ standard before finding pybind11
 set(CMAKE_CXX_STANDARD 17)

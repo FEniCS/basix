@@ -21,12 +21,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+        run:
+          pip install pybind11
       - name: Install dependencies (non-Python, Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libeigen3-dev doxygen
-          pip install pybind11
+          # pip install pybind11
       - name: Build documentation (Linux)
         if: runner.os == 'Linux'
         run: |

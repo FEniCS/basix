@@ -28,31 +28,31 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y doxygen libeigen3-dev
-          wget https://github.com/xtensor-stack/xtl/archive/0.7.2.tar.gz -O xtl-0.7.2.tar.gz
-          tar xf xtl-0.7.2.tar.gz
-          cmake -B build-xlt -S xtl-0.7.2/
-          sudo cmake --install build-xlt
-          wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
-          tar xf xtensor-0.23.1.tar.gz
-          cmake -B build-xtensor -S xtensor-0.23.1/
-          sudo cmake --install build-xtensor
+          sudo apt-get install -y doxygen libeigen3-dev ninja-build
+          # wget https://github.com/xtensor-stack/xtl/archive/0.7.2.tar.gz -O xtl-0.7.2.tar.gz
+          # tar xf xtl-0.7.2.tar.gz
+          # cmake -B build-xlt -S xtl-0.7.2/
+          # sudo cmake --install build-xlt
+          # wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
+          # tar xf xtensor-0.23.1.tar.gz
+          # cmake -B build-xtensor -S xtensor-0.23.1/
+          # sudo cmake --install build-xtensor
       - name: Build documentation (Linux)
         if: runner.os == 'Linux'
         run: |
           cd doc && doxygen
       - name: Install dependencies (non-Python, macOS)
         if: runner.os == 'macOS'
-        run: brew install eigen
+        run: brew install eigen ninja
       - name: Lint with flake8
         run: |
           pip install flake8
           flake8 --statistics test/
       - name: Install basix C++
         run: |
-          cmake .
-          make -j 2
-          sudo make install
+          cmake -G Ninja.
+          ninja
+          sudo ninja install
       - name: Build basix Python
         run: |
           cd python

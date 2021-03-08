@@ -110,6 +110,11 @@ target_include_directories(basix PUBLIC
 # Add dependencies to target
 target_include_directories(basix PRIVATE ${EIGEN3_INCLUDE_DIRS})
 
+
+# Temp fix
+target_compile_definitions(basix PUBLIC NDEBUG)
+
+
 # Install the Basix library
 install(TARGETS basix
   EXPORT BasixTargets

@@ -33,15 +33,15 @@ jobs:
           cd doc && doxygen
       - name: Install dependencies (non-Python, macOS)
         if: runner.os == 'macOS'
-        run: brew install eigen
+        run: brew install eigen pybind11
       - name: Lint with flake8
         run: |
           pip install flake8
           flake8 --statistics test/
       - name: Install basix C++
         run: |
-          cmake . 
-          make -j 2 
+          cmake .
+          make -j 2
           sudo make install
       - name: Install basix Python
         run: |

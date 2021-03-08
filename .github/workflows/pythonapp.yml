@@ -26,9 +26,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libeigen3-dev doxygen
+<<<<<<< HEAD
           sudo pip3 install -v pybind11 --user
           python3 -c 'import sys; print(sys.path)'
           python3 -c 'import pybind11; print(pybind11.get_cmake_dir())'
+=======
+          sudo pip install -vv pybind11
+          python -c 'import sys; print(sys.path)'
+          python -c 'import pybind11; print(pybind11.get_cmake_dir())'
+>>>>>>> 1a94cb428a8da4bf080cddc3fc158d3904b0867f
       - name: Build documentation (Linux)
         if: runner.os == 'Linux'
         run: |

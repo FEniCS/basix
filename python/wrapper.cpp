@@ -8,15 +8,15 @@
 #include <pybind11/stl.h>
 #include <string>
 
-#include <basix/core/cell.h>
-#include <basix/core/element-families.h>
-#include <basix/core/finite-element.h>
-#include <basix/core/indexing.h>
-#include <basix/core/lattice.h>
-#include <basix/core/mappings.h>
-#include <basix/core/polyset.h>
-#include <basix/core/quadrature.h>
-#include <basix/core/span.hpp>
+#include <basix/cell.h>
+#include <basix/element-families.h>
+#include <basix/finite-element.h>
+#include <basix/indexing.h>
+#include <basix/lattice.h>
+#include <basix/mappings.h>
+#include <basix/polyset.h>
+#include <basix/quadrature.h>
+#include <basix/span.hpp>
 
 namespace py = pybind11;
 using namespace basix;

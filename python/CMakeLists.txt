@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 
 PROJECT(basix_pybind11)
 
@@ -40,7 +40,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(cpp PRIVATE "-fvisibility=default")
 endif()
 
-# Add DOLFINX libraries and other config
+# Add libraries and other config
 target_link_libraries(cpp PRIVATE pybind11::module)
 target_link_libraries(cpp PUBLIC Basix::basix)
 

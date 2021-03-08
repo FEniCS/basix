@@ -16,11 +16,11 @@ find_package(xtensor REQUIRED)
 find_package(Basix REQUIRED)
 # include(FetchContent)
 # FetchContent_Declare(
-#   basixcpp
+#   basix
 #   GIT_REPOSITORY https://github.com/FEniCS/basix.git
 #   GIT_TAG        cmake-improve
 # )
-# FetchContent_MakeAvailable(basixcpp)
+# FetchContent_MakeAvailable(basix)
 
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
@@ -29,9 +29,10 @@ find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
 pybind11_add_module(_basixcpp SHARED wrapper.cpp)
 target_include_directories(_basixcpp PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(_basixcpp PRIVATE pybind11::module)
-target_link_libraries(_basixcpp PUBLIC Basix::basix)
+# target_link_libraries(_basixcpp PUBLIC Basix::basix)
+target_link_libraries(_basixcpp PUBLIC basix)
 
-# Add srict compiler flags
+# Add strict compiler flags
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wall -Werror  -Wextra -Wno-comment -pedantic" HAVE_PEDANTIC)
 if (HAVE_PEDANTIC)

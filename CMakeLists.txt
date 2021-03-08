@@ -91,7 +91,8 @@ set(CPP_elements
 # Configure the library
 add_library(basix ${CPP_core} ${CPP_elements} cpp/basix.cpp)
 set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
-set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_core};${HEADERS_elements}")
+set_target_properties(basix PROPERTIES PUBLIC_HEADER "${HEADERS_core};${HEADERS_elements}")
+# set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_core};${HEADERS_elements}")
 target_include_directories(basix PUBLIC
                            $<INSTALL_INTERFACE:include>
                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")
@@ -104,7 +105,6 @@ target_link_libraries(basix PUBLIC xtensor)
 # allow strict compiler checking
 get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
-
 
 # TODO: Replace hardwiring
 # Configure compiler
@@ -137,5 +137,4 @@ configure_package_config_file(BasixConfig.cmake.in ${CMAKE_BINARY_DIR}/BasixConf
 
 install(FILES ${CMAKE_BINARY_DIR}/BasixConfig.cmake ${CMAKE_BINARY_DIR}/BasixConfigVersion.cmake
         DESTINATION  ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
-
 install(EXPORT BasixTargets FILE BasixTargets.cmake NAMESPACE Basix:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)

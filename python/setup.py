@@ -70,7 +70,7 @@ setup(name='fenics-basix',
       description='BASIX Python interface',
       long_description='',
       packages=["basix"],
-      ext_modules=[CMakeExtension('basix.cpp')],
+      ext_modules=[CMakeExtension('basix._basixcpp')],
       cmdclass=dict(build_ext=CMakeBuild),
       install_requires=['pybind11'],
       zip_safe=False)

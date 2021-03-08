@@ -32,19 +32,19 @@ message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 
 # find_package(xtl REQUIRED)
 # find_package(xtensor REQUIRED)
-# include(FetchContent)
-# FetchContent_Declare(
-#   xlt
-#   GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
-#   GIT_TAG        0.7.2
-# )
-# FetchContent_Declare(
-#   xtensor
-#   GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-#   GIT_TAG        0.23.1
-# )
-# FetchContent_MakeAvailable(xlt)
-# FetchContent_MakeAvailable(xtensor)
+include(FetchContent)
+FetchContent_Declare(
+  xlt
+  GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
+  GIT_TAG        0.7.2
+)
+FetchContent_Declare(
+  xtensor
+  GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
+  GIT_TAG        0.23.1
+)
+FetchContent_MakeAvailable(xlt)
+FetchContent_MakeAvailable(xtensor)
 
 feature_summary(WHAT ALL)
 
@@ -108,11 +108,12 @@ target_include_directories(basix PUBLIC
                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")
 
 # Add dependencies to target
-target_include_directories(basix PRIVATE ${EIGEN3_INCLUDE_DIRS})
+target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
+target_link_libraries(basix PRIVATE xtl)
+target_link_libraries(basix PUBLIC xtensor)
 
-
-# Temp fix
-target_compile_definitions(basix PUBLIC NDEBUG)
+# # Temp fix
+# target_compile_definitions(basix PUBLIC NDEBUG)
 
 
 # Install the Basix library

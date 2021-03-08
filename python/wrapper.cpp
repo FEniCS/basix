@@ -8,7 +8,7 @@
 #include <pybind11/stl.h>
 #include <string>
 
-#include <basix/cell.h>
+#include "basix/cell.h"
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
 #include <basix/indexing.h>

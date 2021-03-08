@@ -21,6 +21,9 @@ find_package(Basix REQUIRED)
 #   GIT_TAG        cmake-improve
 # )
 # FetchContent_MakeAvailable(basix)
+# get_target_property(_basix_include_dirs basix INTERFACE_INCLUDE_DIRECTORIES)
+# target_include_directories(basix SYSTEM PRIVATE ${_basix_include_dirs})
+# target_link_libraries(_basixcpp PUBLIC basix)
 
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
@@ -30,7 +33,6 @@ pybind11_add_module(_basixcpp SHARED wrapper.cpp)
 target_include_directories(_basixcpp PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_link_libraries(_basixcpp PRIVATE pybind11::module)
 target_link_libraries(_basixcpp PUBLIC Basix::basix)
-# target_link_libraries(_basixcpp PUBLIC basix)
 
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)

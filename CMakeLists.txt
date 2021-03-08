@@ -34,7 +34,7 @@ message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 # find_package(xtensor REQUIRED)
 include(FetchContent)
 FetchContent_Declare(
-  xlt
+  xtl
   GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
   GIT_TAG        0.7.2
 )
@@ -43,7 +43,7 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
   GIT_TAG        0.23.1
 )
-FetchContent_MakeAvailable(xlt)
+FetchContent_MakeAvailable(xtl)
 FetchContent_MakeAvailable(xtensor)
 
 feature_summary(WHAT ALL)
@@ -112,7 +112,14 @@ target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 # target_include_directories(basix SYSTEM PRIVATE ${xtl_INCLUDE_DIRS})
 # target_include_directories(basix SYSTEM PUBLIC ${xtensor_INCLUDE_DIRS})
 # target_link_libraries(basix SYSTEM PRIVATE xtl)
+
+# get_property(_xtensor_include_dirs TARGET xtensor PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
+# set_property(TARGET xtensor PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_xtensor_include_dirs}")
+
+target_link_libraries(basix PUBLIC xtl)
+# target_include_directories(basix SYSTEM PUBLIC ${xlt_INCLUDE_DIRS})
 target_link_libraries(basix PUBLIC xtensor)
+
 
 # # Temp fix
 # target_compile_definitions(basix PUBLIC NDEBUG)

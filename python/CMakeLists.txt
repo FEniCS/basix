@@ -18,7 +18,7 @@ include(FetchContent)
 FetchContent_Declare(
   basix
   GIT_REPOSITORY https://github.com/FEniCS/basix.git
-  GIT_TAG        cmake-improve
+  GIT_TAG        xtensor
 )
 FetchContent_MakeAvailable(basix)
 # get_target_property(_basix_include_dirs basix INTERFACE_INCLUDE_DIRECTORIES)

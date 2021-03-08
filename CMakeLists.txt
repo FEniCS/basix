@@ -42,49 +42,49 @@ feature_summary(WHAT ALL)
 add_library(basix)
 
 set(HEADERS_basix
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/cell.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/dof-transformations.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/element-families.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/finite-element.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/indexing.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/lattice.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/log.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/mappings.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/moments.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/polyset.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/quadrature.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/span.hpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/lagrange.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/nce-rtc.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/brezzi-douglas-marini.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/nedelec.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/raviart-thomas.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/regge.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/crouzeix-raviart.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/bubble.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serendipity.h)
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/dof-transformations.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/element-families.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/finite-element.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/indexing.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lattice.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/log.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/mappings.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/moments.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/polyset.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/quadrature.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/span.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lagrange.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nce-rtc.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/brezzi-douglas-marini.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nedelec.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/raviart-thomas.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/regge.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/crouzeix-raviart.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/bubble.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.h)
 
 target_sources(basix PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/cell.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/dof-transformations.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/element-families.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/finite-element.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/lattice.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/log.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/mappings.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/moments.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/polyset.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/quadrature.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/lagrange.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/nce-rtc.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/brezzi-douglas-marini.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/nedelec.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/raviart-thomas.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/regge.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/crouzeix-raviart.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/bubble.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serendipity.cpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/basix.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/dof-transformations.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/element-families.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/finite-element.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lattice.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/log.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/mappings.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/moments.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/polyset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/quadrature.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lagrange.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nce-rtc.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/brezzi-douglas-marini.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nedelec.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/raviart-thomas.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/regge.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/crouzeix-raviart.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/bubble.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.cpp)
 
 # Configure the library
 set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
@@ -111,15 +111,14 @@ target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Develop
 install(TARGETS basix
   EXPORT BasixTargets
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  # PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
+  PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
-
-foreach ( file ${HEADERS_basix} )
-  install(FILES ${file} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix)
-endforeach()
+# foreach ( file ${HEADERS_basix} )
+#   install(FILES ${file} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix)
+# endforeach()
 
 # Install CMake helpers
 include(CMakePackageConfigHelpers)

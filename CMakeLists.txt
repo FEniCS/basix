@@ -101,6 +101,7 @@ set(CPP_elements
 # Configure the library
 add_library(basix ${CPP_core} ${CPP_elements} cpp/basix.cpp)
 set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
+set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_core};${HEADERS_elements}")
 target_include_directories(basix PUBLIC
                            $<INSTALL_INTERFACE:include>
                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")
@@ -112,6 +113,7 @@ target_include_directories(basix PRIVATE ${EIGEN3_INCLUDE_DIRS})
 install(TARGETS basix
   EXPORT BasixTargets
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  # PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix/private
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)

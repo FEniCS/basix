@@ -33,17 +33,16 @@ jobs:
       - name: Install dependencies (non-Python, macOS)
         if: runner.os == 'macOS'
         run: brew install eigen
-      - name: Install dependencies (Python)
-        run: |
-          pip install --upgrade pip
-          pip install scikit-build
       - name: Lint with flake8
         run: |
           pip install flake8
           flake8 --statistics test/
-      - name: Install basix
+      - name: Install basix C++
         run: |
-          pip install .
+          cmake . && make -j 2 install
+      - name: Install basix Python
+        run: |
+          cd python && python3 setup.py install
       - name: Run units tests
         run: |
           pip install pytest pytest-xdist numpy sympy

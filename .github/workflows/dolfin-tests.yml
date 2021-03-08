@@ -25,13 +25,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install dependencies (Python)
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install scikit-build
       - name: Install basix
         run: |
-          python3 -m pip install .
+          cmake -G Ninja -B build-dir -S .
+          cmake --build build-dir
+          sudo cmake --install build-dir
+          python3 -m pip install ./python
       - name: Install FEniCS Python components
         run: |
           python3 -m pip install git+https://github.com/FEniCS/ufl.git

@@ -53,6 +53,8 @@ class CMakeBuild(build_ext):
             build_args += ['--', '-j3']
 
         env = os.environ.copy()
+        import pybind11
+        env['pybind11_DIR'] = pybind11.get_cmake_dir()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
                                                               self.distribution.get_version())
         if not os.path.exists(self.build_temp):
@@ -69,4 +71,5 @@ setup(name='fenics-basix',
       packages=["basix"],
       ext_modules=[CMakeExtension('basix.cpp')],
       cmdclass=dict(build_ext=CMakeBuild),
+      install_requires=['pybind11'],
       zip_safe=False)

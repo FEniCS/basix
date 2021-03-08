@@ -47,7 +47,8 @@ jobs:
           sudo make install
       - name: Build basix Python
         run: |
-          cd python && python3 setup.py install
+          cd python
+          pip install .
       - name: Run units tests
         run: |
           pip install pytest pytest-xdist numpy sympy

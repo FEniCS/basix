@@ -25,7 +25,7 @@ find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
 # Create the binding library
 pybind11_add_module(cpp SHARED wrapper.cpp)
 
-target_include_directories(cpp PRIVATE ${EIGEN3_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/../cpp")
+target_include_directories(cpp PRIVATE ${EIGEN3_INCLUDE_DIRS})
 
 # Add srict compiler flags
 include(CheckCXXCompilerFlag)

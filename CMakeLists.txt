@@ -51,30 +51,31 @@ feature_summary(WHAT ALL)
 # --Source files
 
 set(HEADERS_core
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/cell.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/dof-transformations.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/element-families.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/finite-element.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/indexing.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/lattice.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/log.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/mappings.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/moments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/ndarray.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/polyset.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/dof-transformations.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/moments.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/finite-element.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/mappings.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/element-families.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/log.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/quadrature.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/cell.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/span.hpp)
 
 set(CPP_core
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/lattice.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/polyset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/cell.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/dof-transformations.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/moments.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/finite-element.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/mappings.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/element-families.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/finite-element.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/lattice.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/log.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/quadrature.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/cell.cpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/mappings.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/moments.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/polyset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/quadrature.cpp)
 
   set(HEADERS_elements
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/lagrange.h

@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.18)
 
 # Set the version
 project(basix VERSION "0.0.1" LANGUAGES CXX)
+include(GNUInstallDirs)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -101,9 +102,9 @@ install(TARGETS basix
 # Install CMake helpers
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(BasixConfigVersion.cmake VERSION ${PACKAGE_VERSION} COMPATIBILITY AnyNewerVersion)
-configure_package_config_file(BasixConfig.cmake.in ${CMAKE_BINARY_DIR}/BasixConfig.cmake INSTALL_DESTINATION lib/cmake/basix)
+configure_package_config_file(BasixConfig.cmake.in ${CMAKE_BINARY_DIR}/BasixConfig.cmake INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)
 
 install(FILES ${CMAKE_BINARY_DIR}/BasixConfig.cmake ${CMAKE_BINARY_DIR}/BasixConfigVersion.cmake
-        DESTINATION lib/cmake/basix COMPONENT Development)
+        DESTINATION  ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
 
-install(EXPORT BasixTargets FILE BasixTargets.cmake NAMESPACE Basix:: DESTINATION lib/cmake/basix)
+install(EXPORT BasixTargets FILE BasixTargets.cmake NAMESPACE Basix:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)

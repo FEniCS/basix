@@ -8,15 +8,15 @@
 #include <pybind11/stl.h>
 #include <string>
 
-#include "core/cell.h"
-#include "core/element-families.h"
-#include "core/finite-element.h"
-#include "core/indexing.h"
-#include "core/lattice.h"
-#include "core/mappings.h"
-#include "core/polyset.h"
-#include "core/quadrature.h"
-#include "core/span.hpp"
+#include <basix/cell.h>
+#include <basix/element-families.h>
+#include <basix/finite-element.h>
+#include <basix/indexing.h>
+#include <basix/lattice.h>
+#include <basix/mappings.h>
+#include <basix/polyset.h>
+#include <basix/quadrature.h>
+#include <basix/span.hpp>
 
 #include <xtensor/xadapt.hpp>
 

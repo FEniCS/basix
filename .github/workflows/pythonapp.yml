@@ -21,6 +21,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install pybind11
+        run:
+          pip install pybind11
       - name: Install dependencies (non-Python, Linux)
         if: runner.os == 'Linux'
         run: |
@@ -40,17 +43,19 @@ jobs:
           cd doc && doxygen
       - name: Install dependencies (non-Python, macOS)
         if: runner.os == 'macOS'
-        run: brew install eigen ninja xtensor
-      - name: Install dependencies (Python)
-        run: |
-          pip install --upgrade pip
-          pip install scikit-build
+        run: brew install eigen
       - name: Lint with flake8
         run: |
           pip install flake8
           flake8 --statistics test/
-      - name: Install basix
+      - name: Install basix C++
         run: |
+          cmake .
+          make -j 2
+          sudo make install
+      - name: Build basix Python
+        run: |
+          cd python
           pip install .
       - name: Run units tests
         run: |
@@ -75,46 +80,3 @@ jobs:
           git add --all
           git commit --allow-empty -m "C++ FEniCS/basix@${{ github.sha }}"
           git push
-
-  cmake:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: |
-          sudo apt-get -y install libeigen3-dev ninja-build python3-pip
-          sudo python3 -m pip install scikit-build pybind11 cmake
-          wget https://github.com/xtensor-stack/xtl/archive/0.7.2.tar.gz -O xtl-0.7.2.tar.gz
-          tar xf xtl-0.7.2.tar.gz
-          cmake -B build-xlt -S xtl-0.7.2/
-          sudo cmake --install build-xlt
-          wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
-          tar xf xtensor-0.23.1.tar.gz
-          cmake -B build-xtensor -S xtensor-0.23.1/
-          sudo cmake --install build-xtensor
-      - name: Build with cmake
-        run: |
-          cmake .
-          make -j 2
-          sudo make install
-
-  setup-py:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install dependencies
-        run: |
-          sudo apt-get -y install libeigen3-dev ninja-build python3-pip
-          sudo python3 -m pip install scikit-build pybind11 cmake
-          wget https://github.com/xtensor-stack/xtl/archive/0.7.2.tar.gz -O xtl-0.7.2.tar.gz
-          tar xf xtl-0.7.2.tar.gz
-          cmake -B build-xlt -S xtl-0.7.2/
-          sudo cmake --install build-xlt
-          wget https://github.com/xtensor-stack/xtensor/archive/0.23.1.tar.gz -O xtensor-0.23.1.tar.gz
-          tar xf xtensor-0.23.1.tar.gz
-          cmake -B build-xtensor -S xtensor-0.23.1/
-          sudo cmake --install build-xtensor
-      - name: Build with setup.py
-        run: |
-          sudo python3 setup.py install
-          python3 -c "import basix; print(basix.__version__)"

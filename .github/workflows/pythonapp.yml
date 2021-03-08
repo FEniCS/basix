@@ -40,8 +40,8 @@ jobs:
           flake8 --statistics test/
       - name: Install basix C++
         run: |
-          cmake . 
-          make -j 2 
+          cmake .
+          make -j 2
           sudo make install
       - name: Install basix Python
         run: |

@@ -103,7 +103,7 @@ add_library(basix ${CPP_core} ${CPP_elements} cpp/basix.cpp)
 set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
 target_include_directories(basix PUBLIC
                            $<INSTALL_INTERFACE:include>
-                           "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR};${CMAKE_SOURCE_DIR}/cpp>")
+                           "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")
 
 # Add dependencies to target
 target_include_directories(basix PRIVATE ${EIGEN3_INCLUDE_DIRS})

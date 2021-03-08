@@ -27,6 +27,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libeigen3-dev doxygen
           sudo python3 -m pip install pybind11
+          python3 -c 'import pybind11; print(pybind11.get_cmake_dir())'
       - name: Build documentation (Linux)
         if: runner.os == 'Linux'
         run: |

@@ -109,16 +109,12 @@ target_include_directories(basix PUBLIC
 
 # Add dependencies to target
 target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
-# target_include_directories(basix SYSTEM PRIVATE ${xtl_INCLUDE_DIRS})
-# target_include_directories(basix SYSTEM PUBLIC ${xtensor_INCLUDE_DIRS})
-# target_link_libraries(basix SYSTEM PRIVATE xtl)
-
-# get_property(_xtensor_include_dirs TARGET xtensor PROPERTY INTERFACE_INCLUDE_DIRECTORIES)
-# set_property(TARGET xtensor PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${_xtensor_include_dirs}")
-
-target_link_libraries(basix PUBLIC xtl)
-# target_include_directories(basix SYSTEM PUBLIC ${xlt_INCLUDE_DIRS})
 target_link_libraries(basix PUBLIC xtensor)
+
+# Note: xtl needs special handling to apply SYSTEM to the includes to
+# allow strict compiler checking
+get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
 
 
 # # Temp fix

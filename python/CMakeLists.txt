@@ -34,6 +34,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 # Add DOLFINX libraries and other config
-target_link_libraries(cpp PRIVATE pybind11::module basix)
-
+target_link_libraries(cpp PRIVATE pybind11::module)
+target_link_libraries(cpp PUBLIC Basix::basix)
 

@@ -116,10 +116,6 @@ install(TARGETS basix
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
-# foreach ( file ${HEADERS_basix} )
-#   install(FILES ${file} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix)
-# endforeach()
-
 # Install CMake helpers
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(BasixConfigVersion.cmake VERSION ${PACKAGE_VERSION} COMPATIBILITY AnyNewerVersion)

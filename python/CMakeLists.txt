@@ -18,11 +18,11 @@ find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
 # Create the binding library
 pybind11_add_module(cpp SHARED wrapper.cpp)
 
-target_include_directories(cpp PRIVATE ${EIGEN3_INCLUDE_DIRS} ${BASIX_INCLUDE_DIR})
+target_include_directories(cpp PRIVATE ${EIGEN3_INCLUDE_DIRS} "../cpp")
 
 # Add srict compiler flags
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-Wall -Werror -pedantic" HAVE_PEDANTIC)
+CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wno-error=comment -pedantic" HAVE_PEDANTIC)
 if (HAVE_PEDANTIC)
   target_compile_options(cpp PRIVATE -Wall;-Werror;-pedantic)
 endif()

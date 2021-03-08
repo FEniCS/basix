@@ -29,5 +29,6 @@ constexpr int idx(int p, int q, int r)
 {
   return (p + q + r) * (p + q + r + 1) * (p + q + r + 2) / 6
          + (q + r) * (q + r + 1) / 2 + r;
-};
+}
+
 } // namespace basix

@@ -91,8 +91,7 @@ set(CPP_elements
 # Configure the library
 add_library(basix ${CPP_core} ${CPP_elements} cpp/basix.cpp)
 set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
-set_target_properties(basix PROPERTIES PUBLIC_HEADER "${HEADERS_core};${HEADERS_elements}")
-# set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_core};${HEADERS_elements}")
+set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_core};${HEADERS_elements}")
 target_include_directories(basix PUBLIC
                            $<INSTALL_INTERFACE:include>
                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")

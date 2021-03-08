@@ -43,9 +43,9 @@ jobs:
           cmake .
           make -j 2
           sudo make install
-      - name: Install basix Python
+      - name: Build basix Python
         run: |
-          cd python && pip install .
+          cd python && python3 setup.py install
       - name: Run units tests
         run: |
           pip install pytest pytest-xdist numpy sympy

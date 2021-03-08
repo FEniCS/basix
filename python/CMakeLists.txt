@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 
 PROJECT(basix_pybind11 VERSION "0.0.1")
 

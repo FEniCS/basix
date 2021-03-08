@@ -39,6 +39,8 @@ feature_summary(WHAT ALL)
 
 # --Source files
 
+add_library(basix)
+
 set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/cell.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/dof-transformations.h
@@ -46,7 +48,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/finite-element.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/indexing.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/lattice.h
-  # ${CMAKE_CURRENT_SOURCE_DIR}/cpp/log.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/log.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/mappings.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/moments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/polyset.h
@@ -62,7 +64,8 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/bubble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serendipity.h)
 
-set(CPP_basix
+target_sources(basix PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/cell.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/dof-transformations.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/element-families.cpp
@@ -84,11 +87,8 @@ set(CPP_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serendipity.cpp)
 
 # Configure the library
-add_library(basix ${CPP_basix} ${CPP_elements} cpp/basix.cpp)
-# set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
-# set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
-# set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
-set_target_properties(basix PROPERTIES PUBLIC_HEADER "${HEADERS_basix}")
+set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
+set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
                            $<INSTALL_INTERFACE:include>
                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")
@@ -110,14 +110,16 @@ target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Develop
 # Install the Basix library
 install(TARGETS basix
   EXPORT BasixTargets
-  # PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   # PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
-install(FILES cpp/basix.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+foreach ( file ${HEADERS_basix} )
+  install(FILES ${file} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix)
+endforeach()
 
 # Install CMake helpers
 include(CMakePackageConfigHelpers)

@@ -286,7 +286,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
           shape.push_back(x.shape(0));
         else
         {
-          for (py::ssize_t i = 0; i < x.ndim(); ++i)
+          for (pybind11::ssize_t i = 0; i < x.ndim(); ++i)
             shape.push_back(x.shape(i));
         }
         auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);

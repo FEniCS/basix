@@ -62,12 +62,11 @@ class CMakeBuild(build_ext):
 
 
 setup(name='fenics-basix',
-      version=0.0.1,
+      version='0.0.1',
       author='FEniCS Project',
       description='BASIX Python interface',
       long_description='',
-      packages=["basix",
-                "basix.wrappers"],
+      packages=["basix"],
       ext_modules=[CMakeExtension('basix.cpp')],
       cmdclass=dict(build_ext=CMakeBuild),
       zip_safe=False)

@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.16)
 
 PROJECT(basix_pybind11)
 
+find_package(Eigen3 REQUIRED)
+message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
+
 find_package(Basix REQUIRED)
 
 # Set C++ standard before finding pybind11
@@ -13,7 +16,9 @@ find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
 
 # Create the binding library
-pybind11_add_module(cpp SHARED wrappers.cpp)
+pybind11_add_module(cpp SHARED wrapper.cpp)
+
+target_include_directories(cpp PRIVATE ${EIGEN3_INCLUDE_DIRS} ${BASIX_INCLUDE_DIR})
 
 # Add srict compiler flags
 include(CheckCXXCompilerFlag)

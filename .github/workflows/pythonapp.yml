@@ -52,7 +52,7 @@ jobs:
         run: |
           cmake -G Ninja -B build-dir -S .
           cmake --build build-dir
-          cmake --install build-dir
+          sudo cmake --install build-dir
       - name: Build basix Python
         run: |
           cd python

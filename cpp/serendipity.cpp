@@ -3,14 +3,14 @@
 // SPDX-License-Identifier:    MIT
 
 #include "serendipity.h"
-#include "core/element-families.h"
-#include "core/lattice.h"
-#include "core/log.h"
-#include "core/mappings.h"
-#include "core/moments.h"
-#include "core/polyset.h"
-#include "core/quadrature.h"
-#include "elements/lagrange.h"
+#include "element-families.h"
+#include "lagrange.h"
+#include "lattice.h"
+#include "log.h"
+#include "mappings.h"
+#include "moments.h"
+#include "polyset.h"
+#include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
 

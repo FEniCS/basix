@@ -4,9 +4,8 @@
 
 #pragma once
 
-#include "core/cell.h"
-#include "core/finite-element.h"
-#include <string>
+#include "cell.h"
+#include "finite-element.h"
 
 namespace basix
 {

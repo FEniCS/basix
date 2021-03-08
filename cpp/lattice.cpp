@@ -4,7 +4,7 @@
 
 #include "lattice.h"
 #include "cell.h"
-#include "elements/lagrange.h"
+#include "lagrange.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
 

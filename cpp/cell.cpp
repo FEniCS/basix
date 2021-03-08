@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
-#include "elements/lagrange.h"
 #include "quadrature.h"
 #include <map>
 #include <xtensor/xview.hpp>

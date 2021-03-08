@@ -39,59 +39,54 @@ feature_summary(WHAT ALL)
 
 # --Source files
 
-set(HEADERS_core
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/cell.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/dof-transformations.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/element-families.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/finite-element.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/indexing.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/lattice.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/log.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/mappings.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/moments.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/ndarray.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/polyset.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/quadrature.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/span.hpp)
+set(HEADERS_basix
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/cell.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/dof-transformations.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/element-families.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/finite-element.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/indexing.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/lattice.h
+  # ${CMAKE_CURRENT_SOURCE_DIR}/cpp/log.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/mappings.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/moments.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/polyset.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/quadrature.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/span.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/lagrange.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/nce-rtc.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/brezzi-douglas-marini.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/nedelec.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/raviart-thomas.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/regge.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/crouzeix-raviart.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/bubble.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serendipity.h)
 
-set(CPP_core
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/cell.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/dof-transformations.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/element-families.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/finite-element.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/lattice.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/log.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/mappings.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/moments.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/polyset.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/core/quadrature.cpp)
-
-  set(HEADERS_elements
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/lagrange.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/nce-rtc.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/brezzi-douglas-marini.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/nedelec.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/raviart-thomas.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/regge.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/crouzeix-raviart.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/bubble.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/serendipity.h)
-
-set(CPP_elements
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/lagrange.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/nce-rtc.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/brezzi-douglas-marini.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/nedelec.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/raviart-thomas.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/regge.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/crouzeix-raviart.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/bubble.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/elements/serendipity.cpp)
+set(CPP_basix
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/cell.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/dof-transformations.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/element-families.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/finite-element.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/lattice.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/log.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/mappings.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/moments.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/polyset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/quadrature.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/lagrange.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/nce-rtc.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/brezzi-douglas-marini.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/nedelec.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/raviart-thomas.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/regge.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/crouzeix-raviart.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/bubble.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serendipity.cpp)
 
 # Configure the library
-add_library(basix ${CPP_core} ${CPP_elements} cpp/basix.cpp)
+add_library(basix ${CPP_basix} ${CPP_elements} cpp/basix.cpp)
 set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
-set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_core};${HEADERS_elements}")
+set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
                            $<INSTALL_INTERFACE:include>
                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")
@@ -104,16 +99,6 @@ target_link_libraries(basix PUBLIC xtensor)
 # allow strict compiler checking
 get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
-
-# TODO: Replace hardwiring
-# Configure compiler
-# Note: -Wno-comment is added to avoid warning/errors for LaTeX code
-# with backslashes on Doxygen comments
-# include(CheckCXXCompilerFlag)
-# CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_EXTRA_FLAGS)
-# if (HAVE_EXTRA_FLAGS)
-#   set(CMAKE_CXX_FLAGS "-Wall -Werror -Wextra -Wno-comment -pedantic ${CMAKE_CXX_FLAGS}")
-# endif()
 
 # Set debug definitions (private)
 list(APPEND basix_compiler_flags "-Wall -Werror -Wextra -pedantic")

@@ -3,12 +3,12 @@
 // SPDX-License-Identifier:    MIT
 
 #include "raviart-thomas.h"
-#include "core/element-families.h"
-#include "core/mappings.h"
-#include "core/moments.h"
-#include "core/polyset.h"
-#include "core/quadrature.h"
+#include "element-families.h"
 #include "lagrange.h"
+#include "mappings.h"
+#include "moments.h"
+#include "polyset.h"
+#include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>

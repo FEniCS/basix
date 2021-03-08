@@ -3,13 +3,13 @@
 // SPDX-License-Identifier:    MIT
 
 #include "lagrange.h"
-#include "core/dof-transformations.h"
-#include "core/element-families.h"
-#include "core/lattice.h"
-#include "core/log.h"
-#include "core/mappings.h"
-#include "core/polyset.h"
-#include "core/quadrature.h"
+#include "dof-transformations.h"
+#include "element-families.h"
+#include "lattice.h"
+#include "log.h"
+#include "mappings.h"
+#include "polyset.h"
+#include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
 #include <xtensor/xview.hpp>

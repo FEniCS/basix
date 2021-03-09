@@ -30,7 +30,6 @@ jobs:
           cmake -G Ninja -B build-dir -S .
           cmake --build build-dir
           cmake --install build-dir
-          cd python
           python3 -m pip install ./python
       - name: Install FEniCS Python components
         run: |

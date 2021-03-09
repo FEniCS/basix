@@ -1,61 +1,131 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 
-project(basix VERSION "0.0.1")
-# set(CMAKE_BUILD_TYPE Debug)
-
-# Define CMAKE_INSTALL_xxx: LIBDIR, INCLUDEDIR
+# Set the version
+project(Basix VERSION "0.0.1" LANGUAGES CXX)
 include(GNUInstallDirs)
 
-# Currently, Scikit-build does not support FindPython, so we convert the
-# provided hints ourselves.
-if(SKBUILD)
-   set(Python_EXECUTABLE "${PYTHON_EXECUTABLE}")
-   set(Python_INCLUDE_DIR "${PYTHON_INCLUDE_DIR}")
-   set(Python_LIBRARY "${PYTHON_LIBRARY}")
-endif()
-
-set(Python_FIND_IMPLEMENTATIONS CPython PyPy)
-find_package(Python REQUIRED COMPONENTS Interpreter Development)
-
-# Set C++ standard before finding pybind11
+# Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Get pybind11 CMake dir
-execute_process(
-  COMMAND
-    "${Python_EXECUTABLE}" -c
-    "import pybind11; print(pybind11.get_cmake_dir())"
-  OUTPUT_VARIABLE _tmp_cmake_dir
-  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT ECHO_OUTPUT_VARIABLE
-  ECHO_ERROR_VARIABLE)
-list(APPEND CMAKE_PREFIX_PATH "${_tmp_cmake_dir}")
+list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
+
+# Options
+include(FeatureSummary)
+option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
+add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
+
+# Find dependecies
 
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
-include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 
-# Now we can find pybind11
-find_package(pybind11 CONFIG REQUIRED)
+# find_package(xtl REQUIRED)
+# find_package(xtensor REQUIRED)
+include(FetchContent)
+FetchContent_Declare(
+  xtl
+  GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
+  GIT_TAG        0.7.2
+)
+FetchContent_Declare(
+  xtensor
+  GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
+  GIT_TAG        0.23.1
+)
+FetchContent_MakeAvailable(xtl)
+FetchContent_MakeAvailable(xtensor)
 
-add_subdirectory(cpp)
+feature_summary(WHAT ALL)
 
-pybind11_add_module(_basixcpp MODULE cpp/wrapper.cpp)
+# --Source files
 
-set_target_properties(_basixcpp PROPERTIES SKIP_BUILD_RPATH FALSE)
-set_target_properties(_basixcpp PROPERTIES BUILD_WITH_INSTALL_RPATH TRUE)
-set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+add_library(basix)
 
-if (APPLE)
-  set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
-else()
-  set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
-endif()
+set(HEADERS_basix
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/dof-transformations.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/element-families.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/finite-element.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/indexing.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lattice.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/log.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/mappings.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/moments.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/polyset.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/quadrature.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/span.hpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lagrange.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nce-rtc.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/brezzi-douglas-marini.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nedelec.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/raviart-thomas.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/regge.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/crouzeix-raviart.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/bubble.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.h)
 
-target_link_libraries(_basixcpp PRIVATE pybind11::module basix)
+target_sources(basix PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/basix.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/dof-transformations.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/element-families.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/finite-element.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lattice.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/log.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/mappings.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/moments.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/polyset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/quadrature.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lagrange.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nce-rtc.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/brezzi-douglas-marini.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nedelec.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/raviart-thomas.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/regge.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/crouzeix-raviart.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/bubble.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.cpp)
 
-set_target_properties(basix PROPERTIES PUBLIC_HEADER "cpp/basix.h")
+# Configure the library
+set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
+set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
+target_include_directories(basix PUBLIC
+                           $<INSTALL_INTERFACE:include>
+                           "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")
 
-install(TARGETS _basixcpp DESTINATION .)
-install(TARGETS basix LIBRARY DESTINATION lib PUBLIC_HEADER DESTINATION include)
+# Add dependencies to target
+target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
+target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
+target_link_libraries(basix PRIVATE xtensor)
+
+# Note: xtl needs special handling to apply SYSTEM to the includes to
+# allow strict compiler checking
+get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
+
+# Set debug definitions (private)
+# list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)
+list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment)
+target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
+target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
+target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
+
+# Install the Basix library
+install(TARGETS basix
+  EXPORT BasixTargets
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
+
+# Install CMake helpers
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(BasixConfigVersion.cmake VERSION ${PACKAGE_VERSION} COMPATIBILITY AnyNewerVersion)
+configure_package_config_file(BasixConfig.cmake.in ${CMAKE_BINARY_DIR}/BasixConfig.cmake INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)
+
+install(FILES ${CMAKE_BINARY_DIR}/BasixConfig.cmake ${CMAKE_BINARY_DIR}/BasixConfigVersion.cmake
+        DESTINATION  ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
+install(EXPORT BasixTargets FILE BasixTargets.cmake NAMESPACE Basix:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)

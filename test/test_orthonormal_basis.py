@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 import basix
-import pytest
 import numpy as np
+import pytest
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
@@ -25,8 +25,8 @@ def test_quad(order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    np.set_printoptions(suppress=True)
-    print(mat, np.eye(mat.shape[0]))
+    # np.set_printoptions(suppress=True)
+    # print(mat, np.eye(mat.shape[0]))
     assert(np.isclose(mat * 4.0, np.eye(mat.shape[0])).all())
 
 
@@ -50,8 +50,8 @@ def test_pyramid(order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    np.set_printoptions(suppress=True, linewidth=220)
-    print(mat)
+    # np.set_printoptions(suppress=True, linewidth=220)
+    # print(mat)
     assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
 
 
@@ -74,8 +74,8 @@ def test_hex(order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    np.set_printoptions(suppress=True)
-    print(mat)
+    # np.set_printoptions(suppress=True)
+    # print(mat)
     assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
 
 
@@ -98,26 +98,29 @@ def test_prism(order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    np.set_printoptions(suppress=True)
-    print(mat)
+    # np.set_printoptions(suppress=True)
+    # print(mat)
     assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
 
 
-@pytest.mark.parametrize("cell_type", [basix.CellType.interval,
-                                       basix.CellType.triangle,
-                                       basix.CellType.tetrahedron])
+@pytest.mark.parametrize("cell_type", [
+    basix.CellType.interval,
+    basix.CellType.triangle,
+    basix.CellType.tetrahedron
+])
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_cell(cell_type, order):
     Qpts, Qwts = basix.make_quadrature("default", cell_type, 2*order + 1)
     basis = basix.tabulate_polynomial_set(cell_type, order, 0, Qpts)[0]
+
     ndofs = basis.shape[1]
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    np.set_printoptions(suppress=True)
-    print(mat)
+    # np.set_printoptions(suppress=True)
+    # print(mat)
 
     pts = basix.create_lattice(cell_type, 1, basix.LatticeType.equispaced, True)
     fac = 2 ** pts.shape[0] / 2

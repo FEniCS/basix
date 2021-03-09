@@ -65,11 +65,6 @@ def test_symbolic_quad():
                 wd = sympy.diff(w[i], x, kx, y, ky)
                 for j, p in enumerate(pts0):
                     wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
-
-            print(kx, ky)
-            print(wtab[idx(kx, ky)])
-            print()
-            print(wsym)
             assert(np.isclose(wtab[idx(kx, ky)], wsym).all())
 
 
@@ -157,8 +152,6 @@ def test_symbolic_tetrahedron():
             for kx in range(q + 1):
                 ky = q - kx
                 kz = k - q
-                print((kx, ky, kz))
-
                 wsym = np.zeros_like(wtab[0])
                 for i in range(m):
                     wd = sympy.diff(w[i], x, kx, y, ky, z, kz)
@@ -226,8 +219,4 @@ def test_symbolic_pyramid():
                         wsym[j, i] = wd.subs([(x, p[0]),
                                               (y, p[1]),
                                               (z, p[2])])
-
-                print(wd)
-                print(w[idx(kx, ky, kz)])
-                print(wsym)
                 assert(np.isclose(wtab[idx(kx, ky, kz)], wsym).all())

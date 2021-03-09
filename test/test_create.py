@@ -40,7 +40,6 @@ def test_create_custom():
                                   basix.MappingType.identity)
 
     numpy.set_printoptions(suppress=True, precision=2)
-
     points = numpy.array([[.25, 0], [0, .25], [.25, .25]], dtype=numpy.float64)
     print(fe.tabulate(0, points))
 

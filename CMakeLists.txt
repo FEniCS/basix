@@ -95,7 +95,7 @@ target_include_directories(basix PUBLIC
 
 # Add dependencies to target
 target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
-target_link_libraries(basix PUBLIC xtensor)
+target_link_libraries(basix PRIVATE xtensor)
 
 # Note: xtl needs special handling to apply SYSTEM to the includes to
 # allow strict compiler checking

@@ -30,6 +30,7 @@ find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
 # Create the binding library
 pybind11_add_module(_basixcpp SHARED wrapper.cpp)
 target_include_directories(_basixcpp PRIVATE ${EIGEN3_INCLUDE_DIRS})
+target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
 target_link_libraries(_basixcpp PRIVATE pybind11::module)
 target_link_libraries(_basixcpp PUBLIC Basix::basix)
 # target_link_libraries(_basixcpp PUBLIC basix)

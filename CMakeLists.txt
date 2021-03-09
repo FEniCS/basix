@@ -95,6 +95,7 @@ target_include_directories(basix PUBLIC
 
 # Add dependencies to target
 target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
+target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
 target_link_libraries(basix PRIVATE xtensor)
 
 # Note: xtl needs special handling to apply SYSTEM to the includes to
@@ -103,7 +104,8 @@ get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
 
 # Set debug definitions (private)
-list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-pedantic)
+# list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-pedantic)
+list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
 target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 

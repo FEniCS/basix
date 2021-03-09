@@ -83,8 +83,6 @@ tabulate_polyset_triangle_derivs(int n, int nderiv,
 {
   assert(pts.shape()[1] == 2);
 
-  std::cout << "x poly\n" << pts << std::endl;
-
   const auto x = pts * 2.0 - 1.0;
   auto x0 = xt::col(x, 0);
   auto x1 = xt::col(x, 1);

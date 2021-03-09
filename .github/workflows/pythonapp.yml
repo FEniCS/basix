@@ -42,7 +42,7 @@ jobs:
           flake8 --statistics test/
       - name: Install basix C++
         run: |
-          cmake -G Ninja -B build-dir -S .
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
           cmake --build build-dir
           sudo cmake --install build-dir
       - name: Build basix Python

@@ -417,7 +417,7 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
-  std::vector<Eigen::MatrixXd> base_permutations() const;
+  std::vector<Eigen::MatrixXd> base_transformations() const;
 
   /// Return a set of interpolation points
   const Eigen::ArrayXXd& points() const;

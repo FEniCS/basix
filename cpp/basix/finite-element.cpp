@@ -280,7 +280,7 @@ void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
   }
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> FiniteElement::base_permutations() const
+std::vector<Eigen::MatrixXd> FiniteElement::base_transformations() const
 {
   return _base_transformations;
 }

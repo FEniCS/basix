@@ -262,7 +262,7 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   const int psize = polyset::dim(celltype, degree);
 
   auto [Qpts, Qwts] = quadrature::make_quadrature(
-      "default", cell::type::quadrilateral, 2 * degree);
+      "default", celltype, 2 * degree);
   Eigen::ArrayXXd quad_polyset_at_Qpts
       = polyset::tabulate(celltype, degree, 0, Qpts)[0];
   Eigen::ArrayXXd polyset_at_Qpts

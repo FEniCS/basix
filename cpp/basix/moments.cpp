@@ -275,8 +275,7 @@ std::vector<Eigen::MatrixXd> moments::create_tangent_moment_dof_transformations(
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 moments::make_integral_moments(const FiniteElement& moment_space,
-                               cell::type celltype, int value_size,
-                               int /*poly_deg*/, int q_deg)
+                               cell::type celltype, int value_size, int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -287,9 +286,6 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 
   auto [Qpts, Qwts]
       = quadrature::make_quadrature("default", sub_celltype, q_deg);
-
-  // If this is always true, value_size input can be removed
-  assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
   Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
@@ -356,7 +352,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 moments::make_dot_integral_moments(const FiniteElement& moment_space,
                                    cell::type celltype, int value_size,
-                                   int /*poly_deg*/, int q_deg)
+                                   int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -430,7 +426,7 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 moments::make_tangent_integral_moments(const FiniteElement& moment_space,
                                        cell::type celltype, int value_size,
-                                       int /*poly_deg*/, int q_deg)
+                                       int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -497,8 +493,7 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 moments::make_normal_integral_moments(const FiniteElement& moment_space,
                                       const cell::type celltype,
-                                      const int value_size, const int poly_deg,
-                                      const int q_deg)
+                                      const int value_size, const int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const int sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -568,10 +563,6 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
     }
     else
       throw std::runtime_error("Normal on this cell cannot be computed.");
-
-    // Tabulate polynomial set at facet quadrature points
-    Eigen::MatrixXd poly_set_at_Qpts
-        = polyset::tabulate(celltype, poly_deg, 0, Qpts_scaled)[0].transpose();
 
     // Compute facet normal integral moments
     for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)

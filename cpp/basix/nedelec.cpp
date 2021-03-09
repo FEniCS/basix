@@ -71,7 +71,7 @@ create_nedelec_2d_interpolation(int degree)
   Eigen::MatrixXd matrix_1d;
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       create_dlagrange(cell::type::interval, degree - 1), cell::type::triangle,
-      2, degree, quad_deg);
+      2, quad_deg);
 
   Eigen::ArrayXXd points_2d(0, 2);
   Eigen::MatrixXd matrix_2d(0, 0);
@@ -80,7 +80,7 @@ create_nedelec_2d_interpolation(int degree)
     // Interior integral moment
     std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
         create_dlagrange(cell::type::triangle, degree - 2),
-        cell::type::triangle, 2, degree, quad_deg);
+        cell::type::triangle, 2, quad_deg);
   }
 
   return combine_interpolation_data(points_1d, points_2d, {}, matrix_1d,
@@ -196,7 +196,7 @@ create_nedelec_3d_interpolation(int degree)
   Eigen::MatrixXd matrix_1d;
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       create_dlagrange(cell::type::interval, degree - 1),
-      cell::type::tetrahedron, 3, degree, quad_deg);
+      cell::type::tetrahedron, 3, quad_deg);
 
   Eigen::ArrayXXd points_2d(0, 3);
   Eigen::MatrixXd matrix_2d(0, 0);
@@ -204,7 +204,7 @@ create_nedelec_3d_interpolation(int degree)
   {
     std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
         create_dlagrange(cell::type::triangle, degree - 2),
-        cell::type::tetrahedron, 3, degree, quad_deg);
+        cell::type::tetrahedron, 3, quad_deg);
   }
 
   Eigen::ArrayXXd points_3d(0, 3);
@@ -213,7 +213,7 @@ create_nedelec_3d_interpolation(int degree)
   {
     std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
         create_dlagrange(cell::type::tetrahedron, degree - 3),
-        cell::type::tetrahedron, 3, degree, quad_deg);
+        cell::type::tetrahedron, 3, quad_deg);
   }
 
   return combine_interpolation_data(points_1d, points_2d, points_3d, matrix_1d,
@@ -271,7 +271,7 @@ create_nedelec2_2d_interpolation(int degree)
   Eigen::MatrixXd matrix_1d;
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       create_dlagrange(cell::type::interval, degree), cell::type::triangle, 2,
-      degree, quad_deg);
+      quad_deg);
 
   Eigen::ArrayXXd points_2d(0, 2);
   Eigen::MatrixXd matrix_2d(0, 0);
@@ -279,7 +279,7 @@ create_nedelec2_2d_interpolation(int degree)
   {
     std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
         create_rt(cell::type::triangle, degree - 1), cell::type::triangle, 2,
-        degree, quad_deg);
+        quad_deg);
   }
 
   return combine_interpolation_data(points_1d, points_2d, {}, matrix_1d,
@@ -317,7 +317,7 @@ create_nedelec2_3d_interpolation(int degree)
   Eigen::MatrixXd matrix_1d;
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       create_dlagrange(cell::type::interval, degree), cell::type::tetrahedron,
-      3, degree, quad_deg);
+      3, quad_deg);
 
   Eigen::ArrayXXd points_2d(0, 3);
   Eigen::MatrixXd matrix_2d(0, 0);
@@ -327,7 +327,7 @@ create_nedelec2_3d_interpolation(int degree)
     // Integral moments on faces
     std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
         create_rt(cell::type::triangle, degree - 1), cell::type::tetrahedron, 3,
-        degree, quad_deg);
+        quad_deg);
   }
 
   Eigen::ArrayXXd points_3d(0, 3);
@@ -337,7 +337,7 @@ create_nedelec2_3d_interpolation(int degree)
     // Interior integral moment
     std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
         create_rt(cell::type::tetrahedron, degree - 2), cell::type::tetrahedron,
-        3, degree, quad_deg);
+        3, quad_deg);
   }
 
   return combine_interpolation_data(points_1d, points_2d, points_3d, matrix_1d,

@@ -116,7 +116,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   Eigen::MatrixXd matrix_facet;
   FiniteElement moment_space = create_dlagrange(facettype, degree - 1);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
-      moment_space, celltype, tdim, degree, quad_deg);
+      moment_space, celltype, tdim, quad_deg);
   std::vector<Eigen::MatrixXd> facet_transforms
       = moments::create_normal_moment_dof_transformations(moment_space);
 
@@ -127,7 +127,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   {
     // Interior integral moment
     std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
-        create_nce(celltype, degree - 1), celltype, tdim, degree, quad_deg);
+        create_nce(celltype, degree - 1), celltype, tdim, quad_deg);
   }
 
   // Interpolation points and matrix
@@ -311,7 +311,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   FiniteElement edge_moment_space
       = create_dlagrange(cell::type::interval, degree - 1);
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
-      edge_moment_space, celltype, tdim, degree, quad_deg);
+      edge_moment_space, celltype, tdim, quad_deg);
   std::vector<Eigen::MatrixXd> edge_transforms
       = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
@@ -328,7 +328,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
     FiniteElement moment_space
         = create_rtc(cell::type::quadrilateral, degree - 1);
     std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
-        moment_space, celltype, tdim, degree, quad_deg);
+        moment_space, celltype, tdim, quad_deg);
 
     if (tdim == 3)
     {
@@ -338,7 +338,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
       // Interior integral moment
       std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
           create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
-          degree, quad_deg);
+          quad_deg);
     }
   }
 

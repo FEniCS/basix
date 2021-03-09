@@ -103,8 +103,8 @@ get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
 
 # Set debug definitions (private)
-list(APPEND basix_compiler_flags "-Wall -Werror -Wextra -pedantic")
-target_compile_options(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>)
+list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-pedantic)
+target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
 target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 
 # Install the Basix library

@@ -41,7 +41,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: garth/basix-cmake
+          ref: master
 
       - name: Install DOLFINX
         run: |

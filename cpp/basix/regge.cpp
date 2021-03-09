@@ -83,23 +83,12 @@ create_regge_interpolation(cell::type celltype, int degree)
           = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
       for (std::size_t j = 0; j < lattice.shape()[0]; ++j)
       {
-        // for (std::size_t p = 0; p < entity_geom.shape()[1]; ++p)
-        //   points(point_n + j, p) = entity_geom(0, p);
         xt::row(points, point_n + j) = xt::row(entity_geom, 0);
         for (std::size_t k = 0; k < entity_geom.shape()[0] - 1; ++k)
         {
-          // for (std::size_t p = 0; p < entity_geom.shape()[1]; ++p)
-          // {
-          //   points(point_n + j, p)
-          //       += (entity_geom(k + 1, p) - entity_geom(0, p)) * lattice(j,
-          //       k);
-          //
           xt::row(points, point_n + j)
               += (xt::row(entity_geom, k + 1) - xt::row(entity_geom, 0))
                  * lattice(j, k);
-          // points.row(point_n + j)
-          //     += (entity_geom.row(k + 1) - entity_geom.row(0)) * lattice(j,
-          //     k);
         }
       }
 

@@ -26,13 +26,10 @@ Eigen::MatrixXd make_serendipity_space_2d(const int degree)
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts] = quadrature::make_quadrature(
       "default", cell::type::quadrilateral, 2 * degree);
-  std::cout << "S0 call" << std::endl;
   Eigen::ArrayXXd polyset_at_Qpts
       = polyset::tabulate(cell::type::quadrilateral, degree, 0, Qpts)[0];
-  std::cout << "S1 call" << std::endl;
   Eigen::ArrayXXd smaller_polyset_at_Qpts
       = polyset::tabulate(cell::type::triangle, degree, 0, Qpts)[0];
-  std::cout << "S2 call" << std::endl;
 
   const int psize = polyset_at_Qpts.cols();
   const int nv = smaller_polyset_at_Qpts.cols();

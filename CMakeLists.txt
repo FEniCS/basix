@@ -108,7 +108,7 @@ target_include_directories(basix PUBLIC
 target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
 target_link_libraries(basix PRIVATE xtensor)
-target_link_libraries(basix PRIVATE xtensor_blas)
+target_link_libraries(basix PRIVATE xtensor-blas)
 
 target_link_libraries(basix PRIVATE BLAS)
 target_link_libraries(basix PRIVATE LAPACK)

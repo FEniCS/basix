@@ -96,11 +96,9 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
     shape.push_back(x.cols());
   auto _x = xt::adapt<xt::layout_type::column_major>(x.data(), x.size(),
                                                      xt::no_ownership(), shape);
-  const xt::xtensor<double, 3> PP = polyset::tabulate(celltype, degree, 0, _x);
-  auto P = xt::view(PP, 0, xt::all(), xt::all());
+  const xt::xtensor<double, 3> P = polyset::tabulate(celltype, degree, 0, _x);
 
-  // const int coeff_size = P.cols();
-  const int coeff_size = P.shape()[1];
+  const int coeff_size = P.shape()[2];
   const int value_size = B.cols() / coeff_size;
   const int m_size = M.cols() / value_size;
 
@@ -117,21 +115,20 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
       = xt::zeros<double>({_B.shape()[0], _M.shape()[0]});
   for (int row = 0; row < B.rows(); ++row)
   {
+    auto Aview = xt::row(A, row);
     for (int v = 0; v < value_size; ++v)
     {
       auto Bview
           = xt::view(_B, row, xt::range(v * coeff_size, (v + 1) * coeff_size));
-      auto Pt = xt::transpose(P);
-      auto Mview_t = xt::transpose(xt::strided_view(
-          _M, {xt::all(), xt::range(v * m_size, (v + 1) * m_size)}));
-      auto Aview = xt::row(A, row);
+      auto Mview_t
+          = xt::view(_M, xt::all(), xt::range(v * m_size, (v + 1) * m_size));
 
       // Compute Aview = Bview * Pt * Mview ( Aview_i = Bview_j * Pt_jk *
       // Mview_ki )
       for (std::size_t i = 0; i < Aview.shape()[0]; ++i)
-        for (std::size_t k = 0; k < Pt.shape()[1]; ++k)
-          for (std::size_t j = 0; j < Pt.shape()[0]; ++j)
-            Aview(i) += Bview(j) * Pt(j, k) * Mview_t(k, i);
+        for (std::size_t k = 0; k < P.shape()[1]; ++k)
+          for (std::size_t j = 0; j < P.shape()[2]; ++j)
+            Aview(i) += Bview(j) * P(0, k, j) * Mview_t(i, k);
     }
   }
 

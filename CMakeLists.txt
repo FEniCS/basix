@@ -18,14 +18,9 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 
 # Find dependecies
 
-find_package(BLAS REQUIRED)
-find_package(LAPACK REQUIRED)
-
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 
-# find_package(xtl REQUIRED)
-# find_package(xtensor REQUIRED)
 include(FetchContent)
 FetchContent_Declare(
   xtl
@@ -42,9 +37,10 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
   GIT_TAG        master
 )
-# FetchContent_MakeAvailable(xtl)
-# FetchContent_MakeAvailable(xtensor)
 FetchContent_MakeAvailable(xtl xtensor xtensor_blas)
+
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
 
 feature_summary(WHAT ALL)
 
@@ -111,8 +107,9 @@ target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, 
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
-# Note: xtl and xtensor-blas needs special handling to apply SYSTEM to
-# the includes to allow strict compiler checking
+# Note: We would like to use `target_link_libraries`, but CMake does not
+# apply the SYSTEM option to the includes, and this causes our strict
+# compiler checks to fail on the xtensor headers.
 # target_link_libraries(basix PRIVATE xtl)
 # target_link_libraries(basix PRIVATE xtensor)
 # target_link_libraries(basix PRIVATE xtensor-blas)
@@ -125,8 +122,6 @@ target_include_directories(basix SYSTEM PRIVATE ${_xtensor_include_dirs})
 
 # Set debug definitions (private)
 list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)
-# list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment)
-# list(APPEND basix_compiler_flags -Wall;-Werror;-Wno-comment)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
 target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)

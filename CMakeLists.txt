@@ -110,8 +110,8 @@ target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, 
 target_link_libraries(basix PRIVATE xtensor)
 target_link_libraries(basix PRIVATE xtensor-blas)
 
-target_link_libraries(basix PRIVATE BLAS)
-target_link_libraries(basix PRIVATE LAPACK)
+target_link_libraries(basix PRIVATE BLAS::BLAS)
+target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
 # Note: xtl needs special handling to apply SYSTEM to the includes to
 # allow strict compiler checking

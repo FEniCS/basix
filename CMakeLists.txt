@@ -18,6 +18,9 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 
 # Find dependecies
 
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 
@@ -34,8 +37,14 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
   GIT_TAG        0.23.1
 )
-FetchContent_MakeAvailable(xtl)
-FetchContent_MakeAvailable(xtensor)
+FetchContent_Declare(
+  xtensor_blas
+  GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
+  GIT_TAG        master
+)
+# FetchContent_MakeAvailable(xtl)
+# FetchContent_MakeAvailable(xtensor)
+FetchContent_MakeAvailable(xtl xtensor xtensor_blas)
 
 feature_summary(WHAT ALL)
 
@@ -99,6 +108,10 @@ target_include_directories(basix PUBLIC
 target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
 target_link_libraries(basix PRIVATE xtensor)
+target_link_libraries(basix PRIVATE xtensor_blas)
+
+target_link_libraries(basix PRIVATE BLAS)
+target_link_libraries(basix PRIVATE LAPACK)
 
 # Note: xtl needs special handling to apply SYSTEM to the includes to
 # allow strict compiler checking

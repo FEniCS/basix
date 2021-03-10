@@ -220,13 +220,13 @@ def test_lagrange(celltype, order):
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
-def test_dof_permutations_interval(order):
+def test_dof_transformations_interval(order):
     lagrange = basix.create_element("Lagrange", "interval", order)
-    assert len(lagrange.base_permutations) == 0
+    assert len(lagrange.base_transformations) == 0
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
-def test_dof_permutations_triangle(order):
+def test_dof_transformations_triangle(order):
     lagrange = basix.create_element("Lagrange", "triangle", order)
 
     permuted = {}
@@ -241,21 +241,21 @@ def test_dof_permutations_triangle(order):
         permuted[1] = {6: 8, 8: 6}
         permuted[2] = {9: 11, 11: 9}
 
-    base_perms = lagrange.base_permutations
-    assert len(base_perms) == 3
+    base_transformations = lagrange.base_transformations
+    assert len(base_transformations) == 3
 
-    for i, perm in enumerate(base_perms):
-        actual = numpy.zeros_like(perm)
-        for j, row in enumerate(perm):
+    for i, t in enumerate(base_transformations):
+        actual = numpy.zeros_like(t)
+        for j, row in enumerate(t):
             if i in permuted and j in permuted[i]:
                 actual[j, permuted[i][j]] = 1
             else:
                 actual[j, j] = 1
-        assert numpy.allclose(perm, actual)
+        assert numpy.allclose(t, actual)
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
-def test_dof_permutations_tetrahedron(order):
+def test_dof_transformations_tetrahedron(order):
     lagrange = basix.create_element("Lagrange", "tetrahedron", order)
 
     permuted = {}
@@ -285,17 +285,17 @@ def test_dof_permutations_tetrahedron(order):
         permuted[12] = {31: 33, 32: 31, 33: 32}
         permuted[13] = {32: 33, 33: 32}
 
-    base_perms = lagrange.base_permutations
-    assert len(base_perms) == 14
+    base_transformations = lagrange.base_transformations
+    assert len(base_transformations) == 14
 
-    for i, perm in enumerate(base_perms):
-        actual = numpy.zeros_like(perm)
-        for j, row in enumerate(perm):
+    for i, t in enumerate(base_transformations):
+        actual = numpy.zeros_like(t)
+        for j, row in enumerate(t):
             if i in permuted and j in permuted[i]:
                 actual[j, permuted[i][j]] = 1
             else:
                 actual[j, j] = 1
-        assert numpy.allclose(perm, actual)
+        assert numpy.allclose(t, actual)
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])

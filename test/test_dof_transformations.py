@@ -12,78 +12,78 @@ from .utils import parametrize_over_elements
 def test_non_zero(cell_name, element_name, order):
     e = basix.create_element(element_name, cell_name, order)
 
-    for perm in e.base_permutations:
-        for row in perm:
+    for t in e.base_transformations:
+        for row in t:
             assert max(abs(i) for i in row) > 1e-6
 
 
 @parametrize_over_elements(5, "interval")
-def test_interval_permutation_size(element_name, order):
+def test_interval_transformation_size(element_name, order):
     e = basix.create_element(element_name, "interval", order)
-    assert len(e.base_permutations) == 0
+    assert len(e.base_transformations) == 0
 
 
 @parametrize_over_elements(5, "triangle")
-def test_triangle_permutation_orders(element_name, order):
+def test_triangle_transformation_orders(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
 
     e = basix.create_element(element_name, "triangle", order)
-    assert len(e.base_permutations) == 3
+    assert len(e.base_transformations) == 3
 
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(e.base_permutations[i], order),
+            np.linalg.matrix_power(e.base_transformations[i], order),
             identity)
 
 
 @parametrize_over_elements(5, "tetrahedron")
-def test_tetrahedron_permutation_orders(element_name, order):
+def test_tetrahedron_transformation_orders(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
 
     e = basix.create_element(element_name, "tetrahedron", order)
-    assert len(e.base_permutations) == 14
+    assert len(e.base_transformations) == 14
 
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2, 2, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(e.base_permutations[i], order),
+            np.linalg.matrix_power(e.base_transformations[i], order),
             identity)
 
 
 @parametrize_over_elements(5, "quadrilateral")
-def test_quadrilateral_permutation_orders(element_name, order):
+def test_quadrilateral_transformation_orders(element_name, order):
     e = basix.create_element(element_name, "quadrilateral", order)
-    assert len(e.base_permutations) == 4
+    assert len(e.base_transformations) == 4
 
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(e.base_permutations[i], order),
+            np.linalg.matrix_power(e.base_transformations[i], order),
             identity)
 
 
 @parametrize_over_elements(5, "hexahedron")
-def test_hexahedron_permutation_orders(element_name, order):
+def test_hexahedron_transformation_orders(element_name, order):
     e = basix.create_element(element_name, "hexahedron", order)
-    assert len(e.base_permutations) == 24
+    assert len(e.base_transformations) == 24
 
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(e.base_permutations[i], order),
+            np.linalg.matrix_power(e.base_transformations[i], order),
             identity)
 
 
 @parametrize_over_elements(5, "triangle")
-def test_permutation_of_tabulated_data_triangle(element_name, order):
+def test_transformation_of_tabulated_data_triangle(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
     if element_name == "Regge":
-        pytest.skip("DOF permutations not yet implemented for Regge elements.")
+        pytest.skip("DOF transformations not yet implemented for Regge elements.")
 
     e = basix.create_element(element_name, "triangle", order)
 
@@ -94,7 +94,7 @@ def test_permutation_of_tabulated_data_triangle(element_name, order):
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
-        # Check that the 0th permutation undoes the effect of reflecting edge 0
+        # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[p[1], p[0]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
@@ -108,12 +108,12 @@ def test_permutation_of_tabulated_data_triangle(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
-                assert np.allclose((e.base_permutations[0].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
 
 @parametrize_over_elements(5, "quadrilateral")
-def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
+def test_transformation_of_tabulated_data_quadrilateral(element_name, order):
     e = basix.create_element(element_name, "quadrilateral", order)
 
     N = 4
@@ -123,7 +123,7 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
-        # Check that the 0th permutation undoes the effect of reflecting edge 0
+        # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[1 - p[0], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
@@ -137,14 +137,14 @@ def test_permutation_of_tabulated_data_quadrilateral(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
-                assert np.allclose((e.base_permutations[0].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
 
 @parametrize_over_elements(5, "tetrahedron")
-def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
+def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
     if element_name == "Regge":
-        pytest.skip("DOF permutations not yet implemented for Regge elements.")
+        pytest.skip("DOF transformations not yet implemented for Regge elements.")
 
     e = basix.create_element(element_name, "tetrahedron", order)
 
@@ -156,7 +156,7 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
-        # Check that the 0th permutation undoes the effect of reflecting edge 0
+        # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
@@ -170,13 +170,13 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
-                assert np.allclose((e.base_permutations[0].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
     start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
     ndofs = e.entity_dofs[2][0]
     if ndofs != 0:
-        # Check that the 6th permutation undoes the effect of rotating face 0
+        # Check that the 6th transformation undoes the effect of rotating face 0
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
@@ -190,11 +190,11 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
-                assert np.allclose(e.base_permutations[6].dot(i_slice)[start: start + ndofs],
+                assert np.allclose(e.base_transformations[6].dot(i_slice)[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
     if ndofs != 0:
-        # Check that the 7th permutation undoes the effect of reflecting face 0
+        # Check that the 7th transformation undoes the effect of reflecting face 0
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
@@ -208,13 +208,13 @@ def test_permutation_of_tabulated_data_tetrahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
-                assert np.allclose((e.base_permutations[7].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((e.base_transformations[7].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
 
 # @parametrize_over_elements(5, "hexahedron")
 @parametrize_over_elements(2, "hexahedron")
-def test_permutation_of_tabulated_data_hexahedron(element_name, order):
+def test_transformation_of_tabulated_data_hexahedron(element_name, order):
     if order > 4 and element_name in ["Raviart-Thomas", "Nedelec 1st kind H(curl)"]:
         pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "
                      "Lagrange spaces equally spaced points are unstable.")
@@ -229,7 +229,7 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
-        # Check that the 0th permutation undoes the effect of reflecting edge 0
+        # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[1 - p[0], p[1], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
@@ -243,13 +243,13 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
-                assert np.allclose((e.base_permutations[0].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
     start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
     ndofs = e.entity_dofs[2][0]
     if ndofs != 0:
-        # Check that the 12th permutation undoes the effect of rotating face 0
+        # Check that the 12th transformation undoes the effect of rotating face 0
         rotated_points = np.array([[1 - p[1], p[0], p[2]] for p in points])
         rotated_values = e.tabulate(0, rotated_points)[0]
 
@@ -263,11 +263,11 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
-                assert np.allclose(e.base_permutations[12].dot(i_slice)[start: start + ndofs],
+                assert np.allclose(e.base_transformations[12].dot(i_slice)[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
     if ndofs != 0:
-        # Check that the 13th permutation undoes the effect of reflecting face 0
+        # Check that the 13th transformation undoes the effect of reflecting face 0
         reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
@@ -281,5 +281,5 @@ def test_permutation_of_tabulated_data_hexahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
                 j_slice = j[d * e.dim:(d + 1) * e.dim]
-                assert np.allclose((e.base_permutations[13].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((e.base_transformations[13].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])

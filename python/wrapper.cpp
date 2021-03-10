@@ -254,8 +254,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
                                       tcb::span(detJ.data(), detJ.size()), K);
           },
           invmapdoc.c_str())
-      .def_property_readonly("base_permutations",
-                             &FiniteElement::base_permutations)
+      .def_property_readonly("base_transformations",
+                             &FiniteElement::base_transformations)
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)

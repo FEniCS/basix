@@ -104,8 +104,8 @@ target_include_directories(basix PUBLIC
 target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
 
-target_link_libraries(basix PRIVATE BLAS::BLAS)
-target_link_libraries(basix PRIVATE LAPACK::LAPACK)
+target_link_libraries(basix PRIVATE BLAS)
+target_link_libraries(basix PRIVATE LAPACK)
 
 # Note: We would like to use `target_link_libraries`, but CMake does not
 # apply the SYSTEM option to the includes, and this causes our strict

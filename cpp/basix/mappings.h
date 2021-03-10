@@ -5,9 +5,9 @@
 #pragma once
 
 #include "span.hpp"
-#include <Eigen/Dense>
 #include <string>
 #include <vector>
+#include <xtensor/xtensor.hpp>
 
 /// Information about mappings.
 namespace basix::mapping
@@ -28,8 +28,8 @@ enum class type
 /// @param mapping_type Mapping type
 /// @return The mapping function
 std::function<std::vector<double>(const tcb::span<const double>&,
-                                  const Eigen::MatrixXd&, double,
-                                  const Eigen::MatrixXd&)>
+                                  const xt::xtensor<double, 2>&, double,
+                                  const xt::xtensor<double, 2>&)>
 get_forward_map(mapping::type mapping_type);
 
 /// Convert mapping type enum to string

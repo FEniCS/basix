@@ -318,12 +318,14 @@ FiniteElement::map_push_forward(
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
         physical_block(physical_data.row(pt).data(), physical_value_size,
                        nresults);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_J(J.row(pt).data(), physical_dim, reference_dim);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_K(K.row(pt).data(), reference_dim, physical_dim);
+    std::array<std::size_t, 2> J_s
+        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
+    std::array<std::size_t, 2> K_s
+        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
+    const xt::xtensor<double, 2> current_J
+        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
+    const xt::xtensor<double, 2> current_K
+        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
     for (int i = 0; i < reference_block.cols(); ++i)
     {
       Eigen::ArrayXd col = reference_block.col(i);
@@ -366,12 +368,14 @@ FiniteElement::map_pull_back(
                                   Eigen::RowMajor>>
         physical_block(physical_data.row(pt).data(), physical_value_size,
                        nresults);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_J(J.row(pt).data(), physical_dim, reference_dim);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_K(K.row(pt).data(), reference_dim, physical_dim);
+    std::array<std::size_t, 2> J_s
+        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
+    std::array<std::size_t, 2> K_s
+        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
+    const xt::xtensor<double, 2> current_J
+        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
+    const xt::xtensor<double, 2> current_K
+        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
     for (int i = 0; i < physical_block.cols(); ++i)
     {
       Eigen::ArrayXd col = physical_block.col(i);

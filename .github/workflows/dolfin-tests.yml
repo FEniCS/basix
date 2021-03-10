@@ -1,6 +1,6 @@
 # This workflow will install Basix, FFCx, DOLFINx and run the DOLFINx unit tests.
 
-name: Basix/DOLFINX CI
+name: DOLFINx integration
 
 on: pull_request
 
@@ -34,7 +34,7 @@ jobs:
       - name: Install FEniCS Python components
         run: |
           python3 -m pip install git+https://github.com/FEniCS/ufl.git
-          python3 -m pip install git+https://github.com/FEniCS/ffcx.git
+          python3 -m pip install git+https://github.com/FEniCS/ffcx.git@mscroggs/base_trans
 
       - name: Get DOLFINX
         uses: actions/checkout@v2

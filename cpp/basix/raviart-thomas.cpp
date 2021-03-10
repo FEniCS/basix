@@ -75,7 +75,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   Eigen::MatrixXd matrix_facet;
   FiniteElement facet_moment_space = create_dlagrange(facettype, degree - 1);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
-      facet_moment_space, celltype, tdim, degree, quad_deg);
+      facet_moment_space, celltype, tdim, quad_deg);
   std::vector<Eigen::MatrixXd> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
@@ -87,9 +87,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_cell, matrix_cell)
-        = moments::make_integral_moments(create_dlagrange(celltype, degree - 2),
-                                         celltype, tdim, degree, quad_deg);
+    std::tie(points_cell, matrix_cell) = moments::make_integral_moments(
+        create_dlagrange(celltype, degree - 2), celltype, tdim, quad_deg);
   }
 
   // Interpolation points and matrix

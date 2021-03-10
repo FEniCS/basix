@@ -107,18 +107,21 @@ target_include_directories(basix PUBLIC
 # Add dependencies to target
 target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
-target_link_libraries(basix PRIVATE xtensor)
-target_link_libraries(basix PRIVATE)
 
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
 # Note: xtl and xtensor-blas needs special handling to apply SYSTEM to
 # the includes to allow strict compiler checking
+# target_link_libraries(basix PRIVATE xtl)
+# target_link_libraries(basix PRIVATE xtensor)
+# target_link_libraries(basix PRIVATE xtensor-blas)
 get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
 get_target_property(_xtensor_blas_include_dirs xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtensor_blas_include_dirs})
+get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(basix SYSTEM PRIVATE ${_xtensor_include_dirs})
 
 # Set debug definitions (private)
 list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)

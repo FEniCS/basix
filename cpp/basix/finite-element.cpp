@@ -115,7 +115,6 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
       = xt::zeros<double>({_B.shape()[0], _M.shape()[0]});
   for (int row = 0; row < B.rows(); ++row)
   {
-    auto Aview = xt::row(A, row);
     for (int v = 0; v < value_size; ++v)
     {
       auto Bview
@@ -125,10 +124,10 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
 
       // Compute Aview = Bview * Pt * Mview ( Aview_i = Bview_j * Pt_jk *
       // Mview_ki )
-      for (std::size_t i = 0; i < Aview.shape()[0]; ++i)
+      for (std::size_t i = 0; i < A.shape()[1]; ++i)
         for (std::size_t k = 0; k < P.shape()[1]; ++k)
           for (std::size_t j = 0; j < P.shape()[2]; ++j)
-            Aview(i) += Bview(j) * P(0, k, j) * Mview_t(i, k);
+            A(row, i) += Bview(j) * P(0, k, j) * Mview_t(i, k);
     }
   }
 

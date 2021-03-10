@@ -114,8 +114,8 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
       _pt(points.data(), points.shape()[0], points.shape()[1]);
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, Eigen::MatrixXd::Identity(ndofs, ndofs), _pt, degree);
-
+      celltype, wcoeffs, Eigen::MatrixXd::Identity(ndofs, ndofs), points,
+      degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, _pt,
                        Eigen::MatrixXd::Identity(ndofs, ndofs),

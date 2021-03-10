@@ -108,20 +108,22 @@ target_include_directories(basix PUBLIC
 target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
 target_link_libraries(basix PRIVATE xtensor)
-target_link_libraries(basix PRIVATE xtensor-blas)
+target_link_libraries(basix PRIVATE)
 
 target_link_libraries(basix PRIVATE BLAS::BLAS)
 target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 
-# Note: xtl needs special handling to apply SYSTEM to the includes to
-# allow strict compiler checking
+# Note: xtl and xtensor-blas needs special handling to apply SYSTEM to
+# the includes to allow strict compiler checking
 get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
+get_target_property(_xtensor_blas_include_dirs xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(basix SYSTEM PRIVATE ${_xtensor_blas_include_dirs})
 
 # Set debug definitions (private)
-# list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)
+list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)
 # list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment)
-list(APPEND basix_compiler_flags -Wall;-Werror;-Wno-comment)
+# list(APPEND basix_compiler_flags -Wall;-Werror;-Wno-comment)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
 target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)

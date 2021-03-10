@@ -41,7 +41,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: main
+          ref: master
 
       - name: Install DOLFINX
         run: |

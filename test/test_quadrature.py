@@ -27,12 +27,10 @@ def test_qorder_line(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.interval, m)
     x = sympy.Symbol('x')
     f = x**m
-    print(f)
     q = sympy.integrate(f, (x, 0, (1)))
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0])])
-    print(len(Qwts))
     assert(np.isclose(float(q), float(s)))
 
 

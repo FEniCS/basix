@@ -21,8 +21,6 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 
-# find_package(xtl REQUIRED)
-# find_package(xtensor REQUIRED)
 include(FetchContent)
 FetchContent_Declare(
   xtl
@@ -34,8 +32,15 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
   GIT_TAG        0.23.1
 )
-FetchContent_MakeAvailable(xtl)
-FetchContent_MakeAvailable(xtensor)
+FetchContent_Declare(
+  xtensor_blas
+  GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
+  GIT_TAG        master
+)
+FetchContent_MakeAvailable(xtl xtensor xtensor_blas)
+
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
 
 feature_summary(WHAT ALL)
 
@@ -98,16 +103,28 @@ target_include_directories(basix PUBLIC
 # Add dependencies to target
 target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
 target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
-target_link_libraries(basix PRIVATE xtensor)
 
-# Note: xtl needs special handling to apply SYSTEM to the includes to
-# allow strict compiler checking
+# The commented lines need CMake >= 3.18
+# target_link_libraries(basix PRIVATE BLAS::BLAS)
+# target_link_libraries(basix PRIVATE LAPACK::LAPACK)
+target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})
+target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
+
+# Note: We would like to use `target_link_libraries`, but CMake does not
+# apply the SYSTEM option to the includes, and this causes our strict
+# compiler checks to fail on the xtensor headers.
+# target_link_libraries(basix PRIVATE xtl)
+# target_link_libraries(basix PRIVATE xtensor)
+# target_link_libraries(basix PRIVATE xtensor-blas)
 get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
+get_target_property(_xtensor_blas_include_dirs xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(basix SYSTEM PRIVATE ${_xtensor_blas_include_dirs})
+get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(basix SYSTEM PRIVATE ${_xtensor_include_dirs})
 
 # Set debug definitions (private)
-# list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)
-list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment)
+list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
 target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)

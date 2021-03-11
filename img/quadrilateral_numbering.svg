@@ -1,0 +1,40 @@
+<svg width='500' height='140'>
+<style type="text/css"><![CDATA[
+  text { text-anchor:middle; font-size:15px; font-family: "Lato Bold" }
+  line { stroke-width: 4px; stroke-linecap: round; stroke: #000000 }
+  circle { fill: #FFFFFF; stroke: #000000; stroke-width:4px}
+]]></style>
+<line x1='20' y1='120' x2='120' y2='120' />
+<line x1='120' y1='120' x2='120' y2='20' />
+<line x1='120' y1='20' x2='20' y2='20' />
+<line x1='20' y1='20' x2='20' y2='120' />
+<circle cx='20' cy='120' r='12px' />
+<text x='20' y='120' fill='#000000' dy='.3em'>0</text>
+<circle cx='120' cy='120' r='12px' />
+<text x='120' y='120' fill='#000000' dy='.3em'>1</text>
+<circle cx='20' cy='20' r='12px' />
+<text x='20' y='20' fill='#000000' dy='.3em'>2</text>
+<circle cx='120' cy='20' r='12px' />
+<text x='120' y='20' fill='#000000' dy='.3em'>3</text>
+
+<line x1='200' y1='120' x2='300' y2='120' />
+<line x1='300' y1='120' x2='300' y2='20' />
+<line x1='300' y1='20' x2='200' y2='20' />
+<line x1='200' y1='20' x2='200' y2='120' />
+<circle cx='250' cy='120' r='12px' />
+<text x='250' y='120' fill='#000000' dy='.3em'>0</text>
+<circle cx='200' cy='70' r='12px' />
+<text x='200' y='70' fill='#000000' dy='.3em'>1</text>
+<circle cx='300' cy='70' r='12px' />
+<text x='300' y='70' fill='#000000' dy='.3em'>2</text>
+<circle cx='250' cy='20' r='12px' />
+<text x='250' y='20' fill='#000000' dy='.3em'>3</text>
+
+<line x1='380' y1='120' x2='480' y2='120' />
+<line x1='480' y1='120' x2='480' y2='20' />
+<line x1='480' y1='20' x2='380' y2='20' />
+<line x1='380' y1='20' x2='380' y2='120' />
+<circle cx='430' cy='70' r='12px' />
+<text x='430' y='70' fill='#000000' dy='.3em'>0</text>
+
+</svg>

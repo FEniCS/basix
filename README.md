@@ -6,6 +6,18 @@ Basix is a finite element definition and tabulation runtime library.
 
 ## Supported elements
 
+### Interval
+In Basix, the sub-entities of the reference interval are numbered as follows:
+
+![The numbering of a reference interval](img/interval_numbering.png)
+
+The following elements are supported on a interval:
+
+  - [Lagrange](https://defelement.com/elements/lagrange.html)
+  - [Bubble](https://defelement.com/elements/bubble.html)
+  - [DPC](https://defelement.com/elements/dpc.html)
+  - [Serendipity](https://defelement.com/elements/serendipity.html)
+
 ### Triangle
 In Basix, the sub-entities of the reference triangle are numbered as follows:
 

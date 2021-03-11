@@ -7,15 +7,6 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
-# Copy demo files into doc source tree and process with pylit
-import basix
-import os
-import sys
-import shutil
-
-#import rstprocess
-#rstprocess.process()
-
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

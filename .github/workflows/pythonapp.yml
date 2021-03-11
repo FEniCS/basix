@@ -76,7 +76,7 @@ jobs:
           mkdir -p basix/main/cpp
           mkdir -p basix/main/python
           cp -r ../cpp/doc/html/* basix/main/cpp
-          cp -r ../python/doc/html/* basix/main/python
+          cp -r ../python/doc/build/html/* basix/main/python
           git add --all
           git commit --allow-empty -m "C++ FEniCS/basix@${{ github.sha }}"
           git push

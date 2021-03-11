@@ -68,7 +68,10 @@ jobs:
           git config --global user.name "FEniCS GitHub Actions"
           git rm -r basix/main/cpp
           mkdir -p basix/main/cpp
-          cp -r ../doc/html/* basix/main/cpp
+          cp -r ../cpp/doc/html/* basix/main/cpp/
+          git rm -r basix/main/python
+          mkdir -p basix/main/python
+          cp -r ../python/doc/html/* basix/main/python/
           git add --all
           git commit --allow-empty -m "C++ FEniCS/basix@${{ github.sha }}"
           git push

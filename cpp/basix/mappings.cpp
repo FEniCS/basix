@@ -11,6 +11,40 @@
 
 namespace
 {
+
+//-----------------------------------------------------------------------------
+// TODO: replace this with xt::linalg::dot
+xt::xtensor<double, 2> dot22(xt::xtensor<double, 2> A, xt::xtensor<double, 2> B)
+{
+  assert(A.shape(1) == B.shape(0));
+  std::array<std::size_t, 2> s = {A.shape(0), B.shape(1)};
+
+  xt::xtensor<double, 2> r(s);
+  for (std::size_t i = 0; i < s[0]; ++i)
+    for (std::size_t j = 0; j < s[1]; ++j)
+    {
+      r(i, j) = 0;
+      for (std::size_t k = 0; k < A.shape(1); ++k)
+        r(i, j) += A(i, k) * B(k, j);
+    }
+  return r;
+}
+//-----------------------------------------------------------------------------
+// TODO: replace this with xt::linalg::dot
+xt::xtensor<double, 1> dot21(xt::xtensor<double, 2> A, xt::xtensor<double, 1> B)
+{
+  assert(A.shape(1) == B.shape(0));
+  std::array<std::size_t, 1> s = {A.shape(0)};
+
+  xt::xtensor<double, 1> r(s);
+  for (std::size_t i = 0; i < s[0]; ++i)
+  {
+    r(i) = 0;
+    for (std::size_t k = 0; k < A.shape(1); ++k)
+      r(i) += A(i, k) * B(k);
+  }
+  return r;
+}
 //-----------------------------------------------------------------------------
 std::vector<double> identity(const tcb::span<const double>& reference_data,
                              const xt::xtensor<double, 2>& /*J*/,

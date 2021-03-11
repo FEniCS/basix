@@ -3,48 +3,14 @@
 // SPDX-License-Identifier:    MIT
 
 #include "mappings.h"
+#include "utils.h"
 #include <functional>
 #include <map>
 #include <stdexcept>
 #include <xtensor/xadapt.hpp>
-// #include <xtensor-blas/xlinalg.hpp>
 
 namespace
 {
-
-//-----------------------------------------------------------------------------
-// TODO: replace this with xt::linalg::dot
-xt::xtensor<double, 2> dot22(xt::xtensor<double, 2> A, xt::xtensor<double, 2> B)
-{
-  assert(A.shape(1) == B.shape(0));
-  std::array<std::size_t, 2> s = {A.shape(0), B.shape(1)};
-
-  xt::xtensor<double, 2> r(s);
-  for (std::size_t i = 0; i < s[0]; ++i)
-    for (std::size_t j = 0; j < s[1]; ++j)
-    {
-      r(i, j) = 0;
-      for (std::size_t k = 0; k < A.shape(1); ++k)
-        r(i, j) += A(i, k) * B(k, j);
-    }
-  return r;
-}
-//-----------------------------------------------------------------------------
-// TODO: replace this with xt::linalg::dot
-xt::xtensor<double, 1> dot21(xt::xtensor<double, 2> A, xt::xtensor<double, 1> B)
-{
-  assert(A.shape(1) == B.shape(0));
-  std::array<std::size_t, 1> s = {A.shape(0)};
-
-  xt::xtensor<double, 1> r(s);
-  for (std::size_t i = 0; i < s[0]; ++i)
-  {
-    r(i) = 0;
-    for (std::size_t k = 0; k < A.shape(1); ++k)
-      r(i) += A(i, k) * B(k);
-  }
-  return r;
-}
 //-----------------------------------------------------------------------------
 std::vector<double> identity(const tcb::span<const double>& reference_data,
                              const xt::xtensor<double, 2>& /*J*/,
@@ -62,8 +28,7 @@ covariant_piola(const tcb::span<const double>& reference_data,
   std::array<std::size_t, 1> s = {reference_data.size()};
   auto _reference_data = xt::adapt(reference_data.data(), reference_data.size(),
                                    xt::no_ownership(), s);
-
-  auto r = dot21(xt::transpose(K), _reference_data);
+  auto r = basix::linalg::dot(xt::transpose(K), _reference_data);
   return std::vector<double>(r.begin(), r.end());
 }
 //-----------------------------------------------------------------------------
@@ -75,7 +40,7 @@ contravariant_piola(const tcb::span<const double>& reference_data,
   std::array<std::size_t, 1> s = {reference_data.size()};
   auto _reference_data = xt::adapt(reference_data.data(), reference_data.size(),
                                    xt::no_ownership(), s);
-  auto r = 1 / detJ * dot21(J, _reference_data);
+  auto r = 1 / detJ * basix::linalg::dot(J, _reference_data);
   return std::vector<double>(r.begin(), r.end());
 }
 //-----------------------------------------------------------------------------
@@ -87,7 +52,8 @@ double_covariant_piola(const tcb::span<const double>& reference_data,
   std::array<std::size_t, 2> s = {J.shape(1), J.shape(1)};
   auto data_matrix = xt::adapt(reference_data.data(), reference_data.size(),
                                xt::no_ownership(), s);
-  xt::xtensor<double, 2> r = dot22(xt::transpose(K), dot22(data_matrix, K));
+  xt::xtensor<double, 2> r = basix::linalg::dot(
+      xt::transpose(K), basix::linalg::dot(data_matrix, K));
   return std::vector<double>(r.begin(), r.end());
 }
 //-----------------------------------------------------------------------------
@@ -101,7 +67,9 @@ double_contravariant_piola(const tcb::span<const double>& reference_data,
                                xt::no_ownership(), s);
 
   xt::xtensor<double, 2> r
-      = 1 / (detJ * detJ) * dot22(J, dot22(data_matrix, xt::transpose(J)));
+      = 1 / (detJ * detJ)
+        * basix::linalg::dot(J,
+                             basix::linalg::dot(data_matrix, xt::transpose(J)));
   return std::vector<double>(r.begin(), r.end());
 }
 //-----------------------------------------------------------------------------

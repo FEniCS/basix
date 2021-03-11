@@ -15,6 +15,7 @@
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
+#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xio.hpp>
 
 using namespace basix;
@@ -45,40 +46,31 @@ std::vector<int> axis_points(const cell::type celltype)
 } // namespace
 
 //-----------------------------------------------------------------------------
-// xt::xtensor<double, 3>
 std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
-  std::cout << "Momoment 0" << std::endl;
-
   cell::type celltype = moment_space.cell_type();
   if (celltype == cell::type::point)
     return {};
 
-  std::cout << "Momoment 1" << std::endl;
+  Eigen::ArrayXXd _points = moment_space.points();
+  std::vector<std::size_t> s = {(std::size_t)_points.rows()};
+  if (_points.cols() > 1)
+    s.push_back(_points.cols());
+  auto pts = xt::adapt<xt::layout_type::column_major>(
+      _points.data(), _points.size(), xt::no_ownership(), s);
 
-  Eigen::ArrayXXd points = moment_space.points();
-  Eigen::MatrixXd matrix = moment_space.interpolation_matrix();
-  // std::vector<Eigen::ArrayXXd> transformed_pointsets;
-  // std::vector<Eigen::ArrayXXd> J;
-  // std::vector<Eigen::ArrayXXd> K;
-  // std::vector<std::vector<double>> detJ;
-
-  // xt::xtensor<double, 3> transformed_pointsets;
-  // xt::xtensor<double, 3> J;
-  // xt::xtensor<double, 3> K;
-  // xt::xtensor<double, 2> detJ;
+  Eigen::MatrixXd _matrix = moment_space.interpolation_matrix();
+  s = {(std::size_t)_matrix.rows()};
+  if (_matrix.cols() > 1)
+    s.push_back(_matrix.cols());
+  auto matrix = xt::adapt<xt::layout_type::column_major>(
+      _matrix.data(), _matrix.size(), xt::no_ownership(), s);
 
   xt::xarray<double> transformed_pointsets;
   xt::xarray<double> J;
   xt::xarray<double> K;
   xt::xarray<double> detJ;
-
-  std::vector<std::size_t> s = {(std::size_t)points.rows()};
-  if (points.cols() > 1)
-    s.push_back(points.cols());
-  auto pts = xt::adapt<xt::layout_type::column_major>(
-      points.data(), points.size(), xt::no_ownership(), s);
 
   std::cout << "Momoment 2" << std::endl;
 
@@ -168,6 +160,8 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
   else if (celltype == cell::type::quadrilateral)
   {
     std::cout << "Momoment 7" << std::endl;
+    detJ = xt::zeros<double>({(std::size_t)2, pts.shape()[0]});
+
 
     std::array<std::size_t, 3> shape = {2, pts.shape()[0], pts.shape()[1]};
     transformed_pointsets = xt::zeros<double>(shape);
@@ -177,16 +171,20 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
       transformed_pointsets(0, i, 1) = 1 - pts(i, 0);
     }
 
+    std::cout << "Momoment 7a" << std::endl;
+
     std::array<std::size_t, 3> shape2 = {2, pts.shape()[0], 4};
     J = xt::zeros<double>(shape2);
     K = xt::zeros<double>(shape2);
 
+    std::cout << "Momoment 7b" << std::endl;
     auto J0 = xt::view(J, 0, xt::all(), xt::all());
     xt::col(J0, 0) = 0;
     xt::col(J0, 1) = 1;
     xt::col(J0, 2) = -1;
     xt::col(J0, 3) = 0;
 
+    std::cout << "Momoment 7c" << std::endl;
     auto K0 = xt::view(K, 0, xt::all(), xt::all());
     xt::col(K0, 0) = 0;
     xt::col(K0, 1) = -1;
@@ -195,7 +193,7 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
 
     xt::view(detJ, 0, xt::all()) = 1.0;
 
-    for (int i = 0; i < points.rows(); ++i)
+    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
     {
       transformed_pointsets(1, i, 0) = pts(i, 1);
       transformed_pointsets(1, i, 1) = pts(i, 0);
@@ -207,11 +205,15 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
     xt::col(J1, 2) = 1;
     xt::col(J1, 3) = 0;
 
+    std::cout << "Momoment 7c" << std::endl;
+
     auto K1 = xt::view(K, 1, xt::all(), xt::all());
     xt::col(K1, 0) = 0;
     xt::col(K1, 1) = 1;
     xt::col(K1, 2) = 1;
     xt::col(K1, 3) = 0;
+
+    std::cout << "Momoment 7d" << std::endl;
 
     xt::view(detJ, 1, xt::all()) = 1.0;
     std::cout << "Momoment 8" << std::endl;
@@ -274,11 +276,6 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
     auto _pulled = xt::adapt<xt::layout_type::column_major>(
         pulled.data(), pulled.size(), xt::no_ownership(), shape1);
 
-    std::array<std::size_t, 2> shape2
-        = {(std::size_t)matrix.rows(), (std::size_t)matrix.cols()};
-    auto _matrix = xt::adapt<xt::layout_type::column_major>(
-        matrix.data(), matrix.size(), xt::no_ownership(), shape2);
-
     // Eigen::MatrixXd result
     //     = Eigen::MatrixXd::Zero(moment_space.dim(), moment_space.dim());
 
@@ -286,13 +283,19 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
     {
       auto r = xt::view(out, i, xt::all(), xt::all());
       auto tmp0
-          = xt::view(_matrix, xt::range(0, matrix.rows()),
-                     xt::range(v * pulled.rows(), (v + 1) + pulled.rows()));
+          = xt::view(matrix, xt::range(0, matrix.shape()[0]),
+                     xt::range(v * pulled.rows(), (v + 1) * pulled.rows()));
       auto tmp1 = xt::view(
           _pulled, xt::range(0, pulled.rows()),
           xt::range(moment_space.dim() * v, moment_space.dim() * (v + 1)));
 
-      r += basix::linalg::dot(tmp0, tmp1);
+      std::cout << "Mult: " << std::endl;
+      std::cout << tmp0.shape()[0] << ", " << tmp0.shape()[1] << std::endl;
+      std::cout << tmp1.shape()[0] << ", " << tmp1.shape()[1] << std::endl;
+      std::cout << r.shape()[0] << ", " << r.shape()[1] << std::endl;
+      // std::cout << "Mult: " << std::endl;
+      // std::cout << "Mult: " << std::endl;
+      r += xt::linalg::dot(tmp0, tmp1);
 
       // result += matrix.block(0, v * pulled.rows(), matrix.rows(),
       // pulled.rows())

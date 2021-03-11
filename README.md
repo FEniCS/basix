@@ -6,6 +6,11 @@ Basix is a finite element definition and tabulation runtime library.
 
 ## Supported elements
 
+### Triangle
+In Basix, the sub-entities of the reference triangle are numbered as follows:
+
+![The numbering of a reference triangle](img/triangle_numbering.svg)
+
 Basix currently supports the following finite elements:
 
   - Lagrange (interval, triangle, tetrahedron, prism, pyramid, quadrilateral, hexahedron)

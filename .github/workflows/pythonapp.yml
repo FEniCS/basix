@@ -52,6 +52,7 @@ jobs:
       - name: Build Python documentation (Linux)
         if: runner.os == 'Linux'
         run: |
+          apt-get install -y python3-sphinx
           cd python/doc && make html
       - name: Run units tests
         run: |

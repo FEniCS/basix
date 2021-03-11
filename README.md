@@ -9,7 +9,7 @@ Basix is a finite element definition and tabulation runtime library.
 ### Triangle
 In Basix, the sub-entities of the reference triangle are numbered as follows:
 
-![The numbering of a reference triangle](img/triangle_numbering.svg)
+![The numbering of a reference triangle](img/triangle_numbering.png)
 
 Basix currently supports the following finite elements:
 

@@ -77,8 +77,6 @@ def test_hexahedron_transformation_orders(element_name, order):
 def test_transformation_of_tabulated_data_triangle(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
-    if element_name == "Regge":
-        pytest.skip("DOF transformations not yet implemented for Regge elements.")
 
     e = basix.create_element(element_name, "triangle", order)
 
@@ -138,9 +136,6 @@ def test_transformation_of_tabulated_data_quadrilateral(element_name, order):
 
 @parametrize_over_elements(5, "tetrahedron")
 def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
-    if element_name == "Regge":
-        pytest.skip("DOF transformations not yet implemented for Regge elements.")
-
     e = basix.create_element(element_name, "tetrahedron", order)
 
     N = 4

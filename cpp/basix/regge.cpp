@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "regge.h"
+#include "dof-transformations.h"
 #include "element-families.h"
 #include "lattice.h"
 #include "mappings.h"
@@ -96,10 +97,6 @@ create_regge_interpolation(cell::type celltype, int degree)
           Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
           _pt(points.data(), points.shape()[0], points.shape()[1]);
 
-      Eigen::MatrixXd basis = polyset::tabulate(
-          celltype, degree, 0,
-          _pt.block(point_n, 0, lattice.shape()[0], tdim))[0];
-
       // Store up outer(t, t) for all tangents
       std::vector<int>& vert_ids = topology[dim][i];
       int ntangents = dim * (dim + 1) / 2;
@@ -158,25 +155,74 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   std::tie(points, matrix) = create_regge_interpolation(celltype, degree);
 
-  // TODO
-
-  int transform_count = tdim == 2 ? 3 : 14;
-  std::vector<Eigen::MatrixXd> base_transformations(
-      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D
+  const int edge_dofs = degree + 1;
+  const int face_dofs = 3 * (degree + 1) * degree / 2;
+  const int volume_dofs = tdim > 2 ? (degree + 1) * degree * (degree - 1) : 0;
+
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  entity_dofs[0].resize(topology[0].size(), 0);
-  entity_dofs[1].resize(topology[1].size(), degree + 1);
-  entity_dofs[2].resize(topology[2].size(), 3 * (degree + 1) * degree / 2);
+  const int num_vertices = topology[0].size();
+  const int num_edges = topology[1].size();
+  const int num_faces = topology[2].size();
+
+  int transform_count = tdim == 2 ? 3 : 14;
+  std::vector<Eigen::MatrixXd> base_transformations(
+      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  const std::vector<int> edge_ref
+      = doftransforms::interval_reflection(degree + 1);
+  for (int edge = 0; edge < num_edges; ++edge)
+  {
+    const int start = edge_ref.size() * edge;
+    for (std::size_t i = 0; i < edge_ref.size(); ++i)
+    {
+      base_transformations[edge](start + i, start + i) = 0;
+      base_transformations[edge](start + i, start + edge_ref[i]) = 1;
+    }
+  }
   if (tdim > 2)
-    entity_dofs[3] = {(degree + 1) * degree * (degree - 1)};
+  {
+    const std::vector<int> face_ref_perm
+        = doftransforms::triangle_reflection(degree);
+    const std::vector<int> face_rot_perm
+        = doftransforms::triangle_rotation(degree);
+    Eigen::Matrix3d sub_ref;
+    sub_ref << 0, 1, 0, 1, 0, 0, 0, 0, 1;
+    Eigen::Matrix3d sub_rot;
+    sub_rot << 0, 1, 0, 0, 0, 1, 1, 0, 0;
+    Eigen::MatrixXd face_ref = Eigen::MatrixXd::Zero(face_ref_perm.size() * 3,
+                                                     face_ref_perm.size() * 3);
+    Eigen::MatrixXd face_rot = Eigen::MatrixXd::Zero(face_ref_perm.size() * 3,
+                                                     face_ref_perm.size() * 3);
+    for (std::size_t i = 0; i < face_ref_perm.size(); ++i)
+    {
+      face_ref.block(3 * i, 3 * face_ref_perm[i], 3, 3) = sub_ref;
+      face_rot.block(3 * i, 3 * face_rot_perm[i], 3, 3) = sub_rot;
+    }
+
+    for (int face = 0; face < num_faces; ++face)
+    {
+      const int start = edge_dofs * num_edges + face_dofs * face;
+      base_transformations[num_edges + 2 * face].block(
+          start, start, face_rot.rows(), face_rot.cols())
+          = face_rot;
+      base_transformations[num_edges + 2 * face + 1].block(
+          start, start, face_ref.rows(), face_ref.cols())
+          = face_ref;
+    }
+  }
+
+  std::vector<std::vector<int>> entity_dofs(topology.size());
+  entity_dofs[0].resize(num_vertices, 0);
+  entity_dofs[1].resize(num_edges, edge_dofs);
+  entity_dofs[2].resize(num_faces, face_dofs);
+  if (tdim > 2)
+    entity_dofs[3] = {volume_dofs};
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
                        coeffs, entity_dofs, base_transformations, points,

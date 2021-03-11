@@ -619,10 +619,6 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> quadrature::compute_gll_rule(int m)
   // Calculate the recursion coefficients
   auto [alpha, beta] = rec_jacobi(m, 0.0, 0.0);
 
-  std::cout << "REc jac" << std::endl;
-  std::cout << xt::adapt(alpha) << std::endl;
-  std::cout << xt::adapt(beta) << std::endl;
-
   // Compute Lobatto nodes and weights
   auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
 

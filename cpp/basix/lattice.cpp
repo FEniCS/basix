@@ -8,6 +8,7 @@
 #include "quadrature.h"
 #include <Eigen/Dense>
 
+#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
@@ -36,27 +37,8 @@ xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
   std::array<std::size_t, 2> shape
       = {(std::size_t)_v.rows(), (std::size_t)_v.cols()};
   auto v = xt::adapt(_v.data(), _v.size(), xt::no_ownership(), shape);
-
-  xt::xtensor<double, 1> tmp = xt::zeros<double>({v.shape()[0]});
-  for (std::size_t i = 0; i < v.shape()[0]; ++i)
-    for (std::size_t j = 0; j < v.shape()[1]; ++j)
-      tmp[i] += v(i, j) * pts[j];
-
-  return tmp;
+  return xt::linalg::dot(v, pts);
 }
-//-----------------------------------------------------------------------------
-// Eigen::ArrayXd warp_function(int n, const Eigen::ArrayXd& x)
-// {
-//   [[maybe_unused]] auto [pts, wts] = quadrature::compute_gll_rule(n + 1);
-
-//   pts *= 0.5;
-//   for (int i = 0; i < n + 1; ++i)
-//     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
-
-//   FiniteElement L = create_dlagrange(cell::type::interval, n);
-//   Eigen::MatrixXd v = L.tabulate(0, x)[0];
-//   return v * pts.matrix();
-// }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
                                        bool exterior)

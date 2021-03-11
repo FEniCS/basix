@@ -15,7 +15,12 @@
 #include "serendipity.h"
 #include <numeric>
 
+#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
+#include <xtensor/xbuilder.hpp>
+#include <xtensor/xio.hpp>
+#include <xtensor/xlayout.hpp>
+#include <xtensor/xview.hpp>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -91,40 +96,54 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
     shape.push_back(x.cols());
   auto _x = xt::adapt<xt::layout_type::column_major>(x.data(), x.size(),
                                                      xt::no_ownership(), shape);
-  const xt::xtensor<double, 3> PP = polyset::tabulate(celltype, degree, 0, _x);
-  Eigen::MatrixXd P(PP.shape()[1], PP.shape()[2]);
-  for (std::size_t i = 0; i < PP.shape()[1]; ++i)
-    for (std::size_t j = 0; j < PP.shape()[2]; ++j)
-      P(i, j) = PP(0, i, j);
-  // const Eigen::MatrixXd P = polyset::tabulate(celltype, degree, 0, x)[0];
+  const xt::xtensor<double, 3> P = polyset::tabulate(celltype, degree, 0, _x);
 
-  const int coeff_size = P.cols();
+  const int coeff_size = P.shape()[2];
   const int value_size = B.cols() / coeff_size;
   const int m_size = M.cols() / value_size;
-  Eigen::MatrixXd A = Eigen::MatrixXd::Zero(B.rows(), M.rows());
+
+  std::array<std::size_t, 2> Bshape
+      = {(std::size_t)B.rows(), (std::size_t)B.cols()};
+  std::array<std::size_t, 2> Mshape
+      = {(std::size_t)M.rows(), (std::size_t)M.cols()};
+  xt::xtensor<double, 2, xt::layout_type::column_major> _B
+      = xt::adapt<xt::layout_type::column_major>(B.data(), B.size(),
+                                                 xt::no_ownership(), Bshape);
+  auto _M = xt::adapt<xt::layout_type::column_major>(
+      M.data(), M.size(), xt::no_ownership(), Mshape);
+  xt::xtensor<double, 2, xt::layout_type::column_major> A
+      = xt::zeros<double>({_B.shape()[0], _M.shape()[0]});
   for (int row = 0; row < B.rows(); ++row)
   {
-    for (int i = 0; i < value_size; ++i)
+    for (int v = 0; v < value_size; ++v)
     {
-      A.row(row) += B.block(row, coeff_size * i, 1, coeff_size) * P.transpose()
-                    * M.block(0, i * m_size, M.rows(), m_size).transpose();
+      auto Bview
+          = xt::view(_B, row, xt::range(v * coeff_size, (v + 1) * coeff_size));
+      auto Mview_t
+          = xt::view(_M, xt::all(), xt::range(v * m_size, (v + 1) * m_size));
+
+      // Compute Aview = Bview * Pt * Mview ( Aview_i = Bview_j * Pt_jk *
+      // Mview_ki )
+      for (std::size_t i = 0; i < A.shape()[1]; ++i)
+        for (std::size_t k = 0; k < P.shape()[1]; ++k)
+          for (std::size_t j = 0; j < P.shape()[2]; ++j)
+            A(row, i) += Bview(j) * P(0, k, j) * Mview_t(i, k);
     }
   }
 
   if (kappa_tol >= 1.0)
   {
-    Eigen::JacobiSVD svd(A);
-    const int size = svd.singularValues().size();
-    const double kappa
-        = svd.singularValues()(0) / svd.singularValues()(size - 1);
-    if (kappa > kappa_tol)
+    if (xt::linalg::cond(A, 2) > kappa_tol)
     {
       throw std::runtime_error("Condition number of B.D^T when computing "
                                "expansion coefficients exceeds tolerance.");
     }
   }
 
-  return A.colPivHouseholderQr().solve(B);
+  xt::xtensor<double, 2, xt::layout_type::column_major> coeff
+      = xt::linalg::solve(A, _B);
+  return Eigen::Map<const Eigen::MatrixXd>(coeff.data(), coeff.shape()[0],
+                                           coeff.shape()[1]);
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(

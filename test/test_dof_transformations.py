@@ -11,7 +11,6 @@ from .utils import parametrize_over_elements
 @parametrize_over_elements(5)
 def test_non_zero(cell_name, element_name, order):
     e = basix.create_element(element_name, cell_name, order)
-
     for t in e.base_transformations:
         for row in t:
             assert max(abs(i) for i in row) > 1e-6
@@ -27,10 +26,8 @@ def test_interval_transformation_size(element_name, order):
 def test_triangle_transformation_orders(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
-
     e = basix.create_element(element_name, "triangle", order)
     assert len(e.base_transformations) == 3
-
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2]):
         assert np.allclose(
@@ -42,10 +39,8 @@ def test_triangle_transformation_orders(element_name, order):
 def test_tetrahedron_transformation_orders(element_name, order):
     if element_name == "Crouzeix-Raviart" and order != 1:
         pytest.xfail()
-
     e = basix.create_element(element_name, "tetrahedron", order)
     assert len(e.base_transformations) == 14
-
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2, 2, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
         assert np.allclose(

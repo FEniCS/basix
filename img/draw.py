@@ -97,6 +97,16 @@ for shape in ["interval", "triangle", "tetrahedron",
             svg += "".join([entities[i] for i in [0, 2, 3, 5]])
             svg += "".join([lines[i] for i in [0, 2, 4, 8]])
             svg += "".join([entities[i] for i in [1]])
+        elif shape == "tetrahedron" and dim == 1:
+            svg += "".join([lines[i] for i in [0, 2, 4]])
+            svg += "".join([entities[i] for i in [0, 2, 4]])
+            svg += "".join([lines[i] for i in [1, 3, 5]])
+            svg += "".join([entities[i] for i in [1, 3, 5]])
+        elif shape == "tetrahedron" and dim == 2:
+            svg += "".join([lines[i] for i in [0, 2, 4]])
+            svg += "".join([entities[i] for i in [0, 1, 3]])
+            svg += "".join([lines[i] for i in [1, 3, 5]])
+            svg += "".join([entities[i] for i in [2]])
         elif shape == "prism" and dim == 1:
             svg += lines[5]
             svg += entities[5]

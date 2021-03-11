@@ -14,7 +14,7 @@
 /// Matrix vector and other products
 namespace basix
 {
-//-----------------------------------------------------------------------------
+/// Calculate a matrix-matrix product.
 xt::xtensor<double, 2> dot22(xt::xtensor<double, 2> A, xt::xtensor<double, 2> B)
 {
   assert(A.shape(1) == B.shape(0));
@@ -31,6 +31,7 @@ xt::xtensor<double, 2> dot22(xt::xtensor<double, 2> A, xt::xtensor<double, 2> B)
   return r;
 }
 //-----------------------------------------------------------------------------
+/// Calculate a matrix-vector product.
 xt::xtensor<double, 1> dot21(xt::xtensor<double, 2> A, xt::xtensor<double, 1> B)
 {
   assert(A.shape(1) == B.shape(0));

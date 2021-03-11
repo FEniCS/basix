@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 import basix
-import pytest
 import numpy as np
+import pytest
 import sympy
 
 

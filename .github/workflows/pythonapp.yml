@@ -28,7 +28,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y doxygen libeigen3-dev libopenblas-dev liblapack-dev ninja-build
+          sudo apt-get install -y doxygen libeigen3-dev libopenblas-dev liblapack-dev ninja-build python3-sphinx
       - name: Build C++ documentation (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -52,7 +52,6 @@ jobs:
       - name: Build Python documentation (Linux)
         if: runner.os == 'Linux'
         run: |
-          apt-get install -y python3-sphinx
           cd python/doc && make html
       - name: Run units tests
         run: |

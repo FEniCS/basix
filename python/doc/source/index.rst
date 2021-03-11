@@ -2,14 +2,6 @@
 Basix Python interface documentation
 ====================================
 
-.. autosummary::
-   :toctree: generated
-
-   basix.create_element
-   basix.geometry
-   basix.make_quadrature
-   basix.topology
-
 
 C++
 ===

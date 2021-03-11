@@ -6,13 +6,21 @@
 #include <Eigen/Dense>
 #include <cmath>
 #include <vector>
+#include <xtensor-blas/xlinalg.hpp>
+#include <xtensor/xadapt.hpp>
+#include <xtensor/xbuilder.hpp>
+#include <xtensor/xview.hpp>
+
+#include <xtensor/xio.hpp>
+
+using namespace xt::placeholders; // required for `_` to work
 
 using namespace basix;
 
 namespace
 {
 //----------------------------------------------------------------------------
-std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> rec_jacobi(int N, double a, double b)
+std::array<std::vector<double>, 2> rec_jacobi(int N, double a, double b)
 {
   // Generate the recursion coefficients alpha_k, beta_k
 
@@ -34,25 +42,27 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> rec_jacobi(int N, double a, double b)
   // http://www.cs.purdue.edu/archives/2002/wxg/codes/r_jacobi.m
 
   double nu = (b - a) / (a + b + 2.0);
-  double mu = pow(2.0, (a + b + 1)) * tgamma(a + 1.0) * tgamma(b + 1.0)
-              / tgamma(a + b + 2.0);
+  double mu = std::pow(2.0, (a + b + 1)) * std::tgamma(a + 1.0)
+              * std::tgamma(b + 1.0) / std::tgamma(a + b + 2.0);
 
-  Eigen::ArrayXd alpha(N), beta(N);
-
+  std::vector<double> alpha(N), beta(N);
   alpha[0] = nu;
   beta[0] = mu;
 
-  Eigen::ArrayXd n = Eigen::ArrayXd::LinSpaced(N - 1, 1.0, N - 1);
-  Eigen::ArrayXd nab = 2.0 * n + a + b;
-  alpha.tail(N - 1) = (b * b - a * a) / (nab * (nab + 2.0));
-  beta.tail(N - 1) = 4 * (n + a) * (n + b) * n * (n + a + b)
-                     / (nab * nab * (nab + 1.0) * (nab - 1.0));
+  auto n = xt::linspace<double>(1.0, N - 1, N - 1);
+  auto nab = 2.0 * n + a + b;
 
-  return {alpha, beta};
+  auto _alpha = xt::adapt(alpha);
+  auto _beta = xt::adapt(beta);
+  xt::view(_alpha, xt::range(1, _)) = (b * b - a * a) / (nab * (nab + 2.0));
+  xt::view(_beta, xt::range(1, _)) = 4 * (n + a) * (n + b) * n * (n + a + b)
+                                     / (nab * nab * (nab + 1.0) * (nab - 1.0));
+
+  return {std::move(alpha), std::move(beta)};
 }
 //----------------------------------------------------------------------------
-std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> gauss(const Eigen::ArrayXd& alpha,
-                                                 const Eigen::ArrayXd& beta)
+std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
+                                         const std::vector<double>& beta)
 {
   // Compute the Gauss nodes and weights from the recursion
   // coefficients associated with a set of orthogonal polynomials
@@ -68,20 +78,25 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> gauss(const Eigen::ArrayXd& alpha,
   // Adapted from the MATLAB code by Walter Gautschi
   // http://www.cs.purdue.edu/archives/2002/wxg/codes/gauss.m
 
-  Eigen::MatrixXd A = alpha.matrix().asDiagonal();
-  const int nb = beta.rows();
-  assert(nb == A.cols());
-  A.bottomLeftCorner(nb - 1, nb - 1)
-      += beta.cwiseSqrt().tail(nb - 1).matrix().asDiagonal();
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(
-      A, Eigen::DecompositionOptions::ComputeEigenvectors);
-  return {solver.eigenvalues(),
-          beta[0] * solver.eigenvectors().row(0).array().square()};
+  auto _alpha = xt::adapt(alpha);
+  auto _beta = xt::adapt(beta);
+
+  xt::xtensor<double, 2> A = xt::diag(_alpha);
+
+  auto tmp = xt::view(_beta, xt::range(1, _));
+  xt::view(A, xt::range(1, _), xt::range(_, -1)) += xt::diag(xt::sqrt(tmp));
+
+  auto [evals, evecs] = xt::linalg::eigh(A);
+
+  std::vector<double> x(evals.shape()[0]), w(evals.shape()[0]);
+  xt::adapt(x) = evals;
+  xt::adapt(w) = beta[0] * xt::square(xt::row(evecs, 0));
+  return {std::move(x), std::move(w)};
 }
 //----------------------------------------------------------------------------
-std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
-                                                   const Eigen::ArrayXd& beta,
-                                                   double xl1, double xl2)
+std::array<std::vector<double>, 2> lobatto(const std::vector<double>& alpha,
+                                           const std::vector<double>& beta,
+                                           double xl1, double xl2)
 {
   // Compute the Lobatto nodes and weights with the preassigned
   // nodes xl1,xl2
@@ -100,25 +115,24 @@ std::tuple<Eigen::ArrayXd, Eigen::ArrayXd> lobatto(const Eigen::ArrayXd& alpha,
   // "Some modified matrix eigenvalue problems"
   // by Gene Golub, SIAM Review Vol 15, No. 2, April 1973, pp.318--334
 
-  assert(alpha.rows() == beta.rows());
-  Eigen::VectorXd bsqrt = beta.cwiseSqrt();
+  assert(alpha.size() == beta.size());
 
   // Solve tridiagonal system using Thomas algorithm
   double g1 = 0.0;
   double g2 = 0.0;
-  const int n = alpha.rows();
-  for (int i = 1; i < n - 1; ++i)
+  const std::size_t n = alpha.size();
+  for (std::size_t i = 1; i < n - 1; ++i)
   {
-    g1 = bsqrt(i) / (alpha(i) - xl1 - bsqrt(i - 1) * g1);
-    g2 = bsqrt(i) / (alpha(i) - xl2 - bsqrt(i - 1) * g2);
+    g1 = std::sqrt(beta[i]) / (alpha[i] - xl1 - std::sqrt(beta[i - 1]) * g1);
+    g2 = std::sqrt(beta[i]) / (alpha[i] - xl2 - std::sqrt(beta[i - 1]) * g2);
   }
-  g1 = 1.0 / (alpha(n - 1) - xl1 - bsqrt(n - 2) * g1);
-  g2 = 1.0 / (alpha(n - 1) - xl2 - bsqrt(n - 2) * g2);
+  g1 = 1.0 / (alpha[n - 1] - xl1 - std::sqrt(beta[n - 2]) * g1);
+  g2 = 1.0 / (alpha[n - 1] - xl2 - std::sqrt(beta[n - 2]) * g2);
 
-  Eigen::ArrayXd alpha_l = alpha;
-  alpha_l(n - 1) = (g1 * xl2 - g2 * xl1) / (g1 - g2);
-  Eigen::ArrayXd beta_l = beta;
-  beta_l(n - 1) = (xl2 - xl1) / (g1 - g2);
+  std::vector<double> alpha_l = alpha;
+  alpha_l[n - 1] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
+  std::vector<double> beta_l = beta;
+  beta_l[n - 1] = (xl2 - xl1) / (g1 - g2);
 
   return gauss(alpha_l, beta_l);
 }
@@ -605,10 +619,17 @@ std::pair<Eigen::ArrayXd, Eigen::ArrayXd> quadrature::compute_gll_rule(int m)
   // Calculate the recursion coefficients
   auto [alpha, beta] = rec_jacobi(m, 0.0, 0.0);
 
+  std::cout << "REc jac" << std::endl;
+  std::cout << xt::adapt(alpha) << std::endl;
+  std::cout << xt::adapt(beta) << std::endl;
+
   // Compute Lobatto nodes and weights
   auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
 
-  return {xs_ref, ws_ref};
+  Eigen::Map<const Eigen::ArrayXd> _xs_ref(xs_ref.data(), xs_ref.size());
+  Eigen::Map<const Eigen::ArrayXd> _ws_ref(ws_ref.data(), ws_ref.size());
+
+  return {_xs_ref, _ws_ref};
 }
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXd, Eigen::ArrayXd>

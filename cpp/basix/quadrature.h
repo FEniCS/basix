@@ -24,7 +24,8 @@ namespace basix::quadrature
 /// @param[in] nderiv Number of derivatives (if zero, just compute
 /// polynomial itself)
 /// @param[in] x Points at which to evaluate
-/// @returns Array of polynomial derivative values (rows) at points (columns)
+/// @returns Array of polynomial derivative values (rows) at points
+/// (columns)
 xt::xtensor<double, 2> compute_jacobi_deriv(double a, std::size_t n,
                                             std::size_t nderiv,
                                             const tcb::span<const double>& x);

@@ -6,6 +6,7 @@
 #include "cell.h"
 #include "lagrange.h"
 #include "quadrature.h"
+#include "utils.h"
 #include <Eigen/Dense>
 
 #include <xtensor-blas/xlinalg.hpp>
@@ -37,7 +38,7 @@ xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
   std::array<std::size_t, 2> shape
       = {(std::size_t)_v.rows(), (std::size_t)_v.cols()};
   auto v = xt::adapt(_v.data(), _v.size(), xt::no_ownership(), shape);
-  return xt::linalg::dot(v, pts);
+  return basix::linalg::dot(v, pts);
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,

@@ -1,42 +1,33 @@
 # Installation instructions
 
-## Using pip
+Before installing Basix, you will need to install eigen3 and ninja. On Ubuntu, you can do this by
+running `apt install libeigen3-dev ninja-build`; on macOS, you can use `brew install eigen ninja`.
 
-The preferred method of installation is to use pip. When using pip, the build dependencies should
-be downloaded automatically, with the exception of Eigen3, which needs to be installed beforehand.
+## Installing Basix C++ library
+To install Basix, you must first install the C++ library. You can do by running:
 
-Eigen3 is available at: https://gitlab.com/libeigen/eigen/-/releases or commonly via package managers,
-e.g. in Ubuntu as libeigen3-dev.
-
-```
-pip3 install .
-```
-
-## Using setup.py
-
-The legacy setup.py install requires several packages to be preinstalled:
-
-scikit-build, cmake>=3.18, ninja, eigen>=3.3.7, pybind11>=2.6.0
-
-Once these are on your system, it should be possible to install with:
-
-`python3 setup.py install --prefix=<install_prefix>`
-
-It is also possible to pass arguments to cmake:
-
-`python3 setup.py install --prefix=<install_prefix> -- -DCMAKE_CXX_COMPILER=clang++`
-
-## Using cmake
-
-Several prerequisites include: cmake, eigen3 and pybind11
-
-e.g.
-
-```
-cmake -DCMAKE_INSTALL_PREFIX=<install_prefix> .
-make -j 3 install
+```bash
+cmake -G Ninja -B build-dir -S .
+cmake --build build-dir
+cmake --install build-dir
 ```
 
-Although this compiles and installs the pybind11 wrapper code, it will not install the pure python part of the package.
+You may need to use `sudo` for the final install line
 
-The install methods are tested in the GitHub Actions CI, and that is the best place to check as a reference.
+## Installing the Python interface
+If you want use Basix via Python, you will need to install the Basix Python interface. First, you
+will need to install pybind11: `pip install pybind11`. You can then install the Basix Python
+interface with:
+
+```bash
+cd python
+pip install .
+```
+
+## Running the Basix tests
+Once you have installed the Basix Python interface, you can run the Basix tests to check that everything
+is running correctly. First, install pytest: `pip install pytest`. You can then run the tests with:
+
+```bash
+pytest test/
+```

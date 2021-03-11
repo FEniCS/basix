@@ -14,6 +14,8 @@
 #include <Eigen/Core>
 #include <string>
 #include <vector>
+#include <xtensor/xadapt.hpp>
+#include <xtensor/xtensor.hpp>
 
 /// Placeholder
 namespace basix
@@ -481,8 +483,8 @@ private:
 
   // The mapping that maps values on the reference to values on a physical cell
   std::function<std::vector<double>(const tcb::span<const double>&,
-                                    const Eigen::MatrixXd&, const double,
-                                    const Eigen::MatrixXd&)>
+                                    const xt::xtensor<double, 2>&, const double,
+                                    const xt::xtensor<double, 2>&)>
       _map_push_forward;
 };
 
@@ -513,12 +515,16 @@ void FiniteElement::map_push_forward_m(
     Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
         physical_block(physical_data + pt * physical_value_size * nresults,
                        physical_value_size, nresults);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_J(J.row(pt).data(), physical_dim, reference_dim);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_K(K.row(pt).data(), reference_dim, physical_dim);
+
+    std::array<std::size_t, 2> J_s
+        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
+    std::array<std::size_t, 2> K_s
+        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
+    const xt::xtensor<double, 2> current_J
+        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
+    const xt::xtensor<double, 2> current_K
+        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
+
     if constexpr (std::is_same<T, double>::value)
     {
       for (int i = 0; i < reference_block.cols(); ++i)
@@ -568,12 +574,15 @@ void FiniteElement::map_pull_back_m(
 
   for (int pt = 0; pt < npoints; ++pt)
   {
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_J(J.row(pt).data(), physical_dim, reference_dim);
-    Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>>
-        current_K(K.row(pt).data(), reference_dim, physical_dim);
+    std::array<std::size_t, 2> J_s
+        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
+    std::array<std::size_t, 2> K_s
+        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
+    const xt::xtensor<double, 2> current_J
+        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
+    const xt::xtensor<double, 2> current_K
+        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
+
     if constexpr (std::is_same<T, double>::value)
     {
       for (int i = 0; i < nresults; ++i)

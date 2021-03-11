@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MIT
 
 import basix
-import pytest
 import numpy as np
+import pytest
 import sympy
 
 
@@ -21,8 +21,8 @@ def test_cell_quadrature(celltype, order):
     assert(np.isclose(sum(Qwts), celltype[1]))
 
 
-@pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
-@pytest.mark.parametrize("scheme", ['default', 'GLL'])
+@ pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
+@ pytest.mark.parametrize("scheme", ['default', 'GLL'])
 def test_qorder_line(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.interval, m)
     x = sympy.Symbol('x')
@@ -34,8 +34,8 @@ def test_qorder_line(m, scheme):
     assert(np.isclose(float(q), float(s)))
 
 
-@pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
-@pytest.mark.parametrize("scheme", ['default', 'Gauss-Jacobi'])
+@ pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
+@ pytest.mark.parametrize("scheme", ['default', 'Gauss-Jacobi'])
 def test_qorder_tri(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.triangle, m)
     x = sympy.Symbol('x')
@@ -49,8 +49,8 @@ def test_qorder_tri(m, scheme):
     assert(np.isclose(float(q), float(s)))
 
 
-@pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
-@pytest.mark.parametrize("scheme", ['default', 'Gauss-Jacobi'])
+@ pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
+@ pytest.mark.parametrize("scheme", ['default', 'Gauss-Jacobi'])
 def test_qorder_tet(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.tetrahedron, m)
     x = sympy.Symbol('x')

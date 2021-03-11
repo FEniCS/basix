@@ -19,6 +19,7 @@
 #include <basix/span.hpp>
 
 #include <xtensor/xadapt.hpp>
+#include <xtensor/xio.hpp>
 
 namespace py = pybind11;
 using namespace basix;
@@ -295,8 +296,17 @@ Each element has a `tabulate` function which returns the basis functions and a n
       },
       "Tabulate orthonormal polynomial expansion set");
 
-  m.def("compute_jacobi_deriv", &quadrature::compute_jacobi_deriv,
-        "Compute jacobi polynomial and derivatives at points");
+  m.def(
+      "compute_jacobi_deriv",
+      [](double a, std::size_t n, std::size_t nderiv,
+         const py::array_t<double, py::array::c_style>& x) {
+        if (x.ndim() > 1)
+          throw std::runtime_error("Expected 1D x array.");
+        xt::xtensor<double, 2> f = quadrature::compute_jacobi_deriv(
+            a, n, nderiv, tcb::span(x.data(), x.size()));
+        return py::array_t<double>(f.shape(), f.data());
+      },
+      "Compute jacobi polynomial and derivatives at points");
 
   m.def("make_quadrature", &quadrature::make_quadrature,
         "Compute quadrature points and weights on a reference cell");

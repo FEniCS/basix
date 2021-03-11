@@ -258,9 +258,9 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
   const double h = 1.0 / static_cast<double>(n);
 
   // Interpolate warp factor along interval
-  std::tuple<Eigen::ArrayXXd, Eigen::ArrayXd> pw
+  std::pair<xt::xarray<double>, std::vector<double>> pw
       = quadrature::compute_gll_rule(n + 1);
-  Eigen::VectorXd pts = std::get<0>(pw);
+  xt::xtensor<double, 1> pts = std::get<0>(pw);
   pts *= 0.5;
   for (int i = 0; i < n + 1; ++i)
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
@@ -270,7 +270,11 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
   auto w = [&](double r) -> double {
     Eigen::ArrayXd rr = Eigen::ArrayXd::Constant(1, 0.5 * (r + 1.0));
     Eigen::VectorXd v = L.tabulate(0, rr)[0].row(0);
-    return v.dot(pts);
+    double d = 0.0;
+    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
+      d += v[i] * pts[i];
+    return d;
+    // return v.dot(pts);
   };
 
   const std::size_t b = (exterior == false) ? 1 : 0;

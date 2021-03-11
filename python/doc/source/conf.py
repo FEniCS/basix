@@ -8,6 +8,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 # Copy demo files into doc source tree and process with pylit
+import basix
 import os
 import sys
 import shutil

@@ -6,6 +6,7 @@
 
 #include "cell.h"
 #include <Eigen/Dense>
+#include <xtensor/xtensor.hpp>
 
 namespace basix
 {
@@ -27,6 +28,7 @@ namespace moments
 /// taken against
 /// @return A list of dof transformations
 std::vector<Eigen::MatrixXd>
+// xt::xtensor<double, 3>
 create_moment_dof_transformations(const FiniteElement& moment_space);
 
 /// Create the dof transformations for a dot integral moment.

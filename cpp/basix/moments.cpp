@@ -8,6 +8,15 @@
 #include "polyset.h"
 #include "quadrature.h"
 
+#include "utils.h"
+#include <xtensor/xadapt.hpp>
+#include <xtensor/xarray.hpp>
+#include <xtensor/xbuilder.hpp>
+#include <xtensor/xtensor.hpp>
+#include <xtensor/xview.hpp>
+
+#include <xtensor/xio.hpp>
+
 using namespace basix;
 
 namespace
@@ -36,139 +45,176 @@ std::vector<int> axis_points(const cell::type celltype)
 } // namespace
 
 //-----------------------------------------------------------------------------
+// xt::xtensor<double, 3>
 std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
+  std::cout << "Momoment 0" << std::endl;
+
   cell::type celltype = moment_space.cell_type();
   if (celltype == cell::type::point)
     return {};
 
+  std::cout << "Momoment 1" << std::endl;
+
   Eigen::ArrayXXd points = moment_space.points();
   Eigen::MatrixXd matrix = moment_space.interpolation_matrix();
+  // std::vector<Eigen::ArrayXXd> transformed_pointsets;
+  // std::vector<Eigen::ArrayXXd> J;
+  // std::vector<Eigen::ArrayXXd> K;
+  // std::vector<std::vector<double>> detJ;
 
-  std::vector<Eigen::ArrayXXd> transformed_pointsets;
+  // xt::xtensor<double, 3> transformed_pointsets;
+  // xt::xtensor<double, 3> J;
+  // xt::xtensor<double, 3> K;
+  // xt::xtensor<double, 2> detJ;
 
-  std::vector<Eigen::ArrayXXd> J;
-  std::vector<Eigen::ArrayXXd> K;
-  std::vector<std::vector<double>> detJ;
+  xt::xarray<double> transformed_pointsets;
+  xt::xarray<double> J;
+  xt::xarray<double> K;
+  xt::xarray<double> detJ;
+
+  std::vector<std::size_t> s = {(std::size_t)points.rows()};
+  if (points.cols() > 1)
+    s.push_back(points.cols());
+  auto pts = xt::adapt<xt::layout_type::column_major>(
+      points.data(), points.size(), xt::no_ownership(), s);
+
+  std::cout << "Momoment 2" << std::endl;
 
   if (celltype == cell::type::interval)
   {
-    Eigen::ArrayXXd reflected_points(points.rows(), points.cols());
-    for (int i = 0; i < points.rows(); ++i)
-      reflected_points(i, 0) = 1 - points(i, 0);
-    transformed_pointsets.push_back(reflected_points);
+    std::cout << "Momoment 3" << std::endl;
 
-    Eigen::ArrayXXd J_part(points.rows(), 1);
-    J_part.col(0) = -1;
-    J.push_back(J_part);
-    Eigen::ArrayXXd K_part(points.rows(), 1);
-    K_part.col(0) = -1;
-    K.push_back(K_part);
-    std::vector<double> detJ_part(points.rows(), 1);
-    detJ.push_back(detJ_part);
+    // Eigen::ArrayXXd reflected_points(points.rows(), points.cols());
+    // xt::xtensor<double ,1> reflected_points(points.rows());
+    // for (int i = 0; i < points.rows(); ++i)
+    //   reflected_points(i, 0) = 1 - points(i, 0);
+    // transformed_pointsets.push_back(reflected_points);
+    transformed_pointsets = 1.0 - pts;
+    transformed_pointsets
+        = xt::expand_dims(xt::expand_dims(transformed_pointsets, 1), 0);
+
+    // Eigen::ArrayXXd J_part(points.rows(), 1);
+    // J_part.col(0) = -1;
+    // J.push_back(J_part);
+    J = xt::full_like(pts, -1.0);
+    J = xt::expand_dims(xt::expand_dims(J, 1), 0);
+
+    // Eigen::ArrayXXd K_part(points.rows(), 1);
+    // K_part.col(0) = -1;
+    // K.push_back(K_part);
+    K = xt::full_like(pts, -1.0);
+    K = xt::expand_dims(xt::expand_dims(K, 1), 0);
+
+    // std::vector<double> detJ_part(points.rows(), 1);
+    // detJ.push_back(detJ_part);
+    detJ = xt::ones_like(pts);
+    detJ = xt::expand_dims(detJ, 0);
+    std::cout << "Momoment 4" << std::endl;
   }
   else if (celltype == cell::type::triangle)
   {
-    Eigen::ArrayXXd rotated_points(points.rows(), points.cols());
-    for (int i = 0; i < points.rows(); ++i)
-    {
-      rotated_points(i, 0) = points(i, 1);
-      rotated_points(i, 1) = 1 - points(i, 0) - points(i, 1);
-    }
-    transformed_pointsets.push_back(rotated_points);
+    std::cout << "Momoment 5" << std::endl;
 
-    Eigen::ArrayXXd J_part(points.rows(), 4);
-    J_part.col(0) = 0;
-    J_part.col(1) = 1;
-    J_part.col(2) = -1;
-    J_part.col(3) = -1;
-    J.push_back(J_part);
-    Eigen::ArrayXXd K_part(points.rows(), 4);
-    K_part.col(0) = -1;
-    K_part.col(1) = -1;
-    K_part.col(2) = 1;
-    K_part.col(3) = 0;
-    K.push_back(K_part);
-    std::vector<double> detJ_part(points.rows(), 1);
-    detJ.push_back(detJ_part);
-
-    Eigen::ArrayXXd reflected_points(points.rows(), points.cols());
-    for (int i = 0; i < points.rows(); ++i)
+    std::array<std::size_t, 3> shape = {2, pts.shape()[0], pts.shape()[1]};
+    transformed_pointsets = xt::zeros<double>(shape);
+    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
     {
-      reflected_points(i, 0) = points(i, 1);
-      reflected_points(i, 1) = points(i, 0);
+      transformed_pointsets(0, i, 0) = pts(i, 1);
+      transformed_pointsets(0, i, 1) = 1 - pts(i, 0) - pts(i, 1);
     }
-    transformed_pointsets.push_back(reflected_points);
 
+    std::array<std::size_t, 3> shape2 = {2, pts.shape()[0], 4};
+    J = xt::zeros<double>(shape2);
+    K = xt::zeros<double>(shape2);
+    detJ = xt::zeros<double>({(std::size_t)2, pts.shape()[0]});
+
+    auto J0 = xt::view(J, 0, xt::all(), xt::all());
+    xt::col(J0, 0) = 0;
+    xt::col(J0, 1) = 1;
+    xt::col(J0, 2) = -1;
+    xt::col(J0, 3) = -1;
+
+    auto K0 = xt::view(K, 0, xt::all(), xt::all());
+    xt::col(K0, 0) = -1;
+    xt::col(K0, 1) = -1;
+    xt::col(K0, 2) = 1;
+    xt::col(K0, 3) = 0;
+
+    xt::view(detJ, 0, xt::all()) = 1.0;
+
+    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
     {
-      Eigen::ArrayXXd J_part(points.rows(), 4);
-      J_part.col(0) = 0;
-      J_part.col(1) = 1;
-      J_part.col(2) = 1;
-      J_part.col(3) = 0;
-      J.push_back(J_part);
-      Eigen::ArrayXXd K_part(points.rows(), 4);
-      K_part.col(0) = 0;
-      K_part.col(1) = 1;
-      K_part.col(2) = 1;
-      K_part.col(3) = 0;
-      K.push_back(K_part);
-      std::vector<double> detJ_part(points.rows(), 1);
-      detJ.push_back(detJ_part);
+      transformed_pointsets(1, i, 0) = pts(i, 1);
+      transformed_pointsets(1, i, 1) = pts(i, 0);
     }
+
+    auto J1 = xt::view(J, 1, xt::all(), xt::all());
+    xt::col(J1, 0) = 0;
+    xt::col(J1, 1) = 1;
+    xt::col(J1, 2) = 1;
+    xt::col(J1, 3) = 0;
+
+    auto K1 = xt::view(K, 1, xt::all(), xt::all());
+    xt::col(K1, 0) = 0;
+    xt::col(K1, 1) = 1;
+    xt::col(K1, 2) = 1;
+    xt::col(K1, 3) = 0;
+
+    xt::view(detJ, 1, xt::all()) = 1.0;
+    std::cout << "Momoment 6" << std::endl;
   }
   else if (celltype == cell::type::quadrilateral)
   {
-    Eigen::ArrayXXd rotated_points(points.rows(), points.cols());
+    std::cout << "Momoment 7" << std::endl;
+
+    std::array<std::size_t, 3> shape = {2, pts.shape()[0], pts.shape()[1]};
+    transformed_pointsets = xt::zeros<double>(shape);
+    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
+    {
+      transformed_pointsets(0, i, 0) = pts(i, 1);
+      transformed_pointsets(0, i, 1) = 1 - pts(i, 0);
+    }
+
+    std::array<std::size_t, 3> shape2 = {2, pts.shape()[0], 4};
+    J = xt::zeros<double>(shape2);
+    K = xt::zeros<double>(shape2);
+
+    auto J0 = xt::view(J, 0, xt::all(), xt::all());
+    xt::col(J0, 0) = 0;
+    xt::col(J0, 1) = 1;
+    xt::col(J0, 2) = -1;
+    xt::col(J0, 3) = 0;
+
+    auto K0 = xt::view(K, 0, xt::all(), xt::all());
+    xt::col(K0, 0) = 0;
+    xt::col(K0, 1) = -1;
+    xt::col(K0, 2) = 1;
+    xt::col(K0, 3) = 0;
+
+    xt::view(detJ, 0, xt::all()) = 1.0;
+
     for (int i = 0; i < points.rows(); ++i)
     {
-      rotated_points(i, 0) = points(i, 1);
-      rotated_points(i, 1) = 1 - points(i, 0);
-    }
-    transformed_pointsets.push_back(rotated_points);
-
-    {
-      Eigen::ArrayXXd J_part(points.rows(), 4);
-      J_part.col(0) = 0;
-      J_part.col(1) = 1;
-      J_part.col(2) = -1;
-      J_part.col(3) = 0;
-      J.push_back(J_part);
-      Eigen::ArrayXXd K_part(points.rows(), 4);
-      K_part.col(0) = 0;
-      K_part.col(1) = -1;
-      K_part.col(2) = 1;
-      K_part.col(3) = 0;
-      K.push_back(K_part);
-      std::vector<double> detJ_part(points.rows(), 1);
-      detJ.push_back(detJ_part);
+      transformed_pointsets(1, i, 0) = pts(i, 1);
+      transformed_pointsets(1, i, 1) = pts(i, 0);
     }
 
-    Eigen::ArrayXXd reflected_points(points.rows(), points.cols());
-    for (int i = 0; i < points.rows(); ++i)
-    {
-      reflected_points(i, 0) = points(i, 1);
-      reflected_points(i, 1) = points(i, 0);
-    }
-    transformed_pointsets.push_back(reflected_points);
+    auto J1 = xt::view(J, 1, xt::all(), xt::all());
+    xt::col(J1, 0) = 0;
+    xt::col(J1, 1) = 1;
+    xt::col(J1, 2) = 1;
+    xt::col(J1, 3) = 0;
 
-    {
-      Eigen::ArrayXXd J_part(points.rows(), 4);
-      J_part.col(0) = 0;
-      J_part.col(1) = 1;
-      J_part.col(2) = 1;
-      J_part.col(3) = 0;
-      J.push_back(J_part);
-      Eigen::ArrayXXd K_part(points.rows(), 4);
-      K_part.col(0) = 0;
-      K_part.col(1) = 1;
-      K_part.col(2) = 1;
-      K_part.col(3) = 0;
-      K.push_back(K_part);
-      std::vector<double> detJ_part(points.rows(), 1);
-      detJ.push_back(detJ_part);
-    }
+    auto K1 = xt::view(K, 1, xt::all(), xt::all());
+    xt::col(K1, 0) = 0;
+    xt::col(K1, 1) = 1;
+    xt::col(K1, 2) = 1;
+    xt::col(K1, 3) = 0;
+
+    xt::view(detJ, 1, xt::all()) = 1.0;
+    std::cout << "Momoment 8" << std::endl;
   }
   else
   {
@@ -176,30 +222,110 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
         "DOF transformations only implemented for tdim <= 2.");
   }
 
-  std::vector<Eigen::MatrixXd> out;
-  for (std::size_t i = 0; i < transformed_pointsets.size(); ++i)
-  {
-    Eigen::ArrayXXd transformed_points = transformed_pointsets[i];
+  std::cout << "Momoment 9: " << std::endl;
 
-    Eigen::ArrayXXd moment_space_at_pts
-        = moment_space.tabulate(0, transformed_points)[0];
+  std::array<std::size_t, 3> shape
+      = {transformed_pointsets.shape()[0], (std::size_t)moment_space.dim(),
+         (std::size_t)moment_space.dim()};
+  xt::xtensor<double, 3> out = xt::zeros<double>(shape);
+  for (std::size_t i = 0; i < transformed_pointsets.shape()[0]; ++i)
+  {
+    // Eigen::ArrayXXd transformed_points = transformed_pointsets[i];
+    // auto tpts = xt::view(transformed_pointsets, i, xt::all(), xt::all());
+
+    Eigen::ArrayXXd _tpoint(transformed_pointsets.shape()[1],
+                            transformed_pointsets.shape()[2]);
+    std::cout << "OOOOppppps" << std::endl;
+    for (std::size_t j = 0; j < transformed_pointsets.shape()[1]; ++j)
+      for (std::size_t k = 0; k < transformed_pointsets.shape()[2]; ++k)
+        _tpoint(j, k) = transformed_pointsets(i, j, k);
+
+    std::cout << "Momoment 9b: " << std::endl;
+    Eigen::ArrayXXd _J(J.shape()[1], J.shape()[2]);
+    for (std::size_t j = 0; j < J.shape()[1]; ++j)
+      for (std::size_t k = 0; k < J.shape()[2]; ++k)
+        _J(j, k) = J(i, j, k);
+
+    std::cout << "Momoment 9c: " << std::endl;
+    std::vector<double> _detJ(detJ.shape()[1]);
+    for (std::size_t j = 0; j < J.shape()[1]; ++j)
+      _detJ[j] = detJ(i, j);
+
+    std::cout << "Momoment 9d: " << std::endl;
+    Eigen::ArrayXXd _K(K.shape()[1], K.shape()[2]);
+    for (std::size_t j = 0; j < K.shape()[1]; ++j)
+      for (std::size_t k = 0; k < K.shape()[2]; ++k)
+        _K(j, k) = K(i, j, k);
+
+    std::cout << "Momoment 9e: " << std::endl;
+    Eigen::ArrayXXd moment_space_at_pts = moment_space.tabulate(0, _tpoint)[0];
     Eigen::ArrayXXd pulled
-        = moment_space.map_pull_back(moment_space_at_pts, J[i], detJ[i], K[i]);
-    Eigen::MatrixXd result
-        = Eigen::MatrixXd::Zero(moment_space.dim(), moment_space.dim());
+        = moment_space.map_pull_back(moment_space_at_pts, _J, _detJ, _K);
+
+    std::array<std::size_t, 2> shape0
+        = {(std::size_t)moment_space_at_pts.rows(),
+           (std::size_t)moment_space_at_pts.cols()};
+    auto _moment_space_at_pts = xt::adapt<xt::layout_type::column_major>(
+        moment_space_at_pts.data(), moment_space_at_pts.size(),
+        xt::no_ownership(), shape0);
+
+    std::array<std::size_t, 2> shape1
+        = {(std::size_t)pulled.rows(), (std::size_t)pulled.cols()};
+    auto _pulled = xt::adapt<xt::layout_type::column_major>(
+        pulled.data(), pulled.size(), xt::no_ownership(), shape1);
+
+    std::array<std::size_t, 2> shape2
+        = {(std::size_t)matrix.rows(), (std::size_t)matrix.cols()};
+    auto _matrix = xt::adapt<xt::layout_type::column_major>(
+        matrix.data(), matrix.size(), xt::no_ownership(), shape2);
+
+    // Eigen::MatrixXd result
+    //     = Eigen::MatrixXd::Zero(moment_space.dim(), moment_space.dim());
+
     for (int v = 0; v < moment_space.value_size(); ++v)
     {
-      result += matrix.block(0, v * pulled.rows(), matrix.rows(), pulled.rows())
-                * pulled
-                      .block(0, moment_space.dim() * v, pulled.rows(),
-                             moment_space.dim())
-                      .matrix();
+      auto r = xt::view(out, i, xt::all(), xt::all());
+      auto tmp0
+          = xt::view(_matrix, xt::range(0, matrix.rows()),
+                     xt::range(v * pulled.rows(), (v + 1) + pulled.rows()));
+      auto tmp1 = xt::view(
+          _pulled, xt::range(0, pulled.rows()),
+          xt::range(moment_space.dim() * v, moment_space.dim() * (v + 1)));
+
+      r += basix::linalg::dot(tmp0, tmp1);
+
+      // result += matrix.block(0, v * pulled.rows(), matrix.rows(),
+      // pulled.rows())
+      //           * pulled.block(0, moment_space.dim() * v, pulled.rows(),
+      //                          moment_space.dim());
+      // result += matrix.block(0, v * pulled.rows(),
+      // matrix.rows(), pulled.rows())
+      //           * pulled
+      //                 .block(0, moment_space.dim() * v,
+      //                 pulled.rows(),
+      //                        moment_space.dim())
+      //                 .matrix();
     }
 
-    out.push_back(result);
+    // out.push_back(result);
   }
 
-  return out;
+  std::cout << "Momoment 10" << std::endl;
+
+  std::vector<Eigen::MatrixXd> outold;
+  for (std::size_t i = 0; i < out.shape()[0]; ++i)
+  {
+    Eigen::MatrixXd mat(out.shape()[1], out.shape()[2]);
+    for (std::size_t j = 0; j < out.shape()[1]; ++j)
+    {
+      for (std::size_t k = 0; k < out.shape()[2]; ++k)
+        mat(j, k) = out(i, j, k);
+    }
+    outold.push_back(mat);
+  }
+
+  std::cout << "Momoment 11" << std::endl;
+  return outold;
 }
 //----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd>

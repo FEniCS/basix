@@ -306,27 +306,29 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
 std::vector<Eigen::MatrixXd> moments::create_normal_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
-  std::vector<Eigen::MatrixXd> t
-      = create_dot_moment_dof_transformations(moment_space);
+  xt::xtensor<double, 3> t
+      = create_dot_moment_dof_transformations_new(moment_space);
   const int tdim = cell::topological_dimension(moment_space.cell_type());
-  if (tdim == 1)
-    t[0] *= -1;
-  if (tdim == 2)
-    t[1] *= -1;
-  return t;
+  if (tdim == 1 or tdim == 2)
+    xt::view(t, tdim - 1, xt::all(), xt::all()) *= -1.0;
+  return myconvert(t);
 }
 //----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> moments::create_tangent_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
-  std::vector<Eigen::MatrixXd> t
-      = create_dot_moment_dof_transformations(moment_space);
+  xt::xtensor<double, 3> t
+      = create_dot_moment_dof_transformations_new(moment_space);
   const int tdim = cell::topological_dimension(moment_space.cell_type());
-  if (tdim == 1)
-    t[0] *= -1;
+
+  // FIXME: Should this check by tdim != 1?
   if (tdim == 2)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
-  return t;
+
+  if (tdim == 1)
+    xt::view(t, 0, xt::all(), xt::all()) *= -1.0;
+
+  return myconvert(t);
 }
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>

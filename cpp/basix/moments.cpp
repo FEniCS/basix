@@ -317,14 +317,13 @@ std::vector<Eigen::MatrixXd> moments::create_normal_moment_dof_transformations(
 std::vector<Eigen::MatrixXd> moments::create_tangent_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
-  xt::xtensor<double, 3> t
-      = create_dot_moment_dof_transformations_new(moment_space);
   const int tdim = cell::topological_dimension(moment_space.cell_type());
-
   // FIXME: Should this check by tdim != 1?
   if (tdim == 2)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
+  xt::xtensor<double, 3> t
+      = create_dot_moment_dof_transformations_new(moment_space);
   if (tdim == 1)
     xt::view(t, 0, xt::all(), xt::all()) *= -1.0;
 
@@ -575,60 +574,110 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
                                        cell::type celltype, int value_size,
                                        int q_deg)
 {
+  auto [points, matrix] = make_tangent_integral_moments_new(
+      moment_space, celltype, value_size, q_deg);
+
+  // TMP: Copy into Eigen
+  Eigen::ArrayXXd _points(points.shape()[0], points.shape()[1]);
+  Eigen::MatrixXd _matrix(matrix.shape()[0], matrix.shape()[1]);
+  for (std::size_t i = 0; i < points.shape()[0]; ++i)
+    for (std::size_t j = 0; j < points.shape()[1]; ++j)
+      _points(i, j) = points(i, j);
+  for (std::size_t i = 0; i < matrix.shape()[0]; ++i)
+    for (std::size_t j = 0; j < matrix.shape()[1]; ++j)
+      _matrix(i, j) = matrix(i, j);
+
+  return std::make_pair(_points, _matrix);
+}
+//----------------------------------------------------------------------------
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
+                                           cell::type celltype,
+                                           std::size_t value_size, int q_deg)
+{
   const cell::type sub_celltype = moment_space.cell_type();
-  const int sub_entity_dim = cell::topological_dimension(sub_celltype);
-  const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
-  const int tdim = cell::topological_dimension(celltype);
+  const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
+  const std::size_t sub_entity_count
+      = cell::sub_entity_count(celltype, sub_entity_dim);
+  const std::size_t tdim = cell::topological_dimension(celltype);
 
   if (sub_entity_dim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
-  auto [Qpts, Qwts]
-      = quadrature::make_quadrature("default", cell::type::interval, q_deg);
+  auto [Qpts, _Qwts]
+      = quadrature::make_quadrature_new("default", cell::type::interval, q_deg);
+  auto Qwts = xt::adapt(_Qwts);
+  if (Qpts.dimension() == 1)
+    Qpts = Qpts.reshape({Qpts.shape()[0], 1});
+
+  // TMP: Copy into Eigen array
+  Eigen::ArrayXXd _Qpts(Qpts.shape()[0], Qpts.shape()[1]);
+  for (std::size_t i = 0; i < Qpts.shape()[0]; ++i)
+    for (std::size_t j = 0; j < Qpts.shape()[1]; ++j)
+      _Qpts(i, j) = Qpts(i, j);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, _Qpts)[0];
+  std::array<std::size_t, 2> shape1
+      = {(std::size_t)_moment_space_at_Qpts.rows(),
+         (std::size_t)_moment_space_at_Qpts.cols()};
+  auto moment_space_at_Qpts = xt::adapt<xt::layout_type::column_major>(
+      _moment_space_at_Qpts.data(), _moment_space_at_Qpts.size(),
+      xt::no_ownership(), shape1);
 
-  Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
-  Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count,
-                         sub_entity_count * Qpts.rows() * value_size);
-  matrix.setZero();
-
-  int c = 0;
+  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
+  const std::array<std::size_t, 2> shape
+      = {moment_space_at_Qpts.shape()[1] * sub_entity_count,
+         sub_entity_count * Qpts.shape()[0] * value_size};
+  xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
+  // Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
+  // Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count,
+  //                        sub_entity_count * Qpts.rows() * value_size);
+  // matrix.setZero();
 
   // Iterate over sub entities
-  for (int i = 0; i < sub_entity_count; ++i)
+  int c = 0;
+  for (std::size_t i = 0; i < sub_entity_count; ++i)
   {
     xt::xtensor<double, 2> edge = cell::sub_entity_geometry(celltype, 1, i);
     Eigen::Map<
         Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
         _edge(edge.data(), edge.shape()[0], edge.shape()[1]);
 
-    Eigen::VectorXd tangent = _edge.row(1) - _edge.row(0);
+    auto tangent = xt::row(edge, 1) - xt::row(edge, 0);
+    // Eigen::VectorXd tangent = _edge.row(1) - _edge.row(0);
+
     // No need to normalise the tangent, as the size of this is equal to the
     // integral jacobian
 
     // Map quadrature points onto triangle edge
-    Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), tdim);
-    for (int j = 0; j < Qpts.rows(); ++j)
+    // Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), tdim);
+    for (std::size_t j = 0; j < Qpts.shape()[0]; ++j)
     {
-      points.row(i * Qpts.rows() + j)
-          = _edge.row(0) + Qpts(j, 0) * (_edge.row(1) - _edge.row(0));
+      xt::row(points, i * Qpts.shape()[0] + j)
+          = xt::row(edge, 0) + Qpts(j, 0) * tangent;
     }
 
     // Compute edge tangent integral moments
-    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    for (std::size_t j = 0; j < moment_space_at_Qpts.shape()[1]; ++j)
     {
-      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
-      for (int k = 0; k < value_size; ++k)
+      // Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
+      auto phi = xt::col(moment_space_at_Qpts, j);
+      for (std::size_t k = 0; k < value_size; ++k)
       {
-        Eigen::RowVectorXd data = phi * Qwts * tangent[k];
-        matrix.block(c, k * sub_entity_count * Qpts.rows() + i * Qpts.rows(), 1,
-                     Qpts.rows())
-            = data;
+        // Eigen::RowVectorXd data = phi * Qwts * tangent[k];
+        // auto data = phi * Qwts * tangent[k];
+        // matrix.block(c, k * sub_entity_count * Qpts.rows() + i * Qpts.rows(),
+        // 1,
+        //              Qpts.rows())
+        //     = data;
+        std::size_t offset
+            = k * sub_entity_count * Qpts.shape()[0] + i * Qpts.shape()[0];
+        xt::view(matrix, c, xt::range(offset, offset + Qpts.shape()[0]))
+            = phi * Qwts * tangent[k];
       }
       ++c;
     }
@@ -681,8 +730,8 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
     {
       Eigen::Vector2d tangent = _facet.row(1) - _facet.row(0);
       normal << -tangent(1), tangent(0);
-      // No need to normalise the normal, as the size of this is equal to the
-      // integral jacobian
+      // No need to normalise the normal, as the size of this is equal to
+      // the integral jacobian
 
       // Map quadrature points onto facet
       for (int j = 0; j < Qpts.rows(); ++j)
@@ -697,8 +746,8 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
       Eigen::Vector3d t1 = _facet.row(2) - _facet.row(0);
       normal = t0.cross(t1);
 
-      // No need to normalise the normal, as the size of this is equal to the
-      // integral jacobian
+      // No need to normalise the normal, as the size of this is equal to
+      // the integral jacobian
 
       // Map quadrature points onto facet
       for (int j = 0; j < Qpts.rows(); ++j)

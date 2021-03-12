@@ -336,6 +336,27 @@ moments::make_integral_moments(const FiniteElement& moment_space,
                                cell::type celltype, std::size_t value_size,
                                int q_deg)
 {
+  auto [points, matrix]
+      = make_integral_moments_new(moment_space, celltype, value_size, q_deg);
+
+  // TMP: Copy into Eigen
+  Eigen::ArrayXXd _points(points.shape()[0], points.shape()[1]);
+  Eigen::MatrixXd _matrix(matrix.shape()[0], matrix.shape()[1]);
+  for (std::size_t i = 0; i < points.shape()[0]; ++i)
+    for (std::size_t j = 0; j < points.shape()[1]; ++j)
+      _points(i, j) = points(i, j);
+  for (std::size_t i = 0; i < matrix.shape()[0]; ++i)
+    for (std::size_t j = 0; j < matrix.shape()[1]; ++j)
+      _matrix(i, j) = matrix(i, j);
+
+  return std::make_pair(_points, _matrix);
+}
+//----------------------------------------------------------------------------
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+moments::make_integral_moments_new(const FiniteElement& moment_space,
+                                   cell::type celltype, std::size_t value_size,
+                                   int q_deg)
+{
   const cell::type sub_celltype = moment_space.cell_type();
   const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
   if (sub_entity_dim == 0)
@@ -429,6 +450,17 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     }
   }
 
+  return {points, matrix};
+}
+//----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+moments::make_dot_integral_moments(const FiniteElement& moment_space,
+                                   cell::type celltype, int value_size,
+                                   int q_deg)
+{
+  auto [points, matrix] = make_dot_integral_moments_new(moment_space, celltype,
+                                                        value_size, q_deg);
+
   // TMP: Copy into Eigen
   Eigen::ArrayXXd _points(points.shape()[0], points.shape()[1]);
   Eigen::MatrixXd _matrix(matrix.shape()[0], matrix.shape()[1]);
@@ -439,39 +471,72 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     for (std::size_t j = 0; j < matrix.shape()[1]; ++j)
       _matrix(i, j) = matrix(i, j);
 
+  // std::cout << std::endl << _points << std::endl;
+  // std::cout << std::endl << _matrix << std::endl;
+
   return std::make_pair(_points, _matrix);
 }
 //----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-moments::make_dot_integral_moments(const FiniteElement& moment_space,
-                                   cell::type celltype, int value_size,
-                                   int q_deg)
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+moments::make_dot_integral_moments_new(const FiniteElement& moment_space,
+                                       cell::type celltype,
+                                       std::size_t value_size, int q_deg)
 {
-  const cell::type sub_celltype = moment_space.cell_type();
-  const int sub_entity_dim = cell::topological_dimension(sub_celltype);
-  const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
-  const int tdim = cell::topological_dimension(celltype);
+  std::cout << "Step 0" << std::endl;
 
-  auto [Qpts, Qwts]
-      = quadrature::make_quadrature("default", sub_celltype, q_deg);
+  const cell::type sub_celltype = moment_space.cell_type();
+  const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
+  const std::size_t sub_entity_count
+      = cell::sub_entity_count(celltype, sub_entity_dim);
+  const std::size_t tdim = cell::topological_dimension(celltype);
+
+  std::cout << "Step 1" << std::endl;
+
+  auto [Qpts, _Qwts]
+      = quadrature::make_quadrature_new("default", sub_celltype, q_deg);
+  auto Qwts = xt::adapt(_Qwts);
+  if (Qpts.dimension() == 1)
+    Qpts = Qpts.reshape({Qpts.shape()[0], 1});
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
 
+  std::cout << "Step 2" << std::endl;
+
+  // TMP: Copy into Eigen array
+  Eigen::ArrayXXd _Qpts(Qpts.shape()[0], Qpts.shape()[1]);
+  for (std::size_t i = 0; i < Qpts.shape()[0]; ++i)
+    for (std::size_t j = 0; j < Qpts.shape()[1]; ++j)
+      _Qpts(i, j) = Qpts(i, j);
+
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
-  const int moment_space_size = moment_space_at_Qpts.cols() / sub_entity_dim;
+  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, _Qpts)[0];
+  std::array<std::size_t, 2> shape1
+      = {(std::size_t)_moment_space_at_Qpts.rows(),
+         (std::size_t)_moment_space_at_Qpts.cols()};
+  auto moment_space_at_Qpts = xt::adapt<xt::layout_type::column_major>(
+      _moment_space_at_Qpts.data(), _moment_space_at_Qpts.size(),
+      xt::no_ownership(), shape1);
 
-  Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
-  Eigen::MatrixXd matrix
-      = Eigen::MatrixXd::Zero(moment_space_size * sub_entity_count,
-                              sub_entity_count * Qpts.rows() * value_size);
+  const std::size_t moment_space_size
+      = moment_space_at_Qpts.shape()[1] / sub_entity_dim;
 
-  std::vector<int> axis_pts = axis_points(celltype);
+  std::cout << "Step 3" << std::endl;
 
-  int c = 0;
+  // Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
+  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
+  // Eigen::MatrixXd matrix
+  //     = Eigen::MatrixXd::Zero(moment_space_size * sub_entity_count,
+  //                             sub_entity_count * Qpts.rows() * value_size);
+  const std::array<std::size_t, 2> shape
+      = {moment_space_size * sub_entity_count,
+         sub_entity_count * Qpts.shape()[0] * value_size};
+  xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
+
   // Iterate over sub entities
-  for (int i = 0; i < sub_entity_count; ++i)
+  int c = 0;
+  std::vector<int> axis_pts = axis_points(celltype);
+  for (std::size_t i = 0; i < sub_entity_count; ++i)
   {
     xt::xtensor<double, 2> entity
         = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
@@ -480,40 +545,76 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
         _entity(entity.data(), entity.shape()[0], entity.shape()[1]);
 
     // Parametrise entity coordinates
-    Eigen::ArrayXXd axes(sub_entity_dim, tdim);
-    for (int j = 0; j < sub_entity_dim; ++j)
-      axes.row(j) = _entity.row(axis_pts[j]) - _entity.row(0);
+    // Eigen::ArrayXXd axes(sub_entity_dim, tdim);
+    // for (int j = 0; j < sub_entity_dim; ++j)
+    //   axes.row(j) = _entity.row(axis_pts[j]) - _entity.row(0);
+    xt::xtensor<double, 2> axes({sub_entity_dim, tdim});
+    for (std::size_t j = 0; j < sub_entity_dim; ++j)
+    {
+      xt::view(axes, j, xt::all()) = xt::view(entity, axis_pts[j], xt::all())
+                                     - xt::view(entity, 0, xt::all());
+    }
+
+    std::cout << "Step 4" << std::endl;
 
     // Map quadrature points onto entity
-    points.block(Qpts.rows() * i, 0, Qpts.rows(), tdim)
-        = _entity.row(0).replicate(Qpts.rows(), 1)
-          + (Qpts.matrix() * axes.matrix()).array();
+    // points.block(Qpts.rows() * i, 0, Qpts.rows(), tdim)
+    //     = _entity.row(0).replicate(Qpts.rows(), 1)
+    //       + (Qpts.matrix() * axes.matrix()).array();
+
+    // See
+    // https://github.com/xtensor-stack/xtensor/issues/1922#issuecomment-586317746
+    // for why xt::newaxis() is required
+    auto points_view = xt::view(
+        points, xt::range(i * Qpts.shape()[0], (i + 1) * Qpts.shape()[0]),
+        xt::range(0, tdim));
+    auto p = xt::tile(xt::view(entity, xt::newaxis(), 0), Qpts.shape()[0]);
+    points_view = p + xt::linalg::dot(Qpts, axes);
 
     // Compute entity integral moments
-    for (int j = 0; j < moment_space_size; ++j)
+    for (std::size_t j = 0; j < moment_space_size; ++j)
     {
-      for (int k = 0; k < value_size; ++k)
+      for (std::size_t k = 0; k < value_size; ++k)
       {
-        Eigen::RowVectorXd q = Eigen::VectorXd::Zero(Qwts.rows());
-        for (int d = 0; d < sub_entity_dim; ++d)
+        auto matrix_view = xt::view(
+            matrix, c,
+            xt::range((k * sub_entity_count + i) * Qpts.shape()[0],
+                      (k * sub_entity_count + i + 1) * Qpts.shape()[0]));
+        matrix_view = 0.0;
+        // Eigen::RowVectorXd q = Eigen::VectorXd::Zero(Qwts.rows());
+        xt::xtensor<double, 1> q = xt::zeros<double>({Qwts.shape()[0]});
+        for (std::size_t d = 0; d < sub_entity_dim; ++d)
         {
-          Eigen::ArrayXd phi
-              = moment_space_at_Qpts.col(d * moment_space_size + j);
-          Eigen::RowVectorXd axis = axes.row(d);
+          // Eigen::ArrayXd phi
+          //     = moment_space_at_Qpts.col(d * moment_space_size + j);
+          // Eigen::RowVectorXd axis = axes.row(d);
+          auto phi = xt::col(moment_space_at_Qpts, d * moment_space_size + j);
+          // Eigen::RowVectorXd axis = axes.row(d);
+          auto axis = xt::row(axes, d);
+
           // FIXME: This assumed that the moment space has a certain mapping
           // type
-          Eigen::RowVectorXd qpart = phi * Qwts * axis(k);
-          q += qpart;
+          // Eigen::RowVectorXd qpart = phi * Qwts * axis(k);
+          // auto qpart = xt::linalg::dot(phi, Qwts) * axis[k];
+          auto qpart = phi * Qwts * axis[k];
+          matrix_view += qpart;
+          // q += qpart;
         }
-        matrix.block(c, (k * sub_entity_count + i) * Qpts.rows(), 1,
-                     Qpts.rows())
-            = q;
+        // matrix.block(c, (k * sub_entity_count + i) * Qpts.rows(), 1,
+        //              Qpts.rows())
+        //     = q;
+        // xt::view(matrix, c,
+        //          xt::range((k * sub_entity_count + i) * Qpts.shape()[0],
+        //                    (k * sub_entity_count + i + 1) * Qpts.shape()[0]))
+        //     = q;
       }
       ++c;
     }
   }
 
-  return std::make_pair(points, matrix);
+  std::cout << "Step 5" << std::endl;
+
+  return {points, matrix};
 }
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>

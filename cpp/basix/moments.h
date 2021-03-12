@@ -28,8 +28,19 @@ namespace moments
 /// taken against
 /// @return A list of dof transformations
 std::vector<Eigen::MatrixXd>
-// xt::xtensor<double, 3>
 create_moment_dof_transformations(const FiniteElement& moment_space);
+
+/// Create the dof transformations for an integral moment.
+///
+/// If the moment space is an interval, this returns one matrix representing the
+/// reversal of the interval. If the moment space is a face, this returns two
+/// matrices: one representing a rotation, the other a reflection
+///
+/// @param[in] moment_space The finite element space that the integral moment is
+/// taken against
+/// @return A list of dof transformations
+xt::xtensor<double, 3>
+create_dot_moment_dof_transformations_new(const FiniteElement& moment_space);
 
 /// Create the dof transformations for a dot integral moment.
 ///

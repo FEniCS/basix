@@ -45,10 +45,32 @@ std::vector<int> axis_points(const cell::type celltype)
   }
 }
 //----------------------------------------------------------------------------
+std::vector<Eigen::MatrixXd> myconvert(xt::xtensor<double, 3> M)
+{
+  std::vector<Eigen::MatrixXd> outold;
+  for (std::size_t i = 0; i < M.shape()[0]; ++i)
+  {
+    Eigen::MatrixXd mat(M.shape()[1], M.shape()[2]);
+    for (std::size_t j = 0; j < M.shape()[1]; ++j)
+    {
+      for (std::size_t k = 0; k < M.shape()[2]; ++k)
+        mat(j, k) = M(i, j, k);
+    }
+    outold.push_back(mat);
+  }
+  return outold;
+}
+//----------------------------------------------------------------------------
 } // namespace
 
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
+    const FiniteElement& moment_space)
+{
+  return myconvert(create_dot_moment_dof_transformations_new(moment_space));
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations_new(
     const FiniteElement& moment_space)
 {
   cell::type celltype = moment_space.cell_type();
@@ -234,65 +256,51 @@ std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
     }
   }
 
-  // TMP: copy into Eigen data structure
-  std::vector<Eigen::MatrixXd> outold;
-  for (std::size_t i = 0; i < out.shape()[0]; ++i)
-  {
-    Eigen::MatrixXd mat(out.shape()[1], out.shape()[2]);
-    for (std::size_t j = 0; j < out.shape()[1]; ++j)
-    {
-      for (std::size_t k = 0; k < out.shape()[2]; ++k)
-        mat(j, k) = out(i, j, k);
-    }
-    outold.push_back(mat);
-  }
-
-  return outold;
+  return out;
 }
 //----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd>
 moments::create_moment_dof_transformations(const FiniteElement& moment_space)
 {
-  std::vector<Eigen::MatrixXd> t
-      = create_dot_moment_dof_transformations(moment_space);
+  const xt::xtensor<double, 3> t
+      = create_dot_moment_dof_transformations_new(moment_space);
   if (moment_space.cell_type() == cell::type::interval)
-    return t;
+    return myconvert(t);
 
-  Eigen::Matrix2d rot;
-  Eigen::Matrix2d ref;
+  xt::xtensor_fixed<double, xt::xshape<2, 2>> rot, ref;
   if (moment_space.cell_type() == cell::type::triangle)
   {
-    rot << -1, -1, 1, 0;
-    ref << 0, 1, 1, 0;
+    rot = {{-1, -1}, {1, 0}};
+    ref = {{0, 1}, {1, 0}};
   }
   else if (moment_space.cell_type() == cell::type::quadrilateral)
   {
     // TODO: check that these are correct
-    rot << 0, -1, 1, 0;
-    ref << 0, 1, 1, 0;
+    rot = {{0, -1}, {1, 0}};
+    ref = {{0, 1}, {1, 0}};
   }
 
-  const int scalar_dofs = t[0].rows();
-
-  std::vector<Eigen::MatrixXd> out;
+  const std::size_t scalar_dofs = t.shape()[1];
+  xt::xtensor<double, 3> M({2, 2 * scalar_dofs, 2 * scalar_dofs});
+  for (std::size_t i = 0; i < scalar_dofs; ++i)
   {
-    Eigen::MatrixXd M(scalar_dofs * 2, scalar_dofs * 2);
-    for (int i = 0; i < scalar_dofs; ++i)
-      for (int j = 0; j < scalar_dofs; ++j)
-        M.block(2 * i, 2 * j, 2, 2) = t[0](i, j) * rot;
-
-    out.push_back(M);
+    for (std::size_t j = 0; j < scalar_dofs; ++j)
+    {
+      xt::view(M, 0, xt::range(2 * i, 2 * i + 2), xt::range(2 * j, 2 * j + 2))
+          = t(0, i, j) * rot;
+    }
   }
+
+  for (std::size_t i = 0; i < scalar_dofs; ++i)
   {
-    Eigen::MatrixXd M(scalar_dofs * 2, scalar_dofs * 2);
-    for (int i = 0; i < scalar_dofs; ++i)
-      for (int j = 0; j < scalar_dofs; ++j)
-        M.block(2 * i, 2 * j, 2, 2) = t[1](i, j) * ref;
-
-    out.push_back(M);
+    for (std::size_t j = 0; j < scalar_dofs; ++j)
+    {
+      xt::view(M, 1, xt::range(2 * i, 2 * i + 2), xt::range(2 * j, 2 * j + 2))
+          = t(1, i, j) * ref;
+    }
   }
 
-  return out;
+  return myconvert(M);
 }
 //----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> moments::create_normal_moment_dof_transformations(

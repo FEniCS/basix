@@ -13,6 +13,8 @@
 #include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
+#include <xtensor/xtensor.hpp>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -156,7 +158,9 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
+  {
     throw std::runtime_error("Invalid celltype");
+  }
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -169,9 +173,8 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   Eigen::ArrayXXd points_1d(0, tdim);
   Eigen::MatrixXd matrix_1d(0, 0);
 
-  std::vector<Eigen::MatrixXd> edge_transforms;
-  std::vector<Eigen::MatrixXd> face_transforms;
-
+  xt::xtensor<double, 3> edge_transforms;
+  xt::xtensor<double, 3> face_transforms;
   if (degree >= 2)
   {
     FiniteElement moment_space = create_dpc(cell::type::interval, degree - 2);
@@ -228,6 +231,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
 
   for (int i = 0; i < vertex_count; ++i)
     interpolation_matrix(i, i) = 1;
+
   interpolation_matrix.block(vertex_count, vertex_count, matrix_1d.rows(),
                              matrix_1d.cols())
       = matrix_1d;
@@ -260,40 +264,51 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     for (std::size_t j = 0; j < topology[3].size(); ++j)
       entity_dofs[3].push_back(matrix_3d.rows() / topology[3].size());
 
-  const int ndofs = interpolation_matrix.rows();
-
-  int transform_count = 0;
+  const std::size_t ndofs = interpolation_matrix.rows();
+  std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_transformations(
-      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  xt::xtensor<double, 3> base_transformations
+      = xt::zeros<double>({transform_count, ndofs, ndofs});
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
   if (tdim >= 2 and degree >= 2)
   {
     const int edge_dofs = degree - 1;
     const int num_vertices = topology[0].size();
-    const int num_edges = topology[1].size();
-    for (int edge = 0; edge < num_edges; ++edge)
+    const std::size_t  num_edges = topology[1].size();
+    for (std::size_t  edge = 0; edge < num_edges; ++edge)
     {
-      const int start = num_vertices + edge_dofs * edge;
-      base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
-          = edge_transforms[0];
+      const std::size_t start = num_vertices + edge_dofs * edge;
+      auto range = xt::range(start, start + edge_dofs);
+      xt::view(base_transformations, edge, range, range)
+          = xt::view(edge_transforms, 0, xt::all(), xt::all());
     }
     if (tdim == 3 and degree >= 4)
     {
-      const int face_dofs = face_transforms[0].rows();
-      const int num_faces = topology[2].size();
-      for (int face = 0; face < num_faces; ++face)
+      const std::size_t face_dofs = face_transforms.shape()[1];
+      const std::size_t num_faces = topology[2].size();
+      for (std::size_t face = 0; face < num_faces; ++face)
       {
-        const int start
+        const std::size_t start
             = num_vertices + num_edges * edge_dofs + face * face_dofs;
-        base_transformations[num_edges + 2 * face].block(start, start,
-                                                         face_dofs, face_dofs)
-            = face_transforms[0];
-        base_transformations[num_edges + 2 * face + 1].block(
-            start, start, face_dofs, face_dofs)
-            = face_transforms[1];
+        auto range = xt::range(start, start + face_dofs);
+        xt::view(base_transformations, num_edges + 2 * face, range, range)
+            = xt::view(face_transforms, 0, xt::all(), xt::all());
+        xt::view(base_transformations, num_edges + 2 * face + 1, range, range)
+            = xt::view(face_transforms, 1, xt::all(), xt::all());
+        // base_transformations[num_edges + 2 * face].block(start, start,
+        //                                                  face_dofs,
+        //                                                  face_dofs)
+        //     = face_transforms[0];
+        // base_transformations[num_edges + 2 * face + 1].block(
+        //     start, start, face_dofs, face_dofs)
+        //     = face_transforms[1];
       }
     }
   }

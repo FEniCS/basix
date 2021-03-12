@@ -203,6 +203,15 @@ public:
                 const Eigen::ArrayXXd& points, const Eigen::MatrixXd M = {},
                 mapping::type map_type = mapping::type::identity);
 
+  // TOOD
+  FiniteElement(element::family family, cell::type cell_type, int degree,
+                const std::vector<int>& value_shape,
+                const Eigen::ArrayXXd& coeffs,
+                const std::vector<std::vector<int>>& entity_dofs,
+                const xt::xtensor<double, 3>& base_transformations,
+                const Eigen::ArrayXXd& points, const Eigen::MatrixXd M = {},
+                mapping::type map_type = mapping::type::identity);
+
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
 

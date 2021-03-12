@@ -27,16 +27,8 @@ namespace moments
 /// @param[in] moment_space The finite element space that the integral moment is
 /// taken against
 /// @return A list of dof transformations
-std::vector<Eigen::MatrixXd>
+xt::xtensor<double, 3>
 create_moment_dof_transformations(const FiniteElement& moment_space);
-
-/// Create the dof transformations for a dot integral moment.
-///
-/// @param[in] moment_space The finite element space that the integral moment is
-/// taken against
-/// @return A list of dof transformations
-std::vector<Eigen::MatrixXd>
-create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 
 /// Create the dof transformations for an integral moment.
 ///
@@ -48,7 +40,7 @@ create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 /// taken against
 /// @return A list of dof transformations
 xt::xtensor<double, 3>
-create_dot_moment_dof_transformations_new(const FiniteElement& moment_space);
+create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 
 /// Create the dof transformations for a normal integral moment.
 ///
@@ -63,7 +55,7 @@ create_normal_moment_dof_transformations(const FiniteElement& moment_space);
 /// @param[in] moment_space The finite element space that the integral moment is
 /// taken against
 /// @return A list of dof transformations
-std::vector<Eigen::MatrixXd>
+xt::xtensor<double, 3>
 create_tangent_moment_dof_transformations(const FiniteElement& moment_space);
 
 /// Make interpolation points and weights for simple integral moments

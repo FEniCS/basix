@@ -60,13 +60,7 @@ std::vector<Eigen::MatrixXd> myconvert(xt::xtensor<double, 3> M)
 } // namespace
 
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> moments::create_dot_moment_dof_transformations(
-    const FiniteElement& moment_space)
-{
-  return myconvert(create_dot_moment_dof_transformations_new(moment_space));
-}
-//-----------------------------------------------------------------------------
-xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations_new(
+xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
   cell::type celltype = moment_space.cell_type();
@@ -264,11 +258,11 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations_new(
   return out;
 }
 //----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd>
+xt::xtensor<double, 3>
 moments::create_moment_dof_transformations(const FiniteElement& moment_space)
 {
   const xt::xtensor<double, 3> t
-      = create_dot_moment_dof_transformations_new(moment_space);
+      = create_dot_moment_dof_transformations(moment_space);
 
   xt::xtensor_fixed<double, xt::xshape<2, 2>> rot, ref;
 
@@ -276,7 +270,7 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   switch (celltype)
   {
   case cell::type::interval:
-    return myconvert(t);
+    return t;
   case cell::type::triangle:
     rot = {{-1, -1}, {1, 0}};
     ref = {{0, 1}, {1, 0}};
@@ -310,21 +304,21 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
     }
   }
 
-  return myconvert(M);
+  return M;
 }
 //----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> moments::create_normal_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
   xt::xtensor<double, 3> t
-      = create_dot_moment_dof_transformations_new(moment_space);
+      = create_dot_moment_dof_transformations(moment_space);
   const int tdim = cell::topological_dimension(moment_space.cell_type());
   if (tdim == 1 or tdim == 2)
     xt::view(t, tdim - 1, xt::all(), xt::all()) *= -1.0;
   return myconvert(t);
 }
 //----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> moments::create_tangent_moment_dof_transformations(
+xt::xtensor<double, 3> moments::create_tangent_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
   const int tdim = cell::topological_dimension(moment_space.cell_type());
@@ -333,11 +327,11 @@ std::vector<Eigen::MatrixXd> moments::create_tangent_moment_dof_transformations(
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
   xt::xtensor<double, 3> t
-      = create_dot_moment_dof_transformations_new(moment_space);
+      = create_dot_moment_dof_transformations(moment_space);
   if (tdim == 1)
     xt::view(t, 0, xt::all(), xt::all()) *= -1.0;
 
-  return myconvert(t);
+  return t;
 }
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>

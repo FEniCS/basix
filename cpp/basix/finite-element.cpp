@@ -214,6 +214,40 @@ FiniteElement::FiniteElement(
   _map_push_forward = mapping::get_forward_map(map_type);
 }
 //-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(element::family family, cell::type cell_type,
+                             int degree, const std::vector<int>& value_shape,
+                             const Eigen::ArrayXXd& coeffs,
+                             const std::vector<std::vector<int>>& entity_dofs,
+                             const xt::xtensor<double, 3>& base_transformations,
+                             const Eigen::ArrayXXd& points,
+                             const Eigen::MatrixXd M, mapping::type map_type)
+    : _cell_type(cell_type), _family(family), _degree(degree),
+      _value_shape(value_shape), _map_type(map_type), _coeffs(coeffs),
+      _entity_dofs(entity_dofs), _points(points), _matM(M)
+{
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  {
+    Eigen::MatrixXd A(base_transformations.shape()[1],
+                      base_transformations.shape()[2]);
+    for (std::size_t j = 0; j < base_transformations.shape()[1]; ++j)
+      for (std::size_t k = 0; k < base_transformations.shape()[2]; ++k)
+        A(j, k) = base_transformations(i, j, k);
+    _base_transformations.push_back(A);
+  }
+
+  // Check that entity dofs add up to total number of dofs
+  int sum = 0;
+  for (const std::vector<int>& q : entity_dofs)
+    sum = std::accumulate(q.begin(), q.end(), sum);
+
+  if (sum != _coeffs.rows())
+  {
+    throw std::runtime_error(
+        "Number of entity dofs does not match total number of dofs");
+  }
+  _map_push_forward = mapping::get_forward_map(map_type);
+}
+//-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }

@@ -13,6 +13,9 @@
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>
+#include <xtensor/xbuilder.hpp>
+#include <xtensor/xtensor.hpp>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -87,21 +90,27 @@ create_nedelec_2d_interpolation(int degree)
                                     matrix_2d, {}, 2, 2);
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> create_nedelec_2d_base_transforms(int degree)
+xt::xtensor<double, 3> create_nedelec_2d_base_transforms(int degree)
 {
-  const int ndofs = degree * (degree + 2);
-  std::vector<Eigen::MatrixXd> base_transformations(
-      3, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  const std::size_t ndofs = degree * (degree + 2);
+  xt::xtensor<double, 3> base_transformations
+      = xt::zeros<double>({static_cast<std::size_t>(3), ndofs, ndofs});
+  for (std::size_t i = 0; i < 3; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
-  std::vector<Eigen::MatrixXd> edge_transforms
+  xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree - 1));
-  const int edge_dofs = edge_transforms[0].rows();
-  for (int edge = 0; edge < 3; ++edge)
+  const std::size_t edge_dofs = edge_transforms.shape()[1];
+  for (std::size_t edge = 0; edge < 3; ++edge)
   {
-    const int start = edge_dofs * edge;
-    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
-        = edge_transforms[0];
+    const std::size_t start = edge_dofs * edge;
+    auto range = xt::range(start, start + edge_dofs);
+    xt::view(base_transformations, edge, range, range)
+        = xt::view(edge_transforms, 0, xt::all(), xt::all());
   }
 
   return base_transformations;
@@ -220,46 +229,55 @@ create_nedelec_3d_interpolation(int degree)
                                     matrix_2d, matrix_3d, 3, 3);
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> create_nedelec_3d_base_transforms(int degree)
+xt::xtensor<double, 3> create_nedelec_3d_base_transforms(int degree)
 {
-  const int ndofs = 6 * degree + 4 * degree * (degree - 1)
-                    + (degree - 2) * (degree - 1) * degree / 2;
-  std::vector<Eigen::MatrixXd> base_transformations(
-      14, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  const std::size_t ndofs = 6 * degree + 4 * degree * (degree - 1)
+                            + (degree - 2) * (degree - 1) * degree / 2;
+  xt::xtensor<double, 3> base_transformations
+      = xt::zeros<double>({static_cast<std::size_t>(14), ndofs, ndofs});
+  for (std::size_t i = 0; i < 14; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
-  std::vector<Eigen::MatrixXd> edge_transforms
+  // std::vector<Eigen::MatrixXd> base_transformations(
+  //     14, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
+  xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree - 1));
-  const int edge_dofs = edge_transforms[0].rows();
-  for (int edge = 0; edge < 6; ++edge)
+  const std::size_t edge_dofs = edge_transforms.shape()[1];
+  for (std::size_t edge = 0; edge < 6; ++edge)
   {
-    const int start = edge_dofs * edge;
-    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
-        = edge_transforms[0];
+    const std::size_t start = edge_dofs * edge;
+    auto range = xt::range(start, start + edge_dofs);
+    xt::view(base_transformations, edge, range, range)
+        = xt::view(edge_transforms, 0, xt::all(), xt::all());
   }
 
   // Faces
   if (degree > 1)
   {
-    std::vector<Eigen::MatrixXd> face_transforms
+    xt::xtensor<double, 3> face_transforms
         = moments::create_moment_dof_transformations(
             create_dlagrange(cell::type::triangle, degree - 2));
 
-    const int face_dofs = face_transforms[0].rows();
-    for (int face = 0; face < 4; ++face)
+    // const int face_dofs = face_transforms[0].rows();
+    const std::size_t face_dofs = face_transforms.shape()[1];
+    for (std::size_t face = 0; face < 4; ++face)
     {
-      const int start = edge_dofs * 6 + face_dofs * face;
-      base_transformations[6 + 2 * face].block(start, start, face_dofs,
-                                               face_dofs)
-          = face_transforms[0];
-      base_transformations[6 + 2 * face + 1].block(start, start, face_dofs,
-                                                   face_dofs)
-          = face_transforms[1];
+      const std::size_t start = edge_dofs * 6 + face_dofs * face;
+      auto range = xt::range(start, start + face_dofs);
+      xt::view(base_transformations, 6 + 2 * face, range, range)
+          = xt::view(face_transforms, 0, xt::all(), xt::all());
+      xt::view(base_transformations, 6 + 2 * face + 1, range, range)
+          = xt::view(face_transforms, 1, xt::all(), xt::all());
     }
   }
+
   return base_transformations;
 }
-
 //-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 create_nedelec2_2d_interpolation(int degree)
@@ -286,21 +304,27 @@ create_nedelec2_2d_interpolation(int degree)
                                     matrix_2d, {}, 2, 2);
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> create_nedelec2_2d_base_transformations(int degree)
+xt::xtensor<double, 3> create_nedelec2_2d_base_transformations(int degree)
 {
-  const int ndofs = (degree + 1) * (degree + 2);
-  std::vector<Eigen::MatrixXd> base_transformations(
-      3, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  const std::size_t ndofs = (degree + 1) * (degree + 2);
+  xt::xtensor<double, 3> base_transformations
+      = xt::zeros<double>({static_cast<std::size_t>(3), ndofs, ndofs});
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
-  std::vector<Eigen::MatrixXd> edge_transforms
+  xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree));
-  const int edge_dofs = edge_transforms[0].rows();
-  for (int edge = 0; edge < 3; ++edge)
+  const std::size_t edge_dofs = edge_transforms.shape()[1];
+  for (std::size_t edge = 0; edge < 3; ++edge)
   {
-    const int start = edge_dofs * edge;
-    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
-        = edge_transforms[0];
+    const std::size_t start = edge_dofs * edge;
+    auto range = xt::range(start, start + edge_dofs);
+    xt::view(base_transformations, edge, range, range)
+        = xt::view(edge_transforms, 0, xt::all(), xt::all());
   }
 
   return base_transformations;
@@ -344,39 +368,44 @@ create_nedelec2_3d_interpolation(int degree)
                                     matrix_2d, matrix_3d, 3, 3);
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> create_nedelec2_3d_base_transformations(int degree)
+xt::xtensor<double, 3> create_nedelec2_3d_base_transformations(int degree)
 {
-  const int ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 2;
-  std::vector<Eigen::MatrixXd> base_transformations(
-      14, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  const std::size_t ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 2;
+  xt::xtensor<double, 3> base_transformations
+      = xt::zeros<double>({static_cast<std::size_t>(14), ndofs, ndofs});
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
-  std::vector<Eigen::MatrixXd> edge_transforms
+  xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree));
-  const int edge_dofs = edge_transforms[0].rows();
-  for (int edge = 0; edge < 6; ++edge)
+  const std::size_t edge_dofs = edge_transforms.shape()[1];
+  for (std::size_t edge = 0; edge < 6; ++edge)
   {
-    const int start = edge_dofs * edge;
-    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
-        = edge_transforms[0];
+    const std::size_t start = edge_dofs * edge;
+    auto range = xt::range(start, start + edge_dofs);
+    xt::view(base_transformations, edge, range, range)
+        = xt::view(edge_transforms, 0, xt::all(), xt::all());
   }
 
   // Faces
   if (degree > 1)
   {
-    std::vector<Eigen::MatrixXd> face_transforms
+    xt::xtensor<double, 3> face_transforms
         = moments::create_dot_moment_dof_transformations(
             create_rt(cell::type::triangle, degree - 1));
-    const int face_dofs = face_transforms[0].rows();
-    for (int face = 0; face < 4; ++face)
+    const std::size_t face_dofs = face_transforms.shape()[1];
+    for (std::size_t face = 0; face < 4; ++face)
     {
-      const int start = edge_dofs * 6 + face_dofs * face;
-      base_transformations[6 + 2 * face].block(start, start, face_dofs,
-                                               face_dofs)
-          = face_transforms[0];
-      base_transformations[6 + 2 * face + 1].block(start, start, face_dofs,
-                                                   face_dofs)
-          = face_transforms[1];
+      const std::size_t start = edge_dofs * 6 + face_dofs * face;
+      auto range = xt::range(start, start + face_dofs);
+      xt::view(base_transformations, 6 + 2 * face, range, range)
+          = xt::view(face_transforms, 0, xt::all(), xt::all());
+      xt::view(base_transformations, 6 + 2 * face + 1, range, range)
+          = xt::view(face_transforms, 1, xt::all(), xt::all());
     }
   }
 
@@ -391,7 +420,7 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   Eigen::MatrixXd wcoeffs;
   Eigen::ArrayXXd points;
   Eigen::MatrixXd interp_matrix;
-  std::vector<Eigen::MatrixXd> transforms;
+  xt::xtensor<double, 3> transforms;
   std::vector<Eigen::MatrixXd> directions;
   if (celltype == cell::type::triangle)
   {
@@ -439,8 +468,7 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
 
   Eigen::ArrayXXd points;
   Eigen::MatrixXd interp_matrix;
-  std::vector<Eigen::MatrixXd> base_transformations;
-
+  xt::xtensor<double, 3> base_transformations;
   if (celltype == cell::type::triangle)
   {
     std::tie(points, interp_matrix) = create_nedelec2_2d_interpolation(degree);
@@ -454,8 +482,8 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
 
-  // Nedelec(2nd kind) has (d+1) dofs on each edge, (d+1)(d-1) on each face
-  // and (d-2)(d-1)(d+1)/2 on the interior in 3D
+  // Nedelec(2nd kind) has (d + 1) dofs on each edge, (d + 1)(d - 1) on
+  // each face and (d - 2)(d - 1)(d + 1)/2 on the interior in 3D
   std::vector<std::vector<int>> entity_dofs(topology.size());
   entity_dofs[0].resize(topology[0].size(), 0);
   entity_dofs[1].resize(topology[1].size(), degree + 1);

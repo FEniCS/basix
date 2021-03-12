@@ -13,6 +13,9 @@
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>
+#include <xtensor/xbuilder.hpp>
+#include <xtensor/xtensor.hpp>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -48,7 +51,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   const int facet_dofs = polyset::dim(facettype, degree - 1);
   const int internal_dofs = tdim == 2 ? 2 * degree * (degree - 1)
                                       : 3 * degree * degree * (degree - 1);
-  const int ndofs = facet_count * facet_dofs + internal_dofs;
+  const std::size_t ndofs = facet_count * facet_dofs + internal_dofs;
 
   // Create coefficients for order (degree-1) vector polynomials
   Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
@@ -215,8 +218,8 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   const int volume_count = tdim == 2 ? 0 : 1;
   const int volume_dofs = 3 * degree * (degree - 1) * (degree - 1);
 
-  const int ndofs = edge_count * edge_dofs + face_count * face_dofs
-                    + volume_count * volume_dofs;
+  const std::size_t ndofs = edge_count * edge_dofs + face_count * face_dofs
+                            + volume_count * volume_dofs;
 
   // Create coefficients for order (degree-1) vector polynomials
   Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
@@ -312,7 +315,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
       = create_dlagrange(cell::type::interval, degree - 1);
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, quad_deg);
-  std::vector<Eigen::MatrixXd> edge_transforms
+  xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
   Eigen::ArrayXXd points_2d(0, tdim);
@@ -320,7 +323,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   Eigen::ArrayXXd points_3d(0, tdim);
   Eigen::MatrixXd matrix_3d(0, 0);
 
-  std::vector<Eigen::MatrixXd> face_transforms;
+  xt::xtensor<double, 3> face_transforms;
   // Add integral moments on interior
   if (degree > 1)
   {
@@ -353,31 +356,39 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  int transform_count = 0;
+  std::size_t transform_count = 0;
   for (int i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_transformations(
-      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  // std::vector<Eigen::MatrixXd> base_transformations(
+  //     transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  xt::xtensor<double, 3> base_transformations
+      = xt::zeros<double>({transform_count, ndofs, ndofs});
+  for (std::size_t i = 0; i < transform_count; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
   for (int edge = 0; edge < edge_count; ++edge)
   {
-    const int start = edge_dofs * edge;
-    base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
-        = edge_transforms[0];
+    const std::size_t start = edge_dofs * edge;
+    auto range = xt::range(start, start + edge_dofs);
+    xt::view(base_transformations, edge, range, range)
+        = xt::view(edge_transforms, 0, xt::all(), xt::all());
   }
 
   if (tdim == 3 and degree > 1)
   {
     for (int face = 0; face < face_count; ++face)
     {
-      const int start = edge_dofs * edge_count + face_dofs * face;
-      const int p = edge_count + 2 * face;
-
-      base_transformations[p].block(start, start, face_dofs, face_dofs)
-          = face_transforms[0];
-      base_transformations[p + 1].block(start, start, face_dofs, face_dofs)
-          = face_transforms[1];
+      const std::size_t start = edge_dofs * edge_count + face_dofs * face;
+      const std::size_t p = edge_count + 2 * face;
+      auto range = xt::range(start, start + face_dofs);
+      xt::view(base_transformations, p, range, range)
+          = xt::view(face_transforms, 0, xt::all(), xt::all());
+      xt::view(base_transformations, p + 1, range, range)
+          = xt::view(face_transforms, 1, xt::all(), xt::all());
     }
   }
 

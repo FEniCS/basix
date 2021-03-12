@@ -41,22 +41,6 @@ std::vector<int> axis_points(const cell::type celltype)
   }
 }
 //----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> myconvert(xt::xtensor<double, 3> M)
-{
-  std::vector<Eigen::MatrixXd> outold;
-  for (std::size_t i = 0; i < M.shape()[0]; ++i)
-  {
-    Eigen::MatrixXd mat(M.shape()[1], M.shape()[2]);
-    for (std::size_t j = 0; j < M.shape()[1]; ++j)
-    {
-      for (std::size_t k = 0; k < M.shape()[2]; ++k)
-        mat(j, k) = M(i, j, k);
-    }
-    outold.push_back(mat);
-  }
-  return outold;
-}
-//----------------------------------------------------------------------------
 } // namespace
 
 //-----------------------------------------------------------------------------
@@ -307,7 +291,7 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   return M;
 }
 //----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> moments::create_normal_moment_dof_transformations(
+xt::xtensor<double, 3> moments::create_normal_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
   xt::xtensor<double, 3> t
@@ -315,7 +299,7 @@ std::vector<Eigen::MatrixXd> moments::create_normal_moment_dof_transformations(
   const int tdim = cell::topological_dimension(moment_space.cell_type());
   if (tdim == 1 or tdim == 2)
     xt::view(t, tdim - 1, xt::all(), xt::all()) *= -1.0;
-  return myconvert(t);
+  return t;
 }
 //----------------------------------------------------------------------------
 xt::xtensor<double, 3> moments::create_tangent_moment_dof_transformations(

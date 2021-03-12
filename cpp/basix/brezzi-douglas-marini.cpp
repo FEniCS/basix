@@ -13,6 +13,9 @@
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>
+#include <xtensor/xbuilder.hpp>
+#include <xtensor/xtensor.hpp>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -29,7 +32,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
 
   // The number of order (degree) scalar polynomials
   const int npoly = polyset::dim(celltype, degree);
-  const int ndofs = npoly * tdim;
+  const std::size_t ndofs = npoly * tdim;
 
   // Create coefficients for order (degree-1) vector polynomials
   Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
@@ -38,8 +41,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   int quad_deg = 5 * degree;
 
   // Add integral moments on facets
-  const int facet_count = tdim + 1;
-  const int facet_dofs = polyset::dim(facettype, degree);
+  const std::size_t facet_count = tdim + 1;
+  const std::size_t facet_dofs = polyset::dim(facettype, degree);
   const int internal_dofs = ndofs - facet_count * facet_dofs;
 
   Eigen::ArrayXXd points_facet;
@@ -48,7 +51,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
 
-  std::vector<Eigen::MatrixXd> facet_transforms
+  xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
   Eigen::ArrayXXd points_cell;
@@ -71,32 +74,48 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  int transform_count = 0;
+  std::size_t transform_count = 0;
   for (int i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_transformations(
-      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  xt::xtensor<double, 3> base_transformations
+      = xt::zeros<double>({transform_count, ndofs, ndofs});
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
+
   if (tdim == 2)
   {
-    for (int edge = 0; edge < facet_count; ++edge)
+    for (std::size_t edge = 0; edge < facet_count; ++edge)
     {
-      const int start = facet_dofs * edge;
-      base_transformations[edge].block(start, start, facet_dofs, facet_dofs)
-          = facet_transforms[0];
+      const std::size_t start = facet_dofs * edge;
+      auto range = xt::range(start, start + facet_dofs);
+      xt::view(base_transformations, edge, range, range)
+          = xt::view(facet_transforms, 0, xt::all(), xt::all());
+      // const int start = facet_dofs * edge;
+      // base_transformations[edge].block(start, start, facet_dofs, facet_dofs)
+      //     = facet_transforms[0];
     }
   }
   else if (tdim == 3)
   {
-    for (int face = 0; face < facet_count; ++face)
+    for (std::size_t face = 0; face < facet_count; ++face)
     {
-      const int start = facet_dofs * face;
-      base_transformations[6 + 2 * face].block(start, start, facet_dofs,
-                                               facet_dofs)
-          = facet_transforms[0];
-      base_transformations[6 + 2 * face + 1].block(start, start, facet_dofs,
-                                                   facet_dofs)
-          = facet_transforms[1];
+      const std::size_t start = facet_dofs * face;
+      auto range = xt::range(start, start + facet_dofs);
+      xt::view(base_transformations, 6 + 2 * face, range, range)
+          = xt::view(facet_transforms, 0, xt::all(), xt::all());
+      xt::view(base_transformations, 6 + 2 * face + 1, range, range)
+          = xt::view(facet_transforms, 1, xt::all(), xt::all());
+      // const int start = facet_dofs * face;
+      // base_transformations[6 + 2 * face].block(start, start, facet_dofs,
+      //                                          facet_dofs)
+      //     = facet_transforms[0];
+      // base_transformations[6 + 2 * face + 1].block(start, start, facet_dofs,
+      //                                              facet_dofs)
+      //     = facet_transforms[1];
     }
   }
 

@@ -203,7 +203,7 @@ public:
                 const Eigen::ArrayXXd& points, const Eigen::MatrixXd M = {},
                 mapping::type map_type = mapping::type::identity);
 
-  // TOOD
+  /// TODO
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<int>& value_shape,
                 const Eigen::ArrayXXd& coeffs,

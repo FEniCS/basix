@@ -81,7 +81,7 @@ create_tangent_moment_dof_transformations(const FiniteElement& moment_space);
 /// @param q_deg The quadrature degree used for the integrals
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
-                      int value_size, int q_deg);
+                      std::size_t value_size, int q_deg);
 
 /// Make interpolation points and weights for dot product integral moments
 ///

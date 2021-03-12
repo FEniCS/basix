@@ -69,6 +69,16 @@ make_quadrature_tetrahedron_collapsed(std::size_t m);
 std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
 make_quadrature(const std::string& rule, cell::type celltype, int m);
 
+/// Utility for quadrature rule on reference cell
+/// @param[in] rule Name of quadrature rule (or use "default")
+/// @param[in] celltype
+/// @param[in] m Maximum degree of polynomial that this quadrature rule
+/// will integrate exactly
+/// @returns List of points and list of weights. The number of points
+/// arrays has shape (num points, gdim)
+std::pair<xt::xarray<double>, std::vector<double>>
+make_quadrature_new(const std::string& rule, cell::type celltype, int m);
+
 /// Compute GLL line quadrature rule on [0, 1]
 /// @param m order
 /// @returns list of 1D points, list of weights

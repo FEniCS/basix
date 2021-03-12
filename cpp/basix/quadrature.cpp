@@ -748,32 +748,39 @@ quadrature::make_quadrature_tetrahedron_collapsed(std::size_t m)
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
+std::pair<xt::xarray<double>, std::vector<double>>
+quadrature::make_quadrature_new(const std::string& rule, cell::type celltype,
+                                int m)
 {
   if (rule == "" or rule == "default")
   {
     if (celltype == cell::type::triangle)
-      return convert(make_default_triangle_quadrature(m));
+      return make_default_triangle_quadrature(m);
     else if (celltype == cell::type::tetrahedron)
-      return convert(make_default_tetrahedron_quadrature(m));
+      return make_default_tetrahedron_quadrature(m);
     else
     {
       const int np = (m + 2) / 2;
-      return convert(make_gauss_jacobi_quadrature(celltype, np));
+      return make_gauss_jacobi_quadrature(celltype, np);
     }
   }
   else if (rule == "Gauss-Jacobi")
   {
     const int np = (m + 2) / 2;
-    return convert(make_gauss_jacobi_quadrature(celltype, np));
+    return make_gauss_jacobi_quadrature(celltype, np);
   }
   else if (rule == "GLL")
   {
     const int np = (m + 4) / 2;
-    return convert(make_gll_quadrature(celltype, np));
+    return make_gll_quadrature(celltype, np);
   }
   else
     throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");
+}
+//-----------------------------------------------------------------------------
+std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
+{
+  return convert(make_quadrature_new(rule, celltype, m));
 }
 //-----------------------------------------------------------------------------

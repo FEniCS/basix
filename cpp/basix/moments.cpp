@@ -7,17 +7,13 @@
 #include "finite-element.h"
 #include "polyset.h"
 #include "quadrature.h"
-
-#include "utils.h"
+#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
-
-#include <xtensor-blas/xlinalg.hpp>
-#include <xtensor/xio.hpp>
 
 using namespace basix;
 
@@ -95,14 +91,18 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations_new(
   xt::xtensor<double, 3> J;
   xt::xtensor<double, 3> K;
   xt::xtensor<double, 2> detJ;
-  if (celltype == cell::type::interval)
+  switch (celltype)
   {
+  case cell::type::interval:
+  {
+
     tpts = xt::atleast_3d(1.0 - pts);
     J = xt::full_like(tpts, -1.0);
     K = xt::full_like(tpts, -1.0);
     detJ = xt::atleast_2d(xt::ones_like(pts));
+    break;
   }
-  else if (celltype == cell::type::triangle)
+  case cell::type::triangle:
   {
     std::array<std::size_t, 3> shape = {2, pts.shape()[0], pts.shape()[1]};
     std::array<std::size_t, 3> shape2 = {2, pts.shape()[0], 4};
@@ -150,8 +150,10 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations_new(
     xt::col(K1, 1) = 1;
     xt::col(K1, 2) = 1;
     xt::col(K1, 3) = 0;
+
+    break;
   }
-  else if (celltype == cell::type::quadrilateral)
+  case cell::type::quadrilateral:
   {
     std::array<std::size_t, 3> shape0 = {2, pts.shape()[0], pts.shape()[1]};
     tpts = xt::zeros<double>(shape0);
@@ -199,11 +201,14 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations_new(
     xt::col(K1, 1) = 1;
     xt::col(K1, 2) = 1;
     xt::col(K1, 3) = 0;
+
+    break;
   }
-  else
+  default:
   {
     throw std::runtime_error(
         "DOF transformations only implemented for tdim <= 2.");
+  }
   }
 
   std::array<std::size_t, 3> shape
@@ -264,20 +269,25 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
 {
   const xt::xtensor<double, 3> t
       = create_dot_moment_dof_transformations_new(moment_space);
-  if (moment_space.cell_type() == cell::type::interval)
-    return myconvert(t);
 
   xt::xtensor_fixed<double, xt::xshape<2, 2>> rot, ref;
-  if (moment_space.cell_type() == cell::type::triangle)
+
+  cell::type celltype = moment_space.cell_type();
+  switch (celltype)
   {
+  case cell::type::interval:
+    return myconvert(t);
+  case cell::type::triangle:
     rot = {{-1, -1}, {1, 0}};
     ref = {{0, 1}, {1, 0}};
-  }
-  else if (moment_space.cell_type() == cell::type::quadrilateral)
-  {
+    break;
+  case cell::type::quadrilateral:
     // TODO: check that these are correct
     rot = {{0, -1}, {1, 0}};
     ref = {{0, 1}, {1, 0}};
+    break;
+  default:
+    throw std::runtime_error("Unexpected cell type");
   }
 
   const std::size_t scalar_dofs = t.shape()[1];
@@ -384,6 +394,7 @@ moments::make_integral_moments_new(const FiniteElement& moment_space,
   auto moment_space_at_Qpts = xt::adapt<xt::layout_type::column_major>(
       _moment_space_at_Qpts.data(), _moment_space_at_Qpts.size(),
       xt::no_ownership(), shape1);
+
   xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
   const std::array<std::size_t, 2> shape
       = {moment_space_at_Qpts.shape()[1] * sub_entity_count
@@ -602,7 +613,7 @@ moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   if (sub_entity_dim != 1)
-    throw std::runtime_error("Tangent is only well-defined on an edge.");
+    throw std::runtime_error("XXXTangent is only well-defined on an edge.");
 
   auto [Qpts, _Qwts]
       = quadrature::make_quadrature_new("default", cell::type::interval, q_deg);
@@ -633,10 +644,6 @@ moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
       = {moment_space_at_Qpts.shape()[1] * sub_entity_count,
          sub_entity_count * Qpts.shape()[0] * value_size};
   xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
-  // Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
-  // Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count,
-  //                        sub_entity_count * Qpts.rows() * value_size);
-  // matrix.setZero();
 
   // Iterate over sub entities
   int c = 0;
@@ -648,13 +655,11 @@ moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
         _edge(edge.data(), edge.shape()[0], edge.shape()[1]);
 
     auto tangent = xt::row(edge, 1) - xt::row(edge, 0);
-    // Eigen::VectorXd tangent = _edge.row(1) - _edge.row(0);
 
-    // No need to normalise the tangent, as the size of this is equal to the
-    // integral jacobian
+    // No need to normalise the tangent, as the size of this is equal to
+    // the integral Jacobian
 
     // Map quadrature points onto triangle edge
-    // Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), tdim);
     for (std::size_t j = 0; j < Qpts.shape()[0]; ++j)
     {
       xt::row(points, i * Qpts.shape()[0] + j)
@@ -664,16 +669,9 @@ moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
     // Compute edge tangent integral moments
     for (std::size_t j = 0; j < moment_space_at_Qpts.shape()[1]; ++j)
     {
-      // Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
       auto phi = xt::col(moment_space_at_Qpts, j);
       for (std::size_t k = 0; k < value_size; ++k)
       {
-        // Eigen::RowVectorXd data = phi * Qwts * tangent[k];
-        // auto data = phi * Qwts * tangent[k];
-        // matrix.block(c, k * sub_entity_count * Qpts.rows() + i * Qpts.rows(),
-        // 1,
-        //              Qpts.rows())
-        //     = data;
         std::size_t offset
             = k * sub_entity_count * Qpts.shape()[0] + i * Qpts.shape()[0];
         xt::view(matrix, c, xt::range(offset, offset + Qpts.shape()[0]))
@@ -688,37 +686,74 @@ moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
 //----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 moments::make_normal_integral_moments(const FiniteElement& moment_space,
-                                      const cell::type celltype,
-                                      const int value_size, const int q_deg)
+                                      cell::type celltype, int value_size,
+                                      int q_deg)
+{
+  auto [points, matrix] = make_normal_integral_moments_new(
+      moment_space, celltype, value_size, q_deg);
+
+  // TMP: Copy into Eigen
+  Eigen::ArrayXXd _points(points.shape()[0], points.shape()[1]);
+  Eigen::MatrixXd _matrix(matrix.shape()[0], matrix.shape()[1]);
+  for (std::size_t i = 0; i < points.shape()[0]; ++i)
+    for (std::size_t j = 0; j < points.shape()[1]; ++j)
+      _points(i, j) = points(i, j);
+  for (std::size_t i = 0; i < matrix.shape()[0]; ++i)
+    for (std::size_t j = 0; j < matrix.shape()[1]; ++j)
+      _matrix(i, j) = matrix(i, j);
+
+  return std::make_pair(_points, _matrix);
+}
+//----------------------------------------------------------------------------
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+moments::make_normal_integral_moments_new(const FiniteElement& moment_space,
+                                          cell::type celltype,
+                                          std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
-  const int sub_entity_dim = cell::topological_dimension(sub_celltype);
-  const int sub_entity_count = cell::sub_entity_count(celltype, sub_entity_dim);
-  const int tdim = cell::topological_dimension(celltype);
-
-  if (sub_entity_dim != tdim - 1)
-    throw std::runtime_error("Normal is only well-defined on a facet.");
-
-  auto [Qpts, Qwts]
-      = quadrature::make_quadrature("default", sub_celltype, q_deg);
+  const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
+  const std::size_t sub_entity_count
+      = cell::sub_entity_count(celltype, sub_entity_dim);
+  const std::size_t tdim = cell::topological_dimension(celltype);
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
 
+  std::cout << "Testing: " << sub_entity_dim << ", " << tdim << std::endl;
+  if (static_cast<int>(sub_entity_dim) != static_cast<int>(tdim) - 1)
+    throw std::runtime_error("Normal is only well-defined on a facet.");
+
+  auto [Qpts, _Qwts]
+      = quadrature::make_quadrature_new("default", sub_celltype, q_deg);
+  auto Qwts = xt::adapt(_Qwts);
+  if (Qpts.dimension() == 1)
+    Qpts = Qpts.reshape({Qpts.shape()[0], 1});
+
+  // TMP: Copy into Eigen array
+  Eigen::ArrayXXd _Qpts(Qpts.shape()[0], Qpts.shape()[1]);
+  for (std::size_t i = 0; i < Qpts.shape()[0]; ++i)
+    for (std::size_t j = 0; j < Qpts.shape()[1]; ++j)
+      _Qpts(i, j) = Qpts(i, j);
+
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
+  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, _Qpts)[0];
+  std::array<std::size_t, 2> shape1
+      = {(std::size_t)_moment_space_at_Qpts.rows(),
+         (std::size_t)_moment_space_at_Qpts.cols()};
+  auto moment_space_at_Qpts = xt::adapt<xt::layout_type::column_major>(
+      _moment_space_at_Qpts.data(), _moment_space_at_Qpts.size(),
+      xt::no_ownership(), shape1);
 
-  Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
-  Eigen::MatrixXd matrix(moment_space_at_Qpts.cols() * sub_entity_count,
-                         sub_entity_count * Qpts.rows() * value_size);
-  matrix.setZero();
-
-  int c = 0;
+  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
+  const std::array<std::size_t, 2> shape
+      = {moment_space_at_Qpts.shape()[1] * sub_entity_count,
+         sub_entity_count * Qpts.shape()[0] * value_size};
+  xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
 
   // Iterate over sub entities
-  Eigen::VectorXd normal(tdim);
-  Eigen::ArrayXXd Qpts_scaled(Qpts.rows(), tdim);
-  for (int i = 0; i < sub_entity_count; ++i)
+  int c = 0;
+  xt::xtensor<double, 1> normal;
+  for (std::size_t i = 0; i < sub_entity_count; ++i)
   {
     xt::xtensor<double, 2> facet
         = cell::sub_entity_geometry(celltype, tdim - 1, i);
@@ -728,48 +763,48 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
 
     if (tdim == 2)
     {
-      Eigen::Vector2d tangent = _facet.row(1) - _facet.row(0);
-      normal << -tangent(1), tangent(0);
+      auto tangent = xt::row(facet, 1) - xt::row(facet, 0);
+      normal = {-tangent(1), tangent(0)};
+
       // No need to normalise the normal, as the size of this is equal to
       // the integral jacobian
 
       // Map quadrature points onto facet
-      for (int j = 0; j < Qpts.rows(); ++j)
+      for (std::size_t j = 0; j < Qpts.shape()[0]; ++j)
       {
-        points.row(i * Qpts.rows() + j)
-            = _facet.row(0) + Qpts(j, 0) * (_facet.row(1) - _facet.row(0));
+        xt::row(points, i * Qpts.shape()[0] + j)
+            = xt::row(facet, 0) + Qpts(j, 0) * tangent;
       }
     }
     else if (tdim == 3)
     {
-      Eigen::Vector3d t0 = _facet.row(1) - _facet.row(0);
-      Eigen::Vector3d t1 = _facet.row(2) - _facet.row(0);
-      normal = t0.cross(t1);
+      auto t0 = xt::row(facet, 1) - xt::row(facet, 0);
+      auto t1 = xt::row(facet, 2) - xt::row(facet, 0);
+      normal = xt::linalg::cross(t0, t1);
 
-      // No need to normalise the normal, as the size of this is equal to
-      // the integral jacobian
+      // No need to normalise the normal, as the size of this is equal
+      // to the integral Jacobian
 
       // Map quadrature points onto facet
-      for (int j = 0; j < Qpts.rows(); ++j)
+      for (std::size_t j = 0; j < Qpts.shape()[0]; ++j)
       {
-        points.row(i * Qpts.rows() + j)
-            = _facet.row(0) + Qpts(j, 0) * (_facet.row(1) - _facet.row(0))
-              + Qpts(j, 1) * (_facet.row(2) - _facet.row(0));
+        xt::row(points, i * Qpts.shape()[0] + j)
+            = xt::row(facet, 0) + Qpts(j, 0) * t0 + Qpts(j, 1) * t1;
       }
     }
     else
       throw std::runtime_error("Normal on this cell cannot be computed.");
 
     // Compute facet normal integral moments
-    for (int j = 0; j < moment_space_at_Qpts.cols(); ++j)
+    for (std::size_t j = 0; j < moment_space_at_Qpts.shape()[1]; ++j)
     {
-      Eigen::ArrayXd phi = moment_space_at_Qpts.col(j);
-      for (int k = 0; k < value_size; ++k)
+      auto phi = xt::col(moment_space_at_Qpts, j);
+      for (std::size_t k = 0; k < value_size; ++k)
       {
-        Eigen::RowVectorXd q = phi * Qwts * normal[k];
-        matrix.block(c, k * sub_entity_count * Qpts.rows() + i * Qpts.rows(), 1,
-                     Qpts.rows())
-            = q;
+        std::size_t offset
+            = k * sub_entity_count * Qpts.shape()[0] + i * Qpts.shape()[0];
+        xt::view(matrix, c, xt::range(offset, offset + Qpts.shape()[0]))
+            = phi * Qwts * normal[k];
       }
       ++c;
     }

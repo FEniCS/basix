@@ -30,6 +30,14 @@ namespace moments
 std::vector<Eigen::MatrixXd>
 create_moment_dof_transformations(const FiniteElement& moment_space);
 
+/// Create the dof transformations for a dot integral moment.
+///
+/// @param[in] moment_space The finite element space that the integral moment is
+/// taken against
+/// @return A list of dof transformations
+std::vector<Eigen::MatrixXd>
+create_dot_moment_dof_transformations(const FiniteElement& moment_space);
+
 /// Create the dof transformations for an integral moment.
 ///
 /// If the moment space is an interval, this returns one matrix representing the
@@ -41,14 +49,6 @@ create_moment_dof_transformations(const FiniteElement& moment_space);
 /// @return A list of dof transformations
 xt::xtensor<double, 3>
 create_dot_moment_dof_transformations_new(const FiniteElement& moment_space);
-
-/// Create the dof transformations for a dot integral moment.
-///
-/// @param[in] moment_space The finite element space that the integral moment is
-/// taken against
-/// @return A list of dof transformations
-std::vector<Eigen::MatrixXd>
-create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 
 /// Create the dof transformations for a normal integral moment.
 ///
@@ -200,5 +200,20 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
 make_normal_integral_moments(const FiniteElement& moment_space,
                              cell::type celltype, int value_size, int q_deg);
 
+/// Make interpolation points and weights for normal integral moments
+///
+/// These can only be used when the moment space is defined on facets of
+/// the cell
+///
+/// @param moment_space The space to compute the integral moments against
+/// @param celltype The cell type of the cell on which the space is
+/// being defined
+/// @param value_size The value size of the space being defined
+/// the space
+/// @param q_deg The quadrature degree used for the integrals
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+make_normal_integral_moments_new(const FiniteElement& moment_space,
+                                 cell::type celltype, std::size_t value_size,
+                                 int q_deg);
 } // namespace moments
 } // namespace basix

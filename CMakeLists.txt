@@ -69,7 +69,6 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/regge.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/crouzeix-raviart.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/bubble.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/utils.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.h)
 
 target_sources(basix PRIVATE

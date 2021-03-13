@@ -14,7 +14,7 @@ def test_quad(order):
     Qpts = []
     for p, u in zip(Lpts, Lwts):
         for q, v in zip(Lpts, Lwts):
-            Qpts.append([p, q])
+            Qpts.append([p[0], q[0]])
             Qwts.append(u * v)
     basis = basix.tabulate_polynomial_set(basix.CellType.quadrilateral,
                                           order, 0, Qpts)[0]
@@ -38,8 +38,8 @@ def test_pyramid(order):
     for p, u in zip(Lpts, Lwts):
         for q, v in zip(Lpts, Lwts):
             for r, w in zip(Lpts, Lwts):
-                sc = (1.0 - r)
-                Qpts.append([p * sc, q * sc, r])
+                sc = (1.0 - r[0])
+                Qpts.append([p[0] * sc, q[0] * sc, r[0]])
                 Qwts.append(u * v * sc * sc * w)
     basis = basix.tabulate_polynomial_set(basix.CellType.pyramid,
                                           order, 0, Qpts)[0]
@@ -63,7 +63,7 @@ def test_hex(order):
     for p, u in zip(Lpts, Lwts):
         for q, v in zip(Lpts, Lwts):
             for r, w in zip(Lpts, Lwts):
-                Qpts.append([p, q, r])
+                Qpts.append([p[0], q[0], r[0]])
                 Qwts.append(u * v * w)
     basis = basix.tabulate_polynomial_set(basix.CellType.hexahedron,
                                           order, 0, Qpts)[0]
@@ -87,7 +87,7 @@ def test_prism(order):
     Qpts = []
     for p, u in zip(Tpts, Twts):
         for q, v in zip(Lpts, Lwts):
-            Qpts.append([p[0], p[1], q])
+            Qpts.append([p[0], p[1], q[0]])
             Qwts.append(u * v)
     basis = basix.tabulate_polynomial_set(basix.CellType.prism,
                                           order, 0, Qpts)[0]

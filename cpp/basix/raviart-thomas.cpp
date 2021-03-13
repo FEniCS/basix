@@ -13,6 +13,7 @@
 #include <numeric>
 #include <vector>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xmath.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
@@ -40,13 +41,14 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const std::size_t ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, Qwts]
-      = quadrature::make_quadrature("default", celltype, 2 * degree);
-  Eigen::ArrayXXd Pkp1_at_Qpts
-      = polyset::tabulate(celltype, degree, 0, Qpts)[0];
+  auto [Qpts, _Qwts]
+      = quadrature::make_quadrature_new("default", celltype, 2 * degree);
+  auto Qwts = xt::adapt(_Qwts);
+  auto Pkp1_at_Qpts = xt::view(polyset::tabulate(celltype, degree, 0, Qpts), 0,
+                               xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = Pkp1_at_Qpts.cols();
+  const std::size_t psize = Pkp1_at_Qpts.shape()[1];
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs
@@ -62,14 +64,14 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   // polynomial basis
   for (std::size_t i = 0; i < ns; ++i)
   {
+    auto p = xt::col(Pkp1_at_Qpts, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
+      auto pk = xt::col(Pkp1_at_Qpts, k);
       for (std::size_t j = 0; j < tdim; ++j)
       {
-        const double w_sum = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
-                              * Pkp1_at_Qpts.col(k))
-                                 .sum();
-        wcoeffs(nv * tdim + i, k + psize * j) = w_sum;
+        wcoeffs(nv * tdim + i, k + psize * j)
+            = xt::sum(Qwts * p * xt::col(Qpts, j) * pk)();
       }
     }
   }

@@ -5,7 +5,6 @@
 #pragma once
 
 #include "cell.h"
-#include <Eigen/Dense>
 #include <vector>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xtensor.hpp>
@@ -47,10 +46,6 @@ namespace basix::polyset
 /// basis function index.
 xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
                                 const xt::xarray<double>& x);
-
-/// @todo Remove this interface
-std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int d, int n,
-                                      const Eigen::ArrayXXd& x);
 
 /// Dimension of a polynomial space
 /// @param[in] cell The cell type

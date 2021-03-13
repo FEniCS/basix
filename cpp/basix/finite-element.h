@@ -178,27 +178,6 @@ Eigen::MatrixXd compute_expansion_coefficients(cell::type cell_type,
 /// @param[in] tdim The toplogical dimension
 /// @param[in] value_size Value size
 /// @return The interpolation points and matrix
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> combine_interpolation_data(
-    const Eigen::ArrayXXd& points_1d, const Eigen::ArrayXXd& points_2d,
-    const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,
-    const Eigen::MatrixXd& matrix_2d, const Eigen::MatrixXd& matrix_3d,
-    const int tdim, const int value_size);
-
-/// Combines interpolation data
-///
-/// When the value size is not 1, the matrices are split up into
-/// `value_size` parts, then recombined so that the columns of the
-/// matrix that is output is ordered correctly.
-///
-/// @param[in] points_1d The interpolation points for a 1d entity
-/// @param[in] points_2d The interpolation points for a 2d entity
-/// @param[in] points_3d The interpolation points for a 3d entity
-/// @param[in] matrix_1d The interpolation matrix for a 1d entity
-/// @param[in] matrix_2d The interpolation matrix for a 2d entity
-/// @param[in] matrix_3d The interpolation matrix for a 3d entity
-/// @param[in] tdim The toplogical dimension
-/// @param[in] value_size Value size
-/// @return The interpolation points and matrix
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
 combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
                            const xt::xtensor<double, 2>& points_2d,
@@ -530,6 +509,17 @@ private:
       _map_push_forward;
 };
 
+/// Create an element by name
+FiniteElement create_element(std::string family, std::string cell, int degree);
+
+/// Create an element by name
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree);
+
+/// Return the version number of basix across projects
+/// @return version string
+std::string version();
+
 template <typename T>
 void FiniteElement::map_push_forward_m(
     const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
@@ -659,16 +649,5 @@ void FiniteElement::map_pull_back_m(
   }
 }
 //-----------------------------------------------------------------------------
-
-/// Create an element by name
-FiniteElement create_element(std::string family, std::string cell, int degree);
-
-/// Create an element by name
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree);
-
-/// Return the version number of basix across projects
-/// @return version string
-std::string version();
 
 } // namespace basix

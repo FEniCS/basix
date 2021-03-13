@@ -165,49 +165,6 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
                                         kappa_tol);
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(
-    const Eigen::ArrayXXd& points_1d, const Eigen::ArrayXXd& points_2d,
-    const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,
-    const Eigen::MatrixXd& matrix_2d, const Eigen::MatrixXd& matrix_3d,
-    const int tdim, const int value_size)
-{
-  Eigen::ArrayXXd points(points_1d.rows() + points_2d.rows() + points_3d.rows(),
-                         tdim);
-
-  if (points_1d.cols() > 0)
-    points.block(0, 0, points_1d.rows(), tdim) = points_1d;
-
-  if (points_2d.cols() > 0)
-    points.block(points_1d.rows(), 0, points_2d.rows(), tdim) = points_2d;
-
-  if (points_3d.cols() > 0)
-  {
-    points.block(points_1d.rows() + points_2d.rows(), 0, points_3d.rows(), tdim)
-        = points_3d;
-  }
-
-  Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(
-      matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
-      matrix_1d.cols() + matrix_2d.cols() + matrix_3d.cols());
-
-  const int r1d = matrix_1d.rows();
-  const int r2d = matrix_2d.rows();
-  const int r3d = matrix_3d.rows();
-  const int c1d = matrix_1d.cols() / value_size;
-  const int c2d = matrix_2d.cols() / value_size;
-  const int c3d = matrix_3d.cols() / value_size;
-  for (int i = 0; i < value_size; ++i)
-  {
-    matrix.block(0, i * (c1d + c2d + c3d), r1d, c1d)
-        = matrix_1d.block(0, i * c1d, r1d, c1d);
-    matrix.block(r1d, i * (c1d + c2d + c3d) + c1d, r2d, c2d)
-        = matrix_2d.block(0, i * c2d, r2d, c2d);
-    matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r3d, c3d)
-        = matrix_3d.block(0, i * c3d, r3d, c3d);
-  }
-  return std::make_pair(points, matrix);
-}
-//-----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
 basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
                                   const xt::xtensor<double, 2>& points_2d,
@@ -257,7 +214,6 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
       auto range0 = xt::range(0, row_dim[0]);
       auto range1 = xt::range(i * num_cols, i * num_cols + col_dim[0]);
       auto range = xt::range(i * col_dim[0], i * col_dim[0] + col_dim[0]);
-      std::cout << xt::view(matrix_1d, xt::all(), range) << std::endl;
       xt::view(matrix, range0, range1) = xt::view(matrix_1d, xt::all(), range);
     }
 
@@ -279,7 +235,6 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
       xt::view(matrix, range0, range1) = xt::view(matrix_3d, xt::all(), range);
     }
   }
-
 
   return std::make_pair(points, matrix);
 }
@@ -421,21 +376,54 @@ void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
   if (x.cols() != tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
-  std::vector<Eigen::ArrayXXd> basis
-      = polyset::tabulate(_cell_type, _degree, nd, x);
+  std::vector<std::size_t> s = {(std::size_t)x.rows()};
+  if (x.cols() > 1)
+    s.push_back(x.cols());
+  xt::xarray<double> _x(s);
+  if (_x.dimension() > 1)
+  {
+    for (std::size_t i = 0; i < _x.shape()[0]; ++i)
+      for (std::size_t j = 0; j < _x.shape()[1]; ++j)
+        _x(i, j) = x(i, j);
+  }
+  else
+  {
+    for (std::size_t i = 0; i < _x.shape()[0]; ++i)
+      _x(i) = x(i, 0);
+  }
+
+  std::array<std::size_t, 2> cs
+      = {(std::size_t)_coeffs.rows(), (std::size_t)_coeffs.cols()};
+  const auto coeffs = xt::adapt<xt::layout_type::column_major>(
+      _coeffs.data(), _coeffs.size(), xt::no_ownership(), cs);
+
+  xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
   const int psize = polyset::dim(_cell_type, _degree);
-  const int ndofs = _coeffs.rows();
+  const std::size_t ndofs = _coeffs.rows();
   const int vs = value_size();
-  for (std::size_t p = 0; p < basis.size(); ++p)
+  for (std::size_t p = 0; p < basis.shape()[0]; ++p)
   {
     // Map block for current derivative
-    Eigen::Map<Eigen::ArrayXXd> dresult(basis_data + p * x.rows() * ndofs * vs,
-                                        x.rows(), ndofs * vs);
+    // Eigen::Map<Eigen::ArrayXXd> dresult(basis_data + p * x.rows() * ndofs *
+    // vs,
+    //                                     x.rows(), ndofs * vs);
+    std::array<std::size_t, 2> shape = {_x.shape()[0], ndofs * vs};
+    std::size_t offset = p * x.rows() * ndofs * vs;
+    auto dresult = xt::adapt<xt::layout_type::column_major>(
+        basis_data + offset, _x.shape()[0] * ndofs * vs, xt::no_ownership(),
+        shape);
     for (int j = 0; j < vs; ++j)
     {
-      dresult.block(0, ndofs * j, x.rows(), ndofs)
-          = basis[p].matrix()
-            * _coeffs.block(0, psize * j, _coeffs.rows(), psize).transpose();
+      const auto B = xt::view(basis, p, xt::all(), xt::all());
+      const auto C = xt::transpose(
+          xt::view(coeffs, xt::all(), xt::range(psize * j, psize * j + psize)));
+      xt::view(dresult, xt::range(0, _x.shape()[0]),
+               xt::range(ndofs * j, ndofs * j + ndofs))
+          = xt::linalg::dot(B, C);
+      // dresult.block(0, ndofs * j, x.rows(), ndofs)
+      //     = basis[p].matrix()
+      //       * _coeffs.block(0, psize * j, _coeffs.rows(),
+      //       psize).transpose();
     }
   }
 }

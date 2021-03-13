@@ -76,7 +76,7 @@ def test_quadrature_function():
 
 def test_jacobi():
     pts = np.arange(0, 1, 0.1)
-    f = basix.compute_jacobi_deriv(1.0, 4, 5, pts)
+    basix.compute_jacobi_deriv(1.0, 4, 5, pts)
 
 
 def test_gll():

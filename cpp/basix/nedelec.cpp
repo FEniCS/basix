@@ -46,8 +46,6 @@ xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
   xt::view(wcoeffs, xt::range(0, nv), xt::range(0, nv)) = xt::eye<double>(nv);
   xt::view(wcoeffs, xt::range(nv, 2 * nv), xt::range(psize, psize + nv))
       = xt::eye<double>(nv);
-  // wcoeffs.block(0, 0, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
-  // wcoeffs.block(nv, psize, nv, nv) = Eigen::MatrixXd::Identity(nv, nv);
 
   // Create coefficients for the additional Nedelec polynomials
   for (std::size_t i = 0; i < ns; ++i)
@@ -88,14 +86,8 @@ create_nedelec_2d_interpolation(int degree)
         cell::type::triangle, 2, quad_deg);
   }
 
-  std::cout << "Test combine_interpolation_data: " << matrix_1d.shape()[0]
-            << ", " << matrix_1d.shape()[1] << std::endl;
-  auto tmp = combine_interpolation_data(points_1d, points_2d, {}, matrix_1d,
-                                        matrix_2d, {}, 2, 2);
-  std::cout << "End Test combine_interpolation_data" << std::endl;
-  return tmp;
-  // return combine_interpolation_data(points_1d, points_2d, {}, matrix_1d,
-  //                                   matrix_2d, {}, 2, 2);
+  return combine_interpolation_data(points_1d, points_2d, {}, matrix_1d,
+                                    matrix_2d, {}, 2, 2);
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> create_nedelec_2d_base_transforms(int degree)
@@ -154,15 +146,12 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
   const std::size_t psize = Pkp1_at_Qpts.cols();
 
   // Create coefficients for order (degree-1) polynomials
-  // Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * tdim});
   for (std::size_t i = 0; i < tdim; ++i)
   {
     auto range0 = xt::range(nv * i, nv * i + nv);
     auto range1 = xt::range(psize * i, psize * i + nv);
     xt::view(wcoeffs, range0, range1) = xt::eye<double>(nv);
-    // wcoeffs.block(nv * i, psize * i, nv, nv)
-    //     = Eigen::MatrixXd::Identity(nv, nv);
   }
 
   // Create coefficients for additional Nedelec polynomials
@@ -173,6 +162,7 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
       const double w = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(2)
                         * Pkp1_at_Qpts.col(k))
                            .sum();
+
       // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
         wcoeffs(tdim * nv + i - ns_remove, psize + k) = -w;
@@ -188,6 +178,7 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
                         * Pkp1_at_Qpts.col(k))
                            .sum();
       wcoeffs(tdim * nv + i + ns * 2 - ns_remove, k) = -w;
+
       // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
         wcoeffs(tdim * nv + i - ns_remove, psize * 2 + k) = w;
@@ -249,14 +240,11 @@ xt::xtensor<double, 3> create_nedelec_3d_base_transforms(int degree)
                             + (degree - 2) * (degree - 1) * degree / 2;
   xt::xtensor<double, 3> base_transformations
       = xt::zeros<double>({static_cast<std::size_t>(14), ndofs, ndofs});
-  for (std::size_t i = 0; i < 14; ++i)
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
   {
     xt::view(base_transformations, i, xt::all(), xt::all())
         = xt::eye<double>(ndofs);
   }
-
-  // std::vector<Eigen::MatrixXd> base_transformations(
-  //     14, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
@@ -298,16 +286,11 @@ create_nedelec2_2d_interpolation(int degree)
 {
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
-
-  // Eigen::ArrayXXd points_1d;
-  // Eigen::MatrixXd matrix_1d;
   xt::xtensor<double, 2> points_1d, matrix_1d;
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments_new(
       create_dlagrange(cell::type::interval, degree), cell::type::triangle, 2,
       quad_deg);
 
-  // Eigen::ArrayXXd points_2d(0, 2);
-  // Eigen::MatrixXd matrix_2d(0, 0);
   xt::xtensor<double, 2> points_2d, matrix_2d;
   if (degree > 1)
   {
@@ -353,15 +336,11 @@ create_nedelec2_3d_interpolation(int degree)
   int quad_deg = 5 * degree;
 
   // Integral representation for the boundary (edge) dofs
-  // Eigen::ArrayXXd points_1d;
-  // Eigen::MatrixXd matrix_1d;
   xt::xtensor<double, 2> points_1d, matrix_1d;
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments_new(
       create_dlagrange(cell::type::interval, degree), cell::type::tetrahedron,
       3, quad_deg);
 
-  // Eigen::ArrayXXd points_2d(0, 3);
-  // Eigen::MatrixXd matrix_2d(0, 0);
   xt::xtensor<double, 2> points_2d, matrix_2d;
   if (degree > 1)
   {
@@ -371,8 +350,6 @@ create_nedelec2_3d_interpolation(int degree)
         quad_deg);
   }
 
-  // Eigen::ArrayXXd points_3d(0, 3);
-  // Eigen::MatrixXd matrix_3d(0, 0);
   xt::xtensor<double, 2> points_3d, matrix_3d;
   if (degree > 2)
   {
@@ -435,31 +412,20 @@ xt::xtensor<double, 3> create_nedelec2_3d_base_transformations(int degree)
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nedelec(cell::type celltype, int degree)
 {
-  std::cout << "Create Nedelec 0" << std::endl;
-  xt::xtensor<double, 2> wcoeffs;
-  xt::xtensor<double, 2> points;
-  xt::xtensor<double, 2> interp_matrix;
+  xt::xtensor<double, 2> wcoeffs, points, interp_matrix;
   xt::xtensor<double, 3> transforms;
   std::vector<Eigen::MatrixXd> directions;
   if (celltype == cell::type::triangle)
   {
-    std::cout << "Create Nedelec 2d 0" << std::endl;
     wcoeffs = create_nedelec_2d_space(degree);
-    std::cout << "Create Nedelec 2d 1" << std::endl;
     std::tie(points, interp_matrix) = create_nedelec_2d_interpolation(degree);
-    std::cout << "Create Nedelec 2d 3" << std::endl;
     transforms = create_nedelec_2d_base_transforms(degree);
-    std::cout << "Create Nedelec 2d 4" << std::endl;
   }
   else if (celltype == cell::type::tetrahedron)
   {
-    std::cout << "Create Nedelec 3d 0" << std::endl;
     wcoeffs = create_nedelec_3d_space(degree);
-    std::cout << "Create Nedelec 3d 1" << std::endl;
     std::tie(points, interp_matrix) = create_nedelec_3d_interpolation(degree);
-    std::cout << "Create Nedelec 3d 2" << std::endl;
     transforms = create_nedelec_3d_base_transforms(degree);
-    std::cout << "Create Nedelec 3d 3" << std::endl;
   }
   else
     throw std::runtime_error("Invalid celltype in Nedelec");
@@ -492,8 +458,6 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  // Eigen::ArrayXXd points;
-  // Eigen::MatrixXd interp_matrix;
   xt::xtensor<double, 2> points, interp_matrix;
   xt::xtensor<double, 3> base_transformations;
   if (celltype == cell::type::triangle)

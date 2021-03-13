@@ -56,8 +56,6 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     xt::view(wcoeffs, xt::range(nv * j, nv * j + nv),
              xt::range(psize * j, psize * j + nv))
         = xt::eye<double>(nv);
-    // wcoeffs.block(nv * j, psize * j, nv, nv)
-    //     = Eigen::MatrixXd::Identity(nv, nv);
   }
 
   // Create coefficients for additional polynomials in Raviart-Thomas
@@ -80,8 +78,6 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   int quad_deg = 5 * degree;
 
   // Add integral moments on facets
-  // Eigen::ArrayXXd points_facet;
-  // Eigen::MatrixXd matrix_facet;
   xt::xtensor<double, 2> points_facet, matrix_facet;
   FiniteElement facet_moment_space = create_dlagrange(facettype, degree - 1);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
@@ -91,10 +87,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
 
   const std::size_t facet_dofs = facet_transforms.shape()[1];
 
-  // Eigen::ArrayXXd points_cell(0, tdim);
-  // Eigen::MatrixXd matrix_cell(0, 0);
-  xt::xtensor<double, 2> points_cell, matrix_cell;
   // Add integral moments on interior
+  xt::xtensor<double, 2> points_cell, matrix_cell;
   if (degree > 1)
   {
     // Interior integral moment
@@ -103,8 +97,6 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   }
 
   // Interpolation points and matrix
-  // Eigen::ArrayXXd points;
-  // Eigen::MatrixXd matrix;
   xt::xtensor<double, 2> points, matrix;
   std::tie(points, matrix) = combine_interpolation_data(
       points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
@@ -133,9 +125,6 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
       auto range = xt::range(start, start + facet_dofs);
       xt::view(base_transformations, edge, range, range)
           = xt::view(facet_transforms, 0, xt::all(), xt::all());
-      // const int start = facet_dofs * edge;
-      // base_transformations[edge].block(start, start, facet_dofs, facet_dofs)
-      // = facet_transforms[0];
     }
   }
   else if (tdim == 3)
@@ -151,7 +140,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     }
   }
 
-  // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the interior
+  // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the
+  // interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);

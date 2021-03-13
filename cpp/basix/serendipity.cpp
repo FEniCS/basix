@@ -84,13 +84,16 @@ serendipity_3d_indices(const int total, const int linear,
     for (int i = 0; i < 3; ++i)
       if (done[i] == 1)
         ++count;
+
     if (count >= linear)
       return {{done[0], done[1], done[2]}};
     return {};
   }
   if (done.size() == 2)
+  {
     return serendipity_3d_indices(
         total, linear, {done[0], done[1], total - done[0] - done[1]});
+  }
 
   std::vector<int> new_done(done.size() + 1);
   int sum_done = 0;
@@ -175,8 +178,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     throw std::runtime_error("Invalid celltype");
   }
 
-  std::cout << "Serendip 0" << std::endl;
-
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::size_t tdim = cell::topological_dimension(celltype);
@@ -184,10 +185,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
-  // Eigen::ArrayXXd points_1d(0, tdim);
-  // Eigen::MatrixXd matrix_1d(0, 0);
   xt::xtensor<double, 2> points_1d, matrix_1d;
-
   xt::xtensor<double, 3> edge_transforms, face_transforms;
   if (degree >= 2)
   {
@@ -201,10 +199,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     }
   }
 
-  std::cout << "Serendip 1" << std::endl;
-
-  // Eigen::ArrayXXd points_2d(0, tdim);
-  // Eigen::MatrixXd matrix_2d(0, 0);
   xt::xtensor<double, 2> points_2d, matrix_2d;
   if (tdim >= 2 and degree >= 4)
   {
@@ -219,18 +213,12 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     }
   }
 
-  std::cout << "Serendip 2" << std::endl;
-
-  // Eigen::ArrayXXd points_3d(0, tdim);
-  // Eigen::MatrixXd matrix_3d(0, 0);
   xt::xtensor<double, 2> points_3d, matrix_3d;
   if (tdim == 3 and degree >= 6)
   {
     std::tie(points_3d, matrix_3d) = moments::make_integral_moments_new(
         create_dpc(cell::type::hexahedron, degree - 6), celltype, 1, quad_deg);
   }
-
-  std::cout << "Serendip 2b" << std::endl;
 
   const std::size_t vertex_count = cell::sub_entity_count(celltype, 0);
   const std::array<std::size_t, 3> num_pts_dim
@@ -247,33 +235,16 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   std::size_t num_mat1
       = std::accumulate(num_mat_dim1.begin(), num_mat_dim1.end(), 0);
 
-  std::cout << "Serendip 2c" << std::endl;
-
   xt::xtensor<double, 2> interpolation_points({vertex_count + num_pts, tdim});
   xt::xtensor<double, 2> interpolation_matrix
       = xt::zeros<double>({vertex_count + num_mat0, vertex_count + num_mat1});
-  // Eigen::MatrixXd interpolation_matrix = Eigen::MatrixXd::Zero(
-  //     vertex_count + matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
-  //     vertex_count + matrix_1d.cols() + matrix_2d.cols() + matrix_3d.cols());
 
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
-  // Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                               Eigen::RowMajor>>
-  //     _geometry(geometry.data(), geometry.shape()[0], geometry.shape()[1]);
-  // interpolation_points.block(0, 0, vertex_count, tdim) = _geometry;
   xt::view(interpolation_points, xt::range(0, vertex_count), xt::all())
       = geometry;
 
   if (points_1d.size() > 0)
   {
-    std::cout << "Serendip 2d" << std::endl;
-    // std::cout << xt::view(
-    //     interpolation_points,
-    //     xt::range(vertex_count, vertex_count + num_pts_dim[0]), xt::all())
-    //           << std::endl;
-    // std::cout << points_1d << std::endl;
-    // interpolation_points.block(vertex_count, 0, points_1d.rows(), tdim)
-    //     = points_1d;
     xt::view(interpolation_points,
              xt::range(vertex_count, vertex_count + num_pts_dim[0]), xt::all())
         = points_1d;
@@ -281,10 +252,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
 
   if (points_2d.size() > 0)
   {
-    std::cout << "Serendip 2e" << std::endl;
-    // interpolation_points.block(vertex_count + points_1d.rows(), 0,
-    //                            points_2d.rows(), tdim)
-    //     = points_2d;
     xt::view(interpolation_points,
              xt::range(vertex_count + num_pts_dim[0],
                        vertex_count + num_pts_dim[0] + num_pts_dim[1]),
@@ -294,11 +261,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
 
   if (points_3d.size() > 0)
   {
-    std::cout << "Serendip 2f" << std::endl;
-    // interpolation_points.block(vertex_count + points_1d.rows() +
-    // points_2d.rows(),
-    //                            0, points_3d.rows(), tdim)
-    //     = points_3d;
     xt::view(interpolation_points,
              xt::range(vertex_count + num_pts_dim[0] + num_pts_dim[1],
                        vertex_count + num_pts_dim[0] + num_pts_dim[1]
@@ -310,29 +272,16 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   for (std::size_t i = 0; i < vertex_count; ++i)
     interpolation_matrix(i, i) = 1;
 
-  // interpolation_matrix.block(vertex_count, vertex_count, matrix_1d.rows(),
-  //                            matrix_1d.cols())
-  //     = matrix_1d;
   xt::view(interpolation_matrix,
            xt::range(vertex_count, vertex_count + num_mat_dim0[0]),
            xt::range(vertex_count, vertex_count + num_mat_dim1[0]))
       = matrix_1d;
-  // interpolation_matrix.block(vertex_count + matrix_1d.rows(),
-  //                            vertex_count + matrix_1d.cols(),
-  //                            matrix_2d.rows(), matrix_2d.cols())
-  //     = matrix_2d;
   xt::view(interpolation_matrix,
            xt::range(vertex_count + num_mat_dim0[0],
                      vertex_count + num_mat_dim0[0] + num_mat_dim0[1]),
            xt::range(vertex_count + num_mat_dim1[0],
                      vertex_count + num_mat_dim1[0] + +num_mat_dim1[1]))
       = matrix_2d;
-  // interpolation_matrix.block(vertex_count + matrix_1d.rows() +
-  // matrix_2d.rows(),
-  //                            vertex_count + matrix_1d.cols() +
-  //                            matrix_2d.cols(), matrix_3d.rows(),
-  //                            matrix_3d.cols())
-  //     = matrix_3d;
   xt::view(interpolation_matrix,
            xt::range(vertex_count + num_mat_dim0[0] + num_mat_dim0[1],
                      vertex_count + num_mat_dim0[0] + num_mat_dim0[1]
@@ -341,8 +290,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
                      vertex_count + num_mat_dim1[0] + +num_mat_dim1[1]
                          + num_mat_dim1[2]))
       = matrix_3d;
-
-  std::cout << "Serendip 3" << std::endl;
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 1)
@@ -368,8 +315,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
-
-  std::cout << "Serendip 4" << std::endl;
 
   xt::xtensor<double, 3> base_transformations
       = xt::zeros<double>({transform_count, ndofs, ndofs});
@@ -404,22 +349,13 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
             = xt::view(face_transforms, 0, xt::all(), xt::all());
         xt::view(base_transformations, num_edges + 2 * face + 1, range, range)
             = xt::view(face_transforms, 1, xt::all(), xt::all());
-        // base_transformations[num_edges + 2 * face].block(start, start,
-        //                                                  face_dofs,
-        //                                                  face_dofs)
-        //     = face_transforms[0];
-        // base_transformations[num_edges + 2 * face + 1].block(
-        //     start, start, face_dofs, face_dofs)
-        //     = face_transforms[1];
       }
     }
   }
 
-  std::cout << "Serendip 5" << std::endl;
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, interpolation_matrix, interpolation_points, degree);
-
   return FiniteElement(element::family::Serendipity, celltype, degree, {1},
                        coeffs, entity_dofs, base_transformations,
                        interpolation_points, interpolation_matrix,

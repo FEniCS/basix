@@ -54,9 +54,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   const std::size_t ndofs = facet_count * facet_dofs + internal_dofs;
 
   // Create coefficients for order (degree-1) vector polynomials
-  // Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * tdim});
-
   const int nv_interval = polyset::dim(cell::type::interval, degree);
   const int ns_interval = polyset::dim(cell::type::interval, degree - 1);
   int dof = 0;
@@ -123,12 +121,8 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(moment_space);
 
-  // Eigen::ArrayXXd points_cell(0, tdim);
-  // Eigen::MatrixXd matrix_cell(0, 0);
-  xt::xtensor<double, 2> points_cell;
-  xt::xtensor<double, 2> matrix_cell;
-
   // Add integral moments on interior
+  xt::xtensor<double, 2> points_cell, matrix_cell;
   if (degree > 1)
   {
     // Interior integral moment
@@ -137,11 +131,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   }
 
   // Interpolation points and matrix
-  // Eigen::ArrayXXd points;
-  // Eigen::MatrixXd matrix;
-  xt::xtensor<double, 2> points;
-  xt::xtensor<double, 2> matrix;
-
+  xt::xtensor<double, 2> points, matrix;
   std::tie(points, matrix) = combine_interpolation_data(
       points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
 
@@ -159,8 +149,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
     xt::view(base_transformations, i, xt::all(), xt::all())
         = xt::eye<double>(ndofs);
   }
-  // std::vector<Eigen::MatrixXd> base_transformations(
-  //     transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+
   if (tdim == 2)
   {
     for (int edge = 0; edge < facet_count; ++edge)

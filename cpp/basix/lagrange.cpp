@@ -46,12 +46,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
       {
         const xt::xtensor<double, 2> entity_geom
             = cell::sub_entity_geometry(celltype, dim, i);
-        // Eigen::Map < const Eigen::Array < double, Eigen::Dynamic,
-        //     Eigen::Dynamic,
-        //                           Eigen::RowMajor>>
-        // _entity_geom(entity_geom.data(), entity_geom.shape()[0],
-        //              entity_geom.shape()[1]);
-
         if (dim == 0)
         {
           xt::row(pt, c++) = xt::row(entity_geom, 0);
@@ -261,8 +255,8 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   const int ndofs = polyset::dim(simplex_type, degree);
   const int psize = polyset::dim(celltype, degree);
 
-  auto [Qpts, Qwts] = quadrature::make_quadrature(
-      "default", celltype, 2 * degree);
+  auto [Qpts, Qwts]
+      = quadrature::make_quadrature("default", celltype, 2 * degree);
   Eigen::ArrayXXd quad_polyset_at_Qpts
       = polyset::tabulate(celltype, degree, 0, Qpts)[0];
   Eigen::ArrayXXd polyset_at_Qpts

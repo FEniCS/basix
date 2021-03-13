@@ -39,7 +39,6 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
     {
       for (std::size_t j = 0; j < geometry.shape()[1]; ++j)
         pts(c, j) += geometry(i, j);
-      // pts.row(c) += geometry.row(i);
     }
 
     for (std::size_t j = 0; j < geometry.shape()[1]; ++j)

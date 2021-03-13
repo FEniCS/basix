@@ -26,8 +26,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
-  std::cout << "BDM 0 " << std::endl;
-
   const std::size_t tdim = cell::topological_dimension(celltype);
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::triangle;
@@ -47,10 +45,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::size_t facet_dofs = polyset::dim(facettype, degree);
   const int internal_dofs = ndofs - facet_count * facet_dofs;
 
-  std::cout << "BDM 1 " << std::endl;
-
-  // Eigen::ArrayXXd points_facet;
-  // Eigen::MatrixXd matrix_facet;
   xt::xtensor<double, 2> points_facet, matrix_facet;
   FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
@@ -59,32 +53,22 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
-  std::cout << "BDM 2 " << std::endl;
-
-  // Eigen::ArrayXXd points_cell;
-  // Eigen::MatrixXd matrix_cell;
-  xt::xtensor<double, 2> points_cell, matrix_cell;
   // Add integral moments on interior
+  xt::xtensor<double, 2> points_cell, matrix_cell;
   if (degree > 1)
   {
-    std::cout << "BDM 3a " << std::endl;
     // Interior integral moment
     std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments_new(
         create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
   }
 
   // Interpolation points and matrix
-  // Eigen::ArrayXXd points;
-  // Eigen::MatrixXd matrix;
   xt::xtensor<double, 2> points, matrix;
-
   std::tie(points, matrix) = combine_interpolation_data(
       points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-
-  std::cout << "BDM 4 " << std::endl;
 
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < tdim; ++i)
@@ -106,9 +90,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       auto range = xt::range(start, start + facet_dofs);
       xt::view(base_transformations, edge, range, range)
           = xt::view(facet_transforms, 0, xt::all(), xt::all());
-      // const int start = facet_dofs * edge;
-      // base_transformations[edge].block(start, start, facet_dofs, facet_dofs)
-      //     = facet_transforms[0];
     }
   }
   else if (tdim == 3)
@@ -121,17 +102,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
           = xt::view(facet_transforms, 0, xt::all(), xt::all());
       xt::view(base_transformations, 6 + 2 * face + 1, range, range)
           = xt::view(facet_transforms, 1, xt::all(), xt::all());
-      // const int start = facet_dofs * face;
-      // base_transformations[6 + 2 * face].block(start, start, facet_dofs,
-      //                                          facet_dofs)
-      //     = facet_transforms[0];
-      // base_transformations[6 + 2 * face + 1].block(start, start, facet_dofs,
-      //                                              facet_dofs)
-      //     = facet_transforms[1];
     }
   }
-
-  std::cout << "BDM 5 " << std::endl;
 
   // BDM has facet_dofs dofs on each facet, and
   // ndofs-facet_count*facet_dofs in the interior
@@ -141,14 +113,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
 
-  std::cout << wcoeffs << std::endl;
-  std::cout << matrix << std::endl;
-  std::cout << points << std::endl;
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
-
-  std::cout << "BDM 6 " << std::endl;
-
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
                        mapping::type::contravariantPiola);

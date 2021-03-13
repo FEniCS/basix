@@ -40,7 +40,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, _Qwts]
-      = quadrature::make_quadrature_new("default", celltype, 2 * degree);
+      = quadrature::make_quadrature("default", celltype, 2 * degree);
   auto Qwts = xt::adapt(_Qwts);
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
       polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
@@ -208,7 +208,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, _Qwts]
-      = quadrature::make_quadrature_new("default", celltype, 2 * degree);
+      = quadrature::make_quadrature("default", celltype, 2 * degree);
   auto Qwts = xt::adapt(_Qwts);
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
       polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());

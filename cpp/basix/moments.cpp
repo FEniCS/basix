@@ -332,7 +332,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   auto [Qpts, _Qwts]
-      = quadrature::make_quadrature_new("default", sub_celltype, q_deg);
+      = quadrature::make_quadrature("default", sub_celltype, q_deg);
   auto Qwts = xt::adapt(_Qwts);
   if (Qpts.dimension() == 1)
     Qpts = Qpts.reshape({Qpts.shape()[0], 1});
@@ -429,7 +429,7 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   auto [qpts, _qwts]
-      = quadrature::make_quadrature_new("default", sub_celltype, q_deg);
+      = quadrature::make_quadrature("default", sub_celltype, q_deg);
   auto qwts = xt::adapt(_qwts);
   if (qpts.dimension() == 1)
     qpts = qpts.reshape({qpts.shape()[0], 1});
@@ -524,7 +524,7 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
     throw std::runtime_error("XXXTangent is only well-defined on an edge.");
 
   auto [Qpts, _Qwts]
-      = quadrature::make_quadrature_new("default", cell::type::interval, q_deg);
+      = quadrature::make_quadrature("default", cell::type::interval, q_deg);
   auto Qwts = xt::adapt(_Qwts);
   if (Qpts.dimension() == 1)
     Qpts = Qpts.reshape({Qpts.shape()[0], 1});
@@ -606,7 +606,7 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
     throw std::runtime_error("Normal is only well-defined on a facet.");
 
   auto [Qpts, _Qwts]
-      = quadrature::make_quadrature_new("default", sub_celltype, q_deg);
+      = quadrature::make_quadrature("default", sub_celltype, q_deg);
   auto Qwts = xt::adapt(_Qwts);
   if (Qpts.dimension() == 1)
     Qpts = Qpts.reshape({Qpts.shape()[0], 1});

@@ -28,7 +28,7 @@ xt::xtensor<double, 2> make_serendipity_space_2d(const int degree)
   const std::size_t ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature_new(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature(
       "default", cell::type::quadrilateral, 2 * degree);
   auto Qwts = xt::adapt(_Qwts);
 
@@ -126,7 +126,7 @@ xt::xtensor<double, 2> make_serendipity_space_3d(const int degree)
   // Number of order (degree) polynomials
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature_new(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature(
       "default", cell::type::hexahedron, 2 * degree);
   auto Qwts = xt::adapt(_Qwts);
   xt::xtensor<double, 2> polyset_at_Qpts

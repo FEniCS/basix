@@ -10,6 +10,7 @@
 #include <Eigen/Dense>
 #include <numeric>
 #include <vector>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -19,7 +20,7 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
 
-  const int tdim = cell::topological_dimension(celltype);
+  const std::size_t tdim = cell::topological_dimension(celltype);
   if (tdim < 2)
     throw std::runtime_error("Tdim must be 2 or 3 for Crouzeix-Raviart");
 
@@ -28,8 +29,8 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   const std::vector<std::vector<int>> facet_topology = topology[tdim - 1];
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
 
-  const int ndofs = facet_topology.size();
-  Eigen::ArrayXXd pts = Eigen::ArrayXXd::Zero(ndofs, tdim);
+  const std::size_t ndofs = facet_topology.size();
+  xt::xtensor<double, 2> pts = xt::zeros<double>({ndofs, tdim});
 
   // Compute facet midpoints
   int c = 0;
@@ -47,10 +48,17 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
     ++c;
   }
 
-  Eigen::MatrixXd dual = polyset::tabulate(celltype, 1, 0, pts)[0];
-  int transform_count = tdim == 2 ? 3 : 14;
-  std::vector<Eigen::MatrixXd> base_transformations(
-      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  xt::xtensor<double, 2> dual = xt::view(polyset::tabulate(celltype, 1, 0, pts),
+                                         0, xt::all(), xt::all());
+  std::size_t transform_count = tdim == 2 ? 3 : 14;
+  // std::vector<Eigen::MatrixXd> base_transformations(
+  //     transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  xt::xtensor<double, 3> base_transformations({transform_count, ndofs, ndofs});
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
   // Crouzeix-Raviart has one dof on each entity of tdim-1.
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -61,12 +69,9 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
     entity_dofs[3] = {0};
 
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      celltype, Eigen::MatrixXd::Identity(ndofs, ndofs),
-      Eigen::MatrixXd::Identity(ndofs, ndofs), pts, degree);
-
+      celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pts, degree);
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
                        entity_dofs, base_transformations, pts,
-                       Eigen::MatrixXd::Identity(ndofs, ndofs),
-                       mapping::type::identity);
+                       xt::eye<double>(ndofs), mapping::type::identity);
 }
 //-----------------------------------------------------------------------------

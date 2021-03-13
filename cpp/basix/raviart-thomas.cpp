@@ -42,7 +42,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, _Qwts]
-      = quadrature::make_quadrature_new("default", celltype, 2 * degree);
+      = quadrature::make_quadrature("default", celltype, 2 * degree);
   auto Qwts = xt::adapt(_Qwts);
   auto Pkp1_at_Qpts = xt::view(polyset::tabulate(celltype, degree, 0, Qpts), 0,
                                xt::all(), xt::all());

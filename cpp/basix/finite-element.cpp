@@ -18,6 +18,7 @@
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xio.hpp>
 #include <xtensor/xlayout.hpp>
 #include <xtensor/xview.hpp>
 
@@ -256,6 +257,7 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
       auto range0 = xt::range(0, row_dim[0]);
       auto range1 = xt::range(i * num_cols, i * num_cols + col_dim[0]);
       auto range = xt::range(i * col_dim[0], i * col_dim[0] + col_dim[0]);
+      std::cout << xt::view(matrix_1d, xt::all(), range) << std::endl;
       xt::view(matrix, range0, range1) = xt::view(matrix_1d, xt::all(), range);
     }
 
@@ -277,6 +279,7 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
       xt::view(matrix, range0, range1) = xt::view(matrix_3d, xt::all(), range);
     }
   }
+
 
   return std::make_pair(points, matrix);
 }

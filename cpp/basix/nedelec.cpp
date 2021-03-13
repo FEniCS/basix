@@ -36,7 +36,7 @@ xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
   const std::size_t ns = degree;
 
   // Tabulate polynomial set at quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature_new(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature(
       "default", cell::type::triangle, 2 * degree);
   auto Qwts = xt::adapt(_Qwts);
   xt::xtensor<double, 2> Pkp1_at_Qpts
@@ -142,7 +142,7 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
                             + (degree - 2) * (degree - 1) * degree / 2;
 
   // Tabulate polynomial basis at quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature_new(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature(
       "default", cell::type::tetrahedron, 2 * degree);
   auto Qwts = xt::adapt(_Qwts);
   xt::xtensor<double, 2> Pkp1_at_Qpts

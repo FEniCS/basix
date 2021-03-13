@@ -308,8 +308,14 @@ Each element has a `tabulate` function which returns the basis functions and a n
       },
       "Compute jacobi polynomial and derivatives at points");
 
-  m.def("make_quadrature", &quadrature::make_quadrature,
-        "Compute quadrature points and weights on a reference cell");
+  m.def(
+      "make_quadrature",
+      [](const std::string& rule, cell::type celltype, int m) {
+        auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
+        return std::pair(py::array_t<double>(pts.shape(), pts.data()),
+                         py::array_t<double>(w.size(), w.data()));
+      },
+      "Compute quadrature points and weights on a reference cell");
 
   m.def("index", py::overload_cast<int>(&basix::idx), "Indexing for 1D arrays")
       .def("index", py::overload_cast<int, int>(&basix::idx),

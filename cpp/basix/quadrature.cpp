@@ -4,7 +4,6 @@
 
 #include "quadrature.h"
 #include "span.hpp"
-#include <Eigen/Dense>
 #include <cmath>
 #include <vector>
 #include <xtensor-blas/xlinalg.hpp>
@@ -18,31 +17,6 @@ using namespace basix;
 
 namespace
 {
-
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-convert(const std::pair<xt::xarray<double>, std::vector<double>>& data)
-{
-  auto& x = data.first;
-  auto& w = data.second;
-  int dim1 = 1;
-  if (x.dimension() == 2)
-    dim1 = x.shape()[1];
-  Eigen::ArrayXXd _x(x.shape()[0], dim1);
-  Eigen::ArrayXd _w(w.size());
-  for (std::size_t i = 0; i < w.size(); ++i)
-  {
-    _w[i] = w[i];
-    if (x.dimension() == 2)
-    {
-      for (std::size_t j = 0; j < x.shape()[1]; ++j)
-        _x(i, j) = x(i, j);
-    }
-    else
-      _x(i, 0) = x[i];
-  }
-
-  return {_x, _w};
-}
 
 //----------------------------------------------------------------------------
 std::array<std::vector<double>, 2> rec_jacobi(int N, double a, double b)
@@ -749,8 +723,7 @@ quadrature::make_quadrature_tetrahedron_collapsed(std::size_t m)
 }
 //-----------------------------------------------------------------------------
 std::pair<xt::xarray<double>, std::vector<double>>
-quadrature::make_quadrature_new(const std::string& rule, cell::type celltype,
-                                int m)
+quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
 {
   if (rule == "" or rule == "default")
   {
@@ -776,11 +749,5 @@ quadrature::make_quadrature_new(const std::string& rule, cell::type celltype,
   }
   else
     throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");
-}
-//-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
-{
-  return convert(make_quadrature_new(rule, celltype, m));
 }
 //-----------------------------------------------------------------------------

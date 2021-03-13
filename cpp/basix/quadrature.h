@@ -6,8 +6,8 @@
 
 #include "cell.h"
 #include "span.hpp"
-#include <Eigen/Core>
 #include <utility>
+#include <vector>
 #include <xtensor/xtensor.hpp>
 
 /// basix
@@ -66,18 +66,8 @@ make_quadrature_tetrahedron_collapsed(std::size_t m);
 /// will integrate exactly
 /// @returns List of points and list of weights. The number of points
 /// arrays has shape (num points, gdim)
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-make_quadrature(const std::string& rule, cell::type celltype, int m);
-
-/// Utility for quadrature rule on reference cell
-/// @param[in] rule Name of quadrature rule (or use "default")
-/// @param[in] celltype
-/// @param[in] m Maximum degree of polynomial that this quadrature rule
-/// will integrate exactly
-/// @returns List of points and list of weights. The number of points
-/// arrays has shape (num points, gdim)
 std::pair<xt::xarray<double>, std::vector<double>>
-make_quadrature_new(const std::string& rule, cell::type celltype, int m);
+make_quadrature(const std::string& rule, cell::type celltype, int m);
 
 /// Compute GLL line quadrature rule on [0, 1]
 /// @param m order

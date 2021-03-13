@@ -17,6 +17,7 @@ import sympy
 @pytest.mark.parametrize("order", [1, 2, 3, 4, 5, 6, 7, 8])
 def test_cell_quadrature(celltype, order):
     Qpts, Qwts = basix.make_quadrature("default", celltype[0], order)
+    print(sum(Qwts))
     assert(np.isclose(sum(Qwts), celltype[1]))
 
 
@@ -29,7 +30,7 @@ def test_qorder_line(m, scheme):
     q = sympy.integrate(f, (x, 0, (1)))
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
-        s += wt * f.subs([(x, pt)])
+        s += wt * f.subs([(x, pt[0])])
     assert(np.isclose(float(q), float(s)))
 
 
@@ -44,6 +45,7 @@ def test_qorder_tri(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1])])
+    print(len(Qwts))
     assert(np.isclose(float(q), float(s)))
 
 
@@ -59,24 +61,28 @@ def test_qorder_tet(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
+    print(len(Qwts))
     assert(np.isclose(float(q), float(s)))
 
 
 def test_quadrature_function():
-    def f(x):
-        return x * x
-
     Qpts, Qwts = basix.make_quadrature("default", basix.CellType.interval, 3)
     # Scale to interval [0.0, 2.0]
     Qpts *= 2.0
     Qwts *= 2.0
-    b = sum([w * f(pt) for pt, w in zip(Qpts, Qwts)])
+
+    def f(x):
+        return x * x
+
+    b = sum([w * f(pt[0]) for pt, w in zip(Qpts, Qwts)])
+
     assert np.isclose(b, 8.0 / 3.0)
 
 
 def test_jacobi():
     pts = np.arange(0, 1, 0.1)
-    basix.compute_jacobi_deriv(1.0, 4, 5, pts)
+    f = basix.compute_jacobi_deriv(1.0, 4, 5, pts)
+    print(f)
 
 
 def test_gll():

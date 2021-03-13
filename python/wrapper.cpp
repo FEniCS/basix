@@ -312,8 +312,19 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "make_quadrature",
       [](const std::string& rule, cell::type celltype, int m) {
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
-        return std::pair(py::array_t<double>(pts.shape(), pts.data()),
-                         py::array_t<double>(w.size(), w.data()));
+        // FIXME: it would be more elegant to handle 1D case as a 1D
+        // array, but FFC would need updating
+        if (pts.dimension() == 1)
+        {
+          std::array<std::size_t, 2> s = {pts.shape()[0], 1};
+          return std::pair(py::array_t<double>(s, pts.data()),
+                           py::array_t<double>(w.size(), w.data()));
+        }
+        else
+        {
+          return std::pair(py::array_t<double>(pts.shape(), pts.data()),
+                           py::array_t<double>(w.size(), w.data()));
+        }
       },
       "Compute quadrature points and weights on a reference cell");
 

@@ -155,6 +155,14 @@ Eigen::MatrixXd compute_expansion_coefficients(
     cell::type cell_type, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
     const Eigen::ArrayXXd& x, int degree, double kappa_tol = 0.0);
 
+/// TODO
+Eigen::MatrixXd compute_expansion_coefficients(cell::type cell_type,
+                                               const xt::xtensor<double, 2>& B,
+                                               const xt::xtensor<double, 2>& M,
+                                               const xt::xtensor<double, 2>& x,
+                                               int degree,
+                                               double kappa_tol = 0.0);
+
 /// Combines interpolation data
 ///
 /// When the value size is not 1, the matrices are split up into
@@ -175,6 +183,30 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> combine_interpolation_data(
     const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,
     const Eigen::MatrixXd& matrix_2d, const Eigen::MatrixXd& matrix_3d,
     const int tdim, const int value_size);
+
+/// Combines interpolation data
+///
+/// When the value size is not 1, the matrices are split up into
+/// `value_size` parts, then recombined so that the columns of the
+/// matrix that is output is ordered correctly.
+///
+/// @param[in] points_1d The interpolation points for a 1d entity
+/// @param[in] points_2d The interpolation points for a 2d entity
+/// @param[in] points_3d The interpolation points for a 3d entity
+/// @param[in] matrix_1d The interpolation matrix for a 1d entity
+/// @param[in] matrix_2d The interpolation matrix for a 2d entity
+/// @param[in] matrix_3d The interpolation matrix for a 3d entity
+/// @param[in] tdim The toplogical dimension
+/// @param[in] value_size Value size
+/// @return The interpolation points and matrix
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
+                           const xt::xtensor<double, 2>& points_2d,
+                           const xt::xtensor<double, 2>& points_3d,
+                           const xt::xtensor<double, 2>& matrix_1d,
+                           const xt::xtensor<double, 2>& matrix_2d,
+                           const xt::xtensor<double, 2>& matrix_3d,
+                           std::size_t tdim, std::size_t value_size);
 
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the
@@ -205,11 +237,12 @@ public:
 
   /// TODO
   FiniteElement(element::family family, cell::type cell_type, int degree,
-                const std::vector<int>& value_shape,
+                const std::vector<std::size_t>& value_shape,
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
                 const xt::xtensor<double, 3>& base_transformations,
-                const Eigen::ArrayXXd& points, const Eigen::MatrixXd M = {},
+                const xt::xtensor<double, 2>& points,
+                const xt::xtensor<double, 2>& M = {},
                 mapping::type map_type = mapping::type::identity);
 
   /// Copy constructor

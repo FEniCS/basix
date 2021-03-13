@@ -24,18 +24,20 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
-  const int tdim = cell::topological_dimension(celltype);
+  const std::size_t tdim = cell::topological_dimension(celltype);
 
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::triangle;
 
   // The number of order (degree-1) scalar polynomials
-  const int nv = polyset::dim(celltype, degree - 1);
+  const std::size_t nv = polyset::dim(celltype, degree - 1);
+
   // The number of order (degree-2) scalar polynomials
-  const int ns0 = polyset::dim(celltype, degree - 2);
+  const std::size_t ns0 = polyset::dim(celltype, degree - 2);
+
   // The number of additional polynomials in the polynomial basis for
   // Raviart-Thomas
-  const int ns = polyset::dim(facettype, degree - 1);
+  const std::size_t ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts]
@@ -44,23 +46,27 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
       = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 
   // The number of order (degree) polynomials
-  const int psize = Pkp1_at_Qpts.cols();
+  const std::size_t psize = Pkp1_at_Qpts.cols();
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(nv * tdim + ns, psize * tdim);
-  for (int j = 0; j < tdim; ++j)
+  xt::xtensor<double, 2> wcoeffs
+      = xt::zeros<double>({nv * tdim + ns, psize * tdim});
+  for (std::size_t j = 0; j < tdim; ++j)
   {
-    wcoeffs.block(nv * j, psize * j, nv, nv)
-        = Eigen::MatrixXd::Identity(nv, nv);
+    xt::view(wcoeffs, xt::range(nv * j, nv * j + nv),
+             xt::range(psize * j, psize * j + nv))
+        = xt::eye<double>(nv);
+    // wcoeffs.block(nv * j, psize * j, nv, nv)
+    //     = Eigen::MatrixXd::Identity(nv, nv);
   }
 
   // Create coefficients for additional polynomials in Raviart-Thomas
   // polynomial basis
-  for (int i = 0; i < ns; ++i)
+  for (std::size_t i = 0; i < ns; ++i)
   {
-    for (int k = 0; k < psize; ++k)
+    for (std::size_t k = 0; k < psize; ++k)
     {
-      for (int j = 0; j < tdim; ++j)
+      for (std::size_t j = 0; j < tdim; ++j)
       {
         const double w_sum = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(j)
                               * Pkp1_at_Qpts.col(k))
@@ -74,8 +80,9 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   int quad_deg = 5 * degree;
 
   // Add integral moments on facets
-  Eigen::ArrayXXd points_facet;
-  Eigen::MatrixXd matrix_facet;
+  // Eigen::ArrayXXd points_facet;
+  // Eigen::MatrixXd matrix_facet;
+  xt::xtensor<double, 2> points_facet, matrix_facet;
   FiniteElement facet_moment_space = create_dlagrange(facettype, degree - 1);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
@@ -84,20 +91,21 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
 
   const std::size_t facet_dofs = facet_transforms.shape()[1];
 
-  Eigen::ArrayXXd points_cell(0, tdim);
-  Eigen::MatrixXd matrix_cell(0, 0);
+  // Eigen::ArrayXXd points_cell(0, tdim);
+  // Eigen::MatrixXd matrix_cell(0, 0);
+  xt::xtensor<double, 2> points_cell, matrix_cell;
   // Add integral moments on interior
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_cell, matrix_cell) = moments::make_integral_moments(
+    std::tie(points_cell, matrix_cell) = moments::make_integral_moments_new(
         create_dlagrange(celltype, degree - 2), celltype, tdim, quad_deg);
   }
 
   // Interpolation points and matrix
-  Eigen::ArrayXXd points;
-  Eigen::MatrixXd matrix;
-
+  // Eigen::ArrayXXd points;
+  // Eigen::MatrixXd matrix;
+  xt::xtensor<double, 2> points, matrix;
   std::tie(points, matrix) = combine_interpolation_data(
       points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
 
@@ -107,7 +115,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const std::size_t facet_count = tdim + 1;
   const std::size_t ndofs = nv * tdim + ns;
   std::size_t transform_count = 0;
-  for (int i = 1; i < tdim; ++i)
+  for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
   xt::xtensor<double, 3> base_transformations
@@ -145,10 +153,10 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
 
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (int i = 0; i < tdim - 1; ++i)
+  for (std::size_t i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
-  entity_dofs[tdim] = {ns0 * tdim};
+  entity_dofs[tdim] = {(int)(ns0 * tdim)};
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);

@@ -146,6 +146,25 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
                                            coeff.shape()[1]);
 }
 //-----------------------------------------------------------------------------
+Eigen::MatrixXd basix::compute_expansion_coefficients(
+    cell::type cell_type, const xt::xtensor<double, 2>& B,
+    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
+    int degree, double kappa_tol)
+{
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _B(B.data(), B.shape()[0], B.shape()[1]);
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _M(M.data(), M.shape()[0], M.shape()[1]);
+  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+                                Eigen::RowMajor>>
+      _x(x.data(), x.shape()[0], x.shape()[1]);
+
+  return compute_expansion_coefficients(cell_type, _B, _M, _x, degree,
+                                        kappa_tol);
+}
+//-----------------------------------------------------------------------------
 std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(
     const Eigen::ArrayXXd& points_1d, const Eigen::ArrayXXd& points_2d,
     const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,
@@ -189,6 +208,111 @@ std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> basix::combine_interpolation_data(
   return std::make_pair(points, matrix);
 }
 //-----------------------------------------------------------------------------
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
+                                  const xt::xtensor<double, 2>& points_2d,
+                                  const xt::xtensor<double, 2>& points_3d,
+                                  const xt::xtensor<double, 2>& matrix_1d,
+                                  const xt::xtensor<double, 2>& matrix_2d,
+                                  const xt::xtensor<double, 2>& matrix_3d,
+                                  std::size_t tdim, std::size_t value_size)
+{
+  std::cout << "Combine 0 " << std::endl;
+  std::array<std::size_t, 3> num_ptsd
+      = {points_1d.shape()[0], points_2d.shape()[0], points_3d.shape()[0]};
+  std::size_t num_pts = std::accumulate(num_ptsd.begin(), num_ptsd.end(), 0);
+  xt::xtensor<double, 2> points({num_pts, tdim});
+
+  std::cout << "Combine 1 " << std::endl;
+
+  if (num_ptsd[0] > 0)
+    xt::view(points, xt::range(0, num_ptsd[0]), xt::all()) = points_1d;
+
+  if (num_ptsd[1] > 0)
+  {
+    xt::view(points, xt::range(num_ptsd[0], num_ptsd[0] + num_ptsd[1]),
+             xt::all())
+        = points_2d;
+  }
+
+  if (num_ptsd[2] > 0)
+  {
+    auto range = xt::range(num_ptsd[0] + num_ptsd[1],
+                           num_ptsd[0] + num_ptsd[1] + num_ptsd[2]);
+    xt::view(points, range, xt::all()) = points_3d;
+  }
+
+  std::cout << "Combine 2 " << std::endl;
+
+  // Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(
+  //     matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
+  //     matrix_1d.cols() + matrix_2d.cols() + matrix_3d.cols());
+
+  std::array<std::size_t, 3> row_dim
+      = {matrix_1d.shape()[0], matrix_2d.shape()[0], matrix_3d.shape()[0]};
+  std::size_t num_rows = std::accumulate(row_dim.begin(), row_dim.end(), 0);
+  std::array<std::size_t, 3> col_dim
+      = {matrix_1d.shape()[1], matrix_2d.shape()[1], matrix_3d.shape()[1]};
+  std::size_t num_cols = std::accumulate(col_dim.begin(), col_dim.end(), 0);
+
+  xt::xtensor<double, 2> matrix = xt::zeros<double>({num_rows, num_cols});
+
+  std::cout << "Combine 3: " << matrix.shape()[0] << ", " << matrix.shape()[1]
+            << std::endl;
+
+  // const int r1d = matrix_1d.rows();
+  // const int r2d = matrix_2d.rows();
+  // const int r3d = matrix_3d.rows();
+  // const int c1d = matrix_1d.cols() / value_size;
+  // const int c2d = matrix_2d.cols() / value_size;
+  // const int c3d = matrix_3d.cols() / value_size;
+  std::cout << "Combine 3 pre:  " << num_cols << ", " << col_dim[0]
+            << std::endl;
+  std::transform(col_dim.begin(), col_dim.end(), col_dim.begin(),
+                 [value_size](auto x) { return x /= value_size; });
+  num_cols /= value_size;
+  for (std::size_t i = 0; i < value_size; ++i)
+  {
+    {
+      // matrix.block(0, i * (c1d + c2d + c3d), r1d, c1d)
+      //     = matrix_1d.block(0, i * c1d, r1d, c1d);
+      auto range0 = xt::range(0, row_dim[0]);
+      auto range1 = xt::range(i * num_cols, i * num_cols + col_dim[0]);
+      auto range = xt::range(i * col_dim[0], i * col_dim[0] + col_dim[0]);
+      std::cout << xt::view(matrix_1d, xt::all(), range) << std::endl;
+      xt::view(matrix, range0, range1) = xt::view(matrix_1d, xt::all(), range);
+    }
+
+    {
+      std::cout << "Combine 3b " << std::endl;
+      // matrix.block(r1d, i * (c1d + c2d + c3d) + c1d, r2d, c2d)
+      //     = matrix_2d.block(0, i * c2d, r2d, c2d);
+      auto range0 = xt::range(row_dim[0], row_dim[0] + row_dim[1]);
+      auto range1 = xt::range(i * num_cols + col_dim[0],
+                              i * num_cols + col_dim[0] + col_dim[1]);
+      auto range = xt::range(i * col_dim[1], i * col_dim[1] + col_dim[1]);
+      xt::view(matrix, range0, range1) = xt::view(matrix_2d, xt::all(), range);
+    }
+
+    {
+      std::cout << "Combine 3c " << std::endl;
+      // matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r3d, c3d)
+      //     = matrix_3d.block(0, i * c3d, r3d, c3d);
+      auto range0 = xt::range(row_dim[0] + row_dim[1],
+                              row_dim[0] + row_dim[1] + row_dim[2]);
+      auto range1
+          = xt::range(i * num_cols + col_dim[0] + col_dim[1],
+                      i * num_cols + col_dim[0] + col_dim[1] + col_dim[2]);
+      auto range = xt::range(i * col_dim[2], i * col_dim[2] + col_dim[2]);
+      xt::view(matrix, range0, range1) = xt::view(matrix_3d, xt::all(), range);
+    }
+  }
+
+  std::cout << "Combine 4 " << std::endl;
+
+  return std::make_pair(points, matrix);
+}
+//-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
     const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
@@ -215,16 +339,18 @@ FiniteElement::FiniteElement(
 }
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(element::family family, cell::type cell_type,
-                             int degree, const std::vector<int>& value_shape,
+                             int degree,
+                             const std::vector<std::size_t>& value_shape,
                              const Eigen::ArrayXXd& coeffs,
                              const std::vector<std::vector<int>>& entity_dofs,
                              const xt::xtensor<double, 3>& base_transformations,
-                             const Eigen::ArrayXXd& points,
-                             const Eigen::MatrixXd M, mapping::type map_type)
+                             const xt::xtensor<double, 2>& points,
+                             const xt::xtensor<double, 2>& M,
+                             mapping::type map_type)
     : _cell_type(cell_type), _family(family), _degree(degree),
-      _value_shape(value_shape), _map_type(map_type), _coeffs(coeffs),
-      _entity_dofs(entity_dofs), _points(points), _matM(M)
+      _map_type(map_type), _coeffs(coeffs), _entity_dofs(entity_dofs)
 {
+  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
   for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
   {
     Eigen::MatrixXd A(base_transformations.shape()[1],
@@ -234,6 +360,16 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
         A(j, k) = base_transformations(i, j, k);
     _base_transformations.push_back(A);
   }
+
+  _points.resize(points.shape()[0], points.shape()[1]);
+  for (std::size_t i = 0; i < points.shape()[0]; ++i)
+    for (std::size_t j = 0; j < points.shape()[1]; ++j)
+      _points(i, j) = points(i, j);
+
+  _matM.resize(M.shape()[0], M.shape()[1]);
+  for (std::size_t i = 0; i < M.shape()[0]; ++i)
+    for (std::size_t j = 0; j < M.shape()[1]; ++j)
+      _matM(i, j) = M(i, j);
 
   // Check that entity dofs add up to total number of dofs
   int sum = 0;

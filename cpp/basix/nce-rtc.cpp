@@ -33,7 +33,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
                  << " points are unstable.";
   }
 
-  const int tdim = cell::topological_dimension(celltype);
+  const std::size_t tdim = cell::topological_dimension(celltype);
 
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
@@ -45,7 +45,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
       = polyset::tabulate(celltype, degree, 0, Qpts)[0];
 
   // The number of order (degree) polynomials
-  const int psize = polyset_at_Qpts.cols();
+  const std::size_t psize = polyset_at_Qpts.cols();
 
   const int facet_count = tdim == 2 ? 4 : 6;
   const int facet_dofs = polyset::dim(facettype, degree - 1);
@@ -54,21 +54,22 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   const std::size_t ndofs = facet_count * facet_dofs + internal_dofs;
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
+  // Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * tdim});
 
   const int nv_interval = polyset::dim(cell::type::interval, degree);
   const int ns_interval = polyset::dim(cell::type::interval, degree - 1);
   int dof = 0;
   if (tdim == 2)
   {
-    for (int d = 0; d < tdim; ++d)
+    for (std::size_t d = 0; d < tdim; ++d)
       for (int i = 0; i < ns_interval; ++i)
         for (int j = 0; j < ns_interval; ++j)
           wcoeffs(dof++, psize * d + i * nv_interval + j) = 1;
   }
   else
   {
-    for (int d = 0; d < tdim; ++d)
+    for (std::size_t d = 0; d < tdim; ++d)
       for (int i = 0; i < ns_interval; ++i)
         for (int j = 0; j < ns_interval; ++j)
           for (int k = 0; k < ns_interval; ++k)
@@ -88,13 +89,13 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
       indices[0] = i / degree;
       indices[1] = i % degree;
     }
-    for (int d = 0; d < tdim; ++d)
+    for (std::size_t d = 0; d < tdim; ++d)
     {
       int n = 0;
       Eigen::ArrayXd integrand = Qpts.col(d);
       for (int j = 1; j < degree; ++j)
         integrand *= Qpts.col(d);
-      for (int c = 0; c < tdim; ++c)
+      for (std::size_t c = 0; c < tdim; ++c)
       {
         if (c != d)
         {
@@ -103,7 +104,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
           ++n;
         }
       }
-      for (int k = 0; k < psize; ++k)
+      for (std::size_t k = 0; k < psize; ++k)
       {
         const double w_sum = (Qwts * integrand * polyset_at_Qpts.col(k)).sum();
         wcoeffs(dof, k + psize * d) = w_sum;
@@ -115,27 +116,31 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   // quadrature degree
   int quad_deg = 2 * degree;
 
-  Eigen::ArrayXXd points_facet;
-  Eigen::MatrixXd matrix_facet;
+  xt::xtensor<double, 2> points_facet, matrix_facet;
   FiniteElement moment_space = create_dlagrange(facettype, degree - 1);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
       moment_space, celltype, tdim, quad_deg);
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(moment_space);
 
-  Eigen::ArrayXXd points_cell(0, tdim);
-  Eigen::MatrixXd matrix_cell(0, 0);
+  // Eigen::ArrayXXd points_cell(0, tdim);
+  // Eigen::MatrixXd matrix_cell(0, 0);
+  xt::xtensor<double, 2> points_cell;
+  xt::xtensor<double, 2> matrix_cell;
+
   // Add integral moments on interior
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
+    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments_new(
         create_nce(celltype, degree - 1), celltype, tdim, quad_deg);
   }
 
   // Interpolation points and matrix
-  Eigen::ArrayXXd points;
-  Eigen::MatrixXd matrix;
+  // Eigen::ArrayXXd points;
+  // Eigen::MatrixXd matrix;
+  xt::xtensor<double, 2> points;
+  xt::xtensor<double, 2> matrix;
 
   std::tie(points, matrix) = combine_interpolation_data(
       points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
@@ -144,7 +149,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
       = cell::topology(celltype);
 
   std::size_t transform_count = 0;
-  for (int i = 1; i < tdim; ++i)
+  for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
   xt::xtensor<double, 3> base_transformations
@@ -182,7 +187,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   }
 
   std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (int i = 0; i < tdim - 1; ++i)
+  for (std::size_t i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
@@ -207,7 +212,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
                  << " points are unstable.";
   }
 
-  const int tdim = cell::topological_dimension(celltype);
+  const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, Qwts]
@@ -229,21 +234,21 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
                             + volume_count * volume_dofs;
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize * tdim);
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * tdim});
 
   const int nv_interval = polyset::dim(cell::type::interval, degree);
   const int ns_interval = polyset::dim(cell::type::interval, degree - 1);
   int dof = 0;
   if (tdim == 2)
   {
-    for (int d = 0; d < tdim; ++d)
+    for (std::size_t d = 0; d < tdim; ++d)
       for (int i = 0; i < ns_interval; ++i)
         for (int j = 0; j < ns_interval; ++j)
           wcoeffs(dof++, psize * d + i * nv_interval + j) = 1;
   }
   else
   {
-    for (int d = 0; d < tdim; ++d)
+    for (std::size_t d = 0; d < tdim; ++d)
       for (int i = 0; i < ns_interval; ++i)
         for (int j = 0; j < ns_interval; ++j)
           for (int k = 0; k < ns_interval; ++k)
@@ -257,7 +262,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   {
     for (int i = 0; i < degree; ++i)
     {
-      for (int d = 0; d < tdim; ++d)
+      for (std::size_t d = 0; d < tdim; ++d)
       {
         Eigen::ArrayXd integrand = Qpts.col(1 - d);
         for (int j = 1; j < degree; ++j)
@@ -281,13 +286,13 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
     {
       for (int j = 0; j < degree + 1; ++j)
       {
-        for (int c = 0; c < tdim; ++c)
+        for (std::size_t c = 0; c < tdim; ++c)
         {
-          for (int d = 0; d < tdim; ++d)
+          for (std::size_t d = 0; d < tdim; ++d)
           {
             if (d != c)
             {
-              const int e
+              const std::size_t e
                   = (c == 0 || d == 0) ? ((c == 1 || d == 1) ? 2 : 1) : 0;
               if (c < e and j == degree)
                 continue;
@@ -316,19 +321,26 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   // quadrature degree
   int quad_deg = 2 * degree;
 
-  Eigen::ArrayXXd points_1d;
-  Eigen::MatrixXd matrix_1d;
+  // Eigen::ArrayXXd points_1d;
+  // Eigen::MatrixXd matrix_1d;
+  xt::xtensor<double, 2> points_1d;
+  xt::xtensor<double, 2> matrix_1d;
+
   FiniteElement edge_moment_space
       = create_dlagrange(cell::type::interval, degree - 1);
-  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments_new(
       edge_moment_space, celltype, tdim, quad_deg);
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
-  Eigen::ArrayXXd points_2d(0, tdim);
-  Eigen::MatrixXd matrix_2d(0, 0);
-  Eigen::ArrayXXd points_3d(0, tdim);
-  Eigen::MatrixXd matrix_3d(0, 0);
+  // Eigen::ArrayXXd points_2d(0, tdim);
+  // Eigen::MatrixXd matrix_2d(0, 0);
+  // Eigen::ArrayXXd points_3d(0, tdim);
+  // Eigen::MatrixXd matrix_3d(0, 0);
+  xt::xtensor<double, 2> points_2d;
+  xt::xtensor<double, 2> matrix_2d;
+  xt::xtensor<double, 2> points_3d;
+  xt::xtensor<double, 2> matrix_3d;
 
   xt::xtensor<double, 3> face_transforms;
   // Add integral moments on interior
@@ -337,7 +349,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
     // Face integral moment
     FiniteElement moment_space
         = create_rtc(cell::type::quadrilateral, degree - 1);
-    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
+    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments_new(
         moment_space, celltype, tdim, quad_deg);
 
     if (tdim == 3)
@@ -346,15 +358,15 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
           = moments::create_dot_moment_dof_transformations(moment_space);
 
       // Interior integral moment
-      std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
+      std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments_new(
           create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
           quad_deg);
     }
   }
 
   // Interpolation points and matrix
-  Eigen::ArrayXXd points;
-  Eigen::MatrixXd matrix;
+  xt::xtensor<double, 2> points;
+  xt::xtensor<double, 2> matrix;
 
   std::tie(points, matrix)
       = combine_interpolation_data(points_1d, points_2d, points_3d, matrix_1d,
@@ -364,7 +376,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
       = cell::topology(celltype);
 
   std::size_t transform_count = 0;
-  for (int i = 1; i < tdim; ++i)
+  for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
   // std::vector<Eigen::MatrixXd> base_transformations(

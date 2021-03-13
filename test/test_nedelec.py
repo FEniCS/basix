@@ -6,6 +6,7 @@ import basix
 import numpy
 import pytest
 import sympy
+
 from .test_lagrange import sympy_disc_lagrange
 
 

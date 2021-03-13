@@ -14,6 +14,7 @@
 #include <numeric>
 #include <vector>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xio.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
@@ -25,8 +26,9 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
-  const int tdim = cell::topological_dimension(celltype);
+  std::cout << "BDM 0 " << std::endl;
 
+  const std::size_t tdim = cell::topological_dimension(celltype);
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::triangle;
 
@@ -35,7 +37,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::size_t ndofs = npoly * tdim;
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
+  xt::xtensor<double, 2> wcoeffs = xt::eye<double>(ndofs);
 
   // quadrature degree
   int quad_deg = 5 * degree;
@@ -45,8 +47,11 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::size_t facet_dofs = polyset::dim(facettype, degree);
   const int internal_dofs = ndofs - facet_count * facet_dofs;
 
-  Eigen::ArrayXXd points_facet;
-  Eigen::MatrixXd matrix_facet;
+  std::cout << "BDM 1 " << std::endl;
+
+  // Eigen::ArrayXXd points_facet;
+  // Eigen::MatrixXd matrix_facet;
+  xt::xtensor<double, 2> points_facet, matrix_facet;
   FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
@@ -54,19 +59,24 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
-  Eigen::ArrayXXd points_cell;
-  Eigen::MatrixXd matrix_cell;
+  std::cout << "BDM 2 " << std::endl;
+
+  // Eigen::ArrayXXd points_cell;
+  // Eigen::MatrixXd matrix_cell;
+  xt::xtensor<double, 2> points_cell, matrix_cell;
   // Add integral moments on interior
   if (degree > 1)
   {
+    std::cout << "BDM 3a " << std::endl;
     // Interior integral moment
-    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
+    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments_new(
         create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
   }
 
   // Interpolation points and matrix
-  Eigen::ArrayXXd points;
-  Eigen::MatrixXd matrix;
+  // Eigen::ArrayXXd points;
+  // Eigen::MatrixXd matrix;
+  xt::xtensor<double, 2> points, matrix;
 
   std::tie(points, matrix) = combine_interpolation_data(
       points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
@@ -74,8 +84,10 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
+  std::cout << "BDM 4 " << std::endl;
+
   std::size_t transform_count = 0;
-  for (int i = 1; i < tdim; ++i)
+  for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
   xt::xtensor<double, 3> base_transformations
@@ -119,16 +131,23 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     }
   }
 
+  std::cout << "BDM 5 " << std::endl;
+
   // BDM has facet_dofs dofs on each facet, and
   // ndofs-facet_count*facet_dofs in the interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (int i = 0; i < tdim - 1; ++i)
+  for (std::size_t i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
 
+  std::cout << wcoeffs << std::endl;
+  std::cout << matrix << std::endl;
+  std::cout << points << std::endl;
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
+
+  std::cout << "BDM 6 " << std::endl;
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,

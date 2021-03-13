@@ -662,29 +662,8 @@ moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
   return std::make_pair(points, matrix);
 }
 //----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-moments::make_normal_integral_moments(const FiniteElement& moment_space,
-                                      cell::type celltype, int value_size,
-                                      int q_deg)
-{
-  auto [points, matrix] = make_normal_integral_moments_new(
-      moment_space, celltype, value_size, q_deg);
-
-  // TMP: Copy into Eigen
-  Eigen::ArrayXXd _points(points.shape()[0], points.shape()[1]);
-  Eigen::MatrixXd _matrix(matrix.shape()[0], matrix.shape()[1]);
-  for (std::size_t i = 0; i < points.shape()[0]; ++i)
-    for (std::size_t j = 0; j < points.shape()[1]; ++j)
-      _points(i, j) = points(i, j);
-  for (std::size_t i = 0; i < matrix.shape()[0]; ++i)
-    for (std::size_t j = 0; j < matrix.shape()[1]; ++j)
-      _matrix(i, j) = matrix(i, j);
-
-  return std::make_pair(_points, _matrix);
-}
-//----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-moments::make_normal_integral_moments_new(const FiniteElement& moment_space,
+moments::make_normal_integral_moments(const FiniteElement& moment_space,
                                           cell::type celltype,
                                           std::size_t value_size, int q_deg)
 {

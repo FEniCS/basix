@@ -252,22 +252,27 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   else
     throw std::runtime_error("Invalid cell type");
 
-  const int ndofs = polyset::dim(simplex_type, degree);
-  const int psize = polyset::dim(celltype, degree);
+  const std::size_t ndofs = polyset::dim(simplex_type, degree);
+  const std::size_t psize = polyset::dim(celltype, degree);
 
-  auto [Qpts, Qwts]
-      = quadrature::make_quadrature("default", celltype, 2 * degree);
-  Eigen::ArrayXXd quad_polyset_at_Qpts
-      = polyset::tabulate(celltype, degree, 0, Qpts)[0];
-  Eigen::ArrayXXd polyset_at_Qpts
-      = polyset::tabulate(simplex_type, degree, 0, Qpts)[0];
+  auto [Qpts, _Qwts]
+      = quadrature::make_quadrature_new("default", celltype, 2 * degree);
+  auto Qwts = xt::adapt(_Qwts);
+
+  xt::xtensor<double, 2> quad_polyset_at_Qpts = xt::view(
+      polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> polyset_at_Qpts
+      = xt::view(polyset::tabulate(simplex_type, degree, 0, Qpts), 0, xt::all(),
+                 xt::all());
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize);
-  for (int i = 0; i < ndofs; ++i)
-    for (int k = 0; k < psize; ++k)
-      wcoeffs(i, k)
-          = (Qwts * polyset_at_Qpts.col(i) * quad_polyset_at_Qpts.col(k)).sum();
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+  for (std::size_t i = 0; i < ndofs; ++i)
+  {
+    auto p_i = xt::col(polyset_at_Qpts, i);
+    for (std::size_t k = 0; k < psize; ++k)
+      wcoeffs(i, k) = xt::sum(Qwts * p_i * xt::col(quad_polyset_at_Qpts, k))();
+  }
 
   std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -279,24 +284,21 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   const auto pt
       = lattice::create(simplex_type, degree, lattice::type::equispaced, true);
 
-  int transform_count = 0;
+  std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_transformations(
-      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _pt
-      = Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>>(
-          pt.data(), pt.shape()[0], pt.shape()[1]);
+  xt::xtensor<double, 3> base_transformations({transform_count, ndofs, ndofs});
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, Eigen::MatrixXd::Identity(ndofs, ndofs), _pt, degree);
-
+      celltype, wcoeffs, xt::eye<double>(ndofs), pt, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, _pt,
-                       Eigen::MatrixXd::Identity(ndofs, ndofs),
-                       mapping::type::identity);
+                       entity_dofs, base_transformations, pt,
+                       xt::eye<double>(ndofs), mapping::type::identity);
 }
 //-----------------------------------------------------------------------------

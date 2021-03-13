@@ -602,7 +602,6 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
 
-  std::cout << "Testing: " << sub_entity_dim << ", " << tdim << std::endl;
   if (static_cast<int>(sub_entity_dim) != static_cast<int>(tdim) - 1)
     throw std::runtime_error("Normal is only well-defined on a facet.");
 

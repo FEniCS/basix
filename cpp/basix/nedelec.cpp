@@ -73,7 +73,7 @@ create_nedelec_2d_interpolation(int degree)
   // Integral representation for the boundary (edge) dofs
   xt::xtensor<double, 2> points_1d;
   xt::xtensor<double, 2> matrix_1d;
-  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments_new(
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       create_dlagrange(cell::type::interval, degree - 1), cell::type::triangle,
       2, quad_deg);
 
@@ -81,7 +81,7 @@ create_nedelec_2d_interpolation(int degree)
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_2d, matrix_2d) = moments::make_integral_moments_new(
+    std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
         create_dlagrange(cell::type::triangle, degree - 2),
         cell::type::triangle, 2, quad_deg);
   }
@@ -208,7 +208,7 @@ create_nedelec_3d_interpolation(int degree)
 
   xt::xtensor<double, 2> points_1d;
   xt::xtensor<double, 2> matrix_1d;
-  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments_new(
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       create_dlagrange(cell::type::interval, degree - 1),
       cell::type::tetrahedron, 3, quad_deg);
 
@@ -216,7 +216,7 @@ create_nedelec_3d_interpolation(int degree)
   xt::xtensor<double, 2> matrix_2d;
   if (degree > 1)
   {
-    std::tie(points_2d, matrix_2d) = moments::make_integral_moments_new(
+    std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
         create_dlagrange(cell::type::triangle, degree - 2),
         cell::type::tetrahedron, 3, quad_deg);
   }
@@ -225,7 +225,7 @@ create_nedelec_3d_interpolation(int degree)
   xt::xtensor<double, 2> matrix_3d;
   if (degree > 2)
   {
-    std::tie(points_3d, matrix_3d) = moments::make_integral_moments_new(
+    std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
         create_dlagrange(cell::type::tetrahedron, degree - 3),
         cell::type::tetrahedron, 3, quad_deg);
   }
@@ -287,14 +287,14 @@ create_nedelec2_2d_interpolation(int degree)
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
   xt::xtensor<double, 2> points_1d, matrix_1d;
-  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments_new(
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       create_dlagrange(cell::type::interval, degree), cell::type::triangle, 2,
       quad_deg);
 
   xt::xtensor<double, 2> points_2d, matrix_2d;
   if (degree > 1)
   {
-    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments_new(
+    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
         create_rt(cell::type::triangle, degree - 1), cell::type::triangle, 2,
         quad_deg);
   }
@@ -337,7 +337,7 @@ create_nedelec2_3d_interpolation(int degree)
 
   // Integral representation for the boundary (edge) dofs
   xt::xtensor<double, 2> points_1d, matrix_1d;
-  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments_new(
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       create_dlagrange(cell::type::interval, degree), cell::type::tetrahedron,
       3, quad_deg);
 
@@ -345,7 +345,7 @@ create_nedelec2_3d_interpolation(int degree)
   if (degree > 1)
   {
     // Integral moments on faces
-    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments_new(
+    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
         create_rt(cell::type::triangle, degree - 1), cell::type::tetrahedron, 3,
         quad_deg);
   }
@@ -354,7 +354,7 @@ create_nedelec2_3d_interpolation(int degree)
   if (degree > 2)
   {
     // Interior integral moment
-    std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments_new(
+    std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
         create_rt(cell::type::tetrahedron, degree - 2), cell::type::tetrahedron,
         3, quad_deg);
   }

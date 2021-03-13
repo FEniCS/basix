@@ -58,7 +58,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments_new(
+    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
         create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
   }
 

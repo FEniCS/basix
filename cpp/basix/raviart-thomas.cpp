@@ -92,7 +92,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_cell, matrix_cell) = moments::make_integral_moments_new(
+    std::tie(points_cell, matrix_cell) = moments::make_integral_moments(
         create_dlagrange(celltype, degree - 2), celltype, tdim, quad_deg);
   }
 

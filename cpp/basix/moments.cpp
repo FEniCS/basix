@@ -318,31 +318,10 @@ xt::xtensor<double, 3> moments::create_tangent_moment_dof_transformations(
   return t;
 }
 //----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
 moments::make_integral_moments(const FiniteElement& moment_space,
                                cell::type celltype, std::size_t value_size,
                                int q_deg)
-{
-  auto [points, matrix]
-      = make_integral_moments_new(moment_space, celltype, value_size, q_deg);
-
-  // TMP: Copy into Eigen
-  Eigen::ArrayXXd _points(points.shape()[0], points.shape()[1]);
-  Eigen::MatrixXd _matrix(matrix.shape()[0], matrix.shape()[1]);
-  for (std::size_t i = 0; i < points.shape()[0]; ++i)
-    for (std::size_t j = 0; j < points.shape()[1]; ++j)
-      _points(i, j) = points(i, j);
-  for (std::size_t i = 0; i < matrix.shape()[0]; ++i)
-    for (std::size_t j = 0; j < matrix.shape()[1]; ++j)
-      _matrix(i, j) = matrix(i, j);
-
-  return std::make_pair(_points, _matrix);
-}
-//----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-moments::make_integral_moments_new(const FiniteElement& moment_space,
-                                   cell::type celltype, std::size_t value_size,
-                                   int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -387,9 +366,6 @@ moments::make_integral_moments_new(const FiniteElement& moment_space,
   {
     xt::xtensor<double, 2> entity
         = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        _entity(entity.data(), entity.shape()[0], entity.shape()[1]);
 
     // Parametrise entity coordinates
     xt::xtensor<double, 2> axes({sub_entity_dim, tdim});
@@ -441,31 +417,10 @@ moments::make_integral_moments_new(const FiniteElement& moment_space,
   return {points, matrix};
 }
 //----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-moments::make_dot_integral_moments(const FiniteElement& moment_space,
-                                   cell::type celltype, int value_size,
-                                   int q_deg)
-{
-  auto [points, matrix] = make_dot_integral_moments_new(moment_space, celltype,
-                                                        value_size, q_deg);
-
-  // TMP: Copy into Eigen
-  Eigen::ArrayXXd _points(points.shape()[0], points.shape()[1]);
-  Eigen::MatrixXd _matrix(matrix.shape()[0], matrix.shape()[1]);
-  for (std::size_t i = 0; i < points.shape()[0]; ++i)
-    for (std::size_t j = 0; j < points.shape()[1]; ++j)
-      _points(i, j) = points(i, j);
-  for (std::size_t i = 0; i < matrix.shape()[0]; ++i)
-    for (std::size_t j = 0; j < matrix.shape()[1]; ++j)
-      _matrix(i, j) = matrix(i, j);
-
-  return std::make_pair(_points, _matrix);
-}
-//----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-moments::make_dot_integral_moments_new(const FiniteElement& moment_space,
-                                       cell::type celltype,
-                                       std::size_t value_size, int q_deg)
+moments::make_dot_integral_moments(const FiniteElement& moment_space,
+                                   cell::type celltype, std::size_t value_size,
+                                   int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -500,7 +455,6 @@ moments::make_dot_integral_moments_new(const FiniteElement& moment_space,
   const std::size_t moment_space_size
       = moment_space_at_Qpts.shape()[1] / sub_entity_dim;
 
-  // Eigen::ArrayXXd points(sub_entity_count * Qpts.rows(), tdim);
   xt::xtensor<double, 2> points({sub_entity_count * qpts.shape()[0], tdim});
   const std::array<std::size_t, 2> shape
       = {moment_space_size * sub_entity_count,
@@ -515,9 +469,6 @@ moments::make_dot_integral_moments_new(const FiniteElement& moment_space,
   {
     xt::xtensor<double, 2> entity
         = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        _entity(entity.data(), entity.shape()[0], entity.shape()[1]);
 
     // Parameterise entity coordinates
     xt::xtensor<double, 2> axes({sub_entity_dim, tdim});
@@ -558,31 +509,10 @@ moments::make_dot_integral_moments_new(const FiniteElement& moment_space,
   return {points, matrix};
 }
 //----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
-moments::make_tangent_integral_moments(const FiniteElement& moment_space,
-                                       cell::type celltype, int value_size,
-                                       int q_deg)
-{
-  auto [points, matrix] = make_tangent_integral_moments_new(
-      moment_space, celltype, value_size, q_deg);
-
-  // TMP: Copy into Eigen
-  Eigen::ArrayXXd _points(points.shape()[0], points.shape()[1]);
-  Eigen::MatrixXd _matrix(matrix.shape()[0], matrix.shape()[1]);
-  for (std::size_t i = 0; i < points.shape()[0]; ++i)
-    for (std::size_t j = 0; j < points.shape()[1]; ++j)
-      _points(i, j) = points(i, j);
-  for (std::size_t i = 0; i < matrix.shape()[0]; ++i)
-    for (std::size_t j = 0; j < matrix.shape()[1]; ++j)
-      _matrix(i, j) = matrix(i, j);
-
-  return std::make_pair(_points, _matrix);
-}
-//----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
-                                           cell::type celltype,
-                                           std::size_t value_size, int q_deg)
+moments::make_tangent_integral_moments(const FiniteElement& moment_space,
+                                       cell::type celltype,
+                                       std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -628,10 +558,6 @@ moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
   for (std::size_t i = 0; i < sub_entity_count; ++i)
   {
     xt::xtensor<double, 2> edge = cell::sub_entity_geometry(celltype, 1, i);
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        _edge(edge.data(), edge.shape()[0], edge.shape()[1]);
-
     auto tangent = xt::row(edge, 1) - xt::row(edge, 0);
 
     // No need to normalise the tangent, as the size of this is equal to
@@ -664,8 +590,8 @@ moments::make_tangent_integral_moments_new(const FiniteElement& moment_space,
 //----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
 moments::make_normal_integral_moments(const FiniteElement& moment_space,
-                                          cell::type celltype,
-                                          std::size_t value_size, int q_deg)
+                                      cell::type celltype,
+                                      std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
   const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
@@ -714,10 +640,6 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   {
     xt::xtensor<double, 2> facet
         = cell::sub_entity_geometry(celltype, tdim - 1, i);
-    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>>
-        _facet(facet.data(), facet.shape()[0], facet.shape()[1]);
-
     if (tdim == 2)
     {
       auto tangent = xt::row(facet, 1) - xt::row(facet, 0);

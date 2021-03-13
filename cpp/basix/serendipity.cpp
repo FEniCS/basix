@@ -190,8 +190,8 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   if (degree >= 2)
   {
     FiniteElement moment_space = create_dpc(cell::type::interval, degree - 2);
-    std::tie(points_1d, matrix_1d) = moments::make_integral_moments_new(
-        moment_space, celltype, 1, quad_deg);
+    std::tie(points_1d, matrix_1d)
+        = moments::make_integral_moments(moment_space, celltype, 1, quad_deg);
     if (tdim > 1)
     {
       edge_transforms
@@ -204,8 +204,8 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   {
     FiniteElement moment_space
         = create_dpc(cell::type::quadrilateral, degree - 4);
-    std::tie(points_2d, matrix_2d) = moments::make_integral_moments_new(
-        moment_space, celltype, 1, quad_deg);
+    std::tie(points_2d, matrix_2d)
+        = moments::make_integral_moments(moment_space, celltype, 1, quad_deg);
     if (tdim > 2)
     {
       face_transforms
@@ -216,7 +216,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   xt::xtensor<double, 2> points_3d, matrix_3d;
   if (tdim == 3 and degree >= 6)
   {
-    std::tie(points_3d, matrix_3d) = moments::make_integral_moments_new(
+    std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
         create_dpc(cell::type::hexahedron, degree - 6), celltype, 1, quad_deg);
   }
 
@@ -352,7 +352,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
       }
     }
   }
-
 
   Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, interpolation_matrix, interpolation_points, degree);

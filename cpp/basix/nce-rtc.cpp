@@ -126,7 +126,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments_new(
+    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
         create_nce(celltype, degree - 1), celltype, tdim, quad_deg);
   }
 
@@ -317,7 +317,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
 
   FiniteElement edge_moment_space
       = create_dlagrange(cell::type::interval, degree - 1);
-  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments_new(
+  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, quad_deg);
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(edge_moment_space);
@@ -338,7 +338,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
     // Face integral moment
     FiniteElement moment_space
         = create_rtc(cell::type::quadrilateral, degree - 1);
-    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments_new(
+    std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
         moment_space, celltype, tdim, quad_deg);
 
     if (tdim == 3)
@@ -347,7 +347,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
           = moments::create_dot_moment_dof_transformations(moment_space);
 
       // Interior integral moment
-      std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments_new(
+      std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
           create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
           quad_deg);
     }

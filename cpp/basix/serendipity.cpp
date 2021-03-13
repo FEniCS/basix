@@ -13,6 +13,7 @@
 #include "quadrature.h"
 #include <Eigen/Dense>
 #include <numeric>
+#include <xtensor/xadapt.hpp>
 #include <xtensor/xio.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
@@ -27,47 +28,49 @@ xt::xtensor<double, 2> make_serendipity_space_2d(const int degree)
   const std::size_t ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature_new(
       "default", cell::type::quadrilateral, 2 * degree);
-  Eigen::ArrayXXd polyset_at_Qpts
-      = polyset::tabulate(cell::type::quadrilateral, degree, 0, Qpts)[0];
-  Eigen::ArrayXXd smaller_polyset_at_Qpts
-      = polyset::tabulate(cell::type::triangle, degree, 0, Qpts)[0];
+  auto Qwts = xt::adapt(_Qwts);
 
-  const std::size_t psize = polyset_at_Qpts.cols();
-  const std::size_t nv = smaller_polyset_at_Qpts.cols();
+  xt::xtensor<double, 2> polyset_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::quadrilateral, degree, 0, Qpts),
+                 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> smaller_polyset_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, Qpts), 0,
+                 xt::all(), xt::all());
+
+  const std::size_t psize = polyset_at_Qpts.shape()[1];
+  const std::size_t nv = smaller_polyset_at_Qpts.shape()[1];
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   for (std::size_t i = 0; i < nv; ++i)
   {
+    auto p_i = xt::col(smaller_polyset_at_Qpts, i);
     for (std::size_t k = 0; k < psize; ++k)
-    {
-      wcoeffs(i, k)
-          = (Qwts * smaller_polyset_at_Qpts.col(i) * polyset_at_Qpts.col(k))
-                .sum();
-    }
+      wcoeffs(i, k) = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
   }
 
+  auto q0 = xt::col(Qpts, 0);
+  auto q1 = xt::col(Qpts, 1);
   if (degree == 1)
   {
     for (std::size_t k = 0; k < psize; ++k)
-    {
-      wcoeffs(nv, k)
-          = (Qwts * Qpts.col(0) * Qpts.col(1) * polyset_at_Qpts.col(k)).sum();
-    }
+      wcoeffs(nv, k) = xt::sum(Qwts * q0 * q1 * xt::col(polyset_at_Qpts, k))();
     return wcoeffs;
   }
 
+  xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
+    auto pk = xt::col(polyset_at_Qpts, k);
     for (std::size_t a = 0; a < 2; ++a)
     {
-      Eigen::ArrayXd integrand
-          = Qwts * Qpts.col(0) * Qpts.col(1) * polyset_at_Qpts.col(k);
+      auto q_a = xt::col(Qpts, a);
+      integrand = Qwts * q0 * q1 * pk;
       for (int i = 1; i < degree; ++i)
-        integrand *= Qpts.col(a);
-      wcoeffs(nv + a, k) = integrand.sum();
+        integrand *= q_a;
+      wcoeffs(nv + a, k) = xt::sum(integrand)();
     }
   }
 
@@ -123,42 +126,47 @@ xt::xtensor<double, 2> make_serendipity_space_3d(const int degree)
   // Number of order (degree) polynomials
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature_new(
       "default", cell::type::hexahedron, 2 * degree);
-  Eigen::ArrayXXd polyset_at_Qpts
-      = polyset::tabulate(cell::type::hexahedron, degree, 0, Qpts)[0];
-  Eigen::ArrayXXd smaller_polyset_at_Qpts
-      = polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts)[0];
+  auto Qwts = xt::adapt(_Qwts);
+  xt::xtensor<double, 2> polyset_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::hexahedron, degree, 0, Qpts), 0,
+                 xt::all(), xt::all());
+  xt::xtensor<double, 2> smaller_polyset_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts), 0,
+                 xt::all(), xt::all());
 
-  const std::size_t psize = polyset_at_Qpts.cols();
-  const std::size_t nv = smaller_polyset_at_Qpts.cols();
+  const std::size_t psize = polyset_at_Qpts.shape()[1];
+  const std::size_t nv = smaller_polyset_at_Qpts.shape()[1];
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   for (std::size_t i = 0; i < nv; ++i)
   {
+    auto p_i = xt::col(smaller_polyset_at_Qpts, i);
     for (std::size_t k = 0; k < psize; ++k)
-    {
-      wcoeffs(i, k)
-          = (Qwts * smaller_polyset_at_Qpts.col(i) * polyset_at_Qpts.col(k))
-                .sum();
-    }
+      wcoeffs(i, k) = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
   }
 
   std::size_t c = nv;
+  xt::xtensor<double, 1> integrand;
+  std::vector<std::array<int, 3>> indices;
   for (std::size_t s = 1; s <= 3; ++s)
   {
-    std::vector<std::array<int, 3>> indices
-        = serendipity_3d_indices(s + degree, s);
+    indices = serendipity_3d_indices(s + degree, s);
     for (std::array<int, 3> i : indices)
     {
       for (std::size_t k = 0; k < psize; ++k)
       {
-        Eigen::ArrayXd integrand = Qwts * polyset_at_Qpts.col(k);
+        integrand = Qwts * xt::col(polyset_at_Qpts, k);
         for (int d = 0; d < 3; ++d)
+        {
+          auto q_d = xt::col(Qpts, d);
           for (int j = 0; j < i[d]; ++j)
-            integrand *= Qpts.col(d);
-        wcoeffs(c, k) = integrand.sum();
+            integrand *= q_d;
+        }
+
+        wcoeffs(c, k) = xt::sum(integrand)();
       }
       ++c;
     }

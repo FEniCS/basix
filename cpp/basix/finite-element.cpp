@@ -217,13 +217,10 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
                                   const xt::xtensor<double, 2>& matrix_3d,
                                   std::size_t tdim, std::size_t value_size)
 {
-  std::cout << "Combine 0 " << std::endl;
   std::array<std::size_t, 3> num_ptsd
       = {points_1d.shape()[0], points_2d.shape()[0], points_3d.shape()[0]};
   std::size_t num_pts = std::accumulate(num_ptsd.begin(), num_ptsd.end(), 0);
   xt::xtensor<double, 2> points({num_pts, tdim});
-
-  std::cout << "Combine 1 " << std::endl;
 
   if (num_ptsd[0] > 0)
     xt::view(points, xt::range(0, num_ptsd[0]), xt::all()) = points_1d;
@@ -242,12 +239,6 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
     xt::view(points, range, xt::all()) = points_3d;
   }
 
-  std::cout << "Combine 2 " << std::endl;
-
-  // Eigen::MatrixXd matrix = Eigen::MatrixXd::Zero(
-  //     matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
-  //     matrix_1d.cols() + matrix_2d.cols() + matrix_3d.cols());
-
   std::array<std::size_t, 3> row_dim
       = {matrix_1d.shape()[0], matrix_2d.shape()[0], matrix_3d.shape()[0]};
   std::size_t num_rows = std::accumulate(row_dim.begin(), row_dim.end(), 0);
@@ -257,25 +248,12 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
 
   xt::xtensor<double, 2> matrix = xt::zeros<double>({num_rows, num_cols});
 
-  std::cout << "Combine 3: " << matrix.shape()[0] << ", " << matrix.shape()[1]
-            << std::endl;
-
-  // const int r1d = matrix_1d.rows();
-  // const int r2d = matrix_2d.rows();
-  // const int r3d = matrix_3d.rows();
-  // const int c1d = matrix_1d.cols() / value_size;
-  // const int c2d = matrix_2d.cols() / value_size;
-  // const int c3d = matrix_3d.cols() / value_size;
-  std::cout << "Combine 3 pre:  " << num_cols << ", " << col_dim[0]
-            << std::endl;
   std::transform(col_dim.begin(), col_dim.end(), col_dim.begin(),
                  [value_size](auto x) { return x /= value_size; });
   num_cols /= value_size;
   for (std::size_t i = 0; i < value_size; ++i)
   {
     {
-      // matrix.block(0, i * (c1d + c2d + c3d), r1d, c1d)
-      //     = matrix_1d.block(0, i * c1d, r1d, c1d);
       auto range0 = xt::range(0, row_dim[0]);
       auto range1 = xt::range(i * num_cols, i * num_cols + col_dim[0]);
       auto range = xt::range(i * col_dim[0], i * col_dim[0] + col_dim[0]);
@@ -284,9 +262,6 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
     }
 
     {
-      std::cout << "Combine 3b " << std::endl;
-      // matrix.block(r1d, i * (c1d + c2d + c3d) + c1d, r2d, c2d)
-      //     = matrix_2d.block(0, i * c2d, r2d, c2d);
       auto range0 = xt::range(row_dim[0], row_dim[0] + row_dim[1]);
       auto range1 = xt::range(i * num_cols + col_dim[0],
                               i * num_cols + col_dim[0] + col_dim[1]);
@@ -295,9 +270,6 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
     }
 
     {
-      std::cout << "Combine 3c " << std::endl;
-      // matrix.block(r1d + r2d, i * (c1d + c2d + c3d) + c1d + c2d, r3d, c3d)
-      //     = matrix_3d.block(0, i * c3d, r3d, c3d);
       auto range0 = xt::range(row_dim[0] + row_dim[1],
                               row_dim[0] + row_dim[1] + row_dim[2]);
       auto range1
@@ -307,8 +279,6 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
       xt::view(matrix, range0, range1) = xt::view(matrix_3d, xt::all(), range);
     }
   }
-
-  std::cout << "Combine 4 " << std::endl;
 
   return std::make_pair(points, matrix);
 }

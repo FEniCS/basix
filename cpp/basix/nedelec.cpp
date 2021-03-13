@@ -17,6 +17,8 @@
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
+#include <xtensor/xio.hpp>
+
 using namespace basix;
 
 namespace
@@ -34,12 +36,14 @@ xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
   const std::size_t ns = degree;
 
   // Tabulate polynomial set at quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature_new(
       "default", cell::type::triangle, 2 * degree);
-  Eigen::ArrayXXd Pkp1_at_Qpts
-      = polyset::tabulate(cell::type::triangle, degree, 0, Qpts)[0];
+  auto Qwts = xt::adapt(_Qwts);
+  xt::xtensor<double, 2> Pkp1_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, Qpts), 0,
+                 xt::all(), xt::all());
 
-  const std::size_t psize = Pkp1_at_Qpts.cols();
+  const std::size_t psize = Pkp1_at_Qpts.shape()[1];
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({nv * 2 + ns, psize * 2});
@@ -50,14 +54,13 @@ xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
   // Create coefficients for the additional Nedelec polynomials
   for (std::size_t i = 0; i < ns; ++i)
   {
+    auto p = xt::col(Pkp1_at_Qpts, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      wcoeffs(2 * nv + i, k) = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
-                                * Pkp1_at_Qpts.col(k))
-                                   .sum();
-      wcoeffs(2 * nv + i, k + psize) = (-Qwts * Pkp1_at_Qpts.col(ns0 + i)
-                                        * Qpts.col(0) * Pkp1_at_Qpts.col(k))
-                                           .sum();
+      auto pk = xt::col(Pkp1_at_Qpts, k);
+      wcoeffs(2 * nv + i, k) = xt::sum(Qwts * p * xt::col(Qpts, 1) * pk)();
+      wcoeffs(2 * nv + i, k + psize)
+          = xt::sum(-Qwts * p * xt::col(Qpts, 0) * pk)();
     }
   }
 
@@ -139,11 +142,13 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
                             + (degree - 2) * (degree - 1) * degree / 2;
 
   // Tabulate polynomial basis at quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature_new(
       "default", cell::type::tetrahedron, 2 * degree);
-  Eigen::ArrayXXd Pkp1_at_Qpts
-      = polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts)[0];
-  const std::size_t psize = Pkp1_at_Qpts.cols();
+  auto Qwts = xt::adapt(_Qwts);
+  xt::xtensor<double, 2> Pkp1_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts), 0,
+                 xt::all(), xt::all());
+  const std::size_t psize = Pkp1_at_Qpts.shape()[1];
 
   // Create coefficients for order (degree-1) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * tdim});
@@ -155,13 +160,15 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
   }
 
   // Create coefficients for additional Nedelec polynomials
+  auto p0 = xt::col(Qpts, 0);
+  auto p1 = xt::col(Qpts, 1);
+  auto p2 = xt::col(Qpts, 2);
   for (std::size_t i = 0; i < ns; ++i)
   {
+    auto p = xt::col(Pkp1_at_Qpts, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      const double w = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(2)
-                        * Pkp1_at_Qpts.col(k))
-                           .sum();
+      const double w = xt::sum(Qwts * p * p2 * xt::col(Pkp1_at_Qpts, k))();
 
       // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
@@ -172,11 +179,10 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
 
   for (std::size_t i = 0; i < ns; ++i)
   {
+    auto p = xt::col(Pkp1_at_Qpts, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      const double w = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(1)
-                        * Pkp1_at_Qpts.col(k))
-                           .sum();
+      const double w = xt::sum(Qwts * p * p1 * xt::col(Pkp1_at_Qpts, k))();
       wcoeffs(tdim * nv + i + ns * 2 - ns_remove, k) = -w;
 
       // Don't include polynomials (*, *, 0) that are dependant
@@ -187,11 +193,10 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
 
   for (std::size_t i = 0; i < ns; ++i)
   {
+    auto p = xt::col(Pkp1_at_Qpts, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      const double w = (Qwts * Pkp1_at_Qpts.col(ns0 + i) * Qpts.col(0)
-                        * Pkp1_at_Qpts.col(k))
-                           .sum();
+      const double w = xt::sum(Qwts * p * p0 * xt::col(Pkp1_at_Qpts, k))();
       wcoeffs(tdim * nv + i + ns - ns_remove, psize * 2 + k) = -w;
       wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + k) = w;
     }
@@ -414,21 +419,21 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
 {
   xt::xtensor<double, 2> wcoeffs, points, interp_matrix;
   xt::xtensor<double, 3> transforms;
-  std::vector<Eigen::MatrixXd> directions;
-  if (celltype == cell::type::triangle)
+  switch (celltype)
   {
+  case cell::type::triangle:
     wcoeffs = create_nedelec_2d_space(degree);
     std::tie(points, interp_matrix) = create_nedelec_2d_interpolation(degree);
     transforms = create_nedelec_2d_base_transforms(degree);
-  }
-  else if (celltype == cell::type::tetrahedron)
-  {
+    break;
+  case cell::type::tetrahedron:
     wcoeffs = create_nedelec_3d_space(degree);
     std::tie(points, interp_matrix) = create_nedelec_3d_interpolation(degree);
     transforms = create_nedelec_3d_base_transforms(degree);
-  }
-  else
+    break;
+  default:
     throw std::runtime_error("Invalid celltype in Nedelec");
+  }
 
   // Nedelec has d dofs on each edge, d(d-1) on each face
   // and d(d-1)(d-2)/2 on the interior in 3D
@@ -453,28 +458,26 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t psize = polyset::dim(celltype, degree);
-  xt::xtensor<double, 2> wcoeffs = xt::eye<double>(tdim * psize);
-
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-
   xt::xtensor<double, 2> points, interp_matrix;
   xt::xtensor<double, 3> base_transformations;
-  if (celltype == cell::type::triangle)
+  switch (celltype)
   {
+  case cell::type::triangle:
     std::tie(points, interp_matrix) = create_nedelec2_2d_interpolation(degree);
     base_transformations = create_nedelec2_2d_base_transformations(degree);
-  }
-  else if (celltype == cell::type::tetrahedron)
-  {
+    break;
+  case cell::type::tetrahedron:
     std::tie(points, interp_matrix) = create_nedelec2_3d_interpolation(degree);
     base_transformations = create_nedelec2_3d_base_transformations(degree);
-  }
-  else
+    break;
+  default:
     throw std::runtime_error("Invalid celltype in Nedelec");
+  }
 
   // Nedelec(2nd kind) has (d + 1) dofs on each edge, (d + 1)(d - 1) on
   // each face and (d - 2)(d - 1)(d + 1)/2 on the interior in 3D
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
   entity_dofs[0].resize(topology[0].size(), 0);
   entity_dofs[1].resize(topology[1].size(), degree + 1);
@@ -482,6 +485,7 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
+  xt::xtensor<double, 2> wcoeffs = xt::eye<double>(tdim * psize);
   const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, interp_matrix, points, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,

@@ -142,9 +142,8 @@ xt::xtensor<double, 2> _compute_expansion_coefficients(
     }
   }
 
-  xt::xtensor<double, 2, xt::layout_type::column_major> coeff
-      = xt::linalg::solve(A, _B);
-  return coeff;
+  return xt::linalg::solve(A, _B);
+  // return coeff;
   // return Eigen::Map<const Eigen::MatrixXd>(coeff.data(), coeff.shape()[0],
   //                                          coeff.shape()[1]);
 }
@@ -253,9 +252,7 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
                              const xt::xtensor<double, 2>& M,
                              mapping::type map_type)
     : _cell_type(cell_type), _family(family), _degree(degree),
-      _map_type(map_type),
-      // _coeffs(coeffs),
-      _entity_dofs(entity_dofs)
+      _map_type(map_type), _coeffs_new(coeffs), _entity_dofs(entity_dofs)
 {
   _coeffs = Eigen::MatrixXd(coeffs.shape()[0], coeffs.shape()[1]);
   for (std::size_t i = 0; i < coeffs.shape()[0]; ++i)
@@ -284,11 +281,11 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
       _matM(i, j) = M(i, j);
 
   // Check that entity dofs add up to total number of dofs
-  int sum = 0;
+  std::size_t sum = 0;
   for (const std::vector<int>& q : entity_dofs)
     sum = std::accumulate(q.begin(), q.end(), sum);
 
-  if (sum != _coeffs.rows())
+  if (sum != _coeffs_new.shape()[0])
   {
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
@@ -313,7 +310,7 @@ const std::vector<int>& FiniteElement::value_shape() const
   return _value_shape;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::dim() const { return _coeffs.rows(); }
+int FiniteElement::dim() const { return _coeffs_new.shape()[0]; }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
@@ -339,7 +336,7 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
   for (int i = 1; i <= nd; ++i)
     ndsize /= i;
 
-  const int ndofs = _coeffs.rows();
+  const std::size_t ndofs = _coeffs_new.shape()[0];
   const int vs = value_size();
 
   std::vector<double> basis_data(ndsize * x.rows() * ndofs * vs);
@@ -358,6 +355,7 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
                              double* basis_data) const
 {
+  // std::cout << "Tabulate" << std::endl;
   const int tdim = cell::topological_dimension(_cell_type);
   if (x.cols() != tdim)
     throw std::runtime_error("Point dim does not match element dim.");
@@ -383,16 +381,21 @@ void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
   const auto coeffs = xt::adapt<xt::layout_type::column_major>(
       _coeffs.data(), _coeffs.size(), xt::no_ownership(), cs);
 
+  // xt::xtensor<double, 2> coeffs = _coeffs_new;
+
+  // std::cout << "A: -------------------" << std::endl;
+  // std::cout << _coeffs_new << std::endl;
+  // std::cout << "B: -------------------" << std::endl;
+  // std::cout << coeffs << std::endl;
+  // std::cout << "C: -------------------" << std::endl;
+
   xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
   const int psize = polyset::dim(_cell_type, _degree);
-  const std::size_t ndofs = _coeffs.rows();
+  const std::size_t ndofs = _coeffs_new.shape()[0];
   const int vs = value_size();
   for (std::size_t p = 0; p < basis.shape()[0]; ++p)
   {
     // Map block for current derivative
-    // Eigen::Map<Eigen::ArrayXXd> dresult(basis_data + p * x.rows() * ndofs *
-    // vs,
-    //                                     x.rows(), ndofs * vs);
     std::array<std::size_t, 2> shape = {_x.shape()[0], ndofs * vs};
     std::size_t offset = p * x.rows() * ndofs * vs;
     auto dresult = xt::adapt<xt::layout_type::column_major>(
@@ -406,12 +409,10 @@ void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
       xt::view(dresult, xt::range(0, _x.shape()[0]),
                xt::range(ndofs * j, ndofs * j + ndofs))
           = xt::linalg::dot(B, C);
-      // dresult.block(0, ndofs * j, x.rows(), ndofs)
-      //     = basis[p].matrix()
-      //       * _coeffs.block(0, psize * j, _coeffs.rows(),
-      //       psize).transpose();
     }
   }
+
+  // std::cout << "End Tabulate" << std::endl;
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::MatrixXd> FiniteElement::base_transformations() const

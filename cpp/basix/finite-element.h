@@ -469,6 +469,7 @@ private:
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
   Eigen::MatrixXd _coeffs;
+  xt::xtensor<double, 2> _coeffs_new;
 
   // Number of dofs associated each subentity
   //

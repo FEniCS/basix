@@ -252,28 +252,15 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
                              const xt::xtensor<double, 2>& M,
                              mapping::type map_type)
     : _cell_type(cell_type), _family(family), _degree(degree),
-      _map_type(map_type), _coeffs(coeffs), _entity_dofs(entity_dofs)
+      _map_type(map_type), _coeffs(coeffs), _entity_dofs(entity_dofs),
+      _base_transformations(base_transformations), _matM(M)
 {
   _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
-  {
-    Eigen::MatrixXd A(base_transformations.shape()[1],
-                      base_transformations.shape()[2]);
-    for (std::size_t j = 0; j < base_transformations.shape()[1]; ++j)
-      for (std::size_t k = 0; k < base_transformations.shape()[2]; ++k)
-        A(j, k) = base_transformations(i, j, k);
-    _base_transformations.push_back(A);
-  }
 
   _points.resize(points.shape()[0], points.shape()[1]);
   for (std::size_t i = 0; i < points.shape()[0]; ++i)
     for (std::size_t j = 0; j < points.shape()[1]; ++j)
       _points(i, j) = points(i, j);
-
-  _matM.resize(M.shape()[0], M.shape()[1]);
-  for (std::size_t i = 0; i < M.shape()[0]; ++i)
-    for (std::size_t j = 0; j < M.shape()[1]; ++j)
-      _matM(i, j) = M(i, j);
 
   // Check that entity dofs add up to total number of dofs
   std::size_t sum = 0;
@@ -311,7 +298,7 @@ element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 mapping::type FiniteElement::mapping_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
-const Eigen::MatrixXd& FiniteElement::interpolation_matrix() const
+const xt::xtensor<double, 2>& FiniteElement::interpolation_matrix() const
 {
   return _matM;
 }
@@ -395,7 +382,7 @@ void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
   }
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::MatrixXd> FiniteElement::base_transformations() const
+const xt::xtensor<double, 3>& FiniteElement::base_transformations() const
 {
   return _base_transformations;
 }

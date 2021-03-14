@@ -268,8 +268,12 @@ Each element has a `tabulate` function which returns the basis functions and a n
                                       tcb::span(detJ.data(), detJ.size()), K);
           },
           invmapdoc.c_str())
-      .def_property_readonly("base_transformations",
-                             &FiniteElement::base_transformations)
+      .def_property_readonly(
+          "base_transformations",
+          [](const FiniteElement& self) {
+            const xt::xtensor<double, 3>& t = self.base_transformations();
+            return py::array_t<double>(t.shape(), t.data(), py::cast(self));
+          })
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
@@ -279,8 +283,11 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("family", &FiniteElement::family)
       .def_property_readonly("mapping_type", &FiniteElement::mapping_type)
       .def_property_readonly("points", &FiniteElement::points)
-      .def_property_readonly("interpolation_matrix",
-                             &FiniteElement::interpolation_matrix);
+      .def_property_readonly(
+          "interpolation_matrix", [](const FiniteElement& self) {
+            const xt::xtensor<double, 2>& P = self.interpolation_matrix();
+            return py::array_t<double>(P.shape(), P.data(), py::cast(self));
+          });
 
   // Create FiniteElement
   m.def(

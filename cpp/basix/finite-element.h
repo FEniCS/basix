@@ -429,7 +429,7 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
-  std::vector<Eigen::MatrixXd> base_transformations() const;
+  const xt::xtensor<double, 3>& base_transformations() const;
 
   /// Return a set of interpolation points
   const Eigen::ArrayXXd& points() const;
@@ -443,7 +443,7 @@ public:
   /// FiniteElement::points(). These function values should then be
   /// multiplied by the weight matrix to give the coefficients of the
   /// interpolated function.
-  const Eigen::MatrixXd& interpolation_matrix() const;
+  const xt::xtensor<double, 2>& interpolation_matrix() const;
 
 private:
   static int compute_value_size(mapping::type map_type, int dim);
@@ -479,7 +479,7 @@ private:
   std::vector<std::vector<int>> _entity_dofs;
 
   // Base transformations
-  std::vector<Eigen::MatrixXd> _base_transformations;
+  xt::xtensor<double, 3> _base_transformations;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of
@@ -489,7 +489,7 @@ private:
   Eigen::ArrayXXd _points;
 
   /// The interpolation weights and points
-  Eigen::MatrixXd _matM;
+  xt::xtensor<double, 2> _matM;
 
   // The mapping that maps values on the reference to values on a physical cell
   std::function<std::vector<double>(const tcb::span<const double>&,

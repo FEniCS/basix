@@ -12,6 +12,8 @@
 #include <iterator>
 #include <memory>
 #include <vector>
+#include <xtensor/xadapt.hpp>
+#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 
@@ -209,11 +211,12 @@ void basix::interpolation_points(int handle, double* points)
 void basix::interpolation_matrix(int handle, double* matrix)
 {
   check_handle(handle);
-  Eigen::Map<
-      Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
-      matrix, dim(handle),
-      interpolation_num_points(handle) * _registry[handle]->value_size())
-      = _registry[handle]->interpolation_matrix();
+  std::size_t num_rows = dim(handle);
+  std::size_t num_cols
+      = interpolation_num_points(handle) * _registry[handle]->value_size();
+  xt::xarray<int>::shape_type s({num_rows, num_cols});
+  auto m = xt::adapt(matrix, num_rows * num_cols, xt::no_ownership(), s);
+  m = _registry[handle]->interpolation_matrix();
 }
 
 void basix::entity_dofs(int handle, int dim, int* num_dofs)

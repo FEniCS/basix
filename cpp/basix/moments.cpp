@@ -58,13 +58,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   auto pts = xt::adapt<xt::layout_type::column_major>(
       _points.data(), _points.size(), xt::no_ownership(), s);
 
-  Eigen::MatrixXd _matrix = moment_space.interpolation_matrix();
-  s = {(std::size_t)_matrix.rows()};
-  if (_matrix.cols() > 1)
-    s.push_back(_matrix.cols());
-  auto matrix = xt::adapt<xt::layout_type::column_major>(
-      _matrix.data(), _matrix.size(), xt::no_ownership(), s);
-
+  const xt::xtensor<double, 2>& matrix = moment_space.interpolation_matrix();
   xt::xtensor<double, 3> tpts;
   xt::xtensor<double, 3> J;
   xt::xtensor<double, 3> K;
@@ -227,12 +221,12 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     auto _pulled = xt::adapt<xt::layout_type::column_major>(
         pulled.data(), pulled.size(), xt::no_ownership(), shape1);
 
+    xt::xtensor<double, 2> tmp0, tmp1;
     for (int v = 0; v < moment_space.value_size(); ++v)
     {
-      auto tmp0
-          = xt::view(matrix, xt::range(0, matrix.shape()[0]),
-                     xt::range(v * pulled.rows(), (v + 1) * pulled.rows()));
-      auto tmp1 = xt::view(
+      tmp0 = xt::view(matrix, xt::range(0, matrix.shape()[0]),
+                      xt::range(v * pulled.rows(), (v + 1) * pulled.rows()));
+      tmp1 = xt::view(
           _pulled, xt::range(0, pulled.rows()),
           xt::range(moment_space.dim() * v, moment_space.dim() * (v + 1)));
       xt::view(out, i, xt::all(), xt::all()) += xt::linalg::dot(tmp0, tmp1);

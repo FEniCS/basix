@@ -160,7 +160,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
         = xt::eye<double>(ndofs);
   }
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face

@@ -87,7 +87,9 @@ basix::FiniteElement basix::create_element(element::family family,
   }
 }
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::compute_expansion_coefficients(
+namespace
+{
+xt::xtensor<double, 2> _compute_expansion_coefficients(
     cell::type celltype, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
     const Eigen::ArrayXXd& x, int degree, double kappa_tol)
 {
@@ -142,11 +144,13 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
 
   xt::xtensor<double, 2, xt::layout_type::column_major> coeff
       = xt::linalg::solve(A, _B);
-  return Eigen::Map<const Eigen::MatrixXd>(coeff.data(), coeff.shape()[0],
-                                           coeff.shape()[1]);
+  return coeff;
+  // return Eigen::Map<const Eigen::MatrixXd>(coeff.data(), coeff.shape()[0],
+  //                                          coeff.shape()[1]);
 }
+} // namespace
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd basix::compute_expansion_coefficients(
+xt::xtensor<double, 2> basix::compute_expansion_coefficients(
     cell::type cell_type, const xt::xtensor<double, 2>& B,
     const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
     int degree, double kappa_tol)
@@ -161,8 +165,8 @@ Eigen::MatrixXd basix::compute_expansion_coefficients(
                                 Eigen::RowMajor>>
       _x(x.data(), x.shape()[0], x.shape()[1]);
 
-  return compute_expansion_coefficients(cell_type, _B, _M, _x, degree,
-                                        kappa_tol);
+  return _compute_expansion_coefficients(cell_type, _B, _M, _x, degree,
+                                         kappa_tol);
 }
 //-----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
@@ -242,15 +246,22 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
 FiniteElement::FiniteElement(element::family family, cell::type cell_type,
                              int degree,
                              const std::vector<std::size_t>& value_shape,
-                             const Eigen::ArrayXXd& coeffs,
+                             const xt::xtensor<double, 2>& coeffs,
                              const std::vector<std::vector<int>>& entity_dofs,
                              const xt::xtensor<double, 3>& base_transformations,
                              const xt::xtensor<double, 2>& points,
                              const xt::xtensor<double, 2>& M,
                              mapping::type map_type)
     : _cell_type(cell_type), _family(family), _degree(degree),
-      _map_type(map_type), _coeffs(coeffs), _entity_dofs(entity_dofs)
+      _map_type(map_type),
+      // _coeffs(coeffs),
+      _entity_dofs(entity_dofs)
 {
+  _coeffs = Eigen::MatrixXd(coeffs.shape()[0], coeffs.shape()[1]);
+  for (std::size_t i = 0; i < coeffs.shape()[0]; ++i)
+    for (std::size_t j = 0; j < coeffs.shape()[1]; ++j)
+      _coeffs(i, j) = coeffs(i, j);
+
   _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
   for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
   {

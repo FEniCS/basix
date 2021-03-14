@@ -199,7 +199,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     LOG(WARNING) << "Base transformations not implemented for this cell type.";
   }
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pt, degree);
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, pt,
@@ -237,7 +237,7 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
         = xt::eye<double>(ndofs);
   }
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pt, degree);
 
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
@@ -303,7 +303,7 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
         = xt::eye<double>(ndofs);
   }
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, xt::eye<double>(ndofs), pt, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, pt,

@@ -52,7 +52,6 @@ def test_tetrahedron_transformation_orders(element_name, order):
 def test_quadrilateral_transformation_orders(element_name, order):
     e = basix.create_element(element_name, "quadrilateral", order)
     assert len(e.base_transformations) == 4
-
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2]):
         assert np.allclose(
@@ -64,7 +63,6 @@ def test_quadrilateral_transformation_orders(element_name, order):
 def test_hexahedron_transformation_orders(element_name, order):
     e = basix.create_element(element_name, "hexahedron", order)
     assert len(e.base_transformations) == 24
-
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
@@ -98,7 +96,6 @@ def test_transformation_of_tabulated_data_triangle(element_name, order):
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J).reshape(4) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
-
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -127,7 +124,6 @@ def test_transformation_of_tabulated_data_quadrilateral(element_name, order):
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J).reshape(4) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
-
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -147,7 +143,6 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
     points = np.array([[i / N, j / N, k / N]
                        for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1 - i - j)])
     values = e.tabulate(0, points)[0]
-
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
@@ -160,7 +155,6 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J).reshape(9) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
-
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -198,7 +192,6 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J).reshape(9) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
-
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]
@@ -271,7 +264,6 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J).reshape(9) for p in points])
         mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
-
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[d * e.dim:(d + 1) * e.dim]

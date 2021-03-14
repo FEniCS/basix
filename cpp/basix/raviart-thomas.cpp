@@ -150,7 +150,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {(int)(ns0 * tdim)};
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,

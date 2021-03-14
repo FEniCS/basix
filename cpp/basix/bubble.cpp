@@ -139,7 +139,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
         = xt::eye<double>(ndofs);
   }
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, xt::eye<double>(ndofs), points, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, points,

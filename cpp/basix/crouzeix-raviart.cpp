@@ -68,7 +68,7 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3] = {0};
 
-  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  const xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pts, degree);
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
                        entity_dofs, base_transformations, pts,

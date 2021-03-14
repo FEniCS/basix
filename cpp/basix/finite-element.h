@@ -151,17 +151,15 @@ namespace basix
 /// condition number is not checked.
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space.
-Eigen::MatrixXd compute_expansion_coefficients(
-    cell::type cell_type, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
-    const Eigen::ArrayXXd& x, int degree, double kappa_tol = 0.0);
+// Eigen::MatrixXd compute_expansion_coefficients(
+//     cell::type cell_type, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
+//     const Eigen::ArrayXXd& x, int degree, double kappa_tol = 0.0);
 
 /// TODO
-Eigen::MatrixXd compute_expansion_coefficients(cell::type cell_type,
-                                               const xt::xtensor<double, 2>& B,
-                                               const xt::xtensor<double, 2>& M,
-                                               const xt::xtensor<double, 2>& x,
-                                               int degree,
-                                               double kappa_tol = 0.0);
+xt::xtensor<double, 2> compute_expansion_coefficients(
+    cell::type cell_type, const xt::xtensor<double, 2>& B,
+    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
+    int degree, double kappa_tol = 0.0);
 
 /// Combines interpolation data
 ///
@@ -208,7 +206,7 @@ public:
   /// @param[in] map_type
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
-                const Eigen::ArrayXXd& coeffs,
+                const xt::xtensor<double, 2>& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
                 const xt::xtensor<double, 3>& base_transformations,
                 const xt::xtensor<double, 2>& points,

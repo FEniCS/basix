@@ -361,7 +361,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     }
   }
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, interpolation_matrix, interpolation_points, degree);
   return FiniteElement(element::family::Serendipity, celltype, degree, {1},
                        coeffs, entity_dofs, base_transformations,

@@ -246,8 +246,7 @@ public:
 
   /// TODO
   std::vector<Eigen::ArrayXXd> tabulate_new(int nd,
-                                            const xt::xarray<double>& x)
-                                            const;
+                                            const xt::xarray<double>& x) const;
 
   /// Direct to memory block tabulation
   /// @param nd Number of derivatives
@@ -299,6 +298,13 @@ public:
                    const tcb::span<const double>& detJ,
                    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                       Eigen::RowMajor>& K) const;
+
+  /// TODO
+  xt::xtensor<double, 2>
+  map_push_forward(const xt::xtensor<double, 2>& reference_data,
+                   const xt::xtensor<double, 3>& J,
+                   const tcb::span<const double>& detJ,
+                   const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
   /// @param reference_data The function values on the reference

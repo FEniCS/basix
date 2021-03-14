@@ -417,7 +417,6 @@ xt::xtensor<double, 3> create_nedelec2_3d_base_transformations(int degree)
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nedelec(cell::type celltype, int degree)
 {
-  std::cout << "Create Nedelec 0" << std::endl;
   xt::xtensor<double, 2> wcoeffs, points, interp_matrix;
   xt::xtensor<double, 3> transforms;
   switch (celltype)
@@ -448,10 +447,8 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
-  std::cout << "Create Nedelec 1" << std::endl;
   const xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, interp_matrix, points, degree);
-  std::cout << "Create Nedelec 2" << std::endl;
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, transforms, points, interp_matrix,
                        mapping::type::covariantPiola);

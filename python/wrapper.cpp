@@ -282,7 +282,12 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family", &FiniteElement::family)
       .def_property_readonly("mapping_type", &FiniteElement::mapping_type)
-      .def_property_readonly("points", &FiniteElement::points)
+      .def_property_readonly("points",
+                             [](const FiniteElement& self) {
+                               const xt::xtensor<double, 2>& x = self.points();
+                               return py::array_t<double>(x.shape(), x.data(),
+                                                          py::cast(self));
+                             })
       .def_property_readonly(
           "interpolation_matrix", [](const FiniteElement& self) {
             const xt::xtensor<double, 2>& P = self.interpolation_matrix();

@@ -432,7 +432,7 @@ public:
   const xt::xtensor<double, 3>& base_transformations() const;
 
   /// Return a set of interpolation points
-  const Eigen::ArrayXXd& points() const;
+  const xt::xtensor<double, 2>& points() const;
 
   /// Return the number of interpolation points
   int num_points() const;
@@ -486,7 +486,7 @@ private:
   // "tabulate_dof_coordinates" Most useful for Lagrange. This may change or go
   // away. For non-Lagrange elements, these points will be used in combination
   // with _interpolation_matrix to perform interpolation
-  Eigen::ArrayXXd _points;
+  xt::xtensor<double, 2> _points;
 
   /// The interpolation weights and points
   xt::xtensor<double, 2> _matM;

@@ -220,12 +220,11 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
       _map_type(map_type), _coeffs(coeffs), _entity_dofs(entity_dofs),
       _base_transformations(base_transformations), _matM(M)
 {
-  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
+  if (points.dimension() == 1)
+    throw std::runtime_error("Problem with points");
+  _points = points;
 
-  _points.resize(points.shape()[0], points.shape()[1]);
-  for (std::size_t i = 0; i < points.shape()[0]; ++i)
-    for (std::size_t j = 0; j < points.shape()[1]; ++j)
-      _points(i, j) = points(i, j);
+  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
 
   // Check that entity dofs add up to total number of dofs
   std::size_t sum = 0;
@@ -352,9 +351,9 @@ const xt::xtensor<double, 3>& FiniteElement::base_transformations() const
   return _base_transformations;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::num_points() const { return _points.rows(); }
+int FiniteElement::num_points() const { return _points.shape()[0]; }
 //-----------------------------------------------------------------------------
-const Eigen::ArrayXXd& FiniteElement::points() const { return _points; }
+const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
 Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
 FiniteElement::map_push_forward(

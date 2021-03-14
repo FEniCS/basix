@@ -51,8 +51,6 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   xt::xtensor<double, 2> dual = xt::view(polyset::tabulate(celltype, 1, 0, pts),
                                          0, xt::all(), xt::all());
   std::size_t transform_count = tdim == 2 ? 3 : 14;
-  // std::vector<Eigen::MatrixXd> base_transformations(
-  //     transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   xt::xtensor<double, 3> base_transformations({transform_count, ndofs, ndofs});
   for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
   {

@@ -51,12 +51,9 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   if (celltype == cell::type::point)
     return {};
 
-  Eigen::ArrayXXd _points = moment_space.points();
-  std::vector<std::size_t> s = {(std::size_t)_points.rows()};
-  if (_points.cols() > 1)
-    s.push_back(_points.cols());
-  auto pts = xt::adapt<xt::layout_type::column_major>(
-      _points.data(), _points.size(), xt::no_ownership(), s);
+  xt::xarray<double> pts = moment_space.points();
+  if (pts.shape()[1] == 1)
+    pts.reshape({pts.shape()[0]});
 
   const xt::xtensor<double, 2>& matrix = moment_space.interpolation_matrix();
   xt::xtensor<double, 3> tpts;

@@ -201,11 +201,11 @@ int basix::interpolation_num_points(int handle)
 void basix::interpolation_points(int handle, double* points)
 {
   check_handle(handle);
-  Eigen::Map<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
-      points, interpolation_num_points(handle),
-      cell_geometry_dimension(cell_type(handle)))
-      = _registry[handle]->points();
+  std::size_t num_rows = interpolation_num_points(handle);
+  std::size_t num_cols = cell_geometry_dimension(cell_type(handle));
+  xt::xarray<int>::shape_type s({num_rows, num_cols});
+  auto m = xt::adapt(points, num_rows * num_cols, xt::no_ownership(), s);
+  m = _registry[handle]->points();
 }
 
 void basix::interpolation_matrix(int handle, double* matrix)

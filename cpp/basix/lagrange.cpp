@@ -24,7 +24,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     throw std::runtime_error("Invalid celltype");
 
   const std::size_t ndofs = polyset::dim(celltype, degree);
-
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());

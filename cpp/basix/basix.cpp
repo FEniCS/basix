@@ -98,10 +98,13 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
   check_handle(handle);
 
   // gdim and tdim are the same for all cells in basix
-  const int gdim = cell::topological_dimension(_registry[handle]->cell_type());
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _x(x, npoints, gdim);
+  const std::size_t gdim
+      = cell::topological_dimension(_registry[handle]->cell_type());
+  // Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+  //                               Eigen::RowMajor>>
+  //     _x(x, npoints, gdim);
+  xt::xarray<int>::shape_type s({(std::size_t)npoints, gdim});
+  auto _x = xt::adapt(x, npoints * gdim, xt::no_ownership(), s);
 
   _registry[handle]->tabulate(nd, _x, basis_values);
 

@@ -172,7 +172,6 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
   std::size_t num_cols = std::accumulate(col_dim.begin(), col_dim.end(), 0);
 
   xt::xtensor<double, 2> matrix = xt::zeros<double>({num_rows, num_cols});
-
   std::transform(col_dim.begin(), col_dim.end(), col_dim.begin(),
                  [value_size](auto x) { return x /= value_size; });
   num_cols /= value_size;
@@ -275,6 +274,16 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
 std::vector<Eigen::ArrayXXd>
 FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 {
+  std::vector<std::size_t> shape
+      = {(std::size_t)x.rows(), (std::size_t)x.cols()};
+  auto _x = xt::adapt<xt::layout_type::column_major>(x.data(), x.size(),
+                                                     xt::no_ownership(), shape);
+  return tabulate_new(nd, _x);
+}
+// //-----------------------------------------------------------------------------
+std::vector<Eigen::ArrayXXd>
+FiniteElement::tabulate_new(int nd, const xt::xarray<double>& x) const
+{
   const int tdim = cell::topological_dimension(_cell_type);
   int ndsize = 1;
   for (int i = 1; i <= nd; ++i)
@@ -284,42 +293,29 @@ FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
 
   const std::size_t ndofs = _coeffs.shape()[0];
   const int vs = value_size();
-
-  std::vector<double> basis_data(ndsize * x.rows() * ndofs * vs);
+  std::vector<double> basis_data(ndsize * x.shape()[0] * ndofs * vs);
   tabulate(nd, x, basis_data.data());
-
   std::vector<Eigen::ArrayXXd> dresult;
   for (int p = 0; p < ndsize; ++p)
   {
     dresult.push_back(Eigen::Map<Eigen::ArrayXXd>(
-        basis_data.data() + p * x.rows() * ndofs * vs, x.rows(), ndofs * vs));
+        basis_data.data() + p * x.shape()[0] * ndofs * vs, x.shape()[0],
+        ndofs * vs));
   }
 
   return dresult;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
+void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
                              double* basis_data) const
 {
-  const int tdim = cell::topological_dimension(_cell_type);
-  if (x.cols() != tdim)
-    throw std::runtime_error("Point dim does not match element dim.");
+  xt::xarray<double> _x = x;
+  if (_x.dimension() == 2 and x.shape()[1] == 1)
+    _x.reshape({x.shape()[0]});
 
-  std::vector<std::size_t> s = {(std::size_t)x.rows()};
-  if (x.cols() > 1)
-    s.push_back(x.cols());
-  xt::xarray<double> _x(s);
-  if (_x.dimension() > 1)
-  {
-    for (std::size_t i = 0; i < _x.shape()[0]; ++i)
-      for (std::size_t j = 0; j < _x.shape()[1]; ++j)
-        _x(i, j) = x(i, j);
-  }
-  else
-  {
-    for (std::size_t i = 0; i < _x.shape()[0]; ++i)
-      _x(i) = x(i, 0);
-  }
+  const std::size_t tdim = cell::topological_dimension(_cell_type);
+  if (_x.shape()[1] != tdim)
+    throw std::runtime_error("Point dim does not match element dim.");
 
   xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
   const int psize = polyset::dim(_cell_type, _degree);
@@ -330,16 +326,16 @@ void FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x,
   {
     // Map block for current derivative
     std::array<std::size_t, 2> shape = {_x.shape()[0], ndofs * vs};
-    std::size_t offset = p * x.rows() * ndofs * vs;
+    std::size_t offset = p * x.shape()[0] * ndofs * vs;
     auto dresult = xt::adapt<xt::layout_type::column_major>(
-        basis_data + offset, _x.shape()[0] * ndofs * vs, xt::no_ownership(),
+        basis_data + offset, x.shape()[0] * ndofs * vs, xt::no_ownership(),
         shape);
     for (int j = 0; j < vs; ++j)
     {
       B = xt::view(basis, p, xt::all(), xt::all());
       C = xt::transpose(xt::view(_coeffs, xt::all(),
                                  xt::range(psize * j, psize * j + psize)));
-      xt::view(dresult, xt::range(0, _x.shape()[0]),
+      xt::view(dresult, xt::range(0, x.shape()[0]),
                xt::range(ndofs * j, ndofs * j + ndofs))
           = xt::linalg::dot(B, C);
     }

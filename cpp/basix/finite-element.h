@@ -244,11 +244,16 @@ public:
   /// likewise tensor-valued results will be stacked in index order.
   std::vector<Eigen::ArrayXXd> tabulate(int nd, const Eigen::ArrayXXd& x) const;
 
+  /// TODO
+  std::vector<Eigen::ArrayXXd> tabulate_new(int nd,
+                                            const xt::xarray<double>& x)
+                                            const;
+
   /// Direct to memory block tabulation
   /// @param nd Number of derivatives
   /// @param x Points
   /// @param basis_data Memory location to fill
-  void tabulate(int nd, const Eigen::ArrayXXd& x, double* basis_data) const;
+  void tabulate(int nd, const xt::xarray<double>& x, double* basis_data) const;
 
   /// Get the element cell type
   /// @return The cell type

@@ -87,45 +87,33 @@ basix::FiniteElement basix::create_element(element::family family,
   }
 }
 //-----------------------------------------------------------------------------
-namespace
+xt::xtensor<double, 2> basix::compute_expansion_coefficients(
+    cell::type celltype, const xt::xtensor<double, 2>& B,
+    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
+    int degree, double kappa_tol)
 {
-xt::xtensor<double, 2> _compute_expansion_coefficients(
-    cell::type celltype, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
-    const Eigen::ArrayXXd& x, int degree, double kappa_tol)
-{
-  std::vector<std::size_t> shape = {(std::size_t)x.rows()};
-  if (x.cols() > 1)
-    shape.push_back(x.cols());
-  auto _x = xt::adapt<xt::layout_type::column_major>(x.data(), x.size(),
-                                                     xt::no_ownership(), shape);
-  const xt::xtensor<double, 3> P = polyset::tabulate(celltype, degree, 0, _x);
+  // TODO: Tidy up 1D views for 1D problems
+  xt::xarray<double> pts = x;
+  if (pts.shape()[1] == 1)
+    pts.reshape({pts.shape()[0]});
+
+  const xt::xtensor<double, 3> P = polyset::tabulate(celltype, degree, 0, pts);
 
   const int coeff_size = P.shape()[2];
-  const int value_size = B.cols() / coeff_size;
-  const int m_size = M.cols() / value_size;
-
-  std::array<std::size_t, 2> Bshape
-      = {(std::size_t)B.rows(), (std::size_t)B.cols()};
-  std::array<std::size_t, 2> Mshape
-      = {(std::size_t)M.rows(), (std::size_t)M.cols()};
-  xt::xtensor<double, 2, xt::layout_type::column_major> _B
-      = xt::adapt<xt::layout_type::column_major>(B.data(), B.size(),
-                                                 xt::no_ownership(), Bshape);
-  auto _M = xt::adapt<xt::layout_type::column_major>(
-      M.data(), M.size(), xt::no_ownership(), Mshape);
-  xt::xtensor<double, 2, xt::layout_type::column_major> A
-      = xt::zeros<double>({_B.shape()[0], _M.shape()[0]});
-  for (int row = 0; row < B.rows(); ++row)
+  const int value_size = B.shape()[1] / coeff_size;
+  const int m_size = M.shape()[1] / value_size;
+  xt::xtensor<double, 2> A = xt::zeros<double>({B.shape()[0], M.shape()[0]});
+  for (std::size_t row = 0; row < B.shape()[0]; ++row)
   {
     for (int v = 0; v < value_size; ++v)
     {
       auto Bview
-          = xt::view(_B, row, xt::range(v * coeff_size, (v + 1) * coeff_size));
+          = xt::view(B, row, xt::range(v * coeff_size, (v + 1) * coeff_size));
       auto Mview_t
-          = xt::view(_M, xt::all(), xt::range(v * m_size, (v + 1) * m_size));
+          = xt::view(M, xt::all(), xt::range(v * m_size, (v + 1) * m_size));
 
-      // Compute Aview = Bview * Pt * Mview ( Aview_i = Bview_j * Pt_jk *
-      // Mview_ki )
+      // Compute Aview = Bview * Pt * Mview ( Aview_i = Bview_j * Pt_jk
+      // * Mview_ki )
       for (std::size_t i = 0; i < A.shape()[1]; ++i)
         for (std::size_t k = 0; k < P.shape()[1]; ++k)
           for (std::size_t j = 0; j < P.shape()[2]; ++j)
@@ -142,30 +130,7 @@ xt::xtensor<double, 2> _compute_expansion_coefficients(
     }
   }
 
-  return xt::linalg::solve(A, _B);
-  // return coeff;
-  // return Eigen::Map<const Eigen::MatrixXd>(coeff.data(), coeff.shape()[0],
-  //                                          coeff.shape()[1]);
-}
-} // namespace
-//-----------------------------------------------------------------------------
-xt::xtensor<double, 2> basix::compute_expansion_coefficients(
-    cell::type cell_type, const xt::xtensor<double, 2>& B,
-    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
-    int degree, double kappa_tol)
-{
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _B(B.data(), B.shape()[0], B.shape()[1]);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _M(M.data(), M.shape()[0], M.shape()[1]);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _x(x.data(), x.shape()[0], x.shape()[1]);
-
-  return _compute_expansion_coefficients(cell_type, _B, _M, _x, degree,
-                                         kappa_tol);
+  return xt::linalg::solve(A, B);
 }
 //-----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>

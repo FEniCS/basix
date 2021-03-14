@@ -84,6 +84,17 @@ numpy.ndarray
     The function value on the reference
 )";
 
+namespace
+{
+auto adapt_x(const py::array_t<double, py::array::c_style>& x)
+{
+  std::vector<std::size_t> shape;
+  for (pybind11::ssize_t i = 0; i < x.ndim(); ++i)
+    shape.push_back(x.shape(i));
+  return xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
+}
+} // namespace
+
 PYBIND11_MODULE(_basixcpp, m)
 {
   m.doc() = R"(
@@ -182,43 +193,45 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "create_new_element",
       [](element::family family_type, cell::type celltype, int degree,
-         std::vector<int>& value_shape,
-         const Eigen::ArrayXXd& interpolation_points,
-         const Eigen::MatrixXd& interpolation_matrix,
-         const Eigen::MatrixXd& coeffs,
+         std::vector<std::size_t>& value_shape,
+         const py::array_t<double, py::array::c_style>& interpolation_points,
+         const py::array_t<double, py::array::c_style>& interpolation_matrix,
+         const py::array_t<double, py::array::c_style>& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_transformations,
+         const py::array_t<double, py::array::c_style>& base_transformations,
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
         return FiniteElement(family_type, celltype, degree, value_shape,
                              compute_expansion_coefficients(
-                                 celltype, coeffs, interpolation_matrix,
-                                 interpolation_points, degree, 1.0e6),
-                             entity_dofs, base_transformations,
-                             interpolation_points, interpolation_matrix,
-                             mapping_type);
+                                 celltype, adapt_x(coeffs),
+                                 adapt_x(interpolation_matrix),
+                                 adapt_x(interpolation_points), degree, 1.0e6),
+                             entity_dofs, adapt_x(base_transformations),
+                             adapt_x(interpolation_points),
+                             adapt_x(interpolation_matrix), mapping_type);
       },
       "Create an element from basic data");
 
   m.def(
       "create_new_element",
       [](std::string family_name, std::string cell_name, int degree,
-         std::vector<int>& value_shape,
-         const Eigen::ArrayXXd& interpolation_points,
-         const Eigen::MatrixXd& interpolation_matrix,
-         const Eigen::MatrixXd& coeffs,
+         std::vector<std::size_t>& value_shape,
+         const py::array_t<double, py::array::c_style>& interpolation_points,
+         const py::array_t<double, py::array::c_style>& interpolation_matrix,
+         const py::array_t<double, py::array::c_style>& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_transformations,
+         const py::array_t<double, py::array::c_style>& base_transformations,
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
-        return FiniteElement(
-            element::str_to_type(family_name), cell::str_to_type(cell_name),
-            degree, value_shape,
-            compute_expansion_coefficients(cell::str_to_type(cell_name), coeffs,
-                                           interpolation_matrix,
-                                           interpolation_points, degree, 1.0e6),
-            entity_dofs, base_transformations, interpolation_points,
-            interpolation_matrix, mapping_type);
+        return FiniteElement(element::str_to_type(family_name),
+                             cell::str_to_type(cell_name), degree, value_shape,
+                             compute_expansion_coefficients(
+                                 cell::str_to_type(cell_name), adapt_x(coeffs),
+                                 adapt_x(interpolation_matrix),
+                                 adapt_x(interpolation_points), degree, 1.0e6),
+                             entity_dofs, adapt_x(base_transformations),
+                             adapt_x(interpolation_points),
+                             adapt_x(interpolation_matrix), mapping_type);
       },
       "Create an element from basic data");
 

@@ -207,15 +207,6 @@ public:
   /// @param[in] M The interpolation matrix
   /// @param[in] map_type
   FiniteElement(element::family family, cell::type cell_type, int degree,
-                const std::vector<int>& value_shape,
-                const Eigen::ArrayXXd& coeffs,
-                const std::vector<std::vector<int>>& entity_dofs,
-                const std::vector<Eigen::MatrixXd>& base_transformations,
-                const Eigen::ArrayXXd& points, const Eigen::MatrixXd M = {},
-                mapping::type map_type = mapping::type::identity);
-
-  /// TODO
-  FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
                 const Eigen::ArrayXXd& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,

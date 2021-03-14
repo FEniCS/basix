@@ -239,31 +239,6 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
   return std::make_pair(points, matrix);
 }
 //-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<int>& value_shape, const Eigen::ArrayXXd& coeffs,
-    const std::vector<std::vector<int>>& entity_dofs,
-    const std::vector<Eigen::MatrixXd>& base_transformations,
-    const Eigen::ArrayXXd& points, const Eigen::MatrixXd M,
-    mapping::type map_type)
-    : _cell_type(cell_type), _family(family), _degree(degree),
-      _value_shape(value_shape), _map_type(map_type), _coeffs(coeffs),
-      _entity_dofs(entity_dofs), _base_transformations(base_transformations),
-      _points(points), _matM(M)
-{
-  // Check that entity dofs add up to total number of dofs
-  int sum = 0;
-  for (const std::vector<int>& q : entity_dofs)
-    sum = std::accumulate(q.begin(), q.end(), sum);
-
-  if (sum != _coeffs.rows())
-  {
-    throw std::runtime_error(
-        "Number of entity dofs does not match total number of dofs");
-  }
-  _map_push_forward = mapping::get_forward_map(map_type);
-}
-//-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(element::family family, cell::type cell_type,
                              int degree,
                              const std::vector<std::size_t>& value_shape,

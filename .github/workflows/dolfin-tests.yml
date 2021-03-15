@@ -14,7 +14,8 @@ jobs:
       CC: clang-10
       CXX: clang++-10
 
-      PETSC_ARCH: linux-gnu-complex-32
+      PETSC_ARCH: linux-gnu-real-32
+      # PETSC_ARCH: linux-gnu-complex-32
       OMPI_ALLOW_RUN_AS_ROOT: 1
       OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
       OMPI_MCA_rmaps_base_oversubscribe: 1

@@ -85,28 +85,6 @@ void _map_pull_back(int handle, T* U, const T* u, const double* J,
 
   _registry[handle]->map_pull_back_m<T>(_u, _J, _detJ, _K, U);
 
-  // std::cout << "Case u0:\n" << _u << std::endl;
-  // std::cout << "Case 0 :\n" << tmp << std::endl;
-
-  // // const int tdim =
-  // // cell::topological_dimension(_registry[handle]->cell_type());
-  // _registry[handle]->map_pull_back_m<T>(
-  //     Eigen::Map<const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic,
-  //                                   Eigen::ColMajor>>(
-  //         u, num_points, physical_value_size * nresults),
-  //     Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                                   Eigen::RowMajor>>(J, num_points,
-  //                                                     physical_dim * tdim),
-  //     tcb::span(detJ, num_points),
-  //     Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                                   Eigen::RowMajor>>(K, num_points,
-  //                                                     physical_dim * tdim),
-  //     U);
-  // Eigen::Map<
-  //     const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-  //     tmp2(u, num_points, physical_value_size * nresults);
-  // std::cout << "Case u1:\n" << tmp2 << std::endl;
-  // std::cout << "Case 1 :\n" << tmp << std::endl;
 }
 } // namespace
 

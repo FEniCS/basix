@@ -336,23 +336,13 @@ public:
                 const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                    Eigen::RowMajor>& K) const;
 
+  /// @todo Weirdly, the u and U
   /// Map function values from a physical cell to the reference
-  /// @param physical_data The function values on the cell
+  /// @param u The function values on the cell
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
-  /// @param reference_data Memory location to fill
-  template <typename T>
-  void map_pull_back_m(
-      const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>& physical_data,
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>& J,
-      const tcb::span<const double>& detJ,
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>& K,
-      T* reference_data) const;
-
-  /// TODO
+  /// @param U Memory location to fill
   template <typename T>
   void map_pull_back_m(const xt::xtensor<T, 3>& u,
                        const xt::xtensor<double, 3>& J,
@@ -575,64 +565,6 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
       //   detJ[p], K_p); for (std::size_t j = 0; j < ur.size(); ++j)
       //     u_b(i, j) = std::complex(ur[j], uc[j]);
       // }
-    }
-  }
-}
-//-----------------------------------------------------------------------------
-template <typename T>
-void FiniteElement::map_pull_back_m(
-    const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>& physical_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const tcb::span<const double>& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K,
-    T* reference_data) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int reference_value_size = value_size();
-  const int npoints = J.rows();
-  const int nresults = physical_data.rows() / npoints;
-
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-      reference_array(reference_data, nresults * npoints, reference_value_size);
-
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    std::array<std::size_t, 2> J_s
-        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
-    std::array<std::size_t, 2> K_s
-        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
-    const xt::xtensor<double, 2> current_J
-        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
-    const xt::xtensor<double, 2> current_K
-        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
-
-    if constexpr (std::is_same<T, double>::value)
-    {
-      for (int i = 0; i < nresults; ++i)
-      {
-        Eigen::ArrayXd tmp = physical_data.row(pt * nresults + i);
-        std::vector<double> U
-            = _map_push_forward(tmp, current_K, 1 / detJ[pt], current_J);
-        for (std::size_t j = 0; j < U.size(); ++j)
-          reference_array(pt * nresults + i, j) = U[j];
-      }
-    }
-    else
-    {
-      for (int i = 0; i < nresults; ++i)
-      {
-        Eigen::ArrayXd tmp_r = physical_data.row(pt * nresults + i).real();
-        Eigen::ArrayXd tmp_c = physical_data.row(pt * nresults + i).imag();
-        std::vector<double> Ur
-            = _map_push_forward(tmp_r, current_K, 1 / detJ[pt], current_J);
-        std::vector<double> Uc
-            = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_J);
-        for (std::size_t j = 0; j < Ur.size(); ++j)
-          reference_array(pt * nresults + i, j) = std::complex(Ur[j], Uc[j]);
-      }
     }
   }
 }

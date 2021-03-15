@@ -55,8 +55,6 @@ void _map_push_forward(int handle, T* u, const T* U, const double* J,
 
   auto _detJ = tcb::span(detJ, num_points);
 
-  std::cout << "raw: " << U[0] << ", " << U[1] << std::endl;
-
   _registry[handle]->map_push_forward_m<T>(_U, _J, _detJ, _K, u);
 
   // _registry[handle]->map_push_forward_m<T>(

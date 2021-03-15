@@ -15,7 +15,9 @@
 #include <string>
 #include <vector>
 #include <xtensor/xadapt.hpp>
+#include <xtensor/xcomplex.hpp>
 #include <xtensor/xtensor.hpp>
+#include <xtensor/xview.hpp>
 
 /// Placeholder
 namespace basix
@@ -301,7 +303,7 @@ public:
 
   /// TODO
   xt::xtensor<double, 2>
-  map_push_forward(const xt::xtensor<double, 2>& reference_data,
+  map_push_forward(const xt::xtensor<double, 2>& U,
                    const xt::xtensor<double, 3>& J,
                    const tcb::span<const double>& detJ,
                    const xt::xtensor<double, 3>& K) const;
@@ -322,6 +324,12 @@ public:
                      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                                         Eigen::RowMajor>& K,
                      T* physical_data) const;
+
+  template <typename T>
+  void map_push_forward_m(const xt::xtensor<double, 3>& U,
+                          const xt::xtensor<double, 3>& J,
+                          const tcb::span<const double>& detJ,
+                          const xt::xtensor<double, 3>& K, T* u) const;
 
   /// Map function values from a physical cell to the reference
   /// @param physical_data The function values on the cell
@@ -580,6 +588,52 @@ void FiniteElement::map_push_forward_m(
             = _map_push_forward(tmp_c, current_J, detJ[pt], current_K);
         for (std::size_t j = 0; j < ur.size(); ++j)
           physical_block(j, i) = std::complex(ur[j], uc[j]);
+      }
+    }
+  }
+}
+//-----------------------------------------------------------------------------
+template <typename T>
+void FiniteElement::map_push_forward_m(const xt::xtensor<double, 3>& U,
+                                       const xt::xtensor<double, 3>& J,
+                                       const tcb::span<const double>& detJ,
+                                       const xt::xtensor<double, 3>& K,
+                                       T* u) const
+{
+  // FIXME: Should U.shape(2) be replaced by the physical value size?
+  // Can it differ?
+  std::array<std::size_t, 3> s = {U.shape(0), U.shape(1), U.shape(2)};
+  auto _u = xt::adapt(u, s[0] * s[1] * s[2], xt::no_ownership(), s);
+
+  // Loop over each point
+  for (std::size_t p = 0; p < U.shape(0); ++p)
+  {
+    auto u_b = xt::view(_u, p, xt::all());
+    auto U_b = xt::view(U, p, xt::all());
+    auto J_p = xt::view(J, p, xt::all(), xt::all());
+    auto K_p = xt::view(K, p, xt::all(), xt::all());
+    if constexpr (std::is_same<T, double>::value)
+    {
+      // Loop over values at each point
+      for (std::size_t i = 0; i < U_b.shape(1); ++i)
+      {
+        auto col = xt::col(U_b, i);
+        std::vector<double> u = _map_push_forward(col, J_p, detJ[p], K_p);
+        for (std::size_t j = 0; j < u.size(); ++j)
+          u_b(j, i) = u[j];
+      }
+    }
+    else
+    {
+      for (std::size_t i = 0; i < U_b.shape(1); ++i)
+      {
+        auto col_r = xt::real(xt::col(U_b, i));
+        auto col_c = xt::imag(xt::col(U_b, i));
+        std::vector<double> _col_c(col_c.begin(), col_c.end());
+        std::vector<double> ur = _map_push_forward(col_r, J_p, detJ[p], K_p);
+        std::vector<double> uc = _map_push_forward(_col_c, J_p, detJ[p], K_p);
+        for (std::size_t j = 0; j < ur.size(); ++j)
+          u_b(j, i) = std::complex(ur[j], uc[j]);
       }
     }
   }

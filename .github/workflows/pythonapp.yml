@@ -92,13 +92,11 @@ jobs:
           pip install pybind11
           sudo apt-get update
           sudo apt-get install -y libeigen3-dev libopenblas-dev liblapack-dev ninja-build
-      - name: Install basix C++
+      - name: Install Basix
         run: |
           cmake -G Ninja -B build-dir -S .
           cmake --build build-dir
           sudo cmake --install build-dir
-      - name: Build basix Python
-        run: |
           cd python
           pip install .
       - name: Run units tests

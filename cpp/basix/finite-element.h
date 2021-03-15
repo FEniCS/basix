@@ -285,27 +285,18 @@ public:
   /// @return The mapping
   mapping::type mapping_type() const;
 
+  /// @todo Need fixing
   /// Map function values from the reference to a physical cell
   /// @param reference_data The function values on the reference
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @return The function values on the cell
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  map_push_forward(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& reference_data,
-                   const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& J,
-                   const tcb::span<const double>& detJ,
-                   const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& K) const;
-
-  /// TODO
-  xt::xtensor<double, 2>
-  map_push_forward(const xt::xtensor<double, 2>& U,
-                   const xt::xtensor<double, 3>& J,
-                   const tcb::span<const double>& detJ,
-                   const xt::xtensor<double, 3>& K) const;
+  // xt::xtensor<double, 2>
+  // map_push_forward(const xt::xtensor<double, 2>& U,
+  //                  const xt::xtensor<double, 3>& J,
+  //                  const tcb::span<const double>& detJ,
+  //                  const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
   /// @param U The function values on the reference
@@ -320,19 +311,16 @@ public:
                           const xt::xtensor<double, 3>& K, T* u) const;
 
   /// Map function values from a physical cell to the reference
-  /// @param physical_data The function values on the cell
+  /// @param u The function values on the cell
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @return The function values on the reference
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  map_pull_back(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>& physical_data,
-                const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>& J,
+  xt::xtensor<double, 3>
+  map_pull_back(const xt::xtensor<double, 3>& u,
+                const xt::xtensor<double, 3>& J,
                 const tcb::span<const double>& detJ,
-                const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>& K) const;
+                const xt::xtensor<double, 3>& K) const;
 
   /// @todo Weirdly, the u and U
   /// Map function values from a physical cell to the reference

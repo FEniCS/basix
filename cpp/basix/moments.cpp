@@ -47,6 +47,9 @@ std::vector<int> axis_points(const cell::type celltype)
 xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
+  // This function can be dramatically simplified and made
+  // understandable by using tensor to give more logic to the objects
+
   cell::type celltype = moment_space.cell_type();
   if (celltype == cell::type::point)
     return {};
@@ -186,23 +189,48 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   xt::xtensor<double, 3> out = xt::zeros<double>(shape);
   for (std::size_t i = 0; i < tpts.shape()[0]; ++i)
   {
-    // TMP: copy data into Eigen
-    Eigen::ArrayXXd _J(J.shape()[1], J.shape()[2]);
-    for (std::size_t j = 0; j < J.shape()[1]; ++j)
-      for (std::size_t k = 0; k < J.shape()[2]; ++k)
-        _J(j, k) = J(i, j, k);
     std::vector<double> _detJ(detJ.shape()[1]);
     for (std::size_t j = 0; j < J.shape()[1]; ++j)
       _detJ[j] = detJ(i, j);
-    Eigen::ArrayXXd _K(K.shape()[1], K.shape()[2]);
-    for (std::size_t j = 0; j < K.shape()[1]; ++j)
-      for (std::size_t k = 0; k < K.shape()[2]; ++k)
-        _K(j, k) = K(i, j, k);
 
     auto _tpoint = xt::view(tpts, i, xt::all(), xt::all());
     Eigen::ArrayXXd moment_space_pts = moment_space.tabulate(0, _tpoint)[0];
-    Eigen::ArrayXXd pulled
-        = moment_space.map_pull_back(moment_space_pts, _J, _detJ, _K);
+
+    std::size_t num_points = moment_space_pts.rows();
+    std::size_t value_size = moment_space.value_size();
+    std::size_t nresults = moment_space_pts.size() / (num_points * value_size);
+    xt::xtensor<double, 3> space({num_points, nresults, value_size});
+    for (std::size_t j = 0; j < num_points; ++j)
+      for (std::size_t k = 0; k < nresults; ++k)
+        for (std::size_t l = 0; l < value_size; ++l)
+          space(j, k, l) = moment_space_pts(j, l * nresults + k);
+
+    xt::xtensor<double, 3> Ji({num_points, _tpoint.shape(1), _tpoint.shape(1)});
+    xt::xtensor<double, 3> Ki({num_points, _tpoint.shape(1), _tpoint.shape(1)});
+    for (std::size_t j = 0; j < num_points; ++j)
+    {
+      for (std::size_t k = 0; k < _tpoint.shape(1); ++k)
+      {
+        for (std::size_t l = 0; l < _tpoint.shape(1); ++l)
+        {
+          Ji(j, k, l) = J(i, j, k * _tpoint.shape(1) + l);
+          Ki(j, k, l) = K(i, j, k * _tpoint.shape(1) + l);
+        }
+      }
+    }
+
+    // Eigen::ArrayXXd pulled
+    //     = moment_space.map_pull_back(moment_space_pts, _J, _detJ, _K);
+    xt::xtensor<double, 3> F = moment_space.map_pull_back(space, Ji, _detJ, Ki);
+
+    // Copy onto 2D array
+    Eigen::ArrayXXd pulled(F.shape(0), F.shape(1) * F.shape(2));
+    for (std::size_t p = 0; p < F.shape(0); ++p)
+    {
+      for (std::size_t i = 0; i < F.shape(1); ++i)
+        for (std::size_t j = 0; j < F.shape(2); ++j)
+          pulled(p, j * F.shape(1) + i) = F(p, i, j);
+    }
 
     std::array<std::size_t, 2> shape0 = {(std::size_t)moment_space_pts.rows(),
                                          (std::size_t)moment_space_pts.cols()};
@@ -218,10 +246,11 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     xt::xtensor<double, 2> tmp0, tmp1;
     for (int v = 0; v < moment_space.value_size(); ++v)
     {
-      tmp0 = xt::view(matrix, xt::range(0, matrix.shape()[0]),
-                      xt::range(v * pulled.rows(), (v + 1) * pulled.rows()));
+      tmp0 = xt::view(
+          matrix, xt::range(0, matrix.shape()[0]),
+          xt::range(v * _pulled.shape(0), (v + 1) * _pulled.shape(0)));
       tmp1 = xt::view(
-          _pulled, xt::range(0, pulled.rows()),
+          _pulled, xt::range(0, _pulled.shape(0)),
           xt::range(moment_space.dim() * v, moment_space.dim() * (v + 1)));
       xt::view(out, i, xt::all(), xt::all()) += xt::linalg::dot(tmp0, tmp1);
     }

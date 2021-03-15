@@ -345,139 +345,81 @@ int FiniteElement::num_points() const { return _points.shape()[0]; }
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-FiniteElement::map_push_forward(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        reference_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const tcb::span<const double>& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size = compute_value_size(_map_type, physical_dim);
-  const int reference_value_size = value_size();
-  const int nresults = reference_data.cols() / reference_value_size;
-  const int npoints = reference_data.rows();
+// xt::xtensor<double, 2> FiniteElement::map_push_forward(
+//     const xt::xtensor<double, 2>& U, const xt::xtensor<double, 3>& J,
+//     const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K)
+//     const
+// {
+//   const std::size_t tdim = cell::topological_dimension(_cell_type);
+//   const std::size_t gdim = J.shape()[1] / tdim;
+//   const std::size_t num_points = U.shape()[0];
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      physical_data(npoints, physical_value_size * nresults);
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>>
-        reference_block(reference_data.row(pt).data(), reference_value_size,
-                        nresults);
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        physical_block(physical_data.row(pt).data(), physical_value_size,
-                       nresults);
-    std::array<std::size_t, 2> J_s
-        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
-    std::array<std::size_t, 2> K_s
-        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
-    const xt::xtensor<double, 2> current_J
-        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
-    const xt::xtensor<double, 2> current_K
-        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
-    for (int i = 0; i < reference_block.cols(); ++i)
-    {
-      Eigen::ArrayXd col = reference_block.col(i);
-      std::vector<double> u
-          = _map_push_forward(col, current_J, detJ[pt], current_K);
-      for (std::size_t j = 0; j < u.size(); ++j)
-        physical_block(j, i) = u[j];
-    }
-  }
+//   const std::size_t value_size = compute_value_size(_map_type, gdim);
+//   const std::size_t value_size_ref = this->value_size();
 
-  return physical_data;
-}
+//   const std::size_t nresults = U.shape()[1] / value_size_ref;
+
+//   // Loop over points
+//   xt::xtensor<double, 2> u({num_points, value_size * nresults});
+//   for (std::size_t pt = 0; pt < num_points; ++pt)
+//   {
+//     auto u_b = xt::view(u, pt, xt::all());
+//     auto U_b = xt::view(U, pt, xt::all());
+//     auto J_s = xt::view(J, pt, xt::all(), xt::all());
+//     auto K_s = xt::view(K, pt, xt::all(), xt::all());
+//     for (std::size_t i = 0; i < U_b.shape()[1]; ++i)
+//     {
+//       auto col = xt::col(U_b, i);
+//       std::vector<double> u = _map_push_forward(col, J_s, detJ[pt], K_s);
+
+//       // u_b = xt::adapt(u);  // There is a weird transpose below
+//       for (std::size_t j = 0; j < u.size(); ++j)
+//         u_b(j, i) = u[j];
+//     }
+//   }
+
+//   return u;
+// }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> FiniteElement::map_push_forward(
-    const xt::xtensor<double, 2>& U, const xt::xtensor<double, 3>& J,
+xt::xtensor<double, 3> FiniteElement::map_pull_back(
+    const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
     const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
-  const std::size_t gdim = J.shape()[1] / tdim;
-  const std::size_t num_points = U.shape()[0];
+  // std::cout << "Insdie pull back: \n" << u << std::endl;
+  // FIXME: Should u.shape(2) be replaced by the reference value size?
+  // Can it differ?
+  const std::size_t reference_value_size = value_size();
+  // xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
+  // const std::size_t tdim  = cell::topological_dimension(_cell_type);
+  // const int physical_dim = J.cols() / reference_dim;
+  // const std::size_t gdim = J.shape(1);
+  // const std::size_t tdim = J.shape(2);
 
-  const std::size_t value_size = compute_value_size(_map_type, gdim);
-  const std::size_t value_size_ref = this->value_size();
+  xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
 
-  const std::size_t nresults = U.shape()[1] / value_size_ref;
-
-  // Loop over points
-  xt::xtensor<double, 2> u({num_points, value_size * nresults});
-  for (std::size_t pt = 0; pt < num_points; ++pt)
+  // Loop over each point
+  for (std::size_t p = 0; p < u.shape(0); ++p)
   {
-    auto u_b = xt::view(u, pt, xt::all());
-    auto U_b = xt::view(U, pt, xt::all());
-    auto J_s = xt::view(J, pt, xt::all(), xt::all());
-    auto K_s = xt::view(K, pt, xt::all(), xt::all());
-    for (std::size_t i = 0; i < U_b.shape()[1]; ++i)
-    {
-      auto col = xt::col(U_b, i);
-      std::vector<double> u = _map_push_forward(col, J_s, detJ[pt], K_s);
+    auto u_b = xt::view(u, p, xt::all(), xt::all());
+    auto J_p = xt::view(J, p, xt::all(), xt::all());
+    auto K_p = xt::view(K, p, xt::all(), xt::all());
+    auto U_b = xt::view(U, p, xt::all(), xt::all());
 
-      // u_b = xt::adapt(u);  // There is a weird transpose below
-      for (std::size_t j = 0; j < u.size(); ++j)
-        u_b(j, i) = u[j];
+    for (std::size_t i = 0; i < u_b.shape(0); ++i)
+    {
+      // Note: we assign here to a xt::xtensor<double, 1> until the
+      // maps are updated to accept xtensor objects rather than spans
+      // auto U_data = xt::row(U_b, i);
+
+      xt::xtensor<double, 1> u_data = xt::row(u_b, i);
+      std::vector<double> f
+          = _map_push_forward(u_data, K_p, 1.0 / detJ[p], J_p);
+      for (std::size_t j = 0; j < f.size(); ++j)
+        U_b(i, j) = f[j];
     }
   }
 
-  return u;
-}
-//-----------------------------------------------------------------------------
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-FiniteElement::map_pull_back(
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        physical_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const tcb::span<const double>& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size = compute_value_size(_map_type, physical_dim);
-  const int reference_value_size = value_size();
-  const int nresults = physical_data.cols() / physical_value_size;
-  const int npoints = physical_data.rows();
-
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-      reference_data(npoints, reference_value_size * nresults);
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    Eigen::Map<
-        Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-        reference_block(reference_data.row(pt).data(), reference_value_size,
-                        nresults);
-    Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                  Eigen::RowMajor>>
-        physical_block(physical_data.row(pt).data(), physical_value_size,
-                       nresults);
-    std::array<std::size_t, 2> J_s
-        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
-    std::array<std::size_t, 2> K_s
-        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
-    const xt::xtensor<double, 2> current_J
-        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
-    const xt::xtensor<double, 2> current_K
-        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
-    for (int i = 0; i < physical_block.cols(); ++i)
-    {
-      Eigen::ArrayXd col = physical_block.col(i);
-      std::vector<double> U
-          = _map_push_forward(col, current_K, 1 / detJ[pt], current_J);
-      for (std::size_t j = 0; j < U.size(); ++j)
-        reference_block(j, i) = U[j];
-    }
-  }
-
-  return reference_data;
+  return U;
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

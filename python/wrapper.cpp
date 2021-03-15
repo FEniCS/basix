@@ -236,10 +236,19 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
-      .def("tabulate",
-           py::overload_cast<int, const Eigen::ArrayXXd&>(
-               &FiniteElement::tabulate, py::const_),
-           tabdoc.c_str())
+      // .def("tabulate",
+      //      py::overload_cast<int, const Eigen::ArrayXXd&>(
+      //          &FiniteElement::tabulate, py::const_),
+      //      tabdoc.c_str())
+      .def(
+          "tabulate",
+          [](const FiniteElement& self, int n,
+             const py::array_t<double, py::array::c_style>& x) {
+            auto _x = adapt_x(x);
+            std::vector<Eigen::ArrayXXd> t = self.tabulate(n, _x);
+            return t;
+          },
+          tabdoc.c_str())
       .def(
           "map_push_forward",
           [](const FiniteElement& self,

@@ -272,17 +272,7 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
 }
 //-----------------------------------------------------------------------------
 std::vector<Eigen::ArrayXXd>
-FiniteElement::tabulate(int nd, const Eigen::ArrayXXd& x) const
-{
-  std::vector<std::size_t> shape
-      = {(std::size_t)x.rows(), (std::size_t)x.cols()};
-  auto _x = xt::adapt<xt::layout_type::column_major>(x.data(), x.size(),
-                                                     xt::no_ownership(), shape);
-  return tabulate_new(nd, _x);
-}
-// //-----------------------------------------------------------------------------
-std::vector<Eigen::ArrayXXd>
-FiniteElement::tabulate_new(int nd, const xt::xarray<double>& x) const
+FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
   const int tdim = cell::topological_dimension(_cell_type);
   int ndsize = 1;
@@ -291,10 +281,14 @@ FiniteElement::tabulate_new(int nd, const xt::xarray<double>& x) const
   for (int i = 1; i <= nd; ++i)
     ndsize /= i;
 
+  xt::xarray<double> _x = x;
+  if (_x.dimension() == 1)
+    _x.reshape({_x.shape(0), 1});
+
   const std::size_t ndofs = _coeffs.shape()[0];
   const int vs = value_size();
   std::vector<double> basis_data(ndsize * x.shape()[0] * ndofs * vs);
-  tabulate(nd, x, basis_data.data());
+  tabulate(nd, _x, basis_data.data());
   std::vector<Eigen::ArrayXXd> dresult;
   for (int p = 0; p < ndsize; ++p)
   {

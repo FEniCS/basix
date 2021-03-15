@@ -187,10 +187,6 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   for (std::size_t i = 0; i < tpts.shape()[0]; ++i)
   {
     // TMP: copy data into Eigen
-    Eigen::ArrayXXd _tpoint(tpts.shape()[1], tpts.shape()[2]);
-    for (std::size_t j = 0; j < tpts.shape()[1]; ++j)
-      for (std::size_t k = 0; k < tpts.shape()[2]; ++k)
-        _tpoint(j, k) = tpts(i, j, k);
     Eigen::ArrayXXd _J(J.shape()[1], J.shape()[2]);
     for (std::size_t j = 0; j < J.shape()[1]; ++j)
       for (std::size_t k = 0; k < J.shape()[2]; ++k)
@@ -203,6 +199,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
       for (std::size_t k = 0; k < K.shape()[2]; ++k)
         _K(j, k) = K(i, j, k);
 
+    auto _tpoint = xt::view(tpts, i, xt::all(), xt::all());
     Eigen::ArrayXXd moment_space_pts = moment_space.tabulate(0, _tpoint)[0];
     Eigen::ArrayXXd pulled
         = moment_space.map_pull_back(moment_space_pts, _J, _detJ, _K);
@@ -328,14 +325,8 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   if (Qpts.dimension() == 1)
     Qpts = Qpts.reshape({Qpts.shape()[0], 1});
 
-  // TMP: Copy into Eigen array
-  Eigen::ArrayXXd _Qpts(Qpts.shape()[0], Qpts.shape()[1]);
-  for (std::size_t i = 0; i < Qpts.shape()[0]; ++i)
-    for (std::size_t j = 0; j < Qpts.shape()[1]; ++j)
-      _Qpts(i, j) = Qpts(i, j);
-
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, _Qpts)[0];
+  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
   std::array<std::size_t, 2> shape1
       = {(std::size_t)_moment_space_at_Qpts.rows(),
          (std::size_t)_moment_space_at_Qpts.cols()};
@@ -428,14 +419,8 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
 
-  // TMP: Copy into Eigen array
-  Eigen::ArrayXXd _qpts(qpts.shape()[0], qpts.shape()[1]);
-  for (std::size_t i = 0; i < qpts.shape()[0]; ++i)
-    for (std::size_t j = 0; j < qpts.shape()[1]; ++j)
-      _qpts(i, j) = qpts(i, j);
-
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, _qpts)[0];
+  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, qpts)[0];
   std::array<std::size_t, 2> shape1
       = {(std::size_t)_moment_space_at_Qpts.rows(),
          (std::size_t)_moment_space_at_Qpts.cols()};
@@ -520,17 +505,11 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   if (Qpts.dimension() == 1)
     Qpts = Qpts.reshape({Qpts.shape()[0], 1});
 
-  // TMP: Copy into Eigen array
-  Eigen::ArrayXXd _Qpts(Qpts.shape()[0], Qpts.shape()[1]);
-  for (std::size_t i = 0; i < Qpts.shape()[0]; ++i)
-    for (std::size_t j = 0; j < Qpts.shape()[1]; ++j)
-      _Qpts(i, j) = Qpts(i, j);
-
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, _Qpts)[0];
+  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
   std::array<std::size_t, 2> shape1
       = {(std::size_t)_moment_space_at_Qpts.rows(),
          (std::size_t)_moment_space_at_Qpts.cols()};
@@ -602,14 +581,8 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
   if (Qpts.dimension() == 1)
     Qpts = Qpts.reshape({Qpts.shape()[0], 1});
 
-  // TMP: Copy into Eigen array
-  Eigen::ArrayXXd _Qpts(Qpts.shape()[0], Qpts.shape()[1]);
-  for (std::size_t i = 0; i < Qpts.shape()[0]; ++i)
-    for (std::size_t j = 0; j < Qpts.shape()[1]; ++j)
-      _Qpts(i, j) = Qpts(i, j);
-
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, _Qpts)[0];
+  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
   std::array<std::size_t, 2> shape1
       = {(std::size_t)_moment_space_at_Qpts.rows(),
          (std::size_t)_moment_space_at_Qpts.cols()};

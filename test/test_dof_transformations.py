@@ -8,7 +8,7 @@ import numpy as np
 from .utils import parametrize_over_elements
 
 
-@parametrize_over_elements(5)
+@parametrize_over_elements(2)
 def test_non_zero(cell_name, element_name, order):
     e = basix.create_element(element_name, cell_name, order)
     for t in e.base_transformations:

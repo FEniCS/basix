@@ -40,36 +40,18 @@ void _map_push_forward(int handle, T* u, const T* U, const double* J,
   const std::size_t tdim
       = cell::topological_dimension(_registry[handle]->cell_type());
   const std::size_t vs = _registry[handle]->value_size();
-
   std::array<std::size_t, 3> s0
       = {(std::size_t)num_points, (std::size_t)nresults, vs};
   auto _U = xt::adapt(U, s0[0] * s0[1] * s0[2], xt::no_ownership(), s0);
-
   std::array<std::size_t, 3> s1
       = {(std::size_t)num_points, (std::size_t)physical_dim, tdim};
   auto _J = xt::adapt(J, s1[0] * s1[1] * s1[2], xt::no_ownership(), s1);
-
   std::array<std::size_t, 3> s2
       = {(std::size_t)num_points, tdim, (std::size_t)physical_dim};
   auto _K = xt::adapt(K, s2[0] * s2[1] * s2[2], xt::no_ownership(), s2);
-
   auto _detJ = tcb::span(detJ, num_points);
 
   _registry[handle]->map_push_forward_m<T>(_U, _J, _detJ, _K, u);
-
-  // _registry[handle]->map_push_forward_m<T>(
-  //     Eigen::Map<const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic,
-  //                                   Eigen::RowMajor>>(reference_data,
-  //                                                     npoints * nresults,
-  //                                                     vs),
-  //     Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                                   Eigen::RowMajor>>(J, npoints,
-  //                                                     physical_dim * tdim),
-  //     tcb::span(detJ, npoints),
-  //     Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                                   Eigen::RowMajor>>(K, npoints,
-  //                                                     physical_dim * tdim),
-  //     physical_data);
 }
 
 template <typename T>

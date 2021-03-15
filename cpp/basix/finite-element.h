@@ -624,7 +624,6 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
         // maps are updated to accept xtensor objects rather than spans
         // auto U_data = xt::row(U_b, i);
         xt::xtensor<double, 1> U_data = xt::row(U_b, i);
-        // auto u_data = xt::row(U_b, i);
         std::vector<double> u = _map_push_forward(U_data, J_p, detJ[p], K_p);
         for (std::size_t j = 0; j < u.size(); ++j)
           u_b(i, j) = u[j];

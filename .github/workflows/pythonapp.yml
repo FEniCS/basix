@@ -87,11 +87,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install pybind11
-        run:
-          pip install pybind11
-      - name: Install dependencies (non-Python, Linux)
+      - name: Install dependencies
         run: |
+          pip install pybind11
           sudo apt-get update
           sudo apt-get install -y libeigen3-dev libopenblas-dev liblapack-dev ninja-build
       - name: Install basix C++

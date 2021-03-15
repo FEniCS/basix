@@ -604,8 +604,7 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
   // FIXME: Should U.shape(2) be replaced by the physical value size?
   // Can it differ?
   std::array<std::size_t, 3> s = {U.shape(0), U.shape(1), U.shape(2)};
-  auto _u = xt::adapt<xt::layout_type::column_major>(u, s[0] * s[1] * s[2],
-                                                     xt::no_ownership(), s);
+  auto _u = xt::adapt(u, s[0] * s[1] * s[2], xt::no_ownership(), s);
 
   // Loop over each point
   for (std::size_t p = 0; p < U.shape(0); ++p)
@@ -622,7 +621,8 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
         auto col = xt::col(U_b, i);
         std::vector<double> u = _map_push_forward(col, J_p, detJ[p], K_p);
         for (std::size_t j = 0; j < u.size(); ++j)
-          u_b(j, i) = u[j];
+          u_b(i, j) = u[j];
+        // u_b(j, i) = u[j];
       }
     }
     else

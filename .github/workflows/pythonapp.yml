@@ -73,7 +73,7 @@ jobs:
           git commit --allow-empty -m "C++ FEniCS/basix@${{ github.sha }}"
           git push
 
-  build:
+  build-not-dev:
     name: Build and test without developer mode
     runs-on: ${{ matrix.os }}
     strategy:

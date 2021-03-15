@@ -316,18 +316,6 @@ public:
   /// @param K The inverse of the Jacobian of the mapping
   /// @param physical_data Memory location to fill
   template <typename T>
-  void
-  map_push_forward_m(const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic,
-                                        Eigen::RowMajor>& reference_data,
-                     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                        Eigen::RowMajor>& J,
-                     const tcb::span<const double>& detJ,
-                     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                        Eigen::RowMajor>& K,
-                     T* physical_data) const;
-
-  /// TODO
-  template <typename T>
   void map_push_forward_m(const xt::xtensor<T, 3>& U,
                           const xt::xtensor<double, 3>& J,
                           const tcb::span<const double>& detJ,
@@ -363,6 +351,13 @@ public:
       const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
                          Eigen::RowMajor>& K,
       T* reference_data) const;
+
+  /// TODO
+  template <typename T>
+  void map_pull_back_m(const xt::xtensor<T, 3>& u,
+                       const xt::xtensor<double, 3>& J,
+                       const tcb::span<const double>& detJ,
+                       const xt::xtensor<double, 3>& K, T* U) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -530,70 +525,6 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @return version string
 std::string version();
 
-template <typename T>
-void FiniteElement::map_push_forward_m(
-    const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        reference_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const tcb::span<const double>& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K,
-    T* physical_data) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size = compute_value_size(_map_type, physical_dim);
-  const int reference_value_size = value_size();
-  const int npoints = J.rows();
-  const int nresults = reference_data.rows() / npoints;
-
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    Eigen::Map<
-        const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-        reference_block(reference_data.row(pt).data(), reference_value_size,
-                        nresults);
-    Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-        physical_block(physical_data + pt * physical_value_size * nresults,
-                       physical_value_size, nresults);
-
-    std::array<std::size_t, 2> J_s
-        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
-    std::array<std::size_t, 2> K_s
-        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
-    const xt::xtensor<double, 2> current_J
-        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
-    const xt::xtensor<double, 2> current_K
-        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
-
-    if constexpr (std::is_same<T, double>::value)
-    {
-      for (int i = 0; i < reference_block.cols(); ++i)
-      {
-        Eigen::ArrayXd col = reference_block.col(i);
-        std::vector<double> u
-            = _map_push_forward(col, current_J, detJ[pt], current_K);
-        for (std::size_t j = 0; j < u.size(); ++j)
-          physical_block(j, i) = u[j];
-      }
-    }
-    else
-    {
-      for (int i = 0; i < reference_block.cols(); ++i)
-      {
-        Eigen::ArrayXd tmp_r = reference_block.col(i).real();
-        Eigen::ArrayXd tmp_c = reference_block.col(i).imag();
-        std::vector<double> ur
-            = _map_push_forward(tmp_r, current_J, detJ[pt], current_K);
-        std::vector<double> uc
-            = _map_push_forward(tmp_c, current_J, detJ[pt], current_K);
-        for (std::size_t j = 0; j < ur.size(); ++j)
-          physical_block(j, i) = std::complex(ur[j], uc[j]);
-      }
-    }
-  }
-}
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
@@ -610,11 +541,10 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
   // Loop over each point
   for (std::size_t p = 0; p < U.shape(0); ++p)
   {
-    auto u_b = xt::view(_u, p, xt::all(), xt::all());
     auto U_b = xt::view(U, p, xt::all(), xt::all());
     auto J_p = xt::view(J, p, xt::all(), xt::all());
     auto K_p = xt::view(K, p, xt::all(), xt::all());
-
+    auto u_b = xt::view(_u, p, xt::all(), xt::all());
     if constexpr (std::is_same<T, double>::value)
     {
       // Loop over values at each point
@@ -624,27 +554,29 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
         // maps are updated to accept xtensor objects rather than spans
         // auto U_data = xt::row(U_b, i);
         xt::xtensor<double, 1> U_data = xt::row(U_b, i);
-        std::vector<double> u = _map_push_forward(U_data, J_p, detJ[p], K_p);
-        for (std::size_t j = 0; j < u.size(); ++j)
-          u_b(i, j) = u[j];
+        std::vector<double> f = _map_push_forward(U_data, J_p, detJ[p], K_p);
+        for (std::size_t j = 0; j < f.size(); ++j)
+          u_b(i, j) = f[j];
       }
     }
     else
     {
-      throw std::runtime_error("Need to fix complex case");
-      // for (std::size_t i = 0; i < U_b.shape(1); ++i)
+      // Note: This is a bit crazy; the maps should handle
+      // real/complex/float and whatever else
+      throw std::runtime_error("Complex not suppoted.");
+
+      // See https://github.com/xtensor-stack/xtensor/issues/1701
+      // for (std::size_t i = 0; i < U_b.shape(0); ++i)
       // {
-      //   auto col_r = xt::real(xt::col(U_b, i));
-      //   auto col_c = xt::imag(xt::col(U_b, i));
-      //   std::vector<double> _col_c(col_c.begin(), col_c.end());
-      //   std::vector<double> ur = _map_push_forward(col_r, J_p, detJ[p], K_p);
-      //   std::vector<double> uc = _map_push_forward(_col_c, J_p, detJ[p],
-      //   K_p); for (std::size_t j = 0; j < ur.size(); ++j)
-      //     u_b(j, i) = std::complex(ur[j], uc[j]);
+      //   xt::xtensor<double, 1> U_data_r = xt::real(xt::row(U_b, i));
+      //   xt::xtensor<double, 1> U_data_c = xt::imag(xt::row(U_b, i));
+      //   std::vector<double> ur = _map_push_forward(U_data_r, J_p, detJ[p],
+      //   K_p); std::vector<double> uc = _map_push_forward(U_data_c, J_p,
+      //   detJ[p], K_p); for (std::size_t j = 0; j < ur.size(); ++j)
+      //     u_b(i, j) = std::complex(ur[j], uc[j]);
       // }
     }
   }
-
 }
 //-----------------------------------------------------------------------------
 template <typename T>
@@ -681,32 +613,80 @@ void FiniteElement::map_pull_back_m(
     {
       for (int i = 0; i < nresults; ++i)
       {
-        for (int i = 0; i < nresults; ++i)
-        {
-          Eigen::ArrayXd tmp = physical_data.row(pt * nresults + i);
-          std::vector<double> U
-              = _map_push_forward(tmp, current_K, 1 / detJ[pt], current_J);
-          for (std::size_t j = 0; j < U.size(); ++j)
-            reference_array(pt * nresults + i, j) = U[j];
-        }
+        Eigen::ArrayXd tmp = physical_data.row(pt * nresults + i);
+        std::vector<double> U
+            = _map_push_forward(tmp, current_K, 1 / detJ[pt], current_J);
+        for (std::size_t j = 0; j < U.size(); ++j)
+          reference_array(pt * nresults + i, j) = U[j];
       }
     }
     else
     {
       for (int i = 0; i < nresults; ++i)
       {
-        for (int i = 0; i < nresults; ++i)
-        {
-          Eigen::ArrayXd tmp_r = physical_data.row(pt * nresults + i).real();
-          Eigen::ArrayXd tmp_c = physical_data.row(pt * nresults + i).imag();
-          std::vector<double> Ur
-              = _map_push_forward(tmp_r, current_K, 1 / detJ[pt], current_J);
-          std::vector<double> Uc
-              = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_J);
-          for (std::size_t j = 0; j < Ur.size(); ++j)
-            reference_array(pt * nresults + i, j) = std::complex(Ur[j], Uc[j]);
-        }
+        Eigen::ArrayXd tmp_r = physical_data.row(pt * nresults + i).real();
+        Eigen::ArrayXd tmp_c = physical_data.row(pt * nresults + i).imag();
+        std::vector<double> Ur
+            = _map_push_forward(tmp_r, current_K, 1 / detJ[pt], current_J);
+        std::vector<double> Uc
+            = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_J);
+        for (std::size_t j = 0; j < Ur.size(); ++j)
+          reference_array(pt * nresults + i, j) = std::complex(Ur[j], Uc[j]);
       }
+    }
+  }
+}
+//-----------------------------------------------------------------------------
+template <typename T>
+void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
+                                    const xt::xtensor<double, 3>& J,
+                                    const tcb::span<const double>& detJ,
+                                    const xt::xtensor<double, 3>& K, T* U) const
+{
+  // FIXME: Should u.shape(2) be replaced by the reference value size?
+  // Can it differ?
+  std::array<std::size_t, 3> s = {u.shape(0), u.shape(1), u.shape(2)};
+  auto _U = xt::adapt<xt::layout_type::column_major>(U, s[0] * s[1] * s[2],
+                                                     xt::no_ownership(), s);
+
+  // Loop over each point
+  for (std::size_t p = 0; p < u.shape(0); ++p)
+  {
+    auto u_b = xt::view(u, p, xt::all(), xt::all());
+    auto J_p = xt::view(J, p, xt::all(), xt::all());
+    auto K_p = xt::view(K, p, xt::all(), xt::all());
+    auto U_b = xt::view(_U, p, xt::all(), xt::all());
+    if constexpr (std::is_same<T, double>::value)
+    {
+      for (std::size_t i = 0; i < u_b.shape(0); ++i)
+      {
+        // Note: we assign here to a xt::xtensor<double, 1> until the
+        // maps are updated to accept xtensor objects rather than spans
+        // auto U_data = xt::row(U_b, i);
+        xt::xtensor<double, 1> u_data = xt::row(u_b, i);
+        std::vector<double> f
+            = _map_push_forward(u_data, K_p, 1.0 / detJ[p], J_p);
+        for (std::size_t j = 0; j < f.size(); ++j)
+          U_b(i, j) = f[j];
+      }
+    }
+    else
+    {
+      // Note: This is a bit crazy; the maps should handle
+      // real/complex/float and whatever else
+      throw std::runtime_error("Complex not suppoted.");
+
+      // for (int i = 0; i < nresults; ++i)
+      // {
+      //   Eigen::ArrayXd tmp_r = physical_data.row(pt * nresults + i).real();
+      //   Eigen::ArrayXd tmp_c = physical_data.row(pt * nresults + i).imag();
+      //   std::vector<double> Ur
+      //       = _map_push_forward(tmp_r, current_K, 1 / detJ[pt], current_J);
+      //   std::vector<double> Uc
+      //       = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_J);
+      //   for (std::size_t j = 0; j < Ur.size(); ++j)
+      //     reference_array(pt * nresults + i, j) = std::complex(Ur[j], Uc[j]);
+      // }
     }
   }
 }

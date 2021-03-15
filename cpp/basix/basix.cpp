@@ -15,6 +15,8 @@
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xtensor.hpp>
 
+#include <xtensor/xio.hpp>
+
 using namespace basix;
 
 std::vector<std::unique_ptr<FiniteElement>> _registry;
@@ -55,25 +57,56 @@ void _map_push_forward(int handle, T* u, const T* U, const double* J,
 }
 
 template <typename T>
-void _map_pull_back(int handle, T* reference_data, const T* physical_data,
-                    const double* J, const double* detJ, const double* K,
-                    const int physical_dim, const int physical_value_size,
-                    const int nresults, const int npoints)
+void _map_pull_back(int handle, T* U, const T* u, const double* J,
+                    const double* detJ, const double* K, const int physical_dim,
+                    const int physical_value_size, const int nresults,
+                    const int num_points)
 {
   check_handle(handle);
-  const int tdim = cell::topological_dimension(_registry[handle]->cell_type());
-  _registry[handle]->map_pull_back_m<T>(
-      Eigen::Map<const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic,
-                                    Eigen::ColMajor>>(
-          physical_data, npoints, physical_value_size * nresults),
-      Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                    Eigen::RowMajor>>(J, npoints,
-                                                      physical_dim * tdim),
-      tcb::span(detJ, npoints),
-      Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                    Eigen::RowMajor>>(K, npoints,
-                                                      physical_dim * tdim),
-      reference_data);
+  const std::size_t tdim
+      = cell::topological_dimension(_registry[handle]->cell_type());
+
+  std::array<std::size_t, 3> s0
+      = {(std::size_t)num_points, (std::size_t)nresults,
+         (std::size_t)physical_value_size};
+  auto _u = xt::adapt<xt::layout_type::column_major>(u, s0[0] * s0[1] * s0[2],
+                                                     xt::no_ownership(), s0);
+
+  std::array<std::size_t, 3> s1
+      = {(std::size_t)num_points, (std::size_t)physical_dim, tdim};
+  auto _J = xt::adapt(J, s1[0] * s1[1] * s1[2], xt::no_ownership(), s1);
+
+  std::array<std::size_t, 3> s2
+      = {(std::size_t)num_points, tdim, (std::size_t)physical_dim};
+  auto _K = xt::adapt(K, s2[0] * s2[1] * s2[2], xt::no_ownership(), s2);
+  auto _detJ = tcb::span(detJ, num_points);
+
+  auto tmp = xt::adapt(U, s0[0] * s0[1] * s0[2], xt::no_ownership(), s0);
+
+  _registry[handle]->map_pull_back_m<T>(_u, _J, _detJ, _K, U);
+
+  // std::cout << "Case u0:\n" << _u << std::endl;
+  // std::cout << "Case 0 :\n" << tmp << std::endl;
+
+  // // const int tdim =
+  // // cell::topological_dimension(_registry[handle]->cell_type());
+  // _registry[handle]->map_pull_back_m<T>(
+  //     Eigen::Map<const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic,
+  //                                   Eigen::ColMajor>>(
+  //         u, num_points, physical_value_size * nresults),
+  //     Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+  //                                   Eigen::RowMajor>>(J, num_points,
+  //                                                     physical_dim * tdim),
+  //     tcb::span(detJ, num_points),
+  //     Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
+  //                                   Eigen::RowMajor>>(K, num_points,
+  //                                                     physical_dim * tdim),
+  //     U);
+  // Eigen::Map<
+  //     const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
+  //     tmp2(u, num_points, physical_value_size * nresults);
+  // std::cout << "Case u1:\n" << tmp2 << std::endl;
+  // std::cout << "Case 1 :\n" << tmp << std::endl;
 }
 } // namespace
 

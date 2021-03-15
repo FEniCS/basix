@@ -271,35 +271,6 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
   return _entity_dofs;
 }
 //-----------------------------------------------------------------------------
-std::vector<Eigen::ArrayXXd>
-FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
-{
-  const int tdim = cell::topological_dimension(_cell_type);
-  int ndsize = 1;
-  for (int i = 1; i <= nd; ++i)
-    ndsize *= (tdim + i);
-  for (int i = 1; i <= nd; ++i)
-    ndsize /= i;
-
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 1)
-    _x.reshape({_x.shape(0), 1});
-
-  const std::size_t ndofs = _coeffs.shape()[0];
-  const int vs = value_size();
-  std::vector<double> basis_data(ndsize * x.shape()[0] * ndofs * vs);
-  tabulate(nd, _x, basis_data.data());
-  std::vector<Eigen::ArrayXXd> dresult;
-  for (int p = 0; p < ndsize; ++p)
-  {
-    dresult.push_back(Eigen::Map<Eigen::ArrayXXd>(
-        basis_data.data() + p * x.shape()[0] * ndofs * vs, x.shape()[0],
-        ndofs * vs));
-  }
-
-  return dresult;
-}
-//-----------------------------------------------------------------------------
 xt::xtensor<double, 3>
 FiniteElement::tabulate_new(int nd, const xt::xarray<double>& x) const
 {

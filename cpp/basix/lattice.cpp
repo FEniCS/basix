@@ -30,12 +30,9 @@ xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
       = xt::adapt(_pts.data(), _pts.size(), xt::no_ownership(), shape0);
 
   FiniteElement L = create_dlagrange(cell::type::interval, n);
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _v
-      = L.tabulate(0, x)[0];
+  xt::xtensor<double, 2> v
+      = xt::view(L.tabulate_new(0, x), 0, xt::all(), xt::all());
 
-  std::array<std::size_t, 2> shape
-      = {(std::size_t)_v.rows(), (std::size_t)_v.cols()};
-  auto v = xt::adapt(_v.data(), _v.size(), xt::no_ownership(), shape);
   return xt::linalg::dot(v, pts);
 }
 //-----------------------------------------------------------------------------
@@ -268,7 +265,8 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
   FiniteElement L = create_dlagrange(cell::type::interval, n);
   auto w = [&](double r) -> double {
     xt::xtensor<double, 1> rr = {0.5 * (r + 1.0)};
-    Eigen::VectorXd v = L.tabulate(0, rr)[0].row(0);
+    xt::xtensor<double, 1> v
+        = xt::view(L.tabulate_new(0, rr), 0, 0, xt::all());
     double d = 0.0;
     for (std::size_t i = 0; i < pts.shape()[0]; ++i)
       d += v[i] * pts[i];

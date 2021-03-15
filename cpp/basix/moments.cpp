@@ -7,6 +7,7 @@
 #include "finite-element.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include <Eigen/Core>
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xarray.hpp>
@@ -194,9 +195,10 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
       _detJ[j] = detJ(i, j);
 
     auto _tpoint = xt::view(tpts, i, xt::all(), xt::all());
-    Eigen::ArrayXXd moment_space_pts = moment_space.tabulate(0, _tpoint)[0];
+    xt::xtensor<double, 2> moment_space_pts = xt::view(
+        moment_space.tabulate_new(0, _tpoint), 0, xt::all(), xt::all());
 
-    std::size_t num_points = moment_space_pts.rows();
+    std::size_t num_points = moment_space_pts.shape(0);
     std::size_t value_size = moment_space.value_size();
     std::size_t nresults = moment_space_pts.size() / (num_points * value_size);
     xt::xtensor<double, 3> space({num_points, nresults, value_size});
@@ -219,8 +221,6 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
       }
     }
 
-    // Eigen::ArrayXXd pulled
-    //     = moment_space.map_pull_back(moment_space_pts, _J, _detJ, _K);
     xt::xtensor<double, 3> F = moment_space.map_pull_back(space, Ji, _detJ, Ki);
 
     // Copy onto 2D array
@@ -231,12 +231,6 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
         for (std::size_t j = 0; j < F.shape(2); ++j)
           pulled(p, j * F.shape(1) + i) = F(p, i, j);
     }
-
-    std::array<std::size_t, 2> shape0 = {(std::size_t)moment_space_pts.rows(),
-                                         (std::size_t)moment_space_pts.cols()};
-    auto _moment_space_pts = xt::adapt<xt::layout_type::column_major>(
-        moment_space_pts.data(), moment_space_pts.size(), xt::no_ownership(),
-        shape0);
 
     std::array<std::size_t, 2> shape1
         = {(std::size_t)pulled.rows(), (std::size_t)pulled.cols()};
@@ -355,13 +349,8 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     Qpts = Qpts.reshape({Qpts.shape()[0], 1});
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
-  std::array<std::size_t, 2> shape1
-      = {(std::size_t)_moment_space_at_Qpts.rows(),
-         (std::size_t)_moment_space_at_Qpts.cols()};
-  auto moment_space_at_Qpts = xt::adapt<xt::layout_type::column_major>(
-      _moment_space_at_Qpts.data(), _moment_space_at_Qpts.size(),
-      xt::no_ownership(), shape1);
+  xt::xtensor<double, 2> moment_space_at_Qpts
+      = xt::view(moment_space.tabulate_new(0, Qpts), 0, xt::all(), xt::all());
 
   xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
   const std::array<std::size_t, 2> shape
@@ -449,13 +438,8 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, qpts)[0];
-  std::array<std::size_t, 2> shape1
-      = {(std::size_t)_moment_space_at_Qpts.rows(),
-         (std::size_t)_moment_space_at_Qpts.cols()};
-  auto moment_space_at_Qpts = xt::adapt<xt::layout_type::column_major>(
-      _moment_space_at_Qpts.data(), _moment_space_at_Qpts.size(),
-      xt::no_ownership(), shape1);
+  xt::xtensor<double, 2> moment_space_at_Qpts
+      = xt::view(moment_space.tabulate_new(0, qpts), 0, xt::all(), xt::all());
 
   const std::size_t moment_space_size
       = moment_space_at_Qpts.shape()[1] / sub_entity_dim;
@@ -538,13 +522,8 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
-  std::array<std::size_t, 2> shape1
-      = {(std::size_t)_moment_space_at_Qpts.rows(),
-         (std::size_t)_moment_space_at_Qpts.cols()};
-  auto moment_space_at_Qpts = xt::adapt<xt::layout_type::column_major>(
-      _moment_space_at_Qpts.data(), _moment_space_at_Qpts.size(),
-      xt::no_ownership(), shape1);
+  xt::xtensor<double, 2> moment_space_at_Qpts
+      = xt::view(moment_space.tabulate_new(0, Qpts), 0, xt::all(), xt::all());
 
   xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
   const std::array<std::size_t, 2> shape
@@ -611,13 +590,8 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
     Qpts = Qpts.reshape({Qpts.shape()[0], 1});
 
   // Evaluate moment space at quadrature points
-  Eigen::ArrayXXd _moment_space_at_Qpts = moment_space.tabulate(0, Qpts)[0];
-  std::array<std::size_t, 2> shape1
-      = {(std::size_t)_moment_space_at_Qpts.rows(),
-         (std::size_t)_moment_space_at_Qpts.cols()};
-  auto moment_space_at_Qpts = xt::adapt<xt::layout_type::column_major>(
-      _moment_space_at_Qpts.data(), _moment_space_at_Qpts.size(),
-      xt::no_ownership(), shape1);
+  xt::xtensor<double, 2> moment_space_at_Qpts
+      = xt::view(moment_space.tabulate_new(0, Qpts), 0, xt::all(), xt::all());
 
   xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
   const std::array<std::size_t, 2> shape

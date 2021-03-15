@@ -11,7 +11,6 @@
 #include "element-families.h"
 #include "mappings.h"
 #include "span.hpp"
-#include <Eigen/Core>
 #include <string>
 #include <vector>
 #include <xtensor/xadapt.hpp>
@@ -154,11 +153,6 @@ namespace basix
 /// condition number is not checked.
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space.
-// Eigen::MatrixXd compute_expansion_coefficients(
-//     cell::type cell_type, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
-//     const Eigen::ArrayXXd& x, int degree, double kappa_tol = 0.0);
-
-/// TODO
 xt::xtensor<double, 2> compute_expansion_coefficients(
     cell::type cell_type, const xt::xtensor<double, 2>& B,
     const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
@@ -231,6 +225,10 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
+  /// @todo Fix unclear description of the returned data layout and
+  /// consider using rank 4 tensor [deriv][point][num_res][value_shape].
+  /// It is presently inconsistent with other data structures,
+  ///
   /// Compute basis values and derivatives at set of points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
@@ -246,10 +244,6 @@ public:
   /// stacked with all x values, followed by all y-values (and then z,
   /// if any), likewise tensor-valued results will be stacked in index
   /// order.
-  std::vector<Eigen::ArrayXXd> tabulate(int nd,
-                                        const xt::xarray<double>& x) const;
-
-  /// TODO
   xt::xtensor<double, 3> tabulate_new(int nd,
                                       const xt::xarray<double>& x) const;
 

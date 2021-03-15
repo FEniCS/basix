@@ -310,11 +310,11 @@ public:
                    const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
-  /// @param reference_data The function values on the reference
+  /// @param U The function values on the reference
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
-  /// @param physical_data Memory location to fill
+  /// @param u Memory location to fill
   template <typename T>
   void map_push_forward_m(const xt::xtensor<T, 3>& U,
                           const xt::xtensor<double, 3>& J,

@@ -93,7 +93,7 @@ jobs:
       - name: Install dependencies (non-Python, Linux)
         run: |
           sudo apt-get update
-          sudo apt-get install -y doxygen libeigen3-dev libopenblas-dev liblapack-dev ninja-build
+          sudo apt-get install -y libeigen3-dev libopenblas-dev liblapack-dev ninja-build
       - name: Install basix C++
         run: |
           cmake -G Ninja -B build-dir -S .

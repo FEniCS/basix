@@ -327,7 +327,7 @@ public:
 
   /// TODO
   template <typename T>
-  void map_push_forward_m(const xt::xtensor<double, 3>& U,
+  void map_push_forward_m(const xt::xtensor<T, 3>& U,
                           const xt::xtensor<double, 3>& J,
                           const tcb::span<const double>& detJ,
                           const xt::xtensor<double, 3>& K, T* u) const;
@@ -595,7 +595,7 @@ void FiniteElement::map_push_forward_m(
 }
 //-----------------------------------------------------------------------------
 template <typename T>
-void FiniteElement::map_push_forward_m(const xt::xtensor<double, 3>& U,
+void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
                                        const xt::xtensor<double, 3>& J,
                                        const tcb::span<const double>& detJ,
                                        const xt::xtensor<double, 3>& K,
@@ -626,16 +626,17 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<double, 3>& U,
     }
     else
     {
-      for (std::size_t i = 0; i < U_b.shape(1); ++i)
-      {
-        auto col_r = xt::real(xt::col(U_b, i));
-        auto col_c = xt::imag(xt::col(U_b, i));
-        std::vector<double> _col_c(col_c.begin(), col_c.end());
-        std::vector<double> ur = _map_push_forward(col_r, J_p, detJ[p], K_p);
-        std::vector<double> uc = _map_push_forward(_col_c, J_p, detJ[p], K_p);
-        for (std::size_t j = 0; j < ur.size(); ++j)
-          u_b(j, i) = std::complex(ur[j], uc[j]);
-      }
+      throw std::runtime_error("Need to fix complex case");
+      // for (std::size_t i = 0; i < U_b.shape(1); ++i)
+      // {
+      //   auto col_r = xt::real(xt::col(U_b, i));
+      //   auto col_c = xt::imag(xt::col(U_b, i));
+      //   std::vector<double> _col_c(col_c.begin(), col_c.end());
+      //   std::vector<double> ur = _map_push_forward(col_r, J_p, detJ[p], K_p);
+      //   std::vector<double> uc = _map_push_forward(_col_c, J_p, detJ[p],
+      //   K_p); for (std::size_t j = 0; j < ur.size(); ++j)
+      //     u_b(j, i) = std::complex(ur[j], uc[j]);
+      // }
     }
   }
 }

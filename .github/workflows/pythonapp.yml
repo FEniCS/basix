@@ -72,34 +72,3 @@ jobs:
           git add --all
           git commit --allow-empty -m "C++ FEniCS/basix@${{ github.sha }}"
           git push
-
-  build-not-dev:
-    name: Build and test without developer mode
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-20.04]
-        python-version: [3.8]
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          pip install pybind11
-          sudo apt-get update
-          sudo apt-get install -y libeigen3-dev libopenblas-dev liblapack-dev ninja-build
-      - name: Install Basix
-        run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
-          cmake --build build-dir
-          sudo cmake --install build-dir
-          cd python
-          pip install .
-      - name: Run units tests
-        run: |
-          pip install pytest pytest-xdist numpy sympy
-          pytest -v -n auto --durations 20 test/

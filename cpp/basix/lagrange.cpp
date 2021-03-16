@@ -12,6 +12,7 @@
 #include "quadrature.h"
 #include <numeric>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
@@ -84,16 +85,17 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
   xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+      = xt::expand_dims(xt::eye<double>(ndofs), 0);
+  base_transformations = xt::tile(base_transformations, transform_count);
 
-  if (celltype == cell::type::interval)
+  switch (celltype)
+  {
+  case cell::type::interval:
+  {
     assert(transform_count == 0);
-  else if (celltype == cell::type::triangle)
+    break;
+  }
+  case cell::type::triangle:
   {
     const std::vector<int> edge_ref
         = doftransforms::interval_reflection(degree - 1);
@@ -107,8 +109,9 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         bt(start + i, start + edge_ref[i]) = 1;
       }
     }
+    break;
   }
-  else if (celltype == cell::type::quadrilateral)
+  case cell::type::quadrilateral:
   {
     const std::vector<int> edge_ref
         = doftransforms::interval_reflection(degree - 1);
@@ -122,8 +125,9 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         bt(start + i, start + edge_ref[i]) = 1;
       }
     }
+    break;
   }
-  else if (celltype == cell::type::tetrahedron)
+  case cell::type::tetrahedron:
   {
     const std::vector<int> edge_ref
         = doftransforms::interval_reflection(degree - 1);
@@ -156,8 +160,9 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         bt1(start + i, start + face_ref[i]) = 1;
       }
     }
+    break;
   }
-  else if (celltype == cell::type::hexahedron)
+  case cell::type::hexahedron:
   {
     const std::vector<int> edge_ref
         = doftransforms::interval_reflection(degree - 1);
@@ -191,9 +196,9 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         bt1(start + i, start + face_ref[i]) = 1;
       }
     }
+    break;
   }
-  else
-  {
+  default:
     LOG(WARNING) << "Base transformations not implemented for this cell type.";
   }
 
@@ -225,15 +230,9 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  // std::vector<Eigen::MatrixXd> base_transformations(
-  //     transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
   xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+      = xt::expand_dims(xt::eye<double>(ndofs), 0);
+  base_transformations = xt::tile(base_transformations, transform_count);
 
   xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pt, degree);
@@ -249,14 +248,20 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   // the scalar space.
 
   cell::type simplex_type;
-  if (celltype == cell::type::interval)
+  switch (celltype)
+  {
+  case cell::type::interval:
     simplex_type = cell::type::interval;
-  else if (celltype == cell::type::quadrilateral)
+    break;
+  case cell::type::quadrilateral:
     simplex_type = cell::type::triangle;
-  else if (celltype == cell::type::hexahedron)
+    break;
+  case cell::type::hexahedron:
     simplex_type = cell::type::tetrahedron;
-  else
+    break;
+  default:
     throw std::runtime_error("Invalid cell type");
+  }
 
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
@@ -294,12 +299,9 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  xt::xtensor<double, 3> base_transformations({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+  xt::xtensor<double, 3> base_transformations
+      = xt::expand_dims(xt::eye<double>(ndofs), 0);
+  base_transformations = xt::tile(base_transformations, transform_count);
 
   xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, xt::eye<double>(ndofs), pt, degree);

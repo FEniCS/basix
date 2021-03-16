@@ -13,6 +13,7 @@
 #include <numeric>
 #include <vector>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
@@ -96,12 +97,8 @@ xt::xtensor<double, 3> create_nedelec_2d_base_transforms(int degree)
 {
   const std::size_t ndofs = degree * (degree + 2);
   xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({static_cast<std::size_t>(3), ndofs, ndofs});
-  for (std::size_t i = 0; i < 3; ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+      = xt::expand_dims(xt::eye<double>(ndofs), 0);
+  base_transformations = xt::tile(base_transformations, 3);
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
@@ -243,12 +240,8 @@ xt::xtensor<double, 3> create_nedelec_3d_base_transforms(int degree)
   const std::size_t ndofs = 6 * degree + 4 * degree * (degree - 1)
                             + (degree - 2) * (degree - 1) * degree / 2;
   xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({static_cast<std::size_t>(14), ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+      = xt::expand_dims(xt::eye<double>(ndofs), 0);
+  base_transformations = xt::tile(base_transformations, 14);
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(

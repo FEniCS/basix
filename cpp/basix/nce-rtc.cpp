@@ -13,6 +13,7 @@
 #include <numeric>
 #include <vector>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
@@ -145,12 +146,8 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
     transform_count += topology[i].size() * i;
 
   xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+      = xt::expand_dims(xt::eye<double>(ndofs), 0);
+  base_transformations = xt::tile(base_transformations, transform_count);
 
   if (tdim == 2)
   {
@@ -358,14 +355,9 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
-
   xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < transform_count; ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+      = xt::expand_dims(xt::eye<double>(ndofs), 0);
+  base_transformations = xt::tile(base_transformations, transform_count);
 
   for (int edge = 0; edge < edge_count; ++edge)
   {

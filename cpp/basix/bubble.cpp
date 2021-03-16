@@ -12,6 +12,7 @@
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xio.hpp>
 #include <xtensor/xmath.hpp>
+#include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
@@ -64,15 +65,18 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> lower_polyset_at_Qpts;
   xt::xtensor<double, 1> bubble;
-  if (celltype == cell::type::interval)
+  switch (celltype)
+  {
+  case cell::type::interval:
   {
     lower_polyset_at_Qpts
         = xt::view(polyset::tabulate(celltype, degree - 2, 0, Qpts), 0,
                    xt::all(), xt::all());
     auto p = Qpts;
     bubble = p * (1.0 - p);
+    break;
   }
-  else if (celltype == cell::type::triangle)
+  case cell::type::triangle:
   {
     lower_polyset_at_Qpts
         = xt::view(polyset::tabulate(celltype, degree - 3, 0, Qpts), 0,
@@ -80,8 +84,9 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p0 = xt::col(Qpts, 0);
     auto p1 = xt::col(Qpts, 1);
     bubble = p0 * p1 * (1 - p0 - p1);
+    break;
   }
-  else if (celltype == cell::type::tetrahedron)
+  case cell::type::tetrahedron:
   {
     lower_polyset_at_Qpts
         = xt::view(polyset::tabulate(celltype, degree - 4, 0, Qpts), 0,
@@ -90,8 +95,9 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p1 = xt::col(Qpts, 1);
     auto p2 = xt::col(Qpts, 2);
     bubble = p0 * p1 * p2 * (1 - p0 - p1 - p2);
+    break;
   }
-  else if (celltype == cell::type::quadrilateral)
+  case cell::type::quadrilateral:
   {
     lower_polyset_at_Qpts
         = xt::view(polyset::tabulate(celltype, degree - 2, 0, Qpts), 0,
@@ -99,8 +105,9 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p0 = xt::col(Qpts, 0);
     auto p1 = xt::col(Qpts, 1);
     bubble = p0 * (1 - p0) * p1 * (1 - p1);
+    break;
   }
-  else if (celltype == cell::type::hexahedron)
+  case cell::type::hexahedron:
   {
     lower_polyset_at_Qpts
         = xt::view(polyset::tabulate(celltype, degree - 2, 0, Qpts), 0,
@@ -109,6 +116,10 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p1 = xt::col(Qpts, 1);
     auto p2 = xt::col(Qpts, 2);
     bubble = p0 * (1 - p0) * p1 * (1 - p1) * p2 * (1 - p2);
+    break;
+  }
+  default:
+    throw std::runtime_error("Unknown cell type.");
   }
 
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
@@ -131,12 +142,9 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  xt::xtensor<double, 3> base_transformations({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+  xt::xtensor<double, 3> base_transformations
+      = xt::expand_dims(xt::eye<double>(ndofs), 0);
+  base_transformations = xt::tile(base_transformations, transform_count);
 
   xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, xt::eye<double>(ndofs), points, degree);

@@ -129,19 +129,9 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
   // gdim and tdim are the same for all cells in basix
   const std::size_t gdim
       = cell::topological_dimension(_registry[handle]->cell_type());
-  // Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                               Eigen::RowMajor>>
-  //     _x(x, npoints, gdim);
   xt::xarray<int>::shape_type s({(std::size_t)npoints, gdim});
   auto _x = xt::adapt(x, npoints * gdim, xt::no_ownership(), s);
-
   _registry[handle]->tabulate(nd, _x, basis_values);
-
-  // std::vector<Eigen::ArrayXXd> values = _registry[handle]->tabulate(nd, _x);
-
-  // const int m = values[0].rows() * values[0].cols();
-  // for (std::size_t i = 0; i < values.size(); ++i)
-  //   std::copy(values[i].data(), values[i].data() + m, basis_values + i * m);
 }
 
 void basix::map_push_forward_real(int handle, double* physical_data,

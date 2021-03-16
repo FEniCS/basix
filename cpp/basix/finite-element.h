@@ -327,10 +327,10 @@ public:
   /// @param K The inverse of the Jacobian of the mapping
   /// @param U Memory location to fill
   template <typename T>
-  void map_pull_back_m(const xt::xtensor<T, 3>& u,
-                       const xt::xtensor<double, 3>& J,
-                       const tcb::span<const double>& detJ,
-                       const xt::xtensor<double, 3>& K, T* U) const;
+  void
+  map_pull_back_m(const xt::xtensor<T, 3>& u, const xt::xtensor<double, 3>& J,
+                  const tcb::span<const double>& detJ,
+                  const xt::xtensor<double, 3>& K, xt::xtensor<T, 3>& U) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -556,33 +556,30 @@ template <typename T>
 void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
                                     const xt::xtensor<double, 3>& J,
                                     const tcb::span<const double>& detJ,
-                                    const xt::xtensor<double, 3>& K, T* U) const
+                                    const xt::xtensor<double, 3>& K,
+                                    xt::xtensor<T, 3>& U) const
 {
-  // FIXME: Should u.shape(2) be replaced by the reference value size?
-  // Can it differ?
-  std::array<std::size_t, 3> s = {u.shape(0), u.shape(1), u.shape(2)};
-  auto _U = xt::adapt<xt::layout_type::column_major>(U, s[0] * s[1] * s[2],
-                                                     xt::no_ownership(), s);
-
   // Loop over each point
   for (std::size_t p = 0; p < u.shape(0); ++p)
   {
-    auto u_b = xt::view(u, p, xt::all(), xt::all());
     auto J_p = xt::view(J, p, xt::all(), xt::all());
     auto K_p = xt::view(K, p, xt::all(), xt::all());
-    auto U_b = xt::view(_U, p, xt::all(), xt::all());
     if constexpr (std::is_same<T, double>::value)
     {
-      for (std::size_t i = 0; i < u_b.shape(0); ++i)
+      // Loop over each item at point to be transformed
+      for (std::size_t i = 0; i < u.shape(1); ++i)
       {
         // Note: we assign here to a xt::xtensor<double, 1> until the
         // maps are updated to accept xtensor objects rather than spans
         // auto U_data = xt::row(U_b, i);
-        xt::xtensor<double, 1> u_data = xt::row(u_b, i);
+        // xt::xtensor<double, 1> u_data = xt::row(u_b, i);
+
+        // Map data
+        xt::xtensor<double, 1> u_data = xt::view(u, p, i, xt::all());
         std::vector<double> f
             = _map_push_forward(u_data, K_p, 1.0 / detJ[p], J_p);
         for (std::size_t j = 0; j < f.size(); ++j)
-          U_b(i, j) = f[j];
+          U(p, i, j) = f[j];
       }
     }
     else

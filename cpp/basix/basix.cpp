@@ -62,15 +62,23 @@ void _map_pull_back(int handle, T* U, const T* u, const double* J,
                     const int physical_value_size, const int nresults,
                     const int num_points)
 {
+  // FIXME: need to sort out row-major column major storage and expected
+  // input layout. It does really weird things to interface with DOLFIN.
+
   check_handle(handle);
   const std::size_t tdim
       = cell::topological_dimension(_registry[handle]->cell_type());
 
+  // std::array<std::size_t, 3> s0
+  //     = {(std::size_t)num_points, (std::size_t)nresults,
+  //        (std::size_t)physical_value_size};
+  // auto _u = xt::adapt<xt::layout_type::column_major>(u, s0[0] * s0[1] *
+  // s0[2],
+  //                                                    xt::no_ownership(), s0);
   std::array<std::size_t, 3> s0
-      = {(std::size_t)num_points, (std::size_t)nresults,
-         (std::size_t)physical_value_size};
-  auto _u = xt::adapt<xt::layout_type::column_major>(u, s0[0] * s0[1] * s0[2],
-                                                     xt::no_ownership(), s0);
+      = {(std::size_t)physical_value_size, (std::size_t)nresults,
+         (std::size_t)num_points};
+  auto _u = xt::adapt(u, s0[0] * s0[1] * s0[2], xt::no_ownership(), s0);
 
   std::array<std::size_t, 3> s1
       = {(std::size_t)num_points, (std::size_t)physical_dim, tdim};
@@ -81,10 +89,18 @@ void _map_pull_back(int handle, T* U, const T* u, const double* J,
   auto _K = xt::adapt(K, s2[0] * s2[1] * s2[2], xt::no_ownership(), s2);
   auto _detJ = tcb::span(detJ, num_points);
 
+  // auto tmp = xt::adapt(U, s0[0] * s0[1] * s0[2], xt::no_ownership(), s0);
+
+  xt::xtensor<T, 3> u_t = xt::transpose(_u);
+
+  std::array<std::size_t, 3> s3
+      = {(std::size_t)num_points, (std::size_t)nresults,
+         (std::size_t)physical_value_size};
+  xt::xtensor<T, 3> _U(s3);
+  _registry[handle]->map_pull_back_m<T>(u_t, _J, _detJ, _K, _U);
+
   auto tmp = xt::adapt(U, s0[0] * s0[1] * s0[2], xt::no_ownership(), s0);
-
-  _registry[handle]->map_pull_back_m<T>(_u, _J, _detJ, _K, U);
-
+  tmp = xt::transpose(_U);
 }
 } // namespace
 

@@ -82,22 +82,14 @@ def test_transformation_of_tabulated_data_triangle(element_name, order):
 
     N = 4
     points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1 - i)])
-    values = e.tabulate(0, points)[0]
-
-    # TODO: remove these two lines once tabulate has been updated
-    shape = (values.shape[0], e.value_size, e.dim)
-    values = values.reshape(shape).transpose(0, 2, 1)
+    values = e.tabulate_x(0, points)[0]
 
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[p[1], p[0]] for p in points])
-        reflected_values = e.tabulate(0, reflected_points)[0]
-
-        # TODO: remove these two lines once tabulate has been updated
-        shape = (reflected_values.shape[0], e.value_size, e.dim)
-        reflected_values = reflected_values.reshape(shape).transpose(0, 2, 1)
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
 
         _J = np.array([[0, 1], [1, 0]])
         J = np.array([_J for p in points])
@@ -119,22 +111,14 @@ def test_transformation_of_tabulated_data_quadrilateral(element_name, order):
 
     N = 4
     points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1)])
-    values = e.tabulate(0, points)[0]
-
-    # TODO: remove these two lines once tabulate has been updated
-    shape = (values.shape[0], e.value_size, e.dim)
-    values = values.reshape(shape).transpose(0, 2, 1)
+    values = e.tabulate_x(0, points)[0]
 
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[1 - p[0], p[1]] for p in points])
-        reflected_values = e.tabulate(0, reflected_points)[0]
-
-        # TODO: remove these two lines once tabulate has been updated
-        shape = (reflected_values.shape[0], e.value_size, e.dim)
-        reflected_values = reflected_values.reshape(shape).transpose(0, 2, 1)
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
 
         _J = np.array([[-1, 0], [0, 1]])
         J = np.array([_J for p in points])
@@ -159,22 +143,14 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
     N = 4
     points = np.array([[i / N, j / N, k / N]
                        for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1 - i - j)])
-    values = e.tabulate(0, points)[0]
-
-    # TODO: remove these two lines once tabulate has been updated
-    shape = (values.shape[0], e.value_size, e.dim)
-    values = values.reshape(shape).transpose(0, 2, 1)
+    values = e.tabulate_x(0, points)[0]
 
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
-        reflected_values = e.tabulate(0, reflected_points)[0]
-
-        # TODO: remove these two lines once tabulate has been updated
-        shape = (reflected_values.shape[0], e.value_size, e.dim)
-        reflected_values = reflected_values.reshape(shape).transpose(0, 2, 1)
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
 
         _J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
         J = np.array([_J for p in points])
@@ -193,11 +169,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
     if ndofs != 0:
         # Check that the 6th transformation undoes the effect of rotating face 0
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
-        rotated_values = e.tabulate(0, rotated_points)[0]
-
-        # TODO: remove these two lines once tabulate has been updated
-        shape = (rotated_values.shape[0], e.value_size, e.dim)
-        rotated_values = rotated_values.reshape(shape).transpose(0, 2, 1)
+        rotated_values = e.tabulate_x(0, rotated_points)[0]
 
         _J = np.array([[0, 1, 0], [0, 0, 1], [1, 0, 0]])
         J = np.array([_J for p in points])
@@ -214,11 +186,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
     if ndofs != 0:
         # Check that the 7th transformation undoes the effect of reflecting face 0
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
-        reflected_values = e.tabulate(0, reflected_points)[0]
-
-        # TODO: remove these two lines once tabulate has been updated
-        shape = (reflected_values.shape[0], e.value_size, e.dim)
-        reflected_values = reflected_values.reshape(shape).transpose(0, 2, 1)
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
 
         _J = np.array([[1, 0, 0], [0, 0, 1], [0, 1, 0]])
         J = np.array([_J for p in points])
@@ -245,22 +213,14 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
     N = 4
     points = np.array([[i / N, j / N, k / N]
                        for i in range(N + 1) for j in range(N + 1) for k in range(N + 1)])
-    values = e.tabulate(0, points)[0]
-
-    # TODO: remove these two lines once tabulate has been updated
-    shape = (values.shape[0], e.value_size, e.dim)
-    values = values.reshape(shape).transpose(0, 2, 1)
+    values = e.tabulate_x(0, points)[0]
 
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[1 - p[0], p[1], p[2]] for p in points])
-        reflected_values = e.tabulate(0, reflected_points)[0]
-
-        # TODO: remove these two lines once tabulate has been updated
-        shape = (reflected_values.shape[0], e.value_size, e.dim)
-        reflected_values = reflected_values.reshape(shape).transpose(0, 2, 1)
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
 
         _J = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
         J = np.array([_J for p in points])
@@ -279,11 +239,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
     if ndofs != 0:
         # Check that the 12th transformation undoes the effect of rotating face 0
         rotated_points = np.array([[1 - p[1], p[0], p[2]] for p in points])
-        rotated_values = e.tabulate(0, rotated_points)[0]
-
-        # TODO: remove these two lines once tabulate has been updated
-        shape = (rotated_values.shape[0], e.value_size, e.dim)
-        rotated_values = rotated_values.reshape(shape).transpose(0, 2, 1)
+        rotated_values = e.tabulate_x(0, rotated_points)[0]
 
         _J = np.array([[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
         J = np.array([_J for p in points])
@@ -300,11 +256,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
     if ndofs != 0:
         # Check that the 13th transformation undoes the effect of reflecting face 0
         reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
-        reflected_values = e.tabulate(0, reflected_points)[0]
-
-        # TODO: remove these two lines once tabulate has been updated
-        shape = (reflected_values.shape[0], e.value_size, e.dim)
-        reflected_values = reflected_values.reshape(shape).transpose(0, 2, 1)
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
 
         _J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
         J = np.array([_J for p in points])

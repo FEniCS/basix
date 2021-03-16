@@ -423,7 +423,7 @@ public:
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
   /// to interpolate it in the finite element space.
-  /// @return Arary of coordinate with shape `(num_points, tdim)`
+  /// @return Array of coordinate with shape `(num_points, tdim)`
   const xt::xtensor<double, 2>& points() const;
 
   /// Return the number of interpolation points

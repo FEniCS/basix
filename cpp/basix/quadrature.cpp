@@ -587,9 +587,9 @@ std::vector<double> quadrature::compute_gauss_jacobi_points(double a, int m)
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
       tcb::span<const double> _x(&x[k], 1);
-      const xt::xtensor<double, 1> f
+      const xt::xtensor<double, 2> f
           = quadrature::compute_jacobi_deriv(a, m, 1, _x);
-      const double delta = f[0] / (f[1] - f[0] * s);
+      const double delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
       x[k] -= delta;
 
       if (std::abs(delta) < eps)

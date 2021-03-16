@@ -103,7 +103,6 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   {
     std::array<std::size_t, 3> shape0 = {2, pts.shape(0), pts.shape(1)};
     tpts = xt::zeros<double>(shape0);
-    std::array<std::size_t, 3> shape1 = {2, pts.shape(0), 4};
 
     J.resize({2, 2, 2});
     K.resize({2, 2, 2});

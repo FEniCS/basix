@@ -335,8 +335,6 @@ FiniteElement::tabulate_x(int nd, const xt::xarray<double>& x) const
     // Loop over points
     for (std::size_t p = 0; p < data.shape(1); ++p)
     {
-      std::size_t offset_p = offset_d + p * data.shape(2) * data.shape(3);
-
       // Loop over basis functions
       for (std::size_t r = 0; r < data.shape(2); ++r)
       {

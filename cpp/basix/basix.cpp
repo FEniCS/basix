@@ -70,12 +70,6 @@ void _map_pull_back(int handle, T* U, const T* u, const double* J,
   const std::size_t tdim
       = cell::topological_dimension(_registry[handle]->cell_type());
 
-  // std::array<std::size_t, 3> s0
-  //     = {(std::size_t)num_points, (std::size_t)nresults,
-  //        (std::size_t)physical_value_size};
-  // auto _u = xt::adapt<xt::layout_type::column_major>(u, s0[0] * s0[1] *
-  // s0[2],
-  //                                                    xt::no_ownership(), s0);
   std::array<std::size_t, 3> s0
       = {(std::size_t)physical_value_size, (std::size_t)nresults,
          (std::size_t)num_points};
@@ -89,8 +83,6 @@ void _map_pull_back(int handle, T* U, const T* u, const double* J,
       = {(std::size_t)num_points, tdim, (std::size_t)physical_dim};
   auto _K = xt::adapt(K, s2[0] * s2[1] * s2[2], xt::no_ownership(), s2);
   auto _detJ = tcb::span(detJ, num_points);
-
-  // auto tmp = xt::adapt(U, s0[0] * s0[1] * s0[2], xt::no_ownership(), s0);
 
   xt::xtensor<T, 3> u_t = xt::transpose(_u);
 
@@ -129,19 +121,10 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
   // gdim and tdim are the same for all cells in basix
   const std::size_t gdim
       = cell::topological_dimension(_registry[handle]->cell_type());
-  // Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-  //                               Eigen::RowMajor>>
-  //     _x(x, npoints, gdim);
   xt::xarray<int>::shape_type s({(std::size_t)npoints, gdim});
   auto _x = xt::adapt(x, npoints * gdim, xt::no_ownership(), s);
 
   _registry[handle]->tabulate(nd, _x, basis_values);
-
-  // std::vector<Eigen::ArrayXXd> values = _registry[handle]->tabulate(nd, _x);
-
-  // const int m = values[0].rows() * values[0].cols();
-  // for (std::size_t i = 0; i < values.size(); ++i)
-  //   std::copy(values[i].data(), values[i].data() + m, basis_values + i * m);
 }
 
 void basix::map_push_forward_real(int handle, double* physical_data,

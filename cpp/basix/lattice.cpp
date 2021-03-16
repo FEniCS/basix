@@ -6,7 +6,6 @@
 #include "cell.h"
 #include "lagrange.h"
 #include "quadrature.h"
-#include <Eigen/Dense>
 
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>

@@ -144,16 +144,16 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     }
 
     auto J0 = xt::view(J, 0, xt::all(), xt::all());
-    xt::col(J0, 0) = 0;
-    xt::col(J0, 1) = 1;
-    xt::col(J0, 2) = -1;
-    xt::col(J0, 3) = 0;
+    xt::view(J0, xt::all(), 0) = 0;
+    xt::view(J0, xt::all(), 1) = 1;
+    xt::view(J0, xt::all(), 2) = -1;
+    xt::view(J0, xt::all(), 3) = 0;
 
     auto K0 = xt::view(K, 0, xt::all(), xt::all());
-    xt::col(K0, 0) = 0;
-    xt::col(K0, 1) = -1;
-    xt::col(K0, 2) = 1;
-    xt::col(K0, 3) = 0;
+    xt::view(K0, xt::all(), 0) = 0;
+    xt::view(K0, xt::all(), 1) = -1;
+    xt::view(K0, xt::all(), 2) = 1;
+    xt::view(K0, xt::all(), 3) = 0;
 
     // Case 1
     xt::view(detJ, 1, xt::all()) = 1.0;
@@ -164,16 +164,16 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     }
 
     auto J1 = xt::view(J, 1, xt::all(), xt::all());
-    xt::col(J1, 0) = 0;
-    xt::col(J1, 1) = 1;
-    xt::col(J1, 2) = 1;
-    xt::col(J1, 3) = 0;
+    xt::view(J1, xt::all(), 0) = 0;
+    xt::view(J1, xt::all(), 1) = 1;
+    xt::view(J1, xt::all(), 2) = 1;
+    xt::view(J1, xt::all(), 3) = 0;
 
     auto K1 = xt::view(K, 1, xt::all(), xt::all());
-    xt::col(K1, 0) = 0;
-    xt::col(K1, 1) = 1;
-    xt::col(K1, 2) = 1;
-    xt::col(K1, 3) = 0;
+    xt::view(K1, xt::all(), 0) = 0;
+    xt::view(K1, xt::all(), 1) = 1;
+    xt::view(K1, xt::all(), 2) = 1;
+    xt::view(K1, xt::all(), 3) = 0;
 
     break;
   }

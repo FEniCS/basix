@@ -7,7 +7,6 @@
 #include "mappings.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <Eigen/Dense>
 #include <numeric>
 #include <vector>
 #include <xtensor/xview.hpp>

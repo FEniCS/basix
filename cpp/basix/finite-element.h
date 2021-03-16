@@ -302,11 +302,11 @@ public:
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @param u Memory location to fill
-  template <typename T>
+  template <typename T, typename E>
   void map_push_forward_m(const xt::xtensor<T, 3>& U,
                           const xt::xtensor<double, 3>& J,
                           const tcb::span<const double>& detJ,
-                          const xt::xtensor<double, 3>& K, T* u) const;
+                          const xt::xtensor<double, 3>& K, E&& u) const;
 
   /// Map function values from a physical cell to the reference
   /// @param u The function values on the cell
@@ -326,11 +326,11 @@ public:
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @param U Memory location to fill
-  template <typename T>
-  void
-  map_pull_back_m(const xt::xtensor<T, 3>& u, const xt::xtensor<double, 3>& J,
-                  const tcb::span<const double>& detJ,
-                  const xt::xtensor<double, 3>& K, xt::xtensor<T, 3>& U) const;
+  template <typename T, typename E>
+  void map_pull_back_m(const xt::xtensor<T, 3>& u,
+                       const xt::xtensor<double, 3>& J,
+                       const tcb::span<const double>& detJ,
+                       const xt::xtensor<double, 3>& K, E&& U) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -499,37 +499,35 @@ FiniteElement create_element(element::family family, cell::type cell,
 std::string version();
 
 //-----------------------------------------------------------------------------
-template <typename T>
+template <typename T, typename E>
 void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
                                        const xt::xtensor<double, 3>& J,
                                        const tcb::span<const double>& detJ,
                                        const xt::xtensor<double, 3>& K,
-                                       T* u) const
+                                       E&& u) const
 {
   // FIXME: Should U.shape(2) be replaced by the physical value size?
   // Can it differ?
-  std::array<std::size_t, 3> s = {U.shape(0), U.shape(1), U.shape(2)};
-  auto _u = xt::adapt(u, s[0] * s[1] * s[2], xt::no_ownership(), s);
+  // std::array<std::size_t, 3> s = {U.shape(0), U.shape(1), U.shape(2)};
+  // auto _u = xt::adapt(u, s[0] * s[1] * s[2], xt::no_ownership(), s);
 
   // Loop over each point
   for (std::size_t p = 0; p < U.shape(0); ++p)
   {
-    auto U_b = xt::view(U, p, xt::all(), xt::all());
     auto J_p = xt::view(J, p, xt::all(), xt::all());
     auto K_p = xt::view(K, p, xt::all(), xt::all());
-    auto u_b = xt::view(_u, p, xt::all(), xt::all());
     if constexpr (std::is_same<T, double>::value)
     {
       // Loop over values at each point
-      for (std::size_t i = 0; i < U_b.shape(0); ++i)
+      for (std::size_t i = 0; i < U.shape(1); ++i)
       {
         // Note: we assign here to a xt::xtensor<double, 1> until the
         // maps are updated to accept xtensor objects rather than spans
         // auto U_data = xt::row(U_b, i);
-        xt::xtensor<double, 1> U_data = xt::row(U_b, i);
+        xt::xtensor<double, 1> U_data = xt::view(U, p, i, xt::all());
         std::vector<double> f = _map_push_forward(U_data, J_p, detJ[p], K_p);
         for (std::size_t j = 0; j < f.size(); ++j)
-          u_b(i, j) = f[j];
+          u(p, i, j) = f[j];
       }
     }
     else
@@ -552,12 +550,12 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
   }
 }
 //-----------------------------------------------------------------------------
-template <typename T>
+template <typename T, typename E>
 void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
                                     const xt::xtensor<double, 3>& J,
                                     const tcb::span<const double>& detJ,
                                     const xt::xtensor<double, 3>& K,
-                                    xt::xtensor<T, 3>& U) const
+                                    E&& U) const
 {
   // Loop over each point
   for (std::size_t p = 0; p < u.shape(0); ++p)
@@ -571,7 +569,7 @@ void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
       {
         // Note: we assign here to a xt::xtensor<double, 1> until the
         // maps are updated to accept xtensor objects rather than spans
-        // auto u_data = xxt::view(u, p, i, xt::all());
+        // auto U_data = xt::row(U_b, i);
 
         // Map data
         xt::xtensor<double, 1> u_data = xt::view(u, p, i, xt::all());

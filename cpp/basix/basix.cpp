@@ -53,7 +53,8 @@ void _map_push_forward(int handle, T* u, const T* U, const double* J,
   auto _K = xt::adapt(K, s2[0] * s2[1] * s2[2], xt::no_ownership(), s2);
   auto _detJ = tcb::span(detJ, num_points);
 
-  _registry[handle]->map_push_forward_m<T>(_U, _J, _detJ, _K, u);
+  auto _u = xt::adapt(u, s0[0] * s0[1] * s0[2], xt::no_ownership(), s0);
+  _registry[handle]->map_push_forward_m<T>(_U, _J, _detJ, _K, _u);
 }
 
 template <typename T>

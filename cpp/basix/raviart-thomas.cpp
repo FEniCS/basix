@@ -9,7 +9,6 @@
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <Eigen/Dense>
 #include <numeric>
 #include <vector>
 #include <xtensor/xbuilder.hpp>

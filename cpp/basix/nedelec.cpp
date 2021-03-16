@@ -10,7 +10,6 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include "raviart-thomas.h"
-#include <Eigen/Dense>
 #include <numeric>
 #include <vector>
 #include <xtensor/xbuilder.hpp>

@@ -21,23 +21,50 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 find_package(Eigen3 REQUIRED)
 message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
 
-include(FetchContent)
-FetchContent_Declare(
-  xtl
-  GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
-  GIT_TAG        0.7.2
-)
-FetchContent_Declare(
-  xtensor
-  GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-  GIT_TAG        0.23.1
-)
-FetchContent_Declare(
-  xtensor_blas
-  GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
-  GIT_TAG        master
-)
-FetchContent_MakeAvailable(xtl xtensor xtensor_blas)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+  find_package(xtl 0.7...<0.8 QUIET)
+  find_package(xtensor 0.23...<0.24 QUIET)
+else()
+  find_package(xtl 0.7 QUIET)
+  find_package(xtensor 0.23 QUIET)
+endif()
+find_package(xtensor-blas 0.19 QUIET)
+if(NOT xtl_FOUND OR NOT xtensor_FOUND OR NOT xtensor-blas_FOUND)
+  include(FetchContent)
+endif()
+if(NOT xtl_FOUND)
+  message("downloading xtl source...")
+  FetchContent_Declare(
+    xtl
+    GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
+    GIT_TAG        0.7.2
+  )
+  FetchContent_MakeAvailable(xtl)
+else()
+  message("found xtl ${xtl_VERSION}")
+endif()
+if(NOT xtensor_FOUND)
+  message("downloading xtensor source...")
+  FetchContent_Declare(
+    xtensor
+    GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
+    GIT_TAG        0.23.1
+  )
+  FetchContent_MakeAvailable(xtensor)
+else()
+  message("found xtensor ${xtensor_VERSION}")
+endif()
+if(NOT xtensor-blas_FOUND)
+  message("downloading xtensor-blas source...")
+  FetchContent_Declare(
+    xtensor_blas
+    GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
+    GIT_TAG        master
+  )
+  FetchContent_MakeAvailable(xtensor_blas)
+else()
+  message("found xtensor-blas ${xtensor-blas_VERSION}")
+endif()
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)

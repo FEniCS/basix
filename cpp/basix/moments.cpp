@@ -60,7 +60,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
   const xt::xtensor<double, 2>& matrix = moment_space.interpolation_matrix();
   xt::xtensor<double, 3> tpts;
-  xt::xtensor<double, 3> J;
+  xt::xtensor<double, 3> J, Jnew;
   xt::xtensor<double, 3> K;
   xt::xtensor<double, 2> detJ;
   switch (celltype)
@@ -70,6 +70,9 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
     tpts = xt::atleast_3d(1.0 - pts);
     J = xt::full_like(tpts, -1.0);
+    Jnew.resize({1, 1, 1});
+    Jnew(0, 0, 0) = -1.0;
+
     K = xt::full_like(tpts, -1.0);
     detJ = xt::atleast_2d(xt::ones_like(pts));
     break;
@@ -82,6 +85,9 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     J = xt::zeros<double>(shape2);
     K = xt::zeros<double>(shape2);
     detJ = xt::zeros<double>({(std::size_t)2, pts.shape()[0]});
+
+    Jnew.resize({2, 2, 2});
+    xt::xtensor_fixed<double, xt::xshape<2, 2>> A;
 
     // Case 0
     xt::view(detJ, 0, xt::all()) = 1.0;
@@ -96,6 +102,8 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     xt::col(J0, 1) = 1;
     xt::col(J0, 2) = -1;
     xt::col(J0, 3) = -1;
+    A = {{0, 1}, {-1, -1}};
+    xt::view(Jnew, 0, xt::all(), xt::all()) = A;
 
     auto K0 = xt::view(K, 0, xt::all(), xt::all());
     xt::col(K0, 0) = -1;
@@ -116,6 +124,8 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     xt::col(J1, 1) = 1;
     xt::col(J1, 2) = 1;
     xt::col(J1, 3) = 0;
+    A = {{0, 1}, {1, 0}};
+    xt::view(Jnew, 1, xt::all(), xt::all()) = A;
 
     auto K1 = xt::view(K, 1, xt::all(), xt::all());
     xt::col(K1, 0) = 0;
@@ -134,6 +144,9 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     K = xt::zeros<double>(shape1);
     detJ = xt::zeros<double>({(std::size_t)2, pts.shape()[0]});
 
+    Jnew.resize({2, 2, 2});
+    xt::xtensor_fixed<double, xt::xshape<2, 2>> A;
+
     // Case 0
     xt::view(detJ, 0, xt::all()) = 1.0;
     for (std::size_t i = 0; i < pts.shape()[0]; ++i)
@@ -147,6 +160,8 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     xt::view(J0, xt::all(), 1) = 1;
     xt::view(J0, xt::all(), 2) = -1;
     xt::view(J0, xt::all(), 3) = 0;
+    A = {{0, 1}, {-1, 0}};
+    xt::view(Jnew, 0, xt::all(), xt::all()) = A;
 
     auto K0 = xt::view(K, 0, xt::all(), xt::all());
     xt::view(K0, xt::all(), 0) = 0;
@@ -167,6 +182,8 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     xt::view(J1, xt::all(), 1) = 1;
     xt::view(J1, xt::all(), 2) = 1;
     xt::view(J1, xt::all(), 3) = 0;
+    A = {{0, 1}, {1, 0}};
+    xt::view(Jnew, 1, xt::all(), xt::all()) = A;
 
     auto K1 = xt::view(K, 1, xt::all(), xt::all());
     xt::view(K1, xt::all(), 0) = 0;
@@ -198,8 +215,8 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
         = xt::view(moment_space.tabulate_x(0, _tpoint), 0, xt::all(), xt::all(),
                    xt::all());
 
-    xt::xtensor<double, 3> Ji(
-        {moment_space_pts.shape(0), _tpoint.shape(1), _tpoint.shape(1)});
+    // xt::xtensor<double, 3> Ji(
+    //     {moment_space_pts.shape(0), _tpoint.shape(1), _tpoint.shape(1)});
     xt::xtensor<double, 3> Ki(
         {moment_space_pts.shape(0), _tpoint.shape(1), _tpoint.shape(1)});
     for (std::size_t j = 0; j < moment_space_pts.shape(0); ++j)
@@ -208,14 +225,18 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
       {
         for (std::size_t l = 0; l < _tpoint.shape(1); ++l)
         {
-          Ji(j, k, l) = J(i, j, k * _tpoint.shape(1) + l);
+          // Ji(j, k, l) = J(i, j, k * _tpoint.shape(1) + l);
           Ki(j, k, l) = K(i, j, k * _tpoint.shape(1) + l);
         }
       }
     }
 
+    xt::xtensor<double, 3> tmp
+        = xt::view(Jnew, i, xt::newaxis(), xt::all(), xt::all());
+    auto _Ji = xt::tile(tmp, moment_space_pts.shape(0));
+
     xt::xtensor<double, 3> F
-        = moment_space.map_pull_back(moment_space_pts, Ji, _detJ, Ki);
+        = moment_space.map_pull_back(moment_space_pts, _Ji, _detJ, Ki);
 
     // Copy onto 2D array
     xt::xtensor<double, 2> _pulled({F.shape(0), F.shape(1) * F.shape(2)});

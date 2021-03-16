@@ -7,7 +7,6 @@
 #include "finite-element.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <Eigen/Core>
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xarray.hpp>
@@ -224,18 +223,15 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     xt::xtensor<double, 3> F = moment_space.map_pull_back(space, Ji, _detJ, Ki);
 
     // Copy onto 2D array
-    Eigen::ArrayXXd pulled(F.shape(0), F.shape(1) * F.shape(2));
+    xt::xtensor<double, 2> _pulled({F.shape(0), F.shape(1) * F.shape(2)});
     for (std::size_t p = 0; p < F.shape(0); ++p)
     {
-      for (std::size_t i = 0; i < F.shape(1); ++i)
-        for (std::size_t j = 0; j < F.shape(2); ++j)
-          pulled(p, j * F.shape(1) + i) = F(p, i, j);
+      {
+        for (std::size_t i = 0; i < F.shape(1); ++i)
+          for (std::size_t j = 0; j < F.shape(2); ++j)
+            _pulled(p, j * F.shape(1) + i) = F(p, i, j);
+      }
     }
-
-    std::array<std::size_t, 2> shape1
-        = {(std::size_t)pulled.rows(), (std::size_t)pulled.cols()};
-    auto _pulled = xt::adapt<xt::layout_type::column_major>(
-        pulled.data(), pulled.size(), xt::no_ownership(), shape1);
 
     xt::xtensor<double, 2> tmp0, tmp1;
     for (int v = 0; v < moment_space.value_size(); ++v)

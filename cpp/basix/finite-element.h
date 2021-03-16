@@ -247,6 +247,11 @@ public:
   xt::xtensor<double, 3> tabulate_new(int nd,
                                       const xt::xarray<double>& x) const;
 
+  /// TODO
+  /// @return Shape [derivative][point][basis fn][value index]
+  xt::xtensor<double, 4> tabulate_x(int nd,
+                                      const xt::xarray<double>& x) const;
+
   /// Direct to memory block tabulation
   /// @param nd Number of derivatives
   /// @param x Points

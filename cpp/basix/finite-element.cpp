@@ -304,6 +304,57 @@ FiniteElement::tabulate_new(int nd, const xt::xarray<double>& x) const
   return d;
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 4>
+FiniteElement::tabulate_x(int nd, const xt::xarray<double>& x) const
+{
+  const std::size_t tdim = cell::topological_dimension(_cell_type);
+  std::size_t ndsize = 1;
+  for (int i = 1; i <= nd; ++i)
+    ndsize *= (tdim + i);
+  for (int i = 1; i <= nd; ++i)
+    ndsize /= i;
+  const std::size_t vs = value_size();
+  const std::size_t ndofs = _coeffs.shape()[0];
+
+  xt::xarray<double> _x = x;
+  if (_x.dimension() == 1)
+    _x.reshape({_x.shape(0), 1});
+
+  // Tabulate
+  std::vector<double> basis_data(ndsize * x.shape()[0] * ndofs * vs);
+  tabulate(nd, _x, basis_data.data());
+
+  // Pack data in
+  xt::xtensor<double, 4> data({ndsize, _x.shape(0), ndofs, vs});
+
+  // Loop over derivatives
+  for (std::size_t d = 0; d < data.shape(0); ++d)
+  {
+    std::size_t offset_d = d * data.shape(1) * data.shape(2) * data.shape(3);
+
+    // Loop over points
+    for (std::size_t p = 0; p < data.shape(1); ++p)
+    {
+      std::size_t offset_p = offset_d + p * data.shape(2) * data.shape(3);
+
+      // Loop over basis functions
+      for (std::size_t r = 0; r < data.shape(2); ++r)
+      {
+        // Loop over values
+        for (std::size_t i = 0; i < data.shape(3); ++i)
+        {
+          std::size_t offset = offset_d + p + r * data.shape(1)
+                               + i * data.shape(1) * data.shape(2);
+          assert(offset < basis_data.size());
+          data(d, p, r, i) = basis_data[offset];
+        }
+      }
+    }
+  }
+
+  return data;
+}
+//-----------------------------------------------------------------------------
 void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
                              double* basis_data) const
 {

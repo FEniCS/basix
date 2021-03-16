@@ -48,148 +48,84 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
   // This function can be dramatically simplified and made
-  // understandable by using tensor to give more logic to the objects
+  // understandable by using tensors to give more logic to the objects
 
   cell::type celltype = moment_space.cell_type();
   if (celltype == cell::type::point)
     return {};
 
   xt::xarray<double> pts = moment_space.points();
-  if (pts.shape()[1] == 1)
-    pts.reshape({pts.shape()[0]});
+  if (pts.shape(1) == 1)
+    pts.reshape({pts.shape(0)});
 
-  const xt::xtensor<double, 2>& matrix = moment_space.interpolation_matrix();
+  const xt::xtensor<double, 2>& P = moment_space.interpolation_matrix();
   xt::xtensor<double, 3> tpts;
-  xt::xtensor<double, 3> J, Jnew;
-  xt::xtensor<double, 3> K;
-  xt::xtensor<double, 2> detJ;
+  xt::xtensor<double, 3> J, K;
   switch (celltype)
   {
   case cell::type::interval:
   {
-
     tpts = xt::atleast_3d(1.0 - pts);
-    J = xt::full_like(tpts, -1.0);
-    Jnew.resize({1, 1, 1});
-    Jnew(0, 0, 0) = -1.0;
-
-    K = xt::full_like(tpts, -1.0);
-    detJ = xt::atleast_2d(xt::ones_like(pts));
+    J = {{{-1.0}}};
+    K = {{{-1.0}}};
     break;
   }
   case cell::type::triangle:
   {
-    std::array<std::size_t, 3> shape = {2, pts.shape()[0], pts.shape()[1]};
-    std::array<std::size_t, 3> shape2 = {2, pts.shape()[0], 4};
+    std::array<std::size_t, 3> shape = {2, pts.shape(0), pts.shape(1)};
     tpts = xt::zeros<double>(shape);
-    J = xt::zeros<double>(shape2);
-    K = xt::zeros<double>(shape2);
-    detJ = xt::zeros<double>({(std::size_t)2, pts.shape()[0]});
 
-    Jnew.resize({2, 2, 2});
+    J.resize({2, 2, 2});
+    K.resize({2, 2, 2});
     xt::xtensor_fixed<double, xt::xshape<2, 2>> A;
 
-    // Case 0
-    xt::view(detJ, 0, xt::all()) = 1.0;
-    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
+    for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       tpts(0, i, 0) = pts(i, 1);
       tpts(0, i, 1) = 1 - pts(i, 0) - pts(i, 1);
-    }
-
-    auto J0 = xt::view(J, 0, xt::all(), xt::all());
-    xt::col(J0, 0) = 0;
-    xt::col(J0, 1) = 1;
-    xt::col(J0, 2) = -1;
-    xt::col(J0, 3) = -1;
-    A = {{0, 1}, {-1, -1}};
-    xt::view(Jnew, 0, xt::all(), xt::all()) = A;
-
-    auto K0 = xt::view(K, 0, xt::all(), xt::all());
-    xt::col(K0, 0) = -1;
-    xt::col(K0, 1) = -1;
-    xt::col(K0, 2) = 1;
-    xt::col(K0, 3) = 0;
-
-    // Case 1
-    xt::view(detJ, 1, xt::all()) = 1.0;
-    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
-    {
       tpts(1, i, 0) = pts(i, 1);
       tpts(1, i, 1) = pts(i, 0);
     }
 
-    auto J1 = xt::view(J, 1, xt::all(), xt::all());
-    xt::col(J1, 0) = 0;
-    xt::col(J1, 1) = 1;
-    xt::col(J1, 2) = 1;
-    xt::col(J1, 3) = 0;
-    A = {{0, 1}, {1, 0}};
-    xt::view(Jnew, 1, xt::all(), xt::all()) = A;
+    A = {{0, 1}, {-1, -1}};
+    xt::view(J, 0, xt::all(), xt::all()) = A;
+    A = {{-1, -1}, {1, 0}};
+    xt::view(K, 0, xt::all(), xt::all()) = A;
 
-    auto K1 = xt::view(K, 1, xt::all(), xt::all());
-    xt::col(K1, 0) = 0;
-    xt::col(K1, 1) = 1;
-    xt::col(K1, 2) = 1;
-    xt::col(K1, 3) = 0;
+    A = {{0, 1}, {1, 0}};
+    xt::view(J, 1, xt::all(), xt::all()) = A;
+    A = {{0, 1}, {1, 0}};
+    xt::view(K, 1, xt::all(), xt::all()) = A;
 
     break;
   }
   case cell::type::quadrilateral:
   {
-    std::array<std::size_t, 3> shape0 = {2, pts.shape()[0], pts.shape()[1]};
+    std::array<std::size_t, 3> shape0 = {2, pts.shape(0), pts.shape(1)};
     tpts = xt::zeros<double>(shape0);
-    std::array<std::size_t, 3> shape1 = {2, pts.shape()[0], 4};
-    J = xt::zeros<double>(shape1);
-    K = xt::zeros<double>(shape1);
-    detJ = xt::zeros<double>({(std::size_t)2, pts.shape()[0]});
+    std::array<std::size_t, 3> shape1 = {2, pts.shape(0), 4};
 
-    Jnew.resize({2, 2, 2});
+    J.resize({2, 2, 2});
+    K.resize({2, 2, 2});
     xt::xtensor_fixed<double, xt::xshape<2, 2>> A;
 
-    // Case 0
-    xt::view(detJ, 0, xt::all()) = 1.0;
-    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
+    for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       tpts(0, i, 0) = pts(i, 1);
       tpts(0, i, 1) = 1.0 - pts(i, 0);
-    }
-
-    auto J0 = xt::view(J, 0, xt::all(), xt::all());
-    xt::view(J0, xt::all(), 0) = 0;
-    xt::view(J0, xt::all(), 1) = 1;
-    xt::view(J0, xt::all(), 2) = -1;
-    xt::view(J0, xt::all(), 3) = 0;
-    A = {{0, 1}, {-1, 0}};
-    xt::view(Jnew, 0, xt::all(), xt::all()) = A;
-
-    auto K0 = xt::view(K, 0, xt::all(), xt::all());
-    xt::view(K0, xt::all(), 0) = 0;
-    xt::view(K0, xt::all(), 1) = -1;
-    xt::view(K0, xt::all(), 2) = 1;
-    xt::view(K0, xt::all(), 3) = 0;
-
-    // Case 1
-    xt::view(detJ, 1, xt::all()) = 1.0;
-    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
-    {
       tpts(1, i, 0) = pts(i, 1);
       tpts(1, i, 1) = pts(i, 0);
     }
 
-    auto J1 = xt::view(J, 1, xt::all(), xt::all());
-    xt::view(J1, xt::all(), 0) = 0;
-    xt::view(J1, xt::all(), 1) = 1;
-    xt::view(J1, xt::all(), 2) = 1;
-    xt::view(J1, xt::all(), 3) = 0;
-    A = {{0, 1}, {1, 0}};
-    xt::view(Jnew, 1, xt::all(), xt::all()) = A;
+    A = {{0, 1}, {-1, 0}};
+    xt::view(J, 0, xt::all(), xt::all()) = A;
+    A = {{0, -1}, {1, 0}};
+    xt::view(K, 0, xt::all(), xt::all()) = A;
 
-    auto K1 = xt::view(K, 1, xt::all(), xt::all());
-    xt::view(K1, xt::all(), 0) = 0;
-    xt::view(K1, xt::all(), 1) = 1;
-    xt::view(K1, xt::all(), 2) = 1;
-    xt::view(K1, xt::all(), 3) = 0;
+    A = {{0, 1}, {1, 0}};
+    xt::view(J, 1, xt::all(), xt::all()) = A;
+    A = {{0, 1}, {1, 0}};
+    xt::view(K, 1, xt::all(), xt::all()) = A;
 
     break;
   }
@@ -201,42 +137,32 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   }
 
   std::array<std::size_t, 3> shape
-      = {tpts.shape()[0], (std::size_t)moment_space.dim(),
+      = {tpts.shape(0), (std::size_t)moment_space.dim(),
          (std::size_t)moment_space.dim()};
   xt::xtensor<double, 3> out = xt::zeros<double>(shape);
-  for (std::size_t i = 0; i < tpts.shape()[0]; ++i)
+  for (std::size_t i = 0; i < tpts.shape(0); ++i)
   {
-    std::vector<double> _detJ(detJ.shape()[1]);
-    for (std::size_t j = 0; j < J.shape()[1]; ++j)
-      _detJ[j] = detJ(i, j);
-
     auto _tpoint = xt::view(tpts, i, xt::all(), xt::all());
     xt::xtensor<double, 3> moment_space_pts
         = xt::view(moment_space.tabulate_x(0, _tpoint), 0, xt::all(), xt::all(),
                    xt::all());
 
-    // xt::xtensor<double, 3> Ji(
-    //     {moment_space_pts.shape(0), _tpoint.shape(1), _tpoint.shape(1)});
-    xt::xtensor<double, 3> Ki(
-        {moment_space_pts.shape(0), _tpoint.shape(1), _tpoint.shape(1)});
-    for (std::size_t j = 0; j < moment_space_pts.shape(0); ++j)
-    {
-      for (std::size_t k = 0; k < _tpoint.shape(1); ++k)
-      {
-        for (std::size_t l = 0; l < _tpoint.shape(1); ++l)
-        {
-          // Ji(j, k, l) = J(i, j, k * _tpoint.shape(1) + l);
-          Ki(j, k, l) = K(i, j, k * _tpoint.shape(1) + l);
-        }
-      }
-    }
+    // Tile the J and J^-1 for passing into the mapping function. This
+    // could be avoided with some changes to calls to map functions
+    // taking just one J and J^1
+    xt::xtensor<double, 3> tmp0
+        = xt::view(J, i, xt::newaxis(), xt::all(), xt::all());
+    auto Ji = xt::tile(tmp0, moment_space_pts.shape(0));
+    xt::xtensor<double, 3> tmp1
+        = xt::view(K, i, xt::newaxis(), xt::all(), xt::all());
+    auto Ki = xt::tile(tmp1, moment_space_pts.shape(0));
 
-    xt::xtensor<double, 3> tmp
-        = xt::view(Jnew, i, xt::newaxis(), xt::all(), xt::all());
-    auto _Ji = xt::tile(tmp, moment_space_pts.shape(0));
+    std::vector<double> detJ(Ji.shape(0), 1.0);
 
+    // Pull back basis function values to the reference cell (applied
+    // map)
     xt::xtensor<double, 3> F
-        = moment_space.map_pull_back(moment_space_pts, _Ji, _detJ, Ki);
+        = moment_space.map_pull_back(moment_space_pts, Ji, detJ, Ki);
 
     // Copy onto 2D array
     xt::xtensor<double, 2> _pulled({F.shape(0), F.shape(1) * F.shape(2)});
@@ -249,16 +175,18 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
       }
     }
 
-    xt::xtensor<double, 2> tmp0, tmp1;
+    // Apply interpolation matrix to transformed basis function values
+    xt::xtensor<double, 2> Pview, phi_transformed;
     for (int v = 0; v < moment_space.value_size(); ++v)
     {
-      tmp0 = xt::view(
-          matrix, xt::range(0, matrix.shape()[0]),
+      Pview = xt::view(
+          P, xt::range(0, P.shape(0)),
           xt::range(v * _pulled.shape(0), (v + 1) * _pulled.shape(0)));
-      tmp1 = xt::view(
+      phi_transformed = xt::view(
           _pulled, xt::range(0, _pulled.shape(0)),
           xt::range(moment_space.dim() * v, moment_space.dim() * (v + 1)));
-      xt::view(out, i, xt::all(), xt::all()) += xt::linalg::dot(tmp0, tmp1);
+      xt::view(out, i, xt::all(), xt::all())
+          += xt::linalg::dot(Pview, phi_transformed);
     }
   }
 
@@ -291,7 +219,7 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
     throw std::runtime_error("Unexpected cell type");
   }
 
-  const std::size_t scalar_dofs = t.shape()[1];
+  const std::size_t scalar_dofs = t.shape(1);
   xt::xtensor<double, 3> M({2, 2 * scalar_dofs, 2 * scalar_dofs});
   for (std::size_t i = 0; i < scalar_dofs; ++i)
   {
@@ -358,17 +286,17 @@ moments::make_integral_moments(const FiniteElement& moment_space,
       = quadrature::make_quadrature("default", sub_celltype, q_deg);
   auto Qwts = xt::adapt(_Qwts);
   if (Qpts.dimension() == 1)
-    Qpts = Qpts.reshape({Qpts.shape()[0], 1});
+    Qpts = Qpts.reshape({Qpts.shape(0), 1});
 
   // Evaluate moment space at quadrature points
   xt::xtensor<double, 2> moment_space_at_Qpts
       = xt::view(moment_space.tabulate_new(0, Qpts), 0, xt::all(), xt::all());
 
-  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
+  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape(0), tdim});
   const std::array<std::size_t, 2> shape
-      = {moment_space_at_Qpts.shape()[1] * sub_entity_count
+      = {moment_space_at_Qpts.shape(1) * sub_entity_count
              * (value_size == 1 ? 1 : sub_entity_dim),
-         sub_entity_count * Qpts.shape()[0] * value_size};
+         sub_entity_count * Qpts.shape(0) * value_size};
   xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
 
   // Iterate over sub entities
@@ -391,9 +319,9 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     // https://github.com/xtensor-stack/xtensor/issues/1922#issuecomment-586317746
     // for why xt::newaxis() is required
     auto points_view = xt::view(
-        points, xt::range(i * Qpts.shape()[0], (i + 1) * Qpts.shape()[0]),
+        points, xt::range(i * Qpts.shape()[0], (i + 1) * Qpts.shape(0)),
         xt::range(0, tdim));
-    auto p = xt::tile(xt::view(entity, xt::newaxis(), 0), Qpts.shape()[0]);
+    auto p = xt::tile(xt::view(entity, xt::newaxis(), 0), Qpts.shape(0));
     points_view = p + xt::linalg::dot(Qpts, axes);
 
     // Compute entity integral moments
@@ -403,7 +331,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
       if (value_size == 1)
       {
         xt::view(matrix, c,
-                 xt::range(i * Qpts.shape()[0], (i + 1) * Qpts.shape()[0]))
+                 xt::range(i * Qpts.shape()[0], (i + 1) * Qpts.shape(0)))
             = phi * Qwts;
         ++c;
       }
@@ -416,8 +344,8 @@ moments::make_integral_moments(const FiniteElement& moment_space,
           auto axis = xt::row(axes, d);
           for (std::size_t k = 0; k < value_size; ++k)
           {
-            std::size_t offset = (k * sub_entity_count + i) * Qpts.shape()[0];
-            xt::view(matrix, c, xt::range(offset, offset + Qpts.shape()[0]))
+            std::size_t offset = (k * sub_entity_count + i) * Qpts.shape(0);
+            xt::view(matrix, c, xt::range(offset, offset + Qpts.shape(0)))
                 = phi * Qwts * axis[k];
           }
           ++c;

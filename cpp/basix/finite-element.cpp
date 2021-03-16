@@ -389,39 +389,9 @@ xt::xtensor<double, 3> FiniteElement::map_pull_back(
     const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
     const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
-  // std::cout << "Insdie pull back: \n" << u << std::endl;
-  // FIXME: Should u.shape(2) be replaced by the reference value size?
-  // Can it differ?
   const std::size_t reference_value_size = value_size();
-  // xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
-  // const std::size_t tdim  = cell::topological_dimension(_cell_type);
-  // const int physical_dim = J.cols() / reference_dim;
-  // const std::size_t gdim = J.shape(1);
-  // const std::size_t tdim = J.shape(2);
-
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
-
-  // Loop over each point
-  for (std::size_t p = 0; p < u.shape(0); ++p)
-  {
-    auto u_b = xt::view(u, p, xt::all(), xt::all());
-    auto J_p = xt::view(J, p, xt::all(), xt::all());
-    auto K_p = xt::view(K, p, xt::all(), xt::all());
-    auto U_b = xt::view(U, p, xt::all(), xt::all());
-
-    for (std::size_t i = 0; i < u_b.shape(0); ++i)
-    {
-      // Note: we assign here to a xt::xtensor<double, 1> until the
-      // maps are updated to accept xtensor objects rather than spans
-      // auto U_data = xt::row(U_b, i);
-      xt::xtensor<double, 1> u_data = xt::row(u_b, i);
-      std::vector<double> f
-          = _map_push_forward(u_data, K_p, 1.0 / detJ[p], J_p);
-      for (std::size_t j = 0; j < f.size(); ++j)
-        U_b(i, j) = f[j];
-    }
-  }
-
+  map_pull_back_m(u, J, detJ, K, U);
   return U;
 }
 //-----------------------------------------------------------------------------

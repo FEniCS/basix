@@ -571,8 +571,7 @@ void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
       {
         // Note: we assign here to a xt::xtensor<double, 1> until the
         // maps are updated to accept xtensor objects rather than spans
-        // auto U_data = xt::row(U_b, i);
-        // xt::xtensor<double, 1> u_data = xt::row(u_b, i);
+        // auto u_data = xxt::view(u, p, i, xt::all());
 
         // Map data
         xt::xtensor<double, 1> u_data = xt::view(u, p, i, xt::all());

@@ -354,7 +354,7 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
     const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
   const std::size_t physical_value_size
-      = compute_value_size(_map_type, U.shape(2));
+      = compute_value_size(_map_type, J.shape(1));
   xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
   map_push_forward_m(U, J, detJ, K, u);
 

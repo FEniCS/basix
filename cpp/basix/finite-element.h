@@ -285,7 +285,7 @@ public:
 
   // @todo Need fixing
   // Map function values from the reference to a physical cell
-  // @param reference_data The function values on the reference
+  // @param U The function values on the reference
   // @param J The Jacobian of the mapping
   // @param detJ The determinant of the Jacobian of the mapping
   // @param K The inverse of the Jacobian of the mapping

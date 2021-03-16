@@ -349,41 +349,17 @@ int FiniteElement::num_points() const { return _points.shape()[0]; }
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-// xt::xtensor<double, 2> FiniteElement::map_push_forward(
-//     const xt::xtensor<double, 2>& U, const xt::xtensor<double, 3>& J,
-//     const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K)
-//     const
-// {
-//   const std::size_t tdim = cell::topological_dimension(_cell_type);
-//   const std::size_t gdim = J.shape()[1] / tdim;
-//   const std::size_t num_points = U.shape()[0];
+xt::xtensor<double, 3> FiniteElement::map_push_forward(
+    const xt::xtensor<double, 3>& U, const xt::xtensor<double, 3>& J,
+    const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
+{
+  const std::size_t physical_value_size
+      = compute_value_size(_map_type, U.shape(2));
+  xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
+  map_push_forward_m(U, J, detJ, K, u);
 
-//   const std::size_t value_size = compute_value_size(_map_type, gdim);
-//   const std::size_t value_size_ref = this->value_size();
-
-//   const std::size_t nresults = U.shape()[1] / value_size_ref;
-
-//   // Loop over points
-//   xt::xtensor<double, 2> u({num_points, value_size * nresults});
-//   for (std::size_t pt = 0; pt < num_points; ++pt)
-//   {
-//     auto u_b = xt::view(u, pt, xt::all());
-//     auto U_b = xt::view(U, pt, xt::all());
-//     auto J_s = xt::view(J, pt, xt::all(), xt::all());
-//     auto K_s = xt::view(K, pt, xt::all(), xt::all());
-//     for (std::size_t i = 0; i < U_b.shape()[1]; ++i)
-//     {
-//       auto col = xt::col(U_b, i);
-//       std::vector<double> u = _map_push_forward(col, J_s, detJ[pt], K_s);
-
-//       // u_b = xt::adapt(u);  // There is a weird transpose below
-//       for (std::size_t j = 0; j < u.size(); ++j)
-//         u_b(j, i) = u[j];
-//     }
-//   }
-
-//   return u;
-// }
+  return u;
+}
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::map_pull_back(
     const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,

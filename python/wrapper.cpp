@@ -252,20 +252,19 @@ Each element has a `tabulate` function which returns the basis functions and a n
             return py::array_t<double>(t.shape(), t.data());
           },
           tabdoc.c_str())
-      // .def(
-      //     "map_push_forward",
-      //     [](const FiniteElement& self,
-      //        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-      //                           Eigen::RowMajor>& reference_data,
-      //        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-      //                           Eigen::RowMajor>& J,
-      //        const py::array_t<double, py::array::c_style>& detJ,
-      //        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-      //                           Eigen::RowMajor>& K) {
-      //       return self.map_push_forward(
-      //           reference_data, J, tcb::span(detJ.data(), detJ.size()), K);
-      //     },
-      //     mapdoc.c_str())
+      .def(
+          "map_push_forward",
+          [](const FiniteElement& self,
+             const py::array_t<double, py::array::c_style>& reference_data,
+             const py::array_t<double, py::array::c_style>& J,
+             const py::array_t<double, py::array::c_style>& detJ,
+             const py::array_t<double, py::array::c_style>& K) {
+            auto r = self.map_push_forward(adapt_x(reference_data), adapt_x(J),
+                                           tcb::span(detJ.data(), detJ.size()),
+                                           adapt_x(K));
+            return py::array_t<double>(r.shape(), r.data());
+          },
+          mapdoc.c_str())
       // .def(
       //     "map_pull_back",
       //     [](const FiniteElement& self,

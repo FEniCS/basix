@@ -84,6 +84,10 @@ def test_transformation_of_tabulated_data_triangle(element_name, order):
     points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1 - i)])
     values = e.tabulate(0, points)[0]
 
+    # TODO: remove these two lines once tabulate has been updated
+    shape = (values.shape[0], e.value_size, e.dim)
+    values = values.reshape(shape).transpose(0, 2, 1)
+
     start = sum(e.entity_dofs[0])
     ndofs = e.entity_dofs[1][0]
     if ndofs != 0:
@@ -91,17 +95,22 @@ def test_transformation_of_tabulated_data_triangle(element_name, order):
         reflected_points = np.array([[p[1], p[0]] for p in points])
         reflected_values = e.tabulate(0, reflected_points)[0]
 
+        # TODO: remove these two lines once tabulate has been updated
+        shape = (reflected_values.shape[0], e.value_size, e.dim)
+        reflected_values = reflected_values.reshape(shape).transpose(0, 2, 1)
+
         _J = np.array([[0, 1], [1, 0]])
-        J = np.array([_J.reshape(4) for p in points])
+        J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
-        K = np.array([np.linalg.inv(_J).reshape(4) for p in points])
-        # mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
-        # for i, j in zip(values, mapped_values):
-        #     for d in range(e.value_size):
-        #         i_slice = i[d * e.dim:(d + 1) * e.dim]
-        #         j_slice = j[d * e.dim:(d + 1) * e.dim]
-        #         assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
-        #                            j_slice[start: start + ndofs])
+        K = np.array([np.linalg.inv(_J) for p in points])
+        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+
+        for i, j in zip(values, mapped_values):
+            for d in range(e.value_size):
+                i_slice = i[:, d]
+                j_slice = j[:, d]
+                assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
+                                   j_slice[start: start + ndofs])
 
 
 @parametrize_over_elements(5, "quadrilateral")

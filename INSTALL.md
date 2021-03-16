@@ -7,7 +7,7 @@ running `apt install libeigen3-dev ninja-build`; on macOS, you can use `brew ins
 To install Basix, you must first install the C++ library. You can do by running:
 
 ```bash
-cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -O3 -B build-dir -S .
+cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
 cmake --build build-dir
 cmake --install build-dir
 ```

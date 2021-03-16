@@ -2,7 +2,6 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include <pybind11/eigen.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -236,17 +235,10 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
-      // .def("tabulate",
-      //      py::overload_cast<int, const Eigen::ArrayXXd&>(
-      //          &FiniteElement::tabulate, py::const_),
-      //      tabdoc.c_str())
       .def(
           "tabulate",
           [](const FiniteElement& self, int n,
              const py::array_t<double, py::array::c_style>& x) {
-            // auto _x = adapt_x(x);
-            // std::vector<Eigen::ArrayXXd> t = self.tabulate(n, _x);
-            // return t;
             auto _x = adapt_x(x);
             auto t = self.tabulate_new(n, _x);
             return py::array_t<double>(t.shape(), t.data());

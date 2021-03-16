@@ -420,7 +420,10 @@ public:
   /// ~~~~~~~~~~~~~~~~
   const xt::xtensor<double, 3>& base_transformations() const;
 
-  /// Return a set of interpolation points
+  /// Return the interpolation points, i.e. the coordinates on the
+  /// reference element where a function need to be evaluated in order
+  /// to interpolate it in the finite element space.
+  /// @return Arary of coordinate with shape `(num_points, tdim)`
   const xt::xtensor<double, 2>& points() const;
 
   /// Return the number of interpolation points

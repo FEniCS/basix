@@ -252,35 +252,32 @@ Each element has a `tabulate` function which returns the basis functions and a n
             return py::array_t<double>(t.shape(), t.data());
           },
           tabdoc.c_str())
-      // .def(
-      //     "map_push_forward",
-      //     [](const FiniteElement& self,
-      //        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-      //                           Eigen::RowMajor>& reference_data,
-      //        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-      //                           Eigen::RowMajor>& J,
-      //        const py::array_t<double, py::array::c_style>& detJ,
-      //        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-      //                           Eigen::RowMajor>& K) {
-      //       return self.map_push_forward(
-      //           reference_data, J, tcb::span(detJ.data(), detJ.size()), K);
-      //     },
-      //     mapdoc.c_str())
-      // .def(
-      //     "map_pull_back",
-      //     [](const FiniteElement& self,
-      //        const py::array_t<double, py::array::c_style>& u,
-      //        const py::array_t<double, py::array::c_style>& J,
-      //        const py::array_t<double, py::array::c_style>& detJ,
-      //        const py::array_t<double, py::array::c_style>& K) {
-      //       return self.map_pull_back(adapt_x(u), adapt_x(J),
-      //                                 tcb::span(detJ.data(), detJ.size()),
-      //                                 adapt_x(K));
-      //       // return self.map_pull_back(physical_data, J,
-      //       //                           tcb::span(detJ.data(), detJ.size()),
-      //       //                           K);
-      //     },
-      //     invmapdoc.c_str())
+      .def(
+          "map_push_forward",
+          [](const FiniteElement& self,
+             const py::array_t<double, py::array::c_style>& U,
+             const py::array_t<double, py::array::c_style>& J,
+             const py::array_t<double, py::array::c_style>& detJ,
+             const py::array_t<double, py::array::c_style>& K) {
+            auto u = self.map_push_forward(adapt_x(U), adapt_x(J),
+                                           tcb::span(detJ.data(), detJ.size()),
+                                           adapt_x(K));
+            return py::array_t<double>(u.shape(), u.data());
+          },
+          mapdoc.c_str())
+      .def(
+          "map_pull_back",
+          [](const FiniteElement& self,
+             const py::array_t<double, py::array::c_style>& u,
+             const py::array_t<double, py::array::c_style>& J,
+             const py::array_t<double, py::array::c_style>& detJ,
+             const py::array_t<double, py::array::c_style>& K) {
+            auto U = self.map_pull_back(adapt_x(u), adapt_x(J),
+                                        tcb::span(detJ.data(), detJ.size()),
+                                        adapt_x(K));
+            return py::array_t<double>(U.shape(), U.data());
+          },
+          invmapdoc.c_str())
       .def_property_readonly(
           "base_transformations",
           [](const FiniteElement& self) {

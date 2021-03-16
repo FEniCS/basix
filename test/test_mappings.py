@@ -27,20 +27,28 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
                            for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1 - i - j)])
     values = e.tabulate(0, points)[0]
 
-    _J = np.array([J.reshape(J.shape[0] * J.shape[1]) for p in points])
-    _detJ = np.array([detJ for p in points])
-    _K = np.array([K.reshape(K.shape[0] * K.shape[1]) for p in points])
+    # TODO: remove these two lines once tabulate has been updated
+    shape = (values.shape[0], e.value_size, e.dim)
+    values = values.reshape(shape).transpose(0, 2, 1)
 
-    # assert values.shape[1] == reference_value_size * e.dim
-    # mapped = e.map_push_forward(values, _J, _detJ, _K)
-    # assert mapped.shape[0] == values.shape[0]
-    # assert mapped.shape[1] == physical_value_size * e.dim
-    # unmapped = e.map_pull_back(mapped, _J, _detJ, _K)
-    # assert np.allclose(values, unmapped)
+    _J = np.array([J for p in points])
+    _detJ = np.array([detJ for p in points])
+    _K = np.array([K for p in points])
+
+    assert values.shape[1] == e.dim
+    assert values.shape[2] == reference_value_size
+
+    mapped = e.map_push_forward(values, _J, _detJ, _K)
+    assert mapped.shape[0] == values.shape[0]
+    assert mapped.shape[1] == e.dim
+    assert mapped.shape[2] == physical_value_size
+
+    unmapped = e.map_pull_back(mapped, _J, _detJ, _K)
+    assert np.allclose(values, unmapped)
 
 
 @pytest.mark.parametrize("element_name", elements)
-def xtest_mappings_2d_to_2d(element_name):
+def test_mappings_2d_to_2d(element_name):
     e = basix.create_element(element_name, "triangle", 1)
     J = np.array([[random.random() + 1, random.random()],
                   [random.random(), random.random()]])
@@ -50,7 +58,7 @@ def xtest_mappings_2d_to_2d(element_name):
 
 
 @pytest.mark.parametrize("element_name", elements)
-def xtest_mappings_2d_to_3d(element_name):
+def test_mappings_2d_to_3d(element_name):
     e = basix.create_element(element_name, "triangle", 1)
 
     # Map from (0,0)--(1,0)--(0,1) to (1,0,1)--(2,1,0)--(0,1,1)
@@ -68,7 +76,7 @@ def xtest_mappings_2d_to_3d(element_name):
 
 
 @pytest.mark.parametrize("element_name", elements)
-def xtest_mappings_3d_to_3d(element_name):
+def test_mappings_3d_to_3d(element_name):
     e = basix.create_element(element_name, "tetrahedron", 1)
 
     J = np.array([[random.random() + 2, random.random(), random.random()],

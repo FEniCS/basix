@@ -288,18 +288,17 @@ public:
   /// @return The mapping
   mapping::type mapping_type() const;
 
-  // @todo Need fixing
-  // Map function values from the reference to a physical cell
-  // @param reference_data The function values on the reference
-  // @param J The Jacobian of the mapping
-  // @param detJ The determinant of the Jacobian of the mapping
-  // @param K The inverse of the Jacobian of the mapping
-  // @return The function values on the cell
-  // xt::xtensor<double, 2>
-  // map_push_forward(const xt::xtensor<double, 2>& U,
-  //                  const xt::xtensor<double, 3>& J,
-  //                  const tcb::span<const double>& detJ,
-  //                  const xt::xtensor<double, 3>& K) const;
+  /// Map function values from the reference to a physical cell
+  /// @param U The function values on the reference
+  /// @param J The Jacobian of the mapping
+  /// @param detJ The determinant of the Jacobian of the mapping
+  /// @param K The inverse of the Jacobian of the mapping
+  /// @return The function values on the cell
+  xt::xtensor<double, 3>
+  map_push_forward(const xt::xtensor<double, 3>& U,
+                   const xt::xtensor<double, 3>& J,
+                   const tcb::span<const double>& detJ,
+                   const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
   /// @param U The function values on the reference

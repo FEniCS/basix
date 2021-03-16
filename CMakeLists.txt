@@ -10,7 +10,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
-list(APPEND BASIX_RELEASE_FLAGS -O2;-g;-pipe)
 
 # Options
 include(FeatureSummary)
@@ -129,7 +128,6 @@ list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
 target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
-target_compile_options(basix PRIVATE $<$<CONFIG:Release>:${BASIX_RELEASE_FLAGS}>)
 
 # Install the Basix library
 install(TARGETS basix

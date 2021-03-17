@@ -214,6 +214,8 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
     for (std::size_t i = 0; i < face_ref_perm.size(); ++i)
     {
+      std::cout << i << " " << face_ref_perm.size() << " " << face_rot_perm[i] << " "
+                << face_rot.shape(0) << " " << face_rot.shape(1) << "\n";
       xt::view(face_rot, xt::range(3 * i, 3 * i + 3),
                xt::range(3 * face_rot_perm[i], 3 * face_rot_perm[i] + 3))
           = sub_rot;

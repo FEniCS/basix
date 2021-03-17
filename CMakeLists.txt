@@ -18,9 +18,6 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 
 # Find dependecies
 
-find_package(Eigen3 REQUIRED)
-message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
-
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
   find_package(xtl 0.7...<0.8 QUIET)
   find_package(xtensor 0.23...<0.24 QUIET)

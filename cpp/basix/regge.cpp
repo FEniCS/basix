@@ -205,7 +205,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
     std::cout << "C\n";
 
-    std::array<std::size_t, 3> shape
+    std::array<std::size_t, 2> shape
         = {face_ref_perm.size() * 3, face_ref_perm.size() * 3};
     xt::xtensor<double, 2> face_ref = xt::zeros<double>(shape);
     xt::xtensor<double, 2> face_rot = xt::zeros<double>(shape);

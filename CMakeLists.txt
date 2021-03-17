@@ -9,8 +9,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
-
 # Options
 include(FeatureSummary)
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
@@ -143,11 +141,14 @@ target_include_directories(basix SYSTEM PRIVATE ${_xtensor_blas_include_dirs})
 get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtensor_include_dirs})
 
-# Set debug definitions (private)
+# Set compiler flags
+list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
 list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
-target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
+
+# Set debug definitions (private)
+target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 
 # Install the Basix library
 install(TARGETS basix

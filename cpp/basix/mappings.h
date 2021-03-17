@@ -27,10 +27,10 @@ enum class type
   doubleContravariantPiola,
 };
 
-/// Get the function that maps data from the reference to the physical
-/// cell
-/// @param mapping_type Mapping type
-/// @return The mapping function
+// Get the function that maps data from the reference to the physical
+// cell
+// @param mapping_type Mapping type
+// @return The mapping function
 // std::function<std::vector<double>(const tcb::span<const double>&,
 //                                   const xt::xtensor<double, 2>&, double,
 //                                   const xt::xtensor<double, 2>&)>

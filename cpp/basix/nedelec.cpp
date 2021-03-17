@@ -94,9 +94,8 @@ create_nedelec_2d_interpolation(int degree)
 xt::xtensor<double, 3> create_nedelec_2d_base_transforms(int degree)
 {
   const std::size_t ndofs = degree * (degree + 2);
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, 3);
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), 3);
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
@@ -237,9 +236,8 @@ xt::xtensor<double, 3> create_nedelec_3d_base_transforms(int degree)
 {
   const std::size_t ndofs = 6 * degree + 4 * degree * (degree - 1)
                             + (degree - 2) * (degree - 1) * degree / 2;
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, 14);
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), 14);
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(

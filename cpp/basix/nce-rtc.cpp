@@ -145,10 +145,8 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, transform_count);
-
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   if (tdim == 2)
   {
     for (int edge = 0; edge < facet_count; ++edge)
@@ -355,10 +353,8 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, transform_count);
-
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   for (int edge = 0; edge < edge_count; ++edge)
   {
     const std::size_t start = edge_dofs * edge;

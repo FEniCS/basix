@@ -149,12 +149,10 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     // Tile the J and J^-1 for passing into the mapping function. This
     // could be avoided with some changes to calls to map functions
     // taking just one J and J^1
-    xt::xtensor<double, 3> tmp0
-        = xt::view(J, i, xt::newaxis(), xt::all(), xt::all());
-    auto Ji = xt::tile(tmp0, moment_space_pts.shape(0));
-    xt::xtensor<double, 3> tmp1
-        = xt::view(K, i, xt::newaxis(), xt::all(), xt::all());
-    auto Ki = xt::tile(tmp1, moment_space_pts.shape(0));
+    auto Ji = xt::tile(xt::view(J, i, xt::newaxis(), xt::all(), xt::all()),
+                       moment_space_pts.shape(0));
+    auto Ki = xt::tile(xt::view(K, i, xt::newaxis(), xt::all(), xt::all()),
+                       moment_space_pts.shape(0));
 
     std::vector<double> detJ(Ji.shape(0), 1.0);
 

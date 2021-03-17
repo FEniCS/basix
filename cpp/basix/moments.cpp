@@ -256,14 +256,12 @@ xt::xtensor<double, 3> moments::create_tangent_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
   const int tdim = cell::topological_dimension(moment_space.cell_type());
-  // FIXME: Should this check by tdim != 1?
-  if (tdim == 2)
+  if (tdim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
   xt::xtensor<double, 3> t
       = create_dot_moment_dof_transformations(moment_space);
-  if (tdim == 1)
-    xt::view(t, 0, xt::all(), xt::all()) *= -1.0;
+  xt::view(t, 0, xt::all(), xt::all()) *= -1.0;
 
   return t;
 }

@@ -17,25 +17,17 @@ class FiniteElement;
 /// against spaces on a subentity of the cell
 namespace moments
 {
-/// Create the dof transformations for an integral moment.
-///
-/// If the moment space is an interval, this returns one matrix
-/// representing the reversal of the interval. If the moment space is a
-/// face, this returns two matrices: one representing a rotation, the
-/// other a reflection
-///
-/// @param[in] moment_space The finite element space that the integral
-/// moment is taken against
-/// @return A list of dof transformations
-xt::xtensor<double, 3>
-create_moment_dof_transformations(const FiniteElement& moment_space);
 
-/// Create the dof transformations for an integral moment.
+/// Create the dof transformations for the DOFs defined using a dot integral
+/// moment.
 ///
 /// If the moment space is an interval, this returns one matrix
 /// representing the reversal of the interval. If the moment space is a
 /// face, this returns two matrices: one representing a rotation, the
-/// other a reflection
+/// other a reflection.
+///
+/// These matrices are computed by calculation the interpolation coefficients
+/// of a rotated/reflected basis into the original basis.
 ///
 /// @param[in] moment_space The finite element space that the integral
 /// moment is taken against
@@ -43,7 +35,25 @@ create_moment_dof_transformations(const FiniteElement& moment_space);
 xt::xtensor<double, 3>
 create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 
-/// Create the dof transformations for a normal integral moment.
+/// Create the DOF transformations for the DOFs defined using an integral
+/// moment.
+///
+/// This will combine multiple copies of the result of
+/// `create_dot_moment_dof_transformations` to give the transformations for
+/// integral moments of each vector component against the moment space.
+///
+/// @param[in] moment_space The finite element space that the integral
+/// moment is taken against
+/// @return A list of dof transformations
+xt::xtensor<double, 3>
+create_moment_dof_transformations(const FiniteElement& moment_space);
+
+/// Create the dof transformations for the DOFs defined using a normal integral
+/// moment.
+///
+/// This does the same as `create_dot_moment_dof_transformations` with some
+/// additional factors of -1 to account for the changing of the normal direction
+/// when the entity is reflected.
 ///
 /// @param[in] moment_space The finite element space that the integral
 /// moment is taken against
@@ -51,7 +61,12 @@ create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 xt::xtensor<double, 3>
 create_normal_moment_dof_transformations(const FiniteElement& moment_space);
 
-/// Create the dof transformations for a tangential integral moment.
+/// Create the dof transformations for the DOFs defined using a tangential
+/// integral moment.
+///
+/// This does the same as `create_dot_moment_dof_transformations` with some
+/// additional factors of -1 to account for the changing of the tangent
+/// direction when the edge is reflected.
 ///
 /// @param[in] moment_space The finite element space that the integral
 /// moment is taken against

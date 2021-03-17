@@ -6,7 +6,6 @@
 #include "cell.h"
 #include "lagrange.h"
 #include "quadrature.h"
-#include <Eigen/Dense>
 
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
@@ -30,13 +29,9 @@ xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
       = xt::adapt(_pts.data(), _pts.size(), xt::no_ownership(), shape0);
 
   FiniteElement L = create_dlagrange(cell::type::interval, n);
-  Eigen::ArrayXd _x = Eigen::Map<const Eigen::ArrayXd>(x.data(), x.size());
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> _v
-      = L.tabulate(0, _x)[0];
+  xt::xtensor<double, 2> v
+      = xt::view(L.tabulate_new(0, x), 0, xt::all(), xt::all());
 
-  std::array<std::size_t, 2> shape
-      = {(std::size_t)_v.rows(), (std::size_t)_v.cols()};
-  auto v = xt::adapt(_v.data(), _v.size(), xt::no_ownership(), shape);
   return xt::linalg::dot(v, pts);
 }
 //-----------------------------------------------------------------------------
@@ -268,8 +263,8 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
   // Get interpolated value at r in range [-1, 1]
   FiniteElement L = create_dlagrange(cell::type::interval, n);
   auto w = [&](double r) -> double {
-    Eigen::ArrayXd rr = Eigen::ArrayXd::Constant(1, 0.5 * (r + 1.0));
-    Eigen::VectorXd v = L.tabulate(0, rr)[0].row(0);
+    xt::xtensor<double, 1> rr = {0.5 * (r + 1.0)};
+    xt::xtensor<double, 1> v = xt::view(L.tabulate_new(0, rr), 0, 0, xt::all());
     double d = 0.0;
     for (std::size_t i = 0; i < pts.shape()[0]; ++i)
       d += v[i] * pts[i];

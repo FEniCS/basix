@@ -8,6 +8,8 @@
 #include "lattice.h"
 #include "mappings.h"
 #include "polyset.h"
+#include <xtensor-blas/xlinalg.hpp>
+#include <xtensor/xbuilder.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
@@ -15,7 +17,7 @@ using namespace basix;
 namespace
 {
 //-----------------------------------------------------------------------------
-Eigen::MatrixXd create_regge_space(cell::type celltype, int degree)
+xt::xtensor<double, 2> create_regge_space(cell::type celltype, int degree)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported celltype");
@@ -23,10 +25,10 @@ Eigen::MatrixXd create_regge_space(cell::type celltype, int degree)
   const int tdim = cell::topological_dimension(celltype);
   const int nc = tdim * (tdim + 1) / 2;
   const int basis_size = polyset::dim(celltype, degree);
-  const int ndofs = basis_size * nc;
-  const int psize = basis_size * tdim * tdim;
+  const std::size_t ndofs = basis_size * nc;
+  const std::size_t psize = basis_size * tdim * tdim;
 
-  Eigen::ArrayXXd wcoeffs = Eigen::ArrayXXd::Zero(ndofs, psize);
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   int s = basis_size;
   for (int i = 0; i < tdim; ++i)
   {
@@ -37,22 +39,24 @@ Eigen::MatrixXd create_regge_space(cell::type celltype, int degree)
       if (tdim == 3 and i > 0 and j > 0)
         ++yoff;
 
-      wcoeffs.block(yoff * s, xoff * s, s, s) = Eigen::MatrixXd::Identity(s, s);
+      xt::view(wcoeffs, xt::range(yoff * s, yoff * s + s),
+               xt::range(xoff * s, xoff * s + s))
+          = xt::eye<double>(s);
     }
   }
 
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd>
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
 create_regge_interpolation(cell::type celltype, int degree)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   const int basis_size = polyset::dim(celltype, degree);
 
-  const int ndofs = basis_size * (tdim + 1) * tdim / 2;
-  const int space_size = basis_size * tdim * tdim;
+  const std::size_t ndofs = basis_size * (tdim + 1) * tdim / 2;
+  const std::size_t space_size = basis_size * tdim * tdim;
 
   const std::size_t npoints
       = tdim == 2 ? 3 * (degree + 1) + degree * (degree + 1) / 2
@@ -60,10 +64,10 @@ create_regge_interpolation(cell::type celltype, int degree)
                         + degree * (degree + 1) * (degree - 1) / 6;
 
   xt::xtensor<double, 2> points({npoints, tdim});
-  Eigen::ArrayXXd matrix(ndofs, npoints * tdim * tdim);
-  matrix.setZero();
+  xt::xtensor<double, 2> matrix
+      = xt::zeros<double>({ndofs, npoints * tdim * tdim});
 
-  Eigen::ArrayXXd dualmat(ndofs, space_size);
+  xt::xtensor<double, 2> dualmat({ndofs, space_size});
   std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
@@ -78,7 +82,6 @@ create_regge_interpolation(cell::type celltype, int degree)
       const xt::xtensor<double, 2> entity_geom
           = cell::sub_entity_geometry(celltype, dim, i);
 
-      // Eigen::ArrayXd point = entity_geom.row(0);
       cell::type ct = cell::sub_entity_type(celltype, dim, i);
       auto lattice
           = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
@@ -93,40 +96,40 @@ create_regge_interpolation(cell::type celltype, int degree)
         }
       }
 
-      Eigen::Map<
-          Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-          _pt(points.data(), points.shape()[0], points.shape()[1]);
+      auto pt_view = xt::view(
+          points, xt::range(point_n, point_n + lattice.shape()[0]), xt::all());
+      xt::xtensor<double, 2> basis
+          = xt::view(polyset::tabulate(celltype, degree, 0, pt_view), 0,
+                     xt::all(), xt::all());
 
       // Store up outer(t, t) for all tangents
       std::vector<int>& vert_ids = topology[dim][i];
-      int ntangents = dim * (dim + 1) / 2;
-      std::vector<Eigen::MatrixXd> vvt(ntangents);
+      std::size_t ntangents = dim * (dim + 1) / 2;
+      xt::xtensor<double, 3> vvt(
+          {ntangents, geometry.shape()[1], geometry.shape()[1]});
+      std::vector<double> _edge(geometry.shape()[1]);
+      auto edge_t = xt::adapt(_edge);
       int c = 0;
       for (std::size_t s = 0; s < dim; ++s)
       {
         for (std::size_t d = s + 1; d < dim + 1; ++d)
         {
-          Eigen::VectorXd edge_t(geometry.shape()[1]);
           for (std::size_t p = 0; p < geometry.shape()[1]; ++p)
             edge_t[p] = geometry(vert_ids[d], p) - geometry(vert_ids[s], p);
-          // const Eigen::VectorXd edge_t
-          //     = geometry.row(vert_ids[d]) - geometry.row(vert_ids[s]);
-
           // outer product v.v^T
-          vvt[c++] = edge_t * edge_t.transpose();
+          xt::view(vvt, c, xt::all(), xt::all())
+              = xt::linalg::outer(edge_t, edge_t);
+          ++c;
         }
       }
 
       for (std::size_t k = 0; k < lattice.shape()[0]; ++k)
       {
-        for (int j = 0; j < ntangents; ++j)
+        for (std::size_t j = 0; j < ntangents; ++j)
         {
-          Eigen::Map<Eigen::VectorXd> vvt_flat(vvt[j].data(),
-                                               vvt[j].rows() * vvt[j].cols());
+          auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
           for (std::size_t i = 0; i < tdim * tdim; ++i)
             matrix(dof, point_n + i * npoints) = vvt_flat(i);
-          Eigen::Map<Eigen::RowVectorXd>(vvt[j].data(),
-                                         vvt[j].rows() * vvt[j].cols());
           ++dof;
         }
         ++point_n;
@@ -134,28 +137,22 @@ create_regge_interpolation(cell::type celltype, int degree)
     }
   }
 
-  Eigen::Map<
-      Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      _pt(points.data(), points.shape()[0], points.shape()[1]);
-  return std::make_pair(_pt, matrix);
+  return std::make_pair(points, matrix);
 }
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_regge(cell::type celltype, int degree)
 {
-  const int tdim = cell::topological_dimension(celltype);
+  const std::size_t tdim = cell::topological_dimension(celltype);
   const int basis_size = polyset::dim(celltype, degree);
-  const int ndofs = basis_size * (tdim + 1) * tdim / 2;
+  const std::size_t ndofs = basis_size * (tdim + 1) * tdim / 2;
 
-  Eigen::MatrixXd wcoeffs = create_regge_space(celltype, degree);
-
-  Eigen::ArrayXXd points;
-  Eigen::MatrixXd matrix;
-
+  xt::xtensor<double, 2> wcoeffs = create_regge_space(celltype, degree);
+  xt::xtensor<double, 2> points, matrix;
   std::tie(points, matrix) = create_regge_interpolation(celltype, degree);
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
@@ -170,9 +167,14 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   const int num_edges = topology[1].size();
   const int num_faces = topology[2].size();
 
-  int transform_count = tdim == 2 ? 3 : 14;
-  std::vector<Eigen::MatrixXd> base_transformations(
-      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::size_t transform_count = tdim == 2 ? 3 : 14;
+  xt::xtensor<double, 3> base_transformations
+      = xt::zeros<double>({transform_count, ndofs, ndofs});
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
   const std::vector<int> edge_ref
       = doftransforms::interval_reflection(degree + 1);
@@ -181,8 +183,8 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
     const int start = edge_ref.size() * edge;
     for (std::size_t i = 0; i < edge_ref.size(); ++i)
     {
-      base_transformations[edge](start + i, start + i) = 0;
-      base_transformations[edge](start + i, start + edge_ref[i]) = 1;
+      base_transformations(edge, start + i, start + i) = 0;
+      base_transformations(edge, start + i, start + edge_ref[i]) = 1;
     }
   }
   if (tdim > 2)
@@ -191,28 +193,33 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
         = doftransforms::triangle_reflection(degree);
     const std::vector<int> face_rot_perm
         = doftransforms::triangle_rotation(degree);
-    Eigen::Matrix3d sub_ref;
-    sub_ref << 0, 1, 0, 1, 0, 0, 0, 0, 1;
-    Eigen::Matrix3d sub_rot;
-    sub_rot << 0, 1, 0, 0, 0, 1, 1, 0, 0;
-    Eigen::MatrixXd face_ref = Eigen::MatrixXd::Zero(face_ref_perm.size() * 3,
-                                                     face_ref_perm.size() * 3);
-    Eigen::MatrixXd face_rot = Eigen::MatrixXd::Zero(face_ref_perm.size() * 3,
-                                                     face_ref_perm.size() * 3);
+    xt::xtensor<double, 2> sub_ref = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
+    xt::xtensor<double, 2> sub_rot = {{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
+    std::array<std::size_t, 3> shape
+        = {face_ref_perm.size() * 3, face_ref_perm.size() * 3};
+    xt::xtensor<double, 2> face_ref = xt::zeros<double>(shape);
+    xt::xtensor<double, 2> face_rot = xt::zeros<double>(shape);
+
     for (std::size_t i = 0; i < face_ref_perm.size(); ++i)
     {
-      face_ref.block(3 * i, 3 * face_ref_perm[i], 3, 3) = sub_ref;
-      face_rot.block(3 * i, 3 * face_rot_perm[i], 3, 3) = sub_rot;
+      xt::view(face_rot, xt::range(3 * i, 3 * i + 3),
+               xt::range(3 * face_rot_perm[i], 3 * face_rot_perm[i] + 3))
+          = sub_rot;
+      xt::view(face_ref, xt::range(3 * i, 3 * i + 3),
+               xt::range(3 * face_ref_perm[i], 3 * face_ref_perm[i] + 3))
+          = sub_ref;
     }
 
     for (int face = 0; face < num_faces; ++face)
     {
       const int start = edge_dofs * num_edges + face_dofs * face;
-      base_transformations[num_edges + 2 * face].block(
-          start, start, face_rot.rows(), face_rot.cols())
+      xt::view(base_transformations, num_edges + 2 * face,
+               xt::range(start, start + face_rot.shape(0)),
+               xt::range(start, start + face_rot.shape(1)))
           = face_rot;
-      base_transformations[num_edges + 2 * face + 1].block(
-          start, start, face_ref.rows(), face_ref.cols())
+      xt::view(base_transformations, num_edges + 2 * face + 1,
+               xt::range(start, start + face_ref.shape(0)),
+               xt::range(start, start + face_ref.shape(1)))
           = face_ref;
     }
   }

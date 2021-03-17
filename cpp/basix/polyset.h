@@ -5,20 +5,22 @@
 #pragma once
 
 #include "cell.h"
-#include <Eigen/Dense>
 #include <vector>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xtensor.hpp>
 
 /// ## Orthonormal polynomial basis on reference cell
-/// These are the underlying "expansion sets" for all finite elements, which
-/// when multiplied by a set of "coefficients" give the FE basis functions.
+/// These are the underlying "expansion sets" for all finite elements,
+/// which when multiplied by a set of "coefficients" give the FE basis
+/// functions.
 ///
-/// The polynomials (and their derivatives) can be tabulated on unit interval,
-/// triangle, tetrahedron, quadrilateral, hexahedron, prism and pyramids.
+/// The polynomials (and their derivatives) can be tabulated on unit
+/// interval, triangle, tetrahedron, quadrilateral, hexahedron, prism
+/// and pyramids.
 namespace basix::polyset
 {
-/// Basis and derivatives of orthonormal polynomials on reference cell at points
+/// Basis and derivatives of orthonormal polynomials on reference cell
+/// at points
 ///
 /// Compute all derivatives up to given order. If derivatives are not
 /// required, use n=0. For example, order n=2 for a 2D cell, will
@@ -44,10 +46,6 @@ namespace basix::polyset
 /// basis function index.
 xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
                                 const xt::xarray<double>& x);
-
-/// @todo Remove this interface
-std::vector<Eigen::ArrayXXd> tabulate(cell::type celltype, int d, int n,
-                                      const Eigen::ArrayXXd& x);
 
 /// Dimension of a polynomial space
 /// @param[in] cell The cell type

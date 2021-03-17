@@ -18,9 +18,6 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 
 # Find dependecies
 
-find_package(Eigen3 REQUIRED)
-message(STATUS "Found Eigen ${EIGEN3_INCLUDE_DIRS}")
-
 include(FetchContent)
 FetchContent_Declare(
   xtl
@@ -99,10 +96,6 @@ set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
                            $<INSTALL_INTERFACE:include>
                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")
-
-# Add dependencies to target
-target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
-target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
 
 # The commented lines need CMake >= 3.18
 # target_link_libraries(basix PRIVATE BLAS::BLAS)

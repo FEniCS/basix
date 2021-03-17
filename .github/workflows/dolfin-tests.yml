@@ -42,7 +42,6 @@ jobs:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: main
-
       - name: Install DOLFINX
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/

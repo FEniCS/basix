@@ -194,9 +194,9 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
     const std::vector<int> face_rot_perm
         = doftransforms::triangle_rotation(degree);
 
-    xt::xtensor<double, 2> sub_ref(3, 3);
+    xt::xtensor<double, 2> sub_ref({3, 3});
     sub_ref = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
-    xt::xtensor<double, 2> sub_rot(3, 3);
+    xt::xtensor<double, 2> sub_rot({3, 3});
     sub_rot = {{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
 
     std::array<std::size_t, 3> shape

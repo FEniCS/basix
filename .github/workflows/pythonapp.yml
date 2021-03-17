@@ -28,15 +28,15 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y doxygen libeigen3-dev libopenblas-dev liblapack-dev ninja-build
+          sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
       - name: Build C++ documentation (Linux)
         if: runner.os == 'Linux'
         run: |
           cd cpp/doc && doxygen
       - name: Install dependencies (non-Python, macOS)
         if: runner.os == 'macOS'
-        run: brew install eigen ninja
-      - name: Lint with flake8
+        run: brew install ninja
+        - name: Lint with flake8
         run: |
           pip install flake8
           flake8 --statistics test/

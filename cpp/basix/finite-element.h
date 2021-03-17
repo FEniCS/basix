@@ -11,11 +11,12 @@
 #include "element-families.h"
 #include "mappings.h"
 #include "span.hpp"
-#include <Eigen/Core>
 #include <string>
 #include <vector>
 #include <xtensor/xadapt.hpp>
+#include <xtensor/xcomplex.hpp>
 #include <xtensor/xtensor.hpp>
+#include <xtensor/xview.hpp>
 
 /// Placeholder
 namespace basix
@@ -151,9 +152,10 @@ namespace basix
 /// condition number is not checked.
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space.
-Eigen::MatrixXd compute_expansion_coefficients(
-    cell::type cell_type, const Eigen::MatrixXd& B, const Eigen::MatrixXd& M,
-    const Eigen::ArrayXXd& x, int degree, double kappa_tol = 0.0);
+xt::xtensor<double, 2> compute_expansion_coefficients(
+    cell::type cell_type, const xt::xtensor<double, 2>& B,
+    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
+    int degree, double kappa_tol = 0.0);
 
 /// Combines interpolation data
 ///
@@ -170,11 +172,14 @@ Eigen::MatrixXd compute_expansion_coefficients(
 /// @param[in] tdim The toplogical dimension
 /// @param[in] value_size Value size
 /// @return The interpolation points and matrix
-std::pair<Eigen::ArrayXXd, Eigen::MatrixXd> combine_interpolation_data(
-    const Eigen::ArrayXXd& points_1d, const Eigen::ArrayXXd& points_2d,
-    const Eigen::ArrayXXd& points_3d, const Eigen::MatrixXd& matrix_1d,
-    const Eigen::MatrixXd& matrix_2d, const Eigen::MatrixXd& matrix_3d,
-    const int tdim, const int value_size);
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
+                           const xt::xtensor<double, 2>& points_2d,
+                           const xt::xtensor<double, 2>& points_3d,
+                           const xt::xtensor<double, 2>& matrix_1d,
+                           const xt::xtensor<double, 2>& matrix_2d,
+                           const xt::xtensor<double, 2>& matrix_3d,
+                           std::size_t tdim, std::size_t value_size);
 
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the
@@ -196,11 +201,12 @@ public:
   /// @param[in] M The interpolation matrix
   /// @param[in] map_type
   FiniteElement(element::family family, cell::type cell_type, int degree,
-                const std::vector<int>& value_shape,
-                const Eigen::ArrayXXd& coeffs,
+                const std::vector<std::size_t>& value_shape,
+                const xt::xtensor<double, 2>& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
-                const std::vector<Eigen::MatrixXd>& base_transformations,
-                const Eigen::ArrayXXd& points, const Eigen::MatrixXd M = {},
+                const xt::xtensor<double, 3>& base_transformations,
+                const xt::xtensor<double, 2>& points,
+                const xt::xtensor<double, 2>& M = {},
                 mapping::type map_type = mapping::type::identity);
 
   /// Copy constructor
@@ -218,6 +224,10 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
+  /// @todo Fix unclear description of the returned data layout and
+  /// consider using rank 4 tensor [deriv][point][num_res][value_shape].
+  /// It is presently inconsistent with other data structures,
+  ///
   /// Compute basis values and derivatives at set of points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
@@ -227,18 +237,24 @@ public:
   /// @return The basis functions (and derivatives). The first entry in
   /// the list is the basis function. Higher derivatives are stored in
   /// triangular (2D) or tetrahedral (3D) ordering, i.e. for the (x,y)
-  /// derivatives in 2D: (0,0),(1,0),(0,1),(2,0),(1,1),(0,2),(3,0)...
-  /// The function basix::idx can be used to find the appropriate
-  /// derivative. If a vector result is expected, it will be stacked
-  /// with all x values, followed by all y-values (and then z, if any),
-  /// likewise tensor-valued results will be stacked in index order.
-  std::vector<Eigen::ArrayXXd> tabulate(int nd, const Eigen::ArrayXXd& x) const;
+  /// derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1), (0,2),
+  /// (3,0)... The function basix::idx can be used to find the
+  /// appropriate derivative. If a vector result is expected, it will be
+  /// stacked with all x values, followed by all y-values (and then z,
+  /// if any), likewise tensor-valued results will be stacked in index
+  /// order.
+  xt::xtensor<double, 3> tabulate_new(int nd,
+                                      const xt::xarray<double>& x) const;
+
+  /// TODO
+  /// @return Shape [derivative][point][basis fn][value index]
+  xt::xtensor<double, 4> tabulate_x(int nd, const xt::xarray<double>& x) const;
 
   /// Direct to memory block tabulation
   /// @param nd Number of derivatives
   /// @param x Points
   /// @param basis_data Memory location to fill
-  void tabulate(int nd, const Eigen::ArrayXXd& x, double* basis_data) const;
+  void tabulate(int nd, const xt::xarray<double>& x, double* basis_data) const;
 
   /// Get the element cell type
   /// @return The cell type
@@ -271,67 +287,52 @@ public:
   mapping::type mapping_type() const;
 
   /// Map function values from the reference to a physical cell
-  /// @param reference_data The function values on the reference
+  /// @param U The function values on the reference
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @return The function values on the cell
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  map_push_forward(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& reference_data,
-                   const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& J,
+  xt::xtensor<double, 3>
+  map_push_forward(const xt::xtensor<double, 3>& U,
+                   const xt::xtensor<double, 3>& J,
                    const tcb::span<const double>& detJ,
-                   const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                      Eigen::RowMajor>& K) const;
+                   const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
-  /// @param reference_data The function values on the reference
+  /// @param U The function values on the reference
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
-  /// @param physical_data Memory location to fill
-  template <typename T>
-  void
-  map_push_forward_m(const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic,
-                                        Eigen::RowMajor>& reference_data,
-                     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                        Eigen::RowMajor>& J,
-                     const tcb::span<const double>& detJ,
-                     const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                        Eigen::RowMajor>& K,
-                     T* physical_data) const;
+  /// @param u Memory location to fill
+  template <typename T, typename E>
+  void map_push_forward_m(const xt::xtensor<T, 3>& U,
+                          const xt::xtensor<double, 3>& J,
+                          const tcb::span<const double>& detJ,
+                          const xt::xtensor<double, 3>& K, E&& u) const;
 
   /// Map function values from a physical cell to the reference
-  /// @param physical_data The function values on the cell
+  /// @param u The function values on the cell
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
   /// @return The function values on the reference
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-  map_pull_back(const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>& physical_data,
-                const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>& J,
-                const tcb::span<const double>& detJ,
-                const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                   Eigen::RowMajor>& K) const;
+  xt::xtensor<double, 3> map_pull_back(const xt::xtensor<double, 3>& u,
+                                       const xt::xtensor<double, 3>& J,
+                                       const tcb::span<const double>& detJ,
+                                       const xt::xtensor<double, 3>& K) const;
 
+  /// @todo Weirdly, the u and U
   /// Map function values from a physical cell to the reference
-  /// @param physical_data The function values on the cell
+  /// @param u The function values on the cell
   /// @param J The Jacobian of the mapping
   /// @param detJ The determinant of the Jacobian of the mapping
   /// @param K The inverse of the Jacobian of the mapping
-  /// @param reference_data Memory location to fill
-  template <typename T>
-  void map_pull_back_m(
-      const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>& physical_data,
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>& J,
-      const tcb::span<const double>& detJ,
-      const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                         Eigen::RowMajor>& K,
-      T* reference_data) const;
+  /// @param U Memory location to fill
+  template <typename T, typename E>
+  void map_pull_back_m(const xt::xtensor<T, 3>& u,
+                       const xt::xtensor<double, 3>& J,
+                       const tcb::span<const double>& detJ,
+                       const xt::xtensor<double, 3>& K, E&& U) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -419,10 +420,13 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
-  std::vector<Eigen::MatrixXd> base_transformations() const;
+  const xt::xtensor<double, 3>& base_transformations() const;
 
-  /// Return a set of interpolation points
-  const Eigen::ArrayXXd& points() const;
+  /// Return the interpolation points, i.e. the coordinates on the
+  /// reference element where a function need to be evaluated in order
+  /// to interpolate it in the finite element space.
+  /// @return Array of coordinate with shape `(num_points, tdim)`
+  const xt::xtensor<double, 2>& points() const;
 
   /// Return the number of interpolation points
   int num_points() const;
@@ -433,7 +437,10 @@ public:
   /// FiniteElement::points(). These function values should then be
   /// multiplied by the weight matrix to give the coefficients of the
   /// interpolated function.
-  const Eigen::MatrixXd& interpolation_matrix() const;
+  const xt::xtensor<double, 2>& interpolation_matrix() const;
+
+  /// Element map type
+  mapping::type map_type;
 
 private:
   static int compute_value_size(mapping::type map_type, int dim);
@@ -458,7 +465,7 @@ private:
   // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e.,
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
-  Eigen::MatrixXd _coeffs;
+  xt::xtensor<double, 2> _coeffs;
 
   // Number of dofs associated each subentity
   //
@@ -469,154 +476,24 @@ private:
   std::vector<std::vector<int>> _entity_dofs;
 
   // Base transformations
-  std::vector<Eigen::MatrixXd> _base_transformations;
+  xt::xtensor<double, 3> _base_transformations;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of
   // "tabulate_dof_coordinates" Most useful for Lagrange. This may change or go
   // away. For non-Lagrange elements, these points will be used in combination
   // with _interpolation_matrix to perform interpolation
-  Eigen::ArrayXXd _points;
+  xt::xtensor<double, 2> _points;
 
   /// The interpolation weights and points
-  Eigen::MatrixXd _matM;
+  xt::xtensor<double, 2> _matM;
 
   // The mapping that maps values on the reference to values on a physical cell
-  std::function<std::vector<double>(const tcb::span<const double>&,
-                                    const xt::xtensor<double, 2>&, const double,
-                                    const xt::xtensor<double, 2>&)>
-      _map_push_forward;
+  // std::function<std::vector<double>(const tcb::span<const double>&,
+  //                                   const xt::xtensor<double, 2>&, const
+  //                                   double, const xt::xtensor<double, 2>&)>
+  //     _map_push_forward;
 };
-
-template <typename T>
-void FiniteElement::map_push_forward_m(
-    const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        reference_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const tcb::span<const double>& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K,
-    T* physical_data) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int physical_value_size = compute_value_size(_map_type, physical_dim);
-  const int reference_value_size = value_size();
-  const int npoints = J.rows();
-  const int nresults = reference_data.rows() / npoints;
-
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    Eigen::Map<
-        const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-        reference_block(reference_data.row(pt).data(), reference_value_size,
-                        nresults);
-    Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-        physical_block(physical_data + pt * physical_value_size * nresults,
-                       physical_value_size, nresults);
-
-    std::array<std::size_t, 2> J_s
-        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
-    std::array<std::size_t, 2> K_s
-        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
-    const xt::xtensor<double, 2> current_J
-        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
-    const xt::xtensor<double, 2> current_K
-        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
-
-    if constexpr (std::is_same<T, double>::value)
-    {
-      for (int i = 0; i < reference_block.cols(); ++i)
-      {
-        Eigen::ArrayXd col = reference_block.col(i);
-        std::vector<double> u
-            = _map_push_forward(col, current_J, detJ[pt], current_K);
-        for (std::size_t j = 0; j < u.size(); ++j)
-          physical_block(j, i) = u[j];
-      }
-    }
-    else
-    {
-      for (int i = 0; i < reference_block.cols(); ++i)
-      {
-        Eigen::ArrayXd tmp_r = reference_block.col(i).real();
-        Eigen::ArrayXd tmp_c = reference_block.col(i).imag();
-        std::vector<double> ur
-            = _map_push_forward(tmp_r, current_J, detJ[pt], current_K);
-        std::vector<double> uc
-            = _map_push_forward(tmp_c, current_J, detJ[pt], current_K);
-        for (std::size_t j = 0; j < ur.size(); ++j)
-          physical_block(j, i) = std::complex(ur[j], uc[j]);
-      }
-    }
-  }
-}
-//-----------------------------------------------------------------------------
-template <typename T>
-void FiniteElement::map_pull_back_m(
-    const Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic>& physical_data,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        J,
-    const tcb::span<const double>& detJ,
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>&
-        K,
-    T* reference_data) const
-{
-  const int reference_dim = cell::topological_dimension(_cell_type);
-  const int physical_dim = J.cols() / reference_dim;
-  const int reference_value_size = value_size();
-  const int npoints = J.rows();
-  const int nresults = physical_data.rows() / npoints;
-
-  Eigen::Map<Eigen::Array<T, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>>
-      reference_array(reference_data, nresults * npoints, reference_value_size);
-
-  for (int pt = 0; pt < npoints; ++pt)
-  {
-    std::array<std::size_t, 2> J_s
-        = {(std::size_t)physical_dim, (std::size_t)reference_dim};
-    std::array<std::size_t, 2> K_s
-        = {(std::size_t)reference_dim, (std::size_t)physical_dim};
-    const xt::xtensor<double, 2> current_J
-        = xt::adapt(J.row(pt).data(), J.cols(), xt::no_ownership(), J_s);
-    const xt::xtensor<double, 2> current_K
-        = xt::adapt(K.row(pt).data(), K.cols(), xt::no_ownership(), K_s);
-
-    if constexpr (std::is_same<T, double>::value)
-    {
-      for (int i = 0; i < nresults; ++i)
-      {
-        for (int i = 0; i < nresults; ++i)
-        {
-          Eigen::ArrayXd tmp = physical_data.row(pt * nresults + i);
-          std::vector<double> U
-              = _map_push_forward(tmp, current_K, 1 / detJ[pt], current_J);
-          for (std::size_t j = 0; j < U.size(); ++j)
-            reference_array(pt * nresults + i, j) = U[j];
-        }
-      }
-    }
-    else
-    {
-      for (int i = 0; i < nresults; ++i)
-      {
-        for (int i = 0; i < nresults; ++i)
-        {
-          Eigen::ArrayXd tmp_r = physical_data.row(pt * nresults + i).real();
-          Eigen::ArrayXd tmp_c = physical_data.row(pt * nresults + i).imag();
-          std::vector<double> Ur
-              = _map_push_forward(tmp_r, current_K, 1 / detJ[pt], current_J);
-          std::vector<double> Uc
-              = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_J);
-          for (std::size_t j = 0; j < Ur.size(); ++j)
-            reference_array(pt * nresults + i, j) = std::complex(Ur[j], Uc[j]);
-        }
-      }
-    }
-  }
-}
-//-----------------------------------------------------------------------------
 
 /// Create an element by name
 FiniteElement create_element(std::string family, std::string cell, int degree);
@@ -628,5 +505,70 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// Return the version number of basix across projects
 /// @return version string
 std::string version();
+
+//-----------------------------------------------------------------------------
+template <typename T, typename E>
+void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
+                                       const xt::xtensor<double, 3>& J,
+                                       const tcb::span<const double>& detJ,
+                                       const xt::xtensor<double, 3>& K,
+                                       E&& u) const
+{
+  // FIXME: Should U.shape(2) be replaced by the physical value size?
+  // Can it differ?
+  // std::array<std::size_t, 3> s = {U.shape(0), U.shape(1), U.shape(2)};
+  // auto _u = xt::adapt(u, s[0] * s[1] * s[2], xt::no_ownership(), s);
+
+  // Loop over each point
+  for (std::size_t p = 0; p < U.shape(0); ++p)
+  {
+    auto J_p = xt::view(J, p, xt::all(), xt::all());
+    auto K_p = xt::view(K, p, xt::all(), xt::all());
+
+    // Loop over values at each point
+    for (std::size_t i = 0; i < U.shape(1); ++i)
+    {
+      // Note: we assign here to a xt::xtensor<double, 1> until the
+      // maps are updated to accept xtensor objects rather than spans
+      // auto U_data = xt::row(U_b, i);
+      xt::xtensor<T, 1> U_data = xt::view(U, p, i, xt::all());
+      std::vector<T> f
+          = mapping::apply_map<T>(U_data, J_p, detJ[p], K_p, map_type);
+      for (std::size_t j = 0; j < f.size(); ++j)
+        u(p, i, j) = f[j];
+    }
+  }
+}
+//-----------------------------------------------------------------------------
+template <typename T, typename E>
+void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
+                                    const xt::xtensor<double, 3>& J,
+                                    const tcb::span<const double>& detJ,
+                                    const xt::xtensor<double, 3>& K,
+                                    E&& U) const
+{
+  // Loop over each point
+  for (std::size_t p = 0; p < u.shape(0); ++p)
+  {
+    auto J_p = xt::view(J, p, xt::all(), xt::all());
+    auto K_p = xt::view(K, p, xt::all(), xt::all());
+
+    // Loop over each item at point to be transformed
+    for (std::size_t i = 0; i < u.shape(1); ++i)
+    {
+      // Note: we assign here to a xt::xtensor<double, 1> until the
+      // maps are updated to accept xtensor objects rather than spans
+      // auto U_data = xt::row(U_b, i);
+
+      // Map data
+      xt::xtensor<T, 1> u_data = xt::view(u, p, i, xt::all());
+      std::vector<T> f
+          = mapping::apply_map<T>(u_data, K_p, 1.0 / detJ[p], J_p, map_type);
+      for (std::size_t j = 0; j < f.size(); ++j)
+        U(p, i, j) = f[j];
+    }
+  }
+}
+//-----------------------------------------------------------------------------
 
 } // namespace basix

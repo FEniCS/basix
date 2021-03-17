@@ -4,7 +4,6 @@
 
 #include "quadrature.h"
 #include "span.hpp"
-#include <Eigen/Dense>
 #include <cmath>
 #include <vector>
 #include <xtensor-blas/xlinalg.hpp>
@@ -18,31 +17,6 @@ using namespace basix;
 
 namespace
 {
-
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
-convert(const std::pair<xt::xarray<double>, std::vector<double>>& data)
-{
-  auto& x = data.first;
-  auto& w = data.second;
-  int dim1 = 1;
-  if (x.dimension() == 2)
-    dim1 = x.shape()[1];
-  Eigen::ArrayXXd _x(x.shape()[0], dim1);
-  Eigen::ArrayXd _w(w.size());
-  for (std::size_t i = 0; i < w.size(); ++i)
-  {
-    _w[i] = w[i];
-    if (x.dimension() == 2)
-    {
-      for (std::size_t j = 0; j < x.shape()[1]; ++j)
-        _x(i, j) = x(i, j);
-    }
-    else
-      _x(i, 0) = x[i];
-  }
-
-  return {_x, _w};
-}
 
 //----------------------------------------------------------------------------
 std::array<std::vector<double>, 2> rec_jacobi(int N, double a, double b)
@@ -613,9 +587,9 @@ std::vector<double> quadrature::compute_gauss_jacobi_points(double a, int m)
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
       tcb::span<const double> _x(&x[k], 1);
-      const xt::xtensor<double, 1> f
+      const xt::xtensor<double, 2> f
           = quadrature::compute_jacobi_deriv(a, m, 1, _x);
-      const double delta = f[0] / (f[1] - f[0] * s);
+      const double delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
       x[k] -= delta;
 
       if (std::abs(delta) < eps)
@@ -748,30 +722,30 @@ quadrature::make_quadrature_tetrahedron_collapsed(std::size_t m)
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+std::pair<xt::xarray<double>, std::vector<double>>
 quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
 {
   if (rule == "" or rule == "default")
   {
     if (celltype == cell::type::triangle)
-      return convert(make_default_triangle_quadrature(m));
+      return make_default_triangle_quadrature(m);
     else if (celltype == cell::type::tetrahedron)
-      return convert(make_default_tetrahedron_quadrature(m));
+      return make_default_tetrahedron_quadrature(m);
     else
     {
       const int np = (m + 2) / 2;
-      return convert(make_gauss_jacobi_quadrature(celltype, np));
+      return make_gauss_jacobi_quadrature(celltype, np);
     }
   }
   else if (rule == "Gauss-Jacobi")
   {
     const int np = (m + 2) / 2;
-    return convert(make_gauss_jacobi_quadrature(celltype, np));
+    return make_gauss_jacobi_quadrature(celltype, np);
   }
   else if (rule == "GLL")
   {
     const int np = (m + 4) / 2;
-    return convert(make_gll_quadrature(celltype, np));
+    return make_gll_quadrature(celltype, np);
   }
   else
     throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");

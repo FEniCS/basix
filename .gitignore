@@ -1,12 +1,16 @@
 *.pyc
 *~
 *.so
-doc/html/*
-doc/latex/*
+cpp/doc/html/*
+cpp/doc/latex/*
 cpp/Makefile
 cpp/CMakeCache.txt
 cpp/CMakeFiles/*
 cpp/cmake_install.cmake
+
+python/doc/build/*
+python/doc/source/generated/*
+
 build/*
 
 .*.swp

@@ -11,6 +11,7 @@
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xview.hpp>
+#include <iostream>
 
 using namespace basix;
 
@@ -189,20 +190,27 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   }
   if (tdim > 2)
   {
+    std::cout << "A\n";
     const std::vector<int> face_ref_perm
         = doftransforms::triangle_reflection(degree);
     const std::vector<int> face_rot_perm
         = doftransforms::triangle_rotation(degree);
+
+    std::cout << "B\n";
 
     xt::xtensor<double, 2> sub_ref({3, 3});
     sub_ref = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
     xt::xtensor<double, 2> sub_rot({3, 3});
     sub_rot = {{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
 
+    std::cout << "C\n";
+
     std::array<std::size_t, 3> shape
         = {face_ref_perm.size() * 3, face_ref_perm.size() * 3};
     xt::xtensor<double, 2> face_ref = xt::zeros<double>(shape);
     xt::xtensor<double, 2> face_rot = xt::zeros<double>(shape);
+
+    std::cout << "D\n";
 
     for (std::size_t i = 0; i < face_ref_perm.size(); ++i)
     {
@@ -213,6 +221,8 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
                xt::range(3 * face_ref_perm[i], 3 * face_ref_perm[i] + 3))
           = sub_ref;
     }
+
+    std::cout << "E\n";
 
     for (int face = 0; face < num_faces; ++face)
     {
@@ -226,6 +236,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
                xt::range(start, start + face_ref.shape(1)))
           = face_ref;
     }
+    std::cout << "F\n";
   }
 
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -235,6 +246,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   if (tdim > 2)
     entity_dofs[3] = {volume_dofs};
 
+  std::cout << "end\n";
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
                        coeffs, entity_dofs, base_transformations, points,
                        matrix, mapping::type::doubleCovariantPiola);

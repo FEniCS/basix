@@ -35,7 +35,7 @@ target_link_libraries(_basixcpp PUBLIC Basix::basix)
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-Wall -Werror  -Wextra -Wno-comment -pedantic" HAVE_PEDANTIC)
 if (HAVE_PEDANTIC)
-  target_compile_options(_basixcpp PRIVATE -Wall; -Wextral-Werror;-Wno-comment;-pedantic)
+  target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment;-pedantic)
 endif()
 
 # In Debug mode override pybind11 symbols visibility Symbols must be

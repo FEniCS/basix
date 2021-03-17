@@ -13,7 +13,6 @@
 #include "quadrature.h"
 #include <numeric>
 #include <xtensor/xadapt.hpp>
-#include <xtensor/xio.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 

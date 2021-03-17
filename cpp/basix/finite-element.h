@@ -15,7 +15,6 @@
 #include <vector>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xcomplex.hpp>
-#include <xtensor/xio.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 

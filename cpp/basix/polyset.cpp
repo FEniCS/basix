@@ -8,7 +8,6 @@
 #include <array>
 #include <cmath>
 #include <xtensor/xadapt.hpp>
-#include <xtensor/xio.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;

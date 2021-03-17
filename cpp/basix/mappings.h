@@ -13,7 +13,7 @@
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
-/// Information about mappings
+/// Information about finite element maps
 namespace basix::mapping
 {
 

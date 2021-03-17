@@ -18,7 +18,6 @@
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
-#include <xtensor/xio.hpp>
 #include <xtensor/xlayout.hpp>
 #include <xtensor/xview.hpp>
 

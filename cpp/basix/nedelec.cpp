@@ -17,8 +17,6 @@
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
-#include <xtensor/xio.hpp>
-
 using namespace basix;
 
 namespace

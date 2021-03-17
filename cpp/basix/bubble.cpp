@@ -10,7 +10,6 @@
 #include "quadrature.h"
 #include <numeric>
 #include <xtensor/xadapt.hpp>
-#include <xtensor/xio.hpp>
 #include <xtensor/xmath.hpp>
 #include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>

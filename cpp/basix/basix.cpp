@@ -15,8 +15,6 @@
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xtensor.hpp>
 
-#include <xtensor/xio.hpp>
-
 using namespace basix;
 
 std::vector<std::unique_ptr<FiniteElement>> _registry;

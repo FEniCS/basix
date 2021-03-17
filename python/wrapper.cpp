@@ -7,6 +7,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <string>
+#include <xtensor/xadapt.hpp>
 
 #include <basix/cell.h>
 #include <basix/element-families.h>
@@ -17,9 +18,6 @@
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <basix/span.hpp>
-
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xio.hpp>
 
 namespace py = pybind11;
 using namespace basix;

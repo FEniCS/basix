@@ -1,0 +1,71 @@
+<svg width='730' height='140'>
+<style type="text/css"><![CDATA[
+  text { text-anchor:middle; font-size:15px; font-family: "Lato Bold" }
+  line { stroke-width: 4px; stroke-linecap: round; stroke: #000000 }
+  circle { fill: #FFFFFF; stroke: #000000; stroke-width:4px}
+]]></style>
+<line x1='20' y1='120' x2='20' y2='90' />
+<line x1='15' y1='100' x2='20' y2='90' />
+<line x1='25' y1='100' x2='20' y2='90' />
+<line x1='20' y1='120' x2='50' y2='120' />
+<line x1='40' y1='115' x2='50' y2='120' />
+<line x1='40' y1='125' x2='50' y2='120' />
+<line x1='20' y1='120' x2='44' y2='102' />
+<line x1='33' y1='104' x2='44' y2='102' />
+<line x1='39' y1='112' x2='44' y2='102' />
+<text x='60' y='120' fill='#000000' dy='.3em' style='font-family:"Libertinus Serif Semibold Italic";font-size:20px'>x</text>
+<text x='52' y='91' fill='#000000' dy='.3em' style='font-family:"Libertinus Serif Semibold Italic";font-size:20px'>y</text>
+<text x='20' y='75' fill='#000000' dy='.3em' style='font-family:"Libertinus Serif Semibold Italic";font-size:20px'>z</text>
+<line x1='130.0' y1='80.0' x2='100.0' y2='20.0' />
+
+<line x1='200.0' y1='120.0' x2='100.0' y2='20.0' />
+
+<line x1='200.0' y1='120.0' x2='130.0' y2='80.0' />
+
+<line x1='100.0' y1='120.0' x2='100.0' y2='20.0' />
+
+<line x1='100.0' y1='120.0' x2='130.0' y2='80.0' />
+
+<line x1='100.0' y1='120.0' x2='200.0' y2='120.0' />
+<circle cx='100.0' cy='120.0' r='12px' /><text x='100.0' y='120.0' dy='.3em'>0</text>
+
+<circle cx='200.0' cy='120.0' r='12px' /><text x='200.0' y='120.0' dy='.3em'>1</text>
+
+<circle cx='130.0' cy='80.0' r='12px' /><text x='130.0' y='80.0' dy='.3em'>2</text>
+
+<circle cx='100.0' cy='20.0' r='12px' /><text x='100.0' y='20.0' dy='.3em'>3</text>
+<line x1='300.0' y1='80.0' x2='270.0' y2='20.0' />
+<line x1='370.0' y1='120.0' x2='300.0' y2='80.0' />
+<line x1='270.0' y1='120.0' x2='300.0' y2='80.0' />
+<circle cx='285.0' cy='50.0' r='12px' /><text x='285.0' y='50.0' dy='.3em'>0</text>
+<circle cx='335.0' cy='100.0' r='12px' /><text x='335.0' y='100.0' dy='.3em'>2</text>
+<circle cx='285.0' cy='100.0' r='12px' /><text x='285.0' y='100.0' dy='.3em'>4</text>
+<line x1='370.0' y1='120.0' x2='270.0' y2='20.0' />
+<line x1='270.0' y1='120.0' x2='270.0' y2='20.0' />
+<line x1='270.0' y1='120.0' x2='370.0' y2='120.0' />
+<circle cx='320.0' cy='70.0' r='12px' /><text x='320.0' y='70.0' dy='.3em'>1</text>
+<circle cx='270.0' cy='70.0' r='12px' /><text x='270.0' y='70.0' dy='.3em'>3</text>
+<circle cx='320.0' cy='120.0' r='12px' /><text x='320.0' y='120.0' dy='.3em'>5</text>
+<line x1='470.0' y1='80.0' x2='440.0' y2='20.0' />
+<line x1='540.0' y1='120.0' x2='470.0' y2='80.0' />
+<line x1='440.0' y1='120.0' x2='470.0' y2='80.0' />
+<circle cx='483.3333333333333' cy='73.33333333333334' r='12px' /><text x='483.3333333333333' y='73.33333333333334' dy='.3em'>0</text>
+<circle cx='450.0' cy='73.33333333333334' r='12px' /><text x='450.0' y='73.33333333333334' dy='.3em'>1</text>
+<circle cx='483.3333333333333' cy='106.66666666666667' r='12px' /><text x='483.3333333333333' y='106.66666666666667' dy='.3em'>3</text>
+<line x1='540.0' y1='120.0' x2='440.0' y2='20.0' />
+<line x1='440.0' y1='120.0' x2='440.0' y2='20.0' />
+<line x1='440.0' y1='120.0' x2='540.0' y2='120.0' />
+<circle cx='473.3333333333333' cy='86.66666666666667' r='12px' /><text x='473.3333333333333' y='86.66666666666667' dy='.3em'>2</text>
+<line x1='640.0' y1='80.0' x2='610.0' y2='20.0' />
+
+<line x1='710.0' y1='120.0' x2='610.0' y2='20.0' />
+
+<line x1='710.0' y1='120.0' x2='640.0' y2='80.0' />
+
+<line x1='610.0' y1='120.0' x2='610.0' y2='20.0' />
+
+<line x1='610.0' y1='120.0' x2='640.0' y2='80.0' />
+
+<line x1='610.0' y1='120.0' x2='710.0' y2='120.0' />
+<circle cx='642.5' cy='85.0' r='12px' /><text x='642.5' y='85.0' dy='.3em'>0</text>
+</svg>

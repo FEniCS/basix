@@ -9,8 +9,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
-
 # Options
 include(FeatureSummary)
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
@@ -18,23 +16,50 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 
 # Find dependecies
 
-include(FetchContent)
-FetchContent_Declare(
-  xtl
-  GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
-  GIT_TAG        0.7.2
-)
-FetchContent_Declare(
-  xtensor
-  GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-  GIT_TAG        0.23.1
-)
-FetchContent_Declare(
-  xtensor_blas
-  GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
-  GIT_TAG        master
-)
-FetchContent_MakeAvailable(xtl xtensor xtensor_blas)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+  find_package(xtl 0.7...<0.8 QUIET)
+  find_package(xtensor 0.23...<0.24 QUIET)
+else()
+  find_package(xtl 0.7 QUIET)
+  find_package(xtensor 0.23 QUIET)
+endif()
+find_package(xtensor-blas 0.19 QUIET)
+if(NOT xtl_FOUND OR NOT xtensor_FOUND OR NOT xtensor-blas_FOUND)
+  include(FetchContent)
+endif()
+if(NOT xtl_FOUND)
+  message("downloading xtl source...")
+  FetchContent_Declare(
+    xtl
+    GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
+    GIT_TAG        0.7.2
+  )
+  FetchContent_MakeAvailable(xtl)
+else()
+  message("found xtl ${xtl_VERSION}")
+endif()
+if(NOT xtensor_FOUND)
+  message("downloading xtensor source...")
+  FetchContent_Declare(
+    xtensor
+    GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
+    GIT_TAG        0.23.1
+  )
+  FetchContent_MakeAvailable(xtensor)
+else()
+  message("found xtensor ${xtensor_VERSION}")
+endif()
+if(NOT xtensor-blas_FOUND)
+  message("downloading xtensor-blas source...")
+  FetchContent_Declare(
+    xtensor_blas
+    GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
+    GIT_TAG        master
+  )
+  FetchContent_MakeAvailable(xtensor_blas)
+else()
+  message("found xtensor-blas ${xtensor-blas_VERSION}")
+endif()
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
@@ -116,11 +141,14 @@ target_include_directories(basix SYSTEM PRIVATE ${_xtensor_blas_include_dirs})
 get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(basix SYSTEM PRIVATE ${_xtensor_include_dirs})
 
-# Set debug definitions (private)
+# Set compiler flags
+list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
 list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
-target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
+
+# Set debug definitions (private)
+target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 
 # Install the Basix library
 install(TARGETS basix

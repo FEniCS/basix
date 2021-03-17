@@ -56,7 +56,7 @@ jobs:
       - name: Run units tests
         run: |
           pip install pytest pytest-xdist numpy sympy
-          pytest -v -n auto --durations 20 test
+          pytest -v -n auto --durations 20 test/
       - name: Checkout FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && github.ref == 'refs/heads/main' && runner.os == 'Linux' }}
         uses: actions/checkout@v2

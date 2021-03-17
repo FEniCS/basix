@@ -11,55 +11,67 @@
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <Eigen/Dense>
 #include <numeric>
+#include <xtensor/xadapt.hpp>
+#include <xtensor/xtensor.hpp>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 
 namespace
 {
 //----------------------------------------------------------------------------
-Eigen::MatrixXd make_serendipity_space_2d(const int degree)
+xt::xtensor<double, 2> make_serendipity_space_2d(const int degree)
 {
-  const int ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
+  const std::size_t ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature(
       "default", cell::type::quadrilateral, 2 * degree);
-  Eigen::ArrayXXd polyset_at_Qpts
-      = polyset::tabulate(cell::type::quadrilateral, degree, 0, Qpts)[0];
-  Eigen::ArrayXXd smaller_polyset_at_Qpts
-      = polyset::tabulate(cell::type::triangle, degree, 0, Qpts)[0];
+  auto Qwts = xt::adapt(_Qwts);
 
-  const int psize = polyset_at_Qpts.cols();
-  const int nv = smaller_polyset_at_Qpts.cols();
+  xt::xtensor<double, 2> polyset_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::quadrilateral, degree, 0, Qpts),
+                 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> smaller_polyset_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, Qpts), 0,
+                 xt::all(), xt::all());
+
+  const std::size_t psize = polyset_at_Qpts.shape()[1];
+  const std::size_t nv = smaller_polyset_at_Qpts.shape()[1];
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize);
-  for (int i = 0; i < nv; ++i)
-    for (int k = 0; k < psize; ++k)
-      wcoeffs(i, k)
-          = (Qwts * smaller_polyset_at_Qpts.col(i) * polyset_at_Qpts.col(k))
-                .sum();
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+  for (std::size_t i = 0; i < nv; ++i)
+  {
+    auto p_i = xt::col(smaller_polyset_at_Qpts, i);
+    for (std::size_t k = 0; k < psize; ++k)
+      wcoeffs(i, k) = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
+  }
+
+  auto q0 = xt::col(Qpts, 0);
+  auto q1 = xt::col(Qpts, 1);
   if (degree == 1)
   {
-    for (int k = 0; k < psize; ++k)
-      wcoeffs(nv, k)
-          = (Qwts * Qpts.col(0) * Qpts.col(1) * polyset_at_Qpts.col(k)).sum();
+    for (std::size_t k = 0; k < psize; ++k)
+      wcoeffs(nv, k) = xt::sum(Qwts * q0 * q1 * xt::col(polyset_at_Qpts, k))();
     return wcoeffs;
   }
 
-  for (int k = 0; k < psize; ++k)
+  xt::xtensor<double, 1> integrand;
+  for (std::size_t k = 0; k < psize; ++k)
   {
-    for (int a = 0; a < 2; ++a)
+    auto pk = xt::col(polyset_at_Qpts, k);
+    for (std::size_t a = 0; a < 2; ++a)
     {
-      Eigen::ArrayXd integrand
-          = Qwts * Qpts.col(0) * Qpts.col(1) * polyset_at_Qpts.col(k);
+      auto q_a = xt::col(Qpts, a);
+      integrand = Qwts * q0 * q1 * pk;
       for (int i = 1; i < degree; ++i)
-        integrand *= Qpts.col(a);
-      wcoeffs(nv + a, k) = integrand.sum();
+        integrand *= q_a;
+      wcoeffs(nv + a, k) = xt::sum(integrand)();
     }
   }
+
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
@@ -73,13 +85,16 @@ serendipity_3d_indices(const int total, const int linear,
     for (int i = 0; i < 3; ++i)
       if (done[i] == 1)
         ++count;
+
     if (count >= linear)
       return {{done[0], done[1], done[2]}};
     return {};
   }
   if (done.size() == 2)
+  {
     return serendipity_3d_indices(
         total, linear, {done[0], done[1], total - done[0] - done[1]});
+  }
 
   std::vector<int> new_done(done.size() + 1);
   int sum_done = 0;
@@ -99,48 +114,57 @@ serendipity_3d_indices(const int total, const int linear,
   return out;
 }
 //----------------------------------------------------------------------------
-Eigen::MatrixXd make_serendipity_space_3d(const int degree)
+xt::xtensor<double, 2> make_serendipity_space_3d(const int degree)
 {
-  const int ndofs = degree < 4
-                        ? 12 * degree - 4
-                        : (degree < 6 ? 3 * degree * degree - 3 * degree + 14
-                                      : degree * (degree - 1) * (degree + 1) / 6
-                                            + degree * degree + 5 * degree + 4);
+  const std::size_t ndofs
+      = degree < 4 ? 12 * degree - 4
+                   : (degree < 6 ? 3 * degree * degree - 3 * degree + 14
+                                 : degree * (degree - 1) * (degree + 1) / 6
+                                       + degree * degree + 5 * degree + 4);
   // Number of order (degree) polynomials
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, Qwts] = quadrature::make_quadrature(
+  auto [Qpts, _Qwts] = quadrature::make_quadrature(
       "default", cell::type::hexahedron, 2 * degree);
-  Eigen::ArrayXXd polyset_at_Qpts
-      = polyset::tabulate(cell::type::hexahedron, degree, 0, Qpts)[0];
-  Eigen::ArrayXXd smaller_polyset_at_Qpts
-      = polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts)[0];
+  auto Qwts = xt::adapt(_Qwts);
+  xt::xtensor<double, 2> polyset_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::hexahedron, degree, 0, Qpts), 0,
+                 xt::all(), xt::all());
+  xt::xtensor<double, 2> smaller_polyset_at_Qpts
+      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts), 0,
+                 xt::all(), xt::all());
 
-  const int psize = polyset_at_Qpts.cols();
-  const int nv = smaller_polyset_at_Qpts.cols();
+  const std::size_t psize = polyset_at_Qpts.shape()[1];
+  const std::size_t nv = smaller_polyset_at_Qpts.shape()[1];
 
   // Create coefficients for order (degree-1) vector polynomials
-  Eigen::MatrixXd wcoeffs = Eigen::MatrixXd::Zero(ndofs, psize);
-  for (int i = 0; i < nv; ++i)
-    for (int k = 0; k < psize; ++k)
-      wcoeffs(i, k)
-          = (Qwts * smaller_polyset_at_Qpts.col(i) * polyset_at_Qpts.col(k))
-                .sum();
-
-  int c = nv;
-  for (int s = 1; s <= 3; ++s)
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+  for (std::size_t i = 0; i < nv; ++i)
   {
-    std::vector<std::array<int, 3>> indices
-        = serendipity_3d_indices(s + degree, s);
+    auto p_i = xt::col(smaller_polyset_at_Qpts, i);
+    for (std::size_t k = 0; k < psize; ++k)
+      wcoeffs(i, k) = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
+  }
+
+  std::size_t c = nv;
+  xt::xtensor<double, 1> integrand;
+  std::vector<std::array<int, 3>> indices;
+  for (std::size_t s = 1; s <= 3; ++s)
+  {
+    indices = serendipity_3d_indices(s + degree, s);
     for (std::array<int, 3> i : indices)
     {
-      for (int k = 0; k < psize; ++k)
+      for (std::size_t k = 0; k < psize; ++k)
       {
-        Eigen::ArrayXd integrand = Qwts * polyset_at_Qpts.col(k);
+        integrand = Qwts * xt::col(polyset_at_Qpts, k);
         for (int d = 0; d < 3; ++d)
+        {
+          auto q_d = xt::col(Qpts, d);
           for (int j = 0; j < i[d]; ++j)
-            integrand *= Qpts.col(d);
-        wcoeffs(c, k) = integrand.sum();
+            integrand *= q_d;
+        }
+
+        wcoeffs(c, k) = xt::sum(integrand)();
       }
       ++c;
     }
@@ -156,34 +180,32 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
+  {
     throw std::runtime_error("Invalid celltype");
+  }
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-
-  const int tdim = cell::topological_dimension(celltype);
+  const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
-  Eigen::ArrayXXd points_1d(0, tdim);
-  Eigen::MatrixXd matrix_1d(0, 0);
-
-  std::vector<Eigen::MatrixXd> edge_transforms;
-  std::vector<Eigen::MatrixXd> face_transforms;
-
+  xt::xtensor<double, 2> points_1d, matrix_1d;
+  xt::xtensor<double, 3> edge_transforms, face_transforms;
   if (degree >= 2)
   {
     FiniteElement moment_space = create_dpc(cell::type::interval, degree - 2);
     std::tie(points_1d, matrix_1d)
         = moments::make_integral_moments(moment_space, celltype, 1, quad_deg);
     if (tdim > 1)
+    {
       edge_transforms
           = moments::create_dot_moment_dof_transformations(moment_space);
+    }
   }
 
-  Eigen::ArrayXXd points_2d(0, tdim);
-  Eigen::MatrixXd matrix_2d(0, 0);
+  xt::xtensor<double, 2> points_2d, matrix_2d;
   if (tdim >= 2 and degree >= 4)
   {
     FiniteElement moment_space
@@ -191,58 +213,93 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     std::tie(points_2d, matrix_2d)
         = moments::make_integral_moments(moment_space, celltype, 1, quad_deg);
     if (tdim > 2)
+    {
       face_transforms
           = moments::create_dot_moment_dof_transformations(moment_space);
+    }
   }
 
-  Eigen::ArrayXXd points_3d(0, tdim);
-  Eigen::MatrixXd matrix_3d(0, 0);
+  xt::xtensor<double, 2> points_3d, matrix_3d;
   if (tdim == 3 and degree >= 6)
   {
     std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
         create_dpc(cell::type::hexahedron, degree - 6), celltype, 1, quad_deg);
   }
 
-  const int vertex_count = cell::sub_entity_count(celltype, 0);
+  const std::size_t vertex_count = cell::sub_entity_count(celltype, 0);
+  const std::array<std::size_t, 3> num_pts_dim
+      = {points_1d.shape()[0], points_2d.shape()[0], points_3d.shape()[0]};
+  std::size_t num_pts
+      = std::accumulate(num_pts_dim.begin(), num_pts_dim.end(), 0);
 
-  Eigen::ArrayXXd interpolation_points(
-      vertex_count + points_1d.rows() + points_2d.rows() + points_3d.rows(),
-      tdim);
-  Eigen::MatrixXd interpolation_matrix = Eigen::MatrixXd::Zero(
-      vertex_count + matrix_1d.rows() + matrix_2d.rows() + matrix_3d.rows(),
-      vertex_count + matrix_1d.cols() + matrix_2d.cols() + matrix_3d.cols());
+  const std::array<std::size_t, 3> num_mat_dim0
+      = {matrix_1d.shape()[0], matrix_2d.shape()[0], matrix_3d.shape()[0]};
+  const std::array<std::size_t, 3> num_mat_dim1
+      = {matrix_1d.shape()[1], matrix_2d.shape()[1], matrix_3d.shape()[1]};
+  std::size_t num_mat0
+      = std::accumulate(num_mat_dim0.begin(), num_mat_dim0.end(), 0);
+  std::size_t num_mat1
+      = std::accumulate(num_mat_dim1.begin(), num_mat_dim1.end(), 0);
+
+  xt::xtensor<double, 2> interpolation_points({vertex_count + num_pts, tdim});
+  xt::xtensor<double, 2> interpolation_matrix
+      = xt::zeros<double>({vertex_count + num_mat0, vertex_count + num_mat1});
 
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
-  Eigen::Map<const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>>
-      _geometry(geometry.data(), geometry.shape()[0], geometry.shape()[1]);
-  interpolation_points.block(0, 0, vertex_count, tdim) = _geometry;
-  interpolation_points.block(vertex_count, 0, points_1d.rows(), tdim)
-      = points_1d;
-  interpolation_points.block(vertex_count + points_1d.rows(), 0,
-                             points_2d.rows(), tdim)
-      = points_2d;
-  interpolation_points.block(vertex_count + points_1d.rows() + points_2d.rows(),
-                             0, points_3d.rows(), tdim)
-      = points_3d;
+  xt::view(interpolation_points, xt::range(0, vertex_count), xt::all())
+      = geometry;
 
-  for (int i = 0; i < vertex_count; ++i)
+  if (points_1d.size() > 0)
+  {
+    xt::view(interpolation_points,
+             xt::range(vertex_count, vertex_count + num_pts_dim[0]), xt::all())
+        = points_1d;
+  }
+
+  if (points_2d.size() > 0)
+  {
+    xt::view(interpolation_points,
+             xt::range(vertex_count + num_pts_dim[0],
+                       vertex_count + num_pts_dim[0] + num_pts_dim[1]),
+             xt::all())
+        = points_2d;
+  }
+
+  if (points_3d.size() > 0)
+  {
+    xt::view(interpolation_points,
+             xt::range(vertex_count + num_pts_dim[0] + num_pts_dim[1],
+                       vertex_count + num_pts_dim[0] + num_pts_dim[1]
+                           + +num_pts_dim[2]),
+             xt::all())
+        = points_3d;
+  }
+
+  for (std::size_t i = 0; i < vertex_count; ++i)
     interpolation_matrix(i, i) = 1;
-  interpolation_matrix.block(vertex_count, vertex_count, matrix_1d.rows(),
-                             matrix_1d.cols())
+
+  xt::view(interpolation_matrix,
+           xt::range(vertex_count, vertex_count + num_mat_dim0[0]),
+           xt::range(vertex_count, vertex_count + num_mat_dim1[0]))
       = matrix_1d;
-  interpolation_matrix.block(vertex_count + matrix_1d.rows(),
-                             vertex_count + matrix_1d.cols(), matrix_2d.rows(),
-                             matrix_2d.cols())
+  xt::view(interpolation_matrix,
+           xt::range(vertex_count + num_mat_dim0[0],
+                     vertex_count + num_mat_dim0[0] + num_mat_dim0[1]),
+           xt::range(vertex_count + num_mat_dim1[0],
+                     vertex_count + num_mat_dim1[0] + +num_mat_dim1[1]))
       = matrix_2d;
-  interpolation_matrix.block(vertex_count + matrix_1d.rows() + matrix_2d.rows(),
-                             vertex_count + matrix_1d.cols() + matrix_2d.cols(),
-                             matrix_3d.rows(), matrix_3d.cols())
+  xt::view(interpolation_matrix,
+           xt::range(vertex_count + num_mat_dim0[0] + num_mat_dim0[1],
+                     vertex_count + num_mat_dim0[0] + num_mat_dim0[1]
+                         + num_mat_dim0[2]),
+           xt::range(vertex_count + num_mat_dim1[0] + num_mat_dim1[1],
+                     vertex_count + num_mat_dim1[0] + +num_mat_dim1[1]
+                         + num_mat_dim1[2]))
       = matrix_3d;
 
-  Eigen::MatrixXd wcoeffs;
+  xt::xtensor<double, 2> wcoeffs;
   if (tdim == 1)
-    wcoeffs = Eigen::MatrixXd::Identity(degree + 1, degree + 1);
+    wcoeffs = xt::eye<double>(degree + 1);
   else if (tdim == 2)
     wcoeffs = make_serendipity_space_2d(degree);
   else if (tdim == 3)
@@ -252,55 +309,58 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   for (std::size_t j = 0; j < topology[0].size(); ++j)
     entity_dofs[0].push_back(1);
   for (std::size_t j = 0; j < topology[1].size(); ++j)
-    entity_dofs[1].push_back(matrix_1d.rows() / topology[1].size());
+    entity_dofs[1].push_back(num_mat_dim0[0] / topology[1].size());
   if (tdim >= 2)
     for (std::size_t j = 0; j < topology[2].size(); ++j)
-      entity_dofs[2].push_back(matrix_2d.rows() / topology[2].size());
+      entity_dofs[2].push_back(num_mat_dim0[1] / topology[2].size());
   if (tdim == 3)
     for (std::size_t j = 0; j < topology[3].size(); ++j)
-      entity_dofs[3].push_back(matrix_3d.rows() / topology[3].size());
+      entity_dofs[3].push_back(num_mat_dim0[2] / topology[3].size());
 
-  const int ndofs = interpolation_matrix.rows();
-
-  int transform_count = 0;
+  const std::size_t ndofs = interpolation_matrix.shape()[0];
+  std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  std::vector<Eigen::MatrixXd> base_transformations(
-      transform_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  xt::xtensor<double, 3> base_transformations
+      = xt::zeros<double>({transform_count, ndofs, ndofs});
+  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  {
+    xt::view(base_transformations, i, xt::all(), xt::all())
+        = xt::eye<double>(ndofs);
+  }
 
   if (tdim >= 2 and degree >= 2)
   {
     const int edge_dofs = degree - 1;
     const int num_vertices = topology[0].size();
-    const int num_edges = topology[1].size();
-    for (int edge = 0; edge < num_edges; ++edge)
+    const std::size_t num_edges = topology[1].size();
+    for (std::size_t edge = 0; edge < num_edges; ++edge)
     {
-      const int start = num_vertices + edge_dofs * edge;
-      base_transformations[edge].block(start, start, edge_dofs, edge_dofs)
-          = edge_transforms[0];
+      const std::size_t start = num_vertices + edge_dofs * edge;
+      auto range = xt::range(start, start + edge_dofs);
+      xt::view(base_transformations, edge, range, range)
+          = xt::view(edge_transforms, 0, xt::all(), xt::all());
     }
     if (tdim == 3 and degree >= 4)
     {
-      const int face_dofs = face_transforms[0].rows();
-      const int num_faces = topology[2].size();
-      for (int face = 0; face < num_faces; ++face)
+      const std::size_t face_dofs = face_transforms.shape()[1];
+      const std::size_t num_faces = topology[2].size();
+      for (std::size_t face = 0; face < num_faces; ++face)
       {
-        const int start
+        const std::size_t start
             = num_vertices + num_edges * edge_dofs + face * face_dofs;
-        base_transformations[num_edges + 2 * face].block(start, start,
-                                                         face_dofs, face_dofs)
-            = face_transforms[0];
-        base_transformations[num_edges + 2 * face + 1].block(
-            start, start, face_dofs, face_dofs)
-            = face_transforms[1];
+        auto range = xt::range(start, start + face_dofs);
+        xt::view(base_transformations, num_edges + 2 * face, range, range)
+            = xt::view(face_transforms, 0, xt::all(), xt::all());
+        xt::view(base_transformations, num_edges + 2 * face + 1, range, range)
+            = xt::view(face_transforms, 1, xt::all(), xt::all());
       }
     }
   }
 
-  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, interpolation_matrix, interpolation_points, degree);
-
   return FiniteElement(element::family::Serendipity, celltype, degree, {1},
                        coeffs, entity_dofs, base_transformations,
                        interpolation_points, interpolation_matrix,

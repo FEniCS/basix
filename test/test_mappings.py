@@ -25,16 +25,20 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
     elif tdim == 3:
         points = np.array([[i / N, j / N, k / N]
                            for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1 - i - j)])
-    values = e.tabulate(0, points)[0]
+    values = e.tabulate_x(0, points)[0]
 
-    _J = np.array([J.reshape(J.shape[0] * J.shape[1]) for p in points])
+    _J = np.array([J for p in points])
     _detJ = np.array([detJ for p in points])
-    _K = np.array([K.reshape(K.shape[0] * K.shape[1]) for p in points])
+    _K = np.array([K for p in points])
 
-    assert values.shape[1] == reference_value_size * e.dim
+    assert values.shape[1] == e.dim
+    assert values.shape[2] == reference_value_size
+
     mapped = e.map_push_forward(values, _J, _detJ, _K)
     assert mapped.shape[0] == values.shape[0]
-    assert mapped.shape[1] == physical_value_size * e.dim
+    assert mapped.shape[1] == e.dim
+    assert mapped.shape[2] == physical_value_size
+
     unmapped = e.map_pull_back(mapped, _J, _detJ, _K)
     assert np.allclose(values, unmapped)
 
@@ -42,12 +46,10 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
 @pytest.mark.parametrize("element_name", elements)
 def test_mappings_2d_to_2d(element_name):
     e = basix.create_element(element_name, "triangle", 1)
-
     J = np.array([[random.random() + 1, random.random()],
                   [random.random(), random.random()]])
     detJ = np.linalg.det(J)
     K = np.linalg.inv(J)
-
     run_map_test(e, J, detJ, K, e.value_size, e.value_size)
 
 

@@ -2,11 +2,12 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include <pybind11/eigen.h>
+#include <pybind11/numpy.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <string>
+#include <xtensor/xadapt.hpp>
 
 #include <basix/cell.h>
 #include <basix/element-families.h>
@@ -17,9 +18,6 @@
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <basix/span.hpp>
-
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xio.hpp>
 
 namespace py = pybind11;
 using namespace basix;
@@ -83,6 +81,17 @@ Returns
 numpy.ndarray
     The function value on the reference
 )";
+
+namespace
+{
+auto adapt_x(const py::array_t<double, py::array::c_style>& x)
+{
+  std::vector<std::size_t> shape;
+  for (pybind11::ssize_t i = 0; i < x.ndim(); ++i)
+    shape.push_back(x.shape(i));
+  return xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
+}
+} // namespace
 
 PYBIND11_MODULE(_basixcpp, m)
 {
@@ -182,81 +191,99 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "create_new_element",
       [](element::family family_type, cell::type celltype, int degree,
-         std::vector<int>& value_shape,
-         const Eigen::ArrayXXd& interpolation_points,
-         const Eigen::MatrixXd& interpolation_matrix,
-         const Eigen::MatrixXd& coeffs,
+         std::vector<std::size_t>& value_shape,
+         const py::array_t<double, py::array::c_style>& interpolation_points,
+         const py::array_t<double, py::array::c_style>& interpolation_matrix,
+         const py::array_t<double, py::array::c_style>& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_transformations,
+         const py::array_t<double, py::array::c_style>& base_transformations,
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
         return FiniteElement(family_type, celltype, degree, value_shape,
                              compute_expansion_coefficients(
-                                 celltype, coeffs, interpolation_matrix,
-                                 interpolation_points, degree, 1.0e6),
-                             entity_dofs, base_transformations,
-                             interpolation_points, interpolation_matrix,
-                             mapping_type);
+                                 celltype, adapt_x(coeffs),
+                                 adapt_x(interpolation_matrix),
+                                 adapt_x(interpolation_points), degree, 1.0e6),
+                             entity_dofs, adapt_x(base_transformations),
+                             adapt_x(interpolation_points),
+                             adapt_x(interpolation_matrix), mapping_type);
       },
       "Create an element from basic data");
 
   m.def(
       "create_new_element",
       [](std::string family_name, std::string cell_name, int degree,
-         std::vector<int>& value_shape,
-         const Eigen::ArrayXXd& interpolation_points,
-         const Eigen::MatrixXd& interpolation_matrix,
-         const Eigen::MatrixXd& coeffs,
+         std::vector<std::size_t>& value_shape,
+         const py::array_t<double, py::array::c_style>& interpolation_points,
+         const py::array_t<double, py::array::c_style>& interpolation_matrix,
+         const py::array_t<double, py::array::c_style>& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
-         const std::vector<Eigen::MatrixXd>& base_transformations,
+         const py::array_t<double, py::array::c_style>& base_transformations,
          mapping::type mapping_type
          = mapping::type::identity) -> FiniteElement {
-        return FiniteElement(
-            element::str_to_type(family_name), cell::str_to_type(cell_name),
-            degree, value_shape,
-            compute_expansion_coefficients(cell::str_to_type(cell_name), coeffs,
-                                           interpolation_matrix,
-                                           interpolation_points, degree, 1.0e6),
-            entity_dofs, base_transformations, interpolation_points,
-            interpolation_matrix, mapping_type);
+        return FiniteElement(element::str_to_type(family_name),
+                             cell::str_to_type(cell_name), degree, value_shape,
+                             compute_expansion_coefficients(
+                                 cell::str_to_type(cell_name), adapt_x(coeffs),
+                                 adapt_x(interpolation_matrix),
+                                 adapt_x(interpolation_points), degree, 1.0e6),
+                             entity_dofs, adapt_x(base_transformations),
+                             adapt_x(interpolation_points),
+                             adapt_x(interpolation_matrix), mapping_type);
       },
       "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
-      .def("tabulate",
-           py::overload_cast<int, const Eigen::ArrayXXd&>(
-               &FiniteElement::tabulate, py::const_),
-           tabdoc.c_str())
+      .def(
+          "tabulate",
+          [](const FiniteElement& self, int n,
+             const py::array_t<double, py::array::c_style>& x) {
+            auto _x = adapt_x(x);
+            auto t = self.tabulate_new(n, _x);
+            return py::array_t<double>(t.shape(), t.data());
+          },
+          tabdoc.c_str())
+      .def(
+          "tabulate_x",
+          [](const FiniteElement& self, int n,
+             const py::array_t<double, py::array::c_style>& x) {
+            auto _x = adapt_x(x);
+            auto t = self.tabulate_x(n, _x);
+            return py::array_t<double>(t.shape(), t.data());
+          },
+          tabdoc.c_str())
       .def(
           "map_push_forward",
           [](const FiniteElement& self,
-             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>& reference_data,
-             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>& J,
+             const py::array_t<double, py::array::c_style>& U,
+             const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>& K) {
-            return self.map_push_forward(
-                reference_data, J, tcb::span(detJ.data(), detJ.size()), K);
+             const py::array_t<double, py::array::c_style>& K) {
+            auto u = self.map_push_forward(adapt_x(U), adapt_x(J),
+                                           tcb::span(detJ.data(), detJ.size()),
+                                           adapt_x(K));
+            return py::array_t<double>(u.shape(), u.data());
           },
           mapdoc.c_str())
       .def(
           "map_pull_back",
           [](const FiniteElement& self,
-             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>& physical_data,
-             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>& J,
+             const py::array_t<double, py::array::c_style>& u,
+             const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                                Eigen::RowMajor>& K) {
-            return self.map_pull_back(physical_data, J,
-                                      tcb::span(detJ.data(), detJ.size()), K);
+             const py::array_t<double, py::array::c_style>& K) {
+            auto U = self.map_pull_back(adapt_x(u), adapt_x(J),
+                                        tcb::span(detJ.data(), detJ.size()),
+                                        adapt_x(K));
+            return py::array_t<double>(U.shape(), U.data());
           },
           invmapdoc.c_str())
-      .def_property_readonly("base_transformations",
-                             &FiniteElement::base_transformations)
+      .def_property_readonly(
+          "base_transformations",
+          [](const FiniteElement& self) {
+            const xt::xtensor<double, 3>& t = self.base_transformations();
+            return py::array_t<double>(t.shape(), t.data(), py::cast(self));
+          })
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
@@ -265,9 +292,17 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family", &FiniteElement::family)
       .def_property_readonly("mapping_type", &FiniteElement::mapping_type)
-      .def_property_readonly("points", &FiniteElement::points)
-      .def_property_readonly("interpolation_matrix",
-                             &FiniteElement::interpolation_matrix);
+      .def_property_readonly("points",
+                             [](const FiniteElement& self) {
+                               const xt::xtensor<double, 2>& x = self.points();
+                               return py::array_t<double>(x.shape(), x.data(),
+                                                          py::cast(self));
+                             })
+      .def_property_readonly(
+          "interpolation_matrix", [](const FiniteElement& self) {
+            const xt::xtensor<double, 2>& P = self.interpolation_matrix();
+            return py::array_t<double>(P.shape(), P.data(), py::cast(self));
+          });
 
   // Create FiniteElement
   m.def(
@@ -308,8 +343,25 @@ Each element has a `tabulate` function which returns the basis functions and a n
       },
       "Compute jacobi polynomial and derivatives at points");
 
-  m.def("make_quadrature", &quadrature::make_quadrature,
-        "Compute quadrature points and weights on a reference cell");
+  m.def(
+      "make_quadrature",
+      [](const std::string& rule, cell::type celltype, int m) {
+        auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
+        // FIXME: it would be more elegant to handle 1D case as a 1D
+        // array, but FFC would need updating
+        if (pts.dimension() == 1)
+        {
+          std::array<std::size_t, 2> s = {pts.shape()[0], 1};
+          return std::pair(py::array_t<double>(s, pts.data()),
+                           py::array_t<double>(w.size(), w.data()));
+        }
+        else
+        {
+          return std::pair(py::array_t<double>(pts.shape(), pts.data()),
+                           py::array_t<double>(w.size(), w.data()));
+        }
+      },
+      "Compute quadrature points and weights on a reference cell");
 
   m.def("index", py::overload_cast<int>(&basix::idx), "Indexing for 1D arrays")
       .def("index", py::overload_cast<int, int>(&basix::idx),

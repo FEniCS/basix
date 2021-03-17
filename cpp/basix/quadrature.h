@@ -6,8 +6,8 @@
 
 #include "cell.h"
 #include "span.hpp"
-#include <Eigen/Core>
 #include <utility>
+#include <vector>
 #include <xtensor/xtensor.hpp>
 
 /// basix
@@ -66,7 +66,7 @@ make_quadrature_tetrahedron_collapsed(std::size_t m);
 /// will integrate exactly
 /// @returns List of points and list of weights. The number of points
 /// arrays has shape (num points, gdim)
-std::pair<Eigen::ArrayXXd, Eigen::ArrayXd>
+std::pair<xt::xarray<double>, std::vector<double>>
 make_quadrature(const std::string& rule, cell::type celltype, int m);
 
 /// Compute GLL line quadrature rule on [0, 1]

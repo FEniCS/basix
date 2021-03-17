@@ -127,10 +127,6 @@ target_include_directories(basix PUBLIC
                            $<INSTALL_INTERFACE:include>
                            "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/cpp>")
 
-# Add dependencies to target
-target_include_directories(basix SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIRS})
-target_compile_definitions(basix PUBLIC EIGEN_MAX_ALIGN_BYTES=32) # Eigen hack, remove later
-
 # The commented lines need CMake >= 3.18
 # target_link_libraries(basix PRIVATE BLAS::BLAS)
 # target_link_libraries(basix PRIVATE LAPACK::LAPACK)

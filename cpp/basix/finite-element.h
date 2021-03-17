@@ -249,8 +249,7 @@ public:
 
   /// TODO
   /// @return Shape [derivative][point][basis fn][value index]
-  xt::xtensor<double, 4> tabulate_x(int nd,
-                                      const xt::xarray<double>& x) const;
+  xt::xtensor<double, 4> tabulate_x(int nd, const xt::xarray<double>& x) const;
 
   /// Direct to memory block tabulation
   /// @param nd Number of derivatives
@@ -441,6 +440,9 @@ public:
   /// interpolated function.
   const xt::xtensor<double, 2>& interpolation_matrix() const;
 
+  /// Element map type
+  mapping::type map_type;
+
 private:
   static int compute_value_size(mapping::type map_type, int dim);
 
@@ -488,10 +490,10 @@ private:
   xt::xtensor<double, 2> _matM;
 
   // The mapping that maps values on the reference to values on a physical cell
-  std::function<std::vector<double>(const tcb::span<const double>&,
-                                    const xt::xtensor<double, 2>&, const double,
-                                    const xt::xtensor<double, 2>&)>
-      _map_push_forward;
+  // std::function<std::vector<double>(const tcb::span<const double>&,
+  //                                   const xt::xtensor<double, 2>&, const
+  //                                   double, const xt::xtensor<double, 2>&)>
+  //     _map_push_forward;
 };
 
 /// Create an element by name
@@ -523,36 +525,18 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
   {
     auto J_p = xt::view(J, p, xt::all(), xt::all());
     auto K_p = xt::view(K, p, xt::all(), xt::all());
-    if constexpr (std::is_same<T, double>::value)
-    {
-      // Loop over values at each point
-      for (std::size_t i = 0; i < U.shape(1); ++i)
-      {
-        // Note: we assign here to a xt::xtensor<double, 1> until the
-        // maps are updated to accept xtensor objects rather than spans
-        // auto U_data = xt::row(U_b, i);
-        xt::xtensor<double, 1> U_data = xt::view(U, p, i, xt::all());
-        std::vector<double> f = _map_push_forward(U_data, J_p, detJ[p], K_p);
-        for (std::size_t j = 0; j < f.size(); ++j)
-          u(p, i, j) = f[j];
-      }
-    }
-    else
-    {
-      // Note: This is a bit crazy; the maps should handle
-      // real/complex/float and whatever else
-      throw std::runtime_error("Complex not suppoted.");
 
-      // See https://github.com/xtensor-stack/xtensor/issues/1701
-      // for (std::size_t i = 0; i < U_b.shape(0); ++i)
-      // {
-      //   xt::xtensor<double, 1> U_data_r = xt::real(xt::row(U_b, i));
-      //   xt::xtensor<double, 1> U_data_c = xt::imag(xt::row(U_b, i));
-      //   std::vector<double> ur = _map_push_forward(U_data_r, J_p, detJ[p],
-      //   K_p); std::vector<double> uc = _map_push_forward(U_data_c, J_p,
-      //   detJ[p], K_p); for (std::size_t j = 0; j < ur.size(); ++j)
-      //     u_b(i, j) = std::complex(ur[j], uc[j]);
-      // }
+    // Loop over values at each point
+    for (std::size_t i = 0; i < U.shape(1); ++i)
+    {
+      // Note: we assign here to a xt::xtensor<double, 1> until the
+      // maps are updated to accept xtensor objects rather than spans
+      // auto U_data = xt::row(U_b, i);
+      xt::xtensor<T, 1> U_data = xt::view(U, p, i, xt::all());
+      std::vector<T> f
+          = mapping::apply_map<T>(U_data, J_p, detJ[p], K_p, map_type);
+      for (std::size_t j = 0; j < f.size(); ++j)
+        u(p, i, j) = f[j];
     }
   }
 }
@@ -569,40 +553,20 @@ void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
   {
     auto J_p = xt::view(J, p, xt::all(), xt::all());
     auto K_p = xt::view(K, p, xt::all(), xt::all());
-    if constexpr (std::is_same<T, double>::value)
-    {
-      // Loop over each item at point to be transformed
-      for (std::size_t i = 0; i < u.shape(1); ++i)
-      {
-        // Note: we assign here to a xt::xtensor<double, 1> until the
-        // maps are updated to accept xtensor objects rather than spans
-        // auto U_data = xt::row(U_b, i);
 
-        // Map data
-        xt::xtensor<double, 1> u_data = xt::view(u, p, i, xt::all());
-        std::vector<double> f
-            = _map_push_forward(u_data, K_p, 1.0 / detJ[p], J_p);
-        for (std::size_t j = 0; j < f.size(); ++j)
-          U(p, i, j) = f[j];
-      }
-    }
-    else
+    // Loop over each item at point to be transformed
+    for (std::size_t i = 0; i < u.shape(1); ++i)
     {
-      // Note: This is a bit crazy; the maps should handle
-      // real/complex/float and whatever else
-      throw std::runtime_error("Complex not suppoted.");
+      // Note: we assign here to a xt::xtensor<double, 1> until the
+      // maps are updated to accept xtensor objects rather than spans
+      // auto U_data = xt::row(U_b, i);
 
-      // for (int i = 0; i < nresults; ++i)
-      // {
-      //   Eigen::ArrayXd tmp_r = physical_data.row(pt * nresults + i).real();
-      //   Eigen::ArrayXd tmp_c = physical_data.row(pt * nresults + i).imag();
-      //   std::vector<double> Ur
-      //       = _map_push_forward(tmp_r, current_K, 1 / detJ[pt], current_J);
-      //   std::vector<double> Uc
-      //       = _map_push_forward(tmp_c, current_K, 1 / detJ[pt], current_J);
-      //   for (std::size_t j = 0; j < Ur.size(); ++j)
-      //     reference_array(pt * nresults + i, j) = std::complex(Ur[j], Uc[j]);
-      // }
+      // Map data
+      xt::xtensor<T, 1> u_data = xt::view(u, p, i, xt::all());
+      std::vector<T> f
+          = mapping::apply_map<T>(u_data, K_p, 1.0 / detJ[p], J_p, map_type);
+      for (std::size_t j = 0; j < f.size(); ++j)
+        U(p, i, j) = f[j];
     }
   }
 }

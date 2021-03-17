@@ -215,9 +215,10 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
                              const xt::xtensor<double, 2>& points,
                              const xt::xtensor<double, 2>& M,
                              mapping::type map_type)
-    : _cell_type(cell_type), _family(family), _degree(degree),
-      _map_type(map_type), _coeffs(coeffs), _entity_dofs(entity_dofs),
-      _base_transformations(base_transformations), _matM(M)
+    : map_type(map_type), _cell_type(cell_type), _family(family),
+      _degree(degree), _map_type(map_type), _coeffs(coeffs),
+      _entity_dofs(entity_dofs), _base_transformations(base_transformations),
+      _matM(M)
 {
   if (points.dimension() == 1)
     throw std::runtime_error("Problem with points");
@@ -235,7 +236,6 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
   }
-  _map_push_forward = mapping::get_forward_map(map_type);
 }
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }

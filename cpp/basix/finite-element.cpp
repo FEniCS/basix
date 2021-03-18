@@ -213,7 +213,7 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
                              const xt::xtensor<double, 3>& base_transformations,
                              const xt::xtensor<double, 2>& points,
                              const xt::xtensor<double, 2>& M,
-                             map::type map_type)
+                             maps::type map_type)
     : map_type(map_type), _cell_type(cell_type), _family(family),
       _degree(degree), _map_type(map_type), _coeffs(coeffs),
       _entity_dofs(entity_dofs), _base_transformations(base_transformations),
@@ -256,7 +256,7 @@ int FiniteElement::dim() const { return _coeffs.shape(0); }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
-map::type FiniteElement::mapping_type() const { return _map_type; }
+maps::type FiniteElement::mapping_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::interpolation_matrix() const
 {
@@ -423,19 +423,19 @@ std::string basix::version()
   return version_str;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::compute_value_size(map::type map_type, int dim)
+int FiniteElement::compute_value_size(maps::type map_type, int dim)
 {
   switch (map_type)
   {
-  case map::type::identity:
+  case maps::type::identity:
     return 1;
-  case map::type::covariantPiola:
+  case maps::type::covariantPiola:
     return dim;
-  case map::type::contravariantPiola:
+  case maps::type::contravariantPiola:
     return dim;
-  case map::type::doubleCovariantPiola:
+  case maps::type::doubleCovariantPiola:
     return dim * dim;
-  case map::type::doubleContravariantPiola:
+  case maps::type::doubleContravariantPiola:
     return dim * dim;
   default:
     throw std::runtime_error("Mapping not yet implemented");

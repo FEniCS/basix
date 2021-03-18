@@ -155,18 +155,18 @@ Each element has a `tabulate` function which returns the basis functions and a n
       },
       "Create a uniform lattice of points on a reference cell");
 
-  py::enum_<map::type>(m, "MappingType")
-      .value("identity", map::type::identity)
-      .value("covariantPiola", map::type::covariantPiola)
-      .value("contravariantPiola", map::type::contravariantPiola)
-      .value("doubleCovariantPiola", map::type::doubleCovariantPiola)
+  py::enum_<maps::type>(m, "MappingType")
+      .value("identity", maps::type::identity)
+      .value("covariantPiola", maps::type::covariantPiola)
+      .value("contravariantPiola", maps::type::contravariantPiola)
+      .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
       .value("doubleContravariantPiola",
-             map::type::doubleContravariantPiola);
+             maps::type::doubleContravariantPiola);
 
   m.def(
       "mapping_to_str",
-      [](map::type mapping_type) -> const std::string& {
-        return map::type_to_str(mapping_type);
+      [](maps::type mapping_type) -> const std::string& {
+        return maps::type_to_str(mapping_type);
       },
       "Convert a mapping type to a string.");
 
@@ -197,8 +197,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const py::array_t<double, py::array::c_style>& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const py::array_t<double, py::array::c_style>& base_transformations,
-         map::type mapping_type
-         = map::type::identity) -> FiniteElement {
+         maps::type mapping_type
+         = maps::type::identity) -> FiniteElement {
         return FiniteElement(family_type, celltype, degree, value_shape,
                              compute_expansion_coefficients(
                                  celltype, adapt_x(coeffs),
@@ -219,8 +219,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const py::array_t<double, py::array::c_style>& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const py::array_t<double, py::array::c_style>& base_transformations,
-         map::type mapping_type
-         = map::type::identity) -> FiniteElement {
+         maps::type mapping_type
+         = maps::type::identity) -> FiniteElement {
         return FiniteElement(element::str_to_type(family_name),
                              cell::str_to_type(cell_name), degree, value_shape,
                              compute_expansion_coefficients(

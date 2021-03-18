@@ -435,7 +435,7 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
       celltype, wcoeffs, interp_matrix, points, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, transforms, points, interp_matrix,
-                       map::type::covariantPiola);
+                       maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
@@ -474,6 +474,6 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
       celltype, wcoeffs, interp_matrix, points, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, interp_matrix,
-                       map::type::covariantPiola);
+                       maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

@@ -5,7 +5,7 @@
 #include "basix.h"
 #include "cell.h"
 #include "finite-element.h"
-#include "mappings.h"
+#include "maps.h"
 #include "quadrature.h"
 #include "span.hpp"
 #include <algorithm>
@@ -244,7 +244,7 @@ const char* basix::family_name(int handle)
 const char* basix::mapping_name(int handle)
 {
   check_handle(handle);
-  return mapping::type_to_str(_registry[handle]->mapping_type()).c_str();
+  return maps::type_to_str(_registry[handle]->mapping_type()).c_str();
 }
 
 int basix::cell_geometry_num_points(const char* cell_type)

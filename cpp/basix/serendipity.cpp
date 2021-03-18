@@ -7,7 +7,7 @@
 #include "lagrange.h"
 #include "lattice.h"
 #include "log.h"
-#include "mappings.h"
+#include "maps.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
@@ -363,6 +363,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   return FiniteElement(element::family::Serendipity, celltype, degree, {1},
                        coeffs, entity_dofs, base_transformations,
                        interpolation_points, interpolation_matrix,
-                       mapping::type::identity);
+                       maps::type::identity);
 }
 //-----------------------------------------------------------------------------

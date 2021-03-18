@@ -6,7 +6,7 @@
 #include "element-families.h"
 #include "lagrange.h"
 #include "log.h"
-#include "mappings.h"
+#include "maps.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
@@ -180,7 +180,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
       celltype, wcoeffs, matrix, points, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
-                       mapping::type::contravariantPiola);
+                       maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nce(cell::type celltype, int degree)
@@ -387,6 +387,6 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
-                       mapping::type::covariantPiola);
+                       maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

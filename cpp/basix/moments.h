@@ -64,8 +64,9 @@ create_moment_dof_transformations(const FiniteElement& moment_space);
 ///
 /// A normal integral moment is defined by
 /// \f[l_{i,j}(v) = \int v\cdot n\phi_i,\f]
-/// where \f$\phi_i\f$ is a basis function in the moment space, \f$n\f$ is normal to
-/// the cell sub-entity, \f$v\f$ is a vector, and \f$\phi_i\f$ is a scalar.
+/// where \f$\phi_i\f$ is a basis function in the moment space, \f$n\f$ is
+/// normal to the cell sub-entity, \f$v\f$ is a vector, and \f$\phi_i\f$ is a
+/// scalar.
 ///
 /// This does the same as `create_dot_moment_dof_transformations` with some
 /// additional factors of -1 to account for the changing of the normal direction

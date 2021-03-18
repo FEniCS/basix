@@ -9,7 +9,7 @@
 
 #include "cell.h"
 #include "element-families.h"
-#include "mappings.h"
+#include "maps.h"
 #include "span.hpp"
 #include <string>
 #include <vector>
@@ -207,7 +207,7 @@ public:
                 const xt::xtensor<double, 3>& base_transformations,
                 const xt::xtensor<double, 2>& points,
                 const xt::xtensor<double, 2>& M = {},
-                mapping::type map_type = mapping::type::identity);
+                maps::type map_type = maps::type::identity);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -284,7 +284,7 @@ public:
 
   /// Get the mapping type used for this element
   /// @return The mapping
-  mapping::type mapping_type() const;
+  maps::type mapping_type() const;
 
   /// Map function values from the reference to a physical cell
   /// @param U The function values on the reference
@@ -440,10 +440,10 @@ public:
   const xt::xtensor<double, 2>& interpolation_matrix() const;
 
   /// Element map type
-  mapping::type map_type;
+  maps::type map_type;
 
 private:
-  static int compute_value_size(mapping::type map_type, int dim);
+  static int compute_value_size(maps::type map_type, int dim);
 
   // Cell type
   cell::type _cell_type;
@@ -458,7 +458,7 @@ private:
   std::vector<int> _value_shape;
 
   /// The mapping used to map this element from the reference to a cell
-  mapping::type _map_type;
+  maps::type _map_type;
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k}
@@ -528,14 +528,9 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
     // Loop over values at each point
     for (std::size_t i = 0; i < U.shape(1); ++i)
     {
-      // Note: we assign here to a xt::xtensor<double, 1> until the
-      // maps are updated to accept xtensor objects rather than spans
-      // auto U_data = xt::row(U_b, i);
-      xt::xtensor<T, 1> U_data = xt::view(U, p, i, xt::all());
-      std::vector<T> f
-          = mapping::apply_map<T>(U_data, J_p, detJ[p], K_p, map_type);
-      for (std::size_t j = 0; j < f.size(); ++j)
-        u(p, i, j) = f[j];
+      auto U_data = xt::view(U, p, i, xt::all());
+      auto u_data = xt::view(u, p, i, xt::all());
+      maps::apply_map(u_data, U_data, J_p, detJ[p], K_p, map_type);
     }
   }
 }
@@ -556,16 +551,9 @@ void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
     // Loop over each item at point to be transformed
     for (std::size_t i = 0; i < u.shape(1); ++i)
     {
-      // Note: we assign here to a xt::xtensor<double, 1> until the
-      // maps are updated to accept xtensor objects rather than spans
-      // auto U_data = xt::row(U_b, i);
-
-      // Map data
-      xt::xtensor<T, 1> u_data = xt::view(u, p, i, xt::all());
-      std::vector<T> f
-          = mapping::apply_map<T>(u_data, K_p, 1.0 / detJ[p], J_p, map_type);
-      for (std::size_t j = 0; j < f.size(); ++j)
-        U(p, i, j) = f[j];
+      auto u_data = xt::view(u, p, i, xt::all());
+      auto U_data = xt::view(U, p, i, xt::all());
+      maps::apply_map(U_data, u_data, K_p, 1.0 / detJ[p], J_p, map_type);
     }
   }
 }

@@ -6,7 +6,7 @@
 #include "dof-transformations.h"
 #include "element-families.h"
 #include "lattice.h"
-#include "mappings.h"
+#include "maps.h"
 #include "polyset.h"
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xbuilder.hpp>
@@ -237,6 +237,6 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
                        coeffs, entity_dofs, base_transformations, points,
-                       matrix, mapping::type::doubleCovariantPiola);
+                       matrix, maps::type::doubleCovariantPiola);
 }
 //-----------------------------------------------------------------------------

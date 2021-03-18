@@ -5,7 +5,7 @@
 #include "bubble.h"
 #include "element-families.h"
 #include "lattice.h"
-#include "mappings.h"
+#include "maps.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include <numeric>
@@ -158,6 +158,6 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
       celltype, wcoeffs, xt::eye<double>(ndofs), points, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, points,
-                       xt::eye<double>(ndofs), mapping::type::identity);
+                       xt::eye<double>(ndofs), maps::type::identity);
 }
 //-----------------------------------------------------------------------------

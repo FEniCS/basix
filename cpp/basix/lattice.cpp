@@ -74,7 +74,7 @@ xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
   if (lattice_type == lattice::type::gll_warped)
     r += warp_function_new(n, r);
 
-  const std::size_t m = r.shape()[0];
+  const std::size_t m = r.shape(0);
   xt::xtensor<double, 2> x({m * m, 2});
   std::size_t c = 0;
   for (std::size_t j = 0; j < m; ++j)
@@ -232,12 +232,12 @@ xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
   const xt::xtensor<double, 1> line_pts
       = create_interval(n, lattice_type, exterior);
 
-  xt::xtensor<double, 2> x({tri_pts.shape()[0] * line_pts.shape()[0], 3});
-  std::array<std::size_t, 2> reps = {line_pts.shape()[0], 1};
+  xt::xtensor<double, 2> x({tri_pts.shape(0) * line_pts.shape(0), 3});
+  std::array<std::size_t, 2> reps = {line_pts.shape(0), 1};
   xt::view(x, xt::all(), xt::range(0, 2)) = xt::tile(tri_pts, reps);
-  for (std::size_t i = 0; i < line_pts.shape()[0]; ++i)
+  for (std::size_t i = 0; i < line_pts.shape(0); ++i)
   {
-    auto rows = xt::range(i * tri_pts.shape()[0], (i + 1) * tri_pts.shape()[0]);
+    auto rows = xt::range(i * tri_pts.shape(0), (i + 1) * tri_pts.shape(0));
     xt::view(x, rows, xt::range(2, 3)) = line_pts(i);
   }
 
@@ -264,10 +264,9 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
   FiniteElement L = create_dlagrange(cell::type::interval, n);
   auto w = [&](double r) -> double {
     xt::xtensor<double, 1> rr = {0.5 * (r + 1.0)};
-    xt::xtensor<double, 1> v
-        = xt::view(L.tabulate_new(0, rr), 0, 0, xt::all());
+    xt::xtensor<double, 1> v = xt::view(L.tabulate_new(0, rr), 0, 0, xt::all());
     double d = 0.0;
-    for (std::size_t i = 0; i < pts.shape()[0]; ++i)
+    for (std::size_t i = 0; i < pts.shape(0); ++i)
       d += v[i] * pts[i];
     return d;
     // return v.dot(pts);
@@ -395,7 +394,7 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
   case cell::type::interval:
   {
     xt::xtensor<double, 1> x = create_interval(n, type, exterior);
-    std::array<std::size_t, 2> s = {x.shape()[0], 1};
+    std::array<std::size_t, 2> s = {x.shape(0), 1};
     return xt::reshape_view(x, s);
   }
   case cell::type::triangle:

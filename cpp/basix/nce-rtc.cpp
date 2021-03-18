@@ -24,7 +24,9 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
 {
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
+  {
     throw std::runtime_error("Unsupported cell type");
+  }
 
   if (degree > 4)
   {
@@ -46,7 +48,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
       polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = polyset_at_Qpts.shape()[1];
+  const std::size_t psize = polyset_at_Qpts.shape(1);
 
   const int facet_count = tdim == 2 ? 4 : 6;
   const int facet_dofs = polyset::dim(facettype, degree - 1);
@@ -92,15 +94,11 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
     {
       int n = 0;
       xt::xtensor<double, 1> integrand = xt::pow(xt::col(Qpts, d), degree);
-      // for (int j = 1; j < degree; ++j)
-      //   integrand *= xt::col(Qpts, d);
       for (std::size_t c = 0; c < tdim; ++c)
       {
         if (c != d)
         {
-          for (int j = 0; j < indices[n]; ++j)
-            integrand *= xt::col(Qpts, c);
-          // integrand *= std::pow(xt::col(Qpts, c), ;
+          integrand *= xt::pow(xt::col(Qpts, c), indices[n]);
           ++n;
         }
       }
@@ -145,10 +143,8 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, transform_count);
-
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   if (tdim == 2)
   {
     for (int edge = 0; edge < facet_count; ++edge)
@@ -210,7 +206,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
       polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const int psize = polyset_at_Qpts.shape()[1];
+  const int psize = polyset_at_Qpts.shape(1);
 
   const int edge_count = tdim == 2 ? 4 : 12;
   const int edge_dofs = polyset::dim(cell::type::interval, degree - 1);
@@ -355,10 +351,8 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, transform_count);
-
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   for (int edge = 0; edge < edge_count; ++edge)
   {
     const std::size_t start = edge_dofs * edge;

@@ -21,7 +21,7 @@ using namespace basix;
 namespace
 {
 //----------------------------------------------------------------------------
-xt::xtensor<double, 2> make_serendipity_space_2d(const int degree)
+xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
 {
   const std::size_t ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
@@ -37,8 +37,8 @@ xt::xtensor<double, 2> make_serendipity_space_2d(const int degree)
       = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, Qpts), 0,
                  xt::all(), xt::all());
 
-  const std::size_t psize = polyset_at_Qpts.shape()[1];
-  const std::size_t nv = smaller_polyset_at_Qpts.shape()[1];
+  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t nv = smaller_polyset_at_Qpts.shape(1);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
@@ -76,8 +76,7 @@ xt::xtensor<double, 2> make_serendipity_space_2d(const int degree)
 }
 //----------------------------------------------------------------------------
 std::vector<std::array<int, 3>>
-serendipity_3d_indices(const int total, const int linear,
-                       std::vector<int> done = {})
+serendipity_3d_indices(int total, int linear, std::vector<int> done = {})
 {
   if (done.size() == 3)
   {
@@ -114,7 +113,7 @@ serendipity_3d_indices(const int total, const int linear,
   return out;
 }
 //----------------------------------------------------------------------------
-xt::xtensor<double, 2> make_serendipity_space_3d(const int degree)
+xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
 {
   const std::size_t ndofs
       = degree < 4 ? 12 * degree - 4
@@ -134,8 +133,8 @@ xt::xtensor<double, 2> make_serendipity_space_3d(const int degree)
       = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts), 0,
                  xt::all(), xt::all());
 
-  const std::size_t psize = polyset_at_Qpts.shape()[1];
-  const std::size_t nv = smaller_polyset_at_Qpts.shape()[1];
+  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t nv = smaller_polyset_at_Qpts.shape(1);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
@@ -228,14 +227,14 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
 
   const std::size_t vertex_count = cell::sub_entity_count(celltype, 0);
   const std::array<std::size_t, 3> num_pts_dim
-      = {points_1d.shape()[0], points_2d.shape()[0], points_3d.shape()[0]};
+      = {points_1d.shape(0), points_2d.shape(0), points_3d.shape(0)};
   std::size_t num_pts
       = std::accumulate(num_pts_dim.begin(), num_pts_dim.end(), 0);
 
   const std::array<std::size_t, 3> num_mat_dim0
-      = {matrix_1d.shape()[0], matrix_2d.shape()[0], matrix_3d.shape()[0]};
+      = {matrix_1d.shape(0), matrix_2d.shape(0), matrix_3d.shape(0)};
   const std::array<std::size_t, 3> num_mat_dim1
-      = {matrix_1d.shape()[1], matrix_2d.shape()[1], matrix_3d.shape()[1]};
+      = {matrix_1d.shape(1), matrix_2d.shape(1), matrix_3d.shape(1)};
   std::size_t num_mat0
       = std::accumulate(num_mat_dim0.begin(), num_mat_dim0.end(), 0);
   std::size_t num_mat1
@@ -317,14 +316,14 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     for (std::size_t j = 0; j < topology[3].size(); ++j)
       entity_dofs[3].push_back(num_mat_dim0[2] / topology[3].size());
 
-  const std::size_t ndofs = interpolation_matrix.shape()[0];
+  const std::size_t ndofs = interpolation_matrix.shape(0);
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
   xt::xtensor<double, 3> base_transformations
       = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
   {
     xt::view(base_transformations, i, xt::all(), xt::all())
         = xt::eye<double>(ndofs);
@@ -344,7 +343,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     }
     if (tdim == 3 and degree >= 4)
     {
-      const std::size_t face_dofs = face_transforms.shape()[1];
+      const std::size_t face_dofs = face_transforms.shape(1);
       const std::size_t num_faces = topology[2].size();
       for (std::size_t face = 0; face < num_faces; ++face)
       {

@@ -1394,8 +1394,9 @@ std::string stacktrace_as_stdstring(int skip)
       }
       snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n", i - skip,
                int(2 + sizeof(void*) * 2), callstack[i],
-               status == 0 ? demangled
-                           : info.dli_sname == 0 ? symbols[i] : info.dli_sname,
+               status == 0           ? demangled
+               : info.dli_sname == 0 ? symbols[i]
+                                     : info.dli_sname,
                static_cast<char*>(callstack[i])
                    - static_cast<char*>(info.dli_saddr));
       free(demangled);

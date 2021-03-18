@@ -38,22 +38,20 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   {
     for (int i : f)
     {
-      for (std::size_t j = 0; j < geometry.shape()[1]; ++j)
+      for (std::size_t j = 0; j < geometry.shape(1); ++j)
         pts(c, j) += geometry(i, j);
     }
 
-    for (std::size_t j = 0; j < geometry.shape()[1]; ++j)
+    for (std::size_t j = 0; j < geometry.shape(1); ++j)
       pts(c, j) /= static_cast<double>(f.size());
-    // pts.row(c) /= static_cast<double>(f.size());
     ++c;
   }
 
   xt::xtensor<double, 2> dual = xt::view(polyset::tabulate(celltype, 1, 0, pts),
                                          0, xt::all(), xt::all());
   std::size_t transform_count = tdim == 2 ? 3 : 14;
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, transform_count);
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
 
   // Crouzeix-Raviart has one dof on each entity of tdim-1.
   std::vector<std::vector<int>> entity_dofs(topology.size());

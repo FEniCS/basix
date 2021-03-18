@@ -17,25 +17,22 @@ class FiniteElement;
 /// against spaces on a subentity of the cell
 namespace moments
 {
-/// Create the dof transformations for an integral moment.
-///
-/// If the moment space is an interval, this returns one matrix
-/// representing the reversal of the interval. If the moment space is a
-/// face, this returns two matrices: one representing a rotation, the
-/// other a reflection
-///
-/// @param[in] moment_space The finite element space that the integral
-/// moment is taken against
-/// @return A list of dof transformations
-xt::xtensor<double, 3>
-create_moment_dof_transformations(const FiniteElement& moment_space);
 
-/// Create the dof transformations for an integral moment.
+/// Create the dof transformations for the DOFs defined using a dot integral
+/// moment.
+///
+/// A dot integral moment is defined by
+/// @f[l_i(v) = \int v\cdot\phi_i,]
+/// where @f$\phi_i$ is a basis function in the moment space, and @f$v$ and
+/// $f$\phi_i$ are either both scalars or are vectors of the same size.
 ///
 /// If the moment space is an interval, this returns one matrix
 /// representing the reversal of the interval. If the moment space is a
 /// face, this returns two matrices: one representing a rotation, the
-/// other a reflection
+/// other a reflection.
+///
+/// These matrices are computed by calculation the interpolation coefficients
+/// of a rotated/reflected basis into the original basis.
 ///
 /// @param[in] moment_space The finite element space that the integral
 /// moment is taken against
@@ -43,7 +40,37 @@ create_moment_dof_transformations(const FiniteElement& moment_space);
 xt::xtensor<double, 3>
 create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 
-/// Create the dof transformations for a normal integral moment.
+/// Create the DOF transformations for the DOFs defined using an integral
+/// moment.
+///
+/// An integral moment is defined by
+/// @f[l_{i,j}(v) = \int v\cdot e_j\phi_i,]
+/// where @f$\phi_i$ is a basis function in the moment space, @f$e_j$ is a
+/// coordinate direction (of the cell sub-entity the moment is taken on),
+/// @f$v$ is a vector, and $f$\phi_i$ is a scalar.
+///
+/// This will combine multiple copies of the result of
+/// `create_dot_moment_dof_transformations` to give the transformations for
+/// integral moments of each vector component against the moment space.
+///
+/// @param[in] moment_space The finite element space that the integral
+/// moment is taken against
+/// @return A list of dof transformations
+xt::xtensor<double, 3>
+create_moment_dof_transformations(const FiniteElement& moment_space);
+
+/// Create the dof transformations for the DOFs defined using a normal integral
+/// moment.
+///
+/// A normal integral moment is defined by
+/// @f[l_{i,j}(v) = \int v\cdot n\phi_i,]
+/// where @f$\phi_i$ is a basis function in the moment space, @f$n$ is normal to
+/// the cell sub-entity,
+/// @f$v$ is a vector, and $f$\phi_i$ is a scalar.
+///
+/// This does the same as `create_dot_moment_dof_transformations` with some
+/// additional factors of -1 to account for the changing of the normal direction
+/// when the entity is reflected.
 ///
 /// @param[in] moment_space The finite element space that the integral
 /// moment is taken against
@@ -51,7 +78,18 @@ create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 xt::xtensor<double, 3>
 create_normal_moment_dof_transformations(const FiniteElement& moment_space);
 
-/// Create the dof transformations for a tangential integral moment.
+/// Create the dof transformations for the DOFs defined using a tangential
+/// integral moment.
+///
+/// A tangential integral moment is defined by
+/// @f[l_{i,j}(v) = \int v\cdot t\phi_i,]
+/// where @f$\phi_i$ is a basis function in the moment space, @f$t$ is
+/// tangential to the edge,
+/// @f$v$ is a vector, and $f$\phi_i$ is a scalar.
+///
+/// This does the same as `create_dot_moment_dof_transformations` with some
+/// additional factors of -1 to account for the changing of the tangent
+/// direction when the edge is reflected.
 ///
 /// @param[in] moment_space The finite element space that the integral
 /// moment is taken against

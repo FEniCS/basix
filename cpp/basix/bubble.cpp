@@ -20,29 +20,37 @@ using namespace basix;
 //----------------------------------------------------------------------------
 FiniteElement basix::create_bubble(cell::type celltype, int degree)
 {
-  if (celltype == cell::type::point)
-    throw std::runtime_error("Invalid celltype");
-  if (celltype == cell::type::interval && degree < 2)
-    throw std::runtime_error(
-        "Bubble element on an interval must have degree at least 2");
-  if (celltype == cell::type::triangle && degree < 3)
-    throw std::runtime_error(
-        "Bubble element on a triangle must have degree at least 3");
-  if (celltype == cell::type::tetrahedron && degree < 4)
-    throw std::runtime_error(
-        "Bubble element on a tetrahedron must have degree at least 4");
-  if (celltype == cell::type::quadrilateral && degree < 2)
-    throw std::runtime_error("Bubble element on a quadrilateral interval must "
-                             "have degree at least 2");
-  if (celltype == cell::type::hexahedron && degree < 2)
-    throw std::runtime_error(
-        "Bubble element on a hexahedron must have degree at least 2");
-
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-
-  const std::size_t tdim = cell::topological_dimension(celltype);
+  switch (celltype)
+  {
+  case cell::type::interval:
+    if (degree < 2)
+      throw std::runtime_error(
+          "Bubble element on an interval must have degree at least 2");
+    break;
+  case cell::type::triangle:
+    if (degree < 3)
+      throw std::runtime_error(
+          "Bubble element on a triangle must have degree at least 3");
+    break;
+  case cell::type::tetrahedron:
+    if (degree < 4)
+      throw std::runtime_error(
+          "Bubble element on a tetrahedron must have degree at least 4");
+    break;
+  case cell::type::quadrilateral:
+    if (degree < 2)
+      throw std::runtime_error(
+          "Bubble element on a quadrilateral interval must "
+          "have degree at least 2");
+    break;
+  case cell::type::hexahedron:
+    if (degree < 2)
+      throw std::runtime_error(
+          "Bubble element on a hexahedron must have degree at least 2");
+    break;
+  default:
+    throw std::runtime_error("Unsupported cell type");
+  }
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, _Qwts]
@@ -53,13 +61,13 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
       polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = polyset_at_Qpts.shape()[1];
+  const std::size_t psize = polyset_at_Qpts.shape(1);
 
   // Create points at nodes on interior
   const auto points
       = lattice::create(celltype, degree, lattice::type::equispaced, false);
 
-  const std::size_t ndofs = points.shape()[0];
+  const std::size_t ndofs = points.shape(0);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> lower_polyset_at_Qpts;
@@ -122,7 +130,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   }
 
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-  for (std::size_t i = 0; i < lower_polyset_at_Qpts.shape()[1]; ++i)
+  for (std::size_t i = 0; i < lower_polyset_at_Qpts.shape(1); ++i)
   {
     auto integrand = xt::col(lower_polyset_at_Qpts, i) * bubble;
     for (std::size_t k = 0; k < psize; ++k)
@@ -132,10 +140,14 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     }
   }
 
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < tdim; ++i)
     for (std::size_t j = 0; j < topology[i].size(); ++j)
       entity_dofs[i].push_back(0);
-  entity_dofs[tdim].push_back(points.shape()[0]);
+  entity_dofs[tdim].push_back(points.shape(0));
 
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)

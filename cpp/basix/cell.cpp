@@ -175,9 +175,8 @@ xt::xtensor<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
   if (index < 0 or index >= (int)t.size())
     throw std::runtime_error("Invalid entity index");
 
-  xt::xtensor<double, 2> sub_entity(
-      {t[index].size(), cell_geometry.shape()[1]});
-  for (std::size_t i = 0; i < sub_entity.shape()[0]; ++i)
+  xt::xtensor<double, 2> sub_entity({t[index].size(), cell_geometry.shape(1)});
+  for (std::size_t i = 0; i < sub_entity.shape(0); ++i)
     xt::row(sub_entity, i) = xt::row(cell_geometry, t[index][i]);
   return sub_entity;
 }

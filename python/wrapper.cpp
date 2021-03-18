@@ -351,7 +351,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
         // array, but FFC would need updating
         if (pts.dimension() == 1)
         {
-          std::array<std::size_t, 2> s = {pts.shape()[0], 1};
+          std::array<std::size_t, 2> s = {pts.shape(0), 1};
           return std::pair(py::array_t<double>(s, pts.data()),
                            py::array_t<double>(w.size(), w.data()));
         }

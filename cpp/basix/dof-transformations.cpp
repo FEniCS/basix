@@ -20,7 +20,6 @@ std::vector<int> doftransforms::triangle_reflection(int degree)
   const int n = degree * (degree + 1) / 2;
   std::vector<int> perm(n);
   int p = 0;
-
   for (int st = 0; st < degree; ++st)
   {
     int dof = st;
@@ -59,7 +58,6 @@ std::vector<int> doftransforms::quadrilateral_reflection(int degree)
   const int n = degree * degree;
   std::vector<int> perm(n);
   int p = 0;
-
   for (int st = 0; st < degree; ++st)
     for (int i = 0; i < degree; ++i)
       perm[p++] = st + i * degree;
@@ -72,7 +70,6 @@ std::vector<int> doftransforms::quadrilateral_rotation(int degree)
   const int n = degree * degree;
   std::vector<int> perm(n);
   int p = 0;
-
   for (int st = degree - 1; st >= 0; --st)
     for (int i = 0; i < degree; ++i)
       perm[st + degree * i] = p++;

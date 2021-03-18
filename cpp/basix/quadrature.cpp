@@ -86,7 +86,7 @@ std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
 
   auto [evals, evecs] = xt::linalg::eigh(A);
 
-  std::vector<double> x(evals.shape()[0]), w(evals.shape()[0]);
+  std::vector<double> x(evals.shape(0)), w(evals.shape(0));
   xt::adapt(x) = evals;
   xt::adapt(w) = beta[0] * xt::square(xt::row(evecs, 0));
   return {std::move(x), std::move(w)};
@@ -185,12 +185,12 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
   {
     auto [QptsL, QwtsL] = quadrature::make_quadrature_line(m);
     auto [QptsT, QwtsT] = quadrature::make_quadrature_triangle_collapsed(m);
-    xt::xtensor<double, 2> Qpts({m * QptsT.shape()[0], 3});
-    std::vector<double> Qwts(m * QptsT.shape()[0]);
+    xt::xtensor<double, 2> Qpts({m * QptsT.shape(0), 3});
+    std::vector<double> Qwts(m * QptsT.shape(0));
     int c = 0;
     for (std::size_t k = 0; k < m; ++k)
     {
-      for (std::size_t i = 0; i < QptsT.shape()[0]; ++i)
+      for (std::size_t i = 0; i < QptsT.shape(0); ++i)
       {
         Qpts(c, 0) = QptsT(i, 0);
         Qpts(c, 1) = QptsT(i, 1);

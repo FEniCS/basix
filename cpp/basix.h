@@ -38,7 +38,6 @@ void release_element(int handle);
 /// @param [in] nd Number of derivatives
 /// @param [in] x Points at which to evaluate (of size [npoints * tdim])
 /// @param [in] npoints Number of points
-///
 void tabulate(int handle, double* basis_values, int nd, const double* x,
               int npoints);
 
@@ -81,9 +80,8 @@ void tabulate(int handle, double* basis_values, int nd, const double* x,
 void map_push_forward_real(int handle, double* physical_data,
                            const double* reference_data, const double* J,
                            const double* detJ, const double* K,
-                           const int physical_dim,
-                           const int physical_value_size, const int nresults,
-                           const int npoints);
+                           int physical_dim, int physical_value_size,
+                           int nresults, int npoints);
 
 // FIXME: Currently pull_back's data is the transpose of push_forward's data.
 // This should be made consistent. See
@@ -127,9 +125,8 @@ void map_push_forward_real(int handle, double* physical_data,
 /// @param[in] npoints The number of points
 void map_pull_back_real(int handle, double* reference_data,
                         const double* physical_data, const double* J,
-                        const double* detJ, const double* K,
-                        const int physical_dim, const int physical_value_size,
-                        const int nresults, const int npoints);
+                        const double* detJ, const double* K, int physical_dim,
+                        int physical_value_size, int nresults, int npoints);
 
 /// Map function values from the reference to a physical cell.
 ///
@@ -137,9 +134,9 @@ void map_pull_back_real(int handle, double* reference_data,
 void map_push_forward_complex(int handle, std::complex<double>* physical_data,
                               const std::complex<double>* reference_data,
                               const double* J, const double* detJ,
-                              const double* K, const int physical_dim,
-                              const int physical_value_size, const int nresults,
-                              const int npoints);
+                              const double* K, int physical_dim,
+                              int physical_value_size, int nresults,
+                              int npoints);
 
 /// Map function values from a physical cell to the reference
 ///
@@ -147,9 +144,8 @@ void map_push_forward_complex(int handle, std::complex<double>* physical_data,
 void map_pull_back_complex(int handle, std::complex<double>* reference_data,
                            const std::complex<double>* physical_data,
                            const double* J, const double* detJ, const double* K,
-                           const int physical_dim,
-                           const int physical_value_size, const int nresults,
-                           const int npoints);
+                           int physical_dim, int physical_value_size,
+                           int nresults, int npoints);
 
 /// String representation of the cell type of the finite element
 /// @param handle

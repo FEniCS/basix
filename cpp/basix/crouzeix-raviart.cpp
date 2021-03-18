@@ -38,13 +38,12 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   {
     for (int i : f)
     {
-      for (std::size_t j = 0; j < geometry.shape()[1]; ++j)
+      for (std::size_t j = 0; j < geometry.shape(1); ++j)
         pts(c, j) += geometry(i, j);
     }
 
-    for (std::size_t j = 0; j < geometry.shape()[1]; ++j)
+    for (std::size_t j = 0; j < geometry.shape(1); ++j)
       pts(c, j) /= static_cast<double>(f.size());
-    // pts.row(c) /= static_cast<double>(f.size());
     ++c;
   }
 

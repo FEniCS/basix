@@ -31,10 +31,9 @@ namespace
 {
 template <typename T>
 void _map_push_forward(int handle, T* u, const T* U, const double* J,
-                       const double* detJ, const double* K,
-                       const int physical_dim,
-                       const int /*physical_value_size*/, const int nresults,
-                       const int num_points)
+                       const double* detJ, const double* K, int physical_dim,
+                       int /*physical_value_size*/, int nresults,
+                       int num_points)
 {
   check_handle(handle);
   const std::size_t tdim
@@ -57,9 +56,8 @@ void _map_push_forward(int handle, T* u, const T* U, const double* J,
 
 template <typename T>
 void _map_pull_back(int handle, T* U, const T* u, const double* J,
-                    const double* detJ, const double* K, const int physical_dim,
-                    const int physical_value_size, const int nresults,
-                    const int num_points)
+                    const double* detJ, const double* K, int physical_dim,
+                    int physical_value_size, int nresults, int num_points)
 {
   // FIXME: need to sort out row-major column major storage and expected
   // input layout. It does really weird things to interface with DOLFIN.
@@ -128,9 +126,8 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
 void basix::map_push_forward_real(int handle, double* physical_data,
                                   const double* reference_data, const double* J,
                                   const double* detJ, const double* K,
-                                  const int physical_dim,
-                                  const int physical_value_size,
-                                  const int nresults, const int npoints)
+                                  int physical_dim, int physical_value_size,
+                                  int nresults, int npoints)
 {
   _map_push_forward<double>(handle, physical_data, reference_data, J, detJ, K,
                             physical_dim, physical_value_size, nresults,
@@ -140,9 +137,8 @@ void basix::map_push_forward_real(int handle, double* physical_data,
 void basix::map_pull_back_real(int handle, double* reference_data,
                                const double* physical_data, const double* J,
                                const double* detJ, const double* K,
-                               const int physical_dim,
-                               const int physical_value_size,
-                               const int nresults, const int npoints)
+                               int physical_dim, int physical_value_size,
+                               int nresults, int npoints)
 {
   _map_pull_back<double>(handle, reference_data, physical_data, J, detJ, K,
                          physical_dim, physical_value_size, nresults, npoints);
@@ -152,9 +148,9 @@ void basix::map_push_forward_complex(int handle,
                                      std::complex<double>* physical_data,
                                      const std::complex<double>* reference_data,
                                      const double* J, const double* detJ,
-                                     const double* K, const int physical_dim,
-                                     const int physical_value_size,
-                                     const int nresults, const int npoints)
+                                     const double* K, int physical_dim,
+                                     int physical_value_size, int nresults,
+                                     int npoints)
 {
   _map_push_forward<std::complex<double>>(
       handle, physical_data, reference_data, J, detJ, K, physical_dim,
@@ -165,9 +161,9 @@ void basix::map_pull_back_complex(int handle,
                                   std::complex<double>* reference_data,
                                   const std::complex<double>* physical_data,
                                   const double* J, const double* detJ,
-                                  const double* K, const int physical_dim,
-                                  const int physical_value_size,
-                                  const int nresults, const int npoints)
+                                  const double* K, int physical_dim,
+                                  int physical_value_size, int nresults,
+                                  int npoints)
 {
   _map_pull_back<std::complex<double>>(handle, reference_data, physical_data, J,
                                        detJ, K, physical_dim,
@@ -254,13 +250,13 @@ const char* basix::mapping_name(int handle)
 int basix::cell_geometry_num_points(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
-  return cell::geometry(ct).shape()[0];
+  return cell::geometry(ct).shape(0);
 }
 
 int basix::cell_geometry_dimension(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);
-  return cell::geometry(ct).shape()[1];
+  return cell::geometry(ct).shape(1);
 }
 
 void basix::cell_geometry(const char* cell_type, double* points)

@@ -149,12 +149,10 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     // Tile the J and J^-1 for passing into the mapping function. This
     // could be avoided with some changes to calls to map functions
     // taking just one J and J^1
-    xt::xtensor<double, 3> tmp0
-        = xt::view(J, i, xt::newaxis(), xt::all(), xt::all());
-    auto Ji = xt::tile(tmp0, moment_space_pts.shape(0));
-    xt::xtensor<double, 3> tmp1
-        = xt::view(K, i, xt::newaxis(), xt::all(), xt::all());
-    auto Ki = xt::tile(tmp1, moment_space_pts.shape(0));
+    auto Ji = xt::tile(xt::view(J, i, xt::newaxis(), xt::all(), xt::all()),
+                       moment_space_pts.shape(0));
+    auto Ki = xt::tile(xt::view(K, i, xt::newaxis(), xt::all(), xt::all()),
+                       moment_space_pts.shape(0));
 
     std::vector<double> detJ(Ji.shape(0), 1.0);
 
@@ -316,19 +314,19 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     // https://github.com/xtensor-stack/xtensor/issues/1922#issuecomment-586317746
     // for why xt::newaxis() is required
     auto points_view = xt::view(
-        points, xt::range(i * Qpts.shape()[0], (i + 1) * Qpts.shape(0)),
+        points, xt::range(i * Qpts.shape(0), (i + 1) * Qpts.shape(0)),
         xt::range(0, tdim));
     auto p = xt::tile(xt::view(entity, xt::newaxis(), 0), Qpts.shape(0));
     points_view = p + xt::linalg::dot(Qpts, axes);
 
     // Compute entity integral moments
-    for (std::size_t j = 0; j < moment_space_at_Qpts.shape()[1]; ++j)
+    for (std::size_t j = 0; j < moment_space_at_Qpts.shape(1); ++j)
     {
       auto phi = xt::col(moment_space_at_Qpts, j);
       if (value_size == 1)
       {
         xt::view(matrix, c,
-                 xt::range(i * Qpts.shape()[0], (i + 1) * Qpts.shape(0)))
+                 xt::range(i * Qpts.shape(0), (i + 1) * Qpts.shape(0)))
             = phi * Qwts;
         ++c;
       }
@@ -369,7 +367,7 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
       = quadrature::make_quadrature("default", sub_celltype, q_deg);
   auto qwts = xt::adapt(_qwts);
   if (qpts.dimension() == 1)
-    qpts = qpts.reshape({qpts.shape()[0], 1});
+    qpts = qpts.reshape({qpts.shape(0), 1});
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -379,18 +377,18 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
       = xt::view(moment_space.tabulate_new(0, qpts), 0, xt::all(), xt::all());
 
   const std::size_t moment_space_size
-      = moment_space_at_Qpts.shape()[1] / sub_entity_dim;
+      = moment_space_at_Qpts.shape(1) / sub_entity_dim;
 
-  xt::xtensor<double, 2> points({sub_entity_count * qpts.shape()[0], tdim});
+  xt::xtensor<double, 2> points({sub_entity_count * qpts.shape(0), tdim});
   const std::array<std::size_t, 2> shape
       = {moment_space_size * sub_entity_count,
-         sub_entity_count * qpts.shape()[0] * value_size};
+         sub_entity_count * qpts.shape(0) * value_size};
   xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
 
   // Iterate over sub entities
   int c = 0;
   std::vector<int> axis_pts = axis_points(celltype);
-  const std::size_t num_points = qpts.shape()[0];
+  const std::size_t num_points = qpts.shape(0);
   for (std::size_t i = 0; i < sub_entity_count; ++i)
   {
     xt::xtensor<double, 2> entity
@@ -447,13 +445,13 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   if (sub_entity_dim != 1)
-    throw std::runtime_error("XXXTangent is only well-defined on an edge.");
+    throw std::runtime_error("Tangent is only well-defined on an edge.");
 
   auto [Qpts, _Qwts]
       = quadrature::make_quadrature("default", cell::type::interval, q_deg);
   auto Qwts = xt::adapt(_Qwts);
   if (Qpts.dimension() == 1)
-    Qpts = Qpts.reshape({Qpts.shape()[0], 1});
+    Qpts = Qpts.reshape({Qpts.shape(0), 1});
 
   // If this is always true, value_size input can be removed
   assert(tdim == value_size);
@@ -462,10 +460,10 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   xt::xtensor<double, 2> moment_space_at_Qpts
       = xt::view(moment_space.tabulate_new(0, Qpts), 0, xt::all(), xt::all());
 
-  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
+  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape(0), tdim});
   const std::array<std::size_t, 2> shape
-      = {moment_space_at_Qpts.shape()[1] * sub_entity_count,
-         sub_entity_count * Qpts.shape()[0] * value_size};
+      = {moment_space_at_Qpts.shape(1) * sub_entity_count,
+         sub_entity_count * Qpts.shape(0) * value_size};
   xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
 
   // Iterate over sub entities
@@ -479,21 +477,21 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
     // the integral Jacobian
 
     // Map quadrature points onto triangle edge
-    for (std::size_t j = 0; j < Qpts.shape()[0]; ++j)
+    for (std::size_t j = 0; j < Qpts.shape(0); ++j)
     {
-      xt::row(points, i * Qpts.shape()[0] + j)
+      xt::row(points, i * Qpts.shape(0) + j)
           = xt::row(edge, 0) + Qpts(j, 0) * tangent;
     }
 
     // Compute edge tangent integral moments
-    for (std::size_t j = 0; j < moment_space_at_Qpts.shape()[1]; ++j)
+    for (std::size_t j = 0; j < moment_space_at_Qpts.shape(1); ++j)
     {
       auto phi = xt::col(moment_space_at_Qpts, j);
       for (std::size_t k = 0; k < value_size; ++k)
       {
         std::size_t offset
-            = k * sub_entity_count * Qpts.shape()[0] + i * Qpts.shape()[0];
-        xt::view(matrix, c, xt::range(offset, offset + Qpts.shape()[0]))
+            = k * sub_entity_count * Qpts.shape(0) + i * Qpts.shape(0);
+        xt::view(matrix, c, xt::range(offset, offset + Qpts.shape(0)))
             = phi * Qwts * tangent[k];
       }
       ++c;
@@ -524,16 +522,16 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
       = quadrature::make_quadrature("default", sub_celltype, q_deg);
   auto Qwts = xt::adapt(_Qwts);
   if (Qpts.dimension() == 1)
-    Qpts = Qpts.reshape({Qpts.shape()[0], 1});
+    Qpts = Qpts.reshape({Qpts.shape(0), 1});
 
   // Evaluate moment space at quadrature points
   xt::xtensor<double, 2> moment_space_at_Qpts
       = xt::view(moment_space.tabulate_new(0, Qpts), 0, xt::all(), xt::all());
 
-  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape()[0], tdim});
+  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape(0), tdim});
   const std::array<std::size_t, 2> shape
-      = {moment_space_at_Qpts.shape()[1] * sub_entity_count,
-         sub_entity_count * Qpts.shape()[0] * value_size};
+      = {moment_space_at_Qpts.shape(1) * sub_entity_count,
+         sub_entity_count * Qpts.shape(0) * value_size};
   xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
 
   // Iterate over sub entities
@@ -552,9 +550,9 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
       // the integral jacobian
 
       // Map quadrature points onto facet
-      for (std::size_t j = 0; j < Qpts.shape()[0]; ++j)
+      for (std::size_t j = 0; j < Qpts.shape(0); ++j)
       {
-        xt::row(points, i * Qpts.shape()[0] + j)
+        xt::row(points, i * Qpts.shape(0) + j)
             = xt::row(facet, 0) + Qpts(j, 0) * tangent;
       }
     }
@@ -568,9 +566,9 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
       // to the integral Jacobian
 
       // Map quadrature points onto facet
-      for (std::size_t j = 0; j < Qpts.shape()[0]; ++j)
+      for (std::size_t j = 0; j < Qpts.shape(0); ++j)
       {
-        xt::row(points, i * Qpts.shape()[0] + j)
+        xt::row(points, i * Qpts.shape(0) + j)
             = xt::row(facet, 0) + Qpts(j, 0) * t0 + Qpts(j, 1) * t1;
       }
     }
@@ -578,14 +576,14 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
       throw std::runtime_error("Normal on this cell cannot be computed.");
 
     // Compute facet normal integral moments
-    for (std::size_t j = 0; j < moment_space_at_Qpts.shape()[1]; ++j)
+    for (std::size_t j = 0; j < moment_space_at_Qpts.shape(1); ++j)
     {
       auto phi = xt::col(moment_space_at_Qpts, j);
       for (std::size_t k = 0; k < value_size; ++k)
       {
         std::size_t offset
-            = k * sub_entity_count * Qpts.shape()[0] + i * Qpts.shape()[0];
-        xt::view(matrix, c, xt::range(offset, offset + Qpts.shape()[0]))
+            = k * sub_entity_count * Qpts.shape(0) + i * Qpts.shape(0);
+        xt::view(matrix, c, xt::range(offset, offset + Qpts.shape(0)))
             = phi * Qwts * normal[k];
       }
       ++c;

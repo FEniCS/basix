@@ -84,10 +84,10 @@ create_regge_interpolation(cell::type celltype, int degree)
       cell::type ct = cell::sub_entity_type(celltype, dim, i);
       auto lattice
           = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
-      for (std::size_t j = 0; j < lattice.shape()[0]; ++j)
+      for (std::size_t j = 0; j < lattice.shape(0); ++j)
       {
         xt::row(points, point_n + j) = xt::row(entity_geom, 0);
-        for (std::size_t k = 0; k < entity_geom.shape()[0] - 1; ++k)
+        for (std::size_t k = 0; k < entity_geom.shape(0) - 1; ++k)
         {
           xt::row(points, point_n + j)
               += (xt::row(entity_geom, k + 1) - xt::row(entity_geom, 0))
@@ -96,7 +96,7 @@ create_regge_interpolation(cell::type celltype, int degree)
       }
 
       auto pt_view = xt::view(
-          points, xt::range(point_n, point_n + lattice.shape()[0]), xt::all());
+          points, xt::range(point_n, point_n + lattice.shape(0)), xt::all());
       xt::xtensor<double, 2> basis
           = xt::view(polyset::tabulate(celltype, degree, 0, pt_view), 0,
                      xt::all(), xt::all());
@@ -105,15 +105,15 @@ create_regge_interpolation(cell::type celltype, int degree)
       std::vector<int>& vert_ids = topology[dim][i];
       std::size_t ntangents = dim * (dim + 1) / 2;
       xt::xtensor<double, 3> vvt(
-          {ntangents, geometry.shape()[1], geometry.shape()[1]});
-      std::vector<double> _edge(geometry.shape()[1]);
+          {ntangents, geometry.shape(1), geometry.shape(1)});
+      std::vector<double> _edge(geometry.shape(1));
       auto edge_t = xt::adapt(_edge);
       int c = 0;
       for (std::size_t s = 0; s < dim; ++s)
       {
         for (std::size_t d = s + 1; d < dim + 1; ++d)
         {
-          for (std::size_t p = 0; p < geometry.shape()[1]; ++p)
+          for (std::size_t p = 0; p < geometry.shape(1); ++p)
             edge_t[p] = geometry(vert_ids[d], p) - geometry(vert_ids[s], p);
           // outer product v.v^T
           xt::view(vvt, c, xt::all(), xt::all())
@@ -122,7 +122,7 @@ create_regge_interpolation(cell::type celltype, int degree)
         }
       }
 
-      for (std::size_t k = 0; k < lattice.shape()[0]; ++k)
+      for (std::size_t k = 0; k < lattice.shape(0); ++k)
       {
         for (std::size_t j = 0; j < ntangents; ++j)
         {
@@ -154,7 +154,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   std::size_t transform_count = tdim == 2 ? 3 : 14;
   xt::xtensor<double, 3> base_transformations
       = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
   {
     xt::view(base_transformations, i, xt::all(), xt::all())
         = xt::eye<double>(ndofs);

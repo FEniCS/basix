@@ -93,16 +93,16 @@ xt::xtensor<double, 2> basix::compute_expansion_coefficients(
 {
   // TODO: Tidy up 1D views for 1D problems
   xt::xarray<double> pts = x;
-  if (pts.shape()[1] == 1)
-    pts.reshape({pts.shape()[0]});
+  if (pts.shape(1) == 1)
+    pts.reshape({pts.shape(0)});
 
   const xt::xtensor<double, 3> P = polyset::tabulate(celltype, degree, 0, pts);
 
-  const int coeff_size = P.shape()[2];
-  const int value_size = B.shape()[1] / coeff_size;
-  const int m_size = M.shape()[1] / value_size;
-  xt::xtensor<double, 2> A = xt::zeros<double>({B.shape()[0], M.shape()[0]});
-  for (std::size_t row = 0; row < B.shape()[0]; ++row)
+  const int coeff_size = P.shape(2);
+  const int value_size = B.shape(1) / coeff_size;
+  const int m_size = M.shape(1) / value_size;
+  xt::xtensor<double, 2> A = xt::zeros<double>({B.shape(0), M.shape(0)});
+  for (std::size_t row = 0; row < B.shape(0); ++row)
   {
     for (int v = 0; v < value_size; ++v)
     {
@@ -113,9 +113,9 @@ xt::xtensor<double, 2> basix::compute_expansion_coefficients(
 
       // Compute Aview = Bview * Pt * Mview ( Aview_i = Bview_j * Pt_jk
       // * Mview_ki )
-      for (std::size_t i = 0; i < A.shape()[1]; ++i)
-        for (std::size_t k = 0; k < P.shape()[1]; ++k)
-          for (std::size_t j = 0; j < P.shape()[2]; ++j)
+      for (std::size_t i = 0; i < A.shape(1); ++i)
+        for (std::size_t k = 0; k < P.shape(1); ++k)
+          for (std::size_t j = 0; j < P.shape(2); ++j)
             A(row, i) += Bview(j) * P(0, k, j) * Mview_t(i, k);
     }
   }
@@ -142,7 +142,7 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
                                   std::size_t tdim, std::size_t value_size)
 {
   std::array<std::size_t, 3> num_ptsd
-      = {points_1d.shape()[0], points_2d.shape()[0], points_3d.shape()[0]};
+      = {points_1d.shape(0), points_2d.shape(0), points_3d.shape(0)};
   std::size_t num_pts = std::accumulate(num_ptsd.begin(), num_ptsd.end(), 0);
   xt::xtensor<double, 2> points({num_pts, tdim});
 
@@ -164,10 +164,10 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
   }
 
   std::array<std::size_t, 3> row_dim
-      = {matrix_1d.shape()[0], matrix_2d.shape()[0], matrix_3d.shape()[0]};
+      = {matrix_1d.shape(0), matrix_2d.shape(0), matrix_3d.shape(0)};
   std::size_t num_rows = std::accumulate(row_dim.begin(), row_dim.end(), 0);
   std::array<std::size_t, 3> col_dim
-      = {matrix_1d.shape()[1], matrix_2d.shape()[1], matrix_3d.shape()[1]};
+      = {matrix_1d.shape(1), matrix_2d.shape(1), matrix_3d.shape(1)};
   std::size_t num_cols = std::accumulate(col_dim.begin(), col_dim.end(), 0);
 
   xt::xtensor<double, 2> matrix = xt::zeros<double>({num_rows, num_cols});
@@ -230,7 +230,7 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
   for (const std::vector<int>& q : entity_dofs)
     sum = std::accumulate(q.begin(), q.end(), sum);
 
-  if (sum != _coeffs.shape()[0])
+  if (sum != _coeffs.shape(0))
   {
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
@@ -243,10 +243,8 @@ int FiniteElement::degree() const { return _degree; }
 //-----------------------------------------------------------------------------
 int FiniteElement::value_size() const
 {
-  int value_size = 1;
-  for (int d : _value_shape)
-    value_size *= d;
-  return value_size;
+  return std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
+                         std::multiplies<int>());
 }
 //-----------------------------------------------------------------------------
 const std::vector<int>& FiniteElement::value_shape() const
@@ -254,7 +252,7 @@ const std::vector<int>& FiniteElement::value_shape() const
   return _value_shape;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::dim() const { return _coeffs.shape()[0]; }
+int FiniteElement::dim() const { return _coeffs.shape(0); }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
@@ -280,23 +278,23 @@ FiniteElement::tabulate_new(int nd, const xt::xarray<double>& x) const
   for (int i = 1; i <= nd; ++i)
     ndsize /= i;
   const std::size_t vs = value_size();
-  const std::size_t ndofs = _coeffs.shape()[0];
+  const std::size_t ndofs = _coeffs.shape(0);
 
   xt::xarray<double> _x = x;
   if (_x.dimension() == 1)
     _x.reshape({_x.shape(0), 1});
 
-  std::vector<double> basis_data(ndsize * x.shape()[0] * ndofs * vs);
+  std::vector<double> basis_data(ndsize * x.shape(0) * ndofs * vs);
   tabulate(nd, _x, basis_data.data());
 
-  xt::xtensor<double, 3> d({ndsize, _x.shape()[0], ndofs * vs});
+  xt::xtensor<double, 3> d({ndsize, _x.shape(0), ndofs * vs});
   for (std::size_t i = 0; i < d.shape(0); ++i)
   {
-    std::size_t offset = i * x.shape()[0] * ndofs * vs;
-    std::array<std::size_t, 2> shape = {_x.shape()[0], ndofs * vs};
+    std::size_t offset = i * x.shape(0) * ndofs * vs;
+    std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
     auto mat = xt::adapt<xt::layout_type::column_major>(
-        basis_data.data() + offset, x.shape()[0] * ndofs * vs,
-        xt::no_ownership(), shape);
+        basis_data.data() + offset, x.shape(0) * ndofs * vs, xt::no_ownership(),
+        shape);
     xt::view(d, i, xt::all(), xt::all()) = mat;
   }
 
@@ -313,14 +311,14 @@ FiniteElement::tabulate_x(int nd, const xt::xarray<double>& x) const
   for (int i = 1; i <= nd; ++i)
     ndsize /= i;
   const std::size_t vs = value_size();
-  const std::size_t ndofs = _coeffs.shape()[0];
+  const std::size_t ndofs = _coeffs.shape(0);
 
   xt::xarray<double> _x = x;
   if (_x.dimension() == 1)
     _x.reshape({_x.shape(0), 1});
 
   // Tabulate
-  std::vector<double> basis_data(ndsize * x.shape()[0] * ndofs * vs);
+  std::vector<double> basis_data(ndsize * x.shape(0) * ndofs * vs);
   tabulate(nd, _x, basis_data.data());
 
   // Pack data in
@@ -356,32 +354,32 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
                              double* basis_data) const
 {
   xt::xarray<double> _x = x;
-  if (_x.dimension() == 2 and x.shape()[1] == 1)
-    _x.reshape({x.shape()[0]});
+  if (_x.dimension() == 2 and x.shape(1) == 1)
+    _x.reshape({x.shape(0)});
 
   const std::size_t tdim = cell::topological_dimension(_cell_type);
-  if (_x.shape()[1] != tdim)
+  if (_x.shape(1) != tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
   xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
   const int psize = polyset::dim(_cell_type, _degree);
-  const std::size_t ndofs = _coeffs.shape()[0];
+  const std::size_t ndofs = _coeffs.shape(0);
   const int vs = value_size();
   xt::xtensor<double, 2> B, C;
-  for (std::size_t p = 0; p < basis.shape()[0]; ++p)
+  for (std::size_t p = 0; p < basis.shape(0); ++p)
   {
     // Map block for current derivative
-    std::array<std::size_t, 2> shape = {_x.shape()[0], ndofs * vs};
-    std::size_t offset = p * x.shape()[0] * ndofs * vs;
+    std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
+    std::size_t offset = p * x.shape(0) * ndofs * vs;
     auto dresult = xt::adapt<xt::layout_type::column_major>(
-        basis_data + offset, x.shape()[0] * ndofs * vs, xt::no_ownership(),
+        basis_data + offset, x.shape(0) * ndofs * vs, xt::no_ownership(),
         shape);
     for (int j = 0; j < vs; ++j)
     {
       B = xt::view(basis, p, xt::all(), xt::all());
       C = xt::transpose(xt::view(_coeffs, xt::all(),
                                  xt::range(psize * j, psize * j + psize)));
-      xt::view(dresult, xt::range(0, x.shape()[0]),
+      xt::view(dresult, xt::range(0, x.shape(0)),
                xt::range(ndofs * j, ndofs * j + ndofs))
           = xt::linalg::dot(B, C);
     }
@@ -393,7 +391,7 @@ const xt::xtensor<double, 3>& FiniteElement::base_transformations() const
   return _base_transformations;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::num_points() const { return _points.shape()[0]; }
+int FiniteElement::num_points() const { return _points.shape(0); }
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------

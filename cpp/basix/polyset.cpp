@@ -35,10 +35,10 @@ xt::xtensor<double, 3>
 tabulate_polyset_line_derivs(std::size_t degree, std::size_t nderiv,
                              const xt::xtensor<double, 1>& x)
 {
-  assert(x.shape()[0] > 0);
+  assert(x.shape(0) > 0);
   const auto X = x * 2.0 - 1.0;
   const std::size_t m = (degree + 1);
-  xt::xtensor<double, 3> dresult({nderiv + 1, x.shape()[0], m});
+  xt::xtensor<double, 3> dresult({nderiv + 1, x.shape(0), m});
   for (std::size_t k = 0; k <= nderiv; ++k)
   {
     // Get reference to this derivative
@@ -79,7 +79,7 @@ xt::xtensor<double, 3>
 tabulate_polyset_triangle_derivs(int n, int nderiv,
                                  const xt::xtensor<double, 2>& pts)
 {
-  assert(pts.shape()[1] == 2);
+  assert(pts.shape(1) == 2);
 
   const auto x = pts * 2.0 - 1.0;
   auto x0 = xt::col(x, 0);
@@ -87,7 +87,7 @@ tabulate_polyset_triangle_derivs(int n, int nderiv,
 
   const std::size_t m = (n + 1) * (n + 2) / 2;
   const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
-  xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
+  xt::xtensor<double, 3> dresult({md, pts.shape(0), m});
 
   // f3 = ((1 - y) / 2)^2
   const auto f3 = xt::square(1.0 - x1) * 0.25;
@@ -95,7 +95,7 @@ tabulate_polyset_triangle_derivs(int n, int nderiv,
   // Iterate over derivatives in increasing order, since higher derivatives
 
   // Depend on earlier calculations
-  xt::xtensor<double, 2> result({pts.shape()[0], m});
+  xt::xtensor<double, 2> result({pts.shape(0), m});
   for (int k = 0; k <= nderiv; ++k)
   {
     for (int kx = 0; kx <= k; ++kx)
@@ -179,7 +179,7 @@ tabulate_polyset_triangle_derivs(int n, int nderiv,
   }
 
   // Normalisation
-  for (std::size_t j = 0; j < dresult.shape()[0]; ++j)
+  for (std::size_t j = 0; j < dresult.shape(0); ++j)
   {
     auto result = xt::view(dresult, j, xt::all(), xt::all());
     for (int p = 0; p <= n; ++p)
@@ -194,7 +194,7 @@ xt::xtensor<double, 3>
 tabulate_polyset_tetrahedron_derivs(int n, std::size_t nderiv,
                                     const xt::xtensor<double, 2>& pts)
 {
-  assert(pts.shape()[1] == 3);
+  assert(pts.shape(1) == 3);
   const std::size_t m = (n + 1) * (n + 2) * (n + 3) / 6;
   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
@@ -209,8 +209,8 @@ tabulate_polyset_tetrahedron_derivs(int n, std::size_t nderiv,
   auto f5 = f4 * f4;
 
   // Traverse derivatives in increasing order
-  xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
-  xt::xtensor<double, 2> result({pts.shape()[0], m});
+  xt::xtensor<double, 3> dresult({md, pts.shape(0), m});
+  xt::xtensor<double, 2> result({pts.shape(0), m});
   for (std::size_t k = 0; k <= nderiv; ++k)
   {
     for (std::size_t j = 0; j <= k; ++j)
@@ -397,7 +397,7 @@ tabulate_polyset_tetrahedron_derivs(int n, std::size_t nderiv,
     }
   }
 
-  for (std::size_t i = 0; i < dresult.shape()[0]; ++i)
+  for (std::size_t i = 0; i < dresult.shape(0); ++i)
   {
     auto result = xt::view(dresult, i, xt::all(), xt::all());
     for (int p = 0; p < n + 1; ++p)
@@ -420,7 +420,7 @@ xt::xtensor<double, 3>
 tabulate_polyset_pyramid_derivs(int n, std::size_t nderiv,
                                 const xt::xtensor<double, 2>& pts)
 {
-  assert(pts.shape()[1] == 3);
+  assert(pts.shape(1) == 3);
   const std::size_t m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
@@ -439,8 +439,8 @@ tabulate_polyset_pyramid_derivs(int n, std::size_t nderiv,
   auto f2 = 0.25 * xt::square(1.0 - x2);
 
   // Traverse derivatives in increasing order
-  xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
-  xt::xtensor<double, 2> result({pts.shape()[0], m});
+  xt::xtensor<double, 3> dresult({md, pts.shape(0), m});
+  xt::xtensor<double, 2> result({pts.shape(0), m});
   for (std::size_t k = 0; k < nderiv + 1; ++k)
   {
     for (std::size_t j = 0; j < k + 1; ++j)
@@ -597,7 +597,7 @@ tabulate_polyset_pyramid_derivs(int n, std::size_t nderiv,
     }
   }
 
-  for (std::size_t i = 0; i < dresult.shape()[0]; ++i)
+  for (std::size_t i = 0; i < dresult.shape(0); ++i)
   {
     auto result = xt::view(dresult, i, xt::all(), xt::all());
     for (int r = 0; r < n + 1; ++r)
@@ -620,7 +620,7 @@ xt::xtensor<double, 3>
 tabulate_polyset_quad_derivs(int n, int nderiv,
                              const xt::xtensor<double, 2>& pts)
 {
-  assert(pts.shape()[1] == 2);
+  assert(pts.shape(1) == 2);
   const std::size_t m = (n + 1) * (n + 1);
   const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
 
@@ -630,7 +630,7 @@ tabulate_polyset_quad_derivs(int n, int nderiv,
   xt::xtensor<double, 3> px = tabulate_polyset_line_derivs(n, nderiv, x0);
   xt::xtensor<double, 3> py = tabulate_polyset_line_derivs(n, nderiv, x1);
 
-  xt::xtensor<double, 3> dresult({md, pts.shape()[0], m});
+  xt::xtensor<double, 3> dresult({md, pts.shape(0), m});
   for (int kx = 0; kx < nderiv + 1; ++kx)
   {
     auto p0 = xt::view(px, kx, xt::all(), xt::all());
@@ -639,8 +639,8 @@ tabulate_polyset_quad_derivs(int n, int nderiv,
       auto result = xt::view(dresult, idx(kx, ky), xt::all(), xt::all());
       auto p1 = xt::view(py, ky, xt::all(), xt::all());
       int c = 0;
-      for (std::size_t i = 0; i < p0.shape()[1]; ++i)
-        for (std::size_t j = 0; j < p0.shape()[1]; ++j)
+      for (std::size_t i = 0; i < p0.shape(1); ++i)
+        for (std::size_t j = 0; j < p0.shape(1); ++j)
           xt::col(result, c++) = xt::col(p0, i) * xt::col(p1, j);
     }
   }
@@ -652,7 +652,7 @@ xt::xtensor<double, 3>
 tabulate_polyset_hex_derivs(std::size_t n, std::size_t nderiv,
                             const xt::xtensor<double, 2>& x)
 {
-  assert(x.shape()[1] == 3);
+  assert(x.shape(1) == 3);
   const std::size_t m = (n + 1) * (n + 1) * (n + 1);
   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
@@ -665,7 +665,7 @@ tabulate_polyset_hex_derivs(std::size_t n, std::size_t nderiv,
   xt::xtensor<double, 3> pz = tabulate_polyset_line_derivs(n, nderiv, x2);
 
   // Compute basis
-  xt::xtensor<double, 3> dresult({md, x.shape()[0], m});
+  xt::xtensor<double, 3> dresult({md, x.shape(0), m});
   for (std::size_t kx = 0; kx < nderiv + 1; ++kx)
   {
     auto p0 = xt::view(px, kx, xt::all(), xt::all());
@@ -677,13 +677,13 @@ tabulate_polyset_hex_derivs(std::size_t n, std::size_t nderiv,
         auto result = xt::view(dresult, idx(kx, ky, kz), xt::all(), xt::all());
         auto p2 = xt::view(pz, kz, xt::all(), xt::all());
         int c = 0;
-        for (std::size_t i = 0; i < p0.shape()[1]; ++i)
+        for (std::size_t i = 0; i < p0.shape(1); ++i)
         {
           auto pi = xt::col(p0, i);
-          for (std::size_t j = 0; j < p1.shape()[1]; ++j)
+          for (std::size_t j = 0; j < p1.shape(1); ++j)
           {
             auto pj = xt::col(p1, j);
-            for (std::size_t k = 0; k < p2.shape()[1]; ++k)
+            for (std::size_t k = 0; k < p2.shape(1); ++k)
               xt::col(result, c++) = pi * pj * xt::col(p2, k);
           }
         }
@@ -698,7 +698,7 @@ xt::xtensor<double, 3>
 tabulate_polyset_prism_derivs(std::size_t n, std::size_t nderiv,
                               const xt::xtensor<double, 2>& x)
 {
-  assert(x.shape()[1] == 3);
+  assert(x.shape(1) == 3);
   const std::size_t m = (n + 1) * (n + 1) * (n + 2) / 2;
   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
@@ -707,7 +707,7 @@ tabulate_polyset_prism_derivs(std::size_t n, std::size_t nderiv,
   xt::xtensor<double, 3> pxy = tabulate_polyset_triangle_derivs(n, nderiv, x01);
   xt::xtensor<double, 3> pz = tabulate_polyset_line_derivs(n, nderiv, x2);
 
-  xt::xtensor<double, 3> dresult({md, x.shape()[0], m});
+  xt::xtensor<double, 3> dresult({md, x.shape(0), m});
   for (std::size_t kx = 0; kx < nderiv + 1; ++kx)
   {
     for (std::size_t ky = 0; ky < nderiv + 1 - kx; ++ky)
@@ -718,8 +718,8 @@ tabulate_polyset_prism_derivs(std::size_t n, std::size_t nderiv,
         auto p1 = xt::view(pz, kz, xt::all(), xt::all());
         auto result = xt::view(dresult, idx(kx, ky, kz), xt::all(), xt::all());
         int c = 0;
-        for (std::size_t i = 0; i < p0.shape()[1]; ++i)
-          for (std::size_t k = 0; k < p1.shape()[1]; ++k)
+        for (std::size_t i = 0; i < p0.shape(1); ++i)
+          for (std::size_t k = 0; k < p1.shape(1); ++k)
             xt::col(result, c++) = xt::col(p0, i) * xt::col(p1, k);
       }
     }
@@ -750,7 +750,7 @@ xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
   case cell::type::hexahedron:
     return tabulate_polyset_hex_derivs(d, n, x);
   default:
-    throw std::runtime_error("Polynomial set: Unsupported cell type");
+    throw std::runtime_error("Polynomial set: unsupported cell type");
   }
 }
 //-----------------------------------------------------------------------------

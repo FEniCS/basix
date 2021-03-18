@@ -55,20 +55,20 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         {
           const auto lattice = lattice::create(
               celltype, degree, lattice::type::equispaced, false);
-          for (std::size_t j = 0; j < lattice.shape()[0]; ++j)
+          for (std::size_t j = 0; j < lattice.shape(0); ++j)
             xt::row(pt, c++) = xt::row(lattice, j);
-          entity_dofs[dim].push_back(lattice.shape()[0]);
+          entity_dofs[dim].push_back(lattice.shape(0));
         }
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, i);
           const auto lattice
               = lattice::create(ct, degree, lattice::type::equispaced, false);
-          entity_dofs[dim].push_back(lattice.shape()[0]);
-          for (std::size_t j = 0; j < lattice.shape()[0]; ++j)
+          entity_dofs[dim].push_back(lattice.shape(0));
+          for (std::size_t j = 0; j < lattice.shape(0); ++j)
           {
             xt::row(pt, c) = xt::row(entity_geom, 0);
-            for (std::size_t k = 0; k < lattice.shape()[1]; ++k)
+            for (std::size_t k = 0; k < lattice.shape(1); ++k)
             {
               xt::row(pt, c)
                   += (xt::row(entity_geom, k + 1) - xt::row(entity_geom, 0))
@@ -84,10 +84,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, transform_count);
-
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   switch (celltype)
   {
   case cell::type::interval:
@@ -230,10 +228,8 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, transform_count);
-
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pt, degree);
 
@@ -299,10 +295,8 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, transform_count);
-
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, xt::eye<double>(ndofs), pt, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,

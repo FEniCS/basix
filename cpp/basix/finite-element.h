@@ -528,14 +528,9 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
     // Loop over values at each point
     for (std::size_t i = 0; i < U.shape(1); ++i)
     {
-      // Note: we assign here to a xt::xtensor<double, 1> until the
-      // maps are updated to accept xtensor objects rather than spans
-      // auto U_data = xt::row(U_b, i);
-      xt::xtensor<T, 1> U_data = xt::view(U, p, i, xt::all());
-      std::vector<T> f
-          =maps::apply_map<T>(U_data, J_p, detJ[p], K_p, map_type);
-      for (std::size_t j = 0; j < f.size(); ++j)
-        u(p, i, j) = f[j];
+      auto U_data = xt::view(U, p, i, xt::all());
+      auto u_data = xt::view(u, p, i, xt::all());
+      maps::apply_map(u_data, U_data, J_p, detJ[p], K_p, map_type);
     }
   }
 }
@@ -556,16 +551,9 @@ void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
     // Loop over each item at point to be transformed
     for (std::size_t i = 0; i < u.shape(1); ++i)
     {
-      // Note: we assign here to a xt::xtensor<double, 1> until the
-      // maps are updated to accept xtensor objects rather than spans
-      // auto U_data = xt::row(U_b, i);
-
-      // Map data
-      xt::xtensor<T, 1> u_data = xt::view(u, p, i, xt::all());
-      std::vector<T> f
-          =maps::apply_map<T>(u_data, K_p, 1.0 / detJ[p], J_p, map_type);
-      for (std::size_t j = 0; j < f.size(); ++j)
-        U(p, i, j) = f[j];
+      auto u_data = xt::view(u, p, i, xt::all());
+      auto U_data = xt::view(U, p, i, xt::all());
+      maps::apply_map(U_data, u_data, K_p, 1.0 / detJ[p], J_p, map_type);
     }
   }
 }

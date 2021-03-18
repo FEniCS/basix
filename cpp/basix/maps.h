@@ -13,6 +13,8 @@
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
+#include <xtensor/xio.hpp>
+
 /// Information about finite element maps
 namespace basix::maps
 {
@@ -41,115 +43,87 @@ const std::string& type_to_str(maps::type type);
 
 namespace impl
 {
-template <typename T, typename O>
-auto dot22(const T& A, const O& B)
+template <typename O, typename Mat0, typename Mat1, typename Mat2>
+void dot22(O& r, const Mat0& A, const Mat1& B, const Mat2& C)
 {
-  using value_type
-      = std::common_type_t<typename T::value_type, typename O::value_type>;
   assert(A.shape(1) == B.shape(0));
-  xt::xtensor<value_type, 2> r({A.shape(0), B.shape(1)});
+  r = 0;
   for (std::size_t i = 0; i < r.shape(0); ++i)
-  {
     for (std::size_t j = 0; j < r.shape(1); ++j)
-    {
-      r(i, j) = 0;
       for (std::size_t k = 0; k < A.shape(1); ++k)
-        r(i, j) += A(i, k) * B(k, j);
-    }
-  }
-  return r;
+        for (std::size_t l = 0; l < B.shape(1); ++l)
+          r(i, j) += A(i, k) * B(k, l) * C(l, j);
 }
 
-template <typename T, typename O>
-auto dot21(const T& A, const O& B)
+template <typename Vec, typename Mat0, typename Mat1>
+void dot21(Vec& r, const Mat0& A, const Mat1& B)
 {
-  using value_type
-      = std::common_type_t<typename T::value_type, typename O::value_type>;
-  assert(A.shape(1) == B.shape(0));
-  std::array<std::size_t, 1> s = {A.shape(0)};
-  xt::xtensor<value_type, 1> r(s);
+  // assert(A.shape(1) == B.shape(0));
+  r = 0;
   for (std::size_t i = 0; i < r.shape(0); ++i)
-  {
-    r[i] = 0;
     for (std::size_t k = 0; k < A.shape(1); ++k)
       r[i] += A(i, k) * B[k];
-  }
-  return r;
 }
 
-template <typename T>
-std::vector<T> identity(const tcb::span<const T>& U,
-                        const xt::xtensor<double, 2>& /*J*/, double /*detJ*/,
-                        const xt::xtensor<double, 2>& /*K*/)
+template <typename Vec0, typename Vec1, typename Mat0, typename Mat1>
+void identity(Vec0& r, const Vec1& U, const Mat0& /*J*/, double /*detJ*/,
+              const Mat1& /*K*/)
 {
-  return std::vector<T>(U.begin(), U.end());
+  r = U;
 }
 
-template <typename T>
-std::vector<T> covariant_piola(const tcb::span<const T>& U,
-                               const xt::xtensor<double, 2>& /*J*/,
-                               double /*detJ*/, const xt::xtensor<double, 2>& K)
+template <typename O, typename P, typename Q, typename R>
+void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
+                     const R& K)
 {
-  std::array<std::size_t, 1> s = {U.size()};
-  auto _U = xt::adapt(U.data(), U.size(), xt::no_ownership(), s);
-  auto r = dot21(xt::transpose(K), _U);
-  return std::vector<T>(r.begin(), r.end());
+  dot21(r, xt::transpose(K), U);
 }
 
-template <typename T>
-std::vector<T> contravariant_piola(const tcb::span<const T>& U,
-                                   const xt::xtensor<double, 2>& J, double detJ,
-                                   const xt::xtensor<double, 2>& /*K*/)
+template <typename O, typename P, typename Q, typename R>
+void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
+                         const R& /*K*/)
 {
-  std::array<std::size_t, 1> s = {U.size()};
-  auto _U = xt::adapt(U.data(), U.size(), xt::no_ownership(), s);
-  auto r = 1 / detJ * dot21(J, _U);
-  return std::vector<T>(r.begin(), r.end());
+  dot21(r, J, U);
+  r /= detJ;
 }
 
-template <typename T>
-std::vector<T> double_covariant_piola(const tcb::span<const T>& U,
-                                      const xt::xtensor<double, 2>& J,
-                                      double /*detJ*/,
-                                      const xt::xtensor<double, 2>& K)
+template <typename O, typename P, typename Q, typename R>
+void double_covariant_piola(O& r, const P& U, const Q& J, double /*detJ*/,
+                            const R& K)
 {
-  std::array<std::size_t, 2> s = {J.shape(1), J.shape(1)};
-  auto data_matrix = xt::adapt(U.data(), U.size(), xt::no_ownership(), s);
-  auto r = dot22(xt::transpose(K), dot22(data_matrix, K));
-  return std::vector<T>(r.begin(), r.end());
+  auto _U = xt::reshape_view(U, {J.shape(1), J.shape(1)});
+  auto _r = xt::reshape_view(r, {K.shape(1), K.shape(1)});
+  dot22(_r, xt::transpose(K), _U, K);
 }
 
-template <typename T>
-std::vector<T> double_contravariant_piola(const tcb::span<const T>& U,
-                                          const xt::xtensor<double, 2>& J,
-                                          double detJ,
-                                          const xt::xtensor<double, 2>& /*K*/)
+template <typename O, typename P, typename Q, typename R>
+void double_contravariant_piola(O& r, const P& U, const Q& J, double detJ,
+                                const R& /*K*/)
 {
-  std::array<std::size_t, 2> s = {J.shape(1), J.shape(1)};
-  auto data_matrix = xt::adapt(U.data(), U.size(), xt::no_ownership(), s);
-
-  auto r = 1 / (detJ * detJ) * dot22(J, dot22(data_matrix, xt::transpose(J)));
-  return std::vector<T>(r.begin(), r.end());
+  auto _U = xt::reshape_view(U, {J.shape(1), J.shape(1)});
+  auto _r = xt::reshape_view(r, {J.shape(0), J.shape(0)});
+  dot22(_r, J, _U, xt::transpose(J));
+  _r /= (detJ * detJ);
 }
 } // namespace impl
 
 /// TODO
-template <typename T, typename P, typename O>
-std::vector<T> apply_map(const tcb::span<const T>& U, const P& J, double detJ,
-                         const O& K, maps::type map_type)
+template <typename O, typename P, typename Mat0, typename Mat1>
+void apply_map(O&& u, const P& U, const Mat0& J, double detJ, const Mat1& K,
+               maps::type map_type)
 {
   switch (map_type)
   {
   case maps::type::identity:
-    return impl::identity(U, J, detJ, K);
+    return impl::identity(u, U, J, detJ, K);
   case maps::type::covariantPiola:
-    return impl::covariant_piola(U, J, detJ, K);
+    return impl::covariant_piola(u, U, J, detJ, K);
   case maps::type::contravariantPiola:
-    return impl::contravariant_piola(U, J, detJ, K);
+    return impl::contravariant_piola(u, U, J, detJ, K);
   case maps::type::doubleCovariantPiola:
-    return impl::double_covariant_piola(U, J, detJ, K);
+    return impl::double_covariant_piola(u, U, J, detJ, K);
   case maps::type::doubleContravariantPiola:
-    return impl::double_contravariant_piola(U, J, detJ, K);
+    return impl::double_contravariant_piola(u, U, J, detJ, K);
   default:
     throw std::runtime_error("Mapping not yet implemented");
   }

@@ -47,7 +47,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
                                xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = Pkp1_at_Qpts.shape()[1];
+  const std::size_t psize = Pkp1_at_Qpts.shape(1);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs
@@ -86,7 +86,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
-  const std::size_t facet_dofs = facet_transforms.shape()[1];
+  const std::size_t facet_dofs = facet_transforms.shape(1);
 
   // Add integral moments on interior
   xt::xtensor<double, 2> points_cell, matrix_cell;
@@ -113,7 +113,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
 
   xt::xtensor<double, 3> base_transformations
       = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
   {
     xt::view(base_transformations, i, xt::all(), xt::all())
         = xt::eye<double>(ndofs);

@@ -41,7 +41,7 @@ xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
       = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, Qpts), 0,
                  xt::all(), xt::all());
 
-  const std::size_t psize = Pkp1_at_Qpts.shape()[1];
+  const std::size_t psize = Pkp1_at_Qpts.shape(1);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({nv * 2 + ns, psize * 2});
@@ -94,14 +94,13 @@ create_nedelec_2d_interpolation(int degree)
 xt::xtensor<double, 3> create_nedelec_2d_base_transforms(int degree)
 {
   const std::size_t ndofs = degree * (degree + 2);
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, 3);
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), 3);
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree - 1));
-  const std::size_t edge_dofs = edge_transforms.shape()[1];
+  const std::size_t edge_dofs = edge_transforms.shape(1);
   for (std::size_t edge = 0; edge < 3; ++edge)
   {
     const std::size_t start = edge_dofs * edge;
@@ -142,7 +141,7 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
   xt::xtensor<double, 2> Pkp1_at_Qpts
       = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts), 0,
                  xt::all(), xt::all());
-  const std::size_t psize = Pkp1_at_Qpts.shape()[1];
+  const std::size_t psize = Pkp1_at_Qpts.shape(1);
 
   // Create coefficients for order (degree-1) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * tdim});
@@ -205,14 +204,12 @@ create_nedelec_3d_interpolation(int degree)
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
-  xt::xtensor<double, 2> points_1d;
-  xt::xtensor<double, 2> matrix_1d;
+  xt::xtensor<double, 2> points_1d, matrix_1d;
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       create_dlagrange(cell::type::interval, degree - 1),
       cell::type::tetrahedron, 3, quad_deg);
 
-  xt::xtensor<double, 2> points_2d;
-  xt::xtensor<double, 2> matrix_2d;
+  xt::xtensor<double, 2> points_2d, matrix_2d;
   if (degree > 1)
   {
     std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
@@ -220,8 +217,7 @@ create_nedelec_3d_interpolation(int degree)
         cell::type::tetrahedron, 3, quad_deg);
   }
 
-  xt::xtensor<double, 2> points_3d;
-  xt::xtensor<double, 2> matrix_3d;
+  xt::xtensor<double, 2> points_3d, matrix_3d;
   if (degree > 2)
   {
     std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
@@ -237,14 +233,13 @@ xt::xtensor<double, 3> create_nedelec_3d_base_transforms(int degree)
 {
   const std::size_t ndofs = 6 * degree + 4 * degree * (degree - 1)
                             + (degree - 2) * (degree - 1) * degree / 2;
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, 14);
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), 14);
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree - 1));
-  const std::size_t edge_dofs = edge_transforms.shape()[1];
+  const std::size_t edge_dofs = edge_transforms.shape(1);
   for (std::size_t edge = 0; edge < 6; ++edge)
   {
     const std::size_t start = edge_dofs * edge;
@@ -260,8 +255,7 @@ xt::xtensor<double, 3> create_nedelec_3d_base_transforms(int degree)
         = moments::create_moment_dof_transformations(
             create_dlagrange(cell::type::triangle, degree - 2));
 
-    // const int face_dofs = face_transforms[0].rows();
-    const std::size_t face_dofs = face_transforms.shape()[1];
+    const std::size_t face_dofs = face_transforms.shape(1);
     for (std::size_t face = 0; face < 4; ++face)
     {
       const std::size_t start = edge_dofs * 6 + face_dofs * face;
@@ -303,7 +297,7 @@ xt::xtensor<double, 3> create_nedelec2_2d_base_transformations(int degree)
   const std::size_t ndofs = (degree + 1) * (degree + 2);
   xt::xtensor<double, 3> base_transformations
       = xt::zeros<double>({static_cast<std::size_t>(3), ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
   {
     xt::view(base_transformations, i, xt::all(), xt::all())
         = xt::eye<double>(ndofs);
@@ -312,7 +306,7 @@ xt::xtensor<double, 3> create_nedelec2_2d_base_transformations(int degree)
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree));
-  const std::size_t edge_dofs = edge_transforms.shape()[1];
+  const std::size_t edge_dofs = edge_transforms.shape(1);
   for (std::size_t edge = 0; edge < 3; ++edge)
   {
     const std::size_t start = edge_dofs * edge;
@@ -363,7 +357,7 @@ xt::xtensor<double, 3> create_nedelec2_3d_base_transformations(int degree)
   const std::size_t ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 2;
   xt::xtensor<double, 3> base_transformations
       = xt::zeros<double>({static_cast<std::size_t>(14), ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape()[0]; ++i)
+  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
   {
     xt::view(base_transformations, i, xt::all(), xt::all())
         = xt::eye<double>(ndofs);
@@ -372,7 +366,7 @@ xt::xtensor<double, 3> create_nedelec2_3d_base_transformations(int degree)
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree));
-  const std::size_t edge_dofs = edge_transforms.shape()[1];
+  const std::size_t edge_dofs = edge_transforms.shape(1);
   for (std::size_t edge = 0; edge < 6; ++edge)
   {
     const std::size_t start = edge_dofs * edge;
@@ -387,7 +381,7 @@ xt::xtensor<double, 3> create_nedelec2_3d_base_transformations(int degree)
     xt::xtensor<double, 3> face_transforms
         = moments::create_dot_moment_dof_transformations(
             create_rt(cell::type::triangle, degree - 1));
-    const std::size_t face_dofs = face_transforms.shape()[1];
+    const std::size_t face_dofs = face_transforms.shape(1);
     for (std::size_t face = 0; face < 4; ++face)
     {
       const std::size_t start = edge_dofs * 6 + face_dofs * face;

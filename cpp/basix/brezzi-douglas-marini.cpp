@@ -72,11 +72,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
-
-  xt::xtensor<double, 3> base_transformations
-      = xt::expand_dims(xt::eye<double>(ndofs), 0);
-  base_transformations = xt::tile(base_transformations, transform_count);
-
+  auto base_transformations
+      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   if (tdim == 2)
   {
     for (std::size_t edge = 0; edge < facet_count; ++edge)

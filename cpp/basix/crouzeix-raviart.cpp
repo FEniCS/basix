@@ -65,6 +65,6 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
       celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pts, degree);
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
                        entity_dofs, base_transformations, pts,
-                       xt::eye<double>(ndofs), mapping::type::identity);
+                       xt::eye<double>(ndofs), map::type::identity);
 }
 //-----------------------------------------------------------------------------

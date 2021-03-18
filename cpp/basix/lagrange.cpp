@@ -204,7 +204,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
       celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pt, degree);
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, pt,
-                       xt::eye<double>(ndofs), mapping::type::identity);
+                       xt::eye<double>(ndofs), map::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
@@ -235,7 +235,7 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
 
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, pt,
-                       xt::eye<double>(ndofs), mapping::type::identity);
+                       xt::eye<double>(ndofs), map::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dpc(cell::type celltype, int degree)
@@ -301,6 +301,6 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
       celltype, wcoeffs, xt::eye<double>(ndofs), pt, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, pt,
-                       xt::eye<double>(ndofs), mapping::type::identity);
+                       xt::eye<double>(ndofs), map::type::identity);
 }
 //-----------------------------------------------------------------------------

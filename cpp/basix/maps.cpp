@@ -7,14 +7,14 @@
 #include <stdexcept>
 
 //-----------------------------------------------------------------------------
-const std::string& basix::mapping::type_to_str(mapping::type type)
+const std::string& basix::map::type_to_str(map::type type)
 {
-  static const std::map<mapping::type, std::string> type_to_name = {
-      {mapping::type::identity, "identity"},
-      {mapping::type::covariantPiola, "covariant Piola"},
-      {mapping::type::contravariantPiola, "contravariant Piola"},
-      {mapping::type::doubleCovariantPiola, "double covariant Piola"},
-      {mapping::type::doubleContravariantPiola, "double contravariant Piola"}};
+  static const std::map<map::type, std::string> type_to_name
+      = {{map::type::identity, "identity"},
+         {map::type::covariantPiola, "covariant Piola"},
+         {map::type::contravariantPiola, "contravariant Piola"},
+         {map::type::doubleCovariantPiola, "double covariant Piola"},
+         {map::type::doubleContravariantPiola, "double contravariant Piola"}};
 
   auto it = type_to_name.find(type);
   if (it == type_to_name.end())

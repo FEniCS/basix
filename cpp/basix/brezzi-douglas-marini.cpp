@@ -109,6 +109,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       celltype, wcoeffs, matrix, points, degree);
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
-                       mapping::type::contravariantPiola);
+                       map::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

@@ -207,7 +207,7 @@ public:
                 const xt::xtensor<double, 3>& base_transformations,
                 const xt::xtensor<double, 2>& points,
                 const xt::xtensor<double, 2>& M = {},
-                mapping::type map_type = mapping::type::identity);
+                map::type map_type = map::type::identity);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -284,7 +284,7 @@ public:
 
   /// Get the mapping type used for this element
   /// @return The mapping
-  mapping::type mapping_type() const;
+  map::type mapping_type() const;
 
   /// Map function values from the reference to a physical cell
   /// @param U The function values on the reference
@@ -440,10 +440,10 @@ public:
   const xt::xtensor<double, 2>& interpolation_matrix() const;
 
   /// Element map type
-  mapping::type map_type;
+  map::type map_type;
 
 private:
-  static int compute_value_size(mapping::type map_type, int dim);
+  static int compute_value_size(map::type map_type, int dim);
 
   // Cell type
   cell::type _cell_type;
@@ -458,7 +458,7 @@ private:
   std::vector<int> _value_shape;
 
   /// The mapping used to map this element from the reference to a cell
-  mapping::type _map_type;
+  map::type _map_type;
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k}

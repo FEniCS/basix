@@ -176,6 +176,6 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
                        coeffs, entity_dofs, base_transformations, points,
-                       matrix, mapping::type::doubleCovariantPiola);
+                       matrix, map::type::doubleCovariantPiola);
 }
 //-----------------------------------------------------------------------------

@@ -34,10 +34,10 @@ enum class type
 // std::function<std::vector<double>(const tcb::span<const double>&,
 //                                   const xt::xtensor<double, 2>&, double,
 //                                   const xt::xtensor<double, 2>&)>
-// get_forward_map(mapping::type mapping_type);
+// get_forward_map(map::type mapping_type);
 
 /// Convert mapping type enum to string
-const std::string& type_to_str(mapping::type type);
+const std::string& type_to_str(map::type type);
 
 namespace impl
 {
@@ -136,19 +136,19 @@ std::vector<T> double_contravariant_piola(const tcb::span<const T>& U,
 /// TODO
 template <typename T, typename P, typename O>
 std::vector<T> apply_map(const tcb::span<const T>& U, const P& J, double detJ,
-                         const O& K, mapping::type map_type)
+                         const O& K, mapp::type map_type)
 {
   switch (map_type)
   {
-  case mapping::type::identity:
+  case map::type::identity:
     return impl::identity(U, J, detJ, K);
-  case mapping::type::covariantPiola:
+  case map::type::covariantPiola:
     return impl::covariant_piola(U, J, detJ, K);
-  case mapping::type::contravariantPiola:
+  case map::type::contravariantPiola:
     return impl::contravariant_piola(U, J, detJ, K);
-  case mapping::type::doubleCovariantPiola:
+  case map::type::doubleCovariantPiola:
     return impl::double_covariant_piola(U, J, detJ, K);
-  case mapping::type::doubleContravariantPiola:
+  case map::type::doubleContravariantPiola:
     return impl::double_contravariant_piola(U, J, detJ, K);
   default:
     throw std::runtime_error("Mapping not yet implemented");

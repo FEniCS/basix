@@ -9,7 +9,7 @@
 
 #include "cell.h"
 #include "element-families.h"
-#include "mappings.h"
+#include "maps.h"
 #include "span.hpp"
 #include <string>
 #include <vector>

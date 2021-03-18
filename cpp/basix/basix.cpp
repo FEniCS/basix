@@ -5,7 +5,7 @@
 #include "basix.h"
 #include "cell.h"
 #include "finite-element.h"
-#include "mappings.h"
+#include "maps.h"
 #include "quadrature.h"
 #include "span.hpp"
 #include <algorithm>

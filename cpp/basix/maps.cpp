@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "mappings.h"
+#include "maps.h"
 #include <map>
 #include <stdexcept>
 

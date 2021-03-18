@@ -14,7 +14,7 @@
 #include <basix/finite-element.h>
 #include <basix/indexing.h>
 #include <basix/lattice.h>
-#include <basix/mappings.h>
+#include <basix/maps.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <basix/span.hpp>

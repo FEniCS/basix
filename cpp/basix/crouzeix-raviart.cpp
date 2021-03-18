@@ -4,7 +4,7 @@
 
 #include "crouzeix-raviart.h"
 #include "element-families.h"
-#include "mappings.h"
+#include "maps.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include <numeric>

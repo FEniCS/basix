@@ -134,10 +134,9 @@ std::vector<T> double_contravariant_piola(const tcb::span<const T>& U,
 } // namespace impl
 
 /// TODO
-template <typename T>
-std::vector<T>
-apply_map(const tcb::span<const T>& U, const xt::xtensor<double, 2>& J,
-          double detJ, const xt::xtensor<double, 2>& K, mapping::type map_type)
+template <typename T, typename P, typename O>
+std::vector<T> apply_map(const tcb::span<const T>& U, const P& J, double detJ,
+                         const O& K, mapping::type map_type)
 {
   switch (map_type)
   {

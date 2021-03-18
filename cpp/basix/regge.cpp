@@ -5,7 +5,7 @@
 #include "regge.h"
 #include "element-families.h"
 #include "lattice.h"
-#include "mappings.h"
+#include "maps.h"
 #include "polyset.h"
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xbuilder.hpp>

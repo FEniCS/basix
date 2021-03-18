@@ -7,7 +7,7 @@
 #include "lagrange.h"
 #include "lattice.h"
 #include "log.h"
-#include "mappings.h"
+#include "maps.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"

@@ -7,7 +7,7 @@
 #include "element-families.h"
 #include "lattice.h"
 #include "log.h"
-#include "mappings.h"
+#include "maps.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include <numeric>

@@ -447,7 +447,7 @@ moments::make_tangent_integral_moments(const FiniteElement& moment_space,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   if (sub_entity_dim != 1)
-    throw std::runtime_error("XXXTangent is only well-defined on an edge.");
+    throw std::runtime_error("Tangent is only well-defined on an edge.");
 
   auto [Qpts, _Qwts]
       = quadrature::make_quadrature("default", cell::type::interval, q_deg);

@@ -39,9 +39,8 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     break;
   case cell::type::quadrilateral:
     if (degree < 2)
-      throw std::runtime_error(
-          "Bubble element on a quadrilateral interval must "
-          "have degree at least 2");
+      throw std::runtime_error("Bubble element on a quadrilateral interval "
+                               "must have degree at least 2");
     break;
   case cell::type::hexahedron:
     if (degree < 2)

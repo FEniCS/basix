@@ -750,7 +750,7 @@ xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
   case cell::type::hexahedron:
     return tabulate_polyset_hex_derivs(d, n, x);
   default:
-    throw std::runtime_error("Polynomial set: Unsupported cell type");
+    throw std::runtime_error("Polynomial set: unsupported cell type");
   }
 }
 //-----------------------------------------------------------------------------

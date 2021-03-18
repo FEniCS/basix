@@ -22,9 +22,9 @@ namespace moments
 /// moment.
 ///
 /// A dot integral moment is defined by
-/// @f[l_i(v) = \int v\cdot\phi_i,]
-/// where @f$\phi_i$ is a basis function in the moment space, and @f$v$ and
-/// $f$\phi_i$ are either both scalars or are vectors of the same size.
+/// \f[l_i(v) = \int v\cdot\phi_i,\f]
+/// where \f$\phi_i\f$ is a basis function in the moment space, and \f$v\f$ and
+/// \f$\phi_i\f$ are either both scalars or are vectors of the same size.
 ///
 /// If the moment space is an interval, this returns one matrix
 /// representing the reversal of the interval. If the moment space is a
@@ -44,10 +44,10 @@ create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 /// moment.
 ///
 /// An integral moment is defined by
-/// @f[l_{i,j}(v) = \int v\cdot e_j\phi_i,]
-/// where @f$\phi_i$ is a basis function in the moment space, @f$e_j$ is a
+/// \f[l_{i,j}(v) = \int v\cdot e_j\phi_i,\f]
+/// where \f$\phi_i\f$ is a basis function in the moment space, \f$e_j\f$ is a
 /// coordinate direction (of the cell sub-entity the moment is taken on),
-/// @f$v$ is a vector, and $f$\phi_i$ is a scalar.
+/// \f$v\f$ is a vector, and \f$\phi_i\f$ is a scalar.
 ///
 /// This will combine multiple copies of the result of
 /// `create_dot_moment_dof_transformations` to give the transformations for
@@ -63,10 +63,9 @@ create_moment_dof_transformations(const FiniteElement& moment_space);
 /// moment.
 ///
 /// A normal integral moment is defined by
-/// @f[l_{i,j}(v) = \int v\cdot n\phi_i,]
-/// where @f$\phi_i$ is a basis function in the moment space, @f$n$ is normal to
-/// the cell sub-entity,
-/// @f$v$ is a vector, and $f$\phi_i$ is a scalar.
+/// \f[l_{i,j}(v) = \int v\cdot n\phi_i,\f]
+/// where \f$\phi_i\f$ is a basis function in the moment space, \f$n\f$ is normal to
+/// the cell sub-entity, \f$v\f$ is a vector, and \f$\phi_i\f$ is a scalar.
 ///
 /// This does the same as `create_dot_moment_dof_transformations` with some
 /// additional factors of -1 to account for the changing of the normal direction
@@ -82,10 +81,9 @@ create_normal_moment_dof_transformations(const FiniteElement& moment_space);
 /// integral moment.
 ///
 /// A tangential integral moment is defined by
-/// @f[l_{i,j}(v) = \int v\cdot t\phi_i,]
-/// where @f$\phi_i$ is a basis function in the moment space, @f$t$ is
-/// tangential to the edge,
-/// @f$v$ is a vector, and $f$\phi_i$ is a scalar.
+/// \f[l_{i,j}(v) = \int v\cdot t\phi_i,\f]
+/// where \f$\phi_i\f$ is a basis function in the moment space, \f$t\f$ is
+/// tangential to the edge, \f$v\f$ is a vector, and \f$\phi_i\f$ is a scalar.
 ///
 /// This does the same as `create_dot_moment_dof_transformations` with some
 /// additional factors of -1 to account for the changing of the tangent

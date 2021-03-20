@@ -277,8 +277,6 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   auto [pts, _wts]
       = quadrature::make_quadrature("default", sub_celltype, q_deg);
   auto wts = xt::adapt(_wts);
-  if (pts.dimension() == 1)
-    pts = pts.reshape({pts.shape(0), 1});
 
   // Evaluate moment space at quadrature points
   xt::xtensor<double, 2> moment_space_at_Qpts

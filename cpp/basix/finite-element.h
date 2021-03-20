@@ -243,8 +243,7 @@ public:
   /// stacked with all x values, followed by all y-values (and then z,
   /// if any), likewise tensor-valued results will be stacked in index
   /// order.
-  xt::xtensor<double, 3> tabulate_new(int nd,
-                                      const xt::xarray<double>& x) const;
+  xt::xtensor<double, 3> tabulate(int nd, const xt::xarray<double>& x) const;
 
   /// TODO
   /// @return Shape [derivative][point][basis fn][value index]

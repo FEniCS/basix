@@ -269,7 +269,7 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3>
-FiniteElement::tabulate_new(int nd, const xt::xarray<double>& x) const
+FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
   const std::size_t tdim = cell::topological_dimension(_cell_type);
   std::size_t ndsize = 1;

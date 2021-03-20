@@ -148,17 +148,18 @@ make_tangent_integral_moments(const FiniteElement& moment_space,
                               cell::type celltype, std::size_t value_size,
                               int q_deg);
 
-/// Make interpolation points and weights for normal integral moments
+/// Compute interpolation points and weights for normal integral moments
 ///
 /// These can only be used when the moment space is defined on facets of
 /// the cell
 ///
-/// @param moment_space The space to compute the integral moments against
-/// @param celltype The cell type of the cell on which the space is
+/// @param[in] moment_space The space to compute the integral moments
+/// against
+/// @param[in] celltype The cell type of the cell on which the space is
 /// being defined
-/// @param value_size The value size of the space being defined the
-/// space
-/// @param q_deg The quadrature degree used for the integrals
+/// @param[in] value_size The value size of the space being defined
+/// @param[in] q_deg The quadrature degree used for the integrals
+/// @return (interpolation points, interpolation matrix)
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
 make_normal_integral_moments(const FiniteElement& moment_space,
                              cell::type celltype, std::size_t value_size,

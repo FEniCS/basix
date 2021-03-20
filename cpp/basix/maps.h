@@ -107,7 +107,16 @@ void double_contravariant_piola(O& r, const P& U, const Q& J, double detJ,
 }
 } // namespace impl
 
-/// TODO
+/// Apply a map to data. Note that the required input arguments depends
+/// on the type of map.
+///
+/// @param[out] u The field after mapping, flattened with row-major
+/// layout
+/// @param[in] U The field to be mapped, flattened with row-major layout
+/// @param[in] J Jacobian of the map
+/// @param[in] detJ Determinant of `J`
+/// @param[in] K The inverse of `J`
+/// @param[in] map_type The map type
 template <typename O, typename P, typename Mat0, typename Mat1>
 void apply_map(O&& u, const P& U, const Mat0& J, double detJ, const Mat1& K,
                maps::type map_type)

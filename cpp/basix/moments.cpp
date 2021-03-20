@@ -506,90 +506,81 @@ moments::make_normal_integral_moments(const FiniteElement& moment_space,
                                       cell::type celltype,
                                       std::size_t value_size, int q_deg)
 {
-  const cell::type sub_celltype = moment_space.cell_type();
-  const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
-  const std::size_t sub_entity_count
-      = cell::sub_entity_count(celltype, sub_entity_dim);
   const std::size_t tdim = cell::topological_dimension(celltype);
-
-  // If this is always true, value_size input can be removed
   assert(tdim == value_size);
 
-  if (static_cast<int>(sub_entity_dim) != static_cast<int>(tdim) - 1)
+  const cell::type sub_celltype = moment_space.cell_type();
+  const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
+  const std::size_t num_entities = cell::sub_entity_count(celltype, entity_dim);
+
+  if (static_cast<int>(entity_dim) != static_cast<int>(tdim) - 1)
     throw std::runtime_error("Normal is only well-defined on a facet.");
 
-  auto [Qpts, _Qwts]
+  // Compute quadrature points for evaluating integral
+  auto [pts, _wts]
       = quadrature::make_quadrature("default", sub_celltype, q_deg);
-  auto Qwts = xt::adapt(_Qwts);
-  if (Qpts.dimension() == 1)
-    Qpts = Qpts.reshape({Qpts.shape(0), 1});
+  auto wts = xt::adapt(_wts);
 
   // Evaluate moment space at quadrature points
-  xt::xtensor<double, 2> moment_space_at_Qpts
-      = xt::view(moment_space.tabulate(0, Qpts), 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> phi
+      = xt::view(moment_space.tabulate(0, pts), 0, xt::all(), xt::all());
 
-  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape(0), tdim});
+  // Storage for coordinates of evaluations points in the reference cell
+  xt::xtensor<double, 2> points({num_entities * pts.shape(0), tdim});
+  auto X = xt::reshape_view(points, {num_entities, pts.shape(0), tdim});
+
+  // Storage for interpolation matrix
   const std::array<std::size_t, 2> shape
-      = {moment_space_at_Qpts.shape(1) * sub_entity_count,
-         sub_entity_count * Qpts.shape(0) * value_size};
-  xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
+      = {phi.shape(1) * num_entities, num_entities * pts.shape(0) * value_size};
+  xt::xtensor<double, 2> P = xt::zeros<double>(shape);
+
+  // Evaluate moment space at quadrature points
 
   // Iterate over sub entities
   int c = 0;
   xt::xtensor<double, 1> normal;
-  for (std::size_t i = 0; i < sub_entity_count; ++i)
+  for (std::size_t e = 0; e < num_entities; ++e)
   {
-    xt::xtensor<double, 2> facet
-        = cell::sub_entity_geometry(celltype, tdim - 1, i);
+    // Map quadrature points onto facet
+    xt::xtensor<double, 2> facet_X
+        = cell::sub_entity_geometry(celltype, tdim - 1, e);
+    auto X0 = xt::row(facet_X, 0);
     if (tdim == 2)
     {
-      auto tangent = xt::row(facet, 1) - xt::row(facet, 0);
+      // No need to normalise the normal, as the size of this is equal
+      // to the integral jacobian
+      auto tangent = xt::row(facet_X, 1) - X0;
       normal = {-tangent(1), tangent(0)};
-
-      // No need to normalise the normal, as the size of this is equal to
-      // the integral jacobian
-
-      // Map quadrature points onto facet
-      for (std::size_t j = 0; j < Qpts.shape(0); ++j)
-      {
-        xt::row(points, i * Qpts.shape(0) + j)
-            = xt::row(facet, 0) + Qpts(j, 0) * tangent;
-      }
+      for (std::size_t p = 0; p < pts.shape(0); ++p)
+        xt::view(X, e, p, xt::all()) = X0 + pts[p] * tangent;
     }
     else if (tdim == 3)
     {
-      auto t0 = xt::row(facet, 1) - xt::row(facet, 0);
-      auto t1 = xt::row(facet, 2) - xt::row(facet, 0);
-      normal = xt::linalg::cross(t0, t1);
-
       // No need to normalise the normal, as the size of this is equal
       // to the integral Jacobian
-
-      // Map quadrature points onto facet
-      for (std::size_t j = 0; j < Qpts.shape(0); ++j)
-      {
-        xt::row(points, i * Qpts.shape(0) + j)
-            = xt::row(facet, 0) + Qpts(j, 0) * t0 + Qpts(j, 1) * t1;
-      }
+      auto t0 = xt::row(facet_X, 1) - X0;
+      auto t1 = xt::row(facet_X, 2) - X0;
+      normal = xt::linalg::cross(t0, t1);
+      for (std::size_t p = 0; p < pts.shape(0); ++p)
+        xt::view(X, e, p, xt::all()) = X0 + pts(p, 0) * t0 + pts(p, 1) * t1;
     }
     else
       throw std::runtime_error("Normal on this cell cannot be computed.");
 
     // Compute facet normal integral moments
-    for (std::size_t j = 0; j < moment_space_at_Qpts.shape(1); ++j)
+    for (std::size_t i = 0; i < phi.shape(1); ++i)
     {
-      auto phi = xt::col(moment_space_at_Qpts, j);
-      for (std::size_t k = 0; k < value_size; ++k)
+      auto phi_i = xt::col(phi, i);
+      for (std::size_t j = 0; j < value_size; ++j)
       {
-        std::size_t offset
-            = k * sub_entity_count * Qpts.shape(0) + i * Qpts.shape(0);
-        xt::view(matrix, c, xt::range(offset, offset + Qpts.shape(0)))
-            = phi * Qwts * normal[k];
+        std::size_t offset = j * num_entities * pts.shape(0) + e * pts.shape(0);
+        xt::view(P, c, xt::range(offset, offset + pts.shape(0)))
+            = phi_i * wts * normal[j];
       }
       ++c;
     }
   }
 
-  return std::make_pair(points, matrix);
+  return std::make_pair(points, P);
 }
 //----------------------------------------------------------------------------

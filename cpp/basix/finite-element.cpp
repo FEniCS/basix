@@ -111,8 +111,8 @@ xt::xtensor<double, 2> basix::compute_expansion_coefficients(
       auto Mview_t
           = xt::view(M, xt::all(), xt::range(v * m_size, (v + 1) * m_size));
 
-      // Compute Aview = Bview * Pt * Mview ( Aview_i = Bview_j * Pt_jk
-      // * Mview_ki )
+      // Compute Aview = Bview * Pt * Mview
+      /// (by row: Aview_i = Bview_j * Pt_jk * Mview_ki )
       for (std::size_t i = 0; i < A.shape(1); ++i)
         for (std::size_t k = 0; k < P.shape(1); ++k)
           for (std::size_t j = 0; j < P.shape(2); ++j)

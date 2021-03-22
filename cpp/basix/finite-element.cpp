@@ -143,19 +143,11 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
                                   const xt::xtensor<double, 2>& matrix_3d,
                                   std::size_t tdim, std::size_t value_size)
 {
-  std::array<std::size_t, 3> num_pts
-      = {points_1d.shape(0), points_2d.shape(0), points_3d.shape(0)};
-  std::array<std::size_t, 3> offsets;
-  std::partial_sum(num_pts.begin(), num_pts.end(), offsets.begin());
-
-  // Pack the evaluation points
-  xt::xtensor<double, 2> x({offsets.back(), tdim});
-  if (num_pts[0] > 0)
-    xt::view(x, xt::range(0, offsets[0]), xt::all()) = points_1d;
-  if (num_pts[1] > 0)
-    xt::view(x, xt::range(offsets[0], offsets[1]), xt::all()) = points_2d;
-  if (num_pts[2] > 0)
-    xt::view(x, xt::range(offsets[1], offsets[2]), xt::all()) = points_3d;
+  // Stack point coordinates
+  auto p1 = xt::reshape_view(points_1d, {points_1d.shape(0), tdim});
+  auto p2 = xt::reshape_view(points_2d, {points_2d.shape(0), tdim});
+  auto p3 = xt::reshape_view(points_3d, {points_3d.shape(0), tdim});
+  auto x = xt::vstack(std::tuple(p1, p2, p3));
 
   // Pack the matrix M
   std::array<std::size_t, 3> row_dim

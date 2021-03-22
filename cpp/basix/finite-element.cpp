@@ -98,6 +98,7 @@ xt::xtensor<double, 2> basix::compute_expansion_coefficients(
 
   const xt::xtensor<double, 3> P = polyset::tabulate(celltype, degree, 0, pts);
 
+  // Compute A = BD^T =  B(MP)^T
   const int coeff_size = P.shape(2);
   const int value_size = B.shape(1) / coeff_size;
   const int m_size = M.shape(1) / value_size;
@@ -129,6 +130,7 @@ xt::xtensor<double, 2> basix::compute_expansion_coefficients(
     }
   }
 
+  // Compute C = (BD^T)^{-1} B
   return xt::linalg::solve(A, B);
 }
 //-----------------------------------------------------------------------------
@@ -141,28 +143,21 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
                                   const xt::xtensor<double, 2>& matrix_3d,
                                   std::size_t tdim, std::size_t value_size)
 {
-  std::array<std::size_t, 3> num_ptsd
+  std::array<std::size_t, 3> num_pts
       = {points_1d.shape(0), points_2d.shape(0), points_3d.shape(0)};
-  std::size_t num_pts = std::accumulate(num_ptsd.begin(), num_ptsd.end(), 0);
-  xt::xtensor<double, 2> points({num_pts, tdim});
+  std::array<std::size_t, 3> offsets;
+  std::partial_sum(num_pts.begin(), num_pts.end(), offsets.begin());
 
-  if (num_ptsd[0] > 0)
-    xt::view(points, xt::range(0, num_ptsd[0]), xt::all()) = points_1d;
+  // Pack the evaluation points
+  xt::xtensor<double, 2> x({offsets.back(), tdim});
+  if (num_pts[0] > 0)
+    xt::view(x, xt::range(0, offsets[0]), xt::all()) = points_1d;
+  if (num_pts[1] > 0)
+    xt::view(x, xt::range(offsets[0], offsets[1]), xt::all()) = points_2d;
+  if (num_pts[2] > 0)
+    xt::view(x, xt::range(offsets[1], offsets[2]), xt::all()) = points_3d;
 
-  if (num_ptsd[1] > 0)
-  {
-    xt::view(points, xt::range(num_ptsd[0], num_ptsd[0] + num_ptsd[1]),
-             xt::all())
-        = points_2d;
-  }
-
-  if (num_ptsd[2] > 0)
-  {
-    auto range = xt::range(num_ptsd[0] + num_ptsd[1],
-                           num_ptsd[0] + num_ptsd[1] + num_ptsd[2]);
-    xt::view(points, range, xt::all()) = points_3d;
-  }
-
+  // Pack the matrix M
   std::array<std::size_t, 3> row_dim
       = {matrix_1d.shape(0), matrix_2d.shape(0), matrix_3d.shape(0)};
   std::size_t num_rows = std::accumulate(row_dim.begin(), row_dim.end(), 0);
@@ -170,7 +165,7 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
       = {matrix_1d.shape(1), matrix_2d.shape(1), matrix_3d.shape(1)};
   std::size_t num_cols = std::accumulate(col_dim.begin(), col_dim.end(), 0);
 
-  xt::xtensor<double, 2> matrix = xt::zeros<double>({num_rows, num_cols});
+  xt::xtensor<double, 2> M = xt::zeros<double>({num_rows, num_cols});
   std::transform(col_dim.begin(), col_dim.end(), col_dim.begin(),
                  [value_size](auto x) { return x /= value_size; });
   num_cols /= value_size;
@@ -180,7 +175,7 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
       auto range0 = xt::range(0, row_dim[0]);
       auto range1 = xt::range(i * num_cols, i * num_cols + col_dim[0]);
       auto range = xt::range(i * col_dim[0], i * col_dim[0] + col_dim[0]);
-      xt::view(matrix, range0, range1) = xt::view(matrix_1d, xt::all(), range);
+      xt::view(M, range0, range1) = xt::view(matrix_1d, xt::all(), range);
     }
 
     {
@@ -188,7 +183,7 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
       auto range1 = xt::range(i * num_cols + col_dim[0],
                               i * num_cols + col_dim[0] + col_dim[1]);
       auto range = xt::range(i * col_dim[1], i * col_dim[1] + col_dim[1]);
-      xt::view(matrix, range0, range1) = xt::view(matrix_2d, xt::all(), range);
+      xt::view(M, range0, range1) = xt::view(matrix_2d, xt::all(), range);
     }
 
     {
@@ -198,11 +193,11 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
           = xt::range(i * num_cols + col_dim[0] + col_dim[1],
                       i * num_cols + col_dim[0] + col_dim[1] + col_dim[2]);
       auto range = xt::range(i * col_dim[2], i * col_dim[2] + col_dim[2]);
-      xt::view(matrix, range0, range1) = xt::view(matrix_3d, xt::all(), range);
+      xt::view(M, range0, range1) = xt::view(matrix_3d, xt::all(), range);
     }
   }
 
-  return std::make_pair(points, matrix);
+  return {x, M};
 }
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(element::family family, cell::type cell_type,

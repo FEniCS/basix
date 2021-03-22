@@ -137,7 +137,7 @@ namespace basix
 /// The functionals defining the Raviart-Thomas order 1 space are integral
 /// of the normal components along each edge. The matrix D (dual) given
 /// by applying these to @f$p_0@f$ to @f$p_5@f$ is:
-///   dual = @f[ \begin{bmatrix}
+/// @f[ D = \begin{bmatrix}
 /// -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
 /// -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0 &    0 \\
 ///           0 &         0   &    0 &  \sqrt{2}/2 &          0 &   -1

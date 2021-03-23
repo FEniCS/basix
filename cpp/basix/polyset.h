@@ -25,7 +25,7 @@ namespace basix::polyset
 /// are not required, use `n = 0`. For example, order `n = 2` for a 2D
 /// cell, will compute the basis \f$\psi, d\psi/dx, d\psi/dy, d^2
 /// \psi/dx^2, d^2\psi/dxdy, d^2\psi/dy^2\f$ in that order (0, 0), (1,
-/// 0), (0, 1), (2, 0), (2, 1).
+/// 0), (0, 1), (2, 0), (1, 1), (0 ,2).
 ///
 /// For an interval cell there are `nderiv + 1` derivatives, for a 2D
 /// cell, there are `(nderiv + 1)(nderiv + 2)/2` derivatives, and in 3D,

@@ -75,7 +75,6 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     break;
   case cell::type::quadrilateral:
     topo.resize(3);
-    // FIXME - check all these
     // Vertices
     topo[0] = {{0}, {1}, {2}, {3}};
     // Edges
@@ -95,33 +94,30 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     topo[3] = {{0, 1, 2, 3}};
     break;
   case cell::type::prism:
-    // FIXME: check
     topo.resize(4);
     // Vertices
     topo[0] = {{0}, {1}, {2}, {3}, {4}, {5}};
     // Edges
-    topo[1] = {{0, 1}, {1, 2}, {2, 0}, {0, 3}, {1, 4},
-               {2, 5}, {3, 4}, {4, 5}, {5, 3}};
+    topo[1] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 4},
+               {2, 5}, {3, 4}, {3, 5}, {4, 5}};
     // Faces
-    topo[2] = {{0, 1, 2}, {0, 1, 3, 4}, {1, 2, 4, 5}, {2, 0, 5, 3}, {3, 4, 5}};
+    topo[2] = {{0, 1, 2}, {0, 1, 3, 4}, {0, 2, 3, 5}, {1, 2, 4, 5}, {3, 4, 5}};
     // Cell
     topo[3] = {{0, 1, 2, 3, 4, 5}};
     break;
   case cell::type::pyramid:
-    // FIXME: check all these
     topo.resize(4);
     // Vertices
     topo[0] = {{0}, {1}, {2}, {3}, {4}};
     // Edges
-    topo[1] = {{0, 1}, {0, 2}, {2, 3}, {3, 1}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
+    topo[1] = {{0, 1}, {0, 2}, {0, 4}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}};
     // Faces
-    topo[2] = {{0, 1, 2, 3}, {0, 1, 4}, {0, 2, 4}, {2, 3, 4}, {3, 1, 4}};
+    topo[2] = {{0, 1, 2, 3}, {0, 1, 4}, {0, 2, 4}, {2, 3, 4}, {1, 3, 4}};
     // Cell
     topo[3] = {{0, 1, 2, 3, 4}};
     break;
   case cell::type::hexahedron:
     topo.resize(4);
-    // FIXME: check over
     // Vertices
     topo[0] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}};
     // Edges

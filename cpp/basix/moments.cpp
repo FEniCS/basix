@@ -270,78 +270,74 @@ moments::make_integral_moments(const FiniteElement& moment_space,
                                int q_deg)
 {
   const cell::type sub_celltype = moment_space.cell_type();
-  const std::size_t sub_entity_dim = cell::topological_dimension(sub_celltype);
-  if (sub_entity_dim == 0)
+  const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
+  if (entity_dim == 0)
     throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
-  const std::size_t sub_entity_count
-      = cell::sub_entity_count(celltype, sub_entity_dim);
+  const std::size_t num_entities = cell::sub_entity_count(celltype, entity_dim);
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  auto [Qpts, _Qwts]
+  auto [pts, _wts]
       = quadrature::make_quadrature("default", sub_celltype, q_deg);
-  auto Qwts = xt::adapt(_Qwts);
-  if (Qpts.dimension() == 1)
-    Qpts = Qpts.reshape({Qpts.shape(0), 1});
+  auto wts = xt::adapt(_wts);
+  if (pts.dimension() == 1)
+    pts = pts.reshape({pts.shape(0), 1});
 
   // Evaluate moment space at quadrature points
-  xt::xtensor<double, 2> moment_space_at_Qpts
-      = xt::view(moment_space.tabulate(0, Qpts), 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> phi
+      = xt::view(moment_space.tabulate(0, pts), 0, xt::all(), xt::all());
 
-  xt::xtensor<double, 2> points({sub_entity_count * Qpts.shape(0), tdim});
+  xt::xtensor<double, 2> points({num_entities * pts.shape(0), tdim});
   const std::array<std::size_t, 2> shape
-      = {moment_space_at_Qpts.shape(1) * sub_entity_count
-             * (value_size == 1 ? 1 : sub_entity_dim),
-         sub_entity_count * Qpts.shape(0) * value_size};
-  xt::xtensor<double, 2> matrix = xt::zeros<double>(shape);
+      = {phi.shape(1) * num_entities * (value_size == 1 ? 1 : entity_dim),
+         num_entities * pts.shape(0) * value_size};
+  xt::xtensor<double, 2> D = xt::zeros<double>(shape);
 
   // Iterate over sub entities
   int c = 0;
   std::vector<int> axis_pts = axis_points(celltype);
-  for (std::size_t i = 0; i < sub_entity_count; ++i)
+  for (std::size_t e = 0; e < num_entities; ++e)
   {
+    auto r = xt::range(e * pts.shape(0), (e + 1) * pts.shape(0));
+
     xt::xtensor<double, 2> entity
-        = cell::sub_entity_geometry(celltype, sub_entity_dim, i);
+        = cell::sub_entity_geometry(celltype, entity_dim, e);
 
     // Parametrise entity coordinates
-    xt::xtensor<double, 2> axes({sub_entity_dim, tdim});
-    for (std::size_t j = 0; j < sub_entity_dim; ++j)
+    xt::xtensor<double, 2> axes({entity_dim, tdim});
+    for (std::size_t i = 0; i < entity_dim; ++i)
     {
-      xt::view(axes, j, xt::all()) = xt::view(entity, axis_pts[j], xt::all())
+      xt::view(axes, i, xt::all()) = xt::view(entity, axis_pts[i], xt::all())
                                      - xt::view(entity, 0, xt::all());
     }
 
     // See
     // https://github.com/xtensor-stack/xtensor/issues/1922#issuecomment-586317746
     // for why xt::newaxis() is required
-    auto points_view = xt::view(
-        points, xt::range(i * Qpts.shape(0), (i + 1) * Qpts.shape(0)),
-        xt::range(0, tdim));
-    auto p = xt::tile(xt::view(entity, xt::newaxis(), 0), Qpts.shape(0));
-    points_view = p + xt::linalg::dot(Qpts, axes);
+    auto points_view = xt::view(points, r, xt::range(0, tdim));
+    auto p = xt::tile(xt::view(entity, xt::newaxis(), 0), pts.shape(0));
+    points_view = p + xt::linalg::dot(pts, axes);
 
     // Compute entity integral moments
-    for (std::size_t j = 0; j < moment_space_at_Qpts.shape(1); ++j)
+    for (std::size_t i = 0; i < phi.shape(1); ++i)
     {
-      auto phi = xt::col(moment_space_at_Qpts, j);
+      auto phi_i = xt::col(phi, i);
       if (value_size == 1)
       {
-        xt::view(matrix, c,
-                 xt::range(i * Qpts.shape(0), (i + 1) * Qpts.shape(0)))
-            = phi * Qwts;
+        xt::view(D, c, r) = phi_i * wts;
         ++c;
       }
       else
       {
         // FIXME: This assumed that the moment space has a certain
         // mapping type
-        for (std::size_t d = 0; d < sub_entity_dim; ++d)
+        for (std::size_t d = 0; d < entity_dim; ++d)
         {
           auto axis = xt::row(axes, d);
           for (std::size_t k = 0; k < value_size; ++k)
           {
-            std::size_t offset = (k * sub_entity_count + i) * Qpts.shape(0);
-            xt::view(matrix, c, xt::range(offset, offset + Qpts.shape(0)))
-                = phi * Qwts * axis[k];
+            std::size_t offset = (k * num_entities + e) * pts.shape(0);
+            xt::view(D, c, xt::range(offset, offset + pts.shape(0)))
+                = phi_i * wts * axis[k];
           }
           ++c;
         }
@@ -349,7 +345,7 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     }
   }
 
-  return {points, matrix};
+  return {points, D};
 }
 //----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
@@ -388,7 +384,6 @@ moments::make_dot_integral_moments(const FiniteElement& moment_space,
   xt::xtensor<double, 3> D = xt::zeros<double>(shape);
 
   // Iterate over cell entities
-  // int dof = 0;
   const std::vector<int> axis_pts = axis_points(celltype);
   for (std::size_t e = 0; e < num_entities; ++e)
   {

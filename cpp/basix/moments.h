@@ -119,8 +119,11 @@ make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
 /// These will represent the integral of each function in the moment
 /// space over each sub entity of the moment space's cell type in a cell
 /// with the given type. For example, if the input cell type is a
-/// triangle, and the moment space is a P1 space on an edge, this will
+/// triangle and the moment space is a P1 space on an edge, this will
 /// perform two integrals for each of the 3 edges of the triangle.
+///
+/// @todo Clarify what happens value size of the moment space is less
+/// than `value_size`.
 ///
 /// @param moment_space The space to compute the integral moments against
 /// @param celltype The cell type of the cell on which the space is being

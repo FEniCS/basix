@@ -25,34 +25,52 @@ namespace basix
 /// Calculates the basis functions of the finite element, in terms of the
 /// polynomial basis.
 ///
-/// The basis functions @f$(\phi_i)@f$ of a finite element can be represented
-/// as a linear combination of polynomials @f$(p_j)@f$ in an underlying
-/// polynomial basis that span the space of all d-dimensional polynomials up
-/// to order
-/// @f$k (P_k^d)@f$:
-/// @f[  \phi_i = \sum_j c_{ij} p_j @f]
-/// This function computed the matrix @f$C = (c_{ij})@f$.
+/// The below explanation uses Einstein notation.
 ///
-/// In some cases, the basis functions @f$(\phi_i)@f$ do not span the full
-/// space
-/// @f$P_k@f$. In these cases, we represent the space spanned by the basis
-/// functions as the span of some polynomials @f$(q_k)@f$. These can be
-/// represented in terms of the underlying polynomial basis:
-/// @f[  q_k = \sum_j b_{kj} p_j @f]
-/// If the basis functions span the full space, then @f$B = (b_{kj})@f$ is
-/// simply the identity.
+/// The basis functions @f${\phi_i}@f$ of a finite element are represented
+/// as a linear combination of polynomials @f$\{p_j\}@f$ in an underlying
+/// polynomial basis that span the space of all d-dimensional polynomials up
+/// to order @f$k \ (P_k^d)@f$:
+/// \f[ \phi_i = c_{ij} p_j \f]
+///
+/// In some cases, the basis functions @f$\{\phi_i\}@f$ do not span the
+/// full space @f$P_k@f$, in which case we denote space spanned by the
+/// basis functions by @f$\{q_k\}@f$, which can be represented by:
+/// @f[  q_i = b_{ij} p_j. @f]
+///  This leads to
+/// @f[  \phi_i = c^{\prime}_{ij} q_j = c^{\prime}_{ij} b_{jk} p_k,  @f]
+/// and in matrix form:
+/// \f[
+/// \phi = C^{\prime} B p
+/// \f]
+///
+/// If the basis functions span the full space, then @f$ B @f$ is simply
+/// the identity.
 ///
 /// The basis functions @f$\phi_i@f$ are defined by a dual set of functionals
-/// @f$(f_l)@f$. The basis functions are the functions in span{@f$q_k@f$} such
-/// that:
-///   @f[ f_l(\phi_i) = 1 \mbox{ if } i=l \mbox{ else } 0 @f]
-/// We can define a matrix D given by applying the functionals to each
-/// polynomial p_j:
-///  @f[ D = (d_{lj}),\mbox{ where } d_{lj} = f_l(p_j) @f]
+/// @f$\{f_i\}@f$. The basis functions are the functions in span{@f$q_k@f$} such
+/// that
+///   @f[ f_i(\phi_j) = \delta_{ij} @f]
+/// and inserting the expression for @f$\phi_{j}@f$:
+///   @f[ f_i(c^{\prime}_{jk}b_{kl}p_{l}) = c^{\prime}_{jk} b_{kl} f_i \left( p_{l} \right) @f]
+///
+/// Defining a matrix D given by applying the functionals to each
+/// polynomial @f$p_j@f$:
+///  @f[ [D] = d_{ij},\mbox{ where } d_{ij} = f_i(p_j), @f]
+/// we have:
+/// @f[ C^{\prime} B D^{T} = I @f]
+///
+/// and
+///
+/// @f[ C^{\prime} = (B D^{T})^{-1}. @f]
+///
+/// Recalling that @f$C = C^{\prime} B@f$, where @f$C@f$ is the matrix
+/// form of @f$c_{ij}@f$,
+///
+/// @f[ C = (B D^{T})^{-1} B @f]
 ///
 /// This function takes the matrices B (span_coeffs) and D (dual) as
-/// inputs and returns the matrix C. It computed C using:
-///  @f[ C = (B D^T)^{-1} B @f]
+/// inputs and returns the matrix C.
 ///
 /// Example: Order 1 Lagrange elements on a triangle
 /// ------------------------------------------------
@@ -119,7 +137,7 @@ namespace basix
 /// The functionals defining the Raviart-Thomas order 1 space are integral
 /// of the normal components along each edge. The matrix D (dual) given
 /// by applying these to @f$p_0@f$ to @f$p_5@f$ is:
-///   dual = @f[ \begin{bmatrix}
+/// @f[ D = \begin{bmatrix}
 /// -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
 /// -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0 &    0 \\
 ///           0 &         0   &    0 &  \sqrt{2}/2 &          0 &   -1
@@ -243,8 +261,7 @@ public:
   /// stacked with all x values, followed by all y-values (and then z,
   /// if any), likewise tensor-valued results will be stacked in index
   /// order.
-  xt::xtensor<double, 3> tabulate_new(int nd,
-                                      const xt::xarray<double>& x) const;
+  xt::xtensor<double, 3> tabulate(int nd, const xt::xarray<double>& x) const;
 
   /// TODO
   /// @return Shape [derivative][point][basis fn][value index]

@@ -13,13 +13,10 @@ def test_create_simple():
 
     # Create element from space and dual
     coeff_space = numpy.identity(points.shape[0])
-
     fe = basix.create_new_element("Custom element", "triangle", degree, [1], points, matrix, coeff_space,
                                   [[1, 1, 1], [0, 0, 0], [0]], [numpy.identity(3) for i in range(3)],
                                   basix.MappingType.identity)
-
     numpy.set_printoptions(suppress=True, precision=2)
-
     points = numpy.array([[.5, 0], [0, .5], [.5, .5]], dtype=numpy.float64)
     print(fe.tabulate(0, points))
 
@@ -38,7 +35,6 @@ def test_create_custom():
                                   [[0, 0, 0], [1, 1, 1], [3]],
                                   [numpy.identity(5) for i in range(3)],
                                   basix.MappingType.identity)
-
     numpy.set_printoptions(suppress=True, precision=2)
     points = numpy.array([[.25, 0], [0, .25], [.25, .25]], dtype=numpy.float64)
     print(fe.tabulate(0, points))

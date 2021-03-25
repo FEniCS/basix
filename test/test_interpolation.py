@@ -28,10 +28,10 @@ def test_interpolation_matrix(cell_name, order, element_name):
                          "Lagrange spaces with equally spaced points are unstable.")
 
     element = basix.create_element(element_name, cell_name, order)
-
     i_m = element.interpolation_matrix
     tabulated = element.tabulate(0, element.points)[0]
 
+    # Loop over dofs
     coeffs = np.zeros((i_m.shape[0], i_m.shape[0]))
     for i in range(i_m.shape[0]):
         coeffs[i, :] = i_m @ tabulated[:, i::i_m.shape[0]].T.reshape(i_m.shape[1])

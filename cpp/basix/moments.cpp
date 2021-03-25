@@ -41,6 +41,54 @@ std::vector<int> axis_points(const cell::type celltype)
   }
 }
 //----------------------------------------------------------------------------
+// Map points defined on a cell entity into the full cell space
+// @param[in] celltype0
+// @param[in] celltype1
+// @param[in] x
+// @return
+// template <typename P>
+// xt::xtensor<double, 2> map_points(const cell::type celltype0,
+//                                   const cell::type celltype1, const P& x)
+// {
+//   const std::size_t tdim = cell::topological_dimension(celltype0);
+//   std::size_t entity_dim = cell::topological_dimension(celltype1);
+//   std::size_t num_entities = cell::sub_entity_count(celltype1, entity_dim);
+
+//   std::size_t num_points = num_entities * x.shape(0);
+//   xt::xtensor<double, 2> p({num_points, tdim});
+
+//   const std::vector<int> axis_pts = axis_points(celltype0);
+//   for (std::size_t e = 0; e < num_entities; ++e)
+//   {
+//     // Get entity geometry
+//     xt::xtensor<double, 2> entity_x
+//         = cell::sub_entity_geometry(celltype0, entity_dim, e);
+//     auto x0 = xt::row(entity_x, 0);
+
+//     // Axes on the cell entity
+//     xt::xtensor<double, 2> axes({entity_dim, tdim});
+//     for (std::size_t j = 0; j < entity_dim; ++j)
+//       xt::row(axes, j) = xt::row(entity_x, axis_pts[j]) - x0;
+
+//     // See
+//     //
+//     https://github.com/xtensor-stack/xtensor/issues/1922#issuecomment-586317746
+//     // for why xt::newaxis() is required
+
+//     // Get view of points for this entity
+//     auto r = xt::range(e * x.shape(0), (e + 1) * x.shape(0));
+//     auto p_entity = xt::view(p, r, xt::all());
+
+//     // Stack X0
+//     auto p0 = xt::tile(xt::view(entity_x, xt::newaxis(), 0), x.shape(0));
+
+//     // Add position of each point relative to X0
+//     p_entity = p0 + xt::linalg::dot(x, axes);
+//   }
+
+//   return p;
+// }
+//----------------------------------------------------------------------------
 } // namespace
 
 //-----------------------------------------------------------------------------
@@ -286,7 +334,8 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   xt::xtensor<double, 2> phi
       = xt::view(moment_space.tabulate(0, pts), 0, xt::all(), xt::all());
 
-  xt::xtensor<double, 2> points({num_entities * pts.shape(0), tdim});
+  xt::xtensor<double, 3> points({num_entities, pts.shape(0), tdim});
+
   const std::array<std::size_t, 2> shape
       = {phi.shape(1) * num_entities * (value_size == 1 ? 1 : entity_dim),
          num_entities * pts.shape(0) * value_size};
@@ -297,25 +346,22 @@ moments::make_integral_moments(const FiniteElement& moment_space,
   std::vector<int> axis_pts = axis_points(celltype);
   for (std::size_t e = 0; e < num_entities; ++e)
   {
-    auto r = xt::range(e * pts.shape(0), (e + 1) * pts.shape(0));
-
-    xt::xtensor<double, 2> entity
+    xt::xtensor<double, 2> entity_x
         = cell::sub_entity_geometry(celltype, entity_dim, e);
+    auto x0 = xt::row(entity_x, 0);
 
     // Parametrise entity coordinates
     xt::xtensor<double, 2> axes({entity_dim, tdim});
     for (std::size_t i = 0; i < entity_dim; ++i)
-    {
-      xt::view(axes, i, xt::all()) = xt::view(entity, axis_pts[i], xt::all())
-                                     - xt::view(entity, 0, xt::all());
-    }
+      xt::row(axes, i) = xt::row(entity_x, axis_pts[i]) - x0;
 
-    // See
-    // https://github.com/xtensor-stack/xtensor/issues/1922#issuecomment-586317746
-    // for why xt::newaxis() is required
-    auto points_view = xt::view(points, r, xt::range(0, tdim));
-    auto p = xt::tile(xt::view(entity, xt::newaxis(), 0), pts.shape(0));
-    points_view = p + xt::linalg::dot(pts, axes);
+    // Compute x = x0 + \delta x
+    xt::view(points, e, xt::all(), xt::all()) = xt::tile(
+        xt::reshape_view(x0, {static_cast<std::size_t>(1), x0.shape(0)}),
+        pts.shape(0));
+    xt::view(points, e, xt::all(), xt::all()) += xt::linalg::dot(pts, axes);
+
+    auto r = xt::range(e * pts.shape(0), (e + 1) * pts.shape(0));
 
     // Compute entity integral moments
     for (std::size_t i = 0; i < phi.shape(1); ++i)
@@ -345,7 +391,8 @@ moments::make_integral_moments(const FiniteElement& moment_space,
     }
   }
 
-  return {points, D};
+  std::array s = {points.shape(0) * points.shape(1), points.shape(2)};
+  return {xt::reshape_view(points, s), D};
 }
 //----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>

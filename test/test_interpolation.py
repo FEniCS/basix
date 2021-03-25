@@ -31,18 +31,9 @@ def test_interpolation_matrix(cell_name, order, element_name):
     i_m = element.interpolation_matrix
     tabulated = element.tabulate(0, element.points)[0]
 
-    # for i in range(tmp.shape[1]):
-    #     print("Point:", i)
-    #     a = tmp[:, i, :]
-    #     print(tmp[:, i, :].flatten())
-    #     print("Test: ", tmp[0, i])
-
-    # print(tmp)
-
     # Loop over dofs
     coeffs = np.zeros((i_m.shape[0], i_m.shape[0]))
     for i in range(i_m.shape[0]):
-        # print(tabulated[:, i::i_m.shape[0]].T.reshape(i_m.shape[1]))
         coeffs[i, :] = i_m @ tabulated[:, i::i_m.shape[0]].T.reshape(i_m.shape[1])
 
     assert np.allclose(coeffs, np.identity(coeffs.shape[0]))

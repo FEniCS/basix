@@ -30,7 +30,7 @@ xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
 
   FiniteElement L = create_dlagrange(cell::type::interval, n);
   xt::xtensor<double, 2> v
-      = xt::view(L.tabulate(0, x), 0, xt::all(), xt::all());
+      = xt::view(L.tabulate_x(0, x), 0, xt::all(), xt::all(), 0);
 
   return xt::linalg::dot(v, pts);
 }

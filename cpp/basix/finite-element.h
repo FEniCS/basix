@@ -52,7 +52,8 @@ namespace basix
 /// that
 ///   @f[ f_i(\phi_j) = \delta_{ij} @f]
 /// and inserting the expression for @f$\phi_{j}@f$:
-///   @f[ f_i(c^{\prime}_{jk}b_{kl}p_{l}) = c^{\prime}_{jk} b_{kl} f_i \left( p_{l} \right) @f]
+///   @f[ f_i(c^{\prime}_{jk}b_{kl}p_{l}) = c^{\prime}_{jk} b_{kl} f_i \left(
+///   p_{l} \right) @f]
 ///
 /// Defining a matrix D given by applying the functionals to each
 /// polynomial @f$p_j@f$:
@@ -242,30 +243,24 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
-  /// @todo Fix unclear description of the returned data layout and
-  /// consider using rank 4 tensor [deriv][point][num_res][value_shape].
-  /// It is presently inconsistent with other data structures,
-  ///
   /// Compute basis values and derivatives at set of points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
-  /// @return The basis functions (and derivatives). The first entry in
-  /// the list is the basis function. Higher derivatives are stored in
-  /// triangular (2D) or tetrahedral (3D) ordering, i.e. for the (x,y)
-  /// derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1), (0,2),
-  /// (3,0)... The function basix::idx can be used to find the
-  /// appropriate derivative. If a vector result is expected, it will be
-  /// stacked with all x values, followed by all y-values (and then z,
-  /// if any), likewise tensor-valued results will be stacked in index
-  /// order.
-  xt::xtensor<double, 3> tabulate(int nd, const xt::xarray<double>& x) const;
-
-  /// TODO
-  /// @return Shape [derivative][point][basis fn][value index]
-  xt::xtensor<double, 4> tabulate_x(int nd, const xt::xarray<double>& x) const;
+  /// @return The basis functions (and derivatives). The shape is
+  /// (derivative, point, basis fn index, value index).
+  /// - The first index is the derivative, with higher derivatives are
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+  /// (0,2), (3,0)... The function basix::idx can be used to find the
+  /// appropriate derivative.
+  /// - The second index is the point index
+  /// - The third index is the basis function index
+  /// - The fourth index is the basis function component. Its has size
+  /// one for scalar basis functions.
+  xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
 
   /// Direct to memory block tabulation
   /// @param nd Number of derivatives

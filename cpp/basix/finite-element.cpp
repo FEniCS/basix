@@ -255,41 +255,8 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
   return _entity_dofs;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3>
-FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
-{
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
-  std::size_t ndsize = 1;
-  for (int i = 1; i <= nd; ++i)
-    ndsize *= (tdim + i);
-  for (int i = 1; i <= nd; ++i)
-    ndsize /= i;
-  const std::size_t vs = value_size();
-  const std::size_t ndofs = _coeffs.shape(0);
-
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 1)
-    _x.reshape({_x.shape(0), 1});
-
-  std::vector<double> basis_data(ndsize * x.shape(0) * ndofs * vs);
-  tabulate(nd, _x, basis_data.data());
-
-  xt::xtensor<double, 3> d({ndsize, _x.shape(0), ndofs * vs});
-  for (std::size_t i = 0; i < d.shape(0); ++i)
-  {
-    std::size_t offset = i * x.shape(0) * ndofs * vs;
-    std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
-    auto mat = xt::adapt<xt::layout_type::column_major>(
-        basis_data.data() + offset, x.shape(0) * ndofs * vs, xt::no_ownership(),
-        shape);
-    xt::view(d, i, xt::all(), xt::all()) = mat;
-  }
-
-  return d;
-}
-//-----------------------------------------------------------------------------
 xt::xtensor<double, 4>
-FiniteElement::tabulate_x(int nd, const xt::xarray<double>& x) const
+FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
   const std::size_t tdim = cell::topological_dimension(_cell_type);
   std::size_t ndsize = 1;

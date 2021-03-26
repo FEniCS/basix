@@ -186,7 +186,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   {
     auto _tpoint = xt::view(tpts, i, xt::all(), xt::all());
     xt::xtensor<double, 3> moment_space_pts
-        = xt::view(moment_space.tabulate_x(0, _tpoint), 0, xt::all(), xt::all(),
+        = xt::view(moment_space.tabulate(0, _tpoint), 0, xt::all(), xt::all(),
                    xt::all());
 
     // Tile the J and J^-1 for passing into the mapping function. This
@@ -327,7 +327,7 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
   // Evaluate moment space at quadrature points
   assert(V.value_size() == 1);
   xt::xtensor<double, 2> phi
-      = xt::view(V.tabulate_x(0, pts), 0, xt::all(), xt::all(), 0);
+      = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
   // Pad out \phi moment is against a vector-valued function
   std::size_t vdim = value_size == 1 ? 1 : entity_dim;
@@ -402,7 +402,7 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
 
   // Evaluate moment space at quadrature points
   xt::xtensor<double, 3> phi
-      = xt::view(V.tabulate_x(0, pts), 0, xt::all(), xt::all(), xt::all());
+      = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), xt::all());
   assert(phi.shape(2) == entity_dim);
 
   // Note:
@@ -472,7 +472,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
   // Evaluate moment space at quadrature points
   assert(V.value_size() == 1);
   xt::xtensor<double, 2> phi
-      = xt::view(V.tabulate_x(0, pts), 0, xt::all(), xt::all(), 0);
+      = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
   xt::xtensor<double, 3> points({num_entities, pts.shape(0), tdim});
 
@@ -531,7 +531,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
   // Evaluate moment space at quadrature points
   assert(V.value_size() == 1);
   xt::xtensor<double, 2> phi
-      = xt::view(V.tabulate_x(0, pts), 0, xt::all(), xt::all(), 0);
+      = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
   // Storage for coordinates of evaluations points in the reference cell
   xt::xtensor<double, 3> points({num_entities, pts.shape(0), tdim});

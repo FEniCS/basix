@@ -160,8 +160,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .value("covariantPiola", maps::type::covariantPiola)
       .value("contravariantPiola", maps::type::contravariantPiola)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
-      .value("doubleContravariantPiola",
-             maps::type::doubleContravariantPiola);
+      .value("doubleContravariantPiola", maps::type::doubleContravariantPiola);
 
   m.def(
       "mapping_to_str",
@@ -197,8 +196,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const py::array_t<double, py::array::c_style>& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const py::array_t<double, py::array::c_style>& base_transformations,
-         maps::type mapping_type
-         = maps::type::identity) -> FiniteElement {
+         maps::type mapping_type = maps::type::identity) -> FiniteElement {
         return FiniteElement(family_type, celltype, degree, value_shape,
                              compute_expansion_coefficients(
                                  celltype, adapt_x(coeffs),
@@ -219,8 +217,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
          const py::array_t<double, py::array::c_style>& coeffs,
          const std::vector<std::vector<int>>& entity_dofs,
          const py::array_t<double, py::array::c_style>& base_transformations,
-         maps::type mapping_type
-         = maps::type::identity) -> FiniteElement {
+         maps::type mapping_type = maps::type::identity) -> FiniteElement {
         return FiniteElement(element::str_to_type(family_name),
                              cell::str_to_type(cell_name), degree, value_shape,
                              compute_expansion_coefficients(
@@ -240,7 +237,11 @@ Each element has a `tabulate` function which returns the basis functions and a n
              const py::array_t<double, py::array::c_style>& x) {
             auto _x = adapt_x(x);
             auto t = self.tabulate(n, _x);
-            return py::array_t<double>(t.shape(), t.data());
+            auto t_swap = xt::transpose(t, {0, 1, 3, 2});
+            xt::xtensor<double, 3> t_reshape
+                = xt::reshape_view(t_swap, {t_swap.shape(0), t_swap.shape(1),
+                                            t_swap.shape(2) * t_swap.shape(3)});
+            return py::array_t<double>(t_reshape.shape(), t_reshape.data());
           },
           tabdoc.c_str())
       .def(
@@ -248,7 +249,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
           [](const FiniteElement& self, int n,
              const py::array_t<double, py::array::c_style>& x) {
             auto _x = adapt_x(x);
-            auto t = self.tabulate_x(n, _x);
+            auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
           },
           tabdoc.c_str())

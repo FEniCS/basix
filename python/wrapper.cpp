@@ -239,7 +239,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
           [](const FiniteElement& self, int n,
              const py::array_t<double, py::array::c_style>& x) {
             auto _x = adapt_x(x);
-            auto t = self.tabulate_new(n, _x);
+            auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
           },
           tabdoc.c_str())

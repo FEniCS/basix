@@ -52,7 +52,8 @@ namespace basix
 /// that
 ///   @f[ f_i(\phi_j) = \delta_{ij} @f]
 /// and inserting the expression for @f$\phi_{j}@f$:
-///   @f[ f_i(c^{\prime}_{jk}b_{kl}p_{l}) = c^{\prime}_{jk} b_{kl} f_i \left( p_{l} \right) @f]
+///   @f[ f_i(c^{\prime}_{jk}b_{kl}p_{l}) = c^{\prime}_{jk} b_{kl} f_i \left(
+///   p_{l} \right) @f]
 ///
 /// Defining a matrix D given by applying the functionals to each
 /// polynomial @f$p_j@f$:
@@ -482,7 +483,7 @@ private:
   // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e.,
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
-  xt::xtensor<double, 2, xt::layout_type::row_major> _coeffs;
+  xt::xtensor<double, 2> _coeffs;
 
   // Number of dofs associated each subentity
   //

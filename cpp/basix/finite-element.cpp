@@ -352,20 +352,22 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
   const int psize = polyset::dim(_cell_type, _degree);
   const std::size_t ndofs = _coeffs.shape(0);
   const int vs = value_size();
-  xt::xtensor<double, 2> B, C;
+  std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
+  xt::xtensor<double, 2> coeff_T = xt::transpose(_coeffs);
+
   for (std::size_t p = 0; p < basis.shape(0); ++p)
   {
     // Map block for current derivative
-    std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
     std::size_t offset = p * x.shape(0) * ndofs * vs;
+
     auto dresult = xt::adapt<xt::layout_type::column_major>(
         basis_data + offset, x.shape(0) * ndofs * vs, xt::no_ownership(),
         shape);
+    auto B = xt::view(basis, p, xt::all(), xt::all());
     for (int j = 0; j < vs; ++j)
     {
-      B = xt::view(basis, p, xt::all(), xt::all());
-      C = xt::transpose(xt::view(_coeffs, xt::all(),
-                                 xt::range(psize * j, psize * j + psize)));
+      auto C = xt::view(coeff_T, xt::range(psize * j, psize * j + psize),
+                        xt::all());
       xt::view(dresult, xt::range(0, x.shape(0)),
                xt::range(ndofs * j, ndofs * j + ndofs))
           = xt::linalg::dot(B, C);

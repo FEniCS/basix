@@ -482,7 +482,7 @@ private:
   // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e.,
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
-  xt::xtensor<double, 2> _coeffs;
+  xt::xtensor<double, 2, xt::layout_type::row_major> _coeffs;
 
   // Number of dofs associated each subentity
   //

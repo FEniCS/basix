@@ -30,14 +30,11 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       = (tdim == 2) ? cell::type::interval : cell::type::triangle;
 
   // The number of order (degree) scalar polynomials
-  const int npoly = polyset::dim(celltype, degree);
+  const std::size_t npoly = polyset::dim(celltype, degree);
   const std::size_t ndofs = npoly * tdim;
 
-  // Create coefficients for order (degree-1) vector polynomials
-  xt::xtensor<double, 2> wcoeffs = xt::eye<double>(ndofs);
-
   // quadrature degree
-  int quad_deg = 5 * degree;
+  int quad_deg = 2 * degree;
 
   // Add integral moments on facets
   const std::size_t facet_count = tdim + 1;
@@ -49,16 +46,30 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
 
+  auto [points_facet_new, M_facet_new]
+      = moments::make_normal_integral_moments_new(facet_moment_space, celltype,
+                                                  tdim, quad_deg);
+
+  std::vector<xt::xtensor<double, 4>> M = {M_facet_new};
+  std::vector<xt::xtensor<double, 3>> x = {points_facet_new};
+
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
   // Add integral moments on interior
   xt::xtensor<double, 2> points_cell, matrix_cell;
+  xt::xtensor<double, 3> points_cell_new;
+  xt::xtensor<double, 4> M_cell_new;
   if (degree > 1)
   {
     // Interior integral moment
     std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
         create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
+
+    auto [points_cell_new, M_cell_new] = moments::make_dot_integral_moments_new(
+        create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
+    x.push_back(points_cell_new);
+    M.push_back(M_cell_new);
   }
 
   // Interpolation points and matrix
@@ -104,6 +115,17 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
+
+  // Create coefficients for order (degree-1) vector polynomials
+  xt::xtensor<double, 2> wcoeffs = xt::eye<double>(ndofs);
+
+  // std::vector<xt::xtensor<double, 2>> wcoeffs_new(
+  //     tdim, xt::zeros<double>({ndofs, npoly}));
+  // for (std::size_t i = 0; i < tdim; ++i)
+  //   wcoeffs_new[i] = xt::eye({ndofs, npoly}, -i * npoly);
+
+  xt::xtensor<double, 2> coeffs_new
+      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
 
   xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);

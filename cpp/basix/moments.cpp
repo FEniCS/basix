@@ -185,9 +185,8 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   for (std::size_t i = 0; i < tpts.shape(0); ++i)
   {
     auto _tpoint = xt::view(tpts, i, xt::all(), xt::all());
-    xt::xtensor<double, 3> moment_space_pts
-        = xt::view(moment_space.tabulate(0, _tpoint), 0, xt::all(), xt::all(),
-                   xt::all());
+    xt::xtensor<double, 3> moment_space_pts = xt::view(
+        moment_space.tabulate(0, _tpoint), 0, xt::all(), xt::all(), xt::all());
 
     // Tile the J and J^-1 for passing into the mapping function. This
     // could be avoided with some changes to calls to map functions
@@ -311,6 +310,16 @@ std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
 moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
                                std::size_t value_size, int q_deg)
 {
+  auto [points, D] = make_integral_moments_new(V, celltype, value_size, q_deg);
+  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
+  std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
+  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
+}
+//----------------------------------------------------------------------------
+std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
+moments::make_integral_moments_new(const FiniteElement& V, cell::type celltype,
+                                   std::size_t value_size, int q_deg)
+{
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
   if (entity_dim == 0)
@@ -379,14 +388,13 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
     }
   }
 
-  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
-  std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
-  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
+  return {points, D};
 }
 //----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
-                                   std::size_t value_size, int q_deg)
+std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
+moments::make_dot_integral_moments_new(const FiniteElement& V,
+                                       cell::type celltype,
+                                       std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
@@ -444,6 +452,15 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
     }
   }
 
+  return {points, D};
+}
+//----------------------------------------------------------------------------
+std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
+                                   std::size_t value_size, int q_deg)
+{
+  auto [points, D]
+      = make_dot_integral_moments_new(V, celltype, value_size, q_deg);
   const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
   const std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
   return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
@@ -513,6 +530,18 @@ std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
 moments::make_normal_integral_moments(const FiniteElement& V,
                                       cell::type celltype,
                                       std::size_t value_size, int q_deg)
+{
+  auto [points, D]
+      = make_normal_integral_moments_new(V, celltype, value_size, q_deg);
+  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
+  const std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
+  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
+}
+//----------------------------------------------------------------------------
+std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
+moments::make_normal_integral_moments_new(const FiniteElement& V,
+                                          cell::type celltype,
+                                          std::size_t value_size, int q_deg)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
   assert(tdim == value_size);
@@ -586,8 +615,6 @@ moments::make_normal_integral_moments(const FiniteElement& V,
     }
   }
 
-  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
-  const std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
-  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
+  return {points, D};
 }
 //----------------------------------------------------------------------------

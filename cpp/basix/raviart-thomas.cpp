@@ -50,6 +50,9 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const std::size_t psize = Pkp1_at_Qpts.shape(1);
 
   // Create coefficients for order (degree-1) vector polynomials
+  // std::vector<xt::xtensor<double, 2>> wcoeffs_new(
+  //     tdim, xt::zeros<double>({nv * tdim + ns, psize}));
+
   xt::xtensor<double, 2> wcoeffs
       = xt::zeros<double>({nv * tdim + ns, psize * tdim});
   for (std::size_t j = 0; j < tdim; ++j)
@@ -57,6 +60,10 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     xt::view(wcoeffs, xt::range(nv * j, nv * j + nv),
              xt::range(psize * j, psize * j + nv))
         = xt::eye<double>(nv);
+
+    // xt::view(wcoeffs_new[j], xt::range(nv * j, nv * j + nv), xt::range(0,
+    // nv))
+    //     = xt::eye<double>(nv);
   }
 
   // Create coefficients for additional polynomials in Raviart-Thomas
@@ -71,6 +78,9 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
       {
         wcoeffs(nv * tdim + i, k + psize * j)
             = xt::sum(Qwts * p * xt::col(Qpts, j) * pk)();
+
+        // wcoeffs_new[j](nv * tdim + i, k)
+        //     = xt::sum(Qwts * p * xt::col(Qpts, j) * pk)();
       }
     }
   }
@@ -86,6 +96,12 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
+  auto [points_facet_new, M_facet_new]
+      = moments::make_normal_integral_moments_new(facet_moment_space, celltype,
+                                                  tdim, quad_deg);
+  std::vector<xt::xtensor<double, 4>> M = {M_facet_new};
+  std::vector<xt::xtensor<double, 3>> x = {points_facet_new};
+
   const std::size_t facet_dofs = facet_transforms.shape(1);
 
   // Add integral moments on interior
@@ -95,6 +111,11 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     // Interior integral moment
     std::tie(points_cell, matrix_cell) = moments::make_integral_moments(
         create_dlagrange(celltype, degree - 2), celltype, tdim, quad_deg);
+
+    auto [points_cell_new, M_cell_new] = moments::make_integral_moments_new(
+        create_dlagrange(celltype, degree - 2), celltype, tdim, quad_deg);
+    x.push_back(points_cell_new);
+    M.push_back(M_cell_new);
   }
 
   // Interpolation points and matrix
@@ -141,6 +162,14 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     }
   }
 
+  xt::xtensor<double, 2> coeffs_new
+      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
+
+  std::cout << "wc\n" << wcoeffs << std::endl;
+
+  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, matrix, points, degree);
+
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the
   // interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -149,8 +178,6 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {(int)(ns0 * tdim)};
 
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, matrix, points, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
                        maps::type::contravariantPiola);

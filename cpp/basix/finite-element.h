@@ -176,6 +176,32 @@ xt::xtensor<double, 2> compute_expansion_coefficients(
     const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
     int degree, double kappa_tol = 0.0);
 
+/// New function for computing expansion coefficients
+///
+/// @param[in] cell_type The cells shape
+/// @param[in] B Matrices for the kth value index containing the
+/// expansion coefficients defining a polynomial basis spanning the
+/// polynomial space for this element
+/// @param[in] M The interpolation tensor, such that the dual matrix
+/// \f$D\f$ is computed by \f$D = MP\f$
+/// @param[in] x The interpolation points. The vector index is for
+/// points on entities of the same dimension, ordered with the lowest
+/// topological dimension being first. Each 3D tensor hold the points on
+/// cell entities of a common dimension. The shape of the 3d tensors is
+/// (num_entities, num_points_per_entity, tdim).
+/// @param[in] degree The degree of the polynomial basis P used to
+/// create the element (before applying B)
+/// @param[in] kappa_tol If positive, the condition number is computed
+/// and an error thrown if the condition number of \f$B D^{T}\f$ is
+/// greater than @p kappa_tol. If @p kappa_tol is less than 1 the
+/// condition number is not checked.
+xt::xtensor<double, 2>
+compute_expansion_coefficients_new(cell::type cell_type,
+                                   const xt::xtensor<double, 2>& B,
+                                   const std::vector<xt::xtensor<double, 4>>& M,
+                                   const std::vector<xt::xtensor<double, 3>>& x,
+                                   int degree, double kappa_tol = 0.0);
+
 /// Combines interpolation data
 ///
 /// When the value size is not 1, the matrices are split up into

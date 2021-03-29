@@ -195,7 +195,7 @@ xt::xtensor<double, 2> compute_expansion_coefficients(
 /// and an error thrown if the condition number of \f$B D^{T}\f$ is
 /// greater than @p kappa_tol. If @p kappa_tol is less than 1 the
 /// condition number is not checked.
-xt::xtensor<double, 2>
+xt::xtensor<double, 3>
 compute_expansion_coefficients_new(cell::type cell_type,
                                    const xt::xtensor<double, 2>& B,
                                    const std::vector<xt::xtensor<double, 4>>& M,
@@ -248,6 +248,27 @@ public:
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
                 const xt::xtensor<double, 2>& coeffs,
+                const std::vector<std::vector<int>>& entity_dofs,
+                const xt::xtensor<double, 3>& base_transformations,
+                const xt::xtensor<double, 2>& points,
+                const xt::xtensor<double, 2>& M = {},
+                maps::type map_type = maps::type::identity);
+
+  /// @todo Document
+  /// A finite element
+  /// @param[in] family
+  /// @param[in] cell_type
+  /// @param[in] degree
+  /// @param[in] value_shape
+  /// @param[in] coeffs
+  /// @param[in] entity_dofs
+  /// @param[in] base_transformations Base transformations
+  /// @param[in] points
+  /// @param[in] M The interpolation matrix
+  /// @param[in] map_type
+  FiniteElement(element::family family, cell::type cell_type, int degree,
+                const std::vector<std::size_t>& value_shape,
+                const xt::xtensor<double, 3>& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
                 const xt::xtensor<double, 3>& base_transformations,
                 const xt::xtensor<double, 2>& points,

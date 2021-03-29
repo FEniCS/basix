@@ -124,13 +124,13 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   // for (std::size_t i = 0; i < tdim; ++i)
   //   wcoeffs_new[i] = xt::eye({ndofs, npoly}, -i * npoly);
 
-  xt::xtensor<double, 2> coeffs_new
+  xt::xtensor<double, 3> coeffs_new
       = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
 
   xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, matrix, points, degree);
-  return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, points, matrix,
-                       maps::type::contravariantPiola);
+  return FiniteElement(element::family::BDM, celltype, degree, {tdim},
+                       coeffs_new, entity_dofs, base_transformations, points,
+                       matrix, maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

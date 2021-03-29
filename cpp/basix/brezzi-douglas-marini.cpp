@@ -85,8 +85,9 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     transform_count += topology[i].size() * i;
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  if (tdim == 2)
+  switch (tdim)
   {
+  case 2:
     for (std::size_t edge = 0; edge < facet_count; ++edge)
     {
       const std::size_t start = facet_dofs * edge;
@@ -94,9 +95,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       xt::view(base_transformations, edge, range, range)
           = xt::view(facet_transforms, 0, xt::all(), xt::all());
     }
-  }
-  else if (tdim == 3)
-  {
+    break;
+  case 3:
     for (std::size_t face = 0; face < facet_count; ++face)
     {
       const std::size_t start = facet_dofs * face;
@@ -106,10 +106,13 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       xt::view(base_transformations, 6 + 2 * face + 1, range, range)
           = xt::view(facet_transforms, 1, xt::all(), xt::all());
     }
+
+  default:
+    throw std::runtime_error("Invalid topological dimension.");
   }
 
-  // BDM has facet_dofs dofs on each facet, and
-  // ndofs-facet_count*facet_dofs in the interior
+  // BDM has facet_dofs dofs on each facet, and ndofs - facet_count *
+  // facet_dofs in the interior
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < tdim - 1; ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
@@ -117,20 +120,11 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   entity_dofs[tdim] = {internal_dofs};
 
   // Create coefficients for order (degree-1) vector polynomials
-  xt::xtensor<double, 2> wcoeffs = xt::eye<double>(ndofs);
-
-  // std::vector<xt::xtensor<double, 2>> wcoeffs_new(
-  //     tdim, xt::zeros<double>({ndofs, npoly}));
-  // for (std::size_t i = 0; i < tdim; ++i)
-  //   wcoeffs_new[i] = xt::eye({ndofs, npoly}, -i * npoly);
-
-  xt::xtensor<double, 3> coeffs_new
-      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
-
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, matrix, points, degree);
-  return FiniteElement(element::family::BDM, celltype, degree, {tdim},
-                       coeffs_new, entity_dofs, base_transformations, points,
-                       matrix, maps::type::contravariantPiola);
+  xt::xtensor<double, 2> B = xt::eye<double>(ndofs);
+  xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients_new(celltype, B, M, x, degree);
+  return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, base_transformations, points, matrix,
+                       maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

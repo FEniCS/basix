@@ -40,47 +40,36 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const std::size_t ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts]
+  auto [pts, _wts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
-  auto Qwts = xt::adapt(_Qwts);
-  auto Pkp1_at_Qpts = xt::view(polyset::tabulate(celltype, degree, 0, Qpts), 0,
-                               xt::all(), xt::all());
+  auto wts = xt::adapt(_wts);
+  auto phi = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(),
+                      xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = Pkp1_at_Qpts.shape(1);
+  const std::size_t psize = phi.shape(1);
 
   // Create coefficients for order (degree-1) vector polynomials
-  // std::vector<xt::xtensor<double, 2>> wcoeffs_new(
-  //     tdim, xt::zeros<double>({nv * tdim + ns, psize}));
-
-  xt::xtensor<double, 2> wcoeffs
-      = xt::zeros<double>({nv * tdim + ns, psize * tdim});
+  xt::xtensor<double, 2> B = xt::zeros<double>({nv * tdim + ns, psize * tdim});
   for (std::size_t j = 0; j < tdim; ++j)
   {
-    xt::view(wcoeffs, xt::range(nv * j, nv * j + nv),
+    xt::view(B, xt::range(nv * j, nv * j + nv),
              xt::range(psize * j, psize * j + nv))
         = xt::eye<double>(nv);
-
-    // xt::view(wcoeffs_new[j], xt::range(nv * j, nv * j + nv), xt::range(0,
-    // nv))
-    //     = xt::eye<double>(nv);
   }
 
   // Create coefficients for additional polynomials in Raviart-Thomas
   // polynomial basis
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::col(Pkp1_at_Qpts, ns0 + i);
+    auto p = xt::col(phi, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      auto pk = xt::col(Pkp1_at_Qpts, k);
+      auto pk = xt::col(phi, k);
       for (std::size_t j = 0; j < tdim; ++j)
       {
-        wcoeffs(nv * tdim + i, k + psize * j)
-            = xt::sum(Qwts * p * xt::col(Qpts, j) * pk)();
-
-        // wcoeffs_new[j](nv * tdim + i, k)
-        //     = xt::sum(Qwts * p * xt::col(Qpts, j) * pk)();
+        B(nv * tdim + i, k + psize * j)
+            = xt::sum(wts * p * xt::col(pts, j) * pk)();
       }
     }
   }
@@ -162,13 +151,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 3> coeffs_new
-      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
-
-  std::cout << "wc\n" << wcoeffs << std::endl;
-
-  // xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-  //     celltype, wcoeffs, matrix, points, degree);
+  xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients_new(celltype, B, M, x, degree);
 
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the
   // interior
@@ -178,8 +162,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {(int)(ns0 * tdim)};
 
-  return FiniteElement(element::family::RT, celltype, degree, {tdim},
-                       coeffs_new, entity_dofs, base_transformations, points,
-                       matrix, maps::type::contravariantPiola);
+  return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
+                       entity_dofs, base_transformations, points, matrix,
+                       maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

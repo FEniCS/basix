@@ -471,6 +471,18 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
                                        cell::type celltype,
                                        std::size_t value_size, int q_deg)
 {
+  auto [points, D]
+      = make_tangent_integral_moments_new(V, celltype, value_size, q_deg);
+  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
+  const std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
+  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
+}
+//----------------------------------------------------------------------------
+std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
+moments::make_tangent_integral_moments_new(const FiniteElement& V,
+                                           cell::type celltype,
+                                           std::size_t value_size, int q_deg)
+{
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
   const std::size_t num_entities = cell::sub_entity_count(celltype, entity_dim);
@@ -521,9 +533,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
     }
   }
 
-  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
-  const std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
-  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
+  return {points, D};
 }
 //----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>

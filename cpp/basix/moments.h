@@ -160,6 +160,11 @@ std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
 make_tangent_integral_moments(const FiniteElement& V, cell::type celltype,
                               std::size_t value_size, int q_deg);
 
+/// TODO
+std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
+make_tangent_integral_moments_new(const FiniteElement& V, cell::type celltype,
+                                  std::size_t value_size, int q_deg);
+
 /// Compute interpolation points and weights for normal integral moments
 ///
 /// These can only be used when the moment space is defined on facets of

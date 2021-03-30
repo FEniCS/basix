@@ -22,7 +22,8 @@ def test_interpolation(cell_name, n, element_name):
 def test_interpolation_matrix(cell_name, order, element_name):
     if order > 4:
         if cell_name in ["quadrilateral", "hexahedron"] and element_name in [
-            "Raviart-Thomas", "Nedelec 1st kind H(curl)"
+            "Raviart-Thomas", "Nedelec 1st kind H(curl)", "Brezzi-Douglas-Marini",
+            "Nedelec 2nd kind H(curl)"
         ]:
             pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "
                          "Lagrange spaces with equally spaced points are unstable.")

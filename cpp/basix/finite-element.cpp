@@ -358,7 +358,7 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
     // Map block for current derivative
     std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
     std::size_t offset = p * x.shape(0) * ndofs * vs;
-    auto dresult = xt::adapt<xt::layout_type::column_major>(
+    auto dresult = xt::adapt<xt::layout_type::row_major>(
         basis_data + offset, x.shape(0) * ndofs * vs, xt::no_ownership(),
         shape);
     for (int j = 0; j < vs; ++j)

@@ -44,7 +44,15 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::DP:
     return create_dlagrange(cell, degree);
   case element::family::BDM:
-    return create_bdm(cell, degree);
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return create_serendipity_div(cell, degree);
+    case cell::type::hexahedron:
+      return create_serendipity_div(cell, degree);
+    default:
+      return create_bdm(cell, degree);
+    }
   case element::family::RT:
   {
     switch (cell)
@@ -70,7 +78,15 @@ basix::FiniteElement basix::create_element(element::family family,
     }
   }
   case element::family::N2E:
-    return create_nedelec2(cell, degree);
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return create_serendipity_curl(cell, degree);
+    case cell::type::hexahedron:
+      return create_serendipity_curl(cell, degree);
+    default:
+      return create_nedelec2(cell, degree);
+    }
   case element::family::Regge:
     return create_regge(cell, degree);
   case element::family::CR:

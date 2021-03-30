@@ -22,9 +22,10 @@ def parametrize_over_elements(order, reference=None):
                     for o in range(1, order + 1)]
     elementlist += [(c, "Nedelec 2nd kind H(curl)", o)
                     for c in ["triangle", "tetrahedron"]
+                    # for c in ["triangle", "tetrahedron", "quadrilateral", "hexahedron"]
                     for o in range(1, order + 1)]
     elementlist += [(c, "Brezzi-Douglas-Marini", o)
-                    for c in ["triangle", "tetrahedron"]
+                    for c in ["triangle", "tetrahedron", "quadrilateral", "hexahedron"]
                     for o in range(1, order + 1)]
     elementlist += [(c, "Crouzeix-Raviart", o)
                     for c in ["triangle", "tetrahedron"]
@@ -40,6 +41,8 @@ def parametrize_over_elements(order, reference=None):
     elementlist += [(c, "Serendipity", o)
                     for c in ["interval", "quadrilateral", "hexahedron"]
                     for o in range(1, order + 1)]
+
+    elementlist = [e for e in elementlist if e[1] == "Brezzi-Douglas-Marini"]
 
     if reference is None:
         return pytest.mark.parametrize("cell_name, element_name, order", elementlist)

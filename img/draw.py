@@ -122,16 +122,16 @@ for shape in ["interval", "triangle", "tetrahedron",
             svg += "".join([lines[i] for i in [0, 4, 5]])
             svg += "".join([entities[i] for i in [0, 4, 5]])
         elif shape == "pyramid" and dim == 2:
-            svg += lines[2]
+            svg += lines[5]
             svg += entities[3]
             svg += "".join([lines[i] for i in [1, 3, 6, 7]])
             svg += "".join([entities[i] for i in [0, 2, 4]])
-            svg += "".join([lines[i] for i in [0, 4, 5]])
+            svg += "".join([lines[i] for i in [0, 4, 2]])
             svg += "".join([entities[i] for i in [1]])
         elif shape == "pyramid" and dim == 3:
-            svg += "".join([lines[i] for i in [1, 2, 3, 6, 7]])
+            svg += "".join([lines[i] for i in [1, 3, 5, 6, 7]])
             svg += entities[0]
-            svg += "".join([lines[i] for i in [0, 4, 5]])
+            svg += "".join([lines[i] for i in [0, 2, 4]])
         else:
             svg += "\n".join(lines)
             svg += "\n".join(entities)

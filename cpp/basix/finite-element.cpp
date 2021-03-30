@@ -152,26 +152,55 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
   std::size_t dof_index = 0;
   for (std::size_t d = 0; d < M.size(); ++d)
   {
+    // Tidy up w.r.t shape
+    // xt::xarray<double> pts = x[d];
+    // if (pts.shape(1) == 1)
+    //   pts.reshape({pts.shape(0)});
+
     // Loop over entities of dimension d
+    // for (std::size_t e = 0; e < pts.shape(0); ++e)
     for (std::size_t e = 0; e < x[d].shape(0); ++e)
     {
+      std::cout << "e: " << d << ", " << e << std::endl;
+      std::cout << xt::view(x[d], e, xt::all(), xt::all()) << std::endl;
+
       // Evaluate polynomial basis at x[d]
-      const xt::xtensor<double, 2> P
-          = xt::view(polyset::tabulate(celltype, degree, 0,
+      xt::xtensor<double, 2> P;
+      if (x[d].shape(2) == 1)
+      {
+        auto pts = xt::view(x[d], e, xt::all(), 0);
+        P = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(),
+                     xt::all());
+
+      }
+      else
+      {
+        P = xt::view(polyset::tabulate(celltype, degree, 0,
                                        xt::view(x[d], e, xt::all(), xt::all())),
                      0, xt::all(), xt::all());
+      }
+      // std::cout << "Post Call polyset\n" << P << std::endl;
 
       // Me: [dof, vs, point]
       // auto Me = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
       xt::xtensor<double, 3> Me
           = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
 
+      // std::cout << "Dims: " << Me.shape(0) << ", " << Me.shape(1) << ", "
+      //           << Me.shape(2) << ", " << P.shape(2) << std::endl;
+
       // Compute dual matrix contribution
       for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
         for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
           for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
-            for (std::size_t l = 0; l < P.shape(2); ++l) // Polynomial term
+            for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
+            {
+              // std::cout << "Data: " << i << ", " << j << ", " << k << ", " << l
+              //           << std::endl;
+              // std::cout << "Vals: " << Me(i, j, k) << ", " << P(k, l)
+              //           << std::endl;
               D(i + dof_index, j, l) += Me(i, j, k) * P(k, l);
+            }
 
       // Dtmp += xt::linalg::dot(Me, P);
     }
@@ -191,6 +220,12 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
   auto BDt = xt::linalg::dot(B, Dt_flat);
+
+  // std::cout << "BDt" << std::endl;
+  // for (auto _M : M)
+  //   std::cout << _M << std::endl;
+  // std::cout << BDt << std::endl;
+  // std::cout << "Post BDt" << std::endl;
 
   if (kappa_tol >= 1.0)
   {

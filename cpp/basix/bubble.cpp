@@ -67,6 +67,8 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
       = lattice::create(celltype, degree, lattice::type::equispaced, false);
 
   const std::size_t ndofs = points.shape(0);
+  xt::xtensor<double, 3> x({points.shape(0), 1, points.shape(1)});
+  xt::view(x, xt::all(), 0, xt::all()) = points;
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> lower_polyset_at_Qpts;
@@ -152,10 +154,15 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
+  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
+  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
+
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, xt::eye<double>(ndofs), points, degree);
+  xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients_new(celltype, wcoeffs, {M}, {x}, degree);
+  // xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
+  //     celltype, wcoeffs, xt::eye<double>(ndofs), points, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, points,
                        xt::eye<double>(ndofs), maps::type::identity);

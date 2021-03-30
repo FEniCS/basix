@@ -121,9 +121,6 @@ xt::xtensor<double, 2> basix::compute_expansion_coefficients(
     }
   }
 
-  // std::cout << "A:\n" << A << std::endl;
-  // std::cout << "B:\n" << B << std::endl;
-
   if (kappa_tol >= 1.0)
   {
     if (xt::linalg::cond(A, 2) > kappa_tol)

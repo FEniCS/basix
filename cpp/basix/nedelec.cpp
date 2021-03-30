@@ -348,6 +348,28 @@ create_nedelec2_2d_interpolation(int degree)
                                     matrix_2d, {}, 2, 2);
 }
 //-----------------------------------------------------------------------------
+std::pair<std::vector<xt::xtensor<double, 3>>,
+          std::vector<xt::xtensor<double, 4>>>
+create_nedelec2_2d_interpolation_new(int degree)
+{
+  int quad_deg = 5 * degree;
+
+  std::vector<xt::xtensor<double, 3>> x(2);
+  std::vector<xt::xtensor<double, 4>> M(2);
+
+  std::tie(x[0], M[0]) = moments::make_tangent_integral_moments_new(
+      create_dlagrange(cell::type::interval, degree), cell::type::triangle, 2,
+      quad_deg);
+  if (degree > 1)
+  {
+    std::tie(x[1], M[1]) = moments::make_dot_integral_moments_new(
+        create_rt(cell::type::triangle, degree - 1), cell::type::triangle, 2,
+        quad_deg);
+  }
+
+  return {x, M};
+}
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 3> create_nedelec2_2d_base_transformations(int degree)
 {
   const std::size_t ndofs = (degree + 1) * (degree + 2);
@@ -406,6 +428,40 @@ create_nedelec2_3d_interpolation(int degree)
 
   return combine_interpolation_data(points_1d, points_2d, points_3d, matrix_1d,
                                     matrix_2d, matrix_3d, 3, 3);
+}
+//-----------------------------------------------------------------------------
+std::pair<std::vector<xt::xtensor<double, 3>>,
+          std::vector<xt::xtensor<double, 4>>>
+create_nedelec2_3d_interpolation_new(int degree)
+{
+  // Create quadrature scheme on the edge
+  int quad_deg = 5 * degree;
+
+  std::vector<xt::xtensor<double, 3>> x(3);
+  std::vector<xt::xtensor<double, 4>> M(3);
+
+  // Integral representation for the boundary (edge) dofs
+  std::tie(x[0], M[0]) = moments::make_tangent_integral_moments_new(
+      create_dlagrange(cell::type::interval, degree), cell::type::tetrahedron,
+      3, quad_deg);
+
+  if (degree > 1)
+  {
+    // Integral moments on faces
+    std::tie(x[1], M[1]) = moments::make_dot_integral_moments_new(
+        create_rt(cell::type::triangle, degree - 1), cell::type::tetrahedron, 3,
+        quad_deg);
+  }
+
+  if (degree > 2)
+  {
+    // Interior integral moment
+    std::tie(x[2], M[2]) = moments::make_dot_integral_moments_new(
+        create_rt(cell::type::tetrahedron, degree - 2), cell::type::tetrahedron,
+        3, quad_deg);
+  }
+
+  return {x, M};
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> create_nedelec2_3d_base_transformations(int degree)
@@ -501,6 +557,9 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
 {
+  std::vector<xt::xtensor<double, 3>> x;
+  std::vector<xt::xtensor<double, 4>> M;
+
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t psize = polyset::dim(celltype, degree);
   xt::xtensor<double, 2> points, interp_matrix;
@@ -509,10 +568,12 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
   {
   case cell::type::triangle:
     std::tie(points, interp_matrix) = create_nedelec2_2d_interpolation(degree);
+    std::tie(x, M) = create_nedelec2_2d_interpolation_new(degree);
     base_transformations = create_nedelec2_2d_base_transformations(degree);
     break;
   case cell::type::tetrahedron:
     std::tie(points, interp_matrix) = create_nedelec2_3d_interpolation(degree);
+    std::tie(x, M) = create_nedelec2_3d_interpolation_new(degree);
     base_transformations = create_nedelec2_3d_base_transformations(degree);
     break;
   default:
@@ -531,8 +592,8 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
     entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
   xt::xtensor<double, 2> wcoeffs = xt::eye<double>(tdim * psize);
-  const xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, interp_matrix, points, degree);
+  const xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, interp_matrix,
                        maps::type::covariantPiola);

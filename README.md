@@ -82,6 +82,7 @@ The following elements are supported on a hexahedron:
   - [Nédélec](https://defelement.com/elements/qcurl.html)
   - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
   - [Brezzi-Douglas-Marini](https://defelement.com/elements/sdiv.html)
+  - [Nédélec Second Kind](https://defelement.com/elements/scurl.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [DPC](https://defelement.com/elements/dpc.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)

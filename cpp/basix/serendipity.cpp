@@ -889,9 +889,6 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   else if (tdim == 3)
     wcoeffs = make_serendipity_curl_space_3d(degree);
 
-  // quadrature degree
-  int quad_deg = 2 * degree;
-
   xt::xtensor<double, 2> points_1d, matrix_1d;
   FiniteElement edge_moment_space = create_dpc(cell::type::interval, degree);
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
@@ -908,18 +905,18 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
     FiniteElement moment_space
         = create_dpc(cell::type::quadrilateral, degree - 2);
     std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
-        moment_space, celltype, tdim, quad_deg);
+        moment_space, celltype, tdim, 2 * degree);
 
     if (tdim == 3)
     {
       face_transforms
-          = moments::create_dot_moment_dof_transformations(moment_space);
+          = moments::create_moment_dof_transformations(moment_space);
 
       if (degree >= 4)
         // Interior integral moment
         std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
             create_dpc(cell::type::hexahedron, degree - 4), celltype, tdim,
-            quad_deg);
+            2 * degree - 3);
     }
   }
 
@@ -944,6 +941,7 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
     xt::view(base_transformations, edge, range, range)
         = xt::view(edge_transforms, 0, xt::all(), xt::all());
   }
+
 
   if (tdim == 3 and degree > 1)
   {

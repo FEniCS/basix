@@ -279,7 +279,7 @@ FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
   {
     std::size_t offset = i * x.shape(0) * ndofs * vs;
     std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
-    auto mat = xt::adapt<xt::layout_type::column_major>(
+    auto mat = xt::adapt<xt::layout_type::row_major>(
         basis_data.data() + offset, x.shape(0) * ndofs * vs, xt::no_ownership(),
         shape);
     xt::view(d, i, xt::all(), xt::all()) = mat;

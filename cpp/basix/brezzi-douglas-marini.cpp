@@ -106,7 +106,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       xt::view(base_transformations, 6 + 2 * face + 1, range, range)
           = xt::view(facet_transforms, 1, xt::all(), xt::all());
     }
-
+    break;
   default:
     throw std::runtime_error("Invalid topological dimension.");
   }

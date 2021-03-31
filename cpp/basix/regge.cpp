@@ -271,9 +271,6 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   xt::xtensor<double, 2> points, matrix;
   std::tie(points, matrix) = create_regge_interpolation(celltype, degree);
 
-  // xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-  //     celltype, wcoeffs, matrix, points, degree);
-
   auto [x, M] = create_regge_interpolation_new(celltype, degree);
   // for (auto _x : x)
   //   std::cout << _x << std::endl;

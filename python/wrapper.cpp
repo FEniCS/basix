@@ -187,48 +187,48 @@ Each element has a `tabulate` function which returns the basis functions and a n
       },
       "Convert a family type to a string.");
 
-  m.def(
-      "create_new_element",
-      [](element::family family_type, cell::type celltype, int degree,
-         std::vector<std::size_t>& value_shape,
-         const py::array_t<double, py::array::c_style>& interpolation_points,
-         const py::array_t<double, py::array::c_style>& interpolation_matrix,
-         const py::array_t<double, py::array::c_style>& coeffs,
-         const std::vector<std::vector<int>>& entity_dofs,
-         const py::array_t<double, py::array::c_style>& base_transformations,
-         maps::type mapping_type = maps::type::identity) -> FiniteElement {
-        return FiniteElement(family_type, celltype, degree, value_shape,
-                             compute_expansion_coefficients(
-                                 celltype, adapt_x(coeffs),
-                                 adapt_x(interpolation_matrix),
-                                 adapt_x(interpolation_points), degree, 1.0e6),
-                             entity_dofs, adapt_x(base_transformations),
-                             adapt_x(interpolation_points),
-                             adapt_x(interpolation_matrix), mapping_type);
-      },
-      "Create an element from basic data");
+  // m.def(
+  //     "create_new_element",
+  //     [](element::family family_type, cell::type celltype, int degree,
+  //        std::vector<std::size_t>& value_shape,
+  //        const py::array_t<double, py::array::c_style>& interpolation_points,
+  //        const py::array_t<double, py::array::c_style>& interpolation_matrix,
+  //        const py::array_t<double, py::array::c_style>& coeffs,
+  //        const std::vector<std::vector<int>>& entity_dofs,
+  //        const py::array_t<double, py::array::c_style>& base_transformations,
+  //        maps::type mapping_type = maps::type::identity) -> FiniteElement {
+  //       return FiniteElement(family_type, celltype, degree, value_shape,
+  //                            compute_expansion_coefficients(
+  //                                celltype, adapt_x(coeffs),
+  //                                adapt_x(interpolation_matrix),
+  //                                adapt_x(interpolation_points), degree, 1.0e6),
+  //                            entity_dofs, adapt_x(base_transformations),
+  //                            adapt_x(interpolation_points),
+  //                            adapt_x(interpolation_matrix), mapping_type);
+  //     },
+  //     "Create an element from basic data");
 
-  m.def(
-      "create_new_element",
-      [](std::string family_name, std::string cell_name, int degree,
-         std::vector<std::size_t>& value_shape,
-         const py::array_t<double, py::array::c_style>& interpolation_points,
-         const py::array_t<double, py::array::c_style>& interpolation_matrix,
-         const py::array_t<double, py::array::c_style>& coeffs,
-         const std::vector<std::vector<int>>& entity_dofs,
-         const py::array_t<double, py::array::c_style>& base_transformations,
-         maps::type mapping_type = maps::type::identity) -> FiniteElement {
-        return FiniteElement(element::str_to_type(family_name),
-                             cell::str_to_type(cell_name), degree, value_shape,
-                             compute_expansion_coefficients(
-                                 cell::str_to_type(cell_name), adapt_x(coeffs),
-                                 adapt_x(interpolation_matrix),
-                                 adapt_x(interpolation_points), degree, 1.0e6),
-                             entity_dofs, adapt_x(base_transformations),
-                             adapt_x(interpolation_points),
-                             adapt_x(interpolation_matrix), mapping_type);
-      },
-      "Create an element from basic data");
+  // m.def(
+  //     "create_new_element",
+  //     [](std::string family_name, std::string cell_name, int degree,
+  //        std::vector<std::size_t>& value_shape,
+  //        const py::array_t<double, py::array::c_style>& interpolation_points,
+  //        const py::array_t<double, py::array::c_style>& interpolation_matrix,
+  //        const py::array_t<double, py::array::c_style>& coeffs,
+  //        const std::vector<std::vector<int>>& entity_dofs,
+  //        const py::array_t<double, py::array::c_style>& base_transformations,
+  //        maps::type mapping_type = maps::type::identity) -> FiniteElement {
+  //       return FiniteElement(element::str_to_type(family_name),
+  //                            cell::str_to_type(cell_name), degree, value_shape,
+  //                            compute_expansion_coefficients(
+  //                                cell::str_to_type(cell_name), adapt_x(coeffs),
+  //                                adapt_x(interpolation_matrix),
+  //                                adapt_x(interpolation_points), degree, 1.0e6),
+  //                            entity_dofs, adapt_x(base_transformations),
+  //                            adapt_x(interpolation_points),
+  //                            adapt_x(interpolation_matrix), mapping_type);
+  //     },
+  //     "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def(

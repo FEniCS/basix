@@ -34,7 +34,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::size_t ndofs = npoly * tdim;
 
   // quadrature degree
-  int quad_deg = 2 * degree;
+  int quad_deg = 5 * degree;
 
   // Add integral moments on facets
   const std::size_t facet_count = tdim + 1;

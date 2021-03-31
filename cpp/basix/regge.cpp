@@ -169,8 +169,6 @@ create_regge_interpolation_new(cell::type celltype, int degree)
   std::vector<xt::xtensor<double, 4>> M(topology.size() - 1);
 
   // point and dof counters
-  // int point_n = 0;
-  // int dof = 0;
   for (std::size_t d = 1; d < topology.size(); ++d)
   {
     // Loop over entities of dimension dim
@@ -199,12 +197,6 @@ create_regge_interpolation_new(cell::type celltype, int degree)
               += (xt::row(entity_x, k + 1) - x0) * lattice(p, k);
         }
       }
-
-      // auto pt_view = xt::view(
-      //     points, xt::range(point_n, point_n + lattice.shape(0)), xt::all());
-      // xt::xtensor<double, 2> basis
-      //     = xt::view(polyset::tabulate(celltype, degree, 0, pt_view), 0,
-      //                xt::all(), xt::all());
 
       // Store up outer(t, t) for all tangents
       std::vector<int>& vert_ids = topology[d][e];
@@ -236,7 +228,6 @@ create_regge_interpolation_new(cell::type celltype, int degree)
              topology[d].size(), lattice.shape(0)});
       }
 
-      // std::size_t dofs_per_entity = lattice.shape(0) * topology[d].size();
       for (std::size_t p = 0; p < lattice.shape(0); ++p)
       {
         for (std::size_t j = 0; j < ntangents; ++j)
@@ -249,9 +240,7 @@ create_regge_interpolation_new(cell::type celltype, int degree)
                      p)
                 = vvt_flat(i);
           }
-          // ++dof;
         }
-        // ++point_n;
       }
     }
   }
@@ -272,40 +261,8 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   std::tie(points, matrix) = create_regge_interpolation(celltype, degree);
 
   auto [x, M] = create_regge_interpolation_new(celltype, degree);
-  // for (auto _x : x)
-  //   std::cout << _x << std::endl;
-  // std::cout << "------" << std::endl;
-  // std::cout << points << std::endl;
-  // std::cout << "EEEEE" << std::endl;
-
-  // std::cout << "M shape" << std::endl;
-  // for (auto _M : M)
-  // {
-  //   std::cout << "   block" << std::endl;
-  //   for (auto s : _M.shape())
-  //     std::cout << "    " << s << std::endl;
-  // }
-
-  // for (auto _M : M)
-  //   std::cout << _M << std::endl;
-  // std::cout << "------" << std::endl;
-  // std::cout << matrix << std::endl;
-  // std::cout << "EEEEE" << std::endl;
-
   xt::xtensor<double, 3> coeffs
       = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
-
-  // std::cout << coeffs << std::endl;
-  // std::cout << "------" << std::endl;
-  // std::cout << coeffs_new << std::endl;
-  // std::cout << "EEEEE: "
-  //           << xt::sum(xt::square(
-  //                  coeffs
-  //                  - xt::reshape_view(
-  //                      coeffs_new,
-  //                      {coeffs_new.shape(0),
-  //                       coeffs_new.shape(1) * coeffs_new.shape(2)})))()
-  //           << std::endl;
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D

@@ -54,9 +54,6 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
     ++c;
   }
 
-  // xt::xtensor<double, 2> dual = xt::view(polyset::tabulate(celltype, 1, 0,
-  // pts),
-  //                                        0, xt::all(), xt::all());
   std::size_t transform_count = tdim == 2 ? 3 : 14;
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);

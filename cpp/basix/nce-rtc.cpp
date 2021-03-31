@@ -122,6 +122,11 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(moment_space);
 
+  auto [x0, M0] = moments::make_normal_integral_moments_new(
+      moment_space, celltype, tdim, quad_deg);
+  std::vector<xt::xtensor<double, 3>> x = {x0};
+  std::vector<xt::xtensor<double, 4>> M = {M0};
+
   // Add integral moments on interior
   xt::xtensor<double, 2> points_cell, matrix_cell;
   if (degree > 1)
@@ -129,6 +134,10 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
     // Interior integral moment
     std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
         create_nce(celltype, degree - 1), celltype, tdim, quad_deg);
+    auto [x1, M1] = moments::make_dot_integral_moments_new(
+        create_nce(celltype, degree - 1), celltype, tdim, quad_deg);
+    x.push_back(x1);
+    M.push_back(M1);
   }
 
   // Interpolation points and matrix
@@ -176,8 +185,8 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
 
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, matrix, points, degree);
+  xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
                        maps::type::contravariantPiola);
@@ -316,6 +325,11 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
+  auto [x1, M1] = moments::make_tangent_integral_moments_new(
+      edge_moment_space, celltype, tdim, quad_deg);
+  std::vector<xt::xtensor<double, 3>> x = {x1};
+  std::vector<xt::xtensor<double, 4>> M = {M1};
+
   // Add integral moments on interior
   xt::xtensor<double, 2> points_2d, matrix_2d, points_3d, matrix_3d;
   xt::xtensor<double, 3> face_transforms;
@@ -326,6 +340,10 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
         = create_rtc(cell::type::quadrilateral, degree - 1);
     std::tie(points_2d, matrix_2d) = moments::make_dot_integral_moments(
         moment_space, celltype, tdim, quad_deg);
+    auto [x2, M2] = moments::make_dot_integral_moments_new(
+        moment_space, celltype, tdim, quad_deg);
+    x.push_back(x2);
+    M.push_back(M2);
 
     if (tdim == 3)
     {
@@ -336,6 +354,12 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
       std::tie(points_3d, matrix_3d) = moments::make_dot_integral_moments(
           create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
           quad_deg);
+
+      auto [x3, M3] = moments::make_dot_integral_moments_new(
+          create_rtc(cell::type::hexahedron, degree - 1), celltype, tdim,
+          quad_deg);
+      x.push_back(x3);
+      M.push_back(M3);
     }
   }
 
@@ -382,9 +406,8 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3].resize(topology[3].size(), volume_dofs);
 
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, matrix, points, degree);
-
+  xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
                        maps::type::covariantPiola);

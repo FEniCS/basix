@@ -130,6 +130,10 @@ xt::xtensor<double, 2> basix::compute_expansion_coefficients(
     }
   }
 
+  // std::cout << "Old BDt" << std::endl;
+  // std::cout << A << std::endl;
+  // std::cout << "Post old BDt" << std::endl;
+
   // Compute C = (BD^T)^{-1} B
   return xt::linalg::solve(A, B);
 }
@@ -147,7 +151,8 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
   std::size_t vs = M.at(0).shape(1);
   std::size_t pdim = polyset::dim(celltype, degree);
   xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
-  // std::cout << "NNNN: " << num_dofs << ", " << vs << ", " << pdim << std::endl;
+  // std::cout << "NNNN: " << num_dofs << ", " << vs << ", " << pdim <<
+  // std::endl;
 
   // Loop over different dimensions
   std::size_t dof_index = 0;
@@ -232,7 +237,12 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
 
   // std::cout << "BDt" << std::endl;
   // for (auto _M : M)
+  // {
+  //   std::cout << "Sub M" << std::endl;
   //   std::cout << _M << std::endl;
+  //   std::cout << "----" << std::endl;
+  // }
+  // std::cout << "Pre BDt" << std::endl;
   // std::cout << BDt << std::endl;
   // std::cout << "Post BDt" << std::endl;
 
@@ -246,7 +256,9 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
   }
 
   // Compute C = (BD^T)^{-1} B
+  // std::cout << "Solve" << std::endl;
   xt::xtensor<double, 2> C = xt::linalg::solve(BDt, B);
+  // std::cout << "Post Solve" << std::endl;
   return xt::reshape_view(C, {num_dofs, vs, pdim});
 }
 //-----------------------------------------------------------------------------

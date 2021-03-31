@@ -200,8 +200,13 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     LOG(WARNING) << "Base transformations not implemented for this cell type.";
   }
 
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pt, degree);
+  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
+  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
+  xt::xtensor<double, 3> x({pt.shape(0), 1, pt.shape(1)});
+  xt::view(x, xt::all(), 0, xt::all()) = pt;
+
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+      celltype, xt::eye<double>(ndofs), {M}, {x}, degree);
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, pt,
                        xt::eye<double>(ndofs), maps::type::identity);
@@ -228,10 +233,15 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
+  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
+  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
+  xt::xtensor<double, 3> x({pt.shape(0), 1, pt.shape(1)});
+  xt::view(x, xt::all(), 0, xt::all()) = pt;
+
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pt, degree);
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+      celltype, xt::eye<double>(ndofs), {M}, {x}, degree);
 
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, pt,
@@ -295,10 +305,15 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
+  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
+  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
+  xt::xtensor<double, 3> x({pt.shape(0), 1, pt.shape(1)});
+  xt::view(x, xt::all(), 0, xt::all()) = pt;
+
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, xt::eye<double>(ndofs), pt, degree);
+  xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients_new(celltype, wcoeffs, {M}, {x}, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, pt,
                        xt::eye<double>(ndofs), maps::type::identity);

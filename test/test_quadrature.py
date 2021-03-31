@@ -49,7 +49,7 @@ def test_qorder_tri(m, scheme):
     assert(np.isclose(float(q), float(s)))
 
 
-@pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
+@pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6, 7, 8])
 @pytest.mark.parametrize("scheme", ['default', 'Gauss-Jacobi'])
 def test_qorder_tet(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.tetrahedron, m)

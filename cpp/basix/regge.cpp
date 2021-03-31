@@ -262,7 +262,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   auto [x, M] = create_regge_interpolation_new(celltype, degree);
   xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
+      = compute_expansion_coefficients(celltype, wcoeffs, M, x, degree);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D

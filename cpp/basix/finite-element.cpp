@@ -86,55 +86,7 @@ basix::FiniteElement basix::create_element(element::family family,
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> basix::compute_expansion_coefficients(
-    cell::type celltype, const xt::xtensor<double, 2>& B,
-    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
-    int degree, double kappa_tol)
-{
-  // TODO: Tidy up 1D views for 1D problems
-  xt::xarray<double> pts = x;
-  if (pts.shape(1) == 1)
-    pts.reshape({pts.shape(0)});
-
-  const xt::xtensor<double, 3> P = polyset::tabulate(celltype, degree, 0, pts);
-
-  // Compute A = BD^T =  B(MP)^T
-  const int coeff_size = P.shape(2);
-  const int value_size = B.shape(1) / coeff_size;
-  const int m_size = M.shape(1) / value_size;
-  xt::xtensor<double, 2> A = xt::zeros<double>({B.shape(0), M.shape(0)});
-  for (std::size_t row = 0; row < B.shape(0); ++row)
-  {
-    for (int v = 0; v < value_size; ++v)
-    {
-      auto Bview
-          = xt::view(B, row, xt::range(v * coeff_size, (v + 1) * coeff_size));
-      auto Mview_t
-          = xt::view(M, xt::all(), xt::range(v * m_size, (v + 1) * m_size));
-
-      // Compute Aview = Bview * Pt * Mview
-      // (by row: Aview_i = Bview_j * Pt_jk * Mview_ki )
-      for (std::size_t i = 0; i < A.shape(1); ++i)
-        for (std::size_t k = 0; k < P.shape(1); ++k)
-          for (std::size_t j = 0; j < P.shape(2); ++j)
-            A(row, i) += Bview(j) * P(0, k, j) * Mview_t(i, k);
-    }
-  }
-
-  if (kappa_tol >= 1.0)
-  {
-    if (xt::linalg::cond(A, 2) > kappa_tol)
-    {
-      throw std::runtime_error("Condition number of B.D^T when computing "
-                               "expansion coefficients exceeds tolerance.");
-    }
-  }
-
-  // Compute C = (BD^T)^{-1} B
-  return xt::linalg::solve(A, B);
-}
-//-----------------------------------------------------------------------------
-xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
+xt::xtensor<double, 3> basix::compute_expansion_coefficients(
     cell::type celltype, const xt::xtensor<double, 2>& B,
     const std::vector<xt::xtensor<double, 4>>& M,
     const std::vector<xt::xtensor<double, 3>>& x, int degree, double kappa_tol)

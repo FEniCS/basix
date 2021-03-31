@@ -122,7 +122,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> B = xt::eye<double>(ndofs);
   xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients_new(celltype, B, M, x, degree);
+      = compute_expansion_coefficients(celltype, B, M, x, degree);
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, matrix,
                        maps::type::contravariantPiola);

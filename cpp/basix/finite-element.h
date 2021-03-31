@@ -158,27 +158,6 @@ namespace basix
 ///   -x & 1 - y \end{bmatrix} @f]
 ///
 /// @param[in] cell_type The cells shape
-/// @param[in] B The matrix containing the expansion coefficients
-/// defining a polynomial basis spanning the polynomial space for this
-/// element
-/// @param[in] M The interpolation matrix, such that the dual matrix
-/// \f$D\f$ is computed by \f$D = MP\f$
-/// @param[in] x The interpolation points
-/// @param[in] degree The degree of the polynomial set
-/// @param[in] kappa_tol If positive, the condition number is computed
-/// and an error thrown if the condition number of \f$B D^{T}\f$ is
-/// greater than @p kappa_tol. If @p kappa_tol is less than 1 the
-/// condition number is not checked.
-/// @return The matrix C of expansion coefficients that define the basis
-/// functions of the finite element space.
-xt::xtensor<double, 2> compute_expansion_coefficients(
-    cell::type cell_type, const xt::xtensor<double, 2>& B,
-    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
-    int degree, double kappa_tol = 0.0);
-
-/// New function for computing expansion coefficients
-///
-/// @param[in] cell_type The cells shape
 /// @param[in] B Matrices for the kth value index containing the
 /// expansion coefficients defining a polynomial basis spanning the
 /// polynomial space for this element
@@ -195,12 +174,15 @@ xt::xtensor<double, 2> compute_expansion_coefficients(
 /// and an error thrown if the condition number of \f$B D^{T}\f$ is
 /// greater than @p kappa_tol. If @p kappa_tol is less than 1 the
 /// condition number is not checked.
+/// @return The matrix C of expansion coefficients that define the basis
+/// functions of the finite element space. The shape is (num_dofs,
+/// value_size, basis_dim)
 xt::xtensor<double, 3>
-compute_expansion_coefficients_new(cell::type cell_type,
-                                   const xt::xtensor<double, 2>& B,
-                                   const std::vector<xt::xtensor<double, 4>>& M,
-                                   const std::vector<xt::xtensor<double, 3>>& x,
-                                   int degree, double kappa_tol = 0.0);
+compute_expansion_coefficients(cell::type cell_type,
+                               const xt::xtensor<double, 2>& B,
+                               const std::vector<xt::xtensor<double, 4>>& M,
+                               const std::vector<xt::xtensor<double, 3>>& x,
+                               int degree, double kappa_tol = 0.0);
 
 /// Combines interpolation data
 ///

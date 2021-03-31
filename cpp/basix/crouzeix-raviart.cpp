@@ -69,7 +69,7 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
   xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
 
-  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M}, {x}, degree);
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
                        entity_dofs, base_transformations, pts,

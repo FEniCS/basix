@@ -549,7 +549,7 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
     entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
 
   const xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
+      = compute_expansion_coefficients(celltype, wcoeffs, M, x, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, transforms, points, interp_matrix,
                        maps::type::covariantPiola);
@@ -593,7 +593,7 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
 
   xt::xtensor<double, 2> wcoeffs = xt::eye<double>(tdim * psize);
   const xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients_new(celltype, wcoeffs, M, x, degree);
+      = compute_expansion_coefficients(celltype, wcoeffs, M, x, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, points, interp_matrix,
                        maps::type::covariantPiola);

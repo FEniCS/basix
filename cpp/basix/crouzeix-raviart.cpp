@@ -9,8 +9,9 @@
 #include "quadrature.h"
 #include <numeric>
 #include <vector>
+#include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
-#include <xtensor/xview.hpp>
+#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 
@@ -31,6 +32,8 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
 
   const std::size_t ndofs = facet_topology.size();
   xt::xtensor<double, 2> pts = xt::zeros<double>({ndofs, tdim});
+  xt::xtensor<double, 3> x
+      = xt::zeros<double>({ndofs, static_cast<std::size_t>(1), tdim});
 
   // Compute facet midpoints
   int c = 0;
@@ -39,16 +42,21 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
     for (int i : f)
     {
       for (std::size_t j = 0; j < geometry.shape(1); ++j)
+      {
         pts(c, j) += geometry(i, j);
+        x(c, 0, j) += geometry(i, j);
+      }
     }
 
     for (std::size_t j = 0; j < geometry.shape(1); ++j)
       pts(c, j) /= static_cast<double>(f.size());
+    xt::view(x, c, xt::all(), xt::all()) /= static_cast<double>(f.size());
     ++c;
   }
 
-  xt::xtensor<double, 2> dual = xt::view(polyset::tabulate(celltype, 1, 0, pts),
-                                         0, xt::all(), xt::all());
+  // xt::xtensor<double, 2> dual = xt::view(polyset::tabulate(celltype, 1, 0,
+  // pts),
+  //                                        0, xt::all(), xt::all());
   std::size_t transform_count = tdim == 2 ? 3 : 14;
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
@@ -61,8 +69,14 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3] = {0};
 
-  const xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
+  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
+
+  const xt::xtensor<double, 2> coeffs_old = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), xt::eye<double>(ndofs), pts, degree);
+
+  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+      celltype, xt::eye<double>(ndofs), {M}, {x}, degree);
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
                        entity_dofs, base_transformations, pts,
                        xt::eye<double>(ndofs), maps::type::identity);

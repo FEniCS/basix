@@ -190,7 +190,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
-  std::cout << "Start" << std::endl;
   std::vector<xt::xtensor<double, 3>> x(4);
   std::vector<xt::xtensor<double, 4>> M(4);
 

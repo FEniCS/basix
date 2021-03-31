@@ -161,8 +161,6 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   xt::xtensor<double, 3> coeffs
       = compute_expansion_coefficients_new(celltype, wcoeffs, {M}, {x}, degree);
-  // xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-  //     celltype, wcoeffs, xt::eye<double>(ndofs), points, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, points,
                        xt::eye<double>(ndofs), maps::type::identity);

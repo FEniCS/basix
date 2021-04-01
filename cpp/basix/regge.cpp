@@ -140,6 +140,114 @@ create_regge_interpolation(cell::type celltype, int degree)
   return std::make_pair(points, matrix);
 }
 //-----------------------------------------------------------------------------
+std::pair<std::vector<xt::xtensor<double, 3>>,
+          std::vector<xt::xtensor<double, 4>>>
+create_regge_interpolation_new(cell::type celltype, int degree)
+{
+  const std::size_t tdim = cell::topological_dimension(celltype);
+
+  const int basis_size = polyset::dim(celltype, degree);
+
+  const std::size_t ndofs = basis_size * (tdim + 1) * tdim / 2;
+  const std::size_t space_size = basis_size * tdim * tdim;
+
+  const std::size_t npoints
+      = tdim == 2 ? 3 * (degree + 1) + degree * (degree + 1) / 2
+                  : 6 * (degree + 1) + 4 * degree * (degree + 1) / 2
+                        + degree * (degree + 1) * (degree - 1) / 6;
+
+  xt::xtensor<double, 2> points({npoints, tdim});
+  xt::xtensor<double, 2> matrix
+      = xt::zeros<double>({ndofs, npoints * tdim * tdim});
+
+  xt::xtensor<double, 2> dualmat({ndofs, space_size});
+  std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
+
+  std::vector<xt::xtensor<double, 3>> x(topology.size() - 1);
+  std::vector<xt::xtensor<double, 4>> M(topology.size() - 1);
+
+  // point and dof counters
+  for (std::size_t d = 1; d < topology.size(); ++d)
+  {
+    // Loop over entities of dimension dim
+    for (std::size_t e = 0; e < topology[d].size(); ++e)
+    {
+      // Entity coordinates
+      const xt::xtensor<double, 2> entity_x
+          = cell::sub_entity_geometry(celltype, d, e);
+
+      // Tabulate points in lattice
+      cell::type ct = cell::sub_entity_type(celltype, d, e);
+      auto lattice
+          = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
+      auto x0 = xt::row(entity_x, 0);
+
+      if (x[d - 1].size() == 0)
+        x[d - 1].resize({topology[d].size(), lattice.shape(0), tdim});
+
+      // Copy points
+      for (std::size_t p = 0; p < lattice.shape(0); ++p)
+      {
+        xt::view(x[d - 1], e, p, xt::all()) = x0;
+        for (std::size_t k = 0; k < entity_x.shape(0) - 1; ++k)
+        {
+          xt::view(x[d - 1], e, p, xt::all())
+              += (xt::row(entity_x, k + 1) - x0) * lattice(p, k);
+        }
+      }
+
+      // Store up outer(t, t) for all tangents
+      std::vector<int>& vert_ids = topology[d][e];
+      std::size_t ntangents = d * (d + 1) / 2;
+      xt::xtensor<double, 3> vvt(
+          {ntangents, geometry.shape(1), geometry.shape(1)});
+      std::vector<double> _edge(geometry.shape(1));
+      auto edge_t = xt::adapt(_edge);
+
+      int c = 0;
+      for (std::size_t s = 0; s < d; ++s)
+      {
+        for (std::size_t r = s + 1; r < d + 1; ++r)
+        {
+          for (std::size_t p = 0; p < geometry.shape(1); ++p)
+            edge_t[p] = geometry(vert_ids[r], p) - geometry(vert_ids[s], p);
+
+          // outer product v.v^T
+          xt::view(vvt, c, xt::all(), xt::all())
+              = xt::linalg::outer(edge_t, edge_t);
+          ++c;
+        }
+      }
+
+      if (M[d - 1].size() == 0)
+      {
+        M[d - 1] = xt::zeros<double>(
+            {lattice.shape(0) * topology[d].size() * ntangents, tdim * tdim,
+             topology[d].size(), lattice.shape(0)});
+      }
+
+      for (std::size_t p = 0; p < lattice.shape(0); ++p)
+      {
+        for (std::size_t j = 0; j < ntangents; ++j)
+        {
+          auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
+          for (std::size_t i = 0; i < tdim * tdim; ++i)
+          {
+            // matrix(dof, point_n + i * npoints) = vvt_flat(i);
+            M[d - 1](e * lattice.shape(0) * ntangents + p * ntangents + j, i, e,
+                     p)
+                = vvt_flat(i);
+          }
+        }
+      }
+    }
+  }
+
+  return {x, M};
+}
+//-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_regge(cell::type celltype, int degree)
@@ -152,8 +260,9 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   xt::xtensor<double, 2> points, matrix;
   std::tie(points, matrix) = create_regge_interpolation(celltype, degree);
 
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, matrix, points, degree);
+  auto [x, M] = create_regge_interpolation_new(celltype, degree);
+  xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients(celltype, wcoeffs, M, x, degree);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D

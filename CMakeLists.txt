@@ -43,7 +43,7 @@ if(NOT xtensor_FOUND)
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.23.2
+    GIT_TAG        0.23.4
   )
   FetchContent_MakeAvailable(xtensor)
 else()

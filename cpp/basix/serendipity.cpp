@@ -770,6 +770,12 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
   FiniteElement facet_moment_space = create_dpc(facettype, degree);
   std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
+
+  auto [x1, M1] = moments::make_normal_integral_moments_new(
+      facet_moment_space, celltype, tdim, quad_deg);
+  std::vector<xt::xtensor<double, 3>> x = {x1};
+  std::vector<xt::xtensor<double, 4>> M = {M1};
+
   if (tdim > 1)
   {
     facet_transforms
@@ -783,6 +789,10 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
     FiniteElement cell_moment_space = create_dpc(celltype, degree - 2);
     std::tie(points_cell, matrix_cell) = moments::make_integral_moments(
         cell_moment_space, celltype, tdim, quad_deg);
+    auto [x2, M2] = moments::make_integral_moments_new(
+        cell_moment_space, celltype, tdim, quad_deg);
+    x.push_back(x2);
+    M.push_back(M2);
   }
 
   // Interpolation points and matrix
@@ -853,9 +863,8 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 2> coeffs
-      = compute_expansion_coefficients(celltype, wcoeffs, interpolation_matrix,
-                                       interpolation_points, degree + 1);
+  xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients(celltype, wcoeffs, M, x, degree + 1);
 
   return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
                        coeffs, entity_dofs, base_transformations,
@@ -904,10 +913,16 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   else if (tdim == 3)
     wcoeffs = make_serendipity_curl_space_3d(degree);
 
-  xt::xtensor<double, 2> points_1d, matrix_1d;
   FiniteElement edge_moment_space = create_dpc(cell::type::interval, degree);
+
+  xt::xtensor<double, 2> points_1d, matrix_1d;
   std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, 2 * degree + 2);
+
+  auto [x1, M1] = moments::make_tangent_integral_moments_new(
+      edge_moment_space, celltype, tdim, 2 * degree + 2);
+  std::vector<xt::xtensor<double, 3>> x = {x1};
+  std::vector<xt::xtensor<double, 4>> M = {M1};
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
@@ -921,6 +936,10 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
         = create_dpc(cell::type::quadrilateral, degree - 2);
     std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
         moment_space, celltype, tdim, 2 * degree);
+    auto [x2, M2] = moments::make_integral_moments_new(moment_space, celltype,
+                                                       tdim, 2 * degree);
+    x.push_back(x2);
+    M.push_back(M2);
 
     if (tdim == 3)
     {
@@ -928,10 +947,17 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
           = moments::create_moment_dof_transformations(moment_space);
 
       if (degree >= 4)
+      {
         // Interior integral moment
         std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
             create_dpc(cell::type::hexahedron, degree - 4), celltype, tdim,
             2 * degree - 3);
+        auto [x3, M3] = moments::make_integral_moments_new(
+            create_dpc(cell::type::hexahedron, degree - 4), celltype, tdim,
+            2 * degree - 3);
+        x.push_back(x3);
+        M.push_back(M3);
+      }
     }
   }
 
@@ -979,8 +1005,8 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3].resize(topology[3].size(), volume_dofs);
 
-  xt::xtensor<double, 2> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, matrix, points, degree + 1);
+  xt::xtensor<double, 3> coeffs
+      = compute_expansion_coefficients(celltype, wcoeffs, M, x, degree + 1);
 
   return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
                        coeffs, entity_dofs, base_transformations, points,

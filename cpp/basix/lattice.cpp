@@ -30,7 +30,7 @@ xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
 
   FiniteElement L = create_dlagrange(cell::type::interval, n);
   xt::xtensor<double, 2> v
-      = xt::view(L.tabulate(0, x), 0, xt::all(), xt::all());
+      = xt::view(L.tabulate(0, x), 0, xt::all(), xt::all(), 0);
 
   return xt::linalg::dot(v, pts);
 }
@@ -264,7 +264,8 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
   FiniteElement L = create_dlagrange(cell::type::interval, n);
   auto w = [&](double r) -> double {
     xt::xtensor<double, 1> rr = {0.5 * (r + 1.0)};
-    xt::xtensor<double, 1> v = xt::view(L.tabulate(0, rr), 0, 0, xt::all());
+    xt::xtensor<double, 1> v
+        = xt::view(L.tabulate(0, rr), 0, 0, xt::all(), 0);
     double d = 0.0;
     for (std::size_t i = 0; i < pts.shape(0); ++i)
       d += v[i] * pts[i];

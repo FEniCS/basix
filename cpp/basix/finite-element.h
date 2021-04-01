@@ -229,27 +229,6 @@ public:
   /// @param[in] map_type
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
-                const xt::xtensor<double, 2>& coeffs,
-                const std::vector<std::vector<int>>& entity_dofs,
-                const xt::xtensor<double, 3>& base_transformations,
-                const xt::xtensor<double, 2>& points,
-                const xt::xtensor<double, 2>& M = {},
-                maps::type map_type = maps::type::identity);
-
-  /// @todo Document
-  /// A finite element
-  /// @param[in] family
-  /// @param[in] cell_type
-  /// @param[in] degree
-  /// @param[in] value_shape
-  /// @param[in] coeffs
-  /// @param[in] entity_dofs
-  /// @param[in] base_transformations Base transformations
-  /// @param[in] points
-  /// @param[in] M The interpolation matrix
-  /// @param[in] map_type
-  FiniteElement(element::family family, cell::type cell_type, int degree,
-                const std::vector<std::size_t>& value_shape,
                 const xt::xtensor<double, 3>& coeffs,
                 const std::vector<std::vector<int>>& entity_dofs,
                 const xt::xtensor<double, 3>& base_transformations,
@@ -525,6 +504,10 @@ private:
   // away. For non-Lagrange elements, these points will be used in combination
   // with _interpolation_matrix to perform interpolation
   xt::xtensor<double, 2> _points;
+
+  // Interpolation points on the cell. The shape is (entity_dim, num
+  // entities of given dimension, num_points, tdim)
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
 
   /// The interpolation weights and points
   xt::xtensor<double, 2> _matM;

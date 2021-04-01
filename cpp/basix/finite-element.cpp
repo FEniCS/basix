@@ -244,38 +244,6 @@ basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
 FiniteElement::FiniteElement(element::family family, cell::type cell_type,
                              int degree,
                              const std::vector<std::size_t>& value_shape,
-                             const xt::xtensor<double, 2>& coeffs,
-                             const std::vector<std::vector<int>>& entity_dofs,
-                             const xt::xtensor<double, 3>& base_transformations,
-                             const xt::xtensor<double, 2>& points,
-                             const xt::xtensor<double, 2>& M,
-                             maps::type map_type)
-    : map_type(map_type), _cell_type(cell_type), _family(family),
-      _degree(degree), _map_type(map_type), _coeffs(coeffs),
-      _entity_dofs(entity_dofs), _base_transformations(base_transformations),
-      _matM(M)
-{
-  if (points.dimension() == 1)
-    throw std::runtime_error("Problem with points");
-  _points = points;
-
-  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
-
-  // Check that entity dofs add up to total number of dofs
-  std::size_t sum = 0;
-  for (const std::vector<int>& q : entity_dofs)
-    sum = std::accumulate(q.begin(), q.end(), sum);
-
-  if (sum != _coeffs.shape(0))
-  {
-    throw std::runtime_error(
-        "Number of entity dofs does not match total number of dofs");
-  }
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(element::family family, cell::type cell_type,
-                             int degree,
-                             const std::vector<std::size_t>& value_shape,
                              const xt::xtensor<double, 3>& coeffs,
                              const std::vector<std::vector<int>>& entity_dofs,
                              const xt::xtensor<double, 3>& base_transformations,

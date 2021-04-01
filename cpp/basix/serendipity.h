@@ -14,4 +14,16 @@ namespace basix
 /// @param[in] degree
 /// @return A FiniteElement
 FiniteElement create_serendipity(cell::type celltype, int degree);
+
+/// Create a serendipity H(div) element on cell with given degree
+/// @param[in] celltype quadrilateral or hexahedral celltype
+/// @param[in] degree
+/// @return A FiniteElement
+FiniteElement create_serendipity_div(cell::type celltype, int degree);
+
+/// Create a serendipity H(curl) element on cell with given degree
+/// @param[in] celltype quadrilateral or hexahedral celltype
+/// @param[in] degree
+/// @return A FiniteElement
+FiniteElement create_serendipity_curl(cell::type celltype, int degree);
 } // namespace basix

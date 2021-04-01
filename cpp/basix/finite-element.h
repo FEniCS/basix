@@ -11,6 +11,7 @@
 #include "element-families.h"
 #include "maps.h"
 #include "span.hpp"
+#include <array>
 #include <string>
 #include <vector>
 #include <xtensor/xadapt.hpp>
@@ -221,7 +222,8 @@ public:
   /// @param[in] cell_type
   /// @param[in] degree
   /// @param[in] value_shape
-  /// @param[in] coeffs
+  /// @param[in] coeffs Expansion coefficients. The shape is (num_dofs,
+  /// value_size, basis_dim)
   /// @param[in] entity_dofs
   /// @param[in] base_transformations Base transformations
   /// @param[in] points
@@ -233,6 +235,28 @@ public:
                 const std::vector<std::vector<int>>& entity_dofs,
                 const xt::xtensor<double, 3>& base_transformations,
                 const xt::xtensor<double, 2>& points,
+                const xt::xtensor<double, 2>& M = {},
+                maps::type map_type = maps::type::identity);
+
+  /// @todo Document
+  /// A finite element
+  /// @param[in] family
+  /// @param[in] cell_type
+  /// @param[in] degree
+  /// @param[in] value_shape
+  /// @param[in] coeffs Expansion coefficients. The shape is (num_dofs,
+  /// value_size, basis_dim)
+  /// @param[in] entity_dofs
+  /// @param[in] base_transformations Base transformations
+  /// @param[in] points
+  /// @param[in] M The interpolation matrix
+  /// @param[in] map_type
+  FiniteElement(element::family family, cell::type cell_type, int degree,
+                const std::vector<std::size_t>& value_shape,
+                const xt::xtensor<double, 3>& coeffs,
+                const std::vector<std::vector<int>>& entity_dofs,
+                const xt::xtensor<double, 3>& base_transformations,
+                const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                 const xt::xtensor<double, 2>& M = {},
                 maps::type map_type = maps::type::identity);
 

@@ -66,8 +66,9 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
         create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
 
-    auto [points_cell_new, M_cell_new] = moments::make_dot_integral_moments_new(
-        create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
+    std::tie(points_cell_new, M_cell_new)
+        = moments::make_dot_integral_moments_new(
+            create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
     x.push_back(points_cell_new);
     M.push_back(M_cell_new);
   }
@@ -119,12 +120,25 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
 
+  // Pack points
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x_new;
+  std::vector<xt::xtensor<double, 2>> testing;
+  for (std::size_t e = 0; e < points_facet_new.shape(0); ++e)
+  {
+    x_new[tdim - 1].push_back(
+        xt::view(points_facet_new, e, xt::all(), xt::all()));
+  }
+  for (std::size_t e = 0; e < points_cell_new.shape(0); ++e)
+  {
+    x_new[tdim].push_back(xt::view(points_cell_new, e, xt::all(), xt::all()));
+  }
+
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> B = xt::eye<double>(ndofs);
   xt::xtensor<double, 3> coeffs
       = compute_expansion_coefficients(celltype, B, M, x, degree);
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, points, matrix,
+                       entity_dofs, base_transformations, x_new, matrix,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

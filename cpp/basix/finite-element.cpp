@@ -275,6 +275,57 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
   }
 }
 //-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 3>& coeffs,
+    const std::vector<std::vector<int>>& entity_dofs,
+    const xt::xtensor<double, 3>& base_transformations,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const xt::xtensor<double, 2>& M, maps::type map_type)
+    : map_type(map_type), _cell_type(cell_type), _family(family),
+      _degree(degree), _map_type(map_type),
+      _coeffs(xt::reshape_view(
+          coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
+      _entity_dofs(entity_dofs), _base_transformations(base_transformations),
+      _x(x), _matM(M)
+{
+  // if (points.dimension() == 1)
+  //   throw std::runtime_error("Problem with points");
+
+  std::cout << "Count" << std::endl;
+  std::size_t num_points = 0;
+  for (auto& x_dim : x)
+    for (auto& x_e : x_dim)
+      num_points += x_e.shape(0);
+
+  std::cout << "Post Count: " << num_points << std::endl;
+
+  std::size_t tdim = geometry(cell_type).shape(1);
+
+  std::size_t counter = 0;
+  _points.resize({num_points, tdim});
+  for (auto& x_dim : x)
+    for (auto& x_e : x_dim)
+      for (std::size_t p = 0; p < x_e.shape(0); ++p)
+        xt::row(_points, counter++) = xt::row(x_e, p);
+
+  std::cout << "Size check: " << counter << ", " << num_points << std::endl;
+
+  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
+
+  // Check that entity dofs add up to total number of dofs
+  std::size_t sum = 0;
+  for (const std::vector<int>& q : entity_dofs)
+    sum = std::accumulate(q.begin(), q.end(), sum);
+
+  if (sum != _coeffs.shape(0))
+  {
+    throw std::runtime_error(
+        "Number of entity dofs does not match total number of dofs");
+  }
+}
+//-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }

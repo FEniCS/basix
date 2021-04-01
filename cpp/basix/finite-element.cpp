@@ -86,44 +86,76 @@ basix::FiniteElement basix::create_element(element::family family,
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> basix::compute_expansion_coefficients(
+xt::xtensor<double, 3> basix::compute_expansion_coefficients(
     cell::type celltype, const xt::xtensor<double, 2>& B,
-    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
-    int degree, double kappa_tol)
+    const std::vector<xt::xtensor<double, 4>>& M,
+    const std::vector<xt::xtensor<double, 3>>& x, int degree, double kappa_tol)
 {
-  // TODO: Tidy up 1D views for 1D problems
-  xt::xarray<double> pts = x;
-  if (pts.shape(1) == 1)
-    pts.reshape({pts.shape(0)});
+  std::size_t num_dofs
+      = std::accumulate(M.begin(), M.end(), 0, [](int sum, const auto& v) {
+          return sum + v.shape(0);
+        });
 
-  const xt::xtensor<double, 3> P = polyset::tabulate(celltype, degree, 0, pts);
+  std::size_t vs = M.at(0).shape(1);
+  std::size_t pdim = polyset::dim(celltype, degree);
+  xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
 
-  // Compute A = BD^T =  B(MP)^T
-  const int coeff_size = P.shape(2);
-  const int value_size = B.shape(1) / coeff_size;
-  const int m_size = M.shape(1) / value_size;
-  xt::xtensor<double, 2> A = xt::zeros<double>({B.shape(0), M.shape(0)});
-  for (std::size_t row = 0; row < B.shape(0); ++row)
+  // Loop over different dimensions
+  std::size_t dof_index = 0;
+  for (std::size_t d = 0; d < M.size(); ++d)
   {
-    for (int v = 0; v < value_size; ++v)
+    // Loop over entities of dimension d
+    for (std::size_t e = 0; e < x[d].shape(0); ++e)
     {
-      auto Bview
-          = xt::view(B, row, xt::range(v * coeff_size, (v + 1) * coeff_size));
-      auto Mview_t
-          = xt::view(M, xt::all(), xt::range(v * m_size, (v + 1) * m_size));
+      // Evaluate polynomial basis at x[d]
+      xt::xtensor<double, 2> P;
+      if (x[d].shape(2) == 1)
+      {
+        auto pts = xt::view(x[d], e, xt::all(), 0);
+        P = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(),
+                     xt::all());
+      }
+      else
+      {
+        P = xt::view(polyset::tabulate(celltype, degree, 0,
+                                       xt::view(x[d], e, xt::all(), xt::all())),
+                     0, xt::all(), xt::all());
+      }
 
-      // Compute Aview = Bview * Pt * Mview
-      /// (by row: Aview_i = Bview_j * Pt_jk * Mview_ki )
-      for (std::size_t i = 0; i < A.shape(1); ++i)
-        for (std::size_t k = 0; k < P.shape(1); ++k)
-          for (std::size_t j = 0; j < P.shape(2); ++j)
-            A(row, i) += Bview(j) * P(0, k, j) * Mview_t(i, k);
+      // Me: [dof, vs, point]
+      // auto Me = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
+      xt::xtensor<double, 3> Me
+          = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
+
+      // Compute dual matrix contribution
+      for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
+        for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
+          for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
+            for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
+              D(i + dof_index, j, l) += Me(i, j, k) * P(k, l);
+
+      // Dtmp += xt::linalg::dot(Me, P);
     }
+    dof_index += M[d].shape(0);
   }
+
+  // Compute B D^{T}
+  // xt::xtensor<double, 2> A = xt::zeros<double>({num_dofs, num_dofs});
+  // for (std::size_t i = 0; i < A.shape(0); ++i)
+  //   for (std::size_t j = 0; j < A.shape(1); ++j)
+  //     for (std::size_t k = 0; k < vs; ++k)
+  //       for (std::size_t l = 0; l < B[k].shape(1); ++l)
+  //         A(i, j) += B[k](i, l) * D(j, k, l);
+
+  /// Flatten D and take transpose
+  auto Dt_flat = xt::transpose(
+      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
+
+  auto BDt = xt::linalg::dot(B, Dt_flat);
 
   if (kappa_tol >= 1.0)
   {
-    if (xt::linalg::cond(A, 2) > kappa_tol)
+    if (xt::linalg::cond(BDt, 2) > kappa_tol)
     {
       throw std::runtime_error("Condition number of B.D^T when computing "
                                "expansion coefficients exceeds tolerance.");
@@ -131,7 +163,8 @@ xt::xtensor<double, 2> basix::compute_expansion_coefficients(
   }
 
   // Compute C = (BD^T)^{-1} B
-  return xt::linalg::solve(A, B);
+  xt::xtensor<double, 2> C = xt::linalg::solve(BDt, B);
+  return xt::reshape_view(C, {num_dofs, vs, pdim});
 }
 //-----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
@@ -224,6 +257,40 @@ FiniteElement::FiniteElement(element::family family, cell::type cell_type,
   }
 }
 //-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(element::family family, cell::type cell_type,
+                             int degree,
+                             const std::vector<std::size_t>& value_shape,
+                             const xt::xtensor<double, 3>& coeffs,
+                             const std::vector<std::vector<int>>& entity_dofs,
+                             const xt::xtensor<double, 3>& base_transformations,
+                             const xt::xtensor<double, 2>& points,
+                             const xt::xtensor<double, 2>& M,
+                             maps::type map_type)
+    : map_type(map_type), _cell_type(cell_type), _family(family),
+      _degree(degree), _map_type(map_type),
+      _coeffs(xt::reshape_view(
+          coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
+      _entity_dofs(entity_dofs), _base_transformations(base_transformations),
+      _matM(M)
+{
+  if (points.dimension() == 1)
+    throw std::runtime_error("Problem with points");
+  _points = points;
+
+  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
+
+  // Check that entity dofs add up to total number of dofs
+  std::size_t sum = 0;
+  for (const std::vector<int>& q : entity_dofs)
+    sum = std::accumulate(q.begin(), q.end(), sum);
+
+  if (sum != _coeffs.shape(0))
+  {
+    throw std::runtime_error(
+        "Number of entity dofs does not match total number of dofs");
+  }
+}
+//-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }
@@ -255,41 +322,8 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
   return _entity_dofs;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3>
-FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
-{
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
-  std::size_t ndsize = 1;
-  for (int i = 1; i <= nd; ++i)
-    ndsize *= (tdim + i);
-  for (int i = 1; i <= nd; ++i)
-    ndsize /= i;
-  const std::size_t vs = value_size();
-  const std::size_t ndofs = _coeffs.shape(0);
-
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 1)
-    _x.reshape({_x.shape(0), 1});
-
-  std::vector<double> basis_data(ndsize * x.shape(0) * ndofs * vs);
-  tabulate(nd, _x, basis_data.data());
-
-  xt::xtensor<double, 3> d({ndsize, _x.shape(0), ndofs * vs});
-  for (std::size_t i = 0; i < d.shape(0); ++i)
-  {
-    std::size_t offset = i * x.shape(0) * ndofs * vs;
-    std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
-    auto mat = xt::adapt<xt::layout_type::column_major>(
-        basis_data.data() + offset, x.shape(0) * ndofs * vs, xt::no_ownership(),
-        shape);
-    xt::view(d, i, xt::all(), xt::all()) = mat;
-  }
-
-  return d;
-}
-//-----------------------------------------------------------------------------
 xt::xtensor<double, 4>
-FiniteElement::tabulate_x(int nd, const xt::xarray<double>& x) const
+FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
   const std::size_t tdim = cell::topological_dimension(_cell_type);
   std::size_t ndsize = 1;

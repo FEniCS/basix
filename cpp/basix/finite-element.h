@@ -52,7 +52,8 @@ namespace basix
 /// that
 ///   @f[ f_i(\phi_j) = \delta_{ij} @f]
 /// and inserting the expression for @f$\phi_{j}@f$:
-///   @f[ f_i(c^{\prime}_{jk}b_{kl}p_{l}) = c^{\prime}_{jk} b_{kl} f_i \left( p_{l} \right) @f]
+///   @f[ f_i(c^{\prime}_{jk}b_{kl}p_{l}) = c^{\prime}_{jk} b_{kl} f_i \left(
+///   p_{l} \right) @f]
 ///
 /// Defining a matrix D given by applying the functionals to each
 /// polynomial @f$p_j@f$:
@@ -157,23 +158,31 @@ namespace basix
 ///   -x & 1 - y \end{bmatrix} @f]
 ///
 /// @param[in] cell_type The cells shape
-/// @param[in] B The matrix containing the expansion coefficients
-/// defining a polynomial basis spanning the polynomial space for this
-/// element
-/// @param[in] M The interpolation matrix, such that the dual matrix
+/// @param[in] B Matrices for the kth value index containing the
+/// expansion coefficients defining a polynomial basis spanning the
+/// polynomial space for this element
+/// @param[in] M The interpolation tensor, such that the dual matrix
 /// \f$D\f$ is computed by \f$D = MP\f$
-/// @param[in] x The interpolation points
-/// @param[in] degree The degree of the polynomial set
+/// @param[in] x The interpolation points. The vector index is for
+/// points on entities of the same dimension, ordered with the lowest
+/// topological dimension being first. Each 3D tensor hold the points on
+/// cell entities of a common dimension. The shape of the 3d tensors is
+/// (num_entities, num_points_per_entity, tdim).
+/// @param[in] degree The degree of the polynomial basis P used to
+/// create the element (before applying B)
 /// @param[in] kappa_tol If positive, the condition number is computed
 /// and an error thrown if the condition number of \f$B D^{T}\f$ is
 /// greater than @p kappa_tol. If @p kappa_tol is less than 1 the
 /// condition number is not checked.
 /// @return The matrix C of expansion coefficients that define the basis
-/// functions of the finite element space.
-xt::xtensor<double, 2> compute_expansion_coefficients(
-    cell::type cell_type, const xt::xtensor<double, 2>& B,
-    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
-    int degree, double kappa_tol = 0.0);
+/// functions of the finite element space. The shape is (num_dofs,
+/// value_size, basis_dim)
+xt::xtensor<double, 3>
+compute_expansion_coefficients(cell::type cell_type,
+                               const xt::xtensor<double, 2>& B,
+                               const std::vector<xt::xtensor<double, 4>>& M,
+                               const std::vector<xt::xtensor<double, 3>>& x,
+                               int degree, double kappa_tol = 0.0);
 
 /// Combines interpolation data
 ///
@@ -227,6 +236,27 @@ public:
                 const xt::xtensor<double, 2>& M = {},
                 maps::type map_type = maps::type::identity);
 
+  /// @todo Document
+  /// A finite element
+  /// @param[in] family
+  /// @param[in] cell_type
+  /// @param[in] degree
+  /// @param[in] value_shape
+  /// @param[in] coeffs
+  /// @param[in] entity_dofs
+  /// @param[in] base_transformations Base transformations
+  /// @param[in] points
+  /// @param[in] M The interpolation matrix
+  /// @param[in] map_type
+  FiniteElement(element::family family, cell::type cell_type, int degree,
+                const std::vector<std::size_t>& value_shape,
+                const xt::xtensor<double, 3>& coeffs,
+                const std::vector<std::vector<int>>& entity_dofs,
+                const xt::xtensor<double, 3>& base_transformations,
+                const xt::xtensor<double, 2>& points,
+                const xt::xtensor<double, 2>& M = {},
+                maps::type map_type = maps::type::identity);
+
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
 
@@ -242,30 +272,24 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
-  /// @todo Fix unclear description of the returned data layout and
-  /// consider using rank 4 tensor [deriv][point][num_res][value_shape].
-  /// It is presently inconsistent with other data structures,
-  ///
   /// Compute basis values and derivatives at set of points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
-  /// @return The basis functions (and derivatives). The first entry in
-  /// the list is the basis function. Higher derivatives are stored in
-  /// triangular (2D) or tetrahedral (3D) ordering, i.e. for the (x,y)
-  /// derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1), (0,2),
-  /// (3,0)... The function basix::idx can be used to find the
-  /// appropriate derivative. If a vector result is expected, it will be
-  /// stacked with all x values, followed by all y-values (and then z,
-  /// if any), likewise tensor-valued results will be stacked in index
-  /// order.
-  xt::xtensor<double, 3> tabulate(int nd, const xt::xarray<double>& x) const;
-
-  /// TODO
-  /// @return Shape [derivative][point][basis fn][value index]
-  xt::xtensor<double, 4> tabulate_x(int nd, const xt::xarray<double>& x) const;
+  /// @return The basis functions (and derivatives). The shape is
+  /// (derivative, point, basis fn index, value index).
+  /// - The first index is the derivative, with higher derivatives are
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+  /// (0,2), (3,0)... The function basix::idx can be used to find the
+  /// appropriate derivative.
+  /// - The second index is the point index
+  /// - The third index is the basis function index
+  /// - The fourth index is the basis function component. Its has size
+  /// one for scalar basis functions.
+  xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
 
   /// Direct to memory block tabulation
   /// @param nd Number of derivatives

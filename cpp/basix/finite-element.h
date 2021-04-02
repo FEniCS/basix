@@ -248,7 +248,7 @@ public:
   /// value_size, basis_dim)
   /// @param[in] entity_dofs
   /// @param[in] base_transformations Base transformations
-  /// @param[in] points
+  /// @param[in] x
   /// @param[in] M The interpolation matrix
   /// @param[in] map_type
   FiniteElement(element::family family, cell::type cell_type, int degree,

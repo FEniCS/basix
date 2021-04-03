@@ -145,7 +145,8 @@ target_include_directories(basix SYSTEM PRIVATE ${_xtensor_include_dirs})
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
-list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
+# list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
+list(APPEND basix_compiler_flags -Wall;-Wextra;-Wno-comment;-pedantic;)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
 target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
 

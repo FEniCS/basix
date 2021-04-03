@@ -27,6 +27,33 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
+std::array<std::vector<xt::xtensor<double, 3>>, 4>
+basix::new_m(const std::array<xt::xtensor<double, 4>, 4>& M)
+{
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M_new;
+  for (std::size_t i = 0; i < 4; ++i)
+  {
+    M_new[i].resize(M[i].shape(2));
+    for (auto& m : M_new[i])
+    {
+      std::array<std::size_t, 3> s
+          = {M[i].shape(0) / M[i].shape(2), M[i].shape(1), M[i].shape(3)};
+      m = xt::zeros<double>(s);
+    }
+
+    const std::size_t num_dofs
+        = M[i].size() > 0 ? M[i].shape(0) / M[i].shape(2) : 0;
+    for (std::size_t e = 0; e < M[i].shape(2); ++e)
+    {
+      auto dof_range = xt::range(e * num_dofs, (e + 1) * num_dofs);
+      xt::view(M_new[i][e], xt::all(), xt::all(), xt::all())
+          = xt::view(M[i], dof_range, xt::all(), e, xt::all());
+    }
+  }
+
+  return M_new;
+}
+//-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
                                            int degree)
 {
@@ -282,27 +309,26 @@ FiniteElement::FiniteElement(
     const std::vector<std::vector<int>>& entity_dofs,
     const xt::xtensor<double, 3>& base_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const xt::xtensor<double, 2>& M, maps::type map_type)
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type)
     : map_type(map_type), _cell_type(cell_type), _family(family),
       _degree(degree), _map_type(map_type),
       _coeffs(xt::reshape_view(
           coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
       _entity_dofs(entity_dofs), _base_transformations(base_transformations),
-      _x(x), _matM(M)
+      _x(x), _matM_new(M)
 {
   // if (points.dimension() == 1)
   //   throw std::runtime_error("Problem with points");
 
-  std::cout << "Count" << std::endl;
+  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
+
   std::size_t num_points = 0;
   for (auto& x_dim : x)
     for (auto& x_e : x_dim)
       num_points += x_e.shape(0);
 
-  std::cout << "Post Count: " << num_points << std::endl;
-
   std::size_t tdim = geometry(cell_type).shape(1);
-
   std::size_t counter = 0;
   _points.resize({num_points, tdim});
   for (auto& x_dim : x)
@@ -310,9 +336,43 @@ FiniteElement::FiniteElement(
       for (std::size_t p = 0; p < x_e.shape(0); ++p)
         xt::row(_points, counter++) = xt::row(x_e, p);
 
-  std::cout << "Size check: " << counter << ", " << num_points << std::endl;
+  // Copy into _matM
 
-  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
+  const std::size_t value_size
+      = std::accumulate(value_shape.begin(), value_shape.end(), 1,
+                        std::multiplies<std::size_t>());
+
+  // Count number of dofs and point
+  std::size_t num_dofs(0), num_points1(0);
+  for (std::size_t d = 0; d < M.size(); ++d)
+  {
+    for (std::size_t e = 0; e < M[d].size(); ++e)
+    {
+      num_dofs += M[d][e].shape(0);
+      num_points1 += M[d][e].shape(2);
+    }
+  }
+
+  // Copy data into old _matM matrix
+
+  _matM = xt::zeros<double>({num_dofs, value_size * num_points1});
+  auto Mview = xt::reshape_view(_matM, {num_dofs, value_size, num_points1});
+
+  // Loop over each topological dimensions
+  std::size_t dof_offset(0), point_offset(0);
+  for (std::size_t d = 0; d < M.size(); ++d)
+  {
+    // Loop of entities of dimension d
+    for (std::size_t e = 0; e < M[d].size(); ++e)
+    {
+      auto dof_range = xt::range(dof_offset, dof_offset + M[d][e].shape(0));
+      auto point_range
+          = xt::range(point_offset, point_offset + M[d][e].shape(2));
+      xt::view(Mview, dof_range, xt::all(), point_range) = M[d][e];
+      point_offset += M[d][e].shape(2);
+      dof_offset += M[d][e].shape(0);
+    }
+  }
 
   // Check that entity dofs add up to total number of dofs
   std::size_t sum = 0;

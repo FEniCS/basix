@@ -133,12 +133,21 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     x_new[tdim].push_back(xt::view(points_cell_new, e, xt::all(), xt::all()));
   }
 
+  // Pack new M
+  // std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<xt::xtensor<double, 4>, 4> M_old;
+  M_old[tdim - 1] = M_facet_new;
+  M_old[tdim] = M_cell_new;
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M_new
+      = basix::new_m(M_old);
+
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> B = xt::eye<double>(ndofs);
   xt::xtensor<double, 3> coeffs
       = compute_expansion_coefficients(celltype, B, M, x, degree);
+
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, x_new, matrix,
+                       entity_dofs, base_transformations, x_new, M_new,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

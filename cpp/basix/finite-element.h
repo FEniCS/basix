@@ -23,6 +23,10 @@
 namespace basix
 {
 
+/// TMP
+std::array<std::vector<xt::xtensor<double, 3>>, 4>
+new_m(const std::array<xt::xtensor<double, 4>, 4>& M);
+
 /// Calculates the basis functions of the finite element, in terms of the
 /// polynomial basis.
 ///
@@ -248,8 +252,10 @@ public:
   /// value_size, basis_dim)
   /// @param[in] entity_dofs
   /// @param[in] base_transformations Base transformations
-  /// @param[in] x
-  /// @param[in] M The interpolation matrix
+  /// @param[in] x Interpolation points. Shape is (tdim, entity index,
+  /// point index, dim)
+  /// @param[in] M The interpolation matrices. Indices are (tdim, entity
+  /// index, dof, vs, point_index)
   /// @param[in] map_type
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
@@ -257,7 +263,7 @@ public:
                 const std::vector<std::vector<int>>& entity_dofs,
                 const xt::xtensor<double, 3>& base_transformations,
                 const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-                const xt::xtensor<double, 2>& M = {},
+                const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
                 maps::type map_type = maps::type::identity);
 
   /// Copy constructor
@@ -535,6 +541,9 @@ private:
 
   /// The interpolation weights and points
   xt::xtensor<double, 2> _matM;
+
+  /// Interpolation matrices
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> _matM_new;
 
   // The mapping that maps values on the reference to values on a physical cell
   // std::function<std::vector<double>(const tcb::span<const double>&,

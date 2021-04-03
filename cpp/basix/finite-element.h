@@ -189,6 +189,13 @@ compute_expansion_coefficients(cell::type cell_type,
                                const std::vector<xt::xtensor<double, 3>>& x,
                                int degree, double kappa_tol = 0.0);
 
+/// TODO
+xt::xtensor<double, 3> compute_expansion_coefficients_new(
+    cell::type cell_type, const xt::xtensor<double, 2>& B,
+    const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
+    const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
+    double kappa_tol = 0.0);
+
 /// Combines interpolation data
 ///
 /// When the value size is not 1, the matrices are split up into

@@ -7,7 +7,7 @@
 #include "maps.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <numeric>
+#include <array>
 #include <vector>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
@@ -27,40 +27,28 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const std::vector<std::vector<int>> facet_topology = topology[tdim - 1];
+  const std::vector<std::vector<int>>& facet_topology = topology[tdim - 1];
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
 
   const std::size_t ndofs = facet_topology.size();
-  // xt::xtensor<double, 2> pts = xt::zeros<double>({ndofs, tdim});
-  // xt::xtensor<double, 3> x
-  //     = xt::zeros<double>({ndofs, static_cast<std::size_t>(1), tdim});
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-
   x[tdim - 1] = std::vector<xt::xtensor<double, 2>>(
       facet_topology.size(),
       xt::zeros<double>({static_cast<std::size_t>(1), tdim}));
 
-  for (auto xe : x[tdim - 1])
-    std::cout << xe << std::endl;
-
   // Compute facet midpoints
   for (std::size_t f = 0; f < facet_topology.size(); ++f)
   {
-    // Loop over each vertex of the facet
-    for (int v : facet_topology[f])
-      x[tdim - 1][f] += xt::row(geometry, v);
-
-    // Normalise
-    const std::size_t num_vertices = facet_topology[f].size();
-    x[tdim - 1][f] /= static_cast<double>(num_vertices);
+    auto v = xt::view(geometry, xt::keep(facet_topology[f]), xt::all());
+    xt::row(x[tdim - 1][f], 0) = xt::mean(v, 0);
   }
 
-  std::size_t transform_count = tdim == 2 ? 3 : 14;
-  auto base_transformations
+  const std::size_t transform_count = tdim == 2 ? 3 : 14;
+  const auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
 
-  // Crouzeix-Raviart has one dof on each entity of tdim-1.
+  // Crouzeix-Raviart has one dof on each entity of tdim - 1.
   std::vector<std::vector<int>> entity_dofs(topology.size());
   entity_dofs[0].resize(topology[0].size(), 0);
   entity_dofs[1].resize(topology[1].size(), (tdim == 2) ? 1 : 0);

@@ -28,10 +28,10 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   const std::size_t ndofs = polyset::dim(celltype, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  std::vector<std::vector<int>> entity_dofs(topology.size());
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::vector<std::vector<int>> entity_dofs(topology.size());
 
   // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)
@@ -39,7 +39,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     auto pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
     for (std::size_t i = 0; i < entity_dofs.size(); ++i)
       entity_dofs[i].resize(topology[i].size(), 0);
-    entity_dofs[topology.size() - 1][0] = 1;
+    entity_dofs[tdim][0] = 1;
 
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
@@ -67,22 +67,19 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
               {num_dofs, static_cast<std::size_t>(1), num_dofs});
           xt::view(M[dim][e], xt::all(), 0, xt::all())
               = xt::eye<double>(num_dofs);
-
           entity_dofs[0].push_back(1);
         }
         // else if (dim == topology.size() - 1)
         else if (dim == tdim)
         {
-          const auto lattice = lattice::create(
-              celltype, degree, lattice::type::equispaced, false);
-          x[dim][e] = lattice;
-          const std::size_t num_dofs = lattice.shape(0);
+          x[dim][e] = lattice::create(celltype, degree,
+                                      lattice::type::equispaced, false);
+          const std::size_t num_dofs = x[dim][e].shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
           M[dim][e] = xt::xtensor<double, 3>(s);
           xt::view(M[dim][e], xt::all(), 0, xt::all())
               = xt::eye<double>(num_dofs);
-
-          entity_dofs[dim].push_back(lattice.shape(0));
+          entity_dofs[dim].push_back(num_dofs);
         }
         else
         {
@@ -250,7 +247,7 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
 
   const std::size_t ndofs = polyset::dim(celltype, degree);
 
-  std::vector<std::vector<std::vector<int>>> topology
+  const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
@@ -304,26 +301,25 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
 
-  auto [Qpts, _Qwts]
+  auto [pts, _wts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
 
-  xt::xtensor<double, 2> quad_polyset_at_Qpts = xt::view(
-      polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
-  xt::xtensor<double, 2> polyset_at_Qpts
-      = xt::view(polyset::tabulate(simplex_type, degree, 0, Qpts), 0, xt::all(),
-                 xt::all());
+  xt::xtensor<double, 2> psi_quad = xt::view(
+      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> psi = xt::view(
+      polyset::tabulate(simplex_type, degree, 0, pts), 0, xt::all(), xt::all());
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   for (std::size_t i = 0; i < ndofs; ++i)
   {
-    auto p_i = xt::col(polyset_at_Qpts, i);
+    auto p_i = xt::col(psi, i);
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(Qwts * p_i * xt::col(quad_polyset_at_Qpts, k))();
+      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(psi_quad, k))();
   }
 
-  std::vector<std::vector<std::vector<int>>> topology
+  const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::size_t tdim = topology.size() - 1;
   std::vector<std::vector<int>> entity_dofs(topology.size());

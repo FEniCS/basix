@@ -201,7 +201,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
     // Pull back basis function values to the reference cell (applied
     // map)
-    xt::xtensor<double, 3> F
+    const xt::xtensor<double, 3> F
         = moment_space.map_pull_back(moment_space_pts, Ji, detJ, Ki);
 
     // Copy onto 2D array
@@ -240,7 +240,6 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
       = create_dot_moment_dof_transformations(moment_space);
 
   xt::xtensor_fixed<double, xt::xshape<2, 2>> rot, ref;
-
   cell::type celltype = moment_space.cell_type();
   switch (celltype)
   {
@@ -303,7 +302,6 @@ xt::xtensor<double, 3> moments::create_tangent_moment_dof_transformations(
   xt::xtensor<double, 3> t
       = create_dot_moment_dof_transformations(moment_space);
   xt::view(t, 0, xt::all(), xt::all()) *= -1.0;
-
   return t;
 }
 //----------------------------------------------------------------------------
@@ -327,7 +325,7 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
 
   // Evaluate moment space at quadrature points
   assert(V.value_size() == 1);
-  xt::xtensor<double, 2> phi
+  const xt::xtensor<double, 2> phi
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
   // Pad out \phi moment is against a vector-valued function
@@ -339,7 +337,7 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
   std::vector<xt::xtensor<double, 3>> D(num_entities, xt::zeros<double>(shape));
 
   // Map quadrature points onto facet (cell entity e)
-  auto [points, axes] = map_points(celltype, sub_celltype, pts);
+  const auto [points, axes] = map_points(celltype, sub_celltype, pts);
 
   // Compute entity integral moments
 
@@ -357,22 +355,21 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
   }
   else
   {
-    // int dof = 0;
     for (std::size_t e = 0; e < num_entities; ++e)
     {
       // Loop over each 'dof' on an entity (moment basis function index)
       for (std::size_t i = 0; i < phi.shape(1); ++i)
       {
         auto phi_i = xt::col(phi, i);
-        // TODO: Pad-out phi and call a updated make_dot_integral_moments
+        // TODO: Pad-out phi and call a updated
+        // make_dot_integral_moments
 
         // FIXME: This assumed that the moment space has a certain
         // mapping type
         for (std::size_t d = 0; d < entity_dim; ++d)
         {
-          // std::size_t dof = e * phi.shape(1) * entity_dim + i * entity_dim +
-          // d;
-          std::size_t dof = i * entity_dim + d;
+          // TODO: check that dof index is correct
+          const std::size_t dof = i * entity_dim + d;
           for (std::size_t k = 0; k < value_size; ++k)
             xt::view(D[e], dof, k, xt::all()) = phi_i * wts * axes(e, d, k);
         }

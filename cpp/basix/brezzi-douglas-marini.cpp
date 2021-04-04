@@ -10,7 +10,7 @@
 #include "nedelec.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <array>
+#include <numeric>
 #include <vector>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
@@ -26,13 +26,13 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     throw std::runtime_error("Unsupported cell type");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const cell::type facettype = sub_entity_type(celltype, tdim, 0);
+  const cell::type facettype = sub_entity_type(celltype, tdim - 1, 0);
 
   // The number of order (degree) scalar polynomials
   const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
 
   // quadrature degree
-  const int quad_deg = 5 * degree;
+  int quad_deg = 5 * degree;
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
@@ -63,7 +63,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
-
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   switch (tdim)

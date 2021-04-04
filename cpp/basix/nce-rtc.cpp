@@ -196,11 +196,11 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts]
+  auto [pts, _wts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
-      polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
+      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
   const int psize = polyset_at_Qpts.shape(1);
@@ -241,30 +241,31 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
 
   // Create coefficients for additional polynomials in the curl space
   xt::xtensor<double, 1> integrand;
-  if (tdim == 2)
+  switch (tdim)
+  {
+  case 2:
   {
     for (int i = 0; i < degree; ++i)
     {
       for (std::size_t d = 0; d < tdim; ++d)
       {
-        integrand = xt::col(Qpts, 1 - d);
+        integrand = xt::col(pts, 1 - d);
         for (int j = 1; j < degree; ++j)
-          integrand *= xt::col(Qpts, 1 - d);
+          integrand *= xt::col(pts, 1 - d);
         for (int j = 0; j < i; ++j)
-          integrand *= xt::col(Qpts, d);
-
+          integrand *= xt::col(pts, d);
         for (int k = 0; k < psize; ++k)
         {
           const double w_sum
-              = xt::sum(Qwts * integrand * xt::col(polyset_at_Qpts, k))();
+              = xt::sum(wts * integrand * xt::col(polyset_at_Qpts, k))();
           wcoeffs(dof, k + psize * d) = w_sum;
         }
         ++dof;
       }
     }
+    break;
   }
-  else
-  {
+  default:
     for (int i = 0; i < degree; ++i)
     {
       for (int j = 0; j < degree + 1; ++j)
@@ -280,18 +281,18 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
               if (c < e and j == degree)
                 continue;
 
-              integrand = xt::col(Qpts, e);
+              integrand = xt::col(pts, e);
               for (int k = 1; k < degree; ++k)
-                integrand *= xt::col(Qpts, e);
+                integrand *= xt::col(pts, e);
               for (int k = 0; k < i; ++k)
-                integrand *= xt::col(Qpts, d);
+                integrand *= xt::col(pts, d);
               for (int k = 0; k < j; ++k)
-                integrand *= xt::col(Qpts, c);
+                integrand *= xt::col(pts, c);
 
               for (int k = 0; k < psize; ++k)
               {
                 const double w_sum
-                    = xt::sum(Qwts * integrand * xt::col(polyset_at_Qpts, k))();
+                    = xt::sum(wts * integrand * xt::col(polyset_at_Qpts, k))();
                 wcoeffs(dof, k + psize * d) = w_sum;
               }
               ++dof;

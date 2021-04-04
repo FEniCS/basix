@@ -51,6 +51,11 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     throw std::runtime_error("Unsupported cell type");
   }
 
+  const std::size_t tdim = cell::topological_dimension(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, _Qwts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
@@ -65,10 +70,8 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   // Create points at nodes on interior
   const auto points
       = lattice::create(celltype, degree, lattice::type::equispaced, false);
-
   const std::size_t ndofs = points.shape(0);
-  xt::xtensor<double, 3> x({points.shape(0), 1, points.shape(1)});
-  xt::view(x, xt::all(), 0, xt::all()) = points;
+  x[tdim].push_back(points);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> lower_polyset_at_Qpts;
@@ -141,7 +144,6 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     }
   }
 
-  const std::size_t tdim = cell::topological_dimension(celltype);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -154,15 +156,15 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
-  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
+  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients(celltype, wcoeffs, {M}, {x}, degree);
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+      celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, points,
-                       xt::eye<double>(ndofs), maps::type::identity);
+                       entity_dofs, base_transformations, x, M,
+                       maps::type::identity);
 }
 //-----------------------------------------------------------------------------

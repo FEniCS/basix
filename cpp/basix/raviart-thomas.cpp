@@ -40,11 +40,11 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const std::size_t ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, _wts]
+  const auto [pts, _wts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
   auto wts = xt::adapt(_wts);
-  auto phi = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(),
-                      xt::all());
+  const auto phi = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0,
+                            xt::all(), xt::all());
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.shape(1);
@@ -75,13 +75,14 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   }
 
   // quadrature degree
-  int quad_deg = 5 * degree;
+  const int quad_deg = 5 * degree;
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Add integral moments on facets
-  FiniteElement facet_moment_space = create_dlagrange(facettype, degree - 1);
+  const FiniteElement facet_moment_space
+      = create_dlagrange(facettype, degree - 1);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
   xt::xtensor<double, 3> facet_transforms
@@ -90,7 +91,6 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const std::size_t facet_dofs = facet_transforms.shape(1);
 
   // Add integral moments on interior
-  xt::xtensor<double, 2> points_cell, matrix_cell;
   if (degree > 1)
   {
     // Interior integral moment
@@ -114,6 +114,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     xt::view(base_transformations, i, xt::all(), xt::all())
         = xt::eye<double>(ndofs);
   }
+
   if (tdim == 2)
   {
     for (std::size_t edge = 0; edge < facet_count; ++edge)

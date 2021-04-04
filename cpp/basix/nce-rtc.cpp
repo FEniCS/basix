@@ -41,14 +41,14 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts]
+  auto [pts, _wts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
-  auto Qwts = xt::adapt(_Qwts);
-  xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
-      polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
+  auto Qwts = xt::adapt(_wts);
+  xt::xtensor<double, 2> phi = xt::view(
+      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t psize = phi.shape(1);
 
   const int facet_count = tdim == 2 ? 4 : 6;
   const int facet_dofs = polyset::dim(facettype, degree - 1);
@@ -90,22 +90,23 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
       indices[0] = i / degree;
       indices[1] = i % degree;
     }
+
     for (std::size_t d = 0; d < tdim; ++d)
     {
       int n = 0;
-      xt::xtensor<double, 1> integrand = xt::pow(xt::col(Qpts, d), degree);
+      xt::xtensor<double, 1> integrand = xt::pow(xt::col(pts, d), degree);
       for (std::size_t c = 0; c < tdim; ++c)
       {
         if (c != d)
         {
-          integrand *= xt::pow(xt::col(Qpts, c), indices[n]);
+          integrand *= xt::pow(xt::col(pts, c), indices[n]);
           ++n;
         }
       }
+
       for (std::size_t k = 0; k < psize; ++k)
       {
-        const double w_sum
-            = xt::sum(Qwts * integrand * xt::col(polyset_at_Qpts, k))();
+        const double w_sum = xt::sum(Qwts * integrand * xt::col(phi, k))();
         wcoeffs(dof, k + psize * d) = w_sum;
       }
       ++dof;
@@ -127,7 +128,6 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   // Add integral moments on interior
   if (degree > 1)
   {
-    // Interior integral moment
     std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
         create_nce(celltype, degree - 1), celltype, tdim, quad_deg);
   }
@@ -199,11 +199,11 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   auto [pts, _wts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
   auto wts = xt::adapt(_wts);
-  xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
+  xt::xtensor<double, 2> phi = xt::view(
       polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const int psize = polyset_at_Qpts.shape(1);
+  const int psize = phi.shape(1);
 
   const int edge_count = tdim == 2 ? 4 : 12;
   const int edge_dofs = polyset::dim(cell::type::interval, degree - 1);
@@ -256,8 +256,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
           integrand *= xt::col(pts, d);
         for (int k = 0; k < psize; ++k)
         {
-          const double w_sum
-              = xt::sum(wts * integrand * xt::col(polyset_at_Qpts, k))();
+          const double w_sum = xt::sum(wts * integrand * xt::col(phi, k))();
           wcoeffs(dof, k + psize * d) = w_sum;
         }
         ++dof;
@@ -292,7 +291,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
               for (int k = 0; k < psize; ++k)
               {
                 const double w_sum
-                    = xt::sum(wts * integrand * xt::col(polyset_at_Qpts, k))();
+                    = xt::sum(wts * integrand * xt::col(phi, k))();
                 wcoeffs(dof, k + psize * d) = w_sum;
               }
               ++dof;

@@ -27,7 +27,7 @@ using namespace basix;
 
 namespace
 {
-int compute_value_size(maps::type map_type, int dim)
+constexpr int compute_value_size(maps::type map_type, int dim)
 {
   switch (map_type)
   {
@@ -45,8 +45,6 @@ int compute_value_size(maps::type map_type, int dim)
     throw std::runtime_error("Mapping not yet implemented");
   }
 }
-//-----------------------------------------------------------------------------
-
 } // namespace
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,

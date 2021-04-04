@@ -422,8 +422,6 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
     // Loop over each 'dof' on an entity (moment basis function index)
     for (std::size_t dof = 0; dof < phi.shape(1); ++dof)
     {
-      // std::size_t dof = e * phi.shape(1) + i;
-
       // Loop over value size of function to which moment function is
       // applied
       for (std::size_t j = 0; j < value_size; ++j)
@@ -571,7 +569,6 @@ moments::make_normal_integral_moments(const FiniteElement& V,
     // Compute facet normal integral moments
     for (std::size_t i = 0; i < phi.shape(1); ++i)
     {
-      // std::size_t dof = e * phi.shape(1) + i;
       auto phi_i = xt::col(phi, i);
       for (std::size_t j = 0; j < value_size; ++j)
         xt::view(D[e], i, j, xt::all()) = phi_i * wts * normal[j];

@@ -733,7 +733,6 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
   }
 
   const int facet_dofs = facet_moment_space.dim();
-  // const int cell_dofs = matrix_cell.shape(0);
   const int vertex_dofs = tdim == 1 ? facet_dofs : 0;
   const int edge_dofs = tdim == 1 ? cell_dofs : (tdim == 2 ? facet_dofs : 0);
   const int face_dofs = tdim == 2 ? cell_dofs : (tdim == 3 ? facet_dofs : 0);
@@ -755,7 +754,6 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
   for (auto& Md : M)
     for (auto& Me : Md)
       ndofs += Me.shape(0);
-  // const std::size_t ndofs = interpolation_matrix.shape(0);
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 1)

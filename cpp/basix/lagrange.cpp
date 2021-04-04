@@ -116,15 +116,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     }
   }
 
-  // std::cout << "Points" << std::endl;
-  // for (auto xd : x)
-  //   for (auto xe : xd)
-  //     std::cout << xe << std::endl;
-  // std::cout << "----" << std::endl;
-
-  // std::cout << pt << std::endl;
-  // std::cout << "E----" << std::endl;
-
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;

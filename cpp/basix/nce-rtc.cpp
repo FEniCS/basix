@@ -316,7 +316,6 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
       = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
   // Add integral moments on interior
-  // xt::xtensor<double, 2> points_2d, matrix_2d, points_3d, matrix_3d;
   xt::xtensor<double, 3> face_transforms;
   if (degree > 1)
   {

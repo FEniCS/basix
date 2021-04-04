@@ -73,10 +73,10 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::BDM:
     switch (cell)
     {
-    // case cell::type::quadrilateral:
-    //   return create_serendipity_div(cell, degree);
-    // case cell::type::hexahedron:
-    //   return create_serendipity_div(cell, degree);
+    case cell::type::quadrilateral:
+      return create_serendipity_div(cell, degree);
+    case cell::type::hexahedron:
+      return create_serendipity_div(cell, degree);
     default:
       return create_bdm(cell, degree);
     }
@@ -107,10 +107,10 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::N2E:
     switch (cell)
     {
-    // case cell::type::quadrilateral:
-    //   return create_serendipity_curl(cell, degree);
-    // case cell::type::hexahedron:
-    //   return create_serendipity_curl(cell, degree);
+    case cell::type::quadrilateral:
+      return create_serendipity_curl(cell, degree);
+    case cell::type::hexahedron:
+      return create_serendipity_curl(cell, degree);
     default:
       return create_nedelec2(cell, degree);
     }

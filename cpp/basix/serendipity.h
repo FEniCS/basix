@@ -9,11 +9,11 @@
 
 namespace basix
 {
-// /// Create a serendipity element on cell with given degree
-// /// @param[in] celltype quadrilateral or hexahedral celltype
-// /// @param[in] degree
-// /// @return A FiniteElement
-// FiniteElement create_serendipity(cell::type celltype, int degree);
+/// Create a serendipity element on cell with given degree
+/// @param[in] celltype quadrilateral or hexahedral celltype
+/// @param[in] degree
+/// @return A FiniteElement
+FiniteElement create_serendipity(cell::type celltype, int degree);
 
 // /// Create a serendipity H(div) element on cell with given degree
 // /// @param[in] celltype quadrilateral or hexahedral celltype

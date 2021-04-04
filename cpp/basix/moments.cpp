@@ -351,8 +351,7 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
       for (std::size_t i = 0; i < phi.shape(1); ++i)
       {
         auto phi_i = xt::col(phi, i);
-        std::size_t dof = e * phi.shape(1) + i;
-        xt::view(D[e], dof, 0, xt::all()) = phi_i * wts;
+        xt::view(D[e], i, 0, xt::all()) = phi_i * wts;
       }
     }
   }

@@ -10,7 +10,7 @@
 #include "nedelec.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <numeric>
+#include <array>
 #include <vector>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
@@ -26,15 +26,13 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     throw std::runtime_error("Unsupported cell type");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const cell::type facettype
-      = (tdim == 2) ? cell::type::interval : cell::type::triangle;
+  const cell::type facettype = sub_entity_type(celltype, tdim, 0);
 
   // The number of order (degree) scalar polynomials
-  const std::size_t npoly = polyset::dim(celltype, degree);
-  const std::size_t ndofs = npoly * tdim;
+  const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
 
   // quadrature degree
-  int quad_deg = 5 * degree;
+  const int quad_deg = 5 * degree;
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
@@ -44,20 +42,19 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::size_t facet_dofs = polyset::dim(facettype, degree);
   const int internal_dofs = ndofs - facet_count * facet_dofs;
 
-  FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
+  const FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
 
-  xt::xtensor<double, 3> facet_transforms
+  const xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
   // Add integral moments on interior
   if (degree > 1)
   {
     // Interior integral moment
-    auto ele = create_nedelec(celltype, degree - 1);
-    std::tie(x[tdim], M[tdim])
-        = moments::make_dot_integral_moments(ele, celltype, tdim, quad_deg);
+    std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
+        create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
@@ -66,6 +63,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
+
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   switch (tdim)
@@ -103,9 +101,9 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   entity_dofs[tdim] = {internal_dofs};
 
   // Create coefficients for order (degree-1) vector polynomials
-  xt::xtensor<double, 2> B = xt::eye<double>(ndofs);
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
-      celltype, B, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]}, degree);
+      celltype, xt::eye<double>(ndofs), {M[tdim - 1], M[tdim]},
+      {x[tdim - 1], x[tdim]}, degree);
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, x, M,

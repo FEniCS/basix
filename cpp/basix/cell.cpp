@@ -53,86 +53,87 @@ xt::xtensor<double, 2> cell::geometry(cell::type celltype)
 //-----------------------------------------------------------------------------
 std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
 {
-  std::vector<std::vector<std::vector<int>>> topo;
+  std::vector<std::vector<std::vector<int>>> t;
 
   switch (celltype)
   {
   case cell::type::interval:
-    topo.resize(2);
+    t.resize(2);
     // Vertices
-    topo[0] = {{0}, {1}};
+    t[0] = {{0}, {1}};
     // Cell
-    topo[1] = {{0, 1}};
+    t[1] = {{0, 1}};
     break;
   case cell::type::triangle:
-    topo.resize(3);
+    t.resize(3);
     // Vertices
-    topo[0] = {{0}, {1}, {2}};
+    t[0] = {{0}, {1}, {2}};
     // Edges
-    topo[1] = {{1, 2}, {0, 2}, {0, 1}};
+    t[1] = {{1, 2}, {0, 2}, {0, 1}};
     // Cell
-    topo[2] = {{0, 1, 2}};
+    t[2] = {{0, 1, 2}};
     break;
   case cell::type::quadrilateral:
-    topo.resize(3);
+    t.resize(3);
     // Vertices
-    topo[0] = {{0}, {1}, {2}, {3}};
+    t[0] = {{0}, {1}, {2}, {3}};
     // Edges
-    topo[1] = {{0, 1}, {0, 2}, {1, 3}, {2, 3}};
+    t[1] = {{0, 1}, {0, 2}, {1, 3}, {2, 3}};
     // Cell
-    topo[2] = {{0, 1, 2, 3}};
+    t[2] = {{0, 1, 2, 3}};
     break;
   case cell::type::tetrahedron:
-    topo.resize(4);
+    t.resize(4);
     // Vertices
-    topo[0] = {{0}, {1}, {2}, {3}};
+    t[0] = {{0}, {1}, {2}, {3}};
     // Edges
-    topo[1] = {{2, 3}, {1, 3}, {1, 2}, {0, 3}, {0, 2}, {0, 1}};
+    t[1] = {{2, 3}, {1, 3}, {1, 2}, {0, 3}, {0, 2}, {0, 1}};
     // Faces
-    topo[2] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
+    t[2] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
     // Cell
-    topo[3] = {{0, 1, 2, 3}};
+    t[3] = {{0, 1, 2, 3}};
     break;
   case cell::type::prism:
-    topo.resize(4);
+    t.resize(4);
     // Vertices
-    topo[0] = {{0}, {1}, {2}, {3}, {4}, {5}};
+    t[0] = {{0}, {1}, {2}, {3}, {4}, {5}};
     // Edges
-    topo[1] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 4},
-               {2, 5}, {3, 4}, {3, 5}, {4, 5}};
+    t[1] = {{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 4},
+            {2, 5}, {3, 4}, {3, 5}, {4, 5}};
     // Faces
-    topo[2] = {{0, 1, 2}, {0, 1, 3, 4}, {0, 2, 3, 5}, {1, 2, 4, 5}, {3, 4, 5}};
+    t[2] = {{0, 1, 2}, {0, 1, 3, 4}, {0, 2, 3, 5}, {1, 2, 4, 5}, {3, 4, 5}};
     // Cell
-    topo[3] = {{0, 1, 2, 3, 4, 5}};
+    t[3] = {{0, 1, 2, 3, 4, 5}};
     break;
   case cell::type::pyramid:
-    topo.resize(4);
+    t.resize(4);
     // Vertices
-    topo[0] = {{0}, {1}, {2}, {3}, {4}};
+    t[0] = {{0}, {1}, {2}, {3}, {4}};
     // Edges
-    topo[1] = {{0, 1}, {0, 2}, {0, 4}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}};
+    t[1] = {{0, 1}, {0, 2}, {0, 4}, {1, 3}, {1, 4}, {2, 3}, {2, 4}, {3, 4}};
     // Faces
-    topo[2] = {{0, 1, 2, 3}, {0, 1, 4}, {0, 2, 4}, {1, 3, 4}, {2, 3, 4}};
+    t[2] = {{0, 1, 2, 3}, {0, 1, 4}, {0, 2, 4}, {1, 3, 4}, {2, 3, 4}};
     // Cell
-    topo[3] = {{0, 1, 2, 3, 4}};
+    t[3] = {{0, 1, 2, 3, 4}};
     break;
   case cell::type::hexahedron:
-    topo.resize(4);
+    t.resize(4);
     // Vertices
-    topo[0] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}};
+    t[0] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}};
     // Edges
-    topo[1] = {{0, 1}, {0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 3},
-               {2, 6}, {3, 7}, {4, 5}, {4, 6}, {5, 7}, {6, 7}};
+    t[1] = {{0, 1}, {0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 3},
+            {2, 6}, {3, 7}, {4, 5}, {4, 6}, {5, 7}, {6, 7}};
     // Faces
-    topo[2] = {{0, 1, 2, 3}, {0, 1, 4, 5}, {0, 2, 4, 6},
-               {1, 3, 5, 7}, {2, 3, 6, 7}, {4, 5, 6, 7}};
+    t[2] = {{0, 1, 2, 3}, {0, 1, 4, 5}, {0, 2, 4, 6},
+            {1, 3, 5, 7}, {2, 3, 6, 7}, {4, 5, 6, 7}};
     // Cell
-    topo[3] = {{0, 1, 2, 3, 4, 5, 6, 7}};
+    t[3] = {{0, 1, 2, 3, 4, 5, 6, 7}};
     break;
   default:
     throw std::runtime_error("Unsupported cell type");
   }
-  return topo;
+
+  return t;
 }
 //-----------------------------------------------------------------------------
 int cell::topological_dimension(cell::type cell_type)
@@ -197,8 +198,7 @@ cell::type cell::sub_entity_type(cell::type celltype, int dim, int index)
     return celltype;
 
   const std::vector<std::vector<std::vector<int>>> t = cell::topology(celltype);
-  const std::vector<int>& entity = t[dim][index];
-  switch (entity.size())
+  switch (t[dim][index].size())
   {
   case 3:
     return cell::type::triangle;

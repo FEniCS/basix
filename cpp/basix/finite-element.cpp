@@ -129,86 +129,89 @@ basix::FiniteElement basix::create_element(element::family family,
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> basix::compute_expansion_coefficients(
-    cell::type celltype, const xt::xtensor<double, 2>& B,
-    const std::vector<xt::xtensor<double, 4>>& M,
-    const std::vector<xt::xtensor<double, 3>>& x, int degree, double kappa_tol)
-{
-  std::size_t num_dofs
-      = std::accumulate(M.begin(), M.end(), 0, [](int sum, const auto& v) {
-          return sum + v.shape(0);
-        });
+// xt::xtensor<double, 3> basix::compute_expansion_coefficients(
+//     cell::type celltype, const xt::xtensor<double, 2>& B,
+//     const std::vector<xt::xtensor<double, 4>>& M,
+//     const std::vector<xt::xtensor<double, 3>>& x, int degree, double
+//     kappa_tol)
+// {
+//   std::size_t num_dofs
+//       = std::accumulate(M.begin(), M.end(), 0, [](int sum, const auto& v) {
+//           return sum + v.shape(0);
+//         });
 
-  std::size_t vs = M.at(0).shape(1);
-  std::size_t pdim = polyset::dim(celltype, degree);
-  xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
+//   std::size_t vs = M.at(0).shape(1);
+//   std::size_t pdim = polyset::dim(celltype, degree);
+//   xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
 
-  // Loop over different dimensions
-  std::size_t dof_index = 0;
-  for (std::size_t d = 0; d < M.size(); ++d)
-  {
-    // Loop over entities of dimension d
-    for (std::size_t e = 0; e < x[d].shape(0); ++e)
-    {
-      // Evaluate polynomial basis at x[d]
-      xt::xtensor<double, 2> P;
-      if (x[d].shape(2) == 1)
-      {
-        auto pts = xt::view(x[d], e, xt::all(), 0);
-        P = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(),
-                     xt::all());
-      }
-      else
-      {
-        P = xt::view(polyset::tabulate(celltype, degree, 0,
-                                       xt::view(x[d], e, xt::all(), xt::all())),
-                     0, xt::all(), xt::all());
-      }
+//   // Loop over different dimensions
+//   std::size_t dof_index = 0;
+//   for (std::size_t d = 0; d < M.size(); ++d)
+//   {
+//     // Loop over entities of dimension d
+//     for (std::size_t e = 0; e < x[d].shape(0); ++e)
+//     {
+//       // Evaluate polynomial basis at x[d]
+//       xt::xtensor<double, 2> P;
+//       if (x[d].shape(2) == 1)
+//       {
+//         auto pts = xt::view(x[d], e, xt::all(), 0);
+//         P = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0,
+//         xt::all(),
+//                      xt::all());
+//       }
+//       else
+//       {
+//         P = xt::view(polyset::tabulate(celltype, degree, 0,
+//                                        xt::view(x[d], e, xt::all(),
+//                                        xt::all())),
+//                      0, xt::all(), xt::all());
+//       }
 
-      // Me: [dof, vs, point]
-      // auto Me = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
-      xt::xtensor<double, 3> Me
-          = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
+//       // Me: [dof, vs, point]
+//       // auto Me = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
+//       xt::xtensor<double, 3> Me
+//           = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
 
-      // Compute dual matrix contribution
-      for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
-        for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
-          for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
-            for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
-              D(i + dof_index, j, l) += Me(i, j, k) * P(k, l);
+//       // Compute dual matrix contribution
+//       for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
+//         for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
+//           for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
+//             for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
+//               D(i + dof_index, j, l) += Me(i, j, k) * P(k, l);
 
-      // Dtmp += xt::linalg::dot(Me, P);
-    }
-    dof_index += M[d].shape(0);
-  }
+//       // Dtmp += xt::linalg::dot(Me, P);
+//     }
+//     dof_index += M[d].shape(0);
+//   }
 
-  // Compute B D^{T}
-  // xt::xtensor<double, 2> A = xt::zeros<double>({num_dofs, num_dofs});
-  // for (std::size_t i = 0; i < A.shape(0); ++i)
-  //   for (std::size_t j = 0; j < A.shape(1); ++j)
-  //     for (std::size_t k = 0; k < vs; ++k)
-  //       for (std::size_t l = 0; l < B[k].shape(1); ++l)
-  //         A(i, j) += B[k](i, l) * D(j, k, l);
+//   // Compute B D^{T}
+//   // xt::xtensor<double, 2> A = xt::zeros<double>({num_dofs, num_dofs});
+//   // for (std::size_t i = 0; i < A.shape(0); ++i)
+//   //   for (std::size_t j = 0; j < A.shape(1); ++j)
+//   //     for (std::size_t k = 0; k < vs; ++k)
+//   //       for (std::size_t l = 0; l < B[k].shape(1); ++l)
+//   //         A(i, j) += B[k](i, l) * D(j, k, l);
 
-  /// Flatten D and take transpose
-  auto Dt_flat = xt::transpose(
-      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
+//   /// Flatten D and take transpose
+//   auto Dt_flat = xt::transpose(
+//       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
-  auto BDt = xt::linalg::dot(B, Dt_flat);
+//   auto BDt = xt::linalg::dot(B, Dt_flat);
 
-  if (kappa_tol >= 1.0)
-  {
-    if (xt::linalg::cond(BDt, 2) > kappa_tol)
-    {
-      throw std::runtime_error("Condition number of B.D^T when computing "
-                               "expansion coefficients exceeds tolerance.");
-    }
-  }
+//   if (kappa_tol >= 1.0)
+//   {
+//     if (xt::linalg::cond(BDt, 2) > kappa_tol)
+//     {
+//       throw std::runtime_error("Condition number of B.D^T when computing "
+//                                "expansion coefficients exceeds tolerance.");
+//     }
+//   }
 
-  // Compute C = (BD^T)^{-1} B
-  xt::xtensor<double, 2> C = xt::linalg::solve(BDt, B);
-  return xt::reshape_view(C, {num_dofs, vs, pdim});
-}
+//   // Compute C = (BD^T)^{-1} B
+//   xt::xtensor<double, 2> C = xt::linalg::solve(BDt, B);
+//   return xt::reshape_view(C, {num_dofs, vs, pdim});
+// }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
     cell::type celltype, const xt::xtensor<double, 2>& B,
@@ -216,12 +219,21 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
     const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
     double kappa_tol)
 {
-  std::size_t num_dofs = 0;
+  std::size_t num_dofs(0), vs(0);
   for (auto& Md : M)
+  {
     for (auto& Me : Md)
+    {
       num_dofs += Me.shape(0);
+      if (vs == 0)
+        vs = Me.shape(1);
+      else if (vs != Me.shape(1))
+        throw std::runtime_error("Inconsistent value size");
+    }
+  }
 
-  std::size_t vs = M.at(0).at(0).shape(1);
+  // TODO: fix getting vs
+  // std::size_t vs = M.at(0).at(0).shape(1);
   std::size_t pdim = polyset::dim(celltype, degree);
   xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
 

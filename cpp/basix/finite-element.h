@@ -201,28 +201,6 @@ public:
   /// value_size, basis_dim)
   /// @param[in] entity_dofs
   /// @param[in] base_transformations Base transformations
-  /// @param[in] points
-  /// @param[in] M The interpolation matrix
-  /// @param[in] map_type
-  FiniteElement(element::family family, cell::type cell_type, int degree,
-                const std::vector<std::size_t>& value_shape,
-                const xt::xtensor<double, 3>& coeffs,
-                const std::vector<std::vector<int>>& entity_dofs,
-                const xt::xtensor<double, 3>& base_transformations,
-                const xt::xtensor<double, 2>& points,
-                const xt::xtensor<double, 2>& M = {},
-                maps::type map_type = maps::type::identity);
-
-  /// @todo Document
-  /// A finite element
-  /// @param[in] family
-  /// @param[in] cell_type
-  /// @param[in] degree
-  /// @param[in] value_shape
-  /// @param[in] coeffs Expansion coefficients. The shape is (num_dofs,
-  /// value_size, basis_dim)
-  /// @param[in] entity_dofs
-  /// @param[in] base_transformations Base transformations
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
@@ -464,12 +442,10 @@ public:
   maps::type map_type;
 
 private:
-  static int compute_value_size(maps::type map_type, int dim);
-
   // Cell type
   cell::type _cell_type;
 
-  // The name of the finite element family
+  // Finite element family
   element::family _family;
 
   // Degree
@@ -515,12 +491,6 @@ private:
 
   /// Interpolation matrices
   std::array<std::vector<xt::xtensor<double, 3>>, 4> _matM_new;
-
-  // The mapping that maps values on the reference to values on a physical cell
-  // std::function<std::vector<double>(const tcb::span<const double>&,
-  //                                   const xt::xtensor<double, 2>&, const
-  //                                   double, const xt::xtensor<double, 2>&)>
-  //     _map_push_forward;
 };
 
 /// Create an element by name

@@ -14,7 +14,6 @@
 #include "regge.h"
 #include "serendipity.h"
 #include <numeric>
-
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
@@ -26,33 +25,6 @@
 
 using namespace basix;
 
-//-----------------------------------------------------------------------------
-std::array<std::vector<xt::xtensor<double, 3>>, 4>
-basix::new_m(const std::array<xt::xtensor<double, 4>, 4>& M)
-{
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M_new;
-  for (std::size_t i = 0; i < 4; ++i)
-  {
-    M_new[i].resize(M[i].shape(2));
-    for (auto& m : M_new[i])
-    {
-      std::array<std::size_t, 3> s
-          = {M[i].shape(0) / M[i].shape(2), M[i].shape(1), M[i].shape(3)};
-      m = xt::zeros<double>(s);
-    }
-
-    const std::size_t num_dofs
-        = M[i].size() > 0 ? M[i].shape(0) / M[i].shape(2) : 0;
-    for (std::size_t e = 0; e < M[i].shape(2); ++e)
-    {
-      auto dof_range = xt::range(e * num_dofs, (e + 1) * num_dofs);
-      xt::view(M_new[i][e], xt::all(), xt::all(), xt::all())
-          = xt::view(M[i], dof_range, xt::all(), e, xt::all());
-    }
-  }
-
-  return M_new;
-}
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
                                            int degree)
@@ -129,91 +101,7 @@ basix::FiniteElement basix::create_element(element::family family,
   }
 }
 //-----------------------------------------------------------------------------
-// xt::xtensor<double, 3> basix::compute_expansion_coefficients(
-//     cell::type celltype, const xt::xtensor<double, 2>& B,
-//     const std::vector<xt::xtensor<double, 4>>& M,
-//     const std::vector<xt::xtensor<double, 3>>& x, int degree, double
-//     kappa_tol)
-// {
-//   std::size_t num_dofs
-//       = std::accumulate(M.begin(), M.end(), 0, [](int sum, const auto& v) {
-//           return sum + v.shape(0);
-//         });
-
-//   std::size_t vs = M.at(0).shape(1);
-//   std::size_t pdim = polyset::dim(celltype, degree);
-//   xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
-
-//   // Loop over different dimensions
-//   std::size_t dof_index = 0;
-//   for (std::size_t d = 0; d < M.size(); ++d)
-//   {
-//     // Loop over entities of dimension d
-//     for (std::size_t e = 0; e < x[d].shape(0); ++e)
-//     {
-//       // Evaluate polynomial basis at x[d]
-//       xt::xtensor<double, 2> P;
-//       if (x[d].shape(2) == 1)
-//       {
-//         auto pts = xt::view(x[d], e, xt::all(), 0);
-//         P = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0,
-//         xt::all(),
-//                      xt::all());
-//       }
-//       else
-//       {
-//         P = xt::view(polyset::tabulate(celltype, degree, 0,
-//                                        xt::view(x[d], e, xt::all(),
-//                                        xt::all())),
-//                      0, xt::all(), xt::all());
-//       }
-
-//       // Me: [dof, vs, point]
-//       // auto Me = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
-//       xt::xtensor<double, 3> Me
-//           = xt::view(M[d], xt::all(), xt::all(), e, xt::all());
-
-//       // Compute dual matrix contribution
-//       for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
-//         for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
-//           for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
-//             for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
-//               D(i + dof_index, j, l) += Me(i, j, k) * P(k, l);
-
-//       // Dtmp += xt::linalg::dot(Me, P);
-//     }
-//     dof_index += M[d].shape(0);
-//   }
-
-//   // Compute B D^{T}
-//   // xt::xtensor<double, 2> A = xt::zeros<double>({num_dofs, num_dofs});
-//   // for (std::size_t i = 0; i < A.shape(0); ++i)
-//   //   for (std::size_t j = 0; j < A.shape(1); ++j)
-//   //     for (std::size_t k = 0; k < vs; ++k)
-//   //       for (std::size_t l = 0; l < B[k].shape(1); ++l)
-//   //         A(i, j) += B[k](i, l) * D(j, k, l);
-
-//   /// Flatten D and take transpose
-//   auto Dt_flat = xt::transpose(
-//       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
-
-//   auto BDt = xt::linalg::dot(B, Dt_flat);
-
-//   if (kappa_tol >= 1.0)
-//   {
-//     if (xt::linalg::cond(BDt, 2) > kappa_tol)
-//     {
-//       throw std::runtime_error("Condition number of B.D^T when computing "
-//                                "expansion coefficients exceeds tolerance.");
-//     }
-//   }
-
-//   // Compute C = (BD^T)^{-1} B
-//   xt::xtensor<double, 2> C = xt::linalg::solve(BDt, B);
-//   return xt::reshape_view(C, {num_dofs, vs, pdim});
-// }
-//-----------------------------------------------------------------------------
-xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
+xt::xtensor<double, 3> basix::compute_expansion_coefficients(
     cell::type celltype, const xt::xtensor<double, 2>& B,
     const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
     const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
@@ -232,8 +120,6 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
     }
   }
 
-  // TODO: fix getting vs
-  // std::size_t vs = M.at(0).at(0).shape(1);
   std::size_t pdim = polyset::dim(celltype, degree);
   xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
 
@@ -275,6 +161,14 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
     }
   }
 
+  // Compute B D^{T}
+  // xt::xtensor<double, 2> A = xt::zeros<double>({num_dofs, num_dofs});
+  // for (std::size_t i = 0; i < A.shape(0); ++i)
+  //   for (std::size_t j = 0; j < A.shape(1); ++j)
+  //     for (std::size_t k = 0; k < vs; ++k)
+  //       for (std::size_t l = 0; l < B[k].shape(1); ++l)
+  //         A(i, j) += B[k](i, l) * D(j, k, l);
+
   /// Flatten D and take transpose
   auto Dt_flat = xt::transpose(
       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
@@ -293,64 +187,6 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
   // Compute C = (BD^T)^{-1} B
   xt::xtensor<double, 2> C = xt::linalg::solve(BDt, B);
   return xt::reshape_view(C, {num_dofs, vs, pdim});
-}
-//-----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
-                                  const xt::xtensor<double, 2>& points_2d,
-                                  const xt::xtensor<double, 2>& points_3d,
-                                  const xt::xtensor<double, 2>& matrix_1d,
-                                  const xt::xtensor<double, 2>& matrix_2d,
-                                  const xt::xtensor<double, 2>& matrix_3d,
-                                  std::size_t tdim, std::size_t value_size)
-{
-  // Stack point coordinates
-  auto p1 = xt::reshape_view(points_1d, {points_1d.shape(0), tdim});
-  auto p2 = xt::reshape_view(points_2d, {points_2d.shape(0), tdim});
-  auto p3 = xt::reshape_view(points_3d, {points_3d.shape(0), tdim});
-  auto x = xt::vstack(std::tuple(p1, p2, p3));
-
-  // Pack the matrix M
-  std::array<std::size_t, 3> row_dim
-      = {matrix_1d.shape(0), matrix_2d.shape(0), matrix_3d.shape(0)};
-  std::size_t num_rows = std::accumulate(row_dim.begin(), row_dim.end(), 0);
-  std::array<std::size_t, 3> col_dim
-      = {matrix_1d.shape(1), matrix_2d.shape(1), matrix_3d.shape(1)};
-  std::size_t num_cols = std::accumulate(col_dim.begin(), col_dim.end(), 0);
-
-  xt::xtensor<double, 2> M = xt::zeros<double>({num_rows, num_cols});
-  std::transform(col_dim.begin(), col_dim.end(), col_dim.begin(),
-                 [value_size](auto x) { return x /= value_size; });
-  num_cols /= value_size;
-  for (std::size_t i = 0; i < value_size; ++i)
-  {
-    {
-      auto range0 = xt::range(0, row_dim[0]);
-      auto range1 = xt::range(i * num_cols, i * num_cols + col_dim[0]);
-      auto range = xt::range(i * col_dim[0], i * col_dim[0] + col_dim[0]);
-      xt::view(M, range0, range1) = xt::view(matrix_1d, xt::all(), range);
-    }
-
-    {
-      auto range0 = xt::range(row_dim[0], row_dim[0] + row_dim[1]);
-      auto range1 = xt::range(i * num_cols + col_dim[0],
-                              i * num_cols + col_dim[0] + col_dim[1]);
-      auto range = xt::range(i * col_dim[1], i * col_dim[1] + col_dim[1]);
-      xt::view(M, range0, range1) = xt::view(matrix_2d, xt::all(), range);
-    }
-
-    {
-      auto range0 = xt::range(row_dim[0] + row_dim[1],
-                              row_dim[0] + row_dim[1] + row_dim[2]);
-      auto range1
-          = xt::range(i * num_cols + col_dim[0] + col_dim[1],
-                      i * num_cols + col_dim[0] + col_dim[1] + col_dim[2]);
-      auto range = xt::range(i * col_dim[2], i * col_dim[2] + col_dim[2]);
-      xt::view(M, range0, range1) = xt::view(matrix_3d, xt::all(), range);
-    }
-  }
-
-  return {x, M};
 }
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(element::family family, cell::type cell_type,

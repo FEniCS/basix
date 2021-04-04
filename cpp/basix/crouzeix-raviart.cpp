@@ -73,7 +73,7 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   for (std::size_t i = 0; i < facet_topology.size(); ++i)
     M[tdim - 1].push_back(Mf);
 
-  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim - 1]}, {x[tdim - 1]}, degree);
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
                        entity_dofs, base_transformations, x, M,

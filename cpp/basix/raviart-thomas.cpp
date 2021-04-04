@@ -137,7 +137,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, B, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]}, degree);
 
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the

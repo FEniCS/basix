@@ -23,10 +23,6 @@
 namespace basix
 {
 
-/// TMP
-std::array<std::vector<xt::xtensor<double, 3>>, 4>
-new_m(const std::array<xt::xtensor<double, 4>, 4>& M);
-
 /// Calculates the basis functions of the finite element, in terms of the
 /// polynomial basis.
 ///
@@ -182,43 +178,11 @@ new_m(const std::array<xt::xtensor<double, 4>, 4>& M);
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space. The shape is (num_dofs,
 /// value_size, basis_dim)
-// xt::xtensor<double, 3>
-// compute_expansion_coefficients(cell::type cell_type,
-//                                const xt::xtensor<double, 2>& B,
-//                                const std::vector<xt::xtensor<double, 4>>& M,
-//                                const std::vector<xt::xtensor<double, 3>>& x,
-//                                int degree, double kappa_tol = 0.0);
-
-/// TODO
-xt::xtensor<double, 3> compute_expansion_coefficients_new(
+xt::xtensor<double, 3> compute_expansion_coefficients(
     cell::type cell_type, const xt::xtensor<double, 2>& B,
     const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
     const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
     double kappa_tol = 0.0);
-
-/// Combines interpolation data
-///
-/// When the value size is not 1, the matrices are split up into
-/// `value_size` parts, then recombined so that the columns of the
-/// matrix that is output is ordered correctly.
-///
-/// @param[in] points_1d The interpolation points for a 1d entity
-/// @param[in] points_2d The interpolation points for a 2d entity
-/// @param[in] points_3d The interpolation points for a 3d entity
-/// @param[in] matrix_1d The interpolation matrix for a 1d entity
-/// @param[in] matrix_2d The interpolation matrix for a 2d entity
-/// @param[in] matrix_3d The interpolation matrix for a 3d entity
-/// @param[in] tdim The toplogical dimension
-/// @param[in] value_size Value size
-/// @return The interpolation points and matrix
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
-                           const xt::xtensor<double, 2>& points_2d,
-                           const xt::xtensor<double, 2>& points_3d,
-                           const xt::xtensor<double, 2>& matrix_1d,
-                           const xt::xtensor<double, 2>& matrix_2d,
-                           const xt::xtensor<double, 2>& matrix_3d,
-                           std::size_t tdim, std::size_t value_size);
 
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the

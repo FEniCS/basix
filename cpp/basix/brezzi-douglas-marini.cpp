@@ -104,7 +104,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> B = xt::eye<double>(ndofs);
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, B, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]}, degree);
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,

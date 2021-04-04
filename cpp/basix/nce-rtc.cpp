@@ -172,7 +172,7 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
   entity_dofs[tdim] = {internal_dofs};
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]},
       degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
@@ -374,7 +374,7 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3].resize(topology[3].size(), volume_dofs);
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        entity_dofs, base_transformations, x, M,

@@ -681,7 +681,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[0], M[1], M[2], M[3]}, {x[0], x[1], x[2], x[3]},
       degree);
 
@@ -796,7 +796,7 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]},
       degree + 1);
 
@@ -916,7 +916,7 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3].resize(topology[3].size(), volume_dofs);
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients_new(
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree + 1);
 
   return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},

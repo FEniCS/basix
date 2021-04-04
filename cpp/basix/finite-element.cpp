@@ -73,10 +73,10 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::BDM:
     switch (cell)
     {
-    case cell::type::quadrilateral:
-      return create_serendipity_div(cell, degree);
-    case cell::type::hexahedron:
-      return create_serendipity_div(cell, degree);
+    // case cell::type::quadrilateral:
+    //   return create_serendipity_div(cell, degree);
+    // case cell::type::hexahedron:
+    //   return create_serendipity_div(cell, degree);
     default:
       return create_bdm(cell, degree);
     }
@@ -107,10 +107,10 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::N2E:
     switch (cell)
     {
-    case cell::type::quadrilateral:
-      return create_serendipity_curl(cell, degree);
-    case cell::type::hexahedron:
-      return create_serendipity_curl(cell, degree);
+    // case cell::type::quadrilateral:
+    //   return create_serendipity_curl(cell, degree);
+    // case cell::type::hexahedron:
+    //   return create_serendipity_curl(cell, degree);
     default:
       return create_nedelec2(cell, degree);
     }
@@ -120,8 +120,8 @@ basix::FiniteElement basix::create_element(element::family family,
     return create_cr(cell, degree);
   case element::family::Bubble:
     return create_bubble(cell, degree);
-  case element::family::Serendipity:
-    return create_serendipity(cell, degree);
+  // case element::family::Serendipity:
+  //   return create_serendipity(cell, degree);
   case element::family::DPC:
     return create_dpc(cell, degree);
   default:
@@ -235,13 +235,13 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients_new(
       // Evaluate polynomial basis at x[d]
       const xt::xtensor<double, 2>& x_e = x[d][e];
       xt::xtensor<double, 2> P;
-      if (x_e.shape(1) == 1)
+      if (x_e.shape(1) == 1 and x_e.size() != 0)
       {
         auto pts = xt::view(x_e, xt::all(), 0);
         P = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(),
                      xt::all());
       }
-      else
+      else if (x_e.size() != 0)
       {
         P = xt::view(polyset::tabulate(celltype, degree, 0, x_e), 0, xt::all(),
                      xt::all());

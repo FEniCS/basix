@@ -109,15 +109,10 @@ create_tangent_moment_dof_transformations(const FiniteElement& moment_space);
 /// being defined
 /// @param value_size The value size of the space being defined
 /// @param q_deg The quadrature degree used for the integrals
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
 make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
                       std::size_t value_size, int q_deg);
-
-/// TODO
-std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
-make_integral_moments_new(const FiniteElement& moment_space,
-                          cell::type celltype, std::size_t value_size,
-                          int q_deg);
 
 /// Make interpolation points and weights for dot product integral
 /// moments
@@ -136,14 +131,10 @@ make_integral_moments_new(const FiniteElement& moment_space,
 /// defined
 /// @param value_size The value size of the space being defined
 /// @param q_deg The quadrature degree used for the integrals
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
 make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
                           std::size_t value_size, int q_deg);
-
-/// TODO
-std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
-make_dot_integral_moments_new(const FiniteElement& V, cell::type celltype,
-                              std::size_t value_size, int q_deg);
 
 /// Make interpolation points and weights for tangent integral moments
 ///
@@ -156,14 +147,10 @@ make_dot_integral_moments_new(const FiniteElement& V, cell::type celltype,
 /// @param value_size The value size of the space being defined the
 /// space
 /// @param q_deg The quadrature degree used for the integrals
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
 make_tangent_integral_moments(const FiniteElement& V, cell::type celltype,
                               std::size_t value_size, int q_deg);
-
-/// TODO
-std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
-make_tangent_integral_moments_new(const FiniteElement& V, cell::type celltype,
-                                  std::size_t value_size, int q_deg);
 
 /// Compute interpolation points and weights for normal integral moments
 ///
@@ -176,14 +163,10 @@ make_tangent_integral_moments_new(const FiniteElement& V, cell::type celltype,
 /// @param[in] value_size The value size of the space being defined
 /// @param[in] q_deg The quadrature degree used for the integrals
 /// @return (interpolation points, interpolation matrix)
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
 make_normal_integral_moments(const FiniteElement& V, cell::type celltype,
                              std::size_t value_size, int q_deg);
-
-/// TODO
-std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
-make_normal_integral_moments_new(const FiniteElement& V, cell::type celltype,
-                                 std::size_t value_size, int q_deg);
 
 } // namespace moments
 } // namespace basix

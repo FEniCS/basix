@@ -26,56 +26,36 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     throw std::runtime_error("Unsupported cell type");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const cell::type facettype
-      = (tdim == 2) ? cell::type::interval : cell::type::triangle;
+  const cell::type facettype = sub_entity_type(celltype, tdim - 1, 0);
 
   // The number of order (degree) scalar polynomials
-  const std::size_t npoly = polyset::dim(celltype, degree);
-  const std::size_t ndofs = npoly * tdim;
+  const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
 
   // quadrature degree
   int quad_deg = 5 * degree;
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Add integral moments on facets
   const std::size_t facet_count = tdim + 1;
   const std::size_t facet_dofs = polyset::dim(facettype, degree);
   const int internal_dofs = ndofs - facet_count * facet_dofs;
 
-  xt::xtensor<double, 2> points_facet, matrix_facet;
-  FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
-  std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
+  const FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
+  std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
 
-  auto [points_facet_new, M_facet_new]
-      = moments::make_normal_integral_moments_new(facet_moment_space, celltype,
-                                                  tdim, quad_deg);
-
-  std::vector<xt::xtensor<double, 4>> M = {M_facet_new};
-  std::vector<xt::xtensor<double, 3>> x = {points_facet_new};
-
-  xt::xtensor<double, 3> facet_transforms
+  const xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
   // Add integral moments on interior
-  xt::xtensor<double, 2> points_cell, matrix_cell;
-  xt::xtensor<double, 3> points_cell_new;
-  xt::xtensor<double, 4> M_cell_new;
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_cell, matrix_cell) = moments::make_dot_integral_moments(
+    std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
         create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
-
-    auto [points_cell_new, M_cell_new] = moments::make_dot_integral_moments_new(
-        create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
-    x.push_back(points_cell_new);
-    M.push_back(M_cell_new);
   }
-
-  // Interpolation points and matrix
-  xt::xtensor<double, 2> points, matrix;
-  std::tie(points, matrix) = combine_interpolation_data(
-      points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -120,11 +100,12 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   entity_dofs[tdim] = {internal_dofs};
 
   // Create coefficients for order (degree-1) vector polynomials
-  xt::xtensor<double, 2> B = xt::eye<double>(ndofs);
-  xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients(celltype, B, M, x, degree);
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, xt::eye<double>(ndofs), {M[tdim - 1], M[tdim]},
+      {x[tdim - 1], x[tdim]}, degree);
+
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, points, matrix,
+                       entity_dofs, base_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

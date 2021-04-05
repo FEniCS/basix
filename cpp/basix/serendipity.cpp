@@ -13,6 +13,7 @@
 #include "quadrature.h"
 #include <numeric>
 #include <xtensor/xadapt.hpp>
+#include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
@@ -555,22 +556,28 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
-  std::vector<xt::xtensor<double, 3>> x(4);
-  std::vector<xt::xtensor<double, 4>> M(4);
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  const std::size_t vertex_count = cell::sub_entity_count(celltype, 0);
-  M[0].resize({vertex_count, 1, vertex_count, 1});
-  xt::view(M[0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(vertex_count);
+  // dim 0 (vertices)
+  const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
+  const std::size_t num_vertices = geometry.shape(0);
+  M[0] = std::vector<xt::xtensor<double, 3>>(num_vertices,
+                                             xt::ones<double>({1, 1, 1}));
+  x[0].resize(geometry.shape(0));
+  for (std::size_t i = 0; i < x[0].size(); ++i)
+  {
+    x[0][i] = xt::reshape_view(
+        xt::row(geometry, i), {static_cast<std::size_t>(1), geometry.shape(1)});
+  }
 
-  xt::xtensor<double, 2> points_1d, matrix_1d;
   xt::xtensor<double, 3> edge_transforms, face_transforms;
   if (degree >= 2)
   {
     FiniteElement moment_space = create_dpc(cell::type::interval, degree - 2);
-    std::tie(points_1d, matrix_1d)
+    std::tie(x[1], M[1])
         = moments::make_integral_moments(moment_space, celltype, 1, quad_deg);
-    std::tie(x[1], M[1]) = moments::make_integral_moments_new(
-        moment_space, celltype, 1, quad_deg);
+
     if (tdim > 1)
     {
       edge_transforms
@@ -578,15 +585,12 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 2> points_2d, matrix_2d;
   if (tdim >= 2 and degree >= 4)
   {
     FiniteElement moment_space
         = create_dpc(cell::type::quadrilateral, degree - 4);
-    std::tie(points_2d, matrix_2d)
+    std::tie(x[2], M[2])
         = moments::make_integral_moments(moment_space, celltype, 1, quad_deg);
-    std::tie(x[2], M[2]) = moments::make_integral_moments_new(
-        moment_space, celltype, 1, quad_deg);
     if (tdim > 2)
     {
       face_transforms
@@ -594,87 +598,11 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 2> points_3d, matrix_3d;
   if (tdim == 3 and degree >= 6)
   {
-    std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
-        create_dpc(cell::type::hexahedron, degree - 6), celltype, 1, quad_deg);
-    std::tie(x[3], M[3]) = moments::make_integral_moments_new(
+    std::tie(x[3], M[3]) = moments::make_integral_moments(
         create_dpc(cell::type::hexahedron, degree - 6), celltype, 1, quad_deg);
   }
-
-  const std::array<std::size_t, 3> num_pts_dim
-      = {points_1d.shape(0), points_2d.shape(0), points_3d.shape(0)};
-  std::size_t num_pts
-      = std::accumulate(num_pts_dim.begin(), num_pts_dim.end(), 0);
-
-  const std::array<std::size_t, 3> num_mat_dim0
-      = {matrix_1d.shape(0), matrix_2d.shape(0), matrix_3d.shape(0)};
-  const std::array<std::size_t, 3> num_mat_dim1
-      = {matrix_1d.shape(1), matrix_2d.shape(1), matrix_3d.shape(1)};
-  std::size_t num_mat0
-      = std::accumulate(num_mat_dim0.begin(), num_mat_dim0.end(), 0);
-  std::size_t num_mat1
-      = std::accumulate(num_mat_dim1.begin(), num_mat_dim1.end(), 0);
-
-  xt::xtensor<double, 2> interpolation_points({vertex_count + num_pts, tdim});
-  xt::xtensor<double, 2> interpolation_matrix
-      = xt::zeros<double>({vertex_count + num_mat0, vertex_count + num_mat1});
-
-  const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
-  xt::view(interpolation_points, xt::range(0, vertex_count), xt::all())
-      = geometry;
-
-  x[0].resize({vertex_count, 1, tdim});
-  xt::view(x[0], xt::all(), 0, xt::all()) = geometry;
-
-  if (points_1d.size() > 0)
-  {
-    xt::view(interpolation_points,
-             xt::range(vertex_count, vertex_count + num_pts_dim[0]), xt::all())
-        = points_1d;
-  }
-
-  if (points_2d.size() > 0)
-  {
-    xt::view(interpolation_points,
-             xt::range(vertex_count + num_pts_dim[0],
-                       vertex_count + num_pts_dim[0] + num_pts_dim[1]),
-             xt::all())
-        = points_2d;
-  }
-
-  if (points_3d.size() > 0)
-  {
-    xt::view(interpolation_points,
-             xt::range(vertex_count + num_pts_dim[0] + num_pts_dim[1],
-                       vertex_count + num_pts_dim[0] + num_pts_dim[1]
-                           + num_pts_dim[2]),
-             xt::all())
-        = points_3d;
-  }
-
-  auto r0 = xt::range(0, vertex_count);
-  xt::view(interpolation_matrix, r0, r0) = xt::eye<double>(vertex_count);
-
-  xt::view(interpolation_matrix,
-           xt::range(vertex_count, vertex_count + num_mat_dim0[0]),
-           xt::range(vertex_count, vertex_count + num_mat_dim1[0]))
-      = matrix_1d;
-  xt::view(interpolation_matrix,
-           xt::range(vertex_count + num_mat_dim0[0],
-                     vertex_count + num_mat_dim0[0] + num_mat_dim0[1]),
-           xt::range(vertex_count + num_mat_dim1[0],
-                     vertex_count + num_mat_dim1[0] + +num_mat_dim1[1]))
-      = matrix_2d;
-  xt::view(interpolation_matrix,
-           xt::range(vertex_count + num_mat_dim0[0] + num_mat_dim0[1],
-                     vertex_count + num_mat_dim0[0] + num_mat_dim0[1]
-                         + num_mat_dim0[2]),
-           xt::range(vertex_count + num_mat_dim1[0] + num_mat_dim1[1],
-                     vertex_count + num_mat_dim1[0] + +num_mat_dim1[1]
-                         + num_mat_dim1[2]))
-      = matrix_3d;
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 1)
@@ -685,18 +613,33 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     wcoeffs = make_serendipity_space_3d(degree);
 
   std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t j = 0; j < topology[0].size(); ++j)
-    entity_dofs[0].push_back(1);
-  for (std::size_t j = 0; j < topology[1].size(); ++j)
-    entity_dofs[1].push_back(num_mat_dim0[0] / topology[1].size());
-  if (tdim >= 2)
-    for (std::size_t j = 0; j < topology[2].size(); ++j)
-      entity_dofs[2].push_back(num_mat_dim0[1] / topology[2].size());
-  if (tdim == 3)
-    for (std::size_t j = 0; j < topology[3].size(); ++j)
-      entity_dofs[3].push_back(num_mat_dim0[2] / topology[3].size());
+  entity_dofs[0].resize(topology[0].size(), 0);
+  for (std::size_t v = 0; v < M[0].size(); ++v)
+    entity_dofs[0][v] = 1;
 
-  const std::size_t ndofs = interpolation_matrix.shape(0);
+  entity_dofs[1].resize(topology[1].size(), 0);
+  for (std::size_t e = 0; e < M[1].size(); ++e)
+    entity_dofs[1][e] = M[1][e].shape(0);
+
+  if (tdim >= 2)
+  {
+    entity_dofs[2].resize(topology[2].size(), 0);
+    for (std::size_t e = 0; e < M[2].size(); ++e)
+      entity_dofs[2][e] = M[2][e].shape(0);
+  }
+
+  if (tdim == 3)
+  {
+    entity_dofs[3].resize(topology[3].size(), 0);
+    for (std::size_t e = 0; e < M[3].size(); ++e)
+      entity_dofs[3][e] = M[3][e].shape(0);
+  }
+
+  std::size_t ndofs = 0;
+  for (auto& Md : M)
+    for (auto& Me : Md)
+      ndofs += Me.shape(0);
+
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
@@ -738,11 +681,12 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients(celltype, wcoeffs, M, x, degree);
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, {M[0], M[1], M[2], M[3]}, {x[0], x[1], x[2], x[3]},
+      degree);
+
   return FiniteElement(element::family::Serendipity, celltype, degree, {1},
-                       coeffs, entity_dofs, base_transformations,
-                       interpolation_points, interpolation_matrix,
+                       coeffs, entity_dofs, base_transformations, x, M,
                        maps::type::identity);
 }
 //-----------------------------------------------------------------------------
@@ -764,17 +708,14 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
   // Number of dofs and interpolation points
   int quad_deg = 5 * degree;
 
-  xt::xtensor<double, 2> points_facet, matrix_facet;
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
   xt::xtensor<double, 3> facet_transforms;
 
   FiniteElement facet_moment_space = create_dpc(facettype, degree);
-  std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
+  std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
-
-  auto [x1, M1] = moments::make_normal_integral_moments_new(
-      facet_moment_space, celltype, tdim, quad_deg);
-  std::vector<xt::xtensor<double, 3>> x = {x1};
-  std::vector<xt::xtensor<double, 4>> M = {M1};
 
   if (tdim > 1)
   {
@@ -782,27 +723,16 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
         = moments::create_normal_moment_dof_transformations(facet_moment_space);
   }
 
-  xt::xtensor<double, 2> points_cell = {};
-  xt::xtensor<double, 2> matrix_cell = {};
+  int cell_dofs = 0;
   if (tdim >= 2 and degree >= 2)
   {
     FiniteElement cell_moment_space = create_dpc(celltype, degree - 2);
-    std::tie(points_cell, matrix_cell) = moments::make_integral_moments(
+    std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         cell_moment_space, celltype, tdim, quad_deg);
-    auto [x2, M2] = moments::make_integral_moments_new(
-        cell_moment_space, celltype, tdim, quad_deg);
-    x.push_back(x2);
-    M.push_back(M2);
+    cell_dofs = M[tdim][0].shape(0);
   }
 
-  // Interpolation points and matrix
-  xt::xtensor<double, 2> interpolation_points, interpolation_matrix;
-  std::tie(interpolation_points, interpolation_matrix)
-      = combine_interpolation_data(points_facet, points_cell, {}, matrix_facet,
-                                   matrix_cell, {}, tdim, tdim);
-
   const int facet_dofs = facet_moment_space.dim();
-  const int cell_dofs = matrix_cell.shape(0);
   const int vertex_dofs = tdim == 1 ? facet_dofs : 0;
   const int edge_dofs = tdim == 1 ? cell_dofs : (tdim == 2 ? facet_dofs : 0);
   const int face_dofs = tdim == 2 ? cell_dofs : (tdim == 3 ? facet_dofs : 0);
@@ -820,7 +750,10 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
     for (std::size_t j = 0; j < topology[3].size(); ++j)
       entity_dofs[3].push_back(volume_dofs);
 
-  const std::size_t ndofs = interpolation_matrix.shape(0);
+  std::size_t ndofs = 0;
+  for (auto& Md : M)
+    for (auto& Me : Md)
+      ndofs += Me.shape(0);
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 1)
@@ -863,12 +796,12 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients(celltype, wcoeffs, M, x, degree + 1);
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]},
+      degree + 1);
 
   return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
-                       coeffs, entity_dofs, base_transformations,
-                       interpolation_points, interpolation_matrix,
+                       coeffs, entity_dofs, base_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
@@ -913,59 +846,38 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   else if (tdim == 3)
     wcoeffs = make_serendipity_curl_space_3d(degree);
 
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
   FiniteElement edge_moment_space = create_dpc(cell::type::interval, degree);
 
-  xt::xtensor<double, 2> points_1d, matrix_1d;
-  std::tie(points_1d, matrix_1d) = moments::make_tangent_integral_moments(
+  std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, 2 * degree + 2);
-
-  auto [x1, M1] = moments::make_tangent_integral_moments_new(
-      edge_moment_space, celltype, tdim, 2 * degree + 2);
-  std::vector<xt::xtensor<double, 3>> x = {x1};
-  std::vector<xt::xtensor<double, 4>> M = {M1};
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
   // Add integral moments on interior
-  xt::xtensor<double, 2> points_2d, matrix_2d, points_3d, matrix_3d;
   xt::xtensor<double, 3> face_transforms;
   if (degree >= 2)
   {
     // Face integral moment
     FiniteElement moment_space
         = create_dpc(cell::type::quadrilateral, degree - 2);
-    std::tie(points_2d, matrix_2d) = moments::make_integral_moments(
+    std::tie(x[2], M[2]) = moments::make_integral_moments(
         moment_space, celltype, tdim, 2 * degree);
-    auto [x2, M2] = moments::make_integral_moments_new(moment_space, celltype,
-                                                       tdim, 2 * degree);
-    x.push_back(x2);
-    M.push_back(M2);
-
     if (tdim == 3)
     {
       face_transforms
           = moments::create_moment_dof_transformations(moment_space);
-
       if (degree >= 4)
       {
         // Interior integral moment
-        std::tie(points_3d, matrix_3d) = moments::make_integral_moments(
+        std::tie(x[3], M[3]) = moments::make_integral_moments(
             create_dpc(cell::type::hexahedron, degree - 4), celltype, tdim,
             2 * degree - 3);
-        auto [x3, M3] = moments::make_integral_moments_new(
-            create_dpc(cell::type::hexahedron, degree - 4), celltype, tdim,
-            2 * degree - 3);
-        x.push_back(x3);
-        M.push_back(M3);
       }
     }
   }
-
-  // Interpolation points and matrix
-  xt::xtensor<double, 2> points, matrix;
-  std::tie(points, matrix)
-      = combine_interpolation_data(points_1d, points_2d, points_3d, matrix_1d,
-                                   matrix_2d, matrix_3d, tdim, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -982,7 +894,6 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
     xt::view(base_transformations, edge, range, range)
         = xt::view(edge_transforms, 0, xt::all(), xt::all());
   }
-
 
   if (tdim == 3 and degree > 1)
   {
@@ -1005,11 +916,11 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   if (tdim == 3)
     entity_dofs[3].resize(topology[3].size(), volume_dofs);
 
-  xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients(celltype, wcoeffs, M, x, degree + 1);
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree + 1);
 
   return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
-                       coeffs, entity_dofs, base_transformations, points,
-                       matrix, maps::type::covariantPiola);
+                       coeffs, entity_dofs, base_transformations, x, M,
+                       maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

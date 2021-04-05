@@ -23,58 +23,89 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
 
+  const std::size_t tdim = cell::topological_dimension(celltype);
+
   const std::size_t ndofs = polyset::dim(celltype, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   std::vector<std::vector<int>> entity_dofs(topology.size());
 
   // Create points at nodes, ordered by topology (vertices first)
-  xt::xtensor<double, 2> pt({ndofs, topology.size() - 1});
   if (degree == 0)
   {
-    pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
+    auto pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
     for (std::size_t i = 0; i < entity_dofs.size(); ++i)
       entity_dofs[i].resize(topology[i].size(), 0);
-    entity_dofs[topology.size() - 1][0] = 1;
+    entity_dofs[tdim][0] = 1;
+
+    x[tdim].push_back(pt);
+    const std::size_t num_dofs = pt.shape(0);
+    std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
+    M[tdim].push_back(xt::xtensor<double, 3>(s));
+    xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
   }
   else
   {
-    int c = 0;
     for (std::size_t dim = 0; dim < topology.size(); ++dim)
     {
-      for (std::size_t i = 0; i < topology[dim].size(); ++i)
+      M[dim].resize(topology[dim].size());
+      x[dim].resize(topology[dim].size());
+
+      // Loop over entities of dimension 'dim'
+      for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
-        const xt::xtensor<double, 2> entity_geom
-            = cell::sub_entity_geometry(celltype, dim, i);
+        const xt::xtensor<double, 2> entity_x
+            = cell::sub_entity_geometry(celltype, dim, e);
         if (dim == 0)
         {
-          xt::row(pt, c++) = xt::row(entity_geom, 0);
+          x[dim][e] = entity_x;
+          const std::size_t num_dofs = entity_x.shape(0);
+          M[dim][e] = xt::xtensor<double, 3>(
+              {num_dofs, static_cast<std::size_t>(1), num_dofs});
+          xt::view(M[dim][e], xt::all(), 0, xt::all())
+              = xt::eye<double>(num_dofs);
           entity_dofs[0].push_back(1);
         }
-        else if (dim == topology.size() - 1)
+        else if (dim == tdim)
         {
-          const auto lattice = lattice::create(
-              celltype, degree, lattice::type::equispaced, false);
-          for (std::size_t j = 0; j < lattice.shape(0); ++j)
-            xt::row(pt, c++) = xt::row(lattice, j);
-          entity_dofs[dim].push_back(lattice.shape(0));
+          x[dim][e] = lattice::create(celltype, degree,
+                                      lattice::type::equispaced, false);
+          const std::size_t num_dofs = x[dim][e].shape(0);
+          std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
+          M[dim][e] = xt::xtensor<double, 3>(s);
+          xt::view(M[dim][e], xt::all(), 0, xt::all())
+              = xt::eye<double>(num_dofs);
+          entity_dofs[dim].push_back(num_dofs);
         }
         else
         {
-          cell::type ct = cell::sub_entity_type(celltype, dim, i);
+          cell::type ct = cell::sub_entity_type(celltype, dim, e);
           const auto lattice
               = lattice::create(ct, degree, lattice::type::equispaced, false);
+
+          const std::size_t num_dofs = lattice.shape(0);
+          std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
+          M[dim][e] = xt::xtensor<double, 3>(s);
+          xt::view(M[dim][e], xt::all(), 0, xt::all())
+              = xt::eye<double>(num_dofs);
+
           entity_dofs[dim].push_back(lattice.shape(0));
+
+          auto x0s = xt::reshape_view(
+              xt::row(entity_x, 0),
+              {static_cast<std::size_t>(1), entity_x.shape(1)});
+          x[dim][e] = xt::tile(x0s, lattice.shape(0));
+          auto x0 = xt::row(entity_x, 0);
           for (std::size_t j = 0; j < lattice.shape(0); ++j)
           {
-            xt::row(pt, c) = xt::row(entity_geom, 0);
             for (std::size_t k = 0; k < lattice.shape(1); ++k)
             {
-              xt::row(pt, c)
-                  += (xt::row(entity_geom, k + 1) - xt::row(entity_geom, 0))
-                     * lattice(j, k);
+              xt::row(x[dim][e], j)
+                  += (xt::row(entity_x, k + 1) - x0) * lattice(j, k);
             }
-            ++c;
           }
         }
       }
@@ -89,10 +120,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   switch (celltype)
   {
   case cell::type::interval:
-  {
     assert(transform_count == 0);
     break;
-  }
   case cell::type::triangle:
   {
     const std::vector<int> edge_ref
@@ -200,16 +229,12 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     LOG(WARNING) << "Base transformations not implemented for this cell type.";
   }
 
-  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
-  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
-  xt::xtensor<double, 3> x({pt.shape(0), 1, pt.shape(1)});
-  xt::view(x, xt::all(), 0, xt::all()) = pt;
-
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), {M}, {x}, degree);
+      celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
+      {x[0], x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, pt,
-                       xt::eye<double>(ndofs), maps::type::identity);
+                       entity_dofs, base_transformations, x, M,
+                       maps::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
@@ -219,33 +244,34 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
 
   const std::size_t ndofs = polyset::dim(celltype, degree);
 
-  std::vector<std::vector<std::vector<int>>> topology
+  const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[topology.size() - 1][0] = ndofs;
 
-  const auto pt
-      = lattice::create(celltype, degree, lattice::type::equispaced, true);
-
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
-  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
-  xt::xtensor<double, 3> x({pt.shape(0), 1, pt.shape(1)});
-  xt::view(x, xt::all(), 0, xt::all()) = pt;
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  M[1].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
+  xt::view(M[1][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
+
+  const auto pt
+      = lattice::create(celltype, degree, lattice::type::equispaced, true);
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  x[1].push_back(pt);
 
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), {M}, {x}, degree);
+      celltype, xt::eye<double>(ndofs), {M[1]}, {x[1]}, degree);
 
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, pt,
-                       xt::eye<double>(ndofs), maps::type::identity);
+                       entity_dofs, base_transformations, x, M,
+                       maps::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dpc(cell::type celltype, int degree)
@@ -272,50 +298,51 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
 
-  auto [Qpts, _Qwts]
+  auto [pts, _wts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
 
-  xt::xtensor<double, 2> quad_polyset_at_Qpts = xt::view(
-      polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
-  xt::xtensor<double, 2> polyset_at_Qpts
-      = xt::view(polyset::tabulate(simplex_type, degree, 0, Qpts), 0, xt::all(),
-                 xt::all());
+  xt::xtensor<double, 2> psi_quad = xt::view(
+      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> psi = xt::view(
+      polyset::tabulate(simplex_type, degree, 0, pts), 0, xt::all(), xt::all());
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   for (std::size_t i = 0; i < ndofs; ++i)
   {
-    auto p_i = xt::col(polyset_at_Qpts, i);
+    auto p_i = xt::col(psi, i);
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(Qwts * p_i * xt::col(quad_polyset_at_Qpts, k))();
+      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(psi_quad, k))();
   }
 
-  std::vector<std::vector<std::vector<int>>> topology
+  const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
+  const std::size_t tdim = topology.size() - 1;
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[topology.size() - 1][0] = ndofs;
+  entity_dofs[tdim][0] = ndofs;
+
+  std::size_t transform_count = 0;
+  for (std::size_t i = 1; i < tdim; ++i)
+    transform_count += topology[i].size() * i;
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
   const auto pt
       = lattice::create(simplex_type, degree, lattice::type::equispaced, true);
-
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < topology.size() - 1; ++i)
-    transform_count += topology[i].size() * i;
-
-  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
-  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
-  xt::xtensor<double, 3> x({pt.shape(0), 1, pt.shape(1)});
-  xt::view(x, xt::all(), 0, xt::all()) = pt;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  x[tdim].push_back(pt);
 
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients(celltype, wcoeffs, {M}, {x}, degree);
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, pt,
-                       xt::eye<double>(ndofs), maps::type::identity);
+                       entity_dofs, base_transformations, x, M,
+                       maps::type::identity);
 }
 //-----------------------------------------------------------------------------

@@ -40,11 +40,11 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const std::size_t ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, _wts]
+  const auto [pts, _wts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
   auto wts = xt::adapt(_wts);
-  auto phi = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(),
-                      xt::all());
+  const auto phi = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0,
+                            xt::all(), xt::all());
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.shape(1);
@@ -75,42 +75,28 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   }
 
   // quadrature degree
-  int quad_deg = 5 * degree;
+  const int quad_deg = 5 * degree;
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Add integral moments on facets
-  xt::xtensor<double, 2> points_facet, matrix_facet;
-  FiniteElement facet_moment_space = create_dlagrange(facettype, degree - 1);
-  std::tie(points_facet, matrix_facet) = moments::make_normal_integral_moments(
+  const FiniteElement facet_moment_space
+      = create_dlagrange(facettype, degree - 1);
+  std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
-  auto [points_facet_new, M_facet_new]
-      = moments::make_normal_integral_moments_new(facet_moment_space, celltype,
-                                                  tdim, quad_deg);
-  std::vector<xt::xtensor<double, 4>> M = {M_facet_new};
-  std::vector<xt::xtensor<double, 3>> x = {points_facet_new};
-
   const std::size_t facet_dofs = facet_transforms.shape(1);
 
   // Add integral moments on interior
-  xt::xtensor<double, 2> points_cell, matrix_cell;
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(points_cell, matrix_cell) = moments::make_integral_moments(
+    std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         create_dlagrange(celltype, degree - 2), celltype, tdim, quad_deg);
-
-    auto [points_cell_new, M_cell_new] = moments::make_integral_moments_new(
-        create_dlagrange(celltype, degree - 2), celltype, tdim, quad_deg);
-    x.push_back(points_cell_new);
-    M.push_back(M_cell_new);
   }
-
-  // Interpolation points and matrix
-  xt::xtensor<double, 2> points, matrix;
-  std::tie(points, matrix) = combine_interpolation_data(
-      points_facet, points_cell, {}, matrix_facet, matrix_cell, {}, tdim, tdim);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -128,6 +114,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     xt::view(base_transformations, i, xt::all(), xt::all())
         = xt::eye<double>(ndofs);
   }
+
   if (tdim == 2)
   {
     for (std::size_t edge = 0; edge < facet_count; ++edge)
@@ -151,8 +138,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     }
   }
 
-  xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients(celltype, B, M, x, degree);
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, B, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]}, degree);
 
   // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the
   // interior
@@ -163,7 +150,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   entity_dofs[tdim] = {(int)(ns0 * tdim)};
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, points, matrix,
+                       entity_dofs, base_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

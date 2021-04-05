@@ -8,7 +8,8 @@
 #include "maps.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <numeric>
+#include <array>
+#include <vector>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xmath.hpp>
 #include <xtensor/xpad.hpp>
@@ -51,78 +52,76 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     throw std::runtime_error("Unsupported cell type");
   }
 
-  // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts]
-      = quadrature::make_quadrature("default", celltype, 2 * degree);
-  auto Qwts = xt::adapt(_Qwts);
+  const std::size_t tdim = cell::topological_dimension(celltype);
 
-  xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
-      polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  // Evaluate the expansion polynomials at the quadrature points
+  auto [pts, _wts]
+      = quadrature::make_quadrature("default", celltype, 2 * degree);
+  auto wts = xt::adapt(_wts);
+
+  const xt::xtensor<double, 2> phi = xt::view(
+      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t psize = phi.shape(1);
 
   // Create points at nodes on interior
   const auto points
       = lattice::create(celltype, degree, lattice::type::equispaced, false);
-
   const std::size_t ndofs = points.shape(0);
-  xt::xtensor<double, 3> x({points.shape(0), 1, points.shape(1)});
-  xt::view(x, xt::all(), 0, xt::all()) = points;
+  x[tdim].push_back(points);
 
   // Create coefficients for order (degree-1) vector polynomials
-  xt::xtensor<double, 2> lower_polyset_at_Qpts;
+  xt::xtensor<double, 2> phi1;
   xt::xtensor<double, 1> bubble;
   switch (celltype)
   {
   case cell::type::interval:
   {
-    lower_polyset_at_Qpts
-        = xt::view(polyset::tabulate(celltype, degree - 2, 0, Qpts), 0,
-                   xt::all(), xt::all());
-    auto p = Qpts;
+    phi1 = xt::view(polyset::tabulate(celltype, degree - 2, 0, pts), 0,
+                    xt::all(), xt::all());
+    auto p = pts;
     bubble = p * (1.0 - p);
     break;
   }
   case cell::type::triangle:
   {
-    lower_polyset_at_Qpts
-        = xt::view(polyset::tabulate(celltype, degree - 3, 0, Qpts), 0,
-                   xt::all(), xt::all());
-    auto p0 = xt::col(Qpts, 0);
-    auto p1 = xt::col(Qpts, 1);
+    phi1 = xt::view(polyset::tabulate(celltype, degree - 3, 0, pts), 0,
+                    xt::all(), xt::all());
+    auto p0 = xt::col(pts, 0);
+    auto p1 = xt::col(pts, 1);
     bubble = p0 * p1 * (1 - p0 - p1);
     break;
   }
   case cell::type::tetrahedron:
   {
-    lower_polyset_at_Qpts
-        = xt::view(polyset::tabulate(celltype, degree - 4, 0, Qpts), 0,
-                   xt::all(), xt::all());
-    auto p0 = xt::col(Qpts, 0);
-    auto p1 = xt::col(Qpts, 1);
-    auto p2 = xt::col(Qpts, 2);
+    phi1 = xt::view(polyset::tabulate(celltype, degree - 4, 0, pts), 0,
+                    xt::all(), xt::all());
+    auto p0 = xt::col(pts, 0);
+    auto p1 = xt::col(pts, 1);
+    auto p2 = xt::col(pts, 2);
     bubble = p0 * p1 * p2 * (1 - p0 - p1 - p2);
     break;
   }
   case cell::type::quadrilateral:
   {
-    lower_polyset_at_Qpts
-        = xt::view(polyset::tabulate(celltype, degree - 2, 0, Qpts), 0,
-                   xt::all(), xt::all());
-    auto p0 = xt::col(Qpts, 0);
-    auto p1 = xt::col(Qpts, 1);
+    phi1 = xt::view(polyset::tabulate(celltype, degree - 2, 0, pts), 0,
+                    xt::all(), xt::all());
+    auto p0 = xt::col(pts, 0);
+    auto p1 = xt::col(pts, 1);
     bubble = p0 * (1 - p0) * p1 * (1 - p1);
     break;
   }
   case cell::type::hexahedron:
   {
-    lower_polyset_at_Qpts
-        = xt::view(polyset::tabulate(celltype, degree - 2, 0, Qpts), 0,
-                   xt::all(), xt::all());
-    auto p0 = xt::col(Qpts, 0);
-    auto p1 = xt::col(Qpts, 1);
-    auto p2 = xt::col(Qpts, 2);
+    phi1 = xt::view(polyset::tabulate(celltype, degree - 2, 0, pts), 0,
+                    xt::all(), xt::all());
+    auto p0 = xt::col(pts, 0);
+    auto p1 = xt::col(pts, 1);
+    auto p2 = xt::col(pts, 2);
     bubble = p0 * (1 - p0) * p1 * (1 - p1) * p2 * (1 - p2);
     break;
   }
@@ -131,17 +130,13 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   }
 
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-  for (std::size_t i = 0; i < lower_polyset_at_Qpts.shape(1); ++i)
+  for (std::size_t i = 0; i < phi1.shape(1); ++i)
   {
-    auto integrand = xt::col(lower_polyset_at_Qpts, i) * bubble;
+    auto integrand = xt::col(phi1, i) * bubble;
     for (std::size_t k = 0; k < psize; ++k)
-    {
-      double w_sum = xt::sum(Qwts * integrand * xt::col(polyset_at_Qpts, k))();
-      wcoeffs(i, k) = w_sum;
-    }
+      wcoeffs(i, k) = xt::sum(wts * integrand * xt::col(phi, k))();
   }
 
-  const std::size_t tdim = cell::topological_dimension(celltype);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   std::vector<std::vector<int>> entity_dofs(topology.size());
@@ -154,15 +149,15 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
     transform_count += topology[i].size() * i;
 
-  xt::xtensor<double, 4> M({ndofs, 1, ndofs, 1});
-  xt::view(M, xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
+  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  xt::xtensor<double, 3> coeffs
-      = compute_expansion_coefficients(celltype, wcoeffs, {M}, {x}, degree);
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, points,
-                       xt::eye<double>(ndofs), maps::type::identity);
+                       entity_dofs, base_transformations, x, M,
+                       maps::type::identity);
 }
 //-----------------------------------------------------------------------------

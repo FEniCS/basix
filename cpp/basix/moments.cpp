@@ -50,7 +50,7 @@ std::vector<int> axis_points(const cell::type celltype)
 // celltype0) and (1) local axes on each entity (num_entities,
 // entity_dim, tdim).
 template <typename P>
-std::array<xt::xtensor<double, 3>, 2>
+std::pair<std::vector<xt::xtensor<double, 2>>, xt::xtensor<double, 3>>
 map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
 {
   assert(x.dimension() == 2);
@@ -59,7 +59,9 @@ map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
   std::size_t entity_dim = cell::topological_dimension(celltype1);
   std::size_t num_entities = cell::sub_entity_count(celltype0, entity_dim);
 
-  xt::xtensor<double, 3> p({num_entities, x.shape(0), tdim});
+  // xt::xtensor<double, 3> p({num_entities, x.shape(0), tdim});
+  std::vector<xt::xtensor<double, 2>> p(num_entities,
+                                        xt::zeros<double>({x.shape(0), tdim}));
   xt::xtensor<double, 3> axes({num_entities, entity_dim, tdim});
   xt::xtensor<double, 2> axes_e({entity_dim, tdim});
   const std::vector<int> axis_pts = axis_points(celltype0);
@@ -75,10 +77,9 @@ map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
       xt::view(axes, e, i, xt::all()) = xt::row(entity_x, axis_pts[i]) - x0;
 
     // Compute x = x0 + \Delta x
-    xt::view(p, e, xt::all(), xt::all())
-        = xt::tile(xt::view(entity_x, xt::newaxis(), 0), x.shape(0));
+    p[e] = xt::tile(xt::view(entity_x, xt::newaxis(), 0), x.shape(0));
     axes_e = xt::view(axes, e, xt::all(), xt::all());
-    xt::view(p, e, xt::all(), xt::all()) += xt::linalg::dot(x, axes_e);
+    p[e] += xt::linalg::dot(x, axes_e);
   }
 
   return {p, axes};
@@ -200,7 +201,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
     // Pull back basis function values to the reference cell (applied
     // map)
-    xt::xtensor<double, 3> F
+    const xt::xtensor<double, 3> F
         = moment_space.map_pull_back(moment_space_pts, Ji, detJ, Ki);
 
     // Copy onto 2D array
@@ -239,7 +240,6 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
       = create_dot_moment_dof_transformations(moment_space);
 
   xt::xtensor_fixed<double, xt::xshape<2, 2>> rot, ref;
-
   cell::type celltype = moment_space.cell_type();
   switch (celltype)
   {
@@ -302,23 +302,13 @@ xt::xtensor<double, 3> moments::create_tangent_moment_dof_transformations(
   xt::xtensor<double, 3> t
       = create_dot_moment_dof_transformations(moment_space);
   xt::view(t, 0, xt::all(), xt::all()) *= -1.0;
-
   return t;
 }
 //----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
 moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
                                std::size_t value_size, int q_deg)
-{
-  auto [points, D] = make_integral_moments_new(V, celltype, value_size, q_deg);
-  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
-  std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
-  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
-}
-//----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
-moments::make_integral_moments_new(const FiniteElement& V, cell::type celltype,
-                                   std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
@@ -335,20 +325,19 @@ moments::make_integral_moments_new(const FiniteElement& V, cell::type celltype,
 
   // Evaluate moment space at quadrature points
   assert(V.value_size() == 1);
-  xt::xtensor<double, 2> phi
+  const xt::xtensor<double, 2> phi
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
   // Pad out \phi moment is against a vector-valued function
   std::size_t vdim = value_size == 1 ? 1 : entity_dim;
 
   // Storage for the interpolation matrix
-  const std::size_t num_dofs = vdim * num_entities * phi.shape(1);
-  const std::array<std::size_t, 4> shape_new
-      = {num_dofs, value_size, num_entities, pts.shape(0)};
-  xt::xtensor<double, 4> D = xt::zeros<double>(shape_new);
+  const std::size_t num_dofs = vdim * phi.shape(1);
+  const std::array<std::size_t, 3> shape = {num_dofs, value_size, pts.shape(0)};
+  std::vector<xt::xtensor<double, 3>> D(num_entities, xt::zeros<double>(shape));
 
   // Map quadrature points onto facet (cell entity e)
-  auto [points, axes] = map_points(celltype, sub_celltype, pts);
+  const auto [points, axes] = map_points(celltype, sub_celltype, pts);
 
   // Compute entity integral moments
 
@@ -360,29 +349,29 @@ moments::make_integral_moments_new(const FiniteElement& V, cell::type celltype,
       for (std::size_t i = 0; i < phi.shape(1); ++i)
       {
         auto phi_i = xt::col(phi, i);
-        std::size_t dof = e * phi.shape(1) + i;
-        xt::view(D, dof, 0, e, xt::all()) = phi_i * wts;
+        xt::view(D[e], i, 0, xt::all()) = phi_i * wts;
       }
     }
   }
   else
   {
-    // int dof = 0;
     for (std::size_t e = 0; e < num_entities; ++e)
     {
       // Loop over each 'dof' on an entity (moment basis function index)
       for (std::size_t i = 0; i < phi.shape(1); ++i)
       {
         auto phi_i = xt::col(phi, i);
-        // TODO: Pad-out phi and call a updated make_dot_integral_moments
+        // TODO: Pad-out phi and call a updated
+        // make_dot_integral_moments
 
         // FIXME: This assumed that the moment space has a certain
         // mapping type
         for (std::size_t d = 0; d < entity_dim; ++d)
         {
-          std::size_t dof = e * phi.shape(1) * entity_dim + i * entity_dim + d;
+          // TODO: check that dof index is correct
+          const std::size_t dof = i * entity_dim + d;
           for (std::size_t k = 0; k < value_size; ++k)
-            xt::view(D, dof, k, e, xt::all()) = phi_i * wts * axes(e, d, k);
+            xt::view(D[e], dof, k, xt::all()) = phi_i * wts * axes(e, d, k);
         }
       }
     }
@@ -391,10 +380,10 @@ moments::make_integral_moments_new(const FiniteElement& V, cell::type celltype,
   return {points, D};
 }
 //----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
-moments::make_dot_integral_moments_new(const FiniteElement& V,
-                                       cell::type celltype,
-                                       std::size_t value_size, int q_deg)
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
+moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
+                                   std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
@@ -422,9 +411,8 @@ moments::make_dot_integral_moments_new(const FiniteElement& V,
   auto [points, axes] = map_points(celltype, sub_celltype, pts);
 
   // Shape (num dofs, value size, num points)
-  const std::array shape
-      = {num_entities * phi.shape(1), value_size, num_entities, pts.shape(0)};
-  xt::xtensor<double, 4> D = xt::zeros<double>(shape);
+  const std::array shape = {phi.shape(1), value_size, pts.shape(0)};
+  std::vector<xt::xtensor<double, 3>> D(num_entities, xt::zeros<double>(shape));
 
   // Compute entity integral moments
 
@@ -432,10 +420,8 @@ moments::make_dot_integral_moments_new(const FiniteElement& V,
   for (std::size_t e = 0; e < num_entities; ++e)
   {
     // Loop over each 'dof' on an entity (moment basis function index)
-    for (std::size_t i = 0; i < phi.shape(1); ++i)
+    for (std::size_t dof = 0; dof < phi.shape(1); ++dof)
     {
-      std::size_t dof = e * phi.shape(1) + i;
-
       // Loop over value size of function to which moment function is
       // applied
       for (std::size_t j = 0; j < value_size; ++j)
@@ -445,8 +431,8 @@ moments::make_dot_integral_moments_new(const FiniteElement& V,
         for (std::size_t d = 0; d < phi.shape(2); ++d)
         {
           // Add quadrature point on cell entity contributions
-          xt::view(D, dof, j, e, xt::all())
-              += wts * xt::view(phi, xt::all(), i, d) * axes(e, d, j);
+          xt::view(D[e], dof, j, xt::all())
+              += wts * xt::view(phi, xt::all(), dof, d) * axes(e, d, j);
         }
       }
     }
@@ -455,33 +441,11 @@ moments::make_dot_integral_moments_new(const FiniteElement& V,
   return {points, D};
 }
 //----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
-                                   std::size_t value_size, int q_deg)
-{
-  auto [points, D]
-      = make_dot_integral_moments_new(V, celltype, value_size, q_deg);
-  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
-  const std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
-  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
-}
-//----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
 moments::make_tangent_integral_moments(const FiniteElement& V,
                                        cell::type celltype,
                                        std::size_t value_size, int q_deg)
-{
-  auto [points, D]
-      = make_tangent_integral_moments_new(V, celltype, value_size, q_deg);
-  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
-  const std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
-  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
-}
-//----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
-moments::make_tangent_integral_moments_new(const FiniteElement& V,
-                                           cell::type celltype,
-                                           std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
@@ -503,11 +467,10 @@ moments::make_tangent_integral_moments_new(const FiniteElement& V,
   xt::xtensor<double, 2> phi
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
-  xt::xtensor<double, 3> points({num_entities, pts.shape(0), tdim});
-
-  const std::size_t num_dofs = num_entities * phi.shape(1);
-  const std::array shape = {num_dofs, value_size, num_entities, phi.shape(0)};
-  xt::xtensor<double, 4> D = xt::zeros<double>(shape);
+  std::vector<xt::xtensor<double, 2>> points(
+      num_entities, xt::zeros<double>({pts.shape(0), tdim}));
+  const std::array shape = {phi.shape(1), value_size, phi.shape(0)};
+  std::vector<xt::xtensor<double, 3>> D(num_entities, xt::zeros<double>(shape));
 
   // Iterate over cell entities
   for (std::size_t e = 0; e < num_entities; ++e)
@@ -521,37 +484,25 @@ moments::make_tangent_integral_moments_new(const FiniteElement& V,
 
     // Map quadrature points onto triangle edge
     for (std::size_t i = 0; i < pts.shape(0); ++i)
-      xt::view(points, e, i, xt::all()) = X0 + pts[i] * tangent;
+      xt::view(points[e], i, xt::all()) = X0 + pts[i] * tangent;
 
     // Compute edge tangent integral moments
     for (std::size_t i = 0; i < phi.shape(1); ++i)
     {
-      std::size_t dof = e * phi.shape(1) + i;
       auto phi_i = xt::col(phi, i);
       for (std::size_t j = 0; j < value_size; ++j)
-        xt::view(D, dof, j, e, xt::all()) = phi_i * wts * tangent[j];
+        xt::view(D[e], i, j, xt::all()) = phi_i * wts * tangent[j];
     }
   }
 
   return {points, D};
 }
 //----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
 moments::make_normal_integral_moments(const FiniteElement& V,
                                       cell::type celltype,
                                       std::size_t value_size, int q_deg)
-{
-  auto [points, D]
-      = make_normal_integral_moments_new(V, celltype, value_size, q_deg);
-  const std::array s = {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)};
-  const std::array sp = {points.shape(0) * points.shape(1), points.shape(2)};
-  return {xt::reshape_view(points, sp), xt::reshape_view(D, s)};
-}
-//----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 3>, xt::xtensor<double, 4>>
-moments::make_normal_integral_moments_new(const FiniteElement& V,
-                                          cell::type celltype,
-                                          std::size_t value_size, int q_deg)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
   assert(tdim == value_size);
@@ -573,12 +524,12 @@ moments::make_normal_integral_moments_new(const FiniteElement& V,
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
   // Storage for coordinates of evaluations points in the reference cell
-  xt::xtensor<double, 3> points({num_entities, pts.shape(0), tdim});
+  std::vector<xt::xtensor<double, 2>> points(
+      num_entities, xt::zeros<double>({pts.shape(0), tdim}));
 
   // Storage for interpolation matrix
-  const std::size_t num_dofs = num_entities * phi.shape(1);
-  const std::array shape = {num_dofs, value_size, num_entities, phi.shape(0)};
-  xt::xtensor<double, 4> D = xt::zeros<double>(shape);
+  const std::array shape = {phi.shape(1), value_size, phi.shape(0)};
+  std::vector<xt::xtensor<double, 3>> D(num_entities, xt::zeros<double>(shape));
 
   // Evaluate moment space at quadrature points
 
@@ -597,7 +548,7 @@ moments::make_normal_integral_moments_new(const FiniteElement& V,
       auto tangent = xt::row(facet_x, 1) - x0;
       normal = {-tangent(1), tangent(0)};
       for (std::size_t p = 0; p < pts.shape(0); ++p)
-        xt::view(points, e, p, xt::all()) = x0 + pts[p] * tangent;
+        xt::view(points[e], p, xt::all()) = x0 + pts[p] * tangent;
     }
     else if (tdim == 3)
     {
@@ -608,7 +559,7 @@ moments::make_normal_integral_moments_new(const FiniteElement& V,
       normal = xt::linalg::cross(t0, t1);
       for (std::size_t p = 0; p < pts.shape(0); ++p)
       {
-        xt::view(points, e, p, xt::all())
+        xt::view(points[e], p, xt::all())
             = x0 + pts(p, 0) * t0 + pts(p, 1) * t1;
       }
     }
@@ -618,10 +569,9 @@ moments::make_normal_integral_moments_new(const FiniteElement& V,
     // Compute facet normal integral moments
     for (std::size_t i = 0; i < phi.shape(1); ++i)
     {
-      std::size_t dof = e * phi.shape(1) + i;
       auto phi_i = xt::col(phi, i);
       for (std::size_t j = 0; j < value_size; ++j)
-        xt::view(D, dof, j, e, xt::all()) = phi_i * wts * normal[j];
+        xt::view(D[e], i, j, xt::all()) = phi_i * wts * normal[j];
     }
   }
 

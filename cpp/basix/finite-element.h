@@ -338,7 +338,8 @@ public:
   /// on a triangle has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]
   /// The sum of the entity dofs must match the total number of dofs
   /// reported by FiniteElement::dim,
-  /// @return List of entity dof counts on each dimension
+  /// @return List of entity dof counts on each dimension. The shape is (tdim +
+  /// 1, num_entities).
   const std::vector<std::vector<int>>& entity_dofs() const;
 
   /// Get the base transformations

@@ -69,7 +69,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
               = xt::eye<double>(num_dofs);
           entity_dofs[0].push_back(1);
         }
-        // else if (dim == topology.size() - 1)
         else if (dim == tdim)
         {
           x[dim][e] = lattice::create(celltype, degree,
@@ -121,10 +120,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   switch (celltype)
   {
   case cell::type::interval:
-  {
     assert(transform_count == 0);
     break;
-  }
   case cell::type::triangle:
   {
     const std::vector<int> edge_ref

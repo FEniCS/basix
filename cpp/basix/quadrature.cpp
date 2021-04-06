@@ -754,9 +754,6 @@ quadrature::compute_gauss_jacobi_rule(double a, int m)
     wts[i] = a6 / (1.0 - x * x) / (f * f);
   }
 
-  std::cout << "weights:\n" << xt::adapt(wts) << std::endl;
-  std::cout << "x:\n" << pts << std::endl;
-
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------

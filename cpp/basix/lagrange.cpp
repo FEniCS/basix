@@ -251,23 +251,25 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
     entity_dofs[i].resize(topology[i].size(), 0);
   entity_dofs[topology.size() - 1][0] = ndofs;
 
+  const std::size_t tdim = topology.size() - 1;
+
   std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < topology.size() - 1; ++i)
+  for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
-  M[1].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
-  xt::view(M[1][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
+  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
   const auto pt
       = lattice::create(celltype, degree, lattice::type::equispaced, true);
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  x[1].push_back(pt);
+  x[tdim].push_back(pt);
 
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), {M[1]}, {x[1]}, degree);
+      celltype, xt::eye<double>(ndofs), {M[tdim]}, {x[tdim]}, degree);
 
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
                        entity_dofs, base_transformations, x, M,

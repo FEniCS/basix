@@ -214,7 +214,7 @@ FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 3>& coeffs,
-    const std::vector<std::vector<int>>& entity_dofs,
+    const std::vector<std::vector<int>>& /*entity_dofs*/,
     const xt::xtensor<double, 3>& base_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
@@ -223,8 +223,7 @@ FiniteElement::FiniteElement(
       _degree(degree), _map_type(map_type),
       _coeffs(xt::reshape_view(
           coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
-      _entity_dofs(entity_dofs), _base_transformations(base_transformations),
-      _x(x), _matM_new(M)
+      _base_transformations(base_transformations), _x(x), _matM_new(M)
 {
   // if (points.dimension() == 1)
   //   throw std::runtime_error("Problem with points");
@@ -282,11 +281,22 @@ FiniteElement::FiniteElement(
     }
   }
 
+  // Compute number of dofs for each cell entity (computed from
+  // interpolation data)
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(cell_type);
+  _entity_dofs.resize(tdim + 1);
+  for (std::size_t d = 0; d < _entity_dofs.size(); ++d)
+  {
+    _entity_dofs[d].resize(topology[d].size(), 0);
+    for (std::size_t e = 0; e < M[d].size(); ++e)
+      _entity_dofs[d][e] = M[d][e].shape(0);
+  }
+
   // Check that entity dofs add up to total number of dofs
   std::size_t sum = 0;
-  for (const std::vector<int>& q : entity_dofs)
+  for (const std::vector<int>& q : _entity_dofs)
     sum = std::accumulate(q.begin(), q.end(), sum);
-
   if (sum != _coeffs.shape(0))
   {
     throw std::runtime_error(

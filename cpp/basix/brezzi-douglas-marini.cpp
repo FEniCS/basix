@@ -40,7 +40,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   // Add integral moments on facets
   const std::size_t facet_count = tdim + 1;
   const std::size_t facet_dofs = polyset::dim(facettype, degree);
-  const int internal_dofs = ndofs - facet_count * facet_dofs;
 
   const FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
@@ -91,21 +90,13 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
     throw std::runtime_error("Invalid topological dimension.");
   }
 
-  // BDM has facet_dofs dofs on each facet, and ndofs - facet_count *
-  // facet_dofs in the interior
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < tdim - 1; ++i)
-    entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
-  entity_dofs[tdim] = {internal_dofs};
-
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim - 1], M[tdim]},
       {x[tdim - 1], x[tdim]}, degree);
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, x, M,
+                       base_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

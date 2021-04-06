@@ -422,23 +422,11 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
     throw std::runtime_error("Invalid celltype in Nedelec");
   }
 
-  // Nedelec has d dofs on each edge, d(d-1) on each face
-  // and d(d-1)(d-2)/2 on the interior in 3D
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  entity_dofs[0].resize(topology[0].size(), 0);
-  entity_dofs[1].resize(topology[1].size(), degree);
-  entity_dofs[2].resize(topology[2].size(), degree * (degree - 1));
   const std::size_t tdim = cell::topological_dimension(celltype);
-  if (tdim > 2)
-    entity_dofs[3] = {degree * (degree - 1) * (degree - 2) / 2};
-
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, transforms, x, M,
-                       maps::type::covariantPiola);
+                       transforms, x, M, maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
@@ -464,24 +452,13 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
     throw std::runtime_error("Invalid celltype in Nedelec");
   }
 
-  // Nedelec(2nd kind) has (d + 1) dofs on each edge, (d + 1)(d - 1) on
-  // each face and (d - 2)(d - 1)(d + 1)/2 on the interior in 3D
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  entity_dofs[0].resize(topology[0].size(), 0);
-  entity_dofs[1].resize(topology[1].size(), degree + 1);
-  entity_dofs[2].resize(topology[2].size(), (degree + 1) * (degree - 1));
-  if (tdim > 2)
-    entity_dofs[3] = {(degree - 2) * (degree - 1) * (degree + 1) / 2};
 
   const std::size_t psize = polyset::dim(celltype, degree);
   xt::xtensor<double, 2> wcoeffs = xt::eye<double>(tdim * psize);
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, x, M,
-                       maps::type::covariantPiola);
+                       base_transformations, x, M, maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

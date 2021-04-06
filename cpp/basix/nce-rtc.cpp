@@ -166,17 +166,11 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
     }
   }
 
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < tdim - 1; ++i)
-    entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
-  entity_dofs[tdim] = {internal_dofs};
-
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]},
       degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, x, M,
+                       base_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
@@ -367,17 +361,9 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
     }
   }
 
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  entity_dofs[0].resize(topology[0].size(), 0);
-  entity_dofs[1].resize(topology[1].size(), edge_dofs);
-  entity_dofs[2].resize(topology[2].size(), face_dofs);
-  if (tdim == 3)
-    entity_dofs[3].resize(topology[3].size(), volume_dofs);
-
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, x, M,
-                       maps::type::covariantPiola);
+                       base_transformations, x, M, maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

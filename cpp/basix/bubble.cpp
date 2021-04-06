@@ -139,11 +139,6 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < tdim; ++i)
-    for (std::size_t j = 0; j < topology[i].size(); ++j)
-      entity_dofs[i].push_back(0);
-  entity_dofs[tdim].push_back(points.shape(0));
 
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < topology.size() - 1; ++i)
@@ -157,7 +152,6 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, x, M,
-                       maps::type::identity);
+                       base_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------

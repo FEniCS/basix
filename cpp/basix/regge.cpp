@@ -148,11 +148,9 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   // and d(d-1)(d+1) on the interior in 3D
   const int edge_dofs = degree + 1;
   const int face_dofs = 3 * (degree + 1) * degree / 2;
-  const int volume_dofs = tdim > 2 ? (degree + 1) * degree * (degree - 1) : 0;
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const int num_vertices = topology[0].size();
   const int num_edges = topology[1].size();
   const int num_faces = topology[2].size();
 
@@ -218,15 +216,8 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
     }
   }
 
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  entity_dofs[0].resize(num_vertices, 0);
-  entity_dofs[1].resize(num_edges, edge_dofs);
-  entity_dofs[2].resize(num_faces, face_dofs);
-  if (tdim > 2)
-    entity_dofs[3] = {volume_dofs};
-
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
-                       coeffs, entity_dofs, base_transformations, x, M,
+                       coeffs, base_transformations, x, M,
                        maps::type::doubleCovariantPiola);
 }
 //-----------------------------------------------------------------------------

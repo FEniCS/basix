@@ -81,8 +81,8 @@ std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
   auto _beta = xt::adapt(beta);
 
   xt::xtensor<double, 2> A = xt::diag(_alpha);
-  auto tmp = xt::view(_beta, xt::range(1, _));
-  xt::view(A, xt::range(1, _), xt::range(_, -1)) += xt::diag(xt::sqrt(tmp));
+  auto tmp = xt::sqrt(xt::view(_beta, xt::range(1, _)));
+  A += xt::diag(xt::sqrt(tmp), 1) + xt::diag(xt::sqrt(tmp), -1);
 
   auto [evals, evecs] = xt::linalg::eigh(A);
 
@@ -753,6 +753,9 @@ quadrature::compute_gauss_jacobi_rule(double a, int m)
     const double f = Jd[i];
     wts[i] = a6 / (1.0 - x * x) / (f * f);
   }
+
+  std::cout << "weights:\n" << xt::adapt(wts) << std::endl;
+  std::cout << "x:\n" << pts << std::endl;
 
   return {pts, wts};
 }

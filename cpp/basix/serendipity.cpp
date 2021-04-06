@@ -32,23 +32,23 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
       "default", cell::type::quadrilateral, 2 * degree);
   auto wts = xt::adapt(_wts);
 
-  xt::xtensor<double, 2> polyset_at_Qpts
+  xt::xtensor<double, 2> Pq
       = xt::view(polyset::tabulate(cell::type::quadrilateral, degree, 0, pts),
                  0, xt::all(), xt::all());
-  xt::xtensor<double, 2> smaller_polyset_at_Qpts
+  xt::xtensor<double, 2> Pt
       = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
-  const std::size_t psize = polyset_at_Qpts.shape(1);
-  const std::size_t nv = smaller_polyset_at_Qpts.shape(1);
+  const std::size_t psize = Pq.shape(1);
+  const std::size_t nv = Pq.shape(1);
 
   // Create coefficients for order (degree) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   for (std::size_t i = 0; i < nv; ++i)
   {
-    auto p_i = xt::col(smaller_polyset_at_Qpts, i);
+    auto p_i = xt::col(Pt, i);
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(Pq, k))();
   }
 
   auto q0 = xt::col(pts, 0);
@@ -56,14 +56,14 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
   if (degree == 1)
   {
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(nv, k) = xt::sum(wts * q0 * q1 * xt::col(polyset_at_Qpts, k))();
+      wcoeffs(nv, k) = xt::sum(wts * q0 * q1 * xt::col(Pq, k))();
     return wcoeffs;
   }
 
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::col(polyset_at_Qpts, k);
+    auto pk = xt::col(Pq, k);
     for (std::size_t a = 0; a < 2; ++a)
     {
       auto q_a = xt::col(pts, a);
@@ -129,23 +129,23 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
   auto [pts, _wts] = quadrature::make_quadrature(
       "default", cell::type::hexahedron, 2 * degree);
   auto wts = xt::adapt(_wts);
-  xt::xtensor<double, 2> polyset_at_Qpts
+  xt::xtensor<double, 2> Ph
       = xt::view(polyset::tabulate(cell::type::hexahedron, degree, 0, pts), 0,
                  xt::all(), xt::all());
-  xt::xtensor<double, 2> smaller_polyset_at_Qpts
+  xt::xtensor<double, 2> Pt
       = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
-  const std::size_t psize = polyset_at_Qpts.shape(1);
-  const std::size_t nv = smaller_polyset_at_Qpts.shape(1);
+  const std::size_t psize = Ph.shape(1);
+  const std::size_t nv = Pt.shape(1);
 
   // Create coefficients for order (degree) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   for (std::size_t i = 0; i < nv; ++i)
   {
-    auto p_i = xt::col(smaller_polyset_at_Qpts, i);
+    auto p_i = xt::col(Pt, i);
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(Ph, k))();
   }
 
   std::size_t c = nv;
@@ -158,7 +158,7 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
     {
       for (std::size_t k = 0; k < psize; ++k)
       {
-        integrand = wts * xt::col(polyset_at_Qpts, k);
+        integrand = wts * xt::col(Ph, k);
         for (int d = 0; d < 3; ++d)
         {
           auto q_d = xt::col(pts, d);
@@ -184,15 +184,15 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
       "default", cell::type::quadrilateral, 2 * degree + 2);
   auto wts = xt::adapt(_wts);
 
-  xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
+  xt::xtensor<double, 2> Pq = xt::view(
       polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts), 0,
       xt::all(), xt::all());
-  xt::xtensor<double, 2> smaller_polyset_at_Qpts
+  xt::xtensor<double, 2> Pt
       = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
-  const std::size_t psize = polyset_at_Qpts.shape(1);
-  const std::size_t nv = smaller_polyset_at_Qpts.shape(1);
+  const std::size_t psize = Pq.shape(1);
+  const std::size_t nv = Pt.shape(1);
 
   // Create coefficients for order (degree) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * 2});
@@ -200,11 +200,11 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
   {
     for (int d = 0; d < 2; ++d)
     {
-      auto p_i = xt::col(smaller_polyset_at_Qpts, i);
+      auto p_i = xt::col(Pt, i);
       for (std::size_t k = 0; k < psize; ++k)
       {
         wcoeffs(d * nv + i, d * psize + k)
-            = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+            = xt::sum(wts * p_i * xt::col(Pq, k))();
       }
     }
   }
@@ -214,7 +214,7 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::col(polyset_at_Qpts, k);
+    auto pk = xt::col(Pq, k);
     for (std::size_t d = 0; d < 2; ++d)
     {
       for (std::size_t a = 0; a < 2; ++a)
@@ -697,7 +697,6 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
   FiniteElement facet_moment_space = create_dpc(facettype, degree);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
-
   if (tdim > 1)
   {
     facet_transforms

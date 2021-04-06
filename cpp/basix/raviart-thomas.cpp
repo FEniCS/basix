@@ -140,17 +140,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, B, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]}, degree);
-
-  // Raviart-Thomas has ns dofs on each facet, and ns0*tdim in the
-  // interior
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < tdim - 1; ++i)
-    entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[tdim - 1].resize(topology[tdim - 1].size(), facet_dofs);
-  entity_dofs[tdim] = {(int)(ns0 * tdim)};
-
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
-                       entity_dofs, base_transformations, x, M,
+                       base_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

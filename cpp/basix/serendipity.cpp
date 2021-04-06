@@ -28,15 +28,15 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
   const std::size_t ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature(
+  auto [pts, _wts] = quadrature::make_quadrature(
       "default", cell::type::quadrilateral, 2 * degree);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::quadrilateral, degree, 0, Qpts),
+      = xt::view(polyset::tabulate(cell::type::quadrilateral, degree, 0, pts),
                  0, xt::all(), xt::all());
   xt::xtensor<double, 2> smaller_polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, Qpts), 0,
+      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
   const std::size_t psize = polyset_at_Qpts.shape(1);
@@ -48,15 +48,15 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
   {
     auto p_i = xt::col(smaller_polyset_at_Qpts, i);
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
+      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
   }
 
-  auto q0 = xt::col(Qpts, 0);
-  auto q1 = xt::col(Qpts, 1);
+  auto q0 = xt::col(pts, 0);
+  auto q1 = xt::col(pts, 1);
   if (degree == 1)
   {
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(nv, k) = xt::sum(Qwts * q0 * q1 * xt::col(polyset_at_Qpts, k))();
+      wcoeffs(nv, k) = xt::sum(wts * q0 * q1 * xt::col(polyset_at_Qpts, k))();
     return wcoeffs;
   }
 
@@ -66,8 +66,8 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
     auto pk = xt::col(polyset_at_Qpts, k);
     for (std::size_t a = 0; a < 2; ++a)
     {
-      auto q_a = xt::col(Qpts, a);
-      integrand = Qwts * q0 * q1 * pk;
+      auto q_a = xt::col(pts, a);
+      integrand = wts * q0 * q1 * pk;
       for (int i = 1; i < degree; ++i)
         integrand *= q_a;
       wcoeffs(nv + a, k) = xt::sum(integrand)();
@@ -91,7 +91,7 @@ serendipity_3d_indices(int total, int linear, std::vector<int> done = {})
       return {{done[0], done[1], done[2]}};
     return {};
   }
-  if (done.size() == 2)
+  else if (done.size() == 2)
   {
     return serendipity_3d_indices(
         total, linear, {done[0], done[1], total - done[0] - done[1]});
@@ -112,6 +112,7 @@ serendipity_3d_indices(int total, int linear, std::vector<int> done = {})
     for (std::array<int, 3> j : serendipity_3d_indices(total, linear, new_done))
       out.push_back(j);
   }
+
   return out;
 }
 //----------------------------------------------------------------------------
@@ -125,14 +126,14 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
   // Number of order (degree) polynomials
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature(
+  auto [pts, _wts] = quadrature::make_quadrature(
       "default", cell::type::hexahedron, 2 * degree);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
   xt::xtensor<double, 2> polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::hexahedron, degree, 0, Qpts), 0,
+      = xt::view(polyset::tabulate(cell::type::hexahedron, degree, 0, pts), 0,
                  xt::all(), xt::all());
   xt::xtensor<double, 2> smaller_polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts), 0,
+      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
   const std::size_t psize = polyset_at_Qpts.shape(1);
@@ -144,7 +145,7 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
   {
     auto p_i = xt::col(smaller_polyset_at_Qpts, i);
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
+      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
   }
 
   std::size_t c = nv;
@@ -157,10 +158,10 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
     {
       for (std::size_t k = 0; k < psize; ++k)
       {
-        integrand = Qwts * xt::col(polyset_at_Qpts, k);
+        integrand = wts * xt::col(polyset_at_Qpts, k);
         for (int d = 0; d < 3; ++d)
         {
-          auto q_d = xt::col(Qpts, d);
+          auto q_d = xt::col(pts, d);
           for (int j = 0; j < i[d]; ++j)
             integrand *= q_d;
         }
@@ -179,15 +180,15 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
   const std::size_t ndofs = degree * (degree + 3) + 4;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature(
+  auto [pts, _wts] = quadrature::make_quadrature(
       "default", cell::type::quadrilateral, 2 * degree + 2);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
-      polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, Qpts), 0,
+      polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts), 0,
       xt::all(), xt::all());
   xt::xtensor<double, 2> smaller_polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, Qpts), 0,
+      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
   const std::size_t psize = polyset_at_Qpts.shape(1);
@@ -201,14 +202,15 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
     {
       auto p_i = xt::col(smaller_polyset_at_Qpts, i);
       for (std::size_t k = 0; k < psize; ++k)
+      {
         wcoeffs(d * nv + i, d * psize + k)
-            = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
+            = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+      }
     }
   }
 
-  auto q0 = xt::col(Qpts, 0);
-  auto q1 = xt::col(Qpts, 1);
-
+  auto q0 = xt::col(pts, 0);
+  auto q1 = xt::col(pts, 1);
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
@@ -217,8 +219,8 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
     {
       for (std::size_t a = 0; a < 2; ++a)
       {
-        auto q_a = xt::col(Qpts, a);
-        integrand = Qwts * pk;
+        auto q_a = xt::col(pts, a);
+        integrand = wts * pk;
         if (a == 0 and d == 0)
           integrand *= q0;
         else if (a == 0 and d == 1)
@@ -227,6 +229,7 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
           integrand *= (degree + 1) * q0;
         else if (a == 1 and d == 1)
           integrand *= q1;
+
         for (int i = 0; i < degree; ++i)
           integrand *= q_a;
         wcoeffs(2 * nv + a, psize * d + k) = xt::sum(integrand)();
@@ -242,15 +245,15 @@ xt::xtensor<double, 2> make_serendipity_div_space_3d(int degree)
   const std::size_t ndofs = (degree + 1) * (degree * (degree + 5) + 12) / 2;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature(
+  auto [pts, _wts] = quadrature::make_quadrature(
       "default", cell::type::hexahedron, 2 * degree + 2);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::hexahedron, degree + 1, 0, Qpts),
+      = xt::view(polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts),
                  0, xt::all(), xt::all());
   xt::xtensor<double, 2> smaller_polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts), 0,
+      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
   const std::size_t psize = polyset_at_Qpts.shape(1);
@@ -264,15 +267,16 @@ xt::xtensor<double, 2> make_serendipity_div_space_3d(int degree)
     {
       auto p_i = xt::col(smaller_polyset_at_Qpts, i);
       for (std::size_t k = 0; k < psize; ++k)
+      {
         wcoeffs(d * nv + i, d * psize + k)
-            = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
+            = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+      }
     }
   }
 
-  auto q0 = xt::col(Qpts, 0);
-  auto q1 = xt::col(Qpts, 1);
-  auto q2 = xt::col(Qpts, 2);
-
+  auto q0 = xt::col(pts, 0);
+  auto q1 = xt::col(pts, 1);
+  auto q2 = xt::col(pts, 2);
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
@@ -283,8 +287,8 @@ xt::xtensor<double, 2> make_serendipity_div_space_3d(int degree)
       {
         for (int index = 0; index <= degree; ++index)
         {
-          auto q_a = xt::col(Qpts, a);
-          integrand = Qwts * pk;
+          auto q_a = xt::col(pts, a);
+          integrand = wts * pk;
           if (a == 0)
           {
             if (d == 0)
@@ -342,15 +346,15 @@ xt::xtensor<double, 2> make_serendipity_curl_space_2d(int degree)
   const std::size_t ndofs = degree * (degree + 3) + 4;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature(
+  auto [pts, _wts] = quadrature::make_quadrature(
       "default", cell::type::quadrilateral, 2 * degree + 2);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
-      polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, Qpts), 0,
+      polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts), 0,
       xt::all(), xt::all());
   xt::xtensor<double, 2> smaller_polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, Qpts), 0,
+      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
   const std::size_t psize = polyset_at_Qpts.shape(1);
@@ -364,14 +368,15 @@ xt::xtensor<double, 2> make_serendipity_curl_space_2d(int degree)
     {
       auto p_i = xt::col(smaller_polyset_at_Qpts, i);
       for (std::size_t k = 0; k < psize; ++k)
+      {
         wcoeffs(d * nv + i, d * psize + k)
-            = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
+            = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+      }
     }
   }
 
-  auto q0 = xt::col(Qpts, 0);
-  auto q1 = xt::col(Qpts, 1);
-
+  auto q0 = xt::col(pts, 0);
+  auto q1 = xt::col(pts, 1);
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
@@ -380,8 +385,8 @@ xt::xtensor<double, 2> make_serendipity_curl_space_2d(int degree)
     {
       for (std::size_t a = 0; a < 2; ++a)
       {
-        auto q_a = xt::col(Qpts, a);
-        integrand = Qwts * pk;
+        auto q_a = xt::col(pts, a);
+        integrand = wts * pk;
         if (a == 0 and d == 0)
           integrand *= (degree + 1) * q1;
         else if (a == 0 and d == 1)
@@ -390,6 +395,7 @@ xt::xtensor<double, 2> make_serendipity_curl_space_2d(int degree)
           integrand *= q1;
         else if (a == 1 and d == 1)
           integrand *= -(degree + 1) * q0;
+
         for (int i = 0; i < degree; ++i)
           integrand *= q_a;
         wcoeffs(2 * nv + a, psize * d + k) = xt::sum(integrand)();
@@ -408,15 +414,15 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
                                       + 3 * (degree * (degree + 4) + 3);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts] = quadrature::make_quadrature(
+  auto [pts, _wts] = quadrature::make_quadrature(
       "default", cell::type::hexahedron, 2 * degree + 2);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::hexahedron, degree + 1, 0, Qpts),
+      = xt::view(polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts),
                  0, xt::all(), xt::all());
   xt::xtensor<double, 2> smaller_polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, Qpts), 0,
+      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
   const std::size_t psize = polyset_at_Qpts.shape(1);
@@ -430,15 +436,16 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
     {
       auto p_i = xt::col(smaller_polyset_at_Qpts, i);
       for (std::size_t k = 0; k < psize; ++k)
+      {
         wcoeffs(d * nv + i, d * psize + k)
-            = xt::sum(Qwts * p_i * xt::col(polyset_at_Qpts, k))();
+            = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+      }
     }
   }
 
-  auto q0 = xt::col(Qpts, 0);
-  auto q1 = xt::col(Qpts, 1);
-  auto q2 = xt::col(Qpts, 2);
-
+  auto q0 = xt::col(pts, 0);
+  auto q1 = xt::col(pts, 1);
+  auto q2 = xt::col(pts, 2);
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
@@ -449,8 +456,8 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
       {
         for (int index = 0; index <= degree; ++index)
         {
-          auto q_a = xt::col(Qpts, a);
-          integrand = Qwts * pk;
+          auto q_a = xt::col(pts, a);
+          integrand = wts * pk;
           if (a == 0)
           {
             if (d == 0)
@@ -499,8 +506,8 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
       }
     }
   }
-  int c = 3 * nv + (degree > 1 ? 3 : 2) * degree;
 
+  int c = 3 * nv + (degree > 1 ? 3 : 2) * degree;
   std::vector<std::array<int, 3>> indices;
   for (std::size_t s = 1; s <= 3; ++s)
   {
@@ -511,10 +518,10 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
       {
         for (int d = 0; d < 3; ++d)
         {
-          integrand = Qwts * xt::col(polyset_at_Qpts, k);
+          integrand = wts * xt::col(polyset_at_Qpts, k);
           for (int d2 = 0; d2 < 3; ++d2)
           {
-            auto q_d2 = xt::col(Qpts, d2);
+            auto q_d2 = xt::col(pts, d2);
             if (d == d2)
             {
               integrand *= i[d2];
@@ -577,7 +584,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     FiniteElement moment_space = create_dpc(cell::type::interval, degree - 2);
     std::tie(x[1], M[1])
         = moments::make_integral_moments(moment_space, celltype, 1, quad_deg);
-
     if (tdim > 1)
     {
       edge_transforms
@@ -611,29 +617,6 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
     wcoeffs = make_serendipity_space_2d(degree);
   else if (tdim == 3)
     wcoeffs = make_serendipity_space_3d(degree);
-
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  entity_dofs[0].resize(topology[0].size(), 0);
-  for (std::size_t v = 0; v < M[0].size(); ++v)
-    entity_dofs[0][v] = 1;
-
-  entity_dofs[1].resize(topology[1].size(), 0);
-  for (std::size_t e = 0; e < M[1].size(); ++e)
-    entity_dofs[1][e] = M[1][e].shape(0);
-
-  if (tdim >= 2)
-  {
-    entity_dofs[2].resize(topology[2].size(), 0);
-    for (std::size_t e = 0; e < M[2].size(); ++e)
-      entity_dofs[2][e] = M[2][e].shape(0);
-  }
-
-  if (tdim == 3)
-  {
-    entity_dofs[3].resize(topology[3].size(), 0);
-    for (std::size_t e = 0; e < M[3].size(); ++e)
-      entity_dofs[3][e] = M[3][e].shape(0);
-  }
 
   std::size_t ndofs = 0;
   for (auto& Md : M)
@@ -684,9 +667,8 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[0], M[1], M[2], M[3]}, {x[0], x[1], x[2], x[3]},
       degree);
-
   return FiniteElement(element::family::Serendipity, celltype, degree, {1},
-                       coeffs, entity_dofs, base_transformations, x, M,
+                       coeffs, base_transformations, x, M,
                        maps::type::identity);
 }
 //-----------------------------------------------------------------------------
@@ -701,7 +683,6 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::size_t tdim = cell::topological_dimension(celltype);
-
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
@@ -723,32 +704,12 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
         = moments::create_normal_moment_dof_transformations(facet_moment_space);
   }
 
-  int cell_dofs = 0;
   if (tdim >= 2 and degree >= 2)
   {
     FiniteElement cell_moment_space = create_dpc(celltype, degree - 2);
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         cell_moment_space, celltype, tdim, quad_deg);
-    cell_dofs = M[tdim][0].shape(0);
   }
-
-  const int facet_dofs = facet_moment_space.dim();
-  const int vertex_dofs = tdim == 1 ? facet_dofs : 0;
-  const int edge_dofs = tdim == 1 ? cell_dofs : (tdim == 2 ? facet_dofs : 0);
-  const int face_dofs = tdim == 2 ? cell_dofs : (tdim == 3 ? facet_dofs : 0);
-  const int volume_dofs = tdim == 3 ? cell_dofs : 0;
-
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t j = 0; j < topology[0].size(); ++j)
-    entity_dofs[0].push_back(vertex_dofs);
-  for (std::size_t j = 0; j < topology[1].size(); ++j)
-    entity_dofs[1].push_back(edge_dofs);
-  if (tdim >= 2)
-    for (std::size_t j = 0; j < topology[2].size(); ++j)
-      entity_dofs[2].push_back(face_dofs);
-  if (tdim == 3)
-    for (std::size_t j = 0; j < topology[3].size(); ++j)
-      entity_dofs[3].push_back(volume_dofs);
 
   std::size_t ndofs = 0;
   for (auto& Md : M)
@@ -767,28 +728,29 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
 
-  const int facet_count = topology[tdim - 1].size();
+  const int num_facets = topology[tdim - 1].size();
 
   auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
+  const int num_facet_dofs = facet_moment_space.dim();
   if (tdim == 2)
   {
-    for (int edge = 0; edge < facet_count; ++edge)
+    for (int edge = 0; edge < num_facets; ++edge)
     {
-      const std::size_t start = facet_dofs * edge;
-      auto range = xt::range(start, start + facet_dofs);
+      const std::size_t start = num_facet_dofs * edge;
+      auto range = xt::range(start, start + num_facet_dofs);
       xt::view(base_transformations, edge, range, range)
           = xt::view(facet_transforms, 0, xt::all(), xt::all());
     }
   }
   else if (tdim == 3)
   {
-    const int edge_count = 12;
-    for (int face = 0; face < facet_count; ++face)
+    constexpr int num_edges = 12;
+    for (int face = 0; face < num_facets; ++face)
     {
-      const std::size_t start = facet_dofs * face;
-      const std::size_t p = edge_count + 2 * face;
-      auto range = xt::range(start, start + facet_dofs);
+      const std::size_t start = num_facet_dofs * face;
+      const std::size_t p = num_edges + 2 * face;
+      auto range = xt::range(start, start + num_facet_dofs);
       xt::view(base_transformations, p, range, range)
           = xt::view(facet_transforms, 0, xt::all(), xt::all());
       xt::view(base_transformations, p + 1, range, range)
@@ -801,7 +763,7 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
       degree + 1);
 
   return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
-                       coeffs, entity_dofs, base_transformations, x, M,
+                       coeffs, base_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
@@ -816,9 +778,9 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _Qwts]
+  auto [Qpts, _wts]
       = quadrature::make_quadrature("default", celltype, 2 * degree);
-  auto Qwts = xt::adapt(_Qwts);
+  auto wts = xt::adapt(_wts);
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
       polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
 
@@ -909,18 +871,10 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
     }
   }
 
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  entity_dofs[0].resize(topology[0].size(), 0);
-  entity_dofs[1].resize(topology[1].size(), edge_dofs);
-  entity_dofs[2].resize(topology[2].size(), face_dofs);
-  if (tdim == 3)
-    entity_dofs[3].resize(topology[3].size(), volume_dofs);
-
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree + 1);
-
   return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
-                       coeffs, entity_dofs, base_transformations, x, M,
+                       coeffs, base_transformations, x, M,
                        maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

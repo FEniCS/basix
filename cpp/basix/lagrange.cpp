@@ -31,16 +31,11 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  std::vector<std::vector<int>> entity_dofs(topology.size());
 
   // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)
   {
     auto pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
-    for (std::size_t i = 0; i < entity_dofs.size(); ++i)
-      entity_dofs[i].resize(topology[i].size(), 0);
-    entity_dofs[tdim][0] = 1;
-
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
     std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
@@ -67,7 +62,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
               {num_dofs, static_cast<std::size_t>(1), num_dofs});
           xt::view(M[dim][e], xt::all(), 0, xt::all())
               = xt::eye<double>(num_dofs);
-          entity_dofs[0].push_back(1);
         }
         else if (dim == tdim)
         {
@@ -78,7 +72,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
           M[dim][e] = xt::xtensor<double, 3>(s);
           xt::view(M[dim][e], xt::all(), 0, xt::all())
               = xt::eye<double>(num_dofs);
-          entity_dofs[dim].push_back(num_dofs);
         }
         else
         {
@@ -91,8 +84,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
           M[dim][e] = xt::xtensor<double, 3>(s);
           xt::view(M[dim][e], xt::all(), 0, xt::all())
               = xt::eye<double>(num_dofs);
-
-          entity_dofs[dim].push_back(lattice.shape(0));
 
           auto x0s = xt::reshape_view(
               xt::row(entity_x, 0),
@@ -233,8 +224,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
       {x[0], x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, x, M,
-                       maps::type::identity);
+                       base_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
@@ -246,13 +236,8 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < topology.size(); ++i)
-    entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[topology.size() - 1][0] = ndofs;
 
   const std::size_t tdim = topology.size() - 1;
-
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
@@ -272,8 +257,7 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
       celltype, xt::eye<double>(ndofs), {M[tdim]}, {x[tdim]}, degree);
 
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, x, M,
-                       maps::type::identity);
+                       base_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dpc(cell::type celltype, int degree)
@@ -321,11 +305,6 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::size_t tdim = topology.size() - 1;
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < topology.size(); ++i)
-    entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[tdim][0] = ndofs;
-
   std::size_t transform_count = 0;
   for (std::size_t i = 1; i < tdim; ++i)
     transform_count += topology[i].size() * i;
@@ -344,7 +323,6 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
-                       entity_dofs, base_transformations, x, M,
-                       maps::type::identity);
+                       base_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------

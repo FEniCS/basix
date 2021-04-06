@@ -214,7 +214,6 @@ FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 3>& coeffs,
-    const std::vector<std::vector<int>>& /*entity_dofs*/,
     const xt::xtensor<double, 3>& base_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
@@ -293,11 +292,8 @@ FiniteElement::FiniteElement(
       _entity_dofs[d][e] = M[d][e].shape(0);
   }
 
-  // Check that entity dofs add up to total number of dofs
-  std::size_t sum = 0;
-  for (const std::vector<int>& q : _entity_dofs)
-    sum = std::accumulate(q.begin(), q.end(), sum);
-  if (sum != _coeffs.shape(0))
+  // Check that nunber of dofs os equal to number of coefficients
+  if (num_dofs != _coeffs.shape(0))
   {
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");

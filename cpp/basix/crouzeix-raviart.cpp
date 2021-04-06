@@ -49,19 +49,10 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   const auto base_transformations
       = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
 
-  // Crouzeix-Raviart has one dof on each entity of tdim - 1.
-  std::vector<std::vector<int>> entity_dofs(topology.size());
-  entity_dofs[0].resize(topology[0].size(), 0);
-  entity_dofs[1].resize(topology[1].size(), (tdim == 2) ? 1 : 0);
-  entity_dofs[2].resize(topology[2].size(), (tdim == 3) ? 1 : 0);
-  if (tdim == 3)
-    entity_dofs[3] = {0};
-
   M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1}));
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim - 1]}, {x[tdim - 1]}, degree);
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
-                       entity_dofs, base_transformations, x, M,
-                       maps::type::identity);
+                       base_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------

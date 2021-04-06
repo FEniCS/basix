@@ -5,6 +5,7 @@
 #include "cell.h"
 #include "quadrature.h"
 #include <map>
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 

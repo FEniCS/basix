@@ -82,8 +82,7 @@ std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
 
   xt::xtensor<double, 2> A = xt::diag(_alpha);
   auto tmp = xt::sqrt(xt::view(_beta, xt::range(1, _)));
-  A += xt::diag(xt::sqrt(tmp), 1) + xt::diag(xt::sqrt(tmp), -1);
-
+  A += xt::diag(tmp, 1) + xt::diag(tmp, -1);
   auto [evals, evecs] = xt::linalg::eigh(A);
 
   std::vector<double> x(evals.shape(0)), w(evals.shape(0));

@@ -40,7 +40,7 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
                  xt::all(), xt::all());
 
   const std::size_t psize = Pq.shape(1);
-  const std::size_t nv = Pq.shape(1);
+  const std::size_t nv = Pt.shape(1);
 
   // Create coefficients for order (degree) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});

@@ -135,42 +135,26 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < tdim; ++i)
-    transform_count += topology[i].size() * i;
-
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
   if (tdim == 2)
   {
-    for (int edge = 0; edge < facet_count; ++edge)
-    {
-      const std::size_t start = facet_dofs * edge;
-      auto range = xt::range(start, start + facet_dofs);
-      xt::view(base_transformations, edge, range, range)
-          = xt::view(facet_transforms, 0, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 0, xt::all(), xt::all()));
   }
   else if (tdim == 3)
   {
-    const int edge_count = 12;
-    for (int face = 0; face < facet_count; ++face)
-    {
-      const std::size_t start = facet_dofs * face;
-      const std::size_t p = edge_count + 2 * face;
-      auto range = xt::range(start, start + facet_dofs);
-      xt::view(base_transformations, p, range, range)
-          = xt::view(facet_transforms, 0, xt::all(), xt::all());
-      xt::view(base_transformations, p + 1, range, range)
-          = xt::view(facet_transforms, 1, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 0, xt::all(), xt::all()));
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 1, xt::all(), xt::all()));
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]},
       degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
-                       base_transformations, x, M,
+                       entity_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
@@ -334,36 +318,31 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < tdim; ++i)
-    transform_count += topology[i].size() * i;
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  for (int edge = 0; edge < edge_count; ++edge)
-  {
-    const std::size_t start = edge_dofs * edge;
-    auto range = xt::range(start, start + edge_dofs);
-    xt::view(base_transformations, edge, range, range)
-        = xt::view(edge_transforms, 0, xt::all(), xt::all());
-  }
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
-  if (tdim == 3 and degree > 1)
+  entity_transformations.push_back(
+      xt::view(edge_transforms, 0, xt::all(), xt::all()));
+
+  if (tdim == 3)
   {
-    for (int face = 0; face < face_count; ++face)
+    if (degree == 1)
     {
-      const std::size_t start = edge_dofs * edge_count + face_dofs * face;
-      const std::size_t p = edge_count + 2 * face;
-      auto range = xt::range(start, start + face_dofs);
-      xt::view(base_transformations, p, range, range)
-          = xt::view(face_transforms, 0, xt::all(), xt::all());
-      xt::view(base_transformations, p + 1, range, range)
-          = xt::view(face_transforms, 1, xt::all(), xt::all());
+      entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+      entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    }
+    else
+    {
+      entity_transformations.push_back(
+          xt::view(face_transforms, 0, xt::all(), xt::all()));
+      entity_transformations.push_back(
+          xt::view(face_transforms, 1, xt::all(), xt::all()));
     }
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
-                       base_transformations, x, M, maps::type::covariantPiola);
+                       entity_transformations, x, M,
+                       maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

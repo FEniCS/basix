@@ -279,12 +279,11 @@ Each element has a `tabulate` function which returns the basis functions and a n
             return py::array_t<double>(U.shape(), U.data());
           },
           invmapdoc.c_str())
-      .def_property_readonly(
-          "base_transformations",
-          [](const FiniteElement& self) {
-            const xt::xtensor<double, 3>& t = self.base_transformations();
-            return py::array_t<double>(t.shape(), t.data(), py::cast(self));
-          })
+      .def("base_transformations",
+           [](const FiniteElement& self) {
+             xt::xtensor<double, 3> t = self.base_transformations();
+             return py::array_t<double>(t.shape(), t.data());
+           })
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)

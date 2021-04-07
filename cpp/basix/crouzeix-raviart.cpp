@@ -24,12 +24,13 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   if (tdim < 2)
   {
     throw std::runtime_error(
-        "opological dim must be 2 or 3 for Crouzeix-Raviart");
+        "topological dim must be 2 or 3 for Crouzeix-Raviart");
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::vector<std::vector<int>>& facet_topology = topology[tdim - 1];
+  const std::size_t ndofs = facet_topology.size();
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
@@ -44,15 +45,13 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
     xt::row(x[tdim - 1][f], 0) = xt::mean(v, 0);
   }
 
-  const std::size_t ndofs = facet_topology.size();
-  const std::size_t transform_count = tdim == 2 ? 3 : 14;
-  const auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
+  std::vector<xt::xtensor<double, 2>> entity_transformations(
+      tdim == 2 ? 1 : 3, xt::xtensor<double, 2>({0, 0}));
 
   M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1}));
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim - 1]}, {x[tdim - 1]}, degree);
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
-                       base_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------

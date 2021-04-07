@@ -136,8 +136,6 @@ create_regge_interpolation(cell::type celltype, int degree)
 FiniteElement basix::create_regge(cell::type celltype, int degree)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
-  const int basis_size = polyset::dim(celltype, degree);
-  const std::size_t ndofs = basis_size * (tdim + 1) * tdim / 2;
 
   const xt::xtensor<double, 2> wcoeffs = create_regge_space(celltype, degree);
   const auto [x, M] = create_regge_interpolation(celltype, degree);
@@ -146,51 +144,35 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D
-  const int edge_dofs = degree + 1;
-  const int face_dofs = 3 * (degree + 1) * degree / 2;
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const int num_edges = topology[1].size();
-  const int num_faces = topology[2].size();
 
-  const std::size_t transform_count = tdim == 2 ? 3 : 14;
-  xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
   const std::vector<int> edge_ref
       = doftransforms::interval_reflection(degree + 1);
-  for (int edge = 0; edge < num_edges; ++edge)
-  {
-    const int start = edge_ref.size() * edge;
-    for (std::size_t i = 0; i < edge_ref.size(); ++i)
-    {
-      base_transformations(edge, start + i, start + i) = 0;
-      base_transformations(edge, start + i, start + edge_ref[i]) = 1;
-    }
-  }
+  xt::xtensor<double, 2> et({edge_ref.size(), edge_ref.size()});
+  for (std::size_t i = 0; i < edge_ref.size(); ++i)
+    et(i, edge_ref[i]) = 1;
+  entity_transformations.push_back(et);
 
   if (tdim > 2)
   {
-    const std::vector<int> face_ref_perm
-        = doftransforms::triangle_reflection(degree);
     const std::vector<int> face_rot_perm
         = doftransforms::triangle_rotation(degree);
+    const std::vector<int> face_ref_perm
+        = doftransforms::triangle_reflection(degree);
 
-    const xt::xtensor_fixed<double, xt::xshape<3, 3>> sub_ref
-        = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
     const xt::xtensor_fixed<double, xt::xshape<3, 3>> sub_rot
         = {{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
+    const xt::xtensor_fixed<double, xt::xshape<3, 3>> sub_ref
+        = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
 
     std::array<std::size_t, 2> shape
         = {face_ref_perm.size() * 3, face_ref_perm.size() * 3};
-    xt::xtensor<double, 2> face_ref = xt::zeros<double>(shape);
     xt::xtensor<double, 2> face_rot = xt::zeros<double>(shape);
+    xt::xtensor<double, 2> face_ref = xt::zeros<double>(shape);
 
     for (std::size_t i = 0; i < face_ref_perm.size(); ++i)
     {
@@ -202,22 +184,12 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
           = sub_ref;
     }
 
-    for (int face = 0; face < num_faces; ++face)
-    {
-      const int start = edge_dofs * num_edges + face_dofs * face;
-      xt::view(base_transformations, num_edges + 2 * face,
-               xt::range(start, start + face_rot.shape(0)),
-               xt::range(start, start + face_rot.shape(1)))
-          = face_rot;
-      xt::view(base_transformations, num_edges + 2 * face + 1,
-               xt::range(start, start + face_ref.shape(0)),
-               xt::range(start, start + face_ref.shape(1)))
-          = face_ref;
-    }
+    entity_transformations.push_back(face_rot);
+    entity_transformations.push_back(face_ref);
   }
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
-                       coeffs, base_transformations, x, M,
+                       coeffs, entity_transformations, x, M,
                        maps::type::doubleCovariantPiola);
 }
 //-----------------------------------------------------------------------------

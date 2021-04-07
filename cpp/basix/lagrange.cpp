@@ -181,8 +181,9 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   x[tdim].push_back(pt);
 
+  const int num_transformations = tdim * (tdim - 1) / 2;
   std::vector<xt::xtensor<double, 2>> entity_transformations(
-      tdim == 2 ? 1 : (tdim == 3 ? 3 : 0), xt::xtensor<double, 2>({0, 0}));
+      num_transformations, xt::xtensor<double, 2>({0, 0}));
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim]}, {x[tdim]}, degree);
@@ -246,8 +247,9 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   x[tdim].push_back(pt);
 
+  const int num_transformations = tdim * (tdim - 1) / 2;
   std::vector<xt::xtensor<double, 2>> entity_transformations(
-      tdim == 2 ? 1 : (tdim == 3 ? 3 : 0), xt::xtensor<double, 2>({0, 0}));
+      num_transformations);
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);

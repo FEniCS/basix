@@ -45,8 +45,9 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
     xt::row(x[tdim - 1][f], 0) = xt::mean(v, 0);
   }
 
+  const int num_transformations = tdim * (tdim - 1) / 2;
   std::vector<xt::xtensor<double, 2>> entity_transformations(
-      tdim == 2 ? 1 : 3, xt::xtensor<double, 2>({0, 0}));
+      num_transformations);
 
   M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1}));
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(

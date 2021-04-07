@@ -143,8 +143,9 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
+  const int num_transformations = tdim * (tdim - 1) / 2;
   std::vector<xt::xtensor<double, 2>> entity_transformations(
-      tdim == 2 ? 1 : (tdim == 3 ? 3 : 0), xt::xtensor<double, 2>({0, 0}));
+      num_transformations);
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);

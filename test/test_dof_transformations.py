@@ -11,7 +11,7 @@ from .utils import parametrize_over_elements
 @parametrize_over_elements(5)
 def test_non_zero(cell_name, element_name, order):
     e = basix.create_element(element_name, cell_name, order)
-    for t in e.base_transformations:
+    for t in e.base_transformations():
         for row in t:
             assert max(abs(i) for i in row) > 1e-6
 
@@ -19,64 +19,62 @@ def test_non_zero(cell_name, element_name, order):
 @parametrize_over_elements(5, "interval")
 def test_interval_transformation_size(element_name, order):
     e = basix.create_element(element_name, "interval", order)
-    assert len(e.base_transformations) == 0
+    assert len(e.base_transformations()) == 0
 
 
 @parametrize_over_elements(5, "triangle")
 def test_triangle_transformation_orders(element_name, order):
-    if element_name == "Crouzeix-Raviart" and order != 1:
-        pytest.xfail()
     e = basix.create_element(element_name, "triangle", order)
-    assert len(e.base_transformations) == 3
+    bt = e.base_transformations()
+    assert len(bt) == 3
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(e.base_transformations[i], order),
+            np.linalg.matrix_power(bt[i], order),
             identity)
 
 
 @parametrize_over_elements(5, "tetrahedron")
 def test_tetrahedron_transformation_orders(element_name, order):
-    if element_name == "Crouzeix-Raviart" and order != 1:
-        pytest.xfail()
     e = basix.create_element(element_name, "tetrahedron", order)
-    assert len(e.base_transformations) == 14
+    bt = e.base_transformations()
+    assert len(bt) == 14
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2, 2, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(e.base_transformations[i], order),
+            np.linalg.matrix_power(bt[i], order),
             identity)
 
 
 @parametrize_over_elements(5, "quadrilateral")
 def test_quadrilateral_transformation_orders(element_name, order):
     e = basix.create_element(element_name, "quadrilateral", order)
-    assert len(e.base_transformations) == 4
+    bt = e.base_transformations()
+    assert len(bt) == 4
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(e.base_transformations[i], order),
+            np.linalg.matrix_power(bt[i], order),
             identity)
 
 
 @parametrize_over_elements(5, "hexahedron")
 def test_hexahedron_transformation_orders(element_name, order):
     e = basix.create_element(element_name, "hexahedron", order)
-    assert len(e.base_transformations) == 24
+    bt = e.base_transformations()
+    assert len(bt) == 24
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(e.base_transformations[i], order),
+            np.linalg.matrix_power(bt[i], order),
             identity)
 
 
 @parametrize_over_elements(5, "triangle")
 def test_transformation_of_tabulated_data_triangle(element_name, order):
-    if element_name == "Crouzeix-Raviart" and order != 1:
-        pytest.xfail()
-
     e = basix.create_element(element_name, "triangle", order)
+    bt = e.base_transformations()
 
     N = 4
     points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1 - i)])
@@ -99,13 +97,14 @@ def test_transformation_of_tabulated_data_triangle(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
 
 @parametrize_over_elements(5, "quadrilateral")
 def test_transformation_of_tabulated_data_quadrilateral(element_name, order):
     e = basix.create_element(element_name, "quadrilateral", order)
+    bt = e.base_transformations()
 
     N = 4
     points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1)])
@@ -127,13 +126,14 @@ def test_transformation_of_tabulated_data_quadrilateral(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
 
 @parametrize_over_elements(5, "tetrahedron")
 def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
     e = basix.create_element(element_name, "tetrahedron", order)
+    bt = e.base_transformations()
 
     N = 4
     points = np.array([[i / N, j / N, k / N]
@@ -156,7 +156,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
     start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
@@ -175,7 +175,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose(e.base_transformations[6].dot(i_slice)[start: start + ndofs],
+                assert np.allclose(bt[6].dot(i_slice)[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
     if ndofs != 0:
@@ -192,7 +192,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((e.base_transformations[7].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((bt[7].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
 
@@ -204,6 +204,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
                      "Lagrange spaces equally spaced points are unstable.")
 
     e = basix.create_element(element_name, "hexahedron", order)
+    bt = e.base_transformations()
 
     N = 4
     points = np.array([[i / N, j / N, k / N]
@@ -226,7 +227,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((e.base_transformations[0].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
     start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
@@ -245,7 +246,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose(e.base_transformations[12].dot(i_slice)[start: start + ndofs],
+                assert np.allclose(bt[12].dot(i_slice)[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
     if ndofs != 0:
@@ -262,5 +263,5 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
             for d in range(e.value_size):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
-                assert np.allclose((e.base_transformations[13].dot(i_slice))[start: start + ndofs],
+                assert np.allclose((bt[13].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])

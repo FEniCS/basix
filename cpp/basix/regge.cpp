@@ -152,7 +152,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   const std::vector<int> edge_ref
       = doftransforms::interval_reflection(degree + 1);
-  xt::xtensor<double, 2> et({edge_ref.size(), edge_ref.size()});
+  xt::xtensor<double, 2> et = xt::zeros<double>({edge_ref.size(), edge_ref.size()});
   for (std::size_t i = 0; i < edge_ref.size(); ++i)
     et(i, edge_ref[i]) = 1;
   entity_transformations.push_back(et);

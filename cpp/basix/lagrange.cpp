@@ -135,9 +135,9 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   else if (celltype == cell::type::hexahedron)
   {
     const std::vector<int> face_rot
-        = doftransforms::quadrilateral_rotation(degree - 2);
+        = doftransforms::quadrilateral_rotation(degree - 1);
     const std::vector<int> face_ref
-        = doftransforms::quadrilateral_reflection(degree - 2);
+        = doftransforms::quadrilateral_reflection(degree - 1);
     xt::xtensor<double, 2> ft0
         = xt::zeros<double>({face_rot.size(), face_rot.size()});
     xt::xtensor<double, 2> ft1

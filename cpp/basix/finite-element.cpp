@@ -462,7 +462,7 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
   if (tdim > 1)
   {
     // Base transformations for edges
-    for (std::size_t i = 0; i < cell::sub_entity_count(_cell_type, 1); ++i)
+    for (int i = 0; i < cell::sub_entity_count(_cell_type, 1); ++i)
     {
       xt::view(bt, transform_n++,
                xt::range(dof_start, dof_start + _entity_dofs[1][i]),
@@ -473,7 +473,7 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
 
     if (tdim > 2)
     {
-      for (std::size_t i = 0; i < cell::sub_entity_count(_cell_type, 2); ++i)
+      for (int i = 0; i < cell::sub_entity_count(_cell_type, 2); ++i)
       {
         // TODO: This assumes that every face has the same shape
         //       _entity_transformations should be replaced with a map from a

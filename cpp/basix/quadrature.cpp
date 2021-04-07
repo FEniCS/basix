@@ -647,9 +647,9 @@ quadrature::compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
 {
   std::vector<std::size_t> shape = {x.size()};
   const auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
-
   xt::xtensor<double, 3> J({nderiv + 1, n + 1, x.size()});
   xt::xtensor<double, 2> Jd({n + 1, x.size()});
+
   for (std::size_t i = 0; i < nderiv + 1; ++i)
   {
     if (i == 0)
@@ -678,8 +678,8 @@ quadrature::compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
       if (i > 0)
         xt::row(Jd, k) += i * a3 * xt::view(J, i - 1, k - 1, xt::all());
     }
-
-    xt::view(J, i, xt::all(), xt::all()) = Jd;
+    auto J_view = xt::view(J, i, xt::all(), xt::all());
+    J_view.assign(Jd);
     // J.push_back(Jd);
   }
 
@@ -803,7 +803,6 @@ quadrature::make_quadrature_triangle_collapsed(std::size_t m)
 {
   auto [ptx, wx] = quadrature::compute_gauss_jacobi_rule(0.0, m);
   auto [pty, wy] = quadrature::compute_gauss_jacobi_rule(1.0, m);
-
   xt::xtensor<double, 2> pts({m * m, 2});
   std::vector<double> wts(m * m);
   int c = 0;

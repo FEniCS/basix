@@ -680,7 +680,6 @@ quadrature::compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
     }
     auto J_view = xt::view(J, i, xt::all(), xt::all());
     J_view.assign(Jd);
-    // J.push_back(Jd);
   }
 
   xt::xtensor<double, 2> result({nderiv + 1, x.size()});
@@ -739,19 +738,13 @@ quadrature::compute_gauss_jacobi_rule(double a, int m)
       = xt::row(quadrature::compute_jacobi_deriv(a, m, 1, pts), 1);
 
   const double a1 = std::pow(2.0, a + 1.0);
-  const double a3 = std::tgamma(m + 1.0);
-  // factorial(m)
-  double a5 = 1.0;
-  for (int i = 0; i < m; ++i)
-    a5 *= (i + 1);
-  const double a6 = a1 * a3 / a5;
-
+  
   std::vector<double> wts(m);
   for (int i = 0; i < m; ++i)
   {
     const double x = pts[i];
     const double f = Jd[i];
-    wts[i] = a6 / (1.0 - x * x) / (f * f);
+    wts[i] = a1 / (1.0 - x * x) / (f * f);
   }
 
   return {pts, wts};

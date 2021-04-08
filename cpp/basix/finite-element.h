@@ -284,6 +284,14 @@ public:
   /// @return The mapping
   maps::type mapping_type() const;
 
+  /// Indicates whether the dof transformations are all permutations
+  /// @return True or False
+  bool dof_transformations_are_permutations() const;
+
+  /// Indicates whether the dof transformations are all the identity
+  /// @return True or False
+  bool dof_transformations_are_identity() const;
+
   /// Map function values from the reference to a physical cell
   /// @param U The function values on the reference
   /// @param J The Jacobian of the mapping
@@ -421,6 +429,16 @@ public:
   /// ~~~~~~~~~~~~~~~~
   xt::xtensor<double, 3> base_transformations() const;
 
+  /// Permute the dof numbering on a cell
+  /// @param[in/out] dofs The dof numbering for the cell
+  /// @param cell_perm The permutation info for the cell
+  void permute_dofs(std::vector<int>& U, std::uint32_t cell_perm) const;
+
+  /// Unpermute the dof numbering on a cell
+  /// @param[in/out] dofs The dof numbering for the cell
+  /// @param cell_perm The permutation info for the cell
+  void unpermute_dofs(std::vector<int>& U, std::uint32_t cell_perm) const;
+
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
   /// to interpolate it in the finite element space.
@@ -491,6 +509,16 @@ private:
 
   /// Interpolation matrices
   std::array<std::vector<xt::xtensor<double, 3>>, 4> _matM_new;
+
+  /// Indicates whether or not the DOF transformations are all permutations
+  bool _dof_transformations_are_permutations;
+
+  /// Indicates whether or not the DOF transformations are all identity
+  bool _dof_transformations_are_identity;
+
+  /// The base permutations. This will only be set if
+  /// _dof_transformations_are_permutations is True
+  std::vector<std::vector<int>> _entity_permutations;
 };
 
 /// Create an element by name

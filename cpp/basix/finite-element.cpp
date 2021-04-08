@@ -323,6 +323,57 @@ FiniteElement::FiniteElement(
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
   }
+
+  // Check if base transformations are all permutations
+  _dof_transformations_are_permutations = true;
+  _dof_transformations_are_identity = true;
+  for (std::size_t i = 0; _dof_transformations_are_permutations
+                          && i < _entity_transformations.size();
+       ++i)
+  {
+    for (std::size_t row = 0; row < _entity_transformations[i].shape(0); ++row)
+    {
+      double rmin
+          = xt::amin(xt::view(_entity_transformations[i], row, xt::all()))(0);
+      double rmax
+          = xt::amax(xt::view(_entity_transformations[i], row, xt::all()))(0);
+      double rtot
+          = xt::sum(xt::view(_entity_transformations[i], row, xt::all()))(0);
+      if ((_entity_transformations[i].shape(1) != 1
+           and (rmin > 0.001 or rmin < -0.001))
+          or (rmax > 1.001 or rmax < 0.999) or (rtot > 1.001 or rtot < 0.999))
+      {
+        _dof_transformations_are_permutations = false;
+        _dof_transformations_are_identity = false;
+        break;
+      }
+      if (_entity_transformations[i](row, row) < 0.999
+          or _entity_transformations[i](row, row) > 1.001)
+        _dof_transformations_are_identity = false;
+    }
+  }
+  // If transformations are permutations, then create the permutations
+  if (_dof_transformations_are_permutations)
+  {
+    for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
+    {
+      std::vector<int> perm(_entity_transformations[i].shape(0));
+      for (std::size_t row = 0; row < _entity_transformations[i].shape(0);
+           ++row)
+      {
+        for (std::size_t col = 0; col < _entity_transformations[i].shape(0);
+             ++col)
+        {
+          if (_entity_transformations[i](row, col) > 0.5)
+          {
+            perm[row] = col;
+            break;
+          }
+        }
+      }
+      _entity_permutations.push_back(perm);
+    }
+  }
 }
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
@@ -345,6 +396,16 @@ int FiniteElement::dim() const { return _coeffs.shape(0); }
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 maps::type FiniteElement::mapping_type() const { return _map_type; }
+//-----------------------------------------------------------------------------
+bool FiniteElement::dof_transformations_are_permutations() const
+{
+  return _dof_transformations_are_permutations;
+}
+//-----------------------------------------------------------------------------
+bool FiniteElement::dof_transformations_are_identity() const
+{
+  return _dof_transformations_are_identity;
+}
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::interpolation_matrix() const
 {
@@ -519,6 +580,26 @@ xt::xtensor<double, 3> FiniteElement::map_pull_back(
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
   map_pull_back_m(u, J, detJ, K, U);
   return U;
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::permute_dofs(std::vector<int>& U,
+                                 std::uint32_t cell_perm) const
+{
+  if (!_dof_transformations_are_permutations)
+    throw std::runtime_error(
+        "The DOF transformations for this element are not permutations");
+
+  const std::size_t tdim = cell::topological_dimension(_cell_type);
+  std::cout << U[0] << " " << unsigned(cell_perm) << "\n";
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::unpermute_dofs(std::vector<int>& U,
+                                   std::uint32_t cell_perm) const
+{
+  if (!_dof_transformations_are_permutations)
+    throw std::runtime_error(
+        "The DOF transformations for this element are not permutations");
+  std::cout << U[0] << " " << unsigned(cell_perm) << "\n";
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

@@ -516,9 +516,13 @@ private:
   /// Indicates whether or not the DOF transformations are all identity
   bool _dof_transformations_are_identity;
 
-  /// The base permutations. This will only be set if
+  /// The entity permutations (factorised). This will only be set if
   /// _dof_transformations_are_permutations is True
   std::vector<std::vector<int>> _entity_permutations;
+
+  /// The reverse entity permutations (factorised). This will only be set if
+  /// _dof_transformations_are_permutations is True
+  std::vector<std::vector<int>> _reverse_entity_permutations;
 };
 
 /// Create an element by name

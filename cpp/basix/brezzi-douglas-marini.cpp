@@ -38,9 +38,6 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Add integral moments on facets
-  const std::size_t facet_count = tdim + 1;
-  const std::size_t facet_dofs = polyset::dim(facettype, degree);
-
   const FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
@@ -59,32 +56,19 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < tdim; ++i)
-    transform_count += topology[i].size() * i;
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
   switch (tdim)
   {
   case 2:
-    for (std::size_t edge = 0; edge < facet_count; ++edge)
-    {
-      const std::size_t start = facet_dofs * edge;
-      auto range = xt::range(start, start + facet_dofs);
-      xt::view(base_transformations, edge, range, range)
-          = xt::view(facet_transforms, 0, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 0, xt::all(), xt::all()));
     break;
   case 3:
-    for (std::size_t face = 0; face < facet_count; ++face)
-    {
-      const std::size_t start = facet_dofs * face;
-      auto range = xt::range(start, start + facet_dofs);
-      xt::view(base_transformations, 6 + 2 * face, range, range)
-          = xt::view(facet_transforms, 0, xt::all(), xt::all());
-      xt::view(base_transformations, 6 + 2 * face + 1, range, range)
-          = xt::view(facet_transforms, 1, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 0, xt::all(), xt::all()));
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 1, xt::all(), xt::all()));
     break;
   default:
     throw std::runtime_error("Invalid topological dimension.");
@@ -96,7 +80,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
       {x[tdim - 1], x[tdim]}, degree);
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, coeffs,
-                       base_transformations, x, M,
+                       entity_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

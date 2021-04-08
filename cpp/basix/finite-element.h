@@ -199,19 +199,20 @@ public:
   /// @param[in] value_shape
   /// @param[in] coeffs Expansion coefficients. The shape is (num_dofs,
   /// value_size, basis_dim)
-  /// @param[in] base_transformations Base transformations
+  /// @param[in] entity_transformations Entity transformations
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
   /// index, dof, vs, point_index)
   /// @param[in] map_type
-  FiniteElement(element::family family, cell::type cell_type, int degree,
-                const std::vector<std::size_t>& value_shape,
-                const xt::xtensor<double, 3>& coeffs,
-                const xt::xtensor<double, 3>& base_transformations,
-                const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-                const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-                maps::type map_type = maps::type::identity);
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 3>& coeffs,
+      const std::vector<xt::xtensor<double, 2>>& entity_transformations,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      maps::type map_type = maps::type::identity);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -418,7 +419,7 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
-  const xt::xtensor<double, 3>& base_transformations() const;
+  xt::xtensor<double, 3> base_transformations() const;
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
@@ -471,8 +472,8 @@ private:
   // count on the associated entity, as listed by cell::topology.
   std::vector<std::vector<int>> _entity_dofs;
 
-  // Base transformations
-  xt::xtensor<double, 3> _base_transformations;
+  // Entity transformations
+  std::vector<xt::xtensor<double, 2>> _entity_transformations;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of

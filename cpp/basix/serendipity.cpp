@@ -618,48 +618,29 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   else if (tdim == 3)
     wcoeffs = make_serendipity_space_3d(degree);
 
-  std::size_t ndofs = 0;
-  for (auto& Md : M)
-    for (auto& Me : Md)
-      ndofs += Me.shape(0);
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < topology.size() - 1; ++i)
-    transform_count += topology[i].size() * i;
-
-  xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
+  if (tdim >= 2)
   {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+    if (degree < 2)
+      entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    else
+      entity_transformations.push_back(
+          xt::view(edge_transforms, 0, xt::all(), xt::all()));
 
-  if (tdim >= 2 and degree >= 2)
-  {
-    const int edge_dofs = degree - 1;
-    const int num_vertices = topology[0].size();
-    const std::size_t num_edges = topology[1].size();
-    for (std::size_t edge = 0; edge < num_edges; ++edge)
+    if (tdim == 3)
     {
-      const std::size_t start = num_vertices + edge_dofs * edge;
-      auto range = xt::range(start, start + edge_dofs);
-      xt::view(base_transformations, edge, range, range)
-          = xt::view(edge_transforms, 0, xt::all(), xt::all());
-    }
-    if (tdim == 3 and degree >= 4)
-    {
-      const std::size_t face_dofs = face_transforms.shape(1);
-      const std::size_t num_faces = topology[2].size();
-      for (std::size_t face = 0; face < num_faces; ++face)
+      if (degree < 4)
       {
-        const std::size_t start
-            = num_vertices + num_edges * edge_dofs + face * face_dofs;
-        auto range = xt::range(start, start + face_dofs);
-        xt::view(base_transformations, num_edges + 2 * face, range, range)
-            = xt::view(face_transforms, 0, xt::all(), xt::all());
-        xt::view(base_transformations, num_edges + 2 * face + 1, range, range)
-            = xt::view(face_transforms, 1, xt::all(), xt::all());
+        entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+        entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+      }
+      else
+      {
+        entity_transformations.push_back(
+            xt::view(face_transforms, 0, xt::all(), xt::all()));
+        entity_transformations.push_back(
+            xt::view(face_transforms, 1, xt::all(), xt::all()));
       }
     }
   }
@@ -668,7 +649,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
       celltype, wcoeffs, {M[0], M[1], M[2], M[3]}, {x[0], x[1], x[2], x[3]},
       degree);
   return FiniteElement(element::family::Serendipity, celltype, degree, {1},
-                       coeffs, base_transformations, x, M,
+                       coeffs, entity_transformations, x, M,
                        maps::type::identity);
 }
 //-----------------------------------------------------------------------------
@@ -710,11 +691,6 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
         cell_moment_space, celltype, tdim, quad_deg);
   }
 
-  std::size_t ndofs = 0;
-  for (auto& Md : M)
-    for (auto& Me : Md)
-      ndofs += Me.shape(0);
-
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 1)
     wcoeffs = xt::eye<double>(degree + 1);
@@ -723,38 +699,20 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
   else if (tdim == 3)
     wcoeffs = make_serendipity_div_space_3d(degree);
 
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < tdim; ++i)
-    transform_count += topology[i].size() * i;
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
-  const int num_facets = topology[tdim - 1].size();
-
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  const int num_facet_dofs = facet_moment_space.dim();
   if (tdim == 2)
   {
-    for (int edge = 0; edge < num_facets; ++edge)
-    {
-      const std::size_t start = num_facet_dofs * edge;
-      auto range = xt::range(start, start + num_facet_dofs);
-      xt::view(base_transformations, edge, range, range)
-          = xt::view(facet_transforms, 0, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 0, xt::all(), xt::all()));
   }
   else if (tdim == 3)
   {
-    constexpr int num_edges = 12;
-    for (int face = 0; face < num_facets; ++face)
-    {
-      const std::size_t start = num_facet_dofs * face;
-      const std::size_t p = num_edges + 2 * face;
-      auto range = xt::range(start, start + num_facet_dofs);
-      xt::view(base_transformations, p, range, range)
-          = xt::view(facet_transforms, 0, xt::all(), xt::all());
-      xt::view(base_transformations, p + 1, range, range)
-          = xt::view(facet_transforms, 1, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 0, xt::all(), xt::all()));
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 1, xt::all(), xt::all()));
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
@@ -762,7 +720,7 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
       degree + 1);
 
   return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
-                       coeffs, base_transformations, x, M,
+                       coeffs, entity_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
@@ -782,22 +740,6 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   auto wts = xt::adapt(_wts);
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
       polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
-
-  const int edge_count = tdim == 2 ? 4 : 12;
-  const int edge_dofs = polyset::dim(cell::type::interval, degree);
-  const int face_count = tdim == 2 ? 1 : 6;
-  const int face_dofs
-      = (tdim < 2 or degree < 2)
-            ? 0
-            : 2 * polyset::dim(cell::type::triangle, degree - 2);
-  const int volume_count = tdim == 2 ? 0 : 1;
-  const int volume_dofs
-      = (tdim < 3 or degree < 4)
-            ? 0
-            : 3 * polyset::dim(cell::type::tetrahedron, degree - 4);
-
-  const std::size_t ndofs = edge_count * edge_dofs + face_count * face_dofs
-                            + volume_count * volume_dofs;
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 1)
@@ -843,37 +785,31 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < tdim; ++i)
-    transform_count += topology[i].size() * i;
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  for (int edge = 0; edge < edge_count; ++edge)
-  {
-    const std::size_t start = edge_dofs * edge;
-    auto range = xt::range(start, start + edge_dofs);
-    xt::view(base_transformations, edge, range, range)
-        = xt::view(edge_transforms, 0, xt::all(), xt::all());
-  }
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
-  if (tdim == 3 and degree > 1)
+  entity_transformations.push_back(
+      xt::view(edge_transforms, 0, xt::all(), xt::all()));
+
+  if (tdim == 3)
   {
-    for (int face = 0; face < face_count; ++face)
+    if (degree <= 1)
     {
-      const std::size_t start = edge_dofs * edge_count + face_dofs * face;
-      const std::size_t p = edge_count + 2 * face;
-      auto range = xt::range(start, start + face_dofs);
-      xt::view(base_transformations, p, range, range)
-          = xt::view(face_transforms, 0, xt::all(), xt::all());
-      xt::view(base_transformations, p + 1, range, range)
-          = xt::view(face_transforms, 1, xt::all(), xt::all());
+      entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+      entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    }
+    else
+    {
+      entity_transformations.push_back(
+          xt::view(face_transforms, 0, xt::all(), xt::all()));
+      entity_transformations.push_back(
+          xt::view(face_transforms, 1, xt::all(), xt::all()));
     }
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree + 1);
   return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
-                       coeffs, base_transformations, x, M,
+                       coeffs, entity_transformations, x, M,
                        maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

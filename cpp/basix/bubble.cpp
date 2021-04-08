@@ -140,18 +140,16 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < topology.size() - 1; ++i)
-    transform_count += topology[i].size() * i;
-
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
+  const int num_transformations = tdim * (tdim - 1) / 2;
+  std::vector<xt::xtensor<double, 2>> entity_transformations(
+      num_transformations);
+
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
-                       base_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------

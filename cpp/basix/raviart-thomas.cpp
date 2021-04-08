@@ -88,8 +88,6 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
-  const std::size_t facet_dofs = facet_transforms.shape(1);
-
   // Add integral moments on interior
   if (degree > 1)
   {
@@ -101,47 +99,26 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  const std::size_t facet_count = tdim + 1;
-  const std::size_t ndofs = nv * tdim + ns;
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < tdim; ++i)
-    transform_count += topology[i].size() * i;
-
-  xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({transform_count, ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
   if (tdim == 2)
   {
-    for (std::size_t edge = 0; edge < facet_count; ++edge)
-    {
-      const std::size_t start = facet_dofs * edge;
-      auto range = xt::range(start, start + facet_dofs);
-      xt::view(base_transformations, edge, range, range)
-          = xt::view(facet_transforms, 0, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 0, xt::all(), xt::all()));
   }
   else if (tdim == 3)
   {
-    for (std::size_t face = 0; face < facet_count; ++face)
-    {
-      const std::size_t start = facet_dofs * face;
-      auto range = xt::range(start, start + facet_dofs);
-      xt::view(base_transformations, 6 + 2 * face, range, range)
-          = xt::view(facet_transforms, 0, xt::all(), xt::all());
-      xt::view(base_transformations, 6 + 2 * face + 1, range, range)
-          = xt::view(facet_transforms, 1, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 0, xt::all(), xt::all()));
+    entity_transformations.push_back(
+        xt::view(facet_transforms, 1, xt::all(), xt::all()));
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, B, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]}, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
-                       base_transformations, x, M,
+                       entity_transformations, x, M,
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------

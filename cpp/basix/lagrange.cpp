@@ -103,128 +103,61 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     }
   }
 
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < topology.size() - 1; ++i)
-    transform_count += topology[i].size() * i;
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
-  switch (celltype)
-  {
-  case cell::type::interval:
-    assert(transform_count == 0);
-    break;
-  case cell::type::triangle:
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  if (tdim > 1)
   {
     const std::vector<int> edge_ref
         = doftransforms::interval_reflection(degree - 1);
-    for (int edge = 0; edge < 3; ++edge)
-    {
-      auto bt = xt::view(base_transformations, edge, xt::all(), xt::all());
-      const int start = 3 + edge_ref.size() * edge;
-      for (std::size_t i = 0; i < edge_ref.size(); ++i)
-      {
-        bt(start + i, start + i) = 0;
-        bt(start + i, start + edge_ref[i]) = 1;
-      }
-    }
-    break;
+    xt::xtensor<double, 2> et
+        = xt::zeros<double>({edge_ref.size(), edge_ref.size()});
+    for (std::size_t i = 0; i < edge_ref.size(); ++i)
+      et(i, edge_ref[i]) = 1;
+    entity_transformations.push_back(et);
   }
-  case cell::type::quadrilateral:
+  if (celltype == cell::type::tetrahedron)
   {
-    const std::vector<int> edge_ref
-        = doftransforms::interval_reflection(degree - 1);
-    for (int edge = 0; edge < 4; ++edge)
-    {
-      auto bt = xt::view(base_transformations, edge, xt::all(), xt::all());
-      const int start = 4 + edge_ref.size() * edge;
-      for (std::size_t i = 0; i < edge_ref.size(); ++i)
-      {
-        bt(start + i, start + i) = 0;
-        bt(start + i, start + edge_ref[i]) = 1;
-      }
-    }
-    break;
-  }
-  case cell::type::tetrahedron:
-  {
-    const std::vector<int> edge_ref
-        = doftransforms::interval_reflection(degree - 1);
-    for (int edge = 0; edge < 6; ++edge)
-    {
-      auto bt = xt::view(base_transformations, edge, xt::all(), xt::all());
-      const int start = 4 + edge_ref.size() * edge;
-      for (std::size_t i = 0; i < edge_ref.size(); ++i)
-      {
-        bt(start + i, start + i) = 0;
-        bt(start + i, start + edge_ref[i]) = 1;
-      }
-    }
-    const std::vector<int> face_ref
-        = doftransforms::triangle_reflection(degree - 2);
     const std::vector<int> face_rot
         = doftransforms::triangle_rotation(degree - 2);
-    for (int face = 0; face < 4; ++face)
-    {
-      auto bt0
-          = xt::view(base_transformations, 6 + 2 * face, xt::all(), xt::all());
-      auto bt1 = xt::view(base_transformations, 6 + 2 * face + 1, xt::all(),
-                          xt::all());
-      const int start = 4 + edge_ref.size() * 6 + face_ref.size() * face;
-      for (std::size_t i = 0; i < face_rot.size(); ++i)
-      {
-        bt0(start + i, start + i) = 0;
-        bt0(start + i, start + face_rot[i]) = 1;
-        bt1(start + i, start + i) = 0;
-        bt1(start + i, start + face_ref[i]) = 1;
-      }
-    }
-    break;
-  }
-  case cell::type::hexahedron:
-  {
-    const std::vector<int> edge_ref
-        = doftransforms::interval_reflection(degree - 1);
-    for (int edge = 0; edge < 12; ++edge)
-    {
-      auto bt = xt::view(base_transformations, edge, xt::all(), xt::all());
-      const int start = 8 + edge_ref.size() * edge;
-      for (std::size_t i = 0; i < edge_ref.size(); ++i)
-      {
-        bt(start + i, start + i) = 0;
-        bt(start + i, start + edge_ref[i]) = 1;
-      }
-    }
-
     const std::vector<int> face_ref
-        = doftransforms::quadrilateral_reflection(degree - 1);
+        = doftransforms::triangle_reflection(degree - 2);
+    xt::xtensor<double, 2> ft0
+        = xt::zeros<double>({face_rot.size(), face_rot.size()});
+    xt::xtensor<double, 2> ft1
+        = xt::zeros<double>({face_ref.size(), face_ref.size()});
+    for (std::size_t i = 0; i < face_rot.size(); ++i)
+    {
+      ft0(i, face_rot[i]) = 1;
+      ft1(i, face_ref[i]) = 1;
+    }
+    entity_transformations.push_back(ft0);
+    entity_transformations.push_back(ft1);
+  }
+  else if (celltype == cell::type::hexahedron)
+  {
     const std::vector<int> face_rot
         = doftransforms::quadrilateral_rotation(degree - 1);
-    for (int face = 0; face < 6; ++face)
+    const std::vector<int> face_ref
+        = doftransforms::quadrilateral_reflection(degree - 1);
+    xt::xtensor<double, 2> ft0
+        = xt::zeros<double>({face_rot.size(), face_rot.size()});
+    xt::xtensor<double, 2> ft1
+        = xt::zeros<double>({face_ref.size(), face_ref.size()});
+    for (std::size_t i = 0; i < face_rot.size(); ++i)
     {
-      auto bt0
-          = xt::view(base_transformations, 12 + 2 * face, xt::all(), xt::all());
-      auto bt1 = xt::view(base_transformations, 12 + 2 * face + 1, xt::all(),
-                          xt::all());
-      const int start = 8 + edge_ref.size() * 12 + face_ref.size() * face;
-      for (std::size_t i = 0; i < face_rot.size(); ++i)
-      {
-        bt0(start + i, start + i) = 0;
-        bt0(start + i, start + face_rot[i]) = 1;
-        bt1(start + i, start + i) = 0;
-        bt1(start + i, start + face_ref[i]) = 1;
-      }
+      ft0(i, face_rot[i]) = 1;
+      ft1(i, face_ref[i]) = 1;
     }
-    break;
+    entity_transformations.push_back(ft0);
+    entity_transformations.push_back(ft1);
   }
-  default:
+  if (celltype == cell::type::prism or celltype == cell::type::pyramid)
     LOG(WARNING) << "Base transformations not implemented for this cell type.";
-  }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
       {x[0], x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
-                       base_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
@@ -238,9 +171,6 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
       = cell::topology(celltype);
 
   const std::size_t tdim = topology.size() - 1;
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < tdim; ++i)
-    transform_count += topology[i].size() * i;
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
@@ -251,13 +181,15 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   x[tdim].push_back(pt);
 
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
+  const int num_transformations = tdim * (tdim - 1) / 2;
+  std::vector<xt::xtensor<double, 2>> entity_transformations(
+      num_transformations, xt::xtensor<double, 2>({0, 0}));
+
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim]}, {x[tdim]}, degree);
 
   return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
-                       base_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_dpc(cell::type celltype, int degree)
@@ -305,9 +237,6 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::size_t tdim = topology.size() - 1;
-  std::size_t transform_count = 0;
-  for (std::size_t i = 1; i < tdim; ++i)
-    transform_count += topology[i].size() * i;
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
@@ -318,11 +247,13 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   x[tdim].push_back(pt);
 
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), transform_count);
+  const int num_transformations = tdim * (tdim - 1) / 2;
+  std::vector<xt::xtensor<double, 2>> entity_transformations(
+      num_transformations);
+
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
-                       base_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------

@@ -45,6 +45,31 @@ constexpr int compute_value_size(maps::type map_type, int dim)
     throw std::runtime_error("Mapping not yet implemented");
   }
 }
+//-----------------------------------------------------------------------------
+int num_transformations(cell::type cell_type)
+{
+  switch (cell_type)
+  {
+  case cell::type::point:
+    return 0;
+  case cell::type::interval:
+    return 0;
+  case cell::type::triangle:
+    return 3;
+  case cell::type::quadrilateral:
+    return 4;
+  case cell::type::tetrahedron:
+    return 14;
+  case cell::type::hexahedron:
+    return 24;
+  case cell::type::prism:
+    return 19;
+  case cell::type::pyramid:
+    return 18;
+  default:
+    throw std::runtime_error("Cell type not yet supported");
+  }
+}
 } // namespace
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
@@ -214,7 +239,7 @@ FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 3>& coeffs,
-    const xt::xtensor<double, 3>& base_transformations,
+    const std::vector<xt::xtensor<double, 2>>& entity_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type)
@@ -222,7 +247,7 @@ FiniteElement::FiniteElement(
       _degree(degree), _map_type(map_type),
       _coeffs(xt::reshape_view(
           coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
-      _base_transformations(base_transformations), _x(x), _matM_new(M)
+      _entity_transformations(entity_transformations), _x(x), _matM_new(M)
 {
   // if (points.dimension() == 1)
   //   throw std::runtime_error("Problem with points");
@@ -416,9 +441,58 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
   }
 }
 //-----------------------------------------------------------------------------
-const xt::xtensor<double, 3>& FiniteElement::base_transformations() const
+xt::xtensor<double, 3> FiniteElement::base_transformations() const
 {
-  return _base_transformations;
+  const std::size_t tdim = cell::topological_dimension(_cell_type);
+  const std::size_t nt = num_transformations(cell_type());
+  const std::size_t ndofs = dim();
+
+  xt::xtensor<double, 3> bt({nt, ndofs, ndofs});
+  for (std::size_t i = 0; i < nt; ++i)
+    xt::view(bt, i, xt::all(), xt::all()) = xt::eye<double>(ndofs);
+
+  std::size_t dof_start = 0;
+  int transform_n = 0;
+  if (tdim > 0)
+  {
+    for (std::size_t i = 0; i < _entity_dofs[0].size(); ++i)
+      dof_start += _entity_dofs[0][i];
+  }
+
+  if (tdim > 1)
+  {
+    // Base transformations for edges
+    for (int i = 0; i < cell::sub_entity_count(_cell_type, 1); ++i)
+    {
+      xt::view(bt, transform_n++,
+               xt::range(dof_start, dof_start + _entity_dofs[1][i]),
+               xt::range(dof_start, dof_start + _entity_dofs[1][i]))
+          = _entity_transformations[0];
+      dof_start += _entity_dofs[1][i];
+    }
+
+    if (tdim > 2)
+    {
+      for (int i = 0; i < cell::sub_entity_count(_cell_type, 2); ++i)
+      {
+        // TODO: This assumes that every face has the same shape
+        //       _entity_transformations should be replaced with a map from a
+        //       subentity type to a matrix to allow for prisms and pyramids.
+        xt::view(bt, transform_n++,
+                 xt::range(dof_start, dof_start + _entity_dofs[2][i]),
+                 xt::range(dof_start, dof_start + _entity_dofs[2][i]))
+            = _entity_transformations[1];
+        xt::view(bt, transform_n++,
+                 xt::range(dof_start, dof_start + _entity_dofs[2][i]),
+                 xt::range(dof_start, dof_start + _entity_dofs[2][i]))
+            = _entity_transformations[2];
+
+        dof_start += _entity_dofs[2][i];
+      }
+    }
+  }
+
+  return bt;
 }
 //-----------------------------------------------------------------------------
 int FiniteElement::num_points() const { return _points.shape(0); }

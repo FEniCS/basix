@@ -612,9 +612,9 @@ void FiniteElement::permute_dofs(tcb::span<int>& dofs,
         if (cell_info >> (face_start + e) & 1)
         {
           for (int i = 0; i < _entity_dofs[1][e]; ++i)
-            temp[i] = dofs[i];
+            temp[i] = dofs[dofstart + i];
           for (int i = 0; i < _entity_dofs[1][e]; ++i)
-            dofs[i] = temp[_entity_permutations[0][i]];
+            dofs[dofstart + i] = temp[_entity_permutations[0][i]];
         }
 
         dofstart += _entity_dofs[1][e];
@@ -630,22 +630,22 @@ void FiniteElement::permute_dofs(tcb::span<int>& dofs,
       // Permute DOFs on faces
       for (int f = 0; f < cell::sub_entity_count(_cell_type, 2); ++f)
       {
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          for (int i = 0; i < _entity_dofs[2][f]; ++i)
-            temp[i] = dofs[i];
-          for (int i = 0; i < _entity_dofs[2][f]; ++i)
-            dofs[i] = temp[_entity_permutations[1][i]];
-        }
-
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
         {
           for (int i = 0; i < _entity_dofs[2][f]; ++i)
-            temp[i] = dofs[i];
+            temp[i] = dofs[dofstart + i];
           for (int i = 0; i < _entity_dofs[2][f]; ++i)
-            dofs[i] = temp[_entity_permutations[2][i]];
+            dofs[dofstart + i] = temp[_entity_permutations[2][i]];
+        }
+
+        // Rotate a face
+        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            temp[i] = dofs[dofstart + i];
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            dofs[dofstart + i] = temp[_entity_permutations[1][i]];
         }
 
         dofstart += _entity_dofs[2][f];
@@ -684,9 +684,9 @@ void FiniteElement::unpermute_dofs(tcb::span<int>& dofs,
         if (cell_info >> (face_start + e) & 1)
         {
           for (int i = 0; i < _entity_dofs[1][e]; ++i)
-            temp[i] = dofs[i];
+            temp[i] = dofs[dofstart + i];
           for (int i = 0; i < _entity_dofs[1][e]; ++i)
-            dofs[i] = temp[_entity_permutations[0][i]];
+            dofs[dofstart + i] = temp[_entity_permutations[0][i]];
         }
         dofstart += _entity_dofs[1][e];
       }
@@ -701,22 +701,22 @@ void FiniteElement::unpermute_dofs(tcb::span<int>& dofs,
       // Permute DOFs on faces
       for (int f = 0; f < cell::sub_entity_count(_cell_type, 2); ++f)
       {
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-        {
-          for (int i = 0; i < _entity_dofs[2][f]; ++i)
-            temp[i] = dofs[i];
-          for (int i = 0; i < _entity_dofs[2][f]; ++i)
-            dofs[i] = temp[_entity_permutations[2][i]];
-        }
-
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
           for (int i = 0; i < _entity_dofs[2][f]; ++i)
-            temp[_entity_permutations[1][i]] = dofs[i];
+            temp[_entity_permutations[1][i]] = dofs[dofstart + i];
           for (int i = 0; i < _entity_dofs[2][f]; ++i)
-            dofs[i] = temp[i];
+            dofs[dofstart + i] = temp[i];
+        }
+
+        // Reflect a face
+        if (cell_info >> (3 * f) & 1)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            temp[i] = dofs[dofstart + i];
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            dofs[dofstart + i] = temp[_entity_permutations[2][i]];
         }
 
         dofstart += _entity_dofs[2][f];

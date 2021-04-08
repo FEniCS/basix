@@ -191,6 +191,10 @@ const char* family_name(int handle);
 /// @param [in] handle Identifier
 const char* mapping_name(int handle);
 
+/// Indicates whether all the DOF transformations are identity matrices
+/// @param [in] handle Identifier
+bool dof_transformations_are_identity(int handle);
+
 /// Number of dofs per entity of given dimension
 /// @param handle Identifier
 /// @param dim Entity dimension

@@ -261,6 +261,12 @@ const char* basix::mapping_name(int handle)
   return maps::type_to_str(_registry[handle]->mapping_type()).c_str();
 }
 
+bool basix::dof_transformations_are_identity(int handle)
+{
+  check_handle(handle);
+  return _registry[handle]->dof_transformations_are_identity();
+}
+
 int basix::cell_geometry_num_points(const char* cell_type)
 {
   cell::type ct = cell::str_to_type(cell_type);

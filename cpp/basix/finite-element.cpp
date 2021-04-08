@@ -582,8 +582,8 @@ xt::xtensor<double, 3> FiniteElement::map_pull_back(
   return U;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::permute_dofs(std::vector<int>& U,
-                                 std::uint32_t cell_perm) const
+void FiniteElement::permute_dofs(tcb::span<int>& U,
+                                 std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
     throw std::runtime_error(
@@ -603,29 +603,35 @@ void FiniteElement::permute_dofs(std::vector<int>& U,
       dofstart += _entity_dofs[0][v];
 
     // Permute DOFs on edges
-    // This assumes that all edges have the same number of DOFs
-    std::vector<int> temp(_entity_dofs[1][0]);
-    for (int e = 0; e < cell::sub_entity_count(_cell_type, 1); ++e)
-    {
-      // Reverse an edge
-      if (cell_perm >> (face_start + e) & 1)
+    { // scope
+      // This assumes that all edges have the same number of DOFs
+      std::vector<int> temp(_entity_dofs[1][0]);
+      for (int e = 0; e < cell::sub_entity_count(_cell_type, 1); ++e)
       {
-        for (int i = 0; i < _entity_dofs[1][e]; ++i)
-          temp[i] = U[i];
-        for (int i = 0; i < _entity_dofs[1][e]; ++i)
-          U[i] = temp[_entity_permutations[0][i]];
-      }
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          for (int i = 0; i < _entity_dofs[1][e]; ++i)
+            temp[i] = U[i];
+          for (int i = 0; i < _entity_dofs[1][e]; ++i)
+            U[i] = temp[_entity_permutations[0][i]];
+        }
 
-      dofstart += _entity_dofs[1][e];
+        dofstart += _entity_dofs[1][e];
+      }
     }
 
     if (tdim == 3)
     {
+      // This assumes that all faces have the same number of DOFs. This will
+      // need updating to make this work on pyramids and prisms
+      std::vector<int> temp(_entity_dofs[2][0]);
+
       // Permute DOFs on faces
       for (int f = 0; f < cell::sub_entity_count(_cell_type, 2); ++f)
       {
         // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_perm >> (3 * f + 1) & 3); ++r)
+        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
           for (int i = 0; i < _entity_dofs[2][f]; ++i)
             temp[i] = U[i];
@@ -634,7 +640,7 @@ void FiniteElement::permute_dofs(std::vector<int>& U,
         }
 
         // Reflect a face
-        if (cell_perm >> (3 * f) & 1)
+        if (cell_info >> (3 * f) & 1)
         {
           for (int i = 0; i < _entity_dofs[2][f]; ++i)
             temp[i] = U[i];
@@ -648,8 +654,8 @@ void FiniteElement::permute_dofs(std::vector<int>& U,
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::unpermute_dofs(std::vector<int>& U,
-                                   std::uint32_t cell_perm) const
+void FiniteElement::unpermute_dofs(tcb::span<int>& U,
+                                   std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
     throw std::runtime_error(
@@ -669,29 +675,34 @@ void FiniteElement::unpermute_dofs(std::vector<int>& U,
       dofstart += _entity_dofs[0][v];
 
     // Permute DOFs on edges
-    // This assumes that all edges have the same number of DOFs
-    std::vector<int> temp(_entity_dofs[1][0]);
-    for (int e = 0; e < cell::sub_entity_count(_cell_type, 1); ++e)
-    {
-      // Reverse an edge
-      if (cell_perm >> (face_start + e) & 1)
+    { // scope
+      // This assumes that all edges have the same number of DOFs
+      std::vector<int> temp(_entity_dofs[1][0]);
+      for (int e = 0; e < cell::sub_entity_count(_cell_type, 1); ++e)
       {
-        for (int i = 0; i < _entity_dofs[1][e]; ++i)
-          temp[i] = U[i];
-        for (int i = 0; i < _entity_dofs[1][e]; ++i)
-          U[i] = temp[_entity_permutations[0][i]];
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          for (int i = 0; i < _entity_dofs[1][e]; ++i)
+            temp[i] = U[i];
+          for (int i = 0; i < _entity_dofs[1][e]; ++i)
+            U[i] = temp[_entity_permutations[0][i]];
+        }
+        dofstart += _entity_dofs[1][e];
       }
-
-      dofstart += _entity_dofs[1][e];
     }
 
     if (tdim == 3)
     {
+      // This assumes that all faces have the same number of DOFs. This will
+      // need updating to make this work on pyramids and prisms
+      std::vector<int> temp(_entity_dofs[2][0]);
+
       // Permute DOFs on faces
       for (int f = 0; f < cell::sub_entity_count(_cell_type, 2); ++f)
       {
         // Reflect a face
-        if (cell_perm >> (3 * f) & 1)
+        if (cell_info >> (3 * f) & 1)
         {
           for (int i = 0; i < _entity_dofs[2][f]; ++i)
             temp[i] = U[i];
@@ -700,7 +711,7 @@ void FiniteElement::unpermute_dofs(std::vector<int>& U,
         }
 
         // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_perm >> (3 * f + 1) & 3); ++r)
+        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
           for (int i = 0; i < _entity_dofs[2][f]; ++i)
             temp[_entity_permutations[1][i]] = U[i];

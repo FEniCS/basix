@@ -431,13 +431,13 @@ public:
 
   /// Permute the dof numbering on a cell
   /// @param[in/out] dofs The dof numbering for the cell
-  /// @param cell_perm The permutation info for the cell
-  void permute_dofs(std::vector<int>& U, std::uint32_t cell_perm) const;
+  /// @param cell_info The permutation info for the cell
+  void permute_dofs(tcb::span<int>& U, std::uint32_t cell_info) const;
 
   /// Unpermute the dof numbering on a cell
   /// @param[in/out] dofs The dof numbering for the cell
-  /// @param cell_perm The permutation info for the cell
-  void unpermute_dofs(std::vector<int>& U, std::uint32_t cell_perm) const;
+  /// @param cell_info The permutation info for the cell
+  void unpermute_dofs(tcb::span<int>& U, std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order

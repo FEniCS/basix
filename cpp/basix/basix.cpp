@@ -170,6 +170,20 @@ void basix::map_pull_back_complex(int handle,
                                        physical_value_size, nresults, npoints);
 }
 
+void basix::permute_dofs(int handle, int* dofs, std::uint32_t cell_info)
+{
+  check_handle(handle);
+  auto dof_array = tcb::span(dofs, _registry[handle]->dim());
+  _registry[handle]->permute_dofs(dof_array, cell_info);
+}
+
+void basix::unpermute_dofs(int handle, int* dofs, std::uint32_t cell_info)
+{
+  check_handle(handle);
+  auto dof_array = tcb::span(dofs, _registry[handle]->dim());
+  _registry[handle]->unpermute_dofs(dof_array, cell_info);
+}
+
 const char* basix::cell_type(int handle)
 {
   check_handle(handle);

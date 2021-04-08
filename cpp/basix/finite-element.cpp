@@ -588,9 +588,64 @@ void FiniteElement::permute_dofs(std::vector<int>& U,
   if (!_dof_transformations_are_permutations)
     throw std::runtime_error(
         "The DOF transformations for this element are not permutations");
+  if (_dof_transformations_are_identity)
+    return;
 
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
-  std::cout << U[0] << " " << unsigned(cell_perm) << "\n";
+  const int tdim = cell::topological_dimension(_cell_type);
+  if (tdim >= 2)
+  {
+    // This assumes 3 bits are used per face. This will need updating if 3D
+    // cells with faces with more than 4 sides are implemented
+    int face_start = tdim == 3 ? 3 * cell::sub_entity_count(_cell_type, 2) : 0;
+
+    int dofstart = 0;
+    for (int v = 0; v < cell::sub_entity_count(_cell_type, 0); ++v)
+      dofstart += _entity_dofs[0][v];
+
+    // Permute DOFs on edges
+    // This assumes that all edges have the same number of DOFs
+    std::vector<int> temp(_entity_dofs[1][0]);
+    for (int e = 0; e < cell::sub_entity_count(_cell_type, 1); ++e)
+    {
+      // Reverse an edge
+      if (cell_perm >> (face_start + e) & 1)
+      {
+        for (int i = 0; i < _entity_dofs[1][e]; ++i)
+          temp[i] = U[i];
+        for (int i = 0; i < _entity_dofs[1][e]; ++i)
+          U[i] = temp[_entity_permutations[0][i]];
+      }
+
+      dofstart += _entity_dofs[1][e];
+    }
+
+    if (tdim == 3)
+    {
+      // Permute DOFs on faces
+      for (int f = 0; f < cell::sub_entity_count(_cell_type, 2); ++f)
+      {
+        // Rotate a face
+        for (std::uint32_t r = 0; r < (cell_perm >> (3 * f + 1) & 3); ++r)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            temp[i] = U[i];
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            U[i] = temp[_entity_permutations[1][i]];
+        }
+
+        // Reflect a face
+        if (cell_perm >> (3 * f) & 1)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            temp[i] = U[i];
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            U[i] = temp[_entity_permutations[2][i]];
+        }
+
+        dofstart += _entity_dofs[2][f];
+      }
+    }
+  }
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::unpermute_dofs(std::vector<int>& U,
@@ -599,7 +654,64 @@ void FiniteElement::unpermute_dofs(std::vector<int>& U,
   if (!_dof_transformations_are_permutations)
     throw std::runtime_error(
         "The DOF transformations for this element are not permutations");
-  std::cout << U[0] << " " << unsigned(cell_perm) << "\n";
+  if (_dof_transformations_are_identity)
+    return;
+
+  const int tdim = cell::topological_dimension(_cell_type);
+  if (tdim >= 2)
+  {
+    // This assumes 3 bits are used per face. This will need updating if 3D
+    // cells with faces with more than 4 sides are implemented
+    int face_start = tdim == 3 ? 3 * cell::sub_entity_count(_cell_type, 2) : 0;
+
+    int dofstart = 0;
+    for (int v = 0; v < cell::sub_entity_count(_cell_type, 0); ++v)
+      dofstart += _entity_dofs[0][v];
+
+    // Permute DOFs on edges
+    // This assumes that all edges have the same number of DOFs
+    std::vector<int> temp(_entity_dofs[1][0]);
+    for (int e = 0; e < cell::sub_entity_count(_cell_type, 1); ++e)
+    {
+      // Reverse an edge
+      if (cell_perm >> (face_start + e) & 1)
+      {
+        for (int i = 0; i < _entity_dofs[1][e]; ++i)
+          temp[i] = U[i];
+        for (int i = 0; i < _entity_dofs[1][e]; ++i)
+          U[i] = temp[_entity_permutations[0][i]];
+      }
+
+      dofstart += _entity_dofs[1][e];
+    }
+
+    if (tdim == 3)
+    {
+      // Permute DOFs on faces
+      for (int f = 0; f < cell::sub_entity_count(_cell_type, 2); ++f)
+      {
+        // Reflect a face
+        if (cell_perm >> (3 * f) & 1)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            temp[i] = U[i];
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            U[i] = temp[_entity_permutations[2][i]];
+        }
+
+        // Rotate a face
+        for (std::uint32_t r = 0; r < (cell_perm >> (3 * f + 1) & 3); ++r)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            temp[_entity_permutations[1][i]] = U[i];
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            U[i] = temp[i];
+        }
+
+        dofstart += _entity_dofs[2][f];
+      }
+    }
+  }
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

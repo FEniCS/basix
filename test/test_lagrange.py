@@ -222,7 +222,7 @@ def test_lagrange(celltype, order):
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_dof_transformations_interval(order):
     lagrange = basix.create_element("Lagrange", "interval", order)
-    assert len(lagrange.base_transformations) == 0
+    assert len(lagrange.base_transformations()) == 0
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
@@ -241,7 +241,7 @@ def test_dof_transformations_triangle(order):
         permuted[1] = {6: 8, 8: 6}
         permuted[2] = {9: 11, 11: 9}
 
-    base_transformations = lagrange.base_transformations
+    base_transformations = lagrange.base_transformations()
     assert len(base_transformations) == 3
 
     for i, t in enumerate(base_transformations):
@@ -285,7 +285,7 @@ def test_dof_transformations_tetrahedron(order):
         permuted[12] = {31: 33, 32: 31, 33: 32}
         permuted[13] = {32: 33, 33: 32}
 
-    base_transformations = lagrange.base_transformations
+    base_transformations = lagrange.base_transformations()
     assert len(base_transformations) == 14
 
     for i, t in enumerate(base_transformations):

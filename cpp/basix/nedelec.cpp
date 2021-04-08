@@ -88,25 +88,18 @@ create_nedelec_2d_interpolation(int degree)
   return {x, M};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> create_nedelec_2d_base_transforms(int degree)
+std::vector<xt::xtensor<double, 2>>
+create_nedelec_2d_entity_transforms(int degree)
 {
-  const std::size_t ndofs = degree * (degree + 2);
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), 3);
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree - 1));
-  const std::size_t edge_dofs = edge_transforms.shape(1);
-  for (std::size_t edge = 0; edge < 3; ++edge)
-  {
-    const std::size_t start = edge_dofs * edge;
-    auto range = xt::range(start, start + edge_dofs);
-    xt::view(base_transformations, edge, range, range)
-        = xt::view(edge_transforms, 0, xt::all(), xt::all());
-  }
+  entity_transformations.push_back(
+      xt::view(edge_transforms, 0, xt::all(), xt::all()));
 
-  return base_transformations;
+  return entity_transformations;
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
@@ -226,45 +219,35 @@ create_nedelec_3d_interpolation(int degree)
   return {x, M};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> create_nedelec_3d_base_transforms(int degree)
+std::vector<xt::xtensor<double, 2>>
+create_nedelec_3d_entity_transforms(int degree)
 {
-  const std::size_t ndofs = 6 * degree + 4 * degree * (degree - 1)
-                            + (degree - 2) * (degree - 1) * degree / 2;
-  auto base_transformations
-      = xt::tile(xt::expand_dims(xt::eye<double>(ndofs), 0), 14);
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
   const xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree - 1));
-  const std::size_t edge_dofs = edge_transforms.shape(1);
-  for (std::size_t edge = 0; edge < 6; ++edge)
-  {
-    const std::size_t start = edge_dofs * edge;
-    auto range = xt::range(start, start + edge_dofs);
-    xt::view(base_transformations, edge, range, range)
-        = xt::view(edge_transforms, 0, xt::all(), xt::all());
-  }
+  entity_transformations.push_back(
+      xt::view(edge_transforms, 0, xt::all(), xt::all()));
 
   // Faces
+  if (degree == 1)
+  {
+    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+  }
   if (degree > 1)
   {
     xt::xtensor<double, 3> face_transforms
         = moments::create_moment_dof_transformations(
             create_dlagrange(cell::type::triangle, degree - 2));
 
-    const std::size_t face_dofs = face_transforms.shape(1);
-    for (std::size_t face = 0; face < 4; ++face)
-    {
-      const std::size_t start = edge_dofs * 6 + face_dofs * face;
-      auto range = xt::range(start, start + face_dofs);
-      xt::view(base_transformations, 6 + 2 * face, range, range)
-          = xt::view(face_transforms, 0, xt::all(), xt::all());
-      xt::view(base_transformations, 6 + 2 * face + 1, range, range)
-          = xt::view(face_transforms, 1, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(
+        xt::view(face_transforms, 0, xt::all(), xt::all()));
+    entity_transformations.push_back(
+        xt::view(face_transforms, 1, xt::all(), xt::all()));
   }
-
-  return base_transformations;
+  return entity_transformations;
 }
 //-----------------------------------------------------------------------------
 std::pair<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
@@ -289,30 +272,18 @@ create_nedelec2_2d_interpolation(int degree)
   return {x, M};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> create_nedelec2_2d_base_transformations(int degree)
+std::vector<xt::xtensor<double, 2>>
+create_nedelec2_2d_entity_transformations(int degree)
 {
-  const std::size_t ndofs = (degree + 1) * (degree + 2);
-  xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({static_cast<std::size_t>(3), ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree));
-  const std::size_t edge_dofs = edge_transforms.shape(1);
-  for (std::size_t edge = 0; edge < 3; ++edge)
-  {
-    const std::size_t start = edge_dofs * edge;
-    auto range = xt::range(start, start + edge_dofs);
-    xt::view(base_transformations, edge, range, range)
-        = xt::view(edge_transforms, 0, xt::all(), xt::all());
-  }
+  entity_transformations.push_back(
+      xt::view(edge_transforms, 0, xt::all(), xt::all()));
 
-  return base_transformations;
+  return entity_transformations;
 }
 //-----------------------------------------------------------------------------
 std::pair<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
@@ -349,48 +320,35 @@ create_nedelec2_3d_interpolation(int degree)
   return {x, M};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> create_nedelec2_3d_base_transformations(int degree)
+std::vector<xt::xtensor<double, 2>>
+create_nedelec2_3d_entity_transformations(int degree)
 {
-  const std::size_t ndofs = (degree + 1) * (degree + 2) * (degree + 3) / 2;
-  xt::xtensor<double, 3> base_transformations
-      = xt::zeros<double>({static_cast<std::size_t>(14), ndofs, ndofs});
-  for (std::size_t i = 0; i < base_transformations.shape(0); ++i)
-  {
-    xt::view(base_transformations, i, xt::all(), xt::all())
-        = xt::eye<double>(ndofs);
-  }
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
 
   const xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree));
-  const std::size_t edge_dofs = edge_transforms.shape(1);
-  for (std::size_t edge = 0; edge < 6; ++edge)
-  {
-    const std::size_t start = edge_dofs * edge;
-    auto range = xt::range(start, start + edge_dofs);
-    xt::view(base_transformations, edge, range, range)
-        = xt::view(edge_transforms, 0, xt::all(), xt::all());
-  }
+  entity_transformations.push_back(
+      xt::view(edge_transforms, 0, xt::all(), xt::all()));
 
   // Faces
-  if (degree > 1)
+  if (degree == 1)
+  {
+    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+  }
+  else
   {
     const xt::xtensor<double, 3> face_transforms
         = moments::create_dot_moment_dof_transformations(
             create_rt(cell::type::triangle, degree - 1));
-    const std::size_t face_dofs = face_transforms.shape(1);
-    for (std::size_t face = 0; face < 4; ++face)
-    {
-      const std::size_t start = edge_dofs * 6 + face_dofs * face;
-      auto range = xt::range(start, start + face_dofs);
-      xt::view(base_transformations, 6 + 2 * face, range, range)
-          = xt::view(face_transforms, 0, xt::all(), xt::all());
-      xt::view(base_transformations, 6 + 2 * face + 1, range, range)
-          = xt::view(face_transforms, 1, xt::all(), xt::all());
-    }
+    entity_transformations.push_back(
+        xt::view(face_transforms, 0, xt::all(), xt::all()));
+    entity_transformations.push_back(
+        xt::view(face_transforms, 1, xt::all(), xt::all()));
   }
 
-  return base_transformations;
+  return entity_transformations;
 }
 
 } // namespace
@@ -401,20 +359,20 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   xt::xtensor<double, 2> wcoeffs;
-  xt::xtensor<double, 3> transforms;
+  std::vector<xt::xtensor<double, 2>> transforms;
   switch (celltype)
   {
   case cell::type::triangle:
   {
     wcoeffs = create_nedelec_2d_space(degree);
-    transforms = create_nedelec_2d_base_transforms(degree);
+    transforms = create_nedelec_2d_entity_transforms(degree);
     std::tie(x, M) = create_nedelec_2d_interpolation(degree);
     break;
   }
   case cell::type::tetrahedron:
   {
     wcoeffs = create_nedelec_3d_space(degree);
-    transforms = create_nedelec_3d_base_transforms(degree);
+    transforms = create_nedelec_3d_entity_transforms(degree);
     std::tie(x, M) = create_nedelec_3d_interpolation(degree);
     break;
   }
@@ -433,19 +391,19 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
 {
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  xt::xtensor<double, 3> base_transformations;
+  std::vector<xt::xtensor<double, 2>> entity_transformations;
   switch (celltype)
   {
   case cell::type::triangle:
   {
     std::tie(x, M) = create_nedelec2_2d_interpolation(degree);
-    base_transformations = create_nedelec2_2d_base_transformations(degree);
+    entity_transformations = create_nedelec2_2d_entity_transformations(degree);
     break;
   }
   case cell::type::tetrahedron:
   {
     std::tie(x, M) = create_nedelec2_3d_interpolation(degree);
-    base_transformations = create_nedelec2_3d_base_transformations(degree);
+    entity_transformations = create_nedelec2_3d_entity_transformations(degree);
     break;
   }
   default:
@@ -459,6 +417,7 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
-                       base_transformations, x, M, maps::type::covariantPiola);
+                       entity_transformations, x, M,
+                       maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------

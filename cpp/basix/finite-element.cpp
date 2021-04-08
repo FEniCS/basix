@@ -351,50 +351,50 @@ FiniteElement::FiniteElement(
           or _entity_transformations[i](row, row) > 1.001)
         _dof_transformations_are_identity = false;
     }
-  }
-  // If transformations are permutations, then create the permutations
-  if (_dof_transformations_are_permutations)
-  {
-    for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
-    {
-      std::vector<int> perm(_entity_transformations[i].shape(0));
-      std::vector<int> rev_perm(_entity_transformations[i].shape(0));
-      for (std::size_t row = 0; row < _entity_transformations[i].shape(0);
-           ++row)
-      {
-        for (std::size_t col = 0; col < _entity_transformations[i].shape(0);
-             ++col)
-        {
-          if (_entity_transformations[i](row, col) > 0.5)
-          {
-            perm[row] = col;
-            rev_perm[col] = row;
-            break;
           }
-        }
-      }
-      // Factorise the permutations
-      std::vector<int> f_perm(perm.size());
-      for (std::size_t row = 0; row < perm.size(); ++row)
-      {
-        std::size_t row2 = perm[row];
-        while (row2 < row)
-          row2 = perm[row2];
-        f_perm[row] = row2;
-      }
-      _entity_permutations.push_back(f_perm);
+          // If transformations are permutations, then create the permutations
+          if (_dof_transformations_are_permutations)
+          {
+            for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
+            {
+              std::vector<int> perm(_entity_transformations[i].shape(0));
+              std::vector<int> rev_perm(_entity_transformations[i].shape(0));
+              for (std::size_t row = 0;
+                   row < _entity_transformations[i].shape(0); ++row)
+              {
+                for (std::size_t col = 0;
+                     col < _entity_transformations[i].shape(0); ++col)
+                {
+                  if (_entity_transformations[i](row, col) > 0.5)
+                  {
+                    perm[row] = col;
+                    rev_perm[col] = row;
+                    break;
+                  }
+                }
+              }
+              // Factorise the permutations
+              std::vector<int> f_perm(perm.size());
+              for (std::size_t row = 0; row < perm.size(); ++row)
+              {
+                std::size_t row2 = perm[row];
+                while (row2 < row)
+                  row2 = perm[row2];
+                f_perm[row] = row2;
+              }
+              _entity_permutations.push_back(f_perm);
 
-      std::vector<int> f_rev_perm(rev_perm.size());
-      for (std::size_t row = 0; row < rev_perm.size(); ++row)
-      {
-        std::size_t row2 = rev_perm[row];
-        while (row2 < row)
-          row2 = rev_perm[row2];
-        f_rev_perm[row] = row2;
-      }
-      _reverse_entity_permutations.push_back(f_rev_perm);
-    }
-  }
+              std::vector<int> f_rev_perm(rev_perm.size());
+              for (std::size_t row = 0; row < rev_perm.size(); ++row)
+              {
+                std::size_t row2 = rev_perm[row];
+                while (row2 < row)
+                  row2 = rev_perm[row2];
+                f_rev_perm[row] = row2;
+              }
+              _reverse_entity_permutations.push_back(f_rev_perm);
+            }
+          }
 }
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }

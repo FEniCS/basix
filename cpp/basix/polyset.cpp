@@ -727,7 +727,7 @@ xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
   switch (celltype)
   {
   case cell::type::interval:
-    assert(x.shape().size() == 1);
+    assert(x.dimension() == 1);
     return tabulate_polyset_line_derivs(d, n, x);
   case cell::type::triangle:
     return tabulate_polyset_triangle_derivs(d, n, x);

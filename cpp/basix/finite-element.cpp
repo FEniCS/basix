@@ -14,7 +14,6 @@
 #include "regge.h"
 #include "serendipity.h"
 #include <numeric>
-
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
@@ -26,6 +25,52 @@
 
 using namespace basix;
 
+namespace
+{
+constexpr int compute_value_size(maps::type map_type, int dim)
+{
+  switch (map_type)
+  {
+  case maps::type::identity:
+    return 1;
+  case maps::type::covariantPiola:
+    return dim;
+  case maps::type::contravariantPiola:
+    return dim;
+  case maps::type::doubleCovariantPiola:
+    return dim * dim;
+  case maps::type::doubleContravariantPiola:
+    return dim * dim;
+  default:
+    throw std::runtime_error("Mapping not yet implemented");
+  }
+}
+//-----------------------------------------------------------------------------
+int num_transformations(cell::type cell_type)
+{
+  switch (cell_type)
+  {
+  case cell::type::point:
+    return 0;
+  case cell::type::interval:
+    return 0;
+  case cell::type::triangle:
+    return 3;
+  case cell::type::quadrilateral:
+    return 4;
+  case cell::type::tetrahedron:
+    return 14;
+  case cell::type::hexahedron:
+    return 24;
+  case cell::type::prism:
+    return 19;
+  case cell::type::pyramid:
+    return 18;
+  default:
+    throw std::runtime_error("Cell type not yet supported");
+  }
+}
+} // namespace
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
                                            int degree)
@@ -44,7 +89,15 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::DP:
     return create_dlagrange(cell, degree);
   case element::family::BDM:
-    return create_bdm(cell, degree);
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return create_serendipity_div(cell, degree);
+    case cell::type::hexahedron:
+      return create_serendipity_div(cell, degree);
+    default:
+      return create_bdm(cell, degree);
+    }
   case element::family::RT:
   {
     switch (cell)
@@ -70,7 +123,15 @@ basix::FiniteElement basix::create_element(element::family family,
     }
   }
   case element::family::N2E:
-    return create_nedelec2(cell, degree);
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return create_serendipity_curl(cell, degree);
+    case cell::type::hexahedron:
+      return create_serendipity_curl(cell, degree);
+    default:
+      return create_nedelec2(cell, degree);
+    }
   case element::family::Regge:
     return create_regge(cell, degree);
   case element::family::CR:
@@ -82,48 +143,87 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::DPC:
     return create_dpc(cell, degree);
   default:
-    throw std::runtime_error("Family not found");
+    throw std::runtime_error("Element family not found");
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> basix::compute_expansion_coefficients(
+xt::xtensor<double, 3> basix::compute_expansion_coefficients(
     cell::type celltype, const xt::xtensor<double, 2>& B,
-    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
-    int degree, double kappa_tol)
+    const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
+    const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
+    double kappa_tol)
 {
-  // TODO: Tidy up 1D views for 1D problems
-  xt::xarray<double> pts = x;
-  if (pts.shape(1) == 1)
-    pts.reshape({pts.shape(0)});
-
-  const xt::xtensor<double, 3> P = polyset::tabulate(celltype, degree, 0, pts);
-
-  // Compute A = BD^T =  B(MP)^T
-  const int coeff_size = P.shape(2);
-  const int value_size = B.shape(1) / coeff_size;
-  const int m_size = M.shape(1) / value_size;
-  xt::xtensor<double, 2> A = xt::zeros<double>({B.shape(0), M.shape(0)});
-  for (std::size_t row = 0; row < B.shape(0); ++row)
+  std::size_t num_dofs(0), vs(0);
+  for (auto& Md : M)
   {
-    for (int v = 0; v < value_size; ++v)
+    for (auto& Me : Md)
     {
-      auto Bview
-          = xt::view(B, row, xt::range(v * coeff_size, (v + 1) * coeff_size));
-      auto Mview_t
-          = xt::view(M, xt::all(), xt::range(v * m_size, (v + 1) * m_size));
-
-      // Compute Aview = Bview * Pt * Mview
-      /// (by row: Aview_i = Bview_j * Pt_jk * Mview_ki )
-      for (std::size_t i = 0; i < A.shape(1); ++i)
-        for (std::size_t k = 0; k < P.shape(1); ++k)
-          for (std::size_t j = 0; j < P.shape(2); ++j)
-            A(row, i) += Bview(j) * P(0, k, j) * Mview_t(i, k);
+      num_dofs += Me.shape(0);
+      if (vs == 0)
+        vs = Me.shape(1);
+      else if (vs != Me.shape(1))
+        throw std::runtime_error("Inconsistent value size");
     }
   }
 
+  std::size_t pdim = polyset::dim(celltype, degree);
+  xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
+
+  // Loop over different dimensions
+  std::size_t dof_index = 0;
+  for (std::size_t d = 0; d < M.size(); ++d)
+  {
+    // Loop over entities of dimension d
+    for (std::size_t e = 0; e < x[d].size(); ++e)
+    {
+      // Evaluate polynomial basis at x[d]
+      const xt::xtensor<double, 2>& x_e = x[d][e];
+      xt::xtensor<double, 2> P;
+      if (x_e.shape(1) == 1 and x_e.size() != 0)
+      {
+        auto pts = xt::view(x_e, xt::all(), 0);
+        P = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(),
+                     xt::all());
+      }
+      else if (x_e.size() != 0)
+      {
+        P = xt::view(polyset::tabulate(celltype, degree, 0, x_e), 0, xt::all(),
+                     xt::all());
+      }
+
+      // Me: [dof, vs, point]
+      const xt::xtensor<double, 3>& Me = M[d][e];
+
+      // Compute dual matrix contribution
+      for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
+        for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
+          for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
+            for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
+              D(dof_index + i, j, l) += Me(i, j, k) * P(k, l);
+
+      // Dtmp += xt::linalg::dot(Me, P);
+
+      dof_index += M[d][e].shape(0);
+    }
+  }
+
+  // Compute B D^{T}
+  // xt::xtensor<double, 2> A = xt::zeros<double>({num_dofs, num_dofs});
+  // for (std::size_t i = 0; i < A.shape(0); ++i)
+  //   for (std::size_t j = 0; j < A.shape(1); ++j)
+  //     for (std::size_t k = 0; k < vs; ++k)
+  //       for (std::size_t l = 0; l < B[k].shape(1); ++l)
+  //         A(i, j) += B[k](i, l) * D(j, k, l);
+
+  /// Flatten D and take transpose
+  auto Dt_flat = xt::transpose(
+      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
+
+  auto BDt = xt::linalg::dot(B, Dt_flat);
+
   if (kappa_tol >= 1.0)
   {
-    if (xt::linalg::cond(A, 2) > kappa_tol)
+    if (xt::linalg::cond(BDt, 2) > kappa_tol)
     {
       throw std::runtime_error("Condition number of B.D^T when computing "
                                "expansion coefficients exceeds tolerance.");
@@ -131,93 +231,94 @@ xt::xtensor<double, 2> basix::compute_expansion_coefficients(
   }
 
   // Compute C = (BD^T)^{-1} B
-  return xt::linalg::solve(A, B);
+  xt::xtensor<double, 2> C = xt::linalg::solve(BDt, B);
+  return xt::reshape_view(C, {num_dofs, vs, pdim});
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-basix::combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
-                                  const xt::xtensor<double, 2>& points_2d,
-                                  const xt::xtensor<double, 2>& points_3d,
-                                  const xt::xtensor<double, 2>& matrix_1d,
-                                  const xt::xtensor<double, 2>& matrix_2d,
-                                  const xt::xtensor<double, 2>& matrix_3d,
-                                  std::size_t tdim, std::size_t value_size)
-{
-  // Stack point coordinates
-  auto p1 = xt::reshape_view(points_1d, {points_1d.shape(0), tdim});
-  auto p2 = xt::reshape_view(points_2d, {points_2d.shape(0), tdim});
-  auto p3 = xt::reshape_view(points_3d, {points_3d.shape(0), tdim});
-  auto x = xt::vstack(std::tuple(p1, p2, p3));
-
-  // Pack the matrix M
-  std::array<std::size_t, 3> row_dim
-      = {matrix_1d.shape(0), matrix_2d.shape(0), matrix_3d.shape(0)};
-  std::size_t num_rows = std::accumulate(row_dim.begin(), row_dim.end(), 0);
-  std::array<std::size_t, 3> col_dim
-      = {matrix_1d.shape(1), matrix_2d.shape(1), matrix_3d.shape(1)};
-  std::size_t num_cols = std::accumulate(col_dim.begin(), col_dim.end(), 0);
-
-  xt::xtensor<double, 2> M = xt::zeros<double>({num_rows, num_cols});
-  std::transform(col_dim.begin(), col_dim.end(), col_dim.begin(),
-                 [value_size](auto x) { return x /= value_size; });
-  num_cols /= value_size;
-  for (std::size_t i = 0; i < value_size; ++i)
-  {
-    {
-      auto range0 = xt::range(0, row_dim[0]);
-      auto range1 = xt::range(i * num_cols, i * num_cols + col_dim[0]);
-      auto range = xt::range(i * col_dim[0], i * col_dim[0] + col_dim[0]);
-      xt::view(M, range0, range1) = xt::view(matrix_1d, xt::all(), range);
-    }
-
-    {
-      auto range0 = xt::range(row_dim[0], row_dim[0] + row_dim[1]);
-      auto range1 = xt::range(i * num_cols + col_dim[0],
-                              i * num_cols + col_dim[0] + col_dim[1]);
-      auto range = xt::range(i * col_dim[1], i * col_dim[1] + col_dim[1]);
-      xt::view(M, range0, range1) = xt::view(matrix_2d, xt::all(), range);
-    }
-
-    {
-      auto range0 = xt::range(row_dim[0] + row_dim[1],
-                              row_dim[0] + row_dim[1] + row_dim[2]);
-      auto range1
-          = xt::range(i * num_cols + col_dim[0] + col_dim[1],
-                      i * num_cols + col_dim[0] + col_dim[1] + col_dim[2]);
-      auto range = xt::range(i * col_dim[2], i * col_dim[2] + col_dim[2]);
-      xt::view(M, range0, range1) = xt::view(matrix_3d, xt::all(), range);
-    }
-  }
-
-  return {x, M};
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(element::family family, cell::type cell_type,
-                             int degree,
-                             const std::vector<std::size_t>& value_shape,
-                             const xt::xtensor<double, 2>& coeffs,
-                             const std::vector<std::vector<int>>& entity_dofs,
-                             const xt::xtensor<double, 3>& base_transformations,
-                             const xt::xtensor<double, 2>& points,
-                             const xt::xtensor<double, 2>& M,
-                             maps::type map_type)
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 3>& coeffs,
+    const std::vector<xt::xtensor<double, 2>>& entity_transformations,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type)
     : map_type(map_type), _cell_type(cell_type), _family(family),
-      _degree(degree), _map_type(map_type), _coeffs(coeffs),
-      _entity_dofs(entity_dofs), _base_transformations(base_transformations),
-      _matM(M)
+      _degree(degree), _map_type(map_type),
+      _coeffs(xt::reshape_view(
+          coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
+      _entity_transformations(entity_transformations), _x(x), _matM_new(M)
 {
-  if (points.dimension() == 1)
-    throw std::runtime_error("Problem with points");
-  _points = points;
+  // if (points.dimension() == 1)
+  //   throw std::runtime_error("Problem with points");
 
   _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
 
-  // Check that entity dofs add up to total number of dofs
-  std::size_t sum = 0;
-  for (const std::vector<int>& q : entity_dofs)
-    sum = std::accumulate(q.begin(), q.end(), sum);
+  std::size_t num_points = 0;
+  for (auto& x_dim : x)
+    for (auto& x_e : x_dim)
+      num_points += x_e.shape(0);
 
-  if (sum != _coeffs.shape(0))
+  std::size_t tdim = geometry(cell_type).shape(1);
+  std::size_t counter = 0;
+  _points.resize({num_points, tdim});
+  for (auto& x_dim : x)
+    for (auto& x_e : x_dim)
+      for (std::size_t p = 0; p < x_e.shape(0); ++p)
+        xt::row(_points, counter++) = xt::row(x_e, p);
+
+  // Copy into _matM
+
+  const std::size_t value_size
+      = std::accumulate(value_shape.begin(), value_shape.end(), 1,
+                        std::multiplies<std::size_t>());
+
+  // Count number of dofs and point
+  std::size_t num_dofs(0), num_points1(0);
+  for (std::size_t d = 0; d < M.size(); ++d)
+  {
+    for (std::size_t e = 0; e < M[d].size(); ++e)
+    {
+      num_dofs += M[d][e].shape(0);
+      num_points1 += M[d][e].shape(2);
+    }
+  }
+
+  // Copy data into old _matM matrix
+
+  _matM = xt::zeros<double>({num_dofs, value_size * num_points1});
+  auto Mview = xt::reshape_view(_matM, {num_dofs, value_size, num_points1});
+
+  // Loop over each topological dimensions
+  std::size_t dof_offset(0), point_offset(0);
+  for (std::size_t d = 0; d < M.size(); ++d)
+  {
+    // Loop of entities of dimension d
+    for (std::size_t e = 0; e < M[d].size(); ++e)
+    {
+      auto dof_range = xt::range(dof_offset, dof_offset + M[d][e].shape(0));
+      auto point_range
+          = xt::range(point_offset, point_offset + M[d][e].shape(2));
+      xt::view(Mview, dof_range, xt::all(), point_range) = M[d][e];
+      point_offset += M[d][e].shape(2);
+      dof_offset += M[d][e].shape(0);
+    }
+  }
+
+  // Compute number of dofs for each cell entity (computed from
+  // interpolation data)
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(cell_type);
+  _entity_dofs.resize(tdim + 1);
+  for (std::size_t d = 0; d < _entity_dofs.size(); ++d)
+  {
+    _entity_dofs[d].resize(topology[d].size(), 0);
+    for (std::size_t e = 0; e < M[d].size(); ++e)
+      _entity_dofs[d][e] = M[d][e].shape(0);
+  }
+
+  // Check that nunber of dofs os equal to number of coefficients
+  if (num_dofs != _coeffs.shape(0))
   {
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
@@ -255,41 +356,8 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
   return _entity_dofs;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3>
-FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
-{
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
-  std::size_t ndsize = 1;
-  for (int i = 1; i <= nd; ++i)
-    ndsize *= (tdim + i);
-  for (int i = 1; i <= nd; ++i)
-    ndsize /= i;
-  const std::size_t vs = value_size();
-  const std::size_t ndofs = _coeffs.shape(0);
-
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 1)
-    _x.reshape({_x.shape(0), 1});
-
-  std::vector<double> basis_data(ndsize * x.shape(0) * ndofs * vs);
-  tabulate(nd, _x, basis_data.data());
-
-  xt::xtensor<double, 3> d({ndsize, _x.shape(0), ndofs * vs});
-  for (std::size_t i = 0; i < d.shape(0); ++i)
-  {
-    std::size_t offset = i * x.shape(0) * ndofs * vs;
-    std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
-    auto mat = xt::adapt<xt::layout_type::column_major>(
-        basis_data.data() + offset, x.shape(0) * ndofs * vs, xt::no_ownership(),
-        shape);
-    xt::view(d, i, xt::all(), xt::all()) = mat;
-  }
-
-  return d;
-}
-//-----------------------------------------------------------------------------
 xt::xtensor<double, 4>
-FiniteElement::tabulate_x(int nd, const xt::xarray<double>& x) const
+FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
   const std::size_t tdim = cell::topological_dimension(_cell_type);
   std::size_t ndsize = 1;
@@ -374,9 +442,58 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
   }
 }
 //-----------------------------------------------------------------------------
-const xt::xtensor<double, 3>& FiniteElement::base_transformations() const
+xt::xtensor<double, 3> FiniteElement::base_transformations() const
 {
-  return _base_transformations;
+  const std::size_t tdim = cell::topological_dimension(_cell_type);
+  const std::size_t nt = num_transformations(cell_type());
+  const std::size_t ndofs = dim();
+
+  xt::xtensor<double, 3> bt({nt, ndofs, ndofs});
+  for (std::size_t i = 0; i < nt; ++i)
+    xt::view(bt, i, xt::all(), xt::all()) = xt::eye<double>(ndofs);
+
+  std::size_t dof_start = 0;
+  int transform_n = 0;
+  if (tdim > 0)
+  {
+    for (std::size_t i = 0; i < _entity_dofs[0].size(); ++i)
+      dof_start += _entity_dofs[0][i];
+  }
+
+  if (tdim > 1)
+  {
+    // Base transformations for edges
+    for (int i = 0; i < cell::sub_entity_count(_cell_type, 1); ++i)
+    {
+      xt::view(bt, transform_n++,
+               xt::range(dof_start, dof_start + _entity_dofs[1][i]),
+               xt::range(dof_start, dof_start + _entity_dofs[1][i]))
+          = _entity_transformations[0];
+      dof_start += _entity_dofs[1][i];
+    }
+
+    if (tdim > 2)
+    {
+      for (int i = 0; i < cell::sub_entity_count(_cell_type, 2); ++i)
+      {
+        // TODO: This assumes that every face has the same shape
+        //       _entity_transformations should be replaced with a map from a
+        //       subentity type to a matrix to allow for prisms and pyramids.
+        xt::view(bt, transform_n++,
+                 xt::range(dof_start, dof_start + _entity_dofs[2][i]),
+                 xt::range(dof_start, dof_start + _entity_dofs[2][i]))
+            = _entity_transformations[1];
+        xt::view(bt, transform_n++,
+                 xt::range(dof_start, dof_start + _entity_dofs[2][i]),
+                 xt::range(dof_start, dof_start + _entity_dofs[2][i]))
+            = _entity_transformations[2];
+
+        dof_start += _entity_dofs[2][i];
+      }
+    }
+  }
+
+  return bt;
 }
 //-----------------------------------------------------------------------------
 int FiniteElement::num_points() const { return _points.shape(0); }
@@ -409,24 +526,5 @@ std::string basix::version()
 {
   static const std::string version_str = str(BASIX_VERSION);
   return version_str;
-}
-//-----------------------------------------------------------------------------
-int FiniteElement::compute_value_size(maps::type map_type, int dim)
-{
-  switch (map_type)
-  {
-  case maps::type::identity:
-    return 1;
-  case maps::type::covariantPiola:
-    return dim;
-  case maps::type::contravariantPiola:
-    return dim;
-  case maps::type::doubleCovariantPiola:
-    return dim * dim;
-  case maps::type::doubleContravariantPiola:
-    return dim * dim;
-  default:
-    throw std::runtime_error("Mapping not yet implemented");
-  }
 }
 //-----------------------------------------------------------------------------

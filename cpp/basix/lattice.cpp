@@ -6,7 +6,6 @@
 #include "cell.h"
 #include "lagrange.h"
 #include "quadrature.h"
-
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
@@ -18,7 +17,7 @@ using namespace basix;
 namespace
 {
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
+xt::xtensor<double, 1> warp_function(int n, const xt::xtensor<double, 1>& x)
 {
   [[maybe_unused]] auto [_pts, wts] = quadrature::compute_gll_rule(n + 1);
   _pts *= 0.5;
@@ -30,7 +29,7 @@ xt::xtensor<double, 1> warp_function_new(int n, const xt::xtensor<double, 1>& x)
 
   FiniteElement L = create_dlagrange(cell::type::interval, n);
   xt::xtensor<double, 2> v
-      = xt::view(L.tabulate(0, x), 0, xt::all(), xt::all());
+      = xt::view(L.tabulate(0, x), 0, xt::all(), xt::all(), 0);
 
   return xt::linalg::dot(v, pts);
 }
@@ -51,7 +50,7 @@ xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
   }
 
   if (lattice_type == lattice::type::gll_warped)
-    x += warp_function_new(n, x);
+    x += warp_function(n, x);
 
   return x;
 }
@@ -72,7 +71,7 @@ xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
   }
 
   if (lattice_type == lattice::type::gll_warped)
-    r += warp_function_new(n, r);
+    r += warp_function(n, r);
 
   const std::size_t m = r.shape(0);
   xt::xtensor<double, 2> x({m * m, 2});
@@ -105,7 +104,7 @@ xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
     r = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
   if (lattice_type == lattice::type::gll_warped)
-    r += warp_function_new(n, r);
+    r += warp_function(n, r);
 
   const std::size_t m = r.size();
   xt::xtensor<double, 2> x({m * m * m, 3});
@@ -140,7 +139,7 @@ xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
 
   // Displacement from GLL points in 1D, scaled by 1 /(r * (1 - r))
   xt::xtensor<double, 1> r = xt::linspace<double>(0.0, 1.0, 2 * n + 1);
-  xt::xtensor<double, 1> wbar = warp_function_new(n, r);
+  xt::xtensor<double, 1> wbar = warp_function(n, r);
   auto s = xt::view(r, xt::range(1, 2 * n - 1));
   xt::view(wbar, xt::range(1, 2 * n - 1)) /= (s * (1 - s));
 
@@ -179,7 +178,7 @@ xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
   xt::xtensor<double, 2> p(
       {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
   auto r = xt::linspace<double>(0.0, 1.0, 2 * n + 1);
-  auto wbar = warp_function_new(n, r);
+  auto wbar = warp_function(n, r);
   auto s = xt::view(r, xt::range(1, 2 * n - 1));
   xt::view(wbar, xt::range(1, 2 * n - 1)) /= s * (1 - s);
 
@@ -264,7 +263,7 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
   FiniteElement L = create_dlagrange(cell::type::interval, n);
   auto w = [&](double r) -> double {
     xt::xtensor<double, 1> rr = {0.5 * (r + 1.0)};
-    xt::xtensor<double, 1> v = xt::view(L.tabulate(0, rr), 0, 0, xt::all());
+    xt::xtensor<double, 1> v = xt::view(L.tabulate(0, rr), 0, 0, xt::all(), 0);
     double d = 0.0;
     for (std::size_t i = 0; i < pts.shape(0); ++i)
       d += v[i] * pts[i];

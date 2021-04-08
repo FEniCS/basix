@@ -15,13 +15,15 @@ option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
 
 # Find dependecies
+set(XTENSOR_MIN_VERSION 0.23.4)
+set(XTL_MIN_VERSION 0.7.0)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
-  find_package(xtl 0.7...<0.8 QUIET)
-  find_package(xtensor 0.23.2...<0.24 QUIET)
+  find_package(xtl ${XTL_MIN_VERSION}...<0.8 QUIET)
+  find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.24 QUIET)
 else()
-  find_package(xtl 0.7 QUIET)
-  find_package(xtensor 0.23.2 QUIET)
+  find_package(xtl ${XTL_MIN_VERSION} QUIET)
+  find_package(xtensor ${XTENSOR_MIN_VERSION} QUIET)
 endif()
 find_package(xtensor-blas 0.19 QUIET)
 if(NOT xtl_FOUND OR NOT xtensor_FOUND OR NOT xtensor-blas_FOUND)
@@ -43,7 +45,7 @@ if(NOT xtensor_FOUND)
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.23.2
+    GIT_TAG        0.23.4
   )
   FetchContent_MakeAvailable(xtensor)
 else()

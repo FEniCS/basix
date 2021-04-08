@@ -9,8 +9,8 @@ import numpy as np
 def test_gll_warped_pyramid():
     n = 8
 
-    # Check that all the surface points of the pyramid match up with the same points on
-    # quad and triangle
+    # Check that all the surface points of the pyramid match up with the
+    # same points on quad and triangle
     tri_pts = basix.create_lattice(basix.CellType.triangle, n, basix.LatticeType.gll_warped, True)
     quad_pts = basix.create_lattice(basix.CellType.quadrilateral, n, basix.LatticeType.gll_warped, True)
     pyr_pts = basix.create_lattice(basix.CellType.pyramid, n, basix.LatticeType.gll_warped, True)

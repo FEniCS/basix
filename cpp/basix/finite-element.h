@@ -11,6 +11,7 @@
 #include "element-families.h"
 #include "maps.h"
 #include "span.hpp"
+#include <array>
 #include <string>
 #include <vector>
 #include <xtensor/xadapt.hpp>
@@ -158,47 +159,30 @@ namespace basix
 ///   -x & 1 - y \end{bmatrix} @f]
 ///
 /// @param[in] cell_type The cells shape
-/// @param[in] B The matrix containing the expansion coefficients
-/// defining a polynomial basis spanning the polynomial space for this
-/// element
-/// @param[in] M The interpolation matrix, such that the dual matrix
+/// @param[in] B Matrices for the kth value index containing the
+/// expansion coefficients defining a polynomial basis spanning the
+/// polynomial space for this element
+/// @param[in] M The interpolation tensor, such that the dual matrix
 /// \f$D\f$ is computed by \f$D = MP\f$
-/// @param[in] x The interpolation points
-/// @param[in] degree The degree of the polynomial set
+/// @param[in] x The interpolation points. The vector index is for
+/// points on entities of the same dimension, ordered with the lowest
+/// topological dimension being first. Each 3D tensor hold the points on
+/// cell entities of a common dimension. The shape of the 3d tensors is
+/// (num_entities, num_points_per_entity, tdim).
+/// @param[in] degree The degree of the polynomial basis P used to
+/// create the element (before applying B)
 /// @param[in] kappa_tol If positive, the condition number is computed
 /// and an error thrown if the condition number of \f$B D^{T}\f$ is
 /// greater than @p kappa_tol. If @p kappa_tol is less than 1 the
 /// condition number is not checked.
 /// @return The matrix C of expansion coefficients that define the basis
-/// functions of the finite element space.
-xt::xtensor<double, 2> compute_expansion_coefficients(
+/// functions of the finite element space. The shape is (num_dofs,
+/// value_size, basis_dim)
+xt::xtensor<double, 3> compute_expansion_coefficients(
     cell::type cell_type, const xt::xtensor<double, 2>& B,
-    const xt::xtensor<double, 2>& M, const xt::xtensor<double, 2>& x,
-    int degree, double kappa_tol = 0.0);
-
-/// Combines interpolation data
-///
-/// When the value size is not 1, the matrices are split up into
-/// `value_size` parts, then recombined so that the columns of the
-/// matrix that is output is ordered correctly.
-///
-/// @param[in] points_1d The interpolation points for a 1d entity
-/// @param[in] points_2d The interpolation points for a 2d entity
-/// @param[in] points_3d The interpolation points for a 3d entity
-/// @param[in] matrix_1d The interpolation matrix for a 1d entity
-/// @param[in] matrix_2d The interpolation matrix for a 2d entity
-/// @param[in] matrix_3d The interpolation matrix for a 3d entity
-/// @param[in] tdim The toplogical dimension
-/// @param[in] value_size Value size
-/// @return The interpolation points and matrix
-std::pair<xt::xtensor<double, 2>, xt::xtensor<double, 2>>
-combine_interpolation_data(const xt::xtensor<double, 2>& points_1d,
-                           const xt::xtensor<double, 2>& points_2d,
-                           const xt::xtensor<double, 2>& points_3d,
-                           const xt::xtensor<double, 2>& matrix_1d,
-                           const xt::xtensor<double, 2>& matrix_2d,
-                           const xt::xtensor<double, 2>& matrix_3d,
-                           std::size_t tdim, std::size_t value_size);
+    const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
+    const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
+    double kappa_tol = 0.0);
 
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the
@@ -213,20 +197,22 @@ public:
   /// @param[in] cell_type
   /// @param[in] degree
   /// @param[in] value_shape
-  /// @param[in] coeffs
-  /// @param[in] entity_dofs
-  /// @param[in] base_transformations Base transformations
-  /// @param[in] points
-  /// @param[in] M The interpolation matrix
+  /// @param[in] coeffs Expansion coefficients. The shape is (num_dofs,
+  /// value_size, basis_dim)
+  /// @param[in] entity_transformations Entity transformations
+  /// @param[in] x Interpolation points. Shape is (tdim, entity index,
+  /// point index, dim)
+  /// @param[in] M The interpolation matrices. Indices are (tdim, entity
+  /// index, dof, vs, point_index)
   /// @param[in] map_type
-  FiniteElement(element::family family, cell::type cell_type, int degree,
-                const std::vector<std::size_t>& value_shape,
-                const xt::xtensor<double, 2>& coeffs,
-                const std::vector<std::vector<int>>& entity_dofs,
-                const xt::xtensor<double, 3>& base_transformations,
-                const xt::xtensor<double, 2>& points,
-                const xt::xtensor<double, 2>& M = {},
-                maps::type map_type = maps::type::identity);
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 3>& coeffs,
+      const std::vector<xt::xtensor<double, 2>>& entity_transformations,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      maps::type map_type = maps::type::identity);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -243,30 +229,24 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
-  /// @todo Fix unclear description of the returned data layout and
-  /// consider using rank 4 tensor [deriv][point][num_res][value_shape].
-  /// It is presently inconsistent with other data structures,
-  ///
   /// Compute basis values and derivatives at set of points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
-  /// @return The basis functions (and derivatives). The first entry in
-  /// the list is the basis function. Higher derivatives are stored in
-  /// triangular (2D) or tetrahedral (3D) ordering, i.e. for the (x,y)
-  /// derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1), (0,2),
-  /// (3,0)... The function basix::idx can be used to find the
-  /// appropriate derivative. If a vector result is expected, it will be
-  /// stacked with all x values, followed by all y-values (and then z,
-  /// if any), likewise tensor-valued results will be stacked in index
-  /// order.
-  xt::xtensor<double, 3> tabulate(int nd, const xt::xarray<double>& x) const;
-
-  /// TODO
-  /// @return Shape [derivative][point][basis fn][value index]
-  xt::xtensor<double, 4> tabulate_x(int nd, const xt::xarray<double>& x) const;
+  /// @return The basis functions (and derivatives). The shape is
+  /// (derivative, point, basis fn index, value index).
+  /// - The first index is the derivative, with higher derivatives are
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+  /// (0,2), (3,0)... The function basix::idx can be used to find the
+  /// appropriate derivative.
+  /// - The second index is the point index
+  /// - The third index is the basis function index
+  /// - The fourth index is the basis function component. Its has size
+  /// one for scalar basis functions.
+  xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
 
   /// Direct to memory block tabulation
   /// @param nd Number of derivatives
@@ -357,7 +337,8 @@ public:
   /// on a triangle has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]
   /// The sum of the entity dofs must match the total number of dofs
   /// reported by FiniteElement::dim,
-  /// @return List of entity dof counts on each dimension
+  /// @return List of entity dof counts on each dimension. The shape is (tdim +
+  /// 1, num_entities).
   const std::vector<std::vector<int>>& entity_dofs() const;
 
   /// Get the base transformations
@@ -438,7 +419,7 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
-  const xt::xtensor<double, 3>& base_transformations() const;
+  xt::xtensor<double, 3> base_transformations() const;
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
@@ -461,12 +442,10 @@ public:
   maps::type map_type;
 
 private:
-  static int compute_value_size(maps::type map_type, int dim);
-
   // Cell type
   cell::type _cell_type;
 
-  // The name of the finite element family
+  // Finite element family
   element::family _family;
 
   // Degree
@@ -493,8 +472,8 @@ private:
   // count on the associated entity, as listed by cell::topology.
   std::vector<std::vector<int>> _entity_dofs;
 
-  // Base transformations
-  xt::xtensor<double, 3> _base_transformations;
+  // Entity transformations
+  std::vector<xt::xtensor<double, 2>> _entity_transformations;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of
@@ -503,14 +482,15 @@ private:
   // with _interpolation_matrix to perform interpolation
   xt::xtensor<double, 2> _points;
 
+  // Interpolation points on the cell. The shape is (entity_dim, num
+  // entities of given dimension, num_points, tdim)
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+
   /// The interpolation weights and points
   xt::xtensor<double, 2> _matM;
 
-  // The mapping that maps values on the reference to values on a physical cell
-  // std::function<std::vector<double>(const tcb::span<const double>&,
-  //                                   const xt::xtensor<double, 2>&, const
-  //                                   double, const xt::xtensor<double, 2>&)>
-  //     _map_push_forward;
+  /// Interpolation matrices
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> _matM_new;
 };
 
 /// Create an element by name

@@ -150,14 +150,14 @@ void map_pull_back_complex(int handle, std::complex<double>* reference_data,
 /// Permute the DOF numbering of a cell
 ///
 /// @param[in] handle The handle of the basix element
-/// @param[in/out] dofs The dofs numbers
+/// @param[in,out] dofs The dof numbers
 /// @param[in] cell_info The permutation data of the cell
 void permute_dofs(int handle, int* dofs, std::uint32_t cell_info);
 
 /// Unpermute the DOF numbering of a cell
 ///
 /// @param[in] handle The handle of the basix element
-/// @param[in/out] dofs The dofs numbers
+/// @param[in,out] dofs The dof numbers
 /// @param[in] cell_info The permutation data of the cell
 void unpermute_dofs(int handle, int* dofs, std::uint32_t cell_info);
 

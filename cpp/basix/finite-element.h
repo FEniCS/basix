@@ -430,12 +430,12 @@ public:
   xt::xtensor<double, 3> base_transformations() const;
 
   /// Permute the dof numbering on a cell
-  /// @param[in/out] dofs The dof numbering for the cell
+  /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
   void permute_dofs(tcb::span<int>& U, std::uint32_t cell_info) const;
 
   /// Unpermute the dof numbering on a cell
-  /// @param[in/out] dofs The dof numbering for the cell
+  /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
   void unpermute_dofs(tcb::span<int>& U, std::uint32_t cell_info) const;
 

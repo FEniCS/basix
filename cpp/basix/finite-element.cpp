@@ -206,7 +206,9 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
     }
   }
 
-  // FIXME: Workaround for an issue in xtensor and intel compilers
+  // Note: forcing the layout type to get around an xtensor bug with Intel
+  // Compilers
+  // https://github.com/xtensor-stack/xtensor/issues/2351
   xt::xtensor<double, 2, xt::layout_type::column_major> B_cmajor(
       {B.shape(0), B.shape(1)});
   B_cmajor.assign(B);

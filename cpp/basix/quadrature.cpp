@@ -81,7 +81,10 @@ std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
   auto _beta = xt::adapt(beta);
 
   auto tmp = xt::sqrt(xt::view(_beta, xt::range(1, _)));
-  // Note: forcing the layout for A to get around an xtensor-blas bug
+
+  // Note: forcing the layout type to get around an xtensor bug with Intel
+  // Compilers
+  // https://github.com/xtensor-stack/xtensor/issues/2351
   xt::xtensor<double, 2, xt::layout_type::column_major> A
       = xt::diag(_alpha) + xt::diag(tmp, 1) + xt::diag(tmp, -1);
   auto [evals, evecs] = xt::linalg::eigh(A);
@@ -678,6 +681,9 @@ quadrature::compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
       if (i > 0)
         xt::row(Jd, k) += i * a3 * xt::view(J, i - 1, k - 1, xt::all());
     }
+    // Note: using assign, instead of copy assignment,  to get around an xtensor
+    // bug with Intel Compilers
+    // https://github.com/xtensor-stack/xtensor/issues/2351
     auto J_view = xt::view(J, i, xt::all(), xt::all());
     J_view.assign(Jd);
   }
@@ -738,7 +744,7 @@ quadrature::compute_gauss_jacobi_rule(double a, int m)
       = xt::row(quadrature::compute_jacobi_deriv(a, m, 1, pts), 1);
 
   const double a1 = std::pow(2.0, a + 1.0);
-  
+
   std::vector<double> wts(m);
   for (int i = 0; i < m; ++i)
   {

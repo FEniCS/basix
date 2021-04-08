@@ -219,7 +219,8 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
   auto Dt_flat = xt::transpose(
       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
-  auto BDt = xt::linalg::dot(B, Dt_flat);
+  xt::xtensor<double, 2, xt::layout_type::column_major> BDt
+      = xt::linalg::dot(B, Dt_flat);
 
   if (kappa_tol >= 1.0)
   {
@@ -230,8 +231,19 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
     }
   }
 
+  // Note: forcing the layout type to get around an xtensor bug with Intel
+  // Compilers
+  // https://github.com/xtensor-stack/xtensor/issues/2351
+  xt::xtensor<double, 2, xt::layout_type::column_major> B_cmajor(
+      {B.shape(0), B.shape(1)});
+  B_cmajor.assign(B);
+
   // Compute C = (BD^T)^{-1} B
-  xt::xtensor<double, 2> C = xt::linalg::solve(BDt, B);
+  auto result = xt::linalg::solve(BDt, B_cmajor);
+
+  xt::xtensor<double, 2> C({result.shape(0), result.shape(1)});
+  C.assign(result);
+
   return xt::reshape_view(C, {num_dofs, vs, pdim});
 }
 //-----------------------------------------------------------------------------

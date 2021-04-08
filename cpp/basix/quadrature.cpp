@@ -80,9 +80,13 @@ std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
   auto _alpha = xt::adapt(alpha);
   auto _beta = xt::adapt(beta);
 
-  xt::xtensor<double, 2> A = xt::diag(_alpha);
   auto tmp = xt::sqrt(xt::view(_beta, xt::range(1, _)));
-  A += xt::diag(tmp, 1) + xt::diag(tmp, -1);
+
+  // Note: forcing the layout type to get around an xtensor bug with Intel
+  // Compilers
+  // https://github.com/xtensor-stack/xtensor/issues/2351
+  xt::xtensor<double, 2, xt::layout_type::column_major> A
+      = xt::diag(_alpha) + xt::diag(tmp, 1) + xt::diag(tmp, -1);
   auto [evals, evecs] = xt::linalg::eigh(A);
 
   std::vector<double> x(evals.shape(0)), w(evals.shape(0));
@@ -646,9 +650,9 @@ quadrature::compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
 {
   std::vector<std::size_t> shape = {x.size()};
   const auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
-
   xt::xtensor<double, 3> J({nderiv + 1, n + 1, x.size()});
   xt::xtensor<double, 2> Jd({n + 1, x.size()});
+
   for (std::size_t i = 0; i < nderiv + 1; ++i)
   {
     if (i == 0)
@@ -677,9 +681,11 @@ quadrature::compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
       if (i > 0)
         xt::row(Jd, k) += i * a3 * xt::view(J, i - 1, k - 1, xt::all());
     }
-
-    xt::view(J, i, xt::all(), xt::all()) = Jd;
-    // J.push_back(Jd);
+    // Note: using assign, instead of copy assignment,  to get around an xtensor
+    // bug with Intel Compilers
+    // https://github.com/xtensor-stack/xtensor/issues/2351
+    auto J_view = xt::view(J, i, xt::all(), xt::all());
+    J_view.assign(Jd);
   }
 
   xt::xtensor<double, 2> result({nderiv + 1, x.size()});
@@ -738,19 +744,13 @@ quadrature::compute_gauss_jacobi_rule(double a, int m)
       = xt::row(quadrature::compute_jacobi_deriv(a, m, 1, pts), 1);
 
   const double a1 = std::pow(2.0, a + 1.0);
-  const double a3 = std::tgamma(m + 1.0);
-  // factorial(m)
-  double a5 = 1.0;
-  for (int i = 0; i < m; ++i)
-    a5 *= (i + 1);
-  const double a6 = a1 * a3 / a5;
 
   std::vector<double> wts(m);
   for (int i = 0; i < m; ++i)
   {
     const double x = pts[i];
     const double f = Jd[i];
-    wts[i] = a6 / (1.0 - x * x) / (f * f);
+    wts[i] = a1 / (1.0 - x * x) / (f * f);
   }
 
   return {pts, wts};
@@ -802,7 +802,6 @@ quadrature::make_quadrature_triangle_collapsed(std::size_t m)
 {
   auto [ptx, wx] = quadrature::compute_gauss_jacobi_rule(0.0, m);
   auto [pty, wy] = quadrature::compute_gauss_jacobi_rule(1.0, m);
-
   xt::xtensor<double, 2> pts({m * m, 2});
   std::vector<double> wts(m * m);
   int c = 0;

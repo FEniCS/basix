@@ -46,6 +46,8 @@ constexpr int compute_value_size(maps::type map_type, int dim)
   }
 }
 //-----------------------------------------------------------------------------
+bool isClose(double a, double b) { return fabs(a - b) < 0.0001 }
+//-----------------------------------------------------------------------------
 int num_transformations(cell::type cell_type)
 {
   switch (cell_type)
@@ -356,9 +358,8 @@ FiniteElement::FiniteElement(
           = xt::amax(xt::view(_entity_transformations[i], row, xt::all()))(0);
       double rtot
           = xt::sum(xt::view(_entity_transformations[i], row, xt::all()))(0);
-      if ((_entity_transformations[i].shape(1) != 1
-           and (rmin > 0.001 or rmin < -0.001))
-          or (rmax > 1.001 or rmax < 0.999) or (rtot > 1.001 or rtot < 0.999))
+      if ((_entity_transformations[i].shape(1) != 1 and !isClose(rmin, 0))
+          or !isClose(rmax, 1) or !isClose(rtot, 1))
       {
         _dof_transformations_are_permutations = false;
         _dof_transformations_are_identity = false;

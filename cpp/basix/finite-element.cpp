@@ -46,7 +46,7 @@ constexpr int compute_value_size(maps::type map_type, int dim)
   }
 }
 //-----------------------------------------------------------------------------
-bool isClose(double a, double b) { return fabs(a - b) < 0.0001 }
+bool isClose(double a, double b) { return fabs(a - b) < 0.0001; }
 //-----------------------------------------------------------------------------
 int num_transformations(cell::type cell_type)
 {

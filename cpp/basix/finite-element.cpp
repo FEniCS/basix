@@ -255,7 +255,8 @@ FiniteElement::FiniteElement(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type)
-    : map_type(map_type), _cell_type(cell_type), _family(family),
+    : map_type(map_type), _cell_type(cell_type),
+      _cell_tdim(cell::topological_dimension(cell_type)), _family(family),
       _degree(degree), _map_type(map_type),
       _coeffs(xt::reshape_view(
           coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
@@ -271,9 +272,8 @@ FiniteElement::FiniteElement(
     for (auto& x_e : x_dim)
       num_points += x_e.shape(0);
 
-  std::size_t tdim = geometry(cell_type).shape(1);
   std::size_t counter = 0;
-  _points.resize({num_points, tdim});
+  _points.resize({num_points, _cell_tdim});
   for (auto& x_dim : x)
     for (auto& x_e : x_dim)
       for (std::size_t p = 0; p < x_e.shape(0); ++p)
@@ -317,14 +317,19 @@ FiniteElement::FiniteElement(
     }
   }
 
+  // Store the number of subentities of each dimension
+  _cell_sub_entity_count.resize(_cell_tdim + 1);
+  for (std::size_t d = 0; d < _cell_sub_entity_count.size(); ++d)
+    _cell_sub_entity_count[d] = cell::sub_entity_count(_cell_type, d);
+
   // Compute number of dofs for each cell entity (computed from
   // interpolation data)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell_type);
-  _entity_dofs.resize(tdim + 1);
+  _entity_dofs.resize(_cell_tdim + 1);
   for (std::size_t d = 0; d < _entity_dofs.size(); ++d)
   {
-    _entity_dofs[d].resize(topology[d].size(), 0);
+    _entity_dofs[d].resize(_cell_sub_entity_count[d], 0);
     for (std::size_t e = 0; e < M[d].size(); ++e)
       _entity_dofs[d][e] = M[d][e].shape(0);
   }
@@ -453,10 +458,9 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
 xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
   std::size_t ndsize = 1;
   for (int i = 1; i <= nd; ++i)
-    ndsize *= (tdim + i);
+    ndsize *= (_cell_tdim + i);
   for (int i = 1; i <= nd; ++i)
     ndsize /= i;
   const std::size_t vs = value_size();
@@ -506,8 +510,7 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
   if (_x.dimension() == 2 and x.shape(1) == 1)
     _x.reshape({x.shape(0)});
 
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
-  if (_x.shape(1) != tdim)
+  if (_x.shape(1) != _cell_tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
   xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
@@ -537,7 +540,6 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::base_transformations() const
 {
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
   const std::size_t nt = num_transformations(cell_type());
   const std::size_t ndofs = dim();
 
@@ -547,16 +549,16 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
 
   std::size_t dof_start = 0;
   int transform_n = 0;
-  if (tdim > 0)
+  if (_cell_tdim > 0)
   {
     for (std::size_t i = 0; i < _entity_dofs[0].size(); ++i)
       dof_start += _entity_dofs[0][i];
   }
 
-  if (tdim > 1)
+  if (_cell_tdim > 1)
   {
     // Base transformations for edges
-    for (int i = 0; i < cell::sub_entity_count(_cell_type, 1); ++i)
+    for (int i = 0; i < _cell_sub_entity_count[1]; ++i)
     {
       xt::view(bt, transform_n++,
                xt::range(dof_start, dof_start + _entity_dofs[1][i]),
@@ -565,9 +567,9 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
       dof_start += _entity_dofs[1][i];
     }
 
-    if (tdim > 2)
+    if (_cell_tdim > 2)
     {
-      for (int i = 0; i < cell::sub_entity_count(_cell_type, 2); ++i)
+      for (int i = 0; i < _cell_sub_entity_count[2]; ++i)
       {
         // TODO: This assumes that every face has the same shape
         //       _entity_transformations should be replaced with a map from a
@@ -624,19 +626,18 @@ void FiniteElement::permute_dofs(tcb::span<int>& dofs,
   if (_dof_transformations_are_identity)
     return;
 
-  const int tdim = cell::topological_dimension(_cell_type);
-  if (tdim >= 2)
+  if (_cell_tdim >= 2)
   {
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
-    int face_start = tdim == 3 ? 3 * cell::sub_entity_count(_cell_type, 2) : 0;
+    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
 
     int dofstart = 0;
-    for (int v = 0; v < cell::sub_entity_count(_cell_type, 0); ++v)
+    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
       dofstart += _entity_dofs[0][v];
 
     // Permute DOFs on edges
-    for (int e = 0; e < cell::sub_entity_count(_cell_type, 1); ++e)
+    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
@@ -651,10 +652,10 @@ void FiniteElement::permute_dofs(tcb::span<int>& dofs,
       dofstart += _entity_dofs[1][e];
     }
 
-    if (tdim == 3)
+    if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (int f = 0; f < cell::sub_entity_count(_cell_type, 2); ++f)
+      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
@@ -691,19 +692,18 @@ void FiniteElement::unpermute_dofs(tcb::span<int>& dofs,
   if (_dof_transformations_are_identity)
     return;
 
-  const int tdim = cell::topological_dimension(_cell_type);
-  if (tdim >= 2)
+  if (_cell_tdim >= 2)
   {
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
-    int face_start = tdim == 3 ? 3 * cell::sub_entity_count(_cell_type, 2) : 0;
+    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
 
     int dofstart = 0;
-    for (int v = 0; v < cell::sub_entity_count(_cell_type, 0); ++v)
+    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
       dofstart += _entity_dofs[0][v];
 
     // Permute DOFs on edges
-    for (int e = 0; e < cell::sub_entity_count(_cell_type, 1); ++e)
+    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
@@ -718,10 +718,10 @@ void FiniteElement::unpermute_dofs(tcb::span<int>& dofs,
       dofstart += _entity_dofs[1][e];
     }
 
-    if (tdim == 3)
+    if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (int f = 0; f < cell::sub_entity_count(_cell_type, 2); ++f)
+      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
       {
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)

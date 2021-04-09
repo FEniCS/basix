@@ -463,6 +463,9 @@ private:
   // Cell type
   cell::type _cell_type;
 
+  // Topological dimension of the cell
+  std::size_t _cell_tdim;
+
   // Finite element family
   element::family _family;
 
@@ -481,6 +484,9 @@ private:
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
   xt::xtensor<double, 2> _coeffs;
+
+  // Number of cell subentities of each dimension
+  std::vector<int> _cell_sub_entity_count;
 
   // Number of dofs associated each subentity
   //

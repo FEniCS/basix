@@ -46,8 +46,6 @@ constexpr int compute_value_size(maps::type map_type, int dim)
   }
 }
 //-----------------------------------------------------------------------------
-bool isClose(double a, double b) { return fabs(a - b) < 0.0001; }
-//-----------------------------------------------------------------------------
 int num_transformations(cell::type cell_type)
 {
   switch (cell_type)
@@ -358,15 +356,14 @@ FiniteElement::FiniteElement(
           = xt::amax(xt::view(_entity_transformations[i], row, xt::all()))(0);
       double rtot
           = xt::sum(xt::view(_entity_transformations[i], row, xt::all()))(0);
-      if ((_entity_transformations[i].shape(1) != 1 and !isClose(rmin, 0))
-          or !isClose(rmax, 1) or !isClose(rtot, 1))
+      if ((_entity_transformations[i].shape(1) != 1 and !xt::allclose(rmin, 0))
+          or !xt::allclose(rmax, 1) or !xt::allclose(rtot, 1))
       {
         _dof_transformations_are_permutations = false;
         _dof_transformations_are_identity = false;
         break;
       }
-      if (_entity_transformations[i](row, row) < 0.999
-          or _entity_transformations[i](row, row) > 1.001)
+      if (!xt::allclose(_entity_transformations[i](row, row), 1))
         _dof_transformations_are_identity = false;
     }
   }
@@ -618,7 +615,7 @@ xt::xtensor<double, 3> FiniteElement::map_pull_back(
   return U;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::permute_dofs(tcb::span<int>& dofs,
+void FiniteElement::permute_dofs(tcb::span<std::int32_t>& dofs,
                                  std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
@@ -684,7 +681,7 @@ void FiniteElement::permute_dofs(tcb::span<int>& dofs,
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::unpermute_dofs(tcb::span<int>& dofs,
+void FiniteElement::unpermute_dofs(tcb::span<std::int32_t>& dofs,
                                    std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)

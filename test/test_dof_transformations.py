@@ -8,6 +8,30 @@ import numpy as np
 from .utils import parametrize_over_elements
 
 
+@parametrize_over_elements(3)
+def test_if_permutations(cell_name, element_name, order):
+    e = basix.create_element(element_name, cell_name, order)
+
+    for t in e.base_transformations():
+        for row in t:
+            a = np.argmax(row)
+            if not np.isclose(row[a], 1) or not np.allclose(row[:a], 0) or not np.allclose(row[a + 1:], 0):
+                assert not e.dof_transformations_are_permutations
+                return
+    assert e.dof_transformations_are_permutations
+
+
+@parametrize_over_elements(3)
+def test_if_identity(cell_name, element_name, order):
+    e = basix.create_element(element_name, cell_name, order)
+
+    for t in e.base_transformations():
+        if not np.allclose(t, np.eye(t.shape[0])):
+            assert not e.dof_transformations_are_identity
+            return
+    assert e.dof_transformations_are_identity
+
+
 @parametrize_over_elements(5)
 def test_non_zero(cell_name, element_name, order):
     e = basix.create_element(element_name, cell_name, order)

@@ -291,6 +291,11 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family", &FiniteElement::family)
+      .def_property_readonly(
+          "dof_transformations_are_permutations",
+          &FiniteElement::dof_transformations_are_permutations)
+      .def_property_readonly("dof_transformations_are_identity",
+                             &FiniteElement::dof_transformations_are_identity)
       .def_property_readonly("mapping_type", &FiniteElement::mapping_type)
       .def_property_readonly("points",
                              [](const FiniteElement& self) {

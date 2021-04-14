@@ -3,7 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "quadrature.h"
-#include "span.hpp"
+#include <xtl/xspan.hpp>
 #include <cmath>
 #include <vector>
 #include <xtensor-blas/xlinalg.hpp>
@@ -646,7 +646,7 @@ make_default_triangle_quadrature(int m)
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2>
 quadrature::compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
-                                 const tcb::span<const double>& x)
+                                 const xtl::span<const double>& x)
 {
   std::vector<std::size_t> shape = {x.size()};
   const auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
@@ -718,7 +718,7 @@ std::vector<double> quadrature::compute_gauss_jacobi_points(double a, int m)
       double s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      tcb::span<const double> _x(&x[k], 1);
+      xtl::span<const double> _x(&x[k], 1);
       const xt::xtensor<double, 2> f
           = quadrature::compute_jacobi_deriv(a, m, 1, _x);
       const double delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);

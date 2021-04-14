@@ -369,19 +369,30 @@ FiniteElement::FiniteElement(
   }
   if (!_dof_transformations_are_identity)
   {
+    _entity_transformations_inverse_transpose.resize(
+        _entity_transformations.size());
     for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
     {
       if (i == 1)
       {
-        _entity_transformations_inverse_transpose.push_back(
-            xt::transpose(xt::linalg::matrix_power(
-                _entity_transformations[i],
-                _cell_type == cell::type::hexahedron ? 3 : 2)));
+        if (_cell_type == cell::type::hexahedron)
+        {
+          _entity_transformations_inverse_transpose[i] = xt::transpose(
+              xt::linalg::dot(xt::linalg::dot(_entity_transformations[i],
+                                              _entity_transformations[i]),
+                              _entity_transformations[i]));
+        }
+        else
+        {
+          _entity_transformations_inverse_transpose[i]
+              = xt::transpose(xt::linalg::dot(_entity_transformations[i],
+                                              _entity_transformations[i]));
+        }
       }
       else
       {
-        _entity_transformations_inverse_transpose.push_back(
-            xt::transpose(_entity_transformations[i]));
+        _entity_transformations_inverse_transpose[i]
+            = xt::transpose(_entity_transformations[i]);
       }
     }
     // xt::transpose(xt::linalg::inv(_entity_transformations[i])));

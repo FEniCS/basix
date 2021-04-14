@@ -151,7 +151,7 @@ void map_pull_back_complex(int handle, std::complex<double>* reference_data,
 ///
 /// @param[in] handle The handle of the basix element
 /// @param[in,out] data The data
-/// @param[in] block size The block size
+/// @param[in] block_size The block size
 /// @param[in] cell_info The permutation data of the cell
 void apply_dof_transformation_real(int handle, double* data, int block_size,
                                    std::uint32_t cell_info);
@@ -166,7 +166,7 @@ void apply_dof_transformation_complex(int handle, std::complex<double>* data,
 ///
 /// @param[in] handle The handle of the basix element
 /// @param[in,out] data The data
-/// @param[in] block size The block size
+/// @param[in] block_size The block size
 /// @param[in] cell_info The permutation data of the cell
 void apply_inverse_transpose_dof_transformation_real(int handle, double* data,
                                                      int block_size,

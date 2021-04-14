@@ -17,7 +17,7 @@
 #include <basix/maps.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
-#include <basix/span.hpp>
+#include <xtl/xspan.hpp>
 
 namespace py = pybind11;
 using namespace basix;
@@ -201,7 +201,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
   //                            compute_expansion_coefficients(
   //                                celltype, adapt_x(coeffs),
   //                                adapt_x(interpolation_matrix),
-  //                                adapt_x(interpolation_points), degree, 1.0e6),
+  //                                adapt_x(interpolation_points),
+  //                                degree, 1.0e6),
   //                            entity_dofs, adapt_x(base_transformations),
   //                            adapt_x(interpolation_points),
   //                            adapt_x(interpolation_matrix), mapping_type);
@@ -219,11 +220,13 @@ Each element has a `tabulate` function which returns the basis functions and a n
   //        const py::array_t<double, py::array::c_style>& base_transformations,
   //        maps::type mapping_type = maps::type::identity) -> FiniteElement {
   //       return FiniteElement(element::str_to_type(family_name),
-  //                            cell::str_to_type(cell_name), degree, value_shape,
-  //                            compute_expansion_coefficients(
-  //                                cell::str_to_type(cell_name), adapt_x(coeffs),
+  //                            cell::str_to_type(cell_name), degree,
+  //                            value_shape, compute_expansion_coefficients(
+  //                                cell::str_to_type(cell_name),
+  //                                adapt_x(coeffs),
   //                                adapt_x(interpolation_matrix),
-  //                                adapt_x(interpolation_points), degree, 1.0e6),
+  //                                adapt_x(interpolation_points),
+  //                                degree, 1.0e6),
   //                            entity_dofs, adapt_x(base_transformations),
   //                            adapt_x(interpolation_points),
   //                            adapt_x(interpolation_matrix), mapping_type);
@@ -260,9 +263,9 @@ Each element has a `tabulate` function which returns the basis functions and a n
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
              const py::array_t<double, py::array::c_style>& K) {
-            auto u = self.map_push_forward(adapt_x(U), adapt_x(J),
-                                           tcb::span(detJ.data(), detJ.size()),
-                                           adapt_x(K));
+            auto u = self.map_push_forward(
+                adapt_x(U), adapt_x(J),
+                xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
             return py::array_t<double>(u.shape(), u.data());
           },
           mapdoc.c_str())
@@ -273,9 +276,9 @@ Each element has a `tabulate` function which returns the basis functions and a n
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
              const py::array_t<double, py::array::c_style>& K) {
-            auto U = self.map_pull_back(adapt_x(u), adapt_x(J),
-                                        tcb::span(detJ.data(), detJ.size()),
-                                        adapt_x(K));
+            auto U = self.map_pull_back(
+                adapt_x(u), adapt_x(J),
+                xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
             return py::array_t<double>(U.shape(), U.data());
           },
           invmapdoc.c_str())
@@ -343,7 +346,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
         if (x.ndim() > 1)
           throw std::runtime_error("Expected 1D x array.");
         xt::xtensor<double, 2> f = quadrature::compute_jacobi_deriv(
-            a, n, nderiv, tcb::span(x.data(), x.size()));
+            a, n, nderiv, xtl::span<const double>(x.data(), x.size()));
         return py::array_t<double>(f.shape(), f.data());
       },
       "Compute jacobi polynomial and derivatives at points");

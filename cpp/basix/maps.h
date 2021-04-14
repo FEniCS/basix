@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "span.hpp"
+#include <xtl/xspan.hpp>
 #include <map>
 #include <stdexcept>
 #include <string>

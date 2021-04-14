@@ -595,7 +595,7 @@ const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::map_push_forward(
     const xt::xtensor<double, 3>& U, const xt::xtensor<double, 3>& J,
-    const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
+    const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
   const std::size_t physical_value_size
       = compute_value_size(_map_type, J.shape(1));
@@ -607,7 +607,7 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::map_pull_back(
     const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
-    const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
+    const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
   const std::size_t reference_value_size = value_size();
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
@@ -615,7 +615,7 @@ xt::xtensor<double, 3> FiniteElement::map_pull_back(
   return U;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::permute_dofs(tcb::span<std::int32_t>& dofs,
+void FiniteElement::permute_dofs(xtl::span<std::int32_t>& dofs,
                                  std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
@@ -681,7 +681,7 @@ void FiniteElement::permute_dofs(tcb::span<std::int32_t>& dofs,
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::unpermute_dofs(tcb::span<std::int32_t>& dofs,
+void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
                                    std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)

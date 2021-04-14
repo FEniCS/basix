@@ -147,6 +147,38 @@ void map_pull_back_complex(int handle, std::complex<double>* reference_data,
                            int physical_dim, int physical_value_size,
                            int nresults, int npoints);
 
+/// Apply DOF transformations to some data
+///
+/// @param[in] handle The handle of the basix element
+/// @param[in,out] data The data
+/// @param[in] block size The block size
+/// @param[in] cell_info The permutation data of the cell
+void apply_dof_transformation_real(int handle, double* data, int block_size,
+                                   std::uint32_t cell_info);
+
+/// Apply DOF transformations to some data
+///
+/// See `apply_dof_transformation_real()`.
+void apply_dof_transformation_complex(int handle, std::complex<double>* data,
+                                      int block_size, std::uint32_t cell_info);
+
+/// Apply inverse transpose DOF transformations to some data
+///
+/// @param[in] handle The handle of the basix element
+/// @param[in,out] data The data
+/// @param[in] block size The block size
+/// @param[in] cell_info The permutation data of the cell
+void apply_inverse_transpose_dof_transformation_real(int handle, double* data,
+                                                     int block_size,
+                                                     std::uint32_t cell_info);
+
+/// Apply inverse transpose DOF transformations to some data
+///
+/// See `apply_dof_transformation_real()`.
+void apply_inverse_transpose_dof_transformation_complex(
+    int handle, std::complex<double>* data, int block_size,
+    std::uint32_t cell_info);
+
 /// Permute the DOF numbering of a cell
 ///
 /// @param[in] handle The handle of the basix element

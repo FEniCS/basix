@@ -441,6 +441,23 @@ public:
   void unpermute_dofs(tcb::span<std::int32_t>& dofs,
                       std::uint32_t cell_info) const;
 
+  /// Apply DOF transformations to some data
+  /// @param[in,out] data The data
+  /// @param block_size The number of data points per DOF
+  /// @param cell_info The permutation info for the cell
+  template <typename T>
+  void apply_dof_transformation(tcb::span<T>& data, int block_size,
+                                std::uint32_t cell_info) const;
+
+  /// Apply inverse_transpose DOF transformations to some data
+  /// @param[in,out] data The data
+  /// @param block_size The number of data points per DOF
+  /// @param cell_info The permutation info for the cell
+  template <typename T>
+  void
+  apply_inverse_transpose_dof_transformation(tcb::span<T>& data, int block_size,
+                                             std::uint32_t cell_info) const;
+
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
   /// to interpolate it in the finite element space.
@@ -525,12 +542,18 @@ private:
   bool _dof_transformations_are_identity;
 
   /// The entity permutations (factorised). This will only be set if
-  /// _dof_transformations_are_permutations is True
+  /// _dof_transformations_are_permutations is True and
+  /// _dof_transformations_are_identity is False
   std::vector<std::vector<int>> _entity_permutations;
 
   /// The reverse entity permutations (factorised). This will only be set if
-  /// _dof_transformations_are_permutations is True
+  /// _dof_transformations_are_permutations is True and
+  /// _dof_transformations_are_identity is False
   std::vector<std::vector<int>> _reverse_entity_permutations;
+
+  // Inverse transpose entity transformations. This will only be set if
+  /// _dof_transformations_are_identity is False
+  std::vector<xt::xtensor<double, 2>> _entity_transformations_inverse_transpose;
 };
 
 /// Create an element by name
@@ -592,6 +615,193 @@ void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
       auto u_data = xt::view(u, p, i, xt::all());
       auto U_data = xt::view(U, p, i, xt::all());
       maps::apply_map(U_data, u_data, K_p, 1.0 / detJ[p], J_p, map_type);
+    }
+  }
+}
+//-----------------------------------------------------------------------------
+template <typename T>
+void FiniteElement::apply_dof_transformation(tcb::span<T>& data, int block_size,
+                                             std::uint32_t cell_info) const
+{
+  if (_dof_transformations_are_identity)
+    return;
+
+  if (_cell_tdim >= 2)
+  {
+    int max_dof_count = 0;
+    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+      max_dof_count = std::max(max_dof_count, _entity_dofs[1][e]);
+    if (_cell_tdim == 3)
+      for (int e = 0; e < _cell_sub_entity_count[2]; ++e)
+        max_dof_count = std::max(max_dof_count, _entity_dofs[2][e]);
+    std::vector<T> temp(max_dof_count);
+
+    // This assumes 3 bits are used per face. This will need updating if 3D
+    // cells with faces with more than 4 sides are implemented
+    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
+
+    int dofstart = 0;
+    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
+      dofstart += _entity_dofs[0][v];
+
+    // Transform DOFs on edges
+    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+    {
+      // Reverse an edge
+      if (cell_info >> (face_start + e) & 1)
+      {
+        for (int b = 0; b < block_size; ++b)
+        {
+          for (int i = 0; i < _entity_dofs[1][e]; ++i)
+            temp[i] = data[block_size * (dofstart + i) + b];
+          for (int i = 0; i < _entity_dofs[1][e]; ++i)
+          {
+            const int index = block_size * (dofstart + i) + b;
+            data[index] = 0;
+            for (int j = 0; j < _entity_dofs[1][e]; ++j)
+              data[index] += _entity_transformations[0](i, j) * temp[j];
+          }
+        }
+      }
+      dofstart += _entity_dofs[1][e];
+    }
+    if (_cell_tdim == 3)
+    {
+      // Permute DOFs on faces
+      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
+      {
+        // Reflect a face
+        if (cell_info >> (3 * f) & 1)
+        {
+          for (int b = 0; b < block_size; ++b)
+          {
+            for (int i = 0; i < _entity_dofs[2][f]; ++i)
+              temp[i] = data[block_size * (dofstart + i) + b];
+            for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            {
+              const int index = block_size * (dofstart + i) + b;
+              data[index] = 0;
+              for (int j = 0; j < _entity_dofs[2][f]; ++j)
+                data[index] += _entity_transformations[2](i, j) * temp[j];
+            }
+          }
+        }
+
+        // Rotate a face
+        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
+          for (int b = 0; b < block_size; ++b)
+          {
+            for (int i = 0; i < _entity_dofs[2][f]; ++i)
+              temp[i] = data[block_size * (dofstart + i) + b];
+            for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            {
+              const int index = block_size * (dofstart + i) + b;
+              data[index] = 0;
+              for (int j = 0; j < _entity_dofs[2][f]; ++j)
+                data[index] += _entity_transformations[1](i, j) * temp[j];
+            }
+          }
+        }
+
+        dofstart += _entity_dofs[2][f];
+      }
+    }
+  }
+}
+//-----------------------------------------------------------------------------
+template <typename T>
+void FiniteElement::apply_inverse_transpose_dof_transformation(
+    tcb::span<T>& data, int block_size, std::uint32_t cell_info) const
+{
+  if (_dof_transformations_are_identity)
+    return;
+
+  if (_cell_tdim >= 2)
+  {
+    int max_dof_count = 0;
+    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+      max_dof_count = std::max(max_dof_count, _entity_dofs[1][e]);
+    if (_cell_tdim == 3)
+      for (int e = 0; e < _cell_sub_entity_count[2]; ++e)
+        max_dof_count = std::max(max_dof_count, _entity_dofs[2][e]);
+    std::vector<T> temp(max_dof_count);
+
+    // This assumes 3 bits are used per face. This will need updating if 3D
+    // cells with faces with more than 4 sides are implemented
+    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
+
+    int dofstart = 0;
+    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
+      dofstart += _entity_dofs[0][v];
+
+    // Transform DOFs on edges
+    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+    {
+      // Reverse an edge
+      if (cell_info >> (face_start + e) & 1)
+      {
+        for (int b = 0; b < block_size; ++b)
+        {
+          for (int i = 0; i < _entity_dofs[1][e]; ++i)
+            temp[i] = data[block_size * (dofstart + i) + b];
+          for (int i = 0; i < _entity_dofs[1][e]; ++i)
+          {
+            const int index = block_size * (dofstart + i) + b;
+            data[index] = 0;
+            for (int j = 0; j < _entity_dofs[1][e]; ++j)
+              data[index] += _entity_transformations_inverse_transpose[0](i, j)
+                             * temp[j];
+          }
+        }
+      }
+      dofstart += _entity_dofs[1][e];
+    }
+    if (_cell_tdim == 3)
+    {
+      // Permute DOFs on faces
+      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
+      {
+        // Reflect a face
+        if (cell_info >> (3 * f) & 1)
+        {
+          for (int b = 0; b < block_size; ++b)
+          {
+            for (int i = 0; i < _entity_dofs[2][f]; ++i)
+              temp[i] = data[block_size * (dofstart + i) + b];
+            for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            {
+              const int index = block_size * (dofstart + i) + b;
+              data[index] = 0;
+              for (int j = 0; j < _entity_dofs[2][f]; ++j)
+                data[index]
+                    += _entity_transformations_inverse_transpose[2](i, j)
+                       * temp[j];
+            }
+          }
+        }
+
+        // Rotate a face
+        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
+          for (int b = 0; b < block_size; ++b)
+          {
+            for (int i = 0; i < _entity_dofs[2][f]; ++i)
+              temp[i] = data[block_size * (dofstart + i) + b];
+            for (int i = 0; i < _entity_dofs[2][f]; ++i)
+            {
+              const int index = block_size * (dofstart + i) + b;
+              data[index] = 0;
+              for (int j = 0; j < _entity_dofs[2][f]; ++j)
+                data[index]
+                    += _entity_transformations_inverse_transpose[1](i, j)
+                       * temp[j];
+            }
+          }
+        }
+
+        dofstart += _entity_dofs[2][f];
+      }
     }
   }
 }

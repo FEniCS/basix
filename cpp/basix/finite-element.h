@@ -10,7 +10,6 @@
 #include "cell.h"
 #include "element-families.h"
 #include "maps.h"
-#include <xtl/xspan.hpp>
 #include <array>
 #include <string>
 #include <vector>
@@ -18,6 +17,7 @@
 #include <xtensor/xcomplex.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
+#include <xtl/xspan.hpp>
 
 /// Placeholder
 namespace basix
@@ -252,7 +252,8 @@ public:
   /// @param nd Number of derivatives
   /// @param x Points
   /// @param basis_data Memory location to fill
-  void tabulate(int nd, const xt::xarray<double>& x, double* basis_data) const;
+  void tabulate(int nd, const xt::xarray<double>& x,
+                xt::xtensor<double, 4>& basis_data) const;
 
   /// Get the element cell type
   /// @return The cell type

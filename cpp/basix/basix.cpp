@@ -119,8 +119,8 @@ void basix::tabulate(int handle, double* basis_values, int nd, const double* x,
       = cell::topological_dimension(_registry[handle]->cell_type());
   xt::xarray<int>::shape_type s({(std::size_t)npoints, gdim});
   auto _x = xt::adapt(x, npoints * gdim, xt::no_ownership(), s);
-
-  _registry[handle]->tabulate(nd, _x, basis_values);
+  auto data = _registry[handle]->tabulate(nd, _x);
+  std::copy_n(data.data(), data.size(), basis_values);
 }
 
 void basix::map_push_forward_real(int handle, double* physical_data,

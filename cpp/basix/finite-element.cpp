@@ -468,41 +468,14 @@ FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
   if (_x.dimension() == 1)
     _x.reshape({_x.shape(0), 1});
 
-  // Tabulate
-  std::vector<double> basis_data(ndsize * x.shape(0) * ndofs * vs);
-  tabulate(nd, _x, basis_data.data());
-
-  // Pack data in
-  xt::xtensor<double, 4> data({ndsize, _x.shape(0), ndofs, vs});
-
-  // Loop over derivatives
-  for (std::size_t d = 0; d < data.shape(0); ++d)
-  {
-    std::size_t offset_d = d * data.shape(1) * data.shape(2) * data.shape(3);
-
-    // Loop over points
-    for (std::size_t p = 0; p < data.shape(1); ++p)
-    {
-      // Loop over basis functions
-      for (std::size_t r = 0; r < data.shape(2); ++r)
-      {
-        // Loop over values
-        for (std::size_t i = 0; i < data.shape(3); ++i)
-        {
-          std::size_t offset = offset_d + p + r * data.shape(1)
-                               + i * data.shape(1) * data.shape(2);
-          assert(offset < basis_data.size());
-          data(d, p, r, i) = basis_data[offset];
-        }
-      }
-    }
-  }
+  xt::xtensor<double, 4> data({ndsize, x.shape(0), ndofs, vs});
+  tabulate(nd, _x, data);
 
   return data;
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
-                             double* basis_data) const
+                             xt::xtensor<double, 4>& basis_data) const
 {
   xt::xarray<double> _x = x;
   if (_x.dimension() == 2 and x.shape(1) == 1)
@@ -518,20 +491,13 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
   xt::xtensor<double, 2> B, C;
   for (std::size_t p = 0; p < basis.shape(0); ++p)
   {
-    // Map block for current derivative
-    std::array<std::size_t, 2> shape = {_x.shape(0), ndofs * vs};
-    std::size_t offset = p * x.shape(0) * ndofs * vs;
-    auto dresult = xt::adapt<xt::layout_type::column_major>(
-        basis_data + offset, x.shape(0) * ndofs * vs, xt::no_ownership(),
-        shape);
     for (int j = 0; j < vs; ++j)
     {
+      auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
       B = xt::view(basis, p, xt::all(), xt::all());
-      C = xt::transpose(xt::view(_coeffs, xt::all(),
-                                 xt::range(psize * j, psize * j + psize)));
-      xt::view(dresult, xt::range(0, x.shape(0)),
-               xt::range(ndofs * j, ndofs * j + ndofs))
-          = xt::linalg::dot(B, C);
+      C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
+      auto result = xt::linalg::dot(B, xt::transpose(C));
+      basis_view.assign(result);
     }
   }
 }

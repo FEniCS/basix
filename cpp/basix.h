@@ -147,6 +147,20 @@ void map_pull_back_complex(int handle, std::complex<double>* reference_data,
                            int physical_dim, int physical_value_size,
                            int nresults, int npoints);
 
+/// Permute the DOF numbering of a cell
+///
+/// @param[in] handle The handle of the basix element
+/// @param[in,out] dofs The dof numbers
+/// @param[in] cell_info The permutation data of the cell
+void permute_dofs(int handle, std::int32_t* dofs, std::uint32_t cell_info);
+
+/// Unpermute the DOF numbering of a cell
+///
+/// @param[in] handle The handle of the basix element
+/// @param[in,out] dofs The dof numbers
+/// @param[in] cell_info The permutation data of the cell
+void unpermute_dofs(int handle, std::int32_t* dofs, std::uint32_t cell_info);
+
 /// String representation of the cell type of the finite element
 /// @param handle
 /// @return cell type string
@@ -176,6 +190,10 @@ const char* family_name(int handle);
 /// Mapping name (identity, piola etc.)
 /// @param [in] handle Identifier
 const char* mapping_name(int handle);
+
+/// Indicates whether all the DOF transformations are identity matrices
+/// @param [in] handle Identifier
+bool dof_transformations_are_identity(int handle);
 
 /// Number of dofs per entity of given dimension
 /// @param handle Identifier

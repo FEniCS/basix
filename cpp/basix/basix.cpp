@@ -7,13 +7,13 @@
 #include "finite-element.h"
 #include "maps.h"
 #include "quadrature.h"
-#include "span.hpp"
 #include <algorithm>
 #include <iterator>
 #include <memory>
 #include <vector>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xtensor.hpp>
+#include <xtl/xspan.hpp>
 
 using namespace basix;
 
@@ -48,7 +48,7 @@ void _map_push_forward(int handle, T* u, const T* U, const double* J,
   std::array<std::size_t, 3> s2
       = {(std::size_t)num_points, tdim, (std::size_t)physical_dim};
   auto _K = xt::adapt(K, s2[0] * s2[1] * s2[2], xt::no_ownership(), s2);
-  auto _detJ = tcb::span(detJ, num_points);
+  auto _detJ = xtl::span<const double>(detJ, num_points);
 
   auto _u = xt::adapt(u, s0[0] * s0[1] * s0[2], xt::no_ownership(), s0);
   _registry[handle]->map_push_forward_m<T>(_U, _J, _detJ, _K, _u);
@@ -78,7 +78,7 @@ void _map_pull_back(int handle, T* U, const T* u, const double* J,
   std::array<std::size_t, 3> s2
       = {(std::size_t)num_points, tdim, (std::size_t)physical_dim};
   auto _K = xt::adapt(K, s2[0] * s2[1] * s2[2], xt::no_ownership(), s2);
-  auto _detJ = tcb::span(detJ, num_points);
+  auto _detJ = xtl::span<const double>(detJ, num_points);
 
   xt::xtensor<T, 3> u_t = xt::transpose(_u);
 
@@ -170,6 +170,22 @@ void basix::map_pull_back_complex(int handle,
                                        physical_value_size, nresults, npoints);
 }
 
+void basix::permute_dofs(int handle, std::int32_t* dofs,
+                         std::uint32_t cell_info)
+{
+  check_handle(handle);
+  auto dof_array = xtl::span<std::int32_t>(dofs, _registry[handle]->dim());
+  _registry[handle]->permute_dofs(dof_array, cell_info);
+}
+
+void basix::unpermute_dofs(int handle, std::int32_t* dofs,
+                           std::uint32_t cell_info)
+{
+  check_handle(handle);
+  auto dof_array = xtl::span<std::int32_t>(dofs, _registry[handle]->dim());
+  _registry[handle]->unpermute_dofs(dof_array, cell_info);
+}
+
 const char* basix::cell_type(int handle)
 {
   check_handle(handle);
@@ -245,6 +261,12 @@ const char* basix::mapping_name(int handle)
 {
   check_handle(handle);
   return maps::type_to_str(_registry[handle]->mapping_type()).c_str();
+}
+
+bool basix::dof_transformations_are_identity(int handle)
+{
+  check_handle(handle);
+  return _registry[handle]->dof_transformations_are_identity();
 }
 
 int basix::cell_geometry_num_points(const char* cell_type)

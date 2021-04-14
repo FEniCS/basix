@@ -10,7 +10,7 @@
 #include "cell.h"
 #include "element-families.h"
 #include "maps.h"
-#include "span.hpp"
+#include <xtl/xspan.hpp>
 #include <array>
 #include <string>
 #include <vector>
@@ -284,6 +284,14 @@ public:
   /// @return The mapping
   maps::type mapping_type() const;
 
+  /// Indicates whether the dof transformations are all permutations
+  /// @return True or False
+  bool dof_transformations_are_permutations() const;
+
+  /// Indicates whether the dof transformations are all the identity
+  /// @return True or False
+  bool dof_transformations_are_identity() const;
+
   /// Map function values from the reference to a physical cell
   /// @param U The function values on the reference
   /// @param J The Jacobian of the mapping
@@ -293,7 +301,7 @@ public:
   xt::xtensor<double, 3>
   map_push_forward(const xt::xtensor<double, 3>& U,
                    const xt::xtensor<double, 3>& J,
-                   const tcb::span<const double>& detJ,
+                   const xtl::span<const double>& detJ,
                    const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
@@ -305,7 +313,7 @@ public:
   template <typename T, typename E>
   void map_push_forward_m(const xt::xtensor<T, 3>& U,
                           const xt::xtensor<double, 3>& J,
-                          const tcb::span<const double>& detJ,
+                          const xtl::span<const double>& detJ,
                           const xt::xtensor<double, 3>& K, E&& u) const;
 
   /// Map function values from a physical cell to the reference
@@ -316,7 +324,7 @@ public:
   /// @return The function values on the reference
   xt::xtensor<double, 3> map_pull_back(const xt::xtensor<double, 3>& u,
                                        const xt::xtensor<double, 3>& J,
-                                       const tcb::span<const double>& detJ,
+                                       const xtl::span<const double>& detJ,
                                        const xt::xtensor<double, 3>& K) const;
 
   /// @todo Weirdly, the u and U
@@ -329,7 +337,7 @@ public:
   template <typename T, typename E>
   void map_pull_back_m(const xt::xtensor<T, 3>& u,
                        const xt::xtensor<double, 3>& J,
-                       const tcb::span<const double>& detJ,
+                       const xtl::span<const double>& detJ,
                        const xt::xtensor<double, 3>& K, E&& U) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
@@ -421,6 +429,18 @@ public:
   /// ~~~~~~~~~~~~~~~~
   xt::xtensor<double, 3> base_transformations() const;
 
+  /// Permute the dof numbering on a cell
+  /// @param[in,out] dofs The dof numbering for the cell
+  /// @param cell_info The permutation info for the cell
+  void permute_dofs(xtl::span<std::int32_t>& dofs,
+                    std::uint32_t cell_info) const;
+
+  /// Unpermute the dof numbering on a cell
+  /// @param[in,out] dofs The dof numbering for the cell
+  /// @param cell_info The permutation info for the cell
+  void unpermute_dofs(xtl::span<std::int32_t>& dofs,
+                      std::uint32_t cell_info) const;
+
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
   /// to interpolate it in the finite element space.
@@ -445,6 +465,9 @@ private:
   // Cell type
   cell::type _cell_type;
 
+  // Topological dimension of the cell
+  std::size_t _cell_tdim;
+
   // Finite element family
   element::family _family;
 
@@ -463,6 +486,9 @@ private:
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
   xt::xtensor<double, 2> _coeffs;
+
+  // Number of cell subentities of each dimension
+  std::vector<int> _cell_sub_entity_count;
 
   // Number of dofs associated each subentity
   //
@@ -491,6 +517,20 @@ private:
 
   /// Interpolation matrices
   std::array<std::vector<xt::xtensor<double, 3>>, 4> _matM_new;
+
+  /// Indicates whether or not the DOF transformations are all permutations
+  bool _dof_transformations_are_permutations;
+
+  /// Indicates whether or not the DOF transformations are all identity
+  bool _dof_transformations_are_identity;
+
+  /// The entity permutations (factorised). This will only be set if
+  /// _dof_transformations_are_permutations is True
+  std::vector<std::vector<int>> _entity_permutations;
+
+  /// The reverse entity permutations (factorised). This will only be set if
+  /// _dof_transformations_are_permutations is True
+  std::vector<std::vector<int>> _reverse_entity_permutations;
 };
 
 /// Create an element by name
@@ -508,7 +548,7 @@ std::string version();
 template <typename T, typename E>
 void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
                                        const xt::xtensor<double, 3>& J,
-                                       const tcb::span<const double>& detJ,
+                                       const xtl::span<const double>& detJ,
                                        const xt::xtensor<double, 3>& K,
                                        E&& u) const
 {
@@ -536,7 +576,7 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
 template <typename T, typename E>
 void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
                                     const xt::xtensor<double, 3>& J,
-                                    const tcb::span<const double>& detJ,
+                                    const xtl::span<const double>& detJ,
                                     const xt::xtensor<double, 3>& K,
                                     E&& U) const
 {

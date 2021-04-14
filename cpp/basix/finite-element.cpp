@@ -219,7 +219,8 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
   auto Dt_flat = xt::transpose(
       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
-  auto BDt = xt::linalg::dot(B, Dt_flat);
+  xt::xtensor<double, 2, xt::layout_type::column_major> BDt
+      = xt::linalg::dot(B, Dt_flat);
 
   if (kappa_tol >= 1.0)
   {
@@ -230,8 +231,19 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
     }
   }
 
+  // Note: forcing the layout type to get around an xtensor bug with Intel
+  // Compilers
+  // https://github.com/xtensor-stack/xtensor/issues/2351
+  xt::xtensor<double, 2, xt::layout_type::column_major> B_cmajor(
+      {B.shape(0), B.shape(1)});
+  B_cmajor.assign(B);
+
   // Compute C = (BD^T)^{-1} B
-  xt::xtensor<double, 2> C = xt::linalg::solve(BDt, B);
+  auto result = xt::linalg::solve(BDt, B_cmajor);
+
+  xt::xtensor<double, 2> C({result.shape(0), result.shape(1)});
+  C.assign(result);
+
   return xt::reshape_view(C, {num_dofs, vs, pdim});
 }
 //-----------------------------------------------------------------------------
@@ -243,7 +255,8 @@ FiniteElement::FiniteElement(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type)
-    : map_type(map_type), _cell_type(cell_type), _family(family),
+    : map_type(map_type), _cell_type(cell_type),
+      _cell_tdim(cell::topological_dimension(cell_type)), _family(family),
       _degree(degree), _map_type(map_type),
       _coeffs(xt::reshape_view(
           coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
@@ -259,9 +272,8 @@ FiniteElement::FiniteElement(
     for (auto& x_e : x_dim)
       num_points += x_e.shape(0);
 
-  std::size_t tdim = geometry(cell_type).shape(1);
   std::size_t counter = 0;
-  _points.resize({num_points, tdim});
+  _points.resize({num_points, _cell_tdim});
   for (auto& x_dim : x)
     for (auto& x_e : x_dim)
       for (std::size_t p = 0; p < x_e.shape(0); ++p)
@@ -305,14 +317,19 @@ FiniteElement::FiniteElement(
     }
   }
 
+  // Store the number of subentities of each dimension
+  _cell_sub_entity_count.resize(_cell_tdim + 1);
+  for (std::size_t d = 0; d < _cell_sub_entity_count.size(); ++d)
+    _cell_sub_entity_count[d] = cell::sub_entity_count(_cell_type, d);
+
   // Compute number of dofs for each cell entity (computed from
   // interpolation data)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell_type);
-  _entity_dofs.resize(tdim + 1);
+  _entity_dofs.resize(_cell_tdim + 1);
   for (std::size_t d = 0; d < _entity_dofs.size(); ++d)
   {
-    _entity_dofs[d].resize(topology[d].size(), 0);
+    _entity_dofs[d].resize(_cell_sub_entity_count[d], 0);
     for (std::size_t e = 0; e < M[d].size(); ++e)
       _entity_dofs[d][e] = M[d][e].shape(0);
   }
@@ -322,6 +339,76 @@ FiniteElement::FiniteElement(
   {
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
+  }
+
+  // Check if base transformations are all permutations
+  _dof_transformations_are_permutations = true;
+  _dof_transformations_are_identity = true;
+  for (std::size_t i = 0; _dof_transformations_are_permutations
+                          && i < _entity_transformations.size();
+       ++i)
+  {
+    for (std::size_t row = 0; row < _entity_transformations[i].shape(0); ++row)
+    {
+      double rmin
+          = xt::amin(xt::view(_entity_transformations[i], row, xt::all()))(0);
+      double rmax
+          = xt::amax(xt::view(_entity_transformations[i], row, xt::all()))(0);
+      double rtot
+          = xt::sum(xt::view(_entity_transformations[i], row, xt::all()))(0);
+      if ((_entity_transformations[i].shape(1) != 1 and !xt::allclose(rmin, 0))
+          or !xt::allclose(rmax, 1) or !xt::allclose(rtot, 1))
+      {
+        _dof_transformations_are_permutations = false;
+        _dof_transformations_are_identity = false;
+        break;
+      }
+      if (!xt::allclose(_entity_transformations[i](row, row), 1))
+        _dof_transformations_are_identity = false;
+    }
+  }
+  // If transformations are permutations, then create the permutations
+  if (_dof_transformations_are_permutations)
+  {
+    for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
+    {
+      std::vector<int> perm(_entity_transformations[i].shape(0));
+      std::vector<int> rev_perm(_entity_transformations[i].shape(0));
+      for (std::size_t row = 0; row < _entity_transformations[i].shape(0);
+           ++row)
+      {
+        for (std::size_t col = 0; col < _entity_transformations[i].shape(0);
+             ++col)
+        {
+          if (_entity_transformations[i](row, col) > 0.5)
+          {
+            perm[row] = col;
+            rev_perm[col] = row;
+            break;
+          }
+        }
+      }
+      // Factorise the permutations
+      std::vector<int> f_perm(perm.size());
+      for (std::size_t row = 0; row < perm.size(); ++row)
+      {
+        std::size_t row2 = perm[row];
+        while (row2 < row)
+          row2 = perm[row2];
+        f_perm[row] = row2;
+      }
+      _entity_permutations.push_back(f_perm);
+
+      std::vector<int> f_rev_perm(rev_perm.size());
+      for (std::size_t row = 0; row < rev_perm.size(); ++row)
+      {
+        std::size_t row2 = rev_perm[row];
+        while (row2 < row)
+          row2 = rev_perm[row2];
+        f_rev_perm[row] = row2;
+      }
+      _reverse_entity_permutations.push_back(f_rev_perm);
+    }
   }
 }
 //-----------------------------------------------------------------------------
@@ -346,6 +433,16 @@ element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 maps::type FiniteElement::mapping_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
+bool FiniteElement::dof_transformations_are_permutations() const
+{
+  return _dof_transformations_are_permutations;
+}
+//-----------------------------------------------------------------------------
+bool FiniteElement::dof_transformations_are_identity() const
+{
+  return _dof_transformations_are_identity;
+}
+//-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::interpolation_matrix() const
 {
   return _matM;
@@ -359,10 +456,9 @@ const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
 xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
   std::size_t ndsize = 1;
   for (int i = 1; i <= nd; ++i)
-    ndsize *= (tdim + i);
+    ndsize *= (_cell_tdim + i);
   for (int i = 1; i <= nd; ++i)
     ndsize /= i;
   const std::size_t vs = value_size();
@@ -412,8 +508,7 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
   if (_x.dimension() == 2 and x.shape(1) == 1)
     _x.reshape({x.shape(0)});
 
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
-  if (_x.shape(1) != tdim)
+  if (_x.shape(1) != _cell_tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
   xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
@@ -444,7 +539,6 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::base_transformations() const
 {
-  const std::size_t tdim = cell::topological_dimension(_cell_type);
   const std::size_t nt = num_transformations(cell_type());
   const std::size_t ndofs = dim();
 
@@ -454,16 +548,16 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
 
   std::size_t dof_start = 0;
   int transform_n = 0;
-  if (tdim > 0)
+  if (_cell_tdim > 0)
   {
     for (std::size_t i = 0; i < _entity_dofs[0].size(); ++i)
       dof_start += _entity_dofs[0][i];
   }
 
-  if (tdim > 1)
+  if (_cell_tdim > 1)
   {
     // Base transformations for edges
-    for (int i = 0; i < cell::sub_entity_count(_cell_type, 1); ++i)
+    for (int i = 0; i < _cell_sub_entity_count[1]; ++i)
     {
       xt::view(bt, transform_n++,
                xt::range(dof_start, dof_start + _entity_dofs[1][i]),
@@ -472,9 +566,9 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
       dof_start += _entity_dofs[1][i];
     }
 
-    if (tdim > 2)
+    if (_cell_tdim > 2)
     {
-      for (int i = 0; i < cell::sub_entity_count(_cell_type, 2); ++i)
+      for (int i = 0; i < _cell_sub_entity_count[2]; ++i)
       {
         // TODO: This assumes that every face has the same shape
         //       _entity_transformations should be replaced with a map from a
@@ -502,7 +596,7 @@ const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::map_push_forward(
     const xt::xtensor<double, 3>& U, const xt::xtensor<double, 3>& J,
-    const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
+    const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
   const std::size_t physical_value_size
       = compute_value_size(_map_type, J.shape(1));
@@ -514,12 +608,144 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::map_pull_back(
     const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
-    const tcb::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
+    const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
   const std::size_t reference_value_size = value_size();
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
   map_pull_back_m(u, J, detJ, K, U);
   return U;
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::permute_dofs(xtl::span<std::int32_t>& dofs,
+                                 std::uint32_t cell_info) const
+{
+  if (!_dof_transformations_are_permutations)
+    throw std::runtime_error(
+        "The DOF transformations for this element are not permutations");
+  if (_dof_transformations_are_identity)
+    return;
+
+  if (_cell_tdim >= 2)
+  {
+    // This assumes 3 bits are used per face. This will need updating if 3D
+    // cells with faces with more than 4 sides are implemented
+    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
+
+    int dofstart = 0;
+    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
+      dofstart += _entity_dofs[0][v];
+
+    // Permute DOFs on edges
+    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+    {
+      // Reverse an edge
+      if (cell_info >> (face_start + e) & 1)
+      {
+        for (int i = 0; i < _entity_dofs[1][e]; ++i)
+        {
+          std::swap(dofs[dofstart + i],
+                    dofs[dofstart + _entity_permutations[0][i]]);
+        }
+      }
+
+      dofstart += _entity_dofs[1][e];
+    }
+
+    if (_cell_tdim == 3)
+    {
+      // Permute DOFs on faces
+      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
+      {
+        // Reflect a face
+        if (cell_info >> (3 * f) & 1)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+          {
+            std::swap(dofs[dofstart + i],
+                      dofs[dofstart + _entity_permutations[2][i]]);
+          }
+        }
+
+        // Rotate a face
+        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+          {
+            std::swap(dofs[dofstart + i],
+                      dofs[dofstart + _entity_permutations[1][i]]);
+          }
+        }
+
+        dofstart += _entity_dofs[2][f];
+      }
+    }
+  }
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
+                                   std::uint32_t cell_info) const
+{
+  if (!_dof_transformations_are_permutations)
+    throw std::runtime_error(
+        "The DOF transformations for this element are not permutations");
+  if (_dof_transformations_are_identity)
+    return;
+
+  if (_cell_tdim >= 2)
+  {
+    // This assumes 3 bits are used per face. This will need updating if 3D
+    // cells with faces with more than 4 sides are implemented
+    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
+
+    int dofstart = 0;
+    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
+      dofstart += _entity_dofs[0][v];
+
+    // Permute DOFs on edges
+    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+    {
+      // Reverse an edge
+      if (cell_info >> (face_start + e) & 1)
+      {
+        for (int i = 0; i < _entity_dofs[1][e]; ++i)
+        {
+          std::swap(dofs[dofstart + i],
+                    dofs[dofstart + _reverse_entity_permutations[0][i]]);
+        }
+      }
+
+      dofstart += _entity_dofs[1][e];
+    }
+
+    if (_cell_tdim == 3)
+    {
+      // Permute DOFs on faces
+      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
+      {
+        // Rotate a face
+        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+          {
+            std::swap(dofs[dofstart + i],
+                      dofs[dofstart + _reverse_entity_permutations[1][i]]);
+          }
+        }
+
+        // Reflect a face
+        if (cell_info >> (3 * f) & 1)
+        {
+          for (int i = 0; i < _entity_dofs[2][f]; ++i)
+          {
+            std::swap(dofs[dofstart + i],
+                      dofs[dofstart + _reverse_entity_permutations[2][i]]);
+          }
+        }
+
+        dofstart += _entity_dofs[2][f];
+      }
+    }
+  }
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

@@ -486,7 +486,6 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 
   xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
   const int psize = polyset::dim(_cell_type, _degree);
-  const std::size_t ndofs = _coeffs.shape(0);
   const int vs = value_size();
   xt::xtensor<double, 2> B, C;
   for (std::size_t p = 0; p < basis.shape(0); ++p)

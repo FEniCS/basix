@@ -122,9 +122,9 @@ precompute::prepare_matrix(const xt::xtensor<T, 2> matrix)
           = xt::view(permuted_matrix, i, xt::range(i, dim));
     if (i > 0)
     {
-      xt::xtensor<T, 1> v = xt::linalg::dot(
-          xt::transpose(xt::linalg::inv(
-              xt::view(permuted_matrix, xt::range(0, i), xt::range(0, i)))),
+      xt::xtensor<T, 1> v = xt::linalg::solve(
+          xt::transpose(
+              xt::view(permuted_matrix, xt::range(0, i), xt::range(0, i))),
           xt::view(permuted_matrix, i, xt::range(0, i)));
 
       xt::view(prepared_matrix, i, xt::range(0, i)) = v;

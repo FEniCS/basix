@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "span.hpp"
 #include <vector>
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
+#include <xtl/xspan.hpp>
 
 namespace basix
 {
@@ -33,7 +33,7 @@ prepare_permutation(const std::vector<std::size_t> perm);
 /// @param[in] offset The position in the data to start applying the permutation
 /// @param[in] block_size The block size of the data
 template <typename E>
-void apply_permutation(const std::vector<std::size_t> perm, tcb::span<E>& data,
+void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
                        const std::size_t offset = 0,
                        const std::size_t block_size = 1);
 
@@ -56,14 +56,14 @@ template <typename T, typename E>
 void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
                                    xt::xtensor<T, 2>>
                       matrix,
-                  tcb::span<E>& data, const std::size_t offset = 0,
+                  xtl::span<E>& data, const std::size_t offset = 0,
                   const std::size_t block_size = 1);
 } // namespace precompute
 
 //-----------------------------------------------------------------------------
 template <typename E>
 void precompute::apply_permutation(const std::vector<std::size_t> perm,
-                                   tcb::span<E>& data, const std::size_t offset,
+                                   xtl::span<E>& data, const std::size_t offset,
                                    const std::size_t block_size)
 {
   for (std::size_t b = 0; b < block_size; ++b)
@@ -145,7 +145,7 @@ void precompute::apply_matrix(
     const std::tuple<std::vector<std::size_t>, std::vector<T>,
                      xt::xtensor<T, 2>>
         matrix,
-    tcb::span<E>& data, const std::size_t offset, const std::size_t block_size)
+    xtl::span<E>& data, const std::size_t offset, const std::size_t block_size)
 {
   apply_permutation(std::get<0>(matrix), data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)

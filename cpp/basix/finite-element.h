@@ -448,7 +448,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_dof_transformation(tcb::span<T>& data, int block_size,
+  void apply_dof_transformation(xtl::span<T>& data, int block_size,
                                 std::uint32_t cell_info) const;
 
   /// Apply inverse_transpose DOF transformations to some data
@@ -457,7 +457,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void
-  apply_inverse_transpose_dof_transformation(tcb::span<T>& data, int block_size,
+  apply_inverse_transpose_dof_transformation(xtl::span<T>& data, int block_size,
                                              std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
@@ -628,7 +628,7 @@ void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
 }
 //-----------------------------------------------------------------------------
 template <typename T>
-void FiniteElement::apply_dof_transformation(tcb::span<T>& data, int block_size,
+void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
                                              std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
@@ -683,7 +683,7 @@ void FiniteElement::apply_dof_transformation(tcb::span<T>& data, int block_size,
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_transpose_dof_transformation(
-    tcb::span<T>& data, int block_size, std::uint32_t cell_info) const
+    xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;

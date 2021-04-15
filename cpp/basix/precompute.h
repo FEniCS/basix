@@ -85,7 +85,7 @@ precompute::prepare_matrix(const xt::xtensor<T, 2> matrix)
   // Permute the matrix so that all the top left blocks are invertible
   for (std::size_t i = 0; i < dim; ++i)
   {
-    int max_det = 0;
+    double max_det = 0;
     std::size_t col = -1;
     for (std::size_t j = 0; j < dim; ++j)
     {

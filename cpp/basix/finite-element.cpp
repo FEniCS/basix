@@ -599,19 +599,22 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
     {
       for (int i = 0; i < _cell_sub_entity_count[2]; ++i)
       {
-        // TODO: This assumes that every face has the same shape
-        //       _entity_transformations should be replaced with a map from a
-        //       subentity type to a matrix to allow for prisms and pyramids.
-        xt::view(bt, transform_n++,
-                 xt::range(dof_start, dof_start + _entity_dofs[2][i]),
-                 xt::range(dof_start, dof_start + _entity_dofs[2][i]))
-            = _entity_transformations[1];
-        xt::view(bt, transform_n++,
-                 xt::range(dof_start, dof_start + _entity_dofs[2][i]),
-                 xt::range(dof_start, dof_start + _entity_dofs[2][i]))
-            = _entity_transformations[2];
+        if (_entity_dofs[2][i] > 0)
+        {
+          // TODO: This assumes that every face has the same shape
+          //       _entity_transformations should be replaced with a map from a
+          //       subentity type to a matrix to allow for prisms and pyramids.
+          xt::view(bt, transform_n++,
+                   xt::range(dof_start, dof_start + _entity_dofs[2][i]),
+                   xt::range(dof_start, dof_start + _entity_dofs[2][i]))
+              = _entity_transformations[1];
+          xt::view(bt, transform_n++,
+                   xt::range(dof_start, dof_start + _entity_dofs[2][i]),
+                   xt::range(dof_start, dof_start + _entity_dofs[2][i]))
+              = _entity_transformations[2];
 
-        dof_start += _entity_dofs[2][i];
+          dof_start += _entity_dofs[2][i];
+        }
       }
     }
   }

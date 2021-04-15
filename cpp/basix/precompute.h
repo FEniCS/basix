@@ -18,22 +18,36 @@ namespace basix
 /// application without temporary memory assignment later
 namespace precompute
 {
-/// Precompute a permutation
+/// Prepare a permutation
+/// @param[in] perm A permutation
+/// @return The precomputed representation of the permutation
 std::vector<std::size_t>
 prepare_permutation(const std::vector<std::size_t> perm);
 
-// Apply a (precomputed) permutation
+/// Apply a (precomputed) permutation
+/// @param[in] perm A permutation in precomputed form (as returned by
+/// `prepare_permutation()`)
+/// @param[in,out] data The data to apply the permutation to
+/// @param[in] offset The position in the data to start applying the permutation
+/// @param[in] block_size The block size of the data
 template <typename E>
 void apply_permutation(const std::vector<std::size_t> perm, tcb::span<E>& data,
                        const std::size_t offset = 0,
                        const std::size_t block_size = 1);
 
-/// Precompute a matrix
+/// Prepare a matrix
+/// @param[in] perm A matrix
+/// @return The precomputed representation of the matrix
 template <typename T>
 std::tuple<std::vector<std::size_t>, std::vector<T>, xt::xtensor<T, 2>>
 prepare_matrix(const xt::xtensor<T, 2> matrix);
 
 /// Apply a (precomputed) matrix
+/// @param[in] matrix A matrix in precomputed form (as returned by
+/// `prepare_matrix()`)
+/// @param[in,out] data The data to apply the permutation to
+/// @param[in] offset The position in the data to start applying the permutation
+/// @param[in] block_size The block size of the data
 template <typename T, typename E>
 void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
                                    xt::xtensor<T, 2>>

@@ -10,7 +10,7 @@
 #include "cell.h"
 #include "element-families.h"
 #include "maps.h"
-#include "span.hpp"
+#include <xtl/xspan.hpp>
 #include <array>
 #include <string>
 #include <vector>
@@ -303,7 +303,7 @@ public:
   xt::xtensor<double, 3>
   map_push_forward(const xt::xtensor<double, 3>& U,
                    const xt::xtensor<double, 3>& J,
-                   const tcb::span<const double>& detJ,
+                   const xtl::span<const double>& detJ,
                    const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
@@ -315,7 +315,7 @@ public:
   template <typename T, typename E>
   void map_push_forward_m(const xt::xtensor<T, 3>& U,
                           const xt::xtensor<double, 3>& J,
-                          const tcb::span<const double>& detJ,
+                          const xtl::span<const double>& detJ,
                           const xt::xtensor<double, 3>& K, E&& u) const;
 
   /// Map function values from a physical cell to the reference
@@ -326,7 +326,7 @@ public:
   /// @return The function values on the reference
   xt::xtensor<double, 3> map_pull_back(const xt::xtensor<double, 3>& u,
                                        const xt::xtensor<double, 3>& J,
-                                       const tcb::span<const double>& detJ,
+                                       const xtl::span<const double>& detJ,
                                        const xt::xtensor<double, 3>& K) const;
 
   /// @todo Weirdly, the u and U
@@ -339,7 +339,7 @@ public:
   template <typename T, typename E>
   void map_pull_back_m(const xt::xtensor<T, 3>& u,
                        const xt::xtensor<double, 3>& J,
-                       const tcb::span<const double>& detJ,
+                       const xtl::span<const double>& detJ,
                        const xt::xtensor<double, 3>& K, E&& U) const;
 
   /// Get the number of dofs on each topological entity: (vertices,
@@ -434,13 +434,13 @@ public:
   /// Permute the dof numbering on a cell
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void permute_dofs(tcb::span<std::int32_t>& dofs,
+  void permute_dofs(xtl::span<std::int32_t>& dofs,
                     std::uint32_t cell_info) const;
 
   /// Unpermute the dof numbering on a cell
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void unpermute_dofs(tcb::span<std::int32_t>& dofs,
+  void unpermute_dofs(xtl::span<std::int32_t>& dofs,
                       std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some data
@@ -579,7 +579,7 @@ std::string version();
 template <typename T, typename E>
 void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
                                        const xt::xtensor<double, 3>& J,
-                                       const tcb::span<const double>& detJ,
+                                       const xtl::span<const double>& detJ,
                                        const xt::xtensor<double, 3>& K,
                                        E&& u) const
 {
@@ -607,7 +607,7 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
 template <typename T, typename E>
 void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
                                     const xt::xtensor<double, 3>& J,
-                                    const tcb::span<const double>& detJ,
+                                    const xtl::span<const double>& detJ,
                                     const xt::xtensor<double, 3>& K,
                                     E&& U) const
 {

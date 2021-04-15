@@ -5,7 +5,7 @@
 #pragma once
 
 #include "cell.h"
-#include "span.hpp"
+#include <xtl/xspan.hpp>
 #include <utility>
 #include <vector>
 #include <xtensor/xtensor.hpp>
@@ -28,7 +28,7 @@ namespace basix::quadrature
 /// (columns)
 xt::xtensor<double, 2> compute_jacobi_deriv(double a, std::size_t n,
                                             std::size_t nderiv,
-                                            const tcb::span<const double>& x);
+                                            const xtl::span<const double>& x);
 
 // Computes Gauss-Jacobi quadrature points
 /// Finds the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's method.

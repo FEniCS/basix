@@ -118,8 +118,10 @@ precompute::prepare_matrix(const xt::xtensor<T, 2> matrix)
     diag[i] = permuted_matrix(i, i);
     prepared_matrix(i, i) = 0;
     if (i < dim - 1)
-      xt::view(prepared_matrix, i + 1, xt::range(i, dim))
-          = xt::view(permuted_matrix, i, xt::range(i, dim));
+    {
+      xt::view(prepared_matrix, i, xt::range(i + 1, dim))
+          = xt::view(permuted_matrix, i, xt::range(i + 1, dim));
+    }
     if (i > 0)
     {
       xt::xtensor<T, 1> v = xt::linalg::solve(
@@ -147,13 +149,15 @@ void precompute::apply_matrix(
         matrix,
     xtl::span<E>& data, const std::size_t offset, const std::size_t block_size)
 {
+  const std::size_t dim = std::get<0>(matrix).size();
+
   apply_permutation(std::get<0>(matrix), data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
   {
-    for (std::size_t i = 0; i < std::get<1>(matrix).size(); ++i)
+    for (std::size_t i = 0; i < dim; ++i)
     {
       data[block_size * (offset + i) + b] *= std::get<1>(matrix)[i];
-      for (std::size_t j = 0; j < std::get<2>(matrix).shape(1); ++j)
+      for (std::size_t j = 0; j < dim; ++j)
       {
         data[block_size * (offset + i) + b]
             += std::get<2>(matrix)(i, j) * data[block_size * (offset + j) + b];

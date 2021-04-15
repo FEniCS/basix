@@ -19,12 +19,14 @@ namespace basix
 namespace precompute
 {
 /// Prepare a permutation
+///
 /// @param[in] perm A permutation
 /// @return The precomputed representation of the permutation
 std::vector<std::size_t>
 prepare_permutation(const std::vector<std::size_t> perm);
 
 /// Apply a (precomputed) permutation
+///
 /// @param[in] perm A permutation in precomputed form (as returned by
 /// `prepare_permutation()`)
 /// @param[in,out] data The data to apply the permutation to
@@ -36,13 +38,15 @@ void apply_permutation(const std::vector<std::size_t> perm, tcb::span<E>& data,
                        const std::size_t block_size = 1);
 
 /// Prepare a matrix
-/// @param[in] perm A matrix
+///
+/// @param[in] matrix A matrix
 /// @return The precomputed representation of the matrix
 template <typename T>
 std::tuple<std::vector<std::size_t>, std::vector<T>, xt::xtensor<T, 2>>
 prepare_matrix(const xt::xtensor<T, 2> matrix);
 
 /// Apply a (precomputed) matrix
+///
 /// @param[in] matrix A matrix in precomputed form (as returned by
 /// `prepare_matrix()`)
 /// @param[in,out] data The data to apply the permutation to

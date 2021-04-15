@@ -553,7 +553,7 @@ private:
 
   // Inverse transpose entity transformations. This will only be set if
   /// _dof_transformations_are_identity is False
-  std::vector<xt::xtensor<double, 2, xt::layout_type::column_major>> _entity_transformations_inverse_transpose;
+  std::vector<xt::xtensor<double, 2>> _entity_transformations_inverse_transpose;
 };
 
 /// Create an element by name

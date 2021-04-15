@@ -373,26 +373,29 @@ FiniteElement::FiniteElement(
         _entity_transformations.size());
     for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
     {
-      if (i == 1)
+      if (_entity_transformations[i].shape(0) > 0)
       {
-        if (_cell_type == cell::type::hexahedron)
-        {
-          _entity_transformations_inverse_transpose[i] = xt::transpose(
-              xt::linalg::dot(xt::linalg::dot(_entity_transformations[i],
-                                              _entity_transformations[i]),
-                              _entity_transformations[i]));
+       if (i == 1)
+       {
+          if (_cell_type == cell::type::hexahedron)
+          {
+            _entity_transformations_inverse_transpose[i] = xt::transpose(
+                xt::linalg::dot(xt::linalg::dot(_entity_transformations[i],
+                                                _entity_transformations[i]),
+                                _entity_transformations[i]));
+          }
+          else
+          {
+            _entity_transformations_inverse_transpose[i]
+                = xt::transpose(xt::linalg::dot(_entity_transformations[i],
+                                                _entity_transformations[i]));
+          }
         }
         else
         {
           _entity_transformations_inverse_transpose[i]
-              = xt::transpose(xt::linalg::dot(_entity_transformations[i],
-                                              _entity_transformations[i]));
+              = xt::transpose(_entity_transformations[i]);
         }
-      }
-      else
-      {
-        _entity_transformations_inverse_transpose[i]
-            = xt::transpose(_entity_transformations[i]);
       }
     }
     // xt::transpose(xt::linalg::inv(_entity_transformations[i])));

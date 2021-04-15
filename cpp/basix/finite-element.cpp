@@ -714,6 +714,7 @@ void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
       if (cell_info >> (face_start + e) & 1)
         precompute::apply_permutation(_reverse_entity_permutations[0], dofs,
                                       dofstart);
+      dofstart += _entity_dofs[1][e];
     }
 
     if (_cell_tdim == 3)

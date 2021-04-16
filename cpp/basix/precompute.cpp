@@ -6,6 +6,7 @@
 
 using namespace basix;
 
+//-----------------------------------------------------------------------------
 std::vector<std::size_t>
 precompute::prepare_permutation(const std::vector<std::size_t>& perm)
 {
@@ -19,3 +20,4 @@ precompute::prepare_permutation(const std::vector<std::size_t>& perm)
   }
   return f_perm;
 }
+//-----------------------------------------------------------------------------

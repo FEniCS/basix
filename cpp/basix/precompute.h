@@ -371,7 +371,8 @@ precompute::prepare_matrix(const xt::xtensor<T, 2>& matrix)
     }
   }
 
-  return std::make_tuple(prepare_permutation(perm), diag, prepared_matrix);
+  return {prepare_permutation(perm), std::move(diag),
+          std::move(prepared_matrix)};
 }
 //-----------------------------------------------------------------------------
 template <typename T, typename E>
@@ -381,7 +382,6 @@ void precompute::apply_matrix(
     xtl::span<E>& data, std::size_t offset, std::size_t block_size)
 {
   const std::size_t dim = std::get<0>(matrix).size();
-
   apply_permutation(std::get<0>(matrix), data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
   {

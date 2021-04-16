@@ -506,10 +506,7 @@ private:
   // (@f$\psi_{i}@f$).
   xt::xtensor<double, 2> _coeffs;
 
-  // Number of cell subentities of each dimension
-  std::vector<int> _cell_sub_entity_count;
-
-  // Number of dofs associated each subentity
+  // Number of dofs associated with each cell (sub-)entity
   //
   // The dofs of an element are associated with entities of different
   // topological dimension (vertices, edges, faces, cells). The dofs are
@@ -651,11 +648,11 @@ void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
 
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
     int dofstart = std::accumulate(_edofs[0].cbegin(), _edofs[0].cend(), 0);
 
     // Transform DOFs on edges
-    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+    for (std::size_t e = 0; e < _edofs[1].size(); ++e)
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
@@ -668,7 +665,7 @@ void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
@@ -713,11 +710,11 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
 
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
     int dofstart = std::accumulate(_edofs[0].cbegin(), _edofs[0].cend(), 0);
 
     // Transform DOFs on edges
-    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+    for (std::size_t e = 0; e < _edofs[1].size(); ++e)
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
@@ -731,7 +728,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)

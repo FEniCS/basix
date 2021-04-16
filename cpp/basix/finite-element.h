@@ -10,16 +10,16 @@
 #include "cell.h"
 #include "element-families.h"
 #include "maps.h"
-#include <xtl/xspan.hpp>
+#include "precompute.h"
 #include <array>
+#include <numeric>
 #include <string>
 #include <vector>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xcomplex.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
-
-#include "precompute.h"
+#include <xtl/xspan.hpp>
 
 /// Placeholder
 namespace basix
@@ -515,7 +515,7 @@ private:
   // topological dimension (vertices, edges, faces, cells). The dofs are
   // listed in this order, with vertex dofs first. Each entry is the dof
   // count on the associated entity, as listed by cell::topology.
-  std::vector<std::vector<int>> _entity_dofs;
+  std::vector<std::vector<int>> _edofs;
 
   // Entity transformations
   std::vector<xt::xtensor<double, 2>> _entity_transformations;
@@ -637,28 +637,33 @@ void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
   if (_cell_tdim >= 2)
   {
     int max_dof_count = 0;
-    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
-      max_dof_count = std::max(max_dof_count, _entity_dofs[1][e]);
-    if (_cell_tdim == 3)
-      for (int e = 0; e < _cell_sub_entity_count[2]; ++e)
-        max_dof_count = std::max(max_dof_count, _entity_dofs[2][e]);
+    if (auto it = std::max_element(_edofs[1].cbegin(), _edofs[1].cend());
+        it != _edofs[1].cend())
+    {
+      max_dof_count = *it;
+    }
+
+    if (auto it = std::max_element(_edofs[2].cbegin(), _edofs[2].cend());
+        it != _edofs[2].cend())
+    {
+      max_dof_count = std::max(*it, max_dof_count);
+    }
 
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
-
-    int dofstart = 0;
-    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
-      dofstart += _entity_dofs[0][v];
+    int dofstart = std::accumulate(_edofs[0].cbegin(), _edofs[0].cend(), 0);
 
     // Transform DOFs on edges
     for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
+      {
         precompute::apply_matrix(_entity_transformations_precomputed[0], data,
                                  dofstart, block_size);
-      dofstart += _entity_dofs[1][e];
+      }
+      dofstart += _edofs[1][e];
     }
     if (_cell_tdim == 3)
     {
@@ -667,15 +672,18 @@ void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
+        {
           precompute::apply_matrix(_entity_transformations_precomputed[2], data,
                                    dofstart, block_size);
+        }
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
           precompute::apply_matrix(_entity_transformations_precomputed[1], data,
                                    dofstart, block_size);
-
-        dofstart += _entity_dofs[2][f];
+        }
+        dofstart += _edofs[2][f];
       }
     }
   }
@@ -691,29 +699,34 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
   if (_cell_tdim >= 2)
   {
     int max_dof_count = 0;
-    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
-      max_dof_count = std::max(max_dof_count, _entity_dofs[1][e]);
-    if (_cell_tdim == 3)
-      for (int e = 0; e < _cell_sub_entity_count[2]; ++e)
-        max_dof_count = std::max(max_dof_count, _entity_dofs[2][e]);
+    if (auto it = std::max_element(_edofs[1].cbegin(), _edofs[1].cend());
+        it != _edofs[1].cend())
+    {
+      max_dof_count = *it;
+    }
+
+    if (auto it = std::max_element(_edofs[2].cbegin(), _edofs[2].cend());
+        it != _edofs[2].cend())
+    {
+      max_dof_count = std::max(*it, max_dof_count);
+    }
 
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
-
-    int dofstart = 0;
-    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
-      dofstart += _entity_dofs[0][v];
+    int dofstart = std::accumulate(_edofs[0].cbegin(), _edofs[0].cend(), 0);
 
     // Transform DOFs on edges
     for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
+      {
         precompute::apply_matrix(
             _entity_transformations_inverse_transpose_precomputed[0], data,
             dofstart, block_size);
-      dofstart += _entity_dofs[1][e];
+      }
+      dofstart += _edofs[1][e];
     }
     if (_cell_tdim == 3)
     {
@@ -722,17 +735,20 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
+        {
           precompute::apply_matrix(
               _entity_transformations_inverse_transpose_precomputed[2], data,
               dofstart, block_size);
+        }
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
           precompute::apply_matrix(
               _entity_transformations_inverse_transpose_precomputed[1], data,
               dofstart, block_size);
-
-        dofstart += _entity_dofs[2][f];
+        }
+        dofstart += _edofs[2][f];
       }
     }
   }

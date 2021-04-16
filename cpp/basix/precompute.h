@@ -169,19 +169,19 @@ void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
 ///             ?&?&0
 ///          \end{bmatrix}. @f}
 ///
-/// Next, we let
-///  @f{align*}{ B &= A_{:1,:1}^{-\text{T}}A_{1, :1}^{\text{T}}\\
-///          &= \begin{bmatrix}-1\end{bmatrix}\begin{bmatrix}1\end{bmatrix}\\
-///          &= \begin{bmatrix}-1\end{bmatrix}, @f}
-/// and then set:
-///  @f{align*}{ D_1 &= A_{1,1} - B\cdot A_{:1, 1}\\
+/// Next, we set:
+///  @f{align*}{ D_1 &= A_{1,1} - A_{1, :1}A_{:1,:1}^{-1}A_{:1, 1}\\
 ///          &= 1 -
 ///          \begin{bmatrix}-1\end{bmatrix}\cdot\begin{bmatrix}0\end{bmatrix}\\
 ///          &= 1,\\
-/// M_{2,:1} &= B^{\text{T}}\\ &= \begin{bmatrix}-1\end{bmatrix},\\
-///  M_{2,3} &= A_{1,2}-B\cdot A_{:1, 1}\\
+/// M_{2,0} &= A_{1, :1}A_{:1,:1}^{-1}e_0\\
+///         &= \begin{bmatrix}1\end{bmatrix}\begin{bmatrix}-1\end{bmatrix}^{-1}
+///            \begin{bmatrix}1\end{bmatrix}\\
+///         &= \begin{bmatrix}-1\end{bmatrix}
+///  M_{2,3} &= A_{1,2}-A_{1, :1}A_{:1,:1}^{-1}A_{:1, 1}\\
 ///          &=
-///          0-\begin{bmatrix}-1\end{bmatrix}\cdot\begin{bmatrix}1\end{bmatrix},\\
+///          0-\begin{bmatrix}1\end{bmatrix}\begin{bmatrix}-1\end{bmatrix}^{-1}
+///            \begin{bmatrix}1\end{bmatrix},\\
 ///          &= 1.
 /// @f}
 /// The output so far is
@@ -192,17 +192,15 @@ void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
 ///             ?&?&0
 ///          \end{bmatrix}. @f}
 ///
-/// Next, we let
-///  @f{align*}{ B &= A_{:2,:2}^{-\text{T}}A_{2, :2}^{\text{T}}\\
-///          &=
-///          \begin{bmatrix}-1&0\\1&1\end{bmatrix}^{-\text{T}}\begin{bmatrix}2\\0\end{bmatrix}\\
-///          &= \begin{bmatrix}-2\\0\end{bmatrix}, @f}
-/// and then set:
-///  @f{align*}{ D_2 &= A_{2,2} - B\cdot A_{:2, 2}\\
+/// Next, we set:
+///  @f{align*}{ D_2 &= A_{2,2} - A_{2, :2}A_{:2,:2}^{-1}A_{:2, 2}\\
 ///          &= 2 -
-///          \begin{bmatrix}-2\\0\end{bmatrix}\cdot\begin{bmatrix}1\\0\end{bmatrix}\\
+///          \begin{bmatrix}2&0\end{bmatrix}
+///          \begin{bmatrix}-1&0\\1&1\end{bmatrix}^{-1}
+///          \begin{bmatrix}1\\0\end{bmatrix}\\
 ///          &= 4,\\
-/// M_{2,:2} &= B^{\text{T}}\\ &= \begin{bmatrix}-2&0\end{bmatrix}.\\
+/// M_{2,0} &= A_{2, :2}A_{:2,:2}^{-1}e_0\\ &= -2.\\
+/// M_{2,1} &= A_{2, :2}A_{:2,:2}^{-1}e_1\\ &= 0.\\
 /// @f}
 /// The output is
 ///  @f{align*}{ D &= \begin{bmatrix}-1\\1\\4\end{bmatrix},\\

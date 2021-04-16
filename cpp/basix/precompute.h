@@ -67,7 +67,7 @@ namespace precompute
 /// @param[in] perm A permutation
 /// @return The precomputed representation of the permutation
 std::vector<std::size_t>
-prepare_permutation(const std::vector<std::size_t> perm);
+prepare_permutation(const std::vector<std::size_t>& perm);
 
 /// Apply a (precomputed) permutation
 ///
@@ -118,9 +118,8 @@ prepare_permutation(const std::vector<std::size_t> perm);
 /// @param[in] offset The position in the data to start applying the permutation
 /// @param[in] block_size The block size of the data
 template <typename E>
-void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
-                       const std::size_t offset = 0,
-                       const std::size_t block_size = 1);
+void apply_permutation(const std::vector<std::size_t>& perm, xtl::span<E>& data,
+                       std::size_t offset = 0, std::size_t block_size = 1);
 
 /// Prepare a matrix
 ///
@@ -217,7 +216,7 @@ void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
 /// @return The precomputed representation of the matrix
 template <typename T>
 std::tuple<std::vector<std::size_t>, std::vector<T>, xt::xtensor<T, 2>>
-prepare_matrix(const xt::xtensor<T, 2> matrix);
+prepare_matrix(const xt::xtensor<T, 2>& matrix);
 
 /// Apply a (precomputed) matrix
 ///
@@ -281,27 +280,30 @@ prepare_matrix(const xt::xtensor<T, 2> matrix);
 /// @param[in] block_size The block size of the data
 template <typename T, typename E>
 void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
-                                   xt::xtensor<T, 2>>
-                      matrix,
-                  xtl::span<E>& data, const std::size_t offset = 0,
-                  const std::size_t block_size = 1);
+                                   xt::xtensor<T, 2>>& matrix,
+                  xtl::span<E>& data, std::size_t offset = 0,
+                  std::size_t block_size = 1);
 } // namespace precompute
 
 //-----------------------------------------------------------------------------
 template <typename E>
-void precompute::apply_permutation(const std::vector<std::size_t> perm,
+void precompute::apply_permutation(const std::vector<std::size_t>& perm,
                                    xtl::span<E>& data, const std::size_t offset,
-                                   const std::size_t block_size)
+                                   std::size_t block_size)
 {
   for (std::size_t b = 0; b < block_size; ++b)
+  {
     for (std::size_t i = 0; i < perm.size(); ++i)
+    {
       std::swap(data[block_size * (offset + i) + b],
                 data[block_size * (offset + perm[i]) + b]);
+    }
+  }
 }
 //-----------------------------------------------------------------------------
 template <typename T>
 std::tuple<std::vector<std::size_t>, std::vector<T>, xt::xtensor<T, 2>>
-precompute::prepare_matrix(const xt::xtensor<T, 2> matrix)
+precompute::prepare_matrix(const xt::xtensor<T, 2>& matrix)
 {
   const std::size_t dim = matrix.shape(0);
 
@@ -320,6 +322,7 @@ precompute::prepare_matrix(const xt::xtensor<T, 2> matrix)
       for (std::size_t k = 0; k < i; ++k)
         if (perm[k] == j)
           used = true;
+
       if (!used)
       {
         xt::view(permuted_matrix, xt::all(), i)
@@ -361,8 +364,10 @@ precompute::prepare_matrix(const xt::xtensor<T, 2> matrix)
       diag[i] -= xt::linalg::dot(
           v, xt::view(permuted_matrix, xt::range(0, i), i))(0);
       for (std::size_t j = i + 1; j < dim; ++j)
+      {
         prepared_matrix(i, j) -= xt::linalg::dot(
             v, xt::view(permuted_matrix, xt::range(0, i), j))(0);
+      }
     }
   }
 
@@ -372,9 +377,8 @@ precompute::prepare_matrix(const xt::xtensor<T, 2> matrix)
 template <typename T, typename E>
 void precompute::apply_matrix(
     const std::tuple<std::vector<std::size_t>, std::vector<T>,
-                     xt::xtensor<T, 2>>
-        matrix,
-    xtl::span<E>& data, const std::size_t offset, const std::size_t block_size)
+                     xt::xtensor<T, 2>>& matrix,
+    xtl::span<E>& data, std::size_t offset, std::size_t block_size)
 {
   const std::size_t dim = std::get<0>(matrix).size();
 

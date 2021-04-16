@@ -7,7 +7,7 @@
 using namespace basix;
 
 std::vector<std::size_t>
-precompute::prepare_permutation(const std::vector<std::size_t> perm)
+precompute::prepare_permutation(const std::vector<std::size_t>& perm)
 {
   std::vector<std::size_t> f_perm(perm.size());
   for (std::size_t row = 0; row < perm.size(); ++row)

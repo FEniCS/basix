@@ -674,13 +674,17 @@ void FiniteElement::permute_dofs(xtl::span<std::int32_t>& dofs,
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
+        {
           precompute::apply_permutation(_entity_permutations[2], dofs,
                                         dofstart);
+        }
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
           precompute::apply_permutation(_entity_permutations[1], dofs,
                                         dofstart);
+        }
 
         dofstart += _entity_dofs[2][f];
       }
@@ -712,8 +716,10 @@ void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
+      {
         precompute::apply_permutation(_reverse_entity_permutations[0], dofs,
                                       dofstart);
+      }
       dofstart += _entity_dofs[1][e];
     }
 
@@ -724,13 +730,17 @@ void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
       {
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
           precompute::apply_permutation(_reverse_entity_permutations[1], dofs,
                                         dofstart);
+        }
 
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
+        {
           precompute::apply_permutation(_reverse_entity_permutations[2], dofs,
                                         dofstart);
+        }
 
         dofstart += _entity_dofs[2][f];
       }

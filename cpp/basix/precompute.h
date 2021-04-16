@@ -78,7 +78,7 @@ prepare_permutation(const std::vector<std::size_t> perm);
 ///
 /// \code{.pseudo}
 /// FOR index, entry IN perm:
-///     SWAP(data[index], data[entry]
+///     SWAP(data[index], data[entry])
 /// \endcode
 ///
 /// If `block_size` is set, this will apply the permutation to every block.
@@ -128,10 +128,10 @@ void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
 /// applied without any temporary memory assignment.
 ///
 /// This function will first permute the matrix's columns so that the top left
-/// @f$n\times n@F$ blocks are invertible (for all @f$n@f$). Let @f$A@f$ be the
+/// @f$n\times n@f$ blocks are invertible (for all @f$n@f$). Let @f$A@f$ be the
 /// input matrix after the permutation is applied. The output vector @f$D@f$ and
 /// matrix @f$M@f$ are then given by:
-///  @f{align*}[
+///  @f{align*}{
 ///  D_i &= \begin{cases}
 ///         A_{i, i} & i = 0\\
 ///         A_{i, i} - A_{i,:i}A_{:i,:i}^{-1}A_{:i,i} & i \not= 0
@@ -141,7 +141,7 @@ void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
 ///         0 & j = i\\
 ///         A_{i, i} - A_{i,:i}A_{:i,:i}^{-1}A_{:i,j} & j > i = 0
 ///        \end{cases},
-/// @f]
+/// @f}
 /// where @f$e_j@f$ is the @f$j@f$th coordinate vector, we index all the
 /// matrices and vector starting at 0, and we use numpy-slicing-stying notation
 /// in the subscripts: for example, @f$A_{:i,j}@f$ represents the first @f$i@f$
@@ -162,19 +162,19 @@ void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
 /// set the diagonal of @f$M@f$ to be 0
 /// and set @f$M_{0, 1:} = A_{0, 1:}=\begin{bmatrix}0&1\end{bmatrix}@f$.
 /// The output so far is
-///  @f{align*}[ D &= \begin{bmatrix}-1\\?\\?\end{bmatrix},\\
+///  @f{align*}{ D &= \begin{bmatrix}-1\\?\\?\end{bmatrix},\\
 ///  \quad M &= \begin{bmatrix}
 ///             0&0&1\\
 ///             ?&0&?\\
 ///             ?&?&0
-///          \end{bmatrix}. @f]
+///          \end{bmatrix}. @f}
 ///
 /// Next, we let
-///  @f{align*}[ B &= A_{:1,:1}^{-\text{T}}A_{1, :1}^{\text{T}}\\
+///  @f{align*}{ B &= A_{:1,:1}^{-\text{T}}A_{1, :1}^{\text{T}}\\
 ///          &= \begin{bmatrix}-1\end{bmatrix}\begin{bmatrix}1\end{bmatrix}\\
-///          &= \begin{bmatrix}-1\end{bmatrix}, @f]
+///          &= \begin{bmatrix}-1\end{bmatrix}, @f}
 /// and then set:
-///  @f{align*}[ D_1 &= A_{1,1} - B\cdot A_{:1, 1}\\
+///  @f{align*}{ D_1 &= A_{1,1} - B\cdot A_{:1, 1}\\
 ///          &= 1 -
 ///          \begin{bmatrix}-1\end{bmatrix}\cdot\begin{bmatrix}0\end{bmatrix}\\
 ///          &= 1,\\
@@ -183,34 +183,34 @@ void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
 ///          &=
 ///          0-\begin{bmatrix}-1\end{bmatrix}\cdot\begin{bmatrix}1\end{bmatrix},\\
 ///          &= 1.
-/// @f]
+/// @f}
 /// The output so far is
-///  @f{align*}[ D &= \begin{bmatrix}-1\\1\\?\end{bmatrix},\\
+///  @f{align*}{ D &= \begin{bmatrix}-1\\1\\?\end{bmatrix},\\
 ///  \quad M &= \begin{bmatrix}
 ///             0&0&1\\
 ///             -1&0&1\\
 ///             ?&?&0
-///          \end{bmatrix}. @f]
+///          \end{bmatrix}. @f}
 ///
 /// Next, we let
-///  @f{align*}[ B &= A_{:2,:2}^{-\text{T}}A_{2, :2}^{\text{T}}\\
+///  @f{align*}{ B &= A_{:2,:2}^{-\text{T}}A_{2, :2}^{\text{T}}\\
 ///          &=
 ///          \begin{bmatrix}-1&0\\1&1\end{bmatrix}^{-\text{T}}\begin{bmatrix}2\\0\end{bmatrix}\\
-///          &= \begin{bmatrix}-2\\0\end{bmatrix}, @f]
+///          &= \begin{bmatrix}-2\\0\end{bmatrix}, @f}
 /// and then set:
-///  @f{align*}[ D_2 &= A_{2,2} - B\cdot A_{:2, 2}\\
+///  @f{align*}{ D_2 &= A_{2,2} - B\cdot A_{:2, 2}\\
 ///          &= 2 -
 ///          \begin{bmatrix}-2\\0\end{bmatrix}\cdot\begin{bmatrix}1\\0\end{bmatrix}\\
 ///          &= 4,\\
 /// M_{2,:2} &= B^{\text{T}}\\ &= \begin{bmatrix}-2&0\end{bmatrix}.\\
-/// @f]
+/// @f}
 /// The output is
-///  @f{align*}[ D &= \begin{bmatrix}-1\\1\\4\end{bmatrix},\\
+///  @f{align*}{ D &= \begin{bmatrix}-1\\1\\4\end{bmatrix},\\
 ///  \quad M &= \begin{bmatrix}
 ///             0&0&1\\
 ///             -1&0&1\\
 ///             -2&0&0
-///          \end{bmatrix}. @f]
+///          \end{bmatrix}. @f}
 ///
 /// For an example of how the permutation in this form is applied, see
 /// `apply_matrix()`.
@@ -245,12 +245,12 @@ prepare_matrix(const xt::xtensor<T, 2> matrix);
 /// As an example, consider the matrix @f$A = @f$ `[[-1, 0, 1], [1, 1, 0], [2,
 /// 0, 2]]`. In the documentation of `prepare_matrix()`, we saw that the
 /// precomputed representation of this matrix is the identity permutation,
-///  @f{align*}[ D &= \begin{bmatrix}-1\\1\\4\end{bmatrix},\\
+///  @f{align*}{ D &= \begin{bmatrix}-1\\1\\4\end{bmatrix},\\
 ///  \quad M &= \begin{bmatrix}
 ///             0&0&1\\
 ///             -1&0&1\\
 ///             -2&0&0
-///          \end{bmatrix}. @f]
+///          \end{bmatrix}. @f}
 /// In this example, we look at how this representation can be used to
 /// apply this matrix to the vector @f$v = @f$ `[3, -1, 2]`.
 ///

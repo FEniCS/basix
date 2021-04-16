@@ -229,11 +229,12 @@ prepare_matrix(const xt::xtensor<T, 2> matrix);
 /// In pseudo code, this function does the following:
 ///
 /// \code{.pseudo}
-/// APPLY PERMUTATION matrix[0] TO data
+/// perm, diag, mat = matrix
+/// apply_permutation(perm, data)
 /// FOR index IN RANGE(dim):
-///     data[index] *= matrix[1][index]
+///     data[index] *= diag[index]
 ///     FOR j IN RANGE(dim):
-///         data[index] *= matrix[2][index, j] * data[j]
+///         data[index] *= mat[index, j] * data[j]
 /// \endcode
 ///
 /// If `block_size` is set, this will apply the permutation to every block.

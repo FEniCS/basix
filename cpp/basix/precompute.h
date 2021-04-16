@@ -20,12 +20,93 @@ namespace precompute
 {
 /// Prepare a permutation
 ///
+/// This computes a representation of the permutation that allows the
+/// permutations to be applied without any temporary memory assignment.
+///
+/// In pseudo code, this function does the following:
+///
+/// \code{.pseudo}
+/// FOR index, entry IN perm:
+///     new_index = entry
+///     WHILE new_index < index:
+///         new_index = perm[new_index]
+///     OUT[index] = new_index
+/// \endcode
+///
+/// Example
+/// -------
+/// As an example, consider the permutation `P = [1, 4, 0, 5, 2, 3]`.
+///
+/// First, we look at the 0th entry. `P[0]` is 1. This is greater than 0, so the
+/// 0th entry of the output is 1.
+///
+/// Next, we look at the 1st entry. `P[1]` is 4. This is greater than 1, so the
+/// 1st entry of the output is 4.
+///
+/// Next, we look at the 2nd entry. `P[2]` is 0. This is less than 2, so we look
+/// at `P[0]. `P[0]` is 1. This is less than 2, so we look at `P[1]`. `P[1]`
+/// is 4. This is greater than 2, so the 2nd entry of the output is 4.
+///
+/// Next, we look at the 3rd entry. `P[3]` is 5. This is greater than 3, so the
+/// 3rd entry of the output is 5.
+///
+/// Next, we look at the 4th entry. `P[4]` is 2. This is less than 4, so we look
+/// at `P[2]`. `P[2]` is 0. This is less than 4, so we look at `P[0]`. `P[0]`
+/// is 1. This is less than 4, so we look at `P[1]`. `P[1]` is 4. This is
+/// greater than (or equal to) 4, so the 4th entry of the output is 4.
+///
+/// Next, we look at the 5th entry. `P[5]` is 3. This is less than 5, so we look
+/// at `P[3]`. `P[3]` is 5. This is greater than (or equal to) 5, so the 5th
+/// entry of the output is 5.
+///
+/// Hence, the output of this function in this case is `[1, 4, 4, 5, 4, 5]`.
+///
+/// For an example of how the permutation in this form is applied, see
+/// `apply_permutation()`.
+///
 /// @param[in] perm A permutation
 /// @return The precomputed representation of the permutation
 std::vector<std::size_t>
 prepare_permutation(const std::vector<std::size_t> perm);
 
 /// Apply a (precomputed) permutation
+///
+/// This uses the representation returned by `prepare_permutation()` to apply a
+/// permutation without needing any temporary memory.
+///
+/// In pseudo code, this function does the following:
+///
+/// \code{.pseudo}
+/// FOR index, entry IN perm:
+///     SWAP(INPUT[index], INPUT[entry]
+/// \endcode
+///
+/// Example
+/// -------
+/// As an example, consider the permutation `P = [1, 4, 0, 5, 2, 3]`.
+/// In the documentation of `prepare_permutation()`, we saw that the precomputed
+/// representation of this permutation is `P2 = [1, 4, 4, 5, 4, 5]`. In this
+/// example, we look at how this representation can be used to apply this
+/// permutation to the array `A = [a, b, c, d, e, f]`.
+///
+/// `P2[0]` is 1, so we swap `A[0]` and `A[1]`. After this, `A = [b, a, c, d, e,
+/// f]`.
+///
+/// `P2[1]` is 4, so we swap `A[1]` and `A[4]`. After this, `A = [b, e, c, d, a,
+/// f]`.
+///
+/// `P2[2]` is 4, so we swap `A[2]` and `A[4]`. After this, `A = [b, e, a, d, c,
+/// f]`.
+///
+/// `P2[3]` is 5, so we swap `A[3]` and `A[5]`. After this, `A = [b, e, a, f, c,
+/// d]`.
+///
+/// `P2[4]` is 4, so we swap `A[4]` and `A[4]`. This changes nothing.
+///
+/// `P2[5]` is 5, so we swap `A[5]` and `A[5]`. This changes nothing.
+///
+/// Therefore the result of applying this permutation is `[b, e, a, f, c, d]`
+/// (which is what we get if we apply the permutation directly.
 ///
 /// @param[in] perm A permutation in precomputed form (as returned by
 /// `prepare_permutation()`)

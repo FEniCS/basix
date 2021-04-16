@@ -21,7 +21,7 @@ namespace precompute
 /// Prepare a permutation
 ///
 /// This computes a representation of the permutation that allows the
-/// permutations to be applied without any temporary memory assignment.
+/// permutation to be applied without any temporary memory assignment.
 ///
 /// In pseudo code, this function does the following:
 ///
@@ -78,8 +78,12 @@ prepare_permutation(const std::vector<std::size_t> perm);
 ///
 /// \code{.pseudo}
 /// FOR index, entry IN perm:
-///     SWAP(INPUT[index], INPUT[entry]
+///     SWAP(data[index], data[entry]
 /// \endcode
+///
+/// If `block_size` is set, this will apply the permutation to every block.
+/// The `offset` is set, this will start applying the permutation at the
+/// `offset`th block.
 ///
 /// Example
 /// -------
@@ -120,6 +124,97 @@ void apply_permutation(const std::vector<std::size_t> perm, xtl::span<E>& data,
 
 /// Prepare a matrix
 ///
+/// This computes a representation of the matrix that allows the matrix to be
+/// applied without any temporary memory assignment.
+///
+/// This function will first permute the matrix's columns so that the top left
+/// @f$n\times n@F$ blocks are invertible (for all @f$n@f$). Let @f$A@f$ be the
+/// input matrix after the permutation is applied. The output vector @f$D@f$ and
+/// matrix @f$M@f$ are then given by:
+///  @f{align*}[
+///  D_i &= \begin{cases}
+///         A_{i, i} & i = 0\\
+///         A_{i, i} - A_{i,:i}A_{:i,:i}^{-1}A_{:i,i} & i \not= 0
+///        \end{cases},\\
+///  M_{i,j} &= \begin{cases}
+///         A_{i,:i}A_{:i,:i}^{-1}e_j & j < i\\
+///         0 & j = i\\
+///         A_{i, i} - A_{i,:i}A_{:i,:i}^{-1}A_{:i,j} & j > i = 0
+///        \end{cases},
+/// @f]
+/// where @f$e_j@f$ is the @f$j@f$th coordinate vector, we index all the
+/// matrices and vector starting at 0, and we use numpy-slicing-stying notation
+/// in the subscripts: for example, @f$A_{:i,j}@f$ represents the first @f$i@f$
+/// entries in the @f$j@f$th column of @f$A@f$
+///
+/// This function returns the permutation (precomputed as in
+/// `prepare_permutation()`), the vector @f$D@f$, and the matrix @f$M@f$ as a
+/// tuple.
+///
+/// Example
+/// -------
+/// As an example, consider the matrix @f$A = @f$ `[[-1, 0, 1], [1, 1, 0], [2,
+/// 0, 2]]`. For this matrix, no permutation is needed, so the first item in the
+/// output will represent the identity permutation. We now compute the output
+/// vector @f$D@f$ and matrix @f$M@f$.
+///
+/// First, we set @f$D_0 = A_{0,0}=-1@f$,
+/// set the diagonal of @f$M@f$ to be 0
+/// and set @f$M_{0, 1:} = A_{0, 1:}=\begin{bmatrix}0&1\end{bmatrix}@f$.
+/// The output so far is
+///  @f{align*}[ D &= \begin{bmatrix}-1\\?\\?\end{bmatrix},\\
+///  \quad M &= \begin{bmatrix}
+///             0&0&1\\
+///             ?&0&?\\
+///             ?&?&0
+///          \end{bmatrix}. @f]
+///
+/// Next, we let
+///  @f{align*}[ B &= A_{:1,:1}^{-\text{T}}A_{1, :1}^{\text{T}}\\
+///          &= \begin{bmatrix}-1\end{bmatrix}\begin{bmatrix}1\end{bmatrix}\\
+///          &= \begin{bmatrix}-1\end{bmatrix}, @f]
+/// and then set:
+///  @f{align*}[ D_1 &= A_{1,1} - B\cdot A_{:1, 1}\\
+///          &= 1 -
+///          \begin{bmatrix}-1\end{bmatrix}\cdot\begin{bmatrix}0\end{bmatrix}\\
+///          &= 1,\\
+/// M_{2,:1} &= B^{\text{T}}\\ &= \begin{bmatrix}-1\end{bmatrix},\\
+///  M_{2,3} &= A_{1,2}-B\cdot A_{:1, 1}\\
+///          &=
+///          0-\begin{bmatrix}-1\end{bmatrix}\cdot\begin{bmatrix}1\end{bmatrix},\\
+///          &= 1.
+/// @f]
+/// The output so far is
+///  @f{align*}[ D &= \begin{bmatrix}-1\\1\\?\end{bmatrix},\\
+///  \quad M &= \begin{bmatrix}
+///             0&0&1\\
+///             -1&0&1\\
+///             ?&?&0
+///          \end{bmatrix}. @f]
+///
+/// Next, we let
+///  @f{align*}[ B &= A_{:2,:2}^{-\text{T}}A_{2, :2}^{\text{T}}\\
+///          &=
+///          \begin{bmatrix}-1&0\\1&1\end{bmatrix}^{-\text{T}}\begin{bmatrix}2\\0\end{bmatrix}\\
+///          &= \begin{bmatrix}-2\\0\end{bmatrix}, @f]
+/// and then set:
+///  @f{align*}[ D_2 &= A_{2,2} - B\cdot A_{:2, 2}\\
+///          &= 2 -
+///          \begin{bmatrix}-2\\0\end{bmatrix}\cdot\begin{bmatrix}1\\0\end{bmatrix}\\
+///          &= 4,\\
+/// M_{2,:2} &= B^{\text{T}}\\ &= \begin{bmatrix}-2&0\end{bmatrix}.\\
+/// @f]
+/// The output is
+///  @f{align*}[ D &= \begin{bmatrix}-1\\1\\4\end{bmatrix},\\
+///  \quad M &= \begin{bmatrix}
+///             0&0&1\\
+///             -1&0&1\\
+///             -2&0&0
+///          \end{bmatrix}. @f]
+///
+/// For an example of how the permutation in this form is applied, see
+/// `apply_matrix()`.
+///
 /// @param[in] matrix A matrix
 /// @return The precomputed representation of the matrix
 template <typename T>
@@ -127,6 +222,45 @@ std::tuple<std::vector<std::size_t>, std::vector<T>, xt::xtensor<T, 2>>
 prepare_matrix(const xt::xtensor<T, 2> matrix);
 
 /// Apply a (precomputed) matrix
+///
+/// Example
+/// -------
+/// As an example, consider the matrix @f$A = @f$ `[[-1, 0, 1], [1, 1, 0], [2,
+/// 0, 2]]`. In the documentation of `prepare_matrix()`, we saw that the
+/// precomputed representation of this matrix is the identity permutation,
+///  @f{align*}[ D &= \begin{bmatrix}-1\\1\\4\end{bmatrix},\\
+///  \quad M &= \begin{bmatrix}
+///             0&0&1\\
+///             -1&0&1\\
+///             -2&0&0
+///          \end{bmatrix}. @f]
+/// In this
+/// example, we look at how this representation can be used to apply this
+/// matrix to the vector @f$v = @f$ `[3, -1, 2]`.
+///
+/// No permutation is necessary, so first, we multiply @f$v_0@f$ by
+/// @f$D_0=-1@f$. After this, @f$v@f$ is `[-3, -1, 2]`.
+///
+/// Next, we add @f$M_{0,i}v_i@f$ to @f$v_0@f$ for all @f$i@f$: in this case, we
+/// add
+/// @f$0&times-3 + 0\times-1 + 1\times2 = 2@f$. After this, @f$v@f$ is `[-1, -1,
+/// 2]`.
+///
+/// Next, we multiply @f$v_1@f$ by @f$D_1=1@f$. After this, @f$v@f$ is `[-1, -1,
+/// 2]`.
+///
+/// Next, we add @f$M_{1,i}v_i@f$ to @f$v_1@f$ for all @f$i@f$: in this case, we
+/// add
+/// @f$-1&times-1 + 0\times-1 + 1\times2 = 3@f$. After this, @f$v@f$ is `[-1, 2,
+/// 2]`.
+///
+/// Next, we multiply @f$v_2@f$ by @f$D_2=4@f$. After this, @f$v@f$ is `[-1, 2,
+/// 8]`.
+///
+/// Next, we add @f$M_{2,i}v_i@f$ to @f$v_2@f$ for all @f$i@f$: in this case, we
+/// add
+/// @f$-2&times-1 + 0\times2 + 0\times8 = 2@f$. After this, @f$v@f$ is `[-1, 2,
+/// 10]`. This final value of @f$v@f$ is what the result of @f$Av@f$
 ///
 /// @param[in] matrix A matrix in precomputed form (as returned by
 /// `prepare_matrix()`)

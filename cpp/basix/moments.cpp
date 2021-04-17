@@ -57,7 +57,7 @@ map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
 
   const std::size_t tdim = cell::topological_dimension(celltype0);
   std::size_t entity_dim = cell::topological_dimension(celltype1);
-  std::size_t num_entities = cell::sub_entity_count(celltype0, entity_dim);
+  std::size_t num_entities = cell::num_sub_entities(celltype0, entity_dim);
 
   // xt::xtensor<double, 3> p({num_entities, x.shape(0), tdim});
   std::vector<xt::xtensor<double, 2>> p(num_entities,
@@ -314,7 +314,7 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
   if (entity_dim == 0)
     throw std::runtime_error("Cannot integrate over a dimension 0 entity.");
-  const std::size_t num_entities = cell::sub_entity_count(celltype, entity_dim);
+  const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
 
   // Get the quadrature points and weights
   auto [pts, _wts]
@@ -387,7 +387,7 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
-  const std::size_t num_entities = cell::sub_entity_count(celltype, entity_dim);
+  const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   auto [pts, _wts]
@@ -449,7 +449,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
-  const std::size_t num_entities = cell::sub_entity_count(celltype, entity_dim);
+  const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // If this is always true, value_size input can be removed
@@ -508,7 +508,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
   assert(tdim == value_size);
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
-  const std::size_t num_entities = cell::sub_entity_count(celltype, entity_dim);
+  const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
 
   if (static_cast<int>(entity_dim) != static_cast<int>(tdim) - 1)
     throw std::runtime_error("Normal is only well-defined on a facet.");

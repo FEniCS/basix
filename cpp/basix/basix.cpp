@@ -170,6 +170,46 @@ void basix::map_pull_back_complex(int handle,
                                        physical_value_size, nresults, npoints);
 }
 
+void basix::apply_dof_transformation_real(int handle, double* data,
+                                          int block_size,
+                                          std::uint32_t cell_info)
+{
+  check_handle(handle);
+  auto data_array = tcb::span(data, _registry[handle]->dim() * block_size);
+  _registry[handle]->apply_dof_transformation(data_array, block_size,
+                                              cell_info);
+}
+
+void basix::apply_dof_transformation_complex(int handle,
+                                             std::complex<double>* data,
+                                             int block_size,
+                                             std::uint32_t cell_info)
+{
+  check_handle(handle);
+  auto data_array = tcb::span(data, _registry[handle]->dim() * block_size);
+  _registry[handle]->apply_dof_transformation(data_array, block_size,
+                                              cell_info);
+}
+
+void basix::apply_inverse_transpose_dof_transformation_real(
+    int handle, double* data, int block_size, std::uint32_t cell_info)
+{
+  check_handle(handle);
+  auto data_array = tcb::span(data, _registry[handle]->dim() * block_size);
+  _registry[handle]->apply_inverse_transpose_dof_transformation(
+      data_array, block_size, cell_info);
+}
+
+void basix::apply_inverse_transpose_dof_transformation_complex(
+    int handle, std::complex<double>* data, int block_size,
+    std::uint32_t cell_info)
+{
+  check_handle(handle);
+  auto data_array = tcb::span(data, _registry[handle]->dim() * block_size);
+  _registry[handle]->apply_inverse_transpose_dof_transformation(
+      data_array, block_size, cell_info);
+}
+
 void basix::permute_dofs(int handle, std::int32_t* dofs,
                          std::uint32_t cell_info)
 {

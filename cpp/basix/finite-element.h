@@ -633,21 +633,8 @@ void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
 
   if (_cell_tdim >= 2)
   {
-    int max_dof_count = 0;
-    if (auto it = std::max_element(_edofs[1].cbegin(), _edofs[1].cend());
-        it != _edofs[1].cend())
-    {
-      max_dof_count = *it;
-    }
-
-    if (auto it = std::max_element(_edofs[2].cbegin(), _edofs[2].cend());
-        it != _edofs[2].cend())
-    {
-      max_dof_count = std::max(*it, max_dof_count);
-    }
-
-    // This assumes 3 bits are used per face. This will need updating if 3D
-    // cells with faces with more than 4 sides are implemented
+    // This assumes 3 bits are used per face. This will need updating if
+    // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
     int dofstart = std::accumulate(_edofs[0].cbegin(), _edofs[0].cend(), 0);
 
@@ -662,6 +649,7 @@ void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
       }
       dofstart += _edofs[1][e];
     }
+
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
@@ -695,19 +683,6 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
 
   if (_cell_tdim >= 2)
   {
-    int max_dof_count = 0;
-    if (auto it = std::max_element(_edofs[1].cbegin(), _edofs[1].cend());
-        it != _edofs[1].cend())
-    {
-      max_dof_count = *it;
-    }
-
-    if (auto it = std::max_element(_edofs[2].cbegin(), _edofs[2].cend());
-        it != _edofs[2].cend())
-    {
-      max_dof_count = std::max(*it, max_dof_count);
-    }
-
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
@@ -725,6 +700,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
       }
       dofstart += _edofs[1][e];
     }
+
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces

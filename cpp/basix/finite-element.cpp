@@ -46,7 +46,7 @@ constexpr int compute_value_size(maps::type map_type, int dim)
   }
 }
 //-----------------------------------------------------------------------------
-int num_transformations(cell::type cell_type)
+constexpr int num_transformations(cell::type cell_type)
 {
   switch (cell_type)
   {
@@ -324,7 +324,7 @@ FiniteElement::FiniteElement(
   _edofs.resize(_cell_tdim + 1);
   for (std::size_t d = 0; d < _edofs.size(); ++d)
   {
-    _edofs[d].resize(cell::sub_entity_count(_cell_type, d), 0);
+    _edofs[d].resize(cell::num_sub_entities(_cell_type, d), 0);
     for (std::size_t e = 0; e < M[d].size(); ++e)
       _edofs[d][e] = M[d][e].shape(0);
   }
@@ -340,7 +340,7 @@ FiniteElement::FiniteElement(
   _dof_transformations_are_permutations = true;
   _dof_transformations_are_identity = true;
   for (std::size_t i = 0; _dof_transformations_are_permutations
-                          && i < _entity_transformations.size();
+                          and i < _entity_transformations.size();
        ++i)
   {
     for (std::size_t row = 0; row < _entity_transformations[i].shape(0); ++row)
@@ -386,21 +386,20 @@ FiniteElement::FiniteElement(
           }
         }
         // Factorise the permutations
-        _entity_permutations.push_back(precompute::prepare_permutation(perm));
-        _reverse_entity_permutations.push_back(
-            precompute::prepare_permutation(rev_perm));
+        _eperm.push_back(precompute::prepare_permutation(perm));
+        _eperm_rev.push_back(precompute::prepare_permutation(rev_perm));
       }
     }
+
     // Precompute the DOF transformations
-    _entity_transformations_precomputed.resize(_entity_transformations.size());
-    _entity_transformations_inverse_transpose_precomputed.resize(
-        _entity_transformations.size());
+    _etrans.resize(_entity_transformations.size());
+    _etrans_inv.resize(_entity_transformations.size());
     for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
     {
       if (_entity_transformations[i].shape(0) > 0)
       {
-        const auto M = _entity_transformations[i];
-        _entity_transformations_precomputed[i] = precompute::prepare_matrix(M);
+        const xt::xtensor<double, 2>& M = _entity_transformations[i];
+        _etrans[i] = precompute::prepare_matrix(M);
 
         xt::xtensor<double, 2> Minv;
         if (i == 1)
@@ -420,9 +419,8 @@ FiniteElement::FiniteElement(
         else
           Minv = M;
 
-        const xt::xtensor<double, 2> MinvT = xt::transpose(Minv);
-        _entity_transformations_inverse_transpose_precomputed[i]
-            = precompute::prepare_matrix(MinvT);
+        auto MinvT = xt::transpose(Minv);
+        _etrans_inv[i] = precompute::prepare_matrix(MinvT);
       }
     }
   }
@@ -555,7 +553,7 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 xt::xtensor<double, 3> FiniteElement::base_transformations() const
 {
   const std::size_t nt = num_transformations(cell_type());
-  const std::size_t ndofs = dim();
+  const std::size_t ndofs = this->dim();
 
   xt::xtensor<double, 3> bt({nt, ndofs, ndofs});
   for (std::size_t i = 0; i < nt; ++i)
@@ -569,6 +567,7 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
   if (_cell_tdim > 1)
   {
     // Base transformations for edges
+
     for (int ndofs : _edofs[1])
     {
       xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
@@ -614,7 +613,6 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
       = compute_value_size(_map_type, J.shape(1));
   xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
   map_push_forward_m(U, J, detJ, K, u);
-
   return u;
 }
 //-----------------------------------------------------------------------------
@@ -652,7 +650,7 @@ void FiniteElement::permute_dofs(xtl::span<std::int32_t>& dofs,
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
-        precompute::apply_permutation(_entity_permutations[0], dofs, dofstart);
+        precompute::apply_permutation(_eperm[0], dofs, dofstart);
       dofstart += _edofs[1][e];
     }
 
@@ -663,17 +661,11 @@ void FiniteElement::permute_dofs(xtl::span<std::int32_t>& dofs,
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          precompute::apply_permutation(_entity_permutations[2], dofs,
-                                        dofstart);
-        }
+          precompute::apply_permutation(_eperm[2], dofs, dofstart);
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          precompute::apply_permutation(_entity_permutations[1], dofs,
-                                        dofstart);
-        }
+          precompute::apply_permutation(_eperm[1], dofs, dofstart);
 
         dofstart += _edofs[2][f];
       }
@@ -704,10 +696,7 @@ void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
-      {
-        precompute::apply_permutation(_reverse_entity_permutations[0], dofs,
-                                      dofstart);
-      }
+        precompute::apply_permutation(_eperm_rev[0], dofs, dofstart);
       dofstart += _edofs[1][e];
     }
 
@@ -718,17 +707,11 @@ void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
       {
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          precompute::apply_permutation(_reverse_entity_permutations[1], dofs,
-                                        dofstart);
-        }
+          precompute::apply_permutation(_eperm_rev[1], dofs, dofstart);
 
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          precompute::apply_permutation(_reverse_entity_permutations[2], dofs,
-                                        dofstart);
-        }
+          precompute::apply_permutation(_eperm_rev[2], dofs, dofstart);
 
         dofstart += _edofs[2][f];
       }

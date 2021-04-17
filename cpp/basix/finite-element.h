@@ -347,8 +347,13 @@ public:
   /// on a triangle has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]
   /// The sum of the entity dofs must match the total number of dofs
   /// reported by FiniteElement::dim,
-  /// @return List of entity dof counts on each dimension. The shape is (tdim +
-  /// 1, num_entities).
+  /// @code{.cpp}
+  /// const std::vector<std::vector<int>>& dofs = e.entity_dofs();
+  /// int num_dofs0 = dofs[1][3]; // Number of dofs associated with edge 3
+  /// int num_dofs1 = dofs[2][0]; // Number of dofs associated with face 0
+  /// @endcode
+  /// @return Number of dofs associated with an entity of a given
+  /// topological dimension. The shape is (tdim + 1, num_entities).
   const std::vector<std::vector<int>>& entity_dofs() const;
 
   /// Get the base transformations
@@ -543,22 +548,22 @@ private:
   /// The entity permutations (factorised). This will only be set if
   /// _dof_transformations_are_permutations is True and
   /// _dof_transformations_are_identity is False
-  std::vector<std::vector<std::size_t>> _entity_permutations;
+  std::vector<std::vector<std::size_t>> _eperm;
 
   /// The reverse entity permutations (factorised). This will only be set if
   /// _dof_transformations_are_permutations is True and
   /// _dof_transformations_are_identity is False
-  std::vector<std::vector<std::size_t>> _reverse_entity_permutations;
+  std::vector<std::vector<std::size_t>> _eperm_rev;
 
   /// The entity transformations in precomputed form
   std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                          xt::xtensor<double, 2>>>
-      _entity_transformations_precomputed;
+      _etrans;
 
   /// The inverse transpose entity transformations in precomputed form
   std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                          xt::xtensor<double, 2>>>
-      _entity_transformations_inverse_transpose_precomputed;
+      _etrans_inv;
 };
 
 /// Create an element by name
@@ -643,10 +648,7 @@ void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
-      {
-        precompute::apply_matrix(_entity_transformations_precomputed[0], data,
-                                 dofstart, block_size);
-      }
+        precompute::apply_matrix(_etrans[0], data, dofstart, block_size);
       dofstart += _edofs[1][e];
     }
 
@@ -657,17 +659,11 @@ void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          precompute::apply_matrix(_entity_transformations_precomputed[2], data,
-                                   dofstart, block_size);
-        }
+          precompute::apply_matrix(_etrans[2], data, dofstart, block_size);
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          precompute::apply_matrix(_entity_transformations_precomputed[1], data,
-                                   dofstart, block_size);
-        }
+          precompute::apply_matrix(_etrans[1], data, dofstart, block_size);
         dofstart += _edofs[2][f];
       }
     }
@@ -693,11 +689,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
-      {
-        precompute::apply_matrix(
-            _entity_transformations_inverse_transpose_precomputed[0], data,
-            dofstart, block_size);
-      }
+        precompute::apply_matrix(_etrans_inv[0], data, dofstart, block_size);
       dofstart += _edofs[1][e];
     }
 
@@ -708,19 +700,11 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          precompute::apply_matrix(
-              _entity_transformations_inverse_transpose_precomputed[2], data,
-              dofstart, block_size);
-        }
+          precompute::apply_matrix(_etrans_inv[2], data, dofstart, block_size);
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          precompute::apply_matrix(
-              _entity_transformations_inverse_transpose_precomputed[1], data,
-              dofstart, block_size);
-        }
+          precompute::apply_matrix(_etrans_inv[1], data, dofstart, block_size);
         dofstart += _edofs[2][f];
       }
     }

@@ -178,7 +178,7 @@ xt::xtensor<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
   return sub_entity;
 }
 //----------------------------------------------------------------------------
-int cell::sub_entity_count(cell::type celltype, int dim)
+int cell::num_sub_entities(cell::type celltype, int dim)
 {
   const std::vector<std::vector<std::vector<int>>> cell_topology
       = cell::topology(celltype);

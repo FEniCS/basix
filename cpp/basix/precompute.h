@@ -214,9 +214,10 @@ void apply_permutation(const std::vector<std::size_t>& perm, xtl::span<E>& data,
 ///
 /// @param[in] matrix A matrix
 /// @return The precomputed representation of the matrix
-template <typename T>
-std::tuple<std::vector<std::size_t>, std::vector<T>, xt::xtensor<T, 2>>
-prepare_matrix(const xt::xtensor<T, 2>& matrix);
+template <typename U>
+std::tuple<std::vector<std::size_t>, std::vector<typename U::value_type>,
+           xt::xtensor<typename U::value_type, 2>>
+prepare_matrix(const U& matrix);
 
 /// Apply a (precomputed) matrix
 ///
@@ -288,7 +289,7 @@ void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
 //-----------------------------------------------------------------------------
 template <typename E>
 void precompute::apply_permutation(const std::vector<std::size_t>& perm,
-                                   xtl::span<E>& data, const std::size_t offset,
+                                   xtl::span<E>& data, std::size_t offset,
                                    std::size_t block_size)
 {
   for (std::size_t b = 0; b < block_size; ++b)
@@ -301,12 +302,13 @@ void precompute::apply_permutation(const std::vector<std::size_t>& perm,
   }
 }
 //-----------------------------------------------------------------------------
-template <typename T>
-std::tuple<std::vector<std::size_t>, std::vector<T>, xt::xtensor<T, 2>>
-precompute::prepare_matrix(const xt::xtensor<T, 2>& matrix)
+template <typename U>
+std::tuple<std::vector<std::size_t>, std::vector<typename U::value_type>,
+           xt::xtensor<typename U::value_type, 2>>
+precompute::prepare_matrix(const U& matrix)
 {
+  using T = typename U::value_type;
   const std::size_t dim = matrix.shape(0);
-
   std::vector<std::size_t> perm(dim);
   xt::xtensor<T, 2> permuted_matrix({dim, dim});
   std::vector<T> diag(dim);
@@ -381,17 +383,21 @@ void precompute::apply_matrix(
                      xt::xtensor<T, 2>>& matrix,
     xtl::span<E>& data, std::size_t offset, std::size_t block_size)
 {
-  const std::size_t dim = std::get<0>(matrix).size();
-  apply_permutation(std::get<0>(matrix), data, offset, block_size);
+  const std::vector<std::size_t>& v_size_t = std::get<0>(matrix);
+  const std::vector<T>& v_t = std::get<1>(matrix);
+  const xt::xtensor<T, 2>& M = std::get<2>(matrix);
+
+  const std::size_t dim = v_size_t.size();
+  apply_permutation(v_size_t, data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)
     {
-      data[block_size * (offset + i) + b] *= std::get<1>(matrix)[i];
+      data[block_size * (offset + i) + b] *= v_t[i];
       for (std::size_t j = 0; j < dim; ++j)
       {
         data[block_size * (offset + i) + b]
-            += std::get<2>(matrix)(i, j) * data[block_size * (offset + j) + b];
+            += M(i, j) * data[block_size * (offset + j) + b];
       }
     }
   }

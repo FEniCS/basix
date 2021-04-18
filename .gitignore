@@ -10,6 +10,7 @@ cpp/cmake_install.cmake
 
 python/doc/build/*
 python/doc/source/generated/*
+python/testing_build/
 
 build*/
 

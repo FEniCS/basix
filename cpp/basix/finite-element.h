@@ -254,7 +254,8 @@ public:
   /// @param nd Number of derivatives
   /// @param x Points
   /// @param basis_data Memory location to fill
-  void tabulate(int nd, const xt::xarray<double>& x, double* basis_data) const;
+  void tabulate(int nd, const xt::xarray<double>& x,
+                xt::xtensor<double, 4>& basis_data) const;
 
   /// Get the element cell type
   /// @return The cell type

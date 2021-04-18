@@ -47,11 +47,14 @@ std::vector<std::vector<std::vector<int>>> topology(cell::type celltype);
 xt::xtensor<double, 2> sub_entity_geometry(cell::type celltype, int dim,
                                            int index);
 
+/// @todo Optimise this function
 /// Number of sub-entities of a cell by topological dimension
 /// @param celltype The cell::type
 /// @param dim Dimension of sub-entity
 /// @return The number of sub-entities of the given dimension
-int sub_entity_count(cell::type celltype, int dim);
+/// @warning This function is expensive to call. Do not use in
+/// performance critical code
+int num_sub_entities(cell::type celltype, int dim);
 
 /// Get the topological dimension for a given cell type
 /// @param celltype Cell type

@@ -222,30 +222,25 @@ create_nedelec_3d_interpolation(int degree)
 std::vector<xt::xtensor<double, 2>>
 create_nedelec_3d_entity_transforms(int degree)
 {
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::vector<xt::xtensor<double, 2>> entity_transformations(3);
 
   const xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree - 1));
-  entity_transformations.push_back(
-      xt::view(edge_transforms, 0, xt::all(), xt::all()));
+  entity_transformations[0]
+      = xt::view(edge_transforms, 0, xt::all(), xt::all());
 
   // Faces
-  if (degree == 1)
-  {
-    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
-    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
-  }
   if (degree > 1)
   {
     xt::xtensor<double, 3> face_transforms
         = moments::create_moment_dof_transformations(
             create_dlagrange(cell::type::triangle, degree - 2));
 
-    entity_transformations.push_back(
-        xt::view(face_transforms, 0, xt::all(), xt::all()));
-    entity_transformations.push_back(
-        xt::view(face_transforms, 1, xt::all(), xt::all()));
+    entity_transformations[1]
+        = xt::view(face_transforms, 0, xt::all(), xt::all());
+    entity_transformations[2]
+        = xt::view(face_transforms, 1, xt::all(), xt::all());
   }
   return entity_transformations;
 }

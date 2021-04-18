@@ -46,7 +46,7 @@ constexpr int compute_value_size(maps::type map_type, int dim)
   }
 }
 //-----------------------------------------------------------------------------
-int num_transformations(cell::type cell_type)
+constexpr int num_transformations(cell::type cell_type)
 {
   switch (cell_type)
   {
@@ -317,21 +317,16 @@ FiniteElement::FiniteElement(
     }
   }
 
-  // Store the number of subentities of each dimension
-  _cell_sub_entity_count.resize(_cell_tdim + 1);
-  for (std::size_t d = 0; d < _cell_sub_entity_count.size(); ++d)
-    _cell_sub_entity_count[d] = cell::sub_entity_count(_cell_type, d);
-
   // Compute number of dofs for each cell entity (computed from
   // interpolation data)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell_type);
-  _entity_dofs.resize(_cell_tdim + 1);
-  for (std::size_t d = 0; d < _entity_dofs.size(); ++d)
+  _edofs.resize(_cell_tdim + 1);
+  for (std::size_t d = 0; d < _edofs.size(); ++d)
   {
-    _entity_dofs[d].resize(_cell_sub_entity_count[d], 0);
+    _edofs[d].resize(cell::num_sub_entities(_cell_type, d), 0);
     for (std::size_t e = 0; e < M[d].size(); ++e)
-      _entity_dofs[d][e] = M[d][e].shape(0);
+      _edofs[d][e] = M[d][e].shape(0);
   }
 
   // Check that nunber of dofs os equal to number of coefficients
@@ -345,7 +340,7 @@ FiniteElement::FiniteElement(
   _dof_transformations_are_permutations = true;
   _dof_transformations_are_identity = true;
   for (std::size_t i = 0; _dof_transformations_are_permutations
-                          && i < _entity_transformations.size();
+                          and i < _entity_transformations.size();
        ++i)
   {
     for (std::size_t row = 0; row < _entity_transformations[i].shape(0); ++row)
@@ -367,47 +362,66 @@ FiniteElement::FiniteElement(
         _dof_transformations_are_identity = false;
     }
   }
-  // If transformations are permutations, then create the permutations
-  if (_dof_transformations_are_permutations)
+  if (!_dof_transformations_are_identity)
   {
-    for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
+    // If transformations are permutations, then create the permutations
+    if (_dof_transformations_are_permutations)
     {
-      std::vector<int> perm(_entity_transformations[i].shape(0));
-      std::vector<int> rev_perm(_entity_transformations[i].shape(0));
-      for (std::size_t row = 0; row < _entity_transformations[i].shape(0);
-           ++row)
+      for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
       {
-        for (std::size_t col = 0; col < _entity_transformations[i].shape(0);
-             ++col)
+        std::vector<std::size_t> perm(_entity_transformations[i].shape(0));
+        std::vector<std::size_t> rev_perm(_entity_transformations[i].shape(0));
+        for (std::size_t row = 0; row < _entity_transformations[i].shape(0);
+             ++row)
         {
-          if (_entity_transformations[i](row, col) > 0.5)
+          for (std::size_t col = 0; col < _entity_transformations[i].shape(0);
+               ++col)
           {
-            perm[row] = col;
-            rev_perm[col] = row;
-            break;
+            if (_entity_transformations[i](row, col) > 0.5)
+            {
+              perm[row] = col;
+              rev_perm[col] = row;
+              break;
+            }
           }
         }
+        // Factorise the permutations
+        _eperm.push_back(precompute::prepare_permutation(perm));
+        _eperm_rev.push_back(precompute::prepare_permutation(rev_perm));
       }
-      // Factorise the permutations
-      std::vector<int> f_perm(perm.size());
-      for (std::size_t row = 0; row < perm.size(); ++row)
-      {
-        std::size_t row2 = perm[row];
-        while (row2 < row)
-          row2 = perm[row2];
-        f_perm[row] = row2;
-      }
-      _entity_permutations.push_back(f_perm);
+    }
 
-      std::vector<int> f_rev_perm(rev_perm.size());
-      for (std::size_t row = 0; row < rev_perm.size(); ++row)
+    // Precompute the DOF transformations
+    _etrans.resize(_entity_transformations.size());
+    _etrans_inv.resize(_entity_transformations.size());
+    for (std::size_t i = 0; i < _entity_transformations.size(); ++i)
+    {
+      if (_entity_transformations[i].shape(0) > 0)
       {
-        std::size_t row2 = rev_perm[row];
-        while (row2 < row)
-          row2 = rev_perm[row2];
-        f_rev_perm[row] = row2;
+        const xt::xtensor<double, 2>& M = _entity_transformations[i];
+        _etrans[i] = precompute::prepare_matrix(M);
+
+        xt::xtensor<double, 2> Minv;
+        if (i == 1)
+        {
+          // Rotation of a face: this is in the only base transformation such
+          // that M^{-1} != M.
+          // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
+          // For a triangular face, M^3 = Id, so M^{-1} = M^2.
+          // This assumes that all faces of the cell are the same shape. For
+          // prisms and pyramids, this will need updating to look at the face
+          // type
+          if (_cell_type == cell::type::hexahedron)
+            Minv = xt::linalg::dot(xt::linalg::dot(M, M), M);
+          else
+            Minv = xt::linalg::dot(M, M);
+        }
+        else
+          Minv = M;
+
+        auto MinvT = xt::transpose(Minv);
+        _etrans_inv[i] = precompute::prepare_matrix(MinvT);
       }
-      _reverse_entity_permutations.push_back(f_rev_perm);
     }
   }
 }
@@ -450,7 +464,7 @@ const xt::xtensor<double, 2>& FiniteElement::interpolation_matrix() const
 //-----------------------------------------------------------------------------
 const std::vector<std::vector<int>>& FiniteElement::entity_dofs() const
 {
-  return _entity_dofs;
+  return _edofs;
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 4>
@@ -504,7 +518,7 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 xt::xtensor<double, 3> FiniteElement::base_transformations() const
 {
   const std::size_t nt = num_transformations(cell_type());
-  const std::size_t ndofs = dim();
+  const std::size_t ndofs = this->dim();
 
   xt::xtensor<double, 3> bt({nt, ndofs, ndofs});
   for (std::size_t i = 0; i < nt; ++i)
@@ -513,40 +527,38 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
   std::size_t dof_start = 0;
   int transform_n = 0;
   if (_cell_tdim > 0)
-  {
-    for (std::size_t i = 0; i < _entity_dofs[0].size(); ++i)
-      dof_start += _entity_dofs[0][i];
-  }
+    dof_start = std::accumulate(_edofs[0].cbegin(), _edofs[0].cend(), 0);
 
   if (_cell_tdim > 1)
   {
     // Base transformations for edges
-    for (int i = 0; i < _cell_sub_entity_count[1]; ++i)
+
+    for (int ndofs : _edofs[1])
     {
-      xt::view(bt, transform_n++,
-               xt::range(dof_start, dof_start + _entity_dofs[1][i]),
-               xt::range(dof_start, dof_start + _entity_dofs[1][i]))
+      xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
+               xt::range(dof_start, dof_start + ndofs))
           = _entity_transformations[0];
-      dof_start += _entity_dofs[1][i];
+      dof_start += ndofs;
     }
 
     if (_cell_tdim > 2)
     {
-      for (int i = 0; i < _cell_sub_entity_count[2]; ++i)
+      for (int ndofs : _edofs[2])
       {
-        // TODO: This assumes that every face has the same shape
-        //       _entity_transformations should be replaced with a map from a
-        //       subentity type to a matrix to allow for prisms and pyramids.
-        xt::view(bt, transform_n++,
-                 xt::range(dof_start, dof_start + _entity_dofs[2][i]),
-                 xt::range(dof_start, dof_start + _entity_dofs[2][i]))
-            = _entity_transformations[1];
-        xt::view(bt, transform_n++,
-                 xt::range(dof_start, dof_start + _entity_dofs[2][i]),
-                 xt::range(dof_start, dof_start + _entity_dofs[2][i]))
-            = _entity_transformations[2];
+        if (ndofs > 0)
+        {
+          // TODO: This assumes that every face has the same shape
+          //       _entity_transformations should be replaced with a map from a
+          //       subentity type to a matrix to allow for prisms and pyramids.
+          xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
+                   xt::range(dof_start, dof_start + ndofs))
+              = _entity_transformations[1];
+          xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
+                   xt::range(dof_start, dof_start + ndofs))
+              = _entity_transformations[2];
 
-        dof_start += _entity_dofs[2][i];
+          dof_start += ndofs;
+        }
       }
     }
   }
@@ -566,7 +578,6 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
       = compute_value_size(_map_type, J.shape(1));
   xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
   map_push_forward_m(U, J, detJ, K, u);
-
   return u;
 }
 //-----------------------------------------------------------------------------
@@ -584,8 +595,11 @@ void FiniteElement::permute_dofs(xtl::span<std::int32_t>& dofs,
                                  std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
+  {
     throw std::runtime_error(
         "The DOF transformations for this element are not permutations");
+  }
+
   if (_dof_transformations_are_identity)
     return;
 
@@ -593,54 +607,32 @@ void FiniteElement::permute_dofs(xtl::span<std::int32_t>& dofs,
   {
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
-
-    int dofstart = 0;
-    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
-      dofstart += _entity_dofs[0][v];
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = std::accumulate(_edofs[0].cbegin(), _edofs[0].cend(), 0);
 
     // Permute DOFs on edges
-    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+    for (std::size_t e = 0; e < _edofs[1].size(); ++e)
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
-      {
-        for (int i = 0; i < _entity_dofs[1][e]; ++i)
-        {
-          std::swap(dofs[dofstart + i],
-                    dofs[dofstart + _entity_permutations[0][i]]);
-        }
-      }
-
-      dofstart += _entity_dofs[1][e];
+        precompute::apply_permutation(_eperm[0], dofs, dofstart);
+      dofstart += _edofs[1][e];
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          for (int i = 0; i < _entity_dofs[2][f]; ++i)
-          {
-            std::swap(dofs[dofstart + i],
-                      dofs[dofstart + _entity_permutations[2][i]]);
-          }
-        }
+          precompute::apply_permutation(_eperm[2], dofs, dofstart);
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          for (int i = 0; i < _entity_dofs[2][f]; ++i)
-          {
-            std::swap(dofs[dofstart + i],
-                      dofs[dofstart + _entity_permutations[1][i]]);
-          }
-        }
+          precompute::apply_permutation(_eperm[1], dofs, dofstart);
 
-        dofstart += _entity_dofs[2][f];
+        dofstart += _edofs[2][f];
       }
     }
   }
@@ -650,8 +642,10 @@ void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
                                    std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
+  {
     throw std::runtime_error(
         "The DOF transformations for this element are not permutations");
+  }
   if (_dof_transformations_are_identity)
     return;
 
@@ -659,54 +653,32 @@ void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
   {
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _cell_sub_entity_count[2] : 0;
-
-    int dofstart = 0;
-    for (int v = 0; v < _cell_sub_entity_count[0]; ++v)
-      dofstart += _entity_dofs[0][v];
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = std::accumulate(_edofs[0].cbegin(), _edofs[0].cend(), 0);
 
     // Permute DOFs on edges
-    for (int e = 0; e < _cell_sub_entity_count[1]; ++e)
+    for (std::size_t e = 0; e < _edofs[1].size(); ++e)
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
-      {
-        for (int i = 0; i < _entity_dofs[1][e]; ++i)
-        {
-          std::swap(dofs[dofstart + i],
-                    dofs[dofstart + _reverse_entity_permutations[0][i]]);
-        }
-      }
-
-      dofstart += _entity_dofs[1][e];
+        precompute::apply_permutation(_eperm_rev[0], dofs, dofstart);
+      dofstart += _edofs[1][e];
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (int f = 0; f < _cell_sub_entity_count[2]; ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          for (int i = 0; i < _entity_dofs[2][f]; ++i)
-          {
-            std::swap(dofs[dofstart + i],
-                      dofs[dofstart + _reverse_entity_permutations[1][i]]);
-          }
-        }
+          precompute::apply_permutation(_eperm_rev[1], dofs, dofstart);
 
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          for (int i = 0; i < _entity_dofs[2][f]; ++i)
-          {
-            std::swap(dofs[dofstart + i],
-                      dofs[dofstart + _reverse_entity_permutations[2][i]]);
-          }
-        }
+          precompute::apply_permutation(_eperm_rev[2], dofs, dofstart);
 
-        dofstart += _entity_dofs[2][f];
+        dofstart += _edofs[2][f];
       }
     }
   }

@@ -83,6 +83,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/maps.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/moments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/polyset.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/precompute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/quadrature.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lagrange.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nce-rtc.h
@@ -105,6 +106,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/maps.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/moments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/polyset.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/precompute.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/quadrature.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lagrange.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nce-rtc.cpp

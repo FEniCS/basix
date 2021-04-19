@@ -110,7 +110,7 @@ prepare_permutation(const std::vector<std::size_t>& perm);
 /// `P2[5]` is 5, so we swap `A[5]` and `A[5]`. This changes nothing.
 ///
 /// Therefore the result of applying this permutation is `[b, e, a, f, c, d]`
-/// (which is what we get if we apply the permutation directly.
+/// (which is what we get if we apply the permutation directly).
 ///
 /// @param[in] perm A permutation in precomputed form (as returned by
 /// `prepare_permutation()`)

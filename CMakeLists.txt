@@ -96,7 +96,6 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.h)
 
 target_sources(basix PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/basix.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/dof-transformations.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/element-families.cpp
@@ -119,7 +118,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.cpp)
 
 # Configure the library
-set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix.h)
+set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix/finite-element.h)
 set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
                            $<INSTALL_INTERFACE:include>

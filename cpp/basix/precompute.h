@@ -257,21 +257,21 @@ prepare_matrix(const U& matrix);
 /// @f$D_0=-1@f$. After this, @f$v@f$ is `[-3, -1, 2]`.
 ///
 /// Next, we add @f$M_{0,i}v_i@f$ to @f$v_0@f$ for all @f$i@f$: in this case, we
-/// add @f$0&times-3 + 0\times-1 + 1\times2 = 2@f$. After this, @f$v@f$ is `[-1,
+/// add @f$0\times-3 + 0\times-1 + 1\times2 = 2@f$. After this, @f$v@f$ is `[-1,
 /// -1, 2]`.
 ///
 /// Next, we multiply @f$v_1@f$ by @f$D_1=1@f$. After this, @f$v@f$ is `[-1, -1,
 /// 2]`.
 ///
 /// Next, we add @f$M_{1,i}v_i@f$ to @f$v_1@f$ for all @f$i@f$: in this case, we
-/// add @f$-1&times-1 + 0\times-1 + 1\times2 = 3@f$. After this, @f$v@f$ is
+/// add @f$-1\times-1 + 0\times-1 + 1\times2 = 3@f$. After this, @f$v@f$ is
 /// `[-1, 2, 2]`.
 ///
 /// Next, we multiply @f$v_2@f$ by @f$D_2=4@f$. After this, @f$v@f$ is `[-1, 2,
 /// 8]`.
 ///
 /// Next, we add @f$M_{2,i}v_i@f$ to @f$v_2@f$ for all @f$i@f$: in this case, we
-/// add @f$-2&times-1 + 0\times2 + 0\times8 = 2@f$. After this, @f$v@f$ is `[-1,
+/// add @f$-2\times-1 + 0\times2 + 0\times8 = 2@f$. After this, @f$v@f$ is `[-1,
 /// 2, 10]`. This final value of @f$v@f$ is what the result of @f$Av@f$
 ///
 /// @param[in] matrix A matrix in precomputed form (as returned by

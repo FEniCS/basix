@@ -41,7 +41,7 @@ def parametrize_over_elements(order, reference=None):
                     for c in ["interval", "quadrilateral", "hexahedron"]
                     for o in range(1, order + 1)]
 
-    if reference is None:
-        return pytest.mark.parametrize("cell_name, element_name, order", elementlist)
-    else:
+    if reference is not None:
         return pytest.mark.parametrize("element_name, order", [(j, k) for i, j, k in elementlist if i == reference])
+
+    return pytest.mark.parametrize("cell_name, element_name, order", elementlist)

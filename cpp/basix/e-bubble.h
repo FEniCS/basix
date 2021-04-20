@@ -13,6 +13,7 @@ namespace basix
 /// @param[in] celltype interval, triangle, tetrahedral, quadrilateral or
 /// hexahedral celltype
 /// @param[in] degree
+/// @param[in] variant
 /// @return A FiniteElement
 FiniteElement create_bubble(cell::type celltype, int degree,
                             element::variant variant);

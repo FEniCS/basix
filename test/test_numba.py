@@ -10,8 +10,15 @@ import random
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations(cell, element, degree, block_size):
-    from basix.numba_helpers import apply_dof_transformation
+    from basix import numba_helpers
     from numba.typed import List
+
+    transform_functions = {
+        "triangle": numba_helpers.apply_dof_transformation_triangle,
+        "quadrilateral": numba_helpers.apply_dof_transformation_quadrilateral,
+        "tetrahedron": numba_helpers.apply_dof_transformation_tetrahedron,
+        "hexahedron": numba_helpers.apply_dof_transformation_hexahedron
+    }
 
     random.seed(1337)
 
@@ -26,7 +33,7 @@ def test_dof_transformations(cell, element, degree, block_size):
 
         data2 = data.copy()
 
-        apply_dof_transformation(e.entity_transformations(), basix.cell_to_str(e.cell_type),
-                                 List(e.entity_dofs), data2, block_size, cell_info)
+        transform_functions[cell](e.entity_transformations(), basix.cell_to_str(e.cell_type),
+                                  List(e.entity_dofs), data2, block_size, cell_info)
 
         assert np.allclose(data1, data2)

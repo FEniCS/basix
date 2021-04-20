@@ -4,15 +4,15 @@
 
 #pragma once
 
+#include "cell.h"
 #include "finite-element.h"
 
 namespace basix
 {
-
-/// Crouzeix-Raviart element
-/// @note degree must be 1 for Crouzeix-Raviart
+/// Create Raviart-Thomas element
 /// @param celltype
 /// @param degree
-FiniteElement create_cr(cell::type celltype, int degree);
+FiniteElement create_rt(cell::type celltype, int degree,
+                        element::variant variant);
 
 } // namespace basix

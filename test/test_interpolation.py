@@ -20,14 +20,6 @@ def test_interpolation(cell_name, n, element_name):
 
 @parametrize_over_elements(5)
 def test_interpolation_matrix(cell_name, order, element_name):
-    if order > 4:
-        if cell_name in ["quadrilateral", "hexahedron"] and element_name in [
-            "Raviart-Thomas", "Nedelec 1st kind H(curl)", "Brezzi-Douglas-Marini",
-            "Nedelec 2nd kind H(curl)"
-        ]:
-            pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "
-                         "Lagrange spaces with equally spaced points are unstable.")
-
     element = basix.create_element(element_name, cell_name, order)
     i_m = element.interpolation_matrix
     tabulated = element.tabulate(0, element.points)[0]
@@ -37,4 +29,4 @@ def test_interpolation_matrix(cell_name, order, element_name):
     for i in range(i_m.shape[0]):
         coeffs[i, :] = i_m @ tabulated[:, i::i_m.shape[0]].T.reshape(i_m.shape[1])
 
-    assert np.allclose(coeffs, np.identity(coeffs.shape[0]))
+    assert np.allclose(coeffs, np.identity(coeffs.shape[0]), atol=1e-6)

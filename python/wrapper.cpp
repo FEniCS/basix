@@ -183,9 +183,21 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "family_to_str",
       [](element::family family_type) -> const std::string& {
-        return element::type_to_str(family_type);
+        return element::family_to_str(family_type);
       },
       "Convert a family type to a string.");
+
+  py::enum_<element::variant>(m, "ElementVariant")
+      .value("DEFAULT", element::variant::DEFAULT)
+      .value("EQ", element::variant::EQ)
+      .value("GLL", element::variant::GLL);
+
+  m.def(
+      "variant_to_str",
+      [](element::variant variant) -> const std::string& {
+        return element::variant_to_str(variant);
+      },
+      "Convert a element variant to a string.");
 
   // m.def(
   //     "create_new_element",
@@ -320,6 +332,14 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return basix::create_element(family_name, cell_name, degree);
       },
       "Create a FiniteElement of a given family, celltype and degree");
+
+  m.def(
+      "create_element",
+      [](const std::string family_name, const std::string cell_name, int degree,
+         const std::string variant) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, variant);
+      },
+      "Create a FiniteElement of a given family, celltype, degree and variant");
 
   m.def(
       "tabulate_polynomial_set",

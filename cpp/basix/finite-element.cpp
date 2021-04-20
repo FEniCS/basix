@@ -3,16 +3,16 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
-#include "brezzi-douglas-marini.h"
-#include "bubble.h"
-#include "crouzeix-raviart.h"
-#include "lagrange.h"
-#include "nce-rtc.h"
-#include "nedelec.h"
+#include "e-brezzi-douglas-marini.h"
+#include "e-bubble.h"
+#include "e-crouzeix-raviart.h"
+#include "e-lagrange.h"
+#include "e-nce-rtc.h"
+#include "e-nedelec.h"
+#include "e-raviart-thomas.h"
+#include "e-regge.h"
+#include "e-serendipity.h"
 #include "polyset.h"
-#include "raviart-thomas.h"
-#include "regge.h"
-#include "serendipity.h"
 #include <numeric>
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
@@ -73,41 +73,43 @@ constexpr int num_transformations(cell::type cell_type)
 } // namespace
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
-                                           int degree)
+                                           int degree, std::string variant)
 {
-  return basix::create_element(element::str_to_type(family),
-                               cell::str_to_type(cell), degree);
+  return basix::create_element(element::str_to_family(family),
+                               cell::str_to_type(cell), degree,
+                               element::str_to_variant(variant));
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree)
+                                           cell::type cell, int degree,
+                                           element::variant variant)
 {
   switch (family)
   {
   case element::family::P:
-    return create_lagrange(cell, degree);
+    return create_lagrange(cell, degree, variant);
   case element::family::DP:
-    return create_dlagrange(cell, degree);
+    return create_dlagrange(cell, degree, variant);
   case element::family::BDM:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_serendipity_div(cell, degree);
+      return create_serendipity_div(cell, degree, variant);
     case cell::type::hexahedron:
-      return create_serendipity_div(cell, degree);
+      return create_serendipity_div(cell, degree, variant);
     default:
-      return create_bdm(cell, degree);
+      return create_bdm(cell, degree, variant);
     }
   case element::family::RT:
   {
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_rtc(cell, degree);
+      return create_rtc(cell, degree, variant);
     case cell::type::hexahedron:
-      return create_rtc(cell, degree);
+      return create_rtc(cell, degree, variant);
     default:
-      return create_rt(cell, degree);
+      return create_rt(cell, degree, variant);
     }
   }
   case element::family::N1E:
@@ -115,33 +117,33 @@ basix::FiniteElement basix::create_element(element::family family,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_nce(cell, degree);
+      return create_nce(cell, degree, variant);
     case cell::type::hexahedron:
-      return create_nce(cell, degree);
+      return create_nce(cell, degree, variant);
     default:
-      return create_nedelec(cell, degree);
+      return create_nedelec(cell, degree, variant);
     }
   }
   case element::family::N2E:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_serendipity_curl(cell, degree);
+      return create_serendipity_curl(cell, degree, variant);
     case cell::type::hexahedron:
-      return create_serendipity_curl(cell, degree);
+      return create_serendipity_curl(cell, degree, variant);
     default:
-      return create_nedelec2(cell, degree);
+      return create_nedelec2(cell, degree, variant);
     }
   case element::family::Regge:
-    return create_regge(cell, degree);
+    return create_regge(cell, degree, variant);
   case element::family::CR:
-    return create_cr(cell, degree);
+    return create_cr(cell, degree, variant);
   case element::family::Bubble:
-    return create_bubble(cell, degree);
+    return create_bubble(cell, degree, variant);
   case element::family::Serendipity:
-    return create_serendipity(cell, degree);
+    return create_serendipity(cell, degree, variant);
   case element::family::DPC:
-    return create_dpc(cell, degree);
+    return create_dpc(cell, degree, variant);
   default:
     throw std::runtime_error("Element family not found");
   }

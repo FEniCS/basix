@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "bubble.h"
+#include "e-bubble.h"
 #include "element-families.h"
 #include "lattice.h"
 #include "maps.h"
@@ -19,7 +19,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_bubble(cell::type celltype, int degree)
+FiniteElement basix::create_bubble(cell::type celltype, int degree,
+                                   element::variant variant)
 {
   switch (celltype)
   {
@@ -52,6 +53,16 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     throw std::runtime_error("Unsupported cell type");
   }
 
+  // For quads and hexes, use GLL points by default. Otherwise use equispaced
+  if (variant == element::variant::DEFAULT)
+  {
+    if (celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      variant = element::variant::GLL;
+    else
+      variant = element::variant::EQ;
+  }
+
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
@@ -69,8 +80,8 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   const std::size_t psize = phi.shape(1);
 
   // Create points at nodes on interior
-  const auto points
-      = lattice::create(celltype, degree, lattice::type::equispaced, false);
+  const auto points = lattice::create(
+      celltype, degree, element::variant_to_lattice(variant), false);
   const std::size_t ndofs = points.shape(0);
   x[tdim].push_back(points);
 

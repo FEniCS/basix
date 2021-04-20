@@ -2,10 +2,11 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "regge.h"
+#include "e-regge.h"
 #include "dof-transformations.h"
 #include "element-families.h"
 #include "lattice.h"
+#include "log.h"
 #include "maps.h"
 #include "polyset.h"
 #include <xtensor-blas/xlinalg.hpp>
@@ -50,8 +51,12 @@ xt::xtensor<double, 2> create_regge_space(cell::type celltype, int degree)
 //-----------------------------------------------------------------------------
 std::pair<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
           std::array<std::vector<xt::xtensor<double, 3>>, 4>>
-create_regge_interpolation(cell::type celltype, int degree)
+create_regge_interpolation(cell::type celltype, int degree,
+                           element::variant variant)
 {
+  if (variant == element::variant::DEFAULT)
+    variant = element::variant::EQ;
+
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -75,8 +80,8 @@ create_regge_interpolation(cell::type celltype, int degree)
 
       // Tabulate points in lattice
       cell::type ct = cell::sub_entity_type(celltype, d, e);
-      const auto lattice
-          = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
+      const auto lattice = lattice::create(
+          ct, degree + 2, element::variant_to_lattice(variant), false);
       const auto x0 = xt::row(entity_x, 0);
       x[d][e] = xt::xtensor<double, 2>({lattice.shape(0), tdim});
 
@@ -133,12 +138,13 @@ create_regge_interpolation(cell::type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_regge(cell::type celltype, int degree)
+FiniteElement basix::create_regge(cell::type celltype, int degree,
+                                  element::variant variant)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   const xt::xtensor<double, 2> wcoeffs = create_regge_space(celltype, degree);
-  const auto [x, M] = create_regge_interpolation(celltype, degree);
+  const auto [x, M] = create_regge_interpolation(celltype, degree, variant);
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
 
@@ -152,7 +158,8 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   const std::vector<int> edge_ref
       = doftransforms::interval_reflection(degree + 1);
-  xt::xtensor<double, 2> et = xt::zeros<double>({edge_ref.size(), edge_ref.size()});
+  xt::xtensor<double, 2> et
+      = xt::zeros<double>({edge_ref.size(), edge_ref.size()});
   for (std::size_t i = 0; i < edge_ref.size(); ++i)
     et(i, edge_ref[i]) = 1;
   entity_transformations.push_back(et);

@@ -568,11 +568,13 @@ private:
 };
 
 /// Create an element by name
-FiniteElement create_element(std::string family, std::string cell, int degree);
+FiniteElement create_element(std::string family, std::string cell, int degree,
+                             std::string variant = "default");
 
 /// Create an element by name
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree);
+FiniteElement
+create_element(element::family family, cell::type cell, int degree,
+               element::variant variant = element::variant::DEFAULT);
 
 /// Return the version number of basix across projects
 /// @return version string

@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "lagrange.h"
+#include "e-lagrange.h"
 #include "dof-transformations.h"
 #include "element-families.h"
 #include "lattice.h"
@@ -18,10 +18,21 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_lagrange(cell::type celltype, int degree)
+FiniteElement basix::create_lagrange(cell::type celltype, int degree,
+                                     element::variant variant)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
+
+  // For quads and hexes, use GLL points by default. Otherwise use equispaced
+  if (variant == element::variant::DEFAULT)
+  {
+    if (celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      variant = element::variant::GLL;
+    else
+      variant = element::variant::EQ;
+  }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
@@ -35,7 +46,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)
   {
-    auto pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
+    auto pt = lattice::create(celltype, 0, element::variant_to_lattice(variant),
+                              true);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
     std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
@@ -65,8 +77,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         }
         else if (dim == tdim)
         {
-          x[dim][e] = lattice::create(celltype, degree,
-                                      lattice::type::equispaced, false);
+          x[dim][e] = lattice::create(
+              celltype, degree, element::variant_to_lattice(variant), false);
           const std::size_t num_dofs = x[dim][e].shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
           M[dim][e] = xt::xtensor<double, 3>(s);
@@ -76,8 +88,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const auto lattice
-              = lattice::create(ct, degree, lattice::type::equispaced, false);
+          const auto lattice = lattice::create(
+              ct, degree, element::variant_to_lattice(variant), false);
 
           const std::size_t num_dofs = lattice.shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
@@ -160,10 +172,21 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
                        entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
+FiniteElement basix::create_dlagrange(cell::type celltype, int degree,
+                                      element::variant variant)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
+
+  // For quads and hexes, use GLL points by default. Otherwise use equispaced
+  if (variant == element::variant::DEFAULT)
+  {
+    if (celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      variant = element::variant::GLL;
+    else
+      variant = element::variant::EQ;
+  }
 
   const std::size_t ndofs = polyset::dim(celltype, degree);
 
@@ -176,8 +199,8 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  const auto pt
-      = lattice::create(celltype, degree, lattice::type::equispaced, true);
+  const auto pt = lattice::create(celltype, degree,
+                                  element::variant_to_lattice(variant), true);
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   x[tdim].push_back(pt);
 
@@ -192,7 +215,8 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
                        entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_dpc(cell::type celltype, int degree)
+FiniteElement basix::create_dpc(cell::type celltype, int degree,
+                                element::variant variant)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
@@ -212,6 +236,10 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   default:
     throw std::runtime_error("Invalid cell type");
   }
+
+  // For quads and hexes, use GLL points by default. Otherwise use equispaced
+  if (variant == element::variant::DEFAULT)
+    variant = element::variant::GLL;
 
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
@@ -242,8 +270,8 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  const auto pt
-      = lattice::create(simplex_type, degree, lattice::type::equispaced, true);
+  const auto pt = lattice::create(simplex_type, degree,
+                                  element::variant_to_lattice(variant), true);
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   x[tdim].push_back(pt);
 

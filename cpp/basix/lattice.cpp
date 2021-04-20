@@ -4,7 +4,7 @@
 
 #include "lattice.h"
 #include "cell.h"
-#include "lagrange.h"
+#include "e-lagrange.h"
 #include "quadrature.h"
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
@@ -27,7 +27,8 @@ xt::xtensor<double, 1> warp_function(int n, const xt::xtensor<double, 1>& x)
   xt::xtensor<double, 1> pts
       = xt::adapt(_pts.data(), _pts.size(), xt::no_ownership(), shape0);
 
-  FiniteElement L = create_dlagrange(cell::type::interval, n);
+  FiniteElement L
+      = create_dlagrange(cell::type::interval, n, element::variant::EQ);
   xt::xtensor<double, 2> v
       = xt::view(L.tabulate(0, x), 0, xt::all(), xt::all(), 0);
 
@@ -49,7 +50,7 @@ xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
     x = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
 
-  if (lattice_type == lattice::type::gll_warped)
+  if (x.shape(0) > 0 and lattice_type == lattice::type::gll_warped)
     x += warp_function(n, x);
 
   return x;
@@ -70,7 +71,7 @@ xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
     r = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
 
-  if (lattice_type == lattice::type::gll_warped)
+  if (r.shape(0) > 0 and lattice_type == lattice::type::gll_warped)
     r += warp_function(n, r);
 
   const std::size_t m = r.shape(0);
@@ -103,7 +104,7 @@ xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
     const double h = 1.0 / static_cast<double>(n);
     r = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
-  if (lattice_type == lattice::type::gll_warped)
+  if (r.shape(0) > 0 and lattice_type == lattice::type::gll_warped)
     r += warp_function(n, r);
 
   const std::size_t m = r.size();
@@ -260,7 +261,8 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
   // Get interpolated value at r in range [-1, 1]
-  FiniteElement L = create_dlagrange(cell::type::interval, n);
+  FiniteElement L
+      = create_dlagrange(cell::type::interval, n, element::variant::EQ);
   auto w = [&](double r) -> double {
     xt::xtensor<double, 1> rr = {0.5 * (r + 1.0)};
     xt::xtensor<double, 1> v = xt::view(L.tabulate(0, rr), 0, 0, xt::all(), 0);

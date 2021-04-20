@@ -2,12 +2,12 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "brezzi-douglas-marini.h"
+#include "e-brezzi-douglas-marini.h"
+#include "e-lagrange.h"
+#include "e-nedelec.h"
 #include "element-families.h"
-#include "lagrange.h"
 #include "maps.h"
 #include "moments.h"
-#include "nedelec.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include <numeric>
@@ -20,7 +20,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_bdm(cell::type celltype, int degree)
+FiniteElement basix::create_bdm(cell::type celltype, int degree,
+                                element::variant variant)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -38,7 +39,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Add integral moments on facets
-  const FiniteElement facet_moment_space = create_dlagrange(facettype, degree);
+  const FiniteElement facet_moment_space
+      = create_dlagrange(facettype, degree, variant);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
 
@@ -50,7 +52,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   {
     // Interior integral moment
     std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
-        create_nedelec(celltype, degree - 1), celltype, tdim, quad_deg);
+        create_nedelec(celltype, degree - 1, variant), celltype, tdim,
+        quad_deg);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

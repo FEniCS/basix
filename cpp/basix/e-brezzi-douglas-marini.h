@@ -11,6 +11,7 @@ namespace basix
 /// Create BDM element
 /// @param celltype
 /// @param degree
-FiniteElement create_bdm(cell::type celltype, int degree);
+FiniteElement create_bdm(cell::type celltype, int degree,
+                         element::variant variant);
 
 } // namespace basix

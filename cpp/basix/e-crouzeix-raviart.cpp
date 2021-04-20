@@ -2,9 +2,10 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "crouzeix-raviart.h"
+#include "e-crouzeix-raviart.h"
 #include "cell.h"
 #include "element-families.h"
+#include "log.h"
 #include "maps.h"
 #include <array>
 #include <vector>
@@ -15,10 +16,15 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_cr(cell::type celltype, int degree)
+FiniteElement basix::create_cr(cell::type celltype, int degree,
+                               element::variant variant)
 {
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
+
+  if (variant != element::variant::DEFAULT)
+    LOG(WARNING)
+        << "Using a non-default variant has no effect on this element.";
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   if (tdim < 2)

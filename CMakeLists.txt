@@ -85,15 +85,15 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/polyset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/precompute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/quadrature.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lagrange.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nce-rtc.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/brezzi-douglas-marini.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nedelec.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/raviart-thomas.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/regge.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/crouzeix-raviart.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/bubble.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.h)
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-lagrange.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-nce-rtc.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-brezzi-douglas-marini.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-nedelec.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-raviart-thomas.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-regge.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-crouzeix-raviart.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-bubble.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-serendipity.h)
 
 target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.cpp
@@ -107,15 +107,15 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/polyset.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/precompute.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/quadrature.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/lagrange.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nce-rtc.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/brezzi-douglas-marini.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/nedelec.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/raviart-thomas.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/regge.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/crouzeix-raviart.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/bubble.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.cpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-lagrange.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-nce-rtc.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-brezzi-douglas-marini.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-nedelec.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-raviart-thomas.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-regge.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-crouzeix-raviart.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-bubble.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/e-serendipity.cpp)
 
 # Configure the library
 set_target_properties(basix PROPERTIES PUBLIC_HEADER cpp/basix/finite-element.h)

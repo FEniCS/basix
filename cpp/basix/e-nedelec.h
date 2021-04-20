@@ -11,11 +11,13 @@ namespace basix
 /// Create Nedelec element (first kind)
 /// @param celltype
 /// @param degree
-FiniteElement create_nedelec(cell::type celltype, int degree);
+FiniteElement create_nedelec(cell::type celltype, int degree,
+                             element::variant variant);
 
 /// Create Nedelec element (second kind)
 /// @param celltype
 /// @param degree
-FiniteElement create_nedelec2(cell::type celltype, int degree);
+FiniteElement create_nedelec2(cell::type celltype, int degree,
+                              element::variant variant);
 
 } // namespace basix

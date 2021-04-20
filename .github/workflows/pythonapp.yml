@@ -41,6 +41,7 @@ jobs:
           flake8 --statistics test/
       - name: Install basix C++
         run: |
+          export VERBOSE=1
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
           cmake --build build-dir
           sudo cmake --install build-dir

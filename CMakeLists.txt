@@ -137,16 +137,16 @@ target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 # Note: We would like to use `target_link_libraries`, but CMake does not
 # apply the SYSTEM option to the includes, and this causes our strict
 # compiler checks to fail on the xtensor headers.
-# target_link_libraries(basix PRIVATE xtl)
+target_link_libraries(basix PRIVATE xtl)
 target_link_libraries(basix PUBLIC xtensor)
-# target_link_libraries(basix PRIVATE xtensor-blas)
-get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
+target_link_libraries(basix PRIVATE xtensor-blas)
+# get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
+# target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
 
-get_target_property(_xtensor_blas_include_dirs xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(basix SYSTEM PRIVATE ${_xtensor_blas_include_dirs})
+# get_target_property(_xtensor_blas_include_dirs xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
+# target_include_directories(basix SYSTEM PRIVATE ${_xtensor_blas_include_dirs})
 
-# get_target_property(_xtensor_include_dirs xtensor INCLUDE_DIRECTORIES)
+# get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)
 # message("foo: ${xtensor_INCLUDE_DIRS}")
 
 # get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)

@@ -33,7 +33,7 @@ def test_dof_transformations(cell, element, degree, block_size):
 
         data2 = data.copy()
 
-        transform_functions[cell](e.entity_transformations(), basix.cell_to_str(e.cell_type),
-                                  List(e.entity_dofs), data2, block_size, cell_info)
+        transform_functions[cell](
+            e.entity_transformations(), List(e.entity_dofs), data2, block_size, cell_info)
 
         assert np.allclose(data1, data2)

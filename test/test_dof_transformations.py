@@ -247,7 +247,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs], rtol=1e-6)
+                                   j_slice[start: start + ndofs], rtol=1e-4)
 
     start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
     ndofs = e.entity_dofs[2][0]
@@ -266,7 +266,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose(bt[12].dot(i_slice)[start: start + ndofs],
-                                   j_slice[start: start + ndofs], rtol=1e-6)
+                                   j_slice[start: start + ndofs], rtol=1e-4)
 
     if ndofs != 0:
         # Check that the 13th transformation undoes the effect of reflecting face 0
@@ -283,4 +283,4 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[13].dot(i_slice))[start: start + ndofs],
-                                   j_slice[start: start + ndofs], rtol=1e-6)
+                                   j_slice[start: start + ndofs], rtol=1e-4)

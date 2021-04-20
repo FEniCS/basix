@@ -33,9 +33,9 @@ In Basix, the sub-entities of the reference triangle are numbered as follows:
 The following elements are supported on a triangle:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
-  - [Nédélec](https://defelement.com/elements/nedelec1.html)
+  - [Nédélec first kind](https://defelement.com/elements/nedelec1.html)
   - [Raviart-Thomas](https://defelement.com/elements/raviart-thomas.html)
-  - [Nédélec Second Kind](https://defelement.com/elements/nedelec2.html)
+  - [Nédélec second kind](https://defelement.com/elements/nedelec2.html)
   - [Brezzi-Douglas-Marini](https://defelement.com/elements/brezzi-douglas-marini.html)
   - [Regge](https://defelement.com/elements/regge.html)
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
@@ -49,8 +49,10 @@ In Basix, the sub-entities of the reference quadrilateral are numbered as follow
 The following elements are supported on a quadrilateral:
 
   - [Lagrange](https://defelement.com/elements/q.html)
-  - [Nédélec](https://defelement.com/elements/qcurl.html)
+  - [Nédélec first kind](https://defelement.com/elements/qcurl.html)
   - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
+  - [Nédélec second kind](https://defelement.com/elements/scurl.html)
+  - [Brezzi-Douglas-Marini](https://defelement.com/elements/sdiv.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [DPC](https://defelement.com/elements/dpc.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
@@ -63,9 +65,9 @@ In Basix, the sub-entities of the reference tetrahedron are numbered as follows:
 The following elements are supported on a tetrahedron:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
-  - [Nédélec](https://defelement.com/elements/nedelec1.html)
+  - [Nédélec first kind](https://defelement.com/elements/nedelec1.html)
   - [Raviart-Thomas](https://defelement.com/elements/raviart-thomas.html)
-  - [Nédélec Second Kind](https://defelement.com/elements/nedelec2.html)
+  - [Nédélec second kind](https://defelement.com/elements/nedelec2.html)
   - [Brezzi-Douglas-Marini](https://defelement.com/elements/brezzi-douglas-marini.html)
   - [Regge](https://defelement.com/elements/regge.html)
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
@@ -79,9 +81,9 @@ In Basix, the sub-entities of the reference hexahedron are numbered as follows:
 The following elements are supported on a hexahedron:
 
   - [Lagrange](https://defelement.com/elements/q.html)
-  - [Nédélec](https://defelement.com/elements/qcurl.html)
+  - [Nédélec first kind](https://defelement.com/elements/qcurl.html)
   - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
-  - [Nédélec Second Kind](https://defelement.com/elements/scurl.html)
+  - [Nédélec second kind](https://defelement.com/elements/scurl.html)
   - [Brezzi-Douglas-Marini](https://defelement.com/elements/sdiv.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [DPC](https://defelement.com/elements/dpc.html)

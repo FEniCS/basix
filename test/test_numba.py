@@ -1,7 +1,10 @@
+import random
+
 import basix
 import numpy as np
 import pytest
-import random
+from numba.core import types
+from numba.typed import Dict
 
 
 @pytest.mark.parametrize("cell", ["triangle", "tetrahedron", "quadrilateral", "hexahedron"])
@@ -33,7 +36,14 @@ def test_dof_transformations(cell, element, degree, block_size):
 
         data2 = data.copy()
 
-        transform_functions[cell](
-            e.entity_transformations(), List(e.entity_dofs), data2, block_size, cell_info)
+        # Mapping lists to numba dictionaries
+        entity_transformations = Dict.empty(key_type=types.int64, value_type=types.float64[:,:])
+        for i, transformation in enumerate(e.entity_transformations()):
+            entity_transformations[i] = transformation
+        
+        entity_dofs = Dict.empty(key_type=types.int64, value_type=types.int32[:])
+        for i, e_dofs in enumerate(e.entity_dofs):
+            entity_dofs[i] = np.asarray(e_dofs, dtype=np.int32)
+        transform_functions[cell](entity_transformations, entity_dofs, data2, block_size, cell_info)
 
         assert np.allclose(data1, data2)

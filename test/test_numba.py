@@ -3,10 +3,6 @@ import numpy as np
 import pytest
 import random
 
-RED = "\033[31m"
-GREEN = "\033[32m"
-DEFAULT = "\033[0m"
-
 
 @pytest.mark.parametrize("cell", ["triangle", "tetrahedron", "quadrilateral", "hexahedron"])
 @pytest.mark.parametrize("element, degree", [
@@ -29,9 +25,6 @@ def test_dof_transformations(cell, element, degree, block_size):
         data1 = e.apply_dof_transformation(data1, block_size, cell_info)
 
         data2 = data.copy()
-        for i in (e.entity_transformations(), basix.cell_to_str(e.cell_type),
-                                 e.entity_dofs, data2, block_size, cell_info):
-            print(type(i))
 
         apply_dof_transformation(e.entity_transformations(), basix.cell_to_str(e.cell_type),
                                  List(e.entity_dofs), data2, block_size, cell_info)

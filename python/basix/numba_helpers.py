@@ -3,7 +3,6 @@ try:
 except ImportError:
     raise RuntimeError("You must have numba installed to use the numba helper functions.")
 
-import numpy
 
 @numba.njit
 def apply_dof_transformation(tdim, edge_count, face_count, entity_transformations, entity_dofs,
@@ -45,7 +44,7 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
             if cell_info >> (face_start + e) & 1:
                 for b in range(block_size):
                     s = (dofstart * block_size + b, (dofstart + edofs) * block_size, block_size)
-                    data[slice(*s)] = numpy.dot(edge_reflection, data[slice(*s)].copy())
+                    data[slice(*s)] = edge_reflection.dot(data[slice(*s)].copy())
             dofstart += edofs
 
         if tdim == 3:

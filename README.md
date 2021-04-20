@@ -51,6 +51,8 @@ The following elements are supported on a quadrilateral:
   - [Lagrange](https://defelement.com/elements/q.html)
   - [Nédélec](https://defelement.com/elements/qcurl.html)
   - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
+  - [Nédélec Second Kind](https://defelement.com/elements/scurl.html)
+  - [Brezzi-Douglas-Marini](https://defelement.com/elements/sdiv.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [DPC](https://defelement.com/elements/dpc.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)

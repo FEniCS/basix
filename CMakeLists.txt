@@ -72,6 +72,8 @@ feature_summary(WHAT ALL)
 
 add_library(basix)
 
+configure_file(${CMAKE_SOURCE_DIR}/cpp/basix/version.h.cmake ${CMAKE_SOURCE_DIR}/cpp/basix/version.h)
+
 set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/dof-transformations.h
@@ -93,8 +95,9 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/regge.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/crouzeix-raviart.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/bubble.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.h)
-
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/version.h)
+  
 target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/dof-transformations.cpp

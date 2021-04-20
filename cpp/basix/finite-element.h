@@ -437,6 +437,9 @@ public:
   /// ~~~~~~~~~~~~~~~~
   xt::xtensor<double, 3> base_transformations() const;
 
+  // Return the entity dof transformation matricess
+  std::vector<xt::xtensor<double, 2>> entity_transformations() const;
+
   /// Permute the dof numbering on a cell
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell

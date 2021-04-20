@@ -71,9 +71,9 @@ def apply_dof_transformation_interval(entity_transformations, entity_dofs,
 
     Parameters
     ----------
-    entity_transformations : list
+    entity_transformations : Dict(ndarray(float64))
         The DOF transformations for each entity.
-    entity_dofs : list
+    entity_dofs : Dict(ndarray(int32))
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
@@ -92,9 +92,9 @@ def apply_dof_transformation_triangle(entity_transformations, entity_dofs,
 
     Parameters
     ----------
-    entity_transformations : list
+    entity_transformations : Dict(ndarray(float64))
         The DOF transformations for each entity.
-    entity_dofs : list
+    entity_dofs : Dict(ndarray(int32))
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
@@ -115,9 +115,9 @@ def apply_dof_transformation_quadrilateral(
 
     Parameters
     ----------
-    entity_transformations : list
+    entity_transformations : Dict(ndarray(float64))
         The DOF transformations for each entity.
-    entity_dofs : list
+    entity_dofs : Dict(ndarray(int32))
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
@@ -138,9 +138,9 @@ def apply_dof_transformation_tetrahedron(
 
     Parameters
     ----------
-    entity_transformations : list
+    entity_transformations : Dict(ndarray(float64))
         The DOF transformations for each entity.
-    entity_dofs : list
+    entity_dofs : Dict(ndarray(int32))
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
@@ -161,9 +161,9 @@ def apply_dof_transformation_hexahedron(
 
     Parameters
     ----------
-    entity_transformations : list
+    entity_transformations : Dict(ndarray(float64))
         The DOF transformations for each entity.
-    entity_dofs : list
+    entity_dofs : Dict(ndarray(int32))
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.

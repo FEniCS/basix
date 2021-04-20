@@ -5,25 +5,29 @@ except ImportError:
 
 
 @numba.njit
-def apply_dof_transformation(entity_transformations, cell_type, entity_dofs,
+def apply_dof_transformation(tdim, edge_count, face_count, entity_transformations, entity_dofs,
                              data, block_size, cell_info):
-    if cell_type == "interval":
-        tdim = 1
-    elif cell_type == "triangle":
-        edge_count = 3
-        tdim = 2
-    elif cell_type == "quadrilateral":
-        edge_count = 4
-        tdim = 2
-    elif cell_type == "tetrahedron":
-        edge_count = 6
-        face_count = 4
-        tdim = 3
-    elif cell_type == "hexahedron":
-        edge_count = 12
-        face_count = 6
-        tdim = 3
+    """Apply dof transformations to some data.
 
+    Parameters
+    ----------
+    tdim : int
+        The topological dimension of the cell.
+    edge_cout : int
+        The number of edges the cell has.
+    face_count : int
+        The number of faces the cell has.
+    entity_transformations : list
+        The DOF transformations for each entity.
+    entity_dofs : list
+        The number of DOFs on each entity.
+    data : np.array
+        The data. This will be changed by this function.
+    block_size : int
+        The number of data entries for each DOF.
+    cell_info : int
+        An integer representing the orientations of the subentities of the cell.
+    """
     if tdim >= 2:
         if tdim == 3:
             face_start = 3 * face_count
@@ -54,3 +58,41 @@ def apply_dof_transformation(entity_transformations, cell_type, entity_dofs,
                         s = (dofstart * block_size + b, (dofstart + fdofs) * block_size, block_size)
                         data[slice(*s)] = entity_transformations[1].dot(data[slice(*s)])
                 dofstart += fdofs
+
+
+@numba.njit
+def apply_dof_transformation_interval(entity_transformations, entity_dofs,
+                                      data, block_size, cell_info):
+    apply_dof_transformation(1, 1, 0, entity_transformations, entity_dofs,
+                             data, block_size, cell_info)
+
+
+@numba.njit
+def apply_dof_transformation_triangle(entity_transformations, entity_dofs,
+                                      data, block_size, cell_info):
+    apply_dof_transformation(2, 3, 1, entity_transformations, entity_dofs,
+                             data, block_size, cell_info)
+
+
+@numba.njit
+def apply_dof_transformation_quadrilateral(
+    entity_transformations, entity_dofs, data, block_size, cell_info
+):
+    apply_dof_transformation(2, 4, 1, entity_transformations, entity_dofs,
+                             data, block_size, cell_info)
+
+
+@numba.njit
+def apply_dof_transformation_tetrahedron(
+    entity_transformations, entity_dofs, data, block_size, cell_info
+):
+    apply_dof_transformation(3, 6, 4, entity_transformations, entity_dofs,
+                             data, block_size, cell_info)
+
+
+@numba.njit
+def apply_dof_transformation_hexahedron(
+    entity_transformations, entity_dofs, data, block_size, cell_info
+):
+    apply_dof_transformation(3, 12, 6, entity_transformations, entity_dofs,
+                             data, block_size, cell_info)

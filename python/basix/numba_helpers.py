@@ -63,13 +63,42 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
 @numba.njit
 def apply_dof_transformation_interval(entity_transformations, entity_dofs,
                                       data, block_size, cell_info):
-    apply_dof_transformation(1, 1, 0, entity_transformations, entity_dofs,
-                             data, block_size, cell_info)
+    """Apply dof transformations to some data on an interval.
+
+    Parameters
+    ----------
+    entity_transformations : list
+        The DOF transformations for each entity.
+    entity_dofs : list
+        The number of DOFs on each entity.
+    data : np.array
+        The data. This will be changed by this function.
+    block_size : int
+        The number of data entries for each DOF.
+    cell_info : int
+        An integer representing the orientations of the subentities of the cell.
+    """
+    return
 
 
 @numba.njit
 def apply_dof_transformation_triangle(entity_transformations, entity_dofs,
                                       data, block_size, cell_info):
+    """Apply dof transformations to some data on a triangle.
+
+    Parameters
+    ----------
+    entity_transformations : list
+        The DOF transformations for each entity.
+    entity_dofs : list
+        The number of DOFs on each entity.
+    data : np.array
+        The data. This will be changed by this function.
+    block_size : int
+        The number of data entries for each DOF.
+    cell_info : int
+        An integer representing the orientations of the subentities of the cell.
+    """
     apply_dof_transformation(2, 3, 1, entity_transformations, entity_dofs,
                              data, block_size, cell_info)
 
@@ -78,6 +107,21 @@ def apply_dof_transformation_triangle(entity_transformations, entity_dofs,
 def apply_dof_transformation_quadrilateral(
     entity_transformations, entity_dofs, data, block_size, cell_info
 ):
+    """Apply dof transformations to some data on an quadrilateral.
+
+    Parameters
+    ----------
+    entity_transformations : list
+        The DOF transformations for each entity.
+    entity_dofs : list
+        The number of DOFs on each entity.
+    data : np.array
+        The data. This will be changed by this function.
+    block_size : int
+        The number of data entries for each DOF.
+    cell_info : int
+        An integer representing the orientations of the subentities of the cell.
+    """
     apply_dof_transformation(2, 4, 1, entity_transformations, entity_dofs,
                              data, block_size, cell_info)
 
@@ -86,6 +130,21 @@ def apply_dof_transformation_quadrilateral(
 def apply_dof_transformation_tetrahedron(
     entity_transformations, entity_dofs, data, block_size, cell_info
 ):
+    """Apply dof transformations to some data on a tetrahedron.
+
+    Parameters
+    ----------
+    entity_transformations : list
+        The DOF transformations for each entity.
+    entity_dofs : list
+        The number of DOFs on each entity.
+    data : np.array
+        The data. This will be changed by this function.
+    block_size : int
+        The number of data entries for each DOF.
+    cell_info : int
+        An integer representing the orientations of the subentities of the cell.
+    """
     apply_dof_transformation(3, 6, 4, entity_transformations, entity_dofs,
                              data, block_size, cell_info)
 
@@ -94,5 +153,20 @@ def apply_dof_transformation_tetrahedron(
 def apply_dof_transformation_hexahedron(
     entity_transformations, entity_dofs, data, block_size, cell_info
 ):
+    """Apply dof transformations to some data on an hexahedron.
+
+    Parameters
+    ----------
+    entity_transformations : list
+        The DOF transformations for each entity.
+    entity_dofs : list
+        The number of DOFs on each entity.
+    data : np.array
+        The data. This will be changed by this function.
+    block_size : int
+        The number of data entries for each DOF.
+    cell_info : int
+        An integer representing the orientations of the subentities of the cell.
+    """
     apply_dof_transformation(3, 12, 6, entity_transformations, entity_dofs,
                              data, block_size, cell_info)

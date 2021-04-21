@@ -167,7 +167,7 @@ endif()
 # that -isystem flag is applied to allow us to use strict compiler flags
 get_target_property(XTENSORBLAS_INC_SYS xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor-blas PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSORBLAS_INC_SYS}")
-target_link_libraries(basix PUBLIC xtensor-blas)
+target_link_libraries(basix PRIVATE xtensor-blas)
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

@@ -7,22 +7,18 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# xtensor dependencies
+find_package(xtl REQUIRED)
+find_package(xtensor REQUIRED)
+
 # Find Basix (C++)
 find_package(Basix REQUIRED)
 
-# xtensor dependencies
-# Note: xtensor-blas_DIR is not an admissible environment variable name,
-# so we use xtensor_blas_DIR
-find_package(xtl REQUIRED)
-find_package(xtensor REQUIRED)
-# find_package(xtensor-blas HINTS $ENV{xtensor_blas_DIR} REQUIRED)
-
-
 # Check if the Basix C++ library was compiled with xtensor SIMD
-# get_target_property(BASIX_DEFN Basix::basix INTERFACE_COMPILE_DEFINITIONS)
-# if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
-#   find_package(xsimd REQUIRED)
-# endif()
+get_target_property(BASIX_DEFN Basix::basix INTERFACE_COMPILE_DEFINITIONS)
+if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
+  find_package(xsimd REQUIRED)
+endif()
 
 # include(FetchContent)
 # FetchContent_Declare(

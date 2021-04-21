@@ -22,13 +22,13 @@ set(XTENSOR_MIN_VERSION 0.23.4)
 set(XTL_MIN_VERSION 0.7.0)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
-  find_package(xtl ${XTL_MIN_VERSION}...<0.8 QUIET)
-  find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.24 QUIET)
+  find_package(xtl ${XTL_MIN_VERSION}...<0.8 REQUIRED)
+  find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.24 REQUIRED)
 else()
-  find_package(xtl ${XTL_MIN_VERSION} QUIET)
-  find_package(xtensor ${XTENSOR_MIN_VERSION} QUIET)
+  find_package(xtl ${XTL_MIN_VERSION} REQUIRED)
+  find_package(xtensor ${XTENSOR_MIN_VERSION REQUIRED})
 endif()
-find_package(xtensor-blas 0.19 QUIET)
+find_package(xtensor-blas 0.19 REQUIRED)
 if(NOT xtl_FOUND OR NOT xtensor_FOUND OR NOT xtensor-blas_FOUND)
   include(FetchContent)
 endif()
@@ -137,27 +137,20 @@ target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 # does not apply the SYSTEM option to the includes, and this causes our
 # strict compiler checks to fail on the xtensor headers (CMake 3.20
 # seems fine).
+
+# get_target_property(XTL_INC_SYS xlt INTERFACE_INCLUDE_DIRECTORIES)
+# set_target_properties(xtl INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${XTL_INC_SYS})
 target_link_libraries(basix PUBLIC xtl)
+
+get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(xtl INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${XTENSOR_INC_SYS})
 target_link_libraries(basix PUBLIC xtensor)
+
+# get_target_property(XTL_INC_SYS xlt INTERFACE_INCLUDE_DIRECTORIES)
+# set_target_properties(xtl INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${XTL_INC_SYS})
 target_link_libraries(basix PUBLIC xtensor-blas)
 
-# # xtl
-# get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
-# target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
 
-# # xtensor-blas
-# get_target_property(_xtensor_blas_include_dirs xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
-# target_include_directories(basix SYSTEM PUBLIC ${_xtensor_blas_include_dirs})
-
-# # xtensor
-# get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)
-# target_include_directories(basix SYSTEM PUBLIC ${_xtensor_include_dirs})
-# if (XTENSOR_USE_XSIMD AND xsimd_FOUND)
-#   get_target_property(_xsimd_include_dirs xsimd INTERFACE_INCLUDE_DIRECTORIES)
-#   target_include_directories(basix SYSTEM PUBLIC ${_xsimd_include_dirs})
-#   get_target_property(_xtensor_definitions xtensor INTERFACE_COMPILE_DEFINITIONS)
-#   target_compile_definitions(basix PUBLIC ${_xtensor_definitions})
-# endif()
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

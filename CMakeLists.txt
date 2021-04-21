@@ -149,7 +149,7 @@ get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
 target_link_libraries(basix PUBLIC xtensor)
 if (XTENSOR_OPTIMIZE)
-  target_link_libraries(basix xtensor::optimize)
+  target_link_libraries(basix PUBLIC xtensor::optimize)
 endif()
 
 get_target_property(XTENSORBLAS_INC_SYS xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)

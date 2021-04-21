@@ -9,14 +9,12 @@
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
-namespace basix
-{
-
 /// ## Matrix and permutation precomputation
 /// These functions generate precomputed version of matrices to allow
 /// application without temporary memory assignment later
-namespace precompute
+namespace basix::precompute
 {
+
 /// Prepare a permutation
 ///
 /// This computes a representation of the permutation that allows the
@@ -118,7 +116,17 @@ prepare_permutation(const std::vector<std::size_t>& perm);
 /// @param[in] block_size The block size of the data
 template <typename E>
 void apply_permutation(const std::vector<std::size_t>& perm, xtl::span<E>& data,
-                       std::size_t offset = 0, std::size_t block_size = 1);
+                       std::size_t offset = 0, std::size_t block_size = 1)
+{
+  for (std::size_t b = 0; b < block_size; ++b)
+  {
+    for (std::size_t i = 0; i < perm.size(); ++i)
+    {
+      std::swap(data[block_size * (offset + i) + b],
+                data[block_size * (offset + perm[i]) + b]);
+    }
+  }
+}
 
 /// Prepare a matrix
 ///
@@ -281,30 +289,7 @@ template <typename T, typename E>
 void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
                                    xt::xtensor<T, 2>>& matrix,
                   xtl::span<E>& data, std::size_t offset = 0,
-                  std::size_t block_size = 1);
-} // namespace precompute
-
-//-----------------------------------------------------------------------------
-template <typename E>
-void precompute::apply_permutation(const std::vector<std::size_t>& perm,
-                                   xtl::span<E>& data, std::size_t offset,
-                                   std::size_t block_size)
-{
-  for (std::size_t b = 0; b < block_size; ++b)
-  {
-    for (std::size_t i = 0; i < perm.size(); ++i)
-    {
-      std::swap(data[block_size * (offset + i) + b],
-                data[block_size * (offset + perm[i]) + b]);
-    }
-  }
-}
-//-----------------------------------------------------------------------------
-template <typename T, typename E>
-void precompute::apply_matrix(
-    const std::tuple<std::vector<std::size_t>, std::vector<T>,
-                     xt::xtensor<T, 2>>& matrix,
-    xtl::span<E>& data, std::size_t offset, std::size_t block_size)
+                  std::size_t block_size = 1)
 {
   const std::vector<std::size_t>& v_size_t = std::get<0>(matrix);
   const std::vector<T>& v_t = std::get<1>(matrix);
@@ -325,6 +310,6 @@ void precompute::apply_matrix(
     }
   }
 }
-//-----------------------------------------------------------------------------
 
+} // namespace precompute
 } // namespace basix

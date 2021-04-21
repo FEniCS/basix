@@ -15,6 +15,11 @@ jobs:
         os: [ubuntu-20.04]
         python-version: [3.8]
 
+    env:
+      CC: gcc-10
+      CXX: g++-10
+
+
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -39,12 +44,12 @@ jobs:
         run: |
           pip install flake8
           flake8 --statistics test/
-      - name: Install basix C++
+      - name: Install Basix C++
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
           cmake --build build-dir
           sudo cmake --install build-dir
-      - name: Build basix Python
+      - name: Build Basix Python
         run: |
           cd python
           pip install .

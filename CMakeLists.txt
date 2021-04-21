@@ -146,11 +146,9 @@ get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
 target_link_libraries(basix PUBLIC xtensor)
 
-# get_target_property(XTL_INC_SYS xlt INTERFACE_INCLUDE_DIRECTORIES)
-# set_target_properties(xtl INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${XTL_INC_SYS})
+get_target_property(XTENSORBLAS_INC_SYS xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(xtensor-blas PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSORBLAS_INC_SYS}")
 target_link_libraries(basix PUBLIC xtensor-blas)
-
-
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

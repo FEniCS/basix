@@ -7,6 +7,9 @@ include(GNUInstallDirs)
 # Enable SIMD with xtensor
 option(XTENSOR_USE_XSIMD "Enable SIMD with xtensor" OFF)
 
+# Enable xtensor with target-specific optimization, i.e. -march=native
+option(XTENSOR_OPTIMIZE "Enable xtensor target-specific optimization" OFF)
+
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -145,6 +148,9 @@ target_link_libraries(basix PUBLIC xtl)
 get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
 target_link_libraries(basix PUBLIC xtensor)
+if (XTENSOR_OPTIMIZE)
+  target_link_libraries(basix xtensor::optimize)
+endif()
 
 get_target_property(XTENSORBLAS_INC_SYS xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor-blas PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSORBLAS_INC_SYS}")

@@ -4,11 +4,15 @@ cmake_minimum_required(VERSION 3.16)
 project(Basix VERSION "0.0.1" LANGUAGES CXX)
 include(GNUInstallDirs)
 
+include(FeatureSummary)
+
 # Enable SIMD with xtensor
 option(XTENSOR_USE_XSIMD "Enable SIMD with xtensor" OFF)
+add_feature_info(XTENSOR_USE_XSIMD XTENSOR_USE_XSIMD "Enable SIMD with xtensor.")
 
 # Enable xtensor with target-specific optimization, i.e. -march=native
 option(XTENSOR_OPTIMIZE "Enable xtensor target-specific optimization" OFF)
+add_feature_info(XTENSOR_OPTIMIZE XTENSOR_OPTIMIZE "Enable architecture-specific optimizations as defined by xtensor.")
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -16,7 +20,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Options
-include(FeatureSummary)
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
 
@@ -148,7 +151,6 @@ target_link_libraries(basix PUBLIC xtl)
 get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
 target_link_libraries(basix PUBLIC xtensor)
-
 if (XTENSOR_OPTIMIZE)
   target_link_libraries(basix PUBLIC xtensor::optimize)
 endif()

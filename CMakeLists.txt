@@ -143,7 +143,7 @@ target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 target_link_libraries(basix PUBLIC xtl)
 
 get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
-set_target_properties(xtl INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${XTENSOR_INC_SYS})
+set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${XTENSOR_INC_SYS})
 target_link_libraries(basix PUBLIC xtensor)
 
 # get_target_property(XTL_INC_SYS xlt INTERFACE_INCLUDE_DIRECTORIES)

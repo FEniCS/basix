@@ -311,5 +311,4 @@ void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
   }
 }
 
-} // namespace precompute
-} // namespace basix
+} // namespace basix::precompute

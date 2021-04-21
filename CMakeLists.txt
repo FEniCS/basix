@@ -141,17 +141,28 @@ target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 # strict compiler checks to fail on the xtensor headers (CMake 3.20
 # seems fine).
 
-# get_target_property(XTL_INC_SYS xlt INTERFACE_INCLUDE_DIRECTORIES)
-# set_target_properties(xtl INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${XTL_INC_SYS})
 target_link_libraries(basix PUBLIC xtl)
 
+# Note: we use get_target_property/set_target_properties to ensure that
+# that -isystem flag is applied to allow us to use strict compiler flags
 get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
 target_link_libraries(basix PUBLIC xtensor)
+
 if (XTENSOR_OPTIMIZE)
   target_link_libraries(basix PUBLIC xtensor::optimize)
 endif()
 
+# Add SIMD definition to Basix so that Basix will export this option so
+# other libraries will know that Basix was compiled with xsimd
+get_target_property(XTENSOR_DEFN xtensor INTERFACE_COMPILE_DEFINITIONS)
+if("XTENSOR_USE_XSIMD" IN_LIST XTENSOR_DEFN)
+  message("-- Basix is being built with xsimd support")
+  target_compile_definitions(basix PUBLIC XTENSOR_USE_XSIMD)
+endif()
+
+# Note: we use get_target_property/set_target_properties to ensure that
+# that -isystem flag is applied to allow us to use strict compiler flags
 get_target_property(XTENSORBLAS_INC_SYS xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor-blas PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSORBLAS_INC_SYS}")
 target_link_libraries(basix PUBLIC xtensor-blas)

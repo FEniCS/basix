@@ -8,11 +8,21 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Find dependencies
+find_package(Basix REQUIRED)
+
+# Check if the Basix C++ library was compiled with xtensor SIMD
+get_target_property(BASIX_DEFN Basix::basix INTERFACE_COMPILE_DEFINITIONS)
+if(XTENSOR_USE_XSIMD IN_LIST BASIX_DEFN)
+  find_package(xsimd REQUIRED)
+  set(XTENSOR_USE_XSIMD ON)
+endif()
 
 find_package(xtl REQUIRED)
 find_package(xtensor REQUIRED)
-find_package(xtensor-blas REQUIRED)
-find_package(Basix REQUIRED)
+# Note: xtensor-blas_DIR is not an admissible environment variable name,
+# so we use xtensor_blas_DIR
+find_package(xtensor-blas HINTS $ENV{xtensor_blas_DIR} REQUIRED)
+
 # include(FetchContent)
 # FetchContent_Declare(
 #   basix
@@ -30,7 +40,6 @@ find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
 pybind11_add_module(_basixcpp SHARED wrapper.cpp)
 target_link_libraries(_basixcpp PRIVATE pybind11::module)
 target_link_libraries(_basixcpp PUBLIC Basix::basix)
-# target_link_libraries(_basixcpp PUBLIC basix)
 
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)

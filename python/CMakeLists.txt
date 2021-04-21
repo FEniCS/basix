@@ -11,6 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(xtl REQUIRED)
 find_package(xtensor REQUIRED)
+find_package(xtensor-blas REQUIRED)
 find_package(Basix REQUIRED)
 # include(FetchContent)
 # FetchContent_Declare(

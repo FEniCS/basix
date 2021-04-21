@@ -137,27 +137,27 @@ target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 # does not apply the SYSTEM option to the includes, and this causes our
 # strict compiler checks to fail on the xtensor headers (CMake 3.20
 # seems fine).
-# target_link_libraries(basix PUBLIC xtl)
-# target_link_libraries(basix PUBLIC xtensor)
-# target_link_libraries(basix PUBLIC xtensor-blas)
+target_link_libraries(basix PUBLIC xtl)
+target_link_libraries(basix PUBLIC xtensor)
+target_link_libraries(basix PUBLIC xtensor-blas)
 
-# xtl
-get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
+# # xtl
+# get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
+# target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
 
-# xtensor-blas
-get_target_property(_xtensor_blas_include_dirs xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(basix SYSTEM PUBLIC ${_xtensor_blas_include_dirs})
+# # xtensor-blas
+# get_target_property(_xtensor_blas_include_dirs xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
+# target_include_directories(basix SYSTEM PUBLIC ${_xtensor_blas_include_dirs})
 
-# xtensor
-get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(basix SYSTEM PUBLIC ${_xtensor_include_dirs})
-if (XTENSOR_USE_XSIMD AND xsimd_FOUND)
-  get_target_property(_xsimd_include_dirs xsimd INTERFACE_INCLUDE_DIRECTORIES)
-  target_include_directories(basix SYSTEM PUBLIC ${_xsimd_include_dirs})
-  get_target_property(_xtensor_definitions xtensor INTERFACE_COMPILE_DEFINITIONS)
-  target_compile_definitions(basix PUBLIC ${_xtensor_definitions})
-endif()
+# # xtensor
+# get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)
+# target_include_directories(basix SYSTEM PUBLIC ${_xtensor_include_dirs})
+# if (XTENSOR_USE_XSIMD AND xsimd_FOUND)
+#   get_target_property(_xsimd_include_dirs xsimd INTERFACE_INCLUDE_DIRECTORIES)
+#   target_include_directories(basix SYSTEM PUBLIC ${_xsimd_include_dirs})
+#   get_target_property(_xtensor_definitions xtensor INTERFACE_COMPILE_DEFINITIONS)
+#   target_compile_definitions(basix PUBLIC ${_xtensor_definitions})
+# endif()
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

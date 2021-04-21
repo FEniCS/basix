@@ -15,10 +15,6 @@ jobs:
         os: [ubuntu-20.04]
         python-version: [3.8]
 
-    env:
-      CC: gcc-10
-      CXX: g++-10
-
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python

@@ -72,7 +72,7 @@ feature_summary(WHAT ALL)
 
 add_library(basix)
 
-configure_file(${CMAKE_SOURCE_DIR}/cpp/basix/version.h.cmake ${CMAKE_SOURCE_DIR}/cpp/basix/version.h)
+configure_file(${CMAKE_SOURCE_DIR}/cpp/basix/version.h.in ${CMAKE_SOURCE_DIR}/cpp/basix/version.h)
 
 set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.h

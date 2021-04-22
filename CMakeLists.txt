@@ -4,13 +4,22 @@ cmake_minimum_required(VERSION 3.16)
 project(Basix VERSION "0.1.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
+include(FeatureSummary)
+
+# Enable SIMD with xtensor
+option(XTENSOR_USE_XSIMD "Enable SIMD with xtensor" OFF)
+add_feature_info(XTENSOR_USE_XSIMD XTENSOR_USE_XSIMD "Enable SIMD with xtensor.")
+
+# Enable xtensor with target-specific optimization, i.e. -march=native
+option(XTENSOR_OPTIMIZE "Enable xtensor target-specific optimization" OFF)
+add_feature_info(XTENSOR_OPTIMIZE XTENSOR_OPTIMIZE "Enable architecture-specific optimizations as defined by xtensor.")
+
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Options
-include(FeatureSummary)
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
 
@@ -45,7 +54,7 @@ if(NOT xtensor_FOUND)
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.23.4
+    GIT_TAG        0.23.7
   )
   FetchContent_MakeAvailable(xtensor)
 else()
@@ -56,7 +65,7 @@ if(NOT xtensor-blas_FOUND)
   FetchContent_Declare(
     xtensor_blas
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
-    GIT_TAG        master
+    GIT_TAG        0.19.1
   )
   FetchContent_MakeAvailable(xtensor_blas)
 else()
@@ -133,18 +142,31 @@ target_include_directories(basix PUBLIC
 target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})
 target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 
-# Note: We would like to use `target_link_libraries`, but CMake does not
-# apply the SYSTEM option to the includes, and this causes our strict
-# compiler checks to fail on the xtensor headers.
-# target_link_libraries(basix PRIVATE xtl)
-# target_link_libraries(basix PRIVATE xtensor)
-# target_link_libraries(basix PRIVATE xtensor-blas)
-get_target_property(_xtl_include_dirs xtl INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(basix SYSTEM PRIVATE ${_xtl_include_dirs})
-get_target_property(_xtensor_blas_include_dirs xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(basix SYSTEM PRIVATE ${_xtensor_blas_include_dirs})
-get_target_property(_xtensor_include_dirs xtensor INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(basix SYSTEM PRIVATE ${_xtensor_include_dirs})
+# xtensor and related packages
+target_link_libraries(basix PUBLIC xtl)
+
+# Note: we use get_target_property/set_target_properties to ensure that
+# that -isystem flag is applied to allow us to use strict compiler flags
+get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
+target_link_libraries(basix PUBLIC xtensor)
+if (XTENSOR_OPTIMIZE)
+  target_link_libraries(basix PUBLIC xtensor::optimize)
+endif()
+
+# Add SIMD definition to Basix so that Basix will export this option so
+# other libraries will know that Basix was compiled with xsimd
+get_target_property(XTENSOR_DEFN xtensor INTERFACE_COMPILE_DEFINITIONS)
+if("XTENSOR_USE_XSIMD" IN_LIST XTENSOR_DEFN)
+  message("-- Basix is being built with xsimd support")
+  target_compile_definitions(basix PUBLIC XTENSOR_USE_XSIMD)
+endif()
+
+# Note: we use get_target_property/set_target_properties to ensure that
+# that -isystem flag is applied to allow us to use strict compiler flags
+get_target_property(XTENSORBLAS_INC_SYS xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
+set_target_properties(xtensor-blas PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSORBLAS_INC_SYS}")
+target_link_libraries(basix PRIVATE xtensor-blas)
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

@@ -28,13 +28,13 @@ set(XTENSOR_MIN_VERSION 0.23.4)
 set(XTL_MIN_VERSION 0.7.0)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
-  find_package(xtl ${XTL_MIN_VERSION}...<0.8)
-  find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.24)
+  find_package(xtl ${XTL_MIN_VERSION}...<0.8 QUIET)
+  find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.24 QUIET)
 else()
-  find_package(xtl ${XTL_MIN_VERSION})
-  find_package(xtensor ${XTENSOR_MIN_VERSION})
+  find_package(xtl ${XTL_MIN_VERSION} QUIET)
+  find_package(xtensor ${XTENSOR_MIN_VERSION} QUIET)
 endif()
-find_package(xtensor-blas 0.19)
+find_package(xtensor-blas 0.19 QUIET)
 if(NOT xtl_FOUND OR NOT xtensor_FOUND OR NOT xtensor-blas_FOUND)
   include(FetchContent)
 endif()
@@ -54,7 +54,7 @@ if(NOT xtensor_FOUND)
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.23.6
+    GIT_TAG        0.23.7
   )
   FetchContent_MakeAvailable(xtensor)
 else()
@@ -65,7 +65,7 @@ if(NOT xtensor-blas_FOUND)
   FetchContent_Declare(
     xtensor_blas
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
-    GIT_TAG        master
+    GIT_TAG        0.19.1
   )
   FetchContent_MakeAvailable(xtensor_blas)
 else()

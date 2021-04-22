@@ -139,11 +139,7 @@ target_include_directories(basix PUBLIC
 target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})
 target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 
-# Note: We would like to use `target_link_libraries`, but CMake 3.16
-# does not apply the SYSTEM option to the includes, and this causes our
-# strict compiler checks to fail on the xtensor headers (CMake 3.20
-# seems fine).
-
+# xtensor and related packages
 target_link_libraries(basix PUBLIC xtl)
 
 # Note: we use get_target_property/set_target_properties to ensure that

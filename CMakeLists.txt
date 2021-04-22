@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Set the version
-project(Basix VERSION "0.0.1" LANGUAGES CXX)
+project(Basix VERSION "0.1.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 # Set the C++ standard

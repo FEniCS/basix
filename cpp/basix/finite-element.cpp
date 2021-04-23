@@ -684,6 +684,12 @@ void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
   }
 }
 //-----------------------------------------------------------------------------
+std::vector<xt::xtensor<double, 2>>
+FiniteElement::entity_transformations() const
+{
+  return _entity_transformations;
+}
+//-----------------------------------------------------------------------------
 std::string basix::version()
 {
   static const std::string version_str = str(BASIX_VERSION);

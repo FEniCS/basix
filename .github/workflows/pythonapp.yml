@@ -22,8 +22,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install pybind11
-        run:
-          pip install pybind11
+        run: pip install pybind11
       - name: Install dependencies (non-Python, Linux)
         if: runner.os == 'Linux'
         run: |
@@ -39,12 +38,12 @@ jobs:
         run: |
           pip install flake8
           flake8 --statistics test/
-      - name: Install basix C++
+      - name: Install Basix C++
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
           cmake --build build-dir
           sudo cmake --install build-dir
-      - name: Build basix Python
+      - name: Build Basix Python
         run: |
           cd python
           pip install .

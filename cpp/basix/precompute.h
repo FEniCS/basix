@@ -5,19 +5,16 @@
 #pragma once
 
 #include <vector>
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
-namespace basix
-{
-
 /// ## Matrix and permutation precomputation
 /// These functions generate precomputed version of matrices to allow
 /// application without temporary memory assignment later
-namespace precompute
+namespace basix::precompute
 {
+
 /// Prepare a permutation
 ///
 /// This computes a representation of the permutation that allows the
@@ -119,7 +116,17 @@ prepare_permutation(const std::vector<std::size_t>& perm);
 /// @param[in] block_size The block size of the data
 template <typename E>
 void apply_permutation(const std::vector<std::size_t>& perm, xtl::span<E>& data,
-                       std::size_t offset = 0, std::size_t block_size = 1);
+                       std::size_t offset = 0, std::size_t block_size = 1)
+{
+  for (std::size_t b = 0; b < block_size; ++b)
+  {
+    for (std::size_t i = 0; i < perm.size(); ++i)
+    {
+      std::swap(data[block_size * (offset + i) + b],
+                data[block_size * (offset + perm[i]) + b]);
+    }
+  }
+}
 
 /// Prepare a matrix
 ///
@@ -214,10 +221,9 @@ void apply_permutation(const std::vector<std::size_t>& perm, xtl::span<E>& data,
 ///
 /// @param[in] matrix A matrix
 /// @return The precomputed representation of the matrix
-template <typename U>
-std::tuple<std::vector<std::size_t>, std::vector<typename U::value_type>,
-           xt::xtensor<typename U::value_type, 2>>
-prepare_matrix(const U& matrix);
+std::tuple<std::vector<std::size_t>, std::vector<double>,
+           xt::xtensor<double, 2>>
+prepare_matrix(const xt::xtensor<double, 2>& matrix);
 
 /// Apply a (precomputed) matrix
 ///
@@ -283,105 +289,7 @@ template <typename T, typename E>
 void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
                                    xt::xtensor<T, 2>>& matrix,
                   xtl::span<E>& data, std::size_t offset = 0,
-                  std::size_t block_size = 1);
-} // namespace precompute
-
-//-----------------------------------------------------------------------------
-template <typename E>
-void precompute::apply_permutation(const std::vector<std::size_t>& perm,
-                                   xtl::span<E>& data, std::size_t offset,
-                                   std::size_t block_size)
-{
-  for (std::size_t b = 0; b < block_size; ++b)
-  {
-    for (std::size_t i = 0; i < perm.size(); ++i)
-    {
-      std::swap(data[block_size * (offset + i) + b],
-                data[block_size * (offset + perm[i]) + b]);
-    }
-  }
-}
-//-----------------------------------------------------------------------------
-template <typename U>
-std::tuple<std::vector<std::size_t>, std::vector<typename U::value_type>,
-           xt::xtensor<typename U::value_type, 2>>
-precompute::prepare_matrix(const U& matrix)
-{
-  using T = typename U::value_type;
-  const std::size_t dim = matrix.shape(0);
-  std::vector<std::size_t> perm(dim);
-  xt::xtensor<T, 2> permuted_matrix({dim, dim});
-  std::vector<T> diag(dim);
-
-  // Permute the matrix so that all the top left blocks are invertible
-  for (std::size_t i = 0; i < dim; ++i)
-  {
-    double max_det = 0;
-    std::size_t col = -1;
-    for (std::size_t j = 0; j < dim; ++j)
-    {
-      bool used = false;
-      for (std::size_t k = 0; k < i; ++k)
-        if (perm[k] == j)
-          used = true;
-
-      if (!used)
-      {
-        xt::view(permuted_matrix, xt::all(), i)
-            = xt::view(matrix, xt::all(), j);
-        double det = std::abs(xt::linalg::det(xt::view(
-            permuted_matrix, xt::range(0, i + 1), xt::range(0, i + 1))));
-        if (det > max_det)
-        {
-          max_det = det;
-          col = j;
-        }
-      }
-    }
-    xt::view(permuted_matrix, xt::all(), i) = xt::view(matrix, xt::all(), col);
-    perm[i] = col;
-  }
-
-  // Create the precomputed representation of the matrix
-  xt::xtensor<T, 2> prepared_matrix({dim, dim});
-
-  for (std::size_t i = 0; i < dim; ++i)
-  {
-    diag[i] = permuted_matrix(i, i);
-    prepared_matrix(i, i) = 0;
-    if (i < dim - 1)
-    {
-      xt::view(prepared_matrix, i, xt::range(i + 1, dim))
-          = xt::view(permuted_matrix, i, xt::range(i + 1, dim));
-    }
-    if (i > 0)
-    {
-      xt::xtensor<T, 1> v = xt::linalg::solve(
-          xt::transpose(
-              xt::view(permuted_matrix, xt::range(0, i), xt::range(0, i))),
-          xt::view(permuted_matrix, i, xt::range(0, i)));
-
-      xt::view(prepared_matrix, i, xt::range(0, i)) = v;
-
-      diag[i] -= xt::linalg::dot(
-          v, xt::view(permuted_matrix, xt::range(0, i), i))(0);
-      for (std::size_t j = i + 1; j < dim; ++j)
-      {
-        prepared_matrix(i, j) -= xt::linalg::dot(
-            v, xt::view(permuted_matrix, xt::range(0, i), j))(0);
-      }
-    }
-  }
-
-  return {prepare_permutation(perm), std::move(diag),
-          std::move(prepared_matrix)};
-}
-//-----------------------------------------------------------------------------
-template <typename T, typename E>
-void precompute::apply_matrix(
-    const std::tuple<std::vector<std::size_t>, std::vector<T>,
-                     xt::xtensor<T, 2>>& matrix,
-    xtl::span<E>& data, std::size_t offset, std::size_t block_size)
+                  std::size_t block_size = 1)
 {
   const std::vector<std::size_t>& v_size_t = std::get<0>(matrix);
   const std::vector<T>& v_t = std::get<1>(matrix);
@@ -402,6 +310,5 @@ void precompute::apply_matrix(
     }
   }
 }
-//-----------------------------------------------------------------------------
 
-} // namespace basix
+} // namespace basix::precompute

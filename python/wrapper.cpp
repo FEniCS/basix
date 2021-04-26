@@ -105,16 +105,6 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   m.attr("__version__") = basix::version();
 
-  py::enum_<cell::type>(m, "CellType")
-      .value("point", cell::type::point)
-      .value("interval", cell::type::interval)
-      .value("triangle", cell::type::triangle)
-      .value("tetrahedron", cell::type::tetrahedron)
-      .value("quadrilateral", cell::type::quadrilateral)
-      .value("hexahedron", cell::type::hexahedron)
-      .value("prism", cell::type::prism)
-      .value("pyramid", cell::type::pyramid);
-
   m.def("topology", &cell::topology,
         "Topological description of a reference cell");
   m.def(
@@ -170,6 +160,23 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return maps::type_to_str(mapping_type);
       },
       "Convert a mapping type to a string.");
+
+  py::enum_<cell::type>(m, "CellType")
+      .value("point", cell::type::point)
+      .value("interval", cell::type::interval)
+      .value("triangle", cell::type::triangle)
+      .value("tetrahedron", cell::type::tetrahedron)
+      .value("quadrilateral", cell::type::quadrilateral)
+      .value("hexahedron", cell::type::hexahedron)
+      .value("prism", cell::type::prism)
+      .value("pyramid", cell::type::pyramid);
+
+  m.def(
+      "cell_to_str",
+      [](cell::type cell_type) -> const std::string& {
+        return cell::type_to_str(cell_type);
+      },
+      "Convert a cell type to a string.");
 
   py::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)
@@ -288,11 +295,27 @@ Each element has a `tabulate` function which returns the basis functions and a n
             return py::array_t<double>(U.shape(), U.data());
           },
           invmapdoc.c_str())
+      .def("apply_dof_transformation",
+           [](const FiniteElement& self, py::array_t<double>& data,
+              int block_size, std::uint32_t cell_info) {
+             xtl::span<double> data_span(data.mutable_data(), data.size());
+             self.apply_dof_transformation(data_span, block_size, cell_info);
+             return py::array_t<double>(data_span.size(), data_span.data());
+           })
       .def("base_transformations",
            [](const FiniteElement& self)
            {
              xt::xtensor<double, 3> t = self.base_transformations();
              return py::array_t<double>(t.shape(), t.data());
+           })
+      .def("entity_transformations",
+           [](const FiniteElement& self) {
+             std::vector<xt::xtensor<double, 2>> t
+                 = self.entity_transformations();
+             std::vector<py::array_t<double>> t2;
+             for (std::size_t i = 0; i < t.size(); ++i)
+               t2.push_back(py::array_t<double>(t[i].shape(), t[i].data()));
+             return t2;
            })
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)

@@ -48,7 +48,7 @@ In Basix, the sub-entities of the reference quadrilateral are numbered as follow
 
 The following elements are supported on a quadrilateral:
 
-  - [Lagrange](https://defelement.com/elements/q.html)
+  - [Lagrange](https://defelement.com/elements/lagrange.html)
   - [Nédélec first kind](https://defelement.com/elements/qcurl.html)
   - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
   - [Nédélec second kind](https://defelement.com/elements/scurl.html)
@@ -80,7 +80,7 @@ In Basix, the sub-entities of the reference hexahedron are numbered as follows:
 
 The following elements are supported on a hexahedron:
 
-  - [Lagrange](https://defelement.com/elements/q.html)
+  - [Lagrange](https://defelement.com/elements/lagrange.html)
   - [Nédélec first kind](https://defelement.com/elements/qcurl.html)
   - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
   - [Nédélec second kind](https://defelement.com/elements/scurl.html)
@@ -96,7 +96,7 @@ In Basix, the sub-entities of the reference prism are numbered as follows:
 
 The following elements are supported on a prism:
 
-  - Lagrange
+  - [Lagrange](https://defelement.com/elements/lagrange.html)
 
 ## Pyramid
 In Basix, the sub-entities of the reference pyramid are numbered as follows:
@@ -105,4 +105,4 @@ In Basix, the sub-entities of the reference pyramid are numbered as follows:
 
 The following elements are supported on a pyramid:
 
-  - Lagrange
+  - [Lagrange](https://defelement.com/elements/lagrange.html)

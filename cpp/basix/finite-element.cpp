@@ -593,7 +593,7 @@ xt::xtensor<double, 3> FiniteElement::map_pull_back(
   return U;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::permute_dofs(xtl::span<std::int32_t>& dofs,
+void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
                                  std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
@@ -640,7 +640,7 @@ void FiniteElement::permute_dofs(xtl::span<std::int32_t>& dofs,
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
+void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
                                    std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
@@ -684,6 +684,12 @@ void FiniteElement::unpermute_dofs(xtl::span<std::int32_t>& dofs,
       }
     }
   }
+}
+//-----------------------------------------------------------------------------
+std::vector<xt::xtensor<double, 2>>
+FiniteElement::entity_transformations() const
+{
+  return _entity_transformations;
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

@@ -13,6 +13,8 @@
 #include "raviart-thomas.h"
 #include "regge.h"
 #include "serendipity.h"
+#include "version.h"
+
 #include <numeric>
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>

@@ -443,13 +443,13 @@ public:
   /// Permute the dof numbering on a cell
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void permute_dofs(xtl::span<std::int32_t>& dofs,
+  void permute_dofs(const xtl::span<std::int32_t>& dofs,
                     std::uint32_t cell_info) const;
 
   /// Unpermute the dof numbering on a cell
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void unpermute_dofs(xtl::span<std::int32_t>& dofs,
+  void unpermute_dofs(const xtl::span<std::int32_t>& dofs,
                       std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some data
@@ -457,7 +457,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_dof_transformation(xtl::span<T>& data, int block_size,
+  void apply_dof_transformation(const xtl::span<T>& data, int block_size,
                                 std::uint32_t cell_info) const;
 
   /// Apply inverse_transpose DOF transformations to some data
@@ -465,9 +465,8 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void
-  apply_inverse_transpose_dof_transformation(xtl::span<T>& data, int block_size,
-                                             std::uint32_t cell_info) const;
+  void apply_inverse_transpose_dof_transformation(
+      const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
@@ -634,7 +633,8 @@ void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
 }
 //-----------------------------------------------------------------------------
 template <typename T>
-void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
+void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
+                                             int block_size,
                                              std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
@@ -676,7 +676,7 @@ void FiniteElement::apply_dof_transformation(xtl::span<T>& data, int block_size,
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_transpose_dof_transformation(
-    xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
+    const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;

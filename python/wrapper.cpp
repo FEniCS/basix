@@ -2,13 +2,6 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include <pybind11/numpy.h>
-#include <pybind11/operators.h>
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <string>
-#include <xtensor/xadapt.hpp>
-
 #include <basix/cell.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
@@ -17,6 +10,12 @@
 #include <basix/maps.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
+#include <pybind11/numpy.h>
+#include <pybind11/operators.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <string>
+#include <xtensor/xadapt.hpp>
 #include <xtl/xspan.hpp>
 
 namespace py = pybind11;
@@ -120,7 +119,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
         "Topological description of a reference cell");
   m.def(
       "geometry",
-      [](cell::type celltype) {
+      [](cell::type celltype)
+      {
         xt::xtensor<double, 2> g = cell::geometry(celltype);
         auto strides = g.strides();
         for (auto& s : strides)
@@ -130,7 +130,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Geometric points of a reference cell");
   m.def(
       "sub_entity_geometry",
-      [](cell::type celltype, int dim, int index) {
+      [](cell::type celltype, int dim, int index)
+      {
         xt::xtensor<double, 2> g
             = cell::sub_entity_geometry(celltype, dim, index);
         auto strides = g.strides();
@@ -146,7 +147,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   m.def(
       "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior) {
+      [](cell::type celltype, int n, lattice::type type, bool exterior)
+      {
         auto l = lattice::create(celltype, n, type, exterior);
         auto strides = l.strides();
         for (auto& s : strides)
@@ -237,7 +239,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def(
           "tabulate",
           [](const FiniteElement& self, int n,
-             const py::array_t<double, py::array::c_style>& x) {
+             const py::array_t<double, py::array::c_style>& x)
+          {
             auto _x = adapt_x(x);
             auto t = self.tabulate(n, _x);
             auto t_swap = xt::transpose(t, {0, 1, 3, 2});
@@ -250,7 +253,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .def(
           "tabulate_x",
           [](const FiniteElement& self, int n,
-             const py::array_t<double, py::array::c_style>& x) {
+             const py::array_t<double, py::array::c_style>& x)
+          {
             auto _x = adapt_x(x);
             auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
@@ -262,7 +266,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
              const py::array_t<double, py::array::c_style>& U,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K) {
+             const py::array_t<double, py::array::c_style>& K)
+          {
             auto u = self.map_push_forward(
                 adapt_x(U), adapt_x(J),
                 xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
@@ -275,7 +280,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
              const py::array_t<double, py::array::c_style>& u,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K) {
+             const py::array_t<double, py::array::c_style>& K)
+          {
             auto U = self.map_pull_back(
                 adapt_x(u), adapt_x(J),
                 xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
@@ -283,7 +289,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
           },
           invmapdoc.c_str())
       .def("base_transformations",
-           [](const FiniteElement& self) {
+           [](const FiniteElement& self)
+           {
              xt::xtensor<double, 3> t = self.base_transformations();
              return py::array_t<double>(t.shape(), t.data());
            })
@@ -301,13 +308,16 @@ Each element has a `tabulate` function which returns the basis functions and a n
                              &FiniteElement::dof_transformations_are_identity)
       .def_property_readonly("mapping_type", &FiniteElement::mapping_type)
       .def_property_readonly("points",
-                             [](const FiniteElement& self) {
+                             [](const FiniteElement& self)
+                             {
                                const xt::xtensor<double, 2>& x = self.points();
                                return py::array_t<double>(x.shape(), x.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly(
-          "interpolation_matrix", [](const FiniteElement& self) {
+          "interpolation_matrix",
+          [](const FiniteElement& self)
+          {
             const xt::xtensor<double, 2>& P = self.interpolation_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           });
@@ -316,15 +326,15 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "create_element",
       [](const std::string family_name, const std::string cell_name,
-         int degree) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree);
-      },
+         int degree) -> FiniteElement
+      { return basix::create_element(family_name, cell_name, degree); },
       "Create a FiniteElement of a given family, celltype and degree");
 
   m.def(
       "tabulate_polynomial_set",
       [](cell::type celltype, int d, int n,
-         const py::array_t<double, py::array::c_style>& x) {
+         const py::array_t<double, py::array::c_style>& x)
+      {
         std::vector<std::size_t> shape;
         if (x.ndim() == 2 and x.shape(1) == 1)
           shape.push_back(x.shape(0));
@@ -342,7 +352,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
   m.def(
       "compute_jacobi_deriv",
       [](double a, std::size_t n, std::size_t nderiv,
-         const py::array_t<double, py::array::c_style>& x) {
+         const py::array_t<double, py::array::c_style>& x)
+      {
         if (x.ndim() > 1)
           throw std::runtime_error("Expected 1D x array.");
         xt::xtensor<double, 2> f = quadrature::compute_jacobi_deriv(
@@ -353,7 +364,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
 
   m.def(
       "make_quadrature",
-      [](const std::string& rule, cell::type celltype, int m) {
+      [](const std::string& rule, cell::type celltype, int m)
+      {
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
         // FIXME: it would be more elegant to handle 1D case as a 1D
         // array, but FFC would need updating

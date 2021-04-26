@@ -115,8 +115,9 @@ prepare_permutation(const std::vector<std::size_t>& perm);
 /// @param[in] offset The position in the data to start applying the permutation
 /// @param[in] block_size The block size of the data
 template <typename E>
-void apply_permutation(const std::vector<std::size_t>& perm, xtl::span<E>& data,
-                       std::size_t offset = 0, std::size_t block_size = 1)
+void apply_permutation(const std::vector<std::size_t>& perm,
+                       const xtl::span<E>& data, std::size_t offset = 0,
+                       std::size_t block_size = 1)
 {
   for (std::size_t b = 0; b < block_size; ++b)
   {
@@ -288,7 +289,7 @@ prepare_matrix(const xt::xtensor<double, 2>& matrix);
 template <typename T, typename E>
 void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
                                    xt::xtensor<T, 2>>& matrix,
-                  xtl::span<E>& data, std::size_t offset = 0,
+                  const xtl::span<E>& data, std::size_t offset = 0,
                   std::size_t block_size = 1)
 {
   const std::vector<std::size_t>& v_size_t = std::get<0>(matrix);

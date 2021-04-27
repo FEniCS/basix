@@ -8,5 +8,5 @@ C++
 ===
 
 The C++ library is documented `here
-<https://fenicsproject.org/docs/basix/main/cpp/>`_.
+<https://docs.fenicsproject.org/basix/main/cpp/>`_.
 

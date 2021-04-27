@@ -50,7 +50,7 @@ jobs:
       - name: Build Python documentation (Linux)
         if: runner.os == 'Linux'
         run: |
-          pip install sphinx
+          pip install sphinx sphinx_rtd_theme
           cd python/doc && make html
       - name: Run units tests
         run: |

@@ -63,6 +63,7 @@ jobs:
       - name: Build C++ documentation (Linux)
         if: runner.os == 'Linux'
         run: |
+          export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd cpp/doc && doxygen
       - name: Checkout FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || github.ref == 'refs/tags/*' ) && runner.os == 'Linux' }}

@@ -5,14 +5,15 @@
 name: Basix CI
 
 on:
-  - push
-      branches:
-        - "**"
-      tags:
-        - "*.*.*.*"
-        - "*.*.*"
-
-  - pull_request
+  push:
+    branches:
+      - "**"
+    tags:
+      - "*.*.*.*"
+      - "*.*.*"
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:

@@ -40,7 +40,7 @@ pytest test/
 ## Dependencies
 
 Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor)
-and [`xtensor-blass`](https://github.com/xtensor-stack/xtensor-blas).
+and [`xtensor-blas`](https://github.com/xtensor-stack/xtensor-blas).
 CMake will download install these packages if they cannot be found.
 
 Building the Python interface required

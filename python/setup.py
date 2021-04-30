@@ -59,6 +59,8 @@ class CMakeBuild(build_ext):
         build_args += ['--', '-j3']
 
         env = os.environ.copy()
+        import pybind11
+        env['pybind11_DIR'] = pybind11.get_cmake_dir()
         env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(env.get('CXXFLAGS', ''),
                                                               self.distribution.get_version())
 
@@ -79,6 +81,7 @@ setup(name='fenics-basix',
       description='Basix Python interface',
       long_description='',
       packages=["basix"],
+      setup_requires=["pybind11"],
       platforms=["Linux", "Mac OS-X", "Unix"],
       ext_modules=[CMakeExtension('basix._basixcpp')],
       cmdclass=dict(build_ext=CMakeBuild),

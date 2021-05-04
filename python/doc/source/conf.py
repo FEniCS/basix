@@ -6,6 +6,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import datetime
 import basix
 
 # -- General configuration ------------------------------------------------
@@ -35,7 +36,9 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'Basix'
-copyright = '2021, FEniCS Project'
+now = datetime.datetime.now()
+date = now.date()
+copyright = f'{date.year}, FEniCS Project'
 author = 'FEniCS Project'
 
 # The version info for the project you're documenting, acts as replacement for

@@ -1,5 +1,6 @@
 try:
     import numba
+    import numpy
 except ImportError:
     raise RuntimeError("You must have numba installed to use the numba helper functions.")
 
@@ -41,10 +42,10 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
         edge_reflection = entity_transformations[0].copy()
         for e in range(edge_count):
             edofs = entity_dofs[1][e]
+            if edofs == 0:
+                continue
             if cell_info >> (face_start + e) & 1:
-                for b in range(block_size):
-                    s = (dofstart * block_size + b, (dofstart + edofs) * block_size, block_size)
-                    data[slice(*s)] = edge_reflection.dot(data[slice(*s)].copy())
+                data[ dofstart:dofstart+edofs] = numpy.dot(edge_reflection, data[dofstart:dofstart+edofs])
             dofstart += edofs
 
         if tdim == 3:
@@ -52,14 +53,12 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
             face_reflection = entity_transformations[2].copy()
             for f in range(face_count):
                 fdofs = entity_dofs[2][f]
+                if fdofs == 0:
+                    continue
                 if cell_info >> (3 * f) & 1:
-                    for b in range(block_size):
-                        s = (dofstart * block_size + b, (dofstart + fdofs) * block_size, block_size)
-                        data[slice(*s)] = face_reflection.dot(data[slice(*s)].copy())
+                    data[dofstart:dofstart+fdofs] = numpy.dot(face_reflection, data[dofstart:dofstart+fdofs])
                 for _ in range(cell_info >> (3 * f + 1) & 3):
-                    for b in range(block_size):
-                        s = (dofstart * block_size + b, (dofstart + fdofs) * block_size, block_size)
-                        data[slice(*s)] = face_rotation.dot(data[slice(*s)].copy())
+                    data[dofstart:dofstart+fdofs] = numpy.dot(face_rotation, data[dofstart:dofstart+fdofs])
                 dofstart += fdofs
 
 

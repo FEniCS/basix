@@ -391,7 +391,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
       {
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
         // FIXME: it would be more elegant to handle 1D case as a 1D
-        // array, but FFC would need updating
+        // array, but FFCx would need updating
         if (pts.dimension() == 1)
         {
           std::array<std::size_t, 2> s = {pts.shape(0), 1};

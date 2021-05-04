@@ -36,18 +36,18 @@ jobs:
           python3 -m pip install git+https://github.com/FEniCS/ufl.git
           python3 -m pip install git+https://github.com/FEniCS/ffcx.git
 
-      - name: Get DOLFINX
+      - name: Get DOLFINx
         uses: actions/checkout@v2
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: main
-      - name: Install DOLFINX
+      - name: Install DOLFINx
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/
           cmake --build build
           cmake --install build
           python3 -m pip -v install --global-option build --global-option --debug dolfinx/python/
 
-      - name: Run DOLFINX unit tests
+      - name: Run DOLFINx unit tests
         run: python3 -m pytest -v -n auto dolfinx/python/test/unit

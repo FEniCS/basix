@@ -44,6 +44,7 @@ jobs:
         run: |
           pip install flake8
           flake8 --statistics test/
+          flake8 --statistics python/
 
       - name: Install Basix C++
         run: |

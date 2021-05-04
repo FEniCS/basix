@@ -9,4 +9,3 @@ from ._basixcpp import (create_element, CellType, mapping_to_str, family_to_str,
 from ._basixcpp import (topology, geometry, tabulate_polynomial_set,
                         create_lattice, LatticeType, index,
                         make_quadrature, compute_jacobi_deriv)
-

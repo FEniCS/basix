@@ -45,7 +45,7 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
             if edofs == 0:
                 continue
             if cell_info >> (face_start + e) & 1:
-                data[ dofstart:dofstart+edofs] = numpy.dot(edge_reflection, data[dofstart:dofstart+edofs])
+                data[dofstart:dofstart+edofs] = numpy.dot(edge_reflection, data[dofstart:dofstart+edofs])
             dofstart += edofs
 
         if tdim == 3:

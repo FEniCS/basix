@@ -54,7 +54,7 @@ if(NOT xtensor_FOUND)
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.23.7
+    GIT_TAG        0.23.9
   )
   FetchContent_MakeAvailable(xtensor)
 else()
@@ -106,7 +106,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/bubble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/serendipity.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/version.h)
-  
+
 target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/cell.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cpp/basix/dof-transformations.cpp

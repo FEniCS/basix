@@ -7,7 +7,7 @@ except ImportError:
 
 @numba.njit
 def apply_dof_transformation(tdim, edge_count, face_count, entity_transformations, entity_dofs,
-                             data, block_size, cell_info):
+                             data, cell_info):
     """Apply dof transformations to some data.
 
     Parameters
@@ -24,8 +24,6 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
-    block_size : int
-        The number of data entries for each DOF.
     cell_info : int
         An integer representing the orientations of the subentities of the cell.
     """
@@ -64,7 +62,7 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
 
 @numba.njit
 def apply_dof_transformation_interval(entity_transformations, entity_dofs,
-                                      data, block_size, cell_info):
+                                      data, cell_info):
     """Apply dof transformations to some data on an interval.
 
     Parameters
@@ -75,8 +73,6 @@ def apply_dof_transformation_interval(entity_transformations, entity_dofs,
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
-    block_size : int
-        The number of data entries for each DOF.
     cell_info : int
         An integer representing the orientations of the subentities of the cell.
     """
@@ -85,7 +81,7 @@ def apply_dof_transformation_interval(entity_transformations, entity_dofs,
 
 @numba.njit
 def apply_dof_transformation_triangle(entity_transformations, entity_dofs,
-                                      data, block_size, cell_info):
+                                      data, cell_info):
     """Apply dof transformations to some data on a triangle.
 
     Parameters
@@ -96,18 +92,16 @@ def apply_dof_transformation_triangle(entity_transformations, entity_dofs,
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
-    block_size : int
-        The number of data entries for each DOF.
     cell_info : int
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 3, 1, entity_transformations, entity_dofs,
-                             data, block_size, cell_info)
+                             data, cell_info)
 
 
 @numba.njit
 def apply_dof_transformation_quadrilateral(
-    entity_transformations, entity_dofs, data, block_size, cell_info
+    entity_transformations, entity_dofs, data, cell_info
 ):
     """Apply dof transformations to some data on an quadrilateral.
 
@@ -119,18 +113,16 @@ def apply_dof_transformation_quadrilateral(
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
-    block_size : int
-        The number of data entries for each DOF.
     cell_info : int
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 4, 1, entity_transformations, entity_dofs,
-                             data, block_size, cell_info)
+                             data, cell_info)
 
 
 @numba.njit
 def apply_dof_transformation_tetrahedron(
-    entity_transformations, entity_dofs, data, block_size, cell_info
+    entity_transformations, entity_dofs, data, cell_info
 ):
     """Apply dof transformations to some data on a tetrahedron.
 
@@ -142,18 +134,16 @@ def apply_dof_transformation_tetrahedron(
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
-    block_size : int
-        The number of data entries for each DOF.
     cell_info : int
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 6, 4, entity_transformations, entity_dofs,
-                             data, block_size, cell_info)
+                             data, cell_info)
 
 
 @numba.njit
 def apply_dof_transformation_hexahedron(
-    entity_transformations, entity_dofs, data, block_size, cell_info
+    entity_transformations, entity_dofs, data, cell_info
 ):
     """Apply dof transformations to some data on an hexahedron.
 
@@ -165,10 +155,8 @@ def apply_dof_transformation_hexahedron(
         The number of DOFs on each entity.
     data : np.array
         The data. This will be changed by this function.
-    block_size : int
-        The number of data entries for each DOF.
     cell_info : int
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 12, 6, entity_transformations, entity_dofs,
-                             data, block_size, cell_info)
+                             data, cell_info)

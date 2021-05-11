@@ -297,9 +297,19 @@ Each element has a `tabulate` function which returns the basis functions and a n
           invmapdoc.c_str())
       .def("apply_dof_transformation",
            [](const FiniteElement& self, py::array_t<double>& data,
-              int block_size, std::uint32_t cell_info) {
+              int block_size, std::uint32_t cell_info)
+           {
              xtl::span<double> data_span(data.mutable_data(), data.size());
              self.apply_dof_transformation(data_span, block_size, cell_info);
+             return py::array_t<double>(data_span.size(), data_span.data());
+           })
+
+      .def("apply_inverse_transpose_dof_transformation",
+           [](const FiniteElement& self, py::array_t<double>& data,
+              int block_size, std::uint32_t cell_info)
+           {
+             xtl::span<double> data_span(data.mutable_data(), data.size());
+             self.apply_inverse_transpose_dof_transformation(data_span, block_size, cell_info);
              return py::array_t<double>(data_span.size(), data_span.data());
            })
       .def("base_transformations",
@@ -309,7 +319,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
              return py::array_t<double>(t.shape(), t.data());
            })
       .def("entity_transformations",
-           [](const FiniteElement& self) {
+           [](const FiniteElement& self)
+           {
              std::vector<xt::xtensor<double, 2>> t
                  = self.entity_transformations();
              std::vector<py::array_t<double>> t2;

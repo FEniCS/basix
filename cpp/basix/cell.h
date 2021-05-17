@@ -96,7 +96,7 @@ xt::xtensor<bool, 1> facet_orientations(cell::type cell_type);
 
 /// Get the volumes of the facets of a reference cell
 /// @param cell_type Type of cell
-xt::xtensor<double, 1> facet_volumes(cell::type cell_type);
+xt::xtensor<double, 1> facet_reference_volumes(cell::type cell_type);
 
 } // namespace cell
 } // namespace basix

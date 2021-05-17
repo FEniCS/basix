@@ -362,3 +362,44 @@ xt::xtensor<bool, 1> cell::facet_orientations(cell::type cell_type)
   return orientations;
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 1> cell::facet_reference_volumes(cell::type cell_type)
+{
+  switch (cell_type)
+  {
+  case cell::type::interval:
+    return {0, 0};
+  case cell::type::triangle:
+    return {cell::volume(cell::type::interval),
+            cell::volume(cell::type::interval),
+            cell::volume(cell::type::interval)};
+  case cell::type::quadrilateral:
+    return {
+        cell::volume(cell::type::interval), cell::volume(cell::type::interval),
+        cell::volume(cell::type::interval), cell::volume(cell::type::interval)};
+  case cell::type::tetrahedron:
+    return {
+        cell::volume(cell::type::triangle), cell::volume(cell::type::triangle),
+        cell::volume(cell::type::triangle), cell::volume(cell::type::triangle)};
+  case cell::type::hexahedron:
+    return {cell::volume(cell::type::quadrilateral),
+            cell::volume(cell::type::quadrilateral),
+            cell::volume(cell::type::quadrilateral),
+            cell::volume(cell::type::quadrilateral),
+            cell::volume(cell::type::quadrilateral),
+            cell::volume(cell::type::quadrilateral)};
+  case cell::type::prism:
+    return {cell::volume(cell::type::triangle),
+            cell::volume(cell::type::quadrilateral),
+            cell::volume(cell::type::quadrilateral),
+            cell::volume(cell::type::quadrilateral),
+            cell::volume(cell::type::triangle)};
+  case cell::type::pyramid:
+    return {
+        cell::volume(cell::type::quadrilateral),
+        cell::volume(cell::type::triangle), cell::volume(cell::type::triangle),
+        cell::volume(cell::type::triangle), cell::volume(cell::type::triangle)};
+  default:
+    throw std::runtime_error("Unsupported cell type");
+  }
+  return {};
+}

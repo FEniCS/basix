@@ -195,7 +195,7 @@ Each element has a `tabulate` function which returns the basis functions and a n
             = cell::facet_reference_volumes(cell_type);
         return py::array_t<double>(volumes.shape(), volumes.data());
       },
-      "Get the normals to the facets of a cell");
+      "Get the reference volumes of the facets of a cell");
   m.def(
       "cell_facet_outward_normals",
       [](cell::type cell_type) {
@@ -210,6 +210,13 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return py::array_t<bool>(orientations.shape(), orientations.data());
       },
       "Get the orientations of the facets of a cell");
+  m.def(
+      "cell_facet_jacobians",
+      [](cell::type cell_type) {
+        xt::xtensor<double, 3> jacobians = cell::facet_jacobians(cell_type);
+        return py::array_t<double>(jacobians.shape(), jacobians.data());
+      },
+      "Get the jacobians of the facets of a cell");
 
   py::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)

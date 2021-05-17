@@ -94,9 +94,13 @@ xt::xtensor<double, 2> facet_normals(cell::type cell_type);
 /// @param cell_type Type of cell
 xt::xtensor<bool, 1> facet_orientations(cell::type cell_type);
 
-/// Get the volumes of the facets of a reference cell
+/// Get the reference volumes of the facets of a reference cell
 /// @param cell_type Type of cell
 xt::xtensor<double, 1> facet_reference_volumes(cell::type cell_type);
+
+/// Get the jacobians of the facets of a reference cell
+/// @param cell_type Type of cell
+xt::xtensor<double, 3> facet_jacobians(cell::type cell_type);
 
 } // namespace cell
 } // namespace basix

@@ -20,13 +20,13 @@ def test_volume(cell):
         "pyramid": 1 / 3,
         "prism": 1 / 2
     }
-    assert np.isclose(basix.cell_volume(cell_type), volumes[cell])
+    assert np.isclose(basix.cell.volume(cell_type), volumes[cell])
 
 
 @pytest.mark.parametrize("cell", cells)
 def test_normals(cell):
     cell_type = getattr(basix.CellType, cell)
-    normals = basix.cell_facet_normals(cell_type)
+    normals = basix.cell.facet_normals(cell_type)
     facets = basix.topology(cell_type)[-2]
     geometry = basix.geometry(cell_type)
 
@@ -40,7 +40,7 @@ def test_normals(cell):
 @pytest.mark.parametrize("cell", cells)
 def test_outward_normals(cell):
     cell_type = getattr(basix.CellType, cell)
-    normals = basix.cell_facet_outward_normals(cell_type)
+    normals = basix.cell.facet_outward_normals(cell_type)
     facets = basix.topology(cell_type)[-2]
     geometry = basix.geometry(cell_type)
     midpoint = sum(geometry) / len(geometry)
@@ -52,9 +52,9 @@ def test_outward_normals(cell):
 @pytest.mark.parametrize("cell", cells)
 def test_facet_orientations(cell):
     cell_type = getattr(basix.CellType, cell)
-    normals = basix.cell_facet_normals(cell_type)
-    outward_normals = basix.cell_facet_outward_normals(cell_type)
-    orientations = basix.cell_facet_orientations(cell_type)
+    normals = basix.cell.facet_normals(cell_type)
+    outward_normals = basix.cell.facet_outward_normals(cell_type)
+    orientations = basix.cell.facet_orientations(cell_type)
 
     for n1, n2, orient in zip(normals, outward_normals, orientations):
         if orient:

@@ -5,6 +5,7 @@
 #include "cell.h"
 #include "quadrature.h"
 #include <map>
+#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
@@ -245,5 +246,119 @@ const std::string& cell::type_to_str(cell::type type)
     throw std::runtime_error("Can't find type");
 
   return it->second;
+}
+//-----------------------------------------------------------------------------
+double cell::volume(cell::type cell_type)
+{
+  switch (cell_type)
+  {
+  case cell::type::interval:
+    return 1;
+  case cell::type::triangle:
+    return 0.5;
+  case cell::type::quadrilateral:
+    return 1;
+  case cell::type::tetrahedron:
+    return 1.0 / 6;
+  case cell::type::hexahedron:
+    return 1;
+  case cell::type::prism:
+    return 0.5;
+  case cell::type::pyramid:
+    return 1.0 / 3;
+  default:
+    throw std::runtime_error("Unsupported cell type");
+  }
+  return 0;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> cell::facet_outward_normals(cell::type cell_type)
+{
+  xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
+  xt::xtensor<bool, 1> orientations = cell::facet_orientations(cell_type);
+
+  for (std::size_t facet = 0; facet < normals.shape(0); ++facet)
+    if (orientations(facet))
+      for (std::size_t i = 0; i < normals.shape(1); ++i)
+        normals(facet, i) *= -1;
+
+  return normals;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
+{
+  const int tdim = cell::topological_dimension(cell_type);
+  xt::xtensor<double, 2> geometry = cell::geometry(cell_type);
+  std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
+
+  xt::xtensor<double, 2> normals({facets.size(), (std::size_t)tdim});
+  for (std::size_t facet = 0; facet < facets.size(); ++facet)
+  {
+    if (tdim == 1)
+    {
+      normals(facet, 0) = 1;
+    }
+    else if (tdim == 2)
+    {
+      assert(facets[facet].size() == 2);
+      normals(facet, 0)
+          = geometry(facets[facet][1], 1) - geometry(facets[facet][0], 1);
+      normals(facet, 1)
+          = geometry(facets[facet][0], 0) - geometry(facets[facet][1], 0);
+    }
+    else if (tdim == 3)
+    {
+      assert(facets[facet].size() == 3 || facets[facet].size() == 4);
+      for (int i = 0; i < 3; ++i)
+      {
+        normals(facet, i) = (geometry(facets[facet][1], (i + 1) % 3)
+                             - geometry(facets[facet][0], (i + 1) % 3))
+                            * (geometry(facets[facet][2], (i + 2) % 3)
+                               - geometry(facets[facet][0], (i + 2) % 3));
+        normals(facet, i) -= (geometry(facets[facet][2], (i + 1) % 3)
+                              - geometry(facets[facet][0], (i + 1) % 3))
+                             * (geometry(facets[facet][1], (i + 2) % 3)
+                                - geometry(facets[facet][0], (i + 2) % 3));
+      }
+    }
+    double norm = 0;
+    for (std::size_t i = 0; i < normals.shape(1); ++i)
+      norm += normals(facet, i) * normals(facet, i);
+    norm = std::sqrt(norm);
+    for (std::size_t i = 0; i < normals.shape(1); ++i)
+      normals(facet, i) /= norm;
+  }
+
+  return normals;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<bool, 1> cell::facet_orientations(cell::type cell_type)
+{
+  const std::size_t tdim = cell::topological_dimension(cell_type);
+  xt::xtensor<double, 2> geometry = cell::geometry(cell_type);
+  std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
+
+  std::array<std::size_t, 1> m_shape = {tdim};
+  xt::xtensor<double, 1> midpoint(m_shape);
+  for (std::size_t d = 0; d < tdim; ++d)
+  {
+    midpoint(d) = 0;
+    for (std::size_t p = 0; p < geometry.shape(0); ++p)
+      midpoint(d) += geometry(p, d);
+    midpoint(d) /= geometry.shape(0);
+  }
+
+  xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
+
+  std::array<std::size_t, 1> o_shape = {normals.shape(0)};
+  xt::xtensor<bool, 1> orientations(o_shape);
+  for (std::size_t n = 0; n < normals.shape(0); ++n)
+  {
+    double dot = 0;
+    for (std::size_t d = 0; d < tdim; ++d)
+      dot += (geometry(facets[n][0], d) - midpoint(d)) * normals(n, d);
+    orientations(n) = dot < 0;
+  }
+  return orientations;
 }
 //-----------------------------------------------------------------------------

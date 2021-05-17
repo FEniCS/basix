@@ -177,6 +177,31 @@ Each element has a `tabulate` function which returns the basis functions and a n
         return cell::type_to_str(cell_type);
       },
       "Convert a cell type to a string.");
+  m.def(
+      "cell_volume",
+      [](cell::type cell_type) -> double { return cell::volume(cell_type); },
+      "Get the volume of a cell");
+  m.def(
+      "cell_facet_normals",
+      [](cell::type cell_type) {
+        xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
+        return py::array_t<double>(normals.shape(), normals.data());
+      },
+      "Get the normals to the facets of a cell");
+  m.def(
+      "cell_facet_outward_normals",
+      [](cell::type cell_type) {
+        xt::xtensor<double, 2> normals = cell::facet_outward_normals(cell_type);
+        return py::array_t<double>(normals.shape(), normals.data());
+      },
+      "Get the outward normals to the facets of a cell");
+  m.def(
+      "cell_facet_orientations",
+      [](cell::type cell_type) {
+        xt::xtensor<bool, 1> orientations = cell::facet_orientations(cell_type);
+        return py::array_t<bool>(orientations.shape(), orientations.data());
+      },
+      "Get the orientations of the facets of a cell");
 
   py::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)

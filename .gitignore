@@ -7,6 +7,7 @@ cpp/Makefile
 cpp/CMakeCache.txt
 cpp/CMakeFiles/*
 cpp/cmake_install.cmake
+cpp/basix/version.h
 
 python/doc/build/*
 python/doc/source/generated/*

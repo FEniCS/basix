@@ -76,5 +76,31 @@ cell::type str_to_type(std::string name);
 /// Convert cell type enum to string
 const std::string& type_to_str(cell::type type);
 
+/// Get the volume of a reference cell
+/// @param cell_type Type of cell
+double volume(cell::type cell_type);
+
+/// Get the (outward) normals to the facets of a reference cell
+/// @param cell_type Type of cell
+xt::xtensor<double, 2> facet_outward_normals(cell::type cell_type);
+
+/// Get the normals to the facets of a reference cell oriented using the
+/// low-to-high ordering of the facet
+/// @param cell_type Type of cell
+xt::xtensor<double, 2> facet_normals(cell::type cell_type);
+
+/// Get a array of bools indicating whether or not the facet normals are outward
+/// pointing
+/// @param cell_type Type of cell
+xt::xtensor<bool, 1> facet_orientations(cell::type cell_type);
+
+/// Get the reference volumes of the facets of a reference cell
+/// @param cell_type Type of cell
+xt::xtensor<double, 1> facet_reference_volumes(cell::type cell_type);
+
+/// Get the jacobians of the facets of a reference cell
+/// @param cell_type Type of cell
+xt::xtensor<double, 3> facet_jacobians(cell::type cell_type);
+
 } // namespace cell
 } // namespace basix

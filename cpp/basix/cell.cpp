@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
-#include "quadrature.h"
 #include <map>
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xbuilder.hpp>

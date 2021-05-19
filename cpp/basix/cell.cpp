@@ -292,13 +292,16 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
   std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
 
   xt::xtensor<double, 2> normals({facets.size(), (std::size_t)tdim});
-  for (std::size_t facet = 0; facet < facets.size(); ++facet)
+  switch (tdim)
   {
-    if (tdim == 1)
-    {
+  case 0:
+    break;
+  case 1:
+    for (std::size_t facet = 0; facet < facets.size(); ++facet)
       normals(facet, 0) = 1;
-    }
-    else if (tdim == 2)
+    break;
+  case 2:
+    for (std::size_t facet = 0; facet < facets.size(); ++facet)
     {
       assert(facets[facet].size() == 2);
       normals(facet, 0)
@@ -306,7 +309,9 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
       normals(facet, 1)
           = geometry(facets[facet][0], 0) - geometry(facets[facet][1], 0);
     }
-    else if (tdim == 3)
+    break;
+  case 3:
+    for (std::size_t facet = 0; facet < facets.size(); ++facet)
     {
       assert(facets[facet].size() == 3 || facets[facet].size() == 4);
       for (int i = 0; i < 3; ++i)
@@ -321,13 +326,17 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
                                 - geometry(facets[facet][0], (i + 2) % 3));
       }
     }
-    double norm = 0;
-    for (std::size_t i = 0; i < normals.shape(1); ++i)
-      norm += normals(facet, i) * normals(facet, i);
-    norm = std::sqrt(norm);
-    for (std::size_t i = 0; i < normals.shape(1); ++i)
-      normals(facet, i) /= norm;
+    break;
+  default:
+    throw std::runtime_error("Invalid topological dimension");
   }
+
+  double norm = 0;
+  for (std::size_t i = 0; i < normals.shape(1); ++i)
+    norm += normals(facet, i) * normals(facet, i);
+  norm = std::sqrt(norm);
+  for (std::size_t i = 0; i < normals.shape(1); ++i)
+    normals(facet, i) /= norm;
 
   return normals;
 }

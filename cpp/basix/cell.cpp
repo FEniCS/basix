@@ -305,12 +305,13 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
   const xt::xtensor<double, 2> x = cell::geometry(cell_type);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
-  xt::xtensor<double, 2> normals({facets.size(), (std::size_t)tdim});
+  xt::xtensor<double, 2> normals(
+      {facets.size(), static_cast<std::size_t>(tdim)});
 
   switch (tdim)
   {
   case 1:
-    return xt::ones<double>({1, 1});
+    return xt::ones<double>({facets.size(), static_cast<std::size_t>(1)});
   case 2:
   {
     for (std::size_t f = 0; f < facets.size(); ++f)

@@ -410,21 +410,23 @@ xt::xtensor<double, 1> cell::facet_reference_volumes(cell::type cell_type)
 xt::xtensor<double, 3> cell::facet_jacobians(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
+  if (tdim != 2 and tdim != 3)
+  {
+    throw std::runtime_error(
+        "Facet jacobians not supported for this cell type.");
+  }
+
   const xt::xtensor<double, 2> x = cell::geometry(cell_type);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
   xt::xtensor<double, 3> jacobians({facets.size(), tdim, tdim - 1});
-  if (tdim == 2 or tdim == 3)
+
+  for (std::size_t f = 0; f < facets.size(); ++f)
   {
-    for (std::size_t f = 0; f < facets.size(); ++f)
-      for (std::size_t j = 0; j < tdim - 1; ++j)
-        for (std::size_t i = 0; i < tdim; ++i)
-          jacobians(f, i, j) = x(facets[f][1 + j], i) - x(facets[f][0], i);
-  }
-  else
-  {
-    throw std::runtime_error(
-        "Facet jacobians not supported for this cell type.");
+    const std::vector<int>& facet = facets[f];
+    auto x0 = xt::row(x, facet[0]);
+    for (std::size_t j = 0; j < tdim - 1; ++j)
+      xt::view(jacobians, f, xt::all(), j) = xt::row(x, facet[1 + j]) - x0;
   }
 
   return jacobians;

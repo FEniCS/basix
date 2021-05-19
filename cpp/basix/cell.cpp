@@ -331,12 +331,15 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
     throw std::runtime_error("Invalid topological dimension");
   }
 
-  double norm = 0;
-  for (std::size_t i = 0; i < normals.shape(1); ++i)
-    norm += normals(facet, i) * normals(facet, i);
-  norm = std::sqrt(norm);
-  for (std::size_t i = 0; i < normals.shape(1); ++i)
-    normals(facet, i) /= norm;
+  for (std::size_t facet = 0; facet < facets.size(); ++facet)
+  {
+    double norm = 0;
+    for (std::size_t i = 0; i < normals.shape(1); ++i)
+      norm += normals(facet, i) * normals(facet, i);
+    norm = std::sqrt(norm);
+    for (std::size_t i = 0; i < normals.shape(1); ++i)
+      normals(facet, i) /= norm;
+  }
 
   return normals;
 }

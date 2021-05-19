@@ -6,6 +6,7 @@
 #include "quadrature.h"
 #include <map>
 #include <xtensor-blas/xlinalg.hpp>
+#include <xtensor/xbuilder.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
@@ -274,11 +275,11 @@ double cell::volume(cell::type cell_type)
 xt::xtensor<double, 2> cell::facet_outward_normals(cell::type cell_type)
 {
   xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
-  const xt::xtensor<bool, 1> facet_orientations
+  const std::vector<bool> facet_orientations
       = cell::facet_orientations(cell_type);
   for (std::size_t f = 0; f < normals.shape(0); ++f)
   {
-    if (facet_orientations(f))
+    if (facet_orientations[f])
       xt::row(normals, f) *= -1.0;
   }
 
@@ -323,7 +324,7 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
   return normals;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<bool, 1> cell::facet_orientations(cell::type cell_type)
+std::vector<bool> cell::facet_orientations(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
   const xt::xtensor<double, 2> x = cell::geometry(cell_type);
@@ -333,16 +334,13 @@ xt::xtensor<bool, 1> cell::facet_orientations(cell::type cell_type)
   const xt::xtensor<double, 1> midpoint = xt::mean(x, 1);
 
   const xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
-  std::array<std::size_t, 1> o_shape = {normals.shape(0)};
-  xt::xtensor<bool, 1> orientations(o_shape);
+  std::vector<bool> orientations(normals.shape(0));
   for (std::size_t n = 0; n < normals.shape(0); ++n)
   {
-    const std::vector<int>& facet = facets[n];
     auto normal = xt::row(normals, n);
-    double dot = 0;
-    for (std::size_t d = 0; d < tdim; ++d)
-      dot += (x(facet[0], d) - midpoint(d)) * normal(d);
-    orientations(n) = dot < 0;
+    auto x0 = xt::row(x, facets[n][0]) - midpoint;
+    const double dot = xt::sum(x0 * normal)();
+    orientations[n] = dot < 0;
   }
 
   return orientations;
@@ -399,13 +397,9 @@ xt::xtensor<double, 3> cell::facet_jacobians(cell::type cell_type)
   if (tdim == 2 or tdim == 3)
   {
     for (std::size_t f = 0; f < facets.size(); ++f)
-    {
       for (std::size_t j = 0; j < tdim - 1; ++j)
-      {
         for (std::size_t i = 0; i < tdim; ++i)
           jacobians(f, i, j) = x(facets[f][1 + j], i) - x(facets[f][0], i);
-      }
-    }
   }
   else
   {

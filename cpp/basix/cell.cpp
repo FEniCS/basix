@@ -331,9 +331,8 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
 
-  const xt::xtensor<double, 1> midpoint = xt::mean(x, 1);
-
   const xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
+  const xt::xtensor<double, 1> midpoint = xt::mean(x, 0);
   std::vector<bool> orientations(normals.shape(0));
   for (std::size_t n = 0; n < normals.shape(0); ++n)
   {

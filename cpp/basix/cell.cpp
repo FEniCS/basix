@@ -7,9 +7,23 @@
 #include <map>
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xfixed.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
+
+namespace
+{
+template <typename U, typename V>
+xt::xtensor_fixed<double, xt::xshape<3>> cross3(const U& u, const V& v)
+{
+  xt::xtensor_fixed<double, xt::xshape<3>> c;
+  c[0] = u[1] * v[2] - u[2] * v[1];
+  c[1] = u[2] * v[0] - u[0] * v[2];
+  c[2] = u[0] * v[1] - u[1] * v[0];
+  return c;
+}
+} // namespace
 
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> cell::geometry(cell::type celltype)
@@ -293,35 +307,42 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
   xt::xtensor<double, 2> normals({facets.size(), (std::size_t)tdim});
-  for (std::size_t f = 0; f < facets.size(); ++f)
-  {
-    const std::vector<int>& facet = facets[f];
-    auto normal = xt::row(normals, f);
 
-    if (tdim == 1)
-      normal = 1;
-    else if (tdim == 2)
+  switch (tdim)
+  {
+  case 1:
+    return xt::ones<double>({1, 1});
+  case 2:
+  {
+    for (std::size_t f = 0; f < facets.size(); ++f)
     {
+      const std::vector<int>& facet = facets[f];
+      auto normal = xt::row(normals, f);
       assert(facet.size() == 2);
       normal(0) = x(facet[1], 1) - x(facet[0], 1);
       normal(1) = x(facet[0], 0) - x(facet[1], 0);
       normal /= xt::sqrt(xt::sum(normal * normal));
     }
-    else if (tdim == 3)
-    {
-      assert(facets[f].size() == 3 or facets[f].size() == 4);
-      for (int i = 0; i < 3; ++i)
-      {
-        normal(i) = (x(facet[1], (i + 1) % 3) - x(facet[0], (i + 1) % 3))
-                    * (x(facet[2], (i + 2) % 3) - x(facet[0], (i + 2) % 3));
-        normal(i) -= (x(facet[2], (i + 1) % 3) - x(facet[0], (i + 1) % 3))
-                     * (x(facet[1], (i + 2) % 3) - x(facet[0], (i + 2) % 3));
-      }
-    }
-    normal /= xt::sqrt(xt::sum(normal * normal));
+    return normals;
   }
+  case 3:
+  {
+    for (std::size_t f = 0; f < facets.size(); ++f)
+    {
+      const std::vector<int>& facet = facets[f];
+      auto normal = xt::row(normals, f);
 
-  return normals;
+      assert(facets[f].size() == 3 or facets[f].size() == 4);
+      auto e0 = xt::row(x, facet[1]) - xt::row(x, facet[0]);
+      auto e1 = xt::row(x, facet[2]) - xt::row(x, facet[0]);
+      normal = cross3(e0, e1);
+      normal /= xt::sqrt(xt::sum(normal * normal));
+    }
+    return normals;
+  }
+  default:
+    throw std::runtime_error("Wrong topological dimension");
+  }
 }
 //-----------------------------------------------------------------------------
 std::vector<bool> cell::facet_orientations(cell::type cell_type)
@@ -334,12 +355,12 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
   const xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
   const xt::xtensor<double, 1> midpoint = xt::mean(x, 0);
   std::vector<bool> orientations(normals.shape(0));
-  for (std::size_t n = 0; n < normals.shape(0); ++n)
+  for (std::size_t f = 0; f < normals.shape(0); ++f)
   {
-    auto normal = xt::row(normals, n);
-    auto x0 = xt::row(x, facets[n][0]) - midpoint;
+    auto normal = xt::row(normals, f);
+    auto x0 = xt::row(x, facets[f][0]) - midpoint;
     const double dot = xt::sum(x0 * normal)();
-    orientations[n] = dot < 0;
+    orientations[f] = dot < 0;
   }
 
   return orientations;

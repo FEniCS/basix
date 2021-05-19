@@ -269,18 +269,18 @@ double cell::volume(cell::type cell_type)
   default:
     throw std::runtime_error("Unsupported cell type");
   }
-  return 0;
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> cell::facet_outward_normals(cell::type cell_type)
 {
   xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
-  xt::xtensor<bool, 1> orientations = cell::facet_orientations(cell_type);
-
-  for (std::size_t facet = 0; facet < normals.shape(0); ++facet)
-    if (orientations(facet))
-      for (std::size_t i = 0; i < normals.shape(1); ++i)
-        normals(facet, i) *= -1;
+  const xt::xtensor<bool, 1> facet_orientations
+      = cell::facet_orientations(cell_type);
+  for (std::size_t f = 0; f < normals.shape(0); ++f)
+  {
+    if (facet_orientations(f))
+      xt::row(normals, f) *= -1.0;
+  }
 
   return normals;
 }
@@ -288,45 +288,36 @@ xt::xtensor<double, 2> cell::facet_outward_normals(cell::type cell_type)
 xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
 {
   const int tdim = cell::topological_dimension(cell_type);
-  xt::xtensor<double, 2> geometry = cell::geometry(cell_type);
-  std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
-
+  const xt::xtensor<double, 2> x = cell::geometry(cell_type);
+  const std::vector<std::vector<int>> facets
+      = cell::topology(cell_type)[tdim - 1];
   xt::xtensor<double, 2> normals({facets.size(), (std::size_t)tdim});
-  for (std::size_t facet = 0; facet < facets.size(); ++facet)
+  for (std::size_t f = 0; f < facets.size(); ++f)
   {
+    const std::vector<int>& facet = facets[f];
+    auto normal = xt::row(normals, f);
+
     if (tdim == 1)
-    {
-      normals(facet, 0) = 1;
-    }
+      normal = 1;
     else if (tdim == 2)
     {
-      assert(facets[facet].size() == 2);
-      normals(facet, 0)
-          = geometry(facets[facet][1], 1) - geometry(facets[facet][0], 1);
-      normals(facet, 1)
-          = geometry(facets[facet][0], 0) - geometry(facets[facet][1], 0);
+      assert(facet.size() == 2);
+      normal(0) = x(facet[1], 1) - x(facet[0], 1);
+      normal(1) = x(facet[0], 0) - x(facet[1], 0);
+      normal /= xt::sqrt(xt::sum(normal * normal));
     }
     else if (tdim == 3)
     {
-      assert(facets[facet].size() == 3 || facets[facet].size() == 4);
+      assert(facets[f].size() == 3 or facets[f].size() == 4);
       for (int i = 0; i < 3; ++i)
       {
-        normals(facet, i) = (geometry(facets[facet][1], (i + 1) % 3)
-                             - geometry(facets[facet][0], (i + 1) % 3))
-                            * (geometry(facets[facet][2], (i + 2) % 3)
-                               - geometry(facets[facet][0], (i + 2) % 3));
-        normals(facet, i) -= (geometry(facets[facet][2], (i + 1) % 3)
-                              - geometry(facets[facet][0], (i + 1) % 3))
-                             * (geometry(facets[facet][1], (i + 2) % 3)
-                                - geometry(facets[facet][0], (i + 2) % 3));
+        normal(i) = (x(facet[1], (i + 1) % 3) - x(facet[0], (i + 1) % 3))
+                    * (x(facet[2], (i + 2) % 3) - x(facet[0], (i + 2) % 3));
+        normal(i) -= (x(facet[2], (i + 1) % 3) - x(facet[0], (i + 1) % 3))
+                     * (x(facet[1], (i + 2) % 3) - x(facet[0], (i + 2) % 3));
       }
     }
-    double norm = 0;
-    for (std::size_t i = 0; i < normals.shape(1); ++i)
-      norm += normals(facet, i) * normals(facet, i);
-    norm = std::sqrt(norm);
-    for (std::size_t i = 0; i < normals.shape(1); ++i)
-      normals(facet, i) /= norm;
+    normal /= xt::sqrt(xt::sum(normal * normal));
   }
 
   return normals;
@@ -335,17 +326,17 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
 xt::xtensor<bool, 1> cell::facet_orientations(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
-  xt::xtensor<double, 2> geometry = cell::geometry(cell_type);
-  std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
-
+  const xt::xtensor<double, 2> geometry = cell::geometry(cell_type);
+  const std::vector<std::vector<int>> facets
+      = cell::topology(cell_type)[tdim - 1];
   std::array<std::size_t, 1> m_shape = {tdim};
   xt::xtensor<double, 1> midpoint(m_shape);
   for (std::size_t d = 0; d < tdim; ++d)
   {
-    midpoint(d) = 0;
+    midpoint[d] = 0;
     for (std::size_t p = 0; p < geometry.shape(0); ++p)
-      midpoint(d) += geometry(p, d);
-    midpoint(d) /= geometry.shape(0);
+      midpoint[d] += geometry(p, d);
+    midpoint[d] /= geometry.shape(0);
   }
 
   xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
@@ -359,6 +350,7 @@ xt::xtensor<bool, 1> cell::facet_orientations(cell::type cell_type)
       dot += (geometry(facets[n][0], d) - midpoint(d)) * normals(n, d);
     orientations(n) = dot < 0;
   }
+
   return orientations;
 }
 //-----------------------------------------------------------------------------
@@ -401,28 +393,31 @@ xt::xtensor<double, 1> cell::facet_reference_volumes(cell::type cell_type)
   default:
     throw std::runtime_error("Unsupported cell type");
   }
-  return {};
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> cell::facet_jacobians(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
-
-  xt::xtensor<double, 2> geometry = cell::geometry(cell_type);
-  std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
-
+  const xt::xtensor<double, 2> x = cell::geometry(cell_type);
+  const std::vector<std::vector<int>> facets
+      = cell::topology(cell_type)[tdim - 1];
   xt::xtensor<double, 3> jacobians({facets.size(), tdim, tdim - 1});
   if (tdim == 2 or tdim == 3)
   {
-    for (std::size_t facet = 0; facet < facets.size(); ++facet)
+    for (std::size_t f = 0; f < facets.size(); ++f)
+    {
       for (std::size_t j = 0; j < tdim - 1; ++j)
+      {
         for (std::size_t i = 0; i < tdim; ++i)
-          jacobians(facet, i, j) = geometry(facets[facet][1 + j], i)
-                                   - geometry(facets[facet][0], i);
+          jacobians(f, i, j) = x(facets[f][1 + j], i) - x(facets[f][0], i);
+      }
+    }
   }
   else
+  {
     throw std::runtime_error(
         "Facet jacobians not supported for this cell type.");
+  }
 
   return jacobians;
 }

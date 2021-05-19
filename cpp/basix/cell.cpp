@@ -326,28 +326,22 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
 xt::xtensor<bool, 1> cell::facet_orientations(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
-  const xt::xtensor<double, 2> geometry = cell::geometry(cell_type);
+  const xt::xtensor<double, 2> x = cell::geometry(cell_type);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
-  std::array<std::size_t, 1> m_shape = {tdim};
-  xt::xtensor<double, 1> midpoint(m_shape);
-  for (std::size_t d = 0; d < tdim; ++d)
-  {
-    midpoint[d] = 0;
-    for (std::size_t p = 0; p < geometry.shape(0); ++p)
-      midpoint[d] += geometry(p, d);
-    midpoint[d] /= geometry.shape(0);
-  }
 
-  xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
+  const xt::xtensor<double, 1> midpoint = xt::mean(x, 1);
 
+  const xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
   std::array<std::size_t, 1> o_shape = {normals.shape(0)};
   xt::xtensor<bool, 1> orientations(o_shape);
   for (std::size_t n = 0; n < normals.shape(0); ++n)
   {
+    const std::vector<int>& facet = facets[n];
+    auto normal = xt::row(normals, n);
     double dot = 0;
     for (std::size_t d = 0; d < tdim; ++d)
-      dot += (geometry(facets[n][0], d) - midpoint(d)) * normals(n, d);
+      dot += (x(facet[0], d) - midpoint(d)) * normal(d);
     orientations(n) = dot < 0;
   }
 

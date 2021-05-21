@@ -5,6 +5,7 @@
 import basix
 import pytest
 import numpy as np
+import random
 from .utils import parametrize_over_elements
 
 
@@ -38,6 +39,43 @@ def test_non_zero(cell_name, element_name, order):
     for t in e.base_transformations():
         for row in t:
             assert max(abs(i) for i in row) > 1e-6
+
+
+@parametrize_over_elements(5)
+def test_apply_to_transpose(cell_name, element_name, order):
+    random.seed(42)
+
+    e = basix.create_element(element_name, cell_name, order)
+
+    size = e.dim
+
+    data = np.array(list(range(size**2)), dtype=np.float32)
+    data_t = np.zeros((size ** 2))
+    for i in range(size):
+        for j in range(size):
+            data_t[i * size + j] = data[j * size + i]
+    for i in range(10):
+        cell_info = random.randrange(2**30)
+
+        data1 = data.copy()
+        if size < 15:
+            print("-------------------------------------------------")
+            print(data1.reshape((size, size)))
+        data1 = e.apply_dof_transformation(data1, size, cell_info)
+        if size < 15:
+            print(data1.reshape((size, size)))
+
+        data2 = data_t.copy()
+        if size < 15:
+            print(data2.reshape((size, size)))
+        data2 = e.apply_dof_transformation_to_transpose(data2, size, cell_info)
+        if size < 15:
+            print(data2.reshape((size, size)))
+        data2 = data2.reshape((size, size)).transpose().reshape(-1)
+        if size < 15:
+            print(data2.reshape((size, size)))
+
+        assert np.allclose(data1, data2)
 
 
 @parametrize_over_elements(5, "interval")

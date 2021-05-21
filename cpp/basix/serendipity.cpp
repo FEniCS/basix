@@ -618,30 +618,26 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   else if (tdim == 3)
     wcoeffs = make_serendipity_space_3d(degree);
 
-  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
-      entity_transformations;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
 
   if (tdim >= 2)
   {
     if (degree < 2)
       entity_transformations[cell::type::interval]
-          = {xt::xtensor<double, 2>({0, 0})};
+          = xt::xtensor<double, 3>({1, 0, 0});
     else
-      entity_transformations[cell::type::interval]
-          = {xt::view(edge_transforms, 0, xt::all(), xt::all())};
+      entity_transformations[cell::type::interval] = edge_transforms;
 
     if (tdim == 3)
     {
       if (degree < 4)
       {
         entity_transformations[cell::type::quadrilateral]
-            = {xt::xtensor<double, 2>({0, 0}), xt::xtensor<double, 2>({0, 0})};
+            = xt::xtensor<double, 3>({2, 0, 0});
       }
       else
       {
-        entity_transformations[cell::type::quadrilateral]
-            = {xt::view(face_transforms, 0, xt::all(), xt::all()),
-               xt::view(face_transforms, 1, xt::all(), xt::all())};
+        entity_transformations[cell::type::quadrilateral] = face_transforms;
       }
     }
   }
@@ -700,21 +696,17 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
   else if (tdim == 3)
     wcoeffs = make_serendipity_div_space_3d(degree);
 
-  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
-      entity_transformations;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
 
   if (tdim == 2)
   {
-    entity_transformations[cell::type::interval]
-        = {xt::view(facet_transforms, 0, xt::all(), xt::all())};
+    entity_transformations[cell::type::interval] = facet_transforms;
   }
   else if (tdim == 3)
   {
     entity_transformations[cell::type::interval]
-        = {xt::xtensor<double, 2>({0, 0})};
-    entity_transformations[cell::type::quadrilateral]
-        = {xt::view(facet_transforms, 0, xt::all(), xt::all()),
-           xt::view(facet_transforms, 1, xt::all(), xt::all())};
+        = xt::xtensor<double, 3>({1, 0, 0});
+    entity_transformations[cell::type::quadrilateral] = facet_transforms;
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
@@ -787,24 +779,20 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
-      entity_transformations;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
 
-  entity_transformations[cell::type::interval]
-      = {xt::view(edge_transforms, 0, xt::all(), xt::all())};
+  entity_transformations[cell::type::interval] = edge_transforms;
 
   if (tdim == 3)
   {
     if (degree <= 1)
     {
       entity_transformations[cell::type::quadrilateral]
-          = {xt::xtensor<double, 2>({0, 0}), xt::xtensor<double, 2>({0, 0})};
+          = xt::xtensor<double, 3>({2, 0, 0});
     }
     else
     {
-      entity_transformations[cell::type::quadrilateral]
-          = {xt::view(face_transforms, 0, xt::all(), xt::all()),
-             xt::view(face_transforms, 1, xt::all(), xt::all())};
+      entity_transformations[cell::type::quadrilateral] = face_transforms;
     }
   }
 

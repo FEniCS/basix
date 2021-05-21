@@ -77,8 +77,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> phi1;
   xt::xtensor<double, 1> bubble;
-  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
-      entity_transformations;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
   switch (celltype)
   {
   case cell::type::interval:
@@ -97,7 +96,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p1 = xt::col(pts, 1);
     bubble = p0 * p1 * (1 - p0 - p1);
     entity_transformations[cell::type::interval]
-        = std::vector<xt::xtensor<double, 2>>(1);
+        = xt::xtensor<double, 3>({1, 0, 0});
     break;
   }
   case cell::type::tetrahedron:
@@ -109,9 +108,9 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p2 = xt::col(pts, 2);
     bubble = p0 * p1 * p2 * (1 - p0 - p1 - p2);
     entity_transformations[cell::type::interval]
-        = std::vector<xt::xtensor<double, 2>>(1);
+        = xt::xtensor<double, 3>({1, 0, 0});
     entity_transformations[cell::type::triangle]
-        = std::vector<xt::xtensor<double, 2>>(2);
+        = xt::xtensor<double, 3>({2, 0, 0});
     break;
   }
   case cell::type::quadrilateral:
@@ -122,7 +121,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p1 = xt::col(pts, 1);
     bubble = p0 * (1 - p0) * p1 * (1 - p1);
     entity_transformations[cell::type::interval]
-        = std::vector<xt::xtensor<double, 2>>(1);
+        = xt::xtensor<double, 3>({1, 0, 0});
     break;
   }
   case cell::type::hexahedron:
@@ -134,9 +133,9 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p2 = xt::col(pts, 2);
     bubble = p0 * (1 - p0) * p1 * (1 - p1) * p2 * (1 - p2);
     entity_transformations[cell::type::interval]
-        = std::vector<xt::xtensor<double, 2>>(1);
+        = xt::xtensor<double, 3>({1, 0, 0});
     entity_transformations[cell::type::quadrilateral]
-        = std::vector<xt::xtensor<double, 2>>(2);
+        = xt::xtensor<double, 3>({2, 0, 0});
     break;
   }
   default:

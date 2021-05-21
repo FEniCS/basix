@@ -253,8 +253,7 @@ FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 3>& coeffs,
-    const std::map<cell::type, std::vector<xt::xtensor<double, 2>>>&
-        entity_transformations,
+    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type)
@@ -346,21 +345,21 @@ FiniteElement::FiniteElement(
   for (const auto et : _entity_transformations)
   {
     for (std::size_t i = 0;
-         _dof_transformations_are_permutations and i < et.second.size(); ++i)
+         _dof_transformations_are_permutations and i < et.second.shape(0); ++i)
     {
-      for (std::size_t row = 0; row < et.second[i].shape(0); ++row)
+      for (std::size_t row = 0; row < et.second.shape(1); ++row)
       {
-        double rmin = xt::amin(xt::view(et.second[i], row, xt::all()))(0);
-        double rmax = xt::amax(xt::view(et.second[i], row, xt::all()))(0);
-        double rtot = xt::sum(xt::view(et.second[i], row, xt::all()))(0);
-        if ((et.second[i].shape(1) != 1 and !xt::allclose(rmin, 0))
+        double rmin = xt::amin(xt::view(et.second, i, row, xt::all()))(0);
+        double rmax = xt::amax(xt::view(et.second, i, row, xt::all()))(0);
+        double rtot = xt::sum(xt::view(et.second, i, row, xt::all()))(0);
+        if ((et.second.shape(2) != 1 and !xt::allclose(rmin, 0))
             or !xt::allclose(rmax, 1) or !xt::allclose(rtot, 1))
         {
           _dof_transformations_are_permutations = false;
           _dof_transformations_are_identity = false;
           break;
         }
-        if (!xt::allclose(et.second[i](row, row), 1))
+        if (!xt::allclose(et.second(i, row, row), 1))
           _dof_transformations_are_identity = false;
       }
     }
@@ -375,18 +374,18 @@ FiniteElement::FiniteElement(
       for (const auto et : _entity_transformations)
       {
         _eperm[et.first]
-            = std::vector<std::vector<std::size_t>>(et.second.size());
+            = std::vector<std::vector<std::size_t>>(et.second.shape(0));
         _eperm_rev[et.first]
-            = std::vector<std::vector<std::size_t>>(et.second.size());
-        for (std::size_t i = 0; i < et.second.size(); ++i)
+            = std::vector<std::vector<std::size_t>>(et.second.shape(0));
+        for (std::size_t i = 0; i < et.second.shape(0); ++i)
         {
-          std::vector<std::size_t> perm(et.second[i].shape(0));
-          std::vector<std::size_t> rev_perm(et.second[i].shape(0));
-          for (std::size_t row = 0; row < et.second[i].shape(0); ++row)
+          std::vector<std::size_t> perm(et.second.shape(1));
+          std::vector<std::size_t> rev_perm(et.second.shape(1));
+          for (std::size_t row = 0; row < et.second.shape(1); ++row)
           {
-            for (std::size_t col = 0; col < et.second[i].shape(0); ++col)
+            for (std::size_t col = 0; col < et.second.shape(1); ++col)
             {
-              if (et.second[i](row, col) > 0.5)
+              if (et.second(i, row, col) > 0.5)
               {
                 perm[row] = col;
                 rev_perm[col] = row;
@@ -406,15 +405,16 @@ FiniteElement::FiniteElement(
     {
       _etrans[et.first] = std::vector<
           std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.size());
+                     xt::xtensor<double, 2>>>(et.second.shape(0));
       _etrans_inv[et.first] = std::vector<
           std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.size());
-      for (std::size_t i = 0; i < et.second.size(); ++i)
+                     xt::xtensor<double, 2>>>(et.second.shape(0));
+      for (std::size_t i = 0; i < et.second.shape(0); ++i)
       {
-        if (et.second[i].shape(0) > 0)
+        if (et.second.shape(1) > 0)
         {
-          const xt::xtensor<double, 2>& M = et.second[i];
+          const xt::xtensor<double, 2>& M
+              = xt::view(et.second, i, xt::all(), xt::all());
           _etrans[et.first][i] = precompute::prepare_matrix(M);
 
           xt::xtensor<double, 2> Minv;
@@ -551,7 +551,8 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
     {
       xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
                xt::range(dof_start, dof_start + ndofs))
-          = _entity_transformations.at(cell::type::interval)[0];
+          = xt::view(_entity_transformations.at(cell::type::interval), 0,
+                     xt::all(), xt::all());
       dof_start += ndofs;
     }
 
@@ -567,10 +568,14 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
           //       subentity type to a matrix to allow for prisms and pyramids.
           xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
                    xt::range(dof_start, dof_start + ndofs))
-              = _entity_transformations.at(_cell_subentity_types[2][f])[0];
+              = xt::view(
+                  _entity_transformations.at(_cell_subentity_types[2][f]), 0,
+                  xt::all(), xt::all());
           xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
                    xt::range(dof_start, dof_start + ndofs))
-              = _entity_transformations.at(_cell_subentity_types[2][f])[1];
+              = xt::view(
+                  _entity_transformations.at(_cell_subentity_types[2][f]), 1,
+                  xt::all(), xt::all());
 
           dof_start += ndofs;
         }
@@ -705,7 +710,7 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
   }
 }
 //-----------------------------------------------------------------------------
-std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+std::map<cell::type, xt::xtensor<double, 3>>
 FiniteElement::entity_transformations() const
 {
   return _entity_transformations;

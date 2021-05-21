@@ -210,7 +210,7 @@ public:
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
                 const xt::xtensor<double, 3>& coeffs,
-                const std::map<cell::type, std::vector<xt::xtensor<double, 2>>>&
+                const std::map<cell::type, xt::xtensor<double, 3>>&
                     entity_transformations,
                 const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                 const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
@@ -438,8 +438,7 @@ public:
   xt::xtensor<double, 3> base_transformations() const;
 
   /// Return the entity dof transformation matricess
-  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
-  entity_transformations() const;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations() const;
 
   /// Permute the dof numbering on a cell
   /// @param[in,out] dofs The dof numbering for the cell
@@ -527,8 +526,7 @@ private:
   std::vector<std::vector<int>> _edofs;
 
   // Entity transformations
-  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
-      _entity_transformations;
+  std::map<cell::type, xt::xtensor<double, 3>> _entity_transformations;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of

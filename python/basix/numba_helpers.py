@@ -1,13 +1,16 @@
+import numpy
+
 try:
     import numba
-    import numpy
+    from numba.typed import List
+    from numba.core import types
 except ImportError:
     raise RuntimeError("You must have numba installed to use the numba helper functions.")
 
 
 @numba.njit
 def apply_dof_transformation(tdim, edge_count, face_count, entity_transformations, entity_dofs,
-                             data, cell_info, face_type=None):
+                             data, cell_info, face_types):
     """Apply dof transformations to some data.
 
     Parameters
@@ -49,7 +52,7 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
         if tdim == 3:
             for f in range(face_count):
                 face_rotation = entity_transformations[face_types[f]][0].copy()
-                face_reflection = entity_transformations[face_types[f]][0].copy()
+                face_reflection = entity_transformations[face_types[f]][1].copy()
                 fdofs = entity_dofs[2][f]
                 if fdofs == 0:
                     continue
@@ -96,7 +99,7 @@ def apply_dof_transformation_triangle(entity_transformations, entity_dofs,
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 3, 1, entity_transformations, entity_dofs,
-                             data, cell_info)
+                             data, cell_info, List.empty_list(types.string))
 
 
 @numba.njit
@@ -117,7 +120,7 @@ def apply_dof_transformation_quadrilateral(
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 4, 1, entity_transformations, entity_dofs,
-                             data, cell_info)
+                             data, cell_info, List.empty_list(types.string))
 
 
 @numba.njit
@@ -138,7 +141,7 @@ def apply_dof_transformation_tetrahedron(
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 6, 4, entity_transformations, entity_dofs,
-                             data, cell_info, ["triangle"] * 4)
+                             data, cell_info, List(["triangle"] * 4))
 
 
 @numba.njit
@@ -159,7 +162,7 @@ def apply_dof_transformation_hexahedron(
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 12, 6, entity_transformations, entity_dofs,
-                             data, cell_info, ["quadrilateral"] * 6)
+                             data, cell_info, List(["quadrilateral"] * 6))
 
 
 @numba.njit
@@ -180,7 +183,7 @@ def apply_dof_transformation_prism(
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 9, 5, entity_transformations, entity_dofs,
-                             data, cell_info, ["triangle"] + ["quadrilateral"] * 4 + ["triangle"])
+                             data, cell_info, List(["triangle"] + ["quadrilateral"] * 4 + ["triangle"]))
 
 
 @numba.njit
@@ -201,4 +204,4 @@ def apply_dof_transformation_pyramid(
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 8, 5, entity_transformations, entity_dofs,
-                             data, cell_info, ["quadrilateral"] + ["triangle"] * 4)
+                             data, cell_info, List(["quadrilateral"] + ["triangle"] * 4))

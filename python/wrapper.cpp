@@ -353,16 +353,13 @@ Each element has a `tabulate` function which returns the basis functions and a n
            })
       .def("entity_transformations",
            [](const FiniteElement& self) {
-             std::map<cell::type, std::vector<xt::xtensor<double, 2>>> t
+             std::map<cell::type, xt::xtensor<double, 3>> t
                  = self.entity_transformations();
              py::dict t2;
              for (auto tpart : t)
              {
-               std::vector<py::array_t<double>> tpart2;
-               for (std::size_t i = 0; i < tpart.second.size(); ++i)
-                 tpart2.push_back(py::array_t<double>(tpart.second[i].shape(),
-                                                      tpart.second[i].data()));
-               t2[cell::type_to_str(tpart.first).c_str()] = tpart2;
+               t2[cell::type_to_str(tpart.first).c_str()] = py::array_t<double>(
+                   tpart.second.shape(), tpart.second.data());
              }
              return t2;
            })

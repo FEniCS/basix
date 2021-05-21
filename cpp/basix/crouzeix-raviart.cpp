@@ -50,19 +50,16 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
     xt::row(x[tdim - 1][f], 0) = xt::mean(v, 0);
   }
 
-  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
-      entity_transformations;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
   if (celltype == cell::type::triangle)
   {
-    xt::xtensor<double, 2> perm = {{1}};
-    entity_transformations[cell::type::interval] = {perm};
+    entity_transformations[cell::type::interval] = {{{1.}}};
   }
   else if (celltype == cell::type::tetrahedron)
   {
     entity_transformations[cell::type::interval]
-        = std::vector<xt::xtensor<double, 2>>(1);
-    xt::xtensor<double, 2> perm = {{1}};
-    entity_transformations[cell::type::triangle] = {perm, perm};
+        = xt::xtensor<double, 3>({1, 0, 0});
+    entity_transformations[cell::type::triangle] = {{{1}}, {{1}}};
   }
 
   M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1}));

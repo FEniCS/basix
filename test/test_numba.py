@@ -20,6 +20,8 @@ def test_dof_transformations(cell, element, degree, block_size):
         "quadrilateral": numba_helpers.apply_dof_transformation_quadrilateral,
         "tetrahedron": numba_helpers.apply_dof_transformation_tetrahedron,
         "hexahedron": numba_helpers.apply_dof_transformation_hexahedron,
+        "prism": numba_helpers.apply_dof_transformation_prism,
+        "pyramid": numba_helpers.apply_dof_transformation_pyramid
     }
 
     random.seed(1337)

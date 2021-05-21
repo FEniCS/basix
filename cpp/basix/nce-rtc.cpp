@@ -135,19 +135,20 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
   if (tdim == 2)
   {
-    entity_transformations.push_back(
-        xt::view(facet_transforms, 0, xt::all(), xt::all()));
+    entity_transformations[cell::type::interval]
+        = {xt::view(facet_transforms, 0, xt::all(), xt::all())};
   }
   else if (tdim == 3)
   {
-    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
-    entity_transformations.push_back(
-        xt::view(facet_transforms, 0, xt::all(), xt::all()));
-    entity_transformations.push_back(
-        xt::view(facet_transforms, 1, xt::all(), xt::all()));
+    entity_transformations[cell::type::interval]
+        = {xt::xtensor<double, 2>({0, 0})};
+    entity_transformations[cell::type::quadrilateral]
+        = {xt::view(facet_transforms, 0, xt::all(), xt::all()),
+           xt::view(facet_transforms, 1, xt::all(), xt::all())};
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
@@ -318,24 +319,24 @@ FiniteElement basix::create_nce(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
 
-  entity_transformations.push_back(
-      xt::view(edge_transforms, 0, xt::all(), xt::all()));
+  entity_transformations[cell::type::interval]
+      = {xt::view(edge_transforms, 0, xt::all(), xt::all())};
 
   if (tdim == 3)
   {
     if (degree == 1)
     {
-      entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
-      entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+      entity_transformations[cell::type::quadrilateral]
+          = {xt::xtensor<double, 2>({0, 0}), xt::xtensor<double, 2>({0, 0})};
     }
     else
     {
-      entity_transformations.push_back(
-          xt::view(face_transforms, 0, xt::all(), xt::all()));
-      entity_transformations.push_back(
-          xt::view(face_transforms, 1, xt::all(), xt::all()));
+      entity_transformations[cell::type::quadrilateral]
+          = {xt::view(face_transforms, 0, xt::all(), xt::all()),
+             xt::view(face_transforms, 1, xt::all(), xt::all())};
     }
   }
 

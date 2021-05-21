@@ -88,16 +88,17 @@ create_nedelec_2d_interpolation(int degree)
   return {x, M};
 }
 //-----------------------------------------------------------------------------
-std::vector<xt::xtensor<double, 2>>
+std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
 create_nedelec_2d_entity_transforms(int degree)
 {
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree - 1));
-  entity_transformations.push_back(
-      xt::view(edge_transforms, 0, xt::all(), xt::all()));
+  entity_transformations[cell::type::interval]
+      = {xt::view(edge_transforms, 0, xt::all(), xt::all())};
 
   return entity_transformations;
 }
@@ -219,16 +220,17 @@ create_nedelec_3d_interpolation(int degree)
   return {x, M};
 }
 //-----------------------------------------------------------------------------
-std::vector<xt::xtensor<double, 2>>
+std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
 create_nedelec_3d_entity_transforms(int degree)
 {
-  std::vector<xt::xtensor<double, 2>> entity_transformations(3);
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
 
   const xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree - 1));
-  entity_transformations[0]
-      = xt::view(edge_transforms, 0, xt::all(), xt::all());
+  entity_transformations[cell::type::interval]
+      = {xt::view(edge_transforms, 0, xt::all(), xt::all())};
 
   // Faces
   if (degree > 1)
@@ -237,10 +239,9 @@ create_nedelec_3d_entity_transforms(int degree)
         = moments::create_moment_dof_transformations(
             create_dlagrange(cell::type::triangle, degree - 2));
 
-    entity_transformations[1]
-        = xt::view(face_transforms, 0, xt::all(), xt::all());
-    entity_transformations[2]
-        = xt::view(face_transforms, 1, xt::all(), xt::all());
+    entity_transformations[cell::type::triangle]
+        = {xt::view(face_transforms, 0, xt::all(), xt::all()),
+           xt::view(face_transforms, 1, xt::all(), xt::all())};
   }
   return entity_transformations;
 }
@@ -267,16 +268,17 @@ create_nedelec2_2d_interpolation(int degree)
   return {x, M};
 }
 //-----------------------------------------------------------------------------
-std::vector<xt::xtensor<double, 2>>
+std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
 create_nedelec2_2d_entity_transformations(int degree)
 {
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree));
-  entity_transformations.push_back(
-      xt::view(edge_transforms, 0, xt::all(), xt::all()));
+  entity_transformations[cell::type::interval]
+      = {xt::view(edge_transforms, 0, xt::all(), xt::all())};
 
   return entity_transformations;
 }
@@ -315,32 +317,32 @@ create_nedelec2_3d_interpolation(int degree)
   return {x, M};
 }
 //-----------------------------------------------------------------------------
-std::vector<xt::xtensor<double, 2>>
+std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
 create_nedelec2_3d_entity_transformations(int degree)
 {
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
 
   const xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
           create_dlagrange(cell::type::interval, degree));
-  entity_transformations.push_back(
-      xt::view(edge_transforms, 0, xt::all(), xt::all()));
+  entity_transformations[cell::type::interval]
+      = {xt::view(edge_transforms, 0, xt::all(), xt::all())};
 
   // Faces
   if (degree == 1)
   {
-    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
-    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
+    entity_transformations[cell::type::triangle]
+        = {xt::xtensor<double, 2>({0, 0}), xt::xtensor<double, 2>({0, 0})};
   }
   else
   {
     const xt::xtensor<double, 3> face_transforms
         = moments::create_dot_moment_dof_transformations(
             create_rt(cell::type::triangle, degree - 1));
-    entity_transformations.push_back(
-        xt::view(face_transforms, 0, xt::all(), xt::all()));
-    entity_transformations.push_back(
-        xt::view(face_transforms, 1, xt::all(), xt::all()));
+    entity_transformations[cell::type::triangle]
+        = {xt::view(face_transforms, 0, xt::all(), xt::all()),
+           xt::view(face_transforms, 1, xt::all(), xt::all())};
   }
 
   return entity_transformations;
@@ -354,7 +356,7 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   xt::xtensor<double, 2> wcoeffs;
-  std::vector<xt::xtensor<double, 2>> transforms;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>> transforms;
   switch (celltype)
   {
   case cell::type::triangle:
@@ -386,7 +388,8 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree)
 {
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
   switch (celltype)
   {
   case cell::type::triangle:

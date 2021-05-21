@@ -7,7 +7,7 @@ except ImportError:
 
 @numba.njit
 def apply_dof_transformation(tdim, edge_count, face_count, entity_transformations, entity_dofs,
-                             data, cell_info):
+                             data, cell_info, face_type=None):
     """Apply dof transformations to some data.
 
     Parameters
@@ -37,7 +37,7 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
         for i in entity_dofs[0]:
             dofstart += i
         # NOTE: Copy array to make numba compilation faster (contiguous array assumption)
-        edge_reflection = entity_transformations[0].copy()
+        edge_reflection = entity_transformations["interval"][0].copy()
         for e in range(edge_count):
             edofs = entity_dofs[1][e]
             if edofs == 0:
@@ -47,9 +47,9 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
             dofstart += edofs
 
         if tdim == 3:
-            face_rotation = entity_transformations[1].copy()
-            face_reflection = entity_transformations[2].copy()
             for f in range(face_count):
+                face_rotation = entity_transformations[face_types[f]][0].copy()
+                face_reflection = entity_transformations[face_types[f]][0].copy()
                 fdofs = entity_dofs[2][f]
                 if fdofs == 0:
                     continue
@@ -138,14 +138,14 @@ def apply_dof_transformation_tetrahedron(
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 6, 4, entity_transformations, entity_dofs,
-                             data, cell_info)
+                             data, cell_info, ["triangle"] * 4)
 
 
 @numba.njit
 def apply_dof_transformation_hexahedron(
     entity_transformations, entity_dofs, data, cell_info
 ):
-    """Apply dof transformations to some data on an hexahedron.
+    """Apply dof transformations to some data on a hexahedron.
 
     Parameters
     ----------
@@ -159,4 +159,46 @@ def apply_dof_transformation_hexahedron(
         An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 12, 6, entity_transformations, entity_dofs,
-                             data, cell_info)
+                             data, cell_info, ["quadrilateral"] * 6)
+
+
+@numba.njit
+def apply_dof_transformation_prism(
+    entity_transformations, entity_dofs, data, cell_info
+):
+    """Apply dof transformations to some data on an prism.
+
+    Parameters
+    ----------
+    entity_transformations : Dict(ndarray(float64))
+        The DOF transformations for each entity.
+    entity_dofs : Dict(ndarray(int32))
+        The number of DOFs on each entity.
+    data : np.array
+        The data. This will be changed by this function.
+    cell_info : int
+        An integer representing the orientations of the subentities of the cell.
+    """
+    apply_dof_transformation(3, 9, 5, entity_transformations, entity_dofs,
+                             data, cell_info, ["triangle"] + ["quadrilateral"] * 4 + ["triangle"])
+
+
+@numba.njit
+def apply_dof_transformation_pyramid(
+    entity_transformations, entity_dofs, data, cell_info
+):
+    """Apply dof transformations to some data on an prism.
+
+    Parameters
+    ----------
+    entity_transformations : Dict(ndarray(float64))
+        The DOF transformations for each entity.
+    entity_dofs : Dict(ndarray(int32))
+        The number of DOFs on each entity.
+    data : np.array
+        The data. This will be changed by this function.
+    cell_info : int
+        An integer representing the orientations of the subentities of the cell.
+    """
+    apply_dof_transformation(3, 8, 5, entity_transformations, entity_dofs,
+                             data, cell_info, ["quadrilateral"] + ["triangle"] * 4)

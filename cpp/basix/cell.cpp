@@ -368,40 +368,72 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 1> cell::facet_reference_volumes(cell::type cell_type)
 {
+  const int tdim = cell::topological_dimension(cell_type);
+  std::vector<cell::type> facet_types
+      = cell::subentity_types(cell_type)[tdim - 1];
+
+  std::array<std::size_t, 1> shape = {facet_types.size()};
+  xt::xtensor<double, 1> out(shape);
+  for (std::size_t i = 0; i < facet_types.size(); ++i)
+    out(i) = cell::volume(facet_types[i]);
+  return out;
+}
+//-----------------------------------------------------------------------------
+std::vector<std::vector<cell::type>> cell::subentity_types(cell::type cell_type)
+{
   switch (cell_type)
   {
   case cell::type::interval:
-    return {0, 0};
+    return {{cell::type::point, cell::type::point}, {cell::type::interval}};
   case cell::type::triangle:
-    return {cell::volume(cell::type::interval),
-            cell::volume(cell::type::interval),
-            cell::volume(cell::type::interval)};
+    return {{cell::type::point, cell::type::point, cell::type::point},
+            {cell::type::interval, cell::type::interval, cell::type::interval},
+            {cell::type::triangle}};
   case cell::type::quadrilateral:
-    return {
-        cell::volume(cell::type::interval), cell::volume(cell::type::interval),
-        cell::volume(cell::type::interval), cell::volume(cell::type::interval)};
+    return {{cell::type::point, cell::type::point, cell::type::point,
+             cell::type::point},
+            {cell::type::interval, cell::type::interval, cell::type::interval,
+             cell::type::interval},
+            {cell::type::quadrilateral}};
   case cell::type::tetrahedron:
-    return {
-        cell::volume(cell::type::triangle), cell::volume(cell::type::triangle),
-        cell::volume(cell::type::triangle), cell::volume(cell::type::triangle)};
+    return {{cell::type::point, cell::type::point, cell::type::point,
+             cell::type::point},
+            {cell::type::interval, cell::type::interval, cell::type::interval,
+             cell::type::interval, cell::type::interval, cell::type::interval},
+            {cell::type::triangle, cell::type::triangle, cell::type::triangle,
+             cell::type::triangle},
+            {cell::type::tetrahedron}};
   case cell::type::hexahedron:
-    return {cell::volume(cell::type::quadrilateral),
-            cell::volume(cell::type::quadrilateral),
-            cell::volume(cell::type::quadrilateral),
-            cell::volume(cell::type::quadrilateral),
-            cell::volume(cell::type::quadrilateral),
-            cell::volume(cell::type::quadrilateral)};
+    return {{cell::type::point, cell::type::point, cell::type::point,
+             cell::type::point, cell::type::point, cell::type::point,
+             cell::type::point, cell::type::point},
+            {cell::type::interval, cell::type::interval, cell::type::interval,
+             cell::type::interval, cell::type::interval, cell::type::interval,
+             cell::type::interval, cell::type::interval, cell::type::interval,
+             cell::type::interval, cell::type::interval, cell::type::interval},
+            {cell::type::quadrilateral, cell::type::quadrilateral,
+             cell::type::quadrilateral, cell::type::quadrilateral,
+             cell::type::quadrilateral, cell::type::quadrilateral},
+            {cell::type::hexahedron}};
   case cell::type::prism:
-    return {cell::volume(cell::type::triangle),
-            cell::volume(cell::type::quadrilateral),
-            cell::volume(cell::type::quadrilateral),
-            cell::volume(cell::type::quadrilateral),
-            cell::volume(cell::type::triangle)};
+    return {{cell::type::point, cell::type::point, cell::type::point,
+             cell::type::point, cell::type::point, cell::type::point},
+            {cell::type::interval, cell::type::interval, cell::type::interval,
+             cell::type::interval, cell::type::interval, cell::type::interval,
+             cell::type::interval, cell::type::interval, cell::type::interval},
+            {cell::type::triangle, cell::type::quadrilateral,
+             cell::type::quadrilateral, cell::type::quadrilateral,
+             cell::type::triangle},
+            {cell::type::prism}};
   case cell::type::pyramid:
-    return {
-        cell::volume(cell::type::quadrilateral),
-        cell::volume(cell::type::triangle), cell::volume(cell::type::triangle),
-        cell::volume(cell::type::triangle), cell::volume(cell::type::triangle)};
+    return {{cell::type::point, cell::type::point, cell::type::point,
+             cell::type::point, cell::type::point},
+            {cell::type::interval, cell::type::interval, cell::type::interval,
+             cell::type::interval, cell::type::interval, cell::type::interval,
+             cell::type::interval, cell::type::interval},
+            {cell::type::quadrilateral, cell::type::triangle,
+             cell::type::triangle, cell::type::triangle, cell::type::triangle},
+            {cell::type::pyramid}};
   default:
     throw std::runtime_error("Unsupported cell type");
   }

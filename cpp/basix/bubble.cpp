@@ -77,6 +77,8 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> phi1;
   xt::xtensor<double, 1> bubble;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
   switch (celltype)
   {
   case cell::type::interval:
@@ -94,6 +96,8 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p0 = xt::col(pts, 0);
     auto p1 = xt::col(pts, 1);
     bubble = p0 * p1 * (1 - p0 - p1);
+    entity_transformations[cell::type::interval]
+        = std::vector<xt::xtensor<double, 2>>(1);
     break;
   }
   case cell::type::tetrahedron:
@@ -104,6 +108,10 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p1 = xt::col(pts, 1);
     auto p2 = xt::col(pts, 2);
     bubble = p0 * p1 * p2 * (1 - p0 - p1 - p2);
+    entity_transformations[cell::type::interval]
+        = std::vector<xt::xtensor<double, 2>>(1);
+    entity_transformations[cell::type::triangle]
+        = std::vector<xt::xtensor<double, 2>>(2);
     break;
   }
   case cell::type::quadrilateral:
@@ -113,6 +121,8 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p0 = xt::col(pts, 0);
     auto p1 = xt::col(pts, 1);
     bubble = p0 * (1 - p0) * p1 * (1 - p1);
+    entity_transformations[cell::type::interval]
+        = std::vector<xt::xtensor<double, 2>>(1);
     break;
   }
   case cell::type::hexahedron:
@@ -123,6 +133,10 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
     auto p1 = xt::col(pts, 1);
     auto p2 = xt::col(pts, 2);
     bubble = p0 * (1 - p0) * p1 * (1 - p1) * p2 * (1 - p2);
+    entity_transformations[cell::type::interval]
+        = std::vector<xt::xtensor<double, 2>>(1);
+    entity_transformations[cell::type::quadrilateral]
+        = std::vector<xt::xtensor<double, 2>>(2);
     break;
   }
   default:
@@ -142,10 +156,6 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
 
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
-
-  const int num_transformations = tdim * (tdim - 1) / 2;
-  std::vector<xt::xtensor<double, 2>> entity_transformations(
-      num_transformations);
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);

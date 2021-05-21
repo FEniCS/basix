@@ -99,20 +99,21 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
 
   if (tdim == 2)
   {
-    entity_transformations.push_back(
-        xt::view(facet_transforms, 0, xt::all(), xt::all()));
+    entity_transformations[cell::type::interval]
+        = {xt::view(facet_transforms, 0, xt::all(), xt::all())};
   }
   else if (tdim == 3)
   {
-    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
-    entity_transformations.push_back(
-        xt::view(facet_transforms, 0, xt::all(), xt::all()));
-    entity_transformations.push_back(
-        xt::view(facet_transforms, 1, xt::all(), xt::all()));
+    entity_transformations[cell::type::interval]
+        = {xt::xtensor<double, 2>({0, 0})};
+    entity_transformations[cell::type::triangle]
+        = {xt::view(facet_transforms, 0, xt::all(), xt::all()),
+           xt::view(facet_transforms, 1, xt::all(), xt::all())};
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(

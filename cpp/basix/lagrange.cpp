@@ -103,7 +103,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     }
   }
 
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
   if (tdim > 1)
   {
     const std::vector<int> edge_ref
@@ -112,9 +113,10 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         = xt::zeros<double>({edge_ref.size(), edge_ref.size()});
     for (std::size_t i = 0; i < edge_ref.size(); ++i)
       et(i, edge_ref[i]) = 1;
-    entity_transformations.push_back(et);
+    entity_transformations[cell::type::interval] = {et};
   }
-  if (celltype == cell::type::tetrahedron)
+  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
   {
     const std::vector<int> face_rot
         = doftransforms::triangle_rotation(degree - 2);
@@ -129,10 +131,10 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
       ft0(i, face_rot[i]) = 1;
       ft1(i, face_ref[i]) = 1;
     }
-    entity_transformations.push_back(ft0);
-    entity_transformations.push_back(ft1);
+    entity_transformations[cell::type::triangle] = {ft0, ft1};
   }
-  else if (celltype == cell::type::hexahedron)
+  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
   {
     const std::vector<int> face_rot
         = doftransforms::quadrilateral_rotation(degree - 1);
@@ -147,11 +149,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
       ft0(i, face_rot[i]) = 1;
       ft1(i, face_ref[i]) = 1;
     }
-    entity_transformations.push_back(ft0);
-    entity_transformations.push_back(ft1);
+    entity_transformations[cell::type::quadrilateral] = {ft0, ft1};
   }
-  if (celltype == cell::type::prism or celltype == cell::type::pyramid)
-    LOG(WARNING) << "Base transformations not implemented for this cell type.";
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
@@ -181,9 +180,23 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   x[tdim].push_back(pt);
 
-  const int num_transformations = tdim * (tdim - 1) / 2;
-  std::vector<xt::xtensor<double, 2>> entity_transformations(
-      num_transformations, xt::xtensor<double, 2>({0, 0}));
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
+  xt::xtensor<double, 2> no_dofs;
+  if (tdim > 1)
+  {
+    entity_transformations[cell::type::interval] = {no_dofs};
+  }
+  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
+  {
+    entity_transformations[cell::type::triangle] = {no_dofs, no_dofs};
+  }
+  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
+  {
+    entity_transformations[cell::type::quadrilateral] = {no_dofs, no_dofs};
+  }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim]}, {x[tdim]}, degree);
@@ -247,9 +260,17 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   x[tdim].push_back(pt);
 
-  const int num_transformations = tdim * (tdim - 1) / 2;
-  std::vector<xt::xtensor<double, 2>> entity_transformations(
-      num_transformations);
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
+  xt::xtensor<double, 2> no_dofs;
+  if (tdim > 1)
+  {
+    entity_transformations[cell::type::interval] = {no_dofs};
+  }
+  if (tdim == 3)
+  {
+    entity_transformations[cell::type::quadrilateral] = {no_dofs, no_dofs};
+  }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);

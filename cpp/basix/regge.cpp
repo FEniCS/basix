@@ -148,14 +148,15 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, std::vector<xt::xtensor<double, 2>>>
+      entity_transformations;
 
   const std::vector<int> edge_ref
       = doftransforms::interval_reflection(degree + 1);
   xt::xtensor<double, 2> et = xt::zeros<double>({edge_ref.size(), edge_ref.size()});
   for (std::size_t i = 0; i < edge_ref.size(); ++i)
     et(i, edge_ref[i]) = 1;
-  entity_transformations.push_back(et);
+  entity_transformations[cell::type::interval] = {et};
 
   if (tdim > 2)
   {
@@ -184,8 +185,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
           = sub_ref;
     }
 
-    entity_transformations.push_back(face_rot);
-    entity_transformations.push_back(face_ref);
+    entity_transformations[cell::type::triangle] = {face_rot, face_ref};
   }
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},

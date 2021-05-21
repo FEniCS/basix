@@ -19,7 +19,7 @@ def test_dof_transformations(cell, element, degree, block_size):
         "triangle": numba_helpers.apply_dof_transformation_triangle,
         "quadrilateral": numba_helpers.apply_dof_transformation_quadrilateral,
         "tetrahedron": numba_helpers.apply_dof_transformation_tetrahedron,
-        "hexahedron": numba_helpers.apply_dof_transformation_hexahedron
+        "hexahedron": numba_helpers.apply_dof_transformation_hexahedron,
     }
 
     random.seed(1337)
@@ -35,8 +35,8 @@ def test_dof_transformations(cell, element, degree, block_size):
         # Numba function does not use blocked data
         data2 = data.copy().reshape(e.dim, block_size)
         # Mapping lists to numba dictionaries
-        entity_transformations = Dict.empty(key_type=types.int64, value_type=types.float64[:, :])
-        for i, transformation in enumerate(e.entity_transformations()):
+        entity_transformations = Dict.empty(key_type=types.string, value_type=types.float64[:, :, :])
+        for i, transformation in e.entity_transformations().items():
             entity_transformations[i] = transformation
 
         entity_dofs = Dict.empty(key_type=types.int64, value_type=types.int32[:])

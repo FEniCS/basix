@@ -237,6 +237,11 @@ create_nedelec_3d_entity_transforms(int degree)
 
     entity_transformations[cell::type::triangle] = face_transforms;
   }
+  else
+  {
+    entity_transformations[cell::type::triangle]
+        = xt::xtensor<double, 3>({2, 0, 0});
+  }
   return entity_transformations;
 }
 //-----------------------------------------------------------------------------

@@ -26,7 +26,29 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 # Find dependecies
 set(XTENSOR_MIN_VERSION 0.23.4)
 set(XTL_MIN_VERSION 0.7.0)
+set(XSIMD_MIN_VERSION 7.4.10)
 
+include(FetchContent)
+
+# xsimd (optional)
+if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+  find_package(xsimd ${XSIMD_MIN_VERSION}...<8.0 QUIET)
+else()
+  find_package(xsimd ${XSIMD_MIN_VERSION} QUIET)
+endif()
+if(XTENSOR_USE_XSIMD AND NOT xsimd_FOUND)
+  message("downloading xsimd source...")
+  FetchContent_Declare(
+    xsimd
+    GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
+    GIT_TAG        7.4.10
+  )
+  FetchContent_MakeAvailable(xsimd)
+else()
+  message("found xsimd ${xsimd_VERSION}")
+endif()
+
+# xtl, xtensor, xtensor-blas (required)
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
   find_package(xtl ${XTL_MIN_VERSION}...<0.8 QUIET)
   find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.24 QUIET)
@@ -35,9 +57,6 @@ else()
   find_package(xtensor ${XTENSOR_MIN_VERSION} QUIET)
 endif()
 find_package(xtensor-blas 0.19 QUIET)
-if(NOT xtl_FOUND OR NOT xtensor_FOUND OR NOT xtensor-blas_FOUND)
-  include(FetchContent)
-endif()
 if(NOT xtl_FOUND)
   message("downloading xtl source...")
   FetchContent_Declare(
@@ -150,16 +169,22 @@ target_link_libraries(basix PUBLIC xtl)
 get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
 target_link_libraries(basix PUBLIC xtensor)
-if (XTENSOR_OPTIMIZE)
-  target_link_libraries(basix PUBLIC xtensor::optimize)
-endif()
 
-# Add SIMD definition to Basix so that Basix will export this option so
-# other libraries will know that Basix was compiled with xsimd
+# Add xsimd definition to Basix so that Basix will export this option so
+# that other libraries will know that Basix was compiled with xsimd
 get_target_property(XTENSOR_DEFN xtensor INTERFACE_COMPILE_DEFINITIONS)
 if("XTENSOR_USE_XSIMD" IN_LIST XTENSOR_DEFN)
-  message("-- Basix is being built with xsimd support")
   target_compile_definitions(basix PUBLIC XTENSOR_USE_XSIMD)
+elseif(TARGET xsimd AND XTENSOR_USE_XSIMD)
+  target_compile_definitions(basix PUBLIC XTENSOR_USE_XSIMD)
+  target_link_libraries(basix PRIVATE xsimd)
+endif()
+
+# Handle -march=native
+if (XTENSOR_OPTIMIZE AND TARGET xtensor::optimize)
+  target_link_libraries(basix PUBLIC xtensor::optimize)
+elseif(XTENSOR_OPTIMIZE)
+  target_compile_options(basix PUBLIC -march=native)
 endif()
 
 # Note: we use get_target_property/set_target_properties to ensure that

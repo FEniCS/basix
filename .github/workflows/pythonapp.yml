@@ -93,8 +93,6 @@ jobs:
       - name: Build documentation to upload
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
         run: |
-          pip install markdown
-          pip install sphinx sphinx_rtd_theme
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc && python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
       - name: Checkout FEniCS/docs

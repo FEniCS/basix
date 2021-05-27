@@ -8,8 +8,7 @@ Basix is a finite element definition and tabulation runtime library.
 Basix can be installed by following [these instructions](INSTALL.md)
 
 ## Documentation
-Documentation of Basix can be found [here](https://docs.fenicsproject.org/basix/main/cpp/).
-Documentation of the Python interface of Basix can be found [here](https://docs.fenicsproject.org/basix/main/python/).
+Documentation of Basix can be found at https://docs.fenicsproject.org/basix/main/.
 
 ## Supported elements
 

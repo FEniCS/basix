@@ -1,0 +1,18 @@
+.main, .head {margin-left:auto;margin-right:auto;max-width:900px;padding:20px;}
+.main {background-color:#FFFFFF}
+body {background-color:#E6F2FF}
+
+.head .title {font-size:350%;text-align:center}
+.head a, .head a:link, .head a:visited, .head a:active
+ {text-decoration:none;color:black}
+.head a:hover
+ {text-decoration:underline;color:#FF8400}
+
+a, a:link, a:visited, a:active
+ {text-decoration:underline;color:blue}
+a:hover
+ {color:#FF8400}
+
+p {font-family:sans-serif}
+
+h1,h2,h3,h4,h5,h6 {font-weight:bold;color:#000000}

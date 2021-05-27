@@ -95,7 +95,7 @@ auto adapt_x(const py::array_t<double, py::array::c_style>& x)
 PYBIND11_MODULE(_basixcpp, m)
 {
   m.doc() = R"(
-basix provides information about finite elements on the reference cell. It has support for
+Basix provides information about finite elements on the reference cell. It has support for
 interval (1D), triangle and quadrilateral (2D), and tetrahedron, hexahedron, prism and pyramid (3D) reference cells.
 Elements are available in several different types, typically as `ElementName(celltype, degree)`. Not all elements are available
 on all cell types, and an error should be thrown if an invalid combination is requested.

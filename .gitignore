@@ -12,6 +12,7 @@ cpp/basix/version.h
 python/doc/build/*
 python/doc/source/generated/*
 python/testing_build/
+doc/html/*
 
 build*/
 

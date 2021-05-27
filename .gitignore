@@ -1,18 +1,20 @@
 *.pyc
 *~
 *.so
-cpp/doc/html/*
-cpp/doc/latex/*
+
 cpp/Makefile
 cpp/CMakeCache.txt
 cpp/CMakeFiles/*
 cpp/cmake_install.cmake
 cpp/basix/version.h
 
-python/doc/build/*
-python/doc/source/generated/*
+doc/python/build/*
+doc/python/source/generated/*
 python/testing_build/
+doc/cpp/html/*
+doc/cpp/latex/*
 doc/html/*
+doc/_temp
 
 build*/
 

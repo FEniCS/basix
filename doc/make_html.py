@@ -1,6 +1,7 @@
 import argparse
 import markdown
 import os
+import basix
 import re
 
 
@@ -13,7 +14,7 @@ temp_path = os.path.join(path, "_temp")
 
 parser = argparse.ArgumentParser(description="Build defelement.com")
 parser.add_argument('--url', metavar='url',
-                    default="http://localhost", help="URL of built documentation.")
+                    default="http://localhost", help="URL of built documentation")
 
 args = parser.parse_args()
 url = args.url
@@ -55,6 +56,7 @@ def insert_info(txt):
             info = f.read()
         txt = txt.replace("{{STYLESHEETS}}", info)
     txt = txt.replace("{{URL}}", url)
+    txt = txt.replace("{{VERSION}}", basix.__version__)
     txt = re.sub(r"\{\{link:URL/([^\}]*)\}\}", link_markup, txt)
     return txt
 

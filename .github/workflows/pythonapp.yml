@@ -67,7 +67,7 @@ jobs:
           pip install markdown
           pip install sphinx sphinx_rtd_theme
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
-          cd doc && python make_html.py --url https://docs.fenicsproject.org/basix/test
+          cd doc && python make_html.py
 
       - name: Upload C++ documentation artifact
         uses: actions/upload-artifact@v2

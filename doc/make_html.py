@@ -42,6 +42,10 @@ def insert_info(txt):
         with open(os.path.join(temp_path, "navbar.html")) as f:
             info = f.read()
         txt = txt.replace("{{NAVBAR}}", info)
+    if "{{STYLESHEETS}}" in content:
+        with open(os.path.join(temp_path, "stylesheets.html")) as f:
+            info = f.read()
+        txt = txt.replace("{{STYLESHEETS}}", info)
     txt = txt.replace("{{URL}}", url)
     txt = re.sub(r"\{\{link:URL/([^\}]*)\}\}", link_markup, txt)
     return txt
@@ -56,16 +60,17 @@ if os.path.isdir(temp_path):
 os.system(f"mkdir {temp_path}")
 
 # Prepare templates
-for file in ["navbar.html", "intro.html", "outro.html"]:
+for file in ["stylesheets.html", "navbar.html", "intro.html", "outro.html"]:
     with open(os.path.join(template_path, file)) as f:
         content = f.read()
     with open(os.path.join(temp_path, file), "w") as f:
         f.write(insert_info(content))
 
-with open(os.path.join(path, "cpp/header.html.template")) as f:
-    content = f.read()
-with open(os.path.join(path, "cpp/header.html"), "w") as f:
-    f.write(insert_info(content))
+for file in ["cpp/header.html", "python/source/_templates/layout.html"]:
+    with open(os.path.join(path, f"{file}.template")) as f:
+        content = f.read()
+    with open(os.path.join(path, file), "w") as f:
+        f.write(insert_info(content))
 
 # Copy images and assets
 os.system(f"cp -r {img_path} {html_path}/img")

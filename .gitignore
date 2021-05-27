@@ -16,6 +16,9 @@ doc/cpp/latex/*
 doc/html/*
 doc/_temp
 
+doc/python/source/_templates/layout.html
+doc/cpp/header.html
+
 build*/
 
 .*.swp

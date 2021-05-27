@@ -46,6 +46,11 @@ jobs:
           flake8 --statistics test/
           flake8 --statistics python/
 
+      - name: pydocstyle checks
+        run: |
+          pip install pydocstyle
+          python -m pydocstyle python/basix
+
       - name: Install Basix C++
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .

@@ -1,6 +1,8 @@
+import argparse
 import markdown
 import os
 import re
+
 
 path = os.path.dirname(os.path.realpath(__file__))
 html_path = os.path.join(path, "html")
@@ -9,11 +11,17 @@ assets_path = os.path.join(path, "assets")
 template_path = os.path.join(path, "template")
 temp_path = os.path.join(path, "_temp")
 
-url = "http://localhost"
+parser = argparse.ArgumentParser(description="Build defelement.com")
+parser.add_argument('--url', metavar='url',
+                    default="http://localhost", help="URL of built documentation.")
+
+args = parser.parse_args()
+url = args.url
 url_no_http = url.split("//")[1]
 
+
 def unicode_to_html(txt):
-    txt = txt.replace(u"\xe9", f"&eacute;")
+    txt = txt.replace(u"\xe9", "&eacute;")
     return txt
 
 

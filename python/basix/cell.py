@@ -1,3 +1,5 @@
+"""Functions to get cell geometry information."""
+
 from ._basixcpp import cell_volume as volume
 from ._basixcpp import cell_facet_reference_volumes as facet_reference_volumes
 from ._basixcpp import cell_facet_normals as facet_normals

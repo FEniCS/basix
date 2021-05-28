@@ -1,0 +1,27 @@
+.basixmain, .basixhead {margin-left:auto;margin-right:auto;max-width:900px;padding:20px;}
+.basixmain {background-color:#FFFFFF}
+.basixheadwrapper {background-color:#E6F2FF;}
+
+.basixtitle, .basixnav {line-height:normal;font-weight:normal;font-family:Lato, sans-serif}
+
+body {padding:0px;margin:0px}
+
+.basixhead .basixtitle {font-size:60px;text-align:center}
+.basixhead a, .basixhead a:link, .basixhead a:visited, .basixhead a:active
+ {text-decoration:none;color:black}
+.basixhead a:hover
+ {text-decoration:underline;color:#FF8400}
+
+a, a:link, a:visited, a:active
+ {text-decoration:underline;color:blue}
+a:hover
+ {color:#FF8400}
+
+p, li {font-family:sans-serif}
+
+h1,h2,h3,h4,h5,h6 {font-weight:bold;color:#000000}
+
+.basixhead,
+h1,h2,h3,h4,h5,h6 {font-family:Lato, sans-serif;}
+
+.basixnav {display:inline-block;font-size:20px;padding:0px 15px}

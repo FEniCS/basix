@@ -46,6 +46,11 @@ jobs:
           flake8 --statistics test/
           flake8 --statistics python/
 
+      - name: pydocstyle checks
+        run: |
+          pip install pydocstyle
+          python -m pydocstyle python/basix
+
       - name: Install Basix C++
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
@@ -61,23 +66,20 @@ jobs:
           pip install pytest pytest-xdist numpy sympy numba scipy
           pytest -v -n auto --durations 20 test/
 
-      - name: Build Python documentation
+      - name: Build documentation
         if: runner.os == 'Linux'
         run: |
+          pip install markdown
           pip install sphinx sphinx_rtd_theme
-          cd python/doc && make html
-      - name: Build C++ documentation
-        if: runner.os == 'Linux'
-        run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
-          cd cpp/doc && doxygen
+          cd doc && python make_html.py
 
       - name: Upload C++ documentation artifact
         uses: actions/upload-artifact@v2
         with:
           name: doc-cpp
           path: |
-            cpp/doc/html/
+            doc/html/cpp
           retention-days: 2
           if-no-files-found: error
       - name: Upload Python documentation artifact
@@ -85,10 +87,19 @@ jobs:
         with:
           name: doc-python
           path: |
-            python/doc/build/html/
+            doc/html/python
           retention-days: 2
           if-no-files-found: error
 
+      - name: Set version name
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
+        run: |
+          echo "VERSION_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Build documentation to upload
+        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
+        run: |
+          export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
+          cd doc && python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
       - name: Checkout FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
         uses: actions/checkout@v2
@@ -96,20 +107,13 @@ jobs:
           repository: "FEniCS/docs"
           path: "docs"
           ssh-key: "${{ secrets.SSH_GITHUB_DOCS_PRIVATE_KEY }}"
-      - name: Set version name
-        if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
-        run: |
-          echo "VERSION_NAME=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - name: Copy documentation into repository
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
         run: |
           cd docs
-          git rm -r --ignore-unmatch basix/${{ env.VERSION_NAME }}/cpp
-          git rm -r --ignore-unmatch basix/${{ env.VERSION_NAME }}/python
-          mkdir -p basix/${{ env.VERSION_NAME }}/cpp
-          mkdir -p basix/${{ env.VERSION_NAME }}/python
-          cp -r ../cpp/doc/html/* basix/${{ env.VERSION_NAME }}/cpp
-          cp -r ../python/doc/build/html/* basix/${{ env.VERSION_NAME }}/python
+          git rm -r --ignore-unmatch basix/${{ env.VERSION_NAME }}
+          mkdir -p basix/${{ env.VERSION_NAME }}
+          cp -r ../doc/html/* basix/${{ env.VERSION_NAME }}
       - name: Commit and push documentation to FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
         run: |

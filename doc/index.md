@@ -1,6 +1,6 @@
 Basix is a finite element definition and tabulation runtime library.
-It is part of [FEniCSx](https://fenicsproject.org),
-alongside [FFCx](https://github.com/FEniCS/ffcx) and [DOLFINx](https://github.com/FEniCS/dolfinx),
+It is part of [FEniCSx](https://docs.fenicsproject.org),
+alongside [FFCx](https://docs.fenicsproject.org/ffcx) and [DOLFINx](https://docs.fenicsproject.org/dolfinx/cpp),
 
 The main functionality of Basix is written in C++. Documentation of the C++ functionality of Basix can be found
 at {{link:URL/cpp}}.

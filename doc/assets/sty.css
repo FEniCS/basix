@@ -1,27 +1,16 @@
-.basixmain, .basixhead {margin-left:auto;margin-right:auto;max-width:900px;padding:20px;}
-.basixmain {background-color:#FFFFFF}
-.basixheadwrapper {background-color:#E6F2FF;}
+.fenicsmain, .fenicshead {padding:20px;}
+.fenicsheadwrapper {border-bottom:2px solid black;min-height:100px;
+    background-image: url(https://fenicsproject.org/pub/graphics/fenics_logo.svg);
+    background-size:70px; background-repeat:no-repeat;padding:0px 70px;
+    background-position-y: center;}
 
-.basixtitle, .basixnav {line-height:normal;font-weight:normal;font-family:Lato, sans-serif}
+.fenicstitle, .fenicsnav {line-height:normal;font-weight:normal;}
 
-body {padding:0px;margin:0px}
+.fenicshead .fenicstitle {font-size:60px;text-align:center}
+.fenicshead .fenicstitle .fenicsversion {font-size:30px}
 
-.basixhead .basixtitle {font-size:60px;text-align:center}
-.basixhead a, .basixhead a:link, .basixhead a:visited, .basixhead a:active
- {text-decoration:none;color:black}
-.basixhead a:hover
- {text-decoration:underline;color:#FF8400}
+.fenicstitle, .fenicsnav,
+.fenicshead {font-family:Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman', serif}
 
-a, a:link, a:visited, a:active
- {text-decoration:underline;color:blue}
-a:hover
- {color:#FF8400}
+.fenicsnav {display:inline-block;font-size:20px;padding:0px 15px}
 
-p, li {font-family:sans-serif}
-
-h1,h2,h3,h4,h5,h6 {font-weight:bold;color:#000000}
-
-.basixhead,
-h1,h2,h3,h4,h5,h6 {font-family:Lato, sans-serif;}
-
-.basixnav {display:inline-block;font-size:20px;padding:0px 15px}

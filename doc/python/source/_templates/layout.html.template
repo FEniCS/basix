@@ -1,0 +1,9 @@
+{% extends "!layout.html" %}
+{%- block content %}
+    {{NAVBAR}}
+    {{ super() }}
+{% endblock %}
+{%- block extrahead %}  
+  {{ super() }}
+  {{STYLESHEETS}}
+{% endblock %}

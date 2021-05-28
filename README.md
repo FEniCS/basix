@@ -8,8 +8,7 @@ Basix is a finite element definition and tabulation runtime library.
 Basix can be installed by following [these instructions](INSTALL.md)
 
 ## Documentation
-Documentation of Basix can be found [here](https://docs.fenicsproject.org/basix/main/cpp/).
-Documentation of the Python interface of Basix can be found [here](https://docs.fenicsproject.org/basix/main/python/).
+Documentation of Basix can be found at https://docs.fenicsproject.org/basix/main/.
 
 ## Supported elements
 
@@ -41,7 +40,7 @@ The following elements are supported on a triangle:
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
 
-## Quadrilateral
+### Quadrilateral
 In Basix, the sub-entities of the reference quadrilateral are numbered as follows:
 
 ![The numbering of a reference quadrilateral](img/quadrilateral_numbering.png)
@@ -73,7 +72,7 @@ The following elements are supported on a tetrahedron:
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
 
-## Hexahedron
+### Hexahedron
 In Basix, the sub-entities of the reference hexahedron are numbered as follows:
 
 ![The numbering of a reference hexahedron](img/hexahedron_numbering.png)
@@ -89,7 +88,7 @@ The following elements are supported on a hexahedron:
   - [DPC](https://defelement.com/elements/dpc.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
 
-## Prism
+### Prism
 In Basix, the sub-entities of the reference prism are numbered as follows:
 
 ![The numbering of a reference prism](img/prism_numbering.png)
@@ -98,7 +97,7 @@ The following elements are supported on a prism:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
 
-## Pyramid
+### Pyramid
 In Basix, the sub-entities of the reference pyramid are numbered as follows:
 
 ![The numbering of a reference pyramid](img/pyramid_numbering.png)

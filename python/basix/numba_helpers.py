@@ -1,11 +1,12 @@
-import numpy
+"""Helper functions for writing DOLFINx custom kernels using Numba."""
 
+import numpy
 try:
     import numba
     from numba.typed import List
     from numba.core import types
 except ImportError:
-    raise RuntimeError("You must have numba installed to use the numba helper functions.")
+    raise RuntimeError("You must have Numba installed to use the Numba helper functions.")
 
 
 @numba.njit

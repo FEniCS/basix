@@ -144,7 +144,9 @@ for shape in ["interval", "triangle", "tetrahedron",
                 "  text { text-anchor:middle; font-size:15px; font-family: \"Lato Bold\" }\n"
                 "  line { stroke-width: 4px; stroke-linecap: round; stroke: #000000 }\n"
                 "  circle { fill: #FFFFFF; stroke: #000000; stroke-width:4px}\n"
+                "  rect { fill: #FFFFFF; stroke: #FFFFFF; stroke-width:4px}\n"
                 "]]></style>\n")
+        f.write(f"<rect x='0' y='0' width='{xpos - 50}' height='{140 + yadd}' />\n")
 
         f.write(svg)
         f.write("</svg>")

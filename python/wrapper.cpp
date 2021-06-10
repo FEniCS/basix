@@ -95,12 +95,7 @@ auto adapt_x(const py::array_t<double, py::array::c_style>& x)
 PYBIND11_MODULE(_basixcpp, m)
 {
   m.doc() = R"(
-basix provides information about finite elements on the reference cell. It has support for
-interval (1D), triangle and quadrilateral (2D), and tetrahedron, hexahedron, prism and pyramid (3D) reference cells.
-Elements are available in several different types, typically as `ElementName(celltype, degree)`. Not all elements are available
-on all cell types, and an error should be thrown if an invalid combination is requested.
-Each element has a `tabulate` function which returns the basis functions and a number of their derivatives, as desired.
-
+Interface to the Basix C++ library.
 )";
 
   m.attr("__version__") = basix::version();
@@ -183,14 +178,16 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Get the volume of a cell");
   m.def(
       "cell_facet_normals",
-      [](cell::type cell_type) {
+      [](cell::type cell_type)
+      {
         xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
         return py::array_t<double>(normals.shape(), normals.data());
       },
       "Get the normals to the facets of a cell");
   m.def(
       "cell_facet_reference_volumes",
-      [](cell::type cell_type) {
+      [](cell::type cell_type)
+      {
         xt::xtensor<double, 1> volumes
             = cell::facet_reference_volumes(cell_type);
         return py::array_t<double>(volumes.shape(), volumes.data());
@@ -198,21 +195,18 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Get the reference volumes of the facets of a cell");
   m.def(
       "cell_facet_outward_normals",
-      [](cell::type cell_type) {
+      [](cell::type cell_type)
+      {
         xt::xtensor<double, 2> normals = cell::facet_outward_normals(cell_type);
         return py::array_t<double>(normals.shape(), normals.data());
       },
       "Get the outward normals to the facets of a cell");
-  m.def(
-      "cell_facet_orientations",
-      [](cell::type cell_type) {
-        xt::xtensor<bool, 1> orientations = cell::facet_orientations(cell_type);
-        return py::array_t<bool>(orientations.shape(), orientations.data());
-      },
-      "Get the orientations of the facets of a cell");
+  m.def("cell_facet_orientations", &cell::facet_orientations,
+        "Get the orientations of the facets of a cell");
   m.def(
       "cell_facet_jacobians",
-      [](cell::type cell_type) {
+      [](cell::type cell_type)
+      {
         xt::xtensor<double, 3> jacobians = cell::facet_jacobians(cell_type);
         return py::array_t<double>(jacobians.shape(), jacobians.data());
       },
@@ -350,7 +344,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
            [](const FiniteElement& self, py::array_t<double>& data,
               int block_size, std::uint32_t cell_info) {
              xtl::span<double> data_span(data.mutable_data(), data.size());
-             self.apply_inverse_transpose_dof_transformation(data_span, block_size, cell_info);
+             self.apply_inverse_transpose_dof_transformation(
+                 data_span, block_size, cell_info);
              return py::array_t<double>(data_span.size(), data_span.data());
            })
       .def("base_transformations",

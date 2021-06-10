@@ -1,0 +1,16 @@
+.fenicsmain, .fenicshead {padding:20px;}
+.fenicsheadwrapper {border-bottom:2px solid black;min-height:100px;
+    background-image: url(https://fenicsproject.org/pub/graphics/fenics_logo.svg);
+    background-size:70px; background-repeat:no-repeat;padding:0px 70px;
+    background-position-y: center;}
+
+.fenicstitle, .fenicsnav {line-height:normal;font-weight:normal;}
+
+.fenicshead .fenicstitle {font-size:60px;text-align:center}
+.fenicshead .fenicstitle .fenicsversion {font-size:30px}
+
+.fenicstitle, .fenicsnav,
+.fenicshead {font-family:Georgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman', serif}
+
+.fenicsnav {display:inline-block;font-size:20px;padding:0px 15px}
+

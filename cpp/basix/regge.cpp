@@ -148,14 +148,16 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
 
   const std::vector<int> edge_ref
       = doftransforms::interval_reflection(degree + 1);
-  xt::xtensor<double, 2> et = xt::zeros<double>({edge_ref.size(), edge_ref.size()});
+  const std::array<std::size_t, 3> e_shape
+      = {1, edge_ref.size(), edge_ref.size()};
+  xt::xtensor<double, 3> et = xt::zeros<double>(e_shape);
   for (std::size_t i = 0; i < edge_ref.size(); ++i)
-    et(i, edge_ref[i]) = 1;
-  entity_transformations.push_back(et);
+    et(0, i, edge_ref[i]) = 1;
+  entity_transformations[cell::type::interval] = et;
 
   if (tdim > 2)
   {
@@ -169,23 +171,21 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
     const xt::xtensor_fixed<double, xt::xshape<3, 3>> sub_ref
         = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
 
-    std::array<std::size_t, 2> shape
-        = {face_ref_perm.size() * 3, face_ref_perm.size() * 3};
-    xt::xtensor<double, 2> face_rot = xt::zeros<double>(shape);
-    xt::xtensor<double, 2> face_ref = xt::zeros<double>(shape);
+    const std::array<std::size_t, 3> f_shape
+        = {2, face_ref_perm.size() * 3, face_ref_perm.size() * 3};
+    xt::xtensor<double, 3> face_trans = xt::zeros<double>(f_shape);
 
     for (std::size_t i = 0; i < face_ref_perm.size(); ++i)
     {
-      xt::view(face_rot, xt::range(3 * i, 3 * i + 3),
+      xt::view(face_trans, 0, xt::range(3 * i, 3 * i + 3),
                xt::range(3 * face_rot_perm[i], 3 * face_rot_perm[i] + 3))
           = sub_rot;
-      xt::view(face_ref, xt::range(3 * i, 3 * i + 3),
+      xt::view(face_trans, 1, xt::range(3 * i, 3 * i + 3),
                xt::range(3 * face_ref_perm[i], 3 * face_ref_perm[i] + 3))
           = sub_ref;
     }
 
-    entity_transformations.push_back(face_rot);
-    entity_transformations.push_back(face_ref);
+    entity_transformations[cell::type::triangle] = face_trans;
   }
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},

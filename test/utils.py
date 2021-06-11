@@ -9,7 +9,8 @@ def parametrize_over_elements(order, reference=None):
     elementlist = []
 
     elementlist += [(c, "Lagrange", o)
-                    for c in ["interval", "triangle", "tetrahedron", "quadrilateral", "hexahedron"]
+                    for c in ["interval", "triangle", "tetrahedron", "quadrilateral", "hexahedron",
+                              "prism", "pyramid"]
                     for o in range(1, order + 1)]
     elementlist += [(c, "Discontinuous Lagrange", o)
                     for c in ["interval", "triangle", "tetrahedron", "quadrilateral", "hexahedron"]

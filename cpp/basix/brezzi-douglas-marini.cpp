@@ -56,19 +56,16 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::vector<xt::xtensor<double, 2>> entity_transformations;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
   switch (tdim)
   {
   case 2:
-    entity_transformations.push_back(
-        xt::view(facet_transforms, 0, xt::all(), xt::all()));
+    entity_transformations[cell::type::interval] = facet_transforms;
     break;
   case 3:
-    entity_transformations.push_back(xt::xtensor<double, 2>({0, 0}));
-    entity_transformations.push_back(
-        xt::view(facet_transforms, 0, xt::all(), xt::all()));
-    entity_transformations.push_back(
-        xt::view(facet_transforms, 1, xt::all(), xt::all()));
+    entity_transformations[cell::type::interval]
+        = xt::xtensor<double, 3>({1, 0, 0});
+    entity_transformations[cell::type::triangle] = facet_transforms;
     break;
   default:
     throw std::runtime_error("Invalid topological dimension.");

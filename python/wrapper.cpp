@@ -355,11 +355,14 @@ Interface to the Basix C++ library.
            })
       .def("entity_transformations",
            [](const FiniteElement& self) {
-             std::vector<xt::xtensor<double, 2>> t
+             std::map<cell::type, xt::xtensor<double, 3>> t
                  = self.entity_transformations();
-             std::vector<py::array_t<double>> t2;
-             for (std::size_t i = 0; i < t.size(); ++i)
-               t2.push_back(py::array_t<double>(t[i].shape(), t[i].data()));
+             py::dict t2;
+             for (auto tpart : t)
+             {
+               t2[cell::type_to_str(tpart.first).c_str()] = py::array_t<double>(
+                   tpart.second.shape(), tpart.second.data());
+             }
              return t2;
            })
       .def_property_readonly("degree", &FiniteElement::degree)

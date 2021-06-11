@@ -332,7 +332,14 @@ Interface to the Basix C++ library.
              self.apply_dof_transformation(data_span, block_size, cell_info);
              return py::array_t<double>(data_span.size(), data_span.data());
            })
-
+      .def("apply_dof_transformation_to_transpose",
+           [](const FiniteElement& self, py::array_t<double>& data,
+              int block_size, std::uint32_t cell_info) {
+             xtl::span<double> data_span(data.mutable_data(), data.size());
+             self.apply_dof_transformation_to_transpose(data_span, block_size,
+                                                        cell_info);
+             return py::array_t<double>(data_span.size(), data_span.data());
+           })
       .def("apply_inverse_transpose_dof_transformation",
            [](const FiniteElement& self, py::array_t<double>& data,
               int block_size, std::uint32_t cell_info) {
@@ -349,6 +356,7 @@ Interface to the Basix C++ library.
       .def("entity_transformations",
            [](const FiniteElement& self) {
              std::map<cell::type, xt::xtensor<double, 3>> t
+             std::vector<xt::xtensor<double, 2>> t
                  = self.entity_transformations();
              py::dict t2;
              for (auto tpart : t)

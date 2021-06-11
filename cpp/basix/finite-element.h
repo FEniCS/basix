@@ -710,8 +710,8 @@ void FiniteElement::apply_dof_transformation_to_transpose(
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
-        precompute::apply_matrix_to_transpose(_etrans[0], data, dofstart,
-                                              block_size);
+        precompute::apply_matrix_to_transpose(
+            _etrans.at(cell::type::interval)[0], data, dofstart, block_size);
       dofstart += _edofs[1][e];
     }
 
@@ -722,13 +722,15 @@ void FiniteElement::apply_dof_transformation_to_transpose(
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-          precompute::apply_matrix_to_transpose(_etrans[2], data, dofstart,
-                                                block_size);
+          precompute::apply_matrix_to_transpose(
+              _etrans.at(_cell_subentity_types[2][f])[1], data, dofstart,
+              block_size);
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-          precompute::apply_matrix_to_transpose(_etrans[1], data, dofstart,
-                                                block_size);
+          precompute::apply_matrix_to_transpose(
+              _etrans.at(_cell_subentity_types[2][f])[0], data, dofstart,
+              block_size);
         dofstart += _edofs[2][f];
       }
     }

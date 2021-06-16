@@ -406,6 +406,12 @@ FiniteElement::FiniteElement(
       _etrans[et.first] = std::vector<
           std::tuple<std::vector<std::size_t>, std::vector<double>,
                      xt::xtensor<double, 2>>>(et.second.shape(0));
+      _etransT[et.first] = std::vector<
+          std::tuple<std::vector<std::size_t>, std::vector<double>,
+                     xt::xtensor<double, 2>>>(et.second.shape(0));
+      _etrans_invT[et.first] = std::vector<
+          std::tuple<std::vector<std::size_t>, std::vector<double>,
+                     xt::xtensor<double, 2>>>(et.second.shape(0));
       _etrans_inv[et.first] = std::vector<
           std::tuple<std::vector<std::size_t>, std::vector<double>,
                      xt::xtensor<double, 2>>>(et.second.shape(0));
@@ -416,6 +422,8 @@ FiniteElement::FiniteElement(
           const xt::xtensor<double, 2>& M
               = xt::view(et.second, i, xt::all(), xt::all());
           _etrans[et.first][i] = precompute::prepare_matrix(M);
+          auto M_t = xt::transpose(M);
+          _etransT[et.first][i] = precompute::prepare_matrix(M_t);
 
           xt::xtensor<double, 2> Minv;
           // Rotation of a face: this is in the only base transformation such
@@ -432,8 +440,9 @@ FiniteElement::FiniteElement(
           else
             Minv = M;
 
+          _etrans_inv[et.first][i] = precompute::prepare_matrix(Minv);
           auto MinvT = xt::transpose(Minv);
-          _etrans_inv[et.first][i] = precompute::prepare_matrix(MinvT);
+          _etrans_invT[et.first][i] = precompute::prepare_matrix(MinvT);
         }
       }
     }

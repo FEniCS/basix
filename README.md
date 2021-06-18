@@ -48,7 +48,7 @@ In Basix, the sub-entities of the reference quadrilateral are numbered as follow
 The following elements are supported on a quadrilateral:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
-  - [Nédélec first kind](https://defelement.com/elements/qcurl.html)
+  - [Nédélec first kind](https://defelement.com/elements/nedelec1.html)
   - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
   - [Nédélec second kind](https://defelement.com/elements/scurl.html)
   - [Brezzi-Douglas-Marini](https://defelement.com/elements/sdiv.html)
@@ -80,7 +80,7 @@ In Basix, the sub-entities of the reference hexahedron are numbered as follows:
 The following elements are supported on a hexahedron:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
-  - [Nédélec first kind](https://defelement.com/elements/qcurl.html)
+  - [Nédélec first kind](https://defelement.com/elements/nedelec1.html)
   - [Raviart-Thomas](https://defelement.com/elements/qdiv.html)
   - [Nédélec second kind](https://defelement.com/elements/scurl.html)
   - [Brezzi-Douglas-Marini](https://defelement.com/elements/sdiv.html)

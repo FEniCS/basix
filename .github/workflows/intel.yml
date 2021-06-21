@@ -21,7 +21,6 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-20.04
-    container: fenicsproject/test-env:mpich
 
     defaults:
       run:
@@ -49,15 +48,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
-
-      - name: Install Intel compilers
-        run: |
-          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-          apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-          echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
-          apt update
-          # apt install -y intel-hpckit
-          apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
       
       - name: Install pybind11
         run: |
@@ -66,6 +56,14 @@ jobs:
       - name: Install dependencies (non-Python, Linux)
         run: |
           sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
+
+      - name: Install Intel compilers
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+          apt update
+          apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
       
       - name: Install Basix C++
         run: |

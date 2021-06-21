@@ -121,7 +121,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
     J.resize({2, 2, 2});
     K.resize({2, 2, 2});
-    xt::xtensor_fixed<double, xt::xshape<2, 2>> A;
+    xt::xtensor<double, 2> A = xt::zeros<double>({2, 2});
 
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
@@ -150,7 +150,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
     J.resize({2, 2, 2});
     K.resize({2, 2, 2});
-    xt::xtensor_fixed<double, xt::xshape<2, 2>> A;
+    xt::xtensor<double, 2> A = xt::zeros<double>({2, 2});
 
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
@@ -239,7 +239,8 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   const xt::xtensor<double, 3> t
       = create_dot_moment_dof_transformations(moment_space);
 
-  xt::xtensor_fixed<double, xt::xshape<2, 2>> rot, ref;
+  xt::xtensor<double, 2> rot = xt::zeros<double>({2, 2});
+  xt::xtensor<double, 2> ref = xt::zeros<double>({2, 2});
   cell::type celltype = moment_space.cell_type();
   switch (celltype)
   {

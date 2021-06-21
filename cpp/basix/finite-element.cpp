@@ -342,7 +342,7 @@ FiniteElement::FiniteElement(
   // Check if base transformations are all permutations
   _dof_transformations_are_permutations = true;
   _dof_transformations_are_identity = true;
-  for (const auto &et : _entity_transformations)
+  for (const auto& et : _entity_transformations)
   {
     for (std::size_t i = 0;
          _dof_transformations_are_permutations and i < et.second.shape(0); ++i)
@@ -371,7 +371,7 @@ FiniteElement::FiniteElement(
     // If transformations are permutations, then create the permutations
     if (_dof_transformations_are_permutations)
     {
-      for (const auto &et : _entity_transformations)
+      for (const auto& et : _entity_transformations)
       {
         _eperm[et.first]
             = std::vector<std::vector<std::size_t>>(et.second.shape(0));
@@ -401,7 +401,7 @@ FiniteElement::FiniteElement(
     }
 
     // Precompute the DOF transformations
-    for (const auto &et : _entity_transformations)
+    for (const auto& et : _entity_transformations)
     {
       _etrans[et.first] = std::vector<
           std::tuple<std::vector<std::size_t>, std::vector<double>,

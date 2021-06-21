@@ -36,7 +36,7 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
   for (std::size_t i = 0; i < dim; ++i)
   {
     double max_det = 0;
-    std::size_t col = -1;
+    std::size_t col;
     for (std::size_t j = 0; j < dim; ++j)
     {
       bool used = false;

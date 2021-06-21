@@ -20,19 +20,7 @@ on:
 jobs:
   build:
     name: Build and test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-20.04]
-        python-version: [3.8]
-
-    defaults:
-      run:
-        shell: bash
-
-    env:
-      CC: ${{ matrix.c_compiler }}
-      CXX: ${{ matrix.cxx_compiler }}
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
@@ -42,7 +30,17 @@ jobs:
             cxx_compiler: icpc
           - compiler: "LLVM-based"
             c_compiler: icx
-            cxx_compiler: icpx
+            cxx_compiler: icpx    
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      CC: ${{ matrix.c_compiler }}
+      CXX: ${{ matrix.cxx_compiler }}
+
+
 
     steps:
       - uses: actions/checkout@v2
@@ -50,7 +48,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.8
 
       - name: Install Intel compilers
         run: |
@@ -67,7 +65,6 @@ jobs:
           pip install pybind11
       
       - name: Install dependencies (non-Python, Linux)
-        if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
       

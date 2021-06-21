@@ -36,18 +36,14 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
   for (std::size_t i = 0; i < dim; ++i)
   {
     double max_det = 0;
-    std::size_t col = -1;
+    std::size_t col = 0;
     for (std::size_t j = 0; j < dim; ++j)
     {
-      bool used = false;
-      for (std::size_t k = 0; k < i; ++k)
-        if (perm[k] == j)
-          used = true;
-
+      const bool used = std::find(perm.begin(), std::next(perm.begin(), i), j)
+                        != std::next(perm.begin(), i);
       if (!used)
       {
-        xt::view(permuted_matrix, xt::all(), i)
-            = xt::view(matrix, xt::all(), j);
+        xt::col(permuted_matrix, i) = xt::col(matrix, j);
         double det = std::abs(xt::linalg::det(xt::view(
             permuted_matrix, xt::range(0, i + 1), xt::range(0, i + 1))));
         if (det > max_det)
@@ -57,7 +53,8 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
         }
       }
     }
-    xt::view(permuted_matrix, xt::all(), i) = xt::view(matrix, xt::all(), col);
+
+    xt::col(permuted_matrix, i) = xt::col(matrix, col);
     perm[i] = col;
   }
 
@@ -73,6 +70,7 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
       xt::view(prepared_matrix, i, xt::range(i + 1, dim))
           = xt::view(permuted_matrix, i, xt::range(i + 1, dim));
     }
+
     if (i > 0)
     {
       xt::xtensor<T, 1> v = xt::linalg::solve(
@@ -81,7 +79,6 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
           xt::view(permuted_matrix, i, xt::range(0, i)));
 
       xt::view(prepared_matrix, i, xt::range(0, i)) = v;
-
       diag[i] -= xt::linalg::dot(
           v, xt::view(permuted_matrix, xt::range(0, i), i))(0);
       for (std::size_t j = i + 1; j < dim; ++j)

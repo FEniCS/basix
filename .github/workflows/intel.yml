@@ -1,0 +1,89 @@
+name: Intel compilers
+
+# on:
+#   schedule:
+#     # '*' is a special character in YAML, so string must be quoted
+#     - cron: "0 2 * * TUE"
+#   workflow_dispatch: ~
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "*.*.*.*"
+      - "*.*.*"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04]
+        python-version: [3.8]
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      CC: ${{ matrix.c_compiler }}
+      CXX: ${{ matrix.cxx_compiler }}
+
+    strategy:
+      matrix:
+        include:
+          - compiler: "Classic"
+            c_compiler: icc
+            cxx_compiler: icpc
+          - compiler: "LLVM-based"
+            c_compiler: icx
+            cxx_compiler: icpx
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Intel compilers
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+          apt update
+          # apt install -y intel-hpckit
+          apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+      
+      - name: Install pybind11
+        run: |
+          . /opt/intel/oneapi/setvars.sh
+          pip install pybind11
+      
+      - name: Install dependencies (non-Python, Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
+      
+      - name: Install Basix C++
+        run: |
+          . /opt/intel/oneapi/setvars.sh
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
+          cmake --build build-dir
+          sudo cmake --install build-dir
+      
+      - name: Build Basix Python
+        run: |
+          cd python
+          pip install .
+      
+      - name: Run units tests
+        run: |
+          pip install pytest pytest-xdist numpy sympy numba scipy
+          pytest -v -n auto --durations 20 test/

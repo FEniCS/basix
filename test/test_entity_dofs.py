@@ -11,13 +11,13 @@ def test_number_of_dofs(cell_name, order, element_name):
     element = basix.create_element(element_name, cell_name, order)
 
     entity_dofs = element.entity_dofs
-    entity_dof_counts = element.entity_dof_counts
+    num_entity_dofs = element.num_entity_dofs
 
-    for entity_dofs, entity_dof_counts in zip(element.entity_dofs, element.entity_dof_counts):
-        for dofs, ndofs in zip(entity_dofs, entity_dof_counts):
+    for entity_dofs, num_entity_dofs in zip(element.entity_dofs, element.num_entity_dofs):
+        for dofs, ndofs in zip(entity_dofs, num_entity_dofs):
             assert len(dofs) == ndofs
 
-    assert element.dim == sum(sum(i) for i in element.entity_dof_counts)
+    assert element.dim == sum(sum(i) for i in element.num_entity_dofs)
 
 
 @parametrize_over_elements(4)

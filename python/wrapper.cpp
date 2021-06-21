@@ -370,8 +370,7 @@ Interface to the Basix C++ library.
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
-      .def_property_readonly("entity_dof_counts",
-                             &FiniteElement::entity_dof_counts)
+      .def_property_readonly("num_entity_dofs", &FiniteElement::num_entity_dofs)
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("entity_closure_dofs",
                              &FiniteElement::entity_closure_dofs)

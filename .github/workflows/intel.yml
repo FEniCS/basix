@@ -75,10 +75,12 @@ jobs:
       
       - name: Build Basix Python
         run: |
+          . /opt/intel/oneapi/setvars.sh
           cd python
           pip install .
       
       - name: Run units tests
         run: |
+          . /opt/intel/oneapi/setvars.sh
           pip install pytest pytest-xdist numpy sympy numba scipy
           pytest -v -n auto --durations 20 test/

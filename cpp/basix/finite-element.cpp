@@ -324,6 +324,8 @@ FiniteElement::FiniteElement(
   // interpolation data)
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell_type);
+  const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
+      = cell::sub_entity_connectivity(cell_type);
   _edof_counts.resize(_cell_tdim + 1);
   _edofs.resize(_cell_tdim + 1);
   int dof = 0;
@@ -336,6 +338,23 @@ FiniteElement::FiniteElement(
       _edof_counts[d][e] = M[d][e].shape(0);
       for (int i = 0; i < _edof_counts[d][e]; ++i)
         _edofs[d][e].push_back(dof++);
+    }
+  }
+
+  _e_closure_dofs.resize(_cell_tdim + 1);
+  for (std::size_t d = 0; d < _edof_counts.size(); ++d)
+  {
+    _e_closure_dofs[d].resize(cell::num_sub_entities(_cell_type, d));
+    for (std::size_t e = 0; e < _e_closure_dofs[d].size(); ++e)
+    {
+      for (std::size_t dim = 0; dim <= d; ++dim)
+      {
+        for (int c : connectivity[d][e][dim])
+        {
+          for (std::size_t i = 0; i < _edofs[dim][c].size(); ++i)
+            _e_closure_dofs[d][e].push_back(_edofs[dim][c][i]);
+        }
+      }
     }
   }
 
@@ -501,6 +520,12 @@ const std::vector<std::vector<std::vector<int>>>&
 FiniteElement::entity_dofs() const
 {
   return _edofs;
+}
+//-----------------------------------------------------------------------------
+const std::vector<std::vector<std::vector<int>>>&
+FiniteElement::entity_closure_dofs() const
+{
+  return _e_closure_dofs;
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 4>

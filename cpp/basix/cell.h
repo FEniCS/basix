@@ -35,6 +35,12 @@ xt::xtensor<double, 2> geometry(cell::type celltype);
 /// @return List of topology (vertex indices) for each dimension (0..tdim)
 std::vector<std::vector<std::vector<int>>> topology(cell::type celltype);
 
+/// Get the numbers of entitys connected to each subentity of the cell
+/// @param celltype Cell Type
+/// @return List of topology (vertex indices) for each dimension (0..tdim)
+std::vector<std::vector<std::vector<std::vector<int>>>>
+sub_entity_connectivity(cell::type celltype);
+
 /// Sub-entity of a cell, given by topological dimension and index
 /// @param celltype The cell::type
 /// @param dim Dimension of sub-entity

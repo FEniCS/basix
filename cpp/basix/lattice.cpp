@@ -233,11 +233,11 @@ xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
 
   xt::xtensor<double, 2> x({tri_pts.shape(0) * line_pts.shape(0), 3});
   std::array<std::size_t, 2> reps = {line_pts.shape(0), 1};
-  xt::view(x, xt::all(), xt::range(0, 2)) = xt::tile(tri_pts, reps);
+  xt::view(x, xt::all(), xt::range(0, 2)).assign(xt::tile(tri_pts, reps));
   for (std::size_t i = 0; i < line_pts.shape(0); ++i)
   {
     auto rows = xt::range(i * tri_pts.shape(0), (i + 1) * tri_pts.shape(0));
-    xt::view(x, rows, xt::range(2, 3)) = line_pts(i);
+    xt::view(x, rows, 2) = line_pts(i);
   }
 
   return x;
@@ -261,7 +261,8 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
 
   // Get interpolated value at r in range [-1, 1]
   FiniteElement L = create_dlagrange(cell::type::interval, n);
-  auto w = [&](double r) -> double {
+  auto w = [&](double r) -> double
+  {
     xt::xtensor<double, 1> rr = {0.5 * (r + 1.0)};
     xt::xtensor<double, 1> v = xt::view(L.tabulate(0, rr), 0, 0, xt::all(), 0);
     double d = 0.0;

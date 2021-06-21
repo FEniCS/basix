@@ -78,7 +78,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
           const auto lattice
               = lattice::create(ct, degree, lattice::type::equispaced, false);
-
           const std::size_t num_dofs = lattice.shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
           M[dim][e] = xt::xtensor<double, 3>(s);

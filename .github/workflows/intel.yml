@@ -39,6 +39,7 @@ jobs:
     env:
       CC: ${{ matrix.c_compiler }}
       CXX: ${{ matrix.cxx_compiler }}
+      DEBIAN_FRONTEND: noninteractive
 
 
     steps:

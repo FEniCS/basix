@@ -5,6 +5,7 @@
 import basix
 import pytest
 import numpy as np
+import random
 from .utils import parametrize_over_elements
 
 
@@ -38,6 +39,29 @@ def test_non_zero(cell_name, element_name, order):
     for t in e.base_transformations():
         for row in t:
             assert max(abs(i) for i in row) > 1e-6
+
+
+@parametrize_over_elements(5)
+def test_apply_to_transpose(cell_name, element_name, order):
+    random.seed(42)
+
+    e = basix.create_element(element_name, cell_name, order)
+
+    size = e.dim
+
+    for i in range(10):
+        cell_info = random.randrange(2**30)
+
+        data1 = np.array(list(range(size**2)), dtype=np.float32)
+        data1 = e.apply_dof_transformation(data1, size, cell_info)
+        data1 = data1.reshape((size, size))
+
+        # This is the transpose of the data used above
+        data2 = np.array([size * j + i for i in range(size) for j in range(size)], dtype=np.float32)
+        data2 = e.apply_dof_transformation_to_transpose(data2, size, cell_info)
+        data2 = data2.reshape((size, size))
+
+        assert np.allclose(data1.transpose(), data2)
 
 
 @parametrize_over_elements(5, "interval")
@@ -90,6 +114,32 @@ def test_hexahedron_transformation_orders(element_name, order):
     identity = np.identity(e.dim)
     for i, order in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
+        assert np.allclose(
+            np.linalg.matrix_power(bt[i], order),
+            identity)
+
+
+@parametrize_over_elements(5, "prism")
+def test_prism_transformation_orders(element_name, order):
+    e = basix.create_element(element_name, "prism", order)
+    bt = e.base_transformations()
+    assert len(bt) == 19
+    identity = np.identity(e.dim)
+    for i, order in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2,
+                               3, 2, 4, 2, 4, 2, 4, 2, 3, 2]):
+        assert np.allclose(
+            np.linalg.matrix_power(bt[i], order),
+            identity)
+
+
+@parametrize_over_elements(5, "pyramid")
+def test_pyramid_transformation_orders(element_name, order):
+    e = basix.create_element(element_name, "pyramid", order)
+    bt = e.base_transformations()
+    assert len(bt) == 18
+    identity = np.identity(e.dim)
+    for i, order in enumerate([2, 2, 2, 2, 2, 2, 2, 2,
+                               4, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
         assert np.allclose(
             np.linalg.matrix_power(bt[i], order),
             identity)
@@ -220,8 +270,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
                                    j_slice[start: start + ndofs])
 
 
-# @parametrize_over_elements(5, "hexahedron")
-@parametrize_over_elements(2, "hexahedron")
+@parametrize_over_elements(3, "hexahedron")
 def test_transformation_of_tabulated_data_hexahedron(element_name, order):
     if order > 4 and element_name in ["Raviart-Thomas", "Nedelec 1st kind H(curl)"]:
         pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "
@@ -288,4 +337,136 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[13].dot(i_slice))[start: start + ndofs],
+                                   j_slice[start: start + ndofs])
+
+
+@parametrize_over_elements(3, "prism")
+def test_transformation_of_tabulated_data_prism(element_name, order):
+    e = basix.create_element(element_name, "prism", order)
+    bt = e.base_transformations()
+
+    N = 4
+    points = np.array([[i / N, j / N, k / N]
+                       for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1)])
+    values = e.tabulate_x(0, points)[0]
+
+    start = sum(e.entity_dofs[0])
+    ndofs = e.entity_dofs[1][0]
+    if ndofs != 0:
+        # Check that the 0th transformation undoes the effect of reflecting edge 0
+        reflected_points = np.array([[1 - p[1] - p[0], p[1], p[2]] for p in points])
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
+
+        _J = np.array([[-1, 0, 0], [-1, 1, 0], [0, 0, 1]])
+        J = np.array([_J for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J) for p in points])
+        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        for i, j in zip(values, mapped_values):
+            for d in range(e.value_size):
+                i_slice = i[:, d]
+                j_slice = j[:, d]
+                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
+                                   j_slice[start: start + ndofs])
+
+    start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
+    ndofs = e.entity_dofs[2][0]
+    if ndofs != 0:
+        # Check that the 10th transformation undoes the effect of rotating face 0
+        rotated_points = np.array([[1 - p[0] - p[1], p[0], p[2]] for p in points])
+        rotated_values = e.tabulate_x(0, rotated_points)[0]
+
+        _J = np.array([[-1, 1, 0], [-1, 0, 0], [0, 0, 1]])
+        J = np.array([_J for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J) for p in points])
+        mapped_values = e.map_push_forward(rotated_values, J, detJ, K)
+        for i, j in zip(values, mapped_values):
+            for d in range(e.value_size):
+                i_slice = i[:, d]
+                j_slice = j[:, d]
+                assert np.allclose(bt[10].dot(i_slice)[start: start + ndofs],
+                                   j_slice[start: start + ndofs])
+
+    if ndofs != 0:
+        # Check that the 11th transformation undoes the effect of reflecting face 0
+        reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
+
+        _J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+        J = np.array([_J for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J) for p in points])
+        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        for i, j in zip(values, mapped_values):
+            for d in range(e.value_size):
+                i_slice = i[:, d]
+                j_slice = j[:, d]
+                assert np.allclose((bt[11].dot(i_slice))[start: start + ndofs],
+                                   j_slice[start: start + ndofs])
+
+
+@parametrize_over_elements(3, "pyramid")
+def test_transformation_of_tabulated_data_pyramid(element_name, order):
+    e = basix.create_element(element_name, "pyramid", order)
+    bt = e.base_transformations()
+
+    N = 4
+    points = np.array([[i / N, j / N, k / N]
+                       for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1)])
+    values = e.tabulate_x(0, points)[0]
+
+    start = sum(e.entity_dofs[0])
+    ndofs = e.entity_dofs[1][0]
+    if ndofs != 0:
+        # Check that the 0th transformation undoes the effect of reflecting edge 0
+        reflected_points = np.array([[1 - p[2] - p[0], p[1], p[2]] for p in points])
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
+
+        _J = np.array([[-1, 0, 0], [0, 1, 0], [-1, 0, 1]])
+        J = np.array([_J for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J) for p in points])
+        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        for i, j in zip(values, mapped_values):
+            for d in range(e.value_size):
+                i_slice = i[:, d]
+                j_slice = j[:, d]
+                assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
+                                   j_slice[start: start + ndofs])
+
+    start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
+    ndofs = e.entity_dofs[2][0]
+    if ndofs != 0:
+        # Check that the 8th transformation undoes the effect of rotating face 0
+        rotated_points = np.array([[1 - p[1] - p[2], p[0], p[2]] for p in points])
+        rotated_values = e.tabulate_x(0, rotated_points)[0]
+
+        _J = np.array([[0, 1, 0], [-1, 0, 0], [-1, 0, 1]])
+        J = np.array([_J for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J) for p in points])
+        mapped_values = e.map_push_forward(rotated_values, J, detJ, K)
+        for i, j in zip(values, mapped_values):
+            for d in range(e.value_size):
+                i_slice = i[:, d]
+                j_slice = j[:, d]
+                assert np.allclose(bt[8].dot(i_slice)[start: start + ndofs],
+                                   j_slice[start: start + ndofs])
+
+    if ndofs != 0:
+        # Check that the 9th transformation undoes the effect of reflecting face 0
+        reflected_points = np.array([[p[1], p[0], p[2]] for p in points])
+        reflected_values = e.tabulate_x(0, reflected_points)[0]
+
+        _J = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]])
+        J = np.array([_J for p in points])
+        detJ = np.array([np.linalg.det(_J) for p in points])
+        K = np.array([np.linalg.inv(_J) for p in points])
+        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        for i, j in zip(values, mapped_values):
+            for d in range(e.value_size):
+                i_slice = i[:, d]
+                j_slice = j[:, d]
+                assert np.allclose((bt[9].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])

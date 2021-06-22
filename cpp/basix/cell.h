@@ -94,6 +94,10 @@ std::vector<bool> facet_orientations(cell::type cell_type);
 /// @param cell_type Type of cell
 xt::xtensor<double, 1> facet_reference_volumes(cell::type cell_type);
 
+/// Get the reference volumes of the facets of a reference cell
+/// @param cell_type Type of cell
+std::vector<std::vector<cell::type>> subentity_types(cell::type cell_type);
+
 /// Get the jacobians of the facets of a reference cell
 /// @param cell_type Type of cell
 xt::xtensor<double, 3> facet_jacobians(cell::type cell_type);

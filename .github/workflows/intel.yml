@@ -1,0 +1,75 @@
+name: Intel compilers
+
+on:
+  schedule:
+    # '*' is a special character in YAML, so string must be quoted
+    - cron: "0 2 * * TUE"
+  workflow_dispatch: ~
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-20.04
+
+    defaults:
+      run:
+        shell: bash
+
+    strategy:
+      matrix:
+        include:
+          - compiler: "Classic"
+            c_compiler: icc
+            cxx_compiler: icpc
+          - compiler: "LLVM-based"
+            c_compiler: icx
+            cxx_compiler: icpx    
+
+    env:
+      CC: ${{ matrix.c_compiler }}
+      CXX: ${{ matrix.cxx_compiler }}
+      DEBIAN_FRONTEND: noninteractive
+
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      
+      - name: Install pybind11
+        run: |
+          pip install pybind11
+      
+      - name: Install dependencies (non-Python, Linux)
+        run: |
+          sudo apt-get install -y ninja-build
+
+      - name: Install Intel compilers
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+          sudo apt update
+          sudo apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+      
+      - name: Install Basix C++
+        run: |
+          . /opt/intel/oneapi/setvars.sh
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
+          cmake --build build-dir
+          sudo cmake --install build-dir
+      
+      - name: Build Basix Python
+        run: |
+          . /opt/intel/oneapi/setvars.sh
+          cd python
+          pip install .
+      
+      - name: Run units tests
+        run: |
+          . /opt/intel/oneapi/setvars.sh
+          pip install pytest pytest-xdist numpy sympy numba scipy
+          pytest -v -n auto --durations 20 test/

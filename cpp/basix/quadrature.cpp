@@ -3,13 +3,13 @@
 // SPDX-License-Identifier:    MIT
 
 #include "quadrature.h"
-#include <xtl/xspan.hpp>
 #include <cmath>
 #include <vector>
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xview.hpp>
+#include <xtl/xspan.hpp>
 
 using namespace xt::placeholders; // required for `_` to work
 
@@ -289,15 +289,14 @@ make_default_tetrahedron_quadrature(int m)
   {
     // Scheme from Zienkiewicz and Taylor, 4 points, degree of precision 2
     constexpr double a = 0.585410196624969, b = 0.138196601125011;
-    xt::xtensor_fixed<double, xt::xshape<4, 3>> x
-        = {{a, b, b}, {b, a, b}, {b, b, a}, {b, b, b}};
+    xt::xtensor<double, 2> x = {{a, b, b}, {b, a, b}, {b, b, a}, {b, b, b}};
     return {x, {1.0 / 24.0, 1.0 / 24.0, 1.0 / 24.0, 1.0 / 24.0}};
   }
   else if (m == 3)
   {
     // Scheme from Zienkiewicz and Taylor, 5 points, degree of precision 3
     // Note : this scheme has a negative weight
-    xt::xtensor_fixed<double, xt::xshape<5, 3>> x{
+    xt::xtensor<double, 2> x{
         {0.2500000000000000, 0.2500000000000000, 0.2500000000000000},
         {0.5000000000000000, 0.1666666666666666, 0.1666666666666666},
         {0.1666666666666666, 0.5000000000000000, 0.1666666666666666},
@@ -311,7 +310,7 @@ make_default_tetrahedron_quadrature(int m)
     // Values taken from
     // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
     // (KEAST5)
-    xt::xtensor_fixed<double, xt::xshape<14, 3>> x
+    xt::xtensor<double, 2> x
         = {{0.0000000000000000, 0.5000000000000000, 0.5000000000000000},
            {0.5000000000000000, 0.0000000000000000, 0.5000000000000000},
            {0.5000000000000000, 0.5000000000000000, 0.0000000000000000},
@@ -342,7 +341,7 @@ make_default_tetrahedron_quadrature(int m)
     // Values taken from
     // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
     // (KEAST6)
-    xt::xtensor_fixed<double, xt::xshape<15, 3>> x
+    xt::xtensor<double, 2> x
         = {{0.2500000000000000, 0.2500000000000000, 0.2500000000000000},
            {0.0000000000000000, 0.3333333333333333, 0.3333333333333333},
            {0.3333333333333333, 0.3333333333333333, 0.3333333333333333},
@@ -374,7 +373,7 @@ make_default_tetrahedron_quadrature(int m)
     // Values taken from
     // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
     // (KEAST7)
-    xt::xtensor_fixed<double, xt::xshape<24, 3>> x
+    xt::xtensor<double, 2> x
         = {{0.3561913862225449, 0.2146028712591517, 0.2146028712591517},
            {0.2146028712591517, 0.2146028712591517, 0.2146028712591517},
            {0.2146028712591517, 0.2146028712591517, 0.3561913862225449},
@@ -418,7 +417,7 @@ make_default_tetrahedron_quadrature(int m)
     // Values taken from
     // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
     // (KEAST8)
-    xt::xtensor_fixed<double, xt::xshape<31, 3>> x
+    xt::xtensor<double, 2> x
         = {{0.2500000000000000, 0.2500000000000000, 0.2500000000000000},
            {0.7653604230090441, 0.0782131923303186, 0.0782131923303186},
            {0.0782131923303186, 0.0782131923303186, 0.0782131923303186},
@@ -473,7 +472,7 @@ make_default_tetrahedron_quadrature(int m)
     // Values taken from
     // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
     // (KEAST9)
-    xt::xtensor_fixed<double, xt::xshape<45, 3>> x
+    xt::xtensor<double, 2> x
         = {{0.2500000000000000, 0.2500000000000000, 0.2500000000000000},
            {0.6175871903000830, 0.1274709365666390, 0.1274709365666390},
            {0.1274709365666390, 0.1274709365666390, 0.1274709365666390},
@@ -557,33 +556,31 @@ make_default_triangle_quadrature(int m)
   else if (m == 2)
   {
     // Scheme from Strang and Fix, 3 points, degree of precision 2
-    xt::xtensor_fixed<double, xt::xshape<3, 2>> x = {
+    xt::xtensor<double, 2> x = {
         {1.0 / 6.0, 1.0 / 6.0}, {1.0 / 6.0, 2.0 / 3.0}, {2.0 / 3.0, 1.0 / 6.0}};
     return {x, {1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0}};
   }
   else if (m == 3)
   {
     // Scheme from Strang and Fix, 6 points, degree of precision 3
-    xt::xtensor_fixed<double, xt::xshape<6, 2>> x
-        = {{0.659027622374092, 0.231933368553031},
-           {0.659027622374092, 0.109039009072877},
-           {0.231933368553031, 0.659027622374092},
-           {0.231933368553031, 0.109039009072877},
-           {0.109039009072877, 0.659027622374092},
-           {0.109039009072877, 0.231933368553031}};
+    xt::xtensor<double, 2> x = {{0.659027622374092, 0.231933368553031},
+                                {0.659027622374092, 0.109039009072877},
+                                {0.231933368553031, 0.659027622374092},
+                                {0.231933368553031, 0.109039009072877},
+                                {0.109039009072877, 0.659027622374092},
+                                {0.109039009072877, 0.231933368553031}};
     std::vector<double> w(6, 1.0 / 12.0);
     return {x, w};
   }
   else if (m == 4)
   {
     // Scheme from Strang and Fix, 6 points, degree of precision 4
-    xt::xtensor_fixed<double, xt::xshape<6, 2>> x
-        = {{0.816847572980459, 0.091576213509771},
-           {0.091576213509771, 0.816847572980459},
-           {0.091576213509771, 0.091576213509771},
-           {0.108103018168070, 0.445948490915965},
-           {0.445948490915965, 0.108103018168070},
-           {0.445948490915965, 0.445948490915965}};
+    xt::xtensor<double, 2> x = {{0.816847572980459, 0.091576213509771},
+                                {0.091576213509771, 0.816847572980459},
+                                {0.091576213509771, 0.091576213509771},
+                                {0.108103018168070, 0.445948490915965},
+                                {0.445948490915965, 0.108103018168070},
+                                {0.445948490915965, 0.445948490915965}};
     std::vector<double> w
         = {0.109951743655322, 0.109951743655322, 0.109951743655322,
            0.223381589678011, 0.223381589678011, 0.223381589678011};
@@ -594,14 +591,13 @@ make_default_triangle_quadrature(int m)
   else if (m == 5)
   {
     // Scheme from Strang and Fix, 7 points, degree of precision 5
-    xt::xtensor_fixed<double, xt::xshape<7, 2>> x
-        = {{0.33333333333333333, 0.33333333333333333},
-           {0.79742698535308720, 0.10128650732345633},
-           {0.10128650732345633, 0.79742698535308720},
-           {0.10128650732345633, 0.10128650732345633},
-           {0.05971587178976981, 0.47014206410511505},
-           {0.47014206410511505, 0.05971587178976981},
-           {0.47014206410511505, 0.47014206410511505}};
+    xt::xtensor<double, 2> x = {{0.33333333333333333, 0.33333333333333333},
+                                {0.79742698535308720, 0.10128650732345633},
+                                {0.10128650732345633, 0.79742698535308720},
+                                {0.10128650732345633, 0.10128650732345633},
+                                {0.05971587178976981, 0.47014206410511505},
+                                {0.47014206410511505, 0.05971587178976981},
+                                {0.47014206410511505, 0.47014206410511505}};
     std::vector<double> w
         = {0.22500000000000000, 0.12593918054482717, 0.12593918054482717,
            0.12593918054482717, 0.13239415278850616, 0.13239415278850616,
@@ -613,19 +609,18 @@ make_default_triangle_quadrature(int m)
   else if (m == 6)
   {
     // Scheme from Strang and Fix, 12 points, degree of precision 6
-    xt::xtensor_fixed<double, xt::xshape<12, 2>> x
-        = {{0.873821971016996, 0.063089014491502},
-           {0.063089014491502, 0.873821971016996},
-           {0.063089014491502, 0.063089014491502},
-           {0.501426509658179, 0.249286745170910},
-           {0.249286745170910, 0.501426509658179},
-           {0.249286745170910, 0.249286745170910},
-           {0.636502499121399, 0.310352451033785},
-           {0.636502499121399, 0.053145049844816},
-           {0.310352451033785, 0.636502499121399},
-           {0.310352451033785, 0.053145049844816},
-           {0.053145049844816, 0.636502499121399},
-           {0.053145049844816, 0.310352451033785}};
+    xt::xtensor<double, 2> x = {{0.873821971016996, 0.063089014491502},
+                                {0.063089014491502, 0.873821971016996},
+                                {0.063089014491502, 0.063089014491502},
+                                {0.501426509658179, 0.249286745170910},
+                                {0.249286745170910, 0.501426509658179},
+                                {0.249286745170910, 0.249286745170910},
+                                {0.636502499121399, 0.310352451033785},
+                                {0.636502499121399, 0.053145049844816},
+                                {0.310352451033785, 0.636502499121399},
+                                {0.310352451033785, 0.053145049844816},
+                                {0.053145049844816, 0.636502499121399},
+                                {0.053145049844816, 0.310352451033785}};
     std::vector<double> w
         = {0.050844906370207, 0.050844906370207, 0.050844906370207,
            0.116786275726379, 0.116786275726379, 0.116786275726379,

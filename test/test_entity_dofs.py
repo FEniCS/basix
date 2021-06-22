@@ -31,10 +31,10 @@ def test_ordering_of_dofs(cell_name, order, element_name):
 
     entity_dofs = element.entity_dofs
     dof = 0
-
+    print(element.entity_dofs)
     for entity_dofs in element.entity_dofs:
         for dofs in entity_dofs:
-            for d in dofs:
+            for d in sorted(dofs):
                 assert d == dof
                 dof += 1
 

@@ -14,9 +14,9 @@ using namespace basix;
 namespace
 {
 template <typename U, typename V>
-xt::xtensor_fixed<double, xt::xshape<3>> cross3(const U& u, const V& v)
+xt::xtensor<double, 1> cross3(const U& u, const V& v)
 {
-  xt::xtensor_fixed<double, xt::xshape<3>> c;
+  xt::xtensor<double, 1> c = xt::zeros<double>({3});
   c[0] = u[1] * v[2] - u[2] * v[1];
   c[1] = u[2] * v[0] - u[0] * v[2];
   c[2] = u[0] * v[1] - u[1] * v[0];

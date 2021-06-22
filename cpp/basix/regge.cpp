@@ -108,8 +108,8 @@ create_regge_interpolation(cell::type celltype, int degree)
             edge_t[p] = geometry(vert_ids[r], p) - geometry(vert_ids[s], p);
 
           // outer product v.v^T
-          xt::view(vvt, c, xt::all(), xt::all())
-              = xt::linalg::outer(edge_t, edge_t);
+          auto result = xt::linalg::outer(edge_t, edge_t);
+          xt::view(vvt, c, xt::all(), xt::all()).assign(result);
           ++c;
         }
       }
@@ -139,6 +139,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
 
   const xt::xtensor<double, 2> wcoeffs = create_regge_space(celltype, degree);
   const auto [x, M] = create_regge_interpolation(celltype, degree);
+
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
 
@@ -166,10 +167,8 @@ FiniteElement basix::create_regge(cell::type celltype, int degree)
     const std::vector<int> face_ref_perm
         = doftransforms::triangle_reflection(degree);
 
-    const xt::xtensor_fixed<double, xt::xshape<3, 3>> sub_rot
-        = {{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
-    const xt::xtensor_fixed<double, xt::xshape<3, 3>> sub_ref
-        = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
+    const xt::xtensor<double, 2> sub_rot = {{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
+    const xt::xtensor<double, 2> sub_ref = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
 
     const std::array<std::size_t, 3> f_shape
         = {2, face_ref_perm.size() * 3, face_ref_perm.size() * 3};

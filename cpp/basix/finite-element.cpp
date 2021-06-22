@@ -341,9 +341,11 @@ FiniteElement::FiniteElement(
     }
   }
 
+  _num_e_closure_dofs.resize(_cell_tdim + 1);
   _e_closure_dofs.resize(_cell_tdim + 1);
   for (std::size_t d = 0; d < _num_edofs.size(); ++d)
   {
+    _num_e_closure_dofs[d].resize(cell::num_sub_entities(_cell_type, d));
     _e_closure_dofs[d].resize(cell::num_sub_entities(_cell_type, d));
     for (std::size_t e = 0; e < _e_closure_dofs[d].size(); ++e)
     {
@@ -351,6 +353,7 @@ FiniteElement::FiniteElement(
       {
         for (int c : connectivity[d][e][dim])
         {
+          _num_e_closure_dofs[d][e] += _edofs[dim][c].size();
           for (int dof : _edofs[dim][c])
             _e_closure_dofs[d][e].insert(dof);
         }
@@ -520,6 +523,12 @@ const std::vector<std::vector<std::set<int>>>&
 FiniteElement::entity_dofs() const
 {
   return _edofs;
+}
+//-----------------------------------------------------------------------------
+const std::vector<std::vector<int>>&
+FiniteElement::num_entity_closure_dofs() const
+{
+  return _num_e_closure_dofs;
 }
 //-----------------------------------------------------------------------------
 const std::vector<std::vector<std::set<int>>>&

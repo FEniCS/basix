@@ -358,6 +358,13 @@ public:
   /// topological dimension. The shape is (tdim + 1, num_entities).
   const std::vector<std::vector<int>>& num_entity_dofs() const;
 
+  /// Get the number of dofs on the closure of each topological entity:
+  /// (vertices, edges, faces, cell) in that order. For example, Lagrange degree
+  /// 2 on a triangle has vertices: [1, 1, 1], edges: [3, 3, 3], cell: [6]
+  /// @return Number of dofs associated with the closure of an entity of a given
+  /// topological dimension. The shape is (tdim + 1, num_entities).
+  const std::vector<std::vector<int>>& num_entity_closure_dofs() const;
+
   /// Get the dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
   /// on a triangle has vertices: [[0], [1], [2]], edges: [[3], [4], [5]],
@@ -592,6 +599,9 @@ private:
   // listed in this order, with vertex dofs first. Each entry is the dof
   // count on the associated entity, as listed by cell::topology.
   std::vector<std::vector<int>> _num_edofs;
+
+  // Number of dofs associated with the closure of each cell (sub-)entity
+  std::vector<std::vector<int>> _num_e_closure_dofs;
 
   // Dofs associated with each cell (sub-)entity
   std::vector<std::vector<std::set<int>>> _edofs;

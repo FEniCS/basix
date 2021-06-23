@@ -295,12 +295,20 @@ public:
   /// @return True or False
   bool dof_transformations_are_identity() const;
 
-  /// Map function values from the reference to a physical cell
-  /// @param U The function values on the reference
-  /// @param J The Jacobian of the mapping
-  /// @param detJ The determinant of the Jacobian of the mapping
-  /// @param K The inverse of the Jacobian of the mapping
-  /// @return The function values on the cell
+  /// Map function values from the reference to a physical cell. This
+  /// function can perform the mapping for multiple points, grouped by
+  /// points that share a common Jacobian.
+  ///
+  /// @param U The function values on the reference. The indices are
+  /// [Jacobian index, point index, components].
+  /// @param J The Jacobian of the mapping. The indices are [Jacobian
+  /// index, J_i, J_j].
+  /// @param detJ The determinant of the Jacobian of the mapping. It has
+  /// length `J.shape(0)`
+  /// @param K The inverse of the Jacobian of the mapping. The indices
+  /// are [Jacobian index, K_i, K_j].
+  /// @return The function values on the cell. The indices are [Jacobian
+  /// index, point index, components].
   xt::xtensor<double, 3>
   map_push_forward(const xt::xtensor<double, 3>& U,
                    const xt::xtensor<double, 3>& J,
@@ -317,7 +325,21 @@ public:
   void map_push_forward_m(const xt::xtensor<T, 3>& U,
                           const xt::xtensor<double, 3>& J,
                           const xtl::span<const double>& detJ,
-                          const xt::xtensor<double, 3>& K, E&& u) const;
+                          const xt::xtensor<double, 3>& K, E&& u) const
+  {
+    // FIXME: Should U.shape(2) be replaced by the physical value size?
+    // Can it differ?
+
+    // Loop over points that share J
+    for (std::size_t p = 0; p < U.shape(0); ++p)
+    {
+      auto J_p = xt::view(J, p, xt::all(), xt::all());
+      auto K_p = xt::view(K, p, xt::all(), xt::all());
+      auto U_data = xt::view(U, p, xt::all(), xt::all());
+      auto u_data = xt::view(u, p, xt::all(), xt::all());
+      maps::apply_map(u_data, U_data, J_p, detJ[p], K_p, map_type);
+    }
+  }
 
   /// Map function values from a physical cell to the reference
   /// @param u The function values on the cell
@@ -330,7 +352,6 @@ public:
                                        const xtl::span<const double>& detJ,
                                        const xt::xtensor<double, 3>& K) const;
 
-  /// @todo Weirdly, the u and U
   /// Map function values from a physical cell to the reference
   /// @param u The function values on the cell
   /// @param J The Jacobian of the mapping
@@ -341,7 +362,18 @@ public:
   void map_pull_back_m(const xt::xtensor<T, 3>& u,
                        const xt::xtensor<double, 3>& J,
                        const xtl::span<const double>& detJ,
-                       const xt::xtensor<double, 3>& K, E&& U) const;
+                       const xt::xtensor<double, 3>& K, E&& U) const
+  {
+    // Loop over points that share K and K
+    for (std::size_t p = 0; p < u.shape(0); ++p)
+    {
+      auto J_p = xt::view(J, p, xt::all(), xt::all());
+      auto K_p = xt::view(K, p, xt::all(), xt::all());
+      auto u_data = xt::view(u, p, xt::all(), xt::all());
+      auto U_data = xt::view(U, p, xt::all(), xt::all());
+      maps::apply_map(U_data, u_data, K_p, 1.0 / detJ[p], J_p, map_type);
+    }
+  }
 
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
@@ -648,57 +680,6 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @return version string
 std::string version();
 
-//-----------------------------------------------------------------------------
-template <typename T, typename E>
-void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
-                                       const xt::xtensor<double, 3>& J,
-                                       const xtl::span<const double>& detJ,
-                                       const xt::xtensor<double, 3>& K,
-                                       E&& u) const
-{
-  // FIXME: Should U.shape(2) be replaced by the physical value size?
-  // Can it differ?
-  // std::array<std::size_t, 3> s = {U.shape(0), U.shape(1), U.shape(2)};
-  // auto _u = xt::adapt(u, s[0] * s[1] * s[2], xt::no_ownership(), s);
-
-  // Loop over each point
-  for (std::size_t p = 0; p < U.shape(0); ++p)
-  {
-    auto J_p = xt::view(J, p, xt::all(), xt::all());
-    auto K_p = xt::view(K, p, xt::all(), xt::all());
-
-    // Loop over values at each point
-    for (std::size_t i = 0; i < U.shape(1); ++i)
-    {
-      auto U_data = xt::view(U, p, i, xt::all());
-      auto u_data = xt::view(u, p, i, xt::all());
-      maps::apply_map(u_data, U_data, J_p, detJ[p], K_p, map_type);
-    }
-  }
-}
-//-----------------------------------------------------------------------------
-template <typename T, typename E>
-void FiniteElement::map_pull_back_m(const xt::xtensor<T, 3>& u,
-                                    const xt::xtensor<double, 3>& J,
-                                    const xtl::span<const double>& detJ,
-                                    const xt::xtensor<double, 3>& K,
-                                    E&& U) const
-{
-  // Loop over each point
-  for (std::size_t p = 0; p < u.shape(0); ++p)
-  {
-    auto J_p = xt::view(J, p, xt::all(), xt::all());
-    auto K_p = xt::view(K, p, xt::all(), xt::all());
-
-    // Loop over each item at point to be transformed
-    for (std::size_t i = 0; i < u.shape(1); ++i)
-    {
-      auto u_data = xt::view(u, p, i, xt::all());
-      auto U_data = xt::view(U, p, i, xt::all());
-      maps::apply_map(U_data, u_data, K_p, 1.0 / detJ[p], J_p, map_type);
-    }
-  }
-}
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,

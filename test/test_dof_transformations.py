@@ -154,8 +154,8 @@ def test_transformation_of_tabulated_data_triangle(element_name, order):
     points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1 - i)])
     values = e.tabulate_x(0, points)[0]
 
-    start = sum(e.entity_dofs[0])
-    ndofs = e.entity_dofs[1][0]
+    start = sum(e.num_entity_dofs[0])
+    ndofs = e.num_entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[p[1], p[0]] for p in points])
@@ -184,8 +184,8 @@ def test_transformation_of_tabulated_data_quadrilateral(element_name, order):
     points = np.array([[i / N, j / N] for i in range(N + 1) for j in range(N + 1)])
     values = e.tabulate_x(0, points)[0]
 
-    start = sum(e.entity_dofs[0])
-    ndofs = e.entity_dofs[1][0]
+    start = sum(e.num_entity_dofs[0])
+    ndofs = e.num_entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[1 - p[0], p[1]] for p in points])
@@ -214,8 +214,8 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
                        for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1 - i - j)])
     values = e.tabulate_x(0, points)[0]
 
-    start = sum(e.entity_dofs[0])
-    ndofs = e.entity_dofs[1][0]
+    start = sum(e.num_entity_dofs[0])
+    ndofs = e.num_entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[p[0], p[2], p[1]] for p in points])
@@ -233,8 +233,8 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
-    start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
-    ndofs = e.entity_dofs[2][0]
+    start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
+    ndofs = e.num_entity_dofs[2][0]
     if ndofs != 0:
         # Check that the 6th transformation undoes the effect of rotating face 0
         rotated_points = np.array([[p[2], p[0], p[1]] for p in points])
@@ -284,8 +284,8 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
                        for i in range(N + 1) for j in range(N + 1) for k in range(N + 1)])
     values = e.tabulate_x(0, points)[0]
 
-    start = sum(e.entity_dofs[0])
-    ndofs = e.entity_dofs[1][0]
+    start = sum(e.num_entity_dofs[0])
+    ndofs = e.num_entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[1 - p[0], p[1], p[2]] for p in points])
@@ -303,8 +303,8 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
-    start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
-    ndofs = e.entity_dofs[2][0]
+    start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
+    ndofs = e.num_entity_dofs[2][0]
     if ndofs != 0:
         # Check that the 12th transformation undoes the effect of rotating face 0
         rotated_points = np.array([[1 - p[1], p[0], p[2]] for p in points])
@@ -350,8 +350,8 @@ def test_transformation_of_tabulated_data_prism(element_name, order):
                        for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1)])
     values = e.tabulate_x(0, points)[0]
 
-    start = sum(e.entity_dofs[0])
-    ndofs = e.entity_dofs[1][0]
+    start = sum(e.num_entity_dofs[0])
+    ndofs = e.num_entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[1 - p[1] - p[0], p[1], p[2]] for p in points])
@@ -369,8 +369,8 @@ def test_transformation_of_tabulated_data_prism(element_name, order):
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
-    start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
-    ndofs = e.entity_dofs[2][0]
+    start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
+    ndofs = e.num_entity_dofs[2][0]
     if ndofs != 0:
         # Check that the 10th transformation undoes the effect of rotating face 0
         rotated_points = np.array([[1 - p[0] - p[1], p[0], p[2]] for p in points])
@@ -416,8 +416,8 @@ def test_transformation_of_tabulated_data_pyramid(element_name, order):
                        for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1)])
     values = e.tabulate_x(0, points)[0]
 
-    start = sum(e.entity_dofs[0])
-    ndofs = e.entity_dofs[1][0]
+    start = sum(e.num_entity_dofs[0])
+    ndofs = e.num_entity_dofs[1][0]
     if ndofs != 0:
         # Check that the 0th transformation undoes the effect of reflecting edge 0
         reflected_points = np.array([[1 - p[2] - p[0], p[1], p[2]] for p in points])
@@ -435,8 +435,8 @@ def test_transformation_of_tabulated_data_pyramid(element_name, order):
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
                                    j_slice[start: start + ndofs])
 
-    start = sum(e.entity_dofs[0]) + sum(e.entity_dofs[1])
-    ndofs = e.entity_dofs[2][0]
+    start = sum(e.num_entity_dofs[0]) + sum(e.num_entity_dofs[1])
+    ndofs = e.num_entity_dofs[2][0]
     if ndofs != 0:
         # Check that the 8th transformation undoes the effect of rotating face 0
         rotated_points = np.array([[1 - p[1] - p[2], p[0], p[2]] for p in points])

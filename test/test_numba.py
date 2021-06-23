@@ -84,7 +84,7 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size):
             entity_transformations[i] = transformation
 
         entity_dofs = Dict.empty(key_type=types.int64, value_type=types.int32[:])
-        for i, e_dofs in enumerate(e.entity_dofs):
+        for i, e_dofs in enumerate(e.num_entity_dofs):
             entity_dofs[i] = np.asarray(e_dofs, dtype=np.int32)
         transform_functions[cell](entity_transformations, entity_dofs, data2, cell_info)
         # Reshape numba output for comparison

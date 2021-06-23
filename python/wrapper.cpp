@@ -372,6 +372,8 @@ Interface to the Basix C++ library.
       .def_property_readonly("dim", &FiniteElement::dim)
       .def_property_readonly("num_entity_dofs", &FiniteElement::num_entity_dofs)
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
+      .def_property_readonly("num_entity_closure_dofs",
+                             &FiniteElement::num_entity_closure_dofs)
       .def_property_readonly("entity_closure_dofs",
                              &FiniteElement::entity_closure_dofs)
       .def_property_readonly("value_size", &FiniteElement::value_size)

@@ -316,11 +316,11 @@ public:
                    const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
-  /// @param U The function values on the reference
-  /// @param J The Jacobian of the mapping
-  /// @param detJ The determinant of the Jacobian of the mapping
-  /// @param K The inverse of the Jacobian of the mapping
-  /// @param u Memory location to fill
+  /// @param[in] U The function values on the reference
+  /// @param[in] J The Jacobian of the mapping
+  /// @param[in] detJ The determinant of the Jacobian of the mapping
+  /// @param[in] K The inverse of the Jacobian of the mapping
+  /// @param[out] u Memory location to fill
   template <typename T, typename E>
   void map_push_forward_m(const xt::xtensor<T, 3>& U,
                           const xt::xtensor<double, 3>& J,
@@ -342,26 +342,27 @@ public:
   }
 
   /// Map function values from a physical cell to the reference
-  /// @param u The function values on the cell
-  /// @param J The Jacobian of the mapping
-  /// @param detJ The determinant of the Jacobian of the mapping
-  /// @param K The inverse of the Jacobian of the mapping
+  /// @param[in] u The function values on the cell
+  /// @param[in] J The Jacobian of the mapping
+  /// @param[in] inv_detJ The determinant of the Jacobian of the mapping
+  /// @param[in] K The inverse of the Jacobian of the mapping
   /// @return The function values on the reference
   xt::xtensor<double, 3> map_pull_back(const xt::xtensor<double, 3>& u,
                                        const xt::xtensor<double, 3>& J,
-                                       const xtl::span<const double>& detJ,
+                                       const xtl::span<const double>& inv_detJ,
                                        const xt::xtensor<double, 3>& K) const;
 
   /// Map function values from a physical cell to the reference
-  /// @param u The function values on the cell
-  /// @param J The Jacobian of the mapping
-  /// @param detJ The determinant of the Jacobian of the mapping
-  /// @param K The inverse of the Jacobian of the mapping
-  /// @param U Memory location to fill
+  /// @param[in] u The function values on the cell
+  /// @param[in] J The Jacobian of the mapping
+  /// @param[in] inv_detJ The reciprocal  determinant of the Jacobian of
+  /// the mapping
+  /// @param[in] K The inverse of the Jacobian of the mapping
+  /// @param[out] U Memory location to fill
   template <typename T, typename E>
   void map_pull_back_m(const xt::xtensor<T, 3>& u,
                        const xt::xtensor<double, 3>& J,
-                       const xtl::span<const double>& detJ,
+                       const xtl::span<const double>& inv_detJ,
                        const xt::xtensor<double, 3>& K, E&& U) const
   {
     // Loop over points that share K and K
@@ -371,7 +372,7 @@ public:
       auto K_p = xt::view(K, p, xt::all(), xt::all());
       auto u_data = xt::view(u, p, xt::all(), xt::all());
       auto U_data = xt::view(U, p, xt::all(), xt::all());
-      maps::apply_map(U_data, u_data, K_p, 1.0 / detJ[p], J_p, map_type);
+      maps::apply_map(U_data, u_data, K_p, inv_detJ[p], J_p, map_type);
     }
   }
 

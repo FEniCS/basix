@@ -61,3 +61,24 @@ def test_facet_orientations(cell):
             assert np.allclose(n1, -n2)
         else:
             assert np.allclose(n1, n2)
+
+
+@pytest.mark.parametrize("cell", cells)
+def test_sub_entity_connectivity(cell):
+    cell_type = getattr(basix.CellType, cell)
+    connectivity = basix.cell.sub_entity_connectivity(cell_type)
+    topology = basix.topology(cell_type)
+
+    assert len(connectivity) == len(topology)
+
+    for dim, entities in enumerate(connectivity):
+        assert len(entities) == len(topology[dim])
+        for n, entity in enumerate(entities):
+            for dim2, connected_entities in enumerate(entity):
+                for n2 in connected_entities:
+                    if dim > dim2:
+                        for i in topology[dim2][n2]:
+                            assert i in topology[dim][n]
+                    else:
+                        for i in topology[dim][n]:
+                            assert i in topology[dim2][n2]

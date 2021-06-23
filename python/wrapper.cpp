@@ -113,6 +113,8 @@ Interface to the Basix C++ library.
         return py::array_t<double>(g.shape(), strides, g.data());
       },
       "Geometric points of a reference cell");
+  m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
+        "Connectivity between subentities of a reference cell");
   m.def(
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
@@ -368,7 +370,10 @@ Interface to the Basix C++ library.
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
+      .def_property_readonly("num_entity_dofs", &FiniteElement::num_entity_dofs)
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
+      .def_property_readonly("entity_closure_dofs",
+                             &FiniteElement::entity_closure_dofs)
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family", &FiniteElement::family)

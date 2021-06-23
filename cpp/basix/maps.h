@@ -63,11 +63,12 @@ template <typename O, typename P, typename Q, typename R>
 void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
                      const R& K)
 {
+  auto Kt = xt::transpose(K);
   for (std::size_t p = 0; p < U.shape(0); ++p)
   {
     auto r_p = xt::row(r, p);
     auto U_p = xt::row(U, p);
-    dot21(r_p, xt::transpose(K), U_p);
+    dot21(r_p, Kt, U_p);
   }
 }
 
@@ -102,15 +103,15 @@ template <typename O, typename P, typename Q, typename R>
 void double_contravariant_piola(O& r, const P& U, const Q& J, double detJ,
                                 const R& /*K*/)
 {
+  auto Jt = xt::transpose(J);
   for (std::size_t p = 0; p < U.shape(0); ++p)
   {
     auto r_p = xt::row(r, p);
     auto U_p = xt::row(U, p);
     auto _U = xt::reshape_view(U_p, {J.shape(1), J.shape(1)});
     auto _r = xt::reshape_view(r_p, {J.shape(0), J.shape(0)});
-    dot22(_r, J, _U, xt::transpose(J));
+    dot22(_r, J, _U, Jt);
   }
-
   r /= (detJ * detJ);
 }
 } // namespace impl

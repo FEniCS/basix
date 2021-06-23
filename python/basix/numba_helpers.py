@@ -30,6 +30,8 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
         The data. This will be changed by this function.
     cell_info : int
         An integer representing the orientations of the subentities of the cell.
+    face_types: list
+        A list of strings giving the shapes of the faces of the cell.
     """
     if tdim >= 2:
         if tdim == 3:
@@ -229,6 +231,8 @@ def apply_dof_transformation_to_transpose(tdim, edge_count, face_count, entity_t
         The data. This will be changed by this function.
     cell_info : int
         An integer representing the orientations of the subentities of the cell.
+    face_types: list
+        A list of strings giving the shapes of the faces of the cell.
     """
     transposed_data = data.transpose().copy()
     apply_dof_transformation(tdim, edge_count, face_count, entity_transformations, entity_dofs,

@@ -24,7 +24,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
     throw std::runtime_error("Invalid celltype");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-
   const std::size_t ndofs = polyset::dim(celltype, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
@@ -162,10 +161,8 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
   // the scalar space.
 
   const std::size_t ndofs = polyset::dim(celltype, degree);
-
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-
   const std::size_t tdim = topology.size() - 1;
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;

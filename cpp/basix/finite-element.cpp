@@ -660,11 +660,11 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::map_pull_back(
     const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
-    const xtl::span<const double>& inv_detJ, const xt::xtensor<double, 3>& K) const
+    const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
   const std::size_t reference_value_size = value_size();
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
-  map_pull_back_m(u, J, inv_detJ, K, U);
+  map_pull_back_m(u, J, detJ, K, U);
   return U;
 }
 //-----------------------------------------------------------------------------

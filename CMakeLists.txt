@@ -24,7 +24,7 @@ option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
 
 # Find dependecies
-set(XTENSOR_MIN_VERSION 0.23.4)
+set(XTENSOR_MIN_VERSION 0.23.10)
 set(XTL_MIN_VERSION 0.7.0)
 set(XSIMD_MIN_VERSION 7.4.10)
 

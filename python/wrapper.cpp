@@ -406,6 +406,15 @@ Interface to the Basix C++ library.
       "Create a FiniteElement of a given family, celltype and degree");
 
   m.def(
+      "create_element",
+      [](const std::string family_name, const std::string cell_name, int degree,
+         lattice::type lattice_type) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree,
+                                     lattice_type);
+      },
+      "Create a FiniteElement of a given family, celltype and degree");
+
+  m.def(
       "tabulate_polynomial_set",
       [](cell::type celltype, int d, int n,
          const py::array_t<double, py::array::c_style>& x)

@@ -75,22 +75,28 @@ constexpr int num_transformations(cell::type cell_type)
 } // namespace
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(std::string family, std::string cell,
-                                           int degree)
+                                           int degree,
+                                           lattice::type lattice_type)
 {
   return basix::create_element(element::str_to_type(family),
-                               cell::str_to_type(cell), degree);
+                               cell::str_to_type(cell), degree, lattice_type);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree)
+                                           cell::type cell, int degree,
+                                           lattice::type lattice_type)
 {
   switch (family)
   {
   case element::family::P:
+    if (lattice_type != lattice::type::undefined)
+      return create_lagrange(cell, degree, lattice_type);
     return create_lagrange(cell, degree);
   case element::family::DP:
     return create_dlagrange(cell, degree);
   case element::family::BDM:
+    if (lattice_type != lattice::type::undefined)
+      throw std::runtime_error("Cannot pass a lattice type to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -102,6 +108,8 @@ basix::FiniteElement basix::create_element(element::family family,
     }
   case element::family::RT:
   {
+    if (lattice_type != lattice::type::undefined)
+      throw std::runtime_error("Cannot pass a lattice type to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -114,6 +122,8 @@ basix::FiniteElement basix::create_element(element::family family,
   }
   case element::family::N1E:
   {
+    if (lattice_type != lattice::type::undefined)
+      throw std::runtime_error("Cannot pass a lattice type to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -125,6 +135,8 @@ basix::FiniteElement basix::create_element(element::family family,
     }
   }
   case element::family::N2E:
+    if (lattice_type != lattice::type::undefined)
+      throw std::runtime_error("Cannot pass a lattice type to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -135,14 +147,24 @@ basix::FiniteElement basix::create_element(element::family family,
       return create_nedelec2(cell, degree);
     }
   case element::family::Regge:
+    if (lattice_type != lattice::type::undefined)
+      throw std::runtime_error("Cannot pass a lattice type to this element.");
     return create_regge(cell, degree);
   case element::family::CR:
+    if (lattice_type != lattice::type::undefined)
+      throw std::runtime_error("Cannot pass a lattice type to this element.");
     return create_cr(cell, degree);
   case element::family::Bubble:
+    if (lattice_type != lattice::type::undefined)
+      throw std::runtime_error("Cannot pass a lattice type to this element.");
     return create_bubble(cell, degree);
   case element::family::Serendipity:
+    if (lattice_type != lattice::type::undefined)
+      throw std::runtime_error("Cannot pass a lattice type to this element.");
     return create_serendipity(cell, degree);
   case element::family::DPC:
+    if (lattice_type != lattice::type::undefined)
+      throw std::runtime_error("Cannot pass a lattice type to this element.");
     return create_dpc(cell, degree);
   default:
     throw std::runtime_error("Element family not found");

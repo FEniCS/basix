@@ -49,7 +49,7 @@ xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
     x = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
 
-  if (lattice_type == lattice::type::gll_warped)
+  if (x.shape(0) > 0 and lattice_type == lattice::type::gll_warped)
     x += warp_function(n, x);
 
   return x;
@@ -70,7 +70,7 @@ xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
     r = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
 
-  if (lattice_type == lattice::type::gll_warped)
+  if (r.shape(0) > 0 and lattice_type == lattice::type::gll_warped)
     r += warp_function(n, r);
 
   const std::size_t m = r.shape(0);
@@ -103,7 +103,7 @@ xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
     const double h = 1.0 / static_cast<double>(n);
     r = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
-  if (lattice_type == lattice::type::gll_warped)
+  if (r.shape(0) > 0 and lattice_type == lattice::type::gll_warped)
     r += warp_function(n, r);
 
   const std::size_t m = r.size();
@@ -387,6 +387,8 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
 xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
                                        lattice::type type, bool exterior)
 {
+  if (type == lattice::type::undefined)
+    throw std::runtime_error("Can't create a lattice with undefined type.");
   switch (celltype)
   {
   case cell::type::point:

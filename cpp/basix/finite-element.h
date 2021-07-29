@@ -9,6 +9,7 @@
 
 #include "cell.h"
 #include "element-families.h"
+#include "lattice.h"
 #include "maps.h"
 #include "precompute.h"
 #include <array>
@@ -717,11 +718,14 @@ private:
 };
 
 /// Create an element by name
-FiniteElement create_element(std::string family, std::string cell, int degree);
+FiniteElement create_element(std::string family, std::string cell, int degree,
+                             lattice::type lattice_type
+                             = lattice::type::undefined);
 
 /// Create an element by name
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree);
+FiniteElement
+create_element(element::family family, cell::type cell, int degree,
+               lattice::type lattice_type = lattice::type::undefined);
 
 /// Return the version number of basix across projects
 /// @return version string

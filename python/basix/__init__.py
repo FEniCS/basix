@@ -13,4 +13,4 @@ from . import cell
 # To possibly be removed
 from ._basixcpp import (topology, geometry, tabulate_polynomial_set,
                         create_lattice, LatticeType, index,
-                        make_quadrature, compute_jacobi_deriv)
+                        make_quadrature, compute_jacobi_deriv, ElementFamily)

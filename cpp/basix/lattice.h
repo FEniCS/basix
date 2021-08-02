@@ -12,7 +12,6 @@ namespace basix::lattice
 {
 enum class type
 {
-  undefined,
   equispaced,
   gll_warped
 };

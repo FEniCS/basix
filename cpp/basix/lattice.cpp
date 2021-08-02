@@ -387,8 +387,6 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
 xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
                                        lattice::type type, bool exterior)
 {
-  if (type == lattice::type::undefined)
-    throw std::runtime_error("Can't create a lattice with undefined type.");
   switch (celltype)
   {
   case cell::type::point:

@@ -719,13 +719,19 @@ private:
 
 /// Create an element by name
 FiniteElement create_element(std::string family, std::string cell, int degree,
-                             lattice::type lattice_type
-                             = lattice::type::undefined);
+                             lattice::type lattice_type);
+
+/// Create an element by name
+FiniteElement create_element(std::string family, std::string cell, int degree);
 
 /// Create an element by name
 FiniteElement
 create_element(element::family family, cell::type cell, int degree,
-               lattice::type lattice_type = lattice::type::undefined);
+               lattice::type lattice_type);
+
+/// Create an element by name
+FiniteElement
+create_element(element::family family, cell::type cell, int degree);
 
 /// Return the version number of basix across projects
 /// @return version string

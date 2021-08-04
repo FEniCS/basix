@@ -427,7 +427,7 @@ lattice::type lattice::str_to_type(std::string name)
   return it->second;
 }
 //-----------------------------------------------------------------------------
-const std::string& lattice::type_to_str(lattice::type type)
+std::string lattice::type_to_str(lattice::type type)
 {
   static const std::map<lattice::type, std::string> name_to_type
       = {{lattice::type::equispaced, "equispaced"},

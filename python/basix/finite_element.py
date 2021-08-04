@@ -1,3 +1,5 @@
+"""Functions for creating finite elements."""
+
 import typing
 from ._basixcpp import create_element as _cpp_create_element
 from ._basixcpp import ElementFamily, CellType, LatticeType

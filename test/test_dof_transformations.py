@@ -115,8 +115,7 @@ def test_hexahedron_transformation_degrees(element_name, degree, element_kwargs)
     for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(bt[i], degree
-),
+            np.linalg.matrix_power(bt[i], degree),
             identity)
 
 

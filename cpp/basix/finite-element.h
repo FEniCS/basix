@@ -717,19 +717,20 @@ private:
       _etrans_invT;
 };
 
-/// Create an element by name
-FiniteElement create_element(std::string family, std::string cell, int degree,
-                             lattice::type lattice_type);
-
-/// Create an element by name
-FiniteElement create_element(std::string family, std::string cell, int degree);
-
-/// Create an element by name
+/// Create an element using a given lattice type
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+/// @param[in] lattice_type The lattice type that should be used to arrange DOF
+/// points of the element
 FiniteElement
 create_element(element::family family, cell::type cell, int degree,
                lattice::type lattice_type);
 
-/// Create an element by name
+/// Create an element
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
 FiniteElement
 create_element(element::family family, cell::type cell, int degree);
 

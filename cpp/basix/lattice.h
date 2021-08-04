@@ -16,6 +16,12 @@ enum class type
   gll_warped
 };
 
+/// Convert string to a lattice type
+lattice::type str_to_type(std::string name);
+
+// Convert family to string
+const std::string& type_to_str(lattice::type type);
+
 /// Create a lattice of points on a reference cell
 /// optionally including the outer surface points
 ///

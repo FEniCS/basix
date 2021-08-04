@@ -414,3 +414,29 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
   }
 }
 //-----------------------------------------------------------------------------
+lattice::type lattice::str_to_type(std::string name)
+{
+  static const std::map<std::string, lattice::type> name_to_type
+      = {{"equispaced", lattice::type::equispaced},
+         {"gll_warped", lattice::type::gll_warped}};
+
+  auto it = name_to_type.find(name);
+  if (it == name_to_type.end())
+    throw std::runtime_error("Can't find name " + name);
+
+  return it->second;
+}
+//-----------------------------------------------------------------------------
+const std::string& lattice::type_to_str(lattice::type type)
+{
+  static const std::map<lattice::type, std::string> name_to_type
+      = {{lattice::type::equispaced, "equispaced"},
+         {lattice::type::gll_warped, "gll_warped"}};
+
+  auto it = name_to_type.find(type);
+  if (it == name_to_type.end())
+    throw std::runtime_error("Can't find type");
+
+  return it->second;
+}
+//-----------------------------------------------------------------------------

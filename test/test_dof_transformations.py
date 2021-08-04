@@ -10,8 +10,8 @@ from .utils import parametrize_over_elements
 
 
 @parametrize_over_elements(3)
-def test_if_permutations(cell_name, element_name, order):
-    e = basix.create_element(element_name, cell_name, order)
+def test_if_permutations(cell_name, element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, cell_name, degree, **element_kwargs)
 
     for t in e.base_transformations():
         for row in t:
@@ -23,8 +23,8 @@ def test_if_permutations(cell_name, element_name, order):
 
 
 @parametrize_over_elements(3)
-def test_if_identity(cell_name, element_name, order):
-    e = basix.create_element(element_name, cell_name, order)
+def test_if_identity(cell_name, element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, cell_name, degree, **element_kwargs)
 
     for t in e.base_transformations():
         if not np.allclose(t, np.eye(t.shape[0])):
@@ -34,18 +34,18 @@ def test_if_identity(cell_name, element_name, order):
 
 
 @parametrize_over_elements(5)
-def test_non_zero(cell_name, element_name, order):
-    e = basix.create_element(element_name, cell_name, order)
+def test_non_zero(cell_name, element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, cell_name, degree, **element_kwargs)
     for t in e.base_transformations():
         for row in t:
             assert max(abs(i) for i in row) > 1e-6
 
 
 @parametrize_over_elements(5)
-def test_apply_to_transpose(cell_name, element_name, order):
+def test_apply_to_transpose(cell_name, element_name, degree, element_kwargs):
     random.seed(42)
 
-    e = basix.create_element(element_name, cell_name, order)
+    e = basix.create_element(element_name, cell_name, degree, **element_kwargs)
 
     size = e.dim
 
@@ -65,89 +65,90 @@ def test_apply_to_transpose(cell_name, element_name, order):
 
 
 @parametrize_over_elements(5, "interval")
-def test_interval_transformation_size(element_name, order):
-    e = basix.create_element(element_name, "interval", order)
+def test_interval_transformation_size(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "interval", degree, **element_kwargs)
     assert len(e.base_transformations()) == 0
 
 
 @parametrize_over_elements(5, "triangle")
-def test_triangle_transformation_orders(element_name, order):
-    e = basix.create_element(element_name, "triangle", order)
+def test_triangle_transformation_degrees(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "triangle", degree, **element_kwargs)
     bt = e.base_transformations()
     assert len(bt) == 3
     identity = np.identity(e.dim)
-    for i, order in enumerate([2, 2, 2]):
+    for i, degree in enumerate([2, 2, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(bt[i], order),
+            np.linalg.matrix_power(bt[i], degree),
             identity)
 
 
 @parametrize_over_elements(5, "tetrahedron")
-def test_tetrahedron_transformation_orders(element_name, order):
-    e = basix.create_element(element_name, "tetrahedron", order)
+def test_tetrahedron_transformation_degrees(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "tetrahedron", degree, **element_kwargs)
     bt = e.base_transformations()
     assert len(bt) == 14
     identity = np.identity(e.dim)
-    for i, order in enumerate([2, 2, 2, 2, 2, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
+    for i, degree in enumerate([2, 2, 2, 2, 2, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(bt[i], order),
+            np.linalg.matrix_power(bt[i], degree),
             identity)
 
 
 @parametrize_over_elements(5, "quadrilateral")
-def test_quadrilateral_transformation_orders(element_name, order):
-    e = basix.create_element(element_name, "quadrilateral", order)
+def test_quadrilateral_transformation_degrees(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "quadrilateral", degree, **element_kwargs)
     bt = e.base_transformations()
     assert len(bt) == 4
     identity = np.identity(e.dim)
-    for i, order in enumerate([2, 2, 2, 2]):
+    for i, degree in enumerate([2, 2, 2, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(bt[i], order),
+            np.linalg.matrix_power(bt[i], degree),
             identity)
 
 
 @parametrize_over_elements(5, "hexahedron")
-def test_hexahedron_transformation_orders(element_name, order):
-    e = basix.create_element(element_name, "hexahedron", order)
+def test_hexahedron_transformation_degrees(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "hexahedron", degree, **element_kwargs)
     bt = e.base_transformations()
     assert len(bt) == 24
     identity = np.identity(e.dim)
-    for i, order in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(bt[i], order),
+            np.linalg.matrix_power(bt[i], degree
+),
             identity)
 
 
 @parametrize_over_elements(5, "prism")
-def test_prism_transformation_orders(element_name, order):
-    e = basix.create_element(element_name, "prism", order)
+def test_prism_transformation_degrees(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "prism", degree, **element_kwargs)
     bt = e.base_transformations()
     assert len(bt) == 19
     identity = np.identity(e.dim)
-    for i, order in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2,
+    for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2,
                                3, 2, 4, 2, 4, 2, 4, 2, 3, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(bt[i], order),
+            np.linalg.matrix_power(bt[i], degree),
             identity)
 
 
 @parametrize_over_elements(5, "pyramid")
-def test_pyramid_transformation_orders(element_name, order):
-    e = basix.create_element(element_name, "pyramid", order)
+def test_pyramid_transformation_degrees(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "pyramid", degree, **element_kwargs)
     bt = e.base_transformations()
     assert len(bt) == 18
     identity = np.identity(e.dim)
-    for i, order in enumerate([2, 2, 2, 2, 2, 2, 2, 2,
+    for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2,
                                4, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
         assert np.allclose(
-            np.linalg.matrix_power(bt[i], order),
+            np.linalg.matrix_power(bt[i], degree),
             identity)
 
 
 @parametrize_over_elements(5, "triangle")
-def test_transformation_of_tabulated_data_triangle(element_name, order):
-    e = basix.create_element(element_name, "triangle", order)
+def test_transformation_of_tabulated_data_triangle(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "triangle", degree, **element_kwargs)
     bt = e.base_transformations()
 
     N = 4
@@ -176,8 +177,8 @@ def test_transformation_of_tabulated_data_triangle(element_name, order):
 
 
 @parametrize_over_elements(5, "quadrilateral")
-def test_transformation_of_tabulated_data_quadrilateral(element_name, order):
-    e = basix.create_element(element_name, "quadrilateral", order)
+def test_transformation_of_tabulated_data_quadrilateral(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "quadrilateral", degree, **element_kwargs)
     bt = e.base_transformations()
 
     N = 4
@@ -205,8 +206,8 @@ def test_transformation_of_tabulated_data_quadrilateral(element_name, order):
 
 
 @parametrize_over_elements(5, "tetrahedron")
-def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
-    e = basix.create_element(element_name, "tetrahedron", order)
+def test_transformation_of_tabulated_data_tetrahedron(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "tetrahedron", degree, **element_kwargs)
     bt = e.base_transformations()
 
     N = 4
@@ -271,12 +272,12 @@ def test_transformation_of_tabulated_data_tetrahedron(element_name, order):
 
 
 @parametrize_over_elements(3, "hexahedron")
-def test_transformation_of_tabulated_data_hexahedron(element_name, order):
-    if order > 4 and element_name in ["Raviart-Thomas", "Nedelec 1st kind H(curl)"]:
-        pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "
+def test_transformation_of_tabulated_data_hexahedron(element_name, degree, element_kwargs):
+    if degree > 4 and element_name in ["Raviart-Thomas", "Nedelec 1st kind H(curl)"]:
+        pytest.xfail("High degree Hdiv and Hcurl spaces on hexes based on "
                      "Lagrange spaces equally spaced points are unstable.")
 
-    e = basix.create_element(element_name, "hexahedron", order)
+    e = basix.create_element(element_name, "hexahedron", degree, **element_kwargs)
     bt = e.base_transformations()
 
     N = 4
@@ -341,8 +342,8 @@ def test_transformation_of_tabulated_data_hexahedron(element_name, order):
 
 
 @parametrize_over_elements(3, "prism")
-def test_transformation_of_tabulated_data_prism(element_name, order):
-    e = basix.create_element(element_name, "prism", order)
+def test_transformation_of_tabulated_data_prism(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "prism", degree, **element_kwargs)
     bt = e.base_transformations()
 
     N = 4
@@ -407,8 +408,8 @@ def test_transformation_of_tabulated_data_prism(element_name, order):
 
 
 @parametrize_over_elements(3, "pyramid")
-def test_transformation_of_tabulated_data_pyramid(element_name, order):
-    e = basix.create_element(element_name, "pyramid", order)
+def test_transformation_of_tabulated_data_pyramid(element_name, degree, element_kwargs):
+    e = basix.create_element(element_name, "pyramid", degree, **element_kwargs)
     bt = e.base_transformations()
 
     N = 4

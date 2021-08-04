@@ -9,11 +9,13 @@ from numba.typed import Dict
 
 
 @pytest.mark.parametrize("cell", ["triangle", "tetrahedron", "quadrilateral", "hexahedron"])
-@pytest.mark.parametrize("element, degree", [
-    ("Lagrange", 1), ("Lagrange", 3), ("Nedelec 1st kind H(curl)", 3)
+@pytest.mark.parametrize("element, degree, element_kwargs", [
+    ("Lagrange", 1, {"lattice_type": "gll_warped"}),
+    ("Lagrange", 3, {"lattice_type": "gll_warped"}),
+    ("Nedelec 1st kind H(curl)", 3, {})
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
-def test_dof_transformations(cell, element, degree, block_size):
+def test_dof_transformations(cell, element, degree, element_kwargs, block_size):
 
     transform_functions = {
         "triangle": numba_helpers.apply_dof_transformation_triangle,
@@ -26,7 +28,7 @@ def test_dof_transformations(cell, element, degree, block_size):
 
     random.seed(1337)
 
-    e = basix.create_element(element, cell, degree)
+    e = basix.create_element(element, cell, degree, **element_kwargs)
     data = np.array(range(e.dim * block_size), dtype=np.double)
 
     for i in range(10):

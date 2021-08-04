@@ -12,23 +12,23 @@ from .utils import parametrize_over_elements
 @pytest.mark.parametrize("cell_name", ["interval", "triangle", "tetrahedron"])
 @pytest.mark.parametrize("element_name", ["Lagrange"])
 def test_interpolation(cell_name, n, element_name):
-    element = basix.create_element(element_name, cell_name, n)
+    element = basix.create_element(element_name, cell_name, n, lattice_type="gll_warped")
     assert element.interpolation_matrix.shape[0] == element.dim
     assert element.interpolation_matrix.shape[1] == element.points.shape[0]
     assert element.points.shape[1] == len(basix.topology(element.cell_type)) - 1
 
 
 @parametrize_over_elements(5)
-def test_interpolation_matrix(cell_name, order, element_name):
-    if order > 4:
+def test_interpolation_matrix(cell_name, degree, element_name, element_kwargs):
+    if degree > 4:
         if cell_name in ["quadrilateral", "hexahedron"] and element_name in [
             "Raviart-Thomas", "Nedelec 1st kind H(curl)", "Brezzi-Douglas-Marini",
             "Nedelec 2nd kind H(curl)"
         ]:
-            pytest.xfail("High order Hdiv and Hcurl spaces on hexes based on "
+            pytest.xfail("High degree Hdiv and Hcurl spaces on hexes based on "
                          "Lagrange spaces with equally spaced points are unstable.")
 
-    element = basix.create_element(element_name, cell_name, order)
+    element = basix.create_element(element_name, cell_name, degree, **element_kwargs)
     i_m = element.interpolation_matrix
     tabulated = element.tabulate(0, element.points)[0]
 

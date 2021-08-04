@@ -7,8 +7,8 @@ from .utils import parametrize_over_elements
 
 
 @parametrize_over_elements(4)
-def test_number_of_dofs(cell_name, order, element_name):
-    element = basix.create_element(element_name, cell_name, order)
+def test_number_of_dofs(cell_name, degree, element_name, element_kwargs):
+    element = basix.create_element(element_name, cell_name, degree, **element_kwargs)
 
     entity_dofs = element.entity_dofs
     num_entity_dofs = element.num_entity_dofs
@@ -21,13 +21,13 @@ def test_number_of_dofs(cell_name, order, element_name):
 
 
 @parametrize_over_elements(4)
-def test_ordering_of_dofs(cell_name, order, element_name):
+def test_degreeing_of_dofs(cell_name, degree, element_name, element_kwargs):
     """
     Check that DOFs are numbered in ascending order by entity.
 
     This assumption is required for DOF transformations to work correctly.
     """
-    element = basix.create_element(element_name, cell_name, order)
+    element = basix.create_element(element_name, cell_name, degree, **element_kwargs)
 
     entity_dofs = element.entity_dofs
     dof = 0
@@ -40,8 +40,8 @@ def test_ordering_of_dofs(cell_name, order, element_name):
 
 
 @parametrize_over_elements(4)
-def test_closure_dofs(cell_name, order, element_name):
-    element = basix.create_element(element_name, cell_name, order)
+def test_closure_dofs(cell_name, degree, element_name, element_kwargs):
+    element = basix.create_element(element_name, cell_name, degree, **element_kwargs)
 
     entity_dofs = element.entity_dofs
     entity_closure_dofs = element.entity_closure_dofs

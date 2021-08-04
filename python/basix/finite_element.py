@@ -79,7 +79,7 @@ def string_to_lattice(lattice: str):
 
 
 def create_element(family: str, cell: str, degree: int,
-                   lattice_type: typing.Optional[str]=None):
+                   lattice_type: typing.Optional[str] = None):
     """Create a finite element."""
     celltype = string_to_cell(cell)
     familytype = get_family(family, cell)

@@ -3,47 +3,48 @@
 # SPDX-License-Identifier: MIT
 
 import pytest
+import basix
 
 
 def parametrize_over_elements(degree, reference=None):
     elementlist = []
 
-    elementlist += [(c, "Lagrange", o, {"lattice_type": "gll_warped"})
-                    for c in ["interval", "triangle", "tetrahedron", "quadrilateral", "hexahedron",
-                              "prism", "pyramid"]
+    elementlist += [(c, basix.ElementFamily.P, o, {"lattice_type": basix.LatticeType.gll_warped})
+                    for c in [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron,
+                              basix.CellType.prism, basix.CellType.pyramid]
                     for o in range(1, degree + 1)]
-    elementlist += [(c, "Discontinuous Lagrange", o, {})
-                    for c in ["interval", "triangle", "tetrahedron", "quadrilateral", "hexahedron"]
+    elementlist += [(c, basix.ElementFamily.DP, o, {})
+                    for c in [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(0, degree + 1)]
-    elementlist += [(c, "Nedelec 1st kind H(curl)", o, {})
-                    for c in ["triangle", "tetrahedron", "quadrilateral", "hexahedron"]
+    elementlist += [(c, basix.ElementFamily.N1E, o, {})
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(1, degree + 1)]
-    elementlist += [(c, "Raviart-Thomas", o, {})
-                    for c in ["triangle", "tetrahedron", "quadrilateral", "hexahedron"]
+    elementlist += [(c, basix.ElementFamily.RT, o, {})
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(1, degree + 1)]
-    elementlist += [(c, "Nedelec 2nd kind H(curl)", o, {})
-                    for c in ["triangle", "tetrahedron", "quadrilateral", "hexahedron"]
+    elementlist += [(c, basix.ElementFamily.N2E, o, {})
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(1, degree + 1)]
-    elementlist += [(c, "Brezzi-Douglas-Marini", o, {})
-                    for c in ["triangle", "tetrahedron", "quadrilateral", "hexahedron"]
+    elementlist += [(c, basix.ElementFamily.BDM, o, {})
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(1, degree + 1)]
-    elementlist += [(c, "Crouzeix-Raviart", o, {})
-                    for c in ["triangle", "tetrahedron"]
+    elementlist += [(c, basix.ElementFamily.CR, o, {})
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron]
                     for o in range(1, min(2, degree + 1))]
-    elementlist += [(c, "Regge", o, {})
-                    for c in ["triangle", "tetrahedron"]
+    elementlist += [(c, basix.ElementFamily.Regge, o, {})
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron]
                     for o in range(1, degree + 1)]
-    elementlist += [("interval", "Bubble", o, {}) for o in range(2, degree + 1)]
-    elementlist += [("triangle", "Bubble", o, {}) for o in range(3, degree + 1)]
-    elementlist += [("tetrahedron", "Bubble", o, {}) for o in range(4, degree + 1)]
-    elementlist += [("quadrilateral", "Bubble", o, {}) for o in range(2, degree + 1)]
-    elementlist += [("hexahedron", "Bubble", o, {}) for o in range(2, degree + 1)]
-    elementlist += [(c, "Serendipity", o, {})
-                    for c in ["interval", "quadrilateral", "hexahedron"]
+    elementlist += [(basix.CellType.interval, basix.ElementFamily.Bubble, o, {}) for o in range(2, degree + 1)]
+    elementlist += [(basix.CellType.triangle, basix.ElementFamily.Bubble, o, {}) for o in range(3, degree + 1)]
+    elementlist += [(basix.CellType.tetrahedron, basix.ElementFamily.Bubble, o, {}) for o in range(4, degree + 1)]
+    elementlist += [(basix.CellType.quadrilateral, basix.ElementFamily.Bubble, o, {}) for o in range(2, degree + 1)]
+    elementlist += [(basix.CellType.hexahedron, basix.ElementFamily.Bubble, o, {}) for o in range(2, degree + 1)]
+    elementlist += [(c, basix.ElementFamily.Serendipity, o, {})
+                    for c in [basix.CellType.interval, basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(1, degree + 1)]
 
     if reference is None:
-        return pytest.mark.parametrize("cell_name, element_name, degree, element_kwargs", elementlist)
+        return pytest.mark.parametrize("cell_type, element_type, degree, element_kwargs", elementlist)
     else:
-        return pytest.mark.parametrize("element_name, degree, element_kwargs",
+        return pytest.mark.parametrize("element_type, degree, element_kwargs",
                                        [(b, c, d) for a, b, c, d in elementlist if a == reference])

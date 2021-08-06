@@ -8,22 +8,22 @@ from numba.core import types
 from numba.typed import Dict
 
 
-@pytest.mark.parametrize("cell", ["triangle", "tetrahedron", "quadrilateral", "hexahedron"])
+@pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron])
 @pytest.mark.parametrize("element, degree, element_kwargs", [
-    ("Lagrange", 1, {"lattice_type": "gll_warped"}),
-    ("Lagrange", 3, {"lattice_type": "gll_warped"}),
-    ("Nedelec 1st kind H(curl)", 3, {})
+    (basix.ElementFamily.P, 1, {"lattice_type": basix.LatticeType.gll_warped}),
+    (basix.ElementFamily.P, 3, {"lattice_type": basix.LatticeType.gll_warped}),
+    (basix.ElementFamily.N1E, 3, {})
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations(cell, element, degree, element_kwargs, block_size):
 
     transform_functions = {
-        "triangle": numba_helpers.apply_dof_transformation_triangle,
-        "quadrilateral": numba_helpers.apply_dof_transformation_quadrilateral,
-        "tetrahedron": numba_helpers.apply_dof_transformation_tetrahedron,
-        "hexahedron": numba_helpers.apply_dof_transformation_hexahedron,
-        "prism": numba_helpers.apply_dof_transformation_prism,
-        "pyramid": numba_helpers.apply_dof_transformation_pyramid
+        basix.CellType.triangle: numba_helpers.apply_dof_transformation_triangle,
+        basix.CellType.quadrilateral: numba_helpers.apply_dof_transformation_quadrilateral,
+        basix.CellType.tetrahedron: numba_helpers.apply_dof_transformation_tetrahedron,
+        basix.CellType.hexahedron: numba_helpers.apply_dof_transformation_hexahedron,
+        basix.CellType.prism: numba_helpers.apply_dof_transformation_prism,
+        basix.CellType.pyramid: numba_helpers.apply_dof_transformation_pyramid
     }
 
     random.seed(1337)

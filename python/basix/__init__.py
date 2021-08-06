@@ -7,11 +7,11 @@ functionality can be used via this Python interface.
 
 # Public interface
 from ._basixcpp import __version__
-from ._basixcpp import CellType, cell_to_str, mapping_to_str, family_to_str, MappingType
-from . import cell
-from .finite_element import create_element
+from . import cell, finite_element, lattice
+from .cell import CellType
+from .lattice import LatticeType, create_lattice
+from .finite_element import ElementFamily, create_element
 
 # To possibly be removed
 from ._basixcpp import (topology, geometry, tabulate_polynomial_set,
-                        create_lattice, LatticeType, index,
-                        make_quadrature, compute_jacobi_deriv, ElementFamily)
+                        index, make_quadrature, compute_jacobi_deriv, ElementFamily)

@@ -8,10 +8,10 @@ import pytest
 import numpy as np
 
 elements = [
-    ("Lagrange", {"lattice_type": "gll_warped"}),  # identity
-    ("Nedelec 1st kind H(curl)", {}),  # covariant Piola
-    ("Raviart-Thomas", {}),  # contravariant Piola
-    ("Regge", {}),  # double covariant Piola
+    (basix.ElementFamily.P, {"lattice_type": basix.LatticeType.gll_warped}),  # identity
+    (basix.ElementFamily.N1E, {}),  # covariant Piola
+    (basix.ElementFamily.RT, {}),  # contravariant Piola
+    (basix.ElementFamily.Regge, {}),  # double covariant Piola
 ]
 
 
@@ -43,9 +43,9 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
     assert np.allclose(values, unmapped)
 
 
-@pytest.mark.parametrize("element_name, element_kwargs", elements)
-def test_mappings_2d_to_2d(element_name, element_kwargs):
-    e = basix.create_element(element_name, "triangle", 1, **element_kwargs)
+@pytest.mark.parametrize("element_type, element_kwargs", elements)
+def test_mappings_2d_to_2d(element_type, element_kwargs):
+    e = basix.create_element(element_type, basix.CellType.triangle, 1, **element_kwargs)
     J = np.array([[random.random() + 1, random.random()],
                   [random.random(), random.random()]])
     detJ = np.linalg.det(J)
@@ -53,9 +53,9 @@ def test_mappings_2d_to_2d(element_name, element_kwargs):
     run_map_test(e, J, detJ, K, e.value_size, e.value_size)
 
 
-@pytest.mark.parametrize("element_name, element_kwargs", elements)
-def test_mappings_2d_to_3d(element_name, element_kwargs):
-    e = basix.create_element(element_name, "triangle", 1, **element_kwargs)
+@pytest.mark.parametrize("element_type, element_kwargs", elements)
+def test_mappings_2d_to_3d(element_type, element_kwargs):
+    e = basix.create_element(element_type, basix.CellType.triangle, 1, **element_kwargs)
 
     # Map from (0,0)--(1,0)--(0,1) to (1,0,1)--(2,1,0)--(0,1,1)
     J = np.array([[1., -1.], [1., 1.], [-1., 0.]])
@@ -71,9 +71,9 @@ def test_mappings_2d_to_3d(element_name, element_kwargs):
     run_map_test(e, J, detJ, K, e.value_size, physical_vs)
 
 
-@pytest.mark.parametrize("element_name, element_kwargs", elements)
-def test_mappings_3d_to_3d(element_name, element_kwargs):
-    e = basix.create_element(element_name, "tetrahedron", 1, **element_kwargs)
+@pytest.mark.parametrize("element_type, element_kwargs", elements)
+def test_mappings_3d_to_3d(element_type, element_kwargs):
+    e = basix.create_element(element_type, basix.CellType.tetrahedron, 1, **element_kwargs)
 
     J = np.array([[random.random() + 2, random.random(), random.random()],
                   [random.random(), random.random() + 1, random.random()],

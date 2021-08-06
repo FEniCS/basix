@@ -206,7 +206,7 @@ def test_tri(order):
     g = sympy_nedelec(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    nedelec = basix.create_element("Nedelec 1st kind H(curl)", "triangle", order)
+    nedelec = basix.create_element(basix.ElementFamily.N1E, basix.CellType.triangle, order)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
@@ -229,7 +229,7 @@ def test_tet(order):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    nedelec = basix.create_element("Nedelec 1st kind H(curl)", "tetrahedron", order)
+    nedelec = basix.create_element(basix.ElementFamily.N1E, basix.CellType.tetrahedron, order)
 
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 1

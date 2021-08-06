@@ -9,26 +9,28 @@ from .utils import parametrize_over_elements
 
 
 @pytest.mark.parametrize("n", range(1, 6))
-@pytest.mark.parametrize("cell_name", ["interval", "triangle", "tetrahedron"])
-@pytest.mark.parametrize("element_name", ["Lagrange"])
-def test_interpolation(cell_name, n, element_name):
-    element = basix.create_element(element_name, cell_name, n, lattice_type="gll_warped")
+@pytest.mark.parametrize("cell_type", [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron])
+@pytest.mark.parametrize("element_type", [basix.ElementFamily.P])
+def test_interpolation(cell_type, n, element_type):
+    element = basix.create_element(element_type, cell_type, n, lattice_type=basix.LatticeType.gll_warped)
     assert element.interpolation_matrix.shape[0] == element.dim
     assert element.interpolation_matrix.shape[1] == element.points.shape[0]
     assert element.points.shape[1] == len(basix.topology(element.cell_type)) - 1
 
 
 @parametrize_over_elements(5)
-def test_interpolation_matrix(cell_name, degree, element_name, element_kwargs):
+def test_interpolation_matrix(cell_type, degree, element_type, element_kwargs):
     if degree > 4:
-        if cell_name in ["quadrilateral", "hexahedron"] and element_name in [
-            "Raviart-Thomas", "Nedelec 1st kind H(curl)", "Brezzi-Douglas-Marini",
-            "Nedelec 2nd kind H(curl)"
+        if cell_type in [
+            basix.CellType.quadrilateral, basix.CellType.hexahedron
+        ] and element_type in [
+            basix.ElementFamily.RT, basix.ElementFamily.N1E, basix.ElementFamily.BDM,
+            basix.ElementFamily.N2E
         ]:
             pytest.xfail("High degree Hdiv and Hcurl spaces on hexes based on "
                          "Lagrange spaces with equally spaced points are unstable.")
 
-    element = basix.create_element(element_name, cell_name, degree, **element_kwargs)
+    element = basix.create_element(element_type, cell_type, degree, **element_kwargs)
     i_m = element.interpolation_matrix
     tabulated = element.tabulate(0, element.points)[0]
 

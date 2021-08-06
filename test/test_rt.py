@@ -143,7 +143,7 @@ def test_tri(order):
     g = sympy_rt(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    rt = basix.create_element("Raviart-Thomas", "triangle", order)
+    rt = basix.create_element(basix.ElementFamily.RT, basix.CellType.triangle, order)
     pts = basix.create_lattice(celltype, 1, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = rt.tabulate(nderiv, pts)
@@ -166,7 +166,7 @@ def test_tet(order):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    rt = basix.create_element("Raviart-Thomas", "tetrahedron", order)
+    rt = basix.create_element(basix.ElementFamily.RT, basix.CellType.tetrahedron, order)
 
     pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     nderiv = 1

@@ -5,7 +5,7 @@ from ._basixcpp import create_element as _cpp_create_element
 from ._basixcpp import ElementFamily, CellType, LatticeType
 
 
-def get_family(family: str, cell: str):
+def string_to_family(family: str, cell: str):
     """Get a Basix ElementFamily enum representing the family type on the given cell."""
     # Family names that are valid for all cells
     families = {
@@ -66,27 +66,10 @@ def get_family(family: str, cell: str):
     raise ValueError(f"Unknown element family: {family} with cell type {cell}")
 
 
-def string_to_cell(cell: str):
-    """Convert a string to a Basix CellType enum."""
-    if not hasattr(CellType, cell):
-        raise ValueError(f"Unknown cell: {cell}")
-    return getattr(CellType, cell)
-
-
-def string_to_lattice(lattice: str):
-    """Convert a string to a Basix LatticeType enum."""
-    if not hasattr(LatticeType, lattice):
-        raise ValueError(f"Unknown lattice type: {lattice}")
-    return getattr(LatticeType, lattice)
-
-
-def create_element(family: str, cell: str, degree: int,
-                   lattice_type: typing.Optional[str] = None):
+def create_element(element_type: ElementFamily, cell_type: CellType, degree: int,
+                   lattice_type: typing.Optional[LatticeType] = None):
     """Create a finite element."""
-    celltype = string_to_cell(cell)
-    familytype = get_family(family, cell)
-
     if lattice_type is not None:
-        return _cpp_create_element(familytype, celltype, degree, string_to_lattice(lattice_type))
+        return _cpp_create_element(element_type, cell_type, degree, lattice_type)
 
-    return _cpp_create_element(familytype, celltype, degree)
+    return _cpp_create_element(element_type, cell_type, degree)

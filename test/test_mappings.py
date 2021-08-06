@@ -8,10 +8,10 @@ import pytest
 import numpy as np
 
 elements = [
-    (basix.ElementFamily.P, {"lattice_type": basix.LatticeType.gll_warped}),  # identity
-    (basix.ElementFamily.N1E, {}),  # covariant Piola
-    (basix.ElementFamily.RT, {}),  # contravariant Piola
-    (basix.ElementFamily.Regge, {}),  # double covariant Piola
+    (basix.ElementFamily.P, [basix.LatticeType.gll_warped]),  # identity
+    (basix.ElementFamily.N1E, []),  # covariant Piola
+    (basix.ElementFamily.RT, []),  # contravariant Piola
+    (basix.ElementFamily.Regge, []),  # double covariant Piola
 ]
 
 

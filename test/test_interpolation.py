@@ -19,7 +19,7 @@ def test_interpolation(cell_type, n, element_type):
 
 
 @parametrize_over_elements(5)
-def test_interpolation_matrix(cell_type, degree, element_type, element_kwargs):
+def test_interpolation_matrix(cell_type, degree, element_type, element_args):
     if degree > 4:
         if cell_type in [
             basix.CellType.quadrilateral, basix.CellType.hexahedron
@@ -30,7 +30,7 @@ def test_interpolation_matrix(cell_type, degree, element_type, element_kwargs):
             pytest.xfail("High degree Hdiv and Hcurl spaces on hexes based on "
                          "Lagrange spaces with equally spaced points are unstable.")
 
-    element = basix.create_element(element_type, cell_type, degree, **element_kwargs)
+    element = basix.create_element(element_type, cell_type, degree, *element_args)
     i_m = element.interpolation_matrix
     tabulated = element.tabulate(0, element.points)[0]
 

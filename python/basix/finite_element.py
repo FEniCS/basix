@@ -1,7 +1,6 @@
 """Functions for creating finite elements."""
 
 import typing
-from ._basixcpp import create_element as _cpp_create_element
 from ._basixcpp import ElementFamily, CellType, LatticeType
 
 
@@ -64,12 +63,3 @@ def string_to_family(family: str, cell: str):
         return families[family]
 
     raise ValueError(f"Unknown element family: {family} with cell type {cell}")
-
-
-def create_element(element_type: ElementFamily, cell_type: CellType, degree: int,
-                   lattice_type: typing.Optional[LatticeType] = None):
-    """Create a finite element."""
-    if lattice_type is not None:
-        return _cpp_create_element(element_type, cell_type, degree, lattice_type)
-
-    return _cpp_create_element(element_type, cell_type, degree)

@@ -1,7 +1,6 @@
 """Functions to create lattices and manipulate lattice types."""
 
 from ._basixcpp import LatticeType
-from ._basixcpp import create_lattice  # noqa: F401
 
 
 def string_to_type(lattice: str):

@@ -144,7 +144,8 @@ def test_line(n):
     celltype = basix.CellType.interval
     g = sympy_lagrange(celltype, n)
     x = sympy.Symbol("x")
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, n, lattice_type=basix.LatticeType.equispaced)
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, n,
+                                    lattice_type=basix.LatticeType.equispaced)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
@@ -164,7 +165,8 @@ def test_tri(degree):
     g = sympy_lagrange(celltype, degree)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, degree, lattice_type=basix.LatticeType.equispaced)
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, degree,
+                                    lattice_type=basix.LatticeType.equispaced)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)
@@ -187,7 +189,8 @@ def test_tet(degree):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.tetrahedron, degree, lattice_type=basix.LatticeType.equispaced)
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.tetrahedron, degree,
+                                    lattice_type=basix.LatticeType.equispaced)
     pts = basix.create_lattice(celltype, 6,
                                basix.LatticeType.equispaced, True)
     nderiv = 1
@@ -213,7 +216,8 @@ def test_tet(degree):
                                       (basix.CellType.tetrahedron, basix.CellType.tetrahedron)])
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_lagrange(celltype, degree):
-    lagrange = basix.create_element(basix.ElementFamily.P, celltype[1], degree, lattice_type=basix.LatticeType.equispaced)
+    lagrange = basix.create_element(basix.ElementFamily.P, celltype[1], degree,
+                                    lattice_type=basix.LatticeType.equispaced)
     pts = basix.create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
     assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())
@@ -221,13 +225,15 @@ def test_lagrange(celltype, degree):
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_dof_transformations_interval(degree):
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, degree, lattice_type=basix.LatticeType.equispaced)
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, degree,
+                                    lattice_type=basix.LatticeType.equispaced)
     assert len(lagrange.base_transformations()) == 0
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_dof_transformations_triangle(degree):
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, degree, lattice_type=basix.LatticeType.equispaced)
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, degree,
+                                    lattice_type=basix.LatticeType.equispaced)
 
     permuted = {}
     if degree == 3:
@@ -256,7 +262,8 @@ def test_dof_transformations_triangle(degree):
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_dof_transformations_tetrahedron(degree):
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.tetrahedron, degree, lattice_type=basix.LatticeType.equispaced)
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.tetrahedron, degree,
+                                    lattice_type=basix.LatticeType.equispaced)
 
     permuted = {}
     if degree == 3:

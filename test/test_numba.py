@@ -8,7 +8,8 @@ from numba.core import types
 from numba.typed import Dict
 
 
-@pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron])
+@pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral,
+                                  basix.CellType.hexahedron])
 @pytest.mark.parametrize("element, degree, element_kwargs", [
     (basix.ElementFamily.P, 1, {"lattice_type": basix.LatticeType.gll_warped}),
     (basix.ElementFamily.P, 3, {"lattice_type": basix.LatticeType.gll_warped}),

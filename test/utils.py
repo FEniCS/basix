@@ -10,23 +10,29 @@ def parametrize_over_elements(degree, reference=None):
     elementlist = []
 
     elementlist += [(c, basix.ElementFamily.P, o, {"lattice_type": basix.LatticeType.gll_warped})
-                    for c in [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron,
+                    for c in [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron,
+                              basix.CellType.quadrilateral, basix.CellType.hexahedron,
                               basix.CellType.prism, basix.CellType.pyramid]
                     for o in range(1, degree + 1)]
     elementlist += [(c, basix.ElementFamily.DP, o, {})
-                    for c in [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
+                    for c in [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron,
+                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(0, degree + 1)]
     elementlist += [(c, basix.ElementFamily.N1E, o, {})
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron,
+                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(1, degree + 1)]
     elementlist += [(c, basix.ElementFamily.RT, o, {})
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron,
+                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(1, degree + 1)]
     elementlist += [(c, basix.ElementFamily.N2E, o, {})
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron,
+                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(1, degree + 1)]
     elementlist += [(c, basix.ElementFamily.BDM, o, {})
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron, basix.CellType.quadrilateral, basix.CellType.hexahedron]
+                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron,
+                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
                     for o in range(1, degree + 1)]
     elementlist += [(c, basix.ElementFamily.CR, o, {})
                     for c in [basix.CellType.triangle, basix.CellType.tetrahedron]

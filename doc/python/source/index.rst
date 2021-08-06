@@ -12,6 +12,16 @@ Basix Python interface documentation
 
 .. automodule:: basix.cell
 
+`basix.finite_element`
+======================
+
+.. automodule:: basix.finite_element
+
+`basix.lattice`
+===============
+
+.. automodule:: basix.lattice
+
 `basix.numba_helpers`
 =====================
 

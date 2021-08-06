@@ -14,4 +14,4 @@ from .finite_element import ElementFamily, create_element
 
 # To possibly be removed
 from ._basixcpp import (topology, geometry, tabulate_polynomial_set,
-                        index, make_quadrature, compute_jacobi_deriv, ElementFamily)
+                        index, make_quadrature, compute_jacobi_deriv)

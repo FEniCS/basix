@@ -1,6 +1,6 @@
 """Functions for creating finite elements."""
 
-from ._basixcpp import ElementFamily, CellType, LatticeType
+from ._basixcpp import ElementFamily
 
 
 def string_to_family(family: str, cell: str):

@@ -12,7 +12,7 @@ from .utils import parametrize_over_elements
 @pytest.mark.parametrize("cell_type", [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron])
 @pytest.mark.parametrize("element_type", [basix.ElementFamily.P])
 def test_interpolation(cell_type, n, element_type):
-    element = basix.create_element(element_type, cell_type, n, basix.LatticeType.gll_warped)
+    element = basix.create_element(element_type, cell_type, n, basix.LatticeType.gll)
     assert element.interpolation_matrix.shape[0] == element.dim
     assert element.interpolation_matrix.shape[1] == element.points.shape[0]
     assert element.points.shape[1] == len(basix.topology(element.cell_type)) - 1

@@ -6,14 +6,14 @@ import basix
 import numpy as np
 
 
-def test_gll_warped_pyramid():
+def test_gll_pyramid():
     n = 8
 
     # Check that all the surface points of the pyramid match up with the
     # same points on quad and triangle
-    tri_pts = basix.create_lattice(basix.CellType.triangle, n, basix.LatticeType.gll_warped, True)
-    quad_pts = basix.create_lattice(basix.CellType.quadrilateral, n, basix.LatticeType.gll_warped, True)
-    pyr_pts = basix.create_lattice(basix.CellType.pyramid, n, basix.LatticeType.gll_warped, True)
+    tri_pts = basix.create_lattice(basix.CellType.triangle, n, basix.LatticeType.gll, True)
+    quad_pts = basix.create_lattice(basix.CellType.quadrilateral, n, basix.LatticeType.gll, True)
+    pyr_pts = basix.create_lattice(basix.CellType.pyramid, n, basix.LatticeType.gll, True)
 
     # Remove any near-zero values to make sorting robust
     pyr_pts[np.where(abs(pyr_pts) < 1e-12)] = 0.0
@@ -41,13 +41,13 @@ def test_gll_warped_pyramid():
     assert np.allclose(np.sort(quad_pts), np.sort(pyr_z0))
 
 
-def test_gll_warped_tetrahedron():
+def test_gll_tetrahedron():
     n = 8
 
     # Check that all the surface points of the tet match up with the same points on
     # triangle
-    tri_pts = basix.create_lattice(basix.CellType.triangle, n, basix.LatticeType.gll_warped, True)
-    tet_pts = basix.create_lattice(basix.CellType.tetrahedron, n, basix.LatticeType.gll_warped, True)
+    tri_pts = basix.create_lattice(basix.CellType.triangle, n, basix.LatticeType.gll, True)
+    tet_pts = basix.create_lattice(basix.CellType.tetrahedron, n, basix.LatticeType.gll, True)
 
     tet_pts[np.where(abs(tet_pts) < 1e-12)] = 0.0
     tri_pts[np.where(abs(tri_pts) < 1e-12)] = 0.0

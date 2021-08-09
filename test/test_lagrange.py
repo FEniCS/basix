@@ -313,7 +313,7 @@ def test_dof_transformations_tetrahedron(degree):
     basix.CellType.prism
 ])
 def test_celltypes(degree, celltype):
-    tp = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LatticeType.gll_warped)
+    tp = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LatticeType.gll)
     pts = basix.create_lattice(celltype, 5,
                                basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]

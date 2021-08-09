@@ -17,8 +17,7 @@ namespace basix
 /// points of the element
 /// @return A FiniteElement
 FiniteElement create_lagrange(cell::type celltype, int degree,
-                              lattice::type lattice_type
-                              = lattice::type::gll_warped);
+                              lattice::type lattice_type);
 
 /// Create a Discontinuous Lagrange element on cell with given degree
 /// @param[in] celltype The reference cell type that the element is defined on

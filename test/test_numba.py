@@ -53,9 +53,12 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
         assert np.allclose(data1, data2)
 
 
-@pytest.mark.parametrize("cell", ["triangle", "tetrahedron", "quadrilateral", "hexahedron"])
-@pytest.mark.parametrize("element, degree", [
-    ("Lagrange", 1), ("Lagrange", 3), ("Nedelec 1st kind H(curl)", 3)
+@pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron,
+                                  basix.CellType.quadrilateral, basix.CellType.hexahedron])
+@pytest.mark.parametrize("element, degree, element_args", [
+    (basix.ElementFamily.P, 1, [basix.LatticeType.gll]),
+    (basix.ElementFamily.P, 3, [basix.LatticeType.gll]),
+    (basix.ElementFamily.N1E, 3, [])
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations_to_transpose(cell, element, degree, block_size):

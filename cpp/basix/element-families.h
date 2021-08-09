@@ -13,18 +13,18 @@ namespace element
 /// Enum of available element families
 enum class family
 {
-  custom,
-  P,
-  RT,
-  N1E,
-  BDM,
-  N2E,
-  CR,
-  Regge,
-  DP,
-  DPC,
-  Bubble,
-  Serendipity
+  custom = 0,
+  P = 1,
+  RT = 2,
+  N1E = 3,
+  BDM = 4,
+  N2E = 5,
+  CR = 6,
+  Regge = 7,
+  DP = 8,
+  DPC = 9,
+  Bubble = 10,
+  Serendipity = 11
 };
 
 /// Convert string to a family

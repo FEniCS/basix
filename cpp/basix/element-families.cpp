@@ -13,15 +13,15 @@ element::family element::str_to_type(std::string name)
 {
   static const std::map<std::string, element::family> name_to_type
       = {{"Custom element", element::family::custom},
-         {"Lagrange", element::family::P},
-         {"Discontinuous Lagrange", element::family::DP},
+         {"P", element::family::P},
+         {"DP", element::family::DP},
          {"DPC", element::family::DPC},
-         {"Brezzi-Douglas-Marini", element::family::BDM},
-         {"Raviart-Thomas", element::family::RT},
-         {"Nedelec 1st kind H(curl)", element::family::N1E},
-         {"Nedelec 2nd kind H(curl)", element::family::N2E},
+         {"BDM", element::family::BDM},
+         {"RT", element::family::RT},
+         {"N1E", element::family::N1E},
+         {"N2E", element::family::N2E},
          {"Regge", element::family::Regge},
-         {"Crouzeix-Raviart", element::family::CR},
+         {"CR", element::family::CR},
          {"Bubble", element::family::Bubble},
          {"Serendipity", element::family::Serendipity}};
 
@@ -36,15 +36,15 @@ const std::string& element::type_to_str(element::family type)
 {
   static const std::map<element::family, std::string> name_to_type
       = {{element::family::custom, "Custom element"},
-         {element::family::P, "Lagrange"},
-         {element::family::DP, "Discontinuous Lagrange"},
+         {element::family::P, "P"},
+         {element::family::DP, "DP"},
          {element::family::DPC, "DPC"},
-         {element::family::BDM, "Brezzi-Douglas-Marini"},
-         {element::family::RT, "Raviart-Thomas"},
-         {element::family::N1E, "Nedelec 1st kind H(curl)"},
-         {element::family::N2E, "Nedelec 2nd kind H(curl)"},
+         {element::family::BDM, "BDM"},
+         {element::family::RT, "RT"},
+         {element::family::N1E, "N1E"},
+         {element::family::N2E, "N2E"},
          {element::family::Regge, "Regge"},
-         {element::family::CR, "Crouzeix-Raviart"},
+         {element::family::CR, "CR"},
          {element::family::Bubble, "Bubble"},
          {element::family::Serendipity, "Serendipity"}};
 

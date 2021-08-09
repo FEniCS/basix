@@ -74,20 +74,14 @@ constexpr int num_transformations(cell::type cell_type)
 }
 } // namespace
 //-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(std::string family, std::string cell,
-                                           int degree)
-{
-  return basix::create_element(element::str_to_type(family),
-                               cell::str_to_type(cell), degree);
-}
-//-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree)
 {
   switch (family)
   {
   case element::family::P:
-    return create_lagrange(cell, degree);
+    throw std::runtime_error(
+        "Lagrange elements need to be given a lattice type.");
   case element::family::DP:
     return create_dlagrange(cell, degree);
   case element::family::BDM:
@@ -146,6 +140,19 @@ basix::FiniteElement basix::create_element(element::family family,
     return create_dpc(cell, degree);
   default:
     throw std::runtime_error("Element family not found");
+  }
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           lattice::type lattice_type)
+{
+  switch (family)
+  {
+  case element::family::P:
+    return create_lagrange(cell, degree, lattice_type);
+  default:
+    throw std::runtime_error("Cannot pass a lattice type to this element.");
   }
 }
 //-----------------------------------------------------------------------------

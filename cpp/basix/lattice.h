@@ -10,11 +10,25 @@
 
 namespace basix::lattice
 {
+/// The type of point spacing to be used in a lattice.
+/// lattice::type::equispaced represents equally spaced points
+/// on an interval and a regularly spaced set of points on other
+/// shapes. lattice::type:gll represents the GLL (Gauss-Lobatto-Legendre)
+/// points on an interval. Fot other shapes, the points used are obtained
+/// by warping an equispaced grid of points, as described in Hesthaven and
+/// Warburton, Nodal Discontinuous Galerkin Methods, 2008, pp 175-180
+/// (https://doi.org/10.1007/978-0-387-72067-8).
 enum class type
 {
-  equispaced,
-  gll_warped
+  equispaced = 0,
+  gll = 1
 };
+
+/// Convert string to a lattice type
+lattice::type str_to_type(std::string name);
+
+// Convert family to string
+std::string type_to_str(lattice::type type);
 
 /// Create a lattice of points on a reference cell
 /// optionally including the outer surface points
@@ -25,14 +39,14 @@ enum class type
 /// If the parameter exterior is set to false, the points lying on the external
 /// boundary are omitted, in this case for a quadrilateral with n=2, the points
 /// are: [0.5,0.5]. The lattice type can be chosen as "equispaced" or
-/// "gll_warped". The "gll_warped" lattice has points spaced along each edge at
+/// "gll". The "gll" lattice has points spaced along each edge at
 /// the Gauss-Lobatto-Legendre quadrature points. These are the same as
 /// "equispaced" when n<3.
 ///
 /// @param celltype The cell::type
 /// @param n Size in each direction. There are n+1 points along each edge of the
 /// cell.
-/// @param type Either lattice::type::equispaced or lattice::type::gll_warped
+/// @param type Either lattice::type::equispaced or lattice::type::gll
 /// @param exterior If set, includes outer boundaries
 /// @return Set of points
 xt::xtensor<double, 2> create(cell::type celltype, int n, lattice::type type,

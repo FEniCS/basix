@@ -5,7 +5,6 @@
 #include "lagrange.h"
 #include "dof-transformations.h"
 #include "element-families.h"
-#include "lattice.h"
 #include "log.h"
 #include "maps.h"
 #include "polyset.h"
@@ -18,7 +17,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_lagrange(cell::type celltype, int degree)
+FiniteElement basix::create_lagrange(cell::type celltype, int degree,
+                                     lattice::type lattice_type)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
@@ -34,7 +34,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
   // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)
   {
-    auto pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
+    auto pt = lattice::create(celltype, 0, lattice_type, true);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
     std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
@@ -64,8 +64,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         }
         else if (dim == tdim)
         {
-          x[dim][e] = lattice::create(celltype, degree,
-                                      lattice::type::equispaced, false);
+          x[dim][e] = lattice::create(celltype, degree, lattice_type, false);
           const std::size_t num_dofs = x[dim][e].shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
           M[dim][e] = xt::xtensor<double, 3>(s);
@@ -75,8 +74,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree)
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const auto lattice
-              = lattice::create(ct, degree, lattice::type::equispaced, false);
+          const auto lattice = lattice::create(ct, degree, lattice_type, false);
           const std::size_t num_dofs = lattice.shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
           M[dim][e] = xt::xtensor<double, 3>(s);

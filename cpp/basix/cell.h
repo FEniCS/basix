@@ -15,14 +15,14 @@ namespace basix::cell
 /// Cell type
 enum class type
 {
-  point,
-  interval,
-  triangle,
-  tetrahedron,
-  quadrilateral,
-  hexahedron,
-  prism,
-  pyramid
+  point = 0,
+  interval = 1,
+  triangle = 2,
+  tetrahedron = 3,
+  quadrilateral = 4,
+  hexahedron = 5,
+  prism = 6,
+  pyramid = 7
 };
 
 /// Cell geometry

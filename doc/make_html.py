@@ -95,7 +95,7 @@ for file in os.listdir(path):
             f.write(make_html_page(markdown.markdown(contents)))
 
 # Make cpp docs
-os.system(f"cd {path}/cpp && doxygen && cp -r {path}/cpp/html {html_path}/cpp")
+assert os.system(f"cd {path}/cpp && doxygen && cp -r {path}/cpp/html {html_path}/cpp") == 0
 
 # Make python docs
-os.system(f"cd {path}/python && make html && cp -r {path}/python/build/html {html_path}/python")
+assert os.system(f"cd {path}/python && make html && cp -r {path}/python/build/html {html_path}/python") == 0

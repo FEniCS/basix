@@ -130,7 +130,7 @@ Interface to the Basix C++ library.
 
   py::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
-      .value("gll_warped", lattice::type::gll_warped);
+      .value("gll", lattice::type::gll);
 
   m.def(
       "create_lattice",
@@ -223,6 +223,9 @@ Interface to the Basix C++ library.
       .value("N1E", element::family::N1E)
       .value("N2E", element::family::N2E)
       .value("Regge", element::family::Regge)
+      .value("Bubble", element::family::Bubble)
+      .value("Serendipity", element::family::Serendipity)
+      .value("DPC", element::family::DPC)
       .value("CR", element::family::CR);
 
   m.def(
@@ -400,10 +403,20 @@ Interface to the Basix C++ library.
   // Create FiniteElement
   m.def(
       "create_element",
-      [](const std::string family_name, const std::string cell_name,
-         int degree) -> FiniteElement
-      { return basix::create_element(family_name, cell_name, degree); },
+      [](element::family family_name, cell::type cell_name,
+         int degree) -> FiniteElement { return basix::create_element(family_name, cell_name, degree);
+      },
       "Create a FiniteElement of a given family, celltype and degree");
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         lattice::type lattice_type) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree,
+                                     lattice_type);
+      },
+      "Create a FiniteElement of a given family, celltype, degree and lattice "
+      "type");
 
   m.def(
       "tabulate_polynomial_set",

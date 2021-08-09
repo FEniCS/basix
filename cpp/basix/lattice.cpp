@@ -49,7 +49,7 @@ xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
     x = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
 
-  if (lattice_type == lattice::type::gll_warped)
+  if (x.shape(0) > 0 and lattice_type == lattice::type::gll)
     x += warp_function(n, x);
 
   return x;
@@ -70,7 +70,7 @@ xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
     r = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
 
-  if (lattice_type == lattice::type::gll_warped)
+  if (r.shape(0) > 0 and lattice_type == lattice::type::gll)
     r += warp_function(n, r);
 
   const std::size_t m = r.shape(0);
@@ -103,7 +103,7 @@ xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
     const double h = 1.0 / static_cast<double>(n);
     r = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
-  if (lattice_type == lattice::type::gll_warped)
+  if (r.shape(0) > 0 and lattice_type == lattice::type::gll)
     r += warp_function(n, r);
 
   const std::size_t m = r.size();
@@ -154,7 +154,7 @@ xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
       const double y = r[2 * j];
       p(c, 0) = x;
       p(c, 1) = y;
-      if (lattice_type == lattice::type::gll_warped)
+      if (lattice_type == lattice::type::gll)
       {
         const std::size_t l = n - j - i;
         const double a = r[2 * l];
@@ -197,7 +197,7 @@ xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
         p(c, 0) = x;
         p(c, 1) = y;
         p(c, 2) = z;
-        if (lattice_type == lattice::type::gll_warped)
+        if (lattice_type == lattice::type::gll)
         {
           const double dx = x
                             * (a * wbar(n + i - l) + y * wbar(n + i - j)
@@ -287,7 +287,7 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
         double y = h * (j + b);
         double z = h * (k + b);
 
-        if (lattice_type == lattice::type::gll_warped)
+        if (lattice_type == lattice::type::gll)
         {
           // Barycentric coordinates of triangle in x-z plane
           const double l1 = x;
@@ -412,5 +412,31 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
   default:
     throw std::runtime_error("Unsupported cell for lattice");
   }
+}
+//-----------------------------------------------------------------------------
+lattice::type lattice::str_to_type(std::string name)
+{
+  static const std::map<std::string, lattice::type> name_to_type
+      = {{"equispaced", lattice::type::equispaced},
+         {"gll", lattice::type::gll}};
+
+  auto it = name_to_type.find(name);
+  if (it == name_to_type.end())
+    throw std::runtime_error("Can't find name " + name);
+
+  return it->second;
+}
+//-----------------------------------------------------------------------------
+std::string lattice::type_to_str(lattice::type type)
+{
+  static const std::map<lattice::type, std::string> name_to_type
+      = {{lattice::type::equispaced, "equispaced"},
+         {lattice::type::gll, "gll"}};
+
+  auto it = name_to_type.find(type);
+  if (it == name_to_type.end())
+    throw std::runtime_error("Can't find type");
+
+  return it->second;
 }
 //-----------------------------------------------------------------------------

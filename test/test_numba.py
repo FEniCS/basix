@@ -8,25 +8,28 @@ from numba.core import types
 from numba.typed import Dict
 
 
-@pytest.mark.parametrize("cell", ["triangle", "tetrahedron", "quadrilateral", "hexahedron"])
-@pytest.mark.parametrize("element, degree", [
-    ("Lagrange", 1), ("Lagrange", 3), ("Nedelec 1st kind H(curl)", 3)
+@pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron,
+                                  basix.CellType.quadrilateral, basix.CellType.hexahedron])
+@pytest.mark.parametrize("element, degree, element_args", [
+    (basix.ElementFamily.P, 1, [basix.LatticeType.gll]),
+    (basix.ElementFamily.P, 3, [basix.LatticeType.gll]),
+    (basix.ElementFamily.N1E, 3, [])
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
-def test_dof_transformations(cell, element, degree, block_size):
+def test_dof_transformations(cell, element, degree, element_args, block_size):
 
     transform_functions = {
-        "triangle": numba_helpers.apply_dof_transformation_triangle,
-        "quadrilateral": numba_helpers.apply_dof_transformation_quadrilateral,
-        "tetrahedron": numba_helpers.apply_dof_transformation_tetrahedron,
-        "hexahedron": numba_helpers.apply_dof_transformation_hexahedron,
-        "prism": numba_helpers.apply_dof_transformation_prism,
-        "pyramid": numba_helpers.apply_dof_transformation_pyramid
+        basix.CellType.triangle: numba_helpers.apply_dof_transformation_triangle,
+        basix.CellType.quadrilateral: numba_helpers.apply_dof_transformation_quadrilateral,
+        basix.CellType.tetrahedron: numba_helpers.apply_dof_transformation_tetrahedron,
+        basix.CellType.hexahedron: numba_helpers.apply_dof_transformation_hexahedron,
+        basix.CellType.prism: numba_helpers.apply_dof_transformation_prism,
+        basix.CellType.pyramid: numba_helpers.apply_dof_transformation_pyramid
     }
 
     random.seed(1337)
 
-    e = basix.create_element(element, cell, degree)
+    e = basix.create_element(element, cell, degree, *element_args)
     data = np.array(list(range(e.dim * block_size)), dtype=np.double)
 
     for i in range(10):
@@ -50,25 +53,28 @@ def test_dof_transformations(cell, element, degree, block_size):
         assert np.allclose(data1, data2)
 
 
-@pytest.mark.parametrize("cell", ["triangle", "tetrahedron", "quadrilateral", "hexahedron"])
-@pytest.mark.parametrize("element, degree", [
-    ("Lagrange", 1), ("Lagrange", 3), ("Nedelec 1st kind H(curl)", 3)
+@pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron,
+                                  basix.CellType.quadrilateral, basix.CellType.hexahedron])
+@pytest.mark.parametrize("element, degree, element_args", [
+    (basix.ElementFamily.P, 1, [basix.LatticeType.gll]),
+    (basix.ElementFamily.P, 3, [basix.LatticeType.gll]),
+    (basix.ElementFamily.N1E, 3, [])
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
-def test_dof_transformations_to_transpose(cell, element, degree, block_size):
+def test_dof_transformations_to_transpose(cell, element, degree, block_size, element_args):
 
     transform_functions = {
-        "triangle": numba_helpers.apply_dof_transformation_to_transpose_triangle,
-        "quadrilateral": numba_helpers.apply_dof_transformation_to_transpose_quadrilateral,
-        "tetrahedron": numba_helpers.apply_dof_transformation_to_transpose_tetrahedron,
-        "hexahedron": numba_helpers.apply_dof_transformation_to_transpose_hexahedron,
-        "prism": numba_helpers.apply_dof_transformation_to_transpose_prism,
-        "pyramid": numba_helpers.apply_dof_transformation_to_transpose_pyramid
+        basix.CellType.triangle: numba_helpers.apply_dof_transformation_to_transpose_triangle,
+        basix.CellType.quadrilateral: numba_helpers.apply_dof_transformation_to_transpose_quadrilateral,
+        basix.CellType.tetrahedron: numba_helpers.apply_dof_transformation_to_transpose_tetrahedron,
+        basix.CellType.hexahedron: numba_helpers.apply_dof_transformation_to_transpose_hexahedron,
+        basix.CellType.prism: numba_helpers.apply_dof_transformation_to_transpose_prism,
+        basix.CellType.pyramid: numba_helpers.apply_dof_transformation_to_transpose_pyramid
     }
 
     random.seed(1337)
 
-    e = basix.create_element(element, cell, degree)
+    e = basix.create_element(element, cell, degree, *element_args)
     data = np.array(list(range(e.dim * block_size)), dtype=np.double)
 
     for i in range(10):

@@ -61,7 +61,7 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
     (basix.ElementFamily.N1E, 3, [])
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
-def test_dof_transformations_to_transpose(cell, element, degree, block_size):
+def test_dof_transformations_to_transpose(cell, element, degree, block_size, element_args):
 
     transform_functions = {
         "triangle": numba_helpers.apply_dof_transformation_to_transpose_triangle,
@@ -74,7 +74,7 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size):
 
     random.seed(1337)
 
-    e = basix.create_element(element, cell, degree)
+    e = basix.create_element(element, cell, degree, *element_args)
     data = np.array(list(range(e.dim * block_size)), dtype=np.double)
 
     for i in range(10):

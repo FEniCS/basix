@@ -64,12 +64,12 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
 def test_dof_transformations_to_transpose(cell, element, degree, block_size, element_args):
 
     transform_functions = {
-        "triangle": numba_helpers.apply_dof_transformation_to_transpose_triangle,
-        "quadrilateral": numba_helpers.apply_dof_transformation_to_transpose_quadrilateral,
-        "tetrahedron": numba_helpers.apply_dof_transformation_to_transpose_tetrahedron,
-        "hexahedron": numba_helpers.apply_dof_transformation_to_transpose_hexahedron,
-        "prism": numba_helpers.apply_dof_transformation_to_transpose_prism,
-        "pyramid": numba_helpers.apply_dof_transformation_to_transpose_pyramid
+        basix.CellType.triangle: numba_helpers.apply_dof_transformation_to_transpose_triangle,
+        basix.CellType.quadrilateral: numba_helpers.apply_dof_transformation_to_transpose_quadrilateral,
+        basix.CellType.tetrahedron: numba_helpers.apply_dof_transformation_to_transpose_tetrahedron,
+        basix.CellType.hexahedron: numba_helpers.apply_dof_transformation_to_transpose_hexahedron,
+        basix.CellType.prism: numba_helpers.apply_dof_transformation_to_transpose_prism,
+        basix.CellType.pyramid: numba_helpers.apply_dof_transformation_to_transpose_pyramid
     }
 
     random.seed(1337)

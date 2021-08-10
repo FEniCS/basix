@@ -685,7 +685,7 @@ make_xiao_gimbutas_triangle_quadrature(int m)
            0.04322736365941421,  0.015083677576511441, 0.02178358503860756,
            0.04322736365941421,  0.015083677576511441, 0.02178358503860756};
     std::transform(w.cbegin(), w.cend(), w.begin(),
-                   [](auto x) { return x / 6.0; });
+                   [](auto x) { return x / 2.0; });
 
     return {x, w};
   }

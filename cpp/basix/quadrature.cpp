@@ -1370,9 +1370,7 @@ make_xiao_gimbutas_triangle_quadrature(int m)
         0.007156400476915371,  0.002259739204251731,  0.015445215644198462,
         0.004405794837116996,  0.02338349146365547,   0.01197279715790938,
         0.008291423055227716,  0.007391363000510596,  0.01733445113443867,
-        0.007156400476915371
-
-    };
+        0.007156400476915371};
 
     return {x, w};
   }
@@ -1709,6 +1707,9 @@ quadrature::make_quadrature(const std::string& rule, cell::type celltype, int m)
   {
     if (celltype == cell::type::triangle)
       return make_xiao_gimbutas_triangle_quadrature(m);
+    else
+      throw std::runtime_error(
+          "Xiao-Gimbutas is only implemented for triangles.");
   }
   else
     throw std::runtime_error("Unknown quadrature rule \"" + rule + "\"");

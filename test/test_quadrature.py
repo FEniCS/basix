@@ -49,6 +49,21 @@ def test_qorder_tri(m, scheme):
     assert(np.isclose(float(q), float(s)))
 
 
+@pytest.mark.parametrize("m", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+@pytest.mark.parametrize("scheme", ['Xiao-Gimbutas'])
+def test_xiao_gimbutas_tri(m, scheme):
+    Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.triangle, m)
+    x = sympy.Symbol('x')
+    y = sympy.Symbol('y')
+    f = x**m + y**m
+    q = sympy.integrate(sympy.integrate(f, (x, 0, (1 - y))), (y, 0, 1))
+    s = 0.0
+    for (pt, wt) in zip(Qpts, Qwts):
+        s += wt * f.subs([(x, pt[0]), (y, pt[1])])
+    print(len(Qwts))
+    assert(np.isclose(float(q), float(s)))
+
+
 @pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6, 7, 8])
 @pytest.mark.parametrize("scheme", ['default', 'Gauss-Jacobi'])
 def test_qorder_tet(m, scheme):

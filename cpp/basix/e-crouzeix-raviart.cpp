@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "crouzeix-raviart.h"
+#include "e-crouzeix-raviart.h"
 #include "cell.h"
 #include "element-families.h"
 #include "maps.h"
@@ -15,7 +15,7 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_cr(cell::type celltype, int degree)
+FiniteElement basix::create_cr(cell::type celltype, int degree, bool)
 {
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");

@@ -12,11 +12,11 @@ namespace basix
 /// Create RTC H(div) element
 /// @param celltype
 /// @param degree
-FiniteElement create_rtc(cell::type celltype, int degree);
+FiniteElement create_rtc(cell::type celltype, int degree, bool discontinuous);
 
 /// Create NC H(curl) element
 /// @param celltype
 /// @param degree
-FiniteElement create_nce(cell::type celltype, int degree);
+FiniteElement create_nce(cell::type celltype, int degree, bool discontinuous);
 
 } // namespace basix

@@ -2,9 +2,9 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "serendipity.h"
+#include "e-serendipity.h"
+#include "e-lagrange.h"
 #include "element-families.h"
-#include "lagrange.h"
 #include "lattice.h"
 #include "log.h"
 #include "maps.h"
@@ -548,7 +548,7 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
 } // namespace
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_serendipity(cell::type celltype, int degree)
+FiniteElement basix::create_serendipity(cell::type celltype, int degree, bool)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -581,7 +581,8 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   xt::xtensor<double, 3> edge_transforms, face_transforms;
   if (degree >= 2)
   {
-    FiniteElement moment_space = create_dpc(cell::type::interval, degree - 2);
+    FiniteElement moment_space
+        = create_dpc(cell::type::interval, degree - 2, true);
     std::tie(x[1], M[1])
         = moments::make_integral_moments(moment_space, celltype, 1, quad_deg);
     if (tdim > 1)
@@ -594,7 +595,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   if (tdim >= 2 and degree >= 4)
   {
     FiniteElement moment_space
-        = create_dpc(cell::type::quadrilateral, degree - 4);
+        = create_dpc(cell::type::quadrilateral, degree - 4, true);
     std::tie(x[2], M[2])
         = moments::make_integral_moments(moment_space, celltype, 1, quad_deg);
     if (tdim > 2)
@@ -607,7 +608,8 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
   if (tdim == 3 and degree >= 6)
   {
     std::tie(x[3], M[3]) = moments::make_integral_moments(
-        create_dpc(cell::type::hexahedron, degree - 6), celltype, 1, quad_deg);
+        create_dpc(cell::type::hexahedron, degree - 6, true), celltype, 1,
+        quad_deg);
   }
 
   xt::xtensor<double, 2> wcoeffs;
@@ -650,7 +652,8 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree)
                        maps::type::identity);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
+FiniteElement basix::create_serendipity_div(cell::type celltype, int degree,
+                                            bool)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -672,7 +675,7 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
 
   xt::xtensor<double, 3> facet_transforms;
 
-  FiniteElement facet_moment_space = create_dpc(facettype, degree);
+  FiniteElement facet_moment_space = create_dpc(facettype, degree, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
   if (tdim > 1)
@@ -683,7 +686,7 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
 
   if (tdim >= 2 and degree >= 2)
   {
-    FiniteElement cell_moment_space = create_dpc(celltype, degree - 2);
+    FiniteElement cell_moment_space = create_dpc(celltype, degree - 2, true);
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         cell_moment_space, celltype, tdim, quad_deg);
   }
@@ -718,7 +721,8 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree)
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
+FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree,
+                                             bool)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -746,7 +750,8 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  FiniteElement edge_moment_space = create_dpc(cell::type::interval, degree);
+  FiniteElement edge_moment_space
+      = create_dpc(cell::type::interval, degree, true);
 
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, 2 * degree + 2);
@@ -759,7 +764,7 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
   {
     // Face integral moment
     FiniteElement moment_space
-        = create_dpc(cell::type::quadrilateral, degree - 2);
+        = create_dpc(cell::type::quadrilateral, degree - 2, true);
     std::tie(x[2], M[2]) = moments::make_integral_moments(
         moment_space, celltype, tdim, 2 * degree);
     if (tdim == 3)
@@ -770,8 +775,8 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree)
       {
         // Interior integral moment
         std::tie(x[3], M[3]) = moments::make_integral_moments(
-            create_dpc(cell::type::hexahedron, degree - 4), celltype, tdim,
-            2 * degree - 3);
+            create_dpc(cell::type::hexahedron, degree - 4, true), celltype,
+            tdim, 2 * degree - 3);
       }
     }
   }

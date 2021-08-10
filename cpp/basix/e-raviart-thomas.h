@@ -4,13 +4,14 @@
 
 #pragma once
 
+#include "cell.h"
 #include "finite-element.h"
 
 namespace basix
 {
-/// Create Regge element
+/// Create Raviart-Thomas element
 /// @param celltype
 /// @param degree
-FiniteElement create_regge(cell::type celltype, int degree);
+FiniteElement create_rt(cell::type celltype, int degree, bool discontinuous);
 
 } // namespace basix

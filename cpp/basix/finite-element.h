@@ -188,6 +188,24 @@ xt::xtensor<double, 3> compute_expansion_coefficients(
     const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
     double kappa_tol = 0.0);
 
+/// TODO: doc
+std : tuple < std::array<std::vector<xt::xtensor<double, 2>>, 4>,
+    std::array<std::vector<xt::xtensor<double, 3>>,
+               std::map<cell::type, xt::xtensor<double, 3>>>
+    make_discontinuous(
+        const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+        const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+        const std::map<cell::type, xt::xtensor<double, 3>>&
+            entity_transformations)
+{
+  const std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
+  const std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out const
+      std::map<cell::type, xt::xtensor<double, 3>>
+          entity_transformations_out;
+
+  return std::make_tuple(x_out, M_out, entity_transformations_out);
+}
+
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the
 /// underlying expansion set for that cell type, when tabulating.
@@ -722,17 +740,20 @@ private:
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
 /// @param[in] lattice_type The lattice type that should be used to arrange DOF
-/// points of the element
-FiniteElement
-create_element(element::family family, cell::type cell, int degree,
-               lattice::type lattice_type);
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, lattice::type lattice_type,
+                             bool discontinuous = false);
 
 /// Create an element
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-FiniteElement
-create_element(element::family family, cell::type cell, int degree);
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, bool discontinuous = false);
 
 /// Return the version number of basix across projects
 /// @return version string

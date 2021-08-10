@@ -3,16 +3,16 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
-#include "brezzi-douglas-marini.h"
-#include "bubble.h"
-#include "crouzeix-raviart.h"
-#include "lagrange.h"
-#include "nce-rtc.h"
-#include "nedelec.h"
+#include "e-brezzi-douglas-marini.h"
+#include "e-bubble.h"
+#include "e-crouzeix-raviart.h"
+#include "e-lagrange.h"
+#include "e-nce-rtc.h"
+#include "e-nedelec.h"
+#include "e-raviart-thomas.h"
+#include "e-regge.h"
+#include "e-serendipity.h"
 #include "polyset.h"
-#include "raviart-thomas.h"
-#include "regge.h"
-#include "serendipity.h"
 #include "version.h"
 
 #include <numeric>
@@ -75,7 +75,8 @@ constexpr int num_transformations(cell::type cell_type)
 } // namespace
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree)
+                                           cell::type cell, int degree,
+                                           bool discontinuous)
 {
   switch (family)
   {
@@ -83,27 +84,27 @@ basix::FiniteElement basix::create_element(element::family family,
     throw std::runtime_error(
         "Lagrange elements need to be given a lattice type.");
   case element::family::DP:
-    return create_dlagrange(cell, degree);
+    return create_dlagrange(cell, degree, discontinuous);
   case element::family::BDM:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_serendipity_div(cell, degree);
+      return create_serendipity_div(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_serendipity_div(cell, degree);
+      return create_serendipity_div(cell, degree, discontinuous);
     default:
-      return create_bdm(cell, degree);
+      return create_bdm(cell, degree, discontinuous);
     }
   case element::family::RT:
   {
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_rtc(cell, degree);
+      return create_rtc(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_rtc(cell, degree);
+      return create_rtc(cell, degree, discontinuous);
     default:
-      return create_rt(cell, degree);
+      return create_rt(cell, degree, discontinuous);
     }
   }
   case element::family::N1E:
@@ -111,33 +112,33 @@ basix::FiniteElement basix::create_element(element::family family,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_nce(cell, degree);
+      return create_nce(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_nce(cell, degree);
+      return create_nce(cell, degree, discontinuous);
     default:
-      return create_nedelec(cell, degree);
+      return create_nedelec(cell, degree, discontinuous);
     }
   }
   case element::family::N2E:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_serendipity_curl(cell, degree);
+      return create_serendipity_curl(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_serendipity_curl(cell, degree);
+      return create_serendipity_curl(cell, degree, discontinuous);
     default:
-      return create_nedelec2(cell, degree);
+      return create_nedelec2(cell, degree, discontinuous);
     }
   case element::family::Regge:
-    return create_regge(cell, degree);
+    return create_regge(cell, degree, discontinuous);
   case element::family::CR:
-    return create_cr(cell, degree);
+    return create_cr(cell, degree, discontinuous);
   case element::family::Bubble:
-    return create_bubble(cell, degree);
+    return create_bubble(cell, degree, discontinuous);
   case element::family::Serendipity:
-    return create_serendipity(cell, degree);
+    return create_serendipity(cell, degree, discontinuous);
   case element::family::DPC:
-    return create_dpc(cell, degree);
+    return create_dpc(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found");
   }
@@ -145,12 +146,13 @@ basix::FiniteElement basix::create_element(element::family family,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           lattice::type lattice_type)
+                                           lattice::type lattice_type,
+                                           bool discontinuous)
 {
   switch (family)
   {
   case element::family::P:
-    return create_lagrange(cell, degree, lattice_type);
+    return create_lagrange(cell, degree, lattice_type, discontinuous);
   default:
     throw std::runtime_error("Cannot pass a lattice type to this element.");
   }

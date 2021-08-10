@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "bubble.h"
+#include "e-bubble.h"
 #include "element-families.h"
 #include "lattice.h"
 #include "maps.h"
@@ -19,7 +19,7 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_bubble(cell::type celltype, int degree)
+FiniteElement basix::create_bubble(cell::type celltype, int degree, bool)
 {
   switch (celltype)
   {

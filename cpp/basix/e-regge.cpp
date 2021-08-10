@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "regge.h"
+#include "e-regge.h"
 #include "dof-transformations.h"
 #include "element-families.h"
 #include "lattice.h"
@@ -133,7 +133,7 @@ create_regge_interpolation(cell::type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_regge(cell::type celltype, int degree)
+FiniteElement basix::create_regge(cell::type celltype, int degree, bool)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
 

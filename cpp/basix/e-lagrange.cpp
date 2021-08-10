@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "lagrange.h"
+#include "e-lagrange.h"
 #include "dof-transformations.h"
 #include "element-families.h"
 #include "log.h"
@@ -18,7 +18,8 @@ using namespace basix;
 
 //----------------------------------------------------------------------------
 FiniteElement basix::create_lagrange(cell::type celltype, int degree,
-                                     lattice::type lattice_type)
+                                     lattice::type lattice_type,
+                                     bool discontinuous)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
@@ -146,6 +147,10 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
     entity_transformations[cell::type::quadrilateral] = ft;
   }
 
+  if (discontinuous)
+    std::tie(x, M, entity_transformations) = make_discontinuous(x, M);
+  // TODO: define make_discontinuous in finite_element.h/cpp
+
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
       {x[0], x[1], x[2], x[3]}, degree);
@@ -153,7 +158,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
                        entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
+FiniteElement basix::create_dlagrange(cell::type celltype, int degree, bool)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
@@ -198,10 +203,15 @@ FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
                        entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_dpc(cell::type celltype, int degree)
+FiniteElement basix::create_dpc(cell::type celltype, int degree,
+                                bool discontinuous)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
+  if (!discontinuous)
+  {
+    throw std::runtime_error("Cannot create a continuous DPC element.");
+  }
 
   cell::type simplex_type;
   switch (celltype)

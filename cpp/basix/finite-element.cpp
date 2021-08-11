@@ -86,7 +86,6 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::DP:
     return create_element(element::family::P, cell, degree,
                           lattice::type::equispaced, true);
-    // return create_dlagrange(cell, degree, discontinuous);
   case element::family::BDM:
     switch (cell)
     {

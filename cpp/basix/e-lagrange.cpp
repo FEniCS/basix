@@ -161,51 +161,6 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
                        entity_transformations, x, M, maps::type::identity);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_dlagrange(cell::type celltype, int degree, bool)
-{
-  // Only tabulate for scalar. Vector spaces can easily be built from
-  // the scalar space.
-
-  const std::size_t ndofs = polyset::dim(celltype, degree);
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-  const std::size_t tdim = topology.size() - 1;
-
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
-  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
-  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
-
-  const auto pt
-      = lattice::create(celltype, degree, lattice::type::equispaced, true);
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  x[tdim].push_back(pt);
-
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  if (tdim > 1)
-  {
-    entity_transformations[cell::type::interval]
-        = xt::xtensor<double, 3>({1, 0, 0});
-  }
-  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    entity_transformations[cell::type::triangle]
-        = xt::xtensor<double, 3>({2, 0, 0});
-  }
-  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    entity_transformations[cell::type::quadrilateral]
-        = xt::xtensor<double, 3>({2, 0, 0});
-  }
-
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), {M[tdim]}, {x[tdim]}, degree);
-
-  return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity);
-}
-//-----------------------------------------------------------------------------
 FiniteElement basix::create_dpc(cell::type celltype, int degree,
                                 bool discontinuous)
 {

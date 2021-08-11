@@ -19,13 +19,6 @@ namespace basix
 FiniteElement create_lagrange(cell::type celltype, int degree,
                               lattice::type lattice_type, bool discontinuous);
 
-/// Create a Discontinuous Lagrange element on cell with given degree
-/// @param[in] celltype The reference cell type that the element is defined on
-/// @param[in] degree The degree of the element
-/// @return A FiniteElement
-FiniteElement create_dlagrange(cell::type celltype, int degree,
-                               bool discontinuous);
-
 /// Create a DPC element on cell with given degree
 /// @param[in] celltype The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element

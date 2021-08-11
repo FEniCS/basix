@@ -27,7 +27,8 @@ xt::xtensor<double, 1> warp_function(int n, const xt::xtensor<double, 1>& x)
   xt::xtensor<double, 1> pts
       = xt::adapt(_pts.data(), _pts.size(), xt::no_ownership(), shape0);
 
-  FiniteElement L = create_dlagrange(cell::type::interval, n, true);
+  FiniteElement L = create_lagrange(cell::type::interval, n,
+                                    lattice::type::equispaced, true);
   xt::xtensor<double, 2> v
       = xt::view(L.tabulate(0, x), 0, xt::all(), xt::all(), 0);
 
@@ -260,7 +261,8 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
   // Get interpolated value at r in range [-1, 1]
-  FiniteElement L = create_dlagrange(cell::type::interval, n, true);
+  FiniteElement L = create_lagrange(cell::type::interval, n,
+                                    lattice::type::equispaced, true);
   auto w = [&](double r) -> double
   {
     xt::xtensor<double, 1> rr = {0.5 * (r + 1.0)};

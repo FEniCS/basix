@@ -607,6 +607,16 @@ public:
   /// interpolated function.
   const xt::xtensor<double, 2>& interpolation_matrix() const;
 
+  /// Compute the coefficients of a function given the values of the function
+  /// at the interpolation points.
+  /// @param[in,out] coefficients The coefficients of the function's
+  /// interpolation into the function space
+  /// @param[in] data The function evaluated at the points given by `points()`
+  /// @param[in] block_size The block size of the data
+  template <typename T>
+  void interpolate(const xtl::span<T>& coefficients,
+                   const xtl::span<const T>& data, const int block_size) const;
+
   /// Element map type
   maps::type map_type;
 
@@ -1111,6 +1121,33 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
         dofstart += _num_edofs[2][f];
       }
     }
+  }
+}
+//-----------------------------------------------------------------------------
+template <typename T>
+void FiniteElement::interpolate(const xtl::span<T>& coefficients,
+                                const xtl::span<const T>& data,
+                                const int block_size) const
+{
+  if (block_size != 1)
+  {
+    throw std::runtime_error(
+        "Interpolation of blocked data not implemented yet.");
+  }
+
+  const std::size_t rows = dim();
+
+  // Compute coefficients = Pi * x (matrix-vector multiply)
+  const xt::xtensor<double, 2>& Pi = interpolation_matrix();
+  assert(Pi.size() % rows == 0);
+  const std::size_t cols = Pi.size() / rows;
+  for (std::size_t i = 0; i < rows; ++i)
+  {
+    // Can be replaced with std::transform_reduce once GCC 8 series dies.
+    // Dot product between row i of the matrix and 'data'
+    coefficients[i] = std::inner_product(std::next(Pi.data(), i * cols),
+                                         std::next(Pi.data(), i * cols + cols),
+                                         data.data(), T(0.0));
   }
 }
 //-----------------------------------------------------------------------------

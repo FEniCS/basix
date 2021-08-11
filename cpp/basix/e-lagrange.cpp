@@ -148,8 +148,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   }
 
   if (discontinuous)
-    std::tie(x, M, entity_transformations) = make_discontinuous(x, M);
-  // TODO: define make_discontinuous in finite_element.h/cpp
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations);
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},

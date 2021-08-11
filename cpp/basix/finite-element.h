@@ -189,22 +189,13 @@ xt::xtensor<double, 3> compute_expansion_coefficients(
     double kappa_tol = 0.0);
 
 /// TODO: doc
-std : tuple < std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-    std::array<std::vector<xt::xtensor<double, 3>>,
-               std::map<cell::type, xt::xtensor<double, 3>>>
-    make_discontinuous(
-        const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-        const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-        const std::map<cell::type, xt::xtensor<double, 3>>&
-            entity_transformations)
-{
-  const std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
-  const std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out const
-      std::map<cell::type, xt::xtensor<double, 3>>
-          entity_transformations_out;
-
-  return std::make_tuple(x_out, M_out, entity_transformations_out);
-}
+std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
+           std::array<std::vector<xt::xtensor<double, 3>>, 4>,
+           std::map<cell::type, xt::xtensor<double, 3>>>
+make_discontinuous(
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations);
 
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the

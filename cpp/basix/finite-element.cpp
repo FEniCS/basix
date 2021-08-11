@@ -84,7 +84,9 @@ basix::FiniteElement basix::create_element(element::family family,
     throw std::runtime_error(
         "Lagrange elements need to be given a lattice type.");
   case element::family::DP:
-    return create_dlagrange(cell, degree, discontinuous);
+    return create_element(element::family::P, cell, degree,
+                          lattice::type::equispaced, true);
+    // return create_dlagrange(cell, degree, discontinuous);
   case element::family::BDM:
     switch (cell)
     {
@@ -256,6 +258,42 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
   C.assign(result);
 
   return xt::reshape_view(C, {num_dofs, vs, pdim});
+}
+//-----------------------------------------------------------------------------
+std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
+           std::array<std::vector<xt::xtensor<double, 3>>, 4>,
+           std::map<cell::type, xt::xtensor<double, 3>>>
+//    basix::make_discontinuous(
+//        const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+//        const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+//        const std::map<cell::type, xt::xtensor<double, 3>>&
+//            entity_transformations)
+basix::make_discontinuous(
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>&,
+    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations)
+{
+  const std::size_t npoints
+      = x[0].size() + x[1].size() + x[2].size() + x[3].size();
+
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations_out;
+
+  for (int i = 0; i < 4; ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      x_out[4].push_back(x[i][j]);
+
+  xt::xtensor<double, 3> new_M({1, npoints, npoints});
+
+  for (auto i = entity_transformations.begin();
+       i != entity_transformations.end(); ++i)
+
+    entity_transformations_out[i->first]
+        = /// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
+        std::cout << npoints << "\n";
+
+  return std::make_tuple(x_out, M_out, entity_transformations_out);
 }
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(

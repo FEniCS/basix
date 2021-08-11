@@ -1129,6 +1129,12 @@ void FiniteElement::interpolate(const xtl::span<T>& coefficients,
                                 const xtl::span<const T>& data,
                                 const int block_size) const
 {
+  if (block_size != 1)
+  {
+    throw std::runtime_error(
+        "Interpolation of blocked data not implemented yet.");
+  }
+
   const std::size_t rows = dim();
 
   // Compute coefficients = Pi * x (matrix-vector multiply)

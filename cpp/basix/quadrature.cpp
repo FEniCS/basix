@@ -1485,6 +1485,10 @@ make_default_triangle_quadrature(int m)
                    [](auto x) { return 0.5 * x; });
     return {x, w};
   }
+  else if (m >= 10 and m <= 20)
+  {
+    return make_xiao_gimbutas_triangle_quadrature(m);
+  }
   else
   {
     const int np = (m + 2) / 2;

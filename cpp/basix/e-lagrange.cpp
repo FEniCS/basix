@@ -35,6 +35,9 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)
   {
+    if (!discontinuous)
+      throw std::runtime_error(
+          "Cannot create a continuous order 0 Lagrange basis function");
     auto pt = lattice::create(celltype, 0, lattice_type, true);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
@@ -149,7 +152,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
 
   if (discontinuous)
     std::tie(x, M, entity_transformations)
-        = make_discontinuous(x, M, entity_transformations);
+        = make_discontinuous(x, M, entity_transformations, tdim, 1);
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},

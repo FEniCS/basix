@@ -195,7 +195,8 @@ std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
 make_discontinuous(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations);
+    std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
+    const int tdim, const int value_size);
 
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the

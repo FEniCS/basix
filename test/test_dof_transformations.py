@@ -11,6 +11,9 @@ from .utils import parametrize_over_elements
 
 @parametrize_over_elements(3)
 def test_if_permutations(cell_type, element_type, degree, element_args):
+    print(element_type)
+    print(cell_type)
+    print(degree)
     e = basix.create_element(element_type, cell_type, degree, *element_args)
 
     for t in e.base_transformations():

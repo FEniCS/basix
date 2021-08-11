@@ -270,28 +270,46 @@ std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
 //            entity_transformations)
 basix::make_discontinuous(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>&,
-    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations)
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
+    const int tdim, const int value_size)
 {
-  const std::size_t npoints
-      = x[0].size() + x[1].size() + x[2].size() + x[3].size();
-
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out;
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations_out;
-
+  std::size_t npoints = 0;
   for (int i = 0; i < 4; ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
-      x_out[4].push_back(x[i][j]);
+      npoints += x[i][j].shape(0);
 
-  xt::xtensor<double, 3> new_M({1, npoints, npoints});
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations_out;
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
+
+  xt::xtensor<double, 2> new_x
+      = xt::zeros<double>({npoints, static_cast<std::size_t>(tdim)});
+  x_out[tdim].push_back(new_x);
+
+  xt::xtensor<double, 3> new_M = xt::zeros<double>(
+      {npoints, static_cast<std::size_t>(value_size), npoints});
+  M_out[tdim].push_back(new_M);
+
+  int x_n = 0;
+  for (int i = 0; i < 4; ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+    {
+      xt::view(x_out[tdim][0], xt::range(x_n, x_n + x[i][j].shape(0)),
+               xt::all())
+          = x[i][j];
+      xt::view(M_out[tdim][0], xt::range(x_n, x_n + x[i][j].shape(0)),
+               xt::all(), xt::range(x_n, x_n + x[i][j].shape(0)))
+          = M[i][j];
+      x_n += x[i][j].shape(0);
+    }
 
   for (auto i = entity_transformations.begin();
        i != entity_transformations.end(); ++i)
-
+  {
     entity_transformations_out[i->first]
-        = /// TODO TODO TODO TODO TODO TODO TODO TODO TODO TODO
-        std::cout << npoints << "\n";
+        = xt::xtensor<double, 3>({i->second.shape(0), 0, 0});
+  }
 
   return std::make_tuple(x_out, M_out, entity_transformations_out);
 }

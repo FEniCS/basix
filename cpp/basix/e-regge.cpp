@@ -133,15 +133,13 @@ create_regge_interpolation(cell::type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_regge(cell::type celltype, int degree, bool)
+FiniteElement basix::create_regge(cell::type celltype, int degree,
+                                  bool discontinuous)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   const xt::xtensor<double, 2> wcoeffs = create_regge_space(celltype, degree);
   const auto [x, M] = create_regge_interpolation(celltype, degree);
-
-  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
-      celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
 
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D
@@ -186,6 +184,14 @@ FiniteElement basix::create_regge(cell::type celltype, int degree, bool)
 
     entity_transformations[cell::type::triangle] = face_trans;
   }
+
+  if (discontinuous)
+  {
+    throw std::runtime_error("Discontinuous Regge not implemented");
+  }
+
+  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
                        coeffs, entity_transformations, x, M,

@@ -20,7 +20,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_rtc(cell::type celltype, int degree, bool)
+FiniteElement basix::create_rtc(cell::type celltype, int degree,
+                                bool discontinuous)
 {
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -148,6 +149,12 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree, bool)
     entity_transformations[cell::type::quadrilateral] = facet_transforms;
   }
 
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
+  }
+
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]},
       degree);
@@ -156,7 +163,8 @@ FiniteElement basix::create_rtc(cell::type celltype, int degree, bool)
                        maps::type::contravariantPiola);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_nce(cell::type celltype, int degree, bool)
+FiniteElement basix::create_nce(cell::type celltype, int degree,
+                                bool discontinuous)
 {
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -331,6 +339,12 @@ FiniteElement basix::create_nce(cell::type celltype, int degree, bool)
     {
       entity_transformations[cell::type::quadrilateral] = face_transforms;
     }
+  }
+
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(

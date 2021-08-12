@@ -35,7 +35,6 @@ def string_to_family(family: str, cell: str):
     if cell in ["interval", "quadrilateral", "hexahedron"]:
         families.update({
             "Q": _EF.P,
-            "DQ": _EF.DP,
             "DPC": _EF.DPC,
             "Serendipity": _EF.Serendipity,
             "S": _EF.Serendipity,

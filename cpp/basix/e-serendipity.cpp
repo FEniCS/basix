@@ -548,7 +548,8 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
 } // namespace
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_serendipity(cell::type celltype, int degree, bool)
+FiniteElement basix::create_serendipity(cell::type celltype, int degree,
+                                        bool discontinuous)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -644,6 +645,12 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree, bool)
     }
   }
 
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, 1);
+  }
+
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[0], M[1], M[2], M[3]}, {x[0], x[1], x[2], x[3]},
       degree);
@@ -653,7 +660,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree, bool)
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_serendipity_div(cell::type celltype, int degree,
-                                            bool)
+                                            bool discontinuous)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -712,6 +719,12 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree,
     entity_transformations[cell::type::quadrilateral] = facet_transforms;
   }
 
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
+  }
+
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]},
       degree + 1);
@@ -722,7 +735,7 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree,
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree,
-                                             bool)
+                                             bool discontinuous)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -799,6 +812,12 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree,
     {
       entity_transformations[cell::type::quadrilateral] = face_transforms;
     }
+  }
+
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(

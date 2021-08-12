@@ -351,7 +351,8 @@ create_nedelec2_3d_entity_transformations(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_nedelec(cell::type celltype, int degree, bool)
+FiniteElement basix::create_nedelec(cell::type celltype, int degree,
+                                    bool discontinuous)
 {
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
@@ -378,13 +379,21 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree, bool)
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
+
+  if (discontinuous)
+  {
+    std::tie(x, M, transforms)
+        = make_discontinuous(x, M, transforms, tdim, tdim);
+  }
+
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        transforms, x, M, maps::type::covariantPiola);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_nedelec2(cell::type celltype, int degree, bool)
+FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
+                                     bool discontinuous)
 {
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
@@ -411,6 +420,13 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree, bool)
 
   const std::size_t psize = polyset::dim(celltype, degree);
   xt::xtensor<double, 2> wcoeffs = xt::eye<double>(tdim * psize);
+
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
+  }
+
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,

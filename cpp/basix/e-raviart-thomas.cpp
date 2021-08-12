@@ -19,7 +19,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_rt(cell::type celltype, int degree, bool)
+FiniteElement basix::create_rt(cell::type celltype, int degree,
+                               bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -111,6 +112,12 @@ FiniteElement basix::create_rt(cell::type celltype, int degree, bool)
     entity_transformations[cell::type::interval]
         = xt::xtensor<double, 3>({1, 0, 0});
     entity_transformations[cell::type::triangle] = facet_transforms;
+  }
+
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
   }
 
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(

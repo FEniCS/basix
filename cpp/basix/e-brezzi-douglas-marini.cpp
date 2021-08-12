@@ -20,7 +20,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_bdm(cell::type celltype, int degree, bool)
+FiniteElement basix::create_bdm(cell::type celltype, int degree,
+                                bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -70,6 +71,12 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree, bool)
     break;
   default:
     throw std::runtime_error("Invalid topological dimension.");
+  }
+
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
   }
 
   // Create coefficients for order (degree-1) vector polynomials

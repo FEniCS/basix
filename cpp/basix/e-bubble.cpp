@@ -19,8 +19,12 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_bubble(cell::type celltype, int degree, bool)
+FiniteElement basix::create_bubble(cell::type celltype, int degree,
+                                   bool discontinuous)
 {
+  if (discontinuous)
+    throw std::runtime_error("Cannot create a discontinuous bubble element.");
+
   switch (celltype)
   {
   case cell::type::interval:

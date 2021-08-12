@@ -262,11 +262,6 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 3>>, 4>,
            std::map<cell::type, xt::xtensor<double, 3>>>
-//    basix::make_discontinuous(
-//        const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-//        const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-//        const std::map<cell::type, xt::xtensor<double, 3>>&
-//            entity_transformations)
 basix::make_discontinuous(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,

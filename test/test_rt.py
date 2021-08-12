@@ -6,7 +6,7 @@ import basix
 import numpy
 import pytest
 import sympy
-from .test_lagrange import sympy_disc_lagrange
+from .test_lagrange import sympy_lagrange
 
 
 def sympy_rt(celltype, n):
@@ -36,7 +36,7 @@ def sympy_rt(celltype, n):
             if n == 1:
                 edge_basis = [sympy.Integer(1)]
             else:
-                edge_basis = sympy_disc_lagrange(basix.CellType.interval, n - 1)
+                edge_basis = sympy_lagrange(basix.CellType.interval, n - 1)
             edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
             j = 0
             for edge in topology[1]:
@@ -62,7 +62,7 @@ def sympy_rt(celltype, n):
                 if n == 2:
                     face_basis = [sympy.Integer(1)]
                 else:
-                    face_basis = sympy_disc_lagrange(basix.CellType.triangle, n - 2)
+                    face_basis = sympy_lagrange(basix.CellType.triangle, n - 2)
 
                 j = n * 3
                 for g in face_basis:
@@ -92,7 +92,7 @@ def sympy_rt(celltype, n):
             if n == 1:
                 face_basis = [sympy.Integer(1)]
             else:
-                face_basis = sympy_disc_lagrange(basix.CellType.triangle, n - 1)
+                face_basis = sympy_lagrange(basix.CellType.triangle, n - 1)
             face_basis = [a.subs(x, dummy[0]).subs(y, dummy[1]) for a in face_basis]
             j = 0
             for face in topology[2]:
@@ -118,7 +118,7 @@ def sympy_rt(celltype, n):
                 if n == 2:
                     interior_basis = [sympy.Integer(1)]
                 else:
-                    interior_basis = sympy_disc_lagrange(basix.CellType.tetrahedron, n - 2)
+                    interior_basis = sympy_lagrange(basix.CellType.tetrahedron, n - 2)
                 j = 2 * n * (n + 1)
                 for g in interior_basis:
                     for vec in [(1, 0, 0), (0, 1, 0), (0, 0, 1)]:

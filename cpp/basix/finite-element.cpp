@@ -83,9 +83,6 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::P:
     throw std::runtime_error(
         "Lagrange elements need to be given a lattice type.");
-  case element::family::DP:
-    return create_element(element::family::P, cell, degree,
-                          lattice::type::equispaced, true);
   case element::family::BDM:
     switch (cell)
     {

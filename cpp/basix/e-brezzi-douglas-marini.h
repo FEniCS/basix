@@ -11,6 +11,7 @@ namespace basix
 /// Create BDM element
 /// @param celltype
 /// @param degree
+/// @param discontinuous
 FiniteElement create_bdm(cell::type celltype, int degree, bool discontinuous);
 
 } // namespace basix

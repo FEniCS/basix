@@ -11,6 +11,7 @@ namespace basix
 /// Create Regge element
 /// @param celltype
 /// @param degree
+/// @param discontinuous
 FiniteElement create_regge(cell::type celltype, int degree, bool discontinuous);
 
 } // namespace basix

@@ -9,8 +9,6 @@ def string_to_family(family: str, cell: str):
     families = {
         "Lagrange": _EF.P,
         "P": _EF.P,
-        "Discontinuous Lagrange": _EF.DP,
-        "DP": _EF.DP,
         "Bubble": _EF.Bubble,
     }
     # Family names that are valid on non-interval cells

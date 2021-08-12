@@ -13,6 +13,7 @@ namespace basix
 /// @note degree must be 1 for Crouzeix-Raviart
 /// @param celltype
 /// @param degree
+/// @param discontinuous
 FiniteElement create_cr(cell::type celltype, int degree, bool discontinuous);
 
 } // namespace basix

@@ -14,6 +14,7 @@ namespace basix
 /// @param[in] celltype The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
 /// @param[in] lattice_type The lattice type that should be used to arrange DOF
+/// @param discontinuous
 /// points of the element
 /// @return A FiniteElement
 FiniteElement create_lagrange(cell::type celltype, int degree,
@@ -22,6 +23,7 @@ FiniteElement create_lagrange(cell::type celltype, int degree,
 /// Create a DPC element on cell with given degree
 /// @param[in] celltype The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
+/// @param discontinuous
 /// @return A FiniteElement
 FiniteElement create_dpc(cell::type celltype, int degree, bool discontinuous);
 } // namespace basix

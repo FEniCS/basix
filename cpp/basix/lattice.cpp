@@ -27,12 +27,13 @@ xt::xtensor<double, 2> tabulate_dlagrange(int n,
 
   xt::xtensor<double, 3> dual_values
       = polyset::tabulate(cell::type::interval, n, 0, equi_pts);
-  xt::xtensor<double, 2> dualmat({dual_values.shape(2), dual_values.shape(1)});
+  xt::xtensor<double, 2, xt::layout_type::column_major> dualmat(
+      {dual_values.shape(2), dual_values.shape(1)});
   dualmat.assign(xt::transpose(xt::view(dual_values, 0, xt::all(), xt::all())));
 
   xt::xtensor<double, 3> tabulated_values
       = polyset::tabulate(cell::type::interval, n, 0, x);
-  xt::xtensor<double, 2> tabulated(
+  xt::xtensor<double, 2, xt::layout_type::column_major> tabulated(
       {tabulated_values.shape(2), tabulated_values.shape(1)});
   tabulated.assign(
       xt::transpose(xt::view(tabulated_values, 0, xt::all(), xt::all())));

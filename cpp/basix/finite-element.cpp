@@ -562,6 +562,8 @@ element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 maps::type FiniteElement::mapping_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
+bool FiniteElement::discontinuous() const { return _discontinuous; }
+//-----------------------------------------------------------------------------
 bool FiniteElement::dof_transformations_are_permutations() const
 {
   return _dof_transformations_are_permutations;

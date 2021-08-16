@@ -313,6 +313,11 @@ public:
   /// @return The mapping
   maps::type mapping_type() const;
 
+  /// Indicates whether this element is the discontinuous variant
+  /// @return A bool indicating whether or not this is the discontinuous version
+  /// of the element
+  bool discontinuous() const;
+
   /// Indicates whether the dof transformations are all permutations
   /// @return True or False
   bool dof_transformations_are_permutations() const;

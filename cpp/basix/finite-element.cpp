@@ -318,14 +318,15 @@ FiniteElement::FiniteElement(
     const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type)
+    maps::type map_type, bool discontinuous)
     : map_type(map_type), _cell_type(cell_type),
       _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _degree(degree), _map_type(map_type),
       _coeffs(xt::reshape_view(
           coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
-      _entity_transformations(entity_transformations), _x(x), _matM_new(M)
+      _entity_transformations(entity_transformations), _x(x), _matM_new(M),
+      _discontinuous(discontinuous)
 {
   // if (points.dimension() == 1)
   //   throw std::runtime_error("Problem with points");

@@ -389,7 +389,8 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree,
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
-                       transforms, x, M, maps::type::covariantPiola);
+                       transforms, x, M, maps::type::covariantPiola,
+                       discontinuous);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
@@ -430,7 +431,7 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
-                       entity_transformations, x, M,
-                       maps::type::covariantPiola);
+                       entity_transformations, x, M, maps::type::covariantPiola,
+                       discontinuous);
 }
 //-----------------------------------------------------------------------------

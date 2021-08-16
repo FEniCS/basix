@@ -188,7 +188,18 @@ xt::xtensor<double, 3> compute_expansion_coefficients(
     const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
     double kappa_tol = 0.0);
 
-/// TODO: doc
+/// Creates a version of the interpolation points, interpolation matrices and
+/// entity transformation that represent a discontinuous version of the element.
+/// This discontinuous version will have the same DOFs but they will all be
+/// associated with the interior of the reference cell.
+/// @param[in] x Interpolation points. Shape is (tdim, entity index,
+/// point index, dim)
+/// @param[in] M The interpolation matrices. Indices are (tdim, entity
+/// index, dof, vs, point_index)
+/// @param[in] entity_transformations Entity transformations
+/// @param[in] tdim The topological dimension of the cell the element is defined
+/// on
+/// @param[in] value_size The value size of the element
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 3>>, 4>,
            std::map<cell::type, xt::xtensor<double, 3>>>
@@ -218,7 +229,10 @@ public:
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
   /// index, dof, vs, point_index)
-  /// @param[in] map_type
+  /// @param[in] map_type The type of map to be used to map values from the
+  /// reference to a cell
+  /// @param[in] discontinuous Indicates whether or not this is the
+  /// discontinuous version of the element
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
                 const xt::xtensor<double, 3>& coeffs,
@@ -226,7 +240,7 @@ public:
                     entity_transformations,
                 const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                 const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-                maps::type map_type = maps::type::identity);
+                maps::type map_type, bool discontinuous);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -735,6 +749,9 @@ private:
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etrans_invT;
+
+  /// Indicates whether or not this is the discontinuous version of the element
+  bool _discontinuous;
 };
 
 /// Create an element using a given lattice type

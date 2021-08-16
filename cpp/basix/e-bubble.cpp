@@ -163,6 +163,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree,
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity,
+                       discontinuous);
 }
 //-----------------------------------------------------------------------------

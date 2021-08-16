@@ -656,7 +656,7 @@ FiniteElement basix::create_serendipity(cell::type celltype, int degree,
       degree);
   return FiniteElement(element::family::Serendipity, celltype, degree, {1},
                        coeffs, entity_transformations, x, M,
-                       maps::type::identity);
+                       maps::type::identity, discontinuous);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_serendipity_div(cell::type celltype, int degree,
@@ -731,7 +731,7 @@ FiniteElement basix::create_serendipity_div(cell::type celltype, int degree,
 
   return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
                        coeffs, entity_transformations, x, M,
-                       maps::type::contravariantPiola);
+                       maps::type::contravariantPiola, discontinuous);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree,
@@ -824,6 +824,6 @@ FiniteElement basix::create_serendipity_curl(cell::type celltype, int degree,
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree + 1);
   return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
                        coeffs, entity_transformations, x, M,
-                       maps::type::covariantPiola);
+                       maps::type::covariantPiola, discontinuous);
 }
 //-----------------------------------------------------------------------------

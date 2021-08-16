@@ -24,21 +24,20 @@ xt::xtensor<double, 2> tabulate_dlagrange(int n,
   xt::xtensor<double, 1> equi_pts(s);
   for (int i = 0; i <= n; ++i)
     equi_pts(i) = static_cast<double>(i) / static_cast<double>(n);
-  xt::xtensor<double, 2> dualmat = xt::transpose(
-      xt::view(polyset::tabulate(cell::type::interval, n, 0, equi_pts), 0,
-               xt::all(), xt::all()));
-  xt::xtensor<double, 2> tabulated
-      = xt::view(polyset::tabulate(cell::type::interval, n, 0, x), 0, xt::all(),
-                 xt::all());
 
-  // Note: forcing the layout type to get around an xtensor bug with Intel
-  // Compilers
-  // https://github.com/xtensor-stack/xtensor/issues/2351
-  xt::xtensor<double, 2, xt::layout_type::column_major> tabulated_cmajor(
-      {tabulated.shape(0), tabulated.shape(1)});
-  tabulated_cmajor.assign(xt::transpose(tabulated));
+  xt::xtensor<double, 3> dual_values
+      = polyset::tabulate(cell::type::interval, n, 0, equi_pts);
+  xt::xtensor<double, 2> dualmat({dual_values.shape(2), dual_values.shape(1)});
+  dualmat.assign(xt::transpose(xt::view(dual_values, 0, xt::all(), xt::all())));
 
-  return xt::transpose(xt::linalg::solve(dualmat, tabulated_cmajor));
+  xt::xtensor<double, 3> tabulated_values
+      = polyset::tabulate(cell::type::interval, n, 0, x);
+  xt::xtensor<double, 2> tabulated(
+      {tabulated_values.shape(2), tabulated_values.shape(1)});
+  tabulated.assign(
+      xt::transpose(xt::view(tabulated_values, 0, xt::all(), xt::all())));
+
+  return xt::transpose(xt::linalg::solve(dualmat, tabulated));
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 1> warp_function(int n, const xt::xtensor<double, 1>& x)

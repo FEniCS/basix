@@ -266,9 +266,13 @@ basix::make_discontinuous(
     const int tdim, const int value_size)
 {
   std::size_t npoints = 0;
+  std::size_t Mshape0 = 0;
   for (int i = 0; i < 4; ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
+    {
       npoints += x[i][j].shape(0);
+      Mshape0 += M[i][j].shape(0);
+    }
 
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations_out;
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out;
@@ -279,20 +283,22 @@ basix::make_discontinuous(
   x_out[tdim].push_back(new_x);
 
   xt::xtensor<double, 3> new_M = xt::zeros<double>(
-      {npoints, static_cast<std::size_t>(value_size), npoints});
+      {Mshape0, static_cast<std::size_t>(value_size), npoints});
   M_out[tdim].push_back(new_M);
 
   int x_n = 0;
+  int M_n = 0;
   for (int i = 0; i < 4; ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
       xt::view(x_out[tdim][0], xt::range(x_n, x_n + x[i][j].shape(0)),
                xt::all())
           = x[i][j];
-      xt::view(M_out[tdim][0], xt::range(x_n, x_n + x[i][j].shape(0)),
+      xt::view(M_out[tdim][0], xt::range(M_n, M_n + M[i][j].shape(0)),
                xt::all(), xt::range(x_n, x_n + x[i][j].shape(0)))
           = M[i][j];
       x_n += x[i][j].shape(0);
+      M_n += M[i][j].shape(0);
     }
 
   for (auto i = entity_transformations.begin();

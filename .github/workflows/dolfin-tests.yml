@@ -2,7 +2,10 @@
 
 name: DOLFINx integration
 
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -34,14 +37,14 @@ jobs:
       - name: Install FEniCS Python components
         run: |
           python3 -m pip install git+https://github.com/FEniCS/ufl.git
-          python3 -m pip install git+https://github.com/FEniCS/ffcx.git
+          python3 -m pip install git+https://github.com/FEniCS/ffcx.git@mscroggs/discontinuous_elements
 
       - name: Get DOLFINx
         uses: actions/checkout@v2
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: main
+          ref: mscroggs/discontinuous_elements
       - name: Install DOLFINx
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/

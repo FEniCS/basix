@@ -136,6 +136,11 @@ create_regge_interpolation(cell::type celltype, int degree)
 FiniteElement basix::create_regge(cell::type celltype, int degree,
                                   bool discontinuous)
 {
+  if (discontinuous)
+  {
+    throw std::runtime_error("Discontinuous Regge not implemented");
+  }
+
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   const xt::xtensor<double, 2> wcoeffs = create_regge_space(celltype, degree);
@@ -183,11 +188,6 @@ FiniteElement basix::create_regge(cell::type celltype, int degree,
     }
 
     entity_transformations[cell::type::triangle] = face_trans;
-  }
-
-  if (discontinuous)
-  {
-    throw std::runtime_error("Discontinuous Regge not implemented");
   }
 
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(

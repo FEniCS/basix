@@ -36,8 +36,10 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   if (degree == 0)
   {
     if (!discontinuous)
+    {
       throw std::runtime_error(
           "Cannot create a continuous order 0 Lagrange basis function");
+    }
     auto pt = lattice::create(celltype, 0, lattice_type, true);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);

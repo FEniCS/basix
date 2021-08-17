@@ -293,10 +293,10 @@ basix::make_discontinuous(
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
       xt::view(new_x, xt::range(x_n, x_n + x[i][j].shape(0)), xt::all())
-          = x[i][j];
+          .assign(x[i][j]);
       xt::view(new_M, xt::range(M_n, M_n + M[i][j].shape(0)), xt::all(),
                xt::range(x_n, x_n + x[i][j].shape(0)))
-          = M[i][j];
+          .assign(M[i][j]);
       x_n += x[i][j].shape(0);
       M_n += M[i][j].shape(0);
     }

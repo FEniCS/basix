@@ -1,14 +1,33 @@
 cmake_minimum_required(VERSION 3.16)
 
-PROJECT(basix_pybind11 VERSION "0.0.1")
+PROJECT(basix_pybind11 VERSION "0.3.1.0"  LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Find Basix (C++)
-find_package(Basix REQUIRED)
+# SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+message("*** Test rpath: ${CMAKE_INSTALL_PREFIX}")
+# set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+# set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# set(CMAKE_INSTALL_RPATH "@executable_path/lib")
+set(CMAKE_MACOSX_RPATH TRUE)
+set(CMAKE_INSTALL_RPATH "@loader_path/lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
+# message("*** Test rpath: ${CMAKE_INSTALL_RPATH}")
+
+# See https://gitlab.kitware.com/cmake/cmake/-/issues/16414
+if (TARGET basix)
+  add_library(Basix::basix ALIAS basix)
+else()
+  # Find Basix (C++)
+  find_package(Basix REQUIRED)
+endif()
+
 
 # Check if the Basix C++ library was compiled with xtensor SIMD
 get_target_property(BASIX_DEFN Basix::basix INTERFACE_COMPILE_DEFINITIONS)
@@ -16,21 +35,13 @@ if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
   find_package(xsimd REQUIRED)
 endif()
 
-# include(FetchContent)
-# FetchContent_Declare(
-#   basix
-#   GIT_REPOSITORY https://github.com/FEniCS/basix.git
-#   GIT_TAG        xtensor
-# )
-# FetchContent_MakeAvailable(basix)
-# get_target_property(_basix_include_dirs basix INTERFACE_INCLUDE_DIRECTORIES)
-# target_include_directories(basix SYSTEM PRIVATE ${_basix_include_dirs})
-
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
 
-# Create the binding library
+  # Create the binding library
 pybind11_add_module(_basixcpp SHARED wrapper.cpp)
+# set_target_properties(_basixcpp PROPERTIES BUILD_RPATH_USE_ORIGIN ON)
+
 target_link_libraries(_basixcpp PRIVATE pybind11::module)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
@@ -52,4 +63,11 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(_basixcpp PRIVATE "-fvisibility=default")
 endif()
 
-
+if (SKBUILD)
+  # set_target_properties(_basixcpp PROPERTIES BUILD_RPATH_USE_ORIGIN ON)
+# set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
+ # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  install(TARGETS _basixcpp DESTINATION .)
+  # install(TARGETS _basixcpp LIBRARY DESTINATION .)
+  # install(TARGETS _basixcpp LIBRARY DESTINATION basix)
+endif()

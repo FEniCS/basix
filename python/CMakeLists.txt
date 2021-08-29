@@ -7,19 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-message("*** Test rpath: ${CMAKE_INSTALL_PREFIX}")
-# set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
-# set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-# set(CMAKE_INSTALL_RPATH "@executable_path/lib")
-set(CMAKE_MACOSX_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH "@loader_path/lib")
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-# set(CMAKE_INSTALL_RPATH "$ORIGIN/lib")
-# message("*** Test rpath: ${CMAKE_INSTALL_RPATH}")
-
 # See https://gitlab.kitware.com/cmake/cmake/-/issues/16414
 if (TARGET basix)
   add_library(Basix::basix ALIAS basix)
@@ -27,7 +14,6 @@ else()
   # Find Basix (C++)
   find_package(Basix REQUIRED)
 endif()
-
 
 # Check if the Basix C++ library was compiled with xtensor SIMD
 get_target_property(BASIX_DEFN Basix::basix INTERFACE_COMPILE_DEFINITIONS)
@@ -38,10 +24,8 @@ endif()
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
 
-  # Create the binding library
+# Create the binding library
 pybind11_add_module(_basixcpp SHARED wrapper.cpp)
-# set_target_properties(_basixcpp PROPERTIES BUILD_RPATH_USE_ORIGIN ON)
-
 target_link_libraries(_basixcpp PRIVATE pybind11::module)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
@@ -57,17 +41,21 @@ if (HAVE_PEDANTIC)
   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment;-pedantic)
 endif()
 
-# In Debug mode override pybind11 symbols visibility Symbols must be
+# In Debug mode override pybind11 symbols visibility. Symbols must be
 # visible to backtrace_symbols() to produce nice logs
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_options(_basixcpp PRIVATE "-fvisibility=default")
 endif()
 
+# scikit-build specific steps
 if (SKBUILD)
-  # set_target_properties(_basixcpp PROPERTIES BUILD_RPATH_USE_ORIGIN ON)
-# set(CMAKE_BUILD_RPATH_USE_ORIGIN TRUE)
- # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+  # Add relative rpath so _basixcpp can find the Basix::basix libray
+  # when the build is relocated
+  if (APPLE)
+    set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
+  else()
+    set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH $ORIGIN)
+  endif()
+
   install(TARGETS _basixcpp DESTINATION .)
-  # install(TARGETS _basixcpp LIBRARY DESTINATION .)
-  # install(TARGETS _basixcpp LIBRARY DESTINATION basix)
 endif()

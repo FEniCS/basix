@@ -10,7 +10,7 @@ To install Basix:
 ```console
 > pip install .
 ```
-For advanced installation instructions see [these
+For advanced installation instructions see the detailed [install
 instructions](INSTALL.md)
 
 
@@ -18,6 +18,7 @@ instructions](INSTALL.md)
 
 Documentation of Basix can be found at
 https://docs.fenicsproject.org/basix/main/.
+
 
 ## Supported elements
 

@@ -51,15 +51,8 @@ jobs:
           pip install pydocstyle
           python -m pydocstyle python/basix
 
-      - name: Install Basix C++
-        run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
-          cmake --build build-dir
-          sudo cmake --install build-dir
-      - name: Build Basix Python
-        run: |
-          cd python
-          pip install .
+      - name: Install Basix
+        run: pip -v install .
 
       - name: Run units tests
         run: |

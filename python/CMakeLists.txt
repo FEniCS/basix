@@ -66,7 +66,7 @@ if (SKBUILD)
   if (APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
   else()
-    set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH $ORIGIN)
+    set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
 
   install(TARGETS _basixcpp DESTINATION .)

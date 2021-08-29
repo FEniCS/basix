@@ -54,7 +54,7 @@ jobs:
 
       - name: Run units tests
         run: |
-          pip install pytest pytest-xdist numpy sympy numba
+          pip install pytest pytest-xdist numpy sympy numba scipy
           pytest -v -n auto --durations 20 test/
 
       - name: Build documentation

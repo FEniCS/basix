@@ -22,8 +22,9 @@ if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
 endif()
 
 if(SKBUILD)
-  # Scikit-Build does not add your site-packages to the search path automatically,
-  # so we need to add it _or_ the pybind11 specific directory here.
+  # Scikit-Build does not add your site-packages to the search path
+  # automatically, so we need to add it or the pybind11 specific
+  # directory here.
   execute_process(
     COMMAND
       "${PYTHON_EXECUTABLE}" -c

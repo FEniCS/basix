@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install basix
+      - name: Install Basix
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp
           cmake --build build-dir

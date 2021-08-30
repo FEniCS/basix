@@ -11,5 +11,4 @@ setup(name="fenics-basix",
       license="MIT",
       packages=["basix"],
       package_dir={"": "python"},
-      cmake_install_dir="python/basix/",
-      include_package_data=True)
+      cmake_install_dir="python/basix/")

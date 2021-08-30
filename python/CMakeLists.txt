@@ -21,6 +21,19 @@ if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
   find_package(xsimd REQUIRED)
 endif()
 
+if(SKBUILD)
+  # Scikit-Build does not add your site-packages to the search path
+  # automatically, so we need to add it or the pybind11 specific
+  # directory here.
+  execute_process(
+    COMMAND
+      "${PYTHON_EXECUTABLE}" -c
+      "import pybind11; print(pybind11.get_cmake_dir())"
+    OUTPUT_VARIABLE _tmp_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+  list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
+endif()
+
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
 
@@ -54,7 +67,7 @@ if (SKBUILD)
   if (APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")
   else()
-    set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH $ORIGIN)
+    set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "$ORIGIN/lib")
   endif()
 
   install(TARGETS _basixcpp DESTINATION .)

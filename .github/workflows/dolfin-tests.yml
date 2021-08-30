@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install basix
         run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp
           cmake --build build-dir
           cmake --install build-dir
           python3 -m pip install ./python

@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-latest, macos-latest]
         python-version: [3.8]
 
     steps:
@@ -30,8 +30,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install pybind11
-        run: pip install pybind11
       - name: Install dependencies (non-Python, Linux)
         if: runner.os == 'Linux'
         run: |
@@ -51,15 +49,8 @@ jobs:
           pip install pydocstyle
           python -m pydocstyle python/basix
 
-      - name: Install Basix C++
-        run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
-          cmake --build build-dir
-          sudo cmake --install build-dir
-      - name: Build Basix Python
-        run: |
-          cd python
-          pip install .
+      - name: Install Basix
+        run: pip -v install .
 
       - name: Run units tests
         run: |

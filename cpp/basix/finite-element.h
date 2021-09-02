@@ -188,6 +188,27 @@ xt::xtensor<double, 3> compute_expansion_coefficients(
     const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
     double kappa_tol = 0.0);
 
+/// Creates a version of the interpolation points, interpolation matrices and
+/// entity transformation that represent a discontinuous version of the element.
+/// This discontinuous version will have the same DOFs but they will all be
+/// associated with the interior of the reference cell.
+/// @param[in] x Interpolation points. Shape is (tdim, entity index,
+/// point index, dim)
+/// @param[in] M The interpolation matrices. Indices are (tdim, entity
+/// index, dof, vs, point_index)
+/// @param[in] entity_transformations Entity transformations
+/// @param[in] tdim The topological dimension of the cell the element is defined
+/// on
+/// @param[in] value_size The value size of the element
+std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
+           std::array<std::vector<xt::xtensor<double, 3>>, 4>,
+           std::map<cell::type, xt::xtensor<double, 3>>>
+make_discontinuous(
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
+    const int tdim, const int value_size);
+
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the
 /// underlying expansion set for that cell type, when tabulating.
@@ -208,7 +229,10 @@ public:
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
   /// index, dof, vs, point_index)
-  /// @param[in] map_type
+  /// @param[in] map_type The type of map to be used to map values from the
+  /// reference to a cell
+  /// @param[in] discontinuous Indicates whether or not this is the
+  /// discontinuous version of the element
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
                 const xt::xtensor<double, 3>& coeffs,
@@ -216,7 +240,7 @@ public:
                     entity_transformations,
                 const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                 const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-                maps::type map_type = maps::type::identity);
+                maps::type map_type, bool discontinuous);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -288,6 +312,11 @@ public:
   /// Get the mapping type used for this element
   /// @return The mapping
   maps::type mapping_type() const;
+
+  /// Indicates whether this element is the discontinuous variant
+  /// @return True if this element is a discontinuous version
+  /// of the element
+  bool discontinuous() const;
 
   /// Indicates whether the dof transformations are all permutations
   /// @return True or False
@@ -725,6 +754,9 @@ private:
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etrans_invT;
+
+  // Indicates whether or not this is the discontinuous version of the element
+  bool _discontinuous;
 };
 
 /// Create an element using a given lattice type
@@ -732,17 +764,37 @@ private:
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
 /// @param[in] lattice_type The lattice type that should be used to arrange DOF
-/// points of the element
-FiniteElement
-create_element(element::family family, cell::type cell, int degree,
-               lattice::type lattice_type);
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, lattice::type lattice_type,
+                             bool discontinuous);
 
 /// Create an element
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-FiniteElement
-create_element(element::family family, cell::type cell, int degree);
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, bool discontinuous);
+
+/// Create a continuous element using a given lattice type
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+/// @param[in] lattice_type The lattice type that should be used to arrange DOF
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, lattice::type lattice_type);
+
+/// Create a continuous element
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree);
 
 /// Return the version number of basix across projects
 /// @return version string

@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "crouzeix-raviart.h"
+#include "e-crouzeix-raviart.h"
 #include "cell.h"
 #include "element-families.h"
 #include "maps.h"
@@ -15,7 +15,8 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_cr(cell::type celltype, int degree)
+FiniteElement basix::create_cr(cell::type celltype, int degree,
+                               bool discontinuous)
 {
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
@@ -63,9 +64,17 @@ FiniteElement basix::create_cr(cell::type celltype, int degree)
   }
 
   M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1}));
+
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, 1);
+  }
+
   const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim - 1]}, {x[tdim - 1]}, degree);
   return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity,
+                       discontinuous);
 }
 //-----------------------------------------------------------------------------

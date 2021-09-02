@@ -11,11 +11,15 @@ namespace basix
 /// Create Nedelec element (first kind)
 /// @param celltype
 /// @param degree
-FiniteElement create_nedelec(cell::type celltype, int degree);
+/// @param discontinuous
+FiniteElement create_nedelec(cell::type celltype, int degree,
+                             bool discontinuous);
 
 /// Create Nedelec element (second kind)
 /// @param celltype
 /// @param degree
-FiniteElement create_nedelec2(cell::type celltype, int degree);
+/// @param discontinuous
+FiniteElement create_nedelec2(cell::type celltype, int degree,
+                              bool discontinuous);
 
 } // namespace basix

@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "lagrange.h"
+#include "e-lagrange.h"
 #include "dof-transformations.h"
 #include "element-families.h"
 #include "log.h"
@@ -18,7 +18,8 @@ using namespace basix;
 
 //----------------------------------------------------------------------------
 FiniteElement basix::create_lagrange(cell::type celltype, int degree,
-                                     lattice::type lattice_type)
+                                     lattice::type lattice_type,
+                                     bool discontinuous)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
@@ -34,6 +35,11 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)
   {
+    if (!discontinuous)
+    {
+      throw std::runtime_error(
+          "Cannot create a continuous order 0 Lagrange basis function");
+    }
     auto pt = lattice::create(celltype, 0, lattice_type, true);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
@@ -146,62 +152,29 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
     entity_transformations[cell::type::quadrilateral] = ft;
   }
 
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, 1);
+  }
+
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
       {x[0], x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity,
+                       discontinuous);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_dlagrange(cell::type celltype, int degree)
+FiniteElement basix::create_dpc(cell::type celltype, int degree,
+                                bool discontinuous)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
-
-  const std::size_t ndofs = polyset::dim(celltype, degree);
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-  const std::size_t tdim = topology.size() - 1;
-
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
-  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
-  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
-
-  const auto pt
-      = lattice::create(celltype, degree, lattice::type::equispaced, true);
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  x[tdim].push_back(pt);
-
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  if (tdim > 1)
+  if (!discontinuous)
   {
-    entity_transformations[cell::type::interval]
-        = xt::xtensor<double, 3>({1, 0, 0});
+    throw std::runtime_error("Cannot create a continuous DPC element.");
   }
-  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    entity_transformations[cell::type::triangle]
-        = xt::xtensor<double, 3>({2, 0, 0});
-  }
-  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    entity_transformations[cell::type::quadrilateral]
-        = xt::xtensor<double, 3>({2, 0, 0});
-  }
-
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), {M[tdim]}, {x[tdim]}, degree);
-
-  return FiniteElement(element::family::DP, celltype, degree, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity);
-}
-//-----------------------------------------------------------------------------
-FiniteElement basix::create_dpc(cell::type celltype, int degree)
-{
-  // Only tabulate for scalar. Vector spaces can easily be built from
-  // the scalar space.
 
   cell::type simplex_type;
   switch (celltype)
@@ -268,6 +241,7 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree)
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity,
+                       discontinuous);
 }
 //-----------------------------------------------------------------------------

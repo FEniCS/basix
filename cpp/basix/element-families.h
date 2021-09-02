@@ -21,10 +21,9 @@ enum class family
   N2E = 5,
   CR = 6,
   Regge = 7,
-  DP = 8,
-  DPC = 9,
-  Bubble = 10,
-  Serendipity = 11
+  DPC = 8,
+  Bubble = 9,
+  Serendipity = 10
 };
 
 /// Convert string to a family

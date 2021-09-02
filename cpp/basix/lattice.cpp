@@ -4,7 +4,7 @@
 
 #include "lattice.h"
 #include "cell.h"
-#include "lagrange.h"
+#include "polyset.h"
 #include "quadrature.h"
 #include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
@@ -17,6 +17,30 @@ using namespace basix;
 namespace
 {
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 2> tabulate_dlagrange(int n,
+                                          const xt::xtensor<double, 1>& x)
+{
+  std::array<std::size_t, 1> s = {static_cast<std::size_t>(n + 1)};
+  xt::xtensor<double, 1> equi_pts(s);
+  for (int i = 0; i <= n; ++i)
+    equi_pts(i) = static_cast<double>(i) / static_cast<double>(n);
+
+  xt::xtensor<double, 3> dual_values
+      = polyset::tabulate(cell::type::interval, n, 0, equi_pts);
+  xt::xtensor<double, 2, xt::layout_type::column_major> dualmat(
+      {dual_values.shape(2), dual_values.shape(1)});
+  dualmat.assign(xt::transpose(xt::view(dual_values, 0, xt::all(), xt::all())));
+
+  xt::xtensor<double, 3> tabulated_values
+      = polyset::tabulate(cell::type::interval, n, 0, x);
+  xt::xtensor<double, 2, xt::layout_type::column_major> tabulated(
+      {tabulated_values.shape(2), tabulated_values.shape(1)});
+  tabulated.assign(
+      xt::transpose(xt::view(tabulated_values, 0, xt::all(), xt::all())));
+
+  return xt::transpose(xt::linalg::solve(dualmat, tabulated));
+}
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 1> warp_function(int n, const xt::xtensor<double, 1>& x)
 {
   [[maybe_unused]] auto [_pts, wts] = quadrature::compute_gll_rule(n + 1);
@@ -27,9 +51,7 @@ xt::xtensor<double, 1> warp_function(int n, const xt::xtensor<double, 1>& x)
   xt::xtensor<double, 1> pts
       = xt::adapt(_pts.data(), _pts.size(), xt::no_ownership(), shape0);
 
-  FiniteElement L = create_dlagrange(cell::type::interval, n);
-  xt::xtensor<double, 2> v
-      = xt::view(L.tabulate(0, x), 0, xt::all(), xt::all(), 0);
+  xt::xtensor<double, 2> v = tabulate_dlagrange(n, x);
 
   return xt::linalg::dot(v, pts);
 }
@@ -260,11 +282,11 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
   // Get interpolated value at r in range [-1, 1]
-  FiniteElement L = create_dlagrange(cell::type::interval, n);
   auto w = [&](double r) -> double
   {
     xt::xtensor<double, 1> rr = {0.5 * (r + 1.0)};
-    xt::xtensor<double, 1> v = xt::view(L.tabulate(0, rr), 0, 0, xt::all(), 0);
+    xt::xtensor<double, 1> v
+        = xt::view(tabulate_dlagrange(n, rr), 0, xt::all());
     double d = 0.0;
     for (std::size_t i = 0; i < pts.shape(0); ++i)
       d += v[i] * pts[i];

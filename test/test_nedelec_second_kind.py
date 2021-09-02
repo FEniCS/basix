@@ -7,7 +7,7 @@ import numpy
 import pytest
 import sympy
 
-from .test_lagrange import sympy_disc_lagrange
+from .test_lagrange import sympy_lagrange
 from .test_rt import sympy_rt
 
 
@@ -31,7 +31,7 @@ def sympy_nedelec(celltype, n):
         mat = numpy.empty((len(funcs), len(funcs)), dtype=object)
 
         # edge tangents
-        edge_basis = sympy_disc_lagrange(basix.CellType.interval, n)
+        edge_basis = sympy_lagrange(basix.CellType.interval, n)
         edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
         for i, f in enumerate(funcs):
             j = 0
@@ -75,7 +75,7 @@ def sympy_nedelec(celltype, n):
         mat = numpy.empty((len(funcs), len(funcs)), dtype=object)
 
         # edge tangents
-        edge_basis = sympy_disc_lagrange(basix.CellType.interval, n)
+        edge_basis = sympy_lagrange(basix.CellType.interval, n)
         edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
         for i, f in enumerate(funcs):
             j = 0
@@ -195,4 +195,4 @@ def test_tet(order):
                                               (y, p[1]),
                                               (z, p[2])])
 
-                assert(numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all())
+                assert numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all()

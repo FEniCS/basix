@@ -217,7 +217,6 @@ Interface to the Basix C++ library.
   py::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)
       .value("P", element::family::P)
-      .value("DP", element::family::DP)
       .value("BDM", element::family::BDM)
       .value("RT", element::family::RT)
       .value("N1E", element::family::N1E)
@@ -403,10 +402,31 @@ Interface to the Basix C++ library.
   // Create FiniteElement
   m.def(
       "create_element",
-      [](element::family family_name, cell::type cell_name,
-         int degree) -> FiniteElement { return basix::create_element(family_name, cell_name, degree);
+      [](element::family family_name, cell::type cell_name, int degree,
+         bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree,
+                                     discontinuous);
       },
       "Create a FiniteElement of a given family, celltype and degree");
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         lattice::type lattice_type, bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree,
+                                     lattice_type, discontinuous);
+      },
+      "Create a FiniteElement of a given family, celltype, degree and lattice "
+      "type");
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name,
+         int degree) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree);
+      },
+      "Create a continuous FiniteElement of a given family, celltype and "
+      "degree");
 
   m.def(
       "create_element",
@@ -415,7 +435,8 @@ Interface to the Basix C++ library.
         return basix::create_element(family_name, cell_name, degree,
                                      lattice_type);
       },
-      "Create a FiniteElement of a given family, celltype, degree and lattice "
+      "Create a continuous FiniteElement of a given family, celltype, degree "
+      "and lattice "
       "type");
 
   m.def(

@@ -2,9 +2,9 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "raviart-thomas.h"
+#include "e-raviart-thomas.h"
+#include "e-lagrange.h"
 #include "element-families.h"
-#include "lagrange.h"
 #include "maps.h"
 #include "moments.h"
 #include "polyset.h"
@@ -19,7 +19,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_rt(cell::type celltype, int degree)
+FiniteElement basix::create_rt(cell::type celltype, int degree,
+                               bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -82,7 +83,7 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
 
   // Add integral moments on facets
   const FiniteElement facet_moment_space
-      = create_dlagrange(facettype, degree - 1);
+      = create_lagrange(facettype, degree - 1, lattice::type::equispaced, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
   xt::xtensor<double, 3> facet_transforms
@@ -93,7 +94,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
   {
     // Interior integral moment
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
-        create_dlagrange(celltype, degree - 2), celltype, tdim, quad_deg);
+        create_lagrange(celltype, degree - 2, lattice::type::equispaced, true),
+        celltype, tdim, quad_deg);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
@@ -112,10 +114,16 @@ FiniteElement basix::create_rt(cell::type celltype, int degree)
     entity_transformations[cell::type::triangle] = facet_transforms;
   }
 
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
+  }
+
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, B, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]}, degree);
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
                        entity_transformations, x, M,
-                       maps::type::contravariantPiola);
+                       maps::type::contravariantPiola, discontinuous);
 }
 //-----------------------------------------------------------------------------

@@ -21,7 +21,7 @@ def test_number_of_dofs(cell_type, degree, element_type, element_args):
 
 
 @parametrize_over_elements(4)
-def test_degreeing_of_dofs(cell_type, degree, element_type, element_args):
+def test_ordering_of_dofs(cell_type, degree, element_type, element_args):
     """
     Check that DOFs are numbered in ascending order by entity.
 

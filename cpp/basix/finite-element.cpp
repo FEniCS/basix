@@ -3,16 +3,16 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
-#include "brezzi-douglas-marini.h"
-#include "bubble.h"
-#include "crouzeix-raviart.h"
-#include "lagrange.h"
-#include "nce-rtc.h"
-#include "nedelec.h"
+#include "e-brezzi-douglas-marini.h"
+#include "e-bubble.h"
+#include "e-crouzeix-raviart.h"
+#include "e-lagrange.h"
+#include "e-nce-rtc.h"
+#include "e-nedelec.h"
+#include "e-raviart-thomas.h"
+#include "e-regge.h"
+#include "e-serendipity.h"
 #include "polyset.h"
-#include "raviart-thomas.h"
-#include "regge.h"
-#include "serendipity.h"
 #include "version.h"
 
 #include <numeric>
@@ -75,35 +75,34 @@ constexpr int num_transformations(cell::type cell_type)
 } // namespace
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree)
+                                           cell::type cell, int degree,
+                                           bool discontinuous)
 {
   switch (family)
   {
   case element::family::P:
     throw std::runtime_error(
         "Lagrange elements need to be given a lattice type.");
-  case element::family::DP:
-    return create_dlagrange(cell, degree);
   case element::family::BDM:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_serendipity_div(cell, degree);
+      return create_serendipity_div(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_serendipity_div(cell, degree);
+      return create_serendipity_div(cell, degree, discontinuous);
     default:
-      return create_bdm(cell, degree);
+      return create_bdm(cell, degree, discontinuous);
     }
   case element::family::RT:
   {
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_rtc(cell, degree);
+      return create_rtc(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_rtc(cell, degree);
+      return create_rtc(cell, degree, discontinuous);
     default:
-      return create_rt(cell, degree);
+      return create_rt(cell, degree, discontinuous);
     }
   }
   case element::family::N1E:
@@ -111,33 +110,33 @@ basix::FiniteElement basix::create_element(element::family family,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_nce(cell, degree);
+      return create_nce(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_nce(cell, degree);
+      return create_nce(cell, degree, discontinuous);
     default:
-      return create_nedelec(cell, degree);
+      return create_nedelec(cell, degree, discontinuous);
     }
   }
   case element::family::N2E:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_serendipity_curl(cell, degree);
+      return create_serendipity_curl(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_serendipity_curl(cell, degree);
+      return create_serendipity_curl(cell, degree, discontinuous);
     default:
-      return create_nedelec2(cell, degree);
+      return create_nedelec2(cell, degree, discontinuous);
     }
   case element::family::Regge:
-    return create_regge(cell, degree);
+    return create_regge(cell, degree, discontinuous);
   case element::family::CR:
-    return create_cr(cell, degree);
+    return create_cr(cell, degree, discontinuous);
   case element::family::Bubble:
-    return create_bubble(cell, degree);
+    return create_bubble(cell, degree, discontinuous);
   case element::family::Serendipity:
-    return create_serendipity(cell, degree);
+    return create_serendipity(cell, degree, discontinuous);
   case element::family::DPC:
-    return create_dpc(cell, degree);
+    return create_dpc(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found");
   }
@@ -145,15 +144,29 @@ basix::FiniteElement basix::create_element(element::family family,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           lattice::type lattice_type)
+                                           lattice::type lattice_type,
+                                           bool discontinuous)
 {
   switch (family)
   {
   case element::family::P:
-    return create_lagrange(cell, degree, lattice_type);
+    return create_lagrange(cell, degree, lattice_type, discontinuous);
   default:
     throw std::runtime_error("Cannot pass a lattice type to this element.");
   }
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           lattice::type lattice_type)
+{
+  return basix::create_element(family, cell, degree, lattice_type, false);
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree)
+{
+  return basix::create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> basix::compute_expansion_coefficients(
@@ -256,6 +269,65 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
   return xt::reshape_view(C, {num_dofs, vs, pdim});
 }
 //-----------------------------------------------------------------------------
+std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
+           std::array<std::vector<xt::xtensor<double, 3>>, 4>,
+           std::map<cell::type, xt::xtensor<double, 3>>>
+basix::make_discontinuous(
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
+    const int tdim, const int value_size)
+{
+  std::size_t npoints = 0;
+  std::size_t Mshape0 = 0;
+  for (int i = 0; i < 4; ++i)
+  {
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+    {
+      npoints += x[i][j].shape(0);
+      Mshape0 += M[i][j].shape(0);
+    }
+  }
+
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations_out;
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
+
+  xt::xtensor<double, 2> new_x
+      = xt::zeros<double>({npoints, static_cast<std::size_t>(tdim)});
+
+  xt::xtensor<double, 3> new_M = xt::zeros<double>(
+      {Mshape0, static_cast<std::size_t>(value_size), npoints});
+
+  int x_n = 0;
+  int M_n = 0;
+  for (int i = 0; i < 4; ++i)
+  {
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+    {
+      xt::view(new_x, xt::range(x_n, x_n + x[i][j].shape(0)), xt::all())
+          .assign(x[i][j]);
+      xt::view(new_M, xt::range(M_n, M_n + M[i][j].shape(0)), xt::all(),
+               xt::range(x_n, x_n + x[i][j].shape(0)))
+          .assign(M[i][j]);
+      x_n += x[i][j].shape(0);
+      M_n += M[i][j].shape(0);
+    }
+  }
+
+  x_out[tdim].push_back(new_x);
+  M_out[tdim].push_back(new_M);
+
+  for (auto it = entity_transformations.begin();
+       it != entity_transformations.end(); ++it)
+  {
+    entity_transformations_out[it->first]
+        = xt::xtensor<double, 3>({it->second.shape(0), 0, 0});
+  }
+
+  return {x_out, M_out, entity_transformations_out};
+}
+//-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
@@ -263,14 +335,15 @@ FiniteElement::FiniteElement(
     const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type)
+    maps::type map_type, bool discontinuous)
     : map_type(map_type), _cell_type(cell_type),
       _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _degree(degree), _map_type(map_type),
       _coeffs(xt::reshape_view(
           coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
-      _entity_transformations(entity_transformations), _x(x), _matM_new(M)
+      _entity_transformations(entity_transformations), _x(x), _matM_new(M),
+      _discontinuous(discontinuous)
 {
   // if (points.dimension() == 1)
   //   throw std::runtime_error("Problem with points");
@@ -506,6 +579,8 @@ element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 maps::type FiniteElement::mapping_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
+bool FiniteElement::discontinuous() const { return _discontinuous; }
+//-----------------------------------------------------------------------------
 bool FiniteElement::dof_transformations_are_permutations() const
 {
   return _dof_transformations_are_permutations;
@@ -628,8 +703,9 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
         if (ndofs > 0)
         {
           // TODO: This assumes that every face has the same shape
-          //       _entity_transformations should be replaced with a map from a
-          //       subentity type to a matrix to allow for prisms and pyramids.
+          //       _entity_transformations should be replaced with a map from
+          //       a subentity type to a matrix to allow for prisms and
+          //       pyramids.
           xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
                    xt::range(dof_start, dof_start + ndofs))
               = xt::view(

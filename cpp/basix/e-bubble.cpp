@@ -2,7 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "bubble.h"
+#include "e-bubble.h"
 #include "element-families.h"
 #include "lattice.h"
 #include "maps.h"
@@ -19,8 +19,12 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_bubble(cell::type celltype, int degree)
+FiniteElement basix::create_bubble(cell::type celltype, int degree,
+                                   bool discontinuous)
 {
+  if (discontinuous)
+    throw std::runtime_error("Cannot create a discontinuous bubble element.");
+
   switch (celltype)
   {
   case cell::type::interval:
@@ -159,6 +163,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree)
   xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity);
+                       entity_transformations, x, M, maps::type::identity,
+                       discontinuous);
 }
 //-----------------------------------------------------------------------------

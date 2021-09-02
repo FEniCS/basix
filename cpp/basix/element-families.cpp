@@ -14,7 +14,6 @@ element::family element::str_to_type(std::string name)
   static const std::map<std::string, element::family> name_to_type
       = {{"Custom element", element::family::custom},
          {"P", element::family::P},
-         {"DP", element::family::DP},
          {"DPC", element::family::DPC},
          {"BDM", element::family::BDM},
          {"RT", element::family::RT},
@@ -37,7 +36,6 @@ const std::string& element::type_to_str(element::family type)
   static const std::map<element::family, std::string> name_to_type
       = {{element::family::custom, "Custom element"},
          {element::family::P, "P"},
-         {element::family::DP, "DP"},
          {element::family::DPC, "DPC"},
          {element::family::BDM, "BDM"},
          {element::family::RT, "RT"},

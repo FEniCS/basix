@@ -312,7 +312,7 @@ basix::make_discontinuous(
         = xt::xtensor<double, 3>({it->second.shape(0), 0, 0});
   }
 
-  return std::make_tuple(x_out, M_out, entity_transformations_out);
+  return {x_out, M_out, entity_transformations_out};
 }
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(

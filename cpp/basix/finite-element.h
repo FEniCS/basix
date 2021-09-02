@@ -314,7 +314,7 @@ public:
   maps::type mapping_type() const;
 
   /// Indicates whether this element is the discontinuous variant
-  /// @return True is this element is a discontinuous version
+  /// @return True if this element is a discontinuous version
   /// of the element
   bool discontinuous() const;
 

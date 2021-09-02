@@ -781,6 +781,21 @@ FiniteElement create_element(element::family family, cell::type cell,
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, bool discontinuous);
 
+/// Create a continuous element using a given lattice type
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+/// @param[in] lattice_type The lattice type that should be used to arrange DOF
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, lattice::type lattice_type);
+
+/// Create a continuous element
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree);
+
 /// Return the version number of basix across projects
 /// @return version string
 std::string version();

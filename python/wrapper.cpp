@@ -422,18 +422,21 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name,
-         int degree) -> FiniteElement { return basix::create_element(family_name, cell_name, degree);
+         int degree) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, true);
       },
-      "Create a FiniteElement of a given family, celltype and degree");
+      "Create a continuous FiniteElement of a given family, celltype and "
+      "degree");
 
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
          lattice::type lattice_type) -> FiniteElement {
         return basix::create_element(family_name, cell_name, degree,
-                                     lattice_type);
+                                     lattice_type, true);
       },
-      "Create a FiniteElement of a given family, celltype, degree and lattice "
+      "Create a continuous FiniteElement of a given family, celltype, degree "
+      "and lattice "
       "type");
 
   m.def(

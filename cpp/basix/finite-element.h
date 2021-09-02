@@ -768,7 +768,7 @@ private:
 /// between cells points of the element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, lattice::type lattice_type,
-                             bool discontinuous = false);
+                             bool discontinuous);
 
 /// Create an element
 /// @param[in] family The element family
@@ -777,7 +777,7 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells
 FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, bool discontinuous = false);
+                             int degree, bool discontinuous);
 
 /// Return the version number of basix across projects
 /// @return version string

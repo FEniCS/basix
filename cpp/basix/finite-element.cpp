@@ -305,11 +305,11 @@ basix::make_discontinuous(
   x_out[tdim].push_back(new_x);
   M_out[tdim].push_back(new_M);
 
-  for (auto i = entity_transformations.begin();
-       i != entity_transformations.end(); ++i)
+  for (auto it = entity_transformations.begin();
+       it != entity_transformations.end(); ++it)
   {
-    entity_transformations_out[i->first]
-        = xt::xtensor<double, 3>({i->second.shape(0), 0, 0});
+    entity_transformations_out[it->first]
+        = xt::xtensor<double, 3>({it->second.shape(0), 0, 0});
   }
 
   return std::make_tuple(x_out, M_out, entity_transformations_out);

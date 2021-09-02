@@ -765,7 +765,8 @@ private:
 /// @param[in] degree The degree of the element
 /// @param[in] lattice_type The lattice type that should be used to arrange DOF
 /// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, lattice::type lattice_type,
                              bool discontinuous);
@@ -775,7 +776,8 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
 /// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, bool discontinuous);
 

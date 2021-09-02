@@ -755,7 +755,7 @@ private:
                                   xt::xtensor<double, 2>>>>
       _etrans_invT;
 
-  /// Indicates whether or not this is the discontinuous version of the element
+  // Indicates whether or not this is the discontinuous version of the element
   bool _discontinuous;
 };
 

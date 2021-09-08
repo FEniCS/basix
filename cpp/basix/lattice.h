@@ -21,7 +21,8 @@ namespace basix::lattice
 enum class type
 {
   equispaced = 0,
-  gll = 1
+  gll = 1,
+  gll_isaac = 2,
 };
 
 /// Convert string to a lattice type

@@ -75,3 +75,30 @@ def test_tetrahedron(n, lattice_type):
     idx = np.where(np.isclose(tet_pts[:, 0] + tet_pts[:, 1] + tet_pts[:, 2], 1.0))
     tet_xyz = tet_pts[idx][:, 1:]
     assert np.allclose(np.sort(tri_pts), np.sort(tet_xyz))
+
+
+@pytest.mark.parametrize("lattice_type", [
+    basix.LatticeType.equispaced, basix.LatticeType.gll, basix.LatticeType.gll_warped
+])
+@pytest.mark.parametrize("n", [1, 2, 4, 8])
+def test_triangle(n, lattice_type):
+    # Check that all the surface points of the triangle match up with the same points on
+    # an interval
+    tri_pts = basix.create_lattice(basix.CellType.triangle, n, lattice_type, True)
+    interval_pts = basix.create_lattice(basix.CellType.interval, n, lattice_type, True)
+
+    tri_pts[np.where(abs(tri_pts) < 1e-12)] = 0.0
+    interval_pts[np.where(abs(interval_pts) < 1e-12)] = 0.0
+
+    idx = np.where(np.isclose(tri_pts[:, 0], 0.0))
+    tri_x0 = tri_pts[idx][:, 1:]
+    assert np.allclose(np.sort(interval_pts), np.sort(tri_x0))
+
+    idx = np.where(np.isclose(tri_pts[:, 1], 0.0))
+    tri_y0 = tri_pts[idx][:, :1]
+    assert np.allclose(np.sort(interval_pts), np.sort(tri_y0))
+
+    # Project x+y=1 onto x=0
+    idx = np.where(np.isclose(tri_pts[:, 0] + tri_pts[:, 1], 1.0))
+    tri_xyz = tri_pts[idx][:, 1:]
+    assert np.allclose(np.sort(interval_pts), np.sort(tri_xyz))

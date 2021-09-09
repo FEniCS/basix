@@ -1,19 +1,24 @@
-# Copyright (c) 2020 Chris Richardson
+# Copyright (c) 2020 Chris Richardson & Matthew Scroggs
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
+import pytest
 import basix
 import numpy as np
 
 
-def test_gll_pyramid():
-    n = 8
-
+@pytest.mark.parametrize("lattice_type", [
+    basix.LatticeType.equispaced, basix.LatticeType.gll, basix.LatticeType.gll_warped
+])
+@pytest.mark.parametrize("n", [1, 2, 4, 8])
+def test_pyramid(n, lattice_type):
+    if lattice_type == basix.LatticeType.gll:
+        pytest.xfail("This lattice is not implemented on a pyramid yet.")
     # Check that all the surface points of the pyramid match up with the
     # same points on quad and triangle
-    tri_pts = basix.create_lattice(basix.CellType.triangle, n, basix.LatticeType.gll, True)
-    quad_pts = basix.create_lattice(basix.CellType.quadrilateral, n, basix.LatticeType.gll, True)
-    pyr_pts = basix.create_lattice(basix.CellType.pyramid, n, basix.LatticeType.gll, True)
+    tri_pts = basix.create_lattice(basix.CellType.triangle, n, lattice_type, True)
+    quad_pts = basix.create_lattice(basix.CellType.quadrilateral, n, lattice_type, True)
+    pyr_pts = basix.create_lattice(basix.CellType.pyramid, n, lattice_type, True)
 
     # Remove any near-zero values to make sorting robust
     pyr_pts[np.where(abs(pyr_pts) < 1e-12)] = 0.0
@@ -41,13 +46,15 @@ def test_gll_pyramid():
     assert np.allclose(np.sort(quad_pts), np.sort(pyr_z0))
 
 
-def test_gll_tetrahedron():
-    n = 8
-
+@pytest.mark.parametrize("lattice_type", [
+    basix.LatticeType.equispaced, basix.LatticeType.gll, basix.LatticeType.gll_warped
+])
+@pytest.mark.parametrize("n", [1, 2, 4, 8])
+def test_tetrahedron(n, lattice_type):
     # Check that all the surface points of the tet match up with the same points on
     # triangle
-    tri_pts = basix.create_lattice(basix.CellType.triangle, n, basix.LatticeType.gll, True)
-    tet_pts = basix.create_lattice(basix.CellType.tetrahedron, n, basix.LatticeType.gll, True)
+    tri_pts = basix.create_lattice(basix.CellType.triangle, n, lattice_type, True)
+    tet_pts = basix.create_lattice(basix.CellType.tetrahedron, n, lattice_type, True)
 
     tet_pts[np.where(abs(tet_pts) < 1e-12)] = 0.0
     tri_pts[np.where(abs(tri_pts) < 1e-12)] = 0.0

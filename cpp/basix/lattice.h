@@ -22,7 +22,7 @@ enum class type
 {
   equispaced = 0,
   gll = 1,
-  gll_isaac = 2,
+  gll_warped = 2,
 };
 
 /// Convert string to a lattice type

@@ -4,6 +4,7 @@
 
 #include "lattice.h"
 #include "cell.h"
+#include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include <xtensor-blas/xlinalg.hpp>
@@ -53,7 +54,7 @@ xt::xtensor<double, 1> warp_function(int n, const xt::xtensor<double, 1>& x)
 
   xt::xtensor<double, 2> v = tabulate_dlagrange(n, x);
 
-  return xt::linalg::dot(v, pts);
+  return basix::math::dot(v, pts);
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 1> create_interval_equispaced(int n, bool exterior)
@@ -208,8 +209,8 @@ xt::xtensor<double, 2> create_tri_gll_warped(int n, bool exterior)
       p(c, 1) += y * (a * wbar(n + j - l) + x * wbar(n + j - i));
       ++c;
     }
-    }
-    return p;
+  }
+  return p;
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 1> isaac_point(xt::xtensor<std::size_t, 1> a)
@@ -481,87 +482,87 @@ xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
         double y = h * (j + b);
         double z = h * (k + b);
 
-          // Barycentric coordinates of triangle in x-z plane
-          const double l1 = x;
-          const double l2 = z;
-          const double l3 = 1 - x - z;
+        // Barycentric coordinates of triangle in x-z plane
+        const double l1 = x;
+        const double l2 = z;
+        const double l3 = 1 - x - z;
 
-          // Barycentric coordinates of triangle in y-z plane
-          const double l4 = y;
-          const double l5 = z;
-          const double l6 = 1 - y - z;
+        // Barycentric coordinates of triangle in y-z plane
+        const double l4 = y;
+        const double l5 = z;
+        const double l6 = 1 - y - z;
 
-          // b1-b6 are the blending factors for each edge
-          double b1, f1, f2;
-          if (std::fabs(l1) < 1e-12)
-          {
-            b1 = 1.0;
-            f1 = 0.0;
-            f2 = 0.0;
-          }
-          else
-          {
-            b1 = 2.0 * l3 / (2.0 * l3 + l1) * 2.0 * l2 / (2.0 * l2 + l1);
-            f1 = l1 / (l1 + l4);
-            f2 = l1 / (l1 + l6);
-          }
+        // b1-b6 are the blending factors for each edge
+        double b1, f1, f2;
+        if (std::fabs(l1) < 1e-12)
+        {
+          b1 = 1.0;
+          f1 = 0.0;
+          f2 = 0.0;
+        }
+        else
+        {
+          b1 = 2.0 * l3 / (2.0 * l3 + l1) * 2.0 * l2 / (2.0 * l2 + l1);
+          f1 = l1 / (l1 + l4);
+          f2 = l1 / (l1 + l6);
+        }
 
-          // r1-r4 are the edge positions for each of the z>0 edges
-          // calculated so that they use the barycentric coordinates of
-          // the triangle, if the point lies on a triangular face. f1-f4
-          // are face selecting functions, which blend between adjacent
-          // triangular faces
-          const double r1 = (l2 - l3) * f1 + (l5 - l6) * (1 - f1);
-          const double r2 = (l2 - l3) * f2 + (l5 - l4) * (1 - f2);
+        // r1-r4 are the edge positions for each of the z>0 edges
+        // calculated so that they use the barycentric coordinates of
+        // the triangle, if the point lies on a triangular face. f1-f4
+        // are face selecting functions, which blend between adjacent
+        // triangular faces
+        const double r1 = (l2 - l3) * f1 + (l5 - l6) * (1 - f1);
+        const double r2 = (l2 - l3) * f2 + (l5 - l4) * (1 - f2);
 
-          double b2;
-          if (std::fabs(l2) < 1e-12)
-            b2 = 1.0;
-          else
-            b2 = 2.0 * l3 / (2.0 * l3 + l2) * 2.0 * l1 / (2.0 * l1 + l2);
+        double b2;
+        if (std::fabs(l2) < 1e-12)
+          b2 = 1.0;
+        else
+          b2 = 2.0 * l3 / (2.0 * l3 + l2) * 2.0 * l1 / (2.0 * l1 + l2);
 
-          double b3, f3, f4;
-          if (std::fabs(l3) < 1e-12)
-          {
-            b3 = 1.0;
-            f3 = 0.0;
-            f4 = 0.0;
-          }
-          else
-          {
-            b3 = 2.0 * l2 / (2.0 * l2 + l3) * 2.0 * l1 / (2.0 * l1 + l3);
-            f3 = l3 / (l3 + l4);
-            f4 = l3 / (l3 + l6);
-          }
+        double b3, f3, f4;
+        if (std::fabs(l3) < 1e-12)
+        {
+          b3 = 1.0;
+          f3 = 0.0;
+          f4 = 0.0;
+        }
+        else
+        {
+          b3 = 2.0 * l2 / (2.0 * l2 + l3) * 2.0 * l1 / (2.0 * l1 + l3);
+          f3 = l3 / (l3 + l4);
+          f4 = l3 / (l3 + l6);
+        }
 
-          const double r3 = (l2 - l1) * f3 + (l5 - l6) * (1.0 - f3);
-          const double r4 = (l2 - l1) * f4 + (l5 - l4) * (1.0 - f4);
+        const double r3 = (l2 - l1) * f3 + (l5 - l6) * (1.0 - f3);
+        const double r4 = (l2 - l1) * f4 + (l5 - l4) * (1.0 - f4);
 
-          double b4;
-          if (std::fabs(l4) < 1e-12)
-            b4 = 1.0;
-          else
-            b4 = 2 * l6 / (2.0 * l6 + l4) * 2.0 * l5 / (2.0 * l5 + l4);
+        double b4;
+        if (std::fabs(l4) < 1e-12)
+          b4 = 1.0;
+        else
+          b4 = 2 * l6 / (2.0 * l6 + l4) * 2.0 * l5 / (2.0 * l5 + l4);
 
-          double b5;
-          if (std::fabs(l5) < 1e-12)
-            b5 = 1.0;
-          else
-            b5 = 2.0 * l6 / (2.0 * l6 + l5) * 2.0 * l4 / (2.0 * l4 + l5);
+        double b5;
+        if (std::fabs(l5) < 1e-12)
+          b5 = 1.0;
+        else
+          b5 = 2.0 * l6 / (2.0 * l6 + l5) * 2.0 * l4 / (2.0 * l4 + l5);
 
-          double b6;
-          if (std::fabs(l6) < 1e-12)
-            b6 = 1.0;
-          else
-            b6 = 2.0 * l4 / (2.0 * l4 + l6) * 2.0 * l5 / (2.0 * l5 + l6);
+        double b6;
+        if (std::fabs(l6) < 1e-12)
+          b6 = 1.0;
+        else
+          b6 = 2.0 * l4 / (2.0 * l4 + l6) * 2.0 * l5 / (2.0 * l5 + l6);
 
-          double dx = -b3 * b4 * w(r3) - b3 * b6 * w(r4) + b2 * w(l1 - l3);
-          double dy = -b1 * b6 * w(r2) - b3 * b6 * w(r4) + b5 * w(l4 - l6);
-          double dz = b1 * b4 * w(r1) + b1 * b6 * w(r2) + b3 * b4 * w(r3)
-                      + b3 * b6 * w(r4);
-          x += dx;
-          y += dy;
-          z += dz;
+        double dx = -b3 * b4 * w(r3) - b3 * b6 * w(r4) + b2 * w(l1 - l3);
+        double dy = -b1 * b6 * w(r2) - b3 * b6 * w(r4) + b5 * w(l4 - l6);
+        double dz = b1 * b4 * w(r1) + b1 * b6 * w(r2) + b3 * b4 * w(r3)
+                    + b3 * b6 * w(r4);
+        x += dx;
+        y += dy;
+        z += dz;
 
         points(c, 0) = x;
         points(c, 1) = y;

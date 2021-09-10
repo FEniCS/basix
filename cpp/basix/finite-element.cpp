@@ -12,6 +12,7 @@
 #include "e-raviart-thomas.h"
 #include "e-regge.h"
 #include "e-serendipity.h"
+#include "math.h"
 #include "polyset.h"
 #include "version.h"
 
@@ -223,7 +224,7 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
             for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
               D(dof_index + i, j, l) += Me(i, j, k) * P(k, l);
 
-      // Dtmp += xt::linalg::dot(Me, P);
+      // Dtmp += basix::math::dot(Me, P);
 
       dof_index += M[d][e].shape(0);
     }
@@ -242,16 +243,17 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
   xt::xtensor<double, 2, xt::layout_type::column_major> BDt
-      = xt::linalg::dot(B, Dt_flat);
+      = basix::math::dot(B, Dt_flat);
 
-  if (kappa_tol >= 1.0)
-  {
-    if (xt::linalg::cond(BDt, 2) > kappa_tol)
-    {
-      throw std::runtime_error("Condition number of B.D^T when computing "
-                               "expansion coefficients exceeds tolerance.");
-    }
-  }
+  // FIXME: Check condition number of B.D^T
+  // if (kappa_tol >= 1.0)
+  // {
+  //   if (xt::linalg::cond(BDt, 2) > kappa_tol)
+  //   {
+  //     throw std::runtime_error("Condition number of B.D^T when computing "
+  //                              "expansion coefficients exceeds tolerance.");
+  //   }
+  // }
 
   // Note: forcing the layout type to get around an xtensor bug with Intel
   // Compilers
@@ -543,9 +545,9 @@ FiniteElement::FiniteElement(
           // prisms and pyramids, this will need updating to look at the face
           // type
           if (et.first == cell::type::quadrilateral and i == 0)
-            Minv = xt::linalg::dot(xt::linalg::dot(M, M), M);
+            Minv = basix::math::dot(basix::math::dot(M, M), M);
           else if (et.first == cell::type::triangle and i == 0)
-            Minv = xt::linalg::dot(M, M);
+            Minv = basix::math::dot(M, M);
           else
             Minv = M;
 
@@ -661,7 +663,7 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
       auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
       B = xt::view(basis, p, xt::all(), xt::all());
       C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-      auto result = xt::linalg::dot(B, xt::transpose(C));
+      auto result = basix::math::dot(B, xt::transpose(C));
       basis_view.assign(result);
     }
   }

@@ -80,7 +80,7 @@ map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
     // Compute x = x0 + \Delta x
     p[e] = xt::tile(xt::view(entity_x, xt::newaxis(), 0), x.shape(0));
     axes_e = xt::view(axes, e, xt::all(), xt::all());
-    p[e] += xt::linalg::dot(x, axes_e);
+    p[e] += basix::math::dot(x, axes_e);
   }
 
   return {p, axes};
@@ -227,7 +227,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
           _pulled, xt::range(0, _pulled.shape(0)),
           xt::range(moment_space.dim() * v, moment_space.dim() * (v + 1)));
       xt::view(out, i, xt::all(), xt::all())
-          += xt::linalg::dot(Pview, phi_transformed);
+          += basix::math::dot(Pview, phi_transformed);
     }
   }
 

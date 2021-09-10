@@ -44,4 +44,23 @@ xt::xtensor_fixed<typename U::value_type, xt::xshape<3>> cross(const U& u,
           u[0] * v[1] - u[1] * v[0]};
 }
 
+/// Compute C = A * B
+/// @param[in] A Input matrix
+/// @param[in] B Input matrix
+/// @param[out] C Filled to be C = A * B
+template <typename U, typename V>
+xt::xtensor<typename U::value_type, 2> dot(const U& A, const V& B)
+{
+  xt::xtensor<typename U::value_type, 2> C
+      = xt::zeros<typename U::value_type>({A.shape(0), B.shape(1)});
+
+  assert(A.shape(1) == B.shape(0));
+  for (std::size_t i = 0; i < A.shape(0); i++)
+    for (std::size_t j = 0; j < B.shape(1); j++)
+      for (std::size_t k = 0; k < A.shape(1); k++)
+        C(i, j) += A(i, k) * B(k, j);
+
+  return C;
+}
+
 } // namespace basix::math

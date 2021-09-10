@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "precompute.h"
+#include "math.h"
 #include <xtensor-blas/xlinalg.hpp>
 
 using namespace basix;
@@ -79,11 +80,11 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
           xt::view(permuted_matrix, i, xt::range(0, i)));
 
       xt::view(prepared_matrix, i, xt::range(0, i)) = v;
-      diag[i] -= xt::linalg::dot(
+      diag[i] -= basix::math::dot(
           v, xt::view(permuted_matrix, xt::range(0, i), i))(0);
       for (std::size_t j = i + 1; j < dim; ++j)
       {
-        prepared_matrix(i, j) -= xt::linalg::dot(
+        prepared_matrix(i, j) -= basix::math::dot(
             v, xt::view(permuted_matrix, xt::range(0, i), j))(0);
       }
     }

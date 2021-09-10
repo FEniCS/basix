@@ -11,17 +11,27 @@
 namespace basix::lattice
 {
 /// The type of point spacing to be used in a lattice.
+///
 /// lattice::type::equispaced represents equally spaced points
 /// on an interval and a regularly spaced set of points on other
-/// shapes. lattice::type:gll represents the GLL (Gauss-Lobatto-Legendre)
+/// shapes.
+///
+/// lattice::type:gll_warped represents the GLL (Gauss-Lobatto-Legendre)
 /// points on an interval. Fot other shapes, the points used are obtained
 /// by warping an equispaced grid of points, as described in Hesthaven and
 /// Warburton, Nodal Discontinuous Galerkin Methods, 2008, pp 175-180
 /// (https://doi.org/10.1007/978-0-387-72067-8).
+///
+/// lattice::type:gll_isaac represents the GLL (Gauss-Lobatto-Legendre)
+/// points on an interval. Fot other shapes, the points used are obtained
+/// following the methd described in Isaac, Recursive, Parameter-Free,
+/// Explicitly Defined Interpolation Nodes for Simplices, 2020
+/// (https://doi.org/10.1137/20M1321802).
 enum class type
 {
   equispaced = 0,
-  gll = 1
+  gll_warped = 1,
+  gll_isaac = 2,
 };
 
 /// Convert string to a lattice type
@@ -46,7 +56,7 @@ std::string type_to_str(lattice::type type);
 /// @param celltype The cell::type
 /// @param n Size in each direction. There are n+1 points along each edge of the
 /// cell.
-/// @param type Either lattice::type::equispaced or lattice::type::gll
+/// @param type A lattice type
 /// @param exterior If set, includes outer boundaries
 /// @return Set of points
 xt::xtensor<double, 2> create(cell::type celltype, int n, lattice::type type,

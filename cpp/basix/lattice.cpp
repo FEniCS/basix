@@ -56,12 +56,19 @@ xt::xtensor<double, 1> warp_function(int n, const xt::xtensor<double, 1>& x)
   return xt::linalg::dot(v, pts);
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
-                                       bool exterior)
+xt::xtensor<double, 1> create_interval_equispaced(int n, bool exterior)
 {
-  if (n == 0)
-    return {0.5};
-
+  if (exterior)
+    return xt::linspace<double>(0.0, 1.0, n + 1);
+  else
+  {
+    const double h = 1.0 / static_cast<double>(n);
+    return xt::linspace<double>(h, 1.0 - h, n - 1);
+  }
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 1> create_interval_gll(int n, bool exterior)
+{
   xt::xtensor<double, 1> x;
   if (exterior)
     x = xt::linspace<double>(0.0, 1.0, n + 1);
@@ -71,10 +78,29 @@ xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
     x = xt::linspace<double>(h, 1.0 - h, n - 1);
   }
 
-  if (x.shape(0) > 0 and lattice_type == lattice::type::gll)
+  if (x.shape(0) > 0)
     x += warp_function(n, x);
 
   return x;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
+                                       bool exterior)
+{
+  if (n == 0)
+    return {0.5};
+
+  switch (lattice_type)
+  {
+  case lattice::type::equispaced:
+    return create_interval_equispaced(n, exterior);
+  case lattice::type::gll_warped:
+    return create_interval_gll(n, exterior);
+  case lattice::type::gll_isaac:
+    return create_interval_gll(n, exterior);
+  default:
+    throw std::runtime_error("Unrecognised lattice type.");
+  }
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
@@ -83,17 +109,7 @@ xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
   if (n == 0)
     return {{0.5, 0.5}};
 
-  xt::xtensor<double, 1> r;
-  if (exterior)
-    r = xt::linspace<double>(0.0, 1.0, n + 1);
-  else
-  {
-    const double h = 1.0 / static_cast<double>(n);
-    r = xt::linspace<double>(h, 1.0 - h, n - 1);
-  }
-
-  if (r.shape(0) > 0 and lattice_type == lattice::type::gll)
-    r += warp_function(n, r);
+  xt::xtensor<double, 1> r = create_interval(n, lattice_type, exterior);
 
   const std::size_t m = r.shape(0);
   xt::xtensor<double, 2> x({m * m, 2});
@@ -117,16 +133,7 @@ xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
   if (n == 0)
     return {{0.5, 0.5, 0.5}};
 
-  xt::xtensor<double, 1> r;
-  if (exterior)
-    r = xt::linspace<double>(0.0, 1.0, n + 1);
-  else
-  {
-    const double h = 1.0 / static_cast<double>(n);
-    r = xt::linspace<double>(h, 1.0 - h, n - 1);
-  }
-  if (r.shape(0) > 0 and lattice_type == lattice::type::gll)
-    r += warp_function(n, r);
+  xt::xtensor<double, 1> r = create_interval(n, lattice_type, exterior);
 
   const std::size_t m = r.size();
   xt::xtensor<double, 2> x({m * m * m, 3});
@@ -148,16 +155,37 @@ xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
   return x;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
-                                  bool exterior)
+xt::xtensor<double, 2> create_tri_equispaced(int n, bool exterior)
 {
-  if (n == 0)
-    return {{1.0 / 3.0, 1.0 / 3.0}};
+  const std::size_t b = exterior ? 0 : 1;
 
+  // Points
+  xt::xtensor<double, 2> p({(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2});
+
+  // Displacement from GLL points in 1D, scaled by 1 /(r * (1 - r))
+  xt::xtensor<double, 1> r = xt::linspace<double>(0.0, 1.0, 2 * n + 1);
+
+  int c = 0;
+  for (std::size_t j = b; j < (n - b + 1); ++j)
+  {
+    for (std::size_t i = b; i < (n - b + 1 - j); ++i)
+    {
+      p(c, 0) = r[2 * i];
+      p(c, 1) = r[2 * j];
+      ++c;
+    }
+  }
+  return p;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tri_gll_warped(int n, bool exterior)
+{
   // Warp points: see Hesthaven and Warburton, Nodal Discontinuous
   // Galerkin Methods, pp. 175-180
-
   const std::size_t b = exterior ? 0 : 1;
+
+  // Points
+  xt::xtensor<double, 2> p({(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2});
 
   // Displacement from GLL points in 1D, scaled by 1 /(r * (1 - r))
   xt::xtensor<double, 1> r = xt::linspace<double>(0.0, 1.0, 2 * n + 1);
@@ -165,8 +193,6 @@ xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
   auto s = xt::view(r, xt::range(1, 2 * n - 1));
   xt::view(wbar, xt::range(1, 2 * n - 1)) /= (s * (1 - s));
 
-  // Points
-  xt::xtensor<double, 2> p({(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2});
   int c = 0;
   for (std::size_t j = b; j < (n - b + 1); ++j)
   {
@@ -176,26 +202,134 @@ xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
       const double y = r[2 * j];
       p(c, 0) = x;
       p(c, 1) = y;
-      if (lattice_type == lattice::type::gll)
-      {
-        const std::size_t l = n - j - i;
-        const double a = r[2 * l];
-        p(c, 0) += x * (a * wbar(n + i - l) + y * wbar(n + i - j));
-        p(c, 1) += y * (a * wbar(n + j - l) + x * wbar(n + j - i));
-      }
+      const std::size_t l = n - j - i;
+      const double a = r[2 * l];
+      p(c, 0) += x * (a * wbar(n + i - l) + y * wbar(n + i - j));
+      p(c, 1) += y * (a * wbar(n + j - l) + x * wbar(n + j - i));
       ++c;
+    }
+    }
+    return p;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 1> isaac_point(xt::xtensor<std::size_t, 1> a)
+{
+  if (a.shape(0) == 1)
+    return {1};
+  xt::xtensor<double, 1> res = xt::zeros<double>(a.shape());
+  double denominator = 0;
+  xt::xtensor<std::size_t, 1> sub_a
+      = xt::view(a, xt::range(1, xt::placeholders::_));
+  const std::size_t size = xt::sum(a)();
+  xt::xtensor<double, 1> x
+      = create_interval(size, lattice::type::gll_warped, true);
+  for (std::size_t i = 0; i < a.shape(0); ++i)
+  {
+    if (i > 0)
+      sub_a(i - 1) = a(i - 1);
+    const std::size_t sub_size = size - a(i);
+    const xt::xtensor<double, 1> sub_res = isaac_point(sub_a);
+    for (std::size_t j = 0; j < sub_res.shape(0); ++j)
+      res[j < i ? j : j + 1] += x[sub_size] * sub_res[j];
+    denominator += x[sub_size];
+  }
+  for (std::size_t i = 0; i < res.shape(0); ++i)
+    res[i] /= denominator;
+  return res;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tri_gll_isaac(int n, bool exterior)
+{
+  // See http://dx.doi.org/10.1137/20M1321802
+  const std::size_t b = exterior ? 0 : 1;
+
+  // Points
+  xt::xtensor<double, 2> p({(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2});
+
+  int c = 0;
+  for (std::size_t j = b; j < (n - b + 1); ++j)
+  {
+    for (std::size_t i = b; i < (n - b + 1 - j); ++i)
+    {
+      xt::view(p, c, xt::all())
+          = xt::view(isaac_point({i, j, n - i - j}), xt::range(0, 2));
+      ++c;
+    }
+  }
+  return p;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
+                                  bool exterior)
+{
+  if (n == 0)
+    return {{1.0 / 3.0, 1.0 / 3.0}};
+
+  switch (lattice_type)
+  {
+  case lattice::type::equispaced:
+    return create_tri_equispaced(n, exterior);
+  case lattice::type::gll_warped:
+    return create_tri_gll_warped(n, exterior);
+  case lattice::type::gll_isaac:
+    return create_tri_gll_isaac(n, exterior);
+  default:
+    throw std::runtime_error("Unrecognised lattice type.");
+  }
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tet_equispaced(int n, bool exterior)
+{
+  const std::size_t b = exterior ? 0 : 1;
+  xt::xtensor<double, 2> p(
+      {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
+  auto r = xt::linspace<double>(0.0, 1.0, 2 * n + 1);
+
+  std::size_t c = 0;
+  for (std::size_t k = b; k < (n - b + 1); ++k)
+  {
+    for (std::size_t j = b; j < (n - b + 1 - k); ++j)
+    {
+      for (std::size_t i = b; i < (n - b + 1 - j - k); ++i)
+      {
+        p(c, 0) = r[2 * i];
+        p(c, 1) = r[2 * j];
+        p(c, 2) = r[2 * k];
+        ++c;
+      }
     }
   }
 
   return p;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
-                                  bool exterior)
+xt::xtensor<double, 2> create_tet_gll_isaac(int n, bool exterior)
 {
-  if (n == 0)
-    return {{0.25, 0.25, 0.25}};
+  // See http://dx.doi.org/10.1137/20M1321802
+  const std::size_t b = exterior ? 0 : 1;
 
+  // Points
+  xt::xtensor<double, 2> p(
+      {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
+
+  int c = 0;
+  for (std::size_t k = b; k < (n - b + 1); ++k)
+  {
+    for (std::size_t j = b; j < (n - b + 1 - k); ++j)
+    {
+      for (std::size_t i = b; i < (n - b + 1 - j - k); ++i)
+      {
+        xt::view(p, c, xt::all())
+            = xt::view(isaac_point({i, j, k, n - i - j - k}), xt::range(0, 3));
+        ++c;
+      }
+    }
+  }
+  return p;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tet_gll_warped(int n, bool exterior)
+{
   const std::size_t b = exterior ? 0 : 1;
   xt::xtensor<double, 2> p(
       {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
@@ -219,21 +353,18 @@ xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
         p(c, 0) = x;
         p(c, 1) = y;
         p(c, 2) = z;
-        if (lattice_type == lattice::type::gll)
-        {
-          const double dx = x
-                            * (a * wbar(n + i - l) + y * wbar(n + i - j)
-                               + z * wbar(n + i - k));
-          const double dy = y
-                            * (a * wbar(n + j - l) + z * wbar(n + j - k)
-                               + x * wbar(n + j - i));
-          const double dz = z
-                            * (a * wbar(n + k - l) + x * wbar(n + k - i)
-                               + y * wbar(n + k - j));
-          p(c, 0) += dx;
-          p(c, 1) += dy;
-          p(c, 2) += dz;
-        }
+        const double dx = x
+                          * (a * wbar(n + i - l) + y * wbar(n + i - j)
+                             + z * wbar(n + i - k));
+        const double dy = y
+                          * (a * wbar(n + j - l) + z * wbar(n + j - k)
+                             + x * wbar(n + j - i));
+        const double dz = z
+                          * (a * wbar(n + k - l) + x * wbar(n + k - i)
+                             + y * wbar(n + k - j));
+        p(c, 0) += dx;
+        p(c, 1) += dy;
+        p(c, 2) += dz;
 
         ++c;
       }
@@ -241,6 +372,25 @@ xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
   }
 
   return p;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
+                                  bool exterior)
+{
+  if (n == 0)
+    return {{0.25, 0.25, 0.25}};
+
+  switch (lattice_type)
+  {
+  case lattice::type::equispaced:
+    return create_tet_equispaced(n, exterior);
+  case lattice::type::gll_warped:
+    return create_tet_gll_warped(n, exterior);
+  case lattice::type::gll_isaac:
+    return create_tet_gll_isaac(n, exterior);
+  default:
+    throw std::runtime_error("Unrecognised lattice type.");
+  }
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
@@ -265,12 +415,34 @@ xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
   return x;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
-                                      bool exterior)
+xt::xtensor<double, 2> create_pyramid_equispaced(int n, bool exterior)
 {
-  if (n == 0)
-    return {{0.4, 0.4, 0.2}};
+  const double h = 1.0 / static_cast<double>(n);
 
+  const std::size_t b = (exterior == false) ? 1 : 0;
+  n -= b * 3;
+  std::size_t m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
+  xt::xtensor<double, 2> points({m, 3});
+  int c = 0;
+  for (int k = 0; k < n + 1; ++k)
+  {
+    for (int j = 0; j < n + 1 - k; ++j)
+    {
+      for (int i = 0; i < n + 1 - k; ++i)
+      {
+        points(c, 0) = h * (i + b);
+        points(c, 1) = h * (j + b);
+        points(c, 2) = h * (k + b);
+        c++;
+      }
+    }
+  }
+
+  return points;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
+{
   const double h = 1.0 / static_cast<double>(n);
 
   // Interpolate warp factor along interval
@@ -309,8 +481,6 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
         double y = h * (j + b);
         double z = h * (k + b);
 
-        if (lattice_type == lattice::type::gll)
-        {
           // Barycentric coordinates of triangle in x-z plane
           const double l1 = x;
           const double l2 = z;
@@ -392,7 +562,6 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
           x += dx;
           y += dy;
           z += dz;
-        }
 
         points(c, 0) = x;
         points(c, 1) = y;
@@ -403,6 +572,26 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
   }
 
   return points;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
+                                      bool exterior)
+{
+  if (n == 0)
+    return {{0.4, 0.4, 0.2}};
+
+  switch (lattice_type)
+  {
+  case lattice::type::equispaced:
+    return create_pyramid_equispaced(n, exterior);
+  case lattice::type::gll_warped:
+    return create_pyramid_gll_warped(n, exterior);
+  case lattice::type::gll_isaac:
+    throw std::runtime_error("GLL points compatible with Isaac's GLL points on "
+                             "a triangle not implemented yet.");
+  default:
+    throw std::runtime_error("Unrecognised lattice type.");
+  }
 }
 } // namespace
 //-----------------------------------------------------------------------------
@@ -440,7 +629,8 @@ lattice::type lattice::str_to_type(std::string name)
 {
   static const std::map<std::string, lattice::type> name_to_type
       = {{"equispaced", lattice::type::equispaced},
-         {"gll", lattice::type::gll}};
+         {"gll_isaac", lattice::type::gll_isaac},
+         {"gll_warped", lattice::type::gll_warped}};
 
   auto it = name_to_type.find(name);
   if (it == name_to_type.end())
@@ -453,7 +643,8 @@ std::string lattice::type_to_str(lattice::type type)
 {
   static const std::map<lattice::type, std::string> name_to_type
       = {{lattice::type::equispaced, "equispaced"},
-         {lattice::type::gll, "gll"}};
+         {lattice::type::gll_isaac, "gll_isaac"},
+         {lattice::type::gll_warped, "gll_warped"}};
 
   auto it = name_to_type.find(type);
   if (it == name_to_type.end())

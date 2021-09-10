@@ -96,7 +96,7 @@ xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
     return create_interval_equispaced(n, exterior);
   case lattice::type::gll_warped:
     return create_interval_gll(n, exterior);
-  case lattice::type::gll:
+  case lattice::type::gll_isaac:
     return create_interval_gll(n, exterior);
   default:
     throw std::runtime_error("Unrecognised lattice type.");
@@ -221,7 +221,8 @@ xt::xtensor<double, 1> isaac_point(xt::xtensor<std::size_t, 1> a)
   xt::xtensor<std::size_t, 1> sub_a
       = xt::view(a, xt::range(1, xt::placeholders::_));
   const std::size_t size = xt::sum(a)();
-  xt::xtensor<double, 1> x = create_interval(size, lattice::type::gll, true);
+  xt::xtensor<double, 1> x
+      = create_interval(size, lattice::type::gll_warped, true);
   for (std::size_t i = 0; i < a.shape(0); ++i)
   {
     if (i > 0)
@@ -270,7 +271,7 @@ xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
     return create_tri_equispaced(n, exterior);
   case lattice::type::gll_warped:
     return create_tri_gll_warped(n, exterior);
-  case lattice::type::gll:
+  case lattice::type::gll_isaac:
     return create_tri_gll_isaac(n, exterior);
   default:
     throw std::runtime_error("Unrecognised lattice type.");
@@ -385,7 +386,7 @@ xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
     return create_tet_equispaced(n, exterior);
   case lattice::type::gll_warped:
     return create_tet_gll_warped(n, exterior);
-  case lattice::type::gll:
+  case lattice::type::gll_isaac:
     return create_tet_gll_isaac(n, exterior);
   default:
     throw std::runtime_error("Unrecognised lattice type.");
@@ -585,7 +586,7 @@ xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
     return create_pyramid_equispaced(n, exterior);
   case lattice::type::gll_warped:
     return create_pyramid_gll_warped(n, exterior);
-  case lattice::type::gll:
+  case lattice::type::gll_isaac:
     throw std::runtime_error("GLL points compatible with Isaac's GLL points on "
                              "a triangle not implemented yet.");
   default:
@@ -628,7 +629,7 @@ lattice::type lattice::str_to_type(std::string name)
 {
   static const std::map<std::string, lattice::type> name_to_type
       = {{"equispaced", lattice::type::equispaced},
-         {"gll", lattice::type::gll},
+         {"gll_isaac", lattice::type::gll_isaac},
          {"gll_warped", lattice::type::gll_warped}};
 
   auto it = name_to_type.find(name);
@@ -642,7 +643,7 @@ std::string lattice::type_to_str(lattice::type type)
 {
   static const std::map<lattice::type, std::string> name_to_type
       = {{lattice::type::equispaced, "equispaced"},
-         {lattice::type::gll, "gll"},
+         {lattice::type::gll_isaac, "gll_isaac"},
          {lattice::type::gll_warped, "gll_warped"}};
 
   auto it = name_to_type.find(type);

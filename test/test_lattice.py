@@ -8,11 +8,11 @@ import numpy as np
 
 
 @pytest.mark.parametrize("lattice_type", [
-    basix.LatticeType.equispaced, basix.LatticeType.gll, basix.LatticeType.gll_warped
+    basix.LatticeType.equispaced, basix.LatticeType.gll_isaac, basix.LatticeType.gll_warped
 ])
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_pyramid(n, lattice_type):
-    if lattice_type == basix.LatticeType.gll:
+    if lattice_type == basix.LatticeType.gll_isaac:
         pytest.xfail("This lattice is not implemented on a pyramid yet.")
     # Check that all the surface points of the pyramid match up with the
     # same points on quad and triangle
@@ -47,7 +47,7 @@ def test_pyramid(n, lattice_type):
 
 
 @pytest.mark.parametrize("lattice_type", [
-    basix.LatticeType.equispaced, basix.LatticeType.gll, basix.LatticeType.gll_warped
+    basix.LatticeType.equispaced, basix.LatticeType.gll_isaac, basix.LatticeType.gll_warped
 ])
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_tetrahedron(n, lattice_type):
@@ -78,7 +78,7 @@ def test_tetrahedron(n, lattice_type):
 
 
 @pytest.mark.parametrize("lattice_type", [
-    basix.LatticeType.equispaced, basix.LatticeType.gll, basix.LatticeType.gll_warped
+    basix.LatticeType.equispaced, basix.LatticeType.gll_isaac, basix.LatticeType.gll_warped
 ])
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_triangle(n, lattice_type):

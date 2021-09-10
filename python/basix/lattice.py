@@ -5,6 +5,9 @@ from ._basixcpp import LatticeType as _LT
 
 def string_to_type(lattice: str):
     """Convert a string to a Basix LatticeType enum."""
+    if lattice == "gll":
+        return _LT.gll_warped
+
     if not hasattr(_LT, lattice):
         raise ValueError(f"Unknown lattice: {lattice}")
     return getattr(_LT, lattice)

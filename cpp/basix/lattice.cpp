@@ -444,6 +444,8 @@ xt::xtensor<double, 2> create_pyramid_equispaced(int n, bool exterior)
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
 {
+  throw std::runtime_error("GLL on Pyramid is not currently working.");
+
   const double h = 1.0 / static_cast<double>(n);
 
   // Interpolate warp factor along interval

@@ -82,16 +82,13 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
       xt::view(prepared_matrix, i, xt::range(0, i)) = v;
 
       xt::xtensor<T, 1> t = xt::view(permuted_matrix, xt::range(0, i), i);
-      diag[i] -= std::transform_reduce(
-          v.begin(), v.end(), t.begin(), 0., std::plus<T>(),
-          [](const auto a, const auto b) { return a * b; });
+      diag[i] -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.);
 
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         t = xt::view(permuted_matrix, xt::range(0, i), j);
-        prepared_matrix(i, j) -= std::transform_reduce(
-            v.begin(), v.end(), t.begin(), 0., std::plus<T>(),
-            [](const auto a, const auto b) { return a * b; });
+        prepared_matrix(i, j)
+            -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.);
       }
     }
   }

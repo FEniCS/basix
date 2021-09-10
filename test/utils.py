@@ -13,7 +13,7 @@ def parametrize_over_elements(degree, reference=None):
                     for c in [basix.CellType.interval, basix.CellType.triangle,
                               basix.CellType.tetrahedron,
                               basix.CellType.quadrilateral, basix.CellType.hexahedron,
-                              basix.CellType.prism, basix.CellType.pyramid]
+                              basix.CellType.prism]
                     for o in range(1, degree + 1)]
     elementlist += [(c, basix.ElementFamily.P, o, [basix.LatticeType.gll, True])
                     for c in [basix.CellType.interval, basix.CellType.triangle,

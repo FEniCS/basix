@@ -111,6 +111,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/maps.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.h

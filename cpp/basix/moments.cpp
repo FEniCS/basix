@@ -5,9 +5,9 @@
 #include "moments.h"
 #include "cell.h"
 #include "finite-element.h"
+#include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xbuilder.hpp>
@@ -557,7 +557,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
       // to the integral Jacobian
       auto t0 = xt::row(facet_x, 1) - x0;
       auto t1 = xt::row(facet_x, 2) - x0;
-      normal = xt::linalg::cross(t0, t1);
+      normal = basix::math::cross(t0, t1);
       for (std::size_t p = 0; p < pts.shape(0); ++p)
       {
         xt::view(points[e], p, xt::all())

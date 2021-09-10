@@ -1,0 +1,47 @@
+// Copyright (C) 2021 Igor Baratta
+//
+// This file is part of DOLFINx (https://www.fenicsproject.org)
+//
+// SPDX-License-Identifier:    LGPL-3.0-or-later
+
+#pragma once
+
+#include <array>
+#include <cmath>
+#include <type_traits>
+#include <xtensor/xfixed.hpp>
+#include <xtensor/xtensor.hpp>
+
+namespace basix::math
+{
+
+/// Compute the outer product of vectors u and v
+/// @param u The first vector. It must has size 3.
+/// @param v The second vector. It must has size 3.
+/// @return The outer product. The type will be the same as `u`.
+template <typename U, typename V>
+xt::xtensor<typename U::value_type, 2> outer(const U& u, const V& v)
+{
+  xt::xtensor<typename U::value_type, 2> results({u.size(), v.size()});
+  for (std::size_t i = 0; i < u.size(); i++)
+    for (std::size_t j = 0; j < u.size(); j++)
+      results(i, j) = u(i) * v(j);
+
+  return results;
+}
+
+/// Compute the cross product u x v
+/// @param u The first vector. It must has size 3.
+/// @param v The second vector. It must has size 3.
+/// @return The cross product `u x v`. The type will be the same as `u`.
+template <typename U, typename V>
+xt::xtensor_fixed<typename U::value_type, xt::xshape<3>> cross(const U& u,
+                                                               const V& v)
+{
+  assert(u.size() == 3);
+  assert(v.size() == 3);
+  return {u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2],
+          u[0] * v[1] - u[1] * v[0]};
+}
+
+} // namespace basix::math

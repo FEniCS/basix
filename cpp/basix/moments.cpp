@@ -8,6 +8,7 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xbuilder.hpp>

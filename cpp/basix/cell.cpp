@@ -5,7 +5,6 @@
 #include "cell.h"
 #include "math.h"
 #include <map>
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xview.hpp>

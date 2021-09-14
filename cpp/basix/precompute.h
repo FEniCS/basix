@@ -139,7 +139,8 @@ void apply_permutation_to_transpose(const std::vector<std::size_t>& perm,
                                     std::size_t block_size = 1)
 {
   const std::size_t dim = perm.size();
-  const std::size_t data_size = (data.size() + block_size - dim) / block_size;
+  const std::size_t data_size
+      = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
   for (std::size_t b = 0; b < block_size; ++b)
   {
     for (std::size_t i = 0; i < dim; ++i)
@@ -348,7 +349,8 @@ void apply_matrix_to_transpose(
   const xt::xtensor<T, 2>& M = std::get<2>(matrix);
 
   const std::size_t dim = v_size_t.size();
-  const std::size_t data_size = (data.size() + block_size - dim) / block_size;
+  const std::size_t data_size
+      = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
   apply_permutation_to_transpose(v_size_t, data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
   {

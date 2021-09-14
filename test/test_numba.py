@@ -15,7 +15,7 @@ import pytest
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations(cell, element, degree, element_args, block_size):
     try:
-        import numba
+        import numba  # noqa: F401
     except ImportError:
         pytest.skip("Numba must be installed to run this test.")
 
@@ -68,7 +68,7 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations_to_transpose(cell, element, degree, block_size, element_args):
     try:
-        import numba
+        import numba  # noqa: F401
     except ImportError:
         pytest.skip("Numba must be installed to run this test.")
 

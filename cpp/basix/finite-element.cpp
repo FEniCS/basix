@@ -246,14 +246,15 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
       = basix::math::dot(B, Dt_flat);
 
   // FIXME: Check condition number of B.D^T
-  // if (kappa_tol >= 1.0)
-  // {
-  //   if (xt::linalg::cond(BDt, 2) > kappa_tol)
-  //   {
-  //     throw std::runtime_error("Condition number of B.D^T when computing "
-  //                              "expansion coefficients exceeds tolerance.");
-  //   }
-  // }
+  if (kappa_tol >= 1.0)
+  {
+    //   if (xt::linalg::cond(BDt, 2) > kappa_tol)
+    //   {
+    //     throw std::runtime_error("Condition number of B.D^T when computing "
+    //                              "expansion coefficients exceeds
+    //                              tolerance.");
+    //   }
+  }
 
   // Note: forcing the layout type to get around an xtensor bug with Intel
   // Compilers

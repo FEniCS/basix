@@ -12,6 +12,12 @@
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xtensor.hpp>
 
+extern "C"
+{
+  void dsyevd(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
+              double* work, int* lwork, int* iwork, int* liwork, int* info);
+}
+
 namespace basix::math
 {
 
@@ -61,6 +67,52 @@ xt::xtensor<typename U::value_type, 2> dot(const U& A, const V& B)
         C(i, j) += A(i, k) * B(k, j);
 
   return C;
+}
+
+/// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
+/// @param[in] A Input matrix
+/// @param[out] C Filled to be C = A * B
+template <typename U>
+auto eigh(const U& A)
+{
+  // Copy to column major matrix
+  xt::xtensor<double, 2, xt::layout_type::column_major> M(A.shape());
+  M.assign(A);
+  int N = A.shape(0);
+  xt::xtensor<double, 1> w({N});
+
+  char jobz = 'V'; // Vectors
+  char uplo = 'L'; // Lower
+  int ldA = A.shape(1);
+  int lwork = -1;
+  int liwork = -1;
+  int info;
+
+  std::vector<double> work(1);
+  std::vector<int> iwork(1);
+
+  // Query and allocate the optimal workspace
+  dsyevd(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
+         iwork.data(), &liwork, &info);
+
+  if (info != 0)
+  {
+    throw std::runtime_error("Could not find workspace size for syevd.");
+  }
+
+  // Solve eigenproblem
+  work.resize(static_cast<std::size_t>(work[0]));
+  iwork.resize(static_cast<std::size_t>(iwork[0]));
+
+  dsyevd(&jobz, &uplo, &N, A.data(), &ldA, w.data(), work.data(), &lwork,
+         iwork.data(), &liwork, &info);
+
+  if (info != 0)
+  {
+    throw std::runtime_error("Eigenvalue computation did not converge.");
+  }
+
+  return std::make_tuple(std::move(w), std::move(M));
 }
 
 } // namespace basix::math

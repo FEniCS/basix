@@ -162,6 +162,7 @@ target_include_directories(basix PUBLIC
 # target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})
 target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
+target_compile_options(basix PRIVATE ${LAPACK_LINKER_FLAGS})
 
 # xtensor and related packages
 target_link_libraries(basix PUBLIC xtl)

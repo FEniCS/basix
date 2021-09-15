@@ -4,12 +4,14 @@
 
 #include "math.h"
 #include <array>
+#include <cblas.h>
 #include <cmath>
+#include <xtensor/xio.hpp>
 
 extern "C"
 {
-  void dsyevd(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
-              double* work, int* lwork, int* iwork, int* liwork, int* info);
+  void dsyevd_(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
+               double* work, int* lwork, int* iwork, int* liwork, int* info);
 }
 
 std::pair<xt::xtensor<double, 1>,
@@ -22,8 +24,10 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
   int N = A.shape(0);
   xt::xtensor<double, 1> w = xt::zeros<double>({N});
 
-  char jobz = 'V'; // Vectors
-  char uplo = 'L'; // Lower
+  // Compute eigenvalues and eigenvectors
+  char jobz = 'V';
+  // Lower triangle of A is stored.
+  char uplo = 'L';
   int ldA = A.shape(1);
   int lwork = -1;
   int liwork = -1;
@@ -33,8 +37,8 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
   std::vector<int> iwork(1);
 
   // Query and allocate the optimal workspace
-  dsyevd(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
-         iwork.data(), &liwork, &info);
+  dsyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
+          iwork.data(), &liwork, &info);
 
   if (info != 0)
   {
@@ -45,13 +49,13 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
   work.resize(static_cast<std::size_t>(work[0]));
   iwork.resize(static_cast<std::size_t>(iwork[0]));
 
-  dsyevd(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
-         iwork.data(), &liwork, &info);
+  dsyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
+          iwork.data(), &liwork, &info);
 
   if (info != 0)
   {
     throw std::runtime_error("Eigenvalue computation did not converge.");
   }
-
+  std::cout << M;
   return {std::move(w), std::move(M)};
 }

@@ -3,9 +3,9 @@
 // SPDX-License-Identifier:    MIT
 
 #include "quadrature.h"
+#include "math.h"
 #include <cmath>
 #include <vector>
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xview.hpp>
@@ -87,7 +87,7 @@ std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
   // https://github.com/xtensor-stack/xtensor/issues/2351
   xt::xtensor<double, 2, xt::layout_type::column_major> A
       = xt::diag(_alpha) + xt::diag(tmp, 1) + xt::diag(tmp, -1);
-  auto [evals, evecs] = xt::linalg::eigh(A);
+  auto [evals, evecs] = basix::math::eigh(A);
 
   std::vector<double> x(evals.shape(0)), w(evals.shape(0));
   xt::adapt(x) = evals;

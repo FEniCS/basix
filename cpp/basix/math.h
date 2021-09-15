@@ -78,8 +78,8 @@ auto eigh(const U& A)
   // Copy to column major matrix
   xt::xtensor<double, 2, xt::layout_type::column_major> M(A.shape());
   M.assign(A);
-  std::array<int, 1> N = {A.shape(0)};
-  xt::xtensor<double, 1> w(N);
+  int N = A.shape(0);
+  xt::xtensor<double, 1> w = xt::zeros<double>({N});
 
   char jobz = 'V'; // Vectors
   char uplo = 'L'; // Lower
@@ -92,7 +92,7 @@ auto eigh(const U& A)
   std::vector<int> iwork(1);
 
   // Query and allocate the optimal workspace
-  dsyevd(&jobz, &uplo, N.data(), M.data(), &ldA, w.data(), work.data(), &lwork,
+  dsyevd(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
          iwork.data(), &liwork, &info);
 
   if (info != 0)
@@ -104,7 +104,7 @@ auto eigh(const U& A)
   work.resize(static_cast<std::size_t>(work[0]));
   iwork.resize(static_cast<std::size_t>(iwork[0]));
 
-  dsyevd(&jobz, &uplo, N.data(), A.data(), &ldA, w.data(), work.data(), &lwork,
+  dsyevd(&jobz, &uplo, &N, A.data(), &ldA, w.data(), work.data(), &lwork,
          iwork.data(), &liwork, &info);
 
   if (info != 0)

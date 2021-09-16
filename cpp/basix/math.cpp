@@ -4,7 +4,6 @@
 
 #include "math.h"
 #include <array>
-#include <cblas.h>
 #include <cmath>
 #include <xtensor/xio.hpp>
 

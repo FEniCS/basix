@@ -439,18 +439,6 @@ Interface to the Basix C++ library.
 
   m.def(
       "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         lattice::type lattice_type, lattice::simplex_method simplex_method,
-         bool discontinuous) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree,
-                                     lattice_type, simplex_method,
-                                     discontinuous);
-      },
-      "Create a FiniteElement of a given family, celltype, degree, lattice "
-      "type and lattice simplex method");
-
-  m.def(
-      "create_element",
       [](element::family family_name, cell::type cell_name,
          int degree) -> FiniteElement {
         return basix::create_element(family_name, cell_name, degree);
@@ -467,17 +455,6 @@ Interface to the Basix C++ library.
       },
       "Create a continuous FiniteElement of a given family, celltype, degree "
       "and lattice type");
-
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         lattice::type lattice_type,
-         lattice::simplex_method simplex_method) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree,
-                                     lattice_type, simplex_method);
-      },
-      "Create a continuous FiniteElement of a given family, celltype, degree, "
-      "lattice type and lattice simplex method");
 
   m.def(
       "tabulate_polynomial_set",

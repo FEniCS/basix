@@ -81,8 +81,7 @@ basix::FiniteElement basix::create_element(element::family family,
   switch (family)
   {
   case element::family::P:
-    throw std::runtime_error(
-        "Lagrange elements need to be given a lattice type.");
+    throw std::runtime_error("Lagrange elements need to be given a variant.");
   case element::family::BDM:
     switch (cell)
     {

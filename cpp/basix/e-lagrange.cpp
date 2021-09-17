@@ -16,10 +16,32 @@
 
 using namespace basix;
 
+namespace
+{
+//----------------------------------------------------------------------------
+std::pair<lattice::type, lattice::simplex_method>
+variant_to_lattice(lagrange_variant variant)
+{
+  switch (variant)
+  {
+  case lagrange_variant::equispaced:
+    return {lattice::type::equispaced, lattice::simplex_method::none};
+  case lagrange_variant::gll_warped:
+    return {lattice::type::gll, lattice::simplex_method::warp};
+  case lagrange_variant::gll_isaac:
+    return {lattice::type::gll, lattice::simplex_method::isaac};
+  case lagrange_variant::chebyshev_warped:
+    return {lattice::type::chebyshev, lattice::simplex_method::warp};
+  case lagrange_variant::chebyshev_isaac:
+    return {lattice::type::chebyshev, lattice::simplex_method::isaac};
+  default:
+    throw std::runtime_error("Unsupported variant");
+  }
+} // namespace
+
 //----------------------------------------------------------------------------
 FiniteElement basix::create_lagrange(cell::type celltype, int degree,
-                                     lattice::type lattice_type,
-                                     lattice::simplex_method simplex_method,
+                                     lagrange_variant variant,
                                      bool discontinuous)
 {
   if (celltype == cell::type::point)
@@ -32,6 +54,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  auto [lattice_type, simplex_method] = variant_to_lattice(variant);
 
   // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)

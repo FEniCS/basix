@@ -9,7 +9,6 @@
 
 #include "cell.h"
 #include "element-families.h"
-#include "lattice.h"
 #include "maps.h"
 #include "precompute.h"
 #include <array>
@@ -759,31 +758,16 @@ private:
   bool _discontinuous;
 };
 
-/// Create an element using a given lattice type
+/// Create an element using a given Lagrange variant
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-/// @param[in] lattice_type The lattice type that should be used to arrange DOF
+/// @param[in] variant The variant of Lagrange to use
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
 FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, lattice::type lattice_type,
-                             bool discontinuous);
-
-/// Create an element using a given lattice type and simplex method
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
-/// @param[in] degree The degree of the element
-/// @param[in] lattice_type The lattice type that should be used to arrange DOFs
-/// @param[in] simmplex_method The method that should be used to create a
-/// lattice on simplices
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, lattice::type lattice_type,
-                             lattice::simplex_method simplex_method,
+                             int degree, element::lagrange_variant variant,
                              bool discontinuous);
 
 /// Create an element
@@ -796,24 +780,13 @@ FiniteElement create_element(element::family family, cell::type cell,
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, bool discontinuous);
 
-/// Create a continuous element using a given lattice type
+/// Create a continuous element using a given Lagrange variant
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-/// @param[in] lattice_type The lattice type that should be used to arrange DOF
+/// @param[in] variant The variant of Lagrange to use
 FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, lattice::type lattice_type);
-
-/// Create an element using a given lattice type and simplex method
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
-/// @param[in] degree The degree of the element
-/// @param[in] lattice_type The lattice type that should be used to arrange DOFs
-/// @param[in] simmplex_method The method that should be used to create a
-/// lattice on simplices
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, lattice::type lattice_type,
-                             lattice::simplex_method simplex_method);
+                             int degree, element::lagrange_variant variant);
 
 /// Create a continuous element
 /// @param[in] family The element family

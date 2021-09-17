@@ -417,6 +417,13 @@ Interface to the Basix C++ library.
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           });
 
+  py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
+      .value("equispaced", element::lagrange_variant::equispaced)
+      .value("gll_warped", element::lagrange_variant::gll_warped)
+      .value("gll_isaac", element::lagrange_variant::gll_isaac)
+      .value("chebyshev_warped", element::lagrange_variant::chebyshev_warped)
+      .value("chebyshev_isaac", element::lagrange_variant::chebyshev_isaac);
+
   // Create FiniteElement
   m.def(
       "create_element",
@@ -430,12 +437,13 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         lattice::type lattice_type, bool discontinuous) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree,
-                                     lattice_type, discontinuous);
+         element::lagrange_variant variant,
+         bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, variant,
+                                     discontinuous);
       },
-      "Create a FiniteElement of a given family, celltype, degree and lattice "
-      "type");
+      "Create a FiniteElement of a given family, celltype, degree and Lagrange "
+      "variant");
 
   m.def(
       "create_element",
@@ -449,12 +457,11 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         lattice::type lattice_type) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree,
-                                     lattice_type);
+         element::lagrange_variant variant) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, variant);
       },
       "Create a continuous FiniteElement of a given family, celltype, degree "
-      "and lattice type");
+      "and Lagrange variant");
 
   m.def(
       "tabulate_polynomial_set",

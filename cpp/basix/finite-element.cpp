@@ -141,46 +141,25 @@ basix::FiniteElement basix::create_element(element::family family,
   }
 }
 //-----------------------------------------------------------------------------
-basix::FiniteElement
-basix::create_element(element::family family, cell::type cell, int degree,
-                      lattice::type lattice_type,
-                      lattice::simplex_method simplex_method,
-                      bool discontinuous)
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           element::lagrange_variant variant,
+                                           bool discontinuous)
 {
   switch (family)
   {
   case element::family::P:
-    return create_lagrange(cell, degree, lattice_type, simplex_method,
-                           discontinuous);
+    return create_lagrange(cell, degree, variant, discontinuous);
   default:
-    throw std::runtime_error("Cannot pass a lattice type to this element.");
+    throw std::runtime_error("Cannot pass a Lagrange variant.");
   }
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           lattice::type lattice_type,
-                                           bool discontinuous)
+                                           element::lagrange_variant variant)
 {
-  return create_element(family, cell, degree, lattice_type,
-                        lattice::simplex_method::none, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           lattice::type lattice_type)
-{
-  return basix::create_element(family, cell, degree, lattice_type,
-                               lattice::simplex_method::none, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement
-basix::create_element(element::family family, cell::type cell, int degree,
-                      lattice::type lattice_type,
-                      lattice::simplex_method simplex_method)
-{
-  return basix::create_element(family, cell, degree, lattice_type,
-                               simplex_method, false);
+  return basix::create_element(family, cell, degree, variant, false);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,

@@ -19,34 +19,46 @@ using namespace basix;
 namespace
 {
 //----------------------------------------------------------------------------
-std::pair<lattice::type, lattice::simplex_method>
-variant_to_lattice(lagrange_variant variant)
+std::tuple<lattice::type, lattice::simplex_method, bool>
+variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
 {
   switch (variant)
   {
-  case lagrange_variant::equispaced:
-    return {lattice::type::equispaced, lattice::simplex_method::none};
-  case lagrange_variant::gll_warped:
-    return {lattice::type::gll, lattice::simplex_method::warp};
-  case lagrange_variant::gll_isaac:
-    return {lattice::type::gll, lattice::simplex_method::isaac};
-  case lagrange_variant::chebyshev_warped:
-    return {lattice::type::chebyshev, lattice::simplex_method::warp};
-  case lagrange_variant::chebyshev_isaac:
-    return {lattice::type::chebyshev, lattice::simplex_method::isaac};
+  case element::lagrange_variant::equispaced:
+    return {lattice::type::equispaced, lattice::simplex_method::none, true};
+  case element::lagrange_variant::gll_warped:
+    return {lattice::type::gll, lattice::simplex_method::warp, true};
+  case element::lagrange_variant::gll_isaac:
+    return {lattice::type::gll, lattice::simplex_method::isaac, true};
+  case element::lagrange_variant::chebyshev_warped:
+  {
+    if (celltype == cell::type::interval
+        or celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      return {lattice::type::chebyshev, lattice::simplex_method::none, false};
+    // TODO: is this the best thing to do for simplices?
+    return {lattice::type::chebyshev_stretched, lattice::simplex_method::warp,
+            false};
+  }
+  case element::lagrange_variant::chebyshev_isaac:
+  {
+    if (celltype == cell::type::interval
+        or celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      return {lattice::type::chebyshev, lattice::simplex_method::none, false};
+    // TODO: is this the best thing to do for simplices?
+    return {lattice::type::chebyshev_stretched, lattice::simplex_method::isaac,
+            false};
+  }
   default:
     throw std::runtime_error("Unsupported variant");
   }
-} // namespace
-
-//----------------------------------------------------------------------------
-FiniteElement basix::create_lagrange(cell::type celltype, int degree,
-                                     lagrange_variant variant,
-                                     bool discontinuous)
+}
+//-----------------------------------------------------------------------------
+FiniteElement create_d_lagrange(cell::type celltype, int degree,
+                                lattice::type lattice_type,
+                                lattice::simplex_method simplex_method)
 {
-  if (celltype == cell::type::point)
-    throw std::runtime_error("Invalid celltype");
-
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t ndofs = polyset::dim(celltype, degree);
   const std::vector<std::vector<std::vector<int>>> topology
@@ -55,7 +67,86 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  auto [lattice_type, simplex_method] = variant_to_lattice(variant);
+  if (celltype == cell::type::prism or celltype == cell::type::pyramid)
+    throw std::runtime_error(
+        "This variant is not yet supported on prisms and pyramids.");
+
+  const int lattice_degree
+      = celltype == cell::type::triangle
+            ? degree + 3
+            : (celltype == cell::type::tetrahedron ? degree + 4 : degree + 2);
+
+  // Create points in interior
+  auto pt = lattice::create(celltype, lattice_degree, lattice_type, false,
+                            simplex_method);
+  x[tdim].push_back(pt);
+  const std::size_t num_dofs = pt.shape(0);
+  std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
+  M[tdim].push_back(xt::xtensor<double, 3>(s));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
+
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+  if (tdim > 1)
+  {
+    const std::array<std::size_t, 3> shape = {1, 0, 0};
+    xt::xtensor<double, 3> et = xt::zeros<double>(shape);
+    entity_transformations[cell::type::interval] = et;
+  }
+  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
+  {
+    const std::array<std::size_t, 3> shape = {2, 0, 0};
+    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
+    entity_transformations[cell::type::triangle] = ft;
+  }
+  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
+  {
+    const std::array<std::size_t, 3> shape = {2, 0, 0};
+    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
+    entity_transformations[cell::type::quadrilateral] = ft;
+  }
+
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
+      {x[0], x[1], x[2], x[3]}, degree);
+  return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
+                       entity_transformations, x, M, maps::type::identity,
+                       true);
+}
+//-----------------------------------------------------------------------------
+} // namespace
+
+//----------------------------------------------------------------------------
+FiniteElement basix::create_lagrange(cell::type celltype, int degree,
+                                     element::lagrange_variant variant,
+                                     bool discontinuous)
+{
+  if (celltype == cell::type::point)
+    throw std::runtime_error("Invalid celltype");
+
+  auto [lattice_type, simplex_method, exterior]
+      = variant_to_lattice(celltype, variant);
+
+  if (!exterior)
+  {
+    // Points used to define this variant are all interior to the cell, so this
+    // variant required that the element is discontinuous
+    if (!discontinuous)
+    {
+      throw std::runtime_error("This variant of Lagrange is only supported for "
+                               "discontinuous elements");
+    }
+    return create_d_lagrange(celltype, degree, lattice_type, simplex_method);
+  }
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)
@@ -74,7 +165,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   }
   else
   {
-    for (std::size_t dim = 0; dim < topology.size(); ++dim)
+    for (std::size_t dim = 0; dim <= tdim; ++dim)
     {
       M[dim].resize(topology[dim].size());
       x[dim].resize(topology[dim].size());

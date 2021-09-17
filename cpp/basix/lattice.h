@@ -28,6 +28,7 @@ enum class type
   equispaced = 0,
   gll = 1,
   chebyshev = 2,
+  chebyshev_stretched = 3,
 };
 
 /// The method used to generate points inside simplices.

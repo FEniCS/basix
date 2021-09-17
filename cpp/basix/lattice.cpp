@@ -54,7 +54,31 @@ xt::xtensor<double, 1> create_interval_chebyshev(int n, bool exterior)
   xt::xtensor<double, 1> x(s);
 
   for (int i = 1; i < n; ++i)
-    x[i - 1] = 0.5 - cos((2 * i - 1) * M_PI / (2 * n)) / 2.0;
+    x[i - 1] = 0.5 - cos((2 * i - 1) * M_PI / (2 * n - 2)) / 2.0;
+
+  return x;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 1> create_interval_chebyshev_stretched(int n, bool exterior)
+{
+  xt::xtensor<double, 1> x_cheb = create_interval_chebyshev(n + 2, false);
+
+  const double a = x_cheb[0];
+  const double b = x_cheb[n] - x_cheb[0];
+  for (std::size_t i = 0; i < x_cheb.shape(0); ++i)
+  {
+    x_cheb[i] -= a;
+    x_cheb[i] /= b;
+  }
+
+  if (exterior)
+    return x_cheb;
+
+  std::array<std::size_t, 1> s = {static_cast<std::size_t>(n - 1)};
+  xt::xtensor<double, 1> x(s);
+
+  for (int i = 1; i < n; ++i)
+    x[i - 1] = x_cheb[i];
 
   return x;
 }
@@ -73,6 +97,8 @@ xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
     return create_interval_gll(n, exterior);
   case lattice::type::chebyshev:
     return create_interval_chebyshev(n, exterior);
+  case lattice::type::chebyshev_stretched:
+    return create_interval_chebyshev_stretched(n, exterior);
   default:
     throw std::runtime_error("Unrecognised lattice type.");
   }

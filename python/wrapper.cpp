@@ -131,7 +131,9 @@ Interface to the Basix C++ library.
   py::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
       .value("gll_warped", lattice::type::gll_warped)
-      .value("gll_isaac", lattice::type::gll_isaac);
+      .value("gll_isaac", lattice::type::gll_isaac)
+      .value("chebyshev_warped", lattice::type::chebyshev_warped)
+      .value("chebyshev_isaac", lattice::type::chebyshev_isaac);
 
   m.def(
       "create_lattice",

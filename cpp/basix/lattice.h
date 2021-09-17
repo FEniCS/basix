@@ -16,22 +16,31 @@ namespace basix::lattice
 /// on an interval and a regularly spaced set of points on other
 /// shapes.
 ///
-/// lattice::type:gll_warped represents the GLL (Gauss-Lobatto-Legendre)
-/// points on an interval. Fot other shapes, the points used are obtained
+/// lattice::type::gll_warped represents the GLL (Gauss-Lobatto-Legendre)
+/// points on an interval. For other shapes, the points used are obtained
 /// by warping an equispaced grid of points, as described in Hesthaven and
 /// Warburton, Nodal Discontinuous Galerkin Methods, 2008, pp 175-180
 /// (https://doi.org/10.1007/978-0-387-72067-8).
 ///
-/// lattice::type:gll_isaac represents the GLL (Gauss-Lobatto-Legendre)
-/// points on an interval. Fot other shapes, the points used are obtained
-/// following the methd described in Isaac, Recursive, Parameter-Free,
+/// lattice::type::gll_isaac represents the GLL (Gauss-Lobatto-Legendre)
+/// points on an interval. For other shapes, the points used are obtained
+/// following the method described in Isaac, Recursive, Parameter-Free,
 /// Explicitly Defined Interpolation Nodes for Simplices, 2020
 /// (https://doi.org/10.1137/20M1321802).
+///
+/// lattice::type::chebyshev_warped represents the Chebyshev points on an
+/// interval. For other shapes, the points used are obtained using warping.
+///
+/// lattice::type::chebyshev_isaac represents the Chebyshev points on an
+/// interval. For other shapes, the points used are obtained using Isaac's
+/// method.
 enum class type
 {
   equispaced = 0,
   gll_warped = 1,
   gll_isaac = 2,
+  chebyshev_warped = 3,
+  chebyshev_isaac = 4,
 };
 
 /// Convert string to a lattice type

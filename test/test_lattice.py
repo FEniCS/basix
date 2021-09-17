@@ -45,7 +45,8 @@ def test_pyramid(n, lattice_type):
 
 
 @pytest.mark.parametrize("lattice_type", [
-    basix.LatticeType.equispaced, basix.LatticeType.gll_isaac, basix.LatticeType.gll_warped
+    basix.LatticeType.equispaced,
+    basix.LatticeType.gll_isaac, basix.LatticeType.gll_warped,
 ])
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_tetrahedron(n, lattice_type):
@@ -76,7 +77,8 @@ def test_tetrahedron(n, lattice_type):
 
 
 @pytest.mark.parametrize("lattice_type", [
-    basix.LatticeType.equispaced, basix.LatticeType.gll_isaac, basix.LatticeType.gll_warped
+    basix.LatticeType.equispaced,
+    basix.LatticeType.gll_isaac, basix.LatticeType.gll_warped,
 ])
 @pytest.mark.parametrize("n", [1, 2, 4, 8])
 def test_triangle(n, lattice_type):

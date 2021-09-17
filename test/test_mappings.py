@@ -8,7 +8,7 @@ import pytest
 import numpy as np
 
 elements = [
-    (basix.ElementFamily.P, [basix.LatticeType.gll_warped]),  # identity
+    (basix.ElementFamily.P, [basix.LatticeType.gll, basix.LatticeSimplexMethod.warp]),  # identity
     (basix.ElementFamily.N1E, []),  # covariant Piola
     (basix.ElementFamily.RT, []),  # contravariant Piola
     (basix.ElementFamily.Regge, []),  # double covariant Piola

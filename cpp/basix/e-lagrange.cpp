@@ -19,6 +19,7 @@ using namespace basix;
 //----------------------------------------------------------------------------
 FiniteElement basix::create_lagrange(cell::type celltype, int degree,
                                      lattice::type lattice_type,
+                                     lattice::simplex_method simplex_method,
                                      bool discontinuous)
 {
   if (celltype == cell::type::point)
@@ -40,7 +41,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
       throw std::runtime_error(
           "Cannot create a continuous order 0 Lagrange basis function");
     }
-    auto pt = lattice::create(celltype, 0, lattice_type, true);
+    auto pt = lattice::create(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
     std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
@@ -70,7 +71,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
         }
         else if (dim == tdim)
         {
-          x[dim][e] = lattice::create(celltype, degree, lattice_type, false);
+          x[dim][e] = lattice::create(celltype, degree, lattice_type, false,
+                                      simplex_method);
           const std::size_t num_dofs = x[dim][e].shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
           M[dim][e] = xt::xtensor<double, 3>(s);
@@ -80,7 +82,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const auto lattice = lattice::create(ct, degree, lattice_type, false);
+          const auto lattice = lattice::create(ct, degree, lattice_type, false,
+                                               simplex_method);
           const std::size_t num_dofs = lattice.shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
           M[dim][e] = xt::xtensor<double, 3>(s);

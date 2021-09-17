@@ -130,22 +130,37 @@ Interface to the Basix C++ library.
 
   py::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
-      .value("gll_warped", lattice::type::gll_warped)
-      .value("gll_isaac", lattice::type::gll_isaac)
-      .value("chebyshev_warped", lattice::type::chebyshev_warped)
-      .value("chebyshev_isaac", lattice::type::chebyshev_isaac);
+      .value("gll", lattice::type::gll)
+      .value("chebyshev", lattice::type::chebyshev);
+
+  py::enum_<lattice::simplex_method>(m, "LatticeSimplexMethod")
+      .value("none", lattice::simplex_method::none)
+      .value("warp", lattice::simplex_method::warp)
+      .value("isaac", lattice::simplex_method::isaac);
 
   m.def(
       "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior)
-      {
-        auto l = lattice::create(celltype, n, type, exterior);
+      [](cell::type celltype, int n, lattice::type type, bool exterior) {
+        auto l = lattice::create(celltype, n, type, exterior,
+                                 lattice::simplex_method::none);
         auto strides = l.strides();
         for (auto& s : strides)
           s *= sizeof(double);
         return py::array_t<double>(l.shape(), strides, l.data());
       },
-      "Create a uniform lattice of points on a reference cell");
+      "Create a lattice of points on a reference cell");
+
+  m.def(
+      "create_lattice",
+      [](cell::type celltype, int n, lattice::type type, bool exterior,
+         lattice::simplex_method method) {
+        auto l = lattice::create(celltype, n, type, exterior, method);
+        auto strides = l.strides();
+        for (auto& s : strides)
+          s *= sizeof(double);
+        return py::array_t<double>(l.shape(), strides, l.data());
+      },
+      "Create a lattice of points on a reference cell");
 
   py::enum_<maps::type>(m, "MappingType")
       .value("identity", maps::type::identity)
@@ -424,6 +439,18 @@ Interface to the Basix C++ library.
 
   m.def(
       "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         lattice::type lattice_type, lattice::simplex_method simplex_method,
+         bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree,
+                                     lattice_type, simplex_method,
+                                     discontinuous);
+      },
+      "Create a FiniteElement of a given family, celltype, degree, lattice "
+      "type and lattice simplex method");
+
+  m.def(
+      "create_element",
       [](element::family family_name, cell::type cell_name,
          int degree) -> FiniteElement {
         return basix::create_element(family_name, cell_name, degree);
@@ -439,8 +466,18 @@ Interface to the Basix C++ library.
                                      lattice_type);
       },
       "Create a continuous FiniteElement of a given family, celltype, degree "
-      "and lattice "
-      "type");
+      "and lattice type");
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         lattice::type lattice_type,
+         lattice::simplex_method simplex_method) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree,
+                                     lattice_type, simplex_method);
+      },
+      "Create a continuous FiniteElement of a given family, celltype, degree, "
+      "lattice type and lattice simplex method");
 
   m.def(
       "tabulate_polynomial_set",

@@ -44,25 +44,6 @@ xt::xtensor<double, 1> create_interval_gll(int n, bool exterior)
   return x;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 1> create_interval_chebyshev(int n, bool exterior)
-{
-  const std::size_t b = exterior ? 0 : 1;
-  std::array<std::size_t, 1> s = {static_cast<std::size_t>(n + 1 - 2 * b)};
-  xt::xtensor<double, 1> x(s);
-
-  if (exterior)
-  {
-    for (int i = 0; i < n + 1; ++i)
-      x[i - b] = 0.5 - cos(i * M_PI / n) / 2.0;
-  }
-  else
-  {
-    for (int i = 1; i < n; ++i)
-      x[i - b] = 0.5 - cos((2 * i - 1) * M_PI / (2 * n)) / 2.0;
-  }
-  return x;
-}
-//-----------------------------------------------------------------------------
 xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
                                        bool exterior)
 {
@@ -77,10 +58,6 @@ xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
     return create_interval_gll(n, exterior);
   case lattice::type::gll_isaac:
     return create_interval_gll(n, exterior);
-  case lattice::type::chebyshev_warped:
-    return create_interval_chebyshev(n, exterior);
-  case lattice::type::chebyshev_isaac:
-    return create_interval_chebyshev(n, exterior);
   default:
     throw std::runtime_error("Unrecognised lattice type.");
   }
@@ -293,12 +270,8 @@ xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
 
   case lattice::type::gll_warped:
     return create_tri_warped(n, lattice_type, exterior);
-  case lattice::type::chebyshev_warped:
-    return create_tri_warped(n, lattice_type, exterior);
 
   case lattice::type::gll_isaac:
-    return create_tri_isaac(n, lattice_type, exterior);
-  case lattice::type::chebyshev_isaac:
     return create_tri_isaac(n, lattice_type, exterior);
 
   default:
@@ -418,12 +391,8 @@ xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
 
   case lattice::type::gll_warped:
     return create_tet_warped(n, lattice_type, exterior);
-  case lattice::type::chebyshev_warped:
-    return create_tet_warped(n, lattice_type, exterior);
 
   case lattice::type::gll_isaac:
-    return create_tet_isaac(n, lattice_type, exterior);
-  case lattice::type::chebyshev_isaac:
     return create_tet_isaac(n, lattice_type, exterior);
   default:
     throw std::runtime_error("Unrecognised lattice type.");
@@ -480,6 +449,7 @@ xt::xtensor<double, 2> create_pyramid_equispaced(int n, bool exterior)
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
 {
+  // FIXME
   throw std::runtime_error("GLL on Pyramid is not currently working.");
 
   const double h = 1.0 / static_cast<double>(n);

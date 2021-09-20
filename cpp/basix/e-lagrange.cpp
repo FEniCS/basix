@@ -30,6 +30,8 @@ variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
     return {lattice::type::gll, lattice::simplex_method::warp, true};
   case element::lagrange_variant::gll_isaac:
     return {lattice::type::gll, lattice::simplex_method::isaac, true};
+  case element::lagrange_variant::gll_centroid:
+    return {lattice::type::gll, lattice::simplex_method::centroid, true};
   case element::lagrange_variant::chebyshev_warped:
   {
     if (celltype == cell::type::interval
@@ -50,6 +52,8 @@ variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
     return {lattice::type::chebyshev_plus_endpoints,
             lattice::simplex_method::isaac, false};
   }
+  case element::lagrange_variant::chebyshev_centroid:
+    return {lattice::type::chebyshev, lattice::simplex_method::centroid, false};
   default:
     throw std::runtime_error("Unsupported variant");
   }

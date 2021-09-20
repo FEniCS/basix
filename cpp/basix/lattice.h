@@ -43,11 +43,17 @@ enum class type
 /// lattice::simplex_method::isaac will use the method described in Isaac,
 /// Recursive, Parameter-Free, Explicitly Defined Interpolation Nodes for
 /// Simplices, 2020 (https://doi.org/10.1137/20M1321802).
+///
+/// lattice::simplex_method::centroid will place points at the centroids of the
+/// grid created by putting points on the edges, as described in Blyth and
+/// Pozrikidis, A Lobatto interpolation grid over the triangle, 2001
+/// (https://doi.org/10.1093/imamat/hxh077).
 enum class simplex_method
 {
   none = 0,
   warp = 1,
-  isaac = 2
+  isaac = 2,
+  centroid = 3,
 };
 
 /// Create a lattice of points on a reference cell

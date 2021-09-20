@@ -16,8 +16,10 @@ enum class lagrange_variant
   equispaced = 0,
   gll_warped = 1,
   gll_isaac = 2,
-  chebyshev_warped = 3,
-  chebyshev_isaac = 4,
+  gll_centroid = 3,
+  chebyshev_warped = 4,
+  chebyshev_isaac = 5,
+  chebyshev_centroid = 6,
 };
 
 /// Enum of available element families

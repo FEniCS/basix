@@ -10,6 +10,6 @@ def string_to_lagrange_variant(variant: str):
     return getattr(_LV, variant)
 
 
-def lagrange_variant_to_string(variant: _LT):
+def lagrange_variant_to_string(variant: _LV):
     """Convert a Basix LagrangeVariant enum to a string."""
     return variant.name

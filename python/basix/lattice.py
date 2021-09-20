@@ -1,4 +1,4 @@
-"""Functions to create lattices and manipulate lattice types."""
+"""Functions to manipulate lattice types."""
 
 from ._basixcpp import LatticeType as _LT
 from ._basixcpp import LatticeSimplexMethod as _LSM

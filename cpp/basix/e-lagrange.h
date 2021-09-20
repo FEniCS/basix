@@ -15,8 +15,6 @@ namespace basix
 /// @param[in] celltype The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
 /// @param[in] variant The variant of the element to be created
-/// @param[in] simplex_method The simplex method that should be used to create
-/// lattice on simplices
 /// @param discontinuous
 /// points of the element
 /// @return A FiniteElement

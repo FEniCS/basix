@@ -21,14 +21,14 @@ namespace basix::lattice
 ///
 /// lattice::type::chebyshev represents the Chebyshev points.
 ///
-/// lattice::type::chebyshev_stretched represents the Chebyshev points scaled so
-/// that the first and last points are at 0 and 1.
+/// lattice::type::chebyshev_plus_endpoints represents the Chebyshev points plus
+/// the endpoints of the interval.
 enum class type
 {
   equispaced = 0,
   gll = 1,
   chebyshev = 2,
-  chebyshev_stretched = 3,
+  chebyshev_plus_endpoints = 3,
 };
 
 /// The method used to generate points inside simplices.

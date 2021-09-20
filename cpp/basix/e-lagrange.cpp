@@ -37,8 +37,8 @@ variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
         or celltype == cell::type::hexahedron)
       return {lattice::type::chebyshev, lattice::simplex_method::none, false};
     // TODO: is this the best thing to do for simplices?
-    return {lattice::type::chebyshev_stretched, lattice::simplex_method::warp,
-            false};
+    return {lattice::type::chebyshev_plus_endpoints,
+            lattice::simplex_method::warp, false};
   }
   case element::lagrange_variant::chebyshev_isaac:
   {
@@ -47,8 +47,8 @@ variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
         or celltype == cell::type::hexahedron)
       return {lattice::type::chebyshev, lattice::simplex_method::none, false};
     // TODO: is this the best thing to do for simplices?
-    return {lattice::type::chebyshev_stretched, lattice::simplex_method::isaac,
-            false};
+    return {lattice::type::chebyshev_plus_endpoints,
+            lattice::simplex_method::isaac, false};
   }
   default:
     throw std::runtime_error("Unsupported variant");

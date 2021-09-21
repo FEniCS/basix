@@ -68,8 +68,10 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   if (celltype == cell::type::prism or celltype == cell::type::pyramid)
+  {
     throw std::runtime_error(
         "This variant is not yet supported on prisms and pyramids.");
+  }
 
   const int lattice_degree
       = celltype == cell::type::triangle
@@ -86,12 +88,16 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
 
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+
+  // Entity transformations for edges
   if (tdim > 1)
   {
     const std::array<std::size_t, 3> shape = {1, 0, 0};
     xt::xtensor<double, 3> et = xt::zeros<double>(shape);
     entity_transformations[cell::type::interval] = et;
   }
+
+  // Entity transformations for triangular faces
   if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
       or celltype == cell::type::pyramid)
   {
@@ -99,6 +105,8 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
     xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
     entity_transformations[cell::type::triangle] = ft;
   }
+
+  // Entity transformations for quadrilateral faces
   if (celltype == cell::type::hexahedron or celltype == cell::type::prism
       or celltype == cell::type::pyramid)
   {
@@ -224,6 +232,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   }
 
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+
+  // Entity transformations for edges
   if (tdim > 1)
   {
     const std::vector<int> edge_ref
@@ -235,6 +245,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
       et(0, i, edge_ref[i]) = 1;
     entity_transformations[cell::type::interval] = et;
   }
+
+  // Entity transformations for triangular faces
   if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
       or celltype == cell::type::pyramid)
   {
@@ -252,6 +264,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
     }
     entity_transformations[cell::type::triangle] = ft;
   }
+
+  // Entity transformations for quadrilateral faces
   if (celltype == cell::type::hexahedron or celltype == cell::type::prism
       or celltype == cell::type::pyramid)
   {

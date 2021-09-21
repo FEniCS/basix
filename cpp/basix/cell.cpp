@@ -363,44 +363,6 @@ cell::type cell::sub_entity_type(cell::type celltype, int dim, int index)
   }
 }
 //-----------------------------------------------------------------------------
-cell::type cell::str_to_type(std::string name)
-{
-  static const std::map<std::string, cell::type> name_to_type
-      = {{"point", cell::type::point},
-         {"interval", cell::type::interval},
-         {"triangle", cell::type::triangle},
-         {"tetrahedron", cell::type::tetrahedron},
-         {"quadrilateral", cell::type::quadrilateral},
-         {"pyramid", cell::type::pyramid},
-         {"prism", cell::type::prism},
-         {"hexahedron", cell::type::hexahedron}};
-
-  auto it = name_to_type.find(name);
-  if (it == name_to_type.end())
-    throw std::runtime_error("Can't find name " + name);
-
-  return it->second;
-}
-//-----------------------------------------------------------------------------
-const std::string& cell::type_to_str(cell::type type)
-{
-  static const std::map<cell::type, std::string> type_to_name
-      = {{cell::type::point, "point"},
-         {cell::type::interval, "interval"},
-         {cell::type::triangle, "triangle"},
-         {cell::type::tetrahedron, "tetrahedron"},
-         {cell::type::quadrilateral, "quadrilateral"},
-         {cell::type::pyramid, "pyramid"},
-         {cell::type::prism, "prism"},
-         {cell::type::hexahedron, "hexahedron"}};
-
-  auto it = type_to_name.find(type);
-  if (it == type_to_name.end())
-    throw std::runtime_error("Can't find type");
-
-  return it->second;
-}
-//-----------------------------------------------------------------------------
 double cell::volume(cell::type cell_type)
 {
   switch (cell_type)

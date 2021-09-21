@@ -5,7 +5,6 @@
 #pragma once
 
 #include <stdexcept>
-#include <string>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
@@ -24,9 +23,6 @@ enum class type
   doubleCovariantPiola,
   doubleContravariantPiola,
 };
-
-/// Convert mapping type enum to string
-const std::string& type_to_str(maps::type type);
 
 namespace impl
 {

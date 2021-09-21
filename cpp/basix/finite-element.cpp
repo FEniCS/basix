@@ -81,8 +81,7 @@ basix::FiniteElement basix::create_element(element::family family,
   switch (family)
   {
   case element::family::P:
-    throw std::runtime_error(
-        "Lagrange elements need to be given a lattice type.");
+    throw std::runtime_error("Lagrange elements need to be given a variant.");
   case element::family::BDM:
     switch (cell)
     {
@@ -144,23 +143,23 @@ basix::FiniteElement basix::create_element(element::family family,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           lattice::type lattice_type,
+                                           element::lagrange_variant variant,
                                            bool discontinuous)
 {
   switch (family)
   {
   case element::family::P:
-    return create_lagrange(cell, degree, lattice_type, discontinuous);
+    return create_lagrange(cell, degree, variant, discontinuous);
   default:
-    throw std::runtime_error("Cannot pass a lattice type to this element.");
+    throw std::runtime_error("Cannot pass a Lagrange variant.");
   }
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           lattice::type lattice_type)
+                                           element::lagrange_variant variant)
 {
-  return basix::create_element(family, cell, degree, lattice_type, false);
+  return basix::create_element(family, cell, degree, variant, false);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,

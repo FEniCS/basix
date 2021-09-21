@@ -39,8 +39,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Add integral moments on facets
-  const FiniteElement facet_moment_space
-      = create_lagrange(facettype, degree, lattice::type::equispaced, true);
+  const FiniteElement facet_moment_space = create_lagrange(
+      facettype, degree, element::lagrange_variant::equispaced, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
 

@@ -9,6 +9,16 @@ namespace basix
 
 namespace element
 {
+/// An enum defining the variants of a Lagrange space that can be created
+enum class lagrange_variant
+{
+  equispaced = 0,
+  gll_warped = 1,
+  gll_isaac = 2,
+  chebyshev_warped = 3,
+  chebyshev_isaac = 4,
+};
+
 /// Enum of available element families
 enum class family
 {

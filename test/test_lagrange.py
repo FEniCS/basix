@@ -313,5 +313,4 @@ def test_continuous_lagrange(celltype, variant):
     # The variants used in this test can only be used for discontinuous Lagrange,
     # so trying to create them should throw a runtime error
     with pytest.raises(RuntimeError):
-        e = basix.create_element(basix.ElementFamily.P, celltype, 4, variant, False)
-
+        basix.create_element(basix.ElementFamily.P, celltype, 4, variant, False)

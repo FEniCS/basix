@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #pragma once
-#include <string>
 
 namespace basix
 {
@@ -37,12 +36,6 @@ enum class family
   Bubble = 9,
   Serendipity = 10
 };
-
-/// Convert string to a family
-element::family str_to_type(std::string name);
-
-// Convert family to string
-const std::string& type_to_str(element::family type);
 
 } // namespace element
 

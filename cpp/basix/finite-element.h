@@ -13,7 +13,6 @@
 #include "precompute.h"
 #include <array>
 #include <numeric>
-#include <set>
 #include <string>
 #include <vector>
 #include <xtensor/xadapt.hpp>
@@ -446,15 +445,15 @@ public:
   /// cell: [[]]
   /// @return Dofs associated with an entity of a given
   /// topological dimension. The shape is (tdim + 1, num_entities, num_dofs).
-  const std::vector<std::vector<std::set<int>>>& entity_dofs() const;
+  const std::vector<std::vector<std::vector<int>>>& entity_dofs() const;
 
   /// Get the dofs on the closure of each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
   /// on a triangle has vertices: [[0], [1], [2]], edges: [[1, 2, 3], [0, 2, 4],
   /// [0, 1, 5]], cell: [[0, 1, 2, 3, 4, 5]]
-  /// @return Dofs associated with the closre of an entity of a given
+  /// @return Dofs associated with the closure of an entity of a given
   /// topological dimension. The shape is (tdim + 1, num_entities, num_dofs).
-  const std::vector<std::vector<std::set<int>>>& entity_closure_dofs() const;
+  const std::vector<std::vector<std::vector<int>>>& entity_closure_dofs() const;
 
   /// Get the base transformations
   /// The base transformations represent the effect of rotating or reflecting
@@ -689,10 +688,10 @@ private:
   std::vector<std::vector<int>> _num_e_closure_dofs;
 
   // Dofs associated with each cell (sub-)entity
-  std::vector<std::vector<std::set<int>>> _edofs;
+  std::vector<std::vector<std::vector<int>>> _edofs;
 
   // Dofs associated with each cell (sub-)entity
-  std::vector<std::vector<std::set<int>>> _e_closure_dofs;
+  std::vector<std::vector<std::vector<int>>> _e_closure_dofs;
 
   // Entity transformations
   std::map<cell::type, xt::xtensor<double, 3>> _entity_transformations;

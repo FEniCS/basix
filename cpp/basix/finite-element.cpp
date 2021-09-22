@@ -416,7 +416,7 @@ FiniteElement::FiniteElement(
     {
       _num_edofs[d][e] = M[d][e].shape(0);
       for (int i = 0; i < _num_edofs[d][e]; ++i)
-        _edofs[d][e].insert(dof++);
+        _edofs[d][e].push_back(dof++);
     }
   }
 
@@ -434,9 +434,10 @@ FiniteElement::FiniteElement(
         {
           _num_e_closure_dofs[d][e] += _edofs[dim][c].size();
           for (int dof : _edofs[dim][c])
-            _e_closure_dofs[d][e].insert(dof);
+            _e_closure_dofs[d][e].push_back(dof);
         }
       }
+      std::sort(_e_closure_dofs[d][e].begin(), _e_closure_dofs[d][e].end());
     }
   }
 
@@ -600,7 +601,7 @@ const std::vector<std::vector<int>>& FiniteElement::num_entity_dofs() const
   return _num_edofs;
 }
 //-----------------------------------------------------------------------------
-const std::vector<std::vector<std::set<int>>>&
+const std::vector<std::vector<std::vector<int>>>&
 FiniteElement::entity_dofs() const
 {
   return _edofs;
@@ -612,7 +613,7 @@ FiniteElement::num_entity_closure_dofs() const
   return _num_e_closure_dofs;
 }
 //-----------------------------------------------------------------------------
-const std::vector<std::vector<std::set<int>>>&
+const std::vector<std::vector<std::vector<int>>>&
 FiniteElement::entity_closure_dofs() const
 {
   return _e_closure_dofs;

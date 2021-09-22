@@ -47,14 +47,56 @@ xt::xtensor<double, 1> create_interval_gll(int n, bool exterior)
 xt::xtensor<double, 1> create_interval_chebyshev(int n, bool exterior)
 {
   if (exterior)
+  {
     throw std::runtime_error(
         "Chebyshev points including endpoints are not supported.");
+  }
 
   std::array<std::size_t, 1> s = {static_cast<std::size_t>(n - 1)};
   xt::xtensor<double, 1> x(s);
 
   for (int i = 1; i < n; ++i)
-    x[i - 1] = 0.5 - cos((2 * i - 1) * M_PI / (2 * n - 2)) / 2.0;
+    x(i - 1) = 0.5 - cos((2 * i - 1) * M_PI / (2 * n - 2)) / 2.0;
+
+  return x;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 1> create_interval_gl(int n, bool exterior)
+{
+  if (exterior)
+  {
+    throw std::runtime_error(
+        "GL points including endpoints are not supported.");
+  }
+
+  if (n == 0)
+    return {0.5};
+
+  auto _pts = quadrature::compute_gauss_jacobi_points(0, n - 1);
+
+  std::array<std::size_t, 1> s = {static_cast<std::size_t>(n - 1)};
+  xt::xtensor<double, 1> x(s);
+
+  for (int i = 0; i < n - 1; ++i)
+    x(i) = 0.5 + _pts[i] / 2.0;
+
+  return x;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 1> create_interval_gl_plus_endpoints(int n, bool exterior)
+{
+  xt::xtensor<double, 1> x_gl = create_interval_gl(n, false);
+
+  if (!exterior)
+    return x_gl;
+
+  std::array<std::size_t, 1> s = {static_cast<std::size_t>(n + 1)};
+  xt::xtensor<double, 1> x(s);
+
+  x[0] = 0.;
+  x[n] = 1.;
+  for (int i = 0; i < n - 1; ++i)
+    x[i + 1] = x_gl[i];
 
   return x;
 }
@@ -92,8 +134,13 @@ xt::xtensor<double, 1> create_interval(int n, lattice::type lattice_type,
     return create_interval_gll(n, exterior);
   case lattice::type::chebyshev:
     return create_interval_chebyshev(n, exterior);
+  case lattice::type::gl:
+    return create_interval_gl(n, exterior);
+
   case lattice::type::chebyshev_plus_endpoints:
     return create_interval_chebyshev_plus_endpoints(n, exterior);
+  case lattice::type::gl_plus_endpoints:
+    return create_interval_gl_plus_endpoints(n, exterior);
   default:
     throw std::runtime_error("Unrecognised lattice type.");
   }

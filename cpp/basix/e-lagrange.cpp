@@ -54,6 +54,28 @@ variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
   }
   case element::lagrange_variant::chebyshev_centroid:
     return {lattice::type::chebyshev, lattice::simplex_method::centroid, false};
+  case element::lagrange_variant::gl_warped:
+  {
+    if (celltype == cell::type::interval
+        or celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      return {lattice::type::gl, lattice::simplex_method::none, false};
+    // TODO: is this the best thing to do for simplices?
+    return {lattice::type::gl_plus_endpoints, lattice::simplex_method::warp,
+            false};
+  }
+  case element::lagrange_variant::gl_isaac:
+  {
+    if (celltype == cell::type::interval
+        or celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      return {lattice::type::gl, lattice::simplex_method::none, false};
+    // TODO: is this the best thing to do for simplices?
+    return {lattice::type::gl_plus_endpoints, lattice::simplex_method::isaac,
+            false};
+  }
+  case element::lagrange_variant::gl_centroid:
+    return {lattice::type::gl, lattice::simplex_method::centroid, false};
   default:
     throw std::runtime_error("Unsupported variant");
   }

@@ -8,7 +8,9 @@ def string_to_lagrange_variant(variant: str):
     if variant == "gll":
         return _LV.gll_warped
     if variant == "chebyshev":
-        return _LV.chebyshev_warped
+        return _LV.chebyshev_isaac
+    if variant == "gl":
+        return _LV.gl_isaac
 
     if not hasattr(_LV, variant):
         raise ValueError(f"Unknown variant: {variant}")

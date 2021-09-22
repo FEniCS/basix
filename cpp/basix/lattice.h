@@ -21,14 +21,21 @@ namespace basix::lattice
 ///
 /// lattice::type::chebyshev represents the Chebyshev points.
 ///
+/// lattice::type::gl represents the GL (Gauss-Legendre) points.
+///
 /// lattice::type::chebyshev_plus_endpoints represents the Chebyshev points plus
-/// the endpoints of the interval.
+/// the endpoints of the interval. lattice::type::gl_plus_endpoints represents
+/// the Chebyshev points plus the endpoints of the interval. These points are
+/// only intended for internal use.
 enum class type
 {
   equispaced = 0,
   gll = 1,
   chebyshev = 2,
-  chebyshev_plus_endpoints = 3,
+  gl = 4,
+
+  chebyshev_plus_endpoints = 10,
+  gl_plus_endpoints = 11,
 };
 
 /// The method used to generate points inside simplices.

@@ -13,7 +13,6 @@
 #include "precompute.h"
 #include <array>
 #include <numeric>
-#include <set>
 #include <string>
 #include <vector>
 #include <xtensor/xadapt.hpp>

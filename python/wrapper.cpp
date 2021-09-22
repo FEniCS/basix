@@ -153,7 +153,8 @@ Interface to the Basix C++ library.
   py::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
       .value("gll", lattice::type::gll)
-      .value("chebyshev", lattice::type::chebyshev);
+      .value("chebyshev", lattice::type::chebyshev)
+      .value("gl", lattice::type::gl);
 
   py::enum_<lattice::simplex_method>(m, "LatticeSimplexMethod")
       .value("none", lattice::simplex_method::none)
@@ -382,7 +383,10 @@ Interface to the Basix C++ library.
       .value("chebyshev_warped", element::lagrange_variant::chebyshev_warped)
       .value("chebyshev_isaac", element::lagrange_variant::chebyshev_isaac)
       .value("chebyshev_centroid",
-             element::lagrange_variant::chebyshev_centroid);
+             element::lagrange_variant::chebyshev_centroid)
+      .value("gl_warped", element::lagrange_variant::gl_warped)
+      .value("gl_isaac", element::lagrange_variant::gl_isaac)
+      .value("gl_centroid", element::lagrange_variant::gl_centroid);
 
   // Create FiniteElement
   m.def(

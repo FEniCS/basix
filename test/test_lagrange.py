@@ -285,7 +285,8 @@ def in_cell(celltype, p):
     basix.LagrangeVariant.equispaced,
     basix.LagrangeVariant.gll_warped, basix.LagrangeVariant.gll_isaac, basix.LagrangeVariant.gll_centroid,
     basix.LagrangeVariant.chebyshev_warped, basix.LagrangeVariant.chebyshev_isaac,
-    basix.LagrangeVariant.chebyshev_centroid
+    basix.LagrangeVariant.chebyshev_centroid,
+    basix.LagrangeVariant.gl_warped, basix.LagrangeVariant.gl_isaac, basix.LagrangeVariant.gl_centroid,
 ])
 @pytest.mark.parametrize("celltype", [
     basix.CellType.triangle, basix.CellType.tetrahedron,
@@ -293,7 +294,24 @@ def in_cell(celltype, p):
 ])
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_variant_points(celltype, degree, variant):
-    e = basix.create_element(basix.ElementFamily.P, celltype, 4, variant, True)
+    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
 
     for p in e.points:
         assert in_cell(celltype, p)
+
+
+@pytest.mark.parametrize("variant", [
+    basix.LagrangeVariant.chebyshev_warped, basix.LagrangeVariant.chebyshev_isaac,
+    basix.LagrangeVariant.chebyshev_centroid,
+    basix.LagrangeVariant.gl_warped, basix.LagrangeVariant.gl_isaac, basix.LagrangeVariant.gl_centroid,
+])
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.triangle, basix.CellType.tetrahedron,
+    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+])
+def test_continuous_lagrange(celltype, variant):
+    # The variants used in this test can only be used for discontinuous Lagrange,
+    # so trying to create them should throw a runtime error
+    with pytest.raises(RuntimeError):
+        e = basix.create_element(basix.ElementFamily.P, celltype, 4, variant, False)
+

@@ -283,8 +283,9 @@ def in_cell(celltype, p):
 
 @pytest.mark.parametrize("variant", [
     basix.LagrangeVariant.equispaced,
-    basix.LagrangeVariant.gll_warped, basix.LagrangeVariant.gll_isaac,
+    basix.LagrangeVariant.gll_warped, basix.LagrangeVariant.gll_isaac, basix.LagrangeVariant.gll_centroid,
     basix.LagrangeVariant.chebyshev_warped, basix.LagrangeVariant.chebyshev_isaac,
+    basix.LagrangeVariant.chebyshev_centroid
 ])
 @pytest.mark.parametrize("celltype", [
     basix.CellType.triangle, basix.CellType.tetrahedron,

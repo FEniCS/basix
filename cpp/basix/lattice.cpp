@@ -293,6 +293,36 @@ xt::xtensor<double, 2> create_tri_isaac(int n, lattice::type lattice_type,
   return p;
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tri_centroid(int n, lattice::type lattice_type,
+                                           bool exterior)
+{
+  // See https://dx.doi.org/10.1093/imamat/hxh077
+  if (exterior)
+    throw std::runtime_error(
+        "Centroid method not implemented to include boundaries");
+
+  // Points
+  xt::xtensor<double, 2> p(
+      {static_cast<std::size_t>((n - 2) * (n - 1) / 2), 2});
+  xt::xtensor<double, 1> x = create_interval(n, lattice_type, false);
+
+  int c = 0;
+
+  for (std::size_t i = 0; i + 1 < x.shape(0); ++i)
+  {
+    const double xi = x(i);
+    for (std::size_t j = 0; j + i + 1 < x.shape(0); ++j)
+    {
+      const double xj = x(j);
+      const double xk = x(i + j + 1);
+      p(c, 0) = (2 * xj + xk - xi) / 3;
+      p(c, 1) = (2 * xi + xk - xj) / 3;
+      ++c;
+    }
+  }
+  return p;
+}
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
                                   bool exterior,
                                   lattice::simplex_method simplex_method)
@@ -309,6 +339,8 @@ xt::xtensor<double, 2> create_tri(int n, lattice::type lattice_type,
     return create_tri_warped(n, lattice_type, exterior);
   case lattice::simplex_method::isaac:
     return create_tri_isaac(n, lattice_type, exterior);
+  case lattice::simplex_method::centroid:
+    return create_tri_centroid(n, lattice_type, exterior);
   case lattice::simplex_method::none:
   {
     // Methods will all agree when n <= 3
@@ -421,6 +453,41 @@ xt::xtensor<double, 2> create_tet_warped(int n, lattice::type lattice_type,
   return p;
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_tet_centroid(int n, lattice::type lattice_type,
+                                           bool exterior)
+{
+  // See https://dx.doi.org/10.1093/imamat/hxh077
+  if (exterior)
+    throw std::runtime_error(
+        "Centroid method not implemented to include boundaries");
+
+  // Points
+  xt::xtensor<double, 2> p(
+      {static_cast<std::size_t>((n - 3) * (n - 2) * (n - 1) / 6), 3});
+  xt::xtensor<double, 1> x = create_interval(n, lattice_type, false);
+
+  int c = 0;
+
+  for (std::size_t i = 0; i + 2 < x.shape(0); ++i)
+  {
+    const double xi = x(i);
+    for (std::size_t j = 0; j + i + 2 < x.shape(0); ++j)
+    {
+      const double xj = x(j);
+      for (std::size_t k = 0; k + j + i + 2 < x.shape(0); ++k)
+      {
+        const double xk = x(k);
+        const double xl = x(i + j + k + 2);
+        p(c, 0) = (3 * xk + xl - xi - xj) / 4;
+        p(c, 1) = (3 * xj + xl - xi - xk) / 4;
+        p(c, 2) = (3 * xi + xl - xj - xk) / 4;
+        ++c;
+      }
+    }
+  }
+  return p;
+}
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
                                   bool exterior,
                                   lattice::simplex_method simplex_method)
@@ -437,6 +504,8 @@ xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
     return create_tet_warped(n, lattice_type, exterior);
   case lattice::simplex_method::isaac:
     return create_tet_isaac(n, lattice_type, exterior);
+  case lattice::simplex_method::centroid:
+    return create_tet_centroid(n, lattice_type, exterior);
   case lattice::simplex_method::none:
   {
     // Methods will all agree when n <= 3

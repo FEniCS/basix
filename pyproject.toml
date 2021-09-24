@@ -2,3 +2,28 @@
 requires = ["setuptools>=42", "wheel", "pybind11>=2.6.4", "cmake>=3.16", "scikit-build>=0.12"]
 
 build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+build = ["cp*-manylinux_x86_64"]
+skip = ""
+test-skip = ""
+
+archs = ["auto"]
+build-frontend = "pip"
+dependency-versions = "pinned"
+environment = {}
+build-verbosity = ""
+
+before-all = ""
+before-build = "yum -y update && yum install -y openblas-devel ninja-build"
+repair-wheel-command = ""
+
+test-command = "pytest -v -n 2 --durations 20 {project}/test/"
+before-test = ""
+test-requires = ["pytest", "pytest-xdist", "numpy", "sympy", "numba", "scipy"]
+test-extras = []
+
+manylinux-x86_64-image = "manylinux2014"
+
+[tool.cibuildwheel.linux]
+repair-wheel-command = "unzip {wheel} -d tmp/ && export LD_LIBRARY_PATH=$(pwd)/tmp/basix/lib64 && auditwheel repair -w {dest_dir} {wheel} && rm -rf tmp/"

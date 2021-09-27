@@ -26,4 +26,4 @@ test-extras = []
 manylinux-x86_64-image = "manylinux2014"
 
 [tool.cibuildwheel.linux]
-repair-wheel-command = "unzip {wheel} -d tmp/ && export LD_LIBRARY_PATH=$(pwd)/tmp/basix/lib64 && auditwheel repair -w {dest_dir} {wheel} && rm -rf tmp/"
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"

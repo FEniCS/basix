@@ -202,7 +202,7 @@ target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Develop
 
 # Install the Basix library
 if (SKBUILD)
-  set(_INSTALL_LIB ${CMAKE_INSTALL_PREFIX/lib})
+  set(_INSTALL_LIB ${CMAKE_INSTALL_PREFIX}/lib)
 else()
   set(_INSTALL_LIB ${CMAKE_INSTALL_LIBDIR})
 endif()
@@ -212,7 +212,7 @@ install(TARGETS basix
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
   PRIVATE_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/basix
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT RuntimeExecutables
-  LIBRARY DESTINATION _INSTALL_LIB COMPONENT RuntimeLibraries
+  LIBRARY DESTINATION ${_INSTALL_LIB} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
 # Install CMake helpers
@@ -220,10 +220,10 @@ include(CMakePackageConfigHelpers)
 write_basic_package_version_file(BasixConfigVersion.cmake VERSION ${PACKAGE_VERSION}
   COMPATIBILITY AnyNewerVersion)
 configure_package_config_file(BasixConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/BasixConfig.cmake
-  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)
+  INSTALL_DESTINATION ${_INSTALL_LIB}/cmake/basix)
 
 # Install CMake files
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/BasixConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/BasixConfigVersion.cmake
-  DESTINATION  ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
+  DESTINATION ${_INSTALL_LIB}/cmake/basix COMPONENT Development)
 install(EXPORT BasixTargets FILE BasixTargets.cmake NAMESPACE Basix::
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)
+  DESTINATION ${_INSTALL_LIB}/cmake/basix)

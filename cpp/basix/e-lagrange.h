@@ -5,6 +5,7 @@
 #pragma once
 
 #include "cell.h"
+#include "element-families.h"
 #include "finite-element.h"
 #include "lattice.h"
 
@@ -13,12 +14,13 @@ namespace basix
 /// Create a Lagrange element on cell with given degree
 /// @param[in] celltype The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-/// @param[in] lattice_type The lattice type that should be used to arrange DOF
+/// @param[in] variant The variant of the element to be created
 /// @param discontinuous
 /// points of the element
 /// @return A FiniteElement
 FiniteElement create_lagrange(cell::type celltype, int degree,
-                              lattice::type lattice_type, bool discontinuous);
+                              element::lagrange_variant variant,
+                              bool discontinuous);
 
 /// Create a DPC element on cell with given degree
 /// @param[in] celltype The reference cell type that the element is defined on

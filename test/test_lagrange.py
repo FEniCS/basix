@@ -86,7 +86,7 @@ def test_line(n):
     g = sympy_lagrange(celltype, n)
     x = sympy.Symbol("x")
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, n,
-                                    basix.LatticeType.equispaced)
+                                    basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = n
     wtab = lagrange.tabulate(nderiv, pts)
@@ -107,7 +107,7 @@ def test_tri(degree):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, degree,
-                                    basix.LatticeType.equispaced)
+                                    basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)
@@ -131,7 +131,7 @@ def test_tet(degree):
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.tetrahedron, degree,
-                                    basix.LatticeType.equispaced)
+                                    basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype, 6,
                                basix.LatticeType.equispaced, True)
     nderiv = 1
@@ -158,7 +158,7 @@ def test_tet(degree):
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_lagrange(celltype, degree):
     lagrange = basix.create_element(basix.ElementFamily.P, celltype[1], degree,
-                                    basix.LatticeType.equispaced)
+                                    basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
     assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())
@@ -167,14 +167,14 @@ def test_lagrange(celltype, degree):
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_dof_transformations_interval(degree):
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, degree,
-                                    basix.LatticeType.equispaced)
+                                    basix.LagrangeVariant.equispaced)
     assert len(lagrange.base_transformations()) == 0
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_dof_transformations_triangle(degree):
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, degree,
-                                    basix.LatticeType.equispaced)
+                                    basix.LagrangeVariant.equispaced)
 
     permuted = {}
     if degree == 3:
@@ -204,7 +204,7 @@ def test_dof_transformations_triangle(degree):
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
 def test_dof_transformations_tetrahedron(degree):
     lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.tetrahedron, degree,
-                                    basix.LatticeType.equispaced)
+                                    basix.LagrangeVariant.equispaced)
 
     permuted = {}
     if degree == 3:
@@ -255,8 +255,62 @@ def test_dof_transformations_tetrahedron(degree):
 ])
 def test_celltypes(degree, celltype):
     tp = basix.create_element(basix.ElementFamily.P, celltype, degree,
-                              basix.LatticeType.equispaced)
+                              basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype, 5,
                                basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
     assert(numpy.allclose(numpy.sum(w, axis=1), 1.0))
+
+
+def leq(a, b):
+    return a <= b or numpy.isclose(a, b)
+
+
+def in_cell(celltype, p):
+    if celltype == basix.CellType.interval:
+        return leq(0, p[0]) and leq(p[0], 1)
+    if celltype == basix.CellType.triangle:
+        return leq(0, p[0]) and leq(0, p[1]) and leq(p[0] + p[1], 1)
+    if celltype == basix.CellType.tetrahedron:
+        return leq(0, p[0]) and leq(0, p[1]) and leq(0, p[2]) and leq(p[0] + p[1] + p[2], 1)
+    if celltype == basix.CellType.quadrilateral:
+        return leq(0, p[0]) and leq(0, p[1]) and leq(p[0], 1) and leq(p[1], 1)
+    if celltype == basix.CellType.hexahedron:
+        return leq(0, p[0]) and leq(0, p[1]) and leq(0, p[2]) and leq(p[0], 1) and leq(p[1], 1) and leq(p[2], 1)
+    if celltype == basix.CellType.prism:
+        return leq(0, p[0]) and leq(0, p[1]) and leq(0, p[2]) and leq(p[0] + p[1], 1) and leq(p[2], 1)
+
+
+@pytest.mark.parametrize("variant", [
+    basix.LagrangeVariant.equispaced,
+    basix.LagrangeVariant.gll_warped, basix.LagrangeVariant.gll_isaac, basix.LagrangeVariant.gll_centroid,
+    basix.LagrangeVariant.chebyshev_warped, basix.LagrangeVariant.chebyshev_isaac,
+    basix.LagrangeVariant.chebyshev_centroid,
+    basix.LagrangeVariant.gl_warped, basix.LagrangeVariant.gl_isaac, basix.LagrangeVariant.gl_centroid,
+])
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.triangle, basix.CellType.tetrahedron,
+    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("degree", range(1, 5))
+def test_variant_points(celltype, degree, variant):
+    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
+
+    for p in e.points:
+        assert in_cell(celltype, p)
+
+
+@pytest.mark.parametrize("variant", [
+    basix.LagrangeVariant.chebyshev_warped, basix.LagrangeVariant.chebyshev_isaac,
+    basix.LagrangeVariant.chebyshev_centroid,
+    basix.LagrangeVariant.gl_warped, basix.LagrangeVariant.gl_isaac, basix.LagrangeVariant.gl_centroid,
+])
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.triangle, basix.CellType.tetrahedron,
+    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+])
+def test_continuous_lagrange(celltype, variant):
+    # The variants used in this test can only be used for discontinuous Lagrange,
+    # so trying to create them should throw a runtime error
+    with pytest.raises(RuntimeError):
+        basix.create_element(basix.ElementFamily.P, celltype, 4, variant, False)

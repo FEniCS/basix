@@ -207,6 +207,7 @@ target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLA
 # Set debug definitions (private)
 target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 
+# Install the Basix library
 install(TARGETS basix
   EXPORT BasixTargets
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
@@ -224,6 +225,6 @@ configure_package_config_file(BasixConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/B
 
 # Install CMake files
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/BasixConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/BasixConfigVersion.cmake
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
+  DESTINATION  ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
 install(EXPORT BasixTargets FILE BasixTargets.cmake NAMESPACE Basix::
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)

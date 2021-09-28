@@ -1,7 +1,7 @@
 name: Build wheels
 
 # TODO: To adjust
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   build_wheels:
@@ -13,14 +13,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Setup QEMU (Linux)
         if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v1.2.0
         with:
           image: tonistiigi/binfmt:latest
           platforms: aarch64
-      
+
       - name: Install Python
         uses: actions/setup-python@v2
         with:
@@ -28,7 +28,7 @@ jobs:
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.1.2
-      
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v2
         with:

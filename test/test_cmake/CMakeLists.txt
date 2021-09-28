@@ -16,6 +16,7 @@ execute_process(
 if (BASIX_PY_DIR)
   message(STATUS "Adding ${BASIX_PY_DIR} to Basix search hints")
 endif()
+find_package(xtl REQUIRED CONFIG HINTS ${BASIX_PY_DIR}/share/cmake/xtl)
 find_package(Basix REQUIRED CONFIG HINTS ${BASIX_PY_DIR})
 
 add_executable(a.out main.cpp)

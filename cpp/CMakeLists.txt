@@ -4,6 +4,13 @@ cmake_minimum_required(VERSION 3.16)
 project(Basix VERSION "0.3.1.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
+if (SKBUILD)
+  # Always use lib/ in the Python root. Otherwise, environment used for
+  # wheels might place in lib64/, which CMake on some systems will not
+  # find.
+  set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib)
+endif()
+
 include(FeatureSummary)
 
 # Enable SIMD with xtensor
@@ -209,14 +216,14 @@ install(TARGETS basix
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
-# Install CMake helpers
+# Configure CMake helpers
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(BasixConfigVersion.cmake VERSION ${PACKAGE_VERSION}
   COMPATIBILITY AnyNewerVersion)
 configure_package_config_file(BasixConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/BasixConfig.cmake
   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)
 
-# Install library and CMake files
+# Install CMake files
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/BasixConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/BasixConfigVersion.cmake
   DESTINATION  ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
 install(EXPORT BasixTargets FILE BasixTargets.cmake NAMESPACE Basix::

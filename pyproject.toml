@@ -4,9 +4,7 @@ requires = ["setuptools>=42", "wheel", "pybind11>=2.6.4", "cmake>=3.16", "scikit
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-build = ["cp*-manylinux_x86-64", "cp*-manylinux_aarch64", "cp*-macosx_*"]
-
-archs = ["auto64"]
+build = ["cp*-manylinux_{x86_64,aarch64}, "cp*-macosx_x86_64"]
 
 test-command = "pytest -v -n 2 --durations 20 {project}/test/"
 test-requires = ["pytest", "pytest-xdist", "numpy", "sympy", "numba", "scipy"]

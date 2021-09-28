@@ -7,7 +7,7 @@ functionality can be used via this Python interface.
 
 # Public interface
 from ._basixcpp import __version__
-from . import cell, finite_element, lattice, variants
+from . import cell, finite_element, lattice, variants, interpolation
 from ._basixcpp import (CellType, LatticeType, LatticeSimplexMethod, create_lattice, ElementFamily,
                         create_element, LagrangeVariant)
 

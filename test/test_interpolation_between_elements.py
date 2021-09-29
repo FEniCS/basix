@@ -98,3 +98,36 @@ def test_different_element_interpolation(family1, args1, family2, args2, cell_ty
     higher_element = basix.create_element(family2, cell_type, order, *args2)
 
     run_test(lower_element, higher_element, order - 1, lower_element.value_size)
+
+
+@pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron,
+                                       basix.CellType.quadrilateral, basix.CellType.hexahedron])
+@pytest.mark.parametrize("order", [1, 2, 3])
+def test_blocked_interpolation(cell_type, order):
+    """Test interpolation of Nedelec's componenets into a Lagrange space."""
+    nedelec = basix.create_element(basix.ElementFamily.N2E, cell_type, order)
+    lagrange = basix.create_element(basix.ElementFamily.P, cell_type, order, basix.LagrangeVariant.gll_isaac)
+
+    n_points = nedelec.points
+    if nedelec.value_size == 2:
+        n_eval = np.concatenate([n_points[:, 0] ** order, n_points[:, 1] ** order])
+    else:
+        n_eval = np.concatenate([n_points[:, 0] ** order, 0 * n_points[:, 0], n_points[:, 1] ** order])
+    n_coeffs = nedelec.interpolation_matrix @ n_eval
+
+    l_points = lagrange.points
+    if nedelec.value_size == 2:
+        values = [l_points[:, 0] ** order, l_points[:, 1] ** order]
+    else:
+        values = [l_points[:, 0] ** order, 0 * l_points[:, 0], l_points[:, 1] ** order]
+    l_coeffs = np.empty(lagrange.dim * nedelec.value_size)
+    for i, v in enumerate(values):
+        l_coeffs[i::nedelec.value_size] = v
+
+    # Test interpolation from Nedelec to blocked Lagrange
+    i_m = basix.interpolation.compute_interpolation_between_elements(nedelec, lagrange)
+    assert np.allclose(l_coeffs, i_m @ n_coeffs)
+
+    # Test interpolation from blocked Lagrange to Nedelec
+    i_m = basix.interpolation.compute_interpolation_between_elements(lagrange, nedelec)
+    assert np.allclose(n_coeffs, i_m @ l_coeffs)

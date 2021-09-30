@@ -8,17 +8,17 @@
 #include <vector>
 #include <xtensor/xtensor.hpp>
 
-#ifdef __APPLE__
-#include <Accelerate/Accelerate.h>
-#else
-#include <cblas.h>
-#endif
+// #ifdef __APPLE__
+// #include <Accelerate/Accelerate.h>
+// #else
+// #include <cblas.h>
+// #endif
 
-// extern "C"
-// {
-//   void dsyevd(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
-//               double* work, int* lwork, int* iwork, int* liwork, int* info);
-// }
+extern "C"
+{
+  void dsyevd_(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
+              double* work, int* lwork, int* iwork, int* liwork, int* info);
+}
 
 std::pair<xt::xtensor<double, 1>,
           xt::xtensor<double, 2, xt::layout_type::column_major>>

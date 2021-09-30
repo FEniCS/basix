@@ -7,7 +7,6 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
@@ -168,7 +167,7 @@ xt::xtensor<double, 2> tabulate_dlagrange(int n,
   tabulated.assign(
       xt::transpose(xt::view(tabulated_values, 0, xt::all(), xt::all())));
 
-  return xt::transpose(xt::linalg::solve(dualmat, tabulated));
+  return xt::transpose(math::solve(dualmat, tabulated));
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 1> warp_function(lattice::type lattice_type, int n,

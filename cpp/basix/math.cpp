@@ -8,6 +8,8 @@
 #include <vector>
 #include <xtensor/xtensor.hpp>
 
+#include <xtensor/xio.hpp>
+
 // #ifdef __APPLE__
 // #include <Accelerate/Accelerate.h>
 // #else
@@ -17,9 +19,13 @@
 extern "C"
 {
   void dsyevd_(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
-              double* work, int* lwork, int* iwork, int* liwork, int* info);
+               double* work, int* lwork, int* iwork, int* liwork, int* info);
+
+  void dgesv_(int* N, int* NRHS, double* A, int* LDA, int* IPIV, double* B,
+              int* LDB, int* INFO);
 }
 
+//------------------------------------------------------------------
 std::pair<xt::xtensor<double, 1>,
           xt::xtensor<double, 2, xt::layout_type::column_major>>
 basix::math::eigh(const xt::xtensor<double, 2>& A)
@@ -57,3 +63,29 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
 
   return {std::move(w), std::move(M)};
 }
+//------------------------------------------------------------------
+xt::xarray<double, xt::layout_type::column_major>
+basix::math::solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B)
+{
+  assert(A.dimension() == 2);
+  assert(B.dimension() == 1 or B.dimension() == 2);
+
+  // Copy to column major matrix
+  xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
+  _A.assign(A);
+  xt::xarray<double, xt::layout_type::column_major> _B(B.shape());
+  _B.assign(B);
+
+  int N = _A.shape(0);
+  int nrhs = _B.dimension() == 1 ? 1 : _B.shape(1);
+  int LDA = _A.shape(0);
+  int LDB = B.shape(0);
+  std::vector<int> IPIV(N);
+  int info;
+  dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), _B.data(), &LDB, &info);
+  if (info != 0)
+    throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
+
+  return _B;
+}
+//------------------------------------------------------------------

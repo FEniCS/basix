@@ -15,9 +15,7 @@
 #include "math.h"
 #include "polyset.h"
 #include "version.h"
-
 #include <numeric>
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xlayout.hpp>
@@ -251,7 +249,7 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
   B_cmajor.assign(B);
 
   // Compute C = (BD^T)^{-1} B
-  auto result = xt::linalg::solve(BDt, B_cmajor);
+  auto result = math::solve(BDt, B_cmajor);
 
   xt::xtensor<double, 2> C({result.shape(0), result.shape(1)});
   C.assign(result);

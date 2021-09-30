@@ -172,8 +172,7 @@ basix::FiniteElement basix::create_element(element::family family,
 xt::xtensor<double, 3> basix::compute_expansion_coefficients(
     cell::type celltype, const xt::xtensor<double, 2>& B,
     const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
-    const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
-    double kappa_tol)
+    const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree)
 {
   std::size_t num_dofs(0), vs(0);
   for (auto& Md : M)

@@ -6,7 +6,6 @@
 #include "math.h"
 #include <cmath>
 #include <vector>
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xview.hpp>

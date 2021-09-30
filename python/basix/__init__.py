@@ -7,9 +7,9 @@ functionality can be used via this Python interface.
 
 # Public interface
 from ._basixcpp import __version__
-from . import cell, finite_element, lattice, variants, interpolation
+from . import cell, finite_element, lattice, variants
 from ._basixcpp import (CellType, LatticeType, LatticeSimplexMethod, create_lattice, ElementFamily,
-                        create_element, LagrangeVariant)
+                        create_element, LagrangeVariant, compute_interpolation_between_elements)
 
 # To possibly be removed
 from ._basixcpp import (topology, geometry, tabulate_polynomial_set,

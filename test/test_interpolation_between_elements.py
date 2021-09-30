@@ -15,7 +15,7 @@ def run_test(lower_element, higher_element, power, value_size):
     ])
     l_coeffs = lower_element.interpolation_matrix @ l_eval
 
-    i_m = basix.interpolation.compute_interpolation_between_elements(lower_element, higher_element)
+    i_m = basix.compute_interpolation_between_elements(lower_element, higher_element)
     h_coeffs = i_m @ l_coeffs
 
     h_points = higher_element.points
@@ -125,9 +125,9 @@ def test_blocked_interpolation(cell_type, order):
         l_coeffs[i::nedelec.value_size] = v
 
     # Test interpolation from Nedelec to blocked Lagrange
-    i_m = basix.interpolation.compute_interpolation_between_elements(nedelec, lagrange)
+    i_m = basix.compute_interpolation_between_elements(nedelec, lagrange)
     assert np.allclose(l_coeffs, i_m @ n_coeffs)
 
     # Test interpolation from blocked Lagrange to Nedelec
-    i_m = basix.interpolation.compute_interpolation_between_elements(lagrange, nedelec)
+    i_m = basix.compute_interpolation_between_elements(lagrange, nedelec)
     assert np.allclose(n_coeffs, i_m @ l_coeffs)

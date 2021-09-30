@@ -6,6 +6,7 @@
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
 #include <basix/indexing.h>
+#include <basix/interpolation.h>
 #include <basix/lattice.h>
 #include <basix/maps.h>
 #include <basix/polyset.h>
@@ -426,6 +427,16 @@ Interface to the Basix C++ library.
       },
       "Create a continuous FiniteElement of a given family, celltype, degree "
       "and Lagrange variant");
+
+  // Interpolate between elements
+  m.def("compute_interpolation_between_elements",
+        [](const FiniteElement& element_from, const FiniteElement& element_to)
+            -> const py::array_t<double, py::array::c_style> {
+          xt::xtensor<double, 2> out
+              = basix::compute_interpolation_between_elements(element_from,
+                                                              element_to);
+          return py::array_t<double>(out.shape(), out.data());
+        });
 
   m.def(
       "tabulate_polynomial_set",

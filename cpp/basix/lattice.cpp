@@ -178,9 +178,14 @@ xt::xtensor<double, 1> warp_function(lattice::type lattice_type, int n,
   for (int i = 0; i < n + 1; ++i)
     pts[i] -= static_cast<double>(i) / static_cast<double>(n);
 
-  xt::xtensor<double, 2> v = tabulate_dlagrange(n, x);
+  const xt::xtensor<double, 2> v = tabulate_dlagrange(n, x);
 
-  return xt::linalg::dot(v, pts);
+  xt::xtensor<double, 1> w = xt::zeros<double>({v.shape(0)});
+  for (std::size_t i = 0; i < v.shape(0); ++i)
+    for (std::size_t j = 0; j < v.shape(1); ++j)
+      w[i] += v(i, j) * pts[j];
+
+  return w;
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,

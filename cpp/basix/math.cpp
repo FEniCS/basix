@@ -39,13 +39,13 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
   std::vector<double> work(1);
   std::vector<int> iwork(1);
 
-  // Query and allocate the optimal workspace
+  // Query optimal workspace size
   dsyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
           iwork.data(), &liwork, &info);
   if (info != 0)
     throw std::runtime_error("Could not find workspace size for syevd.");
 
-  // Solve eigenproblem
+  // Solve eigen problem
   work.resize(work[0]);
   iwork.resize(iwork[0]);
   lwork = work.size();

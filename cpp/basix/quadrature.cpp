@@ -82,10 +82,7 @@ std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
 
   auto tmp = xt::sqrt(xt::view(_beta, xt::range(1, _)));
 
-  // Note: forcing the layout type to get around an xtensor bug with Intel
-  // Compilers
-  // https://github.com/xtensor-stack/xtensor/issues/2351
-  xt::xtensor<double, 2, xt::layout_type::column_major> A
+  xt::xtensor<double, 2> A
       = xt::diag(_alpha) + xt::diag(tmp, 1) + xt::diag(tmp, -1);
 
   auto [evals, evecs] = math::eigh(A);

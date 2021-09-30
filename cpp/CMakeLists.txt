@@ -149,6 +149,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.cpp

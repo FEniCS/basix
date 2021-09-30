@@ -16,13 +16,163 @@
 
 using namespace basix;
 
+namespace
+{
+//----------------------------------------------------------------------------
+std::tuple<lattice::type, lattice::simplex_method, bool>
+variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
+{
+  switch (variant)
+  {
+  case element::lagrange_variant::equispaced:
+    return {lattice::type::equispaced, lattice::simplex_method::none, true};
+  case element::lagrange_variant::gll_warped:
+    return {lattice::type::gll, lattice::simplex_method::warp, true};
+  case element::lagrange_variant::gll_isaac:
+    return {lattice::type::gll, lattice::simplex_method::isaac, true};
+  case element::lagrange_variant::gll_centroid:
+    return {lattice::type::gll, lattice::simplex_method::centroid, true};
+  case element::lagrange_variant::chebyshev_warped:
+  {
+    if (celltype == cell::type::interval
+        or celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      return {lattice::type::chebyshev, lattice::simplex_method::none, false};
+    // TODO: is this the best thing to do for simplices?
+    return {lattice::type::chebyshev_plus_endpoints,
+            lattice::simplex_method::warp, false};
+  }
+  case element::lagrange_variant::chebyshev_isaac:
+  {
+    if (celltype == cell::type::interval
+        or celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      return {lattice::type::chebyshev, lattice::simplex_method::none, false};
+    // TODO: is this the best thing to do for simplices?
+    return {lattice::type::chebyshev_plus_endpoints,
+            lattice::simplex_method::isaac, false};
+  }
+  case element::lagrange_variant::chebyshev_centroid:
+    return {lattice::type::chebyshev, lattice::simplex_method::centroid, false};
+  case element::lagrange_variant::gl_warped:
+  {
+    if (celltype == cell::type::interval
+        or celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      return {lattice::type::gl, lattice::simplex_method::none, false};
+    // TODO: is this the best thing to do for simplices?
+    return {lattice::type::gl_plus_endpoints, lattice::simplex_method::warp,
+            false};
+  }
+  case element::lagrange_variant::gl_isaac:
+  {
+    if (celltype == cell::type::interval
+        or celltype == cell::type::quadrilateral
+        or celltype == cell::type::hexahedron)
+      return {lattice::type::gl, lattice::simplex_method::none, false};
+    // TODO: is this the best thing to do for simplices?
+    return {lattice::type::gl_plus_endpoints, lattice::simplex_method::isaac,
+            false};
+  }
+  case element::lagrange_variant::gl_centroid:
+    return {lattice::type::gl, lattice::simplex_method::centroid, false};
+  default:
+    throw std::runtime_error("Unsupported variant");
+  }
+}
+//-----------------------------------------------------------------------------
+FiniteElement create_d_lagrange(cell::type celltype, int degree,
+                                lattice::type lattice_type,
+                                lattice::simplex_method simplex_method)
+{
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  if (celltype == cell::type::prism or celltype == cell::type::pyramid)
+  {
+    throw std::runtime_error(
+        "This variant is not yet supported on prisms and pyramids.");
+  }
+
+  const int lattice_degree
+      = celltype == cell::type::triangle
+            ? degree + 3
+            : (celltype == cell::type::tetrahedron ? degree + 4 : degree + 2);
+
+  // Create points in interior
+  auto pt = lattice::create(celltype, lattice_degree, lattice_type, false,
+                            simplex_method);
+  x[tdim].push_back(pt);
+  const std::size_t num_dofs = pt.shape(0);
+  std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
+  M[tdim].push_back(xt::xtensor<double, 3>(s));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
+
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+
+  // Entity transformations for edges
+  if (tdim > 1)
+  {
+    const std::array<std::size_t, 3> shape = {1, 0, 0};
+    xt::xtensor<double, 3> et = xt::zeros<double>(shape);
+    entity_transformations[cell::type::interval] = et;
+  }
+
+  // Entity transformations for triangular faces
+  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
+  {
+    const std::array<std::size_t, 3> shape = {2, 0, 0};
+    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
+    entity_transformations[cell::type::triangle] = ft;
+  }
+
+  // Entity transformations for quadrilateral faces
+  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
+  {
+    const std::array<std::size_t, 3> shape = {2, 0, 0};
+    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
+    entity_transformations[cell::type::quadrilateral] = ft;
+  }
+
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
+      {x[0], x[1], x[2], x[3]}, degree);
+  return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
+                       entity_transformations, x, M, maps::type::identity,
+                       true);
+}
+//-----------------------------------------------------------------------------
+} // namespace
+
 //----------------------------------------------------------------------------
 FiniteElement basix::create_lagrange(cell::type celltype, int degree,
-                                     lattice::type lattice_type,
+                                     element::lagrange_variant variant,
                                      bool discontinuous)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
+
+  auto [lattice_type, simplex_method, exterior]
+      = variant_to_lattice(celltype, variant);
+
+  if (!exterior)
+  {
+    // Points used to define this variant are all interior to the cell, so this
+    // variant required that the element is discontinuous
+    if (!discontinuous)
+    {
+      throw std::runtime_error("This variant of Lagrange is only supported for "
+                               "discontinuous elements");
+    }
+    return create_d_lagrange(celltype, degree, lattice_type, simplex_method);
+  }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t ndofs = polyset::dim(celltype, degree);
@@ -40,7 +190,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
       throw std::runtime_error(
           "Cannot create a continuous order 0 Lagrange basis function");
     }
-    auto pt = lattice::create(celltype, 0, lattice_type, true);
+    auto pt = lattice::create(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
     std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
@@ -49,7 +199,7 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   }
   else
   {
-    for (std::size_t dim = 0; dim < topology.size(); ++dim)
+    for (std::size_t dim = 0; dim <= tdim; ++dim)
     {
       M[dim].resize(topology[dim].size());
       x[dim].resize(topology[dim].size());
@@ -70,7 +220,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
         }
         else if (dim == tdim)
         {
-          x[dim][e] = lattice::create(celltype, degree, lattice_type, false);
+          x[dim][e] = lattice::create(celltype, degree, lattice_type, false,
+                                      simplex_method);
           const std::size_t num_dofs = x[dim][e].shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
           M[dim][e] = xt::xtensor<double, 3>(s);
@@ -80,7 +231,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const auto lattice = lattice::create(ct, degree, lattice_type, false);
+          const auto lattice = lattice::create(ct, degree, lattice_type, false,
+                                               simplex_method);
           const std::size_t num_dofs = lattice.shape(0);
           std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
           M[dim][e] = xt::xtensor<double, 3>(s);
@@ -106,6 +258,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   }
 
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+
+  // Entity transformations for edges
   if (tdim > 1)
   {
     const std::vector<int> edge_ref
@@ -117,6 +271,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
       et(0, i, edge_ref[i]) = 1;
     entity_transformations[cell::type::interval] = et;
   }
+
+  // Entity transformations for triangular faces
   if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
       or celltype == cell::type::pyramid)
   {
@@ -134,6 +290,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
     }
     entity_transformations[cell::type::triangle] = ft;
   }
+
+  // Entity transformations for quadrilateral faces
   if (celltype == cell::type::hexahedron or celltype == cell::type::prism
       or celltype == cell::type::pyramid)
   {

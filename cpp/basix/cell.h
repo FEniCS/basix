@@ -77,14 +77,6 @@ int topological_dimension(cell::type celltype);
 /// @return cell type of sub-entity
 cell::type sub_entity_type(cell::type celltype, int dim, int index);
 
-/// Convert a cell type string to enum
-/// @param name String
-/// @return cell type
-cell::type str_to_type(std::string name);
-
-/// Convert cell type enum to string
-const std::string& type_to_str(cell::type type);
-
 /// Get the volume of a reference cell
 /// @param cell_type Type of cell
 double volume(cell::type cell_type);

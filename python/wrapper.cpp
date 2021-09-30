@@ -21,6 +21,28 @@
 namespace py = pybind11;
 using namespace basix;
 
+namespace
+{
+const std::string& cell_type_to_str(cell::type type)
+{
+  static const std::map<cell::type, std::string> type_to_name
+      = {{cell::type::point, "point"},
+         {cell::type::interval, "interval"},
+         {cell::type::triangle, "triangle"},
+         {cell::type::tetrahedron, "tetrahedron"},
+         {cell::type::quadrilateral, "quadrilateral"},
+         {cell::type::pyramid, "pyramid"},
+         {cell::type::prism, "prism"},
+         {cell::type::hexahedron, "hexahedron"}};
+
+  auto it = type_to_name.find(type);
+  if (it == type_to_name.end())
+    throw std::runtime_error("Can't find type");
+
+  return it->second;
+}
+} // namespace
+
 const std::string tabdoc = R"(
 Tabulate the finite element basis function and derivatives at points.
 If no derivatives are required, use nderiv=0. In 2D and 3D, the derivatives are ordered
@@ -130,20 +152,39 @@ Interface to the Basix C++ library.
 
   py::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
-      .value("gll_warped", lattice::type::gll_warped)
-      .value("gll_isaac", lattice::type::gll_isaac);
+      .value("gll", lattice::type::gll)
+      .value("chebyshev", lattice::type::chebyshev)
+      .value("gl", lattice::type::gl);
+
+  py::enum_<lattice::simplex_method>(m, "LatticeSimplexMethod")
+      .value("none", lattice::simplex_method::none)
+      .value("warp", lattice::simplex_method::warp)
+      .value("isaac", lattice::simplex_method::isaac)
+      .value("centroid", lattice::simplex_method::centroid);
 
   m.def(
       "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior)
-      {
-        auto l = lattice::create(celltype, n, type, exterior);
+      [](cell::type celltype, int n, lattice::type type, bool exterior) {
+        auto l = lattice::create(celltype, n, type, exterior,
+                                 lattice::simplex_method::none);
         auto strides = l.strides();
         for (auto& s : strides)
           s *= sizeof(double);
         return py::array_t<double>(l.shape(), strides, l.data());
       },
-      "Create a uniform lattice of points on a reference cell");
+      "Create a lattice of points on a reference cell");
+
+  m.def(
+      "create_lattice",
+      [](cell::type celltype, int n, lattice::type type, bool exterior,
+         lattice::simplex_method method) {
+        auto l = lattice::create(celltype, n, type, exterior, method);
+        auto strides = l.strides();
+        for (auto& s : strides)
+          s *= sizeof(double);
+        return py::array_t<double>(l.shape(), strides, l.data());
+      },
+      "Create a lattice of points on a reference cell");
 
   py::enum_<maps::type>(m, "MappingType")
       .value("identity", maps::type::identity)
@@ -151,13 +192,6 @@ Interface to the Basix C++ library.
       .value("contravariantPiola", maps::type::contravariantPiola)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
       .value("doubleContravariantPiola", maps::type::doubleContravariantPiola);
-
-  m.def(
-      "mapping_to_str",
-      [](maps::type mapping_type) -> const std::string& {
-        return maps::type_to_str(mapping_type);
-      },
-      "Convert a mapping type to a string.");
 
   py::enum_<cell::type>(m, "CellType")
       .value("point", cell::type::point)
@@ -169,12 +203,6 @@ Interface to the Basix C++ library.
       .value("prism", cell::type::prism)
       .value("pyramid", cell::type::pyramid);
 
-  m.def(
-      "cell_to_str",
-      [](cell::type cell_type) -> const std::string& {
-        return cell::type_to_str(cell_type);
-      },
-      "Convert a cell type to a string.");
   m.def(
       "cell_volume",
       [](cell::type cell_type) -> double { return cell::volume(cell_type); },
@@ -227,59 +255,6 @@ Interface to the Basix C++ library.
       .value("Serendipity", element::family::Serendipity)
       .value("DPC", element::family::DPC)
       .value("CR", element::family::CR);
-
-  m.def(
-      "family_to_str",
-      [](element::family family_type) -> const std::string& {
-        return element::type_to_str(family_type);
-      },
-      "Convert a family type to a string.");
-
-  // m.def(
-  //     "create_new_element",
-  //     [](element::family family_type, cell::type celltype, int degree,
-  //        std::vector<std::size_t>& value_shape,
-  //        const py::array_t<double, py::array::c_style>& interpolation_points,
-  //        const py::array_t<double, py::array::c_style>& interpolation_matrix,
-  //        const py::array_t<double, py::array::c_style>& coeffs,
-  //        const std::vector<std::vector<int>>& entity_dofs,
-  //        const py::array_t<double, py::array::c_style>& base_transformations,
-  //        maps::type mapping_type = maps::type::identity) -> FiniteElement {
-  //       return FiniteElement(family_type, celltype, degree, value_shape,
-  //                            compute_expansion_coefficients(
-  //                                celltype, adapt_x(coeffs),
-  //                                adapt_x(interpolation_matrix),
-  //                                adapt_x(interpolation_points),
-  //                                degree, 1.0e6),
-  //                            entity_dofs, adapt_x(base_transformations),
-  //                            adapt_x(interpolation_points),
-  //                            adapt_x(interpolation_matrix), mapping_type);
-  //     },
-  //     "Create an element from basic data");
-
-  // m.def(
-  //     "create_new_element",
-  //     [](std::string family_name, std::string cell_name, int degree,
-  //        std::vector<std::size_t>& value_shape,
-  //        const py::array_t<double, py::array::c_style>& interpolation_points,
-  //        const py::array_t<double, py::array::c_style>& interpolation_matrix,
-  //        const py::array_t<double, py::array::c_style>& coeffs,
-  //        const std::vector<std::vector<int>>& entity_dofs,
-  //        const py::array_t<double, py::array::c_style>& base_transformations,
-  //        maps::type mapping_type = maps::type::identity) -> FiniteElement {
-  //       return FiniteElement(element::str_to_type(family_name),
-  //                            cell::str_to_type(cell_name), degree,
-  //                            value_shape, compute_expansion_coefficients(
-  //                                cell::str_to_type(cell_name),
-  //                                adapt_x(coeffs),
-  //                                adapt_x(interpolation_matrix),
-  //                                adapt_x(interpolation_points),
-  //                                degree, 1.0e6),
-  //                            entity_dofs, adapt_x(base_transformations),
-  //                            adapt_x(interpolation_points),
-  //                            adapt_x(interpolation_matrix), mapping_type);
-  //     },
-  //     "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def(
@@ -365,7 +340,7 @@ Interface to the Basix C++ library.
              py::dict t2;
              for (auto tpart : t)
              {
-               t2[cell::type_to_str(tpart.first).c_str()] = py::array_t<double>(
+               t2[cell_type_to_str(tpart.first).c_str()] = py::array_t<double>(
                    tpart.second.shape(), tpart.second.data());
              }
              return t2;
@@ -400,6 +375,19 @@ Interface to the Basix C++ library.
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           });
 
+  py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
+      .value("equispaced", element::lagrange_variant::equispaced)
+      .value("gll_warped", element::lagrange_variant::gll_warped)
+      .value("gll_isaac", element::lagrange_variant::gll_isaac)
+      .value("gll_centroid", element::lagrange_variant::gll_centroid)
+      .value("chebyshev_warped", element::lagrange_variant::chebyshev_warped)
+      .value("chebyshev_isaac", element::lagrange_variant::chebyshev_isaac)
+      .value("chebyshev_centroid",
+             element::lagrange_variant::chebyshev_centroid)
+      .value("gl_warped", element::lagrange_variant::gl_warped)
+      .value("gl_isaac", element::lagrange_variant::gl_isaac)
+      .value("gl_centroid", element::lagrange_variant::gl_centroid);
+
   // Create FiniteElement
   m.def(
       "create_element",
@@ -413,12 +401,13 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         lattice::type lattice_type, bool discontinuous) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree,
-                                     lattice_type, discontinuous);
+         element::lagrange_variant variant,
+         bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, variant,
+                                     discontinuous);
       },
-      "Create a FiniteElement of a given family, celltype, degree and lattice "
-      "type");
+      "Create a FiniteElement of a given family, celltype, degree and Lagrange "
+      "variant");
 
   m.def(
       "create_element",
@@ -432,13 +421,11 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         lattice::type lattice_type) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree,
-                                     lattice_type);
+         element::lagrange_variant variant) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, variant);
       },
       "Create a continuous FiniteElement of a given family, celltype, degree "
-      "and lattice "
-      "type");
+      "and Lagrange variant");
 
   m.def(
       "tabulate_polynomial_set",

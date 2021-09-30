@@ -3,13 +3,27 @@
 // SPDX-License-Identifier:    MIT
 
 #pragma once
-#include <string>
 
 namespace basix
 {
 
 namespace element
 {
+/// An enum defining the variants of a Lagrange space that can be created
+enum class lagrange_variant
+{
+  equispaced = 0,
+  gll_warped = 1,
+  gll_isaac = 2,
+  gll_centroid = 3,
+  chebyshev_warped = 4,
+  chebyshev_isaac = 5,
+  chebyshev_centroid = 6,
+  gl_warped = 7,
+  gl_isaac = 8,
+  gl_centroid = 9,
+};
+
 /// Enum of available element families
 enum class family
 {
@@ -25,12 +39,6 @@ enum class family
   Bubble = 9,
   Serendipity = 10
 };
-
-/// Convert string to a family
-element::family str_to_type(std::string name);
-
-// Convert family to string
-const std::string& type_to_str(element::family type);
 
 } // namespace element
 

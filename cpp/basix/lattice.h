@@ -16,29 +16,52 @@ namespace basix::lattice
 /// on an interval and a regularly spaced set of points on other
 /// shapes.
 ///
-/// lattice::type:gll_warped represents the GLL (Gauss-Lobatto-Legendre)
-/// points on an interval. Fot other shapes, the points used are obtained
-/// by warping an equispaced grid of points, as described in Hesthaven and
-/// Warburton, Nodal Discontinuous Galerkin Methods, 2008, pp 175-180
-/// (https://doi.org/10.1007/978-0-387-72067-8).
+/// lattice::type::gll represents the GLL (Gauss-Lobatto-Legendre)
+/// points.
 ///
-/// lattice::type:gll_isaac represents the GLL (Gauss-Lobatto-Legendre)
-/// points on an interval. Fot other shapes, the points used are obtained
-/// following the methd described in Isaac, Recursive, Parameter-Free,
-/// Explicitly Defined Interpolation Nodes for Simplices, 2020
-/// (https://doi.org/10.1137/20M1321802).
+/// lattice::type::chebyshev represents the Chebyshev points.
+///
+/// lattice::type::gl represents the GL (Gauss-Legendre) points.
+///
+/// lattice::type::chebyshev_plus_endpoints represents the Chebyshev points plus
+/// the endpoints of the interval. lattice::type::gl_plus_endpoints represents
+/// the Chebyshev points plus the endpoints of the interval. These points are
+/// only intended for internal use.
 enum class type
 {
   equispaced = 0,
-  gll_warped = 1,
-  gll_isaac = 2,
+  gll = 1,
+  chebyshev = 2,
+  gl = 4,
+
+  chebyshev_plus_endpoints = 10,
+  gl_plus_endpoints = 11,
 };
 
-/// Convert string to a lattice type
-lattice::type str_to_type(std::string name);
-
-// Convert family to string
-std::string type_to_str(lattice::type type);
+/// The method used to generate points inside simplices.
+///
+/// lattice::simplex_method::none can be used when no method is needed (eg when
+/// making points on a quadrilateral, or when making equispaced points).
+///
+/// lattice::simplex_method::warp will use the warping defined in Hesthaven and
+/// Warburton, Nodal Discontinuous Galerkin Methods, 2008, pp 175-180
+/// (https://doi.org/10.1007/978-0-387-72067-8).
+///
+/// lattice::simplex_method::isaac will use the method described in Isaac,
+/// Recursive, Parameter-Free, Explicitly Defined Interpolation Nodes for
+/// Simplices, 2020 (https://doi.org/10.1137/20M1321802).
+///
+/// lattice::simplex_method::centroid will place points at the centroids of the
+/// grid created by putting points on the edges, as described in Blyth and
+/// Pozrikidis, A Lobatto interpolation grid over the triangle, 2001
+/// (https://doi.org/10.1093/imamat/hxh077).
+enum class simplex_method
+{
+  none = 0,
+  warp = 1,
+  isaac = 2,
+  centroid = 3,
+};
 
 /// Create a lattice of points on a reference cell
 /// optionally including the outer surface points
@@ -56,10 +79,12 @@ std::string type_to_str(lattice::type type);
 /// @param celltype The cell::type
 /// @param n Size in each direction. There are n+1 points along each edge of the
 /// cell.
-/// @param type A lattice type
 /// @param exterior If set, includes outer boundaries
+/// @param type A lattice type
+/// @param simplex_method The method used to generate points on simplices
 /// @return Set of points
-xt::xtensor<double, 2> create(cell::type celltype, int n, lattice::type type,
-                              bool exterior);
+xt::xtensor<double, 2>
+create(cell::type celltype, int n, lattice::type type, bool exterior,
+       lattice::simplex_method simplex_method = lattice::simplex_method::none);
 
 } // namespace basix::lattice

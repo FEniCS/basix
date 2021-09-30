@@ -82,8 +82,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Add integral moments on facets
-  const FiniteElement facet_moment_space
-      = create_lagrange(facettype, degree - 1, lattice::type::equispaced, true);
+  const FiniteElement facet_moment_space = create_lagrange(
+      facettype, degree - 1, element::lagrange_variant::equispaced, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
   xt::xtensor<double, 3> facet_transforms
@@ -94,7 +94,8 @@ FiniteElement basix::create_rt(cell::type celltype, int degree,
   {
     // Interior integral moment
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
-        create_lagrange(celltype, degree - 2, lattice::type::equispaced, true),
+        create_lagrange(celltype, degree - 2,
+                        element::lagrange_variant::equispaced, true),
         celltype, tdim, quad_deg);
   }
 

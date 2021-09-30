@@ -4,6 +4,13 @@ cmake_minimum_required(VERSION 3.16)
 project(Basix VERSION "0.3.1.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
+if (SKBUILD)
+  # Always use lib/ in the Python root. Otherwise, environment used for
+  # wheels might place in lib64/, which CMake on some systems will not
+  # find.
+  set(CMAKE_INSTALL_LIBDIR lib)
+endif()
+
 include(FeatureSummary)
 
 # Enable SIMD with xtensor
@@ -57,6 +64,7 @@ else()
   find_package(xtensor ${XTENSOR_MIN_VERSION} QUIET)
 endif()
 find_package(xtensor-blas 0.19 QUIET)
+
 if(NOT xtl_FOUND)
   message("downloading xtl source...")
   FetchContent_Declare(
@@ -68,6 +76,7 @@ if(NOT xtl_FOUND)
 else()
   message("found xtl ${xtl_VERSION}")
 endif()
+
 if(NOT xtensor_FOUND)
   message("downloading xtensor source...")
   FetchContent_Declare(
@@ -79,6 +88,7 @@ if(NOT xtensor_FOUND)
 else()
   message("found xtensor ${xtensor_VERSION}")
 endif()
+
 if(NOT xtensor-blas_FOUND)
   message("downloading xtensor-blas source...")
   FetchContent_Declare(
@@ -86,7 +96,13 @@ if(NOT xtensor-blas_FOUND)
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
     GIT_TAG        0.19.1
   )
-  FetchContent_MakeAvailable(xtensor_blas)
+  # Not using FetchContent_MakeAvailable(xtensor_blas) because we don't
+  # want xtensor_blas to be installed
+  FetchContent_GetProperties(xtensor_blas)
+  if(NOT xtensor_blas_POPULATED)
+    FetchContent_Populate(xtensor_blas)
+    add_subdirectory(${xtensor_blas_SOURCE_DIR} ${xtensor_blas_BINARY_DIR} EXCLUDE_FROM_ALL)
+  endif()
 else()
   message("found xtensor-blas ${xtensor-blas_VERSION}")
 endif()
@@ -130,11 +146,9 @@ set(HEADERS_basix
 target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/dof-transformations.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/element-families.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/maps.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.cpp
@@ -212,14 +226,14 @@ install(TARGETS basix
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT RuntimeLibraries
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT Development)
 
-# Install CMake helpers
+# Configure CMake helpers
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(BasixConfigVersion.cmake VERSION ${PACKAGE_VERSION}
   COMPATIBILITY AnyNewerVersion)
 configure_package_config_file(BasixConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/BasixConfig.cmake
   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)
 
-# Install library and CMake files
+# Install CMake files
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/BasixConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/BasixConfigVersion.cmake
   DESTINATION  ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
 install(EXPORT BasixTargets FILE BasixTargets.cmake NAMESPACE Basix::

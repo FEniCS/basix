@@ -238,14 +238,8 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
   auto Dt_flat = xt::transpose(
       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
-  xt::xtensor<double, 2, xt::layout_type::column_major> BDt
-      = basix::math::dot(B, Dt_flat);
-
-  // Note: forcing the layout type to get around an xtensor bug with Intel
-  // Compilers
-  // https://github.com/xtensor-stack/xtensor/issues/2351
-  xt::xtensor<double, 2, xt::layout_type::column_major> B_cmajor(
-      {B.shape(0), B.shape(1)});
+  xt::xtensor<double, 2> BDt = basix::math::dot(B, Dt_flat);
+  xt::xtensor<double, 2> B_cmajor({B.shape(0), B.shape(1)});
   B_cmajor.assign(B);
 
   // Compute C = (BD^T)^{-1} B

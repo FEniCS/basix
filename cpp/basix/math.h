@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <array>
 #include <cmath>
 #include <type_traits>
 #include <xtensor/xfixed.hpp>
@@ -65,7 +64,7 @@ xt::xtensor<typename U::value_type, 2> dot(const U& A, const V& B)
 
 /// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
 /// @param[in] A Input matrix
-/// @param[out] C Filled to be C = A * B
+/// @return TODO
 std::pair<xt::xtensor<double, 1>,
           xt::xtensor<double, 2, xt::layout_type::column_major>>
 eigh(const xt::xtensor<double, 2>& A);

@@ -9,7 +9,7 @@ import random
 from .utils import parametrize_over_elements
 
 
-@parametrize_over_elements(3)
+@parametrize_over_elements(1)
 def test_if_permutations(cell_type, element_type, degree, element_args):
     e = basix.create_element(element_type, cell_type, degree, *element_args)
 

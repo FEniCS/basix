@@ -4,7 +4,6 @@
 
 #include "precompute.h"
 #include "math.h"
-#include <xtensor-blas/xlinalg.hpp>
 
 using namespace basix;
 
@@ -36,7 +35,7 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
   // Permute the matrix so that all the top left blocks are invertible
   for (std::size_t i = 0; i < dim; ++i)
   {
-    double max_det = 0;
+    double max_eval = 0;
     std::size_t col = 0;
     for (std::size_t j = 0; j < dim; ++j)
     {
@@ -45,11 +44,13 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
       if (!used)
       {
         xt::col(permuted_matrix, i) = xt::col(matrix, j);
-        double det = std::abs(xt::linalg::det(xt::view(
-            permuted_matrix, xt::range(0, i + 1), xt::range(0, i + 1))));
-        if (det > max_det)
+        auto mat = xt::view(permuted_matrix, xt::range(0, i + 1),
+                            xt::range(0, i + 1));
+        xt::xtensor<double, 2> mat2 = math::dot(mat, xt::transpose(mat));
+        auto [evals, evecs] = math::eigh(mat2);
+        if (double lambda = std::abs(evals.front()); lambda > max_eval)
         {
-          max_det = det;
+          max_eval = lambda;
           col = j;
         }
       }

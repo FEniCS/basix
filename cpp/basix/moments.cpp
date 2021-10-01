@@ -5,9 +5,9 @@
 #include "moments.h"
 #include "cell.h"
 #include "finite-element.h"
+#include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xbuilder.hpp>
@@ -79,7 +79,7 @@ map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
     // Compute x = x0 + \Delta x
     p[e] = xt::tile(xt::view(entity_x, xt::newaxis(), 0), x.shape(0));
     axes_e = xt::view(axes, e, xt::all(), xt::all());
-    p[e] += xt::linalg::dot(x, axes_e);
+    p[e] += basix::math::dot(x, axes_e);
   }
 
   return {p, axes};
@@ -226,7 +226,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
           _pulled, xt::range(0, _pulled.shape(0)),
           xt::range(moment_space.dim() * v, moment_space.dim() * (v + 1)));
       xt::view(out, i, xt::all(), xt::all())
-          += xt::linalg::dot(Pview, phi_transformed);
+          += basix::math::dot(Pview, phi_transformed);
     }
   }
 
@@ -557,7 +557,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
       // to the integral Jacobian
       auto t0 = xt::row(facet_x, 1) - x0;
       auto t1 = xt::row(facet_x, 2) - x0;
-      normal = xt::linalg::cross(t0, t1);
+      normal = basix::math::cross(t0, t1);
       for (std::size_t p = 0; p < pts.shape(0); ++p)
       {
         xt::view(points[e], p, xt::all())

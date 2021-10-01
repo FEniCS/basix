@@ -3,26 +3,13 @@
 // SPDX-License-Identifier:    MIT
 
 #include "cell.h"
+#include "math.h"
 #include <map>
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
-
-namespace
-{
-template <typename U, typename V>
-xt::xtensor<double, 1> cross3(const U& u, const V& v)
-{
-  xt::xtensor<double, 1> c = xt::zeros<double>({3});
-  c[0] = u[1] * v[2] - u[2] * v[1];
-  c[1] = u[2] * v[0] - u[0] * v[2];
-  c[2] = u[0] * v[1] - u[1] * v[0];
-  return c;
-}
-} // namespace
 
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> cell::geometry(cell::type celltype)
@@ -436,7 +423,7 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
       assert(facets[f].size() == 3 or facets[f].size() == 4);
       auto e0 = xt::row(x, facet[1]) - xt::row(x, facet[0]);
       auto e1 = xt::row(x, facet[2]) - xt::row(x, facet[0]);
-      normal = cross3(e0, e1);
+      normal = basix::math::cross(e0, e1);
       normal /= xt::sqrt(xt::sum(normal * normal));
     }
     return normals;

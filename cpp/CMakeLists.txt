@@ -55,7 +55,7 @@ else()
   message("found xsimd ${xsimd_VERSION}")
 endif()
 
-# xtl, xtensor, xtensor-blas (required)
+# xtl, xtensor (required)
 if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
   find_package(xtl ${XTL_MIN_VERSION}...<0.8 QUIET)
   find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.24 QUIET)
@@ -63,7 +63,6 @@ else()
   find_package(xtl ${XTL_MIN_VERSION} QUIET)
   find_package(xtensor ${XTENSOR_MIN_VERSION} QUIET)
 endif()
-find_package(xtensor-blas 0.19 QUIET)
 
 if(NOT xtl_FOUND)
   message("downloading xtl source...")
@@ -89,24 +88,6 @@ else()
   message("found xtensor ${xtensor_VERSION}")
 endif()
 
-if(NOT xtensor-blas_FOUND)
-  message("downloading xtensor-blas source...")
-  FetchContent_Declare(
-    xtensor_blas
-    GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
-    GIT_TAG        0.19.1
-  )
-  # Not using FetchContent_MakeAvailable(xtensor_blas) because we don't
-  # want xtensor_blas to be installed
-  FetchContent_GetProperties(xtensor_blas)
-  if(NOT xtensor_blas_POPULATED)
-    FetchContent_Populate(xtensor_blas)
-    add_subdirectory(${xtensor_blas_SOURCE_DIR} ${xtensor_blas_BINARY_DIR} EXCLUDE_FROM_ALL)
-  endif()
-else()
-  message("found xtensor-blas ${xtensor-blas_VERSION}")
-endif()
-
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
@@ -127,6 +108,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/maps.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.h
@@ -148,6 +130,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.cpp
@@ -200,12 +183,6 @@ if (XTENSOR_OPTIMIZE AND TARGET xtensor::optimize)
 elseif(XTENSOR_OPTIMIZE)
   target_compile_options(basix PUBLIC -march=native)
 endif()
-
-# Note: we use get_target_property/set_target_properties to ensure that
-# that -isystem flag is applied to allow us to use strict compiler flags
-get_target_property(XTENSORBLAS_INC_SYS xtensor-blas INTERFACE_INCLUDE_DIRECTORIES)
-set_target_properties(xtensor-blas PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSORBLAS_INC_SYS}")
-target_link_libraries(basix PRIVATE xtensor-blas)
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

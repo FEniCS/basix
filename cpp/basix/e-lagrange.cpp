@@ -149,6 +149,162 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
                        true);
 }
 //-----------------------------------------------------------------------------
+FiniteElement basix::create_vtk_element(cell::type celltype, int degree,
+                                        bool discontinuous)
+{
+  if (celltype == cell::type::point)
+    throw std::runtime_error("Invalid celltype");
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  // Create points at nodes, ordered by topology (vertices first)
+  if (degree == 0)
+  {
+    if (!discontinuous)
+    {
+      throw std::runtime_error(
+          "Cannot create a continuous order 0 Lagrange basis function");
+    }
+    auto pt = lattice::create(celltype, 0, lattice_type, true, simplex_method);
+    x[tdim].push_back(pt);
+    const std::size_t num_dofs = pt.shape(0);
+    std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
+    M[tdim].push_back(xt::xtensor<double, 3>(s));
+    xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
+  }
+  else
+  {
+    for (std::size_t dim = 0; dim <= tdim; ++dim)
+    {
+      M[dim].resize(topology[dim].size());
+      x[dim].resize(topology[dim].size());
+
+      // Loop over entities of dimension 'dim'
+      for (std::size_t e = 0; e < topology[dim].size(); ++e)
+      {
+        const xt::xtensor<double, 2> entity_x
+            = cell::sub_entity_geometry(celltype, dim, e);
+        if (dim == 0)
+        {
+          x[dim][e] = entity_x;
+          const std::size_t num_dofs = entity_x.shape(0);
+          M[dim][e] = xt::xtensor<double, 3>(
+              {num_dofs, static_cast<std::size_t>(1), num_dofs});
+          xt::view(M[dim][e], xt::all(), 0, xt::all())
+              = xt::eye<double>(num_dofs);
+        }
+        else if (dim == tdim)
+        {
+          x[dim][e] = lattice::create(celltype, degree, lattice_type, false,
+                                      simplex_method);
+          const std::size_t num_dofs = x[dim][e].shape(0);
+          std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
+          M[dim][e] = xt::xtensor<double, 3>(s);
+          xt::view(M[dim][e], xt::all(), 0, xt::all())
+              = xt::eye<double>(num_dofs);
+        }
+        else
+        {
+          cell::type ct = cell::sub_entity_type(celltype, dim, e);
+          const auto lattice = lattice::create(ct, degree, lattice_type, false,
+                                               simplex_method);
+          const std::size_t num_dofs = lattice.shape(0);
+          std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
+          M[dim][e] = xt::xtensor<double, 3>(s);
+          xt::view(M[dim][e], xt::all(), 0, xt::all())
+              = xt::eye<double>(num_dofs);
+
+          auto x0s = xt::reshape_view(
+              xt::row(entity_x, 0),
+              {static_cast<std::size_t>(1), entity_x.shape(1)});
+          x[dim][e] = xt::tile(x0s, lattice.shape(0));
+          auto x0 = xt::row(entity_x, 0);
+          for (std::size_t j = 0; j < lattice.shape(0); ++j)
+          {
+            for (std::size_t k = 0; k < lattice.shape(1); ++k)
+            {
+              xt::row(x[dim][e], j)
+                  += (xt::row(entity_x, k + 1) - x0) * lattice(j, k);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+
+  // Entity transformations for edges
+  if (tdim > 1)
+  {
+    const std::vector<int> edge_ref
+        = doftransforms::interval_reflection(degree - 1);
+    const std::array<std::size_t, 3> shape
+        = {1, edge_ref.size(), edge_ref.size()};
+    xt::xtensor<double, 3> et = xt::zeros<double>(shape);
+    for (std::size_t i = 0; i < edge_ref.size(); ++i)
+      et(0, i, edge_ref[i]) = 1;
+    entity_transformations[cell::type::interval] = et;
+  }
+
+  // Entity transformations for triangular faces
+  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
+  {
+    const std::vector<int> face_rot
+        = doftransforms::triangle_rotation(degree - 2);
+    const std::vector<int> face_ref
+        = doftransforms::triangle_reflection(degree - 2);
+    const std::array<std::size_t, 3> shape
+        = {2, face_rot.size(), face_rot.size()};
+    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
+    for (std::size_t i = 0; i < face_rot.size(); ++i)
+    {
+      ft(0, i, face_rot[i]) = 1;
+      ft(1, i, face_ref[i]) = 1;
+    }
+    entity_transformations[cell::type::triangle] = ft;
+  }
+
+  // Entity transformations for quadrilateral faces
+  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
+      or celltype == cell::type::pyramid)
+  {
+    const std::vector<int> face_rot
+        = doftransforms::quadrilateral_rotation(degree - 1);
+    const std::vector<int> face_ref
+        = doftransforms::quadrilateral_reflection(degree - 1);
+    const std::array<std::size_t, 3> shape
+        = {2, face_rot.size(), face_rot.size()};
+    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
+    for (std::size_t i = 0; i < face_rot.size(); ++i)
+    {
+      ft(0, i, face_rot[i]) = 1;
+      ft(1, i, face_ref[i]) = 1;
+    }
+    entity_transformations[cell::type::quadrilateral] = ft;
+  }
+
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = make_discontinuous(x, M, entity_transformations, tdim, 1);
+  }
+
+  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+      celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
+      {x[0], x[1], x[2], x[3]}, degree);
+  return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
+                       entity_transformations, x, M, maps::type::identity,
+                       discontinuous);
+}
+//-----------------------------------------------------------------------------
 } // namespace
 
 //----------------------------------------------------------------------------
@@ -158,6 +314,9 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
+
+  if (variant == element::lagrange_variant::vtk)
+    return create_vtk_element(celltype, degree, discontinuous);
 
   auto [lattice_type, simplex_method, exterior]
       = variant_to_lattice(celltype, variant);

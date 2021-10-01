@@ -14,10 +14,15 @@ class FiniteElement;
 /// elements.
 ///
 /// If the two elements have the same value size, this function returns
-/// the interpolation between them. If one of the elements has value
-/// size 1, and the other has value size > 1, this function returns the
-/// interpolation matrix that maps the components of the element with a
-/// value size to/from the other element.
+/// the interpolation between them.
+///
+/// If element_from has value size 1 and element_to has value size > 1, then
+/// this function returns a matrix to interpolate from a blocked element_from
+/// (ie multiple copies of the element_from) into element_to.
+///
+/// If element_to has value size 1 and element_from has value size > 1, then
+/// this function returns a matrix that interpolates the components of
+/// element_from into copies of element_to.
 ///
 /// @note If the elements have different value sizes and both are
 /// greater than 1, this function throws a runtime error

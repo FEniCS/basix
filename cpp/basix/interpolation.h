@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "finite-element.h"
 #include <xtensor/xtensor.hpp>
 
 namespace basix
 {
+class FiniteElement;
 
 /// Computes a matrix that represents the interpolation between two
 /// elements.
@@ -23,6 +23,8 @@ namespace basix
 ///
 /// @param[in] element_from The element to interpolate from
 /// @param[in] element_to The element to interpolate to
+/// @return Matrix operator that maps the 'from' degrees-of-freedom to
+/// the 'to' degrees-of-freedom
 xt::xtensor<double, 2>
 compute_interpolation_between_elements(const FiniteElement& element_from,
                                        const FiniteElement& element_to);

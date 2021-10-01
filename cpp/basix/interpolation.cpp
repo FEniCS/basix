@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "interpolation.h"
+#include "finite-element.h"
 #include <exception>
 #include <xtensor/xtensor.hpp>
 

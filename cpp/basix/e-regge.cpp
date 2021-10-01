@@ -7,8 +7,8 @@
 #include "element-families.h"
 #include "lattice.h"
 #include "maps.h"
+#include "math.h"
 #include "polyset.h"
-#include <xtensor-blas/xlinalg.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xview.hpp>
 
@@ -108,7 +108,7 @@ create_regge_interpolation(cell::type celltype, int degree)
             edge_t[p] = geometry(vert_ids[r], p) - geometry(vert_ids[s], p);
 
           // outer product v.v^T
-          auto result = xt::linalg::outer(edge_t, edge_t);
+          auto result = basix::math::outer(edge_t, edge_t);
           xt::view(vvt, c, xt::all(), xt::all()).assign(result);
           ++c;
         }

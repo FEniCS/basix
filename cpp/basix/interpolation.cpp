@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "interpolation.h"
-#include <xtensor-blas/xlinalg.hpp>
 
 using namespace basix;
 

@@ -11,8 +11,8 @@ using namespace basix;
 
 //----------------------------------------------------------------------------
 xt::xtensor<double, 2>
-basix::compute_interpolation_between_elements(const FiniteElement& element_from,
-                                              const FiniteElement& element_to)
+basix::compute_interpolation_operator(const FiniteElement& element_from,
+                                      const FiniteElement& element_to)
 {
   if (element_from.cell_type() != element_to.cell_type())
   {

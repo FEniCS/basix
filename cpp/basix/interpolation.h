@@ -26,7 +26,7 @@ class FiniteElement;
 /// @return Matrix operator that maps the 'from' degrees-of-freedom to
 /// the 'to' degrees-of-freedom
 xt::xtensor<double, 2>
-compute_interpolation_between_elements(const FiniteElement& element_from,
-                                       const FiniteElement& element_to);
+compute_interpolation_operator(const FiniteElement& element_from,
+                               const FiniteElement& element_to);
 
 } // namespace basix

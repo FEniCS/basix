@@ -149,11 +149,61 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
                        true);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_vtk_element(cell::type celltype, int degree,
-                                        bool discontinuous)
+xt::xtensor<double, 2> vtk_triangle_points(int degree, double offset)
+{
+  if (degree == 0)
+    return {{offset, offset}};
+
+  const std::size_t npoints = polyset::dim(cell::type::triangle, degree);
+  xt::xtensor<double, 2> out({npoints, 2});
+
+  out(0, 0) = offset;
+  out(0, 1) = offset;
+  out(1, 0) = 1 - offset;
+  out(1, 1) = offset;
+  out(2, 0) = offset;
+  out(2, 1) = 1 - offset;
+  int n = 3;
+  if (degree >= 2)
+  {
+    for (int i = 1; i < degree; ++i)
+    {
+      out(n, 0) = offset
+                  + (1 - 2 * offset) * static_cast<double>(i)
+                        / static_cast<double>(degree);
+      out(n, 1) = 0;
+      ++n;
+    }
+    for (int i = 1; i < degree; ++i)
+    {
+      out[1][1](i - 1, 0)
+          = static_cast<double>(degree - i) / static_cast<double>(degree);
+      out[1][1](i - 1, 1)
+          = static_cast<double>(i) / static_cast<double>(degree);
+    }
+    for (int i = 1; i < degree; ++i)
+    {
+      out[1][2](i - 1, 0) = 0;
+      out[1][2](i - 1, 1)
+          = static_cast<double>(degree - i) / static_cast<double>(degree);
+    }
+  }
+  if (degree >= 3)
+    throw std::runtime_error("?");
+
+  return out;
+}
+//-----------------------------------------------------------------------------
+FiniteElement create_vtk_element(cell::type celltype, int degree,
+                                 bool discontinuous)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
+
+  if (degree == 0)
+  {
+    throw std::runtime_error("Cannot create an order 0 VTK basis function");
+  }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t ndofs = polyset::dim(celltype, degree);
@@ -163,79 +213,85 @@ FiniteElement basix::create_vtk_element(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  // Create points at nodes, ordered by topology (vertices first)
-  if (degree == 0)
+  for (std::size_t dim = 0; dim <= tdim; ++dim)
   {
-    if (!discontinuous)
-    {
-      throw std::runtime_error(
-          "Cannot create a continuous order 0 Lagrange basis function");
-    }
-    auto pt = lattice::create(celltype, 0, lattice_type, true, simplex_method);
-    x[tdim].push_back(pt);
-    const std::size_t num_dofs = pt.shape(0);
-    std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
-    M[tdim].push_back(xt::xtensor<double, 3>(s));
-    xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
+    M[dim].resize(topology[dim].size());
+    x[dim].resize(topology[dim].size());
   }
-  else
+
+  switch (celltype)
   {
-    for (std::size_t dim = 0; dim <= tdim; ++dim)
+  case cell::type::interval:
+  {
+    x[0][0] = {{0.}};
+    M[0][0] = {{{1.}}};
+    x[0][1] = {{1.}};
+    M[0][1] = {{{1.}}};
+
+    x[1][0] = xt::xtensor<double, 2>(
+        {static_cast<std::size_t>(degree - 1), static_cast<std::size_t>(1)});
+    for (int i = 1; i < degree; ++i)
+      x[1][0](i - 1, 0) = static_cast<double>(i) / static_cast<double>(degree);
+
+    break;
+  }
+  case cell::type::triangle:
+  {
+    x[0][0] = {{0., 0.}};
+    M[0][0] = {{{1.}}};
+    x[0][1] = {{1., 0.}};
+    M[0][1] = {{{1.}}};
+    x[0][1] = {{0., 1.}};
+    M[0][1] = {{{1.}}};
+
+    std::array<std::size_t, 2> s
+        = {static_cast<std::size_t>(degree - 1), static_cast<std::size_t>(2)};
+    x[1][0] = xt::xtensor<double, 2>(s);
+    x[1][1] = xt::xtensor<double, 2>(s);
+    x[1][2] = xt::xtensor<double, 2>(s);
+    for (int i = 1; i < degree; ++i)
     {
-      M[dim].resize(topology[dim].size());
-      x[dim].resize(topology[dim].size());
-
-      // Loop over entities of dimension 'dim'
-      for (std::size_t e = 0; e < topology[dim].size(); ++e)
-      {
-        const xt::xtensor<double, 2> entity_x
-            = cell::sub_entity_geometry(celltype, dim, e);
-        if (dim == 0)
-        {
-          x[dim][e] = entity_x;
-          const std::size_t num_dofs = entity_x.shape(0);
-          M[dim][e] = xt::xtensor<double, 3>(
-              {num_dofs, static_cast<std::size_t>(1), num_dofs});
-          xt::view(M[dim][e], xt::all(), 0, xt::all())
-              = xt::eye<double>(num_dofs);
-        }
-        else if (dim == tdim)
-        {
-          x[dim][e] = lattice::create(celltype, degree, lattice_type, false,
-                                      simplex_method);
-          const std::size_t num_dofs = x[dim][e].shape(0);
-          std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
-          M[dim][e] = xt::xtensor<double, 3>(s);
-          xt::view(M[dim][e], xt::all(), 0, xt::all())
-              = xt::eye<double>(num_dofs);
-        }
-        else
-        {
-          cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const auto lattice = lattice::create(ct, degree, lattice_type, false,
-                                               simplex_method);
-          const std::size_t num_dofs = lattice.shape(0);
-          std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
-          M[dim][e] = xt::xtensor<double, 3>(s);
-          xt::view(M[dim][e], xt::all(), 0, xt::all())
-              = xt::eye<double>(num_dofs);
-
-          auto x0s = xt::reshape_view(
-              xt::row(entity_x, 0),
-              {static_cast<std::size_t>(1), entity_x.shape(1)});
-          x[dim][e] = xt::tile(x0s, lattice.shape(0));
-          auto x0 = xt::row(entity_x, 0);
-          for (std::size_t j = 0; j < lattice.shape(0); ++j)
-          {
-            for (std::size_t k = 0; k < lattice.shape(1); ++k)
-            {
-              xt::row(x[dim][e], j)
-                  += (xt::row(entity_x, k + 1) - x0) * lattice(j, k);
-            }
-          }
-        }
-      }
+      x[1][0](i - 1, 0) = static_cast<double>(i) / static_cast<double>(degree);
+      x[1][0](i - 1, 1) = 0;
+      x[1][1](i - 1, 0)
+          = static_cast<double>(degree - i) / static_cast<double>(degree);
+      x[1][1](i - 1, 1) = static_cast<double>(i) / static_cast<double>(degree);
+      x[1][2](i - 1, 0) = 0;
+      x[1][2](i - 1, 1)
+          = static_cast<double>(degree - i) / static_cast<double>(degree);
     }
+    xt::xtensor<double, 3> reverse({static_cast<std::size_t>(degree - 1),
+                                    static_cast<std::size_t>(1),
+                                    static_cast<std::size_t>(degree - 1)});
+    reverse.fill(0);
+    for (int i = 0; i < degree - 1; ++i)
+      reverse(i, 0, degree - 2 - i) = 1;
+    M[1][0] = reverse;
+    M[1][1] = reverse;
+    M[1][2] = reverse;
+
+    if (degree >= 3)
+      x[2][0] = vtk_triangle_points(
+          degree - 3, static_cast<double>(1) / static_cast<double>(degree));
+
+    break;
+  }
+  case cell::type::tetrahedron:
+  {
+    throw std::runtime_error("!!");
+  }
+  case cell::type::quadrilateral:
+  {
+    throw std::runtime_error("!!");
+  }
+  case cell::type::hexahedron:
+  {
+    throw std::runtime_error("!!");
+  }
+  default:
+  {
+    throw std::runtime_error("Unsupported cell type.");
+  }
   }
 
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;

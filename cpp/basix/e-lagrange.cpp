@@ -157,39 +157,49 @@ xt::xtensor<double, 2> vtk_triangle_points(int degree, double offset)
   const std::size_t npoints = polyset::dim(cell::type::triangle, degree);
   xt::xtensor<double, 2> out({npoints, 2});
 
+  std::cout << degree << " " << offset << "\n";
+
   out(0, 0) = offset;
   out(0, 1) = offset;
-  out(1, 0) = 1 - offset;
+  out(1, 0) = 1 - 2 * offset;
   out(1, 1) = offset;
   out(2, 0) = offset;
-  out(2, 1) = 1 - offset;
+  out(2, 1) = 1 - 2 * offset;
   int n = 3;
   if (degree >= 2)
   {
     for (int i = 1; i < degree; ++i)
     {
       out(n, 0) = offset
-                  + (1 - 2 * offset) * static_cast<double>(i)
+                  + static_cast<double>((1 - 3 * offset) * i)
                         / static_cast<double>(degree);
-      out(n, 1) = 0;
+      out(n, 1) = offset;
       ++n;
     }
     for (int i = 1; i < degree; ++i)
     {
-      out[1][1](i - 1, 0)
-          = static_cast<double>(degree - i) / static_cast<double>(degree);
-      out[1][1](i - 1, 1)
-          = static_cast<double>(i) / static_cast<double>(degree);
+      out(n, 0) = offset
+                  + static_cast<double>((1 - 3 * offset) * (degree - i))
+                        / static_cast<double>(degree);
+      out(n, 1) = offset
+                  + static_cast<double>((1 - 3 * offset) * i)
+                        / static_cast<double>(degree);
+      ++n;
     }
     for (int i = 1; i < degree; ++i)
     {
-      out[1][2](i - 1, 0) = 0;
-      out[1][2](i - 1, 1)
-          = static_cast<double>(degree - i) / static_cast<double>(degree);
+      out(n, 0) = offset;
+      out(n, 1) = offset
+                  + static_cast<double>((1 - 3 * offset) * (degree - i))
+                        / static_cast<double>(degree);
+      ++n;
     }
   }
   if (degree >= 3)
-    throw std::runtime_error("?");
+  {
+    xt::view(out, xt::range(n, npoints), xt::all()) = vtk_triangle_points(
+        degree - 3, offset + (1 - 3 * offset) / static_cast<double>(degree));
+  }
 
   return out;
 }
@@ -241,8 +251,8 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     M[0][0] = {{{1.}}};
     x[0][1] = {{1., 0.}};
     M[0][1] = {{{1.}}};
-    x[0][1] = {{0., 1.}};
-    M[0][1] = {{{1.}}};
+    x[0][2] = {{0., 1.}};
+    M[0][2] = {{{1.}}};
 
     std::array<std::size_t, 2> s
         = {static_cast<std::size_t>(degree - 1), static_cast<std::size_t>(2)};
@@ -271,8 +281,18 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     M[1][2] = reverse;
 
     if (degree >= 3)
+    {
       x[2][0] = vtk_triangle_points(
           degree - 3, static_cast<double>(1) / static_cast<double>(degree));
+      M[2][0] = xt::xtensor<double, 3>({x[2][0].shape(0), 1, x[2][0].shape(0)});
+      M[2][0].fill(0);
+      for (std::size_t i = 0; i < x[2][0].shape(0); ++i)
+        M[2][0](i, 0, i) = 1;
+    }
+    else
+    {
+      M[2][0] = xt::xtensor<double, 3>({0, 1, 0});
+    }
 
     break;
   }

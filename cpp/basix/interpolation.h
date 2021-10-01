@@ -18,7 +18,7 @@ class FiniteElement;
 ///
 /// If element_from has value size 1 and element_to has value size > 1, then
 /// this function returns a matrix to interpolate from a blocked element_from
-/// (ie multiple copies of the element_from) into element_to.
+/// (ie multiple copies of element_from) into element_to.
 ///
 /// If element_to has value size 1 and element_from has value size > 1, then
 /// this function returns a matrix that interpolates the components of

@@ -27,6 +27,12 @@ class FiniteElement;
 /// @note If the elements have different value sizes and both are
 /// greater than 1, this function throws a runtime error
 ///
+/// In order to apply interpolate functions in finite element spaces on
+/// arbitrary cells, the function must be pulled back to the reference and DOF
+/// transformations should be applied (if necessary). The matrix returned by
+/// this function can then be applied, then the result can be pushed forward to
+/// the cell and inverse transpose DOF transformations applied (if necessary).
+///
 /// @param[in] element_from The element to interpolate from
 /// @param[in] element_to The element to interpolate to
 /// @return Matrix operator that maps the 'from' degrees-of-freedom to

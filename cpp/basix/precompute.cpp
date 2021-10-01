@@ -3,7 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "precompute.h"
-#include <xtensor-blas/xlinalg.hpp>
+#include "math.h"
 
 using namespace basix;
 
@@ -35,7 +35,7 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
   // Permute the matrix so that all the top left blocks are invertible
   for (std::size_t i = 0; i < dim; ++i)
   {
-    double max_det = 0;
+    double max_eval = 0;
     std::size_t col = 0;
     for (std::size_t j = 0; j < dim; ++j)
     {
@@ -44,11 +44,13 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
       if (!used)
       {
         xt::col(permuted_matrix, i) = xt::col(matrix, j);
-        double det = std::abs(xt::linalg::det(xt::view(
-            permuted_matrix, xt::range(0, i + 1), xt::range(0, i + 1))));
-        if (det > max_det)
+        auto mat = xt::view(permuted_matrix, xt::range(0, i + 1),
+                            xt::range(0, i + 1));
+        xt::xtensor<double, 2> mat2 = math::dot(mat, xt::transpose(mat));
+        auto [evals, evecs] = math::eigh(mat2);
+        if (double lambda = std::abs(evals.front()); lambda > max_eval)
         {
-          max_det = det;
+          max_eval = lambda;
           col = j;
         }
       }
@@ -73,18 +75,21 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
 
     if (i > 0)
     {
-      xt::xtensor<T, 1> v = xt::linalg::solve(
-          xt::transpose(
-              xt::view(permuted_matrix, xt::range(0, i), xt::range(0, i))),
-          xt::view(permuted_matrix, i, xt::range(0, i)));
+      xt::xtensor<T, 1> v
+          = math::solve(xt::transpose(xt::view(permuted_matrix, xt::range(0, i),
+                                               xt::range(0, i))),
+                        xt::view(permuted_matrix, i, xt::range(0, i)));
 
       xt::view(prepared_matrix, i, xt::range(0, i)) = v;
-      diag[i] -= xt::linalg::dot(
-          v, xt::view(permuted_matrix, xt::range(0, i), i))(0);
+
+      xt::xtensor<T, 1> t = xt::view(permuted_matrix, xt::range(0, i), i);
+      diag[i] -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.);
+
       for (std::size_t j = i + 1; j < dim; ++j)
       {
-        prepared_matrix(i, j) -= xt::linalg::dot(
-            v, xt::view(permuted_matrix, xt::range(0, i), j))(0);
+        t = xt::view(permuted_matrix, xt::range(0, i), j);
+        prepared_matrix(i, j)
+            -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.);
       }
     }
   }

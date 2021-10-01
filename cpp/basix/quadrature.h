@@ -5,10 +5,10 @@
 #pragma once
 
 #include "cell.h"
-#include <xtl/xspan.hpp>
 #include <utility>
 #include <vector>
 #include <xtensor/xtensor.hpp>
+#include <xtl/xspan.hpp>
 
 /// basix
 

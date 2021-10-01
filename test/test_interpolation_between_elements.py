@@ -30,7 +30,7 @@ def run_test(lower_element, higher_element, power, value_size):
 
 @pytest.mark.parametrize("cell_type", [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron,
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron, basix.CellType.prism])
-@pytest.mark.parametrize("orders", [(1, 2), (1, 3), (2, 3), (2, 4), (3, 4)])
+@pytest.mark.parametrize("orders", [(1, 2), (2, 4), (4, 5)])
 def test_different_order_interpolation_lagrange(cell_type, orders):
     lower_element = basix.create_element(basix.ElementFamily.P, cell_type, orders[0], basix.LagrangeVariant.gll_warped)
     higher_element = basix.create_element(basix.ElementFamily.P, cell_type, orders[1], basix.LagrangeVariant.gll_warped)
@@ -44,7 +44,7 @@ def test_different_order_interpolation_lagrange(cell_type, orders):
                                       basix.LagrangeVariant.gll_isaac])
 @pytest.mark.parametrize("cell_type", [basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron,
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron, basix.CellType.prism])
-@pytest.mark.parametrize("order", [1, 2, 3])
+@pytest.mark.parametrize("order", [1, 4])
 def test_different_variant_interpolation(cell_type, order, variant1, variant2):
     lower_element = basix.create_element(basix.ElementFamily.P, cell_type, order, variant1)
     higher_element = basix.create_element(basix.ElementFamily.P, cell_type, order, variant2)
@@ -60,7 +60,7 @@ def test_different_variant_interpolation(cell_type, order, variant1, variant2):
 ])
 @pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron])
-@pytest.mark.parametrize("orders", [(1, 2), (1, 3), (2, 3), (2, 4), (3, 4)])
+@pytest.mark.parametrize("orders", [(1, 2), (2, 4), (4, 5)])
 def test_different_order_interpolation_vector(family, args, cell_type, orders):
     lower_element = basix.create_element(family, cell_type, orders[0], *args)
     higher_element = basix.create_element(family, cell_type, orders[1], *args)
@@ -70,7 +70,7 @@ def test_different_order_interpolation_vector(family, args, cell_type, orders):
 
 @pytest.mark.parametrize("family, args", [[basix.ElementFamily.Regge, tuple()]])
 @pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron])
-@pytest.mark.parametrize("orders", [(1, 2), (1, 3), (2, 3), (2, 4), (3, 4)])
+@pytest.mark.parametrize("orders", [(1, 2), (2, 4), (4, 5)])
 def test_different_order_interpolation_matrix(family, args, cell_type, orders):
     lower_element = basix.create_element(family, cell_type, orders[0], *args)
     higher_element = basix.create_element(family, cell_type, orders[1], *args)
@@ -92,7 +92,7 @@ def test_different_order_interpolation_matrix(family, args, cell_type, orders):
 ])
 @pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron])
-@pytest.mark.parametrize("order", [1, 2, 3])
+@pytest.mark.parametrize("order", [1, 4])
 def test_different_element_interpolation(family1, args1, family2, args2, cell_type, order):
     lower_element = basix.create_element(family1, cell_type, order, *args1)
     higher_element = basix.create_element(family2, cell_type, order, *args2)
@@ -102,7 +102,7 @@ def test_different_element_interpolation(family1, args1, family2, args2, cell_ty
 
 @pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron])
-@pytest.mark.parametrize("order", [1, 2, 3])
+@pytest.mark.parametrize("order", [1, 4])
 def test_blocked_interpolation(cell_type, order):
     """Test interpolation of Nedelec's componenets into a Lagrange space."""
     nedelec = basix.create_element(basix.ElementFamily.N2E, cell_type, order)

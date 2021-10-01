@@ -39,21 +39,14 @@ basix::compute_interpolation_between_elements(const FiniteElement element_from,
           = {static_cast<std::size_t>(dim_to * vs),
              static_cast<std::size_t>(dim_from)};
       xt::xtensor<double, 2> out(s);
+      out.fill(0);
 
       for (int i = 0; i < vs; ++i)
-      {
         for (int j = 0; j < dim_to; ++j)
-        {
           for (int k = 0; k < dim_from; ++k)
-          {
-            out(i + j * vs, k) = 0;
             for (std::size_t l = 0; l < npts; ++l)
-            {
               out(i + j * vs, k) += i_m(j, l) * tab(0, l, k, i);
-            }
-          }
-        }
-      }
+
       return out;
     }
     if (element_from.value_size() == 1)
@@ -65,24 +58,18 @@ basix::compute_interpolation_between_elements(const FiniteElement element_from,
           = {static_cast<std::size_t>(dim_to),
              static_cast<std::size_t>(dim_from * vs)};
       xt::xtensor<double, 2> out(s);
+      out.fill(0);
 
       for (int i = 0; i < vs; ++i)
-      {
         for (int j = 0; j < dim_from; ++j)
-        {
           for (int k = 0; k < dim_to; ++k)
-          {
-            out(k, i + j * vs) = 0;
             for (std::size_t l = 0; l < npts; ++l)
-            {
               out(k, i + j * vs) += i_m(k, i * npts + l) * tab(0, l, j, 0);
-            }
-          }
-        }
-      }
+
       return out;
     }
-    throw std::runtime_error("Cannot interpolation between elements with this "
+
+    throw std::runtime_error("Cannot interpolate between elements with this "
                              "combination of value sizes.");
   }
 
@@ -90,21 +77,13 @@ basix::compute_interpolation_between_elements(const FiniteElement element_from,
   const std::array<std::size_t, 2> s
       = {static_cast<std::size_t>(dim_to), static_cast<std::size_t>(dim_from)};
   xt::xtensor<double, 2> out(s);
+  out.fill(0);
 
   for (int i = 0; i < dim_to; ++i)
-  {
     for (int j = 0; j < dim_from; ++j)
-    {
-      out(i, j) = 0;
       for (int k = 0; k < vs; ++k)
-      {
         for (std::size_t l = 0; l < npts; ++l)
-        {
           out(i, j) += i_m(i, k * npts + l) * tab(0, l, j, k);
-        }
-      }
-    }
-  }
 
   return out;
 }

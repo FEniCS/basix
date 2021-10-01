@@ -46,8 +46,7 @@ directory `python/` the tests can be run with:
 
 ## Dependencies
 
-Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor)
-and [`xtensor-blas`](https://github.com/xtensor-stack/xtensor-blas).
+Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor).
 CMake will download install these packages if they cannot be found.
 
 Building the Python interface required

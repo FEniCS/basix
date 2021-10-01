@@ -173,18 +173,13 @@ namespace basix
 /// (num_entities, num_points_per_entity, tdim).
 /// @param[in] degree The degree of the polynomial basis P used to
 /// create the element (before applying B)
-/// @param[in] kappa_tol If positive, the condition number is computed
-/// and an error thrown if the condition number of \f$B D^{T}\f$ is
-/// greater than @p kappa_tol. If @p kappa_tol is less than 1 the
-/// condition number is not checked.
 /// @return The matrix C of expansion coefficients that define the basis
 /// functions of the finite element space. The shape is (num_dofs,
 /// value_size, basis_dim)
 xt::xtensor<double, 3> compute_expansion_coefficients(
     cell::type cell_type, const xt::xtensor<double, 2>& B,
     const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
-    const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree,
-    double kappa_tol = 0.0);
+    const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree);
 
 /// Creates a version of the interpolation points, interpolation matrices and
 /// entity transformation that represent a discontinuous version of the element.

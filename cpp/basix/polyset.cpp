@@ -418,7 +418,8 @@ tabulate_polyset_pyramid_derivs(int n, std::size_t nderiv,
   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
   // Indexing for pyramidal basis functions
-  auto pyr_idx = [n](int p, int q, int r) -> std::size_t {
+  auto pyr_idx = [n](int p, int q, int r) -> std::size_t
+  {
     const int rv = n - r + 1;
     const int r0 = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
     return r0 + p * rv + q;

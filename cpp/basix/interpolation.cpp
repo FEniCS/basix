@@ -3,13 +3,15 @@
 // SPDX-License-Identifier:    MIT
 
 #include "interpolation.h"
-#include <xtensor-blas/xlinalg.hpp>
+#include <exception>
+#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 
+//----------------------------------------------------------------------------
 xt::xtensor<double, 2>
-basix::compute_interpolation_between_elements(const FiniteElement element_from,
-                                              const FiniteElement element_to)
+basix::compute_interpolation_between_elements(const FiniteElement& element_from,
+                                              const FiniteElement& element_to)
 {
   if (element_from.cell_type() != element_to.cell_type())
   {
@@ -37,7 +39,6 @@ basix::compute_interpolation_between_elements(const FiniteElement element_from,
              static_cast<std::size_t>(dim_from)};
       xt::xtensor<double, 2> out(s);
       out.fill(0);
-
       for (int i = 0; i < vs; ++i)
         for (int j = 0; j < dim_to; ++j)
           for (int k = 0; k < dim_from; ++k)
@@ -46,7 +47,7 @@ basix::compute_interpolation_between_elements(const FiniteElement element_from,
 
       return out;
     }
-    if (element_from.value_size() == 1)
+    else if (element_from.value_size() == 1)
     {
       // Map duplicates of element_to to components of element_to
       const int vs = element_to.value_size();
@@ -56,7 +57,6 @@ basix::compute_interpolation_between_elements(const FiniteElement element_from,
              static_cast<std::size_t>(dim_from * vs)};
       xt::xtensor<double, 2> out(s);
       out.fill(0);
-
       for (int i = 0; i < vs; ++i)
         for (int j = 0; j < dim_from; ++j)
           for (int k = 0; k < dim_to; ++k)
@@ -65,9 +65,11 @@ basix::compute_interpolation_between_elements(const FiniteElement element_from,
 
       return out;
     }
-
-    throw std::runtime_error("Cannot interpolate between elements with this "
-                             "combination of value sizes.");
+    else
+    {
+      throw std::runtime_error("Cannot interpolate between elements with this "
+                               "combination of value sizes.");
+    }
   }
 
   const int vs = element_from.value_size();
@@ -75,7 +77,6 @@ basix::compute_interpolation_between_elements(const FiniteElement element_from,
       = {static_cast<std::size_t>(dim_to), static_cast<std::size_t>(dim_from)};
   xt::xtensor<double, 2> out(s);
   out.fill(0);
-
   for (int i = 0; i < dim_to; ++i)
     for (int j = 0; j < dim_from; ++j)
       for (int k = 0; k < vs; ++k)
@@ -84,3 +85,4 @@ basix::compute_interpolation_between_elements(const FiniteElement element_from,
 
   return out;
 }
+//----------------------------------------------------------------------------

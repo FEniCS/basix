@@ -5,6 +5,7 @@
 #pragma once
 
 #include "finite-element.h"
+#include <xtensor/xtensor.hpp>
 
 namespace basix
 {
@@ -21,7 +22,7 @@ namespace basix
 /// @param[in] element_from The element to interpolate from
 /// @param[in] element_to The element to interpolate to
 xt::xtensor<double, 2>
-compute_interpolation_between_elements(const FiniteElement element_from,
-                                       const FiniteElement element_to);
+compute_interpolation_between_elements(const FiniteElement& element_from,
+                                       const FiniteElement& element_to);
 
 } // namespace basix

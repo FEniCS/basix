@@ -7,9 +7,6 @@
 
 using namespace basix;
 
-/// Computes a matrix that represents the interpolation between two elements.
-/// @param[in] element_from The element to interpolatio from
-/// @param[in] element_to The element to interpolatio to
 xt::xtensor<double, 2>
 basix::compute_interpolation_between_elements(const FiniteElement element_from,
                                               const FiniteElement element_to)

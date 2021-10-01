@@ -8,7 +8,7 @@ if (SKBUILD)
   # Always use lib/ in the Python root. Otherwise, environment used for
   # wheels might place in lib64/, which CMake on some systems will not
   # find.
-  set(CMAKE_INSTALL_LIBDIR ${CMAKE_INSTALL_PREFIX}/lib)
+  set(CMAKE_INSTALL_LIBDIR lib)
 endif()
 
 include(FeatureSummary)
@@ -64,6 +64,7 @@ else()
   find_package(xtensor ${XTENSOR_MIN_VERSION} QUIET)
 endif()
 find_package(xtensor-blas 0.19 QUIET)
+
 if(NOT xtl_FOUND)
   message("downloading xtl source...")
   FetchContent_Declare(
@@ -75,6 +76,7 @@ if(NOT xtl_FOUND)
 else()
   message("found xtl ${xtl_VERSION}")
 endif()
+
 if(NOT xtensor_FOUND)
   message("downloading xtensor source...")
   FetchContent_Declare(
@@ -86,6 +88,7 @@ if(NOT xtensor_FOUND)
 else()
   message("found xtensor ${xtensor_VERSION}")
 endif()
+
 if(NOT xtensor-blas_FOUND)
   message("downloading xtensor-blas source...")
   FetchContent_Declare(
@@ -93,7 +96,13 @@ if(NOT xtensor-blas_FOUND)
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor-blas.git
     GIT_TAG        0.19.1
   )
-  FetchContent_MakeAvailable(xtensor_blas)
+  # Not using FetchContent_MakeAvailable(xtensor_blas) because we don't
+  # want xtensor_blas to be installed
+  FetchContent_GetProperties(xtensor_blas)
+  if(NOT xtensor_blas_POPULATED)
+    FetchContent_Populate(xtensor_blas)
+    add_subdirectory(${xtensor_blas_SOURCE_DIR} ${xtensor_blas_BINARY_DIR} EXCLUDE_FROM_ALL)
+  endif()
 else()
   message("found xtensor-blas ${xtensor-blas_VERSION}")
 endif()

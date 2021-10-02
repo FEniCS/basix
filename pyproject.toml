@@ -15,4 +15,4 @@ manylinux-x86_64-image = "manylinux2014"
 before-build = "yum -y update && yum install -y openblas-devel ninja-build"
 
 [tool.cibuildwheel.macos]
-before-build = "brew update && brew install ninja"
+before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"

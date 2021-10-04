@@ -319,7 +319,8 @@ def test_continuous_lagrange(celltype, variant):
 
 @pytest.mark.parametrize("celltype", [
     basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron,
-#    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+    # basix.CellType.quadrilateral,
+    # basix.CellType.hexahedron,
 ])
 @pytest.mark.parametrize("degree", range(1, 9))
 def test_vtk_element(celltype, degree):

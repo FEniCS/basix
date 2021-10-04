@@ -377,18 +377,16 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     x[dim].resize(topology[dim].size());
   }
 
-  for (std::size_t i = 0; i < topology[0].size(); ++i)
-  {
-    const xt::xtensor<double, 2> entity_x
-        = cell::sub_entity_geometry(celltype, 0, i);
-    x[0][i] = entity_x;
-    M[0][i] = {{{1.}}};
-  }
-
   switch (celltype)
   {
   case cell::type::interval:
   {
+    // Points at vertices
+    x[0][0] = {{0.}};
+    M[0][0] = {{{1.}}};
+    x[0][1] = {{1.}};
+    M[0][1] = {{{1.}}};
+
     // Points on interval
     x[1][0] = xt::xtensor<double, 2>(
         {static_cast<std::size_t>(degree - 1), static_cast<std::size_t>(1)});
@@ -403,6 +401,14 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
   }
   case cell::type::triangle:
   {
+    // Points at vertices
+    x[0][0] = {{0., 0.}};
+    M[0][0] = {{{1.}}};
+    x[0][1] = {{1., 0.}};
+    M[0][1] = {{{1.}}};
+    x[0][2] = {{0., 1.}};
+    M[0][2] = {{{1.}}};
+
     // Points on edges
     std::array<std::size_t, 2> s
         = {static_cast<std::size_t>(degree - 1), static_cast<std::size_t>(2)};
@@ -413,9 +419,11 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     {
       x[1][0](i - 1, 0) = static_cast<double>(i) / static_cast<double>(degree);
       x[1][0](i - 1, 1) = 0;
+
       x[1][1](i - 1, 0)
           = static_cast<double>(degree - i) / static_cast<double>(degree);
       x[1][1](i - 1, 1) = static_cast<double>(i) / static_cast<double>(degree);
+
       x[1][2](i - 1, 0) = 0;
       x[1][2](i - 1, 1)
           = static_cast<double>(degree - i) / static_cast<double>(degree);
@@ -446,6 +454,16 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
   }
   case cell::type::tetrahedron:
   {
+    // Points at vertices
+    x[0][0] = {{0., 0., 0.}};
+    M[0][0] = {{{1.}}};
+    x[0][1] = {{1., 0., 0.}};
+    M[0][1] = {{{1.}}};
+    x[0][2] = {{0., 1., 0.}};
+    M[0][2] = {{{1.}}};
+    x[0][3] = {{0., 0., 1.}};
+    M[0][3] = {{{1.}}};
+
     // Points on edges
     std::array<std::size_t, 2> s
         = {static_cast<std::size_t>(degree - 1), static_cast<std::size_t>(3)};
@@ -554,7 +572,61 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
   }
   case cell::type::quadrilateral:
   {
-    throw std::runtime_error("Not implemented yet");
+    // Points at vertices
+    x[0][0] = {{0., 0.}};
+    M[0][0] = {{{1.}}};
+    x[0][1] = {{1., 0.}};
+    M[0][1] = {{{1.}}};
+    x[0][2] = {{1., 1.}};
+    M[0][2] = {{{1.}}};
+    x[0][3] = {{0., 1.}};
+    M[0][3] = {{{1.}}};
+
+    // Points on edges
+    std::array<std::size_t, 2> s = {static_cast<std::size_t>(degree - 1), 2};
+    for (int i = 0; i < 4; ++i)
+      x[1][i] = xt::xtensor<double, 2>(s);
+
+    for (int i = 1; i < degree; ++i)
+    {
+      x[1][0](i - 1, 0) = static_cast<double>(i) / static_cast<double>(degree);
+      x[1][0](i - 1, 1) = 0;
+
+      x[1][1](i - 1, 0) = 1;
+      x[1][1](i - 1, 1) = static_cast<double>(i) / static_cast<double>(degree);
+
+      x[1][2](i - 1, 0) = static_cast<double>(i) / static_cast<double>(degree);
+      x[1][2](i - 1, 1) = 1;
+
+      x[1][3](i - 1, 0) = 0;
+      x[1][3](i - 1, 1) = static_cast<double>(i) / static_cast<double>(degree);
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+      M[1][i] = xt::xtensor<double, 3>({static_cast<std::size_t>(degree - 1), 1,
+                                        static_cast<std::size_t>(degree - 1)});
+      xt::view(M[1][i], xt::all(), 0, xt::all()) = xt::eye<double>(degree - 1);
+    }
+
+    // Points in quadrilateral
+    x[2][0] = xt::xtensor<double, 2>(
+        {static_cast<std::size_t>((degree - 1) * (degree - 1)), 2});
+
+    int n = 0;
+    for (int j = 1; j < degree; ++j)
+      for (int i = 1; i < degree; ++i)
+      {
+        x[2][0](n, 0) = static_cast<double>(i) / static_cast<double>(degree);
+        x[2][0](n, 1) = static_cast<double>(j) / static_cast<double>(degree);
+        ++n;
+      }
+
+    M[2][0] = xt::xtensor<double, 3>({x[2][0].shape(0), 1, x[2][0].shape(0)});
+    xt::view(M[2][0], xt::all(), 0, xt::all())
+        = xt::eye<double>(x[2][0].shape(0));
+
+    break;
   }
   case cell::type::hexahedron:
   {

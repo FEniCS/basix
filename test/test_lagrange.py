@@ -287,6 +287,7 @@ def in_cell(celltype, p):
     basix.LagrangeVariant.chebyshev_warped, basix.LagrangeVariant.chebyshev_isaac,
     basix.LagrangeVariant.chebyshev_centroid,
     basix.LagrangeVariant.gl_warped, basix.LagrangeVariant.gl_isaac, basix.LagrangeVariant.gl_centroid,
+    basix.LagrangeVariant.vtk
 ])
 @pytest.mark.parametrize("celltype", [
     basix.CellType.triangle, basix.CellType.tetrahedron,
@@ -314,3 +315,26 @@ def test_continuous_lagrange(celltype, variant):
     # so trying to create them should throw a runtime error
     with pytest.raises(RuntimeError):
         basix.create_element(basix.ElementFamily.P, celltype, 4, variant, False)
+
+
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron,
+#    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("degree", range(1, 9))
+def test_variant_points(celltype, degree):
+    equi = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced, True)
+    vtk = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.vtk, True)
+
+    assert vtk.points.shape == equi.points.shape
+
+    for i, p in enumerate(vtk.points):
+        for j, q in enumerate(vtk.points):
+            if i != j:
+                assert not numpy.allclose(p, q)
+
+        for q in equi.points:
+            if numpy.allclose(p, q):
+                break
+        else:
+            raise ValueError(f"Incorrect point in VTK variant: {p}")

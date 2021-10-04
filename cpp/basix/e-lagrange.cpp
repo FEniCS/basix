@@ -566,56 +566,30 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
   }
   }
 
+  // Initialise empty transformations, as these will be removed anyway when the
+  // discontinuous element is made
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
   // Entity transformations for edges
   if (tdim > 1)
   {
-    const std::vector<int> edge_ref
-        = doftransforms::interval_reflection(degree - 1);
-    const std::array<std::size_t, 3> shape
-        = {1, edge_ref.size(), edge_ref.size()};
-    xt::xtensor<double, 3> et = xt::zeros<double>(shape);
-    for (std::size_t i = 0; i < edge_ref.size(); ++i)
-      et(0, i, edge_ref[i]) = 1;
-    entity_transformations[cell::type::interval] = et;
+    entity_transformations[cell::type::interval]
+        = xt::xtensor<double, 3>({1, 0, 0});
   }
 
   // Entity transformations for triangular faces
   if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
       or celltype == cell::type::pyramid)
   {
-    const std::vector<int> face_rot
-        = doftransforms::triangle_rotation(degree - 2);
-    const std::vector<int> face_ref
-        = doftransforms::triangle_reflection(degree - 2);
-    const std::array<std::size_t, 3> shape
-        = {2, face_rot.size(), face_rot.size()};
-    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
-    for (std::size_t i = 0; i < face_rot.size(); ++i)
-    {
-      ft(0, i, face_rot[i]) = 1;
-      ft(1, i, face_ref[i]) = 1;
-    }
-    entity_transformations[cell::type::triangle] = ft;
+    entity_transformations[cell::type::triangle]
+        = xt::xtensor<double, 3>({2, 0, 0});
   }
 
   // Entity transformations for quadrilateral faces
   if (celltype == cell::type::hexahedron or celltype == cell::type::prism
       or celltype == cell::type::pyramid)
   {
-    const std::vector<int> face_rot
-        = doftransforms::quadrilateral_rotation(degree - 1);
-    const std::vector<int> face_ref
-        = doftransforms::quadrilateral_reflection(degree - 1);
-    const std::array<std::size_t, 3> shape
-        = {2, face_rot.size(), face_rot.size()};
-    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
-    for (std::size_t i = 0; i < face_rot.size(); ++i)
-    {
-      ft(0, i, face_rot[i]) = 1;
-      ft(1, i, face_ref[i]) = 1;
-    }
-    entity_transformations[cell::type::quadrilateral] = ft;
+    entity_transformations[cell::type::quadrilateral]
+        = xt::xtensor<double, 3>({2, 0, 0});
   }
 
   if (discontinuous)

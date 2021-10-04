@@ -322,7 +322,7 @@ def test_continuous_lagrange(celltype, variant):
 #    basix.CellType.quadrilateral, basix.CellType.hexahedron,
 ])
 @pytest.mark.parametrize("degree", range(1, 9))
-def test_variant_points(celltype, degree):
+def test_vtk_element(celltype, degree):
     equi = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced, True)
     vtk = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.vtk, True)
 

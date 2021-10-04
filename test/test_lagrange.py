@@ -329,10 +329,6 @@ def test_vtk_element(celltype, degree):
     assert vtk.points.shape == equi.points.shape
 
     for i, p in enumerate(vtk.points):
-        print(p)
-
-
-    for i, p in enumerate(vtk.points):
         for j, q in enumerate(vtk.points):
             if i != j:
                 assert not numpy.allclose(p, q)

@@ -306,6 +306,13 @@ xt::xtensor<double, 2> vtk_tetrahedron_points(int degree)
     }
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
+      out(n, 0) = 1 - 3 * d - (pts(i, 0) + pts(i, 1)) * (1 - 4 * d);
+      out(n, 1) = d + pts(i, 0) * (1 - 4 * d);
+      out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
+      ++n;
+    }
+    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    {
       out(n, 0) = d;
       out(n, 1) = d + pts(i, 0) * (1 - 4 * d);
       out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
@@ -316,13 +323,6 @@ xt::xtensor<double, 2> vtk_tetrahedron_points(int degree)
       out(n, 0) = d + pts(i, 0) * (1 - 4 * d);
       out(n, 1) = d + pts(i, 1) * (1 - 4 * d);
       out(n, 2) = d;
-      ++n;
-    }
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
-    {
-      out(n, 0) = 1 - 3 * d - (pts(i, 0) + pts(i, 1)) * (1 - 4 * d);
-      out(n, 1) = d + pts(i, 0) * (1 - 4 * d);
-      out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
       ++n;
     }
   }
@@ -520,17 +520,17 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
         x[2][0](i, 1) = 0;
         x[2][0](i, 2) = x1;
 
-        x[2][1](i, 0) = 0;
+        x[2][1](i, 0) = 1 - x0 - x1;
         x[2][1](i, 1) = x0;
         x[2][1](i, 2) = x1;
 
-        x[2][2](i, 0) = x0;
-        x[2][2](i, 1) = x1;
-        x[2][2](i, 2) = 0;
+        x[2][2](i, 0) = 0;
+        x[2][2](i, 1) = x0;
+        x[2][2](i, 2) = x1;
 
-        x[2][3](i, 0) = 1 - x0 - x1;
-        x[2][3](i, 1) = x0;
-        x[2][3](i, 2) = x1;
+        x[2][3](i, 0) = x0;
+        x[2][3](i, 1) = x1;
+        x[2][3](i, 2) = 0;
       }
 
       for (int i = 0; i < 4; ++i)
@@ -706,20 +706,20 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     for (int j = 1; j < degree; ++j)
       for (int i = 1; i < degree; ++i)
       {
-        x[2][0](n, 0) = static_cast<double>(i) / static_cast<double>(degree);
-        x[2][0](n, 1) = 0;
+        x[2][0](n, 0) = 0;
+        x[2][0](n, 1) = static_cast<double>(i) / static_cast<double>(degree);
         x[2][0](n, 2) = static_cast<double>(j) / static_cast<double>(degree);
 
-        x[2][1](n, 0) = static_cast<double>(i) / static_cast<double>(degree);
-        x[2][1](n, 1) = 1;
+        x[2][1](n, 0) = 1;
+        x[2][1](n, 1) = static_cast<double>(i) / static_cast<double>(degree);
         x[2][1](n, 2) = static_cast<double>(j) / static_cast<double>(degree);
 
-        x[2][2](n, 0) = 0;
-        x[2][2](n, 1) = static_cast<double>(i) / static_cast<double>(degree);
+        x[2][2](n, 0) = static_cast<double>(i) / static_cast<double>(degree);
+        x[2][2](n, 1) = 0;
         x[2][2](n, 2) = static_cast<double>(j) / static_cast<double>(degree);
 
-        x[2][3](n, 0) = 1;
-        x[2][3](n, 1) = static_cast<double>(i) / static_cast<double>(degree);
+        x[2][3](n, 0) = static_cast<double>(i) / static_cast<double>(degree);
+        x[2][3](n, 1) = 1;
         x[2][3](n, 2) = static_cast<double>(j) / static_cast<double>(degree);
 
         x[2][4](n, 0) = static_cast<double>(i) / static_cast<double>(degree);

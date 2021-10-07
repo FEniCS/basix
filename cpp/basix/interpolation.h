@@ -28,12 +28,12 @@ class FiniteElement;
 /// greater than 1, this function throws a runtime error
 ///
 /// In order to interpolate functions between finite element spaces on arbitrary
-/// cells, DOF transformations must be applied to the coefficients to correct
-/// the orientations of the cell's entities (this is equivalent to pulling the
-/// basis functions back to the reference element). The matrix this function
-/// returns can then be applied to the coefficients. Finally, the inverse
-/// transpose DOF transformations should be applied (to push the interpolated
-/// function forward to the cell).
+/// cells, the functions must be pulled back to the reference element (this pull
+/// back includes applying DOF transformations). The matrix that this function
+/// returns can then be applied, then the result pushed forward to the cell. If
+/// element_from and element_to have the same map type, then only the DOF
+/// transformations need to be applied, as the pull back and push forward cancel
+/// each other out.
 ///
 /// @param[in] element_from The element to interpolate from
 /// @param[in] element_to The element to interpolate to

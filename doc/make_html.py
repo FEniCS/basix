@@ -12,7 +12,7 @@ assets_path = os.path.join(path, "assets")
 template_path = os.path.join(path, "template")
 temp_path = os.path.join(path, "_temp")
 
-parser = argparse.ArgumentParser(description="Build defelement.com")
+parser = argparse.ArgumentParser(description="Build Basix documentation")
 parser.add_argument('--url', metavar='url',
                     default="http://localhost", help="URL of built documentation")
 

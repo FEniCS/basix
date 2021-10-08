@@ -6,25 +6,33 @@ name: Build wheels
 on:
   workflow_dispatch:
     inputs:
-      pypi_publish:
-        description: "none (default) | pypi_test | pypi"
-        default: "none"
-        type: string
       basix_ref:
-        description: "basix git ref to checkout"
+        description: "Basix git ref to checkout"
         default: "main"
         type: string
-  
+      test_pypi_publish:
+        description: "Publish to PyPi"
+        default: false
+        type: boolean
+      pypi_publish:
+        description: "Publish to PyPi (danger!)"
+        default: false
+        type: boolean
+
   workflow_call:
     inputs:
-      pypi_publish:
-        description: "none (default) | pypi_test | pypy"
-        default: "none"
-        type: string
       basix_ref:
-        description: "basix git ref to checkout"
+        description: "Basix git ref to checkout"
         default: "main"
         type: string
+      test_pypi_publish:
+        description: "Publish to PyPi"
+        default: false
+        type: boolean
+      pypi_publish:
+        description: "Publish to PyPi (danger!)"
+        default: false
+        type: boolean
 
 jobs:
   build_wheels:
@@ -36,7 +44,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        ref: ${{ inputs.basix_ref }}
+        with:
+          ref: ${{ inputs.basix_ref }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.1.2
@@ -73,14 +82,14 @@ jobs:
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.4.2
-        if: ${{ inputs.pypi_publish }} == "pypy"
+        if: ${{ inputs.test_pypi_publish }}
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
           repository_url: https://pypi.org/legacy/
-      
+
       - uses: pypa/gh-action-pypi-publish@v1.4.2
-        if: ${{ inputs.pypi_publish }} == "pypy_test"
+        if: ${{ inputs.pypi_publish }}
         with:
           user: __token__
           password: ${{ secrets.PYPI_TEST_TOKEN }}

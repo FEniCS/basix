@@ -1,18 +1,42 @@
 name: Build wheels
 
-on: [push]
+# By default this action does not push to test or production PyPI.  The wheels
+# are available as an artifact that can be downloaded and tested locally.
+
+on:
+  workflow_dispatch:
+    inputs:
+      pypi_publish:
+        description: "none (default) | pypi_test | pypi"
+        default: "none"
+        type: string
+      basix_ref:
+        description: "basix git ref to checkout"
+        default: "main"
+        type: string
+  
+  workflow_call:
+    inputs:
+      pypi_publish:
+        description: "none (default) | pypi_test | pypy"
+        default: "none"
+        type: string
+      basix_ref:
+        description: "basix git ref to checkout"
+        default: "main"
+        type: string
 
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    #if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     strategy:
       matrix:
         os: [ubuntu-20.04, macos-10.15, macos-11]
 
     steps:
       - uses: actions/checkout@v2
+        ref: ${{ inputs.basix_ref }}
 
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.1.2
@@ -25,7 +49,6 @@ jobs:
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
-    #if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v2
 
@@ -43,7 +66,6 @@ jobs:
     name: Upload to PyPI
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
-    #if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -51,9 +73,15 @@ jobs:
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.4.2
+        if: ${{ inputs.pypi_publish }} == "pypy"
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
+          repository_url: https://pypi.org/legacy/
+      
+      - uses: pypa/gh-action-pypi-publish@v1.4.2
+        if: ${{ inputs.pypi_publish }} == "pypy_test"
         with:
           user: __token__
           password: ${{ secrets.PYPI_TEST_TOKEN }}
           repository_url: https://test.pypi.org/legacy/
-          #password: ${{ secrets.PYPI_TOKEN }}
-          #repository_url: https://pypi.org/legacy/

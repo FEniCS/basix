@@ -72,8 +72,7 @@ jobs:
           path: dist/*
 
   upload_pypi:
-    name: Upload to PyPI
-    if: ${{ inputs.test_pypi_publish }} || ${{ inputs.pypi_publish }}
+    name: Upload to PyPI (optional)
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     steps:

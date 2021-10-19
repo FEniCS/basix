@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 [tool.cibuildwheel]
 build = ["cp{37,38,39}-manylinux_x86_64", "cp{37,38,39}-macosx_x86_64"]
 
-test-command = "cmake -DPython3_EXECUTABLE=$(which python) -G Ninja -B build -S {project}/test/test_cmake && cmake --build build/ && build/a.out && python -m pytest -v -n 2 --durations 20 {project}/test/"
+test-command = "cmake -DPython3_EXECUTABLE=$(which python) -DCMAKE_INSTALL_PREFIX=$(pwd)/install -G Ninja -B build -S {project}/test/test_cmake && cmake --build build/ && cmake --install build/ && install/bin/basix-app && python -m pytest -v -n 2 --durations 20 {project}/test/"
 test-requires = ["pytest", "pytest-xdist", "numpy", "sympy", "numba", "scipy"]
 
 manylinux-x86_64-image = "manylinux2014"

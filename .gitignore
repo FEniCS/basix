@@ -20,6 +20,7 @@ doc/web/html
 doc/web/_temp
 doc/web/python
 doc/web/cpp
+doc/web/web
 
 build*/
 

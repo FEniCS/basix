@@ -27,7 +27,9 @@ The documentation will then be built in the folder `python/html/`.
 
 Documentation for website
 -------------------------
-To build the Basix documentation as it appears at [](), run the following commands:
+To build the Basix documentation as it appears at
+[docs.fenicsproject.org/basix/main/](https://docs.fenicsproject.org/basix/main/),
+run the following commands:
 
 ```bash
 cd web

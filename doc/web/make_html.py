@@ -167,7 +167,7 @@ with open("cpp/Doxyfile") as f:
         elif line.startswith("HTML_FOOTER"):
             content += f"{line.split('=')[0]}= footer.html\n"
         else:
-            content += line
+            content += line.replace("= ..", "= ../..")
 
 with open("cpp/Doxyfile", "w") as f:
     f.write(content)

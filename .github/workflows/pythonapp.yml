@@ -74,7 +74,7 @@ jobs:
         with:
           name: doc-cpp
           path: |
-            doc/html/cpp
+            doc/cpp/html
           retention-days: 2
           if-no-files-found: error
       - name: Upload Python documentation artifact
@@ -83,7 +83,7 @@ jobs:
         with:
           name: doc-python
           path: |
-            doc/html/python
+            doc/python/html
           retention-days: 2
           if-no-files-found: error
 

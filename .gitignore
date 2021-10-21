@@ -7,12 +7,12 @@ MANIFEST
 
 cpp/Makefile
 cpp/CMakeCache.txt
-cpp/CMakeFiles/*
+cpp/CMakeFiles
 cpp/cmake_install.cmake
 cpp/basix/version.h
 
-doc/python/build/*
-doc/python/source/generated/*
+doc/python/build
+doc/python/source/generated
 python/testing_build/
 doc/cpp/html
 doc/cpp/latex
@@ -21,11 +21,12 @@ doc/web/_temp
 doc/web/python
 doc/web/cpp
 doc/web/web
+doc/python/source/_autosummary
 
 build*/
 
 .*.swp
 
 *.egg-info
-_skbuild/*
-dist/*
+_skbuild
+dist

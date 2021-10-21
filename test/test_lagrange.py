@@ -120,7 +120,7 @@ def test_tri(degree):
                 for j, p in enumerate(pts):
                     wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
 
-            assert numpy.allclose(wtab[basix.index(kx, ky)], wsym)
+            assert numpy.allclose(wtab[basix._basixcpp.index(kx, ky)], wsym)
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
@@ -149,7 +149,7 @@ def test_tet(degree):
                                               (y, p[1]),
                                               (z, p[2])])
 
-                assert numpy.allclose(wtab[basix.index(kx, ky, kz)], wsym)
+                assert numpy.allclose(wtab[basix._basixcpp.index(kx, ky, kz)], wsym)
 
 
 @pytest.mark.parametrize("celltype", [(basix.CellType.interval, basix.CellType.interval),

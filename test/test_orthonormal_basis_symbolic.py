@@ -24,7 +24,7 @@ def test_symbolic_interval():
 
     cell = basix.CellType.interval
     pts0 = basix.create_lattice(cell, 10, basix.LatticeType.equispaced, True)
-    wtab = basix.tabulate_polynomial_set(cell, n, nderiv, pts0)
+    wtab = basix._basixcpp.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     wd = [w[i] for i in range(n + 1)]
     for k in range(nderiv + 1):
@@ -40,7 +40,7 @@ def test_symbolic_quad():
     n = 2
     nderiv = 2
 
-    idx = basix.index
+    idx = basix._basixcpp.index
 
     x = sympy.Symbol("x")
     wx = P_interval(n, x)
@@ -55,7 +55,7 @@ def test_symbolic_quad():
     m = (n + 1)**2
     cell = basix.CellType.quadrilateral
     pts0 = basix.create_lattice(cell, 2, basix.LatticeType.equispaced, True)
-    wtab = basix.tabulate_polynomial_set(cell, n, nderiv, pts0)
+    wtab = basix._basixcpp.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
@@ -72,7 +72,7 @@ def test_symbolic_triangle():
     n = 5
     nderiv = 4
 
-    idx = basix.index
+    idx = basix._basixcpp.index
 
     from sympy import S
     m = (n + 1) * (n + 2) // 2
@@ -94,7 +94,7 @@ def test_symbolic_triangle():
 
     cell = basix.CellType.triangle
     pts0 = basix.create_lattice(cell, 3, basix.LatticeType.equispaced, True)
-    wtab = basix.tabulate_polynomial_set(cell, n, nderiv, pts0)
+    wtab = basix._basixcpp.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     for kx in range(nderiv):
         for ky in range(0, nderiv - kx):
@@ -111,7 +111,7 @@ def test_symbolic_tetrahedron():
     n = 4
     nderiv = 4
 
-    idx = basix.index
+    idx = basix._basixcpp.index
 
     from sympy import S
     m = (n + 1) * (n + 2) * (n + 3) // 6
@@ -145,7 +145,7 @@ def test_symbolic_tetrahedron():
 
     cell = basix.CellType.tetrahedron
     pts0 = basix.create_lattice(cell, 2, basix.LatticeType.equispaced, True)
-    wtab = basix.tabulate_polynomial_set(cell, n, nderiv, pts0)
+    wtab = basix._basixcpp.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     for k in range(nderiv + 1):
         for q in range(k + 1):
@@ -168,7 +168,7 @@ def test_symbolic_pyramid():
     n = 3
     nderiv = 3
 
-    idx = basix.index
+    idx = basix._basixcpp.index
 
     def pyr_idx(p, q, r):
         rv = n - r + 1
@@ -203,7 +203,7 @@ def test_symbolic_pyramid():
 
     cell = basix.CellType.pyramid
     pts0 = basix.create_lattice(cell, 1, basix.LatticeType.equispaced, True)
-    wtab = basix.tabulate_polynomial_set(cell, n, nderiv, pts0)
+    wtab = basix._basixcpp.tabulate_polynomial_set(cell, n, nderiv, pts0)
 
     for k in range(nderiv + 1):
         for q in range(k + 1):

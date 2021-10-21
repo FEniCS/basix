@@ -3,7 +3,7 @@
 from ._basixcpp import ElementFamily as _EF
 
 
-def string_to_family(family: str, cell: str):
+def string_to_family(family: str, cell: str) -> _EF:
     """Get a Basix ElementFamily enum representing the family type on the given cell."""
     # Family names that are valid for all cells
     families = {

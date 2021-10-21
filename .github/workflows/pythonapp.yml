@@ -92,6 +92,7 @@ jobs:
         run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/web
+          pip install -r requirements.txt
           python make_html.py
 
       - name: Set version name

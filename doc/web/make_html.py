@@ -127,7 +127,7 @@ def system(command):
 
 
 # Make paths
-for dir in ["html", "cpp", "python", "wweb"]:
+for dir in ["html", "cpp", "python", "web"]:
     if os.path.isdir(path(dir)):
         system(f"rm -r {path(dir)}")
 if os.path.isdir(temp):
@@ -141,7 +141,7 @@ system(f"cp -r {path('../python')} {path('python')}")
 system(f"mkdir {path('python/source/_templates')}")
 
 # Prepare templates
-# system(f"git clone http://github.com/FEniCS/web {path('web')}")
+system(f"git clone http://github.com/FEniCS/web {path('web')}")
 
 with open(path('web/_layouts/default.html')) as f:
     intro, outro = f.read().split("\n    {{ title }}\n    {{ content }}\n")

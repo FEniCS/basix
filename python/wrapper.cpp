@@ -208,14 +208,16 @@ Interface to the Basix C++ library.
 
   m.def(
       "cell_volume",
-      [](cell::type cell_type) -> double { return cell::volume(cell_type); });
+      [](cell::type cell_type) -> double { return cell::volume(cell_type); },
+      "Get the volume of a cell");
   m.def(
       "cell_facet_normals",
       [](cell::type cell_type)
       {
         xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
         return py::array_t<double>(normals.shape(), normals.data());
-      });
+      },
+      "Get the normals to the facets of a cell");
   m.def(
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
@@ -223,22 +225,26 @@ Interface to the Basix C++ library.
         xt::xtensor<double, 1> volumes
             = cell::facet_reference_volumes(cell_type);
         return py::array_t<double>(volumes.shape(), volumes.data());
-      });
+      },
+      "Get the reference volumes of the facets of a cell");
   m.def(
       "cell_facet_outward_normals",
       [](cell::type cell_type)
       {
         xt::xtensor<double, 2> normals = cell::facet_outward_normals(cell_type);
         return py::array_t<double>(normals.shape(), normals.data());
-      });
-  m.def("cell_facet_orientations", &cell::facet_orientations);
+      },
+      "Get the outward normals to the facets of a cell");
+  m.def("cell_facet_orientations", &cell::facet_orientations,
+        "Get the orientations of the facets of a cell");
   m.def(
       "cell_facet_jacobians",
       [](cell::type cell_type)
       {
         xt::xtensor<double, 3> jacobians = cell::facet_jacobians(cell_type);
         return py::array_t<double>(jacobians.shape(), jacobians.data());
-      });
+      },
+      "Get the jacobians of the facets of a cell");
 
   py::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)

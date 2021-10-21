@@ -1,51 +1,22 @@
 """Functions to get cell geometry information and manipulate cell types."""
 
-from . import _basixcpp
-import numpy as _np
+from ._basixcpp import cell_volume as volume
+from ._basixcpp import cell_facet_reference_volumes as facet_reference_volumes
+from ._basixcpp import cell_facet_normals as facet_normals
+from ._basixcpp import cell_facet_outward_normals as facet_outward_normals
+from ._basixcpp import cell_facet_orientations as facet_orientations
+from ._basixcpp import cell_facet_jacobians as facet_jacobians
+from ._basixcpp import sub_entity_connectivity
+from ._basixcpp import CellType as _CT
 
 
-def string_to_type(cell: str) -> _basixcpp.CellType:
+def string_to_type(cell: str):
     """Convert a string to a Basix CellType."""
-    if not hasattr(_basixcpp.CellType, cell):
+    if not hasattr(_CT, cell):
         raise ValueError(f"Unknown cell: {cell}")
-    return getattr(_basixcpp.CellType, cell)
+    return getattr(_CT, cell)
 
 
-def type_to_string(celltype: _basixcpp.CellType) -> str:
+def type_to_string(celltype: _CT):
     """Convert a Basix CellType to a string."""
     return celltype.name
-
-
-def volume(celltype: _basixcpp.CellType) -> float:
-    """Get the volume of a reference cell."""
-    return _basixcpp.cell_volume(celltype)
-
-
-def facet_reference_volumes(celltype: _basixcpp.CellType) -> _np.array:
-    """Get the reference volumes of the facets of a reference cell."""
-    return _basixcpp.cell_facet_reference_volumes(celltype)
-
-
-def facet_normals(celltype: _basixcpp.CellType) -> _np.ndarray:
-    """Get the normals to the facets of a reference cell."""
-    return _basixcpp.cell_facet_normals(celltype)
-
-
-def facet_outward_normals(celltype: _basixcpp.CellType) -> _np.ndarray:
-    """Get the outward pointing normals to the facets of a reference cell."""
-    return _basixcpp.cell_facet_outward_normals(celltype)
-
-
-def facet_orientations(celltype: _basixcpp.CellType) -> list:
-    """Get the orientation of the facets of a reference cell."""
-    return _basixcpp.cell_facet_orientations(celltype)
-
-
-def facet_jacobians(celltype: _basixcpp.CellType) -> _np.ndarray:
-    """Get the Jacobians of the facets of a reference cell."""
-    return _basixcpp.cell_facet_jacobians(celltype)
-
-
-def sub_entity_connectivity(celltype: _basixcpp.CellType) -> list:
-    """Get the connectivity between subentities of a refernce cell."""
-    return _basixcpp.sub_entity_connectivity(celltype)

@@ -1,6 +1,7 @@
 """Functions for creating finite elements."""
 
 from ._basixcpp import ElementFamily as _EF
+from ._basixcpp import FiniteElement
 
 
 def string_to_family(family: str, cell: str) -> _EF:

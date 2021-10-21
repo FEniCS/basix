@@ -1,5 +1,5 @@
 import argparse
-import markdown
+from markdown import markdown as _markdown
 import os
 import basix
 import re
@@ -21,6 +21,20 @@ parser.add_argument('--url', metavar='url',
 args = parser.parse_args()
 url = args.url
 url_no_http = url.split("//")[1]
+
+
+def markdown(txt):
+    """Convert markdown to HTML."""
+    # Convert code inside ```s (as these are not handled by the markdown library
+    tsp = txt.split("```")
+    out = ""
+    for t, code in zip(tsp[::2], tsp[1::2] + [""]):
+        code = code.strip().split("\n")
+        if code[0] in ["console", "bash", "python", "c", "cpp"]:
+            code = code[1:]
+        code = "\n".join(code)
+        out += f"{t}<pre><code>{code}</code></pre>"
+    return _markdown(out)
 
 
 def jekyll(a):
@@ -45,10 +59,13 @@ def jekyll(a):
         for i in data:
             this_c = c
             for j, k in i.items():
-                this_c = this_c.replace(f"{{{{ link.{j} }}}}", k)
+                if j == "page" and k.startswith("/"):
+                    print(j, k)
+                    this_c = this_c.replace(f"{{{{ link.{j} }}}}", f"https://fenicsproject.org{k}")
+                else:
+                    this_c = this_c.replace(f"{{{{ link.{j} }}}}", k)
             a += this_c
         a += d
-
     if "{% if page.image %}" in a:
         b, c = a.split("{% if page.image %}")
         _, c = c.split("{% else %}", 1)
@@ -61,7 +78,7 @@ def jekyll(a):
     if "\n{% if page.subtitle %}" in a:
         b, c = a.split("\n{% if page.subtitle %}")
         _, c = c.split("\n{% endif %}", 1)
-        a = b + "<h2 id=\"project_subtitle\">Documentation</h2>" + c
+        a = b + c
 
     a = re.sub(r"\{\{[^}]+\| default: (?:'|\")([^}]+)(?:'|\") \}\}", r"\1", a)
     a = re.sub(r"\{\{ (?:'|\")\/assets\/css\/style\.css\?v=(?:'|\")[^\}]+\}\}", "/assets/css/style.css", a)
@@ -105,22 +122,26 @@ def insert_info(txt):
     return txt
 
 
+def system(command):
+    assert os.system(command) == 0
+
+
 # Make paths
 for dir in ["html", "cpp", "python", "wweb"]:
     if os.path.isdir(path(dir)):
-        os.system(f"rm -r {path(dir)}")
+        system(f"rm -r {path(dir)}")
 if os.path.isdir(temp):
-    os.system(f"rm -r {temp}")
-os.system(f"mkdir {path('html')}")
-os.system(f"mkdir {temp}")
+    system(f"rm -r {temp}")
+system(f"mkdir {path('html')}")
+system(f"mkdir {temp}")
 
 # Copy cpp and python folders
-os.system(f"cp -r {path('../cpp')} {path('cpp')}")
-os.system(f"cp -r {path('../python')} {path('python')}")
-os.system(f"mkdir {path('python/source/_templates')}")
+system(f"cp -r {path('../cpp')} {path('cpp')}")
+system(f"cp -r {path('../python')} {path('python')}")
+system(f"mkdir {path('python/source/_templates')}")
 
 # Prepare templates
-# os.system(f"git clone http://github.com/FEniCS/web {path('web')}")
+# system(f"git clone http://github.com/FEniCS/web {path('web')}")
 
 with open(path('web/_layouts/default.html')) as f:
     intro, outro = f.read().split("\n    {{ title }}\n    {{ content }}\n")
@@ -130,34 +151,35 @@ with open(path('web/_layouts/default.html')) as f:
 with open(path("template/navbar.html")) as f:
     intro += f"<h2 id=\"project_subtitle\">{insert_info(f.read())}</h2>"
 
-for file in ["stylesheets.html", "navbar.html"]:
-    with open(os.path.join(path('template'), file)) as f:
-        content = f.read()
-    with open(os.path.join(temp, file), "w") as f:
-        f.write(insert_info(content))
-
 with open(os.path.join(temp, "intro.html"), "w") as f:
     f.write(intro.replace("{{SEO}}", "<title>Basix documentation</title>"))
 with open(os.path.join(temp, "outro.html"), "w") as f:
     f.write(outro)
 
+intro += "\n".join(outro.split("\n")[:2])
+outro = "\n".join(outro.split("\n")[2:])
+
 with open(path("cpp/footer.html"), "w") as f:
     f.write(outro)
 with open(path("cpp/header.html"), "w") as f:
     with open(path("cpp-seo.html")) as f2:
-        f.write(intro.replace("{{SEO}}", f2.read()))
+        f.write(insert_info(intro.replace("{{SEO}}", f2.read())))
     with open(path("cpp-header.html")) as f2:
-        f.write(f2.read())
+        f.write(insert_info(f2.read()))
 
+content = "{% extends \"!layout.html\" %}\n"
+content += "{%- block content %}\n"
+content += intro.split("<body>")[1] + "\n"
+content += "    {{ super() }}\n"
+content += outro.split("</body>")[0] + "\n"
+content += "{% endblock %}\n"
+content += "{%- block extrahead %}\n"
+content += intro.split("<head>")[1].split("</head>")[0] + "\n"
+content += "  {{ super() }}\n"
+content += "{% endblock %}"
 
-for fin, fout in [
-    ("python-layout.html.template", "python/source/_templates/layout.html")
-]:
-    with open(path(fin)) as f:
-        content = f.read()
-    with open(path(fout), "w") as f:
-        content = insert_info(content)
-        f.write(insert_info(content))
+with open(path("python/source/_templates/layout.html"), "w") as f:
+    f.write(insert_info(content))
 
 with open("cpp/Doxyfile") as f:
     content = ""
@@ -173,8 +195,8 @@ with open("cpp/Doxyfile", "w") as f:
     f.write(content)
 
 # Copy images and assets
-os.system(f"cp -r {path('../../img')} {path('html')}/img")
-os.system(f"cp -r {path('assets')} {path('html')}/assets")
+system(f"cp -r {path('../../img')} {path('html')}/img")
+system(f"cp -r {path('assets')} {path('html')}/assets")
 
 # Convert markdown to html
 for file in os.listdir(_path):
@@ -182,10 +204,12 @@ for file in os.listdir(_path):
         with open(path(file)) as f:
             contents = unicode_to_html(insert_info(f.read()))
         with open(os.path.join(path('html'), file[:-3] + ".html"), "w") as f:
-            f.write(make_html_page(markdown.markdown(contents)))
+            f.write(make_html_page(markdown(contents)))
 
 # Make cpp docs
-assert os.system(f"cd {path('cpp')} && doxygen && cp -r {path('cpp/html')} {path('html/cpp')}") == 0
+system(f"cd {path('cpp')} && doxygen")
+system(f"cp -r {path('cpp/html')} {path('html/cpp')}")
 
 # Make python docs
-assert os.system(f"cd {path('python')} && make html && cp -r {path('python/build/html')} {path('html/python')}") == 0
+system(f"cd {path('python')} && make html")
+system(f"cp -r {path('python/build/html')} {path('html/python')}")

@@ -54,7 +54,7 @@ def jekyll(a):
         b, c = a.split("{% for link in site.data.navbar %}", 1)
         c, d = c.split("{% endfor %}", 1)
         with open(path("web/_data/navbar.yml")) as f:
-            data = yaml.load(f)
+            data = yaml.load(f, Loader=yaml.FullLoader)
         a = b
         for i in data:
             this_c = c

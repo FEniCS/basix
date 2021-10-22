@@ -9,4 +9,4 @@ from ._basixcpp import __version__
 from . import cell, finite_element, lattice, variants
 from ._basixcpp import CellType, LatticeType, LatticeSimplexMethod, ElementFamily, LagrangeVariant
 from ._basixcpp import (create_lattice, create_element, compute_interpolation_operator, topology,
-                        geometry, make_quadrature)
+                        geometry, make_quadrature, index)

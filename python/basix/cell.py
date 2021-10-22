@@ -11,12 +11,36 @@ from ._basixcpp import CellType as _CT
 
 
 def string_to_type(cell: str) -> _CT:
-    """Convert a string to a Basix CellType."""
+    """
+    Convert a string to a Basix CellType.
+
+    Parameters
+    ----------
+    cell : str
+        The name of the cell as a string.
+
+    Returns
+    -------
+    basix.CellType
+        The cell type
+    """
     if not hasattr(_CT, cell):
         raise ValueError(f"Unknown cell: {cell}")
     return getattr(_CT, cell)
 
 
 def type_to_string(celltype: _CT) -> str:
-    """Convert a Basix CellType to a string."""
+    """
+    Convert a Basix CellType to a string.
+
+    Parameters
+    ----------
+    celltype : basix.CellType
+        The cell type.
+
+    Returns
+    -------
+    str
+        The name of the cell as a string.
+    """
     return celltype.name

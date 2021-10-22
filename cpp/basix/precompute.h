@@ -9,9 +9,7 @@
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
-/// ## Matrix and permutation precomputation
-/// These functions generate precomputed version of matrices to allow
-/// application without temporary memory assignment later
+/// Matrix and permutation precomputation
 namespace basix::precompute
 {
 
@@ -109,6 +107,9 @@ prepare_permutation(const std::vector<std::size_t>& perm);
 /// Therefore the result of applying this permutation is `[b, e, a, f, c, d]`
 /// (which is what we get if we apply the permutation directly).
 ///
+/// @note This function is designed to be called at runtime, so its performance
+/// is critical.
+///
 /// @param[in] perm A permutation in precomputed form (as returned by
 /// `prepare_permutation()`)
 /// @param[in,out] data The data to apply the permutation to
@@ -130,6 +131,9 @@ void apply_permutation(const std::vector<std::size_t>& perm,
 }
 
 /// Apply a (precomputed) permutation to some transposed data
+///
+/// @note This function is designed to be called at runtime, so its performance
+/// is critical.
 ///
 /// see `apply_permutation()`.
 template <typename E>
@@ -303,6 +307,9 @@ prepare_matrix(const xt::xtensor<double, 2>& matrix);
 /// add @f$-2\times-1 + 0\times2 + 0\times8 = 2@f$. After this, @f$v@f$ is `[-1,
 /// 2, 10]`. This final value of @f$v@f$ is what the result of @f$Av@f$
 ///
+/// @note This function is designed to be called at runtime, so its performance
+/// is critical.
+///
 /// @param[in] matrix A matrix in precomputed form (as returned by
 /// `prepare_matrix()`)
 /// @param[in,out] data The data to apply the permutation to
@@ -335,6 +342,9 @@ void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
 }
 
 /// Apply a (precomputed) matrix to some transposed data.
+///
+/// @note This function is designed to be called at runtime, so its performance
+/// is critical.
 ///
 /// See `apply_matrix()`.
 template <typename T, typename E>

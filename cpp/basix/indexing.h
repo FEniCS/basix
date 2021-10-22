@@ -4,7 +4,8 @@
 
 #pragma once
 
-namespace basix
+/// Indexing
+namespace basix::indexing
 {
 /// Compute trivial indexing in a 1D array (for completeness)
 /// @param p Index in x
@@ -30,4 +31,4 @@ constexpr int idx(int p, int q, int r)
   return (p + q + r) * (p + q + r + 1) * (p + q + r + 2) / 6
          + (q + r) * (q + r + 1) / 2 + r;
 }
-} // namespace basix
+} // namespace basix::indexing

@@ -1,8 +1,9 @@
 # Installation
 
 The Basix Python and C++ can be installed by
+
 ```console
-> pip install .
+pip install .
 ```
 
 It is also possible to install the C++ and Python interfaces separately
@@ -13,12 +14,12 @@ be helpful during development.
 
 ### C++ library
 
-In the `cpp/` directory::
+In the `cpp/` directory:
 
 ```console
-> cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
-> cmake --build build-dir
-> cmake --install build-dir
+cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
+cmake --build build-dir
+cmake --install build-dir
 ```
 
 You may need to use `sudo` for the final install step. Using the CMake
@@ -30,7 +31,7 @@ build type `Release` is strongly recommended for performance.
 To install the Python interface, in the directory `python/`:
 
 ```console
-> pip install .
+pip install .
 ```
 
 
@@ -40,7 +41,7 @@ Once the Basix Python interface has been installed, from the the
 directory `python/` the tests can be run with:
 
 ```console
-> pytest test/
+pytest test/
 ```
 
 
@@ -49,5 +50,5 @@ directory `python/` the tests can be run with:
 Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor).
 CMake will download install these packages if they cannot be found.
 
-Building the Python interface required
+Building the Python interface requires
 [`pybind11`](https://github.com/pybind/pybind11).

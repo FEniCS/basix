@@ -12,6 +12,10 @@
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xtensor.hpp>
 
+/// Mathematical functions
+
+/// @note The functions in this namespace are designed to be called multiple
+/// times at runtime, so their performance is critical.
 namespace basix::math
 {
 
@@ -47,7 +51,7 @@ xt::xtensor_fixed<typename U::value_type, xt::xshape<3>> cross(const U& u,
 /// Compute C = A * B
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
-/// @param[out] C Filled to be C = A * B
+/// return A * B
 template <typename U, typename V>
 xt::xtensor<typename U::value_type, 2> dot(const U& A, const V& B)
 {
@@ -65,15 +69,15 @@ xt::xtensor<typename U::value_type, 2> dot(const U& A, const V& B)
 
 /// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
 /// @param[in] A Input matrix
-/// @return TODO
+/// @return Eigenvalues and eigenvectors
 std::pair<xt::xtensor<double, 1>,
           xt::xtensor<double, 2, xt::layout_type::column_major>>
 eigh(const xt::xtensor<double, 2>& A);
 
 /// Solve A X = B
 /// @param[in] A The matrix
-/// @param[in] A Right-hand side matrix/vector
-/// @return X, where X = A^{-1} B
+/// @param[in] B Right-hand side matrix/vector
+/// @return A^{-1} B
 xt::xarray<double, xt::layout_type::column_major>
 solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B);
 

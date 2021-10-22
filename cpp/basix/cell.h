@@ -7,8 +7,10 @@
 #include <vector>
 #include <xtensor/xtensor.hpp>
 
-/// Information about reference cells including their topological and
-/// geometric data.
+/// Information about reference cells
+
+/// This namespace include functions that can be used to obtain geometric and
+/// topological information about reference cells
 namespace basix::cell
 {
 
@@ -56,13 +58,13 @@ sub_entity_connectivity(cell::type celltype);
 xt::xtensor<double, 2> sub_entity_geometry(cell::type celltype, int dim,
                                            int index);
 
-/// @todo Optimise this function
 /// Number of sub-entities of a cell by topological dimension
+/// @todo Optimise this function
+/// @warning This function is expensive to call. Do not use in
+/// performance critical code
 /// @param celltype The cell::type
 /// @param dim Dimension of sub-entity
 /// @return The number of sub-entities of the given dimension
-/// @warning This function is expensive to call. Do not use in
-/// performance critical code
 int num_sub_entities(cell::type celltype, int dim);
 
 /// Get the topological dimension for a given cell type
@@ -79,32 +81,39 @@ cell::type sub_entity_type(cell::type celltype, int dim, int index);
 
 /// Get the volume of a reference cell
 /// @param cell_type Type of cell
+/// @return The volume of the cell
 double volume(cell::type cell_type);
 
 /// Get the (outward) normals to the facets of a reference cell
 /// @param cell_type Type of cell
+/// @return The outward normals
 xt::xtensor<double, 2> facet_outward_normals(cell::type cell_type);
 
 /// Get the normals to the facets of a reference cell oriented using the
 /// low-to-high ordering of the facet
 /// @param cell_type Type of cell
+/// @return The normals
 xt::xtensor<double, 2> facet_normals(cell::type cell_type);
 
 /// Get a array of bools indicating whether or not the facet normals are outward
 /// pointing
 /// @param cell_type Type of cell
+/// @return The orientations
 std::vector<bool> facet_orientations(cell::type cell_type);
 
 /// Get the reference volumes of the facets of a reference cell
 /// @param cell_type Type of cell
+/// @return The volumes of the references associated with each facet
 xt::xtensor<double, 1> facet_reference_volumes(cell::type cell_type);
 
-/// Get the reference volumes of the facets of a reference cell
+/// Get the types of the subentities of a reference cell
 /// @param cell_type Type of cell
+/// @return The subentity types
 std::vector<std::vector<cell::type>> subentity_types(cell::type cell_type);
 
 /// Get the jacobians of the facets of a reference cell
 /// @param cell_type Type of cell
+/// @return The jacobians of the facets
 xt::xtensor<double, 3> facet_jacobians(cell::type cell_type);
 
 } // namespace basix::cell

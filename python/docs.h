@@ -237,7 +237,7 @@ numpy.ndarray[numpy.float64]
 - The first index is the derivative, with higher derivatives are
 stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
 the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-(0,2), (3,0)... The function basix::idx can be used to find the
+(0,2), (3,0)... The function basix::indexing::idx can be used to find the
 appropriate derivative.
 - The second index is the point index
 - The third index is the basis function index
@@ -574,14 +574,7 @@ the 'to' degrees-of-freedom
 )";
 
 const std::string tabulate_polynomial_set = R"(
-## Orthonormal polynomial basis on reference cell
-These are the underlying "expansion sets" for all finite elements,
-which when multiplied by a set of "coefficients" give the FE basis
-functions.
-
-The polynomials (and their derivatives) can be tabulated on unit
-interval, triangle, tetrahedron, quadrilateral, hexahedron, prism
-and pyramids.
+Polynomial expansion sets
 Tabulate the orthonormal polynomial basis, and derivatives, at
 points on the reference cell.
 
@@ -620,7 +613,8 @@ itself. Derivatives are stored in triangular (2D) or tetrahedral
 repsect to `x` and `q` order derivative with respect to `y`, [0] ->
 (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
 [5] -> (0, 2), [6] -> (3, 0),...
-The function basix::idx maps tuples `(p, q, r)` to the array index.
+The function basix::indexing::idx maps tuples `(p, q, r)` to the array
+index.
 
 - The second index is the point, with index `i` correspondign to the
 point in row `i` of @p x.
@@ -630,10 +624,7 @@ TODO: Does the order for the third index need to be documented?
 )";
 
 const std::string compute_jacobi_deriv = R"(
-basix
-Integration using Gauss-Jacobi quadrature on simplices. Other shapes
-can be obtained by using a product.
-TODO: - pyramid
+Quadrature rules
 Evaluate the nth Jacobi polynomial and derivatives with weight
 parameters (a, 0) at points x
 
@@ -651,7 +642,7 @@ x : numpy.ndarray[numpy.float64]
 Returns
 =======
 numpy.ndarray[numpy.float64]
-    s Array of polynomial derivative values (rows) at points
+    Array of polynomial derivative values (rows) at points
 (columns)
 )";
 
@@ -670,11 +661,12 @@ m : int
 Returns
 =======
 numpy.ndarray[numpy.float64]
-    s List of points and list of weights. The number of points
+    List of points and list of weights. The number of points
 arrays has shape (num points, gdim)
 )";
 
 const std::string index__p = R"(
+Indexing
 Compute trivial indexing in a 1D array (for completeness)
 
 Parameters

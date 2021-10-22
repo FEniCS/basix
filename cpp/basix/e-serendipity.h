@@ -10,26 +10,29 @@
 namespace basix
 {
 /// Create a serendipity element on cell with given degree
-/// @param[in] celltype quadrilateral or hexahedral celltype
-/// @param[in] degree
-/// @param discontinuous
-/// @return A FiniteElement
+/// @param[in] celltype The cell type
+/// @param[in] degree The degree of the element
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
+/// @return A finite element
 FiniteElement create_serendipity(cell::type celltype, int degree,
                                  bool discontinuous);
 
 /// Create a serendipity H(div) element on cell with given degree
-/// @param[in] celltype quadrilateral or hexahedral celltype
-/// @param[in] degree
-/// @param discontinuous
-/// @return A FiniteElement
+/// @param[in] celltype The cell type
+/// @param[in] degree The degree of the element
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
+/// @return A finite element
 FiniteElement create_serendipity_div(cell::type celltype, int degree,
                                      bool discontinuous);
 
 /// Create a serendipity H(curl) element on cell with given degree
-/// @param[in] celltype quadrilateral or hexahedral celltype
-/// @param[in] degree
-/// @param discontinuous
-/// @return A FiniteElement
+/// @param[in] celltype The cell type
+/// @param[in] degree The degree of the element
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
+/// @return A finite element
 FiniteElement create_serendipity_curl(cell::type celltype, int degree,
                                       bool discontinuous);
 } // namespace basix

@@ -10,11 +10,11 @@
 namespace basix
 {
 /// Create a bubble element on cell with given degree
-/// @param[in] celltype interval, triangle, tetrahedral, quadrilateral or
-/// hexahedral celltype
-/// @param[in] degree
-/// @param discontinuous
-/// @return A FiniteElement
+/// @param[in] celltype The cell type
+/// @param[in] degree The degree of the element
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
+/// @return A finite element
 FiniteElement create_bubble(cell::type celltype, int degree,
                             bool discontinuous);
 } // namespace basix

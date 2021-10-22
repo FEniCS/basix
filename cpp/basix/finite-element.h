@@ -2,9 +2,6 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-// FIXME: just include everything for now
-// Need to define public API
-
 #pragma once
 
 #include "cell.h"

@@ -7,6 +7,7 @@
 namespace basix
 {
 
+/// Enums that can be used to define finite element types
 namespace element
 {
 /// An enum defining the variants of a Lagrange space that can be created

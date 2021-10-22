@@ -204,9 +204,10 @@ make_discontinuous(
 
 } // namespace element
 
-/// Finite Element
-/// The basis is stored as a set of coefficients, which are applied to the
-/// underlying expansion set for that cell type, when tabulating.
+/// A finite element
+
+/// The basis of a finite element is stored as a set of coefficients, which are
+/// applied to the underlying expansion set for that cell type, when tabulating.
 class FiniteElement
 {
 

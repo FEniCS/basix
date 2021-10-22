@@ -82,6 +82,7 @@ def get_docstring(matches):
     doc = doc.replace("@f]", "\\]")
     doc = doc.replace("@note", "NOTE:")
     doc = doc.replace("@todo", "TODO:")
+    doc = doc.replace("@warning", "WARNING:")
     doc = unreplace(doc)
 
     if info_type == "doc":

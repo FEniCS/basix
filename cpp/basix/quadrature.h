@@ -61,7 +61,7 @@ make_quadrature_tetrahedron_collapsed(std::size_t m);
 
 /// Utility for quadrature rule on reference cell
 /// @param[in] rule Name of quadrature rule (or use "default")
-/// @param[in] celltype
+/// @param[in] celltype The cell type
 /// @param[in] m Maximum degree of polynomial that this quadrature rule
 /// will integrate exactly
 /// @returns List of points and list of weights. The number of points

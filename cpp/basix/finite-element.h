@@ -528,9 +528,11 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
+  /// @return The base transformations for this element
   xt::xtensor<double, 3> base_transformations() const;
 
-  /// Return the entity dof transformation matricess
+  /// Return the entity dof transformation matrices
+  /// @return The entity transformations for the subentities of this element
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations() const;
 
   /// Permute the dof numbering on a cell
@@ -760,6 +762,7 @@ private:
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, element::lagrange_variant variant,
                              bool discontinuous);
@@ -771,6 +774,7 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, bool discontinuous);
 
@@ -779,6 +783,7 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
 /// @param[in] variant The variant of Lagrange to use
+/// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, element::lagrange_variant variant);
 
@@ -786,6 +791,7 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
+/// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree);
 

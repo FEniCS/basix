@@ -144,7 +144,7 @@ cell_type : basix.CellType
 Returns
 =======
 float
-    TODO: document this
+    The volume of the cell
 )";
 
 const std::string cell_facet_normals = R"(
@@ -159,7 +159,7 @@ cell_type : basix.CellType
 Returns
 =======
 numpy.ndarray[numpy.float64]
-    TODO: document this
+    The normals
 )";
 
 const std::string cell_facet_reference_volumes = R"(
@@ -173,7 +173,7 @@ cell_type : basix.CellType
 Returns
 =======
 numpy.ndarray[numpy.float64]
-    TODO: document this
+    The volumes of the references associated with each facet
 )";
 
 const std::string cell_facet_outward_normals = R"(
@@ -187,7 +187,7 @@ cell_type : basix.CellType
 Returns
 =======
 numpy.ndarray[numpy.float64]
-    TODO: document this
+    The outward normals
 )";
 
 const std::string cell_facet_orientations = R"(
@@ -202,7 +202,7 @@ cell_type : basix.CellType
 Returns
 =======
 List[bool]
-    TODO: document this
+    The orientations
 )";
 
 const std::string cell_facet_jacobians = R"(
@@ -216,7 +216,7 @@ cell_type : basix.CellType
 Returns
 =======
 numpy.ndarray[numpy.float64]
-    TODO: document this
+    The jacobians of the facets
 )";
 
 const std::string FiniteElement__tabulate = R"(
@@ -441,16 +441,16 @@ For these DOFs, the subblocks of the base transformation matrices are:
 Returns
 =======
 numpy.ndarray[numpy.float64]
-    TODO: document this
+    The base transformations for this element
 )";
 
 const std::string FiniteElement__entity_transformations = R"(
-Return the entity dof transformation matricess
+Return the entity dof transformation matrices
 
 Returns
 =======
 dict
-    TODO: document this
+    The base transformations for this element
 )";
 
 const std::string create_element__family_cell_degree_discontinuous = R"(
@@ -470,7 +470,7 @@ discontinuous : bool
 Returns
 =======
 basix.finite_element.FiniteElement
-    TODO: document this
+    A finite element
 )";
 
 const std::string create_element__family_cell_degree_variant_discontinuous = R"(
@@ -492,7 +492,7 @@ discontinuous : bool
 Returns
 =======
 basix.finite_element.FiniteElement
-    TODO: document this
+    A finite element
 )";
 
 const std::string create_element__family_cell_degree_variant = R"(
@@ -512,7 +512,7 @@ variant : basix.LagrangeVariant
 Returns
 =======
 basix.finite_element.FiniteElement
-    TODO: document this
+    A finite element
 )";
 
 const std::string create_element__family_cell_degree = R"(
@@ -530,7 +530,7 @@ degree : int
 Returns
 =======
 basix.finite_element.FiniteElement
-    TODO: document this
+    A finite element
 )";
 
 const std::string compute_interpolation_operator = R"(
@@ -663,7 +663,7 @@ Parameters
 rule : str
     Name of quadrature rule (or use "default")
 celltype : basix.CellType
-    TODO: document this
+    The cell type
 m : int
     Maximum degree of polynomial that this quadrature rule will integrate exactly
 

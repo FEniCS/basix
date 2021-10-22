@@ -4,103 +4,144 @@ import re
 path = os.path.dirname(os.path.realpath(__file__))
 cpp_path = os.path.join(path, "../cpp/basix")
 
-exclude = ["math.h"]
+replacements = [(";", "@semicolon@"), ("{", "@openbrace@"), ("}", "@closebrace@"),
+                ("<", "@opentri@"), (">", "@closetri@"), ("(", "@openb@"), (")", "@closeb@"),
+                ("[", "@opensq@"), ("]", "@closesq@")]
 
 
-def cpp_to_python(doc):
+def replace(txt):
+    for i, j in replacements:
+        txt = txt.replace(i, j)
+    return txt
+
+
+def unreplace(txt):
+    for i, j in replacements:
+        txt = txt.replace(j, i)
+    return txt
+
+
+def remove_types(matches):
+    """Remove the types from a function declaration."""
+    vars = [i.strip().split(" ")[-1] for i in matches[1].split(",")]
+    return "(" + ", ".join(vars) + ")"
+
+
+def prepare_cpp(content):
+    """Prepare a cpp file for parsing."""
+    out = ""
+
+    for line in content.split("\n"):
+        if not line.strip().startswith("#"):
+            if line.strip().startswith("//"):
+                out += replace(line) + "\n"
+            else:
+                out += line + "\n"
+
+    out = re.sub(r"namespace [^{]*\{", "", out)
+    out = re.sub(r"class [^{]*\{", "", out)
+
+    while "{" in out:
+        out = re.sub(r"\{[^{}]*\}", ";", out)
+    while "<" in out and ">" in out:
+        out = re.sub(r"<[^<>]*>", "", out)
+    out = re.sub(r"\(([^\)]*)\)", remove_types, out)
+    return out
+
+
+def get_docstring(matches):
+    """Get documentation from a header file."""
+    # Parse the info
+    info = matches[1]
+    typename = None
+    if " : " in info:
+        info, typename = info.split(" : ")
+    file, function, info = info.split(" > ", 2)
+    if " > " in info:
+        info_type, info = info.split(" > ")
+    else:
+        info_type = info
+
+    # Read documentation from a header file
+    with open(os.path.join(cpp_path, file)) as f:
+        content = prepare_cpp(f.read())
+
+    if "::" in function:
+        function = function.split("::")[-1]
+    if "(" not in function:
+        function += "("
+
+    assert function in content
+    doc = content.split(function)[0].split(";")[-1]
+
+    # Convert doxygen syntax to Python docs
+
+    doc = "\n".join([i.strip()[4:] for i in doc.split("\n") if i.strip().startswith("///")])
     doc = doc.replace("@f$", "$")
     doc = doc.replace("@f[", "\\[")
     doc = doc.replace("@f]", "\\]")
     doc = doc.replace("@note", "NOTE:")
     doc = doc.replace("@todo", "TODO:")
-    out = doc.split("@param")[0].split("@return")[0].strip()
-    params = [i.split("@return")[0] for i in doc.split("@param")[1:]]
-    returns = [i.split("@param")[0] for i in doc.split("@return")[1:]]
-    out += "\n"
-    if len(params) > 0:
-        out += "\nParameters\n=========\n"
-        for p in params:
-            p = p.replace("[in]", "")
-            p = p.replace("[out]", "")
-            p = p.replace("[in,out]", "")
-            try:
-                name, desc = p.strip().split(" ", 1)
-            except ValueError:
-                name = p.strip()
-                desc = "TODO: document this"
-            out += name
-            out += "\n"
-            out += "\n".join(["    " + i.strip() for i in desc.strip().split("\n")])
-            out += "\n"
-    if len(returns) > 0:
+    doc = unreplace(doc)
+
+    if info_type == "doc":
+        assert typename is None
+        docstring = doc.split("@param")[0].split("@return")[0].strip()
+        doclines = docstring.split("\n")
+        in_code = False
+        for i, j in enumerate(doclines):
+            if re.match(r"^~+$", j):
+                if in_code:
+                    in_code = False
+                    doclines[i] = "\n"
+                else:
+                    in_code = True
+                    doclines[i] = "\n.. code-block::\n"
+            elif in_code:
+                doclines[i] = " " + doclines[i]
+            else:
+                doclines[i] = doclines[i].strip()
+        for i, j in enumerate(doclines[:-1]):
+            if re.match(r"^-+$", doclines[i + 1]):
+                doclines[i] = f"*{j}*"
+                doclines[i + 1] = ""
+        return "\n".join(doclines)
+
+    if info_type == "param":
+        assert typename is not None
+        params = {}
+        for i in doc.split("@param")[1:]:
+            i = i.split("@return")[0]
+            i = i.replace("[in]", "")
+            i = i.replace("[out]", "")
+            i = i.replace("[in,out]", "")
+            i = " ".join([j.strip() for j in i.strip().split("\n")])
+            if " " in i:
+                p, pdoc = i.split(" ", 1)
+            else:
+                p = i
+                pdoc = "TODO: document this"
+            params[p] = pdoc
+
+        return f"{info} : {typename}\n    {params[info]}"
+
+    if info_type == "return":
+        assert typename is not None
+        returns = [i.split("@param")[0].strip() for i in doc.split("@return")[1:]]
+        if len(returns) == 0:
+            returns.append("TODO: document this")
         assert len(returns) == 1
-        out += "\nReturns\n=======\n"
-        out += "\n".join([i.strip() for i in returns[0].strip().split("\n")])
-        out += "\n"
-    return out
+        return f"{typename}\n    {returns[0]}"
 
 
 def generate_docs():
-    docs = {}
+    with open(os.path.join(path, "docs.h.template")) as f:
+        docs = f.read()
 
-    for file in os.listdir(cpp_path):
-        if file.endswith(".h") and file not in exclude:
-            with open(os.path.join(cpp_path, file)) as f:
-                contents = ""
-                for line in f:
-                    line = line
-                    if line.strip().startswith("//"):
-                        contents += line.replace(";", "{{SEMICOLON}}")
-                    else:
-                        contents += line.replace("{", ";")
+    docs = docs.replace("{{DOCTYPE}}", "const std::string")
+    docs = re.sub(r"\{\{(.+?)\}\}", get_docstring, docs)
 
-                for part in contents.split(";"):
-                    if "///" in part:
-                        doc = ""
-                        new = False
-                        for line in part.split("\n"):
-                            if line.strip().startswith("///"):
-                                if new:
-                                    doc = ""
-                                    new = False
-                                doc += line.strip()[3:].strip() + "\n"
-                            elif line.strip() != "":
-                                new = True
-                        doc = doc.replace("{{SEMICOLON}}", ";")
-
-                        function_name = " ".join([i for i in part.split("\n") if not i.strip().startswith("//")])
-                        function_name = function_name.replace("const", "")
-                        function_name = re.sub(r"\([^\)]*\)", "", function_name)
-                        function_name = function_name.strip().split(" ")[-1]
-
-                        if "::" not in function_name:
-                            doc_name = file[:-2].replace("-", "_") + "__" + function_name
-                            assert re.match(r"^[A-Za-z_][A-Za-z0-9_]+$", doc_name)
-
-                            if doc_name not in docs:
-                                docs[doc_name] = []
-                            docs[doc_name].append([doc, part])
-
-    output = "#include <string>\n\n"
-    output += "namespace basix::docstring\n{\n\n"
-    for i, j in docs.items():
-        if len(j) == 1:
-            doc = cpp_to_python(j[0][0])
-            if "\n" in doc:
-                first, rest = doc.split("\n", 1)
-            else:
-                first = doc
-                rest = ""
-            for part in ["const std::string", f" {i}", f" = R\"({first}"]:
-                if len(output.split("\n")[-1] + part) > 80:
-                    output += "\n   "
-                output += part
-            output += "\n" + rest + ")\";\n\n"
-        else:
-            pass  # print("overloaded:", i, j)
-
-    output += "} // namespace basix::docstring\n"
-    return output
+    return docs
 
 
 if __name__ == "__main__":

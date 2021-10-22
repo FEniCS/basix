@@ -79,8 +79,8 @@ enum class simplex_method
 /// @param celltype The cell::type
 /// @param n Size in each direction. There are n+1 points along each edge of the
 /// cell.
-/// @param exterior If set, includes outer boundaries
 /// @param type A lattice type
+/// @param exterior If set, includes outer boundaries
 /// @param simplex_method The method used to generate points on simplices
 /// @return Set of points
 xt::xtensor<double, 2>

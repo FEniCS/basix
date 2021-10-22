@@ -210,6 +210,21 @@ for file in os.listdir(_path):
 system(f"cd {path('cpp')} && doxygen")
 system(f"cp -r {path('cpp/html')} {path('html/cpp')}")
 
+# Make demos
+system(f"rm {path('../../demo/*.rst')}")
+system(f"cd {path('../../demo')} && python3 convert_to_rst.py")
+system(f"mkdir {path('python/source/demo')}")
+system(f"cp {path('../../demo/*.rst')} {path('python/source/demo')}")
+
+with open(path("python/source/demo/index.rst"), "w") as f:
+    f.write("=====\n")
+    f.write("Demos\n")
+    f.write("=====\n")
+    f.write(".. toctree::\n")
+    for file in os.listdir(path("python/source/demo")):
+        if file.endswith(".rst") and file.startswith("demo"):
+            f.write(f"   {file[:-4]}\n")
+
 # Make python docs
 system(f"cd {path('python')} && make html")
 system(f"cp -r {path('python/build/html')} {path('html/python')}")

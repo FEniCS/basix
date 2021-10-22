@@ -22,6 +22,8 @@ doc/_temp
 doc/python/source/_templates/layout.html
 doc/cpp/header.html
 
+demo/*.rst
+
 build*/
 
 .*.swp

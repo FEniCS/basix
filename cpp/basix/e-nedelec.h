@@ -6,7 +6,7 @@
 
 #include "finite-element.h"
 
-namespace basix
+namespace basix::element
 {
 /// Create Nedelec element (first kind)
 /// @param[in] celltype The cell type
@@ -26,4 +26,4 @@ FiniteElement create_nedelec(cell::type celltype, int degree,
 FiniteElement create_nedelec2(cell::type celltype, int degree,
                               bool discontinuous);
 
-} // namespace basix
+} // namespace basix::element

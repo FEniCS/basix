@@ -6,8 +6,10 @@
 
 #include <vector>
 
-/// Functions to help with the creation of DOF transformation and
-/// direction correction.
+/// Functions to transform DOFs in high degree Lagrange spaces
+
+/// The functions in this namespace calculate the permutations that can be used
+/// to rotate and reflect DOF points in Lagrange spaces.
 namespace basix::doftransforms
 {
 

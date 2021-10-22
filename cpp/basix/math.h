@@ -65,7 +65,7 @@ xt::xtensor<typename U::value_type, 2> dot(const U& A, const V& B)
 
 /// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
 /// @param[in] A Input matrix
-/// @return TODO
+/// @return Eigenvalues and eigenvectors
 std::pair<xt::xtensor<double, 1>,
           xt::xtensor<double, 2, xt::layout_type::column_major>>
 eigh(const xt::xtensor<double, 2>& A);

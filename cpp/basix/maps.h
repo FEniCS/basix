@@ -14,7 +14,7 @@
 namespace basix::maps
 {
 
-/// Cell type
+/// Map type
 enum class type
 {
   identity,

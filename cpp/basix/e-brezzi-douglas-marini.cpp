@@ -20,8 +20,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_bdm(cell::type celltype, int degree,
-                                bool discontinuous)
+FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
+                                         bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -39,7 +39,7 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Add integral moments on facets
-  const FiniteElement facet_moment_space = create_lagrange(
+  const FiniteElement facet_moment_space = element::create_lagrange(
       facettype, degree, element::lagrange_variant::equispaced, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, quad_deg);
@@ -52,7 +52,8 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
   {
     // Interior integral moment
     std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
-        create_nedelec(celltype, degree - 1, true), celltype, tdim, quad_deg);
+        element::create_nedelec(celltype, degree - 1, true), celltype, tdim,
+        quad_deg);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
@@ -76,11 +77,11 @@ FiniteElement basix::create_bdm(cell::type celltype, int degree,
   if (discontinuous)
   {
     std::tie(x, M, entity_transformations)
-        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
+        = element::make_discontinuous(x, M, entity_transformations, tdim, tdim);
   }
 
   // Create coefficients for order (degree-1) vector polynomials
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim - 1], M[tdim]},
       {x[tdim - 1], x[tdim]}, degree);
 

@@ -18,8 +18,11 @@
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
-/// Placeholder
+/// Basix: FEniCS runtime basis evaluation library
 namespace basix
+{
+
+namespace element
 {
 
 /// Calculates the basis functions of the finite element, in terms of the
@@ -199,6 +202,8 @@ make_discontinuous(
     std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const int tdim, const int value_size);
 
+} // namespace element
+
 /// Finite Element
 /// The basis is stored as a set of coefficients, which are applied to the
 /// underlying expansion set for that cell type, when tabulating.
@@ -206,15 +211,15 @@ class FiniteElement
 {
 
 public:
-  /// @todo Document
   /// A finite element
-  /// @param[in] family
-  /// @param[in] cell_type
-  /// @param[in] degree
-  /// @param[in] value_shape
-  /// @param[in] coeffs Expansion coefficients. The shape is (num_dofs,
-  /// value_size, basis_dim)
-  /// @param[in] entity_transformations Entity transformations
+  /// @param[in] family The element family
+  /// @param[in] cell_type The cell type
+  /// @param[in] degree The degree of the element
+  /// @param[in] value_shape The value shape of the element
+  /// @param[in] coeffs Expansion coefficients of the basis functions in the
+  /// underlying polynomial set. The shape is (num_dofs, value_size, basis_dim)
+  /// @param[in] entity_transformations Entity transformations representing the
+  /// effect rotating and reflecting subentities of the cell has on the DOFs.
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
@@ -258,7 +263,7 @@ public:
   /// - The first index is the derivative, with higher derivatives are
   /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-  /// (0,2), (3,0)... The function basix::idx can be used to find the
+  /// (0,2), (3,0)... The function basix::indexing::idx can be used to find the
   /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
@@ -320,13 +325,13 @@ public:
   /// function can perform the mapping for multiple points, grouped by
   /// points that share a common Jacobian.
   ///
-  /// @param U The function values on the reference. The indices are
+  /// @param[in] U The function values on the reference. The indices are
   /// [Jacobian index, point index, components].
-  /// @param J The Jacobian of the mapping. The indices are [Jacobian
+  /// @param[in] J The Jacobian of the mapping. The indices are [Jacobian
   /// index, J_i, J_j].
-  /// @param detJ The determinant of the Jacobian of the mapping. It has
+  /// @param[in] detJ The determinant of the Jacobian of the mapping. It has
   /// length `J.shape(0)`
-  /// @param K The inverse of the Jacobian of the mapping. The indices
+  /// @param[in] K The inverse of the Jacobian of the mapping. The indices
   /// are [Jacobian index, K_i, K_j].
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].

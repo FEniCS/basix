@@ -85,22 +85,24 @@ basix::FiniteElement basix::create_element(element::family family,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_serendipity_div(cell, degree, discontinuous);
+      return basix::element::create_serendipity_div(cell, degree,
+                                                    discontinuous);
     case cell::type::hexahedron:
-      return create_serendipity_div(cell, degree, discontinuous);
+      return basix::element::create_serendipity_div(cell, degree,
+                                                    discontinuous);
     default:
-      return create_bdm(cell, degree, discontinuous);
+      return basix::element::create_bdm(cell, degree, discontinuous);
     }
   case element::family::RT:
   {
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_rtc(cell, degree, discontinuous);
+      return basix::element::create_rtc(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_rtc(cell, degree, discontinuous);
+      return basix::element::create_rtc(cell, degree, discontinuous);
     default:
-      return create_rt(cell, degree, discontinuous);
+      return basix::element::create_rt(cell, degree, discontinuous);
     }
   }
   case element::family::N1E:
@@ -108,33 +110,35 @@ basix::FiniteElement basix::create_element(element::family family,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_nce(cell, degree, discontinuous);
+      return basix::element::create_nce(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return create_nce(cell, degree, discontinuous);
+      return basix::element::create_nce(cell, degree, discontinuous);
     default:
-      return create_nedelec(cell, degree, discontinuous);
+      return basix::element::create_nedelec(cell, degree, discontinuous);
     }
   }
   case element::family::N2E:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return create_serendipity_curl(cell, degree, discontinuous);
+      return basix::element::create_serendipity_curl(cell, degree,
+                                                     discontinuous);
     case cell::type::hexahedron:
-      return create_serendipity_curl(cell, degree, discontinuous);
+      return basix::element::create_serendipity_curl(cell, degree,
+                                                     discontinuous);
     default:
-      return create_nedelec2(cell, degree, discontinuous);
+      return basix::element::create_nedelec2(cell, degree, discontinuous);
     }
   case element::family::Regge:
-    return create_regge(cell, degree, discontinuous);
+    return basix::element::create_regge(cell, degree, discontinuous);
   case element::family::CR:
-    return create_cr(cell, degree, discontinuous);
+    return basix::element::create_cr(cell, degree, discontinuous);
   case element::family::Bubble:
-    return create_bubble(cell, degree, discontinuous);
+    return basix::element::create_bubble(cell, degree, discontinuous);
   case element::family::Serendipity:
-    return create_serendipity(cell, degree, discontinuous);
+    return basix::element::create_serendipity(cell, degree, discontinuous);
   case element::family::DPC:
-    return create_dpc(cell, degree, discontinuous);
+    return basix::element::create_dpc(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found");
   }
@@ -148,7 +152,8 @@ basix::FiniteElement basix::create_element(element::family family,
   switch (family)
   {
   case element::family::P:
-    return create_lagrange(cell, degree, variant, discontinuous);
+    return basix::element::create_lagrange(cell, degree, variant,
+                                           discontinuous);
   default:
     throw std::runtime_error("Cannot pass a Lagrange variant.");
   }
@@ -167,7 +172,7 @@ basix::FiniteElement basix::create_element(element::family family,
   return basix::create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> basix::compute_expansion_coefficients(
+xt::xtensor<double, 3> basix::element::compute_expansion_coefficients(
     cell::type celltype, const xt::xtensor<double, 2>& B,
     const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
     const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree)
@@ -254,7 +259,7 @@ xt::xtensor<double, 3> basix::compute_expansion_coefficients(
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 3>>, 4>,
            std::map<cell::type, xt::xtensor<double, 3>>>
-basix::make_discontinuous(
+basix::element::make_discontinuous(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,

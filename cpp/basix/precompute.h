@@ -9,9 +9,7 @@
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
-/// ## Matrix and permutation precomputation
-/// These functions generate precomputed version of matrices to allow
-/// application without temporary memory assignment later
+/// Matrix and permutation precomputation
 namespace basix::precompute
 {
 

@@ -7,7 +7,7 @@
 #include "cell.h"
 #include "finite-element.h"
 
-namespace basix
+namespace basix::element
 {
 /// Create a serendipity element on cell with given degree
 /// @param[in] celltype The cell type
@@ -35,4 +35,4 @@ FiniteElement create_serendipity_div(cell::type celltype, int degree,
 /// @return A finite element
 FiniteElement create_serendipity_curl(cell::type celltype, int degree,
                                       bool discontinuous);
-} // namespace basix
+} // namespace basix::element

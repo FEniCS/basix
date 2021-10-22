@@ -6,7 +6,7 @@
 
 #include "finite-element.h"
 
-namespace basix
+namespace basix::element
 {
 
 /// Crouzeix-Raviart element
@@ -18,4 +18,4 @@ namespace basix
 /// @return A finite element
 FiniteElement create_cr(cell::type celltype, int degree, bool discontinuous);
 
-} // namespace basix
+} // namespace basix::element

@@ -7,7 +7,7 @@
 #include "cell.h"
 #include "finite-element.h"
 
-namespace basix
+namespace basix::element
 {
 /// Create RTC H(div) element
 /// @param[in] celltype The cell type
@@ -25,4 +25,4 @@ FiniteElement create_rtc(cell::type celltype, int degree, bool discontinuous);
 /// @return A finite element
 FiniteElement create_nce(cell::type celltype, int degree, bool discontinuous);
 
-} // namespace basix
+} // namespace basix::element

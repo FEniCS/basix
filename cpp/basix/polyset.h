@@ -8,14 +8,7 @@
 #include <xtensor/xarray.hpp>
 #include <xtensor/xtensor.hpp>
 
-/// ## Orthonormal polynomial basis on reference cell
-/// These are the underlying "expansion sets" for all finite elements,
-/// which when multiplied by a set of "coefficients" give the FE basis
-/// functions.
-///
-/// The polynomials (and their derivatives) can be tabulated on unit
-/// interval, triangle, tetrahedron, quadrilateral, hexahedron, prism
-/// and pyramids.
+/// Polynomial expansion sets
 namespace basix::polyset
 {
 /// Tabulate the orthonormal polynomial basis, and derivatives, at
@@ -47,7 +40,8 @@ namespace basix::polyset
 /// repsect to `x` and `q` order derivative with respect to `y`, [0] ->
 /// (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
 /// [5] -> (0, 2), [6] -> (3, 0),...
-/// The function basix::idx maps tuples `(p, q, r)` to the array index.
+/// The function basix::indexing::idx maps tuples `(p, q, r)` to the array
+/// index.
 ///
 /// - The second index is the point, with index `i` correspondign to the
 /// point in row `i` of @p x.

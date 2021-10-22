@@ -7,8 +7,10 @@
 #include <vector>
 #include <xtensor/xtensor.hpp>
 
-/// Information about reference cells including their topological and
-/// geometric data.
+/// Information about reference cells
+
+/// This namespace include functions that can be used to obtain geometric and
+/// topological information about reference cells
 namespace basix::cell
 {
 

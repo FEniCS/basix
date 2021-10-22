@@ -432,10 +432,10 @@ Interface to the Basix C++ library.
       },
       basix::docstring::make_quadrature.c_str());
 
-  m.def("index", py::overload_cast<int>(&basix::idx),
+  m.def("index", py::overload_cast<int>(&basix::indexing::idx),
         basix::docstring::index__p.c_str())
-      .def("index", py::overload_cast<int, int>(&basix::idx),
+      .def("index", py::overload_cast<int, int>(&basix::indexing::idx),
            basix::docstring::index__p_q.c_str())
-      .def("index", py::overload_cast<int, int, int>(&basix::idx),
+      .def("index", py::overload_cast<int, int, int>(&basix::indexing::idx),
            basix::docstring::index__p_q_r.c_str());
 }

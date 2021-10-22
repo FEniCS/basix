@@ -6,7 +6,7 @@
 
 #include "finite-element.h"
 
-namespace basix
+namespace basix::element
 {
 /// Create Regge element
 /// @param[in] celltype The cell type
@@ -16,4 +16,4 @@ namespace basix
 /// @return A finite element
 FiniteElement create_regge(cell::type celltype, int degree, bool discontinuous);
 
-} // namespace basix
+} // namespace basix::element

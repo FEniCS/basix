@@ -9,7 +9,7 @@
 #include "finite-element.h"
 #include "lattice.h"
 
-namespace basix
+namespace basix::element
 {
 /// Create a Lagrange element on cell with given degree
 /// @param[in] celltype The cell type
@@ -30,4 +30,4 @@ FiniteElement create_lagrange(cell::type celltype, int degree,
 /// discontinuous
 /// @return A finite element
 FiniteElement create_dpc(cell::type celltype, int degree, bool discontinuous);
-} // namespace basix
+} // namespace basix::element

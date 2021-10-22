@@ -7,7 +7,7 @@
 #include "cell.h"
 #include "finite-element.h"
 
-namespace basix
+namespace basix::element
 {
 /// Create Raviart-Thomas element
 /// @param[in] celltype The cell type
@@ -17,4 +17,4 @@ namespace basix
 /// @return A finite element
 FiniteElement create_rt(cell::type celltype, int degree, bool discontinuous);
 
-} // namespace basix
+} // namespace basix::element

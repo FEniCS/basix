@@ -133,8 +133,8 @@ create_regge_interpolation(cell::type celltype, int degree)
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_regge(cell::type celltype, int degree,
-                                  bool discontinuous)
+FiniteElement basix::element::create_regge(cell::type celltype, int degree,
+                                           bool discontinuous)
 {
   if (discontinuous)
   {
@@ -190,7 +190,7 @@ FiniteElement basix::create_regge(cell::type celltype, int degree,
     entity_transformations[cell::type::triangle] = face_trans;
   }
 
-  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+  const xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},

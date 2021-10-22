@@ -19,8 +19,8 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_bubble(cell::type celltype, int degree,
-                                   bool discontinuous)
+FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
+                                            bool discontinuous)
 {
   if (discontinuous)
     throw std::runtime_error("Cannot create a discontinuous bubble element.");
@@ -160,7 +160,7 @@ FiniteElement basix::create_bubble(cell::type celltype, int degree,
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
                        entity_transformations, x, M, maps::type::identity,

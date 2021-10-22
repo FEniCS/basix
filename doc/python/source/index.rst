@@ -2,27 +2,26 @@
 Basix Python interface documentation
 ====================================
 
-`basix`
-=======
+Welcome to the Basix Python interface documentation.
 
-.. automodule:: basix
+Basix is a finite element definition and tabulation runtime library.
+It is part of `FEniCSx <https://docs.fenicsproject.org>`_,
+alongside `FFCx <https://docs.fenicsproject.org/ffcx>`_ and `DOLFINx <https://docs.fenicsproject.org/dolfinx/cpp>`_.
 
-`basix.cell`
-============
+Basix can create finite elements on intervals, triangles, quadrilaterals, tetrahedra, hexahedra, prisms, and pyramids.
 
-.. automodule:: basix.cell
+Using Basix
+===========
+A Basix element can be created using the function :meth:`basix.create_element`.
+This function will return a :class:`basix.finite_element.FiniteElement` object.
 
-`basix.finite_element`
-======================
+The element can be tabulated using the function :meth:`basix.finite_element.FiniteElement.tabulate`.
 
-.. automodule:: basix.finite_element
 
-`basix.lattice`
-===============
+Table of contents
+=================
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:
 
-.. automodule:: basix.lattice
-
-`basix.numba_helpers`
-=====================
-
-.. automodule:: basix.numba_helpers
+   basix

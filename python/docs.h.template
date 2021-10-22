@@ -1,0 +1,417 @@
+#include <string>
+
+namespace basix::docstring
+{
+
+{{DOCTYPE}} topology = R"(
+{{cell.h > topology > doc}}
+
+Parameters
+==========
+{{cell.h > topology > param > celltype : basix.CellType}}
+
+Returns
+=======
+{{cell.h > topology > return : List[List[List[int]]]}}
+)";
+
+{{DOCTYPE}} geometry = R"(
+{{cell.h > geometry > doc}}
+
+Parameters
+==========
+{{cell.h > geometry > param > celltype : basix.CellType}}
+
+Returns
+=======
+{{cell.h > geometry > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} sub_entity_connectivity = R"(
+{{cell.h > sub_entity_connectivity > doc}}
+
+Parameters
+==========
+{{cell.h > sub_entity_connectivity > param > celltype : basix.CellType}}
+
+Returns
+=======
+{{cell.h > sub_entity_connectivity > return : List[List[List[List[int]]]]}}
+)";
+
+{{DOCTYPE}} sub_entity_geometry = R"(
+{{cell.h > sub_entity_geometry > doc}}
+
+Parameters
+==========
+{{cell.h > sub_entity_geometry > param > celltype : basix.CellType}}
+{{cell.h > sub_entity_geometry > param > dim : int}}
+{{cell.h > sub_entity_geometry > param > index : int}}
+
+Returns
+=======
+{{cell.h > sub_entity_geometry > return : List[List[List[List[int]]]]}}
+)";
+
+{{DOCTYPE}} create_lattice__celltype_n_type_exterior = R"(
+{{lattice.h > create > doc}}
+
+Parameters
+==========
+{{lattice.h > create > param > celltype : basix.CellType}}
+{{lattice.h > create > param > n : int}}
+{{lattice.h > create > param > type : basix.LatticeType}}
+{{lattice.h > create > param > exterior : bool}}
+
+Returns
+=======
+{{lattice.h > create > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} create_lattice__celltype_n_type_exterior_method = R"(
+{{lattice.h > create > doc}}
+
+Parameters
+==========
+{{lattice.h > create > param > celltype : basix.CellType}}
+{{lattice.h > create > param > n : int}}
+{{lattice.h > create > param > type : basix.LatticeType}}
+{{lattice.h > create > param > exterior : bool}}
+{{lattice.h > create > param > simplex_method : basix.LatticeSimplexMethod}}
+
+Returns
+=======
+{{lattice.h > create > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} cell_volume = R"(
+{{cell.h > volume > doc}}
+
+Parameters
+==========
+{{cell.h > volume > param > cell_type : basix.CellType}}
+
+Returns
+=======
+{{cell.h > volume > return : float}}
+)";
+
+{{DOCTYPE}} cell_facet_normals = R"(
+{{cell.h > facet_normals > doc}}
+
+Parameters
+==========
+{{cell.h > facet_normals > param > cell_type : basix.CellType}}
+
+Returns
+=======
+{{cell.h > facet_normals > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} cell_facet_reference_volumes = R"(
+{{cell.h > facet_reference_volumes > doc}}
+
+Parameters
+==========
+{{cell.h > facet_reference_volumes > param > cell_type : basix.CellType}}
+
+Returns
+=======
+{{cell.h > facet_reference_volumes > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} cell_facet_outward_normals = R"(
+{{cell.h > facet_outward_normals > doc}}
+
+Parameters
+==========
+{{cell.h > facet_outward_normals > param > cell_type : basix.CellType}}
+
+Returns
+=======
+{{cell.h > facet_outward_normals > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} cell_facet_orientations = R"(
+{{cell.h > facet_orientations > doc}}
+
+Parameters
+==========
+{{cell.h > facet_orientations > param > cell_type : basix.CellType}}
+
+Returns
+=======
+{{cell.h > facet_orientations > return : List[bool]}}
+)";
+
+{{DOCTYPE}} cell_facet_jacobians = R"(
+{{cell.h > facet_jacobians > doc}}
+
+Parameters
+==========
+{{cell.h > facet_jacobians > param > cell_type : basix.CellType}}
+
+Returns
+=======
+{{cell.h > facet_jacobians > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} FiniteElement__tabulate = R"(
+{{finite-element.h > FiniteElement::tabulate > doc}}
+
+Parameters
+==========
+{{finite-element.h > FiniteElement::tabulate > param > nd : int}}
+{{finite-element.h > FiniteElement::tabulate > param > x : numpy.ndarray[numpy.float64]}}
+
+Returns
+=======
+{{finite-element.h > FiniteElement::tabulate > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} FiniteElement__map_push_forward = R"(
+{{finite-element.h > FiniteElement::map_push_forward > doc}}
+
+Parameters
+==========
+{{finite-element.h > FiniteElement::map_push_forward > param > U : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::map_push_forward > param > J : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::map_push_forward > param > detJ : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::map_push_forward > param > K : numpy.ndarray[numpy.float64]}}
+
+Returns
+=======
+{{finite-element.h > FiniteElement::map_push_forward > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} FiniteElement__map_pull_back = R"(
+{{finite-element.h > FiniteElement::map_pull_back > doc}}
+
+Parameters
+==========
+{{finite-element.h > FiniteElement::map_pull_back > param > u : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::map_pull_back > param > J : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::map_pull_back > param > detJ : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::map_pull_back > param > K : numpy.ndarray[numpy.float64]}}
+
+Returns
+=======
+{{finite-element.h > FiniteElement::map_pull_back > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} FiniteElement__apply_dof_transformation = R"(
+{{finite-element.h > FiniteElement::apply_dof_transformation > doc}}
+
+Parameters
+==========
+{{finite-element.h > FiniteElement::apply_dof_transformation > param > data : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::apply_dof_transformation > param > block_size : int}}
+{{finite-element.h > FiniteElement::apply_dof_transformation > param > cell_info : int}}
+
+Returns
+=======
+{{finite-element.h > FiniteElement::apply_dof_transformation > param > data : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} FiniteElement__apply_dof_transformation_to_transpose = R"(
+{{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > doc}}
+
+Parameters
+==========
+{{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > data : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > block_size : int}}
+{{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > cell_info : int}}
+
+Returns
+=======
+{{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > data : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} FiniteElement__apply_inverse_transpose_dof_transformation
+    = R"(
+{{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > doc}}
+
+Parameters
+==========
+{{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > data : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > block_size : int}}
+{{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > cell_info : int}}
+
+Returns
+=======
+{{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > data : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} FiniteElement__base_transformations = R"(
+{{finite-element.h > base_transformations > doc}}
+
+Returns
+=======
+{{finite-element.h > base_transformations > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} FiniteElement__entity_transformations = R"(
+{{finite-element.h > entity_transformations > doc}}
+
+Returns
+=======
+{{finite-element.h > base_transformations > return : dict}}
+)";
+
+{{DOCTYPE}} create_element__family_cell_degree_discontinuous = R"(
+{{finite-element.h > create_element(family, cell, degree, discontinuous) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_element(family, cell, degree, discontinuous) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree, discontinuous) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree, discontinuous) > param > degree : int}}
+{{finite-element.h > create_element(family, cell, degree, discontinuous) > param > discontinuous : bool}}
+
+Returns
+=======
+{{finite-element.h > create_element(family, cell, degree, discontinuous) > return : basix.finite_element.FiniteElement}}
+)";
+
+{{DOCTYPE}} create_element__family_cell_degree_variant_discontinuous = R"(
+{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > degree : int}}
+{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > variant : basix.LagrangeVariant}}
+{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > discontinuous : bool}}
+
+Returns
+=======
+{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > return : basix.finite_element.FiniteElement}}
+)";
+
+{{DOCTYPE}} create_element__family_cell_degree_variant = R"(
+{{finite-element.h > create_element(family, cell, degree, variant) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_element(family, cell, degree, variant) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree, variant) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree, variant) > param > degree : int}}
+{{finite-element.h > create_element(family, cell, degree, variant) > param > variant : basix.LagrangeVariant}}
+
+Returns
+=======
+{{finite-element.h > create_element(family, cell, degree, variant) > return : basix.finite_element.FiniteElement}}
+)";
+
+{{DOCTYPE}} create_element__family_cell_degree = R"(
+{{finite-element.h > create_element(family, cell, degree) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_element(family, cell, degree) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree) > param > degree : int}}
+
+Returns
+=======
+{{finite-element.h > create_element(family, cell, degree) > return : basix.finite_element.FiniteElement}}
+)";
+
+{{DOCTYPE}} compute_interpolation_operator = R"(
+{{interpolation.h > compute_interpolation_operator > doc}}
+
+Parameters
+==========
+{{interpolation.h > compute_interpolation_operator > param > element_from : basix.finite_element.FiniteElement}}
+{{interpolation.h > compute_interpolation_operator > param > element_to : basix.finite_element.FiniteElement}}
+
+Returns
+=======
+{{interpolation.h > compute_interpolation_operator > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} tabulate_polynomial_set = R"(
+{{polyset.h > tabulate > doc}}
+
+Parameters
+==========
+{{polyset.h > tabulate > param > celltype : basix.CellType}}
+{{polyset.h > tabulate > param > d : int}}
+{{polyset.h > tabulate > param > n : int}}
+{{polyset.h > tabulate > param > x : numpy.ndarray[numpy.float64]}}
+
+Returns
+=======
+{{polyset.h > tabulate > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} compute_jacobi_deriv = R"(
+{{quadrature.h > compute_jacobi_deriv > doc}}
+
+Parameters
+==========
+{{quadrature.h > compute_jacobi_deriv > param > a : float}}
+{{quadrature.h > compute_jacobi_deriv > param > n : int}}
+{{quadrature.h > compute_jacobi_deriv > param > nderiv : int}}
+{{quadrature.h > compute_jacobi_deriv > param > x : numpy.ndarray[numpy.float64]}}
+
+Returns
+=======
+{{quadrature.h > compute_jacobi_deriv > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} make_quadrature = R"(
+{{quadrature.h > make_quadrature > doc}}
+
+Parameters
+==========
+{{quadrature.h > make_quadrature > param > rule : str}}
+{{quadrature.h > make_quadrature > param > celltype : basix.CellType}}
+{{quadrature.h > make_quadrature > param > m : int}}
+
+Returns
+=======
+{{quadrature.h > make_quadrature > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} index__p = R"(
+{{indexing.h > idx(p) > doc}}
+
+Parameters
+==========
+{{indexing.h > idx(p) > param > p : int}}
+
+Returns
+=======
+{{indexing.h > idx(p) > return : int}}
+)";
+
+{{DOCTYPE}} index__p_q = R"(
+{{indexing.h > idx(p, q) > doc}}
+
+Parameters
+==========
+{{indexing.h > idx(p, q) > param > p : int}}
+{{indexing.h > idx(p, q) > param > q : int}}
+
+Returns
+=======
+{{indexing.h > idx(p, q) > return : int}}
+)";
+
+{{DOCTYPE}} index__p_q_r = R"(
+{{indexing.h > idx(p, q, r) > doc}}
+
+Parameters
+==========
+{{indexing.h > idx(p, q, r) > param > p : int}}
+{{indexing.h > idx(p, q, r) > param > q : int}}
+{{indexing.h > idx(p, q, r) > param > r : int}}
+
+Returns
+=======
+{{indexing.h > idx(p, q, r) > return : int}}
+)";
+
+} // namespace basix::docstring

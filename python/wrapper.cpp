@@ -2,6 +2,7 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include "docs.h"
 #include <basix/cell.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
@@ -42,70 +43,7 @@ const std::string& cell_type_to_str(cell::type type)
 
   return it->second;
 }
-} // namespace
 
-const std::string tabdoc = R"(
-Tabulate the finite element basis function and derivatives at points.
-If no derivatives are required, use nderiv=0. In 2D and 3D, the derivatives are ordered
-in triangular (or tetrahedral) order, i.e. (0,0),(1,0),(0,1),(2,0),(1,1),(0,2) etc. in 2D.
-
-Parameters
-==========
-nderiv : int
-    Number of derivatives required
-
-points : numpy.ndarray
-    Array of points
-
-Returns
-=======
-List[numpy.ndarray]
-    List of basis values and derivatives at points. Returns a list of length `(n+d)!/(n!d!)`
-    where `n` is the number of derivatives and `d` is the topological dimension.
-)";
-
-const std::string mapdoc = R"(
-Map a function value from the reference to a cell
-
-Parameters
-==========
-reference_data : numpy.array
-    The function value on the reference
-J : np.ndarray
-    The Jacobian of the mapping
-detJ : int
-    The determinant of the Jacobian of the mapping
-K : np.ndarray
-    The inverse of the Jacobian of the mapping
-
-Returns
-=======
-numpy.ndarray
-    The function value on the cell
-)";
-
-const std::string invmapdoc = R"(
-Map a function value from a cell to the reference
-
-Parameters
-==========
-physical_data : numpy.array
-    The function value on the cell
-J : np.ndarray
-    The Jacobian of the mapping
-detJ : int
-    The determinant of the Jacobian of the mapping
-K : np.ndarray
-    The inverse of the Jacobian of the mapping
-
-Returns
-=======
-numpy.ndarray
-    The function value on the reference
-)";
-
-namespace
-{
 auto adapt_x(const py::array_t<double, py::array::c_style>& x)
 {
   std::vector<std::size_t> shape;
@@ -123,25 +61,22 @@ Interface to the Basix C++ library.
 
   m.attr("__version__") = basix::version();
 
-  m.def("topology", &cell::topology,
-        "Topological description of a reference cell");
+  m.def("topology", &cell::topology, basix::docstring::topology.c_str());
   m.def(
       "geometry",
-      [](cell::type celltype)
-      {
+      [](cell::type celltype) {
         xt::xtensor<double, 2> g = cell::geometry(celltype);
         auto strides = g.strides();
         for (auto& s : strides)
           s *= sizeof(double);
         return py::array_t<double>(g.shape(), strides, g.data());
       },
-      "Geometric points of a reference cell");
+      basix::docstring::geometry.c_str());
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
-        "Connectivity between subentities of a reference cell");
+        basix::docstring::sub_entity_connectivity.c_str());
   m.def(
       "sub_entity_geometry",
-      [](cell::type celltype, int dim, int index)
-      {
+      [](cell::type celltype, int dim, int index) {
         xt::xtensor<double, 2> g
             = cell::sub_entity_geometry(celltype, dim, index);
         auto strides = g.strides();
@@ -149,7 +84,7 @@ Interface to the Basix C++ library.
           s *= sizeof(double);
         return py::array_t<double>(g.shape(), strides, g.data());
       },
-      "Points of a sub-entity of a cell");
+      basix::docstring::sub_entity_geometry.c_str());
 
   py::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
@@ -165,8 +100,7 @@ Interface to the Basix C++ library.
 
   m.def(
       "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior)
-      {
+      [](cell::type celltype, int n, lattice::type type, bool exterior) {
         auto l = lattice::create(celltype, n, type, exterior,
                                  lattice::simplex_method::none);
         auto strides = l.strides();
@@ -174,20 +108,20 @@ Interface to the Basix C++ library.
           s *= sizeof(double);
         return py::array_t<double>(l.shape(), strides, l.data());
       },
-      "Create a lattice of points on a reference cell");
+      basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
 
   m.def(
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior,
-         lattice::simplex_method method)
-      {
+         lattice::simplex_method method) {
         auto l = lattice::create(celltype, n, type, exterior, method);
         auto strides = l.strides();
         for (auto& s : strides)
           s *= sizeof(double);
         return py::array_t<double>(l.shape(), strides, l.data());
       },
-      "Create a lattice of points on a reference cell");
+      basix::docstring::create_lattice__celltype_n_type_exterior_method
+          .c_str());
 
   py::enum_<maps::type>(m, "MappingType")
       .value("identity", maps::type::identity)
@@ -209,42 +143,38 @@ Interface to the Basix C++ library.
   m.def(
       "cell_volume",
       [](cell::type cell_type) -> double { return cell::volume(cell_type); },
-      "Get the volume of a cell");
+      basix::docstring::cell_volume.c_str());
   m.def(
       "cell_facet_normals",
-      [](cell::type cell_type)
-      {
+      [](cell::type cell_type) {
         xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
         return py::array_t<double>(normals.shape(), normals.data());
       },
-      "Get the normals to the facets of a cell");
+      basix::docstring::cell_facet_normals.c_str());
   m.def(
       "cell_facet_reference_volumes",
-      [](cell::type cell_type)
-      {
+      [](cell::type cell_type) {
         xt::xtensor<double, 1> volumes
             = cell::facet_reference_volumes(cell_type);
         return py::array_t<double>(volumes.shape(), volumes.data());
       },
-      "Get the reference volumes of the facets of a cell");
+      basix::docstring::cell_facet_reference_volumes.c_str());
   m.def(
       "cell_facet_outward_normals",
-      [](cell::type cell_type)
-      {
+      [](cell::type cell_type) {
         xt::xtensor<double, 2> normals = cell::facet_outward_normals(cell_type);
         return py::array_t<double>(normals.shape(), normals.data());
       },
-      "Get the outward normals to the facets of a cell");
+      basix::docstring::cell_facet_outward_normals.c_str());
   m.def("cell_facet_orientations", &cell::facet_orientations,
-        "Get the orientations of the facets of a cell");
+        basix::docstring::cell_facet_orientations.c_str());
   m.def(
       "cell_facet_jacobians",
-      [](cell::type cell_type)
-      {
+      [](cell::type cell_type) {
         xt::xtensor<double, 3> jacobians = cell::facet_jacobians(cell_type);
         return py::array_t<double>(jacobians.shape(), jacobians.data());
       },
-      "Get the jacobians of the facets of a cell");
+      basix::docstring::cell_facet_jacobians.c_str());
 
   py::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)
@@ -263,8 +193,7 @@ Interface to the Basix C++ library.
       .def(
           "tabulate",
           [](const FiniteElement& self, int n,
-             const py::array_t<double, py::array::c_style>& x)
-          {
+             const py::array_t<double, py::array::c_style>& x) {
             auto _x = adapt_x(x);
             auto t = self.tabulate(n, _x);
             auto t_swap = xt::transpose(t, {0, 1, 3, 2});
@@ -273,90 +202,94 @@ Interface to the Basix C++ library.
                                             t_swap.shape(2) * t_swap.shape(3)});
             return py::array_t<double>(t_reshape.shape(), t_reshape.data());
           },
-          tabdoc.c_str())
+          basix::docstring::FiniteElement__tabulate.c_str())
       .def(
           "tabulate_x",
           [](const FiniteElement& self, int n,
-             const py::array_t<double, py::array::c_style>& x)
-          {
+             const py::array_t<double, py::array::c_style>& x) {
             auto _x = adapt_x(x);
             auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
           },
-          tabdoc.c_str())
+          basix::docstring::FiniteElement__tabulate.c_str())
       .def(
           "map_push_forward",
           [](const FiniteElement& self,
              const py::array_t<double, py::array::c_style>& U,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K)
-          {
+             const py::array_t<double, py::array::c_style>& K) {
             auto u = self.map_push_forward(
                 adapt_x(U), adapt_x(J),
                 xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
             return py::array_t<double>(u.shape(), u.data());
           },
-          mapdoc.c_str())
+          basix::docstring::FiniteElement__map_push_forward.c_str())
       .def(
           "map_pull_back",
           [](const FiniteElement& self,
              const py::array_t<double, py::array::c_style>& u,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K)
-          {
+             const py::array_t<double, py::array::c_style>& K) {
             auto U = self.map_pull_back(
                 adapt_x(u), adapt_x(J),
                 xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
             return py::array_t<double>(U.shape(), U.data());
           },
-          invmapdoc.c_str())
-      .def("apply_dof_transformation",
-           [](const FiniteElement& self, py::array_t<double>& data,
-              int block_size, std::uint32_t cell_info)
-           {
-             xtl::span<double> data_span(data.mutable_data(), data.size());
-             self.apply_dof_transformation(data_span, block_size, cell_info);
-             return py::array_t<double>(data_span.size(), data_span.data());
-           })
-      .def("apply_dof_transformation_to_transpose",
-           [](const FiniteElement& self, py::array_t<double>& data,
-              int block_size, std::uint32_t cell_info)
-           {
-             xtl::span<double> data_span(data.mutable_data(), data.size());
-             self.apply_dof_transformation_to_transpose(data_span, block_size,
-                                                        cell_info);
-             return py::array_t<double>(data_span.size(), data_span.data());
-           })
-      .def("apply_inverse_transpose_dof_transformation",
-           [](const FiniteElement& self, py::array_t<double>& data,
-              int block_size, std::uint32_t cell_info)
-           {
-             xtl::span<double> data_span(data.mutable_data(), data.size());
-             self.apply_inverse_transpose_dof_transformation(
-                 data_span, block_size, cell_info);
-             return py::array_t<double>(data_span.size(), data_span.data());
-           })
-      .def("base_transformations",
-           [](const FiniteElement& self)
-           {
-             xt::xtensor<double, 3> t = self.base_transformations();
-             return py::array_t<double>(t.shape(), t.data());
-           })
-      .def("entity_transformations",
-           [](const FiniteElement& self)
-           {
-             std::map<cell::type, xt::xtensor<double, 3>> t
-                 = self.entity_transformations();
-             py::dict t2;
-             for (auto tpart : t)
-             {
-               t2[cell_type_to_str(tpart.first).c_str()] = py::array_t<double>(
-                   tpart.second.shape(), tpart.second.data());
-             }
-             return t2;
-           })
+          basix::docstring::FiniteElement__map_pull_back.c_str())
+      .def(
+          "apply_dof_transformation",
+          [](const FiniteElement& self, py::array_t<double>& data,
+             int block_size, std::uint32_t cell_info) {
+            xtl::span<double> data_span(data.mutable_data(), data.size());
+            self.apply_dof_transformation(data_span, block_size, cell_info);
+            return py::array_t<double>(data_span.size(), data_span.data());
+          },
+          basix::docstring::FiniteElement__apply_dof_transformation.c_str())
+      .def(
+          "apply_dof_transformation_to_transpose",
+          [](const FiniteElement& self, py::array_t<double>& data,
+             int block_size, std::uint32_t cell_info) {
+            xtl::span<double> data_span(data.mutable_data(), data.size());
+            self.apply_dof_transformation_to_transpose(data_span, block_size,
+                                                       cell_info);
+            return py::array_t<double>(data_span.size(), data_span.data());
+          },
+          basix::docstring::FiniteElement__apply_dof_transformation_to_transpose
+              .c_str())
+      .def(
+          "apply_inverse_transpose_dof_transformation",
+          [](const FiniteElement& self, py::array_t<double>& data,
+             int block_size, std::uint32_t cell_info) {
+            xtl::span<double> data_span(data.mutable_data(), data.size());
+            self.apply_inverse_transpose_dof_transformation(
+                data_span, block_size, cell_info);
+            return py::array_t<double>(data_span.size(), data_span.data());
+          },
+          basix::docstring::
+              FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
+      .def(
+          "base_transformations",
+          [](const FiniteElement& self) {
+            xt::xtensor<double, 3> t = self.base_transformations();
+            return py::array_t<double>(t.shape(), t.data());
+          },
+          basix::docstring::FiniteElement__base_transformations.c_str())
+      .def(
+          "entity_transformations",
+          [](const FiniteElement& self) {
+            std::map<cell::type, xt::xtensor<double, 3>> t
+                = self.entity_transformations();
+            py::dict t2;
+            for (auto tpart : t)
+            {
+              t2[cell_type_to_str(tpart.first).c_str()] = py::array_t<double>(
+                  tpart.second.shape(), tpart.second.data());
+            }
+            return t2;
+          },
+          basix::docstring::FiniteElement__entity_transformations.c_str())
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
@@ -376,16 +309,13 @@ Interface to the Basix C++ library.
                              &FiniteElement::dof_transformations_are_identity)
       .def_property_readonly("mapping_type", &FiniteElement::mapping_type)
       .def_property_readonly("points",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                const xt::xtensor<double, 2>& x = self.points();
                                return py::array_t<double>(x.shape(), x.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly(
-          "interpolation_matrix",
-          [](const FiniteElement& self)
-          {
+          "interpolation_matrix", [](const FiniteElement& self) {
             const xt::xtensor<double, 2>& P = self.interpolation_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           });
@@ -407,31 +337,31 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         bool discontinuous) -> FiniteElement
-      {
+         bool discontinuous) -> FiniteElement {
         return basix::create_element(family_name, cell_name, degree,
                                      discontinuous);
       },
-      "Create a FiniteElement of a given family, celltype and degree");
+      basix::docstring::create_element__family_cell_degree_discontinuous
+          .c_str());
 
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant variant, bool discontinuous) -> FiniteElement
-      {
+         element::lagrange_variant variant,
+         bool discontinuous) -> FiniteElement {
         return basix::create_element(family_name, cell_name, degree, variant,
                                      discontinuous);
       },
-      "Create a FiniteElement of a given family, celltype, degree and Lagrange "
-      "variant");
+      basix::docstring::create_element__family_cell_degree_variant_discontinuous
+          .c_str());
 
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name,
-         int degree) -> FiniteElement
-      { return basix::create_element(family_name, cell_name, degree); },
-      "Create a continuous FiniteElement of a given family, celltype and "
-      "degree");
+         int degree) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree);
+      },
+      basix::docstring::create_element__family_cell_degree.c_str());
 
   m.def(
       "create_element",
@@ -439,24 +369,23 @@ Interface to the Basix C++ library.
          element::lagrange_variant variant) -> FiniteElement {
         return basix::create_element(family_name, cell_name, degree, variant);
       },
-      "Create a continuous FiniteElement of a given family, celltype, degree "
-      "and Lagrange variant");
+      basix::docstring::create_element__family_cell_degree_variant.c_str());
 
   // Interpolate between elements
-  m.def("compute_interpolation_operator",
-        [](const FiniteElement& element_from, const FiniteElement& element_to)
-            -> const py::array_t<double, py::array::c_style>
-        {
-          xt::xtensor<double, 2> out
-              = basix::compute_interpolation_operator(element_from, element_to);
-          return py::array_t<double>(out.shape(), out.data());
-        });
+  m.def(
+      "compute_interpolation_operator",
+      [](const FiniteElement& element_from, const FiniteElement& element_to)
+          -> const py::array_t<double, py::array::c_style> {
+        xt::xtensor<double, 2> out
+            = basix::compute_interpolation_operator(element_from, element_to);
+        return py::array_t<double>(out.shape(), out.data());
+      },
+      basix::docstring::compute_interpolation_operator.c_str());
 
   m.def(
       "tabulate_polynomial_set",
       [](cell::type celltype, int d, int n,
-         const py::array_t<double, py::array::c_style>& x)
-      {
+         const py::array_t<double, py::array::c_style>& x) {
         std::vector<std::size_t> shape;
         if (x.ndim() == 2 and x.shape(1) == 1)
           shape.push_back(x.shape(0));
@@ -469,25 +398,23 @@ Interface to the Basix C++ library.
         xt::xtensor<double, 3> P = polyset::tabulate(celltype, d, n, _x);
         return py::array_t<double>(P.shape(), P.data());
       },
-      "Tabulate orthonormal polynomial expansion set");
+      basix::docstring::tabulate_polynomial_set.c_str());
 
   m.def(
       "compute_jacobi_deriv",
       [](double a, std::size_t n, std::size_t nderiv,
-         const py::array_t<double, py::array::c_style>& x)
-      {
+         const py::array_t<double, py::array::c_style>& x) {
         if (x.ndim() > 1)
           throw std::runtime_error("Expected 1D x array.");
         xt::xtensor<double, 2> f = quadrature::compute_jacobi_deriv(
             a, n, nderiv, xtl::span<const double>(x.data(), x.size()));
         return py::array_t<double>(f.shape(), f.data());
       },
-      "Compute jacobi polynomial and derivatives at points");
+      basix::docstring::compute_jacobi_deriv.c_str());
 
   m.def(
       "make_quadrature",
-      [](const std::string& rule, cell::type celltype, int m)
-      {
+      [](const std::string& rule, cell::type celltype, int m) {
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
         // FIXME: it would be more elegant to handle 1D case as a 1D
         // array, but FFCx would need updating
@@ -503,11 +430,12 @@ Interface to the Basix C++ library.
                            py::array_t<double>(w.size(), w.data()));
         }
       },
-      "Compute quadrature points and weights on a reference cell");
+      basix::docstring::make_quadrature.c_str());
 
-  m.def("index", py::overload_cast<int>(&basix::idx), "Indexing for 1D arrays")
-      .def("index", py::overload_cast<int, int>(&basix::idx),
-           "Indexing for triangular arrays")
-      .def("index", py::overload_cast<int, int, int>(&basix::idx),
-           "Indexing for tetrahedral arrays");
+  m.def("index", py::overload_cast<int>(&basix::indexing::idx),
+        basix::docstring::index__p.c_str())
+      .def("index", py::overload_cast<int, int>(&basix::indexing::idx),
+           basix::docstring::index__p_q.c_str())
+      .def("index", py::overload_cast<int, int, int>(&basix::indexing::idx),
+           basix::docstring::index__p_q_r.c_str());
 }

@@ -9,23 +9,25 @@
 #include "finite-element.h"
 #include "lattice.h"
 
-namespace basix
+namespace basix::element
 {
 /// Create a Lagrange element on cell with given degree
-/// @param[in] celltype The reference cell type that the element is defined on
+/// @param[in] celltype The cell type
 /// @param[in] degree The degree of the element
 /// @param[in] variant The variant of the element to be created
-/// @param discontinuous
-/// points of the element
-/// @return A FiniteElement
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
+/// @return A finite element
 FiniteElement create_lagrange(cell::type celltype, int degree,
                               element::lagrange_variant variant,
                               bool discontinuous);
 
 /// Create a DPC element on cell with given degree
-/// @param[in] celltype The reference cell type that the element is defined on
+/// @note DPC elements must be discontinuous
+/// @param[in] celltype The cell type
 /// @param[in] degree The degree of the element
-/// @param discontinuous
-/// @return A FiniteElement
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
+/// @return A finite element
 FiniteElement create_dpc(cell::type celltype, int degree, bool discontinuous);
-} // namespace basix
+} // namespace basix::element

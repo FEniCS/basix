@@ -2,9 +2,6 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-// FIXME: just include everything for now
-// Need to define public API
-
 #pragma once
 
 #include "cell.h"
@@ -21,8 +18,11 @@
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
-/// Placeholder
+/// Basix: FEniCS runtime basis evaluation library
 namespace basix
+{
+
+namespace element
 {
 
 /// Calculates the basis functions of the finite element, in terms of the
@@ -202,22 +202,25 @@ make_discontinuous(
     std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const int tdim, const int value_size);
 
-/// Finite Element
-/// The basis is stored as a set of coefficients, which are applied to the
-/// underlying expansion set for that cell type, when tabulating.
+} // namespace element
+
+/// A finite element
+
+/// The basis of a finite element is stored as a set of coefficients, which are
+/// applied to the underlying expansion set for that cell type, when tabulating.
 class FiniteElement
 {
 
 public:
-  /// @todo Document
   /// A finite element
-  /// @param[in] family
-  /// @param[in] cell_type
-  /// @param[in] degree
-  /// @param[in] value_shape
-  /// @param[in] coeffs Expansion coefficients. The shape is (num_dofs,
-  /// value_size, basis_dim)
-  /// @param[in] entity_transformations Entity transformations
+  /// @param[in] family The element family
+  /// @param[in] cell_type The cell type
+  /// @param[in] degree The degree of the element
+  /// @param[in] value_shape The value shape of the element
+  /// @param[in] coeffs Expansion coefficients of the basis functions in the
+  /// underlying polynomial set. The shape is (num_dofs, value_size, basis_dim)
+  /// @param[in] entity_transformations Entity transformations representing the
+  /// effect rotating and reflecting subentities of the cell has on the DOFs.
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
@@ -261,7 +264,7 @@ public:
   /// - The first index is the derivative, with higher derivatives are
   /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-  /// (0,2), (3,0)... The function basix::idx can be used to find the
+  /// (0,2), (3,0)... The function basix::indexing::idx can be used to find the
   /// appropriate derivative.
   /// - The second index is the point index
   /// - The third index is the basis function index
@@ -270,6 +273,10 @@ public:
   xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
 
   /// Direct to memory block tabulation
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param nd Number of derivatives
   /// @param x Points
   /// @param basis_data Memory location to fill
@@ -322,14 +329,13 @@ public:
   /// Map function values from the reference to a physical cell. This
   /// function can perform the mapping for multiple points, grouped by
   /// points that share a common Jacobian.
-  ///
-  /// @param U The function values on the reference. The indices are
+  /// @param[in] U The function values on the reference. The indices are
   /// [Jacobian index, point index, components].
-  /// @param J The Jacobian of the mapping. The indices are [Jacobian
+  /// @param[in] J The Jacobian of the mapping. The indices are [Jacobian
   /// index, J_i, J_j].
-  /// @param detJ The determinant of the Jacobian of the mapping. It has
+  /// @param[in] detJ The determinant of the Jacobian of the mapping. It has
   /// length `J.shape(0)`
-  /// @param K The inverse of the Jacobian of the mapping. The indices
+  /// @param[in] K The inverse of the Jacobian of the mapping. The indices
   /// are [Jacobian index, K_i, K_j].
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
@@ -340,6 +346,9 @@ public:
                    const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
   ///
   /// @param[in] U Data defined on the reference element. It must have
   /// dimension 3. The first index is for the geometric/map data, the
@@ -384,6 +393,10 @@ public:
                                        const xt::xtensor<double, 3>& K) const;
 
   /// Map function values from a physical cell back to to the reference
+  ///
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
   ///
   /// @param[in] u Data defined on the physical element. It must have
   /// dimension 3. The first index is for the geometric/map data, the
@@ -528,24 +541,38 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
+  /// @return The base transformations for this element
   xt::xtensor<double, 3> base_transformations() const;
 
-  /// Return the entity dof transformation matricess
+  /// Return the entity dof transformation matrices
+  /// @return The entity transformations for the subentities of this element
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations() const;
 
   /// Permute the dof numbering on a cell
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
   void permute_dofs(const xtl::span<std::int32_t>& dofs,
                     std::uint32_t cell_info) const;
 
   /// Unpermute the dof numbering on a cell
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
   void unpermute_dofs(const xtl::span<std::int32_t>& dofs,
                       std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -554,6 +581,10 @@ public:
                                 std::uint32_t cell_info) const;
 
   /// Apply transpose DOF transformations to some data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -563,6 +594,10 @@ public:
                                           std::uint32_t cell_info) const;
 
   /// Apply inverse transpose DOF transformations to some data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -571,6 +606,10 @@ public:
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -580,6 +619,10 @@ public:
                                         std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some transposed data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -589,6 +632,10 @@ public:
                                              std::uint32_t cell_info) const;
 
   /// Apply transpose DOF transformations to some transposed data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -597,6 +644,10 @@ public:
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse transpose DOF transformations to some transposed data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -605,6 +656,10 @@ public:
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some transposed data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -631,6 +686,10 @@ public:
 
   /// Compute the coefficients of a function given the values of the function
   /// at the interpolation points.
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] coefficients The coefficients of the function's
   /// interpolation into the function space
   /// @param[in] data The function evaluated at the points given by `points()`
@@ -760,6 +819,7 @@ private:
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, element::lagrange_variant variant,
                              bool discontinuous);
@@ -771,6 +831,7 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, bool discontinuous);
 
@@ -779,6 +840,7 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
 /// @param[in] variant The variant of Lagrange to use
+/// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, element::lagrange_variant variant);
 
@@ -786,6 +848,7 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
+/// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree);
 

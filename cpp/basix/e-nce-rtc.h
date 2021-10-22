@@ -7,18 +7,22 @@
 #include "cell.h"
 #include "finite-element.h"
 
-namespace basix
+namespace basix::element
 {
 /// Create RTC H(div) element
-/// @param celltype
-/// @param degree
-/// @param discontinuous
+/// @param[in] celltype The cell type
+/// @param[in] degree The degree of the element
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
+/// @return A finite element
 FiniteElement create_rtc(cell::type celltype, int degree, bool discontinuous);
 
 /// Create NC H(curl) element
-/// @param celltype
-/// @param degree
-/// @param discontinuous
+/// @param[in] celltype The cell type
+/// @param[in] degree The degree of the element
+/// @param[in] discontinuous Controls whether the element is continuous or
+/// discontinuous
+/// @return A finite element
 FiniteElement create_nce(cell::type celltype, int degree, bool discontinuous);
 
-} // namespace basix
+} // namespace basix::element

@@ -272,6 +272,10 @@ public:
   xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
 
   /// Direct to memory block tabulation
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param nd Number of derivatives
   /// @param x Points
   /// @param basis_data Memory location to fill
@@ -324,7 +328,6 @@ public:
   /// Map function values from the reference to a physical cell. This
   /// function can perform the mapping for multiple points, grouped by
   /// points that share a common Jacobian.
-  ///
   /// @param[in] U The function values on the reference. The indices are
   /// [Jacobian index, point index, components].
   /// @param[in] J The Jacobian of the mapping. The indices are [Jacobian
@@ -342,6 +345,9 @@ public:
                    const xt::xtensor<double, 3>& K) const;
 
   /// Direct to memory push forward
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
   ///
   /// @param[in] U Data defined on the reference element. It must have
   /// dimension 3. The first index is for the geometric/map data, the
@@ -386,6 +392,10 @@ public:
                                        const xt::xtensor<double, 3>& K) const;
 
   /// Map function values from a physical cell back to to the reference
+  ///
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
   ///
   /// @param[in] u Data defined on the physical element. It must have
   /// dimension 3. The first index is for the geometric/map data, the
@@ -538,18 +548,30 @@ public:
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations() const;
 
   /// Permute the dof numbering on a cell
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
   void permute_dofs(const xtl::span<std::int32_t>& dofs,
                     std::uint32_t cell_info) const;
 
   /// Unpermute the dof numbering on a cell
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
   void unpermute_dofs(const xtl::span<std::int32_t>& dofs,
                       std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -558,6 +580,10 @@ public:
                                 std::uint32_t cell_info) const;
 
   /// Apply transpose DOF transformations to some data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -567,6 +593,10 @@ public:
                                           std::uint32_t cell_info) const;
 
   /// Apply inverse transpose DOF transformations to some data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -575,6 +605,10 @@ public:
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -584,6 +618,10 @@ public:
                                         std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some transposed data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -593,6 +631,10 @@ public:
                                              std::uint32_t cell_info) const;
 
   /// Apply transpose DOF transformations to some transposed data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -601,6 +643,10 @@ public:
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse transpose DOF transformations to some transposed data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -609,6 +655,10 @@ public:
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some transposed data
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] data The data
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
@@ -635,6 +685,10 @@ public:
 
   /// Compute the coefficients of a function given the values of the function
   /// at the interpolation points.
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
   /// @param[in,out] coefficients The coefficients of the function's
   /// interpolation into the function space
   /// @param[in] data The function evaluated at the points given by `points()`

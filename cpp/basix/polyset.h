@@ -25,6 +25,9 @@ namespace basix::polyset
 /// there are `(nderiv + 1)(nderiv + 2)(nderiv + 3)/6`. The ordering is
 /// 'triangular' with the lower derivatives appearing first.
 ///
+/// @note This function will be called at runtime when tabulating a finite
+/// element, so its performance is critical.
+///
 /// @param[in] celltype Cell type
 /// @param[in] d Polynomial degree
 /// @param[in] n Maximum derivative order. Use n = 0 for the basis only.

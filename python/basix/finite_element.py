@@ -44,10 +44,10 @@ def string_to_family(family: str, cell: str):
         families.update({
             "RTCF": _EF.RT,
             "NCF": _EF.RT,
-            "BDMCF": _EF.RT,
             "RTCE": _EF.N1E,
             "NCE": _EF.N1E,
-            "BDMCE": _EF.N1E,
+            "BDMCF": _EF.BDM,
+            "BDMCE": _EF.N2E,
         })
     # Family names that are valid for triangles and tetrahedra
     if cell in ["triangle", "tetrahedron"]:

@@ -291,7 +291,8 @@ numpy.ndarray[numpy.float64]
 const std::string FiniteElement__apply_dof_transformation = R"(
 Apply DOF transformations to some data
 
-NOTE: This function is designed to be called at runtime, so its performance is critical.
+NOTE: This function is designed to be called at runtime, so its
+performance is critical.
 
 Parameters
 ==========
@@ -311,7 +312,8 @@ data : numpy.ndarray[numpy.float64]
 const std::string FiniteElement__apply_dof_transformation_to_transpose = R"(
 Apply DOF transformations to some transposed data
 
-NOTE: This function is designed to be called at runtime, so its performance is critical.
+NOTE: This function is designed to be called at runtime, so its
+performance is critical.
 
 Parameters
 ==========
@@ -332,7 +334,8 @@ const std::string FiniteElement__apply_inverse_transpose_dof_transformation
     = R"(
 Apply inverse transpose DOF transformations to some data
 
-NOTE: This function is designed to be called at runtime, so its performance is critical.
+NOTE: This function is designed to be called at runtime, so its
+performance is critical.
 
 Parameters
 ==========
@@ -595,7 +598,8 @@ cell, there are `(nderiv + 1)(nderiv + 2)/2` derivatives, and in 3D,
 there are `(nderiv + 1)(nderiv + 2)(nderiv + 3)/6`. The ordering is
 'triangular' with the lower derivatives appearing first.
 
-NOTE: This function will be called at runtime when tabulating a finite element, so its performance is critical.
+NOTE: This function will be called at runtime when tabulating a finite
+element, so its performance is critical.
 
 Parameters
 ==========

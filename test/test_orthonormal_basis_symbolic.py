@@ -40,7 +40,7 @@ def test_symbolic_quad():
     n = 2
     nderiv = 2
 
-    idx = basix._basixcpp.index
+    idx = basix.index
 
     x = sympy.Symbol("x")
     wx = P_interval(n, x)
@@ -72,7 +72,7 @@ def test_symbolic_triangle():
     n = 5
     nderiv = 4
 
-    idx = basix._basixcpp.index
+    idx = basix.index
 
     from sympy import S
     m = (n + 1) * (n + 2) // 2
@@ -111,7 +111,7 @@ def test_symbolic_tetrahedron():
     n = 4
     nderiv = 4
 
-    idx = basix._basixcpp.index
+    idx = basix.index
 
     from sympy import S
     m = (n + 1) * (n + 2) * (n + 3) // 6
@@ -168,7 +168,7 @@ def test_symbolic_pyramid():
     n = 3
     nderiv = 3
 
-    idx = basix._basixcpp.index
+    idx = basix.index
 
     def pyr_idx(p, q, r):
         rv = n - r + 1

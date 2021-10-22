@@ -166,7 +166,7 @@ def test_tri(order):
                 for j, p in enumerate(pts):
                     wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
 
-            assert(numpy.isclose(wtab[basix._basixcpp.index(kx, ky)], wsym).all())
+            assert(numpy.isclose(wtab[basix.index(kx, ky)], wsym).all())
 
 
 @pytest.mark.parametrize("order", [1, 2])
@@ -195,4 +195,4 @@ def test_tet(order):
                                               (y, p[1]),
                                               (z, p[2])])
 
-                assert numpy.isclose(wtab[basix._basixcpp.index(kx, ky, kz)], wsym).all()
+                assert numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all()

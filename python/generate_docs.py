@@ -1,3 +1,5 @@
+"""Generate docs for the pybind layer from the C++ header files."""
+
 import os
 import re
 

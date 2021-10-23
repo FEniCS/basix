@@ -225,6 +225,11 @@ with open(path("python/source/demo/index.rst"), "w") as f:
         if file.endswith(".rst") and file.startswith("demo"):
             f.write(f"   {file[:-4]}\n")
 
+with open(path("python/source/index.rst"), "a") as f:
+    f.write("\n")
+    f.write(".. toctree::\n")
+    f.write("   demo/index")
+
 # Make python docs
 system(f"cd {path('python')} && make html")
 system(f"cp -r {path('python/build/html')} {path('html/python')}")

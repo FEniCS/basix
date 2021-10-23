@@ -25,6 +25,3 @@ Table of contents
    :recursive:
 
    basix
-
-.. toctree::
-   demo/index

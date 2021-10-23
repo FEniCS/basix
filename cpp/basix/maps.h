@@ -27,7 +27,7 @@ enum class type
 namespace impl
 {
 template <typename O, typename Mat0, typename Mat1, typename Mat2>
-void dot22(O& r, const Mat0& A, const Mat1& B, const Mat2& C)
+void dot22(O&& r, const Mat0& A, const Mat1& B, const Mat2& C)
 {
   assert(A.shape(1) == B.shape(0));
   r = 0;
@@ -39,7 +39,7 @@ void dot22(O& r, const Mat0& A, const Mat1& B, const Mat2& C)
 }
 
 template <typename Vec, typename Mat0, typename Mat1>
-void dot21(Vec& r, const Mat0& A, const Mat1& B)
+void dot21(Vec&& r, const Mat0& A, const Mat1& B)
 {
   // assert(A.shape(1) == B.shape(0));
   r = 0;
@@ -49,7 +49,7 @@ void dot21(Vec& r, const Mat0& A, const Mat1& B)
 }
 
 template <typename Vec0, typename Vec1, typename Mat0, typename Mat1>
-void identity(Vec0& r, const Vec1& U, const Mat0& /*J*/, double /*detJ*/,
+void identity(Vec0&& r, const Vec1& U, const Mat0& /*J*/, double /*detJ*/,
               const Mat1& /*K*/)
 {
   r = U;
@@ -82,7 +82,7 @@ void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
 }
 
 template <typename O, typename P, typename Q, typename R>
-void double_covariant_piola(O& r, const P& U, const Q& J, double /*detJ*/,
+void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
                             const R& K)
 {
   for (std::size_t p = 0; p < U.shape(0); ++p)
@@ -96,7 +96,7 @@ void double_covariant_piola(O& r, const P& U, const Q& J, double /*detJ*/,
 }
 
 template <typename O, typename P, typename Q, typename R>
-void double_contravariant_piola(O& r, const P& U, const Q& J, double detJ,
+void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
                                 const R& /*K*/)
 {
   auto Jt = xt::transpose(J);
@@ -117,7 +117,7 @@ void double_contravariant_piola(O& r, const P& U, const Q& J, double detJ,
 ///
 /// @note This function is designed to be called at runtime, so its performance
 /// is critical.
-/// @todo Remove the switch from this function.
+/// @todo Remove the switch from this function if possible
 ///
 /// @param[out] u The field after mapping, flattened with row-major
 /// layout

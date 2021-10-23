@@ -211,7 +211,7 @@ system(f"cd {path('cpp')} && doxygen")
 system(f"cp -r {path('cpp/html')} {path('html/cpp')}")
 
 # Make demos
-system(f"rm {path('../../demo/*.rst')}")
+system(f"touch {path('../../demo/dummy.rst')} && rm {path('../../demo/*.rst')}")
 system(f"cd {path('../../demo')} && python3 convert_to_rst.py")
 system(f"mkdir {path('python/source/demo')}")
 system(f"cp {path('../../demo/*.rst')} {path('python/source/demo')}")

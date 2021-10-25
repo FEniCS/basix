@@ -611,9 +611,9 @@ std::array<std::size_t, 4>
 FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
 {
   std::size_t ndsize = 1;
-  for (int i = 1; i <= nd; ++i)
+  for (std::size_t i = 1; i <= nd; ++i)
     ndsize *= (_cell_tdim + i);
-  for (int i = 1; i <= nd; ++i)
+  for (std::size_t i = 1; i <= nd; ++i)
     ndsize /= i;
   std::size_t vs = value_size();
   std::size_t ndofs = _coeffs.shape(0);

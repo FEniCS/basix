@@ -259,11 +259,16 @@ public:
   /// compute. Use 0 for the basis functions only.
   /// @param[in] num_points Number of points that basis will be computed
   /// at
-  /// @return The shape of the array passed to `FiniteElement::tabulate`
+  /// @return The shape of the array to will filled when passed to
+  /// `FiniteElement::tabulate`
   std::array<std::size_t, 4> tabulate_shape(std::size_t nd,
                                             std::size_t num_points) const;
 
   /// Compute basis values and derivatives at set of points.
+  ///
+  /// @note The version of `FiniteElement::tabulate` with the basis data
+  /// as an out argument should be preferred for repeated call where
+  /// performance
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
@@ -282,16 +287,33 @@ public:
   /// one for scalar basis functions.
   xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
 
-  /// Direct to memory block tabulation
+  /// Compute basis values and derivatives at set of points.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///
-  /// @param nd Number of derivatives
-  /// @param x Points
-  /// @param basis_data Memory location to fill
+  /// @param[in] nd The order of derivatives, up to and including, to
+  /// compute. Use 0 for the basis functions only.
+  /// @param[in] x The points at which to compute the basis functions.
+  /// The shape of x is (number of points, geometric dimension).
+  /// @param [out] basis Memory location to fill. It must be allocated
+  /// with shape (num_derivatives, num_points, num basis functions,
+  /// value_size). The function `FiniteElement::tabulate_shape` can be
+  /// used to get the required shape.
+  /// - The first index is the derivative, with higher derivatives are
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+  /// (0,2), (3,0)... The function basix::indexing::idx can be used to
+  /// find the appropriate derivative.
+  /// - The second index is the point index
+  /// - The third index is the basis function index
+  /// - The fourth index is the basis function component. Its has size
+  /// one for scalar basis functions.
+  ///
+  /// @todo Remove all internal dynamic memory allocation, pass scratch
+  /// space as required
   void tabulate(int nd, const xt::xarray<double>& x,
-                xt::xtensor<double, 4>& basis_data) const;
+                xt::xtensor<double, 4>& basis) const;
 
   /// Get the element cell type
   /// @return The cell type

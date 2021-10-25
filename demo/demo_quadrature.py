@@ -5,7 +5,7 @@
 # This demo shows how quadrature rules can be obtained from Basix and how these
 # can be used to compute the integrals of functions. A quadrature rule uses a
 # set of points (:math:`p_0` to :math:`p_{n-1}`) and weights (:math:`w_0` to
-# :math:`w_{n-1}), and approximates an integral as the weighted sum of the
+# :math:`w_{n-1}`), and approximates an integral as the weighted sum of the
 # values of the function at these points, ie
 #
 # .. math::

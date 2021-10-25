@@ -186,7 +186,7 @@ content += "{% endblock %}"
 with open(path("python/source/_templates/layout.html"), "w") as f:
     f.write(insert_info(content))
 
-with open("cpp/Doxyfile") as f:
+with open(path("cpp/Doxyfile")) as f:
     content = ""
     for line in f:
         if line.startswith("HTML_HEADER"):
@@ -196,7 +196,7 @@ with open("cpp/Doxyfile") as f:
         else:
             content += line.replace(" ..", " ../..")
 
-with open("cpp/Doxyfile", "w") as f:
+with open(path("cpp/Doxyfile"), "w") as f:
     f.write(content)
 
 # Copy images and assets

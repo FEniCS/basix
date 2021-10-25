@@ -141,7 +141,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
     entity_transformations[cell::type::quadrilateral] = ft;
   }
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
       {x[0], x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
@@ -811,9 +811,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 } // namespace
 
 //----------------------------------------------------------------------------
-FiniteElement basix::create_lagrange(cell::type celltype, int degree,
-                                     element::lagrange_variant variant,
-                                     bool discontinuous)
+FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
+                                              element::lagrange_variant variant,
+                                              bool discontinuous)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
@@ -975,10 +975,10 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
   if (discontinuous)
   {
     std::tie(x, M, entity_transformations)
-        = make_discontinuous(x, M, entity_transformations, tdim, 1);
+        = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
   }
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
       {x[0], x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
@@ -986,8 +986,8 @@ FiniteElement basix::create_lagrange(cell::type celltype, int degree,
                        discontinuous);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_dpc(cell::type celltype, int degree,
-                                bool discontinuous)
+FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
+                                         bool discontinuous)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
@@ -1058,7 +1058,7 @@ FiniteElement basix::create_dpc(cell::type celltype, int degree,
         = xt::xtensor<double, 3>({2, 0, 0});
   }
 
-  xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
   return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
                        entity_transformations, x, M, maps::type::identity,

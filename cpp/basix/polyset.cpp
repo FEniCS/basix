@@ -11,6 +11,7 @@
 #include <xtensor/xview.hpp>
 
 using namespace basix;
+using namespace basix::indexing;
 
 namespace
 {

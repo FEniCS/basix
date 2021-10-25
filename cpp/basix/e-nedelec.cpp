@@ -76,14 +76,14 @@ create_nedelec_2d_interpolation(int degree)
 
   // Integral representation for the boundary (edge) dofs
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      create_lagrange(cell::type::interval, degree - 1,
-                      element::lagrange_variant::equispaced, true),
+      element::create_lagrange(cell::type::interval, degree - 1,
+                               element::lagrange_variant::equispaced, true),
       cell::type::triangle, 2, quad_deg);
   if (degree > 1)
   {
     std::tie(x[2], M[2]) = moments::make_integral_moments(
-        create_lagrange(cell::type::triangle, degree - 2,
-                        element::lagrange_variant::equispaced, true),
+        element::create_lagrange(cell::type::triangle, degree - 2,
+                                 element::lagrange_variant::equispaced, true),
         cell::type::triangle, 2, quad_deg);
   }
 
@@ -97,8 +97,9 @@ create_nedelec_2d_entity_transforms(int degree)
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
-          create_lagrange(cell::type::interval, degree - 1,
-                          element::lagrange_variant::equispaced, true));
+          element::create_lagrange(cell::type::interval, degree - 1,
+                                   element::lagrange_variant::equispaced,
+                                   true));
   entity_transformations[cell::type::interval] = edge_transforms;
 
   return entity_transformations;
@@ -201,23 +202,23 @@ create_nedelec_3d_interpolation(int degree)
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
 
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      create_lagrange(cell::type::interval, degree - 1,
-                      element::lagrange_variant::equispaced, true),
+      element::create_lagrange(cell::type::interval, degree - 1,
+                               element::lagrange_variant::equispaced, true),
       cell::type::tetrahedron, 3, quad_deg);
 
   if (degree > 1)
   {
     std::tie(x[2], M[2]) = moments::make_integral_moments(
-        create_lagrange(cell::type::triangle, degree - 2,
-                        element::lagrange_variant::equispaced, true),
+        element::create_lagrange(cell::type::triangle, degree - 2,
+                                 element::lagrange_variant::equispaced, true),
         cell::type::tetrahedron, 3, quad_deg);
   }
 
   if (degree > 2)
   {
     std::tie(x[3], M[3]) = moments::make_integral_moments(
-        create_lagrange(cell::type::tetrahedron, degree - 3,
-                        element::lagrange_variant::equispaced, true),
+        element::create_lagrange(cell::type::tetrahedron, degree - 3,
+                                 element::lagrange_variant::equispaced, true),
         cell::type::tetrahedron, 3, quad_deg);
   }
 
@@ -231,17 +232,18 @@ create_nedelec_3d_entity_transforms(int degree)
 
   const xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
-          create_lagrange(cell::type::interval, degree - 1,
-                          element::lagrange_variant::equispaced, true));
+          element::create_lagrange(cell::type::interval, degree - 1,
+                                   element::lagrange_variant::equispaced,
+                                   true));
   entity_transformations[cell::type::interval] = edge_transforms;
 
   // Faces
   if (degree > 1)
   {
     xt::xtensor<double, 3> face_transforms
-        = moments::create_moment_dof_transformations(
-            create_lagrange(cell::type::triangle, degree - 2,
-                            element::lagrange_variant::equispaced, true));
+        = moments::create_moment_dof_transformations(element::create_lagrange(
+            cell::type::triangle, degree - 2,
+            element::lagrange_variant::equispaced, true));
 
     entity_transformations[cell::type::triangle] = face_transforms;
   }
@@ -263,14 +265,14 @@ create_nedelec2_2d_interpolation(int degree)
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
 
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      create_lagrange(cell::type::interval, degree,
-                      element::lagrange_variant::equispaced, true),
+      element::create_lagrange(cell::type::interval, degree,
+                               element::lagrange_variant::equispaced, true),
       cell::type::triangle, 2, quad_deg);
   if (degree > 1)
   {
     std::tie(x[2], M[2]) = moments::make_dot_integral_moments(
-        create_rt(cell::type::triangle, degree - 1, true), cell::type::triangle,
-        2, quad_deg);
+        element::create_rt(cell::type::triangle, degree - 1, true),
+        cell::type::triangle, 2, quad_deg);
   }
 
   return {x, M};
@@ -283,8 +285,9 @@ create_nedelec2_2d_entity_transformations(int degree)
 
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
-          create_lagrange(cell::type::interval, degree,
-                          element::lagrange_variant::equispaced, true));
+          element::create_lagrange(cell::type::interval, degree,
+                                   element::lagrange_variant::equispaced,
+                                   true));
   entity_transformations[cell::type::interval] = edge_transforms;
 
   return entity_transformations;
@@ -302,15 +305,15 @@ create_nedelec2_3d_interpolation(int degree)
 
   // Integral representation for the boundary (edge) dofs
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      create_lagrange(cell::type::interval, degree,
-                      element::lagrange_variant::equispaced, true),
+      element::create_lagrange(cell::type::interval, degree,
+                               element::lagrange_variant::equispaced, true),
       cell::type::tetrahedron, 3, quad_deg);
 
   if (degree > 1)
   {
     // Integral moments on faces
     std::tie(x[2], M[2]) = moments::make_dot_integral_moments(
-        create_rt(cell::type::triangle, degree - 1, true),
+        element::create_rt(cell::type::triangle, degree - 1, true),
         cell::type::tetrahedron, 3, quad_deg);
   }
 
@@ -318,7 +321,7 @@ create_nedelec2_3d_interpolation(int degree)
   {
     // Interior integral moment
     std::tie(x[3], M[3]) = moments::make_dot_integral_moments(
-        create_rt(cell::type::tetrahedron, degree - 2, true),
+        element::create_rt(cell::type::tetrahedron, degree - 2, true),
         cell::type::tetrahedron, 3, quad_deg);
   }
 
@@ -332,8 +335,9 @@ create_nedelec2_3d_entity_transformations(int degree)
 
   const xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(
-          create_lagrange(cell::type::interval, degree,
-                          element::lagrange_variant::equispaced, true));
+          element::create_lagrange(cell::type::interval, degree,
+                                   element::lagrange_variant::equispaced,
+                                   true));
   entity_transformations[cell::type::interval] = edge_transforms;
 
   // Faces
@@ -346,7 +350,7 @@ create_nedelec2_3d_entity_transformations(int degree)
   {
     const xt::xtensor<double, 3> face_transforms
         = moments::create_dot_moment_dof_transformations(
-            create_rt(cell::type::triangle, degree - 1, true));
+            element::create_rt(cell::type::triangle, degree - 1, true));
     entity_transformations[cell::type::triangle] = face_transforms;
   }
 
@@ -356,8 +360,8 @@ create_nedelec2_3d_entity_transformations(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_nedelec(cell::type celltype, int degree,
-                                    bool discontinuous)
+FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
+                                             bool discontinuous)
 {
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
@@ -388,18 +392,18 @@ FiniteElement basix::create_nedelec(cell::type celltype, int degree,
   if (discontinuous)
   {
     std::tie(x, M, transforms)
-        = make_discontinuous(x, M, transforms, tdim, tdim);
+        = element::make_discontinuous(x, M, transforms, tdim, tdim);
   }
 
-  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+  const xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, coeffs,
                        transforms, x, M, maps::type::covariantPiola,
                        discontinuous);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
-                                     bool discontinuous)
+FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
+                                              bool discontinuous)
 {
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
@@ -430,10 +434,10 @@ FiniteElement basix::create_nedelec2(cell::type celltype, int degree,
   if (discontinuous)
   {
     std::tie(x, M, entity_transformations)
-        = make_discontinuous(x, M, entity_transformations, tdim, tdim);
+        = element::make_discontinuous(x, M, entity_transformations, tdim, tdim);
   }
 
-  const xt::xtensor<double, 3> coeffs = compute_expansion_coefficients(
+  const xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, coeffs,
                        entity_transformations, x, M, maps::type::covariantPiola,

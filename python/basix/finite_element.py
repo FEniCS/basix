@@ -1,10 +1,25 @@
 """Functions for creating finite elements."""
 
 from ._basixcpp import ElementFamily as _EF
+from ._basixcpp import FiniteElement  # noqa: F401
 
 
-def string_to_family(family: str, cell: str):
-    """Get a Basix ElementFamily enum representing the family type on the given cell."""
+def string_to_family(family: str, cell: str) -> _EF:
+    """
+    Get a Basix ElementFamily enum representing the family type on the given cell.
+
+    Parameters
+    ----------
+    family : str
+        The element family as a string.
+    cell : str
+        The cell type as a string.
+
+    Returns
+    -------
+    basix.ElementFamily
+        The element family.
+    """
     # Family names that are valid for all cells
     families = {
         "Lagrange": _EF.P,
@@ -46,6 +61,8 @@ def string_to_family(family: str, cell: str):
             "NCF": _EF.RT,
             "RTCE": _EF.N1E,
             "NCE": _EF.N1E,
+            "BDMCF": _EF.BDM,
+            "BDMCE": _EF.N2E,
         })
     # Family names that are valid for triangles and tetrahedra
     if cell in ["triangle", "tetrahedron"]:

@@ -14,7 +14,7 @@
 namespace basix::maps
 {
 
-/// Cell type
+/// Map type
 enum class type
 {
   identity,
@@ -114,6 +114,10 @@ void double_contravariant_piola(O& r, const P& U, const Q& J, double detJ,
 
 /// Apply a map to data. Note that the required input arguments depends
 /// on the type of map.
+///
+/// @note This function is designed to be called at runtime, so its performance
+/// is critical.
+/// @todo Remove the switch from this function.
 ///
 /// @param[out] u The field after mapping, flattened with row-major
 /// layout

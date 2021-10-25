@@ -5,10 +5,11 @@
 # When using high degree finite elements on general meshes, adjustments
 # may need to be made to correct for differences in the orientation of
 # mesh entities on the mesh and on the reference cell. For example, in
-# a degree 4 Lagrange element on a triangle, there are 3 DOFs associated
-# with each edge. If two neighbouring cells in a mesh disagree on the
-# direction of the edge, they could put an incorrectly combine the local
-# basis functions to give the wrong global basis function.
+# a degree 4 Lagrange element on a triangle, there are 3 degrees of
+# freedom (DOFs) associated with each edge. If two neighbouring cells in
+# a mesh disagree on the direction of the edge, they could put an
+# incorrectly combine the local basis functions to give the wrong global
+# basis function.
 #
 # This issue and the use of permutations and transformations to correct
 # it is discussed in detail in `Construction of arbitrary order finite

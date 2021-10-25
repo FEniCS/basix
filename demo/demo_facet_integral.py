@@ -50,10 +50,10 @@ mapped_points = np.array([
 # We then tabulate the basis functions of our space at the quadrature
 # points. We pass 1 in as the first argument, as we want the derivatives
 # of the basis functions. The result of tabulation will be an array of
-# size 4 by number of quadrature points by number of DOFs. To get the
-# data we want, we use the indices `1:` (to get the derivatives and not
-# also the function values), `:` (to include every point), and 5 (to
-# get the fifth basis function.
+# size 4 by number of quadrature points by number of degrees of freedom.
+# To get the data that we want, we use the indices `1:` (to get the
+# derivatives and not also the function values), `:` (to include every
+# point), and 5 (to get the fifth basis function).
 #
 # We then multiply the three derivatives of the basis function by
 # the three componenets of the normal.

@@ -17,6 +17,8 @@ temp = path("_temp")
 parser = argparse.ArgumentParser(description="Build Basix documentation")
 parser.add_argument('--url', metavar='url',
                     default="http://localhost", help="URL of built documentation")
+parser.add_argument('--clone', metavar='clone',
+                    default="true", help="Clone the web repository")
 
 args = parser.parse_args()
 url = args.url
@@ -127,7 +129,7 @@ def system(command):
 
 
 # Make paths
-for dir in ["html", "cpp", "python", "web"]:
+for dir in ["html", "cpp", "python"]:
     if os.path.isdir(path(dir)):
         system(f"rm -r {path(dir)}")
 if os.path.isdir(temp):
@@ -141,7 +143,10 @@ system(f"cp -r {path('../python')} {path('python')}")
 system(f"mkdir {path('python/source/_templates')}")
 
 # Prepare templates
-system(f"git clone http://github.com/FEniCS/web {path('web')}")
+if args.clone == "true":
+    if os.path.isdir(path('web')):
+        system(f"rm -r {path('web')}")
+    system(f"git clone http://github.com/FEniCS/web {path('web')}")
 
 with open(path('web/_layouts/default.html')) as f:
     intro, outro = f.read().split("\n    {{ title }}\n    {{ content }}\n")

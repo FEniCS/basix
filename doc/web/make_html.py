@@ -211,19 +211,10 @@ system(f"cd {path('cpp')} && doxygen")
 system(f"cp -r {path('cpp/html')} {path('html/cpp')}")
 
 # Make demos
-system(f"touch {path('../../demo/dummy.rst')} && rm {path('../../demo/*.rst')}")
+os.system(f"rm {path('../../demo/*.py.rst')}")
 system(f"cd {path('../../demo')} && python3 convert_to_rst.py")
 system(f"mkdir {path('python/source/demo')}")
 system(f"cp {path('../../demo/*.rst')} {path('python/source/demo')}")
-
-with open(path("python/source/demo/index.rst"), "w") as f:
-    f.write("=====\n")
-    f.write("Demos\n")
-    f.write("=====\n")
-    f.write(".. toctree::\n")
-    for file in os.listdir(path("python/source/demo")):
-        if file.endswith(".rst") and file.startswith("demo"):
-            f.write(f"   {file[:-4]}\n")
 
 with open(path("python/source/index.rst"), "a") as f:
     f.write("\n")

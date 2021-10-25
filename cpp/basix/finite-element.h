@@ -268,7 +268,7 @@ public:
   ///
   /// @note The version of `FiniteElement::tabulate` with the basis data
   /// as an out argument should be preferred for repeated call where
-  /// performance
+  /// performance is critical
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.

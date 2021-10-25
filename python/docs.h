@@ -224,7 +224,7 @@ Compute basis values and derivatives at set of points.
 
 NOTE: The version of `FiniteElement::tabulate` with the basis data
 as an out argument should be preferred for repeated call where
-performance
+performance is critical
 
 Parameters
 ==========

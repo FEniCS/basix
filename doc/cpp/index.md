@@ -4,7 +4,9 @@ Welcome to the Basix C++ documentation.
 
 Basix is a finite element definition and tabulation runtime library.
 It is part of [FEniCSx](https://docs.fenicsproject.org),
-alongside [FFCx](https://docs.fenicsproject.org/ffcx) and [DOLFINx](https://docs.fenicsproject.org/dolfinx/cpp).
+alongside [UFL](https://fenics.readthedocs.io/projects/ufl/en/latest), [FFCx](https://docs.fenicsproject.org/ffcx/main)
+and DOLFINx ([C++ docs](https://docs.fenicsproject.org/dolfinx/main/cpp),
+[Python docs](https://docs.fenicsproject.org/dolfinx/main/python)).
 
 Basix can create finite elements on intervals, triangles, quadrilaterals, tetrahedra, hexahedra, prisms, and pyramids.
 

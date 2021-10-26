@@ -222,6 +222,10 @@ numpy.ndarray[numpy.float64]
 const std::string FiniteElement__tabulate = R"(
 Compute basis values and derivatives at set of points.
 
+NOTE: The version of `FiniteElement::tabulate` with the basis data
+as an out argument should be preferred for repeated call where
+performance is critical
+
 Parameters
 ==========
 nd : int

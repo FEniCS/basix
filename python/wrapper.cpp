@@ -196,19 +196,6 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& x) {
             auto _x = adapt_x(x);
             auto t = self.tabulate(n, _x);
-            auto t_swap = xt::transpose(t, {0, 1, 3, 2});
-            xt::xtensor<double, 3> t_reshape
-                = xt::reshape_view(t_swap, {t_swap.shape(0), t_swap.shape(1),
-                                            t_swap.shape(2) * t_swap.shape(3)});
-            return py::array_t<double>(t_reshape.shape(), t_reshape.data());
-          },
-          basix::docstring::FiniteElement__tabulate.c_str())
-      .def(
-          "tabulate_x",
-          [](const FiniteElement& self, int n,
-             const py::array_t<double, py::array::c_style>& x) {
-            auto _x = adapt_x(x);
-            auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
           },
           basix::docstring::FiniteElement__tabulate.c_str())

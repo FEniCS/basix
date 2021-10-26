@@ -17,6 +17,8 @@ temp = path("_temp")
 parser = argparse.ArgumentParser(description="Build Basix documentation")
 parser.add_argument('--url', metavar='url',
                     default="http://localhost", help="URL of built documentation")
+parser.add_argument('--clone', metavar='clone',
+                    default="true", help="Clone the web repository")
 
 args = parser.parse_args()
 url = args.url
@@ -127,7 +129,7 @@ def system(command):
 
 
 # Make paths
-for dir in ["html", "cpp", "python", "web"]:
+for dir in ["html", "cpp", "python"]:
     if os.path.isdir(path(dir)):
         system(f"rm -r {path(dir)}")
 if os.path.isdir(temp):
@@ -141,7 +143,10 @@ system(f"cp -r {path('../python')} {path('python')}")
 system(f"mkdir {path('python/source/_templates')}")
 
 # Prepare templates
-system(f"git clone http://github.com/FEniCS/web {path('web')}")
+if args.clone == "true":
+    if os.path.isdir(path('web')):
+        system(f"rm -r {path('web')}")
+    system(f"git clone http://github.com/FEniCS/web {path('web')}")
 
 with open(path('web/_layouts/default.html')) as f:
     intro, outro = f.read().split("\n    {{ title }}\n    {{ content }}\n")
@@ -181,7 +186,7 @@ content += "{% endblock %}"
 with open(path("python/source/_templates/layout.html"), "w") as f:
     f.write(insert_info(content))
 
-with open("cpp/Doxyfile") as f:
+with open(path("cpp/Doxyfile")) as f:
     content = ""
     for line in f:
         if line.startswith("HTML_HEADER"):
@@ -191,7 +196,7 @@ with open("cpp/Doxyfile") as f:
         else:
             content += line.replace(" ..", " ../..")
 
-with open("cpp/Doxyfile", "w") as f:
+with open(path("cpp/Doxyfile"), "w") as f:
     f.write(content)
 
 # Copy images and assets
@@ -209,6 +214,17 @@ for file in os.listdir(_path):
 # Make cpp docs
 system(f"cd {path('cpp')} && doxygen")
 system(f"cp -r {path('cpp/html')} {path('html/cpp')}")
+
+# Make demos
+os.system(f"rm {path('../../demo/*.py.rst')}")
+system(f"cd {path('../../demo')} && python3 convert_to_rst.py")
+system(f"mkdir {path('python/source/demo')}")
+system(f"cp {path('../../demo/*.rst')} {path('python/source/demo')}")
+
+with open(path("python/source/index.rst"), "a") as f:
+    f.write("\n")
+    f.write(".. toctree::\n")
+    f.write("   demo/index")
 
 # Make python docs
 system(f"cd {path('python')} && make html")

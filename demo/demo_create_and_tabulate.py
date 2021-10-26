@@ -40,7 +40,10 @@ tab = lagrange.tabulate(0, points)
 print(tab)
 print(tab.shape)
 
-# The result of tabulating is a 1 by 5 by 25 Numpy array. The first dimension is 1
-# as we are only tabulating the function values; it would be higher if we had asked
-# for derivatives too. The second dimension (5) is the number of points, and the
-# third dimension (25) is the number of DOFs.
+# The result of tabulating is a 1 by 5 by 25 by 1 Numpy array. The first dimension
+# is 1 as we are only tabulating the function values; it would be higher if we
+# had asked for derivatives too. The second dimension (5) is the number of points.
+# The third dimension (25) is the number of DOFs. The fourth dimension (1) is the
+# value size of the element: this will be greater than 1 for vector-values elements.
+
+assert tab.shape == (1, 5, 25, 1)

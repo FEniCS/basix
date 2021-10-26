@@ -54,13 +54,14 @@ mapped_points = np.array([
 # size 4 by number of quadrature points by number of degrees of freedom.
 # To get the data that we want, we use the indices `1:` (to get the
 # derivatives and not also the function values), `:` (to include every
-# point), and 5 (to get the fifth basis function).
+# point), 5 (to get the fifth basis function), and 0 (to get the only
+# entry as the value size is 1).
 #
 # We then multiply the three derivatives of the basis function by
 # the three componenets of the normal.
 
 normal = basix.cell.facet_outward_normals(CellType.tetrahedron)[0]
-tab = lagrange.tabulate(1, mapped_points)[1:, :, 5]
+tab = lagrange.tabulate(1, mapped_points)[1:, :, 5, 0]
 normal_deriv = tab[0] * normal[0] + tab[1] * normal[1] + tab[2] * normal[2]
 
 # As our facet is not the reference triangle, we must multiply the

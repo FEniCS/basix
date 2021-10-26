@@ -135,10 +135,6 @@ points = basix.create_lattice(
 # not match its direction on the reference, then we need to adjust the
 # tabulated data.
 #
-# To tabulate data, we use the function `tabulate_x` as this version
-# of tabulate keeps the number of DOFs and value size of the element
-# separate instead of flattening the data.
-#
 # As the cell sub-entity that we are correcting is an interval, we
 # get the `"interval"` item from the entity transformations dictionary.
 # We use `entity_dofs[1][2]` (1 is the dimension of an edge, 2 is the
@@ -149,7 +145,7 @@ points = basix.create_lattice(
 # and over the value size. For each of these values, we apply the
 # transformation matrix to the relevant DOFs.
 
-data = nedelec.tabulate_x(0, points)
+data = nedelec.tabulate(0, points)
 
 transformation = nedelec.entity_transformations()["interval"][0]
 dofs = nedelec.entity_dofs[1][2]

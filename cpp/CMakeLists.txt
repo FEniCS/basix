@@ -69,7 +69,7 @@ if(NOT xtl_FOUND)
   FetchContent_Declare(
     xtl
     GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
-    GIT_TAG        0.7.2
+    GIT_TAG        0.7.3
   )
   FetchContent_MakeAvailable(xtl)
 else()
@@ -81,7 +81,7 @@ if(NOT xtensor_FOUND)
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.23.10
+    GIT_TAG        0.24.0
   )
   FetchContent_MakeAvailable(xtensor)
 else()

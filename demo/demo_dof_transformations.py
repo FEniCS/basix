@@ -20,11 +20,15 @@
 # Functions to permute and transform high degree elements are
 # provided by Basix. In this demo, we show how these can be used.
 #
-# First, we import Basix.
+# First, we import Basix and Numpy.
 
 import basix
-from basix import ElementFamily, CellType, LagrangeVariant
+import numpy as np
+from basix import ElementFamily, CellType, LagrangeVariant, LatticeType
 
+# Degree 5 Lagrange element
+# =========================
+#
 # We create a degree 5 Lagrange element on a triangle, then print the
 # values of the attreibutes `dof_transformations_are_identity` and
 # `dof_transformations_are_permutations`.
@@ -77,6 +81,9 @@ print(lagrange.entity_transformations())
 
 print(lagrange.entity_dofs[1][2])
 
+# Degree 2 Lagrange element
+# =========================
+#
 # For a degree 2 Lagrange element, no permutations or transformations
 # are needed. We can verify this by checking that
 # `dof_transformations_are_identity` is `True`. To confirm that the
@@ -88,7 +95,10 @@ lagrange_degree_2 = basix.create_element(
 print(lagrange_degree_2.dof_transformations_are_identity)
 print(lagrange_degree_2.base_transformations())
 
-# For a degree 1 Nedelec (first kind) element on a tetrahedron, the
+# Degree 2 Nédélec element
+# ========================
+#
+# For a degree 2 Nédélec (first kind) element on a tetrahedron, the
 # corrections are not all permutations, so both
 # `dof_transformations_are_identity` and
 # `dof_transformations_are_permutations` are `False`.
@@ -114,6 +124,41 @@ print(nedelec.dof_transformations_are_permutations)
 # a form and cannot be applied to the DOF numbering in the DOF map.
 
 print(nedelec.entity_transformations())
+
+# To demonstrate how these transformations can be used, we create a
+# lattice of points where we will tabulate the element.
+
+points = basix.create_lattice(
+    CellType.tetrahedron, 5, LatticeType.equispaced, True)
+
+# If (for example) the direction of edge 2 in the physical cell does
+# not match its direction on the reference, then we need to adjust the
+# tabulated data.
+#
+# To tabulate data, we use the function `tabulate_x` as this version
+# of tabulate keeps the number of DOFs and value size of the element
+# separate instead of flattening the data.
+#
+# As the cell sub-entity that we are correcting is an interval, we
+# get the `"interval"` item from the entity transformations dictionary.
+# We use `entity_dofs[1][2]` (1 is the dimension of an edge, 2 is the
+# index of the edge we are reversing) to find out which dofs are on
+# our edge.
+#
+# To adjust the tabulated data, we loop over each point in the lattice
+# and over the value size. For each of these values, we apply the
+# transformation matrix to the relevant DOFs.
+
+data = nedelec.tabulate_x(0, points)
+
+transformation = nedelec.entity_transformations()["interval"][0]
+dofs = nedelec.entity_dofs[1][2]
+
+for point in range(data.shape[1]):
+    for dim in range(data.shape[3]):
+        data[0, point, dofs, dim] = np.dot(transformation, data[0, point, dofs, dim])
+
+print(data)
 
 # More efficient functions that apply the transformations and
 # permutations directly to data can be used via Basix's C++

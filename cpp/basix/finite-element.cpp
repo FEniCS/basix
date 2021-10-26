@@ -607,22 +607,28 @@ FiniteElement::entity_closure_dofs() const
   return _e_closure_dofs;
 }
 //-----------------------------------------------------------------------------
+std::array<std::size_t, 4>
+FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
+{
+  std::size_t ndsize = 1;
+  for (std::size_t i = 1; i <= nd; ++i)
+    ndsize *= (_cell_tdim + i);
+  for (std::size_t i = 1; i <= nd; ++i)
+    ndsize /= i;
+  std::size_t vs = value_size();
+  std::size_t ndofs = _coeffs.shape(0);
+  return {ndsize, num_points, ndofs, vs};
+}
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
-  std::size_t ndsize = 1;
-  for (int i = 1; i <= nd; ++i)
-    ndsize *= (_cell_tdim + i);
-  for (int i = 1; i <= nd; ++i)
-    ndsize /= i;
-  const std::size_t vs = value_size();
-  const std::size_t ndofs = _coeffs.shape(0);
-
   xt::xarray<double> _x = x;
   if (_x.dimension() == 1)
     _x.reshape({_x.shape(0), 1});
 
-  xt::xtensor<double, 4> data({ndsize, x.shape(0), ndofs, vs});
+  auto shape = tabulate_shape(nd, x.shape(0));
+  xt::xtensor<double, 4> data(shape);
   tabulate(nd, _x, data);
 
   return data;

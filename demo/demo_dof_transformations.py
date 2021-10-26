@@ -23,6 +23,7 @@
 # First, we import Basix.
 
 import basix
+from basix import ElementFamily, CellType, LagrangeVariant
 
 # We create a degree 5 Lagrange element on a triangle, then print the
 # values of the attreibutes `dof_transformations_are_identity` and
@@ -38,7 +39,7 @@ import basix
 # DOF map.
 
 lagrange = basix.create_element(
-    basix.ElementFamily.P, basix.CellType.triangle, 5, basix.LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.triangle, 5, LagrangeVariant.equispaced)
 print(lagrange.dof_transformations_are_identity)
 print(lagrange.dof_transformations_are_permutations)
 
@@ -83,7 +84,7 @@ print(lagrange.entity_dofs[1][2])
 # transformations.
 
 lagrange_degree_2 = basix.create_element(
-    basix.ElementFamily.P, basix.CellType.triangle, 2, basix.LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.triangle, 2, LagrangeVariant.equispaced)
 print(lagrange_degree_2.dof_transformations_are_identity)
 print(lagrange_degree_2.base_transformations())
 
@@ -92,7 +93,7 @@ print(lagrange_degree_2.base_transformations())
 # `dof_transformations_are_identity` and
 # `dof_transformations_are_permutations` are `False`.
 
-nedelec = basix.create_element(basix.ElementFamily.N1E, basix.CellType.tetrahedron, 2)
+nedelec = basix.create_element(ElementFamily.N1E, CellType.tetrahedron, 2)
 print(nedelec.dof_transformations_are_identity)
 print(nedelec.dof_transformations_are_permutations)
 

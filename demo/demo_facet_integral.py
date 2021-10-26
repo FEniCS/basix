@@ -15,17 +15,18 @@
 
 import basix
 import numpy as np
+from basix import ElementFamily, CellType, LagrangeVariant
 
 # We define a degree 3 Lagrange space on a tetrahedron.
 
 lagrange = basix.create_element(
-    basix.ElementFamily.P, basix.CellType.tetrahedron, 3, basix.LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.tetrahedron, 3, LagrangeVariant.equispaced)
 
 # The facets of a tetrahedron are triangular, so we create a quadrature
 # rule on a triangle. We use an order 3 rule so that we can integrate the
 # basis functions in our space exactly.
 
-points, weights = basix.make_quadrature("default", basix.CellType.triangle, 3)
+points, weights = basix.make_quadrature("default", CellType.triangle, 3)
 
 # Next, we must map the quadrature points to our facet. We use the function
 # `geometry` to get the coordinates of the vertices of the tetrahedron, and
@@ -36,8 +37,8 @@ points, weights = basix.make_quadrature("default", basix.CellType.triangle, 3)
 #
 # Using this information, we can map the quadrature points to the facet.
 
-vertices = basix.geometry(basix.CellType.tetrahedron)
-facet = basix.cell.sub_entity_connectivity(basix.CellType.tetrahedron)[2][0][0]
+vertices = basix.geometry(CellType.tetrahedron)
+facet = basix.cell.sub_entity_connectivity(CellType.tetrahedron)[2][0][0]
 mapped_points = np.array([
     vertices[facet[0]] * (1 - x - y) + vertices[facet[1]] * x + vertices[facet[2]] * y
     for x, y in points
@@ -58,7 +59,7 @@ mapped_points = np.array([
 # We then multiply the three derivatives of the basis function by
 # the three componenets of the normal.
 
-normal = basix.cell.facet_outward_normals(basix.CellType.tetrahedron)[0]
+normal = basix.cell.facet_outward_normals(CellType.tetrahedron)[0]
 tab = lagrange.tabulate(1, mapped_points)[1:, :, 5]
 normal_deriv = tab[0] * normal[0] + tab[1] * normal[1] + tab[2] * normal[2]
 
@@ -67,6 +68,6 @@ normal_deriv = tab[0] * normal[0] + tab[1] * normal[1] + tab[2] * normal[2]
 # cross product of the two columns of the Jacobian, and then compute
 # the integral.
 
-jacobian = basix.cell.facet_jacobians(basix.CellType.tetrahedron)[0]
+jacobian = basix.cell.facet_jacobians(CellType.tetrahedron)[0]
 size_jacobian = np.linalg.norm(np.cross(jacobian[:, 0], jacobian[:, 1]))
 print(np.sum(normal_deriv * weights) * size_jacobian)

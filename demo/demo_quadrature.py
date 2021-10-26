@@ -16,6 +16,7 @@
 
 import basix
 import numpy as np
+from basix import ElementFamily, CellType, LagrangeVariant
 
 # To get a quadrature rule on a triangle, we use the function `make_quadrature`.
 # This function takes three inputs: a quadrature rule (we use the `"default"`
@@ -27,7 +28,7 @@ import numpy as np
 # `make_quadrature` returns two values: the points and the weights of the
 # quadrature rule.
 
-points, weights = basix.make_quadrature("default", basix.CellType.triangle, 4)
+points, weights = basix.make_quadrature("default", CellType.triangle, 4)
 
 # We now use this quadrature rule to integrate the functions :math:`f(x,y)=x^3y`
 # and :math:`g(x,y)=x^3y^2` over the triangle. The exact values of these integrals
@@ -66,7 +67,7 @@ print(np.sum(weights * g(points)))
 # functions at the quadrature points.
 
 lagrange = basix.create_element(
-    basix.ElementFamily.P, basix.CellType.triangle, 3, basix.LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.triangle, 3, LagrangeVariant.equispaced)
 
 values = lagrange.tabulate(0, points)
 

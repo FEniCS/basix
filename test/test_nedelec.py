@@ -193,10 +193,11 @@ def sympy_nedelec(celltype, n):
     mat = sympy.Matrix(mat)
     mat = mat.inv()
     g = []
-    for dim in range(tdim):
-        for r in range(mat.shape[0]):
-            g += [sum([v * funcs[i][dim] for i, v in enumerate(mat.row(r))])]
-
+    for r in range(mat.shape[0]):
+        row = []
+        for dim in range(tdim):
+            row.append(sum([v * funcs[i][dim] for i, v in enumerate(mat.row(r))]))
+        g.append(row)
     return g
 
 
@@ -211,13 +212,14 @@ def test_tri(order):
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
 
-    for kx in range(nderiv):
-        for ky in range(0, nderiv - kx):
+    for kx in range(nderiv + 1):
+        for ky in range(nderiv + 1 - kx):
             wsym = numpy.zeros_like(wtab[0])
-            for i in range(len(g)):
-                wd = sympy.diff(g[i], x, kx, y, ky)
-                for j, p in enumerate(pts):
-                    wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
+            for i, gi in enumerate(g):
+                for j, gij in enumerate(gi):
+                    wd = sympy.diff(gij, x, kx, y, ky)
+                    for k, p in enumerate(pts):
+                        wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1])])
 
             assert(numpy.isclose(wtab[basix.index(kx, ky)], wsym).all())
 
@@ -235,18 +237,14 @@ def test_tet(order):
     nderiv = 1
     wtab = nedelec.tabulate(nderiv, pts)
 
-    for k in range(nderiv + 1):
-        for q in range(k + 1):
-            for kx in range(q + 1):
-                ky = q - kx
-                kz = k - q
-
+    for kx in range(nderiv + 1):
+        for ky in range(nderiv + 1 - kx):
+            for kz in range(nderiv + 1 - kx - ky):
                 wsym = numpy.zeros_like(wtab[0])
-                for i in range(len(g)):
-                    wd = sympy.diff(g[i], x, kx, y, ky, z, kz)
-                    for j, p in enumerate(pts):
-                        wsym[j, i] = wd.subs([(x, p[0]),
-                                              (y, p[1]),
-                                              (z, p[2])])
+                for i, gi in enumerate(g):
+                    for j, gij in enumerate(gi):
+                        wd = sympy.diff(gij, x, kx, y, ky, z, kz)
+                        for k, p in enumerate(pts):
+                            wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
 
                 assert(numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all())

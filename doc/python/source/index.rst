@@ -6,7 +6,10 @@ Welcome to the Basix Python interface documentation.
 
 Basix is a finite element definition and tabulation runtime library.
 It is part of `FEniCSx <https://docs.fenicsproject.org>`_,
-alongside `FFCx <https://docs.fenicsproject.org/ffcx>`_ and `DOLFINx <https://docs.fenicsproject.org/dolfinx/cpp>`_.
+alongside `UFL <https://fenics.readthedocs.io/projects/ufl/en/latest>`_, `FFCx <https://docs.fenicsproject.org/ffcx/main>`_
+and DOLFINx (`C++ docs <https://docs.fenicsproject.org/dolfinx/main/cpp>`_,
+`Python docs <https://docs.fenicsproject.org/dolfinx/main/python>`_).
+
 
 Basix can create finite elements on intervals, triangles, quadrilaterals, tetrahedra, hexahedra, prisms, and pyramids.
 

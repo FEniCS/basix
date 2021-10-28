@@ -80,7 +80,13 @@ basix::FiniteElement basix::create_element(element::family family,
   switch (family)
   {
   case element::family::P:
-    throw std::runtime_error("Lagrange elements need to be given a variant.");
+    if (degree < 3)
+      return basix::element::create_lagrange(
+          cell, degree, discontinuous,
+          basix::element::lagrange_variant::equispaced);
+    else
+      throw std::runtime_error(
+          "Lagrange elements of degree > 2 need to be given a variant.");
   case element::family::BDM:
     switch (cell)
     {

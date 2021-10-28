@@ -156,8 +156,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
                                               element::lagrange_variant variant,
                                               bool discontinuous)
 {
-  if (celltype == cell::type::point)
-    throw std::runtime_error("Invalid celltype");
+  if (celltype == cell::type::point and degree != 0)
+    throw std::runtime_error("Can only create order 0 Lagrange on a point");
 
   auto [lattice_type, simplex_method, exterior]
       = variant_to_lattice(celltype, variant);

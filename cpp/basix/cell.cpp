@@ -16,6 +16,8 @@ xt::xtensor<double, 2> cell::geometry(cell::type celltype)
 {
   switch (celltype)
   {
+  case cell::type::point:
+    return xt::xtensor<double, 2>({{}});
   case cell::type::interval:
     return xt::xtensor<double, 2>({{0.0}, {1.0}});
   case cell::type::triangle:
@@ -59,6 +61,11 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
 
   switch (celltype)
   {
+  case cell::type::point:
+    t.resize(1);
+    // Vertices
+    t[0] = {{0}};
+    break;
   case cell::type::interval:
     t.resize(2);
     // Vertices
@@ -145,6 +152,11 @@ cell::sub_entity_connectivity(cell::type celltype)
 
   switch (celltype)
   {
+  case cell::type::point:
+    t.resize(1);
+    // Vertices
+    t[0] = {{{0}}};
+    break;
   case cell::type::interval:
     t.resize(2);
     // Vertices
@@ -281,6 +293,8 @@ int cell::topological_dimension(cell::type cell_type)
 {
   switch (cell_type)
   {
+  case cell::type::point:
+    return 0;
   case cell::type::interval:
     return 1;
   case cell::type::triangle:
@@ -354,6 +368,8 @@ double cell::volume(cell::type cell_type)
 {
   switch (cell_type)
   {
+  case cell::type::point:
+    return 0;
   case cell::type::interval:
     return 1;
   case cell::type::triangle:
@@ -471,6 +487,8 @@ std::vector<std::vector<cell::type>> cell::subentity_types(cell::type cell_type)
 {
   switch (cell_type)
   {
+  case cell::type::point:
+    return {{cell::type::point}};
   case cell::type::interval:
     return {{cell::type::point, cell::type::point}, {cell::type::interval}};
   case cell::type::triangle:

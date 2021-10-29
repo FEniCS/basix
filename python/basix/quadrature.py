@@ -20,6 +20,13 @@ def string_to_type(rule: str) -> _QT:
     if rule == "default":
         return _QT.Default
 
+    if rule in ["Gauss-Lobatto-Legendre", "GLL"]:
+        return _QT.gll
+    if rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
+        return _QT.gauss_jacobi
+    if rule == "Xiao-Gambutas":
+        return _QT.xiao_gambutas
+
     if not hasattr(_QT, rule):
         raise ValueError(f"Unknown quadrature rule: {rule}")
     return getattr(_QT, rule)

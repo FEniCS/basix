@@ -368,8 +368,8 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
 
-  auto [pts, _wts]
-      = quadrature::make_quadrature("default", celltype, 2 * degree);
+  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 celltype, 2 * degree);
   auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> psi_quad = xt::view(

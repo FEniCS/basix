@@ -41,8 +41,8 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   const std::size_t ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [pts, _wts]
-      = quadrature::make_quadrature("default", celltype, 2 * degree);
+  const auto [pts, _wts] = quadrature::make_quadrature(
+      quadrature::type::Default, celltype, 2 * degree);
   auto wts = xt::adapt(_wts);
   const auto phi = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0,
                             xt::all(), xt::all());

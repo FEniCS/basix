@@ -138,9 +138,9 @@ basix::FiniteElement basix::create_element(element::family family,
     return element::create_regge(cell, degree, discontinuous);
   case element::family::CR:
     return element::create_cr(cell, degree, discontinuous);
-  case element::family::Bubble:
+  case element::family::bubble:
     return element::create_bubble(cell, degree, discontinuous);
-  case element::family::Serendipity:
+  case element::family::serendipity:
     return element::create_serendipity(cell, degree, discontinuous);
   case element::family::DPC:
     return element::create_dpc(cell, degree, discontinuous);

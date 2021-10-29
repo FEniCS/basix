@@ -81,12 +81,9 @@ def sympy_lagrange(celltype, n):
 
 
 def test_point():
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.point, 0,
-                                    basix.LagrangeVariant.equispaced, True)
-    assert np.allclose(
-        lagrange.tabulate(0, np.array([[0]])),
-        [[[1]]]
-    )
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.point, 0, True)
+    assert numpy.allclose(lagrange.tabulate(0, numpy.array([[]])), [[[1]]])
+    assert numpy.allclose(lagrange.tabulate(0, numpy.array([[], []])), [[[1, 1]]])
 
 
 @pytest.mark.parametrize("n", [1, 2, 3, 4, 5])

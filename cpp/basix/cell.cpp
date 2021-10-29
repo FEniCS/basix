@@ -64,7 +64,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
   case cell::type::point:
     t.resize(1);
     // Vertices
-    t[0] = {{0}};
+    t[0] = {{}};
     break;
   case cell::type::interval:
     t.resize(2);
@@ -155,7 +155,7 @@ cell::sub_entity_connectivity(cell::type celltype)
   case cell::type::point:
     t.resize(1);
     // Vertices
-    t[0] = {{{0}}};
+    t[0] = {{{}}};
     break;
   case cell::type::interval:
     t.resize(2);

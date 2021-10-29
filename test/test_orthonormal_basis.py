@@ -9,7 +9,7 @@ import pytest
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_quad(order):
-    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, 2*order + 1)
+    Lpts, Lwts = basix.make_quadrature(basix.CellType.interval, 2*order + 1)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -32,7 +32,7 @@ def test_quad(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
 def test_pyramid(order):
-    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, 4*order + 2)
+    Lpts, Lwts = basix.make_quadrature(basix.CellType.interval, 4*order + 2)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -57,7 +57,7 @@ def test_pyramid(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_hex(order):
-    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, 2*order + 1)
+    Lpts, Lwts = basix.make_quadrature(basix.CellType.interval, 2*order + 1)
     Qwts = []
     Qpts = []
     for p, u in zip(Lpts, Lwts):
@@ -81,8 +81,8 @@ def test_hex(order):
 
 @pytest.mark.parametrize("order", [1, 2, 3])
 def test_prism(order):
-    Tpts, Twts = basix.make_quadrature("default", basix.CellType.triangle, 2*order + 1)
-    Lpts, Lwts = basix.make_quadrature("default", basix.CellType.interval, 2*order + 1)
+    Tpts, Twts = basix.make_quadrature(basix.CellType.triangle, 2*order + 1)
+    Lpts, Lwts = basix.make_quadrature(basix.CellType.interval, 2*order + 1)
     Qwts = []
     Qpts = []
     for p, u in zip(Tpts, Twts):
@@ -110,7 +110,7 @@ def test_prism(order):
 ])
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_cell(cell_type, order):
-    Qpts, Qwts = basix.make_quadrature("default", cell_type, 2*order + 1)
+    Qpts, Qwts = basix.make_quadrature(cell_type, 2*order + 1)
     basis = basix._basixcpp.tabulate_polynomial_set(cell_type, order, 0, Qpts)[0]
 
     ndofs = basis.shape[1]

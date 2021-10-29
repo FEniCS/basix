@@ -31,11 +31,11 @@ from basix import ElementFamily, CellType, LagrangeVariant
 points, weights = basix.make_quadrature(CellType.triangle, 4)
 
 # If we want to control the type of quadrature used, we can pass in three
-# inputs to `make_quadrautre`. For example, the following code would create a
-# Gauss-Lobatto-Legendre (GLL) quadrature rule:
+# inputs to `make_quadrautre`. For example, the following code would force basix
+# to use a Gauss-Jacobi quadrature rule:
 
 points, weights = basix.make_quadrature(
-    basix.QuadratureType.GLL, CellType.triangle, 4)
+    basix.QuadratureType.GaussJacobi, CellType.triangle, 4)
 
 # We now use this quadrature rule to integrate the functions :math:`f(x,y)=x^3y`
 # and :math:`g(x,y)=x^3y^2` over the triangle. The exact values of these integrals

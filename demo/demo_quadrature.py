@@ -19,16 +19,23 @@ import numpy as np
 from basix import ElementFamily, CellType, LagrangeVariant
 
 # To get a quadrature rule on a triangle, we use the function `make_quadrature`.
-# This function takes three inputs: a quadrature rule (we use the `"default"`
-# rule); a cell type; and an order. The order of the rule is equal to the degree
-# of the highest degree polynomial that will be exactly integrated by this rule.
-# In this example, we use an order 4 rule, so all quartic polynomials will be
-# integrated exactly.
+# This function takes two or three three inputs. We want to use the default
+# quadrature, pass in two inputs: a cell type and an order. The order of the rule
+# is equal to the degree of the highest degree polynomial that will be exactly
+# integrated by this rule. In this example, we use an order 4 rule, so all quartic
+# polynomials will be integrated exactly.
 #
 # `make_quadrature` returns two values: the points and the weights of the
 # quadrature rule.
 
-points, weights = basix.make_quadrature("default", CellType.triangle, 4)
+points, weights = basix.make_quadrature(CellType.triangle, 4)
+
+# If we want to control the type of quadrature used, we can pass in three
+# inputs to `make_quadrautre`. For example, the following code would create a
+# Gauss-Lobatto-Legendre (GLL) quadrature rule:
+
+points, weights = basix.make_quadrature(
+    basix.QuadratureType.GLL, CellType.triangle, 4)
 
 # We now use this quadrature rule to integrate the functions :math:`f(x,y)=x^3y`
 # and :math:`g(x,y)=x^3y^2` over the triangle. The exact values of these integrals

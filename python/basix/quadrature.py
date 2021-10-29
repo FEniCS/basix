@@ -17,6 +17,9 @@ def string_to_type(rule: str) -> _QT:
     basix.QuadratureRule
         The quadrature type
     """
+    if rule == "default":
+        return _QT.Default
+
     if not hasattr(_QT, rule):
         raise ValueError(f"Unknown quadrature rule: {rule}")
     return getattr(_QT, rule)

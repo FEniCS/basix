@@ -35,7 +35,7 @@ xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
 
   // Tabulate polynomial set at quadrature points
   const auto [pts, _wts] = quadrature::make_quadrature(
-      "default", cell::type::triangle, 2 * degree);
+      quadrature::type::Default, cell::type::triangle, 2 * degree);
   const auto wts = xt::adapt(_wts);
   const xt::xtensor<double, 2> phi
       = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
@@ -129,7 +129,7 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
 
   // Tabulate polynomial basis at quadrature points
   const auto [pts, _wts] = quadrature::make_quadrature(
-      "default", cell::type::tetrahedron, 2 * degree);
+      quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
   const auto wts = xt::adapt(_wts);
   xt::xtensor<double, 2> phi
       = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,

@@ -29,7 +29,7 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [pts, _wts] = quadrature::make_quadrature(
-      "default", cell::type::quadrilateral, 2 * degree);
+      quadrature::type::Default, cell::type::quadrilateral, 2 * degree);
   auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> Pq
@@ -127,7 +127,7 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [pts, _wts] = quadrature::make_quadrature(
-      "default", cell::type::hexahedron, 2 * degree);
+      quadrature::type::Default, cell::type::hexahedron, 2 * degree);
   auto wts = xt::adapt(_wts);
   xt::xtensor<double, 2> Ph
       = xt::view(polyset::tabulate(cell::type::hexahedron, degree, 0, pts), 0,
@@ -181,7 +181,7 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [pts, _wts] = quadrature::make_quadrature(
-      "default", cell::type::quadrilateral, 2 * degree + 2);
+      quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
   auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> Pq = xt::view(
@@ -246,7 +246,7 @@ xt::xtensor<double, 2> make_serendipity_div_space_3d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [pts, _wts] = quadrature::make_quadrature(
-      "default", cell::type::hexahedron, 2 * degree + 2);
+      quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
   auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> polyset_at_Qpts
@@ -347,7 +347,7 @@ xt::xtensor<double, 2> make_serendipity_curl_space_2d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [pts, _wts] = quadrature::make_quadrature(
-      "default", cell::type::quadrilateral, 2 * degree + 2);
+      quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
   auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
@@ -415,7 +415,7 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [pts, _wts] = quadrature::make_quadrature(
-      "default", cell::type::hexahedron, 2 * degree + 2);
+      quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
   auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> polyset_at_Qpts
@@ -750,8 +750,8 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _wts]
-      = quadrature::make_quadrature("default", celltype, 2 * degree);
+  auto [Qpts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                  celltype, 2 * degree);
   auto wts = xt::adapt(_wts);
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
       polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());

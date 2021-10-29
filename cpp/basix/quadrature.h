@@ -18,13 +18,13 @@ namespace basix::quadrature
 enum class type
 {
   Default = 0,
-  GaussJacobi = 1,
-  GLL = 2,
-  XiaoGimbutas = 3,
+  gauss_jacobi = 1,
+  gll = 2,
+  xiao_gimbutas = 3,
 
-  ZienkiewiczTaylor = 20,
-  Keast = 21,
-  StrangFix = 22,
+  zienkiewicz_taylor = 20,
+  keast = 21,
+  strang_fix = 22,
 };
 
 /// Make a quadrature rule on a reference cell

@@ -132,9 +132,9 @@ Interface to the Basix C++ library.
 
   py::enum_<quadrature::type>(m, "QuadratureType")
       .value("Default", quadrature::type::Default)
-      .value("GaussJacobi", quadrature::type::GaussJacobi)
-      .value("GLL", quadrature::type::GLL)
-      .value("XiaoGimbutas", quadrature::type::XiaoGimbutas);
+      .value("gauss_jacobi", quadrature::type::gauss_jacobi)
+      .value("gll", quadrature::type::gll)
+      .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);
 
   py::enum_<cell::type>(m, "CellType")
       .value("point", cell::type::point)

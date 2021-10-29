@@ -22,7 +22,7 @@ def test_cell_quadrature(celltype, order):
 
 
 @pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
-@pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.GLL])
+@pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gll])
 def test_qorder_line(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.interval, m)
     x = sympy.Symbol('x')
@@ -35,7 +35,7 @@ def test_qorder_line(m, scheme):
 
 
 @pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
-@pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.GaussJacobi])
+@pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi])
 def test_qorder_tri(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.triangle, m)
     x = sympy.Symbol('x')
@@ -50,7 +50,7 @@ def test_qorder_tri(m, scheme):
 
 
 @pytest.mark.parametrize("m", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
-@pytest.mark.parametrize("scheme", [basix.QuadratureType.XiaoGimbutas])
+@pytest.mark.parametrize("scheme", [basix.QuadratureType.xiao_gimbutas])
 def test_xiao_gimbutas_tri(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.triangle, m)
     x = sympy.Symbol('x')
@@ -65,7 +65,7 @@ def test_xiao_gimbutas_tri(m, scheme):
 
 
 @pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6, 7, 8])
-@pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.GaussJacobi])
+@pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi])
 def test_qorder_tet(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.tetrahedron, m)
     x = sympy.Symbol('x')
@@ -98,7 +98,7 @@ def test_gll():
     m = 5
 
     # 1D interval
-    pts, wts = basix.make_quadrature(basix.QuadratureType.GLL, basix.CellType.interval, m+1)
+    pts, wts = basix.make_quadrature(basix.QuadratureType.gll, basix.CellType.interval, m+1)
     pts, wts = 2*pts.flatten()-1, 2*wts.flatten()
     ref_pts = np.array([-1., -np.sqrt(3/7),
                         0.0, np.sqrt(3/7),
@@ -112,7 +112,7 @@ def test_gll():
     assert np.isclose(sum(wts), 2)
 
     # 2D quad
-    pts, wts = basix.make_quadrature(basix.QuadratureType.GLL, basix.CellType.quadrilateral, m+1)
+    pts, wts = basix.make_quadrature(basix.QuadratureType.gll, basix.CellType.quadrilateral, m+1)
     pts, wts = 2*pts-1, 4*wts
     ref_pts2 = np.array([[x, y] for y in ref_pts for x in ref_pts])
     assert (np.allclose(pts, ref_pts2))
@@ -122,7 +122,7 @@ def test_gll():
     assert np.isclose(sum(wts), 4)
 
     # 3D hex
-    pts, wts = basix.make_quadrature(basix.QuadratureType.GLL, basix.CellType.hexahedron, m+1)
+    pts, wts = basix.make_quadrature(basix.QuadratureType.gll, basix.CellType.hexahedron, m+1)
     pts, wts = 2*pts-1, 8*wts
     ref_pts3 = np.array([[x, y, z] for z in ref_pts for y in ref_pts for x in ref_pts])
     assert (np.allclose(pts, ref_pts3))

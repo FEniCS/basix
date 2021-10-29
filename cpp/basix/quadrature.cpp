@@ -1737,25 +1737,25 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
   if (celltype == cell::type::triangle)
   {
     if (m <= 1)
-      return type::ZienkiewiczTaylor;
+      return type::zienkiewicz_taylor;
     else if (m <= 6)
-      return type::StrangFix;
+      return type::strang_fix;
     else if (m >= 10 and m <= 20)
-      return type::XiaoGimbutas;
+      return type::xiao_gimbutas;
     else
-      return type::GaussJacobi;
+      return type::gauss_jacobi;
   }
   else if (celltype == cell::type::tetrahedron)
   {
     if (m <= 3)
-      return type::ZienkiewiczTaylor;
+      return type::zienkiewicz_taylor;
     else if (m <= 8)
-      return type::Keast;
+      return type::keast;
     else
-      return type::GaussJacobi;
+      return type::gauss_jacobi;
   }
   else
-    return type::GaussJacobi;
+    return type::gauss_jacobi;
 }
 //-----------------------------------------------------------------------------
 std::pair<xt::xarray<double>, std::vector<double>>
@@ -1765,17 +1765,17 @@ quadrature::make_quadrature(quadrature::type rule, cell::type celltype, int m)
   {
   case quadrature::type::Default:
     return make_quadrature(get_default_rule(celltype, m), celltype, m);
-  case quadrature::type::GaussJacobi:
+  case quadrature::type::gauss_jacobi:
     return make_gauss_jacobi_quadrature(celltype, m);
-  case quadrature::type::GLL:
+  case quadrature::type::gll:
     return make_gll_quadrature(celltype, m);
-  case quadrature::type::XiaoGimbutas:
+  case quadrature::type::xiao_gimbutas:
     return make_xiao_gimbutas_quadrature(celltype, m);
-  case quadrature::type::ZienkiewiczTaylor:
+  case quadrature::type::zienkiewicz_taylor:
     return make_zienkiewicz_taylor_quadrature(celltype, m);
-  case quadrature::type::Keast:
+  case quadrature::type::keast:
     return make_keast_quadrature(celltype, m);
-  case quadrature::type::StrangFix:
+  case quadrature::type::strang_fix:
     return make_strang_fix_quadrature(celltype, m);
   default:
     throw std::runtime_error("Unknown quadrature rule");

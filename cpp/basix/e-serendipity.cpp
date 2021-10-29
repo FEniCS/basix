@@ -732,7 +732,7 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
       celltype, wcoeffs, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]},
       degree + 1);
 
-  return FiniteElement(element::family::bdm, celltype, degree + 1, {tdim},
+  return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
                        coeffs, entity_transformations, x, M,
                        maps::type::contravariantPiola, discontinuous);
 }
@@ -826,7 +826,7 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
 
   xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree + 1);
-  return FiniteElement(element::family::n2e, celltype, degree + 1, {tdim},
+  return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
                        coeffs, entity_transformations, x, M,
                        maps::type::covariantPiola, discontinuous);
 }

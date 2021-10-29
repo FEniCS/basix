@@ -183,16 +183,16 @@ Interface to the Basix C++ library.
       basix::docstring::cell_facet_jacobians.c_str());
 
   py::enum_<element::family>(m, "ElementFamily")
-      .value("p", element::family::p)
-      .value("bdm", element::family::bdm)
-      .value("rt", element::family::rt)
-      .value("n1e", element::family::n1e)
-      .value("n2e", element::family::n2e)
-      .value("regge", element::family::regge)
+      .value("P", element::family::P)
+      .value("BDM", element::family::BDM)
+      .value("RT", element::family::RT)
+      .value("N1E", element::family::N1E)
+      .value("N2E", element::family::N2E)
+      .value("Regge", element::family::Regge)
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
-      .value("dpc", element::family::dpc)
-      .value("cr", element::family::cr);
+      .value("DPC", element::family::DPC)
+      .value("CR", element::family::CR);
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def(

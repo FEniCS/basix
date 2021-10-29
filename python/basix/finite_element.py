@@ -50,7 +50,7 @@ def string_to_family(family: str, cell: str) -> _EF:
     if cell in ["interval", "quadrilateral", "hexahedron"]:
         families.update({
             "Q": _EF.p,
-            "DPC": _EF.DPC,
+            "DPC": _EF.dpc,
             "Serendipity": _EF.serendipity,
             "serendipity": _EF.serendipity,
             "S": _EF.serendipity,

@@ -35,7 +35,7 @@ from basix import ElementFamily, CellType, LagrangeVariant, LatticeType
 # constant.
 
 lagrange = basix.create_element(
-    ElementFamily.p, CellType.triangle, 15, LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.triangle, 15, LagrangeVariant.equispaced)
 
 # To estimate the Lebesgue constant, we create a lattice of points on the
 # triangle and compute
@@ -71,7 +71,7 @@ print(max(np.sum(np.abs(tab), axis=0)))
 # for the equally spaced element.
 
 gll = basix.create_element(
-    ElementFamily.p, CellType.triangle, 15, LagrangeVariant.gll_warped)
+    ElementFamily.P, CellType.triangle, 15, LagrangeVariant.gll_warped)
 print(max(np.sum(np.abs(gll.tabulate(0, points)[0]), axis=0)))
 
 # An even lower Lebesgue constant can be obtained by placing the DOF points
@@ -80,5 +80,5 @@ print(max(np.sum(np.abs(gll.tabulate(0, points)[0]), axis=0)))
 # Simplices (Isaac, 2020) <https://doi.org/10.1137/20M1321802>`_.
 
 gll2 = basix.create_element(
-    ElementFamily.p, CellType.triangle, 15, LagrangeVariant.gll_isaac)
+    ElementFamily.P, CellType.triangle, 15, LagrangeVariant.gll_isaac)
 print(max(np.sum(np.abs(gll2.tabulate(0, points)[0]), axis=0)))

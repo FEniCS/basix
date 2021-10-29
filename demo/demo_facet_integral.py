@@ -20,7 +20,7 @@ from basix import ElementFamily, CellType, LagrangeVariant
 # We define a degree 3 Lagrange space on a tetrahedron.
 
 lagrange = basix.create_element(
-    ElementFamily.p, CellType.tetrahedron, 3, LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.tetrahedron, 3, LagrangeVariant.equispaced)
 
 # The facets of a tetrahedron are triangular, so we create a quadrature
 # rule on a triangle. We use an order 3 rule so that we can integrate the

@@ -74,7 +74,7 @@ print(np.sum(weights * g(points)))
 # functions at the quadrature points.
 
 lagrange = basix.create_element(
-    ElementFamily.p, CellType.triangle, 3, LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.triangle, 3, LagrangeVariant.equispaced)
 
 values = lagrange.tabulate(0, points)
 

@@ -14,14 +14,14 @@ from basix import ElementFamily, CellType, LagrangeVariant
 
 # Next, we create a degree 4 Lagrange element on a quadrilateral using the function
 # `create_element`. The first input is the element family: for Lagrange elements,
-# we use `ElementFamily.p`. The second input is the cell type. The third
+# we use `ElementFamily.P`. The second input is the cell type. The third
 # input is the degree of the element. For Lagrange elements, we must provide a
 # fourth input: the Lagrange variant. In this example, we use the equispaced
 # variant: this will place the degrees of freedom (DOFs) of the element in an
 # equally spaced lattice.
 
 lagrange = basix.create_element(
-    ElementFamily.p, CellType.quadrilateral, 4, LagrangeVariant.equispaced)
+    ElementFamily.P, CellType.quadrilateral, 4, LagrangeVariant.equispaced)
 
 # We now print the number of DOFs that this element has.
 

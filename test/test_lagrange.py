@@ -109,6 +109,25 @@ def test_line(n):
         assert numpy.allclose(wtab[k], wsym)
 
 
+@pytest.mark.parametrize("n", [1, 2])
+def test_line_without_variant(n):
+    celltype = basix.CellType.interval
+    g = sympy_lagrange(celltype, n)
+    x = sympy.Symbol("x")
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.interval, n)
+    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    nderiv = n
+    wtab = lagrange.tabulate(nderiv, pts)
+    for k in range(nderiv + 1):
+        wsym = numpy.zeros_like(wtab[k])
+        for i in range(n + 1):
+            wd = sympy.diff(g[i], x, k)
+            for j, p in enumerate(pts):
+                wsym[j, i] = wd.subs(x, p[0])
+
+        assert numpy.allclose(wtab[k], wsym)
+
+
 @pytest.mark.parametrize("degree", [1, 2, 3, 4, 5])
 def test_tri(degree):
     celltype = basix.CellType.triangle

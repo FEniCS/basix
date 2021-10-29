@@ -1743,7 +1743,7 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
     else if (m >= 10 and m <= 20)
       return type::XiaoGimbutas;
     else
-      return type::GLL;
+      return type::GaussJacobi;
   }
   else if (celltype == cell::type::tetrahedron)
   {
@@ -1752,7 +1752,7 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
     else if (m <= 8)
       return type::Keast;
     else
-      return type::GLL;
+      return type::GaussJacobi;
   }
   else
     return type::GaussJacobi;

@@ -79,7 +79,7 @@ basix::FiniteElement basix::create_element(element::family family,
 {
   switch (family)
   {
-  case element::family::P:
+  case element::family::p:
     if (degree < 3)
     {
       return element::create_lagrange(
@@ -90,7 +90,7 @@ basix::FiniteElement basix::create_element(element::family family,
       throw std::runtime_error(
           "Lagrange elements of degree > 2 need to be given a variant.");
     }
-  case element::family::BDM:
+  case element::family::bdm:
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -100,7 +100,7 @@ basix::FiniteElement basix::create_element(element::family family,
     default:
       return element::create_bdm(cell, degree, discontinuous);
     }
-  case element::family::RT:
+  case element::family::rt:
   {
     switch (cell)
     {
@@ -112,7 +112,7 @@ basix::FiniteElement basix::create_element(element::family family,
       return element::create_rt(cell, degree, discontinuous);
     }
   }
-  case element::family::N1E:
+  case element::family::n1e:
   {
     switch (cell)
     {
@@ -124,7 +124,7 @@ basix::FiniteElement basix::create_element(element::family family,
       return element::create_nedelec(cell, degree, discontinuous);
     }
   }
-  case element::family::N2E:
+  case element::family::n2e:
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -134,15 +134,15 @@ basix::FiniteElement basix::create_element(element::family family,
     default:
       return element::create_nedelec2(cell, degree, discontinuous);
     }
-  case element::family::Regge:
+  case element::family::regge:
     return element::create_regge(cell, degree, discontinuous);
-  case element::family::CR:
+  case element::family::cr:
     return element::create_cr(cell, degree, discontinuous);
-  case element::family::Bubble:
+  case element::family::bubble:
     return element::create_bubble(cell, degree, discontinuous);
-  case element::family::Serendipity:
+  case element::family::serendipity:
     return element::create_serendipity(cell, degree, discontinuous);
-  case element::family::DPC:
+  case element::family::dpc:
     return element::create_dpc(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found");
@@ -156,7 +156,7 @@ basix::FiniteElement basix::create_element(element::family family,
 {
   switch (family)
   {
-  case element::family::P:
+  case element::family::p:
     return element::create_lagrange(cell, degree, variant, discontinuous);
   default:
     throw std::runtime_error("Cannot pass a Lagrange variant.");

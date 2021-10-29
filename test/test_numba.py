@@ -8,9 +8,9 @@ import pytest
 @pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                   basix.CellType.quadrilateral, basix.CellType.hexahedron])
 @pytest.mark.parametrize("element, degree, element_args", [
-    (basix.ElementFamily.P, 1, [basix.LagrangeVariant.gll_warped]),
-    (basix.ElementFamily.P, 3, [basix.LagrangeVariant.gll_warped]),
-    (basix.ElementFamily.N1E, 3, [])
+    (basix.ElementFamily.p, 1, [basix.LagrangeVariant.gll_warped]),
+    (basix.ElementFamily.p, 3, [basix.LagrangeVariant.gll_warped]),
+    (basix.ElementFamily.n1e, 3, [])
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations(cell, element, degree, element_args, block_size):
@@ -61,9 +61,9 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
 @pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                   basix.CellType.quadrilateral, basix.CellType.hexahedron])
 @pytest.mark.parametrize("element, degree, element_args", [
-    (basix.ElementFamily.P, 1, [basix.LagrangeVariant.gll_warped]),
-    (basix.ElementFamily.P, 3, [basix.LagrangeVariant.gll_warped]),
-    (basix.ElementFamily.N1E, 3, [])
+    (basix.ElementFamily.p, 1, [basix.LagrangeVariant.gll_warped]),
+    (basix.ElementFamily.p, 3, [basix.LagrangeVariant.gll_warped]),
+    (basix.ElementFamily.n1e, 3, [])
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations_to_transpose(cell, element, degree, block_size, element_args):

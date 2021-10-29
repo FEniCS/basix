@@ -144,7 +144,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
       {x[0], x[1], x[2], x[3]}, degree);
-  return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
+  return FiniteElement(element::family::p, celltype, degree, {1}, coeffs,
                        entity_transformations, x, M, maps::type::identity,
                        true);
 }
@@ -319,7 +319,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
       {x[0], x[1], x[2], x[3]}, degree);
-  return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
+  return FiniteElement(element::family::p, celltype, degree, {1}, coeffs,
                        entity_transformations, x, M, maps::type::identity,
                        discontinuous);
 }
@@ -398,7 +398,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
 
   xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
-  return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
+  return FiniteElement(element::family::dpc, celltype, degree, {1}, coeffs,
                        entity_transformations, x, M, maps::type::identity,
                        discontinuous);
 }

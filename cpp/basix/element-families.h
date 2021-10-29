@@ -31,16 +31,16 @@ enum class lagrange_variant
 enum class family
 {
   custom = 0,
-  P = 1,
-  RT = 2,
-  N1E = 3,
-  BDM = 4,
-  N2E = 5,
-  CR = 6,
-  Regge = 7,
-  DPC = 8,
-  Bubble = 9,
-  Serendipity = 10
+  p = 1,
+  rt = 2,
+  n1e = 3,
+  bdm = 4,
+  n2e = 5,
+  cr = 6,
+  regge = 7,
+  dpc = 8,
+  bubble = 9,
+  serendipity = 10
 };
 
 } // namespace element

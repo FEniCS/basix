@@ -32,8 +32,8 @@ def run_test(lower_element, higher_element, power, value_size):
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron, basix.CellType.prism])
 @pytest.mark.parametrize("orders", [(1, 2), (2, 4), (4, 5)])
 def test_different_order_interpolation_lagrange(cell_type, orders):
-    lower_element = basix.create_element(basix.ElementFamily.P, cell_type, orders[0], basix.LagrangeVariant.gll_warped)
-    higher_element = basix.create_element(basix.ElementFamily.P, cell_type, orders[1], basix.LagrangeVariant.gll_warped)
+    lower_element = basix.create_element(basix.ElementFamily.p, cell_type, orders[0], basix.LagrangeVariant.gll_warped)
+    higher_element = basix.create_element(basix.ElementFamily.p, cell_type, orders[1], basix.LagrangeVariant.gll_warped)
 
     run_test(lower_element, higher_element, orders[0], lower_element.value_size)
 
@@ -46,17 +46,17 @@ def test_different_order_interpolation_lagrange(cell_type, orders):
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron, basix.CellType.prism])
 @pytest.mark.parametrize("order", [1, 4])
 def test_different_variant_interpolation(cell_type, order, variant1, variant2):
-    lower_element = basix.create_element(basix.ElementFamily.P, cell_type, order, variant1)
-    higher_element = basix.create_element(basix.ElementFamily.P, cell_type, order, variant2)
+    lower_element = basix.create_element(basix.ElementFamily.p, cell_type, order, variant1)
+    higher_element = basix.create_element(basix.ElementFamily.p, cell_type, order, variant2)
 
     run_test(lower_element, higher_element, order, lower_element.value_size)
 
 
 @pytest.mark.parametrize("family, args", [
-    [basix.ElementFamily.RT, tuple()],
-    [basix.ElementFamily.N1E, tuple()],
-    [basix.ElementFamily.BDM, tuple()],
-    [basix.ElementFamily.N2E, tuple()],
+    [basix.ElementFamily.rt, tuple()],
+    [basix.ElementFamily.n1e, tuple()],
+    [basix.ElementFamily.bdm, tuple()],
+    [basix.ElementFamily.n2e, tuple()],
 ])
 @pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron])
@@ -68,7 +68,7 @@ def test_different_order_interpolation_vector(family, args, cell_type, orders):
     run_test(lower_element, higher_element, orders[0] - 1, lower_element.value_size)
 
 
-@pytest.mark.parametrize("family, args", [[basix.ElementFamily.Regge, tuple()]])
+@pytest.mark.parametrize("family, args", [[basix.ElementFamily.regge, tuple()]])
 @pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron])
 @pytest.mark.parametrize("orders", [(1, 2), (2, 4), (4, 5)])
 def test_different_order_interpolation_matrix(family, args, cell_type, orders):
@@ -79,16 +79,16 @@ def test_different_order_interpolation_matrix(family, args, cell_type, orders):
 
 
 @pytest.mark.parametrize("family1, args1", [
-    [basix.ElementFamily.RT, tuple()],
-    [basix.ElementFamily.N1E, tuple()],
-    [basix.ElementFamily.BDM, tuple()],
-    [basix.ElementFamily.N2E, tuple()],
+    [basix.ElementFamily.rt, tuple()],
+    [basix.ElementFamily.n1e, tuple()],
+    [basix.ElementFamily.bdm, tuple()],
+    [basix.ElementFamily.n2e, tuple()],
 ])
 @pytest.mark.parametrize("family2, args2", [
-    [basix.ElementFamily.RT, tuple()],
-    [basix.ElementFamily.N1E, tuple()],
-    [basix.ElementFamily.BDM, tuple()],
-    [basix.ElementFamily.N2E, tuple()],
+    [basix.ElementFamily.rt, tuple()],
+    [basix.ElementFamily.n1e, tuple()],
+    [basix.ElementFamily.bdm, tuple()],
+    [basix.ElementFamily.n2e, tuple()],
 ])
 @pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron])
@@ -105,8 +105,8 @@ def test_different_element_interpolation(family1, args1, family2, args2, cell_ty
 @pytest.mark.parametrize("order", [1, 4])
 def test_blocked_interpolation(cell_type, order):
     """Test interpolation of Nedelec's componenets into a Lagrange space."""
-    nedelec = basix.create_element(basix.ElementFamily.N2E, cell_type, order)
-    lagrange = basix.create_element(basix.ElementFamily.P, cell_type, order, basix.LagrangeVariant.gll_isaac)
+    nedelec = basix.create_element(basix.ElementFamily.n2e, cell_type, order)
+    lagrange = basix.create_element(basix.ElementFamily.p, cell_type, order, basix.LagrangeVariant.gll_isaac)
 
     n_points = nedelec.points
     if nedelec.value_size == 2:

@@ -73,7 +73,7 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
 
   const xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[tdim - 1]}, {x[tdim - 1]}, degree);
-  return FiniteElement(element::family::CR, celltype, 1, {1}, coeffs,
+  return FiniteElement(element::family::cr, celltype, 1, {1}, coeffs,
                        entity_transformations, x, M, maps::type::identity,
                        discontinuous);
 }

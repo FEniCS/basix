@@ -123,7 +123,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
 
   xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, B, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]}, degree);
-  return FiniteElement(element::family::RT, celltype, degree, {tdim}, coeffs,
+  return FiniteElement(element::family::rt, celltype, degree, {tdim}, coeffs,
                        entity_transformations, x, M,
                        maps::type::contravariantPiola, discontinuous);
 }

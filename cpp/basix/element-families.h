@@ -25,6 +25,7 @@ enum class lagrange_variant
   gl_warped = 7,
   gl_isaac = 8,
   gl_centroid = 9,
+  vtk = 10,
 };
 
 /// Enum of available element families
@@ -39,8 +40,8 @@ enum class family
   CR = 6,
   Regge = 7,
   DPC = 8,
-  Bubble = 9,
-  Serendipity = 10
+  bubble = 9,
+  serendipity = 10
 };
 
 } // namespace element

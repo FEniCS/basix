@@ -23,6 +23,8 @@ doc/web/cpp
 doc/web/web
 doc/python/source/_autosummary
 
+demo/python/*.py.rst
+
 build*/
 
 .*.swp

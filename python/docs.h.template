@@ -346,33 +346,31 @@ Returns
 {{polyset.h > tabulate > return : numpy.ndarray[numpy.float64]}}
 )";
 
-{{DOCTYPE}} compute_jacobi_deriv = R"(
-{{quadrature.h > compute_jacobi_deriv > doc}}
+{{DOCTYPE}} make_quadrature__rule_celltype_m = R"(
+{{quadrature.h > make_quadrature(rule, celltype, m) > doc}}
 
 Parameters
 ==========
-{{quadrature.h > compute_jacobi_deriv > param > a : float}}
-{{quadrature.h > compute_jacobi_deriv > param > n : int}}
-{{quadrature.h > compute_jacobi_deriv > param > nderiv : int}}
-{{quadrature.h > compute_jacobi_deriv > param > x : numpy.ndarray[numpy.float64]}}
+{{quadrature.h > make_quadrature(rule, celltype, m) > param > rule : basix.QuadratureType}}
+{{quadrature.h > make_quadrature(rule, celltype, m) > param > celltype : basix.CellType}}
+{{quadrature.h > make_quadrature(rule, celltype, m) > param > m : int}}
 
 Returns
 =======
-{{quadrature.h > compute_jacobi_deriv > return : numpy.ndarray[numpy.float64]}}
+{{quadrature.h > make_quadrature(rule, celltype, m) > return : numpy.ndarray[numpy.float64]}}
 )";
 
-{{DOCTYPE}} make_quadrature = R"(
-{{quadrature.h > make_quadrature > doc}}
+{{DOCTYPE}} make_quadrature__celltype_m = R"(
+{{quadrature.h > make_quadrature(celltype, m) > doc}}
 
 Parameters
 ==========
-{{quadrature.h > make_quadrature > param > rule : str}}
-{{quadrature.h > make_quadrature > param > celltype : basix.CellType}}
-{{quadrature.h > make_quadrature > param > m : int}}
+{{quadrature.h > make_quadrature(celltype, m) > param > celltype : basix.CellType}}
+{{quadrature.h > make_quadrature(celltype, m) > param > m : int}}
 
 Returns
 =======
-{{quadrature.h > make_quadrature > return : numpy.ndarray[numpy.float64]}}
+{{quadrature.h > make_quadrature(rule, celltype, m) > return : numpy.ndarray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} index__p = R"(

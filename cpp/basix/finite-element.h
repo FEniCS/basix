@@ -181,17 +181,18 @@ xt::xtensor<double, 3> compute_expansion_coefficients(
     const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
     const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree);
 
-/// Creates a version of the interpolation points, interpolation matrices and
-/// entity transformation that represent a discontinuous version of the element.
-/// This discontinuous version will have the same DOFs but they will all be
-/// associated with the interior of the reference cell.
+/// Creates a version of the interpolation points, interpolation
+/// matrices and entity transformation that represent a discontinuous
+/// version of the element. This discontinuous version will have the
+/// same DOFs but they will all be associated with the interior of the
+/// reference cell.
 /// @param[in] x Interpolation points. Shape is (tdim, entity index,
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
 /// index, dof, vs, point_index)
 /// @param[in] entity_transformations Entity transformations
-/// @param[in] tdim The topological dimension of the cell the element is defined
-/// on
+/// @param[in] tdim The topological dimension of the cell the element is
+/// defined on
 /// @param[in] value_size The value size of the element
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 3>>, 4>,
@@ -200,14 +201,15 @@ make_discontinuous(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
-    const int tdim, const int value_size);
+    int tdim, int value_size);
 
 } // namespace element
 
 /// A finite element
 
-/// The basis of a finite element is stored as a set of coefficients, which are
-/// applied to the underlying expansion set for that cell type, when tabulating.
+/// The basis of a finite element is stored as a set of coefficients,
+/// which are applied to the underlying expansion set for that cell
+/// type, when tabulating.
 class FiniteElement
 {
 
@@ -217,16 +219,18 @@ public:
   /// @param[in] cell_type The cell type
   /// @param[in] degree The degree of the element
   /// @param[in] value_shape The value shape of the element
-  /// @param[in] coeffs Expansion coefficients of the basis functions in the
-  /// underlying polynomial set. The shape is (num_dofs, value_size, basis_dim)
-  /// @param[in] entity_transformations Entity transformations representing the
-  /// effect rotating and reflecting subentities of the cell has on the DOFs.
+  /// @param[in] coeffs Expansion coefficients of the basis functions in
+  /// the underlying polynomial set. The shape is (num_dofs, value_size,
+  /// basis_dim)
+  /// @param[in] entity_transformations Entity transformations
+  /// representing the effect rotating and reflecting subentities of the
+  /// cell has on the DOFs.
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
   /// index, dof, vs, point_index)
-  /// @param[in] map_type The type of map to be used to map values from the
-  /// reference to a cell
+  /// @param[in] map_type The type of map to be used to map values from
+  /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
   FiniteElement(element::family family, cell::type cell_type, int degree,
@@ -257,6 +261,21 @@ public:
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
+  /// @param[in] num_points Number of points that basis will be computed
+  /// at
+  /// @return The shape of the array to will filled when passed to
+  /// `FiniteElement::tabulate`
+  std::array<std::size_t, 4> tabulate_shape(std::size_t nd,
+                                            std::size_t num_points) const;
+
+  /// Compute basis values and derivatives at set of points.
+  ///
+  /// @note The version of `FiniteElement::tabulate` with the basis data
+  /// as an out argument should be preferred for repeated call where
+  /// performance is critical
+  ///
+  /// @param[in] nd The order of derivatives, up to and including, to
+  /// compute. Use 0 for the basis functions only.
   /// @param[in] x The points at which to compute the basis functions.
   /// The shape of x is (number of points, geometric dimension).
   /// @return The basis functions (and derivatives). The shape is
@@ -272,16 +291,33 @@ public:
   /// one for scalar basis functions.
   xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
 
-  /// Direct to memory block tabulation
+  /// Compute basis values and derivatives at set of points.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///
-  /// @param nd Number of derivatives
-  /// @param x Points
-  /// @param basis_data Memory location to fill
+  /// @param[in] nd The order of derivatives, up to and including, to
+  /// compute. Use 0 for the basis functions only.
+  /// @param[in] x The points at which to compute the basis functions.
+  /// The shape of x is (number of points, geometric dimension).
+  /// @param [out] basis Memory location to fill. It must be allocated
+  /// with shape (num_derivatives, num_points, num basis functions,
+  /// value_size). The function `FiniteElement::tabulate_shape` can be
+  /// used to get the required shape.
+  /// - The first index is the derivative, with higher derivatives are
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+  /// (0,2), (3,0)... The function basix::indexing::idx can be used to
+  /// find the appropriate derivative.
+  /// - The second index is the point index
+  /// - The third index is the basis function index
+  /// - The fourth index is the basis function component. Its has size
+  /// one for scalar basis functions.
+  ///
+  /// @todo Remove all internal dynamic memory allocation, pass scratch
+  /// space as required
   void tabulate(int nd, const xt::xarray<double>& x,
-                xt::xtensor<double, 4>& basis_data) const;
+                xt::xtensor<double, 4>& basis) const;
 
   /// Get the element cell type
   /// @return The cell type
@@ -887,7 +923,7 @@ FiniteElement create_element(element::family family, cell::type cell,
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree);
 
-/// Return the version number of basix across projects
+/// Return the Basix version number
 /// @return version string
 std::string version();
 

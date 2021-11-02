@@ -130,6 +130,12 @@ Interface to the Basix C++ library.
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
       .value("doubleContravariantPiola", maps::type::doubleContravariantPiola);
 
+  py::enum_<quadrature::type>(m, "QuadratureType")
+      .value("Default", quadrature::type::Default)
+      .value("gauss_jacobi", quadrature::type::gauss_jacobi)
+      .value("gll", quadrature::type::gll)
+      .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);
+
   py::enum_<cell::type>(m, "CellType")
       .value("point", cell::type::point)
       .value("interval", cell::type::interval)
@@ -177,34 +183,20 @@ Interface to the Basix C++ library.
       basix::docstring::cell_facet_jacobians.c_str());
 
   py::enum_<element::family>(m, "ElementFamily")
-      .value("custom", element::family::custom)
       .value("P", element::family::P)
       .value("BDM", element::family::BDM)
       .value("RT", element::family::RT)
       .value("N1E", element::family::N1E)
       .value("N2E", element::family::N2E)
       .value("Regge", element::family::Regge)
-      .value("Bubble", element::family::Bubble)
-      .value("Serendipity", element::family::Serendipity)
+      .value("bubble", element::family::bubble)
+      .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
       .value("CR", element::family::CR);
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def(
           "tabulate",
-          [](const FiniteElement& self, int n,
-             const py::array_t<double, py::array::c_style>& x) {
-            auto _x = adapt_x(x);
-            auto t = self.tabulate(n, _x);
-            auto t_swap = xt::transpose(t, {0, 1, 3, 2});
-            xt::xtensor<double, 3> t_reshape
-                = xt::reshape_view(t_swap, {t_swap.shape(0), t_swap.shape(1),
-                                            t_swap.shape(2) * t_swap.shape(3)});
-            return py::array_t<double>(t_reshape.shape(), t_reshape.data());
-          },
-          basix::docstring::FiniteElement__tabulate.c_str())
-      .def(
-          "tabulate_x",
           [](const FiniteElement& self, int n,
              const py::array_t<double, py::array::c_style>& x) {
             auto _x = adapt_x(x);
@@ -331,7 +323,8 @@ Interface to the Basix C++ library.
              element::lagrange_variant::chebyshev_centroid)
       .value("gl_warped", element::lagrange_variant::gl_warped)
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
-      .value("gl_centroid", element::lagrange_variant::gl_centroid);
+      .value("gl_centroid", element::lagrange_variant::gl_centroid)
+      .value("vtk", element::lagrange_variant::vtk);
 
   // Create FiniteElement
   m.def(
@@ -401,20 +394,8 @@ Interface to the Basix C++ library.
       basix::docstring::tabulate_polynomial_set.c_str());
 
   m.def(
-      "compute_jacobi_deriv",
-      [](double a, std::size_t n, std::size_t nderiv,
-         const py::array_t<double, py::array::c_style>& x) {
-        if (x.ndim() > 1)
-          throw std::runtime_error("Expected 1D x array.");
-        xt::xtensor<double, 2> f = quadrature::compute_jacobi_deriv(
-            a, n, nderiv, xtl::span<const double>(x.data(), x.size()));
-        return py::array_t<double>(f.shape(), f.data());
-      },
-      basix::docstring::compute_jacobi_deriv.c_str());
-
-  m.def(
       "make_quadrature",
-      [](const std::string& rule, cell::type celltype, int m) {
+      [](quadrature::type rule, cell::type celltype, int m) {
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
         // FIXME: it would be more elegant to handle 1D case as a 1D
         // array, but FFCx would need updating
@@ -430,7 +411,27 @@ Interface to the Basix C++ library.
                            py::array_t<double>(w.size(), w.data()));
         }
       },
-      basix::docstring::make_quadrature.c_str());
+      basix::docstring::make_quadrature__rule_celltype_m.c_str());
+
+  m.def(
+      "make_quadrature",
+      [](cell::type celltype, int m) {
+        auto [pts, w] = quadrature::make_quadrature(celltype, m);
+        // FIXME: it would be more elegant to handle 1D case as a 1D
+        // array, but FFCx would need updating
+        if (pts.dimension() == 1)
+        {
+          std::array<std::size_t, 2> s = {pts.shape(0), 1};
+          return std::pair(py::array_t<double>(s, pts.data()),
+                           py::array_t<double>(w.size(), w.data()));
+        }
+        else
+        {
+          return std::pair(py::array_t<double>(pts.shape(), pts.data()),
+                           py::array_t<double>(w.size(), w.data()));
+        }
+      },
+      basix::docstring::make_quadrature__celltype_m.c_str());
 
   m.def("index", py::overload_cast<int>(&basix::indexing::idx),
         basix::docstring::index__p.c_str())

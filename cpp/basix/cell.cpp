@@ -60,18 +60,11 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
   switch (celltype)
   {
   case cell::type::point:
-<<<<<<< HEAD
     return {{{0}}};
     // t.resize(1);
     // // Vertices
     // t[0] = {{0}};
     // break;
-=======
-    t.resize(1);
-    // Vertices
-    t[0] = {{0}};
-    break;
->>>>>>> origin/main
   case cell::type::interval:
     return {{{0}, {1}}, {{0, 1}}};
     // t.resize(2);

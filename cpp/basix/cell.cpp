@@ -17,7 +17,7 @@ xt::xtensor<double, 2> cell::geometry(cell::type celltype)
   switch (celltype)
   {
   case cell::type::point:
-    return xt::xtensor<double, 2>({{}});
+    return xt::xtensor<double, 2>({{0.0}});
   case cell::type::interval:
     return xt::xtensor<double, 2>({{0.0}, {1.0}});
   case cell::type::triangle:
@@ -155,7 +155,7 @@ cell::sub_entity_connectivity(cell::type celltype)
   case cell::type::point:
     t.resize(1);
     // Vertices
-    t[0] = {{{}}};
+    t[0] = {{{0}}};
     break;
   case cell::type::interval:
     t.resize(2);

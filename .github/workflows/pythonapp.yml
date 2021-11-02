@@ -43,7 +43,7 @@ jobs:
           pip install flake8
           flake8 --statistics test/
           flake8 --statistics python/
-          flake8 --statistics demo/
+          flake8 --statistics demo/python
 
       - name: pydocstyle checks
         run: |
@@ -58,9 +58,16 @@ jobs:
           pip install pytest pytest-xdist numpy sympy numba scipy
           pytest -n auto --durations 20 test/
 
-      - name: Run demos
+      - name: Run python demos
         run: |
-          pytest demo/test.py
+          pytest demo/python/test.py
+
+      - name: Run cpp demos
+        run: |
+          cd demo/cpp
+          mkdir build && cd build
+          cmake .. && make
+          ./basix_demo
 
       - name: Build documentation
         if: runner.os == 'Linux'

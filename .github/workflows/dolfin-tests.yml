@@ -44,7 +44,7 @@ jobs:
           cd demo/cpp
           mkdir build && cd build
           cmake .. && make
-          ./basix_demo
+          ./basix-demo
 
       - name: Get DOLFINx
         uses: actions/checkout@v2

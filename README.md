@@ -8,7 +8,7 @@ Basix is a finite element definition and tabulation runtime library.
 
 To install Basix:
 ```console
-> pip install .
+pip install .
 ```
 For advanced installation instructions see the detailed [install
 instructions](INSTALL.md)

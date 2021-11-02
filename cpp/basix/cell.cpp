@@ -57,42 +57,47 @@ xt::xtensor<double, 2> cell::geometry(cell::type celltype)
 //-----------------------------------------------------------------------------
 std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
 {
-  std::vector<std::vector<std::vector<int>>> t;
-
   switch (celltype)
   {
   case cell::type::point:
-    t.resize(1);
-    // Vertices
-    t[0] = {{0}};
-    break;
+    return {{{0}}};
+    // t.resize(1);
+    // // Vertices
+    // t[0] = {{0}};
+    // break;
   case cell::type::interval:
-    t.resize(2);
-    // Vertices
-    t[0] = {{0}, {1}};
-    // Cell
-    t[1] = {{0, 1}};
-    break;
+    return {{{0}, {1}}, {{0, 1}}};
+    // t.resize(2);
+    // // Vertices
+    // t[0] = {{0}, {1}};
+    // // Cell
+    // t[1] = {{0, 1}};
+    // break;
   case cell::type::triangle:
-    t.resize(3);
+  {
+    std::vector<std::vector<std::vector<int>>> t(3);
     // Vertices
     t[0] = {{0}, {1}, {2}};
     // Edges
     t[1] = {{1, 2}, {0, 2}, {0, 1}};
     // Cell
     t[2] = {{0, 1, 2}};
-    break;
+    return t;
+  }
   case cell::type::quadrilateral:
-    t.resize(3);
+  {
+    std::vector<std::vector<std::vector<int>>> t(3);
     // Vertices
     t[0] = {{0}, {1}, {2}, {3}};
     // Edges
     t[1] = {{0, 1}, {0, 2}, {1, 3}, {2, 3}};
     // Cell
     t[2] = {{0, 1, 2, 3}};
-    break;
+    return t;
+  }
   case cell::type::tetrahedron:
-    t.resize(4);
+  {
+    std::vector<std::vector<std::vector<int>>> t(4);
     // Vertices
     t[0] = {{0}, {1}, {2}, {3}};
     // Edges
@@ -101,9 +106,11 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     t[2] = {{1, 2, 3}, {0, 2, 3}, {0, 1, 3}, {0, 1, 2}};
     // Cell
     t[3] = {{0, 1, 2, 3}};
-    break;
+    return t;
+  }
   case cell::type::prism:
-    t.resize(4);
+  {
+    std::vector<std::vector<std::vector<int>>> t(4);
     // Vertices
     t[0] = {{0}, {1}, {2}, {3}, {4}, {5}};
     // Edges
@@ -113,9 +120,11 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     t[2] = {{0, 1, 2}, {0, 1, 3, 4}, {0, 2, 3, 5}, {1, 2, 4, 5}, {3, 4, 5}};
     // Cell
     t[3] = {{0, 1, 2, 3, 4, 5}};
-    break;
+    return t;
+  }
   case cell::type::pyramid:
-    t.resize(4);
+  {
+    std::vector<std::vector<std::vector<int>>> t(4);
     // Vertices
     t[0] = {{0}, {1}, {2}, {3}, {4}};
     // Edges
@@ -124,9 +133,11 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     t[2] = {{0, 1, 2, 3}, {0, 1, 4}, {0, 2, 4}, {1, 3, 4}, {2, 3, 4}};
     // Cell
     t[3] = {{0, 1, 2, 3, 4}};
-    break;
+    return t;
+  }
   case cell::type::hexahedron:
-    t.resize(4);
+  {
+    std::vector<std::vector<std::vector<int>>> t(4);
     // Vertices
     t[0] = {{0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}};
     // Edges
@@ -137,44 +148,43 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
             {1, 3, 5, 7}, {2, 3, 6, 7}, {4, 5, 6, 7}};
     // Cell
     t[3] = {{0, 1, 2, 3, 4, 5, 6, 7}};
-    break;
+    return t;
+  }
   default:
     throw std::runtime_error("Unsupported cell type");
   }
-
-  return t;
 }
 //-----------------------------------------------------------------------------
 std::vector<std::vector<std::vector<std::vector<int>>>>
 cell::sub_entity_connectivity(cell::type celltype)
 {
-  std::vector<std::vector<std::vector<std::vector<int>>>> t;
-
   switch (celltype)
   {
   case cell::type::point:
-    t.resize(1);
-    // Vertices
-    t[0] = {{{0}}};
-    break;
+    return {{{{0}}}};
   case cell::type::interval:
-    t.resize(2);
+  {
+    std::vector<std::vector<std::vector<std::vector<int>>>> t(2);
     // Vertices
     t[0] = {{{0}, {0}}, {{1}, {0}}};
     // Edge
     t[1] = {{{0, 1}, {0}}};
-    break;
+    return t;
+  }
   case cell::type::triangle:
-    t.resize(3);
+  {
+    std::vector<std::vector<std::vector<std::vector<int>>>> t(3);
     // Vertices
     t[0] = {{{0}, {1, 2}, {0}}, {{1}, {0, 2}, {0}}, {{2}, {0, 1}, {0}}};
     // Edges
     t[1] = {{{1, 2}, {0}, {0}}, {{0, 2}, {1}, {0}}, {{0, 1}, {2}, {0}}};
     // Face
     t[2] = {{{0, 1, 2}, {0, 1, 2}, {0}}};
-    break;
+    return t;
+  }
   case cell::type::quadrilateral:
-    t.resize(3);
+  {
+    std::vector<std::vector<std::vector<std::vector<int>>>> t(3);
     // Vertices
     t[0] = {{{0}, {0, 1}, {0}},
             {{1}, {0, 2}, {0}},
@@ -187,9 +197,11 @@ cell::sub_entity_connectivity(cell::type celltype)
             {{2, 3}, {3}, {0}}};
     // Face
     t[2] = {{{0, 1, 2, 3}, {0, 1, 2, 3}, {0}}};
-    break;
+    return t;
+  }
   case cell::type::tetrahedron:
-    t.resize(4);
+  {
+    std::vector<std::vector<std::vector<std::vector<int>>>> t(4);
     // Vertices
     t[0] = {{{0}, {3, 4, 5}, {1, 2, 3}, {0}},
             {{1}, {1, 2, 5}, {0, 2, 3}, {0}},
@@ -208,9 +220,11 @@ cell::sub_entity_connectivity(cell::type celltype)
             {{0, 1, 2}, {2, 4, 5}, {3}, {0}}};
     // Volume
     t[3] = {{{0, 1, 2, 3}, {0, 1, 2, 3, 4, 5}, {0, 1, 2, 3}, {0}}};
-    break;
+    return t;
+  }
   case cell::type::hexahedron:
-    t.resize(4);
+  {
+    std::vector<std::vector<std::vector<std::vector<int>>>> t(4);
     // Vertices
     t[0] = {
         {{0}, {0, 1, 2}, {0, 1, 2}, {0}},  {{1}, {0, 3, 4}, {0, 1, 3}, {0}},
@@ -236,9 +250,11 @@ cell::sub_entity_connectivity(cell::type celltype)
              {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
              {0, 1, 2, 3, 4, 5},
              {0}}};
-    break;
+    return t;
+  }
   case cell::type::prism:
-    t.resize(4);
+  {
+    std::vector<std::vector<std::vector<std::vector<int>>>> t(4);
     // Vertices
     t[0] = {{{0}, {0, 1, 2}, {0, 1, 2}, {0}}, {{1}, {0, 3, 4}, {0, 1, 3}, {0}},
             {{2}, {1, 3, 5}, {0, 2, 3}, {0}}, {{3}, {2, 6, 7}, {1, 2, 4}, {0}},
@@ -260,9 +276,11 @@ cell::sub_entity_connectivity(cell::type celltype)
              {0, 1, 2, 3, 4, 5, 6, 7, 8},
              {0, 1, 2, 3, 4},
              {0}}};
-    break;
+    return t;
+  }
   case cell::type::pyramid:
-    t.resize(4);
+  {
+    std::vector<std::vector<std::vector<std::vector<int>>>> t(4);
     // Vertices
     t[0] = {{{0}, {0, 1, 2}, {0, 1, 2}, {0}},
             {{1}, {0, 3, 4}, {0, 1, 3}, {0}},
@@ -282,11 +300,11 @@ cell::sub_entity_connectivity(cell::type celltype)
             {{2, 3, 4}, {5, 6, 7}, {4}, {0}}};
     // Volume
     t[3] = {{{0, 1, 2, 3, 4}, {0, 1, 2, 3, 4, 5, 6, 7}, {0, 1, 2, 3, 4}, {0}}};
-    break;
+    return t;
+  }
   default:
     throw std::runtime_error("Unsupported cell type");
   }
-  return t;
 }
 //-----------------------------------------------------------------------------
 int cell::topological_dimension(cell::type cell_type)
@@ -312,7 +330,6 @@ int cell::topological_dimension(cell::type cell_type)
   default:
     throw std::runtime_error("Unsupported cell type");
   }
-  return 0;
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
@@ -435,7 +452,6 @@ xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
     {
       const std::vector<int>& facet = facets[f];
       auto normal = xt::row(normals, f);
-
       assert(facets[f].size() == 3 or facets[f].size() == 4);
       auto e0 = xt::row(x, facet[1]) - xt::row(x, facet[0]);
       auto e1 = xt::row(x, facet[2]) - xt::row(x, facet[0]);

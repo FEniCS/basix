@@ -816,7 +816,21 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
                                               bool discontinuous)
 {
   if (celltype == cell::type::point)
-    throw std::runtime_error("Invalid celltype");
+  {
+    if (degree != 0)
+      throw std::runtime_error("Can only create order 0 Lagrange on a point");
+
+    std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+    std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+    x[0].push_back(xt::xtensor<double, 2>({1, 0}));
+    M[0].push_back({{{1}}});
+    std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+    xt::xtensor<double, 3> coeffs = {{{1}}};
+
+    return FiniteElement(element::family::P, cell::type::point, 0, {1}, coeffs,
+                         entity_transformations, x, M, maps::type::identity,
+                         discontinuous);
+  }
 
   if (variant == element::lagrange_variant::vtk)
     return create_vtk_element(celltype, degree, discontinuous);
@@ -981,6 +995,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
       {x[0], x[1], x[2], x[3]}, degree);
+
   return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
                        entity_transformations, x, M, maps::type::identity,
                        discontinuous);
@@ -1015,8 +1030,8 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
 
-  auto [pts, _wts]
-      = quadrature::make_quadrature("default", celltype, 2 * degree);
+  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 celltype, 2 * degree);
   auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 2> psi_quad = xt::view(

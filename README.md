@@ -3,6 +3,17 @@
 ![Basix CI](https://github.com/FEniCS/basix/workflows/Basix%20CI/badge.svg)
 
 Basix is a finite element definition and tabulation runtime library.
+Basix allows users to:
+
+- evaluate finite element basis functions and their derivatives at a set
+  of points;
+- access geometric and topological information about reference cells;
+- apply push forward and pull back operations to map data between a
+  reference cell and a physical cell;
+- permute and transform DOFs to allow higher-order elements to be use on
+  arbitrary meshes; and
+- interpolate into a finite element space and between finite element
+  spaces.
 
 ## Installing Basix
 

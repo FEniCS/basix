@@ -181,17 +181,18 @@ xt::xtensor<double, 3> compute_expansion_coefficients(
     const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
     const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree);
 
-/// Creates a version of the interpolation points, interpolation matrices and
-/// entity transformation that represent a discontinuous version of the element.
-/// This discontinuous version will have the same DOFs but they will all be
-/// associated with the interior of the reference cell.
+/// Creates a version of the interpolation points, interpolation
+/// matrices and entity transformation that represent a discontinuous
+/// version of the element. This discontinuous version will have the
+/// same DOFs but they will all be associated with the interior of the
+/// reference cell.
 /// @param[in] x Interpolation points. Shape is (tdim, entity index,
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
 /// index, dof, vs, point_index)
 /// @param[in] entity_transformations Entity transformations
-/// @param[in] tdim The topological dimension of the cell the element is defined
-/// on
+/// @param[in] tdim The topological dimension of the cell the element is
+/// defined on
 /// @param[in] value_size The value size of the element
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 3>>, 4>,
@@ -200,14 +201,15 @@ make_discontinuous(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
-    const int tdim, const int value_size);
+    int tdim, int value_size);
 
 } // namespace element
 
 /// A finite element
 
-/// The basis of a finite element is stored as a set of coefficients, which are
-/// applied to the underlying expansion set for that cell type, when tabulating.
+/// The basis of a finite element is stored as a set of coefficients,
+/// which are applied to the underlying expansion set for that cell
+/// type, when tabulating.
 class FiniteElement
 {
 
@@ -217,16 +219,18 @@ public:
   /// @param[in] cell_type The cell type
   /// @param[in] degree The degree of the element
   /// @param[in] value_shape The value shape of the element
-  /// @param[in] coeffs Expansion coefficients of the basis functions in the
-  /// underlying polynomial set. The shape is (num_dofs, value_size, basis_dim)
-  /// @param[in] entity_transformations Entity transformations representing the
-  /// effect rotating and reflecting subentities of the cell has on the DOFs.
+  /// @param[in] coeffs Expansion coefficients of the basis functions in
+  /// the underlying polynomial set. The shape is (num_dofs, value_size,
+  /// basis_dim)
+  /// @param[in] entity_transformations Entity transformations
+  /// representing the effect rotating and reflecting subentities of the
+  /// cell has on the DOFs.
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
   /// index, dof, vs, point_index)
-  /// @param[in] map_type The type of map to be used to map values from the
-  /// reference to a cell
+  /// @param[in] map_type The type of map to be used to map values from
+  /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
   FiniteElement(element::family family, cell::type cell_type, int degree,
@@ -884,7 +888,7 @@ FiniteElement create_element(element::family family, cell::type cell,
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree);
 
-/// Return the version number of basix across projects
+/// Return the Basix version number
 /// @return version string
 std::string version();
 

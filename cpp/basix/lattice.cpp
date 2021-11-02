@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson and Garth N. Wells
+// Copyright (c) 2020 Chris Richardson, Garth N. Wells, and Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -33,14 +33,14 @@ xt::xtensor<double, 1> create_interval_gll(int n, bool exterior)
   if (n == 0)
     return {0.5};
 
-  [[maybe_unused]] auto [_pts, wts] = quadrature::compute_gll_rule(n + 1);
+  auto _pts = quadrature::get_gll_points(n + 1);
 
   const std::size_t b = exterior ? 0 : 1;
   std::array<std::size_t, 1> s = {static_cast<std::size_t>(n + 1 - 2 * b)};
   xt::xtensor<double, 1> x(s);
 
   for (std::size_t j = b; j < (n - b + 1); ++j)
-    x(j - b) = 0.5 + 0.5 * _pts[j];
+    x(j - b) = _pts[j];
   return x;
 }
 //-----------------------------------------------------------------------------
@@ -71,14 +71,13 @@ xt::xtensor<double, 1> create_interval_gl(int n, bool exterior)
 
   if (n == 0)
     return {0.5};
-
-  auto _pts = quadrature::compute_gauss_jacobi_points(0, n - 1);
+  auto _pts = quadrature::get_gl_points(n - 1);
 
   std::array<std::size_t, 1> s = {static_cast<std::size_t>(n - 1)};
   xt::xtensor<double, 1> x(s);
 
   for (int i = 0; i < n - 1; ++i)
-    x(i) = 0.5 + _pts[i] / 2.0;
+    x(i) = _pts[i];
 
   return x;
 }
@@ -628,9 +627,7 @@ xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
   const double h = 1.0 / static_cast<double>(n);
 
   // Interpolate warp factor along interval
-  std::pair<xt::xarray<double>, std::vector<double>> pw
-      = quadrature::compute_gll_rule(n + 1);
-  xt::xtensor<double, 1> pts = std::get<0>(pw);
+  xt::xtensor<double, 1> pts = quadrature::get_gll_points(n + 1);
   pts *= 0.5;
   for (int i = 0; i < n + 1; ++i)
     pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));

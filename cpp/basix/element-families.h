@@ -40,8 +40,8 @@ enum class family
   CR = 6,
   Regge = 7,
   DPC = 8,
-  Bubble = 9,
-  Serendipity = 10
+  bubble = 9,
+  serendipity = 10
 };
 
 } // namespace element

@@ -62,8 +62,8 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, _wts]
-      = quadrature::make_quadrature("default", celltype, 2 * degree);
+  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 celltype, 2 * degree);
   auto wts = xt::adapt(_wts);
 
   const xt::xtensor<double, 2> phi = xt::view(
@@ -162,7 +162,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
 
   xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
       celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
-  return FiniteElement(element::family::Bubble, celltype, degree, {1}, coeffs,
+  return FiniteElement(element::family::bubble, celltype, degree, {1}, coeffs,
                        entity_transformations, x, M, maps::type::identity,
                        discontinuous);
 }

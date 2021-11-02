@@ -27,6 +27,26 @@ constexpr std::array<double, 3> jrc(int a, int n)
   return {an, bn, cn};
 }
 //-----------------------------------------------------------------------------
+// At a point, only the constant polynomial can be used. This has value 1 and
+// derivative 0.
+xt::xtensor<double, 3>
+tabulate_polyset_point_derivs(std::size_t, std::size_t nderiv,
+                              const xt::xtensor<double, 2>& x)
+{
+  assert(x.shape(0) > 0);
+  xt::xtensor<double, 3> P({nderiv + 1, x.shape(0), 1});
+  for (std::size_t k = 0; k <= nderiv; ++k)
+  {
+    auto result = xt::view(P, k, xt::all(), xt::all());
+    if (k == 0)
+      xt::col(result, 0) = 1.0;
+    else
+      xt::col(result, 0) = 0.0;
+  }
+
+  return P;
+}
+//-----------------------------------------------------------------------------
 // Compute the complete set of derivatives from 0 to nderiv, for all the
 // polynomials up to order n on a line segment. The polynomials used are
 // Legendre Polynomials, with the recurrence relation given by
@@ -728,6 +748,8 @@ xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
 {
   switch (celltype)
   {
+  case cell::type::point:
+    return tabulate_polyset_point_derivs(d, n, x);
   case cell::type::interval:
     assert(x.dimension() == 1);
     return tabulate_polyset_line_derivs(d, n, x);
@@ -752,6 +774,8 @@ int polyset::dim(cell::type celltype, int d)
 {
   switch (celltype)
   {
+  case cell::type::point:
+    return 1;
   case cell::type::triangle:
     return (d + 1) * (d + 2) / 2;
   case cell::type::tetrahedron:

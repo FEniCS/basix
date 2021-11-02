@@ -37,7 +37,7 @@ pip install .
 
 ## Running the unit tests
 
-Once the Basix Python interface has been installed, from the the
+Once the Basix Python interface has been installed, from the 
 directory `python/` the tests can be run with:
 
 ```console

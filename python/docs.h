@@ -639,36 +639,30 @@ point in row `i` of @p x.
 TODO: Does the order for the third index need to be documented?
 )";
 
-const std::string compute_jacobi_deriv = R"(
-Quadrature rules
-Evaluate the nth Jacobi polynomial and derivatives with weight
-parameters (a, 0) at points x
+const std::string make_quadrature__rule_celltype_m = R"(
+Make a quadrature rule on a reference cell
 
 Parameters
 ==========
-a : float
-    Jacobi weight a
-n : int
-    Order of polynomial
-nderiv : int
-    Number of derivatives (if zero, just compute polynomial itself)
-x : numpy.ndarray[numpy.float64]
-    Points at which to evaluate
+rule : basix.QuadratureType
+    Type of quadrature rule (or use quadrature::Default)
+celltype : basix.CellType
+    The cell type
+m : int
+    Maximum degree of polynomial that this quadrature rule will integrate exactly
 
 Returns
 =======
 numpy.ndarray[numpy.float64]
-    Array of polynomial derivative values (rows) at points
-(columns)
+    List of points and list of weights. The number of points
+arrays has shape (num points, gdim)
 )";
 
-const std::string make_quadrature = R"(
-Utility for quadrature rule on reference cell
+const std::string make_quadrature__celltype_m = R"(
+Make a default quadrature rule on reference cell
 
 Parameters
 ==========
-rule : str
-    Name of quadrature rule (or use "default")
 celltype : basix.CellType
     The cell type
 m : int

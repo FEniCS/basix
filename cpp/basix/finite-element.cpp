@@ -80,29 +80,36 @@ basix::FiniteElement basix::create_element(element::family family,
   switch (family)
   {
   case element::family::P:
-    throw std::runtime_error("Lagrange elements need to be given a variant.");
+    if (degree < 3)
+    {
+      return element::create_lagrange(
+          cell, degree, element::lagrange_variant::equispaced, discontinuous);
+    }
+    else
+    {
+      throw std::runtime_error(
+          "Lagrange elements of degree > 2 need to be given a variant.");
+    }
   case element::family::BDM:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return basix::element::create_serendipity_div(cell, degree,
-                                                    discontinuous);
+      return element::create_serendipity_div(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return basix::element::create_serendipity_div(cell, degree,
-                                                    discontinuous);
+      return element::create_serendipity_div(cell, degree, discontinuous);
     default:
-      return basix::element::create_bdm(cell, degree, discontinuous);
+      return element::create_bdm(cell, degree, discontinuous);
     }
   case element::family::RT:
   {
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return basix::element::create_rtc(cell, degree, discontinuous);
+      return element::create_rtc(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return basix::element::create_rtc(cell, degree, discontinuous);
+      return element::create_rtc(cell, degree, discontinuous);
     default:
-      return basix::element::create_rt(cell, degree, discontinuous);
+      return element::create_rt(cell, degree, discontinuous);
     }
   }
   case element::family::N1E:
@@ -110,35 +117,33 @@ basix::FiniteElement basix::create_element(element::family family,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return basix::element::create_nce(cell, degree, discontinuous);
+      return element::create_nce(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return basix::element::create_nce(cell, degree, discontinuous);
+      return element::create_nce(cell, degree, discontinuous);
     default:
-      return basix::element::create_nedelec(cell, degree, discontinuous);
+      return element::create_nedelec(cell, degree, discontinuous);
     }
   }
   case element::family::N2E:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return basix::element::create_serendipity_curl(cell, degree,
-                                                     discontinuous);
+      return element::create_serendipity_curl(cell, degree, discontinuous);
     case cell::type::hexahedron:
-      return basix::element::create_serendipity_curl(cell, degree,
-                                                     discontinuous);
+      return element::create_serendipity_curl(cell, degree, discontinuous);
     default:
-      return basix::element::create_nedelec2(cell, degree, discontinuous);
+      return element::create_nedelec2(cell, degree, discontinuous);
     }
   case element::family::Regge:
-    return basix::element::create_regge(cell, degree, discontinuous);
+    return element::create_regge(cell, degree, discontinuous);
   case element::family::CR:
-    return basix::element::create_cr(cell, degree, discontinuous);
-  case element::family::Bubble:
-    return basix::element::create_bubble(cell, degree, discontinuous);
-  case element::family::Serendipity:
-    return basix::element::create_serendipity(cell, degree, discontinuous);
+    return element::create_cr(cell, degree, discontinuous);
+  case element::family::bubble:
+    return element::create_bubble(cell, degree, discontinuous);
+  case element::family::serendipity:
+    return element::create_serendipity(cell, degree, discontinuous);
   case element::family::DPC:
-    return basix::element::create_dpc(cell, degree, discontinuous);
+    return element::create_dpc(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found");
   }
@@ -152,8 +157,7 @@ basix::FiniteElement basix::create_element(element::family family,
   switch (family)
   {
   case element::family::P:
-    return basix::element::create_lagrange(cell, degree, variant,
-                                           discontinuous);
+    return element::create_lagrange(cell, degree, variant, discontinuous);
   default:
     throw std::runtime_error("Cannot pass a Lagrange variant.");
   }
@@ -163,13 +167,13 @@ basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
                                            element::lagrange_variant variant)
 {
-  return basix::create_element(family, cell, degree, variant, false);
+  return create_element(family, cell, degree, variant, false);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree)
 {
-  return basix::create_element(family, cell, degree, false);
+  return create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> basix::element::compute_expansion_coefficients(
@@ -243,7 +247,7 @@ xt::xtensor<double, 3> basix::element::compute_expansion_coefficients(
   auto Dt_flat = xt::transpose(
       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
-  xt::xtensor<double, 2> BDt = basix::math::dot(B, Dt_flat);
+  xt::xtensor<double, 2> BDt = math::dot(B, Dt_flat);
   xt::xtensor<double, 2> B_cmajor({B.shape(0), B.shape(1)});
   B_cmajor.assign(B);
 
@@ -263,7 +267,7 @@ basix::element::make_discontinuous(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
-    const int tdim, const int value_size)
+    int tdim, int value_size)
 {
   std::size_t npoints = 0;
   std::size_t Mshape0 = 0;
@@ -531,9 +535,9 @@ FiniteElement::FiniteElement(
           // prisms and pyramids, this will need updating to look at the face
           // type
           if (et.first == cell::type::quadrilateral and i == 0)
-            Minv = basix::math::dot(basix::math::dot(M, M), M);
+            Minv = math::dot(math::dot(M, M), M);
           else if (et.first == cell::type::triangle and i == 0)
-            Minv = basix::math::dot(M, M);
+            Minv = math::dot(M, M);
           else
             Minv = M;
 
@@ -655,7 +659,7 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
       auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
       B = xt::view(basis, p, xt::all(), xt::all());
       C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-      auto result = basix::math::dot(B, xt::transpose(C));
+      auto result = math::dot(B, xt::transpose(C));
       basis_view.assign(result);
     }
   }
@@ -673,8 +677,10 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
   std::size_t dof_start = 0;
   int transform_n = 0;
   if (_cell_tdim > 0)
+  {
     dof_start
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+  }
 
   if (_cell_tdim > 1)
   {
@@ -770,8 +776,10 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
+      {
         precompute::apply_permutation(_eperm.at(cell::type::interval)[0], dofs,
                                       dofstart);
+      }
       dofstart += _num_edofs[1][e];
     }
 
@@ -782,14 +790,17 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
       {
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
+        {
           precompute::apply_permutation(
               _eperm.at(_cell_subentity_types[2][f])[1], dofs, dofstart);
+        }
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
           precompute::apply_permutation(
               _eperm.at(_cell_subentity_types[2][f])[0], dofs, dofstart);
-
+        }
         dofstart += _num_edofs[2][f];
       }
     }
@@ -820,8 +831,10 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
+      {
         precompute::apply_permutation(_eperm_rev.at(cell::type::interval)[0],
                                       dofs, dofstart);
+      }
       dofstart += _num_edofs[1][e];
     }
 
@@ -832,14 +845,17 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
       {
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
           precompute::apply_permutation(
               _eperm_rev.at(_cell_subentity_types[2][f])[0], dofs, dofstart);
+        }
 
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
+        {
           precompute::apply_permutation(
               _eperm_rev.at(_cell_subentity_types[2][f])[1], dofs, dofstart);
-
+        }
         dofstart += _num_edofs[2][f];
       }
     }

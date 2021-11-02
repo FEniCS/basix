@@ -169,28 +169,20 @@ xt::xtensor<double, 2> vtk_triangle_points(int degree)
   {
     for (int i = 1; i < degree; ++i)
     {
-      out(n, 0) = d
-                  + static_cast<double>((1 - 3 * d) * i)
-                        / static_cast<double>(degree);
+      out(n, 0) = d + ((1 - 3 * d) * i) / (degree);
       out(n, 1) = d;
       ++n;
     }
     for (int i = 1; i < degree; ++i)
     {
-      out(n, 0) = d
-                  + static_cast<double>((1 - 3 * d) * (degree - i))
-                        / static_cast<double>(degree);
-      out(n, 1) = d
-                  + static_cast<double>((1 - 3 * d) * i)
-                        / static_cast<double>(degree);
+      out(n, 0) = d + ((1 - 3 * d) * (degree - i)) / (degree);
+      out(n, 1) = d + ((1 - 3 * d) * i) / (degree);
       ++n;
     }
     for (int i = 1; i < degree; ++i)
     {
       out(n, 0) = d;
-      out(n, 1) = d
-                  + static_cast<double>((1 - 3 * d) * (degree - i))
-                        / static_cast<double>(degree);
+      out(n, 1) = d + ((1 - 3 * d) * (degree - i)) / (degree);
       ++n;
     }
   }
@@ -235,30 +227,22 @@ xt::xtensor<double, 2> vtk_tetrahedron_points(int degree)
   {
     for (int i = 1; i < degree; ++i)
     {
-      out(n, 0) = d
-                  + static_cast<double>((1 - 4 * d) * i)
-                        / static_cast<double>(degree);
+      out(n, 0) = d + ((1 - 4 * d) * i) / (degree);
       out(n, 1) = d;
       out(n, 2) = d;
       ++n;
     }
     for (int i = 1; i < degree; ++i)
     {
-      out(n, 0) = d
-                  + static_cast<double>((1 - 4 * d) * (degree - i))
-                        / static_cast<double>(degree);
-      out(n, 1) = d
-                  + static_cast<double>((1 - 4 * d) * i)
-                        / static_cast<double>(degree);
+      out(n, 0) = d + ((1 - 4 * d) * (degree - i)) / (degree);
+      out(n, 1) = d + ((1 - 4 * d) * i) / (degree);
       out(n, 2) = d;
       ++n;
     }
     for (int i = 1; i < degree; ++i)
     {
       out(n, 0) = d;
-      out(n, 1) = d
-                  + static_cast<double>((1 - 4 * d) * (degree - i))
-                        / static_cast<double>(degree);
+      out(n, 1) = d + ((1 - 4 * d) * (degree - i)) / (degree);
       out(n, 2) = d;
       ++n;
     }
@@ -266,31 +250,21 @@ xt::xtensor<double, 2> vtk_tetrahedron_points(int degree)
     {
       out(n, 0) = d;
       out(n, 1) = d;
-      out(n, 2) = d
-                  + static_cast<double>((1 - 4 * d) * i)
-                        / static_cast<double>(degree);
+      out(n, 2) = d + ((1 - 4 * d) * i) / (degree);
       ++n;
     }
     for (int i = 1; i < degree; ++i)
     {
-      out(n, 0) = d
-                  + static_cast<double>((1 - 4 * d) * (degree - i))
-                        / static_cast<double>(degree);
+      out(n, 0) = d + ((1 - 4 * d) * (degree - i)) / (degree);
       out(n, 1) = d;
-      out(n, 2) = d
-                  + static_cast<double>((1 - 4 * d) * i)
-                        / static_cast<double>(degree);
+      out(n, 2) = d + ((1 - 4 * d) * i) / (degree);
       ++n;
     }
     for (int i = 1; i < degree; ++i)
     {
       out(n, 0) = d;
-      out(n, 1) = d
-                  + static_cast<double>((1 - 4 * d) * (degree - i))
-                        / static_cast<double>(degree);
-      out(n, 2) = d
-                  + static_cast<double>((1 - 4 * d) * i)
-                        / static_cast<double>(degree);
+      out(n, 1) = d + ((1 - 4 * d) * (degree - i)) / (degree);
+      out(n, 2) = d + ((1 - 4 * d) * i) / (degree);
       ++n;
     }
   }
@@ -328,8 +302,8 @@ xt::xtensor<double, 2> vtk_tetrahedron_points(int degree)
   }
   if (degree >= 4)
   {
-    xt::view(out, xt::range(n, npoints), xt::all()) = vtk_tetrahedron_points(
-        degree - 4); //, d + (1 - 4 * d) / static_cast<double>(degree));
+    xt::view(out, xt::range(n, npoints), xt::all())
+        = vtk_tetrahedron_points(degree - 4);
 
     xt::xtensor<double, 2> pts = vtk_tetrahedron_points(degree - 4);
     for (std::size_t i = 0; i < pts.shape(0); ++i)

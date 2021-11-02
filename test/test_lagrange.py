@@ -345,9 +345,6 @@ def test_vtk_element(celltype, degree):
         else:
             raise ValueError(f"Incorrect point in VTK variant: {p}")
 
-    print(vtk.points)
-    print(perm)
-
     # Test against permutations that were previously in DOLFINx
     if celltype == basix.CellType.triangle:
         if degree <= 9:
@@ -399,7 +396,5 @@ def test_vtk_element(celltype, degree):
         if degree == 1:
             assert perm == [0, 1, 3, 2, 4, 5, 7, 6]
         elif degree == 2:
-            print([0, 1, 3, 2, 4, 5, 7, 6, 8, 11, 13, 9, 16, 18,
-                   19, 17, 10, 12, 15, 14, 22, 23, 21, 24, 20, 25, 26])
             assert perm == [0, 1, 3, 2, 4, 5, 7, 6, 8, 11, 13, 9, 16, 18,
                             19, 17, 10, 12, 15, 14, 22, 23, 21, 24, 20, 25, 26]

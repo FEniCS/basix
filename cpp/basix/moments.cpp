@@ -389,13 +389,14 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
   const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
-  const std::size_t tdim = cell::topological_dimension(celltype);
 
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  sub_celltype, q_deg);
   auto wts = xt::adapt(_wts);
 
   // If this is always true, value_size input can be removed
+  [[maybe_unused]] const std::size_t tdim
+      = cell::topological_dimension(celltype);
   assert(tdim == value_size);
 
   // Evaluate moment space at quadrature points

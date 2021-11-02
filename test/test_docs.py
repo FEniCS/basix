@@ -21,12 +21,12 @@ def test_generated_docs():
 
 def test_demo_index():
     path = os.path.dirname(os.path.realpath(__file__))
-    if not os.path.isfile(os.path.join(path, "../demo/index.rst")):
+    if not os.path.isfile(os.path.join(path, "../demo/python/index.rst")):
         pytest.skip("This test can only be run from the source directory.")
 
-    with open(os.path.join(path, "../demo/index.rst")) as f:
+    with open(os.path.join(path, "../demo/python/index.rst")) as f:
         index = f.read()
 
-    for file in os.listdir(os.path.join(path, "../demo")):
+    for file in os.listdir(os.path.join(path, "../demo/python")):
         if file.endswith(".py") and file.startswith("demo_"):
             assert file in index

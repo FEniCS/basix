@@ -23,7 +23,7 @@ doc/web/cpp
 doc/web/web
 doc/python/source/_autosummary
 
-demo/*.py.rst
+demo/python/*.py.rst
 
 build*/
 

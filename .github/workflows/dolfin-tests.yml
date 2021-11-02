@@ -39,12 +39,20 @@ jobs:
           python3 -m pip install git+https://github.com/FEniCS/ufl.git
           python3 -m pip install git+https://github.com/FEniCS/ffcx.git
 
+      - name: Run cpp demos
+        run: |
+          cd demo/cpp
+          mkdir build && cd build
+          cmake .. && make
+          ./basix-demo
+
       - name: Get DOLFINx
         uses: actions/checkout@v2
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: main
+
       - name: Install DOLFINx
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/

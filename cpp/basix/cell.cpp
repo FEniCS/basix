@@ -61,18 +61,8 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
   {
   case cell::type::point:
     return {{{0}}};
-    // t.resize(1);
-    // // Vertices
-    // t[0] = {{0}};
-    // break;
   case cell::type::interval:
     return {{{0}, {1}}, {{0, 1}}};
-    // t.resize(2);
-    // // Vertices
-    // t[0] = {{0}, {1}};
-    // // Cell
-    // t[1] = {{0, 1}};
-    // break;
   case cell::type::triangle:
   {
     std::vector<std::vector<std::vector<int>>> t(3);

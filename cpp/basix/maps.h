@@ -30,29 +30,37 @@ template <typename O, typename Mat0, typename Mat1, typename Mat2>
 void dot22(O&& r, const Mat0& A, const Mat1& B, const Mat2& C)
 {
   assert(A.shape(1) == B.shape(0));
-  r = 0;
+  using T = typename O::value_type;
   for (std::size_t i = 0; i < r.shape(0); ++i)
     for (std::size_t j = 0; j < r.shape(1); ++j)
+    {
+      T acc{0};
       for (std::size_t k = 0; k < A.shape(1); ++k)
         for (std::size_t l = 0; l < B.shape(1); ++l)
-          r(i, j) += A(i, k) * B(k, l) * C(l, j);
+          acc += A(i, k) * B(k, l) * C(l, j);
+      r(i, j) = acc;
+    }
 }
 
 template <typename Vec, typename Mat0, typename Mat1>
 void dot21(Vec&& r, const Mat0& A, const Mat1& B)
 {
+  using T = typename Vec::value_type;
   // assert(A.shape(1) == B.shape(0));
-  r = 0;
   for (std::size_t i = 0; i < r.shape(0); ++i)
+  {
+    T acc{0};
     for (std::size_t k = 0; k < A.shape(1); ++k)
-      r[i] += A(i, k) * B[k];
+      acc += A(i, k) * B[k];
+    r[i] = acc;
+  }
 }
 
 template <typename Vec0, typename Vec1, typename Mat0, typename Mat1>
 void identity(Vec0&& r, const Vec1& U, const Mat0& /*J*/, double /*detJ*/,
               const Mat1& /*K*/)
 {
-  r = U;
+  r.assign(U);
 }
 
 template <typename O, typename P, typename Q, typename R>
@@ -78,7 +86,8 @@ void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
     auto U_p = xt::row(U, p);
     dot21(r_p, J, U_p);
   }
-  r /= detJ;
+  double inv_detJ = 1 / detJ;
+  std::for_each(r.begin(), r.end(), [inv_detJ](auto& ri) { ri *= inv_detJ; });
 }
 
 template <typename O, typename P, typename Q, typename R>
@@ -108,7 +117,9 @@ void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
     auto _r = xt::reshape_view(r_p, {J.shape(0), J.shape(0)});
     dot22(_r, J, _U, Jt);
   }
-  r /= (detJ * detJ);
+
+  double inv_detJ = 1 / (detJ * detJ);
+  std::for_each(r.begin(), r.end(), [inv_detJ](auto& ri) { ri *= inv_detJ; });
 }
 } // namespace impl
 

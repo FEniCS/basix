@@ -62,13 +62,6 @@ jobs:
         run: |
           pytest demo/python/test.py
 
-      - name: Run cpp demos
-        run: |
-          cd demo/cpp
-          mkdir build && cd build
-          cmake .. && make
-          ./basix_demo
-
       - name: Build documentation
         if: runner.os == 'Linux'
         run: |

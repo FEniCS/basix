@@ -323,7 +323,8 @@ Interface to the Basix C++ library.
              element::lagrange_variant::chebyshev_centroid)
       .value("gl_warped", element::lagrange_variant::gl_warped)
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
-      .value("gl_centroid", element::lagrange_variant::gl_centroid);
+      .value("gl_centroid", element::lagrange_variant::gl_centroid)
+      .value("vtk", element::lagrange_variant::vtk);
 
   // Create FiniteElement
   m.def(

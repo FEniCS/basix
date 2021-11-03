@@ -41,7 +41,7 @@ jobs:
 
       - name: Run cpp demos
         run: |
-          python -m pytest demo/cpp/test.py
+          python3 -m pytest demo/cpp/test.py
 
       - name: Get DOLFINx
         uses: actions/checkout@v2

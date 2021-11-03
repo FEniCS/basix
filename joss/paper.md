@@ -55,7 +55,7 @@ basis functions of this space are shown in \autoref{fig:fe}.
 The uppper three functions arise from point evaluations at the vertices.
 The lower three arise from point evaluations at the midpoints of the
 edges. These diagrams are taken from DefElement
-[@defelement].\label{fig:fe}](basis-functions.png){ width=60% }
+[@defelement].\label{fig:fe}](img/basis-functions.png){ width=60% }
 
 The functionals in $\mathcal{L}$ are each associated with a degree of
 freedom (DOF) of the finite element space. Each functional (or DOF) is
@@ -66,12 +66,15 @@ element space the desired continuity properties.
 
 Basix is a C++ library that creates and tabulates a range finite
 elements on triangles, tetrahedra, quadrilaterals, hexahedra, pyramids,
-and prisms. Currently supported element types include Lagrange, Nédélec
-first kind [@nedelec1], Nédélec second kind [@nedelec2], Raviart--Thomas
-[@rt], Brezzi--Douglas--Marini [@bdm], Crouzeix--Raviart [@cr],
-serendipity [@serendipity; @sdivcurl], and Regge [@regge; @regge2]
-elements. The majority of Basix's functionality can be used via the
-library's Python interface.
+and prisms. A full list of currently supported elements is included
+below.
+
+For many elements, the functionals in $\mathcal{L}$ are defined to be integrals
+on a sub-entity of the cell. The compute these integrals, Basix provides a
+range of quadrature rules, including Gauss--Jacobi, Gauss--Lobatto--Legendre,
+and Xiao--Gimbutas [@xiao-gimbutas]. Internally, Basix uses xtensor [@xtensor]
+for matrix and tensor storage and manipulation. The majority of Basix's
+functionality can be used via the library's Python interface.
 
 Basix forms part of FEniCSx alongside DOLFINx [@dolfinx], FFCx [@ffcx],
 and UFL [@ufl]. FEniCSx is the latest development version of FEniCS, a
@@ -120,5 +123,106 @@ transforming DOFs for higher-order elements. As described in
 @dof-transformations, these operations are necessary when solving
 problems on arbitrary meshes, as differences in how neighbouring cells
 orient their sub-entities can otherwise cause issues.
+
+# Supported elements
+
+## Interval
+
+In Basix, the sub-entities of the reference interval are numbered as
+shown in \autoref{fig:interval}. The following elements are supported on a interval:
+
+- Lagrange
+- bubble
+- serendipity [@serendipity]
+
+![The numbering of a reference interval. \label{fig:interval}](img/interval_numbering.png){ width=39% }
+
+## Triangle
+
+In Basix, the sub-entities of the reference triangle are numbered as
+shown in \autoref{fig:triangle}.
+The following elements are supported on a triangle:
+
+- Lagrange
+- Nédélec first kind [@nedelec1]
+- Raviart--Thomas [@rt]
+- Nédélec second kind [@nedelec2]
+- Brezzi--Douglas--Marini [@bdm]
+- Regge [@regge; @regge2]
+- Crouzeix--Raviart [@cr]
+- bubble
+
+![The numbering of a reference triangle. \label{fig:triangle}](img/triangle_numbering.png){ width=56% }
+
+## Quadrilateral
+
+In Basix, the sub-entities of the reference quadrilateral are numbered
+as shown in \autoref{fig:quad}.
+The following elements are supported on a quadrilateral:
+
+- Lagrange
+- Nédélec first kind
+- Raviart--Thomas
+- Nédélec second kind [@sdivcurl]
+- Brezzi--Douglas--Marini [@sdivcurl]
+- bubble
+- DPC
+- serendipity
+
+![The numbering of a reference quadrilateral. \label{fig:quad}](img/quadrilateral_numbering.png){ width=56% }
+
+## Tetrahedron
+
+In Basix, the sub-entities of the reference tetrahedron are numbered as
+shown in \autoref{fig:tet}.
+The following elements are supported on a tetrahedron:
+
+- Lagrange
+- Nédélec first kind
+- Raviart--Thomas
+- Nédélec second kind
+- Brezzi--Douglas--Marini
+- Regge
+- Crouzeix--Raviart
+- bubble
+
+![The numbering of a reference tetrahedron. \label{fig:tet}](img/tetrahedron_numbering.png){ width=73% }
+
+## Hexahedron
+
+In Basix, the sub-entities of the reference hexahedron are numbered as
+shown in \autoref{fig:hex}.
+The following elements are supported on a hexahedron:
+
+- Lagrange
+- Nédélec first kind
+- Raviart--Thomas
+- Nédélec second kind
+- Brezzi--Douglas--Marini
+- bubble
+- DPC
+- serendipity
+
+![The numbering of a reference hexahedron. \label{fig:hex}](img/hexahedron_numbering.png){ width=89% }
+
+## Prism
+
+In Basix, the sub-entities of the reference prism are numbered as
+shown in \autoref{fig:prism}.
+The following elements are supported on a prism:
+
+- Lagrange
+
+![The numbering of a reference prism. \label{fig:prism}](img/prism_numbering.png){ width=73% }
+
+## Pyramid
+
+In Basix, the sub-entities of the reference pyramid are numbered as
+shown in \autoref{fig:pyramid}.
+The following elements are supported on a pyramid:
+
+- Lagrange
+
+![The numbering of a reference pyramid. \label{fig:pyramid}](img/pyramid_numbering.png){ width=89% }
 
 # References

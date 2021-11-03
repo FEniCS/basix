@@ -113,6 +113,7 @@ def insert_info(txt):
     if "{{SUPPORTED ELEMENTS}}" in txt:
         with open(path("../../README.md")) as f:
             info = "## Supported elements" + f.read().split("## Supported elements")[1].split("\n## ")[0]
+        info = info.replace("joss/img", "img")
         txt = txt.replace("{{SUPPORTED ELEMENTS}}", info)
     if "{{INSTALL}}" in txt:
         with open(path("../../INSTALL.md")) as f:
@@ -200,7 +201,7 @@ with open(path("cpp/Doxyfile"), "w") as f:
     f.write(content)
 
 # Copy images and assets
-system(f"cp -r {path('../../img')} {path('html')}/img")
+system(f"cp -r {path('../../joss/img')} {path('html')}/img")
 system(f"cp -r {path('assets')} {path('html')}/assets")
 
 # Convert markdown to html

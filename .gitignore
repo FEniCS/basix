@@ -24,8 +24,10 @@ doc/web/web
 doc/python/source/_autosummary
 
 demo/python/*.py.rst
+demo/cpp/*/_build
 
 build*/
+
 
 joss/paper.pdf
 

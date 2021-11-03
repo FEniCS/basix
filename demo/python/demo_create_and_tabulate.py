@@ -45,3 +45,10 @@ print(tab.shape)
 # had asked for derivatives too. The second dimension (5) is the number of points.
 # The third dimension (25) is the number of DOFs. The fourth dimension (1) is the
 # value size of the element: this will be greater than 1 for vector-values elements.
+#
+# C++ demo
+# ========
+# The following C++ code runs the same demo using Basix's C++ interface:
+#
+# .. literalinclude:: ../cpp/demo_create_and_tabulate/main.cpp
+#    :language: c++

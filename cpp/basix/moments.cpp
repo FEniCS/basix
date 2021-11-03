@@ -395,7 +395,7 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
   auto wts = xt::adapt(_wts);
 
   // If this is always true, value_size input can be removed
-  assert(cell::topological_dimension(celltype) == value_size);
+  assert(std::size_t(cell::topological_dimension(celltype)) == value_size);
 
   // Evaluate moment space at quadrature points
   xt::xtensor<double, 3> phi

@@ -7,12 +7,15 @@ tags:
   - basis functions
   - numerical analysis
 authors:
-  - name: Chris N. Richardson
-    orcid: 0000-0003-3137-1392
-    affiliation: 1
   - name: Matthew W. Scroggs
     orcid: 0000-0002-4658-2443
     affiliation: 2
+  - name: Igor A. Baratta
+    orcid:  0000-0003-4298-2973
+    affiliation: 2
+  - name: Chris N. Richardson
+    orcid: 0000-0003-3137-1392
+    affiliation: 1
   - name: Garth N. Wells
     orcid: 0000-0001-5291-7951
     affiliation: 2

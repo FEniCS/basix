@@ -14,4 +14,4 @@ for folder in os.listdir(path):
 @pytest.mark.parametrize("demo", demos)
 def test_demo(demo):
     demo_build = f"{path}/{demo}/_build"
-    assert os.system(f"mkdir {demo_build} && cd {demo_build} && cmake .. && make && ./basix-demo") == 0
+    assert os.system(f"mkdir -p {demo_build} && cd {demo_build} && cmake .. && make && ./{demo}") == 0

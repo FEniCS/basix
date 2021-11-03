@@ -27,6 +27,8 @@ demo/python/*.py.rst
 
 build*/
 
+joss/paper.pdf
+
 .*.swp
 
 *.egg-info

@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
   // the degrees of freedom (DOFs) of the element in an equally spaced lattice.
   auto variant = basix::element::lagrange_variant::equispaced;
 
-  // Create the element lagrange element
+  // Create the lagrange element
   basix::FiniteElement lagrange
       = basix::create_element(family, cell_type, k, variant);
 

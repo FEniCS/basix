@@ -5,7 +5,6 @@
 #pragma once
 
 #include "cell.h"
-#include <vector>
 #include <xtensor/xtensor.hpp>
 
 namespace basix::lattice

@@ -4,9 +4,9 @@
 
 #pragma once
 
+#include <tuple>
 #include <vector>
 #include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
 /// Matrix and permutation precomputation

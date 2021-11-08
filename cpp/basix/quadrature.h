@@ -8,7 +8,6 @@
 #include <utility>
 #include <vector>
 #include <xtensor/xtensor.hpp>
-#include <xtl/xspan.hpp>
 
 /// Quadrature rules
 namespace basix::quadrature

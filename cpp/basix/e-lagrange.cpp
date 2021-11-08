@@ -4,12 +4,10 @@
 
 #include "e-lagrange.h"
 #include "dof-transformations.h"
-#include "element-families.h"
-#include "log.h"
+#include "lattice.h"
 #include "maps.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <numeric>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>

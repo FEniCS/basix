@@ -7,7 +7,8 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor/xadapt.hpp>
+#include <math.h>
+#include <vector>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>

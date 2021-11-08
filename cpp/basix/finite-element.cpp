@@ -16,10 +16,7 @@
 #include "polyset.h"
 #include "version.h"
 #include <numeric>
-#include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
-#include <xtensor/xlayout.hpp>
-#include <xtensor/xview.hpp>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)

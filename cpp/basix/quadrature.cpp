@@ -4,6 +4,7 @@
 
 #include "quadrature.h"
 #include "math.h"
+#include <array>
 #include <cmath>
 #include <vector>
 #include <xtensor/xadapt.hpp>

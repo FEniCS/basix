@@ -38,7 +38,7 @@ https://docs.fenicsproject.org/basix/main/.
 In Basix, the sub-entities of the reference interval are numbered as
 follows:
 
-![The numbering of a reference interval](img/interval_numbering.png)
+![The numbering of a reference interval](joss/img/interval_numbering.png)
 
 The following elements are supported on a interval:
 
@@ -53,7 +53,7 @@ The following elements are supported on a interval:
 In Basix, the sub-entities of the reference triangle are numbered as
 follows:
 
-![The numbering of a reference triangle](img/triangle_numbering.png)
+![The numbering of a reference triangle](joss/img/triangle_numbering.png)
 
 The following elements are supported on a triangle:
 
@@ -72,7 +72,7 @@ The following elements are supported on a triangle:
 In Basix, the sub-entities of the reference quadrilateral are numbered
 as follows:
 
-![The numbering of a reference quadrilateral](img/quadrilateral_numbering.png)
+![The numbering of a reference quadrilateral](joss/img/quadrilateral_numbering.png)
 
 The following elements are supported on a quadrilateral:
 
@@ -91,7 +91,7 @@ The following elements are supported on a quadrilateral:
 In Basix, the sub-entities of the reference tetrahedron are numbered as
 follows:
 
-![The numbering of a reference tetrahedron](img/tetrahedron_numbering.png)
+![The numbering of a reference tetrahedron](joss/img/tetrahedron_numbering.png)
 
 The following elements are supported on a tetrahedron:
 
@@ -110,7 +110,7 @@ The following elements are supported on a tetrahedron:
 In Basix, the sub-entities of the reference hexahedron are numbered as
 follows:
 
-![The numbering of a reference hexahedron](img/hexahedron_numbering.png)
+![The numbering of a reference hexahedron](joss/img/hexahedron_numbering.png)
 
 The following elements are supported on a hexahedron:
 
@@ -129,7 +129,7 @@ The following elements are supported on a hexahedron:
 In Basix, the sub-entities of the reference prism are numbered as
 follows:
 
-![The numbering of a reference prism](img/prism_numbering.png)
+![The numbering of a reference prism](joss/img/prism_numbering.png)
 
 The following elements are supported on a prism:
 
@@ -140,7 +140,7 @@ The following elements are supported on a prism:
 In Basix, the sub-entities of the reference pyramid are numbered as
 follows:
 
-![The numbering of a reference pyramid](img/pyramid_numbering.png)
+![The numbering of a reference pyramid](joss/img/pyramid_numbering.png)
 
 The following elements are supported on a pyramid:
 

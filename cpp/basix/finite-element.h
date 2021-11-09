@@ -12,8 +12,6 @@
 #include <numeric>
 #include <string>
 #include <vector>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xcomplex.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>

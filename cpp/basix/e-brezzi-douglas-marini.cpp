@@ -9,13 +9,9 @@
 #include "maps.h"
 #include "moments.h"
 #include "polyset.h"
-#include "quadrature.h"
-#include <numeric>
 #include <vector>
 #include <xtensor/xbuilder.hpp>
-#include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
 

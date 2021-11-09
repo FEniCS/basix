@@ -6,9 +6,6 @@
 
 #include "math.h"
 #include <vector>
-#include <xtensor/xtensor.hpp>
-
-#include <xtensor/xio.hpp>
 
 // #ifdef __APPLE__
 // #include <Accelerate/Accelerate.h>

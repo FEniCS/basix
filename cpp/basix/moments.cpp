@@ -6,13 +6,11 @@
 #include "cell.h"
 #include "finite-element.h"
 #include "math.h"
-#include "polyset.h"
 #include "quadrature.h"
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
-#include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;

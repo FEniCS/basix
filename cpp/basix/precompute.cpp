@@ -4,6 +4,7 @@
 
 #include "precompute.h"
 #include "math.h"
+#include <xtensor/xview.hpp>
 
 using namespace basix;
 

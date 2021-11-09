@@ -7,7 +7,7 @@
 #include "indexing.h"
 #include <array>
 #include <cmath>
-#include <xtensor/xadapt.hpp>
+#include <stdexcept>
 #include <xtensor/xview.hpp>
 
 using namespace basix;

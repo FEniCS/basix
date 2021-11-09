@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include <cmath>
-#include <type_traits>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xtensor.hpp>

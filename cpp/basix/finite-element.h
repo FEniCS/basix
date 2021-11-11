@@ -1284,9 +1284,9 @@ void FiniteElement::interpolate(const xtl::span<T>& coefficients,
     {
       // Can be replaced with std::transform_reduce once GCC 8 series dies.
       // Dot product between row i of the matrix and 'data'
-      coefficients[i] = std::inner_product(std::next(Pi.data(), i * cols),
-                                           std::next(Pi.data(), i * cols + cols),
-                                           data.data(), T(0.0));
+      coefficients[i] = std::inner_product(
+          std::next(Pi.data(), i * cols), std::next(Pi.data(), i * cols + cols),
+          data.data(), T(0.0));
     }
   }
   else
@@ -1300,7 +1300,6 @@ void FiniteElement::interpolate(const xtl::span<T>& coefficients,
           coefficients[block_size * i + b] += Pi(i, j) * data(b * cols + j);
       }
     }
-
   }
 }
 //-----------------------------------------------------------------------------

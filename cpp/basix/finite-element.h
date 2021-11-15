@@ -707,9 +707,6 @@ public:
   /// @return Array of coordinate with shape `(num_points, tdim)`
   const xt::xtensor<double, 2>& points() const;
 
-  /// Return the number of interpolation points
-  int num_points() const;
-
   /// Return a matrix of weights interpolation
   /// To interpolate a function in this finite element, the functions
   /// should be evaluated at each point given by

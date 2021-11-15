@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "dof-transformations.h"
+#include <algorithm>
 
 using namespace basix;
 

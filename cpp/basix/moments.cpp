@@ -6,13 +6,11 @@
 #include "cell.h"
 #include "finite-element.h"
 #include "math.h"
-#include "polyset.h"
 #include "quadrature.h"
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
-#include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
@@ -389,14 +387,13 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
   const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
-  const std::size_t tdim = cell::topological_dimension(celltype);
 
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  sub_celltype, q_deg);
   auto wts = xt::adapt(_wts);
 
   // If this is always true, value_size input can be removed
-  assert(tdim == value_size);
+  assert(std::size_t(cell::topological_dimension(celltype)) == value_size);
 
   // Evaluate moment space at quadrature points
   xt::xtensor<double, 3> phi

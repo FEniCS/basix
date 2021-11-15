@@ -5,6 +5,8 @@
 #pragma once
 
 #include "cell.h"
+#include <utility>
+#include <vector>
 #include <xtensor/xtensor.hpp>
 
 namespace basix

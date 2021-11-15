@@ -159,3 +159,10 @@ print(data)
 # More efficient functions that apply the transformations and
 # permutations directly to data can be used via Basix's C++
 # interface.
+#
+# C++ demo
+# ========
+# The following C++ code runs the same demo using Basix's C++ interface:
+#
+# .. literalinclude:: ../cpp/demo_dof_transformations/main.cpp
+#    :language: c++

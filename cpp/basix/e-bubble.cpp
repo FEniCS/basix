@@ -12,7 +12,6 @@
 #include <vector>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xmath.hpp>
-#include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 

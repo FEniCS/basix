@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
   // the degrees of freedom (DOFs) of the element in an equally spaced lattice.
   auto variant = basix::element::lagrange_variant::equispaced;
 
-  // Create the element lagrange element
+  // Create the lagrange element
   basix::FiniteElement lagrange
       = basix::create_element(family, cell_type, k, variant);
 
@@ -38,9 +38,9 @@ int main(int argc, char* argv[])
 
   xt::xtensor<double, 4> tab = lagrange.tabulate(0, points);
 
-  std::cout << "\nTabulate data shape: " << xt::adapt(tab.shape());
   std::cout << "\nTabulate data: \n"
             << xt::view(tab, 0, xt::all(), xt::all(), 0);
+  std::cout << "\nTabulate data shape: " << xt::adapt(tab.shape());
 
   return 0;
 }

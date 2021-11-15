@@ -16,10 +16,7 @@
 #include "polyset.h"
 #include "version.h"
 #include <numeric>
-#include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
-#include <xtensor/xlayout.hpp>
-#include <xtensor/xview.hpp>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -725,8 +722,6 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
 
   return bt;
 }
-//-----------------------------------------------------------------------------
-int FiniteElement::num_points() const { return _points.shape(0); }
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------

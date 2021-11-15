@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(basix-demo)
+project(demo_create_and_tabulate)
 
 # Use C++17
 set(CMAKE_CXX_STANDARD 17)

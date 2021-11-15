@@ -13,7 +13,6 @@
 #include <array>
 #include <vector>
 #include <xtensor/xbuilder.hpp>
-#include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 

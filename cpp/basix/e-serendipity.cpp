@@ -5,16 +5,12 @@
 #include "e-serendipity.h"
 #include "e-lagrange.h"
 #include "element-families.h"
-#include "lattice.h"
-#include "log.h"
 #include "maps.h"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <numeric>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
-#include <xtensor/xpad.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 

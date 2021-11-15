@@ -7,7 +7,6 @@
 #include "cell.h"
 #include "element-families.h"
 #include "finite-element.h"
-#include "lattice.h"
 
 namespace basix::element
 {

@@ -41,10 +41,7 @@ jobs:
 
       - name: Run cpp demos
         run: |
-          cd demo/cpp
-          mkdir build && cd build
-          cmake .. && make
-          ./basix-demo
+          python3 -m pytest demo/cpp/test.py
 
       - name: Get DOLFINx
         uses: actions/checkout@v2

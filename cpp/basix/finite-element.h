@@ -12,8 +12,6 @@
 #include <numeric>
 #include <string>
 #include <vector>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xcomplex.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
@@ -744,9 +742,6 @@ public:
   /// @return Array of coordinate with shape `(num_points, tdim)`
   const xt::xtensor<double, 2>& points() const;
 
-  /// Return the number of interpolation points
-  int num_points() const;
-
   /// Return a matrix of weights interpolation
   /// To interpolate a function in this finite element, the functions
   /// should be evaluated at each point given by
@@ -1308,25 +1303,35 @@ void FiniteElement::interpolate(const xtl::span<T>& coefficients,
                                 const xtl::span<const T>& data,
                                 const int block_size) const
 {
-  if (block_size != 1)
-  {
-    throw std::runtime_error(
-        "Interpolation of blocked data not implemented yet.");
-  }
-
   const std::size_t rows = dim();
 
-  // Compute coefficients = Pi * x (matrix-vector multiply)
   const xt::xtensor<double, 2>& Pi = interpolation_matrix();
   assert(Pi.size() % rows == 0);
   const std::size_t cols = Pi.size() / rows;
-  for (std::size_t i = 0; i < rows; ++i)
+
+  // Compute coefficients = Pi * x (matrix-vector multiply)
+  if (block_size == 1)
   {
-    // Can be replaced with std::transform_reduce once GCC 8 series dies.
-    // Dot product between row i of the matrix and 'data'
-    coefficients[i] = std::inner_product(std::next(Pi.data(), i * cols),
-                                         std::next(Pi.data(), i * cols + cols),
-                                         data.data(), T(0.0));
+    for (std::size_t i = 0; i < rows; ++i)
+    {
+      // Can be replaced with std::transform_reduce once GCC 8 series dies.
+      // Dot product between row i of the matrix and 'data'
+      coefficients[i] = std::inner_product(
+          std::next(Pi.data(), i * cols), std::next(Pi.data(), i * cols + cols),
+          data.data(), T(0.0));
+    }
+  }
+  else
+  {
+    for (int b = 0; b < block_size; ++b)
+    {
+      for (std::size_t i = 0; i < rows; ++i)
+      {
+        coefficients[block_size * i + b] = 0;
+        for (std::size_t j = 0; j < cols; ++j)
+          coefficients[block_size * i + b] += Pi(i, j) * data(b * cols + j);
+      }
+    }
   }
 }
 //-----------------------------------------------------------------------------

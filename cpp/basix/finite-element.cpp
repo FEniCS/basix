@@ -723,8 +723,6 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
   return bt;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::num_points() const { return _points.shape(0); }
-//-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::map_push_forward(

@@ -713,6 +713,48 @@ public:
   /// FiniteElement::points(). These function values should then be
   /// multiplied by the weight matrix to give the coefficients of the
   /// interpolated function.
+  ///
+  /// The shape of the returned matrix will be `(dim, num_points * value_size)`,
+  /// where `dim` is the number of DOFs in the finite element, `num_points` is
+  /// the number of points returned by `points()`, and `value_size` is the value
+  /// size of the finite element.
+  ///
+  /// For example, to interpolate into a Lagrange space, the following should be
+  /// done:
+  /// \code{.pseudo}
+  /// i_m = element.interpolation_matrix()
+  /// pts = element.points()
+  /// values = vector(pts.shape(0))
+  /// FOR i, p IN ENUMERATE(pts):
+  ///     values[i] = f.evaluate_at(p)
+  /// coefficients = i_m * values
+  /// \endcode
+  ///
+  /// To interpolate into a Raviart-Thomas space, the following should be done:
+  /// \code{.pseudo}
+  /// i_m = element.interpolation_matrix()
+  /// pts = element.points()
+  /// vs = element.value_size()
+  /// values = VECTOR(pts.shape(0) * vs)
+  /// FOR i, p IN ENUMERATE(pts):
+  ///     values[i * vs: (i + 1) * vs] = f.evaluate_at(p)
+  /// coefficients = i_m * values
+  /// \endcode
+  ///
+  /// To interpolate into a Lagrange space with a block size, the following
+  /// should be done:
+  /// \code{.pseudo}
+  /// i_m = element.interpolation_matrix()
+  /// pts = element.points()
+  /// coefficients = VECTOR(element.dim() * block_size)
+  /// FOR b IN RANGE(block_size):
+  ///     values = vector(pts.shape(0))
+  ///     FOR i, p IN ENUMERATE(pts):
+  ///         values[i] = f.evaluate_at(p)[b]
+  ///     coefficients[::block_size] = i_m * values
+  /// \endcode
+  ///
+  /// @return The interpolation matrix
   const xt::xtensor<double, 2>& interpolation_matrix() const;
 
   /// Compute the coefficients of a function given the values of the function
@@ -720,6 +762,8 @@ public:
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
+  ///
+  /// @note This function will be removed in a future version.
   ///
   /// @param[in,out] coefficients The coefficients of the function's
   /// interpolation into the function space

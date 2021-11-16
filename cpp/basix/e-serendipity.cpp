@@ -647,11 +647,8 @@ FiniteElement basix::element::create_serendipity(cell::type celltype,
         = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
   }
 
-  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
-      celltype, wcoeffs, {M[0], M[1], M[2], M[3]}, {x[0], x[1], x[2], x[3]},
-      degree);
   return FiniteElement(element::family::serendipity, celltype, degree, {1},
-                       coeffs, entity_transformations, x, M,
+                       wcoeffs, entity_transformations, x, M,
                        maps::type::identity, discontinuous);
 }
 //-----------------------------------------------------------------------------
@@ -724,12 +721,8 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
         = element::make_discontinuous(x, M, entity_transformations, tdim, tdim);
   }
 
-  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
-      celltype, wcoeffs, {M[tdim - 1], M[tdim]}, {x[tdim - 1], x[tdim]},
-      degree + 1);
-
   return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
-                       coeffs, entity_transformations, x, M,
+                       wcoeffs, entity_transformations, x, M,
                        maps::type::contravariantPiola, discontinuous);
 }
 //-----------------------------------------------------------------------------
@@ -820,10 +813,8 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
         = element::make_discontinuous(x, M, entity_transformations, tdim, tdim);
   }
 
-  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
-      celltype, wcoeffs, {M[1], M[2], M[3]}, {x[1], x[2], x[3]}, degree + 1);
   return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
-                       coeffs, entity_transformations, x, M,
+                       wcoeffs, entity_transformations, x, M,
                        maps::type::covariantPiola, discontinuous);
 }
 //-----------------------------------------------------------------------------

@@ -25,6 +25,7 @@ using namespace basix;
 
 namespace
 {
+//-----------------------------------------------------------------------------
 constexpr int compute_value_size(maps::type map_type, int dim)
 {
   switch (map_type)
@@ -68,6 +69,74 @@ constexpr int num_transformations(cell::type cell_type)
     throw std::runtime_error("Cell type not yet supported");
   }
 }
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2>
+compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
+                    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+                    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+                    int degree)
+{
+  std::size_t num_dofs(0), vs(0);
+  for (auto& Md : M)
+  {
+    for (auto& Me : Md)
+    {
+      num_dofs += Me.shape(0);
+      if (vs == 0)
+        vs = Me.shape(1);
+      else if (vs != Me.shape(1))
+        throw std::runtime_error("Inconsistent value size");
+    }
+  }
+
+  std::size_t pdim = polyset::dim(cell_type, degree);
+  xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
+
+  // Loop over different dimensions
+  std::size_t dof_index = 0;
+  for (std::size_t d = 0; d < M.size(); ++d)
+  {
+    // Loop over entities of dimension d
+    for (std::size_t e = 0; e < x[d].size(); ++e)
+    {
+      // Evaluate polynomial basis at x[d]
+      const xt::xtensor<double, 2>& x_e = x[d][e];
+      xt::xtensor<double, 2> P;
+      if (x_e.shape(1) == 1 and x_e.size() != 0)
+      {
+        auto pts = xt::view(x_e, xt::all(), 0);
+        P = xt::view(polyset::tabulate(cell_type, degree, 0, pts), 0, xt::all(),
+                     xt::all());
+      }
+      else if (x_e.size() != 0)
+      {
+        P = xt::view(polyset::tabulate(cell_type, degree, 0, x_e), 0, xt::all(),
+                     xt::all());
+      }
+
+      // Me: [dof, vs, point]
+      const xt::xtensor<double, 3>& Me = M[d][e];
+
+      // Compute dual matrix contribution
+      for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
+        for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
+          for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
+            for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
+              D(dof_index + i, j, l) += Me(i, j, k) * P(k, l);
+
+      // Dtmp += basix::math::dot(Me, P);
+
+      dof_index += M[d][e].shape(0);
+    }
+  }
+
+  /// Flatten D and take transpose
+  auto Dt_flat = xt::transpose(
+      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
+
+  return math::dot(B, Dt_flat);
+}
+//-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
@@ -173,90 +242,6 @@ basix::FiniteElement basix::create_element(element::family family,
   return create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> basix::element::compute_expansion_coefficients(
-    cell::type celltype, const xt::xtensor<double, 2>& B,
-    const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
-    const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree)
-{
-  std::size_t num_dofs(0), vs(0);
-  for (auto& Md : M)
-  {
-    for (auto& Me : Md)
-    {
-      num_dofs += Me.shape(0);
-      if (vs == 0)
-        vs = Me.shape(1);
-      else if (vs != Me.shape(1))
-        throw std::runtime_error("Inconsistent value size");
-    }
-  }
-
-  std::size_t pdim = polyset::dim(celltype, degree);
-  xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
-
-  // Loop over different dimensions
-  std::size_t dof_index = 0;
-  for (std::size_t d = 0; d < M.size(); ++d)
-  {
-    // Loop over entities of dimension d
-    for (std::size_t e = 0; e < x[d].size(); ++e)
-    {
-      // Evaluate polynomial basis at x[d]
-      const xt::xtensor<double, 2>& x_e = x[d][e];
-      xt::xtensor<double, 2> P;
-      if (x_e.shape(1) == 1 and x_e.size() != 0)
-      {
-        auto pts = xt::view(x_e, xt::all(), 0);
-        P = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(),
-                     xt::all());
-      }
-      else if (x_e.size() != 0)
-      {
-        P = xt::view(polyset::tabulate(celltype, degree, 0, x_e), 0, xt::all(),
-                     xt::all());
-      }
-
-      // Me: [dof, vs, point]
-      const xt::xtensor<double, 3>& Me = M[d][e];
-
-      // Compute dual matrix contribution
-      for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
-        for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
-          for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
-            for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
-              D(dof_index + i, j, l) += Me(i, j, k) * P(k, l);
-
-      // Dtmp += basix::math::dot(Me, P);
-
-      dof_index += M[d][e].shape(0);
-    }
-  }
-
-  // Compute B D^{T}
-  // xt::xtensor<double, 2> A = xt::zeros<double>({num_dofs, num_dofs});
-  // for (std::size_t i = 0; i < A.shape(0); ++i)
-  //   for (std::size_t j = 0; j < A.shape(1); ++j)
-  //     for (std::size_t k = 0; k < vs; ++k)
-  //       for (std::size_t l = 0; l < B[k].shape(1); ++l)
-  //         A(i, j) += B[k](i, l) * D(j, k, l);
-
-  /// Flatten D and take transpose
-  auto Dt_flat = xt::transpose(
-      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
-
-  xt::xtensor<double, 2> BDt = math::dot(B, Dt_flat);
-  xt::xtensor<double, 2> B_cmajor({B.shape(0), B.shape(1)});
-  B_cmajor.assign(B);
-
-  // Compute C = (BD^T)^{-1} B
-  auto result = math::solve(BDt, B_cmajor);
-
-  xt::xtensor<double, 2> C({result.shape(0), result.shape(1)});
-  C.assign(result);
-
-  return xt::reshape_view(C, {num_dofs, vs, pdim});
-}
-//-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 3>>, 4>,
            std::map<cell::type, xt::xtensor<double, 3>>>
@@ -319,7 +304,7 @@ basix::element::make_discontinuous(
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 3>& coeffs,
+    const xt::xtensor<double, 2>& wcoeffs,
     const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
@@ -328,13 +313,17 @@ FiniteElement::FiniteElement(
       _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _degree(degree), _map_type(map_type),
-      _coeffs(xt::reshape_view(
-          coeffs, {coeffs.shape(0), coeffs.shape(1) * coeffs.shape(2)})),
       _entity_transformations(entity_transformations), _x(x), _matM_new(M),
       _discontinuous(discontinuous)
 {
-  // if (points.dimension() == 1)
-  //   throw std::runtime_error("Problem with points");
+  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
+  xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
+  B_cmajor.assign(wcoeffs);
+  // Compute C = (BD^T)^{-1} B
+  auto result = math::solve(_dual_matrix, B_cmajor);
+
+  _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
+  _coeffs.assign(result);
 
   _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
 
@@ -861,6 +850,11 @@ std::map<cell::type, xt::xtensor<double, 3>>
 FiniteElement::entity_transformations() const
 {
   return _entity_transformations;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> FiniteElement::dual_matrix() const
+{
+  return _dual_matrix;
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

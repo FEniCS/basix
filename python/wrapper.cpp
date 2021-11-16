@@ -312,10 +312,17 @@ Interface to the Basix C++ library.
             const xt::xtensor<double, 2>& P = self.interpolation_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           })
-      .def_property_readonly("dual_matrix", [](const FiniteElement& self) {
-        const xt::xtensor<double, 2>& P = self.dual_matrix();
-        return py::array_t<double>(P.shape(), P.data(), py::cast(self));
-      });
+      .def_property_readonly(
+          "dual_matrix",
+          [](const FiniteElement& self) {
+            const xt::xtensor<double, 2>& P = self.dual_matrix();
+            return py::array_t<double>(P.shape(), P.data(), py::cast(self));
+          })
+      .def_property_readonly(
+          "coefficient_matrix", [](const FiniteElement& self) {
+            const xt::xtensor<double, 2>& P = self.coefficient_matrix();
+            return py::array_t<double>(P.shape(), P.data(), py::cast(self));
+          });
 
   py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("equispaced", element::lagrange_variant::equispaced)

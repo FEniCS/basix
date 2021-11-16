@@ -763,6 +763,8 @@ public:
   /// @return The dual matrix
   xt::xtensor<double, 2> dual_matrix() const;
 
+  xt::xtensor<double, 2> coefficient_matrix() const;
+
   /// Element map type
   maps::type map_type;
 
@@ -828,9 +830,6 @@ private:
 
   /// The interpolation weights and points
   xt::xtensor<double, 2> _matM;
-
-  /// Interpolation matrices
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> _matM_new;
 
   /// Indicates whether or not the DOF transformations are all permutations
   bool _dof_transformations_are_permutations;

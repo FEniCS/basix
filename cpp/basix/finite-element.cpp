@@ -311,7 +311,7 @@ FiniteElement::FiniteElement(
       _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _degree(degree), _map_type(map_type),
-      _entity_transformations(entity_transformations), _x(x), _matM_new(M),
+      _entity_transformations(entity_transformations), _x(x),
       _discontinuous(discontinuous)
 {
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
@@ -853,6 +853,11 @@ FiniteElement::entity_transformations() const
 xt::xtensor<double, 2> FiniteElement::dual_matrix() const
 {
   return _dual_matrix;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> FiniteElement::coefficient_matrix() const
+{
+  return _coeffs;
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

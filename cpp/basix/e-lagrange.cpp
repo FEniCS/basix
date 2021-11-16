@@ -788,7 +788,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
     std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
     std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-    x[0].push_back(xt::xtensor<double, 2>({1, 0}));
+    x[0].push_back({{0}});
     M[0].push_back({{{1}}});
     std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
     xt::xtensor<double, 3> coeffs = {{{1}}};

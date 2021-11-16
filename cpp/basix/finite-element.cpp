@@ -319,6 +319,7 @@ FiniteElement::FiniteElement(
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
   xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
   B_cmajor.assign(wcoeffs);
+
   // Compute C = (BD^T)^{-1} B
   auto result = math::solve(_dual_matrix, B_cmajor);
 

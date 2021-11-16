@@ -737,7 +737,7 @@ public:
   /// vs = element.value_size()
   /// values = VECTOR(pts.shape(0) * vs)
   /// FOR i, p IN ENUMERATE(pts):
-  ///     values[i * vs: (i + 1) * vs] = f.evaluate_at(p)
+  ///     values[i::pts.shape(0)] = f.evaluate_at(p)
   /// coefficients = i_m * values
   /// \endcode
   ///

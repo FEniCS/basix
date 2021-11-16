@@ -102,13 +102,13 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
       // Evaluate polynomial basis at x[d]
       const xt::xtensor<double, 2>& x_e = x[d][e];
       xt::xtensor<double, 2> P;
-      if (x_e.shape(1) == 1 and x_e.size() != 0)
+      if (x_e.shape(1) == 1 and x_e.shape(0) != 0)
       {
         auto pts = xt::view(x_e, xt::all(), 0);
         P = xt::view(polyset::tabulate(cell_type, degree, 0, pts), 0, xt::all(),
                      xt::all());
       }
-      else if (x_e.size() != 0)
+      else if (x_e.shape(0) != 0)
       {
         P = xt::view(polyset::tabulate(cell_type, degree, 0, x_e), 0, xt::all(),
                      xt::all());
@@ -123,8 +123,6 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
           for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
             for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
               D(dof_index + i, j, l) += Me(i, j, k) * P(k, l);
-
-      // Dtmp += basix::math::dot(Me, P);
 
       dof_index += M[d][e].shape(0);
     }
@@ -319,7 +317,6 @@ FiniteElement::FiniteElement(
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
   xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
   B_cmajor.assign(wcoeffs);
-
   // Compute C = (BD^T)^{-1} B
   auto result = math::solve(_dual_matrix, B_cmajor);
 

@@ -110,7 +110,8 @@ public:
   /// inputs and will internally compute @f$C@f$.
   ///
   /// The matrix @f$BD^{T}@f$ can be obtained from an element by using the
-  /// function `dual_matrix()`.
+  /// function `dual_matrix()`. The matrix @f$C@f$ can be obtained from an
+  /// element by using the function `coefficient_matrix()`.
   ///
   /// Example: Order 1 Lagrange elements on a triangle
   /// ------------------------------------------------
@@ -763,6 +764,11 @@ public:
   /// @return The dual matrix
   xt::xtensor<double, 2> dual_matrix() const;
 
+  /// Get the matrix of coefficients.
+  ///
+  /// This is the matrix @f$C@f$, as described in the documentation of the
+  /// `FiniteElement()` constructor.
+  /// @return The dual matrix
   xt::xtensor<double, 2> coefficient_matrix() const;
 
   /// Element map type

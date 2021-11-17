@@ -23,162 +23,6 @@ namespace basix
 namespace element
 {
 
-/// Calculates the basis functions of the finite element, in terms of the
-/// polynomial basis.
-///
-/// The below explanation uses Einstein notation.
-///
-/// The basis functions @f${\phi_i}@f$ of a finite element are represented
-/// as a linear combination of polynomials @f$\{p_j\}@f$ in an underlying
-/// polynomial basis that span the space of all d-dimensional polynomials up
-/// to order @f$k \ (P_k^d)@f$:
-/// \f[ \phi_i = c_{ij} p_j \f]
-///
-/// In some cases, the basis functions @f$\{\phi_i\}@f$ do not span the
-/// full space @f$P_k@f$, in which case we denote space spanned by the
-/// basis functions by @f$\{q_k\}@f$, which can be represented by:
-/// @f[  q_i = b_{ij} p_j. @f]
-///  This leads to
-/// @f[  \phi_i = c^{\prime}_{ij} q_j = c^{\prime}_{ij} b_{jk} p_k,  @f]
-/// and in matrix form:
-/// \f[
-/// \phi = C^{\prime} B p
-/// \f]
-///
-/// If the basis functions span the full space, then @f$ B @f$ is simply
-/// the identity.
-///
-/// The basis functions @f$\phi_i@f$ are defined by a dual set of functionals
-/// @f$\{f_i\}@f$. The basis functions are the functions in span{@f$q_k@f$} such
-/// that
-///   @f[ f_i(\phi_j) = \delta_{ij} @f]
-/// and inserting the expression for @f$\phi_{j}@f$:
-///   @f[ f_i(c^{\prime}_{jk}b_{kl}p_{l}) = c^{\prime}_{jk} b_{kl} f_i \left(
-///   p_{l} \right) @f]
-///
-/// Defining a matrix D given by applying the functionals to each
-/// polynomial @f$p_j@f$:
-///  @f[ [D] = d_{ij},\mbox{ where } d_{ij} = f_i(p_j), @f]
-/// we have:
-/// @f[ C^{\prime} B D^{T} = I @f]
-///
-/// and
-///
-/// @f[ C^{\prime} = (B D^{T})^{-1}. @f]
-///
-/// Recalling that @f$C = C^{\prime} B@f$, where @f$C@f$ is the matrix
-/// form of @f$c_{ij}@f$,
-///
-/// @f[ C = (B D^{T})^{-1} B @f]
-///
-/// This function takes the matrices B (span_coeffs) and D (dual) as
-/// inputs and returns the matrix C.
-///
-/// Example: Order 1 Lagrange elements on a triangle
-/// ------------------------------------------------
-/// On a triangle, the scalar expansion basis is:
-///  @f[ p_0 = \sqrt{2}/2 \qquad
-///   p_1 = \sqrt{3}(2x + y - 1) \qquad
-///   p_2 = 3y - 1 @f]
-/// These span the space @f$P_1@f$.
-///
-/// Lagrange order 1 elements span the space P_1, so in this example,
-/// B (span_coeffs) is the identity matrix:
-///   @f[ B = \begin{bmatrix}
-///                   1 & 0 & 0 \\
-///                   0 & 1 & 0 \\
-///                   0 & 0 & 1 \end{bmatrix} @f]
-///
-/// The functionals defining the Lagrange order 1 space are point
-/// evaluations at the three vertices of the triangle. The matrix D
-/// (dual) given by applying these to p_0 to p_2 is:
-///  @f[ \mbox{dual} = \begin{bmatrix}
-///              \sqrt{2}/2 &  -\sqrt{3} & -1 \\
-///              \sqrt{2}/2 &   \sqrt{3} & -1 \\
-///              \sqrt{2}/2 &          0 &  2 \end{bmatrix} @f]
-///
-/// For this example, this function outputs the matrix:
-///  @f[ C = \begin{bmatrix}
-///            \sqrt{2}/3 & -\sqrt{3}/6 &  -1/6 \\
-///            \sqrt{2}/3 & \sqrt{3}/6  &  -1/6 \\
-///            \sqrt{2}/3 &          0  &   1/3 \end{bmatrix} @f]
-/// The basis functions of the finite element can be obtained by applying
-/// the matrix C to the vector @f$[p_0, p_1, p_2]@f$, giving:
-///   @f[ \begin{bmatrix} 1 - x - y \\ x \\ y \end{bmatrix} @f]
-///
-/// Example: Order 1 Raviart-Thomas on a triangle
-/// ---------------------------------------------
-/// On a triangle, the 2D vector expansion basis is:
-///  @f[ \begin{matrix}
-///   p_0 & = & (\sqrt{2}/2, 0) \\
-///   p_1 & = & (\sqrt{3}(2x + y - 1), 0) \\
-///   p_2 & = & (3y - 1, 0) \\
-///   p_3 & = & (0, \sqrt{2}/2) \\
-///   p_4 & = & (0, \sqrt{3}(2x + y - 1)) \\
-///   p_5 & = & (0, 3y - 1)
-///  \end{matrix}
-/// @f]
-/// These span the space @f$ P_1^2 @f$.
-///
-/// Raviart-Thomas order 1 elements span a space smaller than @f$ P_1^2 @f$,
-/// so B (span_coeffs) is not the identity. It is given by:
-///   @f[ B = \begin{bmatrix}
-///  1 &  0 &  0 &    0 &  0 &   0 \\
-///  0 &  0 &  0 &    1 &  0 &     0 \\
-///  1/12 &  \sqrt{6}/48 &  -\sqrt{2}/48 &  1/12 &  0 &  \sqrt{2}/24
-///  \end{bmatrix}
-///  @f]
-/// Applying the matrix B to the vector @f$[p_0, p_1, ..., p_5]@f$ gives the
-/// basis of the polynomial space for Raviart-Thomas:
-///   @f[ \begin{bmatrix}
-///  \sqrt{2}/2 &  0 \\
-///   0 &  \sqrt{2}/2 \\
-///   \sqrt{2}x/8  & \sqrt{2}y/8
-///  \end{bmatrix} @f]
-///
-/// The functionals defining the Raviart-Thomas order 1 space are integral
-/// of the normal components along each edge. The matrix D (dual) given
-/// by applying these to @f$p_0@f$ to @f$p_5@f$ is:
-/// @f[ D = \begin{bmatrix}
-/// -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
-/// -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0 &    0 \\
-///           0 &         0   &    0 &  \sqrt{2}/2 &          0 &   -1
-/// \end{bmatrix} @f]
-///
-/// In this example, this function outputs the matrix:
-///  @f[  C = \begin{bmatrix}
-///  -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
-///  -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0  &    0 \\
-///            0 &          0  &    0 &  \sqrt{2}/2 &          0  &   -1
-/// \end{bmatrix} @f]
-/// The basis functions of the finite element can be obtained by applying
-/// the matrix C to the vector @f$[p_0, p_1, ..., p_5]@f$, giving:
-///   @f[ \begin{bmatrix}
-///   -x & -y \\
-///   x - 1 & y \\
-///   -x & 1 - y \end{bmatrix} @f]
-///
-/// @param[in] cell_type The cells shape
-/// @param[in] B Matrices for the kth value index containing the
-/// expansion coefficients defining a polynomial basis spanning the
-/// polynomial space for this element
-/// @param[in] M The interpolation tensor, such that the dual matrix
-/// \f$D\f$ is computed by \f$D = MP\f$
-/// @param[in] x The interpolation points. The vector index is for
-/// points on entities of the same dimension, ordered with the lowest
-/// topological dimension being first. Each 3D tensor hold the points on
-/// cell entities of a common dimension. The shape of the 3d tensors is
-/// (num_entities, num_points_per_entity, tdim).
-/// @param[in] degree The degree of the polynomial basis P used to
-/// create the element (before applying B)
-/// @return The matrix C of expansion coefficients that define the basis
-/// functions of the finite element space. The shape is (num_dofs,
-/// value_size, basis_dim)
-xt::xtensor<double, 3> compute_expansion_coefficients(
-    cell::type cell_type, const xt::xtensor<double, 2>& B,
-    const std::vector<std::vector<xt::xtensor<double, 3>>>& M,
-    const std::vector<std::vector<xt::xtensor<double, 2>>>& x, int degree);
-
 /// Creates a version of the interpolation points, interpolation
 /// matrices and entity transformation that represent a discontinuous
 /// version of the element. This discontinuous version will have the
@@ -213,13 +57,153 @@ class FiniteElement
 
 public:
   /// A finite element
+  ///
+  /// Initialising a finite element calculates the basis functions of the finite
+  /// element, in terms of the polynomial basis.
+  ///
+  /// The below explanation uses Einstein notation.
+  ///
+  /// The basis functions @f${\phi_i}@f$ of a finite element are represented
+  /// as a linear combination of polynomials @f$\{p_j\}@f$ in an underlying
+  /// polynomial basis that span the space of all d-dimensional polynomials up
+  /// to order @f$k \ (P_k^d)@f$:
+  /// \f[ \phi_i = c_{ij} p_j \f]
+  ///
+  /// In some cases, the basis functions @f$\{\phi_i\}@f$ do not span the
+  /// full space @f$P_k@f$, in which case we denote space spanned by the
+  /// basis functions by @f$\{q_k\}@f$, which can be represented by:
+  /// @f[  q_i = b_{ij} p_j. @f]
+  ///  This leads to
+  /// @f[  \phi_i = c^{\prime}_{ij} q_j = c^{\prime}_{ij} b_{jk} p_k,  @f]
+  /// and in matrix form:
+  /// \f[
+  /// \phi = C^{\prime} B p
+  /// \f]
+  ///
+  /// If the basis functions span the full space, then @f$ B @f$ is simply
+  /// the identity.
+  ///
+  /// The basis functions @f$\phi_i@f$ are defined by a dual set of functionals
+  /// @f$\{f_i\}@f$. The basis functions are the functions in span{@f$q_k@f$}
+  /// such that
+  ///   @f[ f_i(\phi_j) = \delta_{ij} @f]
+  /// and inserting the expression for @f$\phi_{j}@f$:
+  ///   @f[ f_i(c^{\prime}_{jk}b_{kl}p_{l}) = c^{\prime}_{jk} b_{kl} f_i \left(
+  ///   p_{l} \right) @f]
+  ///
+  /// Defining a matrix D given by applying the functionals to each
+  /// polynomial @f$p_j@f$:
+  ///  @f[ [D] = d_{ij},\mbox{ where } d_{ij} = f_i(p_j), @f]
+  /// we have:
+  /// @f[ C^{\prime} B D^{T} = I @f]
+  ///
+  /// and
+  ///
+  /// @f[ C^{\prime} = (B D^{T})^{-1}. @f]
+  ///
+  /// Recalling that @f$C = C^{\prime} B@f$, where @f$C@f$ is the matrix
+  /// form of @f$c_{ij}@f$,
+  ///
+  /// @f[ C = (B D^{T})^{-1} B @f]
+  ///
+  /// This function takes the matrices @f$B@f$ (`wcoeffs`) and @f$D@f$ (`M`) as
+  /// inputs and will internally compute @f$C@f$.
+  ///
+  /// The matrix @f$BD^{T}@f$ can be obtained from an element by using the
+  /// function `dual_matrix()`. The matrix @f$C@f$ can be obtained from an
+  /// element by using the function `coefficient_matrix()`.
+  ///
+  /// Example: Order 1 Lagrange elements on a triangle
+  /// ------------------------------------------------
+  /// On a triangle, the scalar expansion basis is:
+  ///  @f[ p_0 = \sqrt{2}/2 \qquad
+  ///   p_1 = \sqrt{3}(2x + y - 1) \qquad
+  ///   p_2 = 3y - 1 @f]
+  /// These span the space @f$P_1@f$.
+  ///
+  /// Lagrange order 1 elements span the space P_1, so in this example,
+  /// B (span_coeffs) is the identity matrix:
+  ///   @f[ B = \begin{bmatrix}
+  ///                   1 & 0 & 0 \\
+  ///                   0 & 1 & 0 \\
+  ///                   0 & 0 & 1 \end{bmatrix} @f]
+  ///
+  /// The functionals defining the Lagrange order 1 space are point
+  /// evaluations at the three vertices of the triangle. The matrix D
+  /// (dual) given by applying these to p_0 to p_2 is:
+  ///  @f[ \mbox{dual} = \begin{bmatrix}
+  ///              \sqrt{2}/2 &  -\sqrt{3} & -1 \\
+  ///              \sqrt{2}/2 &   \sqrt{3} & -1 \\
+  ///              \sqrt{2}/2 &          0 &  2 \end{bmatrix} @f]
+  ///
+  /// For this example, this function outputs the matrix:
+  ///  @f[ C = \begin{bmatrix}
+  ///            \sqrt{2}/3 & -\sqrt{3}/6 &  -1/6 \\
+  ///            \sqrt{2}/3 & \sqrt{3}/6  &  -1/6 \\
+  ///            \sqrt{2}/3 &          0  &   1/3 \end{bmatrix} @f]
+  /// The basis functions of the finite element can be obtained by applying
+  /// the matrix C to the vector @f$[p_0, p_1, p_2]@f$, giving:
+  ///   @f[ \begin{bmatrix} 1 - x - y \\ x \\ y \end{bmatrix} @f]
+  ///
+  /// Example: Order 1 Raviart-Thomas on a triangle
+  /// ---------------------------------------------
+  /// On a triangle, the 2D vector expansion basis is:
+  ///  @f[ \begin{matrix}
+  ///   p_0 & = & (\sqrt{2}/2, 0) \\
+  ///   p_1 & = & (\sqrt{3}(2x + y - 1), 0) \\
+  ///   p_2 & = & (3y - 1, 0) \\
+  ///   p_3 & = & (0, \sqrt{2}/2) \\
+  ///   p_4 & = & (0, \sqrt{3}(2x + y - 1)) \\
+  ///   p_5 & = & (0, 3y - 1)
+  ///  \end{matrix}
+  /// @f]
+  /// These span the space @f$ P_1^2 @f$.
+  ///
+  /// Raviart-Thomas order 1 elements span a space smaller than @f$ P_1^2 @f$,
+  /// so B (span_coeffs) is not the identity. It is given by:
+  ///   @f[ B = \begin{bmatrix}
+  ///  1 &  0 &  0 &    0 &  0 &   0 \\
+  ///  0 &  0 &  0 &    1 &  0 &     0 \\
+  ///  1/12 &  \sqrt{6}/48 &  -\sqrt{2}/48 &  1/12 &  0 &  \sqrt{2}/24
+  ///  \end{bmatrix}
+  ///  @f]
+  /// Applying the matrix B to the vector @f$[p_0, p_1, ..., p_5]@f$ gives the
+  /// basis of the polynomial space for Raviart-Thomas:
+  ///   @f[ \begin{bmatrix}
+  ///  \sqrt{2}/2 &  0 \\
+  ///   0 &  \sqrt{2}/2 \\
+  ///   \sqrt{2}x/8  & \sqrt{2}y/8
+  ///  \end{bmatrix} @f]
+  ///
+  /// The functionals defining the Raviart-Thomas order 1 space are integral
+  /// of the normal components along each edge. The matrix D (dual) given
+  /// by applying these to @f$p_0@f$ to @f$p_5@f$ is:
+  /// @f[ D = \begin{bmatrix}
+  /// -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
+  /// -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0 &    0 \\
+  ///           0 &         0   &    0 &  \sqrt{2}/2 &          0 &   -1
+  /// \end{bmatrix} @f]
+  ///
+  /// In this example, this function outputs the matrix:
+  ///  @f[  C = \begin{bmatrix}
+  ///  -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 & -\sqrt{2}/2 & -\sqrt{3}/2 & -1/2 \\
+  ///  -\sqrt{2}/2 &  \sqrt{3}/2 & -1/2 &          0  &          0  &    0 \\
+  ///            0 &          0  &    0 &  \sqrt{2}/2 &          0  &   -1
+  /// \end{bmatrix} @f]
+  /// The basis functions of the finite element can be obtained by applying
+  /// the matrix C to the vector @f$[p_0, p_1, ..., p_5]@f$, giving:
+  ///   @f[ \begin{bmatrix}
+  ///   -x & -y \\
+  ///   x - 1 & y \\
+  ///   -x & 1 - y \end{bmatrix} @f]
+  ///
   /// @param[in] family The element family
   /// @param[in] cell_type The cell type
   /// @param[in] degree The degree of the element
   /// @param[in] value_shape The value shape of the element
-  /// @param[in] coeffs Expansion coefficients of the basis functions in
-  /// the underlying polynomial set. The shape is (num_dofs, value_size,
-  /// basis_dim)
+  /// @param[in] wcoeffs Matrices for the kth value index containing the
+  /// expansion coefficients defining a polynomial basis spanning the
+  /// polynomial space for this element
   /// @param[in] entity_transformations Entity transformations
   /// representing the effect rotating and reflecting subentities of the
   /// cell has on the DOFs.
@@ -233,7 +217,7 @@ public:
   /// discontinuous version of the element
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
-                const xt::xtensor<double, 3>& coeffs,
+                const xt::xtensor<double, 2>& wcoeffs,
                 const std::map<cell::type, xt::xtensor<double, 3>>&
                     entity_transformations,
                 const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
@@ -773,6 +757,20 @@ public:
   void interpolate(const xtl::span<T>& coefficients,
                    const xtl::span<const T>& data, const int block_size) const;
 
+  /// Get the dual matrix.
+  ///
+  /// This is the matrix @f$BD^{T}@f$, as described in the documentation of the
+  /// `FiniteElement()` constructor.
+  /// @return The dual matrix
+  xt::xtensor<double, 2> dual_matrix() const;
+
+  /// Get the matrix of coefficients.
+  ///
+  /// This is the matrix @f$C@f$, as described in the documentation of the
+  /// `FiniteElement()` constructor.
+  /// @return The dual matrix
+  xt::xtensor<double, 2> coefficient_matrix() const;
+
   /// Element map type
   maps::type map_type;
 
@@ -839,9 +837,6 @@ private:
   /// The interpolation weights and points
   xt::xtensor<double, 2> _matM;
 
-  /// Interpolation matrices
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> _matM_new;
-
   /// Indicates whether or not the DOF transformations are all permutations
   bool _dof_transformations_are_permutations;
 
@@ -884,6 +879,9 @@ private:
 
   // Indicates whether or not this is the discontinuous version of the element
   bool _discontinuous;
+
+  // The dual matrix
+  xt::xtensor<double, 2> _dual_matrix;
 };
 
 /// Create an element using a given Lagrange variant

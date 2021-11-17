@@ -139,12 +139,9 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
     entity_transformations[cell::type::quadrilateral] = ft;
   }
 
-  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
-      {x[0], x[1], x[2], x[3]}, degree);
-  return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity,
-                       true);
+  return FiniteElement(element::family::P, celltype, degree, {1},
+                       xt::eye<double>(ndofs), entity_transformations, x, M,
+                       maps::type::identity, true);
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> vtk_triangle_points(int degree)
@@ -772,12 +769,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
         = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
   }
 
-  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
-      {x[0], x[1], x[2], x[3]}, degree);
-  return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity,
-                       discontinuous);
+  return FiniteElement(element::family::P, celltype, degree, {1},
+                       xt::eye<double>(ndofs), entity_transformations, x, M,
+                       maps::type::identity, discontinuous);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -794,12 +788,12 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
     std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
     std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-    x[0].push_back(xt::xtensor<double, 2>({1, 0}));
+    x[0].push_back(xt::zeros<double>({1, 0}));
     M[0].push_back({{{1}}});
     std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-    xt::xtensor<double, 3> coeffs = {{{1}}};
+    xt::xtensor<double, 2> wcoeffs = {{1}};
 
-    return FiniteElement(element::family::P, cell::type::point, 0, {1}, coeffs,
+    return FiniteElement(element::family::P, cell::type::point, 0, {1}, wcoeffs,
                          entity_transformations, x, M, maps::type::identity,
                          discontinuous);
   }
@@ -964,13 +958,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
   }
 
-  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
-      celltype, xt::eye<double>(ndofs), {M[0], M[1], M[2], M[3]},
-      {x[0], x[1], x[2], x[3]}, degree);
-
-  return FiniteElement(element::family::P, celltype, degree, {1}, coeffs,
-                       entity_transformations, x, M, maps::type::identity,
-                       discontinuous);
+  return FiniteElement(element::family::P, celltype, degree, {1},
+                       xt::eye<double>(ndofs), entity_transformations, x, M,
+                       maps::type::identity, discontinuous);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
@@ -1045,9 +1035,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
         = xt::xtensor<double, 3>({2, 0, 0});
   }
 
-  xt::xtensor<double, 3> coeffs = element::compute_expansion_coefficients(
-      celltype, wcoeffs, {M[tdim]}, {x[tdim]}, degree);
-  return FiniteElement(element::family::DPC, celltype, degree, {1}, coeffs,
+  return FiniteElement(element::family::DPC, celltype, degree, {1}, wcoeffs,
                        entity_transformations, x, M, maps::type::identity,
                        discontinuous);
 }

@@ -15,7 +15,7 @@ xt::xtensor<double, 2> cell::geometry(cell::type celltype)
   switch (celltype)
   {
   case cell::type::point:
-    return xt::xtensor<double, 2>({{0.0}});
+    return xt::xtensor<double, 2>({{}});
   case cell::type::interval:
     return xt::xtensor<double, 2>({{0.0}, {1.0}});
   case cell::type::triangle:

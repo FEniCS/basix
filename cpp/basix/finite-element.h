@@ -776,22 +776,6 @@ public:
   /// @return The interpolation matrix
   const xt::xtensor<double, 2>& interpolation_matrix() const;
 
-  /// Compute the coefficients of a function given the values of the function
-  /// at the interpolation points.
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @note This function will be removed in a future version.
-  ///
-  /// @param[in,out] coefficients The coefficients of the function's
-  /// interpolation into the function space
-  /// @param[in] data The function evaluated at the points given by `points()`
-  /// @param[in] block_size The block size of the data
-  template <typename T>
-  void interpolate(const xtl::span<T>& coefficients,
-                   const xtl::span<const T>& data, const int block_size) const;
-
   /// Get the dual matrix.
   ///
   /// This is the matrix @f$BD^{T}@f$, as described in the documentation of the
@@ -1335,43 +1319,6 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
               block_size);
 
         dofstart += _num_edofs[2][f];
-      }
-    }
-  }
-}
-//-----------------------------------------------------------------------------
-template <typename T>
-void FiniteElement::interpolate(const xtl::span<T>& coefficients,
-                                const xtl::span<const T>& data,
-                                const int block_size) const
-{
-  const std::size_t rows = dim();
-
-  const xt::xtensor<double, 2>& Pi = interpolation_matrix();
-  assert(Pi.size() % rows == 0);
-  const std::size_t cols = Pi.size() / rows;
-
-  // Compute coefficients = Pi * x (matrix-vector multiply)
-  if (block_size == 1)
-  {
-    for (std::size_t i = 0; i < rows; ++i)
-    {
-      // Can be replaced with std::transform_reduce once GCC 8 series dies.
-      // Dot product between row i of the matrix and 'data'
-      coefficients[i] = std::inner_product(
-          std::next(Pi.data(), i * cols), std::next(Pi.data(), i * cols + cols),
-          data.data(), T(0.0));
-    }
-  }
-  else
-  {
-    for (int b = 0; b < block_size; ++b)
-    {
-      for (std::size_t i = 0; i < rows; ++i)
-      {
-        coefficients[block_size * i + b] = 0;
-        for (std::size_t j = 0; j < cols; ++j)
-          coefficients[block_size * i + b] += Pi(i, j) * data(b * cols + j);
       }
     }
   }

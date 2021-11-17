@@ -9,6 +9,7 @@
 #include "maps.h"
 #include "precompute.h"
 #include <array>
+#include <functional>
 #include <numeric>
 #include <string>
 #include <vector>

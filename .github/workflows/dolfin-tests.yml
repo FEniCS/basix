@@ -48,7 +48,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: mscroggs/remove_interpolate
+          ref: main
 
       - name: Install DOLFINx
         run: |

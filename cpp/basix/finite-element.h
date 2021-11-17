@@ -454,25 +454,25 @@ public:
   /// - `inv_detJ` [in] 1/det(J)
   /// - `J` [in] The Jacobian  of the map
   template <typename O, typename P, typename Q, typename R>
-  std::function<void(O&&, const P&, const Q&, double, const R&)>
+  std::function<void(O&, const P&, const Q&, double, const R&)>
   map_pull_back() const
   {
     switch (map_type)
     {
     case maps::type::identity:
-      return [](O&& r, const P& U, const Q& J, double detJ, const R& K)
+      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
       { maps::impl::identity(r, U, J, detJ, K); };
     case maps::type::covariantPiola:
-      return [](O&& r, const P& U, const Q& J, double detJ, const R& K)
+      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
       { maps::impl::covariant_piola(r, U, J, detJ, K); };
     case maps::type::contravariantPiola:
-      return [](O&& r, const P& U, const Q& J, double detJ, const R& K)
+      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
       { maps::impl::contravariant_piola(r, U, J, detJ, K); };
     case maps::type::doubleCovariantPiola:
-      return [](O&& r, const P& U, const Q& J, double detJ, const R& K)
+      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
       { maps::impl::double_covariant_piola(r, U, J, detJ, K); };
     case maps::type::doubleContravariantPiola:
-      return [](O&& r, const P& U, const Q& J, double detJ, const R& K)
+      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
       { maps::impl::double_contravariant_piola(r, U, J, detJ, K); };
     default:
       throw std::runtime_error("Mapping not implemented");

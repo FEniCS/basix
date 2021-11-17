@@ -60,7 +60,6 @@ template <typename Vec0, typename Vec1, typename Mat0, typename Mat1>
 void identity(Vec0&& r, const Vec1& U, const Mat0& /*J*/, double /*detJ*/,
               const Mat1& /*K*/)
 {
-
   r.assign(U);
 }
 

@@ -57,7 +57,6 @@ map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
   std::size_t entity_dim = cell::topological_dimension(celltype1);
   std::size_t num_entities = cell::num_sub_entities(celltype0, entity_dim);
 
-  // xt::xtensor<double, 3> p({num_entities, x.shape(0), tdim});
   std::vector<xt::xtensor<double, 2>> p(num_entities,
                                         xt::zeros<double>({x.shape(0), tdim}));
   xt::xtensor<double, 3> axes({num_entities, entity_dim, tdim});
@@ -116,11 +115,9 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   {
     std::array<std::size_t, 3> shape = {2, pts.shape(0), pts.shape(1)};
     tpts = xt::zeros<double>(shape);
-
     J.resize({2, 2, 2});
     K.resize({2, 2, 2});
-    xt::xtensor<double, 2> A = xt::zeros<double>({2, 2});
-
+    xt::xtensor_fixed<double, xt::xshape<2, 2>> A = xt::zeros<double>({2, 2});
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       tpts(0, i, 0) = pts(i, 1);
@@ -148,7 +145,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
     J.resize({2, 2, 2});
     K.resize({2, 2, 2});
-    xt::xtensor<double, 2> A = xt::zeros<double>({2, 2});
+    xt::xtensor_fixed<double, xt::xshape<2, 2>> A = xt::zeros<double>({2, 2});
 
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
@@ -171,10 +168,8 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     break;
   }
   default:
-  {
     throw std::runtime_error(
         "DOF transformations only implemented for tdim <= 2.");
-  }
   }
 
   std::array<std::size_t, 3> shape
@@ -237,8 +232,11 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   const xt::xtensor<double, 3> t
       = create_dot_moment_dof_transformations(moment_space);
 
-  xt::xtensor<double, 2> rot = xt::zeros<double>({2, 2});
-  xt::xtensor<double, 2> ref = xt::zeros<double>({2, 2});
+  // xt::xtensor<double, 2> rot = xt::zeros<double>({2, 2});
+  // xt::xtensor<double, 2> ref = xt::zeros<double>({2, 2});
+  xt::xtensor_fixed<double, xt::xshape<2, 2>> rot = xt::zeros<double>({2, 2});
+  xt::xtensor_fixed<double, xt::xshape<2, 2>> ref = xt::zeros<double>({2, 2});
+
   cell::type celltype = moment_space.cell_type();
   switch (celltype)
   {

@@ -232,8 +232,6 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   const xt::xtensor<double, 3> t
       = create_dot_moment_dof_transformations(moment_space);
 
-  // xt::xtensor<double, 2> rot = xt::zeros<double>({2, 2});
-  // xt::xtensor<double, 2> ref = xt::zeros<double>({2, 2});
   xt::xtensor_fixed<double, xt::xshape<2, 2>> rot = xt::zeros<double>({2, 2});
   xt::xtensor_fixed<double, xt::xshape<2, 2>> ref = xt::zeros<double>({2, 2});
 

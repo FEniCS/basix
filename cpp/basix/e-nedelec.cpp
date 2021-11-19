@@ -179,14 +179,12 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
     throw std::runtime_error("Invalid celltype in Nedelec");
   }
 
-  const int quad_deg = 5 * degree;
-
   // Integral representation for the boundary (edge) dofs
   FiniteElement edge_space
       = element::create_lagrange(cell::type::interval, degree - 1,
                                  element::lagrange_variant::equispaced, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      edge_space, celltype, tdim, quad_deg);
+      edge_space, celltype, tdim, 2 * degree - 1);
   entity_transformations[cell::type::interval]
       = moments::create_tangent_moment_dof_transformations(edge_space);
 
@@ -204,8 +202,8 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
     FiniteElement face_space
         = element::create_lagrange(cell::type::triangle, degree - 2,
                                    element::lagrange_variant::equispaced, true);
-    std::tie(x[2], M[2])
-        = moments::make_integral_moments(face_space, celltype, tdim, quad_deg);
+    std::tie(x[2], M[2]) = moments::make_integral_moments(face_space, celltype,
+                                                          tdim, 2 * degree - 2);
     if (tdim == 3)
     {
       entity_transformations[cell::type::triangle]
@@ -219,7 +217,7 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
     std::tie(x[3], M[3]) = moments::make_integral_moments(
         element::create_lagrange(cell::type::tetrahedron, degree - 3,
                                  element::lagrange_variant::equispaced, true),
-        cell::type::tetrahedron, 3, quad_deg);
+        cell::type::tetrahedron, 3, 2 * degree - 3);
   }
 
   if (discontinuous)
@@ -243,8 +241,6 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
 
-  const int quad_deg = 5 * degree;
-
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Integral representation for the edge dofs
@@ -252,7 +248,7 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
       = element::create_lagrange(cell::type::interval, degree,
                                  element::lagrange_variant::equispaced, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      edge_space, celltype, tdim, quad_deg);
+      edge_space, celltype, tdim, 2 * degree);
   entity_transformations[cell::type::interval]
       = moments::create_tangent_moment_dof_transformations(edge_space);
 
@@ -270,7 +266,7 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
     FiniteElement face_space
         = element::create_rt(cell::type::triangle, degree - 1, true);
     std::tie(x[2], M[2]) = moments::make_dot_integral_moments(
-        face_space, celltype, tdim, quad_deg);
+        face_space, celltype, tdim, 2 * degree - 1);
     if (tdim == 3)
     {
       entity_transformations[cell::type::triangle]
@@ -283,7 +279,7 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
     // Interior integral moment
     std::tie(x[3], M[3]) = moments::make_dot_integral_moments(
         element::create_rt(cell::type::tetrahedron, degree - 2, true), celltype,
-        tdim, quad_deg);
+        tdim, 2 * degree - 2);
   }
 
   const std::size_t psize = polyset::dim(celltype, degree);

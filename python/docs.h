@@ -249,7 +249,7 @@ appropriate derivative.
 one for scalar basis functions.
 )";
 
-const std::string FiniteElement__map_push_forward = R"(
+const std::string FiniteElement__push_forward = R"(
 Map function values from the reference to a physical cell. This
 function can perform the mapping for multiple points, grouped by
 points that share a common Jacobian.
@@ -272,7 +272,7 @@ numpy.ndarray[numpy.float64]
 index, point index, components].
 )";
 
-const std::string FiniteElement__map_pull_back = R"(
+const std::string FiniteElement__pull_back = R"(
 Map function values from a physical cell to the reference
 
 Parameters

@@ -9,6 +9,7 @@
 #include "maps.h"
 #include "precompute.h"
 #include <array>
+#include <functional>
 #include <numeric>
 #include <string>
 #include <vector>
@@ -357,47 +358,10 @@ public:
   /// are [Jacobian index, K_i, K_j].
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
-  xt::xtensor<double, 3>
-  map_push_forward(const xt::xtensor<double, 3>& U,
-                   const xt::xtensor<double, 3>& J,
-                   const xtl::span<const double>& detJ,
-                   const xt::xtensor<double, 3>& K) const;
-
-  /// Direct to memory push forward
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in] U Data defined on the reference element. It must have
-  /// dimension 3. The first index is for the geometric/map data, the
-  /// second is the point index for points that share map data, and the
-  /// third index is (vector) component, e.g. `u[i,:,:]` are points that
-  /// are mapped by `J[i,:,:]`.
-  /// @param[in] J The Jacobians. It must have dimension 3. The first
-  /// index is for the ith Jacobian, i.e. J[i,:,:] is the ith Jacobian.
-  /// @param[in] detJ The determinant of J. `detJ[i]` is equal to
-  /// `det(J[i,:,:])`. It must have dimension 1. @param[in] K The
-  /// inverse of J, `K[i,:,:] = J[i,:,:]^-1`. It must
-  /// have dimension 3.
-  /// @param[out] u The input `U` mapped to the physical. It must have
-  /// dimension 3.
-  template <typename O, typename P, typename Q, typename S, typename T>
-  void map_push_forward_m(const O& U, const P& J, const Q& detJ, const S& K,
-                          T&& u) const
-  {
-    // FIXME: Should U.shape(2) be replaced by the physical value size?
-    // Can it differ?
-
-    // Loop over points that share J
-    for (std::size_t i = 0; i < U.shape(0); ++i)
-    {
-      auto _J = xt::view(J, i, xt::all(), xt::all());
-      auto _K = xt::view(K, i, xt::all(), xt::all());
-      auto _U = xt::view(U, i, xt::all(), xt::all());
-      auto _u = xt::view(u, i, xt::all(), xt::all());
-      maps::apply_map(_u, _U, _J, detJ[i], _K, map_type);
-    }
-  }
+  xt::xtensor<double, 3> push_forward(const xt::xtensor<double, 3>& U,
+                                      const xt::xtensor<double, 3>& J,
+                                      const xtl::span<const double>& detJ,
+                                      const xt::xtensor<double, 3>& K) const;
 
   /// Map function values from a physical cell to the reference
   /// @param[in] u The function values on the cell
@@ -405,42 +369,63 @@ public:
   /// @param[in] detJ The determinant of the Jacobian of the mapping
   /// @param[in] K The inverse of the Jacobian of the mapping
   /// @return The function values on the reference
-  xt::xtensor<double, 3> map_pull_back(const xt::xtensor<double, 3>& u,
-                                       const xt::xtensor<double, 3>& J,
-                                       const xtl::span<const double>& detJ,
-                                       const xt::xtensor<double, 3>& K) const;
+  xt::xtensor<double, 3> pull_back(const xt::xtensor<double, 3>& u,
+                                   const xt::xtensor<double, 3>& J,
+                                   const xtl::span<const double>& detJ,
+                                   const xt::xtensor<double, 3>& K) const;
 
-  /// Map function values from a physical cell back to to the reference
+  /// Return a function that performs the appropriate
+  /// push-forward/pull-back for the element type
   ///
+  /// @tparam O The type that hold the (computed) mapped data (ndim==2)
+  /// @tparam P The type that hold the data to be mapped (ndim==2)
+  /// @tparam Q The type that holds the Jacobian (or inverse) matrix (ndim==2)
+  /// @tparam R The type that holds the inverse of the `Q` data
+  /// (ndim==2)
   ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
+  /// @return A function that for a push-forward takes arguments
+  /// - `u` [out] The data on the physical cell after the
+  /// push-forward flattened with row-major layout, shape=(num_points,
+  /// value_size)
+  /// - `U` [in] The data on the reference cell physical field to push
+  /// forward, flattened with row-major layout, shape=(num_points,
+  /// ref_value_size)
+  /// - `J` [in] The Jacobian matrix of the map ,shape=(gdim, tdim)
+  /// - `detJ` [in] det(J)
+  /// - `K` [in] The inverse of the Jacobian matrix, shape=(tdim, gdim)
   ///
-  /// @param[in] u Data defined on the physical element. It must have
-  /// dimension 3. The first index is for the geometric/map data, the
-  /// second is the point index for points that share map data, and the
-  /// third index is (vector) component, e.g. `u[i,:,:]` are points that
-  /// are mapped by `J[i,:,:]`.
-  /// @param[in] J The Jacobians. It must have dimension 3. The first
-  /// index is for the ith Jacobian, i.e. J[i,:,:] is the ith Jacobian.
-  /// @param[in] detJ The determinant of J. `detJ[i]` is equal to
-  /// `det(J[i,:,:])`. It must have dimension 1. @param[in] K The
-  /// inverse of J, `K[i,:,:] = J[i,:,:]^-1`. It must
-  /// have dimension 3.
-  /// @param[out] U The input `u` mapped to the reference element. It
-  /// must have dimension 3.
-  template <typename O, typename P, typename Q, typename S, typename T>
-  void map_pull_back_m(const O& u, const P& J, const Q& detJ, const S& K,
-                       T&& U) const
+  /// For a pull-back the arguments should be:
+  /// - `U` [out] The data on the reference cell after the pull-back,
+  /// flattened with row-major layout, shape=(num_points, ref
+  /// value_size)
+  /// - `u` [in] The data on the physical cell that should be pulled
+  /// back , flattened with row-major layout, shape=(num_points,
+  /// value_size)
+  /// - `K` [in] The inverse oif the Jacobian matrix of the map
+  /// ,shape=(tdim, gdim)
+  /// - `detJ_inv` [in] 1/det(J)
+  /// - `J` [in] The Jacobian matrix, shape=(gdim, tdim)
+  template <typename O, typename P, typename Q, typename R>
+  std::function<void(O&, const P&, const Q&, double, const R&)> map_fn() const
   {
-    // Loop over points that share K and K
-    for (std::size_t i = 0; i < u.shape(0); ++i)
+    switch (map_type)
     {
-      auto _J = xt::view(J, i, xt::all(), xt::all());
-      auto _K = xt::view(K, i, xt::all(), xt::all());
-      auto _u = xt::view(u, i, xt::all(), xt::all());
-      auto _U = xt::view(U, i, xt::all(), xt::all());
-      maps::apply_map(_U, _u, _K, 1.0 / detJ[i], _J, map_type);
+    case maps::type::identity:
+      return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
+    case maps::type::covariantPiola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::covariant_piola(u, U, J, detJ, K); };
+    case maps::type::contravariantPiola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::contravariant_piola(u, U, J, detJ, K); };
+    case maps::type::doubleCovariantPiola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::double_covariant_piola(u, U, J, detJ, K); };
+    case maps::type::doubleContravariantPiola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::double_contravariant_piola(u, U, J, detJ, K); };
+    default:
+      throw std::runtime_error("Map not implemented");
     }
   }
 

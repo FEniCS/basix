@@ -28,9 +28,6 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   // The number of order (degree) scalar polynomials
   const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
 
-  // quadrature degree
-  int quad_deg = 5 * degree;
-
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
@@ -38,7 +35,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   const FiniteElement facet_moment_space = element::create_lagrange(
       facettype, degree, element::lagrange_variant::equispaced, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
-      facet_moment_space, celltype, tdim, quad_deg);
+      facet_moment_space, celltype, tdim, degree * 2);
 
   const xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
@@ -49,7 +46,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
     // Interior integral moment
     std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
         element::create_nedelec(celltype, degree - 1, true), celltype, tdim,
-        quad_deg);
+        2 * degree - 1);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

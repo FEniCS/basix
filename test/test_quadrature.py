@@ -14,13 +14,13 @@ import sympy
                                       (basix.CellType.interval, 1.0),
                                       (basix.CellType.triangle, 0.5),
                                       (basix.CellType.tetrahedron, 1.0/6.0)])
-@pytest.mark.parametrize("order", [1, 2, 3, 4, 5, 6, 7, 8])
+@pytest.mark.parametrize("order", range(9))
 def test_cell_quadrature(celltype, order):
     Qpts, Qwts = basix.make_quadrature(celltype[0], order)
     assert(np.isclose(sum(Qwts), celltype[1]))
 
 
-@pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
+@pytest.mark.parametrize("m", range(7))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gll])
 def test_qorder_line(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.interval, m)
@@ -33,7 +33,7 @@ def test_qorder_line(m, scheme):
     assert(np.isclose(float(q), float(s)))
 
 
-@pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6])
+@pytest.mark.parametrize("m", range(6))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi])
 def test_qorder_tri(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.triangle, m)
@@ -77,7 +77,7 @@ def test_xiao_gimbutas_tet(m, scheme):
     assert(np.isclose(float(q), float(s)))
 
 
-@pytest.mark.parametrize("m", [0, 1, 2, 3, 4, 5, 6, 7, 8])
+@pytest.mark.parametrize("m", range(9))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.Default, basix.QuadratureType.gauss_jacobi])
 def test_qorder_tet(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.tetrahedron, m)

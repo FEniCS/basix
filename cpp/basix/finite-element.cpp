@@ -764,7 +764,7 @@ xt::xtensor<double, 3> FiniteElement::pull_back(
     map(_U, _u, _K, 1.0 / detJ[i], _J);
   }
 
-  return u;
+  return U;
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,

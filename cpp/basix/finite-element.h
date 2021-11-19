@@ -364,42 +364,6 @@ public:
                    const xtl::span<const double>& detJ,
                    const xt::xtensor<double, 3>& K) const;
 
-  /// Direct to memory push forward
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in] U Data defined on the reference element. It must have
-  /// dimension 3. The first index is for the geometric/map data, the
-  /// second is the point index for points that share map data, and the
-  /// third index is (vector) component, e.g. `u[i,:,:]` are points that
-  /// are mapped by `J[i,:,:]`.
-  /// @param[in] J The Jacobians. It must have dimension 3. The first
-  /// index is for the ith Jacobian, i.e. J[i,:,:] is the ith Jacobian.
-  /// @param[in] detJ The determinant of J. `detJ[i]` is equal to
-  /// `det(J[i,:,:])`. It must have dimension 1. @param[in] K The
-  /// inverse of J, `K[i,:,:] = J[i,:,:]^-1`. It must
-  /// have dimension 3.
-  /// @param[out] u The input `U` mapped to the physical. It must have
-  /// dimension 3.
-  template <typename O, typename P, typename Q, typename S, typename T>
-  void map_push_forward_m(const O& U, const P& J, const Q& detJ, const S& K,
-                          T&& u) const
-  {
-    // FIXME: Should U.shape(2) be replaced by the physical value size?
-    // Can it differ?
-
-    // Loop over points that share J
-    for (std::size_t i = 0; i < U.shape(0); ++i)
-    {
-      auto _J = xt::view(J, i, xt::all(), xt::all());
-      auto _K = xt::view(K, i, xt::all(), xt::all());
-      auto _U = xt::view(U, i, xt::all(), xt::all());
-      auto _u = xt::view(u, i, xt::all(), xt::all());
-      maps::apply_map(_u, _U, _J, detJ[i], _K, map_type);
-    }
-  }
-
   /// Map function values from a physical cell to the reference
   /// @param[in] u The function values on the cell
   /// @param[in] J The Jacobian of the mapping
@@ -410,40 +374,6 @@ public:
                                        const xt::xtensor<double, 3>& J,
                                        const xtl::span<const double>& detJ,
                                        const xt::xtensor<double, 3>& K) const;
-
-  /// Map function values from a physical cell back to to the reference
-  ///
-  ///
-  /// @note This function is designed to be called at runtime, so its
-  /// performance is critical.
-  ///
-  /// @param[in] u Data defined on the physical element. It must have
-  /// dimension 3. The first index is for the geometric/map data, the
-  /// second is the point index for points that share map data, and the
-  /// third index is (vector) component, e.g. `u[i,:,:]` are points that
-  /// are mapped by `J[i,:,:]`.
-  /// @param[in] J The Jacobians. It must have dimension 3. The first
-  /// index is for the ith Jacobian, i.e. J[i,:,:] is the ith Jacobian.
-  /// @param[in] detJ The determinant of J. `detJ[i]` is equal to
-  /// `det(J[i,:,:])`. It must have dimension 1.
-  /// @param[in] K The inverse of J, `K[i,:,:] = J[i,:,:]^-1`. It must
-  /// have dimension 3.
-  /// @param[out] U The input `u` mapped to the reference element. It
-  /// must have dimension 3.
-  template <typename O, typename P, typename Q, typename S, typename T>
-  void map_pull_back_m(const O& u, const P& J, const Q& detJ, const S& K,
-                       T&& U) const
-  {
-    // Loop over points that share K and K
-    for (std::size_t i = 0; i < u.shape(0); ++i)
-    {
-      auto _J = xt::view(J, i, xt::all(), xt::all());
-      auto _K = xt::view(K, i, xt::all(), xt::all());
-      auto _u = xt::view(u, i, xt::all(), xt::all());
-      auto _U = xt::view(U, i, xt::all(), xt::all());
-      maps::apply_map(_U, _u, _K, 1.0 / detJ[i], _J, map_type);
-    }
-  }
 
   /// Return a function that performs the appropriate push-forward for
   /// the element type

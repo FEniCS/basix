@@ -17,7 +17,6 @@ import sympy
 @pytest.mark.parametrize("order", [1, 2, 3, 4, 5, 6, 7, 8])
 def test_cell_quadrature(celltype, order):
     Qpts, Qwts = basix.make_quadrature(celltype[0], order)
-    print(sum(Qwts))
     assert(np.isclose(sum(Qwts), celltype[1]))
 
 
@@ -45,22 +44,36 @@ def test_qorder_tri(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1])])
-    print(len(Qwts))
     assert(np.isclose(float(q), float(s)))
 
 
-@pytest.mark.parametrize("m", [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
+@pytest.mark.parametrize("m", range(1, 20))
 @pytest.mark.parametrize("scheme", [basix.QuadratureType.xiao_gimbutas])
 def test_xiao_gimbutas_tri(m, scheme):
     Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.triangle, m)
     x = sympy.Symbol('x')
     y = sympy.Symbol('y')
-    f = x**m + y**m
-    q = sympy.integrate(sympy.integrate(f, (x, 0, (1 - y))), (y, 0, 1))
+    f = x**m + 2 * y**m
+    q = sympy.integrate(sympy.integrate(f, (x, 0, 1 - y)), (y, 0, 1))
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1])])
-    print(len(Qwts))
+    assert(np.isclose(float(q), float(s)))
+
+
+@pytest.mark.parametrize("m", range(1, 16))
+@pytest.mark.parametrize("scheme", [basix.QuadratureType.xiao_gimbutas])
+def test_xiao_gimbutas_tet(m, scheme):
+    Qpts, Qwts = basix.make_quadrature(scheme, basix.CellType.tetrahedron, m)
+    x = sympy.Symbol('x')
+    y = sympy.Symbol('y')
+    z = sympy.Symbol('z')
+    f = x**m + 2 * y**m + 3 * z**m
+    q = sympy.integrate(f, (x, 0, 1 - y - z), (y, 0, 1 - z), (z, 0, 1))
+    s = 0.0
+    for (pt, wt) in zip(Qpts, Qwts):
+        s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
+    print(q / s)
     assert(np.isclose(float(q), float(s)))
 
 
@@ -76,7 +89,6 @@ def test_qorder_tet(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
-    print(len(Qwts))
     assert(np.isclose(float(q), float(s)))
 
 

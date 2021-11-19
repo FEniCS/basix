@@ -445,38 +445,55 @@ public:
     }
   }
 
-  /// Return a function that performs a pull-back
+  /// Return a function that performs the appropriate push-forward for
+  /// the element type
   ///
+  /// @tparam O The type that hold the computed pushed-forward data
+  /// (ndim==2)
+  /// @tparam P The type that hold the data to be pulled back (ndim==2)
+  /// @tparam Q The type that holds the Jacobian matrix (ndim==2)
+  /// @tparam R The type that holds the inverse of the Jacobian matrix
+  /// (ndim==2)
   /// @return A function that takes arguments
-  /// - `U` [out] The field after the pull-back flattened with row-major layout
-  /// - `u` [in] The physical field to pulled back, flattened with row-major
-  /// layout
-  /// - `K` [in] The inverse of the Jacobian
-  /// - `inv_detJ` [in] 1/det(J)
-  /// - `J` [in] The Jacobian  of the map
+  /// - `u` [out] The data on the physical cell after the
+  /// push-forward flattened with row-major layout, shape=(num_points,
+  /// value_size)
+  /// - `U` [in] The data on the reference cell physical field to push
+  /// forward, flattened with row-major layout, shape=(num_points,
+  /// ref_value_size)
+  /// - `J` [in] The Jacobian matrix of the map ,shape=(gdim, tdim)
+  /// - `detJ` [in] det(J)
+  /// - `K` [in] The inverse of the Jacobian matrix, shape=(tdim, gdim)
+  ///
+  /// @note A pull back can be computed using this function by changing
+  /// the order of the arguments:
+  /// - `u` -> `U`
+  /// - `U` -> `u`
+  /// - `J` -> `K`
+  /// - `det(J)` -> 1.0/det(J)
+  /// - `K` -> `J`
   template <typename O, typename P, typename Q, typename R>
   std::function<void(O&, const P&, const Q&, double, const R&)>
-  map_pull_back() const
+  push_forward_fn() const
   {
     switch (map_type)
     {
     case maps::type::identity:
-      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
-      { maps::impl::identity(r, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
     case maps::type::covariantPiola:
-      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
-      { maps::impl::covariant_piola(r, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::impl::covariant_piola(u, U, J, detJ, K); };
     case maps::type::contravariantPiola:
-      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
-      { maps::impl::contravariant_piola(r, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::impl::contravariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleCovariantPiola:
-      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
-      { maps::impl::double_covariant_piola(r, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::impl::double_covariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleContravariantPiola:
-      return [](O& r, const P& U, const Q& J, double detJ, const R& K)
-      { maps::impl::double_contravariant_piola(r, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::impl::double_contravariant_piola(u, U, J, detJ, K); };
     default:
-      throw std::runtime_error("Mapping not implemented");
+      throw std::runtime_error("Map not implemented");
     }
   }
 

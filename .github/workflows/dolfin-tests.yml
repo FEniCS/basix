@@ -48,7 +48,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: mscroggs/test_more_spaces
+          ref: main
 
       - name: Install DOLFINx
         run: |

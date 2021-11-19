@@ -21,7 +21,7 @@ if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
   find_package(xsimd REQUIRED)
 endif()
 
-find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 if(SKBUILD)
   # Scikit-Build does not add your site-packages to the search path
@@ -29,7 +29,7 @@ if(SKBUILD)
   # directory here.
   execute_process(
     COMMAND
-      "${Python3_EXECUTABLE}" -c
+      "${PYTHON_EXECUTABLE}" -c
       "import pybind11; print(pybind11.get_cmake_dir())"
     OUTPUT_VARIABLE _tmp_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)

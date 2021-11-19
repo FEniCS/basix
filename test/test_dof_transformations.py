@@ -165,7 +165,7 @@ def test_transformation_of_tabulated_data_triangle(element_type, degree, element
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
@@ -195,7 +195,7 @@ def test_transformation_of_tabulated_data_quadrilateral(element_type, degree, el
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -225,7 +225,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -244,7 +244,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(rotated_values, J, detJ, K)
+        mapped_values = e.push_forward(rotated_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -261,7 +261,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -295,7 +295,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -314,7 +314,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(rotated_values, J, detJ, K)
+        mapped_values = e.push_forward(rotated_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -331,7 +331,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -361,7 +361,7 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -380,7 +380,7 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(rotated_values, J, detJ, K)
+        mapped_values = e.push_forward(rotated_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -397,7 +397,7 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -427,7 +427,7 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -446,7 +446,7 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(rotated_values, J, detJ, K)
+        mapped_values = e.push_forward(rotated_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]
@@ -463,7 +463,7 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
         J = np.array([_J for p in points])
         detJ = np.array([np.linalg.det(_J) for p in points])
         K = np.array([np.linalg.inv(_J) for p in points])
-        mapped_values = e.map_push_forward(reflected_values, J, detJ, K)
+        mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
             for d in range(e.value_size):
                 i_slice = i[:, d]

@@ -34,7 +34,7 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
     assert values.shape[1] == e.dim
     assert values.shape[2] == reference_value_size
 
-    mapped = e.map_push_forward(values, _J, _detJ, _K)
+    mapped = e.push_forward(values, _J, _detJ, _K)
     assert mapped.shape[0] == values.shape[0]
     assert mapped.shape[1] == e.dim
     assert mapped.shape[2] == physical_value_size

@@ -170,8 +170,10 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
     const std::vector<int> face_ref_perm
         = doftransforms::triangle_reflection(degree);
 
-    const xt::xtensor<double, 2> sub_rot = {{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
-    const xt::xtensor<double, 2> sub_ref = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
+    const xt::xtensor_fixed<double, xt::xshape<3, 3>> sub_rot
+        = {{0, 1, 0}, {0, 0, 1}, {1, 0, 0}};
+    const xt::xtensor_fixed<double, xt::xshape<3, 3>> sub_ref
+        = {{0, 1, 0}, {1, 0, 0}, {0, 0, 1}};
 
     const std::array<std::size_t, 3> f_shape
         = {2, face_ref_perm.size() * 3, face_ref_perm.size() * 3};

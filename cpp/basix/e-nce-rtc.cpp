@@ -112,16 +112,13 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
     }
   }
 
-  // Quadrature degree
-  int quad_deg = 2 * degree;
-
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   FiniteElement moment_space = element::create_lagrange(
       facettype, degree - 1, element::lagrange_variant::equispaced, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
-      moment_space, celltype, tdim, quad_deg);
+      moment_space, celltype, tdim, 2 * degree - 1);
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(moment_space);
 
@@ -130,7 +127,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   {
     std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
         element::create_nce(celltype, degree - 1, true), celltype, tdim,
-        quad_deg);
+        2 * degree - 1);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
@@ -282,9 +279,6 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     }
   }
 
-  // quadrature degree
-  int quad_deg = 2 * degree;
-
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
@@ -292,7 +286,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
       = element::create_lagrange(cell::type::interval, degree - 1,
                                  element::lagrange_variant::equispaced, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      edge_moment_space, celltype, tdim, quad_deg);
+      edge_moment_space, celltype, tdim, 2 * degree - 1);
   xt::xtensor<double, 3> edge_transforms
       = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
@@ -304,7 +298,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     FiniteElement moment_space
         = element::create_rtc(cell::type::quadrilateral, degree - 1, true);
     std::tie(x[2], M[2]) = moments::make_dot_integral_moments(
-        moment_space, celltype, tdim, quad_deg);
+        moment_space, celltype, tdim, 2 * degree - 1);
 
     if (tdim == 3)
     {
@@ -314,7 +308,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
       // Interior integral moment
       std::tie(x[3], M[3]) = moments::make_dot_integral_moments(
           element::create_rtc(cell::type::hexahedron, degree - 1, true),
-          celltype, tdim, quad_deg);
+          celltype, tdim, 2 * degree - 1);
     }
   }
 

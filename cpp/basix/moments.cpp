@@ -195,7 +195,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
     // Pull back basis function values to the reference cell (applied
     // map)
     const xt::xtensor<double, 3> F
-        = moment_space.map_pull_back(moment_space_pts, Ji, detJ, Ki);
+        = moment_space.pull_back(moment_space_pts, Ji, detJ, Ki);
 
     // Copy onto 2D array
     xt::xtensor<double, 2> _pulled({F.shape(0), F.shape(1) * F.shape(2)});

@@ -39,7 +39,7 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
     assert mapped.shape[1] == e.dim
     assert mapped.shape[2] == physical_value_size
 
-    unmapped = e.map_pull_back(mapped, _J, _detJ, _K)
+    unmapped = e.pull_back(mapped, _J, _detJ, _K)
     assert np.allclose(values, unmapped)
 
 

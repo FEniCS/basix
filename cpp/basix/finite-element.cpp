@@ -712,7 +712,7 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> FiniteElement::map_push_forward(
+xt::xtensor<double, 3> FiniteElement::push_forward(
     const xt::xtensor<double, 3>& U, const xt::xtensor<double, 3>& J,
     const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
@@ -740,7 +740,7 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
   return u;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> FiniteElement::map_pull_back(
+xt::xtensor<double, 3> FiniteElement::pull_back(
     const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
     const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {

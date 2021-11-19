@@ -358,11 +358,10 @@ public:
   /// are [Jacobian index, K_i, K_j].
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
-  xt::xtensor<double, 3>
-  map_push_forward(const xt::xtensor<double, 3>& U,
-                   const xt::xtensor<double, 3>& J,
-                   const xtl::span<const double>& detJ,
-                   const xt::xtensor<double, 3>& K) const;
+  xt::xtensor<double, 3> push_forward(const xt::xtensor<double, 3>& U,
+                                      const xt::xtensor<double, 3>& J,
+                                      const xtl::span<const double>& detJ,
+                                      const xt::xtensor<double, 3>& K) const;
 
   /// Map function values from a physical cell to the reference
   /// @param[in] u The function values on the cell
@@ -370,10 +369,10 @@ public:
   /// @param[in] detJ The determinant of the Jacobian of the mapping
   /// @param[in] K The inverse of the Jacobian of the mapping
   /// @return The function values on the reference
-  xt::xtensor<double, 3> map_pull_back(const xt::xtensor<double, 3>& u,
-                                       const xt::xtensor<double, 3>& J,
-                                       const xtl::span<const double>& detJ,
-                                       const xt::xtensor<double, 3>& K) const;
+  xt::xtensor<double, 3> pull_back(const xt::xtensor<double, 3>& u,
+                                   const xt::xtensor<double, 3>& J,
+                                   const xtl::span<const double>& detJ,
+                                   const xt::xtensor<double, 3>& K) const;
 
   /// Return a function that performs the appropriate
   /// push-forward/pull-back for the element type

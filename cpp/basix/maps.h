@@ -57,6 +57,7 @@ void dot21(Vec&& r, const Mat0& A, const Mat1& B)
 }
 } // namespace impl
 
+/// Covariant Piola map
 template <typename O, typename P, typename Q, typename R>
 void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
                      const R& K)
@@ -70,6 +71,7 @@ void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
   }
 }
 
+/// Contravariant Piola map
 template <typename O, typename P, typename Q, typename R>
 void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
                          const R& /*K*/)
@@ -84,6 +86,7 @@ void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
   std::for_each(r.begin(), r.end(), [inv_detJ](auto& ri) { ri *= inv_detJ; });
 }
 
+/// Double covariant Piola map
 template <typename O, typename P, typename Q, typename R>
 void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
                             const R& K)
@@ -98,6 +101,7 @@ void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
   }
 }
 
+/// Double contravariant Piola map
 template <typename O, typename P, typename Q, typename R>
 void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
                                 const R& /*K*/)

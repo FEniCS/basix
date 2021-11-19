@@ -48,9 +48,9 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable,
-                      f'-DPYTHON_LIBRARIES={sysconfig.get_config_var("LIBDEST")}',
-                      f'-DPYTHON_INCLUDE_DIRS={sysconfig.get_config_var("INCLUDEPY")}']
+                      '-DPython3_EXECUTABLE=' + sys.executable,
+                      f'-DPython3_LIBRARIES={sysconfig.get_config_var("LIBDEST")}',
+                      f'-DPython3_INCLUDE_DIRS={sysconfig.get_config_var("INCLUDEPY")}']
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]

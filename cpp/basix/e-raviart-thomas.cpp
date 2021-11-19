@@ -74,9 +74,6 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
     }
   }
 
-  // quadrature degree
-  const int quad_deg = 5 * degree;
-
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
@@ -84,7 +81,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   const FiniteElement facet_moment_space = element::create_lagrange(
       facettype, degree - 1, element::lagrange_variant::equispaced, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
-      facet_moment_space, celltype, tdim, quad_deg);
+      facet_moment_space, celltype, tdim, 2 * degree - 1);
   xt::xtensor<double, 3> facet_transforms
       = moments::create_normal_moment_dof_transformations(facet_moment_space);
 
@@ -95,7 +92,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         element::create_lagrange(celltype, degree - 2,
                                  element::lagrange_variant::equispaced, true),
-        celltype, tdim, quad_deg);
+        celltype, tdim, 2 * degree - 2);
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

@@ -382,6 +382,7 @@ public:
   /// @tparam Q The type that holds the Jacobian (or inverse) matrix (ndim==2)
   /// @tparam R The type that holds the inverse of the `Q` data
   /// (ndim==2)
+  ///
   /// @return A function that for a push-forward takes arguments
   /// - `u` [out] The data on the physical cell after the
   /// push-forward flattened with row-major layout, shape=(num_points,
@@ -393,7 +394,7 @@ public:
   /// - `detJ` [in] det(J)
   /// - `K` [in] The inverse of the Jacobian matrix, shape=(tdim, gdim)
   ///
-  /// For a pull-back the argumenst should be:
+  /// For a pull-back the arguments should be:
   /// - `U` [out] The data on the reference cell after the pull-back,
   /// flattened with row-major layout, shape=(num_points, ref
   /// value_size)

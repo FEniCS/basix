@@ -412,16 +412,16 @@ public:
       return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
     case maps::type::covariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::impl::covariant_piola(u, U, J, detJ, K); };
+      { maps::covariant_piola(u, U, J, detJ, K); };
     case maps::type::contravariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::impl::contravariant_piola(u, U, J, detJ, K); };
+      { maps::contravariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleCovariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::impl::double_covariant_piola(u, U, J, detJ, K); };
+      { maps::double_covariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleContravariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::impl::double_contravariant_piola(u, U, J, detJ, K); };
+      { maps::double_contravariant_piola(u, U, J, detJ, K); };
     default:
       throw std::runtime_error("Map not implemented");
     }

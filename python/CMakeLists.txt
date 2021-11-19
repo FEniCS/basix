@@ -41,6 +41,7 @@ find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
 
 # Create the binding library
 pybind11_add_module(_basixcpp MODULE wrapper.cpp)
+target_link_libraries(_basixcpp PRIVATE pybind11::module)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
 # Add xsimd if the Basix C++ interface was compiled with it

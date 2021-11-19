@@ -719,7 +719,24 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
   const std::size_t physical_value_size
       = compute_value_size(_map_type, J.shape(1));
   xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
-  map_push_forward_m(U, J, detJ, K, u);
+  using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  using U_t = xt::xview<decltype(U)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  using J_t = xt::xview<decltype(J)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  auto map = this->push_forward_fn<u_t, U_t, J_t, K_t>();
+  for (std::size_t i = 0; i < u.shape(0); ++i)
+  {
+    auto _K = xt::view(K, i, xt::all(), xt::all());
+    auto _J = xt::view(J, i, xt::all(), xt::all());
+    auto _u = xt::view(u, i, xt::all(), xt::all());
+    auto _U = xt::view(U, i, xt::all(), xt::all());
+    map(_u, _U, _J, detJ[i], _K);
+  }
+
   return u;
 }
 //-----------------------------------------------------------------------------

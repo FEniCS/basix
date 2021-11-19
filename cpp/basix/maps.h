@@ -35,7 +35,7 @@ void dot22(O&& r, const Mat0& A, const Mat1& B, const Mat2& C)
   for (std::size_t i = 0; i < r.shape(0); ++i)
     for (std::size_t j = 0; j < r.shape(1); ++j)
     {
-      T acc{};
+      T acc = 0;
       for (std::size_t k = 0; k < A.shape(1); ++k)
         for (std::size_t l = 0; l < B.shape(1); ++l)
           acc += A(i, k) * B(k, l) * C(l, j);
@@ -49,7 +49,7 @@ void dot21(Vec&& r, const Mat0& A, const Mat1& B)
   using T = typename std::decay_t<Vec>::value_type;
   for (std::size_t i = 0; i < r.shape(0); ++i)
   {
-    T acc{};
+    T acc = 0;
     for (std::size_t k = 0; k < A.shape(1); ++k)
       acc += A(i, k) * B[k];
     r[i] = acc;

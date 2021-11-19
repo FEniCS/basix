@@ -727,7 +727,7 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
                         xt::xall<std::size_t>>;
   using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
                         xt::xall<std::size_t>>;
-  auto map = this->push_forward_fn<u_t, U_t, J_t, K_t>();
+  auto map = this->map_fn<u_t, U_t, J_t, K_t>();
   for (std::size_t i = 0; i < u.shape(0); ++i)
   {
     auto _K = xt::view(K, i, xt::all(), xt::all());
@@ -754,7 +754,7 @@ xt::xtensor<double, 3> FiniteElement::map_pull_back(
                         xt::xall<std::size_t>>;
   using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
                         xt::xall<std::size_t>>;
-  auto map = this->push_forward_fn<U_t, u_t, K_t, J_t>();
+  auto map = this->map_fn<U_t, u_t, K_t, J_t>();
   for (std::size_t i = 0; i < u.shape(0); ++i)
   {
     auto _K = xt::view(K, i, xt::all(), xt::all());
@@ -765,11 +765,6 @@ xt::xtensor<double, 3> FiniteElement::map_pull_back(
   }
 
   return u;
-
-  // const std::size_t reference_value_size = value_size();
-  // xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
-  // map_pull_back_m(u, J, detJ, K, U);
-  // return U;
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,

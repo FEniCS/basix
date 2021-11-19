@@ -375,16 +375,15 @@ public:
                                        const xtl::span<const double>& detJ,
                                        const xt::xtensor<double, 3>& K) const;
 
-  /// Return a function that performs the appropriate push-forward for
-  /// the element type
+  /// Return a function that performs the appropriate
+  /// push-forward/pull-back for the element type
   ///
-  /// @tparam O The type that hold the computed pushed-forward data
+  /// @tparam O The type that hold the (computed) mapped data (ndim==2)
+  /// @tparam P The type that hold the data to be mapped (ndim==2)
+  /// @tparam Q The type that holds the Jacobian (or inverse) matrix (ndim==2)
+  /// @tparam R The type that holds the inverse of the `Q` data
   /// (ndim==2)
-  /// @tparam P The type that hold the data to be pulled back (ndim==2)
-  /// @tparam Q The type that holds the Jacobian matrix (ndim==2)
-  /// @tparam R The type that holds the inverse of the Jacobian matrix
-  /// (ndim==2)
-  /// @return A function that takes arguments
+  /// @return A function that for a push-forward takes arguments
   /// - `u` [out] The data on the physical cell after the
   /// push-forward flattened with row-major layout, shape=(num_points,
   /// value_size)
@@ -395,16 +394,19 @@ public:
   /// - `detJ` [in] det(J)
   /// - `K` [in] The inverse of the Jacobian matrix, shape=(tdim, gdim)
   ///
-  /// @note A pull back can be computed using this function by changing
-  /// the order of the arguments:
-  /// - `u` -> `U`
-  /// - `U` -> `u`
-  /// - `J` -> `K`
-  /// - `det(J)` -> 1.0/det(J)
-  /// - `K` -> `J`
+  /// For a pull-back the argumenst should be:
+  /// - `U` [out] The data on the reference cell after the pull-back,
+  /// flattened with row-major layout, shape=(num_points, ref
+  /// value_size)
+  /// - `u` [in] The data on the physical cell that should be pulled
+  /// back , flattened with row-major layout, shape=(num_points,
+  /// value_size)
+  /// - `K` [in] The inverse oif the Jacobian matrix of the map
+  /// ,shape=(tdim, gdim)
+  /// - `detJ_inv` [in] 1/det(J)
+  /// - `J` [in] The Jacobian matrix, shape=(gdim, tdim)
   template <typename O, typename P, typename Q, typename R>
-  std::function<void(O&, const P&, const Q&, double, const R&)>
-  push_forward_fn() const
+  std::function<void(O&, const P&, const Q&, double, const R&)> map_fn() const
   {
     switch (map_type)
     {

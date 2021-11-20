@@ -307,8 +307,7 @@ FiniteElement::FiniteElement(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous)
-    : map_type(map_type), _cell_type(cell_type),
-      _cell_tdim(cell::topological_dimension(cell_type)),
+    : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _degree(degree), _map_type(map_type),
       _entity_transformations(entity_transformations), _x(x),
@@ -553,7 +552,7 @@ int FiniteElement::dim() const { return _coeffs.shape(0); }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
-maps::type FiniteElement::mapping_type() const { return _map_type; }
+maps::type FiniteElement::map_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
 bool FiniteElement::discontinuous() const { return _discontinuous; }
 //-----------------------------------------------------------------------------

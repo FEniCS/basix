@@ -48,7 +48,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: garth/basix-map-fn
+          ref: main
 
       - name: Install DOLFINx
         run: |

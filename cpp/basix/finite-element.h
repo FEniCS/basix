@@ -328,9 +328,9 @@ public:
   /// @return The family
   element::family family() const;
 
-  /// Get the mapping type used for this element
-  /// @return The mapping
-  maps::type mapping_type() const;
+  /// Get the map type for this element
+  /// @return The map type
+  maps::type map_type() const;
 
   /// Indicates whether this element is the discontinuous variant
   /// @return True if this element is a discontinuous version
@@ -408,7 +408,7 @@ public:
   template <typename O, typename P, typename Q, typename R>
   std::function<void(O&, const P&, const Q&, double, const R&)> map_fn() const
   {
-    switch (map_type)
+    switch (_map_type)
     {
     case maps::type::identity:
       return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
@@ -739,9 +739,6 @@ public:
   /// `FiniteElement()` constructor.
   /// @return The dual matrix
   xt::xtensor<double, 2> coefficient_matrix() const;
-
-  /// Element map type
-  maps::type map_type;
 
 private:
   // Cell type

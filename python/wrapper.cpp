@@ -315,7 +315,7 @@ Interface to the Basix C++ library.
           &FiniteElement::dof_transformations_are_permutations)
       .def_property_readonly("dof_transformations_are_identity",
                              &FiniteElement::dof_transformations_are_identity)
-      .def_property_readonly("mapping_type", &FiniteElement::mapping_type)
+      .def_property_readonly("map_type", &FiniteElement::map_type)
       .def_property_readonly("points",
                              [](const FiniteElement& self)
                              {

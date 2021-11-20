@@ -48,7 +48,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: basix-update
+          ref: main
 
       - name: Install DOLFINx
         run: |

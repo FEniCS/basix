@@ -552,7 +552,7 @@ int FiniteElement::dim() const { return _coeffs.shape(0); }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
-maps::type FiniteElement::mapping_type() const { return _map_type; }
+maps::type FiniteElement::map_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
 bool FiniteElement::discontinuous() const { return _discontinuous; }
 //-----------------------------------------------------------------------------

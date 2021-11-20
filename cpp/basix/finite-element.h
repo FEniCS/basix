@@ -328,9 +328,9 @@ public:
   /// @return The family
   element::family family() const;
 
-  /// Get the mapping type used for this element
-  /// @return The mapping
-  maps::type mapping_type() const;
+  /// Get the map type for this element
+  /// @return The map type
+  maps::type map_type() const;
 
   /// Indicates whether this element is the discontinuous variant
   /// @return True if this element is a discontinuous version

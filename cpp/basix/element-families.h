@@ -3,13 +3,31 @@
 // SPDX-License-Identifier:    MIT
 
 #pragma once
-#include <string>
 
 namespace basix
 {
 
+/// Finite elements
+
+/// The functions in this namespace can be used to create finite elements.
 namespace element
 {
+/// An enum defining the variants of a Lagrange space that can be created
+enum class lagrange_variant
+{
+  equispaced = 0,
+  gll_warped = 1,
+  gll_isaac = 2,
+  gll_centroid = 3,
+  chebyshev_warped = 4,
+  chebyshev_isaac = 5,
+  chebyshev_centroid = 6,
+  gl_warped = 7,
+  gl_isaac = 8,
+  gl_centroid = 9,
+  vtk = 10,
+};
+
 /// Enum of available element families
 enum class family
 {
@@ -21,17 +39,10 @@ enum class family
   N2E = 5,
   CR = 6,
   Regge = 7,
-  DP = 8,
-  DPC = 9,
-  Bubble = 10,
-  Serendipity = 11
+  DPC = 8,
+  bubble = 9,
+  serendipity = 10
 };
-
-/// Convert string to a family
-element::family str_to_type(std::string name);
-
-// Convert family to string
-const std::string& type_to_str(element::family type);
 
 } // namespace element
 

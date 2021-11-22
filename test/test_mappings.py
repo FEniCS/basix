@@ -8,7 +8,7 @@ import pytest
 import numpy as np
 
 elements = [
-    (basix.ElementFamily.P, [basix.LatticeType.gll]),  # identity
+    (basix.ElementFamily.P, [basix.LagrangeVariant.gll_warped]),  # identity
     (basix.ElementFamily.N1E, []),  # covariant Piola
     (basix.ElementFamily.RT, []),  # contravariant Piola
     (basix.ElementFamily.Regge, []),  # double covariant Piola
@@ -25,7 +25,7 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
     elif tdim == 3:
         points = np.array([[i / N, j / N, k / N]
                            for i in range(N + 1) for j in range(N + 1 - i) for k in range(N + 1 - i - j)])
-    values = e.tabulate_x(0, points)[0]
+    values = e.tabulate(0, points)[0]
 
     _J = np.array([J for p in points])
     _detJ = np.array([detJ for p in points])
@@ -34,12 +34,12 @@ def run_map_test(e, J, detJ, K, reference_value_size, physical_value_size):
     assert values.shape[1] == e.dim
     assert values.shape[2] == reference_value_size
 
-    mapped = e.map_push_forward(values, _J, _detJ, _K)
+    mapped = e.push_forward(values, _J, _detJ, _K)
     assert mapped.shape[0] == values.shape[0]
     assert mapped.shape[1] == e.dim
     assert mapped.shape[2] == physical_value_size
 
-    unmapped = e.map_pull_back(mapped, _J, _detJ, _K)
+    unmapped = e.pull_back(mapped, _J, _detJ, _K)
     assert np.allclose(values, unmapped)
 
 

@@ -2,7 +2,10 @@
 
 name: DOLFINx integration
 
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
@@ -11,8 +14,8 @@ jobs:
     container: fenicsproject/test-env:latest-openmpi
 
     env:
-      CC: clang-12
-      CXX: clang++-12
+      CC: clang
+      CXX: clang++
 
       PETSC_ARCH: linux-gnu-complex-32
       OMPI_ALLOW_RUN_AS_ROOT: 1
@@ -25,9 +28,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install basix
+      - name: Install Basix
         run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp
           cmake --build build-dir
           cmake --install build-dir
           python3 -m pip install ./python
@@ -36,12 +39,17 @@ jobs:
           python3 -m pip install git+https://github.com/FEniCS/ufl.git
           python3 -m pip install git+https://github.com/FEniCS/ffcx.git
 
+      - name: Run cpp demos
+        run: |
+          python3 -m pytest demo/cpp/test.py
+
       - name: Get DOLFINx
         uses: actions/checkout@v2
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: main
+
       - name: Install DOLFINx
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/

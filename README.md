@@ -3,19 +3,42 @@
 ![Basix CI](https://github.com/FEniCS/basix/workflows/Basix%20CI/badge.svg)
 
 Basix is a finite element definition and tabulation runtime library.
+Basix allows users to:
+
+- evaluate finite element basis functions and their derivatives at a set
+  of points;
+- access geometric and topological information about reference cells;
+- apply push forward and pull back operations to map data between a
+  reference cell and a physical cell;
+- permute and transform DOFs to allow higher-order elements to be use on
+  arbitrary meshes; and
+- interpolate into a finite element space and between finite element
+  spaces.
 
 ## Installing Basix
-Basix can be installed by following [these instructions](INSTALL.md)
+
+To install Basix:
+```console
+pip install .
+```
+For advanced installation instructions see the detailed [install
+instructions](INSTALL.md)
+
 
 ## Documentation
-Documentation of Basix can be found at https://docs.fenicsproject.org/basix/main/.
+
+Documentation of Basix can be found at
+https://docs.fenicsproject.org/basix/main/.
+
 
 ## Supported elements
 
 ### Interval
-In Basix, the sub-entities of the reference interval are numbered as follows:
 
-![The numbering of a reference interval](img/interval_numbering.png)
+In Basix, the sub-entities of the reference interval are numbered as
+follows:
+
+![The numbering of a reference interval](joss/img/interval_numbering.png)
 
 The following elements are supported on a interval:
 
@@ -24,10 +47,13 @@ The following elements are supported on a interval:
   - [DPC](https://defelement.com/elements/dpc.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
 
-### Triangle
-In Basix, the sub-entities of the reference triangle are numbered as follows:
 
-![The numbering of a reference triangle](img/triangle_numbering.png)
+### Triangle
+
+In Basix, the sub-entities of the reference triangle are numbered as
+follows:
+
+![The numbering of a reference triangle](joss/img/triangle_numbering.png)
 
 The following elements are supported on a triangle:
 
@@ -40,10 +66,13 @@ The following elements are supported on a triangle:
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
 
-### Quadrilateral
-In Basix, the sub-entities of the reference quadrilateral are numbered as follows:
 
-![The numbering of a reference quadrilateral](img/quadrilateral_numbering.png)
+### Quadrilateral
+
+In Basix, the sub-entities of the reference quadrilateral are numbered
+as follows:
+
+![The numbering of a reference quadrilateral](joss/img/quadrilateral_numbering.png)
 
 The following elements are supported on a quadrilateral:
 
@@ -56,10 +85,13 @@ The following elements are supported on a quadrilateral:
   - [DPC](https://defelement.com/elements/dpc.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
 
-### Tetrahedron
-In Basix, the sub-entities of the reference tetrahedron are numbered as follows:
 
-![The numbering of a reference tetrahedron](img/tetrahedron_numbering.png)
+### Tetrahedron
+
+In Basix, the sub-entities of the reference tetrahedron are numbered as
+follows:
+
+![The numbering of a reference tetrahedron](joss/img/tetrahedron_numbering.png)
 
 The following elements are supported on a tetrahedron:
 
@@ -72,10 +104,13 @@ The following elements are supported on a tetrahedron:
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
 
-### Hexahedron
-In Basix, the sub-entities of the reference hexahedron are numbered as follows:
 
-![The numbering of a reference hexahedron](img/hexahedron_numbering.png)
+### Hexahedron
+
+In Basix, the sub-entities of the reference hexahedron are numbered as
+follows:
+
+![The numbering of a reference hexahedron](joss/img/hexahedron_numbering.png)
 
 The following elements are supported on a hexahedron:
 
@@ -88,19 +123,24 @@ The following elements are supported on a hexahedron:
   - [DPC](https://defelement.com/elements/dpc.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
 
-### Prism
-In Basix, the sub-entities of the reference prism are numbered as follows:
 
-![The numbering of a reference prism](img/prism_numbering.png)
+### Prism
+
+In Basix, the sub-entities of the reference prism are numbered as
+follows:
+
+![The numbering of a reference prism](joss/img/prism_numbering.png)
 
 The following elements are supported on a prism:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
 
 ### Pyramid
-In Basix, the sub-entities of the reference pyramid are numbered as follows:
 
-![The numbering of a reference pyramid](img/pyramid_numbering.png)
+In Basix, the sub-entities of the reference pyramid are numbered as
+follows:
+
+![The numbering of a reference pyramid](joss/img/pyramid_numbering.png)
 
 The following elements are supported on a pyramid:
 

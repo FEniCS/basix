@@ -7,10 +7,11 @@
 #include "indexing.h"
 #include <array>
 #include <cmath>
-#include <xtensor/xadapt.hpp>
+#include <stdexcept>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
+using namespace basix::indexing;
 
 namespace
 {
@@ -24,6 +25,26 @@ constexpr std::array<double, 3> jrc(int a, int n)
   double cn = n * (a + n) * (a + 2 * n + 2)
               / static_cast<double>((n + 1) * (a + n + 1) * (a + 2 * n));
   return {an, bn, cn};
+}
+//-----------------------------------------------------------------------------
+// At a point, only the constant polynomial can be used. This has value 1 and
+// derivative 0.
+xt::xtensor<double, 3>
+tabulate_polyset_point_derivs(std::size_t, std::size_t nderiv,
+                              const xt::xtensor<double, 2>& x)
+{
+  assert(x.shape(0) > 0);
+  xt::xtensor<double, 3> P({nderiv + 1, x.shape(0), 1});
+  for (std::size_t k = 0; k <= nderiv; ++k)
+  {
+    auto result = xt::view(P, k, xt::all(), xt::all());
+    if (k == 0)
+      xt::col(result, 0) = 1.0;
+    else
+      xt::col(result, 0) = 0.0;
+  }
+
+  return P;
 }
 //-----------------------------------------------------------------------------
 // Compute the complete set of derivatives from 0 to nderiv, for all the
@@ -418,7 +439,8 @@ tabulate_polyset_pyramid_derivs(int n, std::size_t nderiv,
   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
   // Indexing for pyramidal basis functions
-  auto pyr_idx = [n](int p, int q, int r) -> std::size_t {
+  auto pyr_idx = [n](int p, int q, int r) -> std::size_t
+  {
     const int rv = n - r + 1;
     const int r0 = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
     return r0 + p * rv + q;
@@ -726,6 +748,8 @@ xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
 {
   switch (celltype)
   {
+  case cell::type::point:
+    return tabulate_polyset_point_derivs(d, n, x);
   case cell::type::interval:
     assert(x.dimension() == 1);
     return tabulate_polyset_line_derivs(d, n, x);
@@ -750,6 +774,8 @@ int polyset::dim(cell::type celltype, int d)
 {
   switch (celltype)
   {
+  case cell::type::point:
+    return 1;
   case cell::type::triangle:
     return (d + 1) * (d + 2) / 2;
   case cell::type::tetrahedron:

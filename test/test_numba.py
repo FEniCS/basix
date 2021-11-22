@@ -3,20 +3,25 @@ import random
 import basix
 import numpy as np
 import pytest
-from basix import numba_helpers
-from numba.core import types
-from numba.typed import Dict
 
 
 @pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                   basix.CellType.quadrilateral, basix.CellType.hexahedron])
 @pytest.mark.parametrize("element, degree, element_args", [
-    (basix.ElementFamily.P, 1, [basix.LatticeType.gll]),
-    (basix.ElementFamily.P, 3, [basix.LatticeType.gll]),
+    (basix.ElementFamily.P, 1, [basix.LagrangeVariant.gll_warped]),
+    (basix.ElementFamily.P, 3, [basix.LagrangeVariant.gll_warped]),
     (basix.ElementFamily.N1E, 3, [])
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations(cell, element, degree, element_args, block_size):
+    try:
+        import numba  # noqa: F401
+    except ImportError:
+        pytest.skip("Numba must be installed to run this test.")
+
+    from basix import numba_helpers
+    from numba.core import types
+    from numba.typed import Dict
 
     transform_functions = {
         basix.CellType.triangle: numba_helpers.apply_dof_transformation_triangle,
@@ -56,12 +61,20 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
 @pytest.mark.parametrize("cell", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                   basix.CellType.quadrilateral, basix.CellType.hexahedron])
 @pytest.mark.parametrize("element, degree, element_args", [
-    (basix.ElementFamily.P, 1, [basix.LatticeType.gll]),
-    (basix.ElementFamily.P, 3, [basix.LatticeType.gll]),
+    (basix.ElementFamily.P, 1, [basix.LagrangeVariant.gll_warped]),
+    (basix.ElementFamily.P, 3, [basix.LagrangeVariant.gll_warped]),
     (basix.ElementFamily.N1E, 3, [])
 ])
 @pytest.mark.parametrize("block_size", [1, 2, 4])
 def test_dof_transformations_to_transpose(cell, element, degree, block_size, element_args):
+    try:
+        import numba  # noqa: F401
+    except ImportError:
+        pytest.skip("Numba must be installed to run this test.")
+
+    from basix import numba_helpers
+    from numba.core import types
+    from numba.typed import Dict
 
     transform_functions = {
         basix.CellType.triangle: numba_helpers.apply_dof_transformation_to_transpose_triangle,

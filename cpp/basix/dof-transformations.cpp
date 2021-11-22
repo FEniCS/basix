@@ -3,13 +3,14 @@
 // SPDX-License-Identifier:    MIT
 
 #include "dof-transformations.h"
+#include <algorithm>
 
 using namespace basix;
 
 //-----------------------------------------------------------------------------
 std::vector<int> doftransforms::interval_reflection(int degree)
 {
-  std::vector<int> perm(degree);
+  std::vector<int> perm(std::max(0, degree));
   for (int i = 0; i < degree; ++i)
     perm[i] = degree - 1 - i;
   return perm;

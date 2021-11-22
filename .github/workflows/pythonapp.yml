@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-latest, macos-latest]
         python-version: [3.8]
 
     steps:
@@ -30,8 +30,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install pybind11
-        run: pip install pybind11
       - name: Install dependencies (non-Python, Linux)
         if: runner.os == 'Linux'
         run: |
@@ -45,26 +43,24 @@ jobs:
           pip install flake8
           flake8 --statistics test/
           flake8 --statistics python/
+          flake8 --statistics demo/python
 
       - name: pydocstyle checks
         run: |
           pip install pydocstyle
           python -m pydocstyle python/basix
 
-      - name: Install Basix C++
-        run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S .
-          cmake --build build-dir
-          sudo cmake --install build-dir
-      - name: Build Basix Python
-        run: |
-          cd python
-          pip install .
+      - name: Install Basix
+        run: pip -v install .
 
       - name: Run units tests
         run: |
           pip install pytest pytest-xdist numpy sympy numba scipy
-          pytest -v -n auto --durations 20 test/
+          pytest -n auto --durations 20 test/
+
+      - name: Run python demos
+        run: |
+          pytest demo/python/test.py
 
       - name: Build documentation
         if: runner.os == 'Linux'
@@ -72,7 +68,10 @@ jobs:
           pip install markdown
           pip install sphinx sphinx_rtd_theme
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
-          cd doc && python make_html.py
+          cd doc/cpp
+          doxygen
+          cd ../python
+          make html
 
       - name: Upload C++ documentation artifact
         if: runner.os == 'Linux'
@@ -80,7 +79,7 @@ jobs:
         with:
           name: doc-cpp
           path: |
-            doc/html/cpp
+            doc/cpp/html
           retention-days: 2
           if-no-files-found: error
       - name: Upload Python documentation artifact
@@ -89,9 +88,17 @@ jobs:
         with:
           name: doc-python
           path: |
-            doc/html/python
+            doc/python/build/html
           retention-days: 2
           if-no-files-found: error
+
+      - name: Build website documentation
+        if: runner.os == 'Linux'
+        run: |
+          export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
+          cd doc/web
+          pip install -r requirements.txt
+          python make_html.py
 
       - name: Set version name
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
@@ -101,7 +108,8 @@ jobs:
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
         run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
-          cd doc && python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
+          cd doc/web
+          python make_html.py --url https://docs.fenicsproject.org/basix/${{ env.VERSION_NAME }}
       - name: Checkout FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
         uses: actions/checkout@v2
@@ -115,7 +123,7 @@ jobs:
           cd docs
           git rm -r --ignore-unmatch basix/${{ env.VERSION_NAME }}
           mkdir -p basix/${{ env.VERSION_NAME }}
-          cp -r ../doc/html/* basix/${{ env.VERSION_NAME }}
+          cp -r ../doc/web/html/* basix/${{ env.VERSION_NAME }}
       - name: Commit and push documentation to FEniCS/docs
         if: ${{ github.repository == 'FEniCS/basix' && ( github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') ) && runner.os == 'Linux' }}
         run: |

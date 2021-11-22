@@ -7,7 +7,7 @@ import numpy
 import pytest
 import sympy
 
-from .test_lagrange import sympy_disc_lagrange
+from .test_lagrange import sympy_lagrange
 from .test_rt import sympy_rt
 
 
@@ -31,7 +31,7 @@ def sympy_nedelec(celltype, n):
         mat = numpy.empty((len(funcs), len(funcs)), dtype=object)
 
         # edge tangents
-        edge_basis = sympy_disc_lagrange(basix.CellType.interval, n)
+        edge_basis = sympy_lagrange(basix.CellType.interval, n)
         edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
         for i, f in enumerate(funcs):
             j = 0
@@ -55,7 +55,6 @@ def sympy_nedelec(celltype, n):
         # interior dofs
         if n > 1:
             face_basis = sympy_rt(basix.CellType.triangle, n - 1)
-            face_basis = list(zip(face_basis[:len(face_basis) // 2], face_basis[len(face_basis) // 2:]))
             for i, f in enumerate(funcs):
                 j = (n + 1) * 3
                 for g in face_basis:
@@ -75,7 +74,7 @@ def sympy_nedelec(celltype, n):
         mat = numpy.empty((len(funcs), len(funcs)), dtype=object)
 
         # edge tangents
-        edge_basis = sympy_disc_lagrange(basix.CellType.interval, n)
+        edge_basis = sympy_lagrange(basix.CellType.interval, n)
         edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
         for i, f in enumerate(funcs):
             j = 0
@@ -96,9 +95,7 @@ def sympy_nedelec(celltype, n):
         # face dofs
         if n > 1:
             face_basis = sympy_rt(basix.CellType.triangle, n - 1)
-            face_basis = [a.subs(x, dummy[0]).subs(y, dummy[1]) for a in face_basis]
-            face_basis = list(zip(face_basis[:len(face_basis) // 2],
-                                  face_basis[len(face_basis) // 2:]))
+            face_basis = [[b.subs(x, dummy[0]).subs(y, dummy[1]) for b in a] for a in face_basis]
             for i, f in enumerate(funcs):
                 j = (n + 1) * 6
                 for face in topology[2]:
@@ -125,10 +122,6 @@ def sympy_nedelec(celltype, n):
         # interior dofs
         if n > 2:
             interior_basis = sympy_rt(basix.CellType.tetrahedron, n - 2)
-            interior_basis = list(zip(interior_basis[:len(interior_basis) // 3],
-                                      interior_basis[len(interior_basis) // 3: 2 * len(interior_basis) // 3],
-                                      interior_basis[2 * len(interior_basis) // 3:]))
-
             for i, f in enumerate(funcs):
                 j = (n + 1) * 6 + 4 * (n - 1) * (n + 1)
                 for g in interior_basis:
@@ -140,9 +133,11 @@ def sympy_nedelec(celltype, n):
     mat = sympy.Matrix(mat)
     mat = mat.inv()
     g = []
-    for dim in range(tdim):
-        for r in range(mat.shape[0]):
-            g += [sum([v * funcs[i][dim] for i, v in enumerate(mat.row(r))])]
+    for r in range(mat.shape[0]):
+        row = []
+        for dim in range(tdim):
+            row.append(sum([v * funcs[i][dim] for i, v in enumerate(mat.row(r))]))
+        g.append(row)
 
     return g
 
@@ -158,13 +153,14 @@ def test_tri(order):
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
 
-    for kx in range(nderiv):
-        for ky in range(0, nderiv - kx):
+    for kx in range(nderiv + 1):
+        for ky in range(nderiv + 1 - kx):
             wsym = numpy.zeros_like(wtab[0])
-            for i in range(len(g)):
-                wd = sympy.diff(g[i], x, kx, y, ky)
-                for j, p in enumerate(pts):
-                    wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
+            for i, gi in enumerate(g):
+                for j, gij in enumerate(gi):
+                    wd = sympy.diff(gij, x, kx, y, ky)
+                    for k, p in enumerate(pts):
+                        wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1])])
 
             assert(numpy.isclose(wtab[basix.index(kx, ky)], wsym).all())
 
@@ -181,18 +177,14 @@ def test_tet(order):
     nderiv = 1
     wtab = nedelec.tabulate(nderiv, pts)
 
-    for k in range(nderiv + 1):
-        for q in range(k + 1):
-            for kx in range(q + 1):
-                ky = q - kx
-                kz = k - q
-
+    for kx in range(nderiv + 1):
+        for ky in range(nderiv + 1 - kx):
+            for kz in range(nderiv + 1 - kx - ky):
                 wsym = numpy.zeros_like(wtab[0])
-                for i in range(len(g)):
-                    wd = sympy.diff(g[i], x, kx, y, ky, z, kz)
-                    for j, p in enumerate(pts):
-                        wsym[j, i] = wd.subs([(x, p[0]),
-                                              (y, p[1]),
-                                              (z, p[2])])
+                for i, gi in enumerate(g):
+                    for j, gij in enumerate(gi):
+                        wd = sympy.diff(gij, x, kx, y, ky, z, kz)
+                        for k, p in enumerate(pts):
+                            wsym[k, i, j] = wd.subs([(x, p[0]), (y, p[1]), (z, p[2])])
 
                 assert(numpy.isclose(wtab[basix.index(kx, ky, kz)], wsym).all())

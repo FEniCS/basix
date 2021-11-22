@@ -5,6 +5,8 @@
 #pragma once
 
 #include "cell.h"
+#include <utility>
+#include <vector>
 #include <xtensor/xtensor.hpp>
 
 namespace basix
@@ -12,9 +14,7 @@ namespace basix
 
 class FiniteElement;
 
-/// ## Integral moments
-/// These functions generate dual set matrices for integral moments
-/// against spaces on a subentity of the cell
+/// Functions to create integral moment DOFs
 namespace moments
 {
 
@@ -110,6 +110,7 @@ create_tangent_moment_dof_transformations(const FiniteElement& moment_space);
 /// being defined
 /// @param value_size The value size of the space being defined
 /// @param q_deg The quadrature degree used for the integrals
+/// @return (interpolation points, interpolation matrix)
 std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 3>>>
 make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
@@ -132,6 +133,7 @@ make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
 /// defined
 /// @param value_size The value size of the space being defined
 /// @param q_deg The quadrature degree used for the integrals
+/// @return (interpolation points, interpolation matrix)
 std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 3>>>
 make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
@@ -148,6 +150,7 @@ make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
 /// @param value_size The value size of the space being defined the
 /// space
 /// @param q_deg The quadrature degree used for the integrals
+/// @return (interpolation points, interpolation matrix)
 std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 3>>>
 make_tangent_integral_moments(const FiniteElement& V, cell::type celltype,

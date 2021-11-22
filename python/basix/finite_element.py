@@ -1,17 +1,31 @@
 """Functions for creating finite elements."""
 
 from ._basixcpp import ElementFamily as _EF
+from ._basixcpp import FiniteElement  # noqa: F401
 
 
-def string_to_family(family: str, cell: str):
-    """Get a Basix ElementFamily enum representing the family type on the given cell."""
+def string_to_family(family: str, cell: str) -> _EF:
+    """
+    Get a Basix ElementFamily enum representing the family type on the given cell.
+
+    Parameters
+    ----------
+    family : str
+        The element family as a string.
+    cell : str
+        The cell type as a string.
+
+    Returns
+    -------
+    basix.ElementFamily
+        The element family.
+    """
     # Family names that are valid for all cells
     families = {
         "Lagrange": _EF.P,
         "P": _EF.P,
-        "Discontinuous Lagrange": _EF.DP,
-        "DP": _EF.DP,
-        "Bubble": _EF.Bubble,
+        "Bubble": _EF.bubble,
+        "bubble": _EF.bubble,
     }
     # Family names that are valid on non-interval cells
     if cell != "interval":
@@ -37,10 +51,10 @@ def string_to_family(family: str, cell: str):
     if cell in ["interval", "quadrilateral", "hexahedron"]:
         families.update({
             "Q": _EF.P,
-            "DQ": _EF.DP,
             "DPC": _EF.DPC,
-            "Serendipity": _EF.Serendipity,
-            "S": _EF.Serendipity,
+            "Serendipity": _EF.serendipity,
+            "serendipity": _EF.serendipity,
+            "S": _EF.serendipity,
         })
     # Family names that are valid for quads and hexes
     if cell in ["quadrilateral", "hexahedron"]:
@@ -49,6 +63,10 @@ def string_to_family(family: str, cell: str):
             "NCF": _EF.RT,
             "RTCE": _EF.N1E,
             "NCE": _EF.N1E,
+            "BDMCF": _EF.BDM,
+            "BDMCE": _EF.N2E,
+            "AAF": _EF.BDM,
+            "AAE": _EF.N2E,
         })
     # Family names that are valid for triangles and tetrahedra
     if cell in ["triangle", "tetrahedron"]:

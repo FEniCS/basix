@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 
 PROJECT(basix_pybind11 VERSION "0.3.1.0"  LANGUAGES CXX)
 
@@ -21,7 +21,13 @@ if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
   find_package(xsimd REQUIRED)
 endif()
 
-find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+# Correct COMPONENT specification Development.Module added only in CMake 3.18
+# and above.
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+  find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+else()
+  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+endif()
 
 if(SKBUILD)
   # Scikit-Build does not add your site-packages to the search path

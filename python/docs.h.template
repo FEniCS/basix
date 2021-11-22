@@ -169,34 +169,34 @@ Returns
 {{finite-element.h > FiniteElement::tabulate > return : numpy.ndarray[numpy.float64]}}
 )";
 
-{{DOCTYPE}} FiniteElement__map_push_forward = R"(
-{{finite-element.h > FiniteElement::map_push_forward > doc}}
+{{DOCTYPE}} FiniteElement__push_forward = R"(
+{{finite-element.h > FiniteElement::push_forward > doc}}
 
 Parameters
 ==========
-{{finite-element.h > FiniteElement::map_push_forward > param > U : numpy.ndarray[numpy.float64]}}
-{{finite-element.h > FiniteElement::map_push_forward > param > J : numpy.ndarray[numpy.float64]}}
-{{finite-element.h > FiniteElement::map_push_forward > param > detJ : numpy.ndarray[numpy.float64]}}
-{{finite-element.h > FiniteElement::map_push_forward > param > K : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::push_forward > param > U : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::push_forward > param > J : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::push_forward > param > detJ : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::push_forward > param > K : numpy.ndarray[numpy.float64]}}
 
 Returns
 =======
-{{finite-element.h > FiniteElement::map_push_forward > return : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::push_forward > return : numpy.ndarray[numpy.float64]}}
 )";
 
-{{DOCTYPE}} FiniteElement__map_pull_back = R"(
-{{finite-element.h > FiniteElement::map_pull_back > doc}}
+{{DOCTYPE}} FiniteElement__pull_back = R"(
+{{finite-element.h > FiniteElement::pull_back > doc}}
 
 Parameters
 ==========
-{{finite-element.h > FiniteElement::map_pull_back > param > u : numpy.ndarray[numpy.float64]}}
-{{finite-element.h > FiniteElement::map_pull_back > param > J : numpy.ndarray[numpy.float64]}}
-{{finite-element.h > FiniteElement::map_pull_back > param > detJ : numpy.ndarray[numpy.float64]}}
-{{finite-element.h > FiniteElement::map_pull_back > param > K : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::pull_back > param > u : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::pull_back > param > J : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::pull_back > param > detJ : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::pull_back > param > K : numpy.ndarray[numpy.float64]}}
 
 Returns
 =======
-{{finite-element.h > FiniteElement::map_pull_back > return : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > FiniteElement::pull_back > return : numpy.ndarray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} FiniteElement__apply_dof_transformation = R"(

@@ -307,8 +307,7 @@ FiniteElement::FiniteElement(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous)
-    : map_type(map_type), _cell_type(cell_type),
-      _cell_tdim(cell::topological_dimension(cell_type)),
+    : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _degree(degree), _map_type(map_type),
       _entity_transformations(entity_transformations), _x(x),
@@ -553,7 +552,7 @@ int FiniteElement::dim() const { return _coeffs.shape(0); }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
-maps::type FiniteElement::mapping_type() const { return _map_type; }
+maps::type FiniteElement::map_type() const { return _map_type; }
 //-----------------------------------------------------------------------------
 bool FiniteElement::discontinuous() const { return _discontinuous; }
 //-----------------------------------------------------------------------------
@@ -712,24 +711,58 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> FiniteElement::map_push_forward(
+xt::xtensor<double, 3> FiniteElement::push_forward(
     const xt::xtensor<double, 3>& U, const xt::xtensor<double, 3>& J,
     const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
   const std::size_t physical_value_size
       = compute_value_size(_map_type, J.shape(1));
   xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
-  map_push_forward_m(U, J, detJ, K, u);
+  using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  using U_t = xt::xview<decltype(U)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  using J_t = xt::xview<decltype(J)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  auto map = this->map_fn<u_t, U_t, J_t, K_t>();
+  for (std::size_t i = 0; i < u.shape(0); ++i)
+  {
+    auto _K = xt::view(K, i, xt::all(), xt::all());
+    auto _J = xt::view(J, i, xt::all(), xt::all());
+    auto _u = xt::view(u, i, xt::all(), xt::all());
+    auto _U = xt::view(U, i, xt::all(), xt::all());
+    map(_u, _U, _J, detJ[i], _K);
+  }
+
   return u;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> FiniteElement::map_pull_back(
+xt::xtensor<double, 3> FiniteElement::pull_back(
     const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
     const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
   const std::size_t reference_value_size = value_size();
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
-  map_pull_back_m(u, J, detJ, K, U);
+  using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  using U_t = xt::xview<decltype(U)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  using J_t = xt::xview<decltype(J)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
+                        xt::xall<std::size_t>>;
+  auto map = this->map_fn<U_t, u_t, K_t, J_t>();
+  for (std::size_t i = 0; i < u.shape(0); ++i)
+  {
+    auto _K = xt::view(K, i, xt::all(), xt::all());
+    auto _J = xt::view(J, i, xt::all(), xt::all());
+    auto _u = xt::view(u, i, xt::all(), xt::all());
+    auto _U = xt::view(U, i, xt::all(), xt::all());
+    map(_U, _u, _K, 1.0 / detJ[i], _J);
+  }
+
   return U;
 }
 //-----------------------------------------------------------------------------

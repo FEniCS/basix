@@ -2,7 +2,7 @@ from skbuild import setup
 
 setup(name="fenics-basix",
       python_requires='>=3.7.0',
-      version="0.3.1.dev0",
+      version="0.4.0",
       description='Basix Python interface',
       url="https://github.com/FEniCS/basix",
       author='FEniCS Project',

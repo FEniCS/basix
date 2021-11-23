@@ -50,7 +50,7 @@ class CMakeBuild(build_ext):
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                       '-DPython3_EXECUTABLE=' + sys.executable,
                       '-DPython3_LIBRARIES=' + sysconfig.get_config_var("LIBDEST"),
-                      '-DPython3_INCLUDE_DIRS=' + sysconfig.get_config_var("INCLUDEPY")}]
+                      '-DPython3_INCLUDE_DIRS=' + sysconfig.get_config_var("INCLUDEPY")]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]

@@ -136,6 +136,8 @@ def test_blocked_interpolation(cell_type, order):
 
 @parametrize_over_elements(5)
 def test_interpolation_orders(cell_type, degree, element_type, element_args):
+    np.random.seed(13)
+
     element = basix.create_element(element_type, cell_type, degree, *element_args)
 
     points = basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, True)

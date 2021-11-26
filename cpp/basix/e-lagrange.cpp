@@ -141,7 +141,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {1},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, true);
+                       maps::type::identity, true, degree, degree);
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> vtk_triangle_points(int degree)
@@ -771,7 +771,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {1},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, discontinuous);
+                       maps::type::identity, discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -795,7 +795,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
     return FiniteElement(element::family::P, cell::type::point, 0, {1}, wcoeffs,
                          entity_transformations, x, M, maps::type::identity,
-                         discontinuous);
+                         discontinuous, degree, degree);
   }
 
   if (variant == element::lagrange_variant::vtk)
@@ -960,7 +960,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {1},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, discontinuous);
+                       maps::type::identity, discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
@@ -1037,6 +1037,6 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
 
   return FiniteElement(element::family::DPC, celltype, degree, {1}, wcoeffs,
                        entity_transformations, x, M, maps::type::identity,
-                       discontinuous);
+                       discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------

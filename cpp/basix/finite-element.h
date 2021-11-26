@@ -223,7 +223,8 @@ public:
                     entity_transformations,
                 const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                 const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-                maps::type map_type, bool discontinuous);
+                maps::type map_type, bool discontinuous, int highest_degree,
+                int highest_complete_degree);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -740,6 +741,17 @@ public:
   /// @return The dual matrix
   xt::xtensor<double, 2> coefficient_matrix() const;
 
+  /// Get the highest degree of a polynomial contained in the space.
+  ///
+  /// This basis functions of this finite element will all be contained in a
+  /// Lagrange (or vector Lagrange) element of the order returned by this
+  /// function.
+  int highest_polynomial_degree() const;
+
+  /// Get the highest n such that all the basis functions of the Lagrange (or
+  /// vector Lagrange) element of degree n are contained in this space.
+  int highest_complete_polynomial_degree() const;
+
 private:
   // Cell type
   cell::type _cell_type;
@@ -848,6 +860,12 @@ private:
 
   // The dual matrix
   xt::xtensor<double, 2> _dual_matrix;
+
+  // Higest polynomial degree
+  int _highest_degree;
+
+  // Higest degree n such that Lagrange order n is a subset of this space
+  int _highest_complete_degree;
 };
 
 /// Create an element using a given Lagrange variant

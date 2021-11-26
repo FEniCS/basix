@@ -216,6 +216,12 @@ public:
   /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
+  /// @param[in] highest_degree The lowest degree n such that the highest degree
+  /// polynomial in this element is contained in a Lagrange (or vector Lagrange)
+  /// element of degree n
+  /// @param[in] highest_complete_degree The highest degree n such that a
+  /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
+  /// element
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
                 const xt::xtensor<double, 2>& wcoeffs,

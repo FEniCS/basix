@@ -216,6 +216,12 @@ public:
   /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
+  /// @param[in] highest_degree The lowest degree n such that the highest degree
+  /// polynomial in this element is contained in a Lagrange (or vector Lagrange)
+  /// element of degree n
+  /// @param[in] highest_complete_degree The highest degree n such that a
+  /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
+  /// element
   FiniteElement(element::family family, cell::type cell_type, int degree,
                 const std::vector<std::size_t>& value_shape,
                 const xt::xtensor<double, 2>& wcoeffs,
@@ -223,7 +229,8 @@ public:
                     entity_transformations,
                 const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                 const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-                maps::type map_type, bool discontinuous);
+                maps::type map_type, bool discontinuous, int highest_degree,
+                int highest_complete_degree);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -740,6 +747,13 @@ public:
   /// @return The dual matrix
   xt::xtensor<double, 2> coefficient_matrix() const;
 
+  /// Get [0] the lowest degree n such that the highest degree
+  /// polynomial in this element is contained in a Lagrange (or vector
+  /// Lagrange) element of degree n, and [1] the highest degree n such
+  /// that a Lagrange (or vector Lagrange) element of degree n is a
+  /// subspace of this element
+  std::array<int, 2> degree_bounds() const;
+
 private:
   // Cell type
   cell::type _cell_type;
@@ -848,6 +862,13 @@ private:
 
   // The dual matrix
   xt::xtensor<double, 2> _dual_matrix;
+
+
+  // Polynomial degree bounds
+  // [0]: highest degree n such that Lagrange order n is a subspace of
+  // this space
+  // [1]: highest polynomial degree
+  std::array<int, 2> _degree_bounds;
 };
 
 /// Create an element using a given Lagrange variant

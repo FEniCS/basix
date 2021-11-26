@@ -75,6 +75,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::contravariantPiola, discontinuous);
+                       maps::type::contravariantPiola, discontinuous, degree,
+                       degree);
 }
 //-----------------------------------------------------------------------------

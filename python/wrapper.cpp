@@ -206,8 +206,7 @@ Interface to the Basix C++ library.
       .def(
           "tabulate",
           [](const FiniteElement& self, int n,
-             const py::array_t<double, py::array::c_style>& x)
-          {
+             const py::array_t<double, py::array::c_style>& x) {
             auto _x = adapt_x(x);
             auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
@@ -219,8 +218,7 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& U,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K)
-          {
+             const py::array_t<double, py::array::c_style>& K) {
             auto u = self.push_forward(
                 adapt_x(U), adapt_x(J),
                 xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
@@ -233,8 +231,7 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& u,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K)
-          {
+             const py::array_t<double, py::array::c_style>& K) {
             auto U = self.pull_back(
                 adapt_x(u), adapt_x(J),
                 xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
@@ -244,8 +241,7 @@ Interface to the Basix C++ library.
       .def(
           "apply_dof_transformation",
           [](const FiniteElement& self, py::array_t<double>& data,
-             int block_size, std::uint32_t cell_info)
-          {
+             int block_size, std::uint32_t cell_info) {
             xtl::span<double> data_span(data.mutable_data(), data.size());
             self.apply_dof_transformation(data_span, block_size, cell_info);
             return py::array_t<double>(data_span.size(), data_span.data());
@@ -254,8 +250,7 @@ Interface to the Basix C++ library.
       .def(
           "apply_dof_transformation_to_transpose",
           [](const FiniteElement& self, py::array_t<double>& data,
-             int block_size, std::uint32_t cell_info)
-          {
+             int block_size, std::uint32_t cell_info) {
             xtl::span<double> data_span(data.mutable_data(), data.size());
             self.apply_dof_transformation_to_transpose(data_span, block_size,
                                                        cell_info);
@@ -266,8 +261,7 @@ Interface to the Basix C++ library.
       .def(
           "apply_inverse_transpose_dof_transformation",
           [](const FiniteElement& self, py::array_t<double>& data,
-             int block_size, std::uint32_t cell_info)
-          {
+             int block_size, std::uint32_t cell_info) {
             xtl::span<double> data_span(data.mutable_data(), data.size());
             self.apply_inverse_transpose_dof_transformation(
                 data_span, block_size, cell_info);
@@ -277,16 +271,14 @@ Interface to the Basix C++ library.
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
       .def(
           "base_transformations",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             xt::xtensor<double, 3> t = self.base_transformations();
             return py::array_t<double>(t.shape(), t.data());
           },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             std::map<cell::type, xt::xtensor<double, 3>> t
                 = self.entity_transformations();
             py::dict t2;
@@ -316,31 +308,27 @@ Interface to the Basix C++ library.
       .def_property_readonly("dof_transformations_are_identity",
                              &FiniteElement::dof_transformations_are_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
+      .def_property_readonly("degree_bounds", &FiniteElement::degree_bounds)
       .def_property_readonly("points",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                const xt::xtensor<double, 2>& x = self.points();
                                return py::array_t<double>(x.shape(), x.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly(
           "interpolation_matrix",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             const xt::xtensor<double, 2>& P = self.interpolation_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           })
       .def_property_readonly(
           "dual_matrix",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             const xt::xtensor<double, 2>& P = self.dual_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           })
       .def_property_readonly(
-          "coefficient_matrix",
-          [](const FiniteElement& self)
-          {
+          "coefficient_matrix", [](const FiniteElement& self) {
             const xt::xtensor<double, 2>& P = self.coefficient_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           });

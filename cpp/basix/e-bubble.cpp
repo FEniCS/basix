@@ -161,6 +161,6 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
 
   return FiniteElement(element::family::bubble, celltype, degree, {1}, wcoeffs,
                        entity_transformations, x, M, maps::type::identity,
-                       discontinuous);
+                       discontinuous, degree, -1);
 }
 //-----------------------------------------------------------------------------

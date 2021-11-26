@@ -747,10 +747,11 @@ public:
   /// @return The dual matrix
   xt::xtensor<double, 2> coefficient_matrix() const;
 
-  /// Get the lowest degree n such that the highest degree polynomial in this
-  /// element is contained in a Lagrange (or vector Lagrange) element of degree
-  /// n, and the highest degree n such that a Lagrange (or vector Lagrange)
-  /// element of degree n is a subspace of this element
+  /// Get [0] the lowest degree n such that the highest degree
+  /// polynomial in this element is contained in a Lagrange (or vector
+  /// Lagrange) element of degree n, and [1] the highest degree n such
+  /// that a Lagrange (or vector Lagrange) element of degree n is a
+  /// subspace of this element
   std::array<int, 2> degree_bounds() const;
 
 private:
@@ -862,11 +863,12 @@ private:
   // The dual matrix
   xt::xtensor<double, 2> _dual_matrix;
 
-  // Higest polynomial degree
-  int _highest_degree;
 
-  // Higest degree n such that Lagrange order n is a subset of this space
-  int _highest_complete_degree;
+  // Polynomial degree bounds
+  // [0]: higest degree n such that Lagrange order n is a subspace of
+  // this space
+  // [1]: higest polynomial degree
+  std::array<int, 2> _degree_bounds;
 };
 
 /// Create an element using a given Lagrange variant

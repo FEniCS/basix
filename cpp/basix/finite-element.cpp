@@ -312,8 +312,8 @@ FiniteElement::FiniteElement(
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _degree(degree), _map_type(map_type),
       _entity_transformations(entity_transformations), _x(x),
-      _discontinuous(discontinuous), _highest_degree(highest_degree),
-      _highest_complete_degree(highest_complete_degree)
+      _discontinuous(discontinuous),
+      _degree_bounds({highest_complete_degree, highest_degree})
 {
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
   xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
@@ -897,7 +897,7 @@ xt::xtensor<double, 2> FiniteElement::coefficient_matrix() const
 //-----------------------------------------------------------------------------
 std::array<int, 2> FiniteElement::degree_bounds() const
 {
-  return {_highest_complete_degree, _highest_degree};
+  return _degree_bounds;
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

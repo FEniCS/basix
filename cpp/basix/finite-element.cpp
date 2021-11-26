@@ -895,11 +895,9 @@ xt::xtensor<double, 2> FiniteElement::coefficient_matrix() const
   return _coeffs;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::highest_polynomial_degree() const { return _highest_degree; }
-//-----------------------------------------------------------------------------
-int FiniteElement::highest_complete_polynomial_degree() const
+std::array<int, 2> FiniteElement::degree_bounds() const
 {
-  return _highest_complete_degree;
+  return {_highest_complete_degree, _highest_degree};
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

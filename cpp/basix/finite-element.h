@@ -747,16 +747,11 @@ public:
   /// @return The dual matrix
   xt::xtensor<double, 2> coefficient_matrix() const;
 
-  /// Get the highest degree of a polynomial contained in the space.
-  ///
-  /// This basis functions of this finite element will all be contained in a
-  /// Lagrange (or vector Lagrange) element of the order returned by this
-  /// function.
-  int highest_polynomial_degree() const;
-
-  /// Get the highest n such that all the basis functions of the Lagrange (or
-  /// vector Lagrange) element of degree n are contained in this space.
-  int highest_complete_polynomial_degree() const;
+  /// Get the lowest degree n such that the highest degree polynomial in this
+  /// element is contained in a Lagrange (or vector Lagrange) element of degree
+  /// n, and the highest degree n such that a Lagrange (or vector Lagrange)
+  /// element of degree n is a subspace of this element
+  std::array<int, 2> degree_bounds() const;
 
 private:
   // Cell type

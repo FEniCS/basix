@@ -308,10 +308,7 @@ Interface to the Basix C++ library.
       .def_property_readonly("dof_transformations_are_identity",
                              &FiniteElement::dof_transformations_are_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
-      .def_property_readonly("highest_polynomial_degree",
-                             &FiniteElement::highest_polynomial_degree)
-      .def_property_readonly("highest_complete_polynomial_degree",
-                             &FiniteElement::highest_complete_polynomial_degree)
+      .def_property_readonly("degree_bounds", &FiniteElement::degree_bounds)
       .def_property_readonly("points",
                              [](const FiniteElement& self) {
                                const xt::xtensor<double, 2>& x = self.points();

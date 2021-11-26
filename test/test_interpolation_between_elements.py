@@ -135,7 +135,7 @@ def test_blocked_interpolation(cell_type, order):
 
 
 @parametrize_over_elements(5)
-def test_interpolation_orders(cell_type, degree, element_type, element_args):
+def test_degree_bounds(cell_type, degree, element_type, element_args):
     np.random.seed(13)
 
     element = basix.create_element(element_type, cell_type, degree, *element_args)
@@ -144,15 +144,15 @@ def test_interpolation_orders(cell_type, degree, element_type, element_args):
     tab = element.tabulate(0, points)[0]
 
     # Test that this element's basis functions are contained in Lagrange space with
-    # degree element.highest_polynomial_degree
+    # degree element.degree_bounds[1]
     coeffs = np.random.rand(element.dim)
     values = np.array([tab[:, :, i] @ coeffs
                        for i in range(element.value_size)])
 
-    if element.highest_polynomial_degree >= 0:
+    if element.degree_bounds[1] >= 0:
         # The element being tested should be a subset of this Lagrange space
         lagrange = basix.create_element(
-            basix.ElementFamily.P, cell_type, element.highest_polynomial_degree, basix.LagrangeVariant.equispaced, True)
+            basix.ElementFamily.P, cell_type, element.degree_bounds[1], basix.LagrangeVariant.equispaced, True)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
@@ -160,10 +160,10 @@ def test_interpolation_orders(cell_type, degree, element_type, element_args):
 
         assert np.allclose(values, lagrange_values)
 
-    if element.highest_polynomial_degree >= 1:
+    if element.degree_bounds[1] >= 1:
         # The element being tested should be NOT a subset of this Lagrange space
         lagrange = basix.create_element(
-            basix.ElementFamily.P, cell_type, element.highest_polynomial_degree - 1,
+            basix.ElementFamily.P, cell_type, element.degree_bounds[1] - 1,
             basix.LagrangeVariant.equispaced, True)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
         lagrange_tab = lagrange.tabulate(0, points)[0]
@@ -172,13 +172,13 @@ def test_interpolation_orders(cell_type, degree, element_type, element_args):
 
         assert not np.allclose(values, lagrange_values)
 
-    # Test that the basis functions of Lagrange space with degree element.highest_complete_polynomial_degree
+    # Test that the basis functions of Lagrange space with degree element.degree_bounds[0]
     # are contained in this space
 
-    if element.highest_complete_polynomial_degree >= 0:
+    if element.degree_bounds[0] >= 0:
         # This Lagrange space should be a subset to the element being tested
         lagrange = basix.create_element(
-            basix.ElementFamily.P, cell_type, element.highest_complete_polynomial_degree,
+            basix.ElementFamily.P, cell_type, element.degree_bounds[0],
             basix.LagrangeVariant.equispaced, True)
         lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]
@@ -191,10 +191,10 @@ def test_interpolation_orders(cell_type, degree, element_type, element_args):
 
         assert np.allclose(values, lagrange_values)
 
-    if element.highest_complete_polynomial_degree >= -1:
+    if element.degree_bounds[0] >= -1:
         # This Lagrange space should NOT be a subset to the element being tested
         lagrange = basix.create_element(
-            basix.ElementFamily.P, cell_type, element.highest_complete_polynomial_degree + 1,
+            basix.ElementFamily.P, cell_type, element.degree_bounds[0] + 1,
             basix.LagrangeVariant.equispaced, True)
         lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]

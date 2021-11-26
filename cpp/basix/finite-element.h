@@ -865,9 +865,9 @@ private:
 
 
   // Polynomial degree bounds
-  // [0]: higest degree n such that Lagrange order n is a subspace of
+  // [0]: highest degree n such that Lagrange order n is a subspace of
   // this space
-  // [1]: higest polynomial degree
+  // [1]: highest polynomial degree
   std::array<int, 2> _degree_bounds;
 };
 

@@ -466,6 +466,16 @@ dict
     The base transformations for this element
 )";
 
+const std::string FiniteElement__get_tensor_product_representation = R"(
+Get the tensor product representation of this element, or throw an error if no such factorisation exists.
+TODO: Document the output of this
+
+Returns
+=======
+List[Tuple[List[basix.FiniteElement], List[int]]]
+    The tensor product representation
+)";
+
 const std::string create_element__family_cell_degree_discontinuous = R"(
 Create an element
 

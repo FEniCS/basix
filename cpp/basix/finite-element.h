@@ -765,7 +765,13 @@ public:
 
   /// Get the tensor product representation of this element, or throw an error
   /// if no such factorisation exists.
-  /// @todo Document the output of this
+  ///
+  /// The tensor product representation will be a vector of tuples. Each tuple
+  /// contains a vector of finite elements, and a vector on integers. The vector
+  /// of finite elements gives the elements on an interval that appear in the
+  /// tensor product representation. The vector of integers gives the
+  /// permutation between the numbering of the tensor product DOFs and the
+  /// number of the DOFs of this Basix element.
   /// @return The tensor product representation
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
   get_tensor_product_representation() const;
@@ -888,7 +894,7 @@ private:
   // Tensor product representation
   // Entries of tuple are (list of elements on an interval, permutation of DOF
   // numbers)
-  // @todo: For vector-valued elements, a tensor prodcut type and a scaling
+  // @todo: For vector-valued elements, a tensor product type and a scaling
   // factor may additionally be needed.
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
       _tensor_factors;

@@ -372,9 +372,9 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
     xt::xtensor<double, 2> Qpts({np * QptsT.shape(0), 3});
     std::vector<double> Qwts(np * QptsT.shape(0));
     int c = 0;
-    for (std::size_t i = 0; i < np; ++i)
+    for (std::size_t i = 0; i < QptsT.shape(0); ++i)
     {
-      for (std::size_t k = 0; k < QptsT.shape(0); ++k)
+      for (std::size_t k = 0; k < np; ++k)
       {
         Qpts(c, 0) = QptsT(i, 0);
         Qpts(c, 1) = QptsT(i, 1);

@@ -466,6 +466,23 @@ dict
     The base transformations for this element
 )";
 
+const std::string FiniteElement__get_tensor_product_representation = R"(
+Get the tensor product representation of this element, or throw an error
+if no such factorisation exists.
+
+The tensor product representation will be a vector of tuples. Each tuple
+contains a vector of finite elements, and a vector on integers. The vector
+of finite elements gives the elements on an interval that appear in the
+tensor product representation. The vector of integers gives the
+permutation between the numbering of the tensor product DOFs and the
+number of the DOFs of this Basix element.
+
+Returns
+=======
+List[Tuple[List[basix.FiniteElement], List[int]]]
+    The tensor product representation
+)";
+
 const std::string create_element__family_cell_degree_discontinuous = R"(
 Create an element
 

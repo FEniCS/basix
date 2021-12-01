@@ -143,7 +143,107 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
                        xt::eye<double>(ndofs), entity_transformations, x, M,
                        maps::type::identity, true, degree, degree);
 }
-//-----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+create_tensor_product_factors(cell::type celltype, int degree,
+                              element::lagrange_variant variant)
+{
+  if (celltype == cell::type::quadrilateral)
+  {
+    FiniteElement sub_element
+        = element::create_lagrange(cell::type::interval, degree, variant, true);
+    std::vector<int> perm((degree + 1) * (degree + 1));
+    if (degree == 0)
+      perm[0] = 0;
+    else
+    {
+      int p = 0;
+      int n = degree - 1;
+      perm[p++] = 0;
+      perm[p++] = 2;
+      for (int i = 0; i < n; ++i)
+        perm[p++] = 4 + n + i;
+      perm[p++] = 1;
+      perm[p++] = 3;
+      for (int i = 0; i < n; ++i)
+        perm[p++] = 4 + 2 * n + i;
+      for (int i = 0; i < n; ++i)
+      {
+        perm[p++] = 4 + i;
+        perm[p++] = 4 + 3 * n + i;
+        for (int j = 0; j < n; ++j)
+          perm[p++] = 4 + i + (4 + j) * n;
+      }
+    }
+    return {{{sub_element, sub_element}, perm}};
+  }
+  if (celltype == cell::type::hexahedron)
+  {
+    FiniteElement sub_element
+        = element::create_lagrange(cell::type::interval, degree, variant, true);
+    std::vector<int> perm((degree + 1) * (degree + 1) * (degree + 1));
+    if (degree == 0)
+      perm[0] = 0;
+    else
+    {
+      int p = 0;
+      int n = degree - 1;
+      perm[p++] = 0;
+      perm[p++] = 4;
+      for (int i = 0; i < n; ++i)
+        perm[p++] = 8 + 2 * n + i;
+      perm[p++] = 2;
+      perm[p++] = 6;
+      for (int i = 0; i < n; ++i)
+        perm[p++] = 8 + 6 * n + i;
+      for (int i = 0; i < n; ++i)
+      {
+        perm[p++] = 8 + n + i;
+        perm[p++] = 8 + 9 * n + i;
+        for (int j = 0; j < n; ++j)
+          perm[p++] = 8 + 12 * n + 2 * n * n + i + n * j;
+      }
+      perm[p++] = 1;
+      perm[p++] = 5;
+      for (int i = 0; i < n; ++i)
+        perm[p++] = 8 + 4 * n + i;
+      perm[p++] = 3;
+      perm[p++] = 7;
+      for (int i = 0; i < n; ++i)
+        perm[p++] = 8 + 7 * n + i;
+      for (int i = 0; i < n; ++i)
+      {
+        perm[p++] = 8 + 3 * n + i;
+        perm[p++] = 8 + 10 * n + i;
+        for (int j = 0; j < n; ++j)
+          perm[p++] = 8 + 12 * n + 3 * n * n + i + n * j;
+      }
+      for (int i = 0; i < n; ++i)
+      {
+        perm[p++] = 8 + i;
+        perm[p++] = 8 + 8 * n + i;
+        for (int j = 0; j < n; ++j)
+          perm[p++] = 8 + 12 * n + n * n + i + n * j;
+        perm[p++] = 8 + 5 * n + i;
+        perm[p++] = 8 + 11 * n + i;
+        for (int j = 0; j < n; ++j)
+          perm[p++] = 8 + 12 * n + 4 * n * n + i + n * j;
+        for (int j = 0; j < n; ++j)
+        {
+          perm[p++] = 8 + 12 * n + i + n * j;
+          perm[p++] = 8 + 12 * n + 5 * n * n + i + n * j;
+          for (int k = 0; k < n; ++k)
+          {
+            perm[p++] = 8 + 12 * n + 6 * n * n + i + n * j + n * n * k;
+          }
+        }
+      }
+    }
+    return {{{sub_element, sub_element, sub_element}, perm}};
+  }
+  return {};
+}
+//----------------------------------------------------------------------------
 xt::xtensor<double, 2> vtk_triangle_points(int degree)
 {
   const double d = static_cast<double>(1) / static_cast<double>(degree + 3);
@@ -958,9 +1058,13 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
   }
 
+  auto tensor_factors
+      = create_tensor_product_factors(celltype, degree, variant);
+
   return FiniteElement(element::family::P, celltype, degree, {1},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, discontinuous, degree, degree);
+                       maps::type::identity, discontinuous, degree, degree,
+                       tensor_factors);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,

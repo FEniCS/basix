@@ -290,6 +290,13 @@ Interface to the Basix C++ library.
             return t2;
           },
           basix::docstring::FiniteElement__entity_transformations.c_str())
+      .def(
+          "get_tensor_product_representation",
+          [](const FiniteElement& self) {
+            return self.get_tensor_product_representation();
+          },
+          basix::docstring::FiniteElement__get_tensor_product_representation
+              .c_str())
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
@@ -328,10 +335,13 @@ Interface to the Basix C++ library.
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           })
       .def_property_readonly(
-          "coefficient_matrix", [](const FiniteElement& self) {
+          "coefficient_matrix",
+          [](const FiniteElement& self) {
             const xt::xtensor<double, 2>& P = self.coefficient_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
-          });
+          })
+      .def_property_readonly("has_tensor_product_factorisation",
+                             &FiniteElement::has_tensor_product_factorisation);
 
   py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("equispaced", element::lagrange_variant::equispaced)

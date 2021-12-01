@@ -126,6 +126,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
     data = element.tabulate(1, points)
     dphi_x = data[1, :, :, 0]
     dphi_y = data[2, :, :, 0]
+    dphi_z = data[3, :, :, 0]
 
     assert points.shape[0] == (P+2) * (P+2) * (P+2)
 
@@ -168,3 +169,16 @@ def test_tensor_product_factorisation_hexahedron(degree):
 
     dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
     assert numpy.allclose(dphi_y[:, perm], dphi_tensor)
+
+    # Compute the derivative of basis function in the z direction
+    dphi_tensor = numpy.zeros([Nq, Nq, Nq, Nd, Nd, Nd])
+    for q0 in range(Nq):
+        for q1 in range(Nq):
+            for q2 in range(Nq):
+                for i0 in range(Nd):
+                    for i1 in range(Nd):
+                        for i2 in range(Nd):
+                            dphi_tensor[q0, q1, q2, i0, i1, i2] = phi0[q0, i0]*phi0[q1, i1]*dphi0[q2, i2]
+
+    dphi_tensor = dphi_tensor.reshape([Nq*Nq*Nq, Nd*Nd*Nd])
+    assert numpy.allclose(dphi_z[:, perm], dphi_tensor)

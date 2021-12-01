@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Matthew Scroggs
+# Copyright (c) 2021 Matthew Scroggs, Igor A. Baratta
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 
@@ -6,6 +6,7 @@ import numpy as np
 import basix
 import pytest
 from itertools import product
+import numpy
 from .utils import parametrize_over_elements
 
 
@@ -57,3 +58,99 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
                     if b != -1:
                         values2[b, 0] = tab2[a]
             assert np.allclose(values1, values2)
+
+
+@pytest.mark.parametrize("degree", range(1, 9))
+def test_tensor_product_factorisation_quadrilateral(degree):
+    P = degree
+    cell_type = basix.CellType.quadrilateral
+    element = basix.create_element(basix.ElementFamily.P, basix.CellType.quadrilateral,
+                                   P, basix.LagrangeVariant.gll_warped)
+    factors = element.get_tensor_product_representation()[0]
+    tdim = len(basix.topology(cell_type)) - 1
+
+    # Quadrature degree
+    Q = 2 * P + 2
+    points, w = basix.make_quadrature(basix.QuadratureType.Default, basix.CellType.quadrilateral, Q)
+    data = element.tabulate(1, points)
+    dphi_x = data[1, :, :, 0]
+    dphi_y = data[2, :, :, 0]
+
+    assert points.shape[0] == (P+2) * (P+2)
+
+    # FIXME: This test assumes all factors formed by a single element
+    perm = factors[1]
+    element0 = factors[0][0]
+    cell1d = element0.cell_type
+    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell1d, Q)
+    data = element0.tabulate(1, points)
+    phi0 = data[0, :, :, 0]
+    dphi0 = data[1, :, :, 0]
+
+    # number of dofs in each direction
+    I = P + 1
+    # number of quadrature points in each direction
+    Q = P + 2
+
+    # Compute derivative of basis function in the x direction
+    dphi_tensor = numpy.zeros([Q, Q, I, I])
+    for q0 in range(Q):
+        for q1 in range(Q):
+            for i0 in range(I):
+                for i1 in range(I):
+                    dphi_tensor[q0, q1, i0, i1] = dphi0[q0, i0]*phi0[q1, i1]
+    dphi_tensor = dphi_tensor.reshape([Q*Q, I*I])
+    assert numpy.allclose(dphi_x[:, perm], dphi_tensor)
+
+    # Compute derivative of basis function in the y direction
+    dphi_tensor = numpy.zeros([Q, Q, I, I])
+    for q0 in range(Q):
+        for q1 in range(Q):
+            for i0 in range(I):
+                for i1 in range(I):
+                    dphi_tensor[q0, q1, i0, i1] = phi0[q0, i0]*dphi0[q1, i1]
+    dphi_tensor = dphi_tensor.reshape([Q*Q, I*I])
+    assert numpy.allclose(dphi_y[:, perm], dphi_tensor)
+
+
+@pytest.mark.parametrize("degree", range(1, 6))
+def test_tensor_product_factorisation_hexahedron(degree):
+    P = degree
+    element = basix.create_element(basix.ElementFamily.P, basix.CellType.hexahedron,
+                                   P, basix.LagrangeVariant.gll_warped)
+    factors = element.get_tensor_product_representation()[0]
+
+    # Quadrature degree
+    Q = 2 * P + 2
+    points, w = basix.make_quadrature(basix.QuadratureType.Default, basix.CellType.hexahedron, Q)
+    data = element.tabulate(1, points)
+    dphi_x = data[1, :, :, 0]
+
+    assert points.shape[0] == (P+2) * (P+2) * (P+2)
+
+    # FIXME: This test assumes all factors formed by a single element
+    perm = factors[1]
+    element0 = factors[0][0]
+    cell1d = element0.cell_type
+    points, w = basix.make_quadrature(basix.QuadratureType.Default, cell1d, Q)
+    data = element0.tabulate(1, points)
+    phi0 = data[0, :, :, 0]
+    dphi0 = data[1, :, :, 0]
+
+    # number of dofs in each direction
+    I = P + 1
+    # number of quadrature points in each direction
+    Q = P + 2
+
+    # Compute derivative of basis function in the x direction
+    dphi_tensor = numpy.zeros([Q, Q, Q, I, I, I])
+    for q0 in range(Q):
+        for q1 in range(Q):
+            for q2 in range(Q):
+                for i0 in range(I):
+                    for i1 in range(I):
+                        for i2 in range(I):
+                            dphi_tensor[q0, q1, q2, i0, i1, i2] = dphi0[q0, i0]*phi0[q1, i1]*phi0[q2, i2]
+
+    dphi_tensor = dphi_tensor.reshape([Q*Q*Q, I*I*I])
+    assert numpy.allclose(dphi_x[:, perm], dphi_tensor)

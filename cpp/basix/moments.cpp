@@ -276,6 +276,16 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   return M;
 }
 //----------------------------------------------------------------------------
+xt::xtensor<double, 3>
+moments::create_moment_dof_transformations(polynomials::type polytype,
+                                           cell::type celltype, int degree)
+{
+  throw std::runtime_error("Not implemented yet 4.");
+  assert(polytype);
+  assert(celltype);
+  assert(degree);
+}
+//----------------------------------------------------------------------------
 xt::xtensor<double, 3> moments::create_normal_moment_dof_transformations(
     const FiniteElement& moment_space)
 {
@@ -391,12 +401,13 @@ moments::make_integral_moments(polynomials::type polytype,
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  entitytype, q_deg);
   auto wts = xt::adapt(_wts);
-  if (pts.dimension() == 1)
-    pts = pts.reshape({pts.shape(0), 1});
 
   // Evaluate moment space at quadrature points
   const xt::xtensor<double, 2> phi
       = polynomials::tabulate(polytype, entitytype, degree, pts);
+
+  if (pts.dimension() == 1)
+    pts = pts.reshape({pts.shape(0), 1});
 
   // Pad out \phi moment is against a vector-valued function
   std::size_t vdim = value_size == 1 ? 1 : entity_dim;

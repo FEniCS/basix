@@ -876,6 +876,25 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
                        maps::type::identity, discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------
+int get_integral_degree(cell::type et, int degree)
+{
+  switch (et)
+  {
+  case cell::type::interval:
+    return degree - 2;
+  case cell::type::quadrilateral:
+    return degree - 2;
+  case cell::type::hexahedron:
+    return degree - 2;
+  case cell::type::triangle:
+    return degree - 3;
+  case cell::type::tetrahedron:
+    return degree - 4;
+  default:
+    throw std::runtime_error("Unsupported cell type");
+  }
+}
+//-----------------------------------------------------------------------------
 FiniteElement create_integral_lagrange(cell::type celltype, int degree,
                                        element::lagrange_variant variant,
                                        bool discontinuous)
@@ -887,10 +906,9 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
   polynomials::type polytype;
   if (variant == element::lagrange_variant::integral_legendre)
     polytype = polynomials::type::legendre;
-  else if (variant == element::lagrange_variant::integral_chebyshev)
-    polytype = polynomials::type::chebyshev;
   else
-    throw std::runtime_error("Unknown integral variant.");
+    throw std::runtime_error(
+        "Unknown integral variant or integral variant not yet implemented.");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t ndofs = polyset::dim(celltype, degree);
@@ -943,16 +961,21 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
       {
         // This will not work on pyramids and prisms
         cell::type ct = cell::sub_entity_type(celltype, dim, 0);
-        int sub_degree = degree;
 
-        std::tie(x[dim], M[dim]) = moments::make_integral_moments(
-            polytype, ct, sub_degree, celltype, tdim, degree * sub_degree);
+        /// TODO: this will need changing for other polynomial types
+        int sub_degree = get_integral_degree(ct, degree);
 
-        if (dim < tdim)
+        if (sub_degree >= 0)
         {
-          entity_transformations[ct]
-              = moments::create_moment_dof_transformations(polytype, ct,
-                                                           sub_degree);
+          std::tie(x[dim], M[dim]) = moments::make_integral_moments(
+              polytype, ct, sub_degree, celltype, tdim, degree * sub_degree);
+
+          if (dim < tdim)
+          {
+            entity_transformations[ct]
+                = moments::create_moment_dof_transformations(polytype, ct,
+                                                             sub_degree);
+          }
         }
       }
     }

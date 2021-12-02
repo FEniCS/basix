@@ -25,7 +25,9 @@ enum class lagrange_variant
   gl_warped = 7,
   gl_isaac = 8,
   gl_centroid = 9,
-  vtk = 10,
+  integral_legendre = 10,
+  integral_chebyshev = 11,
+  vtk = 20,
 };
 
 /// Enum of available element families

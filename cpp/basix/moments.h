@@ -5,6 +5,7 @@
 #pragma once
 
 #include "cell.h"
+#include "polynomials.h"
 #include <utility>
 #include <vector>
 #include <xtensor/xtensor.hpp>
@@ -59,6 +60,11 @@ create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 /// @return A list of dof transformations
 xt::xtensor<double, 3>
 create_moment_dof_transformations(const FiniteElement& moment_space);
+
+// @todo: doc
+xt::xtensor<double, 3>
+create_moment_dof_transformations(polynomials::type polytype,
+                                  cell::type celltype, int degree);
 
 /// Create the dof transformations for the DOFs defined using a normal
 /// integral moment.
@@ -115,6 +121,13 @@ std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 3>>>
 make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
                       std::size_t value_size, int q_deg);
+
+/// @todo: doc
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
+make_integral_moments(polynomials::type polytype, cell::type entitytype,
+                      int degree, cell::type celltype, std::size_t value_size,
+                      int q_deg);
 
 /// Make interpolation points and weights for dot product integral
 /// moments

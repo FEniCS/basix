@@ -415,8 +415,9 @@ std::pair<xt::xarray<double>, std::vector<double>> compute_gll_rule(int m)
   // Compute Lobatto nodes and weights
   auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
 
-  std::rotate(xs_ref.begin()+1, xs_ref.begin()+2, xs_ref.end());
-  std::rotate(ws_ref.begin()+1, ws_ref.begin()+2, ws_ref.end());
+  // Reorder to match tensor product ordering
+  std::rotate(xs_ref.rbegin(), xs_ref.rbegin() + 1, xs_ref.rend() - 1);
+  std::rotate(ws_ref.rbegin(), ws_ref.rbegin() + 1, ws_ref.rend() - 1);
 
   return {xt::adapt(xs_ref), ws_ref};
 }

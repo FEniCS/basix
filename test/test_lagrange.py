@@ -439,4 +439,5 @@ def test_integral_lagrange(celltype, degree, variant):
     for p in e.points:
         assert in_cell(celltype, p)
 
+    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant)
 

@@ -41,6 +41,10 @@ namespace moments
 xt::xtensor<double, 3>
 create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 
+// @todo: doc
+xt::xtensor<double, 3> create_dot_moment_dof_transformations(
+    polynomials::type polytype, cell::type celltype, int degree, int qdeg);
+
 /// Create the DOF transformations for the DOFs defined using an integral
 /// moment.
 ///
@@ -64,7 +68,7 @@ create_moment_dof_transformations(const FiniteElement& moment_space);
 // @todo: doc
 xt::xtensor<double, 3>
 create_moment_dof_transformations(polynomials::type polytype,
-                                  cell::type celltype, int degree);
+                                  cell::type celltype, int degree, int qdeg);
 
 /// Create the dof transformations for the DOFs defined using a normal
 /// integral moment.

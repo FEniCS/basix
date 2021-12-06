@@ -115,9 +115,6 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   {
     std::array<std::size_t, 3> shape = {2, pts.shape(0), pts.shape(1)};
     tpts = xt::zeros<double>(shape);
-    J.resize({2, 2, 2});
-    K.resize({2, 2, 2});
-    xt::xtensor_fixed<double, xt::xshape<2, 2>> A = xt::zeros<double>({2, 2});
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       tpts(0, i, 0) = pts(i, 1);
@@ -125,28 +122,14 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
       tpts(1, i, 0) = pts(i, 1);
       tpts(1, i, 1) = pts(i, 0);
     }
-
-    A = {{0, 1}, {-1, -1}};
-    xt::view(J, 0, xt::all(), xt::all()) = A;
-    A = {{-1, -1}, {1, 0}};
-    xt::view(K, 0, xt::all(), xt::all()) = A;
-
-    A = {{0, 1}, {1, 0}};
-    xt::view(J, 1, xt::all(), xt::all()) = A;
-    A = {{0, 1}, {1, 0}};
-    xt::view(K, 1, xt::all(), xt::all()) = A;
-
+    J = {{{0.0, 1.0}, {-1.0, -1.0}}, {{0.0, 1.0}, {1.0, 0.0}}};
+    K = {{{-1.0, -1.0}, {1.0, 0.0}}, {{0.0, 1.0}, {1.0, 0.0}}};
     break;
   }
   case cell::type::quadrilateral:
   {
     std::array<std::size_t, 3> shape0 = {2, pts.shape(0), pts.shape(1)};
     tpts = xt::zeros<double>(shape0);
-
-    J.resize({2, 2, 2});
-    K.resize({2, 2, 2});
-    xt::xtensor_fixed<double, xt::xshape<2, 2>> A = xt::zeros<double>({2, 2});
-
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       tpts(0, i, 0) = pts(i, 1);
@@ -154,17 +137,8 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
       tpts(1, i, 0) = pts(i, 1);
       tpts(1, i, 1) = pts(i, 0);
     }
-
-    A = {{0, 1}, {-1, 0}};
-    xt::view(J, 0, xt::all(), xt::all()) = A;
-    A = {{0, -1}, {1, 0}};
-    xt::view(K, 0, xt::all(), xt::all()) = A;
-
-    A = {{0, 1}, {1, 0}};
-    xt::view(J, 1, xt::all(), xt::all()) = A;
-    A = {{0, 1}, {1, 0}};
-    xt::view(K, 1, xt::all(), xt::all()) = A;
-
+    J = {{{0.0, 1.0}, {-1.0, 0.0}}, {{0.0, 1.0}, {1.0, 0.0}}};
+    K = {{{0.0, -1.0}, {1.0, 0.0}}, {{0.0, 1.0}, {1.0, 0.0}}};
     break;
   }
   default:
@@ -226,6 +200,92 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   return out;
 }
 //----------------------------------------------------------------------------
+xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
+    polynomials::type polytype, cell::type celltype, int degree, int qdeg)
+{
+  // This function can be dramatically simplified and made
+  // understandable by using tensors to give more logic to the objects
+
+  if (celltype == cell::type::point)
+    return {};
+
+  if (polytype != polynomials::type::legendre)
+    throw std::runtime_error("DOF transformations not implemented for "
+                             "non-Legrendre polynomials yet.");
+
+  const std::size_t dim = polynomials::dim(polytype, celltype, degree);
+  const auto [pts, wts]
+      = quadrature::make_quadrature(quadrature::type::Default, celltype, qdeg);
+
+  xt::xtensor<double, 3> tpts;
+  switch (celltype)
+  {
+  case cell::type::interval:
+  {
+    tpts = xt::atleast_3d(1.0 - pts);
+    break;
+  }
+  case cell::type::triangle:
+  {
+    std::array<std::size_t, 3> shape = {2, pts.shape(0), pts.shape(1)};
+    tpts = xt::zeros<double>(shape);
+    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    {
+      tpts(0, i, 0) = pts(i, 1);
+      tpts(0, i, 1) = 1 - pts(i, 0) - pts(i, 1);
+      tpts(1, i, 0) = pts(i, 1);
+      tpts(1, i, 1) = pts(i, 0);
+    }
+    break;
+  }
+  case cell::type::quadrilateral:
+  {
+    std::array<std::size_t, 3> shape0 = {2, pts.shape(0), pts.shape(1)};
+    tpts = xt::zeros<double>(shape0);
+    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    {
+      tpts(0, i, 0) = pts(i, 1);
+      tpts(0, i, 1) = 1.0 - pts(i, 0);
+      tpts(1, i, 0) = pts(i, 1);
+      tpts(1, i, 1) = pts(i, 0);
+    }
+    break;
+  }
+  default:
+    throw std::runtime_error(
+        "DOF transformations only implemented for tdim <= 2.");
+  }
+
+  std::array<std::size_t, 3> shape = {tpts.shape(0), dim, dim};
+  xt::xtensor<double, 3> out = xt::zeros<double>(shape);
+  for (std::size_t i = 0; i < tpts.shape(0); ++i)
+  {
+    xt::xtensor<double, 2> poly_at_tpts;
+    if (tpts.shape(2) == 1)
+    {
+      auto _tpoint = xt::view(tpts, i, xt::all(), 0);
+      poly_at_tpts = polynomials::tabulate(polytype, celltype, degree, _tpoint);
+    }
+    else
+    {
+      auto _tpoint = xt::view(tpts, i, xt::all(), xt::all());
+      poly_at_tpts = polynomials::tabulate(polytype, celltype, degree, _tpoint);
+    }
+    xt::xtensor<double, 2> poly_at_pts
+        = polynomials::tabulate(polytype, celltype, degree, pts);
+
+    for (std::size_t j = 0; j < dim; ++j)
+      for (std::size_t k = 0; k < dim; ++k)
+      {
+        out(i, j, k) = 0;
+        for (std::size_t p = 0; p < pts.shape(0); ++p)
+          out(i, j, k) += wts[p] * poly_at_pts(p, i) * poly_at_tpts(p, k);
+      }
+  }
+
+  return out;
+}
+//----------------------------------------------------------------------------
 xt::xtensor<double, 3>
 moments::create_moment_dof_transformations(const FiniteElement& moment_space)
 {
@@ -276,14 +336,53 @@ moments::create_moment_dof_transformations(const FiniteElement& moment_space)
   return M;
 }
 //----------------------------------------------------------------------------
-xt::xtensor<double, 3>
-moments::create_moment_dof_transformations(polynomials::type polytype,
-                                           cell::type celltype, int degree)
+xt::xtensor<double, 3> moments::create_moment_dof_transformations(
+    polynomials::type polytype, cell::type celltype, int degree, int qdeg)
 {
-  throw std::runtime_error("Not implemented yet 4.");
-  assert(polytype);
-  assert(celltype);
-  assert(degree);
+  const xt::xtensor<double, 3> t
+      = create_dot_moment_dof_transformations(polytype, celltype, degree, qdeg);
+
+  xt::xtensor_fixed<double, xt::xshape<2, 2>> rot = xt::zeros<double>({2, 2});
+  xt::xtensor_fixed<double, xt::xshape<2, 2>> ref = xt::zeros<double>({2, 2});
+
+  switch (celltype)
+  {
+  case cell::type::interval:
+    return t;
+  case cell::type::triangle:
+    rot = {{-1, -1}, {1, 0}};
+    ref = {{0, 1}, {1, 0}};
+    break;
+  case cell::type::quadrilateral:
+    // TODO: check that these are correct
+    rot = {{0, -1}, {1, 0}};
+    ref = {{0, 1}, {1, 0}};
+    break;
+  default:
+    throw std::runtime_error("Unexpected cell type");
+  }
+
+  const std::size_t scalar_dofs = t.shape(1);
+  xt::xtensor<double, 3> M({2, 2 * scalar_dofs, 2 * scalar_dofs});
+  for (std::size_t i = 0; i < scalar_dofs; ++i)
+  {
+    for (std::size_t j = 0; j < scalar_dofs; ++j)
+    {
+      xt::view(M, 0, xt::range(2 * i, 2 * i + 2), xt::range(2 * j, 2 * j + 2))
+          = t(0, i, j) * rot;
+    }
+  }
+
+  for (std::size_t i = 0; i < scalar_dofs; ++i)
+  {
+    for (std::size_t j = 0; j < scalar_dofs; ++j)
+    {
+      xt::view(M, 1, xt::range(2 * i, 2 * i + 2), xt::range(2 * j, 2 * j + 2))
+          = t(1, i, j) * ref;
+    }
+  }
+
+  return M;
 }
 //----------------------------------------------------------------------------
 xt::xtensor<double, 3> moments::create_normal_moment_dof_transformations(

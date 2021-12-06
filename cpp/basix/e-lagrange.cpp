@@ -968,13 +968,25 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
         if (sub_degree >= 0)
         {
           std::tie(x[dim], M[dim]) = moments::make_integral_moments(
-              polytype, ct, sub_degree, celltype, tdim, degree * sub_degree);
+              polytype, ct, sub_degree, celltype, 1, degree + sub_degree);
 
           if (dim < tdim)
           {
             entity_transformations[ct]
-                = moments::create_moment_dof_transformations(polytype, ct,
-                                                             sub_degree);
+                = moments::create_moment_dof_transformations(
+                    polytype, ct, sub_degree, degree + sub_degree);
+          }
+        }
+        else
+        {
+          for (std::size_t e = 0; e < topology[dim].size(); ++e)
+          {
+            x[dim][e] = xt::xtensor<double, 2>({0, tdim});
+            M[dim][e] = xt::xtensor<double, 3>({0, 1, 0});
+          }
+          if (dim < tdim)
+          {
+            entity_transformations[ct] = xt::xtensor<double, 3>({dim, 0, 0});
           }
         }
       }

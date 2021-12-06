@@ -25,8 +25,11 @@ xt::xtensor<double, 2> polynomials::tabulate(polynomials::type polytype,
 //-----------------------------------------------------------------------------
 int polynomials::dim(polynomials::type polytype, cell::type cell, int d)
 {
-  throw std::runtime_error("not implemented yet b");
-  assert(polytype);
-  assert(cell);
-  assert(d);
+  switch (polytype)
+  {
+  case polynomials::type::legendre:
+    return polyset::dim(cell, d);
+  default:
+    throw std::runtime_error("not implemented yet a");
+  }
 }

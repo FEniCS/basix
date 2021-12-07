@@ -279,7 +279,7 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
       {
         out(i, j, k) = 0;
         for (std::size_t p = 0; p < pts.shape(0); ++p)
-          out(i, j, k) += wts[p] * poly_at_pts(p, i) * poly_at_tpts(p, k);
+          out(i, j, k) += 2 * wts[p] * poly_at_pts(p, j) * poly_at_tpts(p, k);
       }
   }
 

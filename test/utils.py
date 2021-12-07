@@ -9,6 +9,11 @@ import basix
 def parametrize_over_elements(degree, reference=None):
     elementlist = []
 
+    elementlist += [(c, basix.ElementFamily.P, o, [basix.LagrangeVariant.integral_legendre])
+                    for c in [basix.CellType.interval, basix.CellType.triangle,
+                              basix.CellType.tetrahedron,
+                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
+                    for o in range(1, degree + 1)]
     elementlist += [(c, basix.ElementFamily.P, o, [basix.LagrangeVariant.gll_isaac])
                     for c in [basix.CellType.interval, basix.CellType.triangle,
                               basix.CellType.tetrahedron,

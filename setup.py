@@ -17,6 +17,6 @@ setup(name="fenics-basix",
           '-DPython3_EXECUTABLE=' + sys.executable,
           '-DPython3_LIBRARIES=' + sysconfig.get_config_var("LIBDEST"),
           '-DPython3_INCLUDE_DIRS=' + sysconfig.get_config_var("INCLUDEPY"),
-          '-DXLIBS_DOWNLOAD=ON'],
+          '-DDOWNLOAD_XTENSOR_LIBS=ON'],
       package_dir={"": "python"},
       cmake_install_dir="python/basix/")

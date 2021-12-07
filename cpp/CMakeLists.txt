@@ -23,8 +23,8 @@ option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
 
 # Download xtl and xtensor
-option(XLIBS_DOWNLOAD "Download xtl and xtensor. Requires git." OFF)
-add_feature_info(XLIBS_DOWNLOAD XLIBS_DOWNLOAD "Download xtl and xtensor. Requires git.")
+option(DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git." OFF)
+add_feature_info(DOWNLOAD_XTENSOR_LIBS DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git.")
 
 # Enable xtensor with target-specific optimization, i.e. -march=native
 option(XTENSOR_OPTIMIZE "Enable xtensor target-specific optimization" OFF)
@@ -36,7 +36,7 @@ set(XTL_MIN_VERSION 0.7.0)
 
 include(FetchContent)
 
-if(NOT XLIBS_DOWNLOAD)
+if(NOT DOWNLOAD_XTENSOR_LIBS)
   # xtl, xtensor (required)
   if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
     find_package(xtl ${XTL_MIN_VERSION}...<0.8 REQUIRED)

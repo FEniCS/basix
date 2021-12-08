@@ -973,7 +973,7 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
           if (dim < tdim)
           {
             entity_transformations[ct]
-                = moments::create_moment_dof_transformations(
+                = moments::create_dot_moment_dof_transformations(
                     polytype, ct, sub_degree, degree + sub_degree);
           }
         }

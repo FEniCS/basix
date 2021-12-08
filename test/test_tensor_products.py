@@ -30,7 +30,7 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
         basix.CellType.quadrilateral, basix.CellType.hexahedron
     ] and element_type in [
         basix.ElementFamily.P
-    ]:
+    ] and basix.LagrangeVariant.equispaced in element_args:
         assert element.has_tensor_product_factorisation
 
     if not element.has_tensor_product_factorisation:

@@ -619,9 +619,6 @@ cell, there are `(nderiv + 1)(nderiv + 2)/2` derivatives, and in 3D,
 there are `(nderiv + 1)(nderiv + 2)(nderiv + 3)/6`. The ordering is
 'triangular' with the lower derivatives appearing first.
 
-NOTE: This function will be called at runtime when tabulating a finite
-element, so its performance is critical.
-
 Parameters
 ==========
 celltype : basix.CellType

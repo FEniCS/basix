@@ -40,8 +40,15 @@ xt::xtensor<double, 1> create_interval_gll(int n, bool exterior)
   std::array<std::size_t, 1> s = {static_cast<std::size_t>(n + 1 - 2 * b)};
   xt::xtensor<double, 1> x(s);
 
-  for (std::size_t j = b; j < (n - b + 1); ++j)
-    x(j - b) = _pts[j];
+  if (exterior)
+  {
+    x(0) = _pts[0];
+    x(n) = _pts[1];
+  }
+
+  for (std::size_t j = 2; j < static_cast<std::size_t>(n + 1); ++j)
+    x(j - 1 - b) = _pts[j];
+
   return x;
 }
 //-----------------------------------------------------------------------------

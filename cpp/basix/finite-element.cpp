@@ -636,7 +636,10 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
   if (_x.shape(1) != _cell_tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
-  xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
+  xt::xtensor<double, 3> basis(
+      {static_cast<std::size_t>(polyset::nderivs(_celltype, nd)), _x.shape(0),
+       static_cast<std::size_t>(polyset::dim(_celltype, _degree))});
+  polyset::tabulate(basis, _cell_type, _degree, nd, _x);
   const int psize = polyset::dim(_cell_type, _degree);
   const int vs = value_size();
   xt::xtensor<double, 2> B, C;

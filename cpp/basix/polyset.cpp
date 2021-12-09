@@ -839,7 +839,7 @@ int polyset::nderivs(cell::type celltype, int n)
   case cell::type::point:
     return 1;
   case cell::type::interval:
-    return 1;
+    return n + 1;
   case cell::type::triangle:
     return (n + 1) * (n + 1);
   case cell::type::quadrilateral:

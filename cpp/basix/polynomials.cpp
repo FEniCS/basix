@@ -16,8 +16,25 @@ xt::xtensor<double, 2> polynomials::tabulate(polynomials::type polytype,
   switch (polytype)
   {
   case polynomials::type::legendre:
-    return xt::view(polyset::tabulate(celltype, d, 0, x), 0, xt::all(),
-                    xt::all());
+  {
+    xt::xtensor<double, 2> tab = xt::view(polyset::tabulate(celltype, d, 0, x),
+                                          0, xt::all(), xt::all());
+    switch (celltype)
+    {
+    case cell::type::interval:
+      return tab * std::sqrt(2.0);
+    case cell::type::triangle:
+      return tab * 2;
+    case cell::type::quadrilateral:
+      return tab * 2;
+    case cell::type::tetrahedron:
+      return tab * 2 * std::sqrt(2);
+    case cell::type::hexahedron:
+      return tab * 2 * std::sqrt(2);
+    default:
+      return tab;
+    }
+  }
   default:
     throw std::runtime_error("not implemented yet a");
   }

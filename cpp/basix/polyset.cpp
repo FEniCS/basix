@@ -84,7 +84,7 @@ tabulate_polyset_line_derivs(std::size_t degree, std::size_t nderiv,
   // Normalise
   for (std::size_t k = 0; k < nderiv + 1; ++k)
     for (std::size_t p = 0; p <= degree; ++p)
-      xt::view(P, k, xt::all(), p) *= std::sqrt(p + 0.5);
+      xt::view(P, k, xt::all(), p) *= std::sqrt(2 * p + 1);
 
   return P;
 }
@@ -201,7 +201,7 @@ tabulate_polyset_triangle_derivs(int n, int nderiv,
     auto Pj = xt::view(P, j, xt::all(), xt::all());
     for (int p = 0; p <= n; ++p)
       for (int q = 0; q <= n - p; ++q)
-        xt::col(Pj, idx(p, q)) *= std::sqrt((p + 0.5) * (p + q + 1));
+        xt::col(Pj, idx(p, q)) *= std::sqrt((p + 0.5) * (p + q + 1)) * 2;
   }
 
   return P;
@@ -421,7 +421,8 @@ tabulate_polyset_tetrahedron_derivs(int n, std::size_t nderiv,
         for (int r = 0; r < n + 1 - p - q; ++r)
         {
           xt::col(Pi, idx(p, q, r))
-              *= std::sqrt((p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5));
+              *= std::sqrt(2 * (p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5))
+                 * 2;
         }
       }
     }
@@ -622,7 +623,7 @@ tabulate_polyset_pyramid_derivs(int n, std::size_t nderiv,
         for (int q = 0; q < n - r + 1; ++q)
         {
           xt::col(Pi, pyr_idx(p, q, r))
-              *= std::sqrt((q + 0.5) * (p + 0.5) * (p + q + r + 1.5));
+              *= std::sqrt(2 * (q + 0.5) * (p + 0.5) * (p + q + r + 1.5)) * 2;
         }
       }
     }

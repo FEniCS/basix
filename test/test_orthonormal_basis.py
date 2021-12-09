@@ -114,5 +114,4 @@ def test_cell(cell_type, order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    pts = basix.create_lattice(cell_type, 1, basix.LatticeType.equispaced, True)
     assert np.allclose(mat, np.eye(ndofs))

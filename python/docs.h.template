@@ -366,7 +366,7 @@ Parameters
 
 Returns
 =======
-{{polyset.h > tabulate > return : numpy.ndarray[numpy.float64]}}
+{{polynomials.h > tabulate > return : numpy.ndarray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} make_quadrature__rule_celltype_m = R"(

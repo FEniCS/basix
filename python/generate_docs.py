@@ -124,7 +124,7 @@ def get_docstring(matches):
             else:
                 p = i
                 pdoc = "TODO: document this"
-            params[p] = pdoc
+            params[p] = "\n    ".join(pdoc.split("\n"))
 
         return f"{info} : {typename}\n    {params[info]}"
 
@@ -134,7 +134,8 @@ def get_docstring(matches):
         if len(returns) == 0:
             returns.append("TODO: document this")
         assert len(returns) == 1
-        return f"{typename}\n    {returns[0]}"
+        returns = "\n    ".join(returns[0].split("\n"))
+        return f"{typename}\n    {returns}"
 
 
 def generate_docs():

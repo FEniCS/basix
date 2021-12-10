@@ -102,7 +102,8 @@ Interface to the Basix C++ library.
       .value("centroid", lattice::simplex_method::centroid);
 
   py::enum_<polynomials::type>(m, "PolynomialType")
-      .value("legendre", polynomials::type::legendre);
+      .value("legendre", polynomials::type::legendre)
+      .value("chebyshev", polynomials::type::chebyshev);
 
   m.def(
       "tabulate_polynomials",

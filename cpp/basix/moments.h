@@ -41,10 +41,6 @@ namespace moments
 xt::xtensor<double, 3>
 create_dot_moment_dof_transformations(const FiniteElement& moment_space);
 
-// @todo: doc
-xt::xtensor<double, 3> create_dot_moment_dof_transformations(
-    polynomials::type polytype, cell::type celltype, int degree, int qdeg);
-
 /// Create the DOF transformations for the DOFs defined using an integral
 /// moment.
 ///
@@ -64,11 +60,6 @@ xt::xtensor<double, 3> create_dot_moment_dof_transformations(
 /// @return A list of dof transformations
 xt::xtensor<double, 3>
 create_moment_dof_transformations(const FiniteElement& moment_space);
-
-// @todo: doc
-xt::xtensor<double, 3>
-create_moment_dof_transformations(polynomials::type polytype,
-                                  cell::type celltype, int degree, int qdeg);
 
 /// Create the dof transformations for the DOFs defined using a normal
 /// integral moment.
@@ -107,6 +98,53 @@ create_normal_moment_dof_transformations(const FiniteElement& moment_space);
 xt::xtensor<double, 3>
 create_tangent_moment_dof_transformations(const FiniteElement& moment_space);
 
+/// Create the dof transformations for the DOFs defined using a dot
+/// integral moment.
+///
+/// A dot integral moment is defined by
+/// \f[l_i(v) = \int v\cdot p_i,\f]
+/// where \f$p_i\f$ are the polynomials in a given set, and \f$v\f$ and
+/// \f$p_i\f$ are either both scalars or are vectors of the same size.
+///
+/// If the moment space is an interval, this returns one matrix
+/// representing the reversal of the interval. If the moment space is a
+/// face, this returns two matrices: one representing a rotation, the
+/// other a reflection.
+///
+/// These matrices are computed by calculation the interpolation
+/// coefficients of a rotated/reflected basis into the original basis.
+///
+/// @param[in] polytype The polynomial type to be used
+/// @param[in] celltype The cell type of the entity the moment is defined on
+/// @param[in] degree The maximum polynomial degree
+/// @param[in] qdeg The quadrature degree
+/// @return A list of dof transformations
+xt::xtensor<double, 3> create_dot_moment_dof_transformations(
+    polynomials::type polytype, cell::type celltype, int degree, int qdeg);
+
+/// Create the DOF transformations for the DOFs defined using an integral
+/// moment.
+///
+/// An integral moment is defined by
+/// \f[l_{i,j}(v) = \int v\cdot e_jp_i,\f]
+/// where \f$p_i\f$ is a polynomials in a given set, \f$e_j\f$ is a
+/// coordinate direction (of the cell sub-entity the moment is taken on),
+/// \f$v\f$ is a vector, and \f$p_i\f$ is a scalar.
+///
+/// This will combine multiple copies of the result of
+/// `create_dot_moment_dof_transformations` to give the transformations
+/// for integral moments of each vector component against the moment
+/// space.
+///
+/// @param[in] polytype The polynomial type to be used
+/// @param[in] celltype The cell type of the entity the moment is defined on
+/// @param[in] degree The maximum polynomial degree
+/// @param[in] qdeg The quadrature degree
+/// @return A list of dof transformations
+xt::xtensor<double, 3>
+create_moment_dof_transformations(polynomials::type polytype,
+                                  cell::type celltype, int degree, int qdeg);
+
 /// Make interpolation points and weights for simple integral moments
 ///
 /// These will represent the integral of each function in the moment
@@ -125,13 +163,6 @@ std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 3>>>
 make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
                       std::size_t value_size, int q_deg);
-
-/// @todo: doc
-std::pair<std::vector<xt::xtensor<double, 2>>,
-          std::vector<xt::xtensor<double, 3>>>
-make_integral_moments(polynomials::type polytype, cell::type entitytype,
-                      int degree, cell::type celltype, std::size_t value_size,
-                      int q_deg);
 
 /// Make interpolation points and weights for dot product integral
 /// moments
@@ -188,6 +219,25 @@ std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 3>>>
 make_normal_integral_moments(const FiniteElement& V, cell::type celltype,
                              std::size_t value_size, int q_deg);
+
+/// Make interpolation points and weights for simple integral moments
+///
+/// These will represent the integral of each polynomial in a given set
+/// over each sub entity of the moment space's cell type in a cell
+/// with the given type. For example, if the input cell type is a
+/// triangle, and the moments are degree 1 Legendre polynomials, this will
+/// perform two integrals for each of the 3 edges of the triangle.
+///
+/// @param[in] polytype The polynomial type to be used
+/// @param[in] celltype The cell type of the entity the moment is defined on
+/// @param[in] degree The maximum polynomial degree
+/// @param[in] qdeg The quadrature degree
+/// @return (interpolation points, interpolation matrix)
+std::pair<std::vector<xt::xtensor<double, 2>>,
+          std::vector<xt::xtensor<double, 3>>>
+make_integral_moments(polynomials::type polytype, cell::type entitytype,
+                      int degree, cell::type celltype, std::size_t value_size,
+                      int q_deg);
 
 } // namespace moments
 } // namespace basix

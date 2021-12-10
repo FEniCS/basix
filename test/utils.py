@@ -42,6 +42,7 @@ def parametrize_over_elements(degree, reference=None):
 
         # Elements on all cells except tensor product cells
         for c in [CellType.interval, CellType.quadrilateral, CellType.hexahedron]:
+            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.integral_chebyshev]))
             elementlist.append((c, ElementFamily.serendipity, k, []))
 
         # Bubble elements
@@ -55,7 +56,11 @@ def parametrize_over_elements(degree, reference=None):
             elementlist.append((CellType.tetrahedron, ElementFamily.bubble, k, []))
 
     if reference is None:
+        if len(elementlist) == 0:
+            raise ValueError(f"No elements will be tested with reference: {reference}")
         return pytest.mark.parametrize("cell_type, element_type, degree, element_args", elementlist)
     else:
-        return pytest.mark.parametrize("element_type, degree, element_args",
-                                       [(b, c, d) for a, b, c, d in elementlist if a == reference])
+        elementlist = [(b, c, d) for a, b, c, d in elementlist if a == reference]
+        if len(elementlist) == 0:
+            raise ValueError(f"No elements will be tested with reference: {reference}")
+        return pytest.mark.parametrize("element_type, degree, element_args", elementlist)

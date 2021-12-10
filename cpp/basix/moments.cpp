@@ -209,10 +209,6 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
   if (celltype == cell::type::point)
     return {};
 
-  if (polytype != polynomials::type::legendre)
-    throw std::runtime_error("DOF transformations not implemented for "
-                             "non-Legrendre polynomials yet.");
-
   const std::size_t dim = polynomials::dim(polytype, celltype, degree);
   const auto [pts, wts]
       = quadrature::make_quadrature(quadrature::type::Default, celltype, qdeg);
@@ -258,6 +254,8 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
   std::array<std::size_t, 3> shape = {tpts.shape(0), dim, dim};
   xt::xtensor<double, 3> out = xt::zeros<double>(shape);
+  xt::xtensor<double, 2> lcoeffs({dim, dim});
+  xt::xtensor<double, 2> matrix({dim, dim});
   for (std::size_t i = 0; i < tpts.shape(0); ++i)
   {
     xt::xtensor<double, 2> poly_at_tpts;
@@ -271,16 +269,27 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
       auto _tpoint = xt::view(tpts, i, xt::all(), xt::all());
       poly_at_tpts = polynomials::tabulate(polytype, celltype, degree, _tpoint);
     }
+    xt::xtensor<double, 2> lpoly_at_pts = polynomials::tabulate(
+        polynomials::type::legendre, celltype, degree, pts);
     xt::xtensor<double, 2> poly_at_pts
         = polynomials::tabulate(polytype, celltype, degree, pts);
 
     for (std::size_t j = 0; j < dim; ++j)
       for (std::size_t k = 0; k < dim; ++k)
       {
-        out(i, j, k) = 0;
+        lcoeffs(j, k) = 0;
         for (std::size_t p = 0; p < pts.shape(0); ++p)
-          out(i, j, k) += 2 * wts[p] * poly_at_pts(p, j) * poly_at_tpts(p, k);
+          lcoeffs(j, k) += wts[p] * lpoly_at_pts(p, j) * poly_at_pts(p, k);
       }
+
+    for (std::size_t j = 0; j < dim; ++j)
+      for (std::size_t k = 0; k < dim; ++k)
+      {
+        matrix(j, k) = 0;
+        for (std::size_t p = 0; p < pts.shape(0); ++p)
+          matrix(j, k) += wts[p] * lpoly_at_pts(p, j) * poly_at_tpts(p, k);
+      }
+    xt::view(out, i, xt::all(), xt::all()) = math::solve(lcoeffs, matrix);
   }
 
   return out;

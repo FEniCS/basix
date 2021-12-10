@@ -231,7 +231,7 @@ make_normal_integral_moments(const FiniteElement& V, cell::type celltype,
 /// @param[in] polytype The polynomial type to be used
 /// @param[in] celltype The cell type of the entity the moment is defined on
 /// @param[in] degree The maximum polynomial degree
-/// @param[in] qdeg The quadrature degree
+/// @param[in] q_deg The quadrature degree
 /// @return (interpolation points, interpolation matrix)
 std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 3>>>

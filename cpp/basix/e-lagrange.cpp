@@ -906,9 +906,11 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
   polynomials::type polytype;
   if (variant == element::lagrange_variant::integral_legendre)
     polytype = polynomials::type::legendre;
+  else if (variant == element::lagrange_variant::integral_chebyshev)
+    polytype = polynomials::type::chebyshev;
   else
     throw std::runtime_error(
-        "Unknown integral variant or integral variant not yet implemented.");
+        "Unknown integral variant or integral variant not yet implemented. R");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t ndofs = polyset::dim(celltype, degree);

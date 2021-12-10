@@ -3,71 +3,56 @@
 # SPDX-License-Identifier: MIT
 
 import pytest
-import basix
+from basix import ElementFamily, CellType, LagrangeVariant
 
 
 def parametrize_over_elements(degree, reference=None):
     elementlist = []
 
-    elementlist += [(c, basix.ElementFamily.P, o, [basix.LagrangeVariant.integral_legendre])
-                    for c in [basix.CellType.interval, basix.CellType.triangle,
-                              basix.CellType.tetrahedron,
-                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
-                    for o in range(1, degree + 1)]
-    elementlist += [(c, basix.ElementFamily.P, o, [basix.LagrangeVariant.gll_isaac])
-                    for c in [basix.CellType.interval, basix.CellType.triangle,
-                              basix.CellType.tetrahedron,
-                              basix.CellType.quadrilateral, basix.CellType.hexahedron,
-                              basix.CellType.prism]
-                    for o in range(1, degree + 1)]
-    elementlist += [(c, basix.ElementFamily.P, o, [basix.LagrangeVariant.gll_warped])
-                    for c in [basix.CellType.interval, basix.CellType.triangle,
-                              basix.CellType.tetrahedron,
-                              basix.CellType.quadrilateral, basix.CellType.hexahedron,
-                              basix.CellType.prism]
-                    for o in range(1, degree + 1)]
-    elementlist += [(c, basix.ElementFamily.P, o, [basix.LagrangeVariant.equispaced])
-                    for c in [basix.CellType.interval, basix.CellType.triangle,
-                              basix.CellType.tetrahedron,
-                              basix.CellType.quadrilateral, basix.CellType.hexahedron,
-                              basix.CellType.prism, basix.CellType.pyramid]
-                    for o in range(1, min(4, degree + 1))]
-    elementlist += [(c, basix.ElementFamily.N1E, o, [])
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron,
-                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
-                    for o in range(1, degree + 1)]
-    elementlist += [(c, basix.ElementFamily.RT, o, [])
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron,
-                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
-                    for o in range(1, degree + 1)]
-    elementlist += [(c, basix.ElementFamily.N2E, o, [])
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron,
-                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
-                    for o in range(1, degree + 1)]
-    elementlist += [(c, basix.ElementFamily.BDM, o, [])
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron,
-                              basix.CellType.quadrilateral, basix.CellType.hexahedron]
-                    for o in range(1, degree + 1)]
-    elementlist += [(c, basix.ElementFamily.CR, o, [])
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron]
-                    for o in range(1, min(2, degree + 1))]
-    elementlist += [(c, basix.ElementFamily.Regge, o, [])
-                    for c in [basix.CellType.triangle, basix.CellType.tetrahedron]
-                    for o in range(1, degree + 1)]
-    elementlist += [(basix.CellType.interval, basix.ElementFamily.bubble, o, [])
-                    for o in range(2, degree + 1)]
-    elementlist += [(basix.CellType.triangle, basix.ElementFamily.bubble, o, [])
-                    for o in range(3, degree + 1)]
-    elementlist += [(basix.CellType.tetrahedron, basix.ElementFamily.bubble, o, [])
-                    for o in range(4, degree + 1)]
-    elementlist += [(basix.CellType.quadrilateral, basix.ElementFamily.bubble, o, [])
-                    for o in range(2, degree + 1)]
-    elementlist += [(basix.CellType.hexahedron, basix.ElementFamily.bubble, o, [])
-                    for o in range(2, degree + 1)]
-    elementlist += [(c, basix.ElementFamily.serendipity, o, [])
-                    for c in [basix.CellType.interval, basix.CellType.quadrilateral,
-                              basix.CellType.hexahedron]
-                    for o in range(1, degree + 1)]
+    for k in range(1, degree + 1):
+        # Elements on all cells
+        for c in [CellType.interval, CellType.triangle, CellType.tetrahedron, CellType.quadrilateral,
+                  CellType.hexahedron, CellType.prism, CellType.pyramid]:
+            if k < 4:
+                elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.equispaced]))
+
+        # Elements on all cells except pyramid
+        for c in [CellType.interval, CellType.triangle, CellType.tetrahedron, CellType.quadrilateral,
+                  CellType.hexahedron, CellType.prism]:
+            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.gll_isaac]))
+            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.gll_warped]))
+
+        # Elements on all cells except prism and pyramid
+        for c in [CellType.interval, CellType.triangle, CellType.tetrahedron, CellType.quadrilateral,
+                  CellType.hexahedron]:
+            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.integral_legendre]))
+
+        # Elements on all cells except prism, pyramid and interval
+        for c in [CellType.triangle, CellType.tetrahedron, CellType.quadrilateral, CellType.hexahedron]:
+            elementlist.append((c, ElementFamily.N1E, k, []))
+            elementlist.append((c, ElementFamily.N2E, k, []))
+            elementlist.append((c, ElementFamily.RT, k, []))
+            elementlist.append((c, ElementFamily.BDM, k, []))
+
+        # Elements on simplex cells
+        for c in [CellType.triangle, CellType.tetrahedron]:
+            if k == 1:
+                elementlist.append((c, ElementFamily.CR, k, []))
+            elementlist.append((c, ElementFamily.Regge, k, []))
+
+        # Elements on all cells except tensor product cells
+        for c in [CellType.interval, CellType.quadrilateral, CellType.hexahedron]:
+            elementlist.append((c, ElementFamily.serendipity, k, []))
+
+        # Bubble elements
+        if k >= 2:
+            elementlist.append((CellType.interval, ElementFamily.bubble, k, []))
+            elementlist.append((CellType.quadrilateral, ElementFamily.bubble, k, []))
+            elementlist.append((CellType.hexahedron, ElementFamily.bubble, k, []))
+        if k >= 3:
+            elementlist.append((CellType.triangle, ElementFamily.bubble, k, []))
+        if k >= 4:
+            elementlist.append((CellType.tetrahedron, ElementFamily.bubble, k, []))
 
     if reference is None:
         return pytest.mark.parametrize("cell_type, element_type, degree, element_args", elementlist)

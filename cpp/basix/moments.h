@@ -229,8 +229,10 @@ make_normal_integral_moments(const FiniteElement& V, cell::type celltype,
 /// perform two integrals for each of the 3 edges of the triangle.
 ///
 /// @param[in] polytype The polynomial type to be used
-/// @param[in] celltype The cell type of the entity the moment is defined on
+/// @param[in] entitytype The cell type of the entity the moment is defined on
 /// @param[in] degree The maximum polynomial degree
+/// @param[in] celltype The cell type of the cell the element is defined on
+/// @param[in] value_size The value size of the element
 /// @param[in] q_deg The quadrature degree
 /// @return (interpolation points, interpolation matrix)
 std::pair<std::vector<xt::xtensor<double, 2>>,

@@ -13,14 +13,6 @@ endif()
 
 include(FeatureSummary)
 
-# Enable SIMD with xtensor
-option(XTENSOR_USE_XSIMD "Enable SIMD with xtensor" OFF)
-add_feature_info(XTENSOR_USE_XSIMD XTENSOR_USE_XSIMD "Enable SIMD with xtensor.")
-
-# Enable xtensor with target-specific optimization, i.e. -march=native
-option(XTENSOR_OPTIMIZE "Enable xtensor target-specific optimization" OFF)
-add_feature_info(XTENSOR_OPTIMIZE XTENSOR_OPTIMIZE "Enable architecture-specific optimizations as defined by xtensor.")
-
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,62 +22,45 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
 
+# Download xtl and xtensor
+option(DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git." OFF)
+add_feature_info(DOWNLOAD_XTENSOR_LIBS DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git.")
+
+# Enable xtensor with target-specific optimization, i.e. -march=native
+option(XTENSOR_OPTIMIZE "Enable xtensor target-specific optimization" OFF)
+add_feature_info(XTENSOR_OPTIMIZE XTENSOR_OPTIMIZE "Enable architecture-specific optimizations as defined by xtensor.")
+
 # Find dependecies
 set(XTENSOR_MIN_VERSION 0.23.10)
 set(XTL_MIN_VERSION 0.7.0)
-set(XSIMD_MIN_VERSION 7.4.10)
 
 include(FetchContent)
 
-# xsimd (optional)
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
-  find_package(xsimd ${XSIMD_MIN_VERSION}...<8.0 QUIET)
+if(NOT DOWNLOAD_XTENSOR_LIBS)
+  # xtl, xtensor (required)
+  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
+    find_package(xtl ${XTL_MIN_VERSION}...<0.8 REQUIRED)
+    find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.25 REQUIRED)
+  else()
+    find_package(xtl ${XTL_MIN_VERSION} REQUIRED)
+    find_package(xtensor ${XTENSOR_MIN_VERSION} REQUIRED)
+  endif()
 else()
-  find_package(xsimd ${XSIMD_MIN_VERSION} QUIET)
-endif()
-if(XTENSOR_USE_XSIMD AND NOT xsimd_FOUND)
-  message("downloading xsimd source...")
-  FetchContent_Declare(
-    xsimd
-    GIT_REPOSITORY https://github.com/xtensor-stack/xsimd.git
-    GIT_TAG        7.4.10
-  )
-  FetchContent_MakeAvailable(xsimd)
-else()
-  message("found xsimd ${xsimd_VERSION}")
-endif()
-
-# xtl, xtensor (required)
-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
-  find_package(xtl ${XTL_MIN_VERSION}...<0.8 QUIET)
-  find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.24 QUIET)
-else()
-  find_package(xtl ${XTL_MIN_VERSION} QUIET)
-  find_package(xtensor ${XTENSOR_MIN_VERSION} QUIET)
-endif()
-
-if(NOT xtl_FOUND)
-  message("downloading xtl source...")
+  message("Downloading xtl source...")
   FetchContent_Declare(
     xtl
     GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
     GIT_TAG        0.7.3
   )
   FetchContent_MakeAvailable(xtl)
-else()
-  message("found xtl ${xtl_VERSION}")
-endif()
 
-if(NOT xtensor_FOUND)
-  message("downloading xtensor source...")
+  message("Downloading xtensor source...")
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
     GIT_TAG        0.24.0
   )
   FetchContent_MakeAvailable(xtensor)
-else()
-  message("found xtensor ${xtensor_VERSION}")
 endif()
 
 find_package(BLAS REQUIRED)
@@ -93,7 +68,7 @@ find_package(LAPACK REQUIRED)
 
 feature_summary(WHAT ALL)
 
-# --Source files
+# Source files
 
 add_library(basix)
 
@@ -170,16 +145,6 @@ target_link_libraries(basix PUBLIC xtl)
 get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
 target_link_libraries(basix PUBLIC xtensor)
-
-# Add xsimd definition to Basix so that Basix will export this option so
-# that other libraries will know that Basix was compiled with xsimd
-get_target_property(XTENSOR_DEFN xtensor INTERFACE_COMPILE_DEFINITIONS)
-if("XTENSOR_USE_XSIMD" IN_LIST XTENSOR_DEFN)
-  target_compile_definitions(basix PUBLIC XTENSOR_USE_XSIMD)
-elseif(TARGET xsimd AND XTENSOR_USE_XSIMD)
-  target_compile_definitions(basix PUBLIC XTENSOR_USE_XSIMD)
-  target_link_libraries(basix PRIVATE xsimd)
-endif()
 
 # Handle -march=native
 if (XTENSOR_OPTIMIZE AND TARGET xtensor::optimize)

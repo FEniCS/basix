@@ -32,6 +32,7 @@ xt::xtensor<double, 2> tabulate(polynomials::type polytype, cell::type celltype,
                                 int d, const xt::xarray<double>& x);
 
 /// Dimension of a polynomial space
+/// @param[in] polytype The polynomial type
 /// @param[in] cell The cell type
 /// @param[in] d The polynomial degree
 /// @return The number terms in the basis spanning a space of

@@ -30,6 +30,11 @@ instructions](INSTALL.md)
 Documentation of Basix can be found at
 https://docs.fenicsproject.org/basix/main/.
 
+## Support
+
+## Contributing
+
+Information about how to contribute to Basix can be found [here](CONTRIBUTING.md)
 
 ## Supported elements
 

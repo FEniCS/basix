@@ -1,7 +1,7 @@
 ## How to contribute
 
 ### Reporting bugs
-If you find a bug in Basix, please report it on the [issue tracker](https://github.com/fenics/basix/issues/new?labels=bug).
+If you find a bug in Basix, please report it on the [GitHub issue tracker](https://github.com/fenics/basix/issues/new?labels=bug).
 
 ### Suggesting enhancements
 If you want to suggest a new feature or an improvement of a current feature, you can submit this

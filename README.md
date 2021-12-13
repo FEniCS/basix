@@ -15,6 +15,11 @@ Basix allows users to:
 - interpolate into a finite element space and between finite element
   spaces.
 
+Basix is one of the components of FEniCSx, alongside
+[UFL](https://github.com/fenics/ufl),
+[FFCx](https://github.com/fenics/ffcx), and
+[DOLFINx](https://github.com/fenics/dolfinx).
+
 ## Installing Basix
 
 To install Basix:
@@ -30,6 +35,16 @@ instructions](INSTALL.md)
 Documentation of Basix can be found at
 https://docs.fenicsproject.org/basix/main/.
 
+## Support
+
+If you find a bug in Basix, you can report it on the [GitHub issue tracker](https://github.com/fenics/basix/issues/new?labels=bug).
+
+Questions about using Basix can be asked on the [FEniCS discourse group](https://fenicsproject.discourse.group/).
+
+
+## Contributing
+
+Information about how to contribute to Basix can be found [here](CONTRIBUTING.md).
 
 ## Supported elements
 

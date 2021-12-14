@@ -55,7 +55,7 @@ follows:
 
 ![The numbering of a reference interval](joss/img/interval_numbering.png)
 
-The following elements are supported on a interval:
+The following elements are supported on an interval:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
   - [Bubble](https://defelement.com/elements/bubble.html)

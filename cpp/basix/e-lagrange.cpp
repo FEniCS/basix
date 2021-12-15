@@ -930,7 +930,7 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
           "Cannot create a continuous order 0 Lagrange basis function");
     }
     x[tdim] = {lattice::create(celltype, 0, lattice::type::equispaced, true)};
-    const std::size_t num_dofs = pt.shape(0);
+    const std::size_t num_dofs = x[tdim][0].shape(0);
     std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
     M[tdim].push_back(xt::xtensor<double, 3>(s));
     xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);

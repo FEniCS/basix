@@ -30,12 +30,14 @@ xt::xtensor<double, 2> chebyshev_quad(int d, const xt::xarray<double>& x)
                                               cell::type::quadrilateral, d))});
   std::size_t n = 0;
   for (std::size_t i = 0; i < r0.shape(1); ++i)
+  {
     for (std::size_t j = 0; j < r1.shape(1); ++j)
     {
       for (std::size_t p = 0; p < x.shape(0); ++p)
         out(p, n) = r0(p, i) * r1(p, j);
       ++n;
     }
+  }
   assert(out.shape(1) == n);
 
   return out;
@@ -50,13 +52,17 @@ xt::xtensor<double, 2> chebyshev_hex(int d, const xt::xarray<double>& x)
                                               cell::type::hexahedron, d))});
   std::size_t n = 0;
   for (std::size_t i = 0; i < r0.shape(1); ++i)
+  {
     for (std::size_t j = 0; j < r1.shape(1); ++j)
+    {
       for (std::size_t k = 0; k < r2.shape(1); ++k)
       {
         for (std::size_t p = 0; p < x.shape(0); ++p)
           out(p, n) = r0(p, i) * r1(p, j) * r2(p, k);
         ++n;
       }
+    }
+  }
   assert(out.shape(1) == n);
 
   return out;
@@ -96,11 +102,7 @@ xt::xtensor<double, 2> polynomials::tabulate(polynomials::type polytype,
   }
 }
 //-----------------------------------------------------------------------------
-int polynomials::dim(polynomials::type polytype, cell::type cell, int d)
+int polynomials::dim(polynomials::type, cell::type cell, int d)
 {
-  switch (polytype)
-  {
-  default:
-    return polyset::dim(cell, d);
-  }
+  return polyset::dim(cell, d);
 }

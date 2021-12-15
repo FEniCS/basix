@@ -275,20 +275,24 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
         = polynomials::tabulate(polytype, celltype, degree, pts);
 
     for (std::size_t j = 0; j < dim; ++j)
+    {
       for (std::size_t k = 0; k < dim; ++k)
       {
         lcoeffs(j, k) = 0;
         for (std::size_t p = 0; p < pts.shape(0); ++p)
           lcoeffs(j, k) += wts[p] * lpoly_at_pts(p, j) * poly_at_pts(p, k);
       }
+    }
 
     for (std::size_t j = 0; j < dim; ++j)
+    {
       for (std::size_t k = 0; k < dim; ++k)
       {
         matrix(j, k) = 0;
         for (std::size_t p = 0; p < pts.shape(0); ++p)
           matrix(j, k) += wts[p] * lpoly_at_pts(p, j) * poly_at_tpts(p, k);
       }
+    }
     xt::view(out, i, xt::all(), xt::all()) = math::solve(lcoeffs, matrix);
   }
 

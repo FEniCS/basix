@@ -876,9 +876,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
                        maps::type::identity, discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------
-int get_integral_degree(cell::type et, int degree)
+int get_integral_degree(cell::type celltype, int degree)
 {
-  switch (et)
+  switch (celltype)
   {
   case cell::type::interval:
     return degree - 2;
@@ -929,8 +929,7 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
       throw std::runtime_error(
           "Cannot create a continuous order 0 Lagrange basis function");
     }
-    auto pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
-    x[tdim].push_back(pt);
+    x[tdim] = {lattice::create(celltype, 0, lattice::type::equispaced, true)};
     const std::size_t num_dofs = pt.shape(0);
     std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
     M[tdim].push_back(xt::xtensor<double, 3>(s));
@@ -943,9 +942,9 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
       M[dim].resize(topology[dim].size());
       x[dim].resize(topology[dim].size());
 
-      // Point evaluations at vertices
       if (dim == 0)
       {
+        // Point evaluations at vertices
         for (std::size_t e = 0; e < topology[dim].size(); ++e)
         {
           const xt::xtensor<double, 2> entity_x
@@ -958,16 +957,13 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
               = xt::eye<double>(num_dofs);
         }
       }
-      // Integral moments on other subentities
       else if (dim <= tdim)
       {
-        // This will not work on pyramids and prisms
+        // Integral moments on other subentities
+        // FIXME: This will not work on pyramids and prisms
         cell::type ct = cell::sub_entity_type(celltype, dim, 0);
 
-        /// TODO: this will need changing for other polynomial types
-        int sub_degree = get_integral_degree(ct, degree);
-
-        if (sub_degree >= 0)
+        if (int sub_degree = get_integral_degree(ct, degree); sub_degree >= 0)
         {
           std::tie(x[dim], M[dim]) = moments::make_integral_moments(
               polytype, ct, sub_degree, celltype, 1, degree + sub_degree);
@@ -1001,13 +997,9 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
         = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
   }
 
-  // auto tensor_factors
-  //    = create_tensor_product_factors(celltype, degree, variant);
-
   return FiniteElement(element::family::P, celltype, degree, {1},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
                        maps::type::identity, discontinuous, degree, degree);
-  //                     tensor_factors);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -1039,7 +1031,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   if (variant == element::lagrange_variant::integral_legendre
       or variant == element::lagrange_variant::integral_chebyshev)
+  {
     return create_integral_lagrange(celltype, degree, variant, discontinuous);
+  }
 
   auto [lattice_type, simplex_method, exterior]
       = variant_to_lattice(celltype, variant);

@@ -423,3 +423,21 @@ def test_vtk_element(celltype, degree):
         elif degree == 2:
             assert perm == [0, 1, 3, 2, 4, 5, 7, 6, 8, 11, 13, 9, 16, 18,
                             19, 17, 10, 12, 15, 14, 22, 23, 21, 24, 20, 25, 26]
+
+
+@pytest.mark.parametrize("variant", [
+    basix.LagrangeVariant.integral_legendre
+])
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.triangle, basix.CellType.tetrahedron,
+    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("degree", range(1, 5))
+def test_integral_lagrange(celltype, degree, variant):
+    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
+    for p in e.points:
+        assert in_cell(celltype, p)
+
+    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant)
+    for p in e.points:
+        assert in_cell(celltype, p)

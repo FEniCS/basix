@@ -86,6 +86,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/maps.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/polynomials.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.h
@@ -109,6 +110,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/polynomials.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.cpp

@@ -6,7 +6,7 @@ on:
     - cron: "0 2 * * TUE"
   pull_request:
     branches:
-      - main  
+      - main
   workflow_dispatch: ~
 
 jobs:
@@ -55,5 +55,5 @@ jobs:
       - name: Run units tests
         run: |
           . /opt/intel/oneapi/setvars.sh
-          pip install pytest pytest-xdist numpy sympy numba scipy
+          pip install pytest pytest-xdist numpy sympy numba
           pytest -v -n auto --durations 20 test/

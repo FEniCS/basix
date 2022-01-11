@@ -15,6 +15,7 @@ namespace element
 /// An enum defining the variants of a Lagrange space that can be created
 enum class lagrange_variant
 {
+  unset = -1,
   equispaced = 0,
   gll_warped = 1,
   gll_isaac = 2,

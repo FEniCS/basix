@@ -333,6 +333,8 @@ Interface to the Basix C++ library.
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family", &FiniteElement::family)
+      .def_property_readonly("lagrange_variant",
+                             &FiniteElement::lagrange_variant)
       .def_property_readonly(
           "dof_transformations_are_permutations",
           &FiniteElement::dof_transformations_are_permutations)
@@ -368,6 +370,7 @@ Interface to the Basix C++ library.
                              &FiniteElement::has_tensor_product_factorisation);
 
   py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
+      .value("unset", element::lagrange_variant::unset)
       .value("equispaced", element::lagrange_variant::equispaced)
       .value("gll_warped", element::lagrange_variant::gll_warped)
       .value("gll_isaac", element::lagrange_variant::gll_isaac)

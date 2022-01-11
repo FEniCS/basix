@@ -999,7 +999,8 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {1},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, discontinuous, degree, degree);
+                       maps::type::identity, discontinuous, degree, degree, {},
+                       variant);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -1198,7 +1199,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   return FiniteElement(element::family::P, celltype, degree, {1},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
                        maps::type::identity, discontinuous, degree, degree,
-                       tensor_factors);
+                       tensor_factors, variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,

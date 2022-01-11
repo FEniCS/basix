@@ -236,7 +236,8 @@ public:
       int highest_complete_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
-      = {});
+      = {},
+      element::lagrange_variant lvariant = element::lagrange_variant::unset);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -340,6 +341,11 @@ public:
   /// Get the finite element family
   /// @return The family
   element::family family() const;
+
+  /// Get the Lagrange variant of the element, or throw an error if element has
+  /// no Lagrange variant
+  /// @return The Lagrange variant
+  element::lagrange_variant lagrange_variant() const;
 
   /// Get the map type for this element
   /// @return The map type
@@ -788,6 +794,9 @@ private:
 
   // Finite element family
   element::family _family;
+
+  // Lagrange variant
+  element::lagrange_variant _lagrange_variant;
 
   // Degree
   int _degree;

@@ -309,10 +309,11 @@ FiniteElement::FiniteElement(
     maps::type map_type, bool discontinuous, int highest_degree,
     int highest_complete_degree,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
+        tensor_factors,
+    element::lagrange_variant lvariant)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
-      _degree(degree), _map_type(map_type),
+      _lagrange_variant(lvariant), _degree(degree), _map_type(map_type),
       _entity_transformations(entity_transformations), _x(x),
       _discontinuous(discontinuous),
       _degree_bounds({highest_complete_degree, highest_degree}),
@@ -909,6 +910,11 @@ std::array<int, 2> FiniteElement::degree_bounds() const
 bool FiniteElement::has_tensor_product_factorisation() const
 {
   return _tensor_factors.size() > 0;
+}
+//-----------------------------------------------------------------------------
+element::lagrange_variant FiniteElement::lagrange_variant() const
+{
+  return _lagrange_variant;
 }
 //-----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>

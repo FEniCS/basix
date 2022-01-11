@@ -224,6 +224,7 @@ public:
   /// element
   /// @param[in] tensor_factors The factors in the tensor product representation
   /// of this element
+  /// @param[in] lvariant The Lagrange variant of the element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape,

@@ -55,7 +55,7 @@ examples given above define a degree 2 Lagrange space on a triangle; the
 basis functions of this space are shown in \autoref{fig:fe}.
 
 ![The six basis functions of an order 2 Lagrange space on a triangle.
-The uppper three functions arise from point evaluations at the vertices.
+The upper three functions arise from point evaluations at the vertices.
 The lower three arise from point evaluations at the midpoints of the
 edges. These diagrams are taken from DefElement
 [@defelement].\label{fig:fe}](img/basis-functions.png){ width=60% }
@@ -67,14 +67,14 @@ Ensuring that the same coefficients are assigned to the DOFs of
 neighbouring cells associated with a shared sub-entity gives the finite
 element space the desired continuity properties.
 
-Basix is a C++ library that creates and tabulates a range finite
+Basix is a C++ library that creates and tabulates a range of finite
 elements on triangles, tetrahedra, quadrilaterals, hexahedra, pyramids,
 and prisms. A full list of currently supported elements is included
 below.
 
 For many elements, the functionals in $\mathcal{L}$ are defined to be integrals
-on a sub-entity of the cell. The compute these integrals, Basix provides a
-range of quadrature rules, including Gauss--Jacobi, Gauss--Lobatto--Legendre,
+on a sub-entity of the cell. Basix provides a range of quadrature rules to compute 
+these integrals, including Gauss--Jacobi, Gauss--Lobatto--Legendre,
 and Xiao--Gimbutas [@xiao-gimbutas]. Internally, Basix uses xtensor [@xtensor]
 for matrix and tensor storage and manipulation. The majority of Basix's
 functionality can be used via the library's Python interface.
@@ -92,16 +92,16 @@ Basix allows users to:
 - access geometric and topological information about reference cells;
 - apply push forward and pull back operations to map data between a
   reference cell and a physical cell;
-- permute and transform DOFs to allow higher-order elements to be use on
+- permute and transform DOFs to allow higher-order elements to be used on
   arbitrary meshes; and
 - interpolate into a finite element space and between finite element
   spaces.
 
 In many FEM libraries, the definitions of elements are included within
-the code of the library rather then separating the element definition
+the code of the library rather than separating the element definition
 and tabulation into a standalone library as we do. Following the latter
-approach allows us to make adjustments to how elements are implemented
-and add new elements to Basix without needing to make changes the rest
+approach allows us to adjust how elements are implemented
+and add new elements to Basix without needing to make changes to the rest
 of the library. This also allows users who want to create custom
 integration kernels to get information about elements from Basix without
 having to extract information from the core of the full finite element
@@ -109,7 +109,7 @@ library.
 
 The Python library FIAT [@fiat] (which is part of the legacy FEniCS
 library alongside UFL, FFC [@ffc] and DOLFIN [@dolfin]) serves a
-similiar purpose as Basix and can perform many of the same operatations
+similar purpose as Basix and can perform many of the same operations
 (with the exception of permutations and transformations) on triangles,
 tetrahedra, quadrilaterals, and hexahedra. As FIAT is written in Python,
 the FFC library would use the information from FIAT to generate code
@@ -132,7 +132,7 @@ orient their sub-entities can otherwise cause issues.
 ## Interval
 
 In Basix, the sub-entities of the reference interval are numbered as
-shown in \autoref{fig:interval}. The following elements are supported on a interval:
+shown in \autoref{fig:interval}. The following elements are supported on an interval:
 
 - Lagrange
 - bubble

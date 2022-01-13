@@ -258,6 +258,14 @@ Returns
 {{finite-element.h > base_transformations > return : dict}}
 )";
 
+{{DOCTYPE}} FiniteElement__get_tensor_product_representation = R"(
+{{finite-element.h > get_tensor_product_representation > doc}}
+
+Returns
+=======
+{{finite-element.h > get_tensor_product_representation > return : List[Tuple[List[basix.FiniteElement], List[int]]]}}
+)";
+
 {{DOCTYPE}} create_element__family_cell_degree_discontinuous = R"(
 {{finite-element.h > create_element(family, cell, degree, discontinuous) > doc}}
 
@@ -344,6 +352,21 @@ Parameters
 Returns
 =======
 {{polyset.h > tabulate > return : numpy.ndarray[numpy.float64]}}
+)";
+
+{{DOCTYPE}} tabulate_polynomials = R"(
+{{polynomials.h > tabulate > doc}}
+
+Parameters
+==========
+{{polynomials.h > tabulate > param > polytype : basix.PolynomialType}}
+{{polynomials.h > tabulate > param > celltype : basix.CellType}}
+{{polynomials.h > tabulate > param > d : int}}
+{{polynomials.h > tabulate > param > x : numpy.ndarray[numpy.float64]}}
+
+Returns
+=======
+{{polynomials.h > tabulate > return : numpy.ndarray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} make_quadrature__rule_celltype_m = R"(

@@ -15,10 +15,12 @@ else()
   find_package(Basix REQUIRED)
 endif()
 
-# Check if the Basix C++ library was compiled with xtensor SIMD
-get_target_property(BASIX_DEFN Basix::basix INTERFACE_COMPILE_DEFINITIONS)
-if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
-  find_package(xsimd REQUIRED)
+# Correct COMPONENT specification Development.Module added only in CMake 3.18
+# and above.
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+  find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+else()
+  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 endif()
 
 if(SKBUILD)
@@ -27,7 +29,7 @@ if(SKBUILD)
   # directory here.
   execute_process(
     COMMAND
-      "${PYTHON_EXECUTABLE}" -c
+      "${Python3_EXECUTABLE}" -c
       "import pybind11; print(pybind11.get_cmake_dir())"
     OUTPUT_VARIABLE _tmp_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
@@ -39,13 +41,7 @@ find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
 
 # Create the binding library
 pybind11_add_module(_basixcpp MODULE wrapper.cpp)
-target_link_libraries(_basixcpp PRIVATE pybind11::module)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
-
-# Add xsimd if the Basix C++ interface was compiled with it
-if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
-  target_link_libraries(_basixcpp PRIVATE xsimd)
-endif()
 
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)

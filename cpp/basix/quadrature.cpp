@@ -331,9 +331,9 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
     xt::xtensor<double, 2> Qpts({np * np, 2});
     std::vector<double> Qwts(np * np);
     int c = 0;
-    for (std::size_t j = 0; j < np; ++j)
+    for (std::size_t i = 0; i < np; ++i)
     {
-      for (std::size_t i = 0; i < np; ++i)
+      for (std::size_t j = 0; j < np; ++j)
       {
         Qpts(c, 0) = QptsL[i];
         Qpts(c, 1) = QptsL[j];
@@ -349,11 +349,11 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
     xt::xtensor<double, 2> Qpts({np * np * np, 3});
     std::vector<double> Qwts(np * np * np);
     int c = 0;
-    for (std::size_t k = 0; k < np; ++k)
+    for (std::size_t i = 0; i < np; ++i)
     {
       for (std::size_t j = 0; j < np; ++j)
       {
-        for (std::size_t i = 0; i < np; ++i)
+        for (std::size_t k = 0; k < np; ++k)
         {
           Qpts(c, 0) = QptsL[i];
           Qpts(c, 1) = QptsL[j];
@@ -372,9 +372,9 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
     xt::xtensor<double, 2> Qpts({np * QptsT.shape(0), 3});
     std::vector<double> Qwts(np * QptsT.shape(0));
     int c = 0;
-    for (std::size_t k = 0; k < np; ++k)
+    for (std::size_t i = 0; i < QptsT.shape(0); ++i)
     {
-      for (std::size_t i = 0; i < QptsT.shape(0); ++i)
+      for (std::size_t k = 0; k < np; ++k)
       {
         Qpts(c, 0) = QptsT(i, 0);
         Qpts(c, 1) = QptsT(i, 1);
@@ -415,6 +415,10 @@ std::pair<xt::xarray<double>, std::vector<double>> compute_gll_rule(int m)
   // Compute Lobatto nodes and weights
   auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
 
+  // Reorder to match 1d dof  ordering
+  std::rotate(xs_ref.rbegin(), xs_ref.rbegin() + 1, xs_ref.rend() - 1);
+  std::rotate(ws_ref.rbegin(), ws_ref.rbegin() + 1, ws_ref.rend() - 1);
+
   return {xt::adapt(xs_ref), ws_ref};
 }
 //-----------------------------------------------------------------------------
@@ -440,9 +444,9 @@ make_gll_quadrature(cell::type celltype, std::size_t m)
     xt::xtensor<double, 2> Qpts({np * np, 2});
     std::vector<double> Qwts(np * np);
     int c = 0;
-    for (std::size_t j = 0; j < np; ++j)
+    for (std::size_t i = 0; i < np; ++i)
     {
-      for (std::size_t i = 0; i < np; ++i)
+      for (std::size_t j = 0; j < np; ++j)
       {
         Qpts(c, 0) = QptsL[i];
         Qpts(c, 1) = QptsL[j];
@@ -458,11 +462,11 @@ make_gll_quadrature(cell::type celltype, std::size_t m)
     xt::xtensor<double, 2> Qpts({np * np * np, 3});
     std::vector<double> Qwts(np * np * np);
     int c = 0;
-    for (std::size_t k = 0; k < np; ++k)
+    for (std::size_t i = 0; i < np; ++i)
     {
       for (std::size_t j = 0; j < np; ++j)
       {
-        for (std::size_t i = 0; i < np; ++i)
+        for (std::size_t k = 0; k < np; ++k)
         {
           Qpts(c, 0) = QptsL[i];
           Qpts(c, 1) = QptsL[j];

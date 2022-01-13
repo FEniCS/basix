@@ -237,16 +237,16 @@ Returns
 =======
 numpy.ndarray[numpy.float64]
     The basis functions (and derivatives). The shape is
-(derivative, point, basis fn index, value index).
-- The first index is the derivative, with higher derivatives are
-stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
-the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
-(0,2), (3,0)... The function basix::indexing::idx can be used to find the
-appropriate derivative.
-- The second index is the point index
-- The third index is the basis function index
-- The fourth index is the basis function component. Its has size
-one for scalar basis functions.
+    (derivative, point, basis fn index, value index).
+    - The first index is the derivative, with higher derivatives are
+    stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+    the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+    (0,2), (3,0)... The function basix::indexing::idx can be used to find the
+    appropriate derivative.
+    - The second index is the point index
+    - The third index is the basis function index
+    - The fourth index is the basis function component. Its has size
+    one for scalar basis functions.
 )";
 
 const std::string FiniteElement__push_forward = R"(
@@ -269,7 +269,7 @@ Returns
 =======
 numpy.ndarray[numpy.float64]
     The function values on the cell. The indices are [Jacobian
-index, point index, components].
+    index, point index, components].
 )";
 
 const std::string FiniteElement__pull_back = R"(
@@ -466,6 +466,23 @@ dict
     The base transformations for this element
 )";
 
+const std::string FiniteElement__get_tensor_product_representation = R"(
+Get the tensor product representation of this element, or throw an error
+if no such factorisation exists.
+
+The tensor product representation will be a vector of tuples. Each tuple
+contains a vector of finite elements, and a vector on integers. The vector
+of finite elements gives the elements on an interval that appear in the
+tensor product representation. The vector of integers gives the
+permutation between the numbering of the tensor product DOFs and the
+number of the DOFs of this Basix element.
+
+Returns
+=======
+List[Tuple[List[basix.FiniteElement], List[int]]]
+    The tensor product representation
+)";
+
 const std::string create_element__family_cell_degree_discontinuous = R"(
 Create an element
 
@@ -583,7 +600,7 @@ Returns
 =======
 numpy.ndarray[numpy.float64]
     Matrix operator that maps the 'from' degrees-of-freedom to
-the 'to' degrees-of-freedom
+    the 'to' degrees-of-freedom
 )";
 
 const std::string tabulate_polynomial_set = R"(
@@ -602,9 +619,6 @@ cell, there are `(nderiv + 1)(nderiv + 2)/2` derivatives, and in 3D,
 there are `(nderiv + 1)(nderiv + 2)(nderiv + 3)/6`. The ordering is
 'triangular' with the lower derivatives appearing first.
 
-NOTE: This function will be called at runtime when tabulating a finite
-element, so its performance is critical.
-
 Parameters
 ==========
 celltype : basix.CellType
@@ -620,23 +634,44 @@ Returns
 =======
 numpy.ndarray[numpy.float64]
     Polynomial sets, for each derivative, tabulated at points.
-The shape is `(number of derivatives computed, number of points,
-basis index)`.
+    The shape is `(number of derivatives computed, number of points,
+    basis index)`.
+    
+    - The first index is the derivative. The first entry is the basis
+    itself. Derivatives are stored in triangular (2D) or tetrahedral
+    (3D) ordering, e.g. if `(p, q)` denotes `p` order dervative with
+    repsect to `x` and `q` order derivative with respect to `y`, [0] ->
+    (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
+    [5] -> (0, 2), [6] -> (3, 0),...
+    The function basix::indexing::idx maps tuples `(p, q, r)` to the array
+    index.
+    
+    - The second index is the point, with index `i` correspondign to the
+    point in row `i` of @p x.
+    
+    - The third index is the basis function index.
+    TODO: Does the order for the third index need to be documented?
+)";
 
-- The first index is the derivative. The first entry is the basis
-itself. Derivatives are stored in triangular (2D) or tetrahedral
-(3D) ordering, e.g. if `(p, q)` denotes `p` order dervative with
-repsect to `x` and `q` order derivative with respect to `y`, [0] ->
-(0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
-[5] -> (0, 2), [6] -> (3, 0),...
-The function basix::indexing::idx maps tuples `(p, q, r)` to the array
-index.
+const std::string tabulate_polynomials = R"(
+Tabulate a set of polynomials.
 
-- The second index is the point, with index `i` correspondign to the
-point in row `i` of @p x.
+Parameters
+==========
+polytype : basix.PolynomialType
+    Polynomial type
+celltype : basix.CellType
+    Cell type
+d : int
+    Polynomial degree
+x : numpy.ndarray[numpy.float64]
+    Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
 
-- The third index is the basis function index.
-TODO: Does the order for the third index need to be documented?
+Returns
+=======
+numpy.ndarray[numpy.float64]
+    Polynomial sets, for each derivative, tabulated at points.
+    The shape is `(number of points, basis index)`.
 )";
 
 const std::string make_quadrature__rule_celltype_m = R"(
@@ -655,7 +690,7 @@ Returns
 =======
 numpy.ndarray[numpy.float64]
     List of points and list of weights. The number of points
-arrays has shape (num points, gdim)
+    arrays has shape (num points, gdim)
 )";
 
 const std::string make_quadrature__celltype_m = R"(
@@ -672,7 +707,7 @@ Returns
 =======
 numpy.ndarray[numpy.float64]
     List of points and list of weights. The number of points
-arrays has shape (num points, gdim)
+    arrays has shape (num points, gdim)
 )";
 
 const std::string index__p = R"(

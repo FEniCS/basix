@@ -216,14 +216,29 @@ public:
   /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
-  FiniteElement(element::family family, cell::type cell_type, int degree,
-                const std::vector<std::size_t>& value_shape,
-                const xt::xtensor<double, 2>& wcoeffs,
-                const std::map<cell::type, xt::xtensor<double, 3>>&
-                    entity_transformations,
-                const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-                const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-                maps::type map_type, bool discontinuous);
+  /// @param[in] highest_degree The lowest degree n such that the highest degree
+  /// polynomial in this element is contained in a Lagrange (or vector Lagrange)
+  /// element of degree n
+  /// @param[in] highest_complete_degree The highest degree n such that a
+  /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
+  /// element
+  /// @param[in] tensor_factors The factors in the tensor product representation
+  /// of this element
+  /// @param[in] lvariant The Lagrange variant of the element
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::map<cell::type, xt::xtensor<double, 3>>&
+          entity_transformations,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      maps::type map_type, bool discontinuous, int highest_degree,
+      int highest_complete_degree,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {},
+      element::lagrange_variant lvariant = element::lagrange_variant::unset);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -327,6 +342,11 @@ public:
   /// Get the finite element family
   /// @return The family
   element::family family() const;
+
+  /// Get the Lagrange variant of the element, or throw an error if element has
+  /// no Lagrange variant
+  /// @return The Lagrange variant
+  element::lagrange_variant lagrange_variant() const;
 
   /// Get the map type for this element
   /// @return The map type
@@ -740,6 +760,29 @@ public:
   /// @return The dual matrix
   xt::xtensor<double, 2> coefficient_matrix() const;
 
+  /// Get [0] the lowest degree n such that the highest degree
+  /// polynomial in this element is contained in a Lagrange (or vector
+  /// Lagrange) element of degree n, and [1] the highest degree n such
+  /// that a Lagrange (or vector Lagrange) element of degree n is a
+  /// subspace of this element
+  std::array<int, 2> degree_bounds() const;
+
+  /// Indicates whether or not this element has a tensor product representation.
+  bool has_tensor_product_factorisation() const;
+
+  /// Get the tensor product representation of this element, or throw an error
+  /// if no such factorisation exists.
+  ///
+  /// The tensor product representation will be a vector of tuples. Each tuple
+  /// contains a vector of finite elements, and a vector on integers. The vector
+  /// of finite elements gives the elements on an interval that appear in the
+  /// tensor product representation. The vector of integers gives the
+  /// permutation between the numbering of the tensor product DOFs and the
+  /// number of the DOFs of this Basix element.
+  /// @return The tensor product representation
+  std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+  get_tensor_product_representation() const;
+
 private:
   // Cell type
   cell::type _cell_type;
@@ -752,6 +795,9 @@ private:
 
   // Finite element family
   element::family _family;
+
+  // Lagrange variant
+  element::lagrange_variant _lagrange_variant;
 
   // Degree
   int _degree;
@@ -848,6 +894,20 @@ private:
 
   // The dual matrix
   xt::xtensor<double, 2> _dual_matrix;
+
+  // Polynomial degree bounds
+  // [0]: highest degree n such that Lagrange order n is a subspace of
+  // this space
+  // [1]: highest polynomial degree
+  std::array<int, 2> _degree_bounds;
+
+  // Tensor product representation
+  // Entries of tuple are (list of elements on an interval, permutation of DOF
+  // numbers)
+  // @todo: For vector-valued elements, a tensor product type and a scaling
+  // factor may additionally be needed.
+  std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+      _tensor_factors;
 };
 
 /// Create an element using a given Lagrange variant

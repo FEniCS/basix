@@ -306,12 +306,18 @@ FiniteElement::FiniteElement(
     const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous)
+    maps::type map_type, bool discontinuous, int highest_degree,
+    int highest_complete_degree,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors,
+    element::lagrange_variant lvariant)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
-      _degree(degree), _map_type(map_type),
+      _lagrange_variant(lvariant), _degree(degree), _map_type(map_type),
       _entity_transformations(entity_transformations), _x(x),
-      _discontinuous(discontinuous)
+      _discontinuous(discontinuous),
+      _degree_bounds({highest_complete_degree, highest_degree}),
+      _tensor_factors(tensor_factors)
 {
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
   xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
@@ -631,7 +637,10 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
   if (_x.shape(1) != _cell_tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
-  xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
+  xt::xtensor<double, 3> basis(
+      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), _x.shape(0),
+       static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
+  polyset::tabulate(basis, _cell_type, _degree, nd, _x);
   const int psize = polyset::dim(_cell_type, _degree);
   const int vs = value_size();
   xt::xtensor<double, 2> B, C;
@@ -891,6 +900,29 @@ xt::xtensor<double, 2> FiniteElement::dual_matrix() const
 xt::xtensor<double, 2> FiniteElement::coefficient_matrix() const
 {
   return _coeffs;
+}
+//-----------------------------------------------------------------------------
+std::array<int, 2> FiniteElement::degree_bounds() const
+{
+  return _degree_bounds;
+}
+//-----------------------------------------------------------------------------
+bool FiniteElement::has_tensor_product_factorisation() const
+{
+  return _tensor_factors.size() > 0;
+}
+//-----------------------------------------------------------------------------
+element::lagrange_variant FiniteElement::lagrange_variant() const
+{
+  return _lagrange_variant;
+}
+//-----------------------------------------------------------------------------
+std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+FiniteElement::get_tensor_product_representation() const
+{
+  if (!has_tensor_product_factorisation())
+    throw std::runtime_error("Element has no tensor product representation.");
+  return _tensor_factors;
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

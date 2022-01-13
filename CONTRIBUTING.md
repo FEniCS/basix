@@ -16,5 +16,5 @@ On opening a pull request, unit tests will run on GitHub CI. You can click on th
 to see where (if anywhere) the tests are failing.
 
 ### Code of conduct
-We expect all our contributors to follow the [code of condict](CODE_OF_CONDUCT.md). Any unacceptable
+We expect all our contributors to follow the [code of conduct](CODE_OF_CONDUCT.md). Any unacceptable
 behaviour can be reported to the FEniCS steering council (fenics-steering-council@googlegroups.com).

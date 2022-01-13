@@ -58,14 +58,13 @@ pytest test/
 
 ### C++
 
-Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor).  CMake
-will download install xtensor if it cannot be found. It also requires an
-install of BLAS and LAPACK.
+Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor), BLAS
+and LAPACK. CMake will download xtensor if it cannot be found. 
 
 ### Python
 
 When using the standard install approach all build and runtime dependencies
-should be fetched automatically automatically.
+for the C++ and Python parts of Basix will be fetched automatically.
 
 Building the Python interface requires
 [`pybind11`](https://github.com/pybind/pybind11).

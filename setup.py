@@ -20,7 +20,7 @@ setup(name="fenics-basix",
           "optional": ["numba"],
           "test": ["pytest", "numpy", "sympy", "numba", "scipy"],
           "ci": ["pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]", "fenics-basix[test]"]
-      }
+      },
       cmake_args=[
           '-DPython3_EXECUTABLE=' + sys.executable,
           '-DPython3_LIBRARIES=' + sysconfig.get_config_var("LIBDEST"),

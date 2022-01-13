@@ -38,6 +38,9 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install ninja
 
+      - name: Install Basix
+        run: pip -v install .[ci]
+
       - name: Lint with flake8
         run: |
           pip install flake8
@@ -50,12 +53,8 @@ jobs:
           pip install pydocstyle
           python -m pydocstyle python/basix
 
-      - name: Install Basix
-        run: pip -v install .
-
       - name: Run units tests
         run: |
-          pip install pytest pytest-xdist numpy sympy numba scipy
           pytest -n auto --durations 20 test/
 
       - name: Run python demos
@@ -65,8 +64,6 @@ jobs:
       - name: Build documentation
         if: runner.os == 'Linux'
         run: |
-          pip install markdown
-          pip install sphinx sphinx_rtd_theme
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/cpp
           doxygen
@@ -97,7 +94,6 @@ jobs:
         run: |
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/web
-          pip install -r requirements.txt
           python make_html.py
 
       - name: Set version name

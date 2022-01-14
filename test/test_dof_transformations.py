@@ -168,7 +168,7 @@ def test_transformation_of_tabulated_data_triangle(element_type, degree, element
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
 
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
@@ -197,7 +197,7 @@ def test_transformation_of_tabulated_data_quadrilateral(element_type, degree, el
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
@@ -227,7 +227,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
@@ -246,7 +246,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(rotated_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose(bt[6].dot(i_slice)[start: start + ndofs],
@@ -263,7 +263,7 @@ def test_transformation_of_tabulated_data_tetrahedron(element_type, degree, elem
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[7].dot(i_slice))[start: start + ndofs],
@@ -297,7 +297,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
@@ -316,7 +316,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(rotated_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose(bt[12].dot(i_slice)[start: start + ndofs],
@@ -333,7 +333,7 @@ def test_transformation_of_tabulated_data_hexahedron(element_type, degree, eleme
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[13].dot(i_slice))[start: start + ndofs],
@@ -363,7 +363,7 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
@@ -382,7 +382,7 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(rotated_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose(bt[10].dot(i_slice)[start: start + ndofs],
@@ -399,7 +399,7 @@ def test_transformation_of_tabulated_data_prism(element_type, degree, element_ar
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[11].dot(i_slice))[start: start + ndofs],
@@ -429,7 +429,7 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[0].dot(i_slice))[start: start + ndofs],
@@ -448,7 +448,7 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(rotated_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose(bt[8].dot(i_slice)[start: start + ndofs],
@@ -465,7 +465,7 @@ def test_transformation_of_tabulated_data_pyramid(element_type, degree, element_
         K = np.array([np.linalg.inv(_J) for p in points])
         mapped_values = e.push_forward(reflected_values, J, detJ, K)
         for i, j in zip(values, mapped_values):
-            for d in range(e.value_size):
+            for d in range(e.value_size()):
                 i_slice = i[:, d]
                 j_slice = j[:, d]
                 assert np.allclose((bt[9].dot(i_slice))[start: start + ndofs],

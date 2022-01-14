@@ -50,7 +50,7 @@ def test_mappings_2d_to_2d(element_type, element_args):
                   [random.random(), random.random()]])
     detJ = np.linalg.det(J)
     K = np.linalg.inv(J)
-    run_map_test(e, J, detJ, K, e.value_size, e.value_size)
+    run_map_test(e, J, detJ, K, e.value_size(), e.value_size())
 
 
 @pytest.mark.parametrize("element_type, element_args", elements)
@@ -62,13 +62,13 @@ def test_mappings_2d_to_3d(element_type, element_args):
     detJ = np.sqrt(6)
     K = np.array([[0.5, 0.5, 0.], [-0.5, 0.5, 0.]])
 
-    if e.value_size == 1:
+    if e.value_size() == 1:
         physical_vs = 1
-    elif e.value_size == 2:
+    elif e.value_size() == 2:
         physical_vs = 3
-    elif e.value_size == 4:
+    elif e.value_size() == 4:
         physical_vs = 9
-    run_map_test(e, J, detJ, K, e.value_size, physical_vs)
+    run_map_test(e, J, detJ, K, e.value_size(), physical_vs)
 
 
 @pytest.mark.parametrize("element_type, element_args", elements)
@@ -81,4 +81,4 @@ def test_mappings_3d_to_3d(element_type, element_args):
     detJ = np.linalg.det(J)
     K = np.linalg.inv(J)
 
-    run_map_test(e, J, detJ, K, e.value_size, e.value_size)
+    run_map_test(e, J, detJ, K, e.value_size(), e.value_size())

@@ -10,6 +10,7 @@
 #include <basix/interpolation.h>
 #include <basix/lattice.h>
 #include <basix/maps.h>
+#include <basix/polynomials.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <pybind11/numpy.h>
@@ -99,6 +100,29 @@ Interface to the Basix C++ library.
       .value("warp", lattice::simplex_method::warp)
       .value("isaac", lattice::simplex_method::isaac)
       .value("centroid", lattice::simplex_method::centroid);
+
+  py::enum_<polynomials::type>(m, "PolynomialType")
+      .value("legendre", polynomials::type::legendre)
+      .value("chebyshev", polynomials::type::chebyshev);
+
+  m.def(
+      "tabulate_polynomials",
+      [](polynomials::type polytype, cell::type celltype, int d,
+         const py::array_t<double, py::array::c_style>& x) {
+        std::vector<std::size_t> shape;
+        if (x.ndim() == 2 and x.shape(1) == 1)
+          shape.push_back(x.shape(0));
+        else
+        {
+          for (pybind11::ssize_t i = 0; i < x.ndim(); ++i)
+            shape.push_back(x.shape(i));
+        }
+        auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
+        xt::xtensor<double, 2> t
+            = polynomials::tabulate(polytype, celltype, d, _x);
+        return py::array_t<double>(t.shape(), t.data());
+      },
+      basix::docstring::tabulate_polynomials.c_str());
 
   m.def(
       "create_lattice",
@@ -212,6 +236,7 @@ Interface to the Basix C++ library.
             return py::array_t<double>(t.shape(), t.data());
           },
           basix::docstring::FiniteElement__tabulate.c_str())
+      .def("__eq__", &FiniteElement::operator==)
       .def(
           "push_forward",
           [](const FiniteElement& self,
@@ -309,6 +334,8 @@ Interface to the Basix C++ library.
       .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family", &FiniteElement::family)
+      .def_property_readonly("lagrange_variant",
+                             &FiniteElement::lagrange_variant)
       .def_property_readonly(
           "dof_transformations_are_permutations",
           &FiniteElement::dof_transformations_are_permutations)
@@ -344,6 +371,7 @@ Interface to the Basix C++ library.
                              &FiniteElement::has_tensor_product_factorisation);
 
   py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
+      .value("unset", element::lagrange_variant::unset)
       .value("equispaced", element::lagrange_variant::equispaced)
       .value("gll_warped", element::lagrange_variant::gll_warped)
       .value("gll_isaac", element::lagrange_variant::gll_isaac)
@@ -355,6 +383,9 @@ Interface to the Basix C++ library.
       .value("gl_warped", element::lagrange_variant::gl_warped)
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
+      .value("integral_legendre", element::lagrange_variant::integral_legendre)
+      .value("integral_chebyshev",
+             element::lagrange_variant::integral_chebyshev)
       .value("vtk", element::lagrange_variant::vtk);
 
   // Create FiniteElement

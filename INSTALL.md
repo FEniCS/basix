@@ -1,16 +1,21 @@
 # Installation
 
-The Basix Python and C++ can be installed by
+## Standard
+
+Basix can be installed using
 
 ```console
 pip install .
 ```
 
+## Advanced
+
+In the standard install, the C++ library is built and installed inside the
+Python package.  This method is suitable for the majority of use cases.
+
 It is also possible to install the C++ and Python interfaces separately
 (see below). This is useful if you only need the C++ interface, and can
 be helpful during development.
-
-## Advanced
 
 ### C++ library
 
@@ -28,27 +33,48 @@ build type `Release` is strongly recommended for performance.
 
 ### Python interface
 
-To install the Python interface, in the directory `python/`:
+After installing the C++ library, install the Python interface by running in
+the directory `python/`:
 
 ```console
 pip install .
 ```
 
-
 ## Running the unit tests
 
-Once the Basix Python interface has been installed, from the 
-directory `python/` the tests can be run with:
+To install Basix and the extra depedencies required to run the Python unit tests:
+
+```console
+pip install .[test]
+```
+
+From the directory `python/` the tests can be run with:
 
 ```console
 pytest test/
 ```
 
-
 ## Dependencies
 
-Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor).
-CMake will download install these packages if they cannot be found.
+### C++
+
+Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor), BLAS
+and LAPACK. CMake will download xtensor if it cannot be found. 
+
+### Python
+
+When using the standard install approach all build and runtime dependencies
+for the C++ and Python parts of Basix will be fetched automatically.
 
 Building the Python interface requires
 [`pybind11`](https://github.com/pybind/pybind11).
+
+At runtime Basix requires [`numpy`](https://numpy.org).
+
+Basix specifies sets of optional extras `docs`, `lint`, `optional`, `test`, and
+`ci` for building documentation, linting, enabling optional features, testing
+and for continuous integration, respectively, e.g.:
+
+```console
+pip install .[docs,lint]
+```

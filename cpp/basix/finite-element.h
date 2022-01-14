@@ -224,6 +224,7 @@ public:
   /// element
   /// @param[in] tensor_factors The factors in the tensor product representation
   /// of this element
+  /// @param[in] lvariant The Lagrange variant of the element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape,
@@ -236,7 +237,8 @@ public:
       int highest_complete_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
-      = {});
+      = {},
+      element::lagrange_variant lvariant = element::lagrange_variant::unset);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -253,7 +255,14 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
-  /// Compute basis values and derivatives at set of points.
+  /// Check if two elements are the same
+  /// @note This operator compares the element properties, e.g. family,
+  /// degree, etc, and not computed numerical data
+  /// @return True if elements are the same
+  bool operator==(const FiniteElement& e) const;
+
+  /// Array shape for tabulate basis values and derivatives at set of
+  /// points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
@@ -340,6 +349,11 @@ public:
   /// Get the finite element family
   /// @return The family
   element::family family() const;
+
+  /// Get the Lagrange variant of the element, or throw an error if element has
+  /// no Lagrange variant
+  /// @return The Lagrange variant
+  element::lagrange_variant lagrange_variant() const;
 
   /// Get the map type for this element
   /// @return The map type
@@ -788,6 +802,9 @@ private:
 
   // Finite element family
   element::family _family;
+
+  // Lagrange variant
+  element::lagrange_variant _lagrange_variant;
 
   // Degree
   int _degree;

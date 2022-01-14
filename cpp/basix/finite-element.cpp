@@ -309,10 +309,11 @@ FiniteElement::FiniteElement(
     maps::type map_type, bool discontinuous, int highest_degree,
     int highest_complete_degree,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
+        tensor_factors,
+    element::lagrange_variant lvariant)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
-      _degree(degree), _map_type(map_type),
+      _lagrange_variant(lvariant), _degree(degree), _map_type(map_type),
       _entity_transformations(entity_transformations), _x(x),
       _discontinuous(discontinuous),
       _degree_bounds({highest_complete_degree, highest_degree}),
@@ -538,6 +539,71 @@ FiniteElement::FiniteElement(
   }
 }
 //-----------------------------------------------------------------------------
+bool FiniteElement::operator==(const FiniteElement& e) const
+{
+  return cell_type() == e.cell_type() and family() == e.family()
+         and degree() == e.degree() and discontinuous() == e.discontinuous()
+         and lagrange_variant() == e.lagrange_variant()
+         and map_type() == e.map_type();
+}
+//-----------------------------------------------------------------------------
+std::array<std::size_t, 4>
+FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
+{
+  std::size_t ndsize = 1;
+  for (std::size_t i = 1; i <= nd; ++i)
+    ndsize *= (_cell_tdim + i);
+  for (std::size_t i = 1; i <= nd; ++i)
+    ndsize /= i;
+  std::size_t vs = value_size();
+  std::size_t ndofs = _coeffs.shape(0);
+  return {ndsize, num_points, ndofs, vs};
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 4>
+FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
+{
+  xt::xarray<double> _x = x;
+  if (_x.dimension() == 1)
+    _x.reshape({_x.shape(0), 1});
+
+  auto shape = tabulate_shape(nd, x.shape(0));
+  xt::xtensor<double, 4> data(shape);
+  tabulate(nd, _x, data);
+
+  return data;
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
+                             xt::xtensor<double, 4>& basis_data) const
+{
+  xt::xarray<double> _x = x;
+  if (_x.dimension() == 2 and x.shape(1) == 1)
+    _x.reshape({x.shape(0)});
+
+  if (_x.shape(1) != _cell_tdim)
+    throw std::runtime_error("Point dim does not match element dim.");
+
+  xt::xtensor<double, 3> basis(
+      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), _x.shape(0),
+       static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
+  polyset::tabulate(basis, _cell_type, _degree, nd, _x);
+  const int psize = polyset::dim(_cell_type, _degree);
+  const int vs = value_size();
+  xt::xtensor<double, 2> B, C;
+  for (std::size_t p = 0; p < basis.shape(0); ++p)
+  {
+    for (int j = 0; j < vs; ++j)
+    {
+      auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
+      B = xt::view(basis, p, xt::all(), xt::all());
+      C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
+      auto result = math::dot(B, xt::transpose(C));
+      basis_view.assign(result);
+    }
+  }
+}
+//-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }
@@ -597,60 +663,6 @@ const std::vector<std::vector<std::vector<int>>>&
 FiniteElement::entity_closure_dofs() const
 {
   return _e_closure_dofs;
-}
-//-----------------------------------------------------------------------------
-std::array<std::size_t, 4>
-FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
-{
-  std::size_t ndsize = 1;
-  for (std::size_t i = 1; i <= nd; ++i)
-    ndsize *= (_cell_tdim + i);
-  for (std::size_t i = 1; i <= nd; ++i)
-    ndsize /= i;
-  std::size_t vs = value_size();
-  std::size_t ndofs = _coeffs.shape(0);
-  return {ndsize, num_points, ndofs, vs};
-}
-//-----------------------------------------------------------------------------
-xt::xtensor<double, 4>
-FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
-{
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 1)
-    _x.reshape({_x.shape(0), 1});
-
-  auto shape = tabulate_shape(nd, x.shape(0));
-  xt::xtensor<double, 4> data(shape);
-  tabulate(nd, _x, data);
-
-  return data;
-}
-//-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
-                             xt::xtensor<double, 4>& basis_data) const
-{
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 2 and x.shape(1) == 1)
-    _x.reshape({x.shape(0)});
-
-  if (_x.shape(1) != _cell_tdim)
-    throw std::runtime_error("Point dim does not match element dim.");
-
-  xt::xtensor<double, 3> basis = polyset::tabulate(_cell_type, _degree, nd, _x);
-  const int psize = polyset::dim(_cell_type, _degree);
-  const int vs = value_size();
-  xt::xtensor<double, 2> B, C;
-  for (std::size_t p = 0; p < basis.shape(0); ++p)
-  {
-    for (int j = 0; j < vs; ++j)
-    {
-      auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
-      B = xt::view(basis, p, xt::all(), xt::all());
-      C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-      auto result = math::dot(B, xt::transpose(C));
-      basis_view.assign(result);
-    }
-  }
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::base_transformations() const
@@ -906,6 +918,11 @@ std::array<int, 2> FiniteElement::degree_bounds() const
 bool FiniteElement::has_tensor_product_factorisation() const
 {
   return _tensor_factors.size() > 0;
+}
+//-----------------------------------------------------------------------------
+element::lagrange_variant FiniteElement::lagrange_variant() const
+{
+  return _lagrange_variant;
 }
 //-----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>

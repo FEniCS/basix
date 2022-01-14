@@ -6,6 +6,8 @@
 #include "dof-transformations.h"
 #include "lattice.h"
 #include "maps.h"
+#include "moments.h"
+#include "polynomials.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include <xtensor/xbuilder.hpp>
@@ -874,6 +876,133 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
                        maps::type::identity, discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------
+int get_integral_degree(cell::type celltype, int degree)
+{
+  switch (celltype)
+  {
+  case cell::type::interval:
+    return degree - 2;
+  case cell::type::quadrilateral:
+    return degree - 2;
+  case cell::type::hexahedron:
+    return degree - 2;
+  case cell::type::triangle:
+    return degree - 3;
+  case cell::type::tetrahedron:
+    return degree - 4;
+  default:
+    throw std::runtime_error("Unsupported cell type");
+  }
+}
+//-----------------------------------------------------------------------------
+FiniteElement create_integral_lagrange(cell::type celltype, int degree,
+                                       element::lagrange_variant variant,
+                                       bool discontinuous)
+{
+  if (celltype == cell::type::prism or celltype == cell::type::pyramid)
+    throw std::runtime_error(
+        "Integral Lagrange not suppored on pyramids and prisms.");
+
+  polynomials::type polytype;
+  if (variant == element::lagrange_variant::integral_legendre)
+    polytype = polynomials::type::legendre;
+  else if (variant == element::lagrange_variant::integral_chebyshev)
+    polytype = polynomials::type::chebyshev;
+  else
+    throw std::runtime_error(
+        "Unknown integral variant or integral variant not yet implemented. R");
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+
+  // Create points at nodes, ordered by topology (vertices first)
+  if (degree == 0)
+  {
+    if (!discontinuous)
+    {
+      throw std::runtime_error(
+          "Cannot create a continuous order 0 Lagrange basis function");
+    }
+    x[tdim] = {lattice::create(celltype, 0, lattice::type::equispaced, true)};
+    const std::size_t num_dofs = x[tdim][0].shape(0);
+    std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
+    M[tdim].push_back(xt::xtensor<double, 3>(s));
+    xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
+  }
+  else
+  {
+    for (std::size_t dim = 0; dim <= tdim; ++dim)
+    {
+      M[dim].resize(topology[dim].size());
+      x[dim].resize(topology[dim].size());
+
+      if (dim == 0)
+      {
+        // Point evaluations at vertices
+        for (std::size_t e = 0; e < topology[dim].size(); ++e)
+        {
+          const xt::xtensor<double, 2> entity_x
+              = cell::sub_entity_geometry(celltype, dim, e);
+          x[dim][e] = entity_x;
+          const std::size_t num_dofs = entity_x.shape(0);
+          M[dim][e] = xt::xtensor<double, 3>(
+              {num_dofs, static_cast<std::size_t>(1), num_dofs});
+          xt::view(M[dim][e], xt::all(), 0, xt::all())
+              = xt::eye<double>(num_dofs);
+        }
+      }
+      else if (dim <= tdim)
+      {
+        // Integral moments on other subentities
+        // FIXME: This will not work on pyramids and prisms
+        cell::type ct = cell::sub_entity_type(celltype, dim, 0);
+
+        if (int sub_degree = get_integral_degree(ct, degree); sub_degree >= 0)
+        {
+          std::tie(x[dim], M[dim]) = moments::make_integral_moments(
+              polytype, ct, sub_degree, celltype, 1, degree + sub_degree);
+
+          if (dim < tdim)
+          {
+            entity_transformations[ct]
+                = moments::create_dot_moment_dof_transformations(
+                    polytype, ct, sub_degree, degree + sub_degree);
+          }
+        }
+        else
+        {
+          for (std::size_t e = 0; e < topology[dim].size(); ++e)
+          {
+            x[dim][e] = xt::xtensor<double, 2>({0, tdim});
+            M[dim][e] = xt::xtensor<double, 3>({0, 1, 0});
+          }
+          if (dim < tdim)
+          {
+            entity_transformations[ct] = xt::xtensor<double, 3>({dim, 0, 0});
+          }
+        }
+      }
+    }
+  }
+
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
+  }
+
+  return FiniteElement(element::family::P, celltype, degree, {1},
+                       xt::eye<double>(ndofs), entity_transformations, x, M,
+                       maps::type::identity, discontinuous, degree, degree, {},
+                       variant);
+}
+//-----------------------------------------------------------------------------
 } // namespace
 
 //----------------------------------------------------------------------------
@@ -900,6 +1029,12 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   if (variant == element::lagrange_variant::vtk)
     return create_vtk_element(celltype, degree, discontinuous);
+
+  if (variant == element::lagrange_variant::integral_legendre
+      or variant == element::lagrange_variant::integral_chebyshev)
+  {
+    return create_integral_lagrange(celltype, degree, variant, discontinuous);
+  }
 
   auto [lattice_type, simplex_method, exterior]
       = variant_to_lattice(celltype, variant);
@@ -1064,7 +1199,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   return FiniteElement(element::family::P, celltype, degree, {1},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
                        maps::type::identity, discontinuous, degree, degree,
-                       tensor_factors);
+                       tensor_factors, variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,

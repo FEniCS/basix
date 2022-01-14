@@ -25,9 +25,7 @@ def test_quad(order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    # np.set_printoptions(suppress=True)
-    # print(mat, np.eye(mat.shape[0]))
-    assert(np.isclose(mat * 4.0, np.eye(mat.shape[0])).all())
+    assert np.allclose(mat, np.eye(ndofs))
 
 
 @pytest.mark.parametrize("order", [1, 2, 3, 4])
@@ -50,9 +48,7 @@ def test_pyramid(order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    # np.set_printoptions(suppress=True, linewidth=220)
-    # print(mat)
-    assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
+    assert np.allclose(mat, np.eye(ndofs))
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
@@ -74,9 +70,7 @@ def test_hex(order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    # np.set_printoptions(suppress=True)
-    # print(mat)
-    assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
+    assert np.allclose(mat, np.eye(ndofs))
 
 
 @pytest.mark.parametrize("order", [1, 2, 3])
@@ -98,15 +92,16 @@ def test_prism(order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    # np.set_printoptions(suppress=True)
-    # print(mat)
-    assert(np.isclose(mat * 8.0, np.eye(mat.shape[0])).all())
+    assert np.allclose(mat, np.eye(ndofs))
 
 
 @pytest.mark.parametrize("cell_type", [
     basix.CellType.interval,
     basix.CellType.triangle,
-    basix.CellType.tetrahedron
+    basix.CellType.quadrilateral,
+    basix.CellType.tetrahedron,
+    basix.CellType.hexahedron,
+    basix.CellType.prism,
 ])
 @pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
 def test_cell(cell_type, order):
@@ -119,9 +114,4 @@ def test_cell(cell_type, order):
         for j in range(ndofs):
             mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
 
-    # np.set_printoptions(suppress=True)
-    # print(mat)
-
-    pts = basix.create_lattice(cell_type, 1, basix.LatticeType.equispaced, True)
-    fac = 2 ** pts.shape[0] / 2
-    assert(np.isclose(mat * fac, np.eye(mat.shape[0])).all())
+    assert np.allclose(mat, np.eye(ndofs))

@@ -13,9 +13,18 @@ setup(name="fenics-basix",
       maintainer_email="fenics-dev@googlegroups.com",
       license="MIT",
       packages=["basix"],
+      install_requires=["numpy"],
+      extras_require={
+          "docs": ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"],
+          "lint": ["flake8", "pydocstyle"],
+          "optional": ["numba"],
+          "test": ["pytest", "sympy", "numba", "scipy"],
+          "ci": ["pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]", "fenics-basix[test]"]
+      },
       cmake_args=[
           '-DPython3_EXECUTABLE=' + sys.executable,
           '-DPython3_LIBRARIES=' + sysconfig.get_config_var("LIBDEST"),
-          '-DPython3_INCLUDE_DIRS=' + sysconfig.get_config_var("INCLUDEPY")],
+          '-DPython3_INCLUDE_DIRS=' + sysconfig.get_config_var("INCLUDEPY"),
+          '-DDOWNLOAD_XTENSOR_LIBS=ON'],
       package_dir={"": "python"},
       cmake_install_dir="python/basix/")

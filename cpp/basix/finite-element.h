@@ -951,6 +951,12 @@ FiniteElement create_element(element::family family, cell::type cell,
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree);
 
+/// Check if two elements are the same
+/// @param[in] element1 The first element
+/// @param[in] element2 The second element
+/// @return True or False
+bool elements_are_equal(FiniteElement element1, FiniteElement element2);
+
 /// Return the Basix version number
 /// @return version string
 std::string version();

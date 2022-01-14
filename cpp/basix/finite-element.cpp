@@ -925,6 +925,15 @@ FiniteElement::get_tensor_product_representation() const
   return _tensor_factors;
 }
 //-----------------------------------------------------------------------------
+bool basix::elements_are_equal(FiniteElement element1, FiniteElement element2)
+{
+  return element1.cell_type() == element2.cell_type()
+         and element1.family() == element2.family()
+         and element1.degree() == element2.degree()
+         and element1.discontinuous() == element2.discontinuous()
+         and element1.lagrange_variant() == element2.lagrange_variant();
+}
+//-----------------------------------------------------------------------------
 std::string basix::version()
 {
   static const std::string version_str = str(BASIX_VERSION);

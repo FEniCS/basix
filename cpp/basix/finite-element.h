@@ -783,6 +783,18 @@ public:
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
   get_tensor_product_representation() const;
 
+  /// Check if two elements are the same
+  /// @param[in] element1 The first element
+  /// @param[in] element2 The second element
+  /// @return True or False
+  bool operator==(const FiniteElement& e) const
+  {
+    return cell_type() == e.cell_type() and family() == e.family()
+           and degree() == e.degree() and discontinuous() == e.discontinuous()
+           and lagrange_variant() == e.lagrange_variant()
+           and map_type() == e.map_type();
+  }
+
 private:
   // Cell type
   cell::type _cell_type;
@@ -950,12 +962,6 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree);
-
-/// Check if two elements are the same
-/// @param[in] element1 The first element
-/// @param[in] element2 The second element
-/// @return True or False
-bool elements_are_equal(FiniteElement element1, FiniteElement element2);
 
 /// Return the Basix version number
 /// @return version string

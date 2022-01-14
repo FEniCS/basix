@@ -332,10 +332,10 @@ public:
   /// @return Polynomial degree
   int degree() const;
 
-  /// Get the element value size
-  /// This is just a convenience function returning product(value_shape)
-  /// @return Value size
-  int value_size() const;
+  // /// Get the element value size
+  // /// This is just a convenience function returning product(value_shape)
+  // /// @return Value size
+  // int value_size() const;
 
   /// Get the element value tensor shape, e.g. returning [1] for scalars.
   /// @return Value shape

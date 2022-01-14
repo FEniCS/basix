@@ -331,7 +331,7 @@ Interface to the Basix C++ library.
                              &FiniteElement::num_entity_closure_dofs)
       .def_property_readonly("entity_closure_dofs",
                              &FiniteElement::entity_closure_dofs)
-      .def_property_readonly("value_size", &FiniteElement::value_size)
+      // .def_property_readonly("value_size", &FiniteElement::value_size)
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("family", &FiniteElement::family)
       .def_property_readonly("lagrange_variant",

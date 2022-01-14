@@ -28,12 +28,18 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
   const std::size_t dim_from = element_from.dim();
   const std::size_t npts = tab.shape(1);
 
-  if (element_from.value_size() != element_to.value_size())
+  const int vs_from = std::accumulate(element_from.value_shape().begin(),
+                                      element_from.value_shape().end(), 1,
+                                      std::multiplies<int>());
+  const int vs_to = std::accumulate(element_to.value_shape().begin(),
+                                    element_to.value_shape().end(), 1,
+                                    std::multiplies<int>());
+  if (vs_from != vs_to)
   {
-    if (element_to.value_size() == 1)
+    if (vs_to == 1)
     {
       // Map element_from's components into element_to
-      const std::size_t vs = element_from.value_size();
+      const std::size_t vs = vs_from;
       xt::xtensor<double, 2> out({dim_to * vs, dim_from});
       out.fill(0);
       for (std::size_t i = 0; i < vs; ++i)
@@ -44,10 +50,10 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
 
       return out;
     }
-    else if (element_from.value_size() == 1)
+    else if (vs_from == 1)
     {
       // Map duplicates of element_to to components of element_to
-      const std::size_t vs = element_to.value_size();
+      const std::size_t vs = vs_to;
       xt::xtensor<double, 2> out({dim_to, dim_from * vs});
       out.fill(0);
       for (std::size_t i = 0; i < vs; ++i)
@@ -66,7 +72,7 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
   }
   else
   {
-    const std::size_t vs = element_from.value_size();
+    const std::size_t vs = vs_from;
     xt::xtensor<double, 2> out({dim_to, dim_from});
     out.fill(0);
     for (std::size_t i = 0; i < dim_to; ++i)

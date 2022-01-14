@@ -184,7 +184,10 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
     // Apply interpolation matrix to transformed basis function values
     xt::xtensor<double, 2> Pview, phi_transformed;
-    for (int v = 0; v < moment_space.value_size(); ++v)
+    int vs = std::accumulate(moment_space.value_shape().begin(),
+                             moment_space.value_shape().end(), 1,
+                             std::multiplies<int>());
+    for (int v = 0; v < vs; ++v)
     {
       Pview = xt::view(
           P, xt::range(0, P.shape(0)),

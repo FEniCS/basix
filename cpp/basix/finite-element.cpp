@@ -931,7 +931,8 @@ bool basix::elements_are_equal(FiniteElement element1, FiniteElement element2)
          and element1.family() == element2.family()
          and element1.degree() == element2.degree()
          and element1.discontinuous() == element2.discontinuous()
-         and element1.lagrange_variant() == element2.lagrange_variant();
+         and element1.lagrange_variant() == element2.lagrange_variant()
+         and element1.map_type() == element2.map_type();
 }
 //-----------------------------------------------------------------------------
 std::string basix::version()

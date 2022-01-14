@@ -557,7 +557,6 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
     ndsize /= i;
   std::size_t vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                    std::multiplies<int>());
-
   std::size_t ndofs = _coeffs.shape(0);
   return {ndsize, num_points, ndofs, vs};
 }
@@ -757,9 +756,8 @@ xt::xtensor<double, 3> FiniteElement::pull_back(
     const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
     const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
-  const std::size_t reference_value_size = std::accumulate(
+  std::size_t reference_value_size = std::accumulate(
       _value_shape.begin(), _value_shape.end(), 1, std::multiplies<int>());
-
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
   using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
                         xt::xall<std::size_t>>;

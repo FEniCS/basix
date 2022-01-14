@@ -4,6 +4,7 @@
 
 import basix
 
+
 def test_element_equality():
     p1 = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)
     p1_again = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 1)

@@ -444,7 +444,7 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
     pts = pts.reshape({pts.shape(0), 1});
 
   // Evaluate moment space at quadrature points
-  assert(V.value_size() == 1);
+  assert(V.value_shape().size() == 0);
   const xt::xtensor<double, 2> phi
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
@@ -658,7 +658,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
   auto wts = xt::adapt(_wts);
 
   // Evaluate moment space at quadrature points
-  assert(V.value_size() == 1);
+  assert(V.value_shape().size() == 0);
   xt::xtensor<double, 2> phi
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
@@ -714,7 +714,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
   auto wts = xt::adapt(_wts);
 
   // Evaluate moment space at quadrature points
-  assert(V.value_size() == 1);
+  assert(V.value_shape().size() == 0);
   xt::xtensor<double, 2> phi
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 

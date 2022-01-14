@@ -997,7 +997,7 @@ FiniteElement create_integral_lagrange(cell::type celltype, int degree,
         = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
   }
 
-  return FiniteElement(element::family::P, celltype, degree, {1},
+  return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
                        maps::type::identity, discontinuous, degree, degree, {},
                        variant);

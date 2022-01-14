@@ -35,10 +35,10 @@ const std::string sub_entity_connectivity = R"(
 Get the numbers of entities connected to each subentity of the cell.
 
 Returns a vector of the form: output[dim][entity_n][connected_dim] =
-[connected_entity_n0, connected_entity_n1, ...] This indicates that the
-entity of dimension `dim` and number `entity_n` is connected to the entities
-of dimension `connected_dim` and numbers `connected_entity_n0`,
-`connected_entity_n1`, ...
+[connected_entity_n0, connected_entity_n1, ...] This indicates that
+the entity of dimension `dim` and number `entity_n` is connected to
+the entities of dimension `connected_dim` and numbers
+`connected_entity_n0`, `connected_entity_n1`, ...
 
 Parameters
 ==========
@@ -191,8 +191,8 @@ numpy.ndarray[numpy.float64]
 )";
 
 const std::string cell_facet_orientations = R"(
-Get a array of bools indicating whether or not the facet normals are outward
-pointing
+Get an array of bools indicating whether or not the facet normals are
+outward pointing
 
 Parameters
 ==========

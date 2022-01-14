@@ -95,7 +95,7 @@ xt::xtensor<double, 2> facet_outward_normals(cell::type cell_type);
 /// @return The normals
 xt::xtensor<double, 2> facet_normals(cell::type cell_type);
 
-/// Get a array of bools indicating whether or not the facet normals are
+/// Get an array of bools indicating whether or not the facet normals are
 /// outward pointing
 /// @param cell_type Type of cell
 /// @return The orientations

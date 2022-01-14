@@ -9,8 +9,8 @@
 
 /// Information about reference cells
 
-/// This namespace include functions that can be used to obtain geometric and
-/// topological information about reference cells
+/// This namespace include functions that can be used to obtain
+/// geometric and topological information about reference cells
 namespace basix::cell
 {
 
@@ -40,10 +40,10 @@ std::vector<std::vector<std::vector<int>>> topology(cell::type celltype);
 /// Get the numbers of entities connected to each subentity of the cell.
 ///
 /// Returns a vector of the form: output[dim][entity_n][connected_dim] =
-/// [connected_entity_n0, connected_entity_n1, ...] This indicates that the
-/// entity of dimension `dim` and number `entity_n` is connected to the entities
-/// of dimension `connected_dim` and numbers `connected_entity_n0`,
-/// `connected_entity_n1`, ...
+/// [connected_entity_n0, connected_entity_n1, ...] This indicates that
+/// the entity of dimension `dim` and number `entity_n` is connected to
+/// the entities of dimension `connected_dim` and numbers
+/// `connected_entity_n0`, `connected_entity_n1`, ...
 ///
 /// @param celltype Cell Type
 /// @return List of topology (vertex indices) for each dimension (0..tdim)
@@ -95,8 +95,8 @@ xt::xtensor<double, 2> facet_outward_normals(cell::type cell_type);
 /// @return The normals
 xt::xtensor<double, 2> facet_normals(cell::type cell_type);
 
-/// Get a array of bools indicating whether or not the facet normals are outward
-/// pointing
+/// Get a array of bools indicating whether or not the facet normals are
+/// outward pointing
 /// @param cell_type Type of cell
 /// @return The orientations
 std::vector<bool> facet_orientations(cell::type cell_type);

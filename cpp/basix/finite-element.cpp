@@ -611,12 +611,6 @@ cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }
 //-----------------------------------------------------------------------------
-// int FiniteElement::value_size() const
-// {
-//   return std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
-//                          std::multiplies<int>());
-// }
-//-----------------------------------------------------------------------------
 const std::vector<int>& FiniteElement::value_shape() const
 {
   return _value_shape;

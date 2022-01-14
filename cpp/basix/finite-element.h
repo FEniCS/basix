@@ -255,7 +255,14 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
-  /// Compute basis values and derivatives at set of points.
+  /// Check if two elements are the same
+  /// @note This operator compares the element properties, e.g. family,
+  /// degree, etc, and not computed numerical data
+  /// @return True if elements are the same
+  bool operator==(const FiniteElement& e) const;
+
+  /// Array shape for tabulate basis values and derivatives at set of
+  /// points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.

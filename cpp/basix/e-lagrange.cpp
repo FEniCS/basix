@@ -141,7 +141,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
     entity_transformations[cell::type::quadrilateral] = ft;
   }
 
-  return FiniteElement(element::family::P, celltype, degree, {1},
+  return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
                        maps::type::identity, true, degree, degree);
 }
@@ -871,7 +871,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
         = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
   }
 
-  return FiniteElement(element::family::P, celltype, degree, {1},
+  return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
                        maps::type::identity, discontinuous, degree, degree);
 }
@@ -1022,7 +1022,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
     xt::xtensor<double, 2> wcoeffs = {{1}};
 
-    return FiniteElement(element::family::P, cell::type::point, 0, {1}, wcoeffs,
+    return FiniteElement(element::family::P, cell::type::point, 0, {}, wcoeffs,
                          entity_transformations, x, M, maps::type::identity,
                          discontinuous, degree, degree);
   }
@@ -1196,7 +1196,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   auto tensor_factors
       = create_tensor_product_factors(celltype, degree, variant);
 
-  return FiniteElement(element::family::P, celltype, degree, {1},
+  return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
                        maps::type::identity, discontinuous, degree, degree,
                        tensor_factors, variant);
@@ -1274,7 +1274,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
         = xt::xtensor<double, 3>({2, 0, 0});
   }
 
-  return FiniteElement(element::family::DPC, celltype, degree, {1}, wcoeffs,
+  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs,
                        entity_transformations, x, M, maps::type::identity,
                        discontinuous, degree, degree);
 }

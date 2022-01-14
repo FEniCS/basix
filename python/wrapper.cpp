@@ -236,6 +236,7 @@ Interface to the Basix C++ library.
             return py::array_t<double>(t.shape(), t.data());
           },
           basix::docstring::FiniteElement__tabulate.c_str())
+      .def("__eq__", &FiniteElement::operator==)
       .def(
           "push_forward",
           [](const FiniteElement& self,

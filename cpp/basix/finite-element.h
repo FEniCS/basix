@@ -783,10 +783,7 @@ public:
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
   get_tensor_product_representation() const;
 
-  /// Check if two elements are the same
-  /// @param[in] element1 The first element
-  /// @param[in] element2 The second element
-  /// @return True or False
+  /// Overload the == operator
   bool operator==(const FiniteElement& e) const
   {
     return cell_type() == e.cell_type() and family() == e.family()

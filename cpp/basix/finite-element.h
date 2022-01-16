@@ -332,17 +332,13 @@ public:
   /// @return Polynomial degree
   int degree() const;
 
-  /// Get the element value size
-  /// This is just a convenience function returning product(value_shape)
-  /// @return Value size
-  int value_size() const;
-
-  /// Get the element value tensor shape, e.g. returning [1] for scalars.
+  /// The element value tensor shape, e.g. returning {} for scalars, {3}
+  /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
   /// @return Value shape
   const std::vector<int>& value_shape() const;
 
-  /// Dimension of the finite element space (number of degrees of
-  /// freedom for the element)
+  /// Dimension of the finite element space (number of
+  /// degrees-of-freedom for the element)
   /// @return Number of degrees of freedom
   int dim() const;
 
@@ -350,8 +346,8 @@ public:
   /// @return The family
   element::family family() const;
 
-  /// Get the Lagrange variant of the element, or throw an error if element has
-  /// no Lagrange variant
+  /// Get the Lagrange variant of the element.
+  /// @note Throws an error if element has no Lagrange variant
   /// @return The Lagrange variant
   element::lagrange_variant lagrange_variant() const;
 
@@ -360,8 +356,8 @@ public:
   maps::type map_type() const;
 
   /// Indicates whether this element is the discontinuous variant
-  /// @return True if this element is a discontinuous version
-  /// of the element
+  /// @return True if this element is a discontinuous version of the
+  /// element
   bool discontinuous() const;
 
   /// Indicates whether the dof transformations are all permutations
@@ -377,12 +373,12 @@ public:
   /// points that share a common Jacobian.
   /// @param[in] U The function values on the reference. The indices are
   /// [Jacobian index, point index, components].
-  /// @param[in] J The Jacobian of the mapping. The indices are [Jacobian
-  /// index, J_i, J_j].
-  /// @param[in] detJ The determinant of the Jacobian of the mapping. It has
-  /// length `J.shape(0)`
-  /// @param[in] K The inverse of the Jacobian of the mapping. The indices
-  /// are [Jacobian index, K_i, K_j].
+  /// @param[in] J The Jacobian of the mapping. The indices are
+  /// [Jacobian index, J_i, J_j].
+  /// @param[in] detJ The determinant of the Jacobian of the mapping. It
+  /// has length `J.shape(0)`
+  /// @param[in] K The inverse of the Jacobian of the mapping. The
+  /// indices are [Jacobian index, K_i, K_j].
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
   xt::xtensor<double, 3> push_forward(const xt::xtensor<double, 3>& U,
@@ -726,19 +722,20 @@ public:
   /// coefficients = i_m * values
   /// \endcode
   ///
-  /// To interpolate into a Raviart-Thomas space, the following should be done:
+  /// To interpolate into a Raviart-Thomas space, the following should
+  /// be done:
   /// \code{.pseudo}
   /// i_m = element.interpolation_matrix()
   /// pts = element.points()
-  /// vs = element.value_size()
+  /// vs = prod(element.value_shape())
   /// values = VECTOR(pts.shape(0) * vs)
   /// FOR i, p IN ENUMERATE(pts):
   ///     values[i::pts.shape(0)] = f.evaluate_at(p)
   /// coefficients = i_m * values
   /// \endcode
   ///
-  /// To interpolate into a Lagrange space with a block size, the following
-  /// should be done:
+  /// To interpolate into a Lagrange space with a block size, the
+  /// following should be done:
   /// \code{.pseudo}
   /// i_m = element.interpolation_matrix()
   /// pts = element.points()
@@ -755,15 +752,15 @@ public:
 
   /// Get the dual matrix.
   ///
-  /// This is the matrix @f$BD^{T}@f$, as described in the documentation of the
-  /// `FiniteElement()` constructor.
+  /// This is the matrix @f$BD^{T}@f$, as described in the documentation
+  /// of the `FiniteElement()` constructor.
   /// @return The dual matrix
   xt::xtensor<double, 2> dual_matrix() const;
 
   /// Get the matrix of coefficients.
   ///
-  /// This is the matrix @f$C@f$, as described in the documentation of the
-  /// `FiniteElement()` constructor.
+  /// This is the matrix @f$C@f$, as described in the documentation of
+  /// the `FiniteElement()` constructor.
   /// @return The dual matrix
   xt::xtensor<double, 2> coefficient_matrix() const;
 
@@ -774,18 +771,20 @@ public:
   /// subspace of this element
   std::array<int, 2> degree_bounds() const;
 
-  /// Indicates whether or not this element has a tensor product representation.
+  /// Indicates whether or not this element has a tensor product
+  /// representation.
   bool has_tensor_product_factorisation() const;
 
-  /// Get the tensor product representation of this element, or throw an error
-  /// if no such factorisation exists.
+  /// Get the tensor product representation of this element, or throw an
+  /// error if no such factorisation exists.
   ///
-  /// The tensor product representation will be a vector of tuples. Each tuple
-  /// contains a vector of finite elements, and a vector on integers. The vector
-  /// of finite elements gives the elements on an interval that appear in the
-  /// tensor product representation. The vector of integers gives the
-  /// permutation between the numbering of the tensor product DOFs and the
-  /// number of the DOFs of this Basix element.
+  /// The tensor product representation will be a vector of tuples. Each
+  /// tuple contains a vector of finite elements, and a vector on
+  /// integers. The vector of finite elements gives the elements on an
+  /// interval that appear in the tensor product representation. The
+  /// vector of integers gives the permutation between the numbering of
+  /// the tensor product DOFs and the number of the DOFs of this Basix
+  /// element.
   /// @return The tensor product representation
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
   get_tensor_product_representation() const;
@@ -830,7 +829,8 @@ private:
   // count on the associated entity, as listed by cell::topology.
   std::vector<std::vector<int>> _num_edofs;
 
-  // Number of dofs associated with the closure of each cell (sub-)entity
+  // Number of dofs associated with the closure of each cell
+  // (sub-)entity
   std::vector<std::vector<int>> _num_e_closure_dofs;
 
   // Dofs associated with each cell (sub-)entity
@@ -856,47 +856,49 @@ private:
   /// The interpolation weights and points
   xt::xtensor<double, 2> _matM;
 
-  /// Indicates whether or not the DOF transformations are all permutations
+  // Indicates whether or not the DOF transformations are all
+  // permutations
   bool _dof_transformations_are_permutations;
 
-  /// Indicates whether or not the DOF transformations are all identity
+  // Indicates whether or not the DOF transformations are all identity
   bool _dof_transformations_are_identity;
 
-  /// The entity permutations (factorised). This will only be set if
-  /// _dof_transformations_are_permutations is True and
-  /// _dof_transformations_are_identity is False
+  // The entity permutations (factorised). This will only be set if
+  // _dof_transformations_are_permutations is True and
+  // _dof_transformations_are_identity is False
   std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm;
 
-  /// The reverse entity permutations (factorised). This will only be set if
-  /// _dof_transformations_are_permutations is True and
-  /// _dof_transformations_are_identity is False
+  // The reverse entity permutations (factorised). This will only be set
+  // if _dof_transformations_are_permutations is True and
+  // _dof_transformations_are_identity is False
   std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm_rev;
 
-  /// The entity transformations in precomputed form
+  // The entity transformations in precomputed form
   std::map<cell::type,
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etrans;
 
-  /// The transposed entity transformations in precomputed form
+  // The transposed entity transformations in precomputed form
   std::map<cell::type,
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etransT;
 
-  /// The inverse entity transformations in precomputed form
+  // The inverse entity transformations in precomputed form
   std::map<cell::type,
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etrans_inv;
 
-  /// The inverse transpose entity transformations in precomputed form
+  // The inverse transpose entity transformations in precomputed form
   std::map<cell::type,
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etrans_invT;
 
-  // Indicates whether or not this is the discontinuous version of the element
+  // Indicates whether or not this is the discontinuous version of the
+  // element
   bool _discontinuous;
 
   // The dual matrix
@@ -909,10 +911,10 @@ private:
   std::array<int, 2> _degree_bounds;
 
   // Tensor product representation
-  // Entries of tuple are (list of elements on an interval, permutation of DOF
-  // numbers)
-  // @todo: For vector-valued elements, a tensor product type and a scaling
-  // factor may additionally be needed.
+  // Entries of tuple are (list of elements on an interval, permutation
+  // of DOF numbers)
+  // @todo: For vector-valued elements, a tensor product type and a
+  // scaling factor may additionally be needed.
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
       _tensor_factors;
 };
@@ -932,18 +934,21 @@ FiniteElement create_element(element::family family, cell::type cell,
 
 /// Create an element
 /// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] cell The reference cell type that the element is defined
+/// on
 /// @param[in] degree The degree of the element
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
+/// @param[in] discontinuous Indicates whether the element is
+/// discontinuous between cells points of the element. The discontinuous
+/// element will have the same DOFs, but they will all be associated
+/// with the interior of the cell.
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, bool discontinuous);
 
 /// Create a continuous element using a given Lagrange variant
 /// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] cell The reference cell type that the element is defined
+/// on
 /// @param[in] degree The degree of the element
 /// @param[in] variant The variant of Lagrange to use
 /// @return A finite element
@@ -952,7 +957,8 @@ FiniteElement create_element(element::family family, cell::type cell,
 
 /// Create a continuous element
 /// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] cell The reference cell type that the element is defined
+/// on
 /// @param[in] degree The degree of the element
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
@@ -1062,8 +1068,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
 
   if (_cell_tdim >= 2)
   {
-    // This assumes 3 bits are used per face. This will need updating if 3D
-    // cells with faces with more than 4 sides are implemented
+    // This assumes 3 bits are used per face. This will need updating if
+    // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
     int dofstart
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
@@ -1109,8 +1115,8 @@ void FiniteElement::apply_inverse_dof_transformation(
 
   if (_cell_tdim >= 2)
   {
-    // This assumes 3 bits are used per face. This will need updating if 3D
-    // cells with faces with more than 4 sides are implemented
+    // This assumes 3 bits are used per face. This will need updating if
+    // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
     int dofstart
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);

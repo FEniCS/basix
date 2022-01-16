@@ -184,7 +184,10 @@ xt::xtensor<double, 3> moments::create_dot_moment_dof_transformations(
 
     // Apply interpolation matrix to transformed basis function values
     xt::xtensor<double, 2> Pview, phi_transformed;
-    for (int v = 0; v < moment_space.value_size(); ++v)
+    const int vs = std::accumulate(moment_space.value_shape().begin(),
+                                   moment_space.value_shape().end(), 1,
+                                   std::multiplies<int>());
+    for (int v = 0; v < vs; ++v)
     {
       Pview = xt::view(
           P, xt::range(0, P.shape(0)),
@@ -441,7 +444,9 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
     pts = pts.reshape({pts.shape(0), 1});
 
   // Evaluate moment space at quadrature points
-  assert(V.value_size() == 1);
+  assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(), 1,
+                         std::multiplies<int>())
+         == 1);
   const xt::xtensor<double, 2> phi
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
@@ -655,7 +660,9 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
   auto wts = xt::adapt(_wts);
 
   // Evaluate moment space at quadrature points
-  assert(V.value_size() == 1);
+  assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(), 1,
+                         std::multiplies<int>())
+         == 1);
   xt::xtensor<double, 2> phi
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 
@@ -711,7 +718,9 @@ moments::make_normal_integral_moments(const FiniteElement& V,
   auto wts = xt::adapt(_wts);
 
   // Evaluate moment space at quadrature points
-  assert(V.value_size() == 1);
+  assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(), 1,
+                         std::multiplies<int>())
+         == 1);
   xt::xtensor<double, 2> phi
       = xt::view(V.tabulate(0, pts), 0, xt::all(), xt::all(), 0);
 

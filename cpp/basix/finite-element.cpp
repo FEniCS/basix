@@ -555,7 +555,8 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
     ndsize *= (_cell_tdim + i);
   for (std::size_t i = 1; i <= nd; ++i)
     ndsize /= i;
-  std::size_t vs = value_size();
+  std::size_t vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
+                                   std::multiplies<int>());
   std::size_t ndofs = _coeffs.shape(0);
   return {ndsize, num_points, ndofs, vs};
 }
@@ -589,7 +590,8 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
        static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
   polyset::tabulate(basis, _cell_type, _degree, nd, _x);
   const int psize = polyset::dim(_cell_type, _degree);
-  const int vs = value_size();
+  const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
+                                 std::multiplies<int>());
   xt::xtensor<double, 2> B, C;
   for (std::size_t p = 0; p < basis.shape(0); ++p)
   {
@@ -607,12 +609,6 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }
-//-----------------------------------------------------------------------------
-int FiniteElement::value_size() const
-{
-  return std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
-                         std::multiplies<int>());
-}
 //-----------------------------------------------------------------------------
 const std::vector<int>& FiniteElement::value_shape() const
 {
@@ -760,7 +756,9 @@ xt::xtensor<double, 3> FiniteElement::pull_back(
     const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
     const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
 {
-  const std::size_t reference_value_size = value_size();
+  const std::size_t reference_value_size = std::accumulate(
+      _value_shape.begin(), _value_shape.end(), 1, std::multiplies<int>());
+
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
   using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
                         xt::xall<std::size_t>>;

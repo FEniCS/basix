@@ -44,9 +44,9 @@ $(R, \mathcal{V}, \mathcal{L})$, where:
 - $\mathcal{V}$ is a finite dimensional polynomial space, for example
   $\operatorname{span}\{1, x, y, x^2, xy, y^2\}$;
 - $\mathcal{L}$ is a basis of the dual space
-  $\{f:\mathcal{V}\to\mathbb{R}\}$, for example the set of functionals
-  that evaluate a function at the vertices of the triangle and at the
-  midpoints of its edges.
+  $\left\{f:\mathcal{V}\to\mathbb{R}\,\middle|\,f\text{ is linear}\right\}$,
+  for example the set of functionals that evaluate a function at the
+  vertices of the triangle and at the midpoints of its edges.
 
 The basis functions of the finite element are the polynomials in
 $\mathcal{V}$ such that one functional in $\mathcal{L}$ gives the value

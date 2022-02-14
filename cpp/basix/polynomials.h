@@ -15,18 +15,7 @@ namespace basix::polynomials
 enum class type
 {
   legendre = 0,
-  chebyshev = 1,
-  legendre_bubble = 2,
 };
-
-/// Tabulate the bubble polynomial on a given cell
-///
-/// @param[in] celltype Cell type
-/// @param[in] pts Points at which to evaluate the basis. The shape is
-/// (number of points, geometric dimension).
-/// @return The value of the bubble polynomial at each point.
-xt::xtensor<double, 1> tabulate_bubble(cell::type celltype,
-                                       const xt::xarray<double>& pts);
 
 /// Tabulate a set of polynomials.
 ///

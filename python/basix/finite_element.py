@@ -47,11 +47,15 @@ def string_to_family(family: str, cell: str) -> _EF:
             "N2curl": _EF.N2E,
             "Nedelec 2nd kind H(curl)": _EF.N2E,
         })
+    # Family names that are valid for intervals
+    if cell == "interval":
+        families.update({
+            "DPC": _EF.P,
+        })
     # Family names that are valid for tensor product cells
     if cell in ["interval", "quadrilateral", "hexahedron"]:
         families.update({
             "Q": _EF.P,
-            "DPC": _EF.DPC,
             "Serendipity": _EF.serendipity,
             "serendipity": _EF.serendipity,
             "S": _EF.serendipity,
@@ -60,6 +64,7 @@ def string_to_family(family: str, cell: str) -> _EF:
     if cell in ["quadrilateral", "hexahedron"]:
         families.update({
             "RTCF": _EF.RT,
+            "DPC": _EF.DPC,
             "NCF": _EF.RT,
             "RTCE": _EF.N1E,
             "NCE": _EF.N1E,

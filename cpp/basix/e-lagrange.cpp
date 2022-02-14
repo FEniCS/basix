@@ -1143,9 +1143,6 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   cell::type simplex_type;
   switch (celltype)
   {
-  case cell::type::interval:
-    simplex_type = cell::type::interval;
-    break;
   case cell::type::quadrilateral:
     simplex_type = cell::type::triangle;
     break;
@@ -1191,11 +1188,8 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   x[tdim].push_back(pt);
 
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  if (tdim > 1)
-  {
-    entity_transformations[cell::type::interval]
-        = xt::xtensor<double, 3>({1, 0, 0});
-  }
+  entity_transformations[cell::type::interval]
+      = xt::xtensor<double, 3>({1, 0, 0});
   if (tdim == 3)
   {
     entity_transformations[cell::type::quadrilateral]

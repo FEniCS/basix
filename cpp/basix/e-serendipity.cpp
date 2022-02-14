@@ -665,8 +665,7 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
                                                      int degree,
                                                      bool discontinuous)
 {
-  if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
-      and celltype != cell::type::hexahedron)
+  if (celltype != cell::type::quadrilateral and celltype != cell::type::hexahedron)
   {
     throw std::runtime_error("Invalid celltype");
   }
@@ -682,8 +681,11 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
 
   xt::xtensor<double, 3> facet_transforms;
 
+  // TODO: Lagrange variant here
   FiniteElement facet_moment_space
-      = element::create_dpc(facettype, degree, true);
+      = facettype == cell::type::interval
+        ? element::create_lagrange(facettype, degree, element::lagrange_variant::equispaced, true)
+        : element::create_dpc(facettype, degree, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, 2 * degree);
   if (tdim > 1)
@@ -737,8 +739,7 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
                                                       int degree,
                                                       bool discontinuous)
 {
-  if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
-      and celltype != cell::type::hexahedron)
+  if (celltype != cell::type::quadrilateral and celltype != cell::type::hexahedron)
   {
     throw std::runtime_error("Invalid celltype");
   }
@@ -763,8 +764,9 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
+  // TODO: Lagrange variants
   FiniteElement edge_moment_space
-      = element::create_dpc(cell::type::interval, degree, true);
+      = element::create_lagrange(cell::type::interval, degree, element::lagrange_variant::equispaced, true);
 
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, 2 * degree);

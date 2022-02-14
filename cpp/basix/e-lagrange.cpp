@@ -949,6 +949,15 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
                          discontinuous, degree, degree);
   }
 
+  if (variant == element::lagrange_variant::unset)
+  {
+    if (degree < 3)
+      variant = element::lagrange_variant::equispaced;
+    else
+      throw std::runtime_error(
+          "Lagrange elements of degree > 2 need to be given a variant.");
+  }
+
   if (variant == element::lagrange_variant::vtk)
     return create_vtk_element(celltype, degree, discontinuous);
 

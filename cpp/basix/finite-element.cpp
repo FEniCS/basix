@@ -144,16 +144,8 @@ basix::FiniteElement basix::create_element(element::family family,
   switch (family)
   {
   case element::family::P:
-    if (degree < 3)
-    {
-      return element::create_lagrange(
-          cell, degree, element::lagrange_variant::equispaced, discontinuous);
-    }
-    else
-    {
-      throw std::runtime_error(
-          "Lagrange elements of degree > 2 need to be given a variant.");
-    }
+    return element::create_lagrange(
+        cell, degree, element::lagrange_variant::unset, discontinuous);
   case element::family::BDM:
     switch (cell)
     {
@@ -205,7 +197,8 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::bubble:
     return element::create_bubble(cell, degree, discontinuous);
   case element::family::serendipity:
-    return element::create_serendipity(cell, degree, discontinuous);
+    return element::create_serendipity(
+        cell, degree, element::lagrange_variant::unset, discontinuous);
   case element::family::DPC:
     return element::create_dpc(cell, degree, discontinuous);
   default:
@@ -223,8 +216,6 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::P:
     return element::create_lagrange(cell, degree, variant, discontinuous);
   case element::family::serendipity:
-    if (cell != cell::type::interval)
-      throw std::runtime_error("Cannot pass a Lagrange variant");
     return element::create_serendipity(cell, degree, variant, discontinuous);
   default:
     throw std::runtime_error("Cannot pass a Lagrange variant.");

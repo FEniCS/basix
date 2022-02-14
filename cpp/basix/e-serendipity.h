@@ -13,21 +13,13 @@ namespace basix::element
 /// Create a serendipity element on cell with given degree
 /// @param[in] celltype The cell type
 /// @param[in] degree The degree of the element
+/// @param[in] variant The variant of the Lagrange element to be used for
+/// integral moments on the edges of the cell
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
 FiniteElement create_serendipity(cell::type celltype, int degree,
-                                 bool discontinuous);
-
-/// Create a serendipity element on cell with given degree
-/// @param[in] celltype The cell type
-/// @param[in] degree The degree of the element
-/// @param[in] variant The variant of the element to be created
-/// @param[in] discontinuous Controls whether the element is continuous or
-/// discontinuous
-/// @return A finite element
-FiniteElement create_serendipity(cell::type celltype, int degree,
-                                 element::lagrange_variant variant,
+                                 element::lagrange_variant lvariant,
                                  bool discontinuous);
 
 /// Create a serendipity H(div) element on cell with given degree

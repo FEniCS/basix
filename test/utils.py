@@ -6,7 +6,7 @@ import pytest
 from basix import ElementFamily, CellType, LagrangeVariant
 
 
-def parametrize_over_elements(degree, reference=None):
+def parametrize_over_elements(degree, reference=None, discontinuous=False):
     elementlist = []
 
     for k in range(1, degree + 1):
@@ -25,7 +25,8 @@ def parametrize_over_elements(degree, reference=None):
         # Elements on all cells except prism and pyramid
         for c in [CellType.interval, CellType.triangle, CellType.tetrahedron, CellType.quadrilateral,
                   CellType.hexahedron]:
-            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.integral_legendre]))
+            if discontinuous:
+                elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.legendre]))
 
         # Elements on all cells except prism, pyramid and interval
         for c in [CellType.triangle, CellType.tetrahedron, CellType.quadrilateral, CellType.hexahedron]:
@@ -42,8 +43,9 @@ def parametrize_over_elements(degree, reference=None):
 
         # Elements on all cells except tensor product cells
         for c in [CellType.interval, CellType.quadrilateral, CellType.hexahedron]:
-            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.integral_chebyshev]))
             elementlist.append((c, ElementFamily.serendipity, k, []))
+        elementlist.append((CellType.interval, ElementFamily.serendipity, k, [LagrangeVariant.equispaced]))
+        elementlist.append((CellType.interval, ElementFamily.serendipity, k, [LagrangeVariant.gll_warped]))
 
         # Bubble elements
         if k >= 2:

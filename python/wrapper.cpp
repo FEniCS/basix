@@ -402,9 +402,7 @@ Interface to the Basix C++ library.
       .value("gl_warped", element::lagrange_variant::gl_warped)
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
-      .value("integral_legendre", element::lagrange_variant::integral_legendre)
-      .value("integral_chebyshev",
-             element::lagrange_variant::integral_chebyshev)
+      .value("legendre", element::lagrange_variant::legendre)
       .value("vtk", element::lagrange_variant::vtk);
 
   // Create FiniteElement

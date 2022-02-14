@@ -426,18 +426,15 @@ def test_vtk_element(celltype, degree):
 
 
 @pytest.mark.parametrize("variant", [
-    basix.LagrangeVariant.integral_legendre
+    basix.LagrangeVariant.legendre,
 ])
 @pytest.mark.parametrize("celltype", [
+    basix.CellType.interval,
     basix.CellType.triangle, basix.CellType.tetrahedron,
     basix.CellType.quadrilateral, basix.CellType.hexahedron,
 ])
 @pytest.mark.parametrize("degree", range(1, 5))
-def test_integral_lagrange(celltype, degree, variant):
+def test_legendre(celltype, degree, variant):
     e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
-    for p in e.points:
-        assert in_cell(celltype, p)
-
-    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant)
     for p in e.points:
         assert in_cell(celltype, p)

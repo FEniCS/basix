@@ -222,6 +222,10 @@ basix::FiniteElement basix::create_element(element::family family,
   {
   case element::family::P:
     return element::create_lagrange(cell, degree, variant, discontinuous);
+  case element::family::serendipity:
+    if (cell != cell::type::interval)
+      throw std::runtime_error("Cannot pass a Lagrange variant");
+    return element::create_serendipity(cell, degree, variant, discontinuous);
   default:
     throw std::runtime_error("Cannot pass a Lagrange variant.");
   }

@@ -86,6 +86,61 @@ xt::xtensor<double, 2> tabulate_chebyshev(cell::type celltype, int d,
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 1>
+polynomials::tabulate_bubble(cell::type celltype, const xt::xarray<double>& pts)
+{
+  switch (celltype)
+  {
+  case cell::type::interval:
+  {
+    auto x = pts;
+    return x * (1 - x);
+  }
+  case cell::type::triangle:
+  {
+    auto x = xt::col(pts, 0);
+    auto y = xt::col(pts, 1);
+    return x * y * (1 - x - y);
+  }
+  case cell::type::quadrilateral:
+  {
+    auto x = xt::col(pts, 0);
+    auto y = xt::col(pts, 1);
+    return x * (1 - x) * y * (1 - y);
+  }
+  case cell::type::tetrahedron:
+  {
+    auto x = xt::col(pts, 0);
+    auto y = xt::col(pts, 1);
+    auto z = xt::col(pts, 2);
+    return x * y * z * (1 - x - y - z);
+  }
+  case cell::type::hexahedron:
+  {
+    auto x = xt::col(pts, 0);
+    auto y = xt::col(pts, 1);
+    auto z = xt::col(pts, 2);
+    return x * (1 - x) * y * (1 - y) * z * (1 - z);
+  }
+  case cell::type::prism:
+  {
+    auto x = xt::col(pts, 0);
+    auto y = xt::col(pts, 1);
+    auto z = xt::col(pts, 2);
+    return x * y * z * (1 - z) * (1 - x - y);
+  }
+  case cell::type::pyramid:
+  {
+    auto x = xt::col(pts, 0);
+    auto y = xt::col(pts, 1);
+    auto z = xt::col(pts, 2);
+    return x * y * z * (1 - y - z) * (1 - x - z);
+  }
+  default:
+    throw std::runtime_error("Unsupported cell type");
+  }
+}
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 2> polynomials::tabulate(polynomials::type polytype,
                                              cell::type celltype, int d,
                                              const xt::xarray<double>& x)

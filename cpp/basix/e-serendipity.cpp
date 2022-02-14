@@ -649,6 +649,58 @@ FiniteElement basix::element::create_serendipity(cell::type celltype,
                        maps::type::identity, discontinuous, degree,
                        degree < static_cast<int>(tdim) ? 1 : degree / tdim);
 }
+//----------------------------------------------------------------------------
+FiniteElement
+basix::element::create_serendipity(cell::type celltype, int degree,
+                                   element::lagrange_variant variant,
+                                   bool discontinuous)
+{
+  if (celltype != cell::type::interval)
+  {
+    throw std::runtime_error("Invalid celltype");
+  }
+
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  // dim 0 (vertices)
+  const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
+  const std::size_t num_vertices = geometry.shape(0);
+  M[0] = std::vector<xt::xtensor<double, 3>>(num_vertices,
+                                             xt::ones<double>({1, 1, 1}));
+  x[0].resize(geometry.shape(0));
+  for (std::size_t i = 0; i < x[0].size(); ++i)
+  {
+    x[0][i] = xt::reshape_view(
+        xt::row(geometry, i), {static_cast<std::size_t>(1), geometry.shape(1)});
+  }
+
+  if (degree >= 2)
+  {
+    FiniteElement moment_space = element::create_lagrange(
+        cell::type::interval, degree - 2, variant, true);
+    std::tie(x[1], M[1]) = moments::make_integral_moments(
+        moment_space, celltype, 1, 2 * degree - 2);
+  }
+
+  xt::xtensor<double, 2> wcoeffs = xt::eye<double>(degree + 1);
+
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+
+  if (discontinuous)
+  {
+    std::tie(x, M, entity_transformations)
+        = element::make_discontinuous(x, M, entity_transformations, 1, 1);
+  }
+
+  return FiniteElement(element::family::serendipity, celltype, degree, {1},
+                       wcoeffs, entity_transformations, x, M,
+                       maps::type::identity, discontinuous, degree,
+                       degree < 1 ? 1 : degree);
+}
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_div(cell::type celltype,
                                                      int degree,

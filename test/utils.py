@@ -43,9 +43,8 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
 
         # Elements on all cells except tensor product cells
         for c in [CellType.interval, CellType.quadrilateral, CellType.hexahedron]:
-            elementlist.append((c, ElementFamily.serendipity, k, []))
-        elementlist.append((CellType.interval, ElementFamily.serendipity, k, [LagrangeVariant.equispaced]))
-        elementlist.append((CellType.interval, ElementFamily.serendipity, k, [LagrangeVariant.gll_warped]))
+            elementlist.append((c, ElementFamily.serendipity, k, [LagrangeVariant.equispaced]))
+            elementlist.append((c, ElementFamily.serendipity, k, [LagrangeVariant.gll_warped]))
 
         # Bubble elements
         if k >= 2:

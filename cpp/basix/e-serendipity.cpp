@@ -555,9 +555,6 @@ basix::element::create_serendipity(cell::type celltype, int degree,
     throw std::runtime_error("Invalid celltype");
   }
 
-  // If degree < 3, variant makes no difference, so set it to equispaced so
-  // element signatures match
-
   if (lvariant == element::lagrange_variant::unset)
   {
     if (degree < 3)

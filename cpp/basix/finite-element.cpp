@@ -200,7 +200,8 @@ basix::FiniteElement basix::create_element(element::family family,
     return element::create_serendipity(
         cell, degree, element::lagrange_variant::unset, discontinuous);
   case element::family::DPC:
-    return element::create_dpc(cell, degree, discontinuous);
+    return element::create_dpc(cell, degree, element::dpc_variant::unset,
+                               discontinuous);
   default:
     throw std::runtime_error("Element family not found");
   }
@@ -208,15 +209,29 @@ basix::FiniteElement basix::create_element(element::family family,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           element::lagrange_variant variant,
+                                           element::dpc_variant dvariant,
+                                           bool discontinuous)
+{
+  switch (family)
+  {
+  case element::family::DPC:
+    return element::create_dpc(cell, degree, dvariant, discontinuous);
+  default:
+    throw std::runtime_error("Cannot pass a DPC variant.");
+  }
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           element::lagrange_variant lvariant,
                                            bool discontinuous)
 {
   switch (family)
   {
   case element::family::P:
-    return element::create_lagrange(cell, degree, variant, discontinuous);
+    return element::create_lagrange(cell, degree, lvariant, discontinuous);
   case element::family::serendipity:
-    return element::create_serendipity(cell, degree, variant, discontinuous);
+    return element::create_serendipity(cell, degree, lvariant, discontinuous);
   default:
     throw std::runtime_error("Cannot pass a Lagrange variant.");
   }
@@ -224,9 +239,16 @@ basix::FiniteElement basix::create_element(element::family family,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           element::lagrange_variant variant)
+                                           element::lagrange_variant lvariant)
 {
-  return create_element(family, cell, degree, variant, false);
+  return create_element(family, cell, degree, lvariant, false);
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           element::dpc_variant dvariant)
+{
+  return create_element(family, cell, degree, dvariant, false);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
@@ -305,12 +327,12 @@ FiniteElement::FiniteElement(
     int highest_complete_degree,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors,
-    element::lagrange_variant lvariant)
+    element::lagrange_variant lvariant, element::dpc_variant dvariant)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
-      _lagrange_variant(lvariant), _degree(degree), _map_type(map_type),
-      _entity_transformations(entity_transformations), _x(x),
-      _discontinuous(discontinuous),
+      _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
+      _map_type(map_type), _entity_transformations(entity_transformations),
+      _x(x), _discontinuous(discontinuous),
       _degree_bounds({highest_complete_degree, highest_degree}),
       _tensor_factors(tensor_factors)
 {
@@ -539,7 +561,7 @@ bool FiniteElement::operator==(const FiniteElement& e) const
   return cell_type() == e.cell_type() and family() == e.family()
          and degree() == e.degree() and discontinuous() == e.discontinuous()
          and lagrange_variant() == e.lagrange_variant()
-         and map_type() == e.map_type();
+         and dpc_variant() == e.dpc_variant() and map_type() == e.map_type();
 }
 //-----------------------------------------------------------------------------
 std::array<std::size_t, 4>
@@ -917,6 +939,8 @@ element::lagrange_variant FiniteElement::lagrange_variant() const
 {
   return _lagrange_variant;
 }
+//-----------------------------------------------------------------------------
+element::dpc_variant FiniteElement::dpc_variant() const { return _dpc_variant; }
 //-----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
 FiniteElement::get_tensor_product_representation() const

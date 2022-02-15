@@ -25,6 +25,16 @@ enum class lagrange_variant
   vtk = 20,
 };
 
+/// Variants of a DPC space that can be created
+enum class dpc_variant
+{
+  unset = -1,
+  equispaced_triangle = 0,
+  stretched_equispaced_triangle = 1,
+  diagonal_equispaced = 2,
+  diagonal_gll = 3,
+};
+
 /// Available element families
 enum class family
 {

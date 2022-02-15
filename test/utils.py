@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import pytest
-from basix import ElementFamily, CellType, LagrangeVariant
+from basix import ElementFamily, CellType, LagrangeVariant, DPCVariant
 
 
 def parametrize_over_elements(degree, reference=None, discontinuous=False):
@@ -41,10 +41,17 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
                 elementlist.append((c, ElementFamily.CR, k, []))
             elementlist.append((c, ElementFamily.Regge, k, []))
 
-        # Elements on all cells except tensor product cells
+        # Elements on tensor product cells
         for c in [CellType.interval, CellType.quadrilateral, CellType.hexahedron]:
             elementlist.append((c, ElementFamily.serendipity, k, [LagrangeVariant.equispaced]))
             elementlist.append((c, ElementFamily.serendipity, k, [LagrangeVariant.gll_warped]))
+
+        # Elements on quads and hexes
+        for c in [CellType.quadrilateral, CellType.hexahedron]:
+            if discontinuous:
+                for v in [DPCVariant.equispaced_triangle, DPCVariant.stretched_equispaced_triangle,
+                          DPCVariant.diagonal_equispaced, DPCVariant.diagonal_gll]:
+                    elementlist.append((c, ElementFamily.dpc, k, [v]))
 
         # Bubble elements
         if k >= 2:

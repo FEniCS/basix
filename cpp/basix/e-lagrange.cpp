@@ -1131,6 +1131,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
+                                         element::dpc_variant,
                                          bool discontinuous)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from

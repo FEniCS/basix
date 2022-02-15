@@ -37,7 +37,7 @@ jobs:
       - name: Install FEniCS Python components
         run: |
           python3 -m pip install git+https://github.com/FEniCS/ufl.git
-          python3 -m pip install git+https://github.com/FEniCS/ffcx.git@mscroggs/serendipity-variants2
+          python3 -m pip install git+https://github.com/FEniCS/ffcx.git
 
       - name: Run cpp demos
         run: |
@@ -48,7 +48,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: mscroggs/serendipity-variants2
+          ref: main
 
       - name: Install DOLFINx
         run: |

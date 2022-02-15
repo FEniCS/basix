@@ -394,7 +394,8 @@ Interface to the Basix C++ library.
 
   py::enum_<element::dpc_variant>(m, "DPCVariant")
       .value("unset", element::dpc_variant::unset)
-      .value("equispaced_simplex", element::dpc_variant::equispaced_simplex)
+      .value("simplex_equispaced", element::dpc_variant::simplex_equispaced)
+      .value("simplex_gll", element::dpc_variant::simplex_gll)
       .value("horizontal_equispaced",
              element::dpc_variant::horizontal_equispaced)
       .value("horizontal_gll", element::dpc_variant::horizontal_gll)

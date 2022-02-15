@@ -928,16 +928,27 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
                                        element::dpc_variant variant)
 {
-  if (variant == element::dpc_variant::equispaced_simplex)
+  if (degree == 0)
+    return lattice::create(celltype, 0, lattice::type::equispaced, true);
+
+  if (variant == element::dpc_variant::simplex_equispaced
+      or variant == element::dpc_variant::simplex_gll)
   {
+    lattice::type latticetype;
+    lattice::simplex_method latticesm = lattice::simplex_method::isaac;
+    if (variant == element::dpc_variant::simplex_equispaced)
+      latticetype = lattice::type::equispaced;
+    else if (variant == element::dpc_variant::simplex_gll)
+      latticetype = lattice::type::gll;
+
     switch (celltype)
     {
     case cell::type::quadrilateral:
-      return lattice::create(cell::type::triangle, degree,
-                             lattice::type::equispaced, true);
+      return lattice::create(cell::type::triangle, degree, latticetype, true,
+                             latticesm);
     case cell::type::hexahedron:
-      return lattice::create(cell::type::tetrahedron, degree,
-                             lattice::type::equispaced, true);
+      return lattice::create(cell::type::tetrahedron, degree, latticetype, true,
+                             latticesm);
     default:
       throw std::runtime_error("Invalid cell type");
     }
@@ -1013,6 +1024,7 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
            or variant == element::dpc_variant::diagonal_gll)
   {
     lattice::type latticetype;
+    lattice::simplex_method latticesm = lattice::simplex_method::isaac;
     if (variant == element::dpc_variant::diagonal_equispaced)
       latticetype = lattice::type::equispaced;
     else if (variant == element::dpc_variant::diagonal_gll)
@@ -1029,19 +1041,70 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
                          / (degree * degree + degree + 1);
 
       std::size_t n = 0;
-      for (int i = 0; i <= degree; ++i)
+      for (int j = 0; j <= degree; ++j)
       {
         const auto interval_pts
-            = lattice::create(cell::type::interval, i, latticetype, true);
-        const double y = gap * (i % 2 == 0 ? i / 2 : degree - (i - 1) / 2);
+            = lattice::create(cell::type::interval, j, latticetype, true);
+        const double y = gap * (j % 2 == 0 ? j / 2 : degree - (j - 1) / 2);
         const double coord0 = y < 1 ? y : y - 1;
         const double coord1 = y < 1 ? 0 : 1;
-        for (int j = 0; j <= i; ++j)
+        for (int i = 0; i <= j; ++i)
         {
-          const double x = interval_pts(j, 0);
+          const double x = interval_pts(i, 0);
           pts(n, 0) = coord0 * (1 - x) + coord1 * x;
           pts(n, 1) = coord1 * (1 - x) + coord0 * x;
           ++n;
+        }
+      }
+      return pts;
+    }
+    case cell::type::hexahedron:
+    {
+      xt::xtensor<double, 2> pts(
+          {static_cast<std::size_t>((degree + 3) * (degree + 2) * (degree + 1)
+                                    / 6),
+           3});
+
+      const double gap
+          = static_cast<double>(3 * degree) / (degree * degree + 1);
+
+      std::size_t n = 0;
+      for (int k = 0; k <= degree; ++k)
+      {
+        const double z = gap * (k % 2 == 0 ? k / 2 : degree - (k - 1) / 2);
+        const auto triangle_pts = lattice::create(cell::type::triangle, k,
+                                                  latticetype, true, latticesm);
+        if (z < 1)
+          for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
+          {
+            const double coord0 = triangle_pts(p, 0);
+            const double coord1 = triangle_pts(p, 1);
+            pts(n, 0) = coord0 * z;
+            pts(n, 1) = coord1 * z;
+            pts(n, 2) = (1 - coord0 - coord1) * z;
+            ++n;
+          }
+        else if (z > 2)
+          for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
+          {
+            const double coord0 = triangle_pts(p, 0);
+            const double coord1 = triangle_pts(p, 1);
+            pts(n, 0) = 1 - (3 - z) * coord0;
+            pts(n, 1) = 1 - (3 - z) * coord1;
+            pts(n, 2) = 1 - (3 - z) * (1 - coord0 - coord1);
+            ++n;
+          }
+        else
+        {
+          for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
+          {
+            const double coord0 = triangle_pts(p, 0);
+            const double coord1 = triangle_pts(p, 1);
+            pts(n, 0) = 1 - (2 - z) * coord0 - coord1;
+            pts(n, 1) = coord0 + (z - 1) * coord1;
+            pts(n, 2) = z - 1 - (z - 1) * coord0 + (2 - z) * coord1;
+            ++n;
+          }
         }
       }
       return pts;
@@ -1099,7 +1162,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   if (!exterior)
   {
     // Points used to define this variant are all interior to the cell, so this
-    // variant required that the element is discontinuous
+    // variant requires that the element is discontinuous
     if (!discontinuous)
     {
       throw std::runtime_error("This variant of Lagrange is only supported for "
@@ -1268,6 +1331,15 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   if (!discontinuous)
   {
     throw std::runtime_error("Cannot create a continuous DPC element.");
+  }
+
+  if (variant == element::dpc_variant::unset)
+  {
+    if (degree == 0)
+      variant = element::dpc_variant::simplex_equispaced;
+    else
+      throw std::runtime_error(
+          "DPC elements of degree > 0 need to be given a variant.");
   }
 
   cell::type simplex_type;

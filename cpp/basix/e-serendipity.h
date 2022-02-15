@@ -13,7 +13,7 @@ namespace basix::element
 /// Create a serendipity element on cell with given degree
 /// @param[in] celltype The cell type
 /// @param[in] degree The degree of the element
-/// @param[in] variant The variant of the Lagrange element to be used for
+/// @param[in] lvariant The variant of the Lagrange element to be used for
 /// integral moments on the edges of the cell
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous

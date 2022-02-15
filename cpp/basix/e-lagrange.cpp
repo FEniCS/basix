@@ -925,6 +925,135 @@ FiniteElement create_legendre(cell::type celltype, int degree,
                        element::lagrange_variant::legendre);
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
+                                       element::dpc_variant variant)
+{
+  if (variant == element::dpc_variant::equispaced_simplex)
+  {
+    switch (celltype)
+    {
+    case cell::type::quadrilateral:
+      return lattice::create(cell::type::triangle, degree,
+                             lattice::type::equispaced, true);
+    case cell::type::hexahedron:
+      return lattice::create(cell::type::tetrahedron, degree,
+                             lattice::type::equispaced, true);
+    default:
+      throw std::runtime_error("Invalid cell type");
+    }
+  }
+  else if (variant == element::dpc_variant::horizontal_equispaced
+           or variant == element::dpc_variant::horizontal_gll)
+  {
+    lattice::type latticetype;
+    if (variant == element::dpc_variant::horizontal_equispaced)
+      latticetype = lattice::type::equispaced;
+    else if (variant == element::dpc_variant::horizontal_gll)
+      latticetype = lattice::type::gll;
+
+    switch (celltype)
+    {
+    case cell::type::quadrilateral:
+    {
+      xt::xtensor<double, 2> pts(
+          {static_cast<std::size_t>((degree + 2) * (degree + 1) / 2), 2});
+      std::size_t n = 0;
+      for (int j = 0; j <= degree; ++j)
+      {
+        const auto interval_pts = lattice::create(
+            cell::type::interval, degree - j, latticetype, true);
+        for (int i = 0; i <= degree - j; ++i)
+        {
+          pts(n, 0) = interval_pts(i, 0);
+          pts(n, 1) = j % 2 == 0
+                          ? static_cast<double>(j / 2) / degree
+                          : 1 - static_cast<double>((j - 1) / 2) / degree;
+          ++n;
+        }
+      }
+      return pts;
+    }
+    case cell::type::hexahedron:
+    {
+      xt::xtensor<double, 2> pts(
+          {static_cast<std::size_t>((degree + 3) * (degree + 2) * (degree + 1)
+                                    / 6),
+           3});
+      std::size_t n = 0;
+      for (int k = 0; k <= degree; ++k)
+      {
+        for (int j = 0; j <= degree - k; ++j)
+        {
+          const auto interval_pts = lattice::create(
+              cell::type::interval, degree - j - k, latticetype, true);
+          for (int i = 0; i <= degree - j - k; ++i)
+          {
+            pts(n, 0) = interval_pts(i, 0);
+            pts(n, 1)
+                = degree - k == 0
+                      ? 0.5
+                      : (j % 2 == 0 ? static_cast<double>(j / 2) / (degree - k)
+                                    : 1
+                                          - static_cast<double>((j - 1) / 2)
+                                                / (degree - k));
+            pts(n, 2) = k % 2 == 0
+                            ? static_cast<double>(k / 2) / degree
+                            : 1 - static_cast<double>((k - 1) / 2) / degree;
+            ++n;
+          }
+        }
+      }
+      return pts;
+    }
+    default:
+      throw std::runtime_error("Invalid cell type");
+    }
+  }
+  else if (variant == element::dpc_variant::diagonal_equispaced
+           or variant == element::dpc_variant::diagonal_gll)
+  {
+    lattice::type latticetype;
+    if (variant == element::dpc_variant::diagonal_equispaced)
+      latticetype = lattice::type::equispaced;
+    else if (variant == element::dpc_variant::diagonal_gll)
+      latticetype = lattice::type::gll;
+
+    switch (celltype)
+    {
+    case cell::type::quadrilateral:
+    {
+      xt::xtensor<double, 2> pts(
+          {static_cast<std::size_t>((degree + 2) * (degree + 1) / 2), 2});
+
+      const double gap = static_cast<double>(2 * (degree + 1))
+                         / (degree * degree + degree + 1);
+
+      std::size_t n = 0;
+      for (int i = 0; i <= degree; ++i)
+      {
+        const auto interval_pts
+            = lattice::create(cell::type::interval, i, latticetype, true);
+        const double y = gap * (i % 2 == 0 ? i / 2 : degree - (i - 1) / 2);
+        const double coord0 = y < 1 ? y : y - 1;
+        const double coord1 = y < 1 ? 0 : 1;
+        for (int j = 0; j <= i; ++j)
+        {
+          const double x = interval_pts(j, 0);
+          pts(n, 0) = coord0 * (1 - x) + coord1 * x;
+          pts(n, 1) = coord1 * (1 - x) + coord0 * x;
+          ++n;
+        }
+      }
+      return pts;
+    }
+    default:
+      throw std::runtime_error("Invalid cell type");
+    }
+  }
+  else
+    throw std::runtime_error("Unsupported_variant");
+}
+//----------------------------------------------------------------------------
 } // namespace
 
 //----------------------------------------------------------------------------
@@ -1131,7 +1260,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
-                                         element::dpc_variant,
+                                         element::dpc_variant variant,
                                          bool discontinuous)
 {
   // Only tabulate for scalar. Vector spaces can easily be built from
@@ -1183,9 +1312,8 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  const auto pt
-      = lattice::create(simplex_type, degree, lattice::type::equispaced, true);
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  const auto pt = make_dpc_points(celltype, degree, variant);
   x[tdim].push_back(pt);
 
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
@@ -1199,6 +1327,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs,
                        entity_transformations, x, M, maps::type::identity,
-                       discontinuous, degree, degree);
+                       discontinuous, degree, degree, {},
+                       element::lagrange_variant::unset, variant);
 }
 //-----------------------------------------------------------------------------

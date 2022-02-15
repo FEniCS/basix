@@ -49,7 +49,8 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
         # Elements on quads and hexes
         for c in [CellType.quadrilateral, CellType.hexahedron]:
             if discontinuous:
-                for v in [DPCVariant.equispaced_triangle, DPCVariant.stretched_equispaced_triangle,
+                for v in [DPCVariant.equispaced_simplex,
+                          DPCVariant.horizontal_equispaced, DPCVariant.horizontal_gll]:
                           DPCVariant.diagonal_equispaced, DPCVariant.diagonal_gll]:
                     elementlist.append((c, ElementFamily.dpc, k, [v]))
 

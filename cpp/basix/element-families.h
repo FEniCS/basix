@@ -29,10 +29,11 @@ enum class lagrange_variant
 enum class dpc_variant
 {
   unset = -1,
-  equispaced_triangle = 0,
-  stretched_equispaced_triangle = 1,
-  diagonal_equispaced = 2,
-  diagonal_gll = 3,
+  equispaced_simplex = 0,
+  horizontal_equispaced = 1,
+  horizontal_gll = 2,
+  diagonal_equispaced = 3,
+  diagonal_gll = 4,
 };
 
 /// Available element families

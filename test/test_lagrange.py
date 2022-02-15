@@ -440,9 +440,12 @@ def test_legendre(celltype, degree, variant):
         assert in_cell(celltype, p)
 
 
+import os
+os.system("rm /mnt/shared/49-img/*.png")
 @pytest.mark.parametrize("variant", [
-    basix.DPCVariant.equispaced_triangle,
-    basix.DPCVariant.stretched_equispaced_triangle,
+    basix.DPCVariant.equispaced_simplex,
+    basix.DPCVariant.horizontal_equispaced,
+    basix.DPCVariant.horizontal_gll,
     basix.DPCVariant.diagonal_equispaced,
     basix.DPCVariant.diagonal_gll,
 ])
@@ -452,5 +455,27 @@ def test_legendre(celltype, degree, variant):
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_dpc(celltype, degree, variant):
     e = basix.create_element(basix.ElementFamily.DPC, celltype, degree, variant, True)
+    if celltype == basix.CellType.quadrilateral:
+        print(e.points)
+        import matplotlib.pylab as plt
+        plt.plot([0, 0, 1, 1, 0], [0, 1, 1, 0, 0], "k-")
+        plt.plot(e.points[:, 0], e.points[:, 1], "ro")
+        plt.axis("equal")
+        plt.savefig(f"/mnt/shared/49-img/quad-{variant.name}-{degree}.png")
+        plt.clf()
+    if celltype == basix.CellType.hexahedron:
+        print(e.points)
+        import matplotlib.pylab as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        for i in [0, 1]:
+            ax.plot([0, 0, 1, 1, 0], [0, 1, 1, 0, 0], [i, i, i, i, i], "k-")
+        for i in [0, 1]:
+            for j in [0, 1]:
+                ax.plot([i, i], [j, j], [0, 1], "k-")
+        ax.plot(e.points[:, 0], e.points[:, 1], e.points[:, 2], "ro")
+        plt.savefig(f"/mnt/shared/49-img/hex-{variant.name}-{degree}.png")
+        plt.clf()
     for p in e.points:
         assert in_cell(celltype, p)

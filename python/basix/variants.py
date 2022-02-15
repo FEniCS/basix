@@ -1,6 +1,7 @@
 """Functions to manipulate variant types."""
 
 from ._basixcpp import LagrangeVariant as _LV
+from ._basixcpp import DPCVariant as _DV
 
 
 def string_to_lagrange_variant(variant: str) -> _LV:
@@ -42,5 +43,41 @@ def lagrange_variant_to_string(variant: _LV) -> str:
     -------
     str
         The Lagrange variant as a string.
+    """
+    return variant.name
+
+
+def string_to_dpc_variant(variant: str) -> _DV:
+    """
+    Convert a string to a Basix DPCVariant enum.
+
+    Parameters
+    ----------
+    variant : str
+        The DPC variant as a string.
+
+    Returns
+    -------
+    basix.DPCVariant
+        The DPC variant
+    """
+    if not hasattr(_DV, variant):
+        raise ValueError(f"Unknown variant: {variant}")
+    return getattr(_DV, variant)
+
+
+def dpc_variant_to_string(variant: _DV) -> str:
+    """
+    Convert a Basix DPCVariant enum to a string.
+
+    Parameters
+    ----------
+    variant : basix.DPCVariant
+        The DPC variant
+
+    Returns
+    -------
+    str
+        The DPC variant as a string.
     """
     return variant.name

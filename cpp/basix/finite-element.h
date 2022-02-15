@@ -225,6 +225,7 @@ public:
   /// @param[in] tensor_factors The factors in the tensor product representation
   /// of this element
   /// @param[in] lvariant The Lagrange variant of the element
+  /// @param[in] dvariant The DPC variant of the element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape,
@@ -238,7 +239,8 @@ public:
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {},
-      element::lagrange_variant lvariant = element::lagrange_variant::unset);
+      element::lagrange_variant lvariant = element::lagrange_variant::unset,
+      element::dpc_variant dvariant = element::dpc_variant::unset);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -347,9 +349,12 @@ public:
   element::family family() const;
 
   /// Get the Lagrange variant of the element.
-  /// @note Throws an error if element has no Lagrange variant
   /// @return The Lagrange variant
   element::lagrange_variant lagrange_variant() const;
+
+  /// Get the DPC variant of the element.
+  /// @return The DPC variant
+  element::dpc_variant dpc_variant() const;
 
   /// Get the map type for this element
   /// @return The map type
@@ -805,6 +810,9 @@ private:
   // Lagrange variant
   element::lagrange_variant _lagrange_variant;
 
+  // Lagrange variant
+  element::dpc_variant _dpc_variant;
+
   // Degree
   int _degree;
 
@@ -923,13 +931,26 @@ private:
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-/// @param[in] variant The variant of Lagrange to use
+/// @param[in] lvariant The variant of Lagrange to use
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant variant,
+                             int degree, element::lagrange_variant lvariant,
+                             bool discontinuous);
+
+/// Create an element using a given DPC variant
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+/// @param[in] dvariant The variant of DPC to use
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, element::dpc_variant dvariant,
                              bool discontinuous);
 
 /// Create an element
@@ -950,10 +971,20 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] cell The reference cell type that the element is defined
 /// on
 /// @param[in] degree The degree of the element
-/// @param[in] variant The variant of Lagrange to use
+/// @param[in] lvariant The variant of Lagrange to use
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant variant);
+                             int degree, element::lagrange_variant lvariant);
+
+/// Create a continuous element using a given DPC variant
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined
+/// on
+/// @param[in] degree The degree of the element
+/// @param[in] dvariant The variant of DPC to use
+/// @return A finite element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, element::dpc_variant dvariant);
 
 /// Create a continuous element
 /// @param[in] family The element family

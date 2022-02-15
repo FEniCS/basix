@@ -438,3 +438,21 @@ def test_legendre(celltype, degree, variant):
     e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
     for p in e.points:
         assert in_cell(celltype, p)
+
+
+@pytest.mark.parametrize("variant", [
+    basix.DPCVariant.simplex_equispaced,
+    basix.DPCVariant.simplex_gll,
+    basix.DPCVariant.horizontal_equispaced,
+    basix.DPCVariant.horizontal_gll,
+    basix.DPCVariant.diagonal_equispaced,
+    basix.DPCVariant.diagonal_gll,
+])
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("degree", range(5))
+def test_dpc(celltype, degree, variant):
+    e = basix.create_element(basix.ElementFamily.DPC, celltype, degree, variant, True)
+    for p in e.points:
+        assert in_cell(celltype, p)

@@ -544,10 +544,9 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
 } // namespace
 
 //----------------------------------------------------------------------------
-FiniteElement
-basix::element::create_serendipity(cell::type celltype, int degree,
-                                   element::lagrange_variant lvariant,
-                                   bool discontinuous)
+FiniteElement basix::element::create_serendipity(
+    cell::type celltype, int degree, element::lagrange_variant lvariant,
+    element::dpc_variant dvariant, bool discontinuous)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
@@ -560,8 +559,18 @@ basix::element::create_serendipity(cell::type celltype, int degree,
     if (degree < 3)
       lvariant = element::lagrange_variant::equispaced;
     else
+      throw std::runtime_error("serendipity elements of degree > 2 need to be "
+                               "given a Lagrange variant.");
+  }
+
+  if (dvariant == element::dpc_variant::unset
+      and celltype != cell::type::interval)
+  {
+    if (degree == 4)
+      dvariant = element::dpc_variant::simplex_equispaced;
+    if (degree > 4)
       throw std::runtime_error(
-          "serendipity elements of degree > 2 need to be given a variant.");
+          "serendipity elements of degree > 4 need to be given a DPC variant.");
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
@@ -599,10 +608,8 @@ basix::element::create_serendipity(cell::type celltype, int degree,
 
   if (tdim >= 2 and degree >= 4)
   {
-    // TODO: DPC variant
-    FiniteElement moment_space
-        = element::create_dpc(cell::type::quadrilateral, degree - 4,
-                              element::dpc_variant::simplex_equispaced, true);
+    FiniteElement moment_space = element::create_dpc(
+        cell::type::quadrilateral, degree - 4, dvariant, true);
     std::tie(x[2], M[2]) = moments::make_integral_moments(
         moment_space, celltype, 1, 2 * degree - 4);
     if (tdim > 2)
@@ -614,10 +621,8 @@ basix::element::create_serendipity(cell::type celltype, int degree,
 
   if (tdim == 3 and degree >= 6)
   {
-    // TODO: DPC variant
     std::tie(x[3], M[3]) = moments::make_integral_moments(
-        element::create_dpc(cell::type::hexahedron, degree - 6,
-                            element::dpc_variant::simplex_equispaced, true),
+        element::create_dpc(cell::type::hexahedron, degree - 6, dvariant, true),
         celltype, 1, 2 * degree - 6);
   }
 
@@ -659,10 +664,11 @@ basix::element::create_serendipity(cell::type celltype, int degree,
         = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
   }
 
-  return FiniteElement(
-      element::family::serendipity, celltype, degree, {1}, wcoeffs,
-      entity_transformations, x, M, maps::type::identity, discontinuous, degree,
-      degree < static_cast<int>(tdim) ? 1 : degree / tdim, {}, lvariant);
+  return FiniteElement(element::family::serendipity, celltype, degree, {1},
+                       wcoeffs, entity_transformations, x, M,
+                       maps::type::identity, discontinuous, degree,
+                       degree < static_cast<int>(tdim) ? 1 : degree / tdim, {},
+                       lvariant, dvariant);
 }
 //----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_div(cell::type celltype,

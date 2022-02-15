@@ -43,8 +43,9 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
 
         # Elements on tensor product cells
         for c in [CellType.interval, CellType.quadrilateral, CellType.hexahedron]:
-            elementlist.append((c, ElementFamily.serendipity, k, [LagrangeVariant.equispaced]))
-            elementlist.append((c, ElementFamily.serendipity, k, [LagrangeVariant.gll_warped]))
+            for lv in [LagrangeVariant.equispaced, LagrangeVariant.gll_warped]:
+                for dv in [DPCVariant.simplex_equispaced, DPCVariant.diagonal_gll]:
+                    elementlist.append((c, ElementFamily.serendipity, k, [lv, dv]))
 
         # Elements on quads and hexes
         for c in [CellType.quadrilateral, CellType.hexahedron]:

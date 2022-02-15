@@ -59,7 +59,6 @@ The following elements are supported on an interval:
 
   - [Lagrange](https://defelement.com/elements/lagrange.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
-  - [DPC](https://defelement.com/elements/dpc.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
 
 

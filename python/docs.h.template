@@ -281,7 +281,8 @@ Returns
 {{finite-element.h > create_element(family, cell, degree, discontinuous) > return : basix.finite_element.FiniteElement}}
 )";
 
-{{DOCTYPE}} create_element__family_cell_degree_lvariant_discontinuous = R"(
+{{DOCTYPE}} create_element__family_cell_degree_lvariant_discontinuous
+    = R"(
 {{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > doc}}
 
 Parameters
@@ -312,7 +313,8 @@ Returns
 {{finite-element.h > create_element(family, cell, degree, lvariant) > return : basix.finite_element.FiniteElement}}
 )";
 
-{{DOCTYPE}} create_element__family_cell_degree_dvariant_discontinuous = R"(
+{{DOCTYPE}} create_element__family_cell_degree_dvariant_discontinuous
+    = R"(
 {{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > doc}}
 
 Parameters
@@ -342,7 +344,6 @@ Returns
 =======
 {{finite-element.h > create_element(family, cell, degree, dvariant) > return : basix.finite_element.FiniteElement}}
 )";
-
 
 {{DOCTYPE}} create_element__family_cell_degree = R"(
 {{finite-element.h > create_element(family, cell, degree) > doc}}

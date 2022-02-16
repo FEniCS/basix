@@ -570,6 +570,32 @@ basix.finite_element.FiniteElement
     A finite element
 )";
 
+const std::string
+    create_element__family_cell_degree_lvariant_dvariant_discontinuous
+    = R"(
+Create an element using a given Lagrange variant and a given DPC variant
+
+Parameters
+==========
+family : basix.ElementFamily
+    The element family
+cell : basix.CellType
+    The reference cell type that the element is defined on
+degree : int
+    The degree of the element
+lvariant : basix.LagrangeVariant
+    The variant of Lagrange to use
+dvariant : basix.DPCVariant
+    The variant of DPC to use
+discontinuous : bool
+    Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
+
+Returns
+=======
+basix.finite_element.FiniteElement
+    A finite element
+)";
+
 const std::string create_element__family_cell_degree_dvariant = R"(
 Create a continuous element using a given DPC variant
 
@@ -581,6 +607,29 @@ cell : basix.CellType
     The reference cell type that the element is defined on
 degree : int
     The degree of the element
+dvariant : basix.DPCVariant
+    The variant of DPC to use
+
+Returns
+=======
+basix.finite_element.FiniteElement
+    A finite element
+)";
+
+const std::string create_element__family_cell_degree_lvariant_dvariant = R"(
+Create a continuous element using a given Lagrange variant and a given DPC
+variant
+
+Parameters
+==========
+family : basix.ElementFamily
+    The element family
+cell : basix.CellType
+    The reference cell type that the element is defined on
+degree : int
+    The degree of the element
+lvariant : basix.LagrangeVariant
+    The variant of Lagrange to use
 dvariant : basix.DPCVariant
     The variant of DPC to use
 

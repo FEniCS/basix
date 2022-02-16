@@ -198,12 +198,13 @@ basix::FiniteElement basix::create_element(element::family family,
     return element::create_bubble(cell, degree, discontinuous);
   case element::family::serendipity:
     return element::create_serendipity(
-        cell, degree, element::lagrange_variant::unset, discontinuous);
+        cell, degree, element::lagrange_variant::unset,
+        element::dpc_variant::unset, discontinuous);
   case element::family::DPC:
     return element::create_dpc(cell, degree, element::dpc_variant::unset,
                                discontinuous);
   default:
-    throw std::runtime_error("Element family not found");
+    throw std::runtime_error("Element family not found.");
   }
 }
 //-----------------------------------------------------------------------------
@@ -216,8 +217,12 @@ basix::FiniteElement basix::create_element(element::family family,
   {
   case element::family::DPC:
     return element::create_dpc(cell, degree, dvariant, discontinuous);
+  case element::family::serendipity:
+    return element::create_serendipity(cell, degree,
+                                       element::lagrange_variant::unset,
+                                       dvariant, discontinuous);
   default:
-    throw std::runtime_error("Cannot pass a DPC variant.");
+    throw std::runtime_error("Cannot pass a DPC variant to this element.");
   }
 }
 //-----------------------------------------------------------------------------
@@ -231,9 +236,27 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::P:
     return element::create_lagrange(cell, degree, lvariant, discontinuous);
   case element::family::serendipity:
-    return element::create_serendipity(cell, degree, lvariant, discontinuous);
+    return element::create_serendipity(
+        cell, degree, lvariant, element::dpc_variant::unset, discontinuous);
   default:
-    throw std::runtime_error("Cannot pass a Lagrange variant.");
+    throw std::runtime_error("Cannot pass a Lagrange variant to this element.");
+  }
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           element::lagrange_variant lvariant,
+                                           element::dpc_variant dvariant,
+                                           bool discontinuous)
+{
+  switch (family)
+  {
+  case element::family::serendipity:
+    return element::create_serendipity(cell, degree, lvariant, dvariant,
+                                       discontinuous);
+  default:
+    throw std::runtime_error(
+        "Cannot pass a Lagrange variant and a DPC variant to this element.");
   }
 }
 //-----------------------------------------------------------------------------
@@ -249,6 +272,14 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::dpc_variant dvariant)
 {
   return create_element(family, cell, degree, dvariant, false);
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           element::lagrange_variant lvariant,
+                                           element::dpc_variant dvariant)
+{
+  return create_element(family, cell, degree, lvariant, dvariant, false);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,

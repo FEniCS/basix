@@ -437,6 +437,18 @@ Interface to the Basix C++ library.
 
   m.def(
       "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::lagrange_variant lvariant, element::dpc_variant dvariant,
+         bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     dvariant, discontinuous);
+      },
+      basix::docstring::
+          create_element__family_cell_degree_lvariant_dvariant_discontinuous
+              .c_str());
+
+  m.def(
+      "create_element",
       [](element::family family_name, cell::type cell_name,
          int degree) -> FiniteElement
       { return basix::create_element(family_name, cell_name, degree); },
@@ -457,6 +469,17 @@ Interface to the Basix C++ library.
         return basix::create_element(family_name, cell_name, degree, dvariant);
       },
       basix::docstring::create_element__family_cell_degree_dvariant.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::lagrange_variant lvariant,
+         element::dpc_variant dvariant) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     dvariant);
+      },
+      basix::docstring::create_element__family_cell_degree_lvariant_dvariant
+          .c_str());
 
   // Interpolate between elements
   m.def(

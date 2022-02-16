@@ -15,11 +15,15 @@ namespace basix::element
 /// @param[in] degree The degree of the element
 /// @param[in] lvariant The variant of the Lagrange element to be used for
 /// integral moments on the edges of the cell
+/// @param[in] dvariant The variant of the DPC element to be used for
+/// integral moments on the interior of the cell (for quads and hexes). For
+/// elements on an interval element::dpc_variant::unset can be passed in
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
 FiniteElement create_serendipity(cell::type celltype, int degree,
                                  element::lagrange_variant lvariant,
+                                 element::dpc_variant dvariant,
                                  bool discontinuous);
 
 /// Create a serendipity H(div) element on cell with given degree

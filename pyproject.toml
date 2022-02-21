@@ -17,4 +17,5 @@ manylinux-x86_64-image = "manylinux2014"
 before-build = "yum -y update && yum install -y openblas-devel ninja-build"
 
 [tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"] # Forces arm64 build on intel runner
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"

@@ -82,6 +82,7 @@ variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
 }
 //-----------------------------------------------------------------------------
 FiniteElement create_d_lagrange(cell::type celltype, int degree,
+                                element::lagrange_variant variant,
                                 lattice::type lattice_type,
                                 lattice::simplex_method simplex_method)
 {
@@ -143,7 +144,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, true, degree, degree);
+                       maps::type::identity, true, degree, degree, {}, variant);
 }
 //----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -1168,7 +1169,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       throw std::runtime_error("This variant of Lagrange is only supported for "
                                "discontinuous elements");
     }
-    return create_d_lagrange(celltype, degree, lattice_type, simplex_method);
+    return create_d_lagrange(celltype, degree, variant, lattice_type,
+                             simplex_method);
   }
 
   const std::size_t tdim = cell::topological_dimension(celltype);

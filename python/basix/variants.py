@@ -18,16 +18,16 @@ def string_to_lagrange_variant(variant: str) -> _LV:
     basix.LagrangeVariant
         The Lagrange variant
     """
-    if variant == "gll":
+    if variant.lower() == "gll":
         return _LV.gll_warped
-    if variant == "chebyshev":
+    if variant.lower() == "chebyshev":
         return _LV.chebyshev_isaac
-    if variant == "gl":
+    if variant.lower() == "gl":
         return _LV.gl_isaac
 
-    if not hasattr(_LV, variant):
+    if not hasattr(_LV, variant.lower()):
         raise ValueError(f"Unknown variant: {variant}")
-    return getattr(_LV, variant)
+    return getattr(_LV, variant.lower())
 
 
 def lagrange_variant_to_string(variant: _LV) -> str:
@@ -61,9 +61,9 @@ def string_to_dpc_variant(variant: str) -> _DV:
     basix.DPCVariant
         The DPC variant
     """
-    if not hasattr(_DV, variant):
+    if not hasattr(_DV, variant.lower()):
         raise ValueError(f"Unknown variant: {variant}")
-    return getattr(_DV, variant)
+    return getattr(_DV, variant.lower())
 
 
 def dpc_variant_to_string(variant: _DV) -> str:

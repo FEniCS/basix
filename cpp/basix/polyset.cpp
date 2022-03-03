@@ -458,24 +458,21 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
   assert(P.shape(0) == md);
   assert(P.shape(1) == pts.shape(0));
   assert(P.shape(2) == m);
-  // FIXME: remove this memory assignment
-  xt::xtensor<double, 2> result({pts.shape(0), m});
   for (std::size_t k = 0; k < nderiv + 1; ++k)
   {
     for (std::size_t j = 0; j < k + 1; ++j)
     {
       for (std::size_t kx = 0; kx < j + 1; ++kx)
       {
-        result = xt::zeros<double>(result.shape());
         const std::size_t ky = j - kx;
         const std::size_t kz = k - j;
 
         const std::size_t pyramidal_index = pyr_idx(0, 0, 0);
         assert(pyramidal_index < m);
         if (kx == 0 and ky == 0 and kz == 0)
-          xt::col(result, pyramidal_index) = 1.0;
+          xt::view(P, idx(kx, ky, kz), xt::all(), pyramidal_index) = 1.0;
         else
-          xt::col(result, pyramidal_index) = 0.0;
+          xt::view(P, idx(kx, ky, kz), xt::all(), pyramidal_index) = 0.0;
 
         // r = 0
         for (int p = 0; p < n + 1; ++p)
@@ -484,8 +481,11 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
           {
             const double a
                 = static_cast<double>(p - 1) / static_cast<double>(p);
-            auto p00 = xt::col(result, pyr_idx(p, 0, 0));
-            p00 = (0.5 + x0 + x2 * 0.5) * xt::col(result, pyr_idx(p - 1, 0, 0))
+            auto p00
+                = xt::view(P, idx(kx, ky, kz), xt::all(), pyr_idx(p, 0, 0));
+            p00 = (0.5 + x0 + x2 * 0.5)
+                  * xt::view(P, idx(kx, ky, kz), xt::all(),
+                             pyr_idx(p - 1, 0, 0))
                   * (a + 1.0);
 
             if (kx > 0)
@@ -506,7 +506,10 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
 
             if (p > 1)
             {
-              p00 -= f2 * xt::col(result, pyr_idx(p - 2, 0, 0)) * a;
+              p00 -= f2
+                     * xt::view(P, idx(kx, ky, kz), xt::all(),
+                                pyr_idx(p - 2, 0, 0))
+                     * a;
 
               if (kz > 0)
               {
@@ -531,8 +534,11 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
           {
             const double a
                 = static_cast<double>(q - 1) / static_cast<double>(q);
-            auto r_pq = xt::col(result, pyr_idx(p, q, 0));
-            r_pq = (0.5 + x1 + x2 * 0.5) * xt::col(result, pyr_idx(p, q - 1, 0))
+            auto r_pq
+                = xt::view(P, idx(kx, ky, kz), xt::all(), pyr_idx(p, q, 0));
+            r_pq = (0.5 + x1 + x2 * 0.5)
+                   * xt::view(P, idx(kx, ky, kz), xt::all(),
+                              pyr_idx(p, q - 1, 0))
                    * (a + 1.0);
             if (ky > 0)
             {
@@ -552,7 +558,10 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
 
             if (q > 1)
             {
-              r_pq -= f2 * xt::col(result, pyr_idx(p, q - 2, 0)) * a;
+              r_pq -= f2
+                      * xt::view(P, idx(kx, ky, kz), xt::all(),
+                                 pyr_idx(p, q - 2, 0))
+                      * a;
 
               if (kz > 0)
               {
@@ -578,8 +587,9 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
         {
           for (int q = 0; q < n; ++q)
           {
-            auto r_pq1 = xt::col(result, pyr_idx(p, q, 1));
-            r_pq1 = xt::col(result, pyr_idx(p, q, 0))
+            auto r_pq1
+                = xt::view(P, idx(kx, ky, kz), xt::all(), pyr_idx(p, q, 1));
+            r_pq1 = xt::view(P, idx(kx, ky, kz), xt::all(), pyr_idx(p, q, 0))
                     * ((1.0 + p + q) + x2 * (2.0 + p + q));
             if (kz > 0)
             {
@@ -598,9 +608,13 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
             for (int q = 0; q < n - r; ++q)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
-              auto r_pqr = xt::col(result, pyr_idx(p, q, r + 1));
-              r_pqr = xt::col(result, pyr_idx(p, q, r)) * (x2 * ar + br)
-                      - xt::col(result, pyr_idx(p, q, r - 1)) * cr;
+              auto r_pqr = xt::view(P, idx(kx, ky, kz), xt::all(),
+                                    pyr_idx(p, q, r + 1));
+              r_pqr = xt::view(P, idx(kx, ky, kz), xt::all(), pyr_idx(p, q, r))
+                          * (x2 * ar + br)
+                      - xt::view(P, idx(kx, ky, kz), xt::all(),
+                                 pyr_idx(p, q, r - 1))
+                            * cr;
               if (kz > 0)
               {
                 r_pqr += ar * 2 * kz
@@ -610,8 +624,6 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
             }
           }
         }
-
-        xt::view(P, idx(kx, ky, kz), xt::all(), xt::all()) = result;
       }
     }
   }

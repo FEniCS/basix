@@ -116,26 +116,23 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, int n,
   const auto f3 = xt::square(1.0 - x1) * 0.25;
 
   // Iterate over derivatives in increasing order, since higher derivatives
-
-  // Depend on earlier calculations
-  // FIXME: remove this memory assignment
-  xt::xtensor<double, 2> result({pts.shape(0), m});
   for (int k = 0; k <= nderiv; ++k)
   {
     for (int kx = 0; kx <= k; ++kx)
     {
       const int ky = k - kx;
       if (kx == 0 and ky == 0)
-        xt::col(result, 0) = 1.0;
+        xt::view(P, idx(kx, ky), xt::all(), 0) = 1.0;
       else
-        xt::col(result, 0) = 0.0;
+        xt::view(P, idx(kx, ky), xt::all(), 0) = 0.0;
 
       for (int p = 1; p < n + 1; ++p)
       {
-        auto p0 = xt::col(result, idx(p, 0));
+        auto p0 = xt::view(P, idx(kx, ky), xt::all(), idx(p, 0));
         const double a
             = static_cast<double>(2 * p - 1) / static_cast<double>(p);
-        p0 = (x0 + 0.5 * x1 + 0.5) * xt::col(result, idx(p - 1, 0)) * a;
+        p0 = (x0 + 0.5 * x1 + 0.5)
+             * xt::view(P, idx(kx, ky), xt::all(), idx(p - 1, 0)) * a;
         if (kx > 0)
         {
           auto result0 = xt::view(P, idx(kx - 1, ky), xt::all(), idx(p - 1, 0));
@@ -151,7 +148,8 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, int n,
         if (p > 1)
         {
           // y^2 terms
-          p0 -= f3 * xt::col(result, idx(p - 2, 0)) * (a - 1.0);
+          p0 -= f3 * xt::view(P, idx(kx, ky), xt::all(), idx(p - 2, 0))
+                * (a - 1.0);
           if (ky > 0)
           {
             auto result0
@@ -170,8 +168,8 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, int n,
 
       for (int p = 0; p < n; ++p)
       {
-        auto p0 = xt::col(result, idx(p, 0));
-        auto p1 = xt::col(result, idx(p, 1));
+        auto p0 = xt::view(P, idx(kx, ky), xt::all(), idx(p, 0));
+        auto p1 = xt::view(P, idx(kx, ky), xt::all(), idx(p, 1));
         p1 = p0 * (x1 * (1.5 + p) + 0.5 + p);
         if (ky > 0)
         {
@@ -182,19 +180,17 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, int n,
         for (int q = 1; q < n - p; ++q)
         {
           const auto [a1, a2, a3] = jrc(2 * p + 1, q);
-          xt::col(result, idx(p, q + 1))
-              = xt::col(result, idx(p, q)) * (x1 * a1 + a2)
-                - xt::col(result, idx(p, q - 1)) * a3;
+          xt::view(P, idx(kx, ky), xt::all(), idx(p, q + 1))
+              = xt::view(P, idx(kx, ky), xt::all(), idx(p, q)) * (x1 * a1 + a2)
+                - xt::view(P, idx(kx, ky), xt::all(), idx(p, q - 1)) * a3;
           if (ky > 0)
           {
             auto result0 = xt::view(P, idx(kx, ky - 1), xt::all(), idx(p, q));
-            xt::col(result, idx(p, q + 1)) += 2 * ky * a1 * result0;
+            xt::view(P, idx(kx, ky), xt::all(), idx(p, q + 1))
+                += 2 * ky * a1 * result0;
           }
         }
       }
-
-      // Store
-      xt::view(P, idx(kx, ky), xt::all(), xt::all()) = result;
     }
   }
 

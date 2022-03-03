@@ -226,8 +226,6 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
   assert(P.shape(0) == md);
   assert(P.shape(1) == pts.shape(0));
   assert(P.shape(2) == m);
-  // FIXME: remove this memory assignment
-  xt::xtensor<double, 2> result({pts.shape(0), m});
   for (std::size_t k = 0; k <= nderiv; ++k)
   {
     for (std::size_t j = 0; j <= k; ++j)
@@ -237,16 +235,16 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
         const std::size_t ky = j - kx;
         const std::size_t kz = k - j;
         if (kx == 0 and ky == 0 and kz == 0)
-          xt::col(result, 0) = 1.0;
+          xt::view(P, idx(kx, ky, kz), xt::all(), 0) = 1.0;
         else
-          xt::col(result, 0) = 0.0;
+          xt::view(P, idx(kx, ky, kz), xt::all(), 0) = 0.0;
 
         for (int p = 1; p <= n; ++p)
         {
-          auto p00 = xt::col(result, idx(p, 0, 0));
+          auto p00 = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, 0, 0));
           double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
-          p00 = (x0 + 0.5 * (x1 + x2) + 1.0) * xt::col(result, idx(p - 1, 0, 0))
-                * a;
+          p00 = (x0 + 0.5 * (x1 + x2) + 1.0)
+                * xt::view(P, idx(kx, ky, kz), xt::all(), idx(p - 1, 0, 0)) * a;
           if (kx > 0)
           {
             p00 += 2 * kx * a
@@ -270,7 +268,9 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
 
           if (p > 1)
           {
-            p00 -= f2 * xt::col(result, idx(p - 2, 0, 0)) * (a - 1.0);
+            p00 -= f2
+                   * xt::view(P, idx(kx, ky, kz), xt::all(), idx(p - 2, 0, 0))
+                   * (a - 1.0);
             if (ky > 0)
             {
               p00 -= ky * (x1 + x2)
@@ -315,8 +315,8 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
 
         for (int p = 0; p < n; ++p)
         {
-          auto p10 = xt::col(result, idx(p, 1, 0));
-          p10 = xt::col(result, idx(p, 0, 0))
+          auto p10 = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, 1, 0));
+          p10 = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, 0, 0))
                 * ((1.0 + x1) * p + (2.0 + x1 * 3.0 + x2) * 0.5);
           if (ky > 0)
           {
@@ -334,9 +334,12 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
           for (int q = 1; q < n - p; ++q)
           {
             auto [aq, bq, cq] = jrc(2 * p + 1, q);
-            auto pq1 = xt::col(result, idx(p, q + 1, 0));
-            pq1 = xt::col(result, idx(p, q, 0)) * (f3 * aq + f4 * bq)
-                  - xt::col(result, idx(p, q - 1, 0)) * f5 * cq;
+            auto pq1
+                = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q + 1, 0));
+            pq1 = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, 0))
+                      * (f3 * aq + f4 * bq)
+                  - xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q - 1, 0))
+                        * f5 * cq;
 
             if (ky > 0)
             {
@@ -372,8 +375,8 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
         {
           for (int q = 0; q < n - p; ++q)
           {
-            auto pq = xt::col(result, idx(p, q, 1));
-            pq = xt::col(result, idx(p, q, 0))
+            auto pq = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, 1));
+            pq = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, 0))
                  * ((1.0 + p + q) + x2 * (2.0 + p + q));
             if (kz > 0)
             {
@@ -390,12 +393,14 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
             for (int r = 1; r < n - p - q; ++r)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
-              xt::col(result, idx(p, q, r + 1))
-                  = xt::col(result, idx(p, q, r)) * (x2 * ar + br)
-                    - xt::col(result, idx(p, q, r - 1)) * cr;
+              xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, r + 1))
+                  = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, r))
+                        * (x2 * ar + br)
+                    - xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, r - 1))
+                          * cr;
               if (kz > 0)
               {
-                xt::col(result, idx(p, q, r + 1))
+                xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, r + 1))
                     += 2 * kz * ar
                        * xt::view(P, idx(kx, ky, kz - 1), xt::all(),
                                   idx(p, q, r));
@@ -403,9 +408,6 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
             }
           }
         }
-
-        // Store this derivative
-        xt::view(P, idx(kx, ky, kz), xt::all(), xt::all()) = result;
       }
     }
   }

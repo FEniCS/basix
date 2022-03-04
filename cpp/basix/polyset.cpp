@@ -645,6 +645,11 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
   }
 }
 //-----------------------------------------------------------------------------
+std::size_t quad_idp(std::size_t px, std::size_t py, std::size_t n)
+{
+  return (n + 1) * px + py;
+}
+//-----------------------------------------------------------------------------
 void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, int n, int nderiv,
                                   const xt::xtensor<double, 2>& x)
 {
@@ -655,29 +660,95 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, int n, int nderiv,
   // Compute 1D basis
   const xt::xtensor<double, 1> x0 = xt::col(x, 0);
   const xt::xtensor<double, 1> x1 = xt::col(x, 1);
-  // FIXME: remove this memory assignment
-  xt::xtensor<double, 3> px({static_cast<std::size_t>(nderiv + 1), x0.shape(0),
-                             static_cast<std::size_t>(n + 1)});
-  tabulate_polyset_line_derivs(px, n, nderiv, x0);
-  // FIXME: remove this memory assignment
-  xt::xtensor<double, 3> py({static_cast<std::size_t>(nderiv + 1), x1.shape(0),
-                             static_cast<std::size_t>(n + 1)});
-  tabulate_polyset_line_derivs(py, n, nderiv, x1);
+
+  assert(x0.shape(0) > 0);
+  assert(x1.shape(0) > 0);
+  const auto X0 = x0 * 2.0 - 1.0;
+  const auto X1 = x1 * 2.0 - 1.0;
 
   assert(P.shape(0) == md);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
-  for (int kx = 0; kx < nderiv + 1; ++kx)
+  for (int kx = 0; kx <= nderiv; ++kx)
   {
-    auto p0 = xt::view(px, kx, xt::all(), xt::all());
-    for (int ky = 0; ky < nderiv + 1 - kx; ++ky)
+    if (kx == 0)
     {
-      auto result = xt::view(P, idx(kx, ky), xt::all(), xt::all());
-      auto p1 = xt::view(py, ky, xt::all(), xt::all());
-      int c = 0;
-      for (std::size_t i = 0; i < p0.shape(1); ++i)
-        for (std::size_t j = 0; j < p0.shape(1); ++j)
-          xt::col(result, c++) = xt::col(p0, i) * xt::col(p1, j);
+      for (int ky = 0; ky <= nderiv; ++ky)
+      {
+        // Get reference to this derivative
+        auto result = xt::view(P, idx(0, ky), xt::all(), xt::all());
+        if (ky == 0)
+          xt::col(result, quad_idp(0, 0, n)) = 1.0;
+        else
+          xt::col(result, quad_idp(0, 0, n)) = 0.0;
+
+        auto result0 = xt::view(P, idx(kx, ky - 1), xt::all(), xt::all());
+        for (int py = 1; py <= n; ++py)
+        {
+          const double a = 1.0 - 1.0 / static_cast<double>(py);
+          xt::col(result, quad_idp(0, py, n))
+              = X1 * xt::col(result, quad_idp(0, py - 1, n)) * (a + 1.0);
+          if (ky > 0)
+          {
+            xt::col(result, quad_idp(0, py, n))
+                += 2 * ky * xt::col(result0, quad_idp(0, py - 1, n))
+                   * (a + 1.0);
+          }
+          if (py > 1)
+          {
+            xt::col(result, quad_idp(0, py, n))
+                -= xt::col(result, quad_idp(0, py - 2, n)) * a;
+          }
+        }
+      }
+    }
+    else
+    {
+      for (int ky = 0; ky <= nderiv - kx; ++ky)
+        for (int py = 0; py <= n; ++py)
+          xt::view(P, idx(kx, ky), xt::all(), quad_idp(0, py, n)) = 0.0;
+    }
+
+    for (int px = 1; px <= n; ++px)
+    {
+      const double a = 1.0 - 1.0 / static_cast<double>(px);
+      for (int ky = 0; ky <= nderiv - kx; ++ky)
+      {
+        auto result = xt::view(P, idx(kx, ky), xt::all(), xt::all());
+        auto result0 = xt::view(P, idx(kx - 1, ky), xt::all(), xt::all());
+        for (int py = 0; py <= n; ++py)
+        {
+          xt::col(result, quad_idp(px, py, n))
+              = X0 * xt::col(result, quad_idp(px - 1, py, n)) * (a + 1.0);
+          if (kx > 0)
+          {
+            xt::col(result, quad_idp(px, py, n))
+                += 2 * kx * xt::col(result0, quad_idp(px - 1, py, n))
+                   * (a + 1.0);
+          }
+          if (px > 1)
+          {
+            xt::col(result, quad_idp(px, py, n))
+                -= xt::col(result, quad_idp(px - 2, py, n)) * a;
+          }
+        }
+      }
+    }
+  }
+
+  // Normalise
+  for (int kx = 0; kx <= nderiv; ++kx)
+  {
+    for (int ky = 0; ky <= nderiv - kx; ++ky)
+    {
+      for (int px = 0; px <= n; ++px)
+      {
+        for (int py = 0; py <= n; ++py)
+        {
+          xt::view(P, idx(kx, ky), xt::all(), quad_idp(px, py, n))
+              *= std::sqrt(2 * px + 1) * std::sqrt(2 * py + 1);
+        }
+      }
     }
   }
 }

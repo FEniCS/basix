@@ -753,6 +753,12 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, int n, int nderiv,
   }
 }
 //-----------------------------------------------------------------------------
+std::size_t hex_idp(std::size_t px, std::size_t py, std::size_t pz,
+                    std::size_t n)
+{
+  return (n + 1) * (n + 1) * px + (n + 1) * py + pz;
+}
+//-----------------------------------------------------------------------------
 void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                  std::size_t nderiv,
                                  const xt::xtensor<double, 2>& x)
@@ -765,42 +771,152 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   const xt::xtensor<double, 1> x0 = xt::col(x, 0);
   const xt::xtensor<double, 1> x1 = xt::col(x, 1);
   const xt::xtensor<double, 1> x2 = xt::col(x, 2);
-  // FIXME: remove this memory assignment
-  xt::xtensor<double, 3> px({static_cast<std::size_t>(nderiv + 1), x0.shape(0),
-                             static_cast<std::size_t>(n + 1)});
-  tabulate_polyset_line_derivs(px, n, nderiv, x0);
-  // FIXME: remove this memory assignment
-  xt::xtensor<double, 3> py({static_cast<std::size_t>(nderiv + 1), x1.shape(0),
-                             static_cast<std::size_t>(n + 1)});
-  tabulate_polyset_line_derivs(py, n, nderiv, x1);
-  // FIXME: remove this memory assignment
-  xt::xtensor<double, 3> pz({static_cast<std::size_t>(nderiv + 1), x2.shape(0),
-                             static_cast<std::size_t>(n + 1)});
-  tabulate_polyset_line_derivs(pz, n, nderiv, x2);
 
-  // Compute basis
+  assert(x0.shape(0) > 0);
+  assert(x1.shape(0) > 0);
+  assert(x2.shape(0) > 0);
+  const auto X0 = x0 * 2.0 - 1.0;
+  const auto X1 = x1 * 2.0 - 1.0;
+  const auto X2 = x2 * 2.0 - 1.0;
+
   assert(P.shape(0) == md);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
-  for (std::size_t kx = 0; kx < nderiv + 1; ++kx)
+  for (std::size_t kz = 0; kz <= nderiv; ++kz)
   {
-    auto p0 = xt::view(px, kx, xt::all(), xt::all());
-    for (std::size_t ky = 0; ky < nderiv + 1 - kx; ++ky)
+    if (kz == 0)
     {
-      auto p1 = xt::view(py, ky, xt::all(), xt::all());
-      for (std::size_t kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
+      for (std::size_t kx = 0; kx <= nderiv - kz; ++kx)
       {
-        auto result = xt::view(P, idx(kx, ky, kz), xt::all(), xt::all());
-        auto p2 = xt::view(pz, kz, xt::all(), xt::all());
-        int c = 0;
-        for (std::size_t i = 0; i < p0.shape(1); ++i)
+        if (kx == 0)
         {
-          auto pi = xt::col(p0, i);
-          for (std::size_t j = 0; j < p1.shape(1); ++j)
+          for (std::size_t ky = 0; ky <= nderiv - kz - kx; ++ky)
           {
-            auto pj = xt::col(p1, j);
-            for (std::size_t k = 0; k < p2.shape(1); ++k)
-              xt::col(result, c++) = pi * pj * xt::col(p2, k);
+            // Get reference to this derivative
+            auto result = xt::view(P, idx(0, ky, 0), xt::all(), xt::all());
+            if (ky == 0)
+              xt::col(result, hex_idp(0, 0, 0, n)) = 1.0;
+            else
+              xt::col(result, hex_idp(0, 0, 0, n)) = 0.0;
+
+            auto result0 = xt::view(P, idx(0, ky - 1, 0), xt::all(), xt::all());
+            for (std::size_t py = 1; py <= n; ++py)
+            {
+              const double a = 1.0 - 1.0 / static_cast<double>(py);
+              xt::col(result, hex_idp(0, py, 0, n))
+                  = X1 * xt::col(result, hex_idp(0, py - 1, 0, n)) * (a + 1.0);
+              if (ky > 0)
+              {
+                xt::col(result, hex_idp(0, py, 0, n))
+                    += 2 * ky * xt::col(result0, hex_idp(0, py - 1, 0, n))
+                       * (a + 1.0);
+              }
+              if (py > 1)
+              {
+                xt::col(result, hex_idp(0, py, 0, n))
+                    -= xt::col(result, hex_idp(0, py - 2, 0, n)) * a;
+              }
+            }
+          }
+        }
+        else
+        {
+          for (std::size_t ky = 0; ky <= nderiv - kx - kz; ++ky)
+            for (std::size_t py = 0; py <= n; ++py)
+            {
+              xt::view(P, idx(kx, ky, 0), xt::all(), hex_idp(0, py, 0, n))
+                  = 0.0;
+            }
+        }
+
+        for (std::size_t px = 1; px <= n; ++px)
+        {
+          const double a = 1.0 - 1.0 / static_cast<double>(px);
+          for (std::size_t ky = 0; ky <= nderiv - kx - kz; ++ky)
+          {
+            auto result = xt::view(P, idx(kx, ky, 0), xt::all(), xt::all());
+            auto result0
+                = xt::view(P, idx(kx - 1, ky, 0), xt::all(), xt::all());
+            for (std::size_t py = 0; py <= n; ++py)
+            {
+              xt::col(result, hex_idp(px, py, 0, n))
+                  = X0 * xt::col(result, hex_idp(px - 1, py, 0, n)) * (a + 1.0);
+              if (kx > 0)
+              {
+                xt::col(result, hex_idp(px, py, 0, n))
+                    += 2 * kx * xt::col(result0, hex_idp(px - 1, py, 0, n))
+                       * (a + 1.0);
+              }
+              if (px > 1)
+              {
+                xt::col(result, hex_idp(px, py, 0, n))
+                    -= xt::col(result, hex_idp(px - 2, py, 0, n)) * a;
+              }
+            }
+          }
+        }
+      }
+    }
+    else
+    {
+      for (std::size_t kx = 0; kx <= nderiv - kz; ++kx)
+        for (std::size_t px = 0; px <= n; ++px)
+          for (std::size_t ky = 0; ky <= nderiv - kx - kz; ++ky)
+            for (std::size_t py = 0; py <= n; ++py)
+              xt::view(P, idx(kx, ky, kz), xt::all(), hex_idp(px, py, 0, n))
+                  = 0.0;
+    }
+    for (std::size_t pz = 1; pz <= n; ++pz)
+    {
+      const double a = 1.0 - 1.0 / static_cast<double>(pz);
+      for (std::size_t kx = 0; kx <= nderiv - kz; ++kx)
+      {
+        for (std::size_t ky = 0; ky <= nderiv - kx - kz; ++ky)
+        {
+          auto result = xt::view(P, idx(kx, ky, kz), xt::all(), xt::all());
+          auto result0 = xt::view(P, idx(kx, ky, kz - 1), xt::all(), xt::all());
+          for (std::size_t px = 0; px <= n; ++px)
+          {
+            for (std::size_t py = 0; py <= n; ++py)
+            {
+              xt::col(result, hex_idp(px, py, pz, n))
+                  = X2 * xt::col(result, hex_idp(px, py, pz - 1, n))
+                    * (a + 1.0);
+              if (kz > 0)
+              {
+                xt::col(result, hex_idp(px, py, pz, n))
+                    += 2 * kz * xt::col(result0, hex_idp(px, py, pz - 1, n))
+                       * (a + 1.0);
+              }
+              if (pz > 1)
+              {
+                xt::col(result, hex_idp(px, py, pz, n))
+                    -= xt::col(result, hex_idp(px, py, pz - 2, n)) * a;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Normalise
+  for (std::size_t kx = 0; kx <= nderiv; ++kx)
+  {
+    for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
+    {
+      for (std::size_t kz = 0; kz <= nderiv - kx - ky; ++kz)
+      {
+        for (std::size_t px = 0; px <= n; ++px)
+        {
+          for (std::size_t py = 0; py <= n; ++py)
+          {
+            for (std::size_t pz = 0; pz <= n; ++pz)
+            {
+              xt::view(P, idx(kx, ky, kz), xt::all(), hex_idp(px, py, pz, n))
+                  *= std::sqrt(2 * px + 1) * std::sqrt(2 * py + 1)
+                     * std::sqrt(2 * pz + 1);
+            }
           }
         }
       }

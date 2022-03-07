@@ -924,6 +924,12 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   }
 }
 //-----------------------------------------------------------------------------
+std::size_t prism_idp(std::size_t px, std::size_t py, std::size_t pz,
+                      std::size_t n)
+{
+  return (n + 1) * (py * n + 1 - (py - 2) * (py - 1) / 2) + (n + 1) * px + pz;
+}
+//-----------------------------------------------------------------------------
 void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                    std::size_t nderiv,
                                    const xt::xtensor<double, 2>& x)
@@ -939,31 +945,165 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
       {static_cast<std::size_t>(polyset::nderivs(cell::type::triangle, nderiv)),
        x01.shape(0),
        static_cast<std::size_t>(polyset::dim(cell::type::triangle, n))});
-  tabulate_polyset_triangle_derivs(pxy, n, nderiv, x01);
-  // FIXME: remove this memory assignment
-  xt::xtensor<double, 3> pz(
-      {static_cast<std::size_t>(nderiv + 1), x2.shape(0), n + 1});
-  tabulate_polyset_line_derivs(pz, n, nderiv, x2);
+  // tabulate_polyset_triangle_derivs(pxy, n, nderiv, x01);
+
+  assert(x01.shape(1) == 2);
+
+  const auto X = x01 * 2.0 - 1.0;
+  auto X0 = xt::col(X, 0);
+  auto X1 = xt::col(X, 1);
+
+  // f3 = ((1 - y) / 2)^2
+  const auto f3 = xt::square(1.0 - X1) * 0.25;
+
+  // Iterate over derivatives in increasing order, since higher derivatives
+  for (std::size_t kk = 0; kk <= nderiv; ++kk)
+  {
+    for (std::size_t kx = 0; kx <= kk; ++kx)
+    {
+      const std::size_t ky = kk - kx;
+      if (kx == 0 and ky == 0)
+        xt::view(pxy, idx(kx, ky), xt::all(), 0) = 1.0;
+      else
+        xt::view(pxy, idx(kx, ky), xt::all(), 0) = 0.0;
+
+      for (std::size_t p = 1; p < n + 1; ++p)
+      {
+        auto p0 = xt::view(pxy, idx(kx, ky), xt::all(), idx(p, 0));
+        const double a
+            = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+        p0 = (X0 + 0.5 * X1 + 0.5)
+             * xt::view(pxy, idx(kx, ky), xt::all(), idx(p - 1, 0)) * a;
+        if (kx > 0)
+        {
+          auto result0
+              = xt::view(pxy, idx(kx - 1, ky), xt::all(), idx(p - 1, 0));
+          p0 += 2 * kx * a * result0;
+        }
+
+        if (ky > 0)
+        {
+          auto result0
+              = xt::view(pxy, idx(kx, ky - 1), xt::all(), idx(p - 1, 0));
+          p0 += ky * a * result0;
+        }
+
+        if (p > 1)
+        {
+          // y^2 terms
+          p0 -= f3 * xt::view(pxy, idx(kx, ky), xt::all(), idx(p - 2, 0))
+                * (a - 1.0);
+          if (ky > 0)
+          {
+            auto result0
+                = xt::view(pxy, idx(kx, ky - 1), xt::all(), idx(p - 2, 0));
+            p0 -= ky * (X1 - 1.0) * result0 * (a - 1.0);
+          }
+
+          if (ky > 1)
+          {
+            auto result0
+                = xt::view(pxy, idx(kx, ky - 2), xt::all(), idx(p - 2, 0));
+            p0 -= ky * (ky - 1) * result0 * (a - 1.0);
+          }
+        }
+      }
+
+      for (std::size_t p = 0; p < n; ++p)
+      {
+        auto p0 = xt::view(pxy, idx(kx, ky), xt::all(), idx(p, 0));
+        auto p1 = xt::view(pxy, idx(kx, ky), xt::all(), idx(p, 1));
+        p1 = p0 * (X1 * (1.5 + p) + 0.5 + p);
+        if (ky > 0)
+        {
+          auto result0 = xt::view(pxy, idx(kx, ky - 1), xt::all(), idx(p, 0));
+          p1 += 2 * ky * (1.5 + p) * result0;
+        }
+
+        for (std::size_t q = 1; q < n - p; ++q)
+        {
+          const auto [a1, a2, a3] = jrc(2 * p + 1, q);
+          xt::view(pxy, idx(kx, ky), xt::all(), idx(p, q + 1))
+              = xt::view(pxy, idx(kx, ky), xt::all(), idx(p, q))
+                    * (X1 * a1 + a2)
+                - xt::view(pxy, idx(kx, ky), xt::all(), idx(p, q - 1)) * a3;
+          if (ky > 0)
+          {
+            auto result0 = xt::view(pxy, idx(kx, ky - 1), xt::all(), idx(p, q));
+            xt::view(pxy, idx(kx, ky), xt::all(), idx(p, q + 1))
+                += 2 * ky * a1 * result0;
+          }
+        }
+      }
+    }
+  }
 
   assert(P.shape(0) == md);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
-  for (std::size_t kx = 0; kx < nderiv + 1; ++kx)
+
+  assert(x2.shape(0) > 0);
+  const auto X2 = x2 * 2.0 - 1.0;
+  for (std::size_t kz = 0; kz <= nderiv; ++kz)
   {
-    for (std::size_t ky = 0; ky < nderiv + 1 - kx; ++ky)
+    // Get reference to this derivative
+    if (kz == 0)
     {
-      auto p0 = xt::view(pxy, idx(kx, ky), xt::all(), xt::all());
-      for (std::size_t kz = 0; kz < nderiv + 1 - kx - ky; ++kz)
+      for (std::size_t kx = 0; kx <= nderiv; ++kx)
+        for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
+          for (std::size_t p = 0; p <= n; ++p)
+            for (std::size_t q = 0; q <= n - p; ++q)
+            {
+              xt::view(P, idx(kx, ky, 0), xt::all(), prism_idp(p, q, 0, n))
+                  = xt::view(pxy, idx(kx, ky), xt::all(), idx(p, q));
+            }
+    }
+    else
+      for (std::size_t kx = 0; kx < nderiv + 1; ++kx)
+        for (std::size_t ky = 0; ky < nderiv + 1 - kx; ++ky)
+          for (std::size_t p = 0; p <= n; ++p)
+            for (std::size_t q = 0; q <= n - p; ++q)
+              xt::view(P, idx(kx, ky, kz), xt::all(), prism_idp(p, q, 0, n))
+                  = 0.0;
+
+    for (std::size_t r = 1; r <= n; ++r)
+    {
+      const double a = 1.0 - 1.0 / static_cast<double>(r);
+      for (std::size_t kx = 0; kx < nderiv + 1; ++kx)
       {
-        auto p1 = xt::view(pz, kz, xt::all(), xt::all());
-        auto result = xt::view(P, idx(kx, ky, kz), xt::all(), xt::all());
-        int c = 0;
-        for (std::size_t i = 0; i < p0.shape(1); ++i)
-          for (std::size_t k = 0; k < p1.shape(1); ++k)
-            xt::col(result, c++) = xt::col(p0, i) * xt::col(p1, k);
+        for (std::size_t ky = 0; ky < nderiv + 1 - kx; ++ky)
+        {
+          auto result = xt::view(P, idx(kx, ky, kz), xt::all(), xt::all());
+          auto result0 = xt::view(P, idx(kx, ky, kz - 1), xt::all(), xt::all());
+          for (std::size_t p = 0; p <= n; ++p)
+          {
+            for (std::size_t q = 0; q <= n - p; ++q)
+            {
+              xt::col(result, prism_idp(p, q, r, n))
+                  = X2 * xt::col(result, prism_idp(p, q, r - 1, n)) * (a + 1.0);
+              if (kz > 0)
+                xt::col(result, prism_idp(p, q, r, n))
+                    += 2 * kz * xt::col(result0, prism_idp(p, q, r - 1, n))
+                       * (a + 1.0);
+              if (r > 1)
+                xt::col(result, prism_idp(p, q, r, n))
+                    -= xt::col(result, prism_idp(p, q, r - 2, n)) * a;
+            }
+          }
+        }
       }
     }
   }
+
+  // Normalise
+  for (std::size_t j = 0; j < pxy.shape(0); ++j)
+    for (std::size_t k = 0; k < nderiv + 1; ++k)
+      for (std::size_t p = 0; p <= n; ++p)
+        for (std::size_t q = 0; q <= n - p; ++q)
+          for (std::size_t r = 0; r <= n; ++r)
+            xt::view(P, idx(j, k), xt::all(), prism_idp(p, q, r, n))
+                *= std::sqrt((p + 0.5) * (p + q + 1)) * 2
+                   * std::sqrt(2 * r + 1);
 }
 } // namespace
 //-----------------------------------------------------------------------------

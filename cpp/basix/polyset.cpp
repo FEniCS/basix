@@ -37,14 +37,9 @@ void tabulate_polyset_point_derivs(xt::xtensor<double, 3>& P, std::size_t,
   assert(P.shape(0) == nderiv + 1);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == 1);
-  for (std::size_t k = 0; k <= nderiv; ++k)
-  {
-    auto result = xt::view(P, k, xt::all(), xt::all());
-    if (k == 0)
-      xt::col(result, 0) = 1.0;
-    else
-      xt::col(result, 0) = 0.0;
-  }
+
+  xt::view(P, xt::all(), xt::all(), 0) = 0.0;
+  xt::view(P, 0, xt::all(), 0) = 1.0;
 }
 //-----------------------------------------------------------------------------
 // Compute the complete set of derivatives from 0 to nderiv, for all the
@@ -62,15 +57,14 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t degree,
   assert(P.shape(0) == nderiv + 1);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
+
+  xt::view(P, xt::all(), xt::all(), 0) = 0.0;
+  xt::view(P, 0, xt::all(), 0) = 1.0;
+
   for (std::size_t k = 0; k <= nderiv; ++k)
   {
     // Get reference to this derivative
     auto result = xt::view(P, k, xt::all(), xt::all());
-    if (k == 0)
-      xt::col(result, 0) = 1.0;
-    else
-      xt::col(result, 0) = 0.0;
-
     auto result0 = xt::view(P, k - 1, xt::all(), xt::all());
     for (std::size_t p = 1; p <= degree; ++p)
     {
@@ -84,9 +78,8 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t degree,
   }
 
   // Normalise
-  for (std::size_t k = 0; k < nderiv + 1; ++k)
-    for (std::size_t p = 0; p <= degree; ++p)
-      xt::view(P, k, xt::all(), p) *= std::sqrt(2 * p + 1);
+  for (std::size_t p = 0; p <= degree; ++p)
+    xt::view(P, xt::all(), xt::all(), p) *= std::sqrt(2 * p + 1);
 }
 //-----------------------------------------------------------------------------
 // Compute the complete set of derivatives from 0 to nderiv, for all the
@@ -96,8 +89,8 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t degree,
 // above, but with a change of variables. The polynomials are then
 // extended in the q direction, using the relation given in Sherwin and
 // Karniadakis 1995 (https://doi.org/10.1016/0045-7825(94)00745-9).
-void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, int n,
-                                      int nderiv,
+void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
+                                      std::size_t nderiv,
                                       const xt::xtensor<double, 2>& pts)
 {
   assert(pts.shape(1) == 2);
@@ -115,18 +108,15 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, int n,
   // f3 = ((1 - y) / 2)^2
   const auto f3 = xt::square(1.0 - x1) * 0.25;
 
-  // Iterate over derivatives in increasing order, since higher derivatives
-  for (int k = 0; k <= nderiv; ++k)
-  {
-    for (int kx = 0; kx <= k; ++kx)
-    {
-      const int ky = k - kx;
-      if (kx == 0 and ky == 0)
-        xt::view(P, idx(kx, ky), xt::all(), 0) = 1.0;
-      else
-        xt::view(P, idx(kx, ky), xt::all(), 0) = 0.0;
+  xt::view(P, xt::all(), xt::all(), 0) = 0.0;
+  xt::view(P, idx(0, 0), xt::all(), 0) = 1.0;
 
-      for (int p = 1; p < n + 1; ++p)
+  // Iterate over derivatives in increasing order, since higher derivatives
+  for (std::size_t kx = 0; kx <= nderiv; ++kx)
+  {
+    for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
+    {
+      for (std::size_t p = 1; p < n + 1; ++p)
       {
         auto p0 = xt::view(P, idx(kx, ky), xt::all(), idx(p, 0));
         const double a
@@ -166,7 +156,7 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, int n,
         }
       }
 
-      for (int p = 0; p < n; ++p)
+      for (std::size_t p = 0; p < n; ++p)
       {
         auto p0 = xt::view(P, idx(kx, ky), xt::all(), idx(p, 0));
         auto p1 = xt::view(P, idx(kx, ky), xt::all(), idx(p, 1));
@@ -177,7 +167,7 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, int n,
           p1 += 2 * ky * (1.5 + p) * result0;
         }
 
-        for (int q = 1; q < n - p; ++q)
+        for (std::size_t q = 1; q < n - p; ++q)
         {
           const auto [a1, a2, a3] = jrc(2 * p + 1, q);
           xt::view(P, idx(kx, ky), xt::all(), idx(p, q + 1))
@@ -195,17 +185,14 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, int n,
   }
 
   // Normalisation
-  for (std::size_t j = 0; j < P.shape(0); ++j)
-  {
-    auto Pj = xt::view(P, j, xt::all(), xt::all());
-    for (int p = 0; p <= n; ++p)
-      for (int q = 0; q <= n - p; ++q)
-        xt::col(Pj, idx(p, q)) *= std::sqrt((p + 0.5) * (p + q + 1)) * 2;
-  }
+  for (std::size_t p = 0; p <= n; ++p)
+    for (std::size_t q = 0; q <= n - p; ++q)
+      xt::view(P, xt::all(), xt::all(), idx(p, q))
+          *= std::sqrt((p + 0.5) * (p + q + 1)) * 2;
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
-                                         std::size_t nderiv,
+void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
+                                         std::size_t n, std::size_t nderiv,
                                          const xt::xtensor<double, 2>& pts)
 {
   assert(pts.shape(1) == 3);
@@ -226,20 +213,17 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
   assert(P.shape(0) == md);
   assert(P.shape(1) == pts.shape(0));
   assert(P.shape(2) == m);
-  for (std::size_t k = 0; k <= nderiv; ++k)
-  {
-    for (std::size_t j = 0; j <= k; ++j)
-    {
-      for (std::size_t kx = 0; kx <= j; ++kx)
-      {
-        const std::size_t ky = j - kx;
-        const std::size_t kz = k - j;
-        if (kx == 0 and ky == 0 and kz == 0)
-          xt::view(P, idx(kx, ky, kz), xt::all(), 0) = 1.0;
-        else
-          xt::view(P, idx(kx, ky, kz), xt::all(), 0) = 0.0;
 
-        for (int p = 1; p <= n; ++p)
+  xt::view(P, xt::all(), xt::all(), 0) = 0.0;
+  xt::view(P, idx(0, 0, 0), xt::all(), 0) = 1.0;
+
+  for (std::size_t kx = 0; kx <= nderiv; ++kx)
+  {
+    for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
+    {
+      for (std::size_t kz = 0; kz <= nderiv - kx - ky; ++kz)
+      {
+        for (std::size_t p = 1; p <= n; ++p)
         {
           auto p00 = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, 0, 0));
           double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
@@ -313,7 +297,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
           }
         }
 
-        for (int p = 0; p < n; ++p)
+        for (std::size_t p = 0; p < n; ++p)
         {
           auto p10 = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, 1, 0));
           p10 = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, 0, 0))
@@ -331,7 +315,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
                    * xt::view(P, idx(kx, ky, kz - 1), xt::all(), idx(p, 0, 0));
           }
 
-          for (int q = 1; q < n - p; ++q)
+          for (std::size_t q = 1; q < n - p; ++q)
           {
             auto [aq, bq, cq] = jrc(2 * p + 1, q);
             auto pq1
@@ -371,9 +355,9 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
           }
         }
 
-        for (int p = 0; p < n; ++p)
+        for (std::size_t p = 0; p < n; ++p)
         {
-          for (int q = 0; q < n - p; ++q)
+          for (std::size_t q = 0; q < n - p; ++q)
           {
             auto pq = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, 1));
             pq = xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, 0))
@@ -386,11 +370,11 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
           }
         }
 
-        for (int p = 0; p < n - 1; ++p)
+        for (std::size_t p = 0; p + 1 < n; ++p)
         {
-          for (int q = 0; q < n - p - 1; ++q)
+          for (std::size_t q = 0; q + 1 < n - p; ++q)
           {
-            for (int r = 1; r < n - p - q; ++r)
+            for (std::size_t r = 1; r < n - p - q; ++r)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
               xt::view(P, idx(kx, ky, kz), xt::all(), idx(p, q, r + 1))
@@ -413,25 +397,20 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P, int n,
   }
 
   // Normalise
-  for (std::size_t i = 0; i < P.shape(0); ++i)
+  for (std::size_t p = 0; p < n + 1; ++p)
   {
-    auto Pi = xt::view(P, i, xt::all(), xt::all());
-    for (int p = 0; p < n + 1; ++p)
+    for (std::size_t q = 0; q < n + 1 - p; ++q)
     {
-      for (int q = 0; q < n + 1 - p; ++q)
+      for (std::size_t r = 0; r < n + 1 - p - q; ++r)
       {
-        for (int r = 0; r < n + 1 - p - q; ++r)
-        {
-          xt::col(Pi, idx(p, q, r))
-              *= std::sqrt(2 * (p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5))
-                 * 2;
-        }
+        xt::view(P, xt::all(), xt::all(), idx(p, q, r))
+            *= std::sqrt(2 * (p + 0.5) * (p + q + 1.0) * (p + q + r + 1.5)) * 2;
       }
     }
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
+void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                      std::size_t nderiv,
                                      const xt::xtensor<double, 2>& pts)
 {
@@ -440,10 +419,11 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
   // Indexing for pyramidal basis functions
-  auto pyr_idx = [n](int p, int q, int r) -> std::size_t
+  auto pyr_idx = [n](std::size_t p, std::size_t q, std::size_t r) -> std::size_t
   {
-    const int rv = n - r + 1;
-    const int r0 = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
+    const std::size_t rv = n - r + 1;
+    const std::size_t r0
+        = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
     return r0 + p * rv + q;
   };
 
@@ -458,6 +438,10 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
   assert(P.shape(0) == md);
   assert(P.shape(1) == pts.shape(0));
   assert(P.shape(2) == m);
+
+  xt::view(P, xt::all(), xt::all(), pyr_idx(0, 0, 0)) = 0.0;
+  xt::view(P, idx(0, 0, 0), xt::all(), pyr_idx(0, 0, 0)) = 1.0;
+
   for (std::size_t k = 0; k < nderiv + 1; ++k)
   {
     for (std::size_t j = 0; j < k + 1; ++j)
@@ -467,15 +451,8 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
         const std::size_t ky = j - kx;
         const std::size_t kz = k - j;
 
-        const std::size_t pyramidal_index = pyr_idx(0, 0, 0);
-        assert(pyramidal_index < m);
-        if (kx == 0 and ky == 0 and kz == 0)
-          xt::view(P, idx(kx, ky, kz), xt::all(), pyramidal_index) = 1.0;
-        else
-          xt::view(P, idx(kx, ky, kz), xt::all(), pyramidal_index) = 0.0;
-
         // r = 0
-        for (int p = 0; p < n + 1; ++p)
+        for (std::size_t p = 0; p < n + 1; ++p)
         {
           if (p > 0)
           {
@@ -530,7 +507,7 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
             }
           }
 
-          for (int q = 1; q < n + 1; ++q)
+          for (std::size_t q = 1; q < n + 1; ++q)
           {
             const double a
                 = static_cast<double>(q - 1) / static_cast<double>(q);
@@ -583,9 +560,9 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
         }
 
         // Extend into r > 0
-        for (int p = 0; p < n; ++p)
+        for (std::size_t p = 0; p < n; ++p)
         {
-          for (int q = 0; q < n; ++q)
+          for (std::size_t q = 0; q < n; ++q)
           {
             auto r_pq1
                 = xt::view(P, idx(kx, ky, kz), xt::all(), pyr_idx(p, q, 1));
@@ -601,11 +578,11 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
           }
         }
 
-        for (int r = 1; r < n + 1; ++r)
+        for (std::size_t r = 1; r < n + 1; ++r)
         {
-          for (int p = 0; p < n - r; ++p)
+          for (std::size_t p = 0; p < n - r; ++p)
           {
-            for (int q = 0; q < n - r; ++q)
+            for (std::size_t q = 0; q < n - r; ++q)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
               auto r_pqr = xt::view(P, idx(kx, ky, kz), xt::all(),
@@ -628,34 +605,30 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, int n,
     }
   }
 
-  for (std::size_t i = 0; i < P.shape(0); ++i)
+  for (std::size_t r = 0; r < n + 1; ++r)
   {
-    auto Pi = xt::view(P, i, xt::all(), xt::all());
-    for (int r = 0; r < n + 1; ++r)
+    for (std::size_t p = 0; p < n - r + 1; ++p)
     {
-      for (int p = 0; p < n - r + 1; ++p)
+      for (std::size_t q = 0; q < n - r + 1; ++q)
       {
-        for (int q = 0; q < n - r + 1; ++q)
-        {
-          xt::col(Pi, pyr_idx(p, q, r))
-              *= std::sqrt(2 * (q + 0.5) * (p + 0.5) * (p + q + r + 1.5)) * 2;
-        }
+        xt::view(P, xt::all(), xt::all(), pyr_idx(p, q, r))
+            *= std::sqrt(2 * (q + 0.5) * (p + 0.5) * (p + q + r + 1.5)) * 2;
       }
     }
   }
 }
 //-----------------------------------------------------------------------------
-std::size_t quad_idp(std::size_t px, std::size_t py, std::size_t n)
-{
-  return (n + 1) * px + py;
-}
-//-----------------------------------------------------------------------------
-void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, int n, int nderiv,
+void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
+                                  std::size_t nderiv,
                                   const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(1) == 2);
   const std::size_t m = (n + 1) * (n + 1);
   const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
+
+  // Indexing for quadrilateral basis functions
+  auto quad_idx = [n](std::size_t px, std::size_t py) -> std::size_t
+  { return (n + 1) * px + py; };
 
   // Compute 1D basis
   const xt::xtensor<double, 1> x0 = xt::col(x, 0);
@@ -669,67 +642,58 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, int n, int nderiv,
   assert(P.shape(0) == md);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
-  for (int kx = 0; kx <= nderiv; ++kx)
-  {
-    if (kx == 0)
-    {
-      for (int ky = 0; ky <= nderiv; ++ky)
-      {
-        // Get reference to this derivative
-        auto result = xt::view(P, idx(0, ky), xt::all(), xt::all());
-        if (ky == 0)
-          xt::col(result, quad_idp(0, 0, n)) = 1.0;
-        else
-          xt::col(result, quad_idp(0, 0, n)) = 0.0;
 
-        auto result0 = xt::view(P, idx(kx, ky - 1), xt::all(), xt::all());
-        for (int py = 1; py <= n; ++py)
-        {
-          const double a = 1.0 - 1.0 / static_cast<double>(py);
-          xt::col(result, quad_idp(0, py, n))
-              = X1 * xt::col(result, quad_idp(0, py - 1, n)) * (a + 1.0);
-          if (ky > 0)
-          {
-            xt::col(result, quad_idp(0, py, n))
-                += 2 * ky * xt::col(result0, quad_idp(0, py - 1, n))
-                   * (a + 1.0);
-          }
-          if (py > 1)
-          {
-            xt::col(result, quad_idp(0, py, n))
-                -= xt::col(result, quad_idp(0, py - 2, n)) * a;
-          }
-        }
+  // Compute tabulation of interval for px = 0
+  for (std::size_t py = 0; py <= n; ++py)
+    xt::view(P, xt::all(), xt::all(), quad_idx(0, py)) = 0.0;
+  xt::view(P, idx(0, 0), xt::all(), quad_idx(0, 0)) = 1.0;
+
+  for (std::size_t ky = 0; ky <= nderiv; ++ky)
+  {
+    // Get reference to this derivative
+    auto result = xt::view(P, idx(0, ky), xt::all(), xt::all());
+    auto result0 = xt::view(P, idx(0, ky - 1), xt::all(), xt::all());
+    for (std::size_t py = 1; py <= n; ++py)
+    {
+      const double a = 1.0 - 1.0 / static_cast<double>(py);
+      xt::col(result, quad_idx(0, py))
+          = X1 * xt::col(result, quad_idx(0, py - 1)) * (a + 1.0);
+      if (ky > 0)
+      {
+        xt::col(result, quad_idx(0, py))
+            += 2 * ky * xt::col(result0, quad_idx(0, py - 1)) * (a + 1.0);
+      }
+      if (py > 1)
+      {
+        xt::col(result, quad_idx(0, py))
+            -= xt::col(result, quad_idx(0, py - 2)) * a;
       }
     }
-    else
-    {
-      for (int ky = 0; ky <= nderiv - kx; ++ky)
-        for (int py = 0; py <= n; ++py)
-          xt::view(P, idx(kx, ky), xt::all(), quad_idp(0, py, n)) = 0.0;
-    }
+  }
 
-    for (int px = 1; px <= n; ++px)
+  // Take tensor product with another interval
+  for (std::size_t kx = 0; kx <= nderiv; ++kx)
+  {
+    for (std::size_t px = 1; px <= n; ++px)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(px);
-      for (int ky = 0; ky <= nderiv - kx; ++ky)
+      for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
       {
         auto result = xt::view(P, idx(kx, ky), xt::all(), xt::all());
         auto result0 = xt::view(P, idx(kx - 1, ky), xt::all(), xt::all());
-        for (int py = 0; py <= n; ++py)
+        for (std::size_t py = 0; py <= n; ++py)
         {
-          xt::col(result, quad_idp(px, py, n))
-              = X0 * xt::col(result, quad_idp(px - 1, py, n)) * (a + 1.0);
+          xt::col(result, quad_idx(px, py))
+              = X0 * xt::col(result, quad_idx(px - 1, py)) * (a + 1.0);
           if (kx > 0)
           {
-            xt::col(result, quad_idp(px, py, n))
-                += 2 * kx * xt::col(result0, quad_idp(px - 1, py, n))
-                   * (a + 1.0);
+            xt::col(result, quad_idx(px, py))
+                += 2 * kx * xt::col(result0, quad_idx(px - 1, py)) * (a + 1.0);
           }
           if (px > 1)
           {
-            xt::col(result, quad_idp(px, py, n))
-                -= xt::col(result, quad_idp(px - 2, py, n)) * a;
+            xt::col(result, quad_idx(px, py))
+                -= xt::col(result, quad_idx(px - 2, py)) * a;
           }
         }
       }
@@ -737,26 +701,14 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, int n, int nderiv,
   }
 
   // Normalise
-  for (int kx = 0; kx <= nderiv; ++kx)
+  for (std::size_t px = 0; px <= n; ++px)
   {
-    for (int ky = 0; ky <= nderiv - kx; ++ky)
+    for (std::size_t py = 0; py <= n; ++py)
     {
-      for (int px = 0; px <= n; ++px)
-      {
-        for (int py = 0; py <= n; ++py)
-        {
-          xt::view(P, idx(kx, ky), xt::all(), quad_idp(px, py, n))
-              *= std::sqrt(2 * px + 1) * std::sqrt(2 * py + 1);
-        }
-      }
+      xt::view(P, xt::all(), xt::all(), quad_idx(px, py))
+          *= std::sqrt(2 * px + 1) * std::sqrt(2 * py + 1);
     }
   }
-}
-//-----------------------------------------------------------------------------
-std::size_t hex_idp(std::size_t px, std::size_t py, std::size_t pz,
-                    std::size_t n)
-{
-  return (n + 1) * (n + 1) * px + (n + 1) * py + pz;
 }
 //-----------------------------------------------------------------------------
 void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
@@ -766,6 +718,11 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   assert(x.shape(1) == 3);
   const std::size_t m = (n + 1) * (n + 1) * (n + 1);
   const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
+
+  // Indexing for hexahedral basis functions
+  auto hex_idx
+      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t
+  { return (n + 1) * (n + 1) * px + (n + 1) * py + pz; };
 
   // Compute 1D basis
   const xt::xtensor<double, 1> x0 = xt::col(x, 0);
@@ -782,90 +739,73 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   assert(P.shape(0) == md);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
-  for (std::size_t kx = 0; kx <= nderiv; ++kx)
+
+  for (std::size_t py = 0; py <= n; ++py)
+    for (std::size_t pz = 0; pz <= n; ++pz)
+      xt::view(P, xt::all(), xt::all(), hex_idx(0, py, pz)) = 0.0;
+
+  // Tabulate interval for px=py=0
+  for (std::size_t kz = 0; kz <= nderiv; ++kz)
   {
-    if (kx == 0)
+    // Get reference to this derivative
+    auto result = xt::view(P, idx(0, 0, kz), xt::all(), xt::all());
+    if (kz == 0)
+      xt::col(result, hex_idx(0, 0, 0)) = 1.0;
+    else
+      xt::col(result, hex_idx(0, 0, 0)) = 0.0;
+
+    auto result0 = xt::view(P, idx(0, 0, kz - 1), xt::all(), xt::all());
+    for (std::size_t pz = 1; pz <= n; ++pz)
     {
-      for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
+      const double a = 1.0 - 1.0 / static_cast<double>(pz);
+      xt::col(result, hex_idx(0, 0, pz))
+          = X2 * xt::col(result, hex_idx(0, 0, pz - 1)) * (a + 1.0);
+      if (kz > 0)
       {
-        if (ky == 0)
-        {
-          for (std::size_t kz = 0; kz <= nderiv - kx - ky; ++kz)
-          {
-            // Get reference to this derivative
-            auto result = xt::view(P, idx(0, 0, kz), xt::all(), xt::all());
-            if (kz == 0)
-              xt::col(result, hex_idp(0, 0, 0, n)) = 1.0;
-            else
-              xt::col(result, hex_idp(0, 0, 0, n)) = 0.0;
+        xt::col(result, hex_idx(0, 0, pz))
+            += 2 * kz * xt::col(result0, hex_idx(0, 0, pz - 1)) * (a + 1.0);
+      }
+      if (pz > 1)
+      {
+        xt::col(result, hex_idx(0, 0, pz))
+            -= xt::col(result, hex_idx(0, 0, pz - 2)) * a;
+      }
+    }
+  }
 
-            auto result0 = xt::view(P, idx(0, 0, kz - 1), xt::all(), xt::all());
-            for (std::size_t pz = 1; pz <= n; ++pz)
-            {
-              const double a = 1.0 - 1.0 / static_cast<double>(pz);
-              xt::col(result, hex_idp(0, 0, pz, n))
-                  = X2 * xt::col(result, hex_idp(0, 0, pz - 1, n)) * (a + 1.0);
-              if (kz > 0)
-              {
-                xt::col(result, hex_idp(0, 0, pz, n))
-                    += 2 * kz * xt::col(result0, hex_idp(0, 0, pz - 1, n))
-                       * (a + 1.0);
-              }
-              if (pz > 1)
-              {
-                xt::col(result, hex_idp(0, 0, pz, n))
-                    -= xt::col(result, hex_idp(0, 0, pz - 2, n)) * a;
-              }
-            }
+  // Take tensor product with interval to get quad for px=0
+  for (std::size_t ky = 0; ky <= nderiv; ++ky)
+  {
+    for (std::size_t py = 1; py <= n; ++py)
+    {
+      const double a = 1.0 - 1.0 / static_cast<double>(py);
+      for (std::size_t kz = 0; kz <= nderiv - ky; ++kz)
+      {
+        auto result = xt::view(P, idx(0, ky, kz), xt::all(), xt::all());
+        auto result0 = xt::view(P, idx(0, ky - 1, kz), xt::all(), xt::all());
+        for (std::size_t pz = 0; pz <= n; ++pz)
+        {
+          xt::col(result, hex_idx(0, py, pz))
+              = X1 * xt::col(result, hex_idx(0, py - 1, pz)) * (a + 1.0);
+          if (ky > 0)
+          {
+            xt::col(result, hex_idx(0, py, pz))
+                += 2 * ky * xt::col(result0, hex_idx(0, py - 1, pz))
+                   * (a + 1.0);
           }
-        }
-        else
-        {
-          for (std::size_t kz = 0; kz <= nderiv - kx - ky; ++kz)
-            for (std::size_t pz = 0; pz <= n; ++pz)
-            {
-              xt::view(P, idx(0, ky, kz), xt::all(), hex_idp(0, 0, pz, n))
-                  = 0.0;
-            }
-        }
-
-        for (std::size_t py = 1; py <= n; ++py)
-        {
-          const double a = 1.0 - 1.0 / static_cast<double>(py);
-          for (std::size_t kz = 0; kz <= nderiv - kx - ky; ++kz)
+          if (py > 1)
           {
-            auto result = xt::view(P, idx(0, ky, kz), xt::all(), xt::all());
-            auto result0
-                = xt::view(P, idx(0, ky - 1, kz), xt::all(), xt::all());
-            for (std::size_t pz = 0; pz <= n; ++pz)
-            {
-              xt::col(result, hex_idp(0, py, pz, n))
-                  = X1 * xt::col(result, hex_idp(0, py - 1, pz, n)) * (a + 1.0);
-              if (ky > 0)
-              {
-                xt::col(result, hex_idp(0, py, pz, n))
-                    += 2 * ky * xt::col(result0, hex_idp(0, py - 1, pz, n))
-                       * (a + 1.0);
-              }
-              if (py > 1)
-              {
-                xt::col(result, hex_idp(0, py, pz, n))
-                    -= xt::col(result, hex_idp(0, py - 2, pz, n)) * a;
-              }
-            }
+            xt::col(result, hex_idx(0, py, pz))
+                -= xt::col(result, hex_idx(0, py - 2, pz)) * a;
           }
         }
       }
     }
-    else
-    {
-      for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
-        for (std::size_t py = 0; py <= n; ++py)
-          for (std::size_t kz = 0; kz <= nderiv - kx - ky; ++kz)
-            for (std::size_t pz = 0; pz <= n; ++pz)
-              xt::view(P, idx(kx, ky, kz), xt::all(), hex_idp(0, py, pz, n))
-                  = 0.0;
-    }
+  }
+
+  // Take tensor product with interval to get hex
+  for (std::size_t kx = 0; kx <= nderiv; ++kx)
+  {
     for (std::size_t px = 1; px <= n; ++px)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(px);
@@ -879,19 +819,18 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
           {
             for (std::size_t pz = 0; pz <= n; ++pz)
             {
-              xt::col(result, hex_idp(px, py, pz, n))
-                  = X0 * xt::col(result, hex_idp(px - 1, py, pz, n))
-                    * (a + 1.0);
+              xt::col(result, hex_idx(px, py, pz))
+                  = X0 * xt::col(result, hex_idx(px - 1, py, pz)) * (a + 1.0);
               if (kx > 0)
               {
-                xt::col(result, hex_idp(px, py, pz, n))
-                    += 2 * kx * xt::col(result0, hex_idp(px - 1, py, pz, n))
+                xt::col(result, hex_idx(px, py, pz))
+                    += 2 * kx * xt::col(result0, hex_idx(px - 1, py, pz))
                        * (a + 1.0);
               }
               if (px > 1)
               {
-                xt::col(result, hex_idp(px, py, pz, n))
-                    -= xt::col(result, hex_idp(px - 2, py, pz, n)) * a;
+                xt::col(result, hex_idx(px, py, pz))
+                    -= xt::col(result, hex_idx(px - 2, py, pz)) * a;
               }
             }
           }
@@ -905,16 +844,10 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
     for (std::size_t py = 0; py <= n; ++py)
       for (std::size_t pz = 0; pz <= n; ++pz)
       {
-        xt::view(P, xt::all(), xt::all(), hex_idp(px, py, pz, n))
+        xt::view(P, xt::all(), xt::all(), hex_idx(px, py, pz))
             *= std::sqrt(2 * px + 1) * std::sqrt(2 * py + 1)
                * std::sqrt(2 * pz + 1);
       }
-}
-//-----------------------------------------------------------------------------
-std::size_t prism_idp(std::size_t px, std::size_t py, std::size_t pz,
-                      std::size_t n)
-{
-  return (n + 1) * (py * n + 1 - (py - 2) * (py - 1) / 2) + (n + 1) * px + pz;
 }
 //-----------------------------------------------------------------------------
 void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
@@ -937,6 +870,13 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   assert(X1.shape(0) > 0);
   assert(X2.shape(0) > 0);
 
+  // Indexing for hexahedral basis functions
+  auto prism_idx
+      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t
+  {
+    return (n + 1) * (py * n + 1 - (py - 2) * (py - 1) / 2) + (n + 1) * px + pz;
+  };
+
   // f3 = ((1 - y) / 2)^2
   const auto f3 = xt::square(1.0 - X1) * 0.25;
 
@@ -952,32 +892,32 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
         for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
         {
           if (kx == 0 and ky == 0)
-            xt::view(P, idx(kx, ky, 0), xt::all(), prism_idp(0, 0, 0, n)) = 1.0;
+            xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(0, 0, 0)) = 1.0;
           else
-            xt::view(P, idx(kx, ky, 0), xt::all(), prism_idp(0, 0, 0, n)) = 0.0;
+            xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(0, 0, 0)) = 0.0;
 
           for (std::size_t p = 1; p < n + 1; ++p)
           {
             auto p0
-                = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idp(p, 0, 0, n));
+                = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, 0, 0));
 
             const double a
                 = static_cast<double>(2 * p - 1) / static_cast<double>(p);
             p0 = (X0 + 0.5 * X1 + 0.5)
                  * xt::view(P, idx(kx, ky, 0), xt::all(),
-                            prism_idp(p - 1, 0, 0, n))
+                            prism_idx(p - 1, 0, 0))
                  * a;
             if (kx > 0)
             {
               auto result0 = xt::view(P, idx(kx - 1, ky, 0), xt::all(),
-                                      prism_idp(p - 1, 0, 0, n));
+                                      prism_idx(p - 1, 0, 0));
               p0 += 2 * kx * a * result0;
             }
 
             if (ky > 0)
             {
               auto result0 = xt::view(P, idx(kx, ky - 1, 0), xt::all(),
-                                      prism_idp(p - 1, 0, 0, n));
+                                      prism_idx(p - 1, 0, 0));
               p0 += ky * a * result0;
             }
 
@@ -986,19 +926,19 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
               // y^2 terms
               p0 -= f3
                     * xt::view(P, idx(kx, ky, 0), xt::all(),
-                               prism_idp(p - 2, 0, 0, n))
+                               prism_idx(p - 2, 0, 0))
                     * (a - 1.0);
               if (ky > 0)
               {
                 auto result0 = xt::view(P, idx(kx, ky - 1, 0), xt::all(),
-                                        prism_idp(p - 2, 0, 0, n));
+                                        prism_idx(p - 2, 0, 0));
                 p0 -= ky * (X1 - 1.0) * result0 * (a - 1.0);
               }
 
               if (ky > 1)
               {
                 auto result0 = xt::view(P, idx(kx, ky - 2, 0), xt::all(),
-                                        prism_idp(p - 2, 0, 0, n));
+                                        prism_idx(p - 2, 0, 0));
                 p0 -= ky * (ky - 1) * result0 * (a - 1.0);
               }
             }
@@ -1007,33 +947,31 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
           for (std::size_t p = 0; p < n; ++p)
           {
             auto p0
-                = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idp(p, 0, 0, n));
+                = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, 0, 0));
             auto p1
-                = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idp(p, 1, 0, n));
+                = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, 1, 0));
             p1 = p0 * (X1 * (1.5 + p) + 0.5 + p);
             if (ky > 0)
             {
               auto result0 = xt::view(P, idx(kx, ky - 1, 0), xt::all(),
-                                      prism_idp(p, 0, 0, n));
+                                      prism_idx(p, 0, 0));
               p1 += 2 * ky * (1.5 + p) * result0;
             }
 
             for (std::size_t q = 1; q < n - p; ++q)
             {
               const auto [a1, a2, a3] = jrc(2 * p + 1, q);
-              xt::view(P, idx(kx, ky, 0), xt::all(), prism_idp(p, q + 1, 0, n))
-                  = xt::view(P, idx(kx, ky, 0), xt::all(),
-                             prism_idp(p, q, 0, n))
+              xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, q + 1, 0))
+                  = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, q, 0))
                         * (X1 * a1 + a2)
                     - xt::view(P, idx(kx, ky, 0), xt::all(),
-                               prism_idp(p, q - 1, 0, n))
+                               prism_idx(p, q - 1, 0))
                           * a3;
               if (ky > 0)
               {
                 auto result0 = xt::view(P, idx(kx, ky - 1, 0), xt::all(),
-                                        prism_idp(p, q, 0, n));
-                xt::view(P, idx(kx, ky, 0), xt::all(),
-                         prism_idp(p, q + 1, 0, n))
+                                        prism_idx(p, q, 0));
+                xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, q + 1, 0))
                     += 2 * ky * a1 * result0;
               }
             }
@@ -1046,8 +984,7 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
         for (std::size_t ky = 0; ky <= nderiv - kx - kz; ++ky)
           for (std::size_t p = 0; p <= n; ++p)
             for (std::size_t q = 0; q <= n - p; ++q)
-              xt::view(P, idx(kx, ky, kz), xt::all(), prism_idp(p, q, 0, n))
-                  = 0.0;
+              xt::view(P, idx(kx, ky, kz), xt::all(), prism_idx(p, q, 0)) = 0.0;
 
     for (std::size_t r = 1; r <= n; ++r)
     {
@@ -1062,15 +999,15 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
           {
             for (std::size_t q = 0; q <= n - p; ++q)
             {
-              xt::col(result, prism_idp(p, q, r, n))
-                  = X2 * xt::col(result, prism_idp(p, q, r - 1, n)) * (a + 1.0);
+              xt::col(result, prism_idx(p, q, r))
+                  = X2 * xt::col(result, prism_idx(p, q, r - 1)) * (a + 1.0);
               if (kz > 0)
-                xt::col(result, prism_idp(p, q, r, n))
-                    += 2 * kz * xt::col(result0, prism_idp(p, q, r - 1, n))
+                xt::col(result, prism_idx(p, q, r))
+                    += 2 * kz * xt::col(result0, prism_idx(p, q, r - 1))
                        * (a + 1.0);
               if (r > 1)
-                xt::col(result, prism_idp(p, q, r, n))
-                    -= xt::col(result, prism_idp(p, q, r - 2, n)) * a;
+                xt::col(result, prism_idx(p, q, r))
+                    -= xt::col(result, prism_idx(p, q, r - 2)) * a;
             }
           }
         }
@@ -1082,7 +1019,7 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   for (std::size_t p = 0; p <= n; ++p)
     for (std::size_t q = 0; q <= n - p; ++q)
       for (std::size_t r = 0; r <= n; ++r)
-        xt::view(P, xt::all(), xt::all(), prism_idp(p, q, r, n))
+        xt::view(P, xt::all(), xt::all(), prism_idx(p, q, r))
             *= std::sqrt((p + 0.5) * (p + q + 1)) * 2 * std::sqrt(2 * r + 1);
 }
 } // namespace

@@ -706,7 +706,7 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
     for (std::size_t py = 0; py <= n; ++py)
     {
       xt::view(P, xt::all(), xt::all(), quad_idx(px, py))
-          *= std::sqrt(2 * px + 1) * std::sqrt(2 * py + 1);
+          *= std::sqrt((2 * px + 1) * (2 * py + 1));
     }
   }
 }
@@ -845,8 +845,7 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
       for (std::size_t pz = 0; pz <= n; ++pz)
       {
         xt::view(P, xt::all(), xt::all(), hex_idx(px, py, pz))
-            *= std::sqrt(2 * px + 1) * std::sqrt(2 * py + 1)
-               * std::sqrt(2 * pz + 1);
+            *= std::sqrt((2 * px + 1) * (2 * py + 1) * (2 * pz + 1));
       }
 }
 //-----------------------------------------------------------------------------
@@ -1007,7 +1006,7 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
     for (std::size_t q = 0; q <= n - p; ++q)
       for (std::size_t r = 0; r <= n; ++r)
         xt::view(P, xt::all(), xt::all(), prism_idx(p, q, r))
-            *= std::sqrt((p + 0.5) * (p + q + 1)) * 2 * std::sqrt(2 * r + 1);
+            *= std::sqrt((p + 0.5) * (p + q + 1) * (2 * r + 1)) * 2;
 }
 } // namespace
 //-----------------------------------------------------------------------------

@@ -38,7 +38,7 @@ void tabulate_polyset_point_derivs(xt::xtensor<double, 3>& P, std::size_t,
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == 1);
 
-  xt::view(P, xt::all(), xt::all(), 0) = 0.0;
+  std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, 0, xt::all(), 0) = 1.0;
 }
 //-----------------------------------------------------------------------------
@@ -52,16 +52,28 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t degree,
                                   const xt::xtensor<double, 1>& x)
 {
   assert(x.shape(0) > 0);
-  const auto X = x * 2.0 - 1.0;
   const std::size_t m = (degree + 1);
   assert(P.shape(0) == nderiv + 1);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
 
-  xt::view(P, xt::all(), xt::all(), 0) = 0.0;
+  std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, 0, xt::all(), 0) = 1.0;
 
-  for (std::size_t k = 0; k <= nderiv; ++k)
+  if (degree == 0)
+    return;
+
+  { // scope
+    auto result = xt::view(P, 0, xt::all(), xt::all());
+    xt::col(result, 1) = (x * 2.0 - 1.0) * xt::col(result, 0);
+    for (std::size_t p = 2; p <= degree; ++p)
+    {
+      const double a = 1.0 - 1.0 / static_cast<double>(p);
+      xt::col(result, p) = (x * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
+                           - xt::col(result, p - 2) * a;
+    }
+  }
+  for (std::size_t k = 1; k <= nderiv; ++k)
   {
     // Get reference to this derivative
     auto result = xt::view(P, k, xt::all(), xt::all());
@@ -69,11 +81,9 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t degree,
     for (std::size_t p = 1; p <= degree; ++p)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(p);
-      xt::col(result, p) = X * xt::col(result, p - 1) * (a + 1.0);
-      if (k > 0)
-        xt::col(result, p) += 2 * k * xt::col(result0, p - 1) * (a + 1.0);
-      if (p > 1)
-        xt::col(result, p) -= xt::col(result, p - 2) * a;
+      xt::col(result, p) = (x * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
+                           + 2 * k * xt::col(result0, p - 1) * (a + 1.0)
+                           - xt::col(result, p - 2) * a;
     }
   }
 
@@ -760,16 +770,13 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   { return (n + 1) * (n + 1) * px + (n + 1) * py + pz; };
 
   // Compute 1D basis
-  const xt::xtensor<double, 1> x0 = xt::col(x, 0);
-  const xt::xtensor<double, 1> x1 = xt::col(x, 1);
-  const xt::xtensor<double, 1> x2 = xt::col(x, 2);
+  const auto x0 = xt::col(x, 0);
+  const auto x1 = xt::col(x, 1);
+  const auto x2 = xt::col(x, 2);
 
   assert(x0.shape(0) > 0);
   assert(x1.shape(0) > 0);
   assert(x2.shape(0) > 0);
-  const auto X0 = x0 * 2.0 - 1.0;
-  const auto X1 = x1 * 2.0 - 1.0;
-  const auto X2 = x2 * 2.0 - 1.0;
 
   assert(P.shape(0) == md);
   assert(P.shape(1) == x.shape(0));
@@ -794,7 +801,8 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
     {
       const double a = 1.0 - 1.0 / static_cast<double>(pz);
       xt::col(result, hex_idx(0, 0, pz))
-          = X2 * xt::col(result, hex_idx(0, 0, pz - 1)) * (a + 1.0);
+          = (x2 * 2.0 - 1.0) * xt::col(result, hex_idx(0, 0, pz - 1))
+            * (a + 1.0);
       if (kz > 0)
       {
         xt::col(result, hex_idx(0, 0, pz))
@@ -821,7 +829,8 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
         for (std::size_t pz = 0; pz <= n; ++pz)
         {
           xt::col(result, hex_idx(0, py, pz))
-              = X1 * xt::col(result, hex_idx(0, py - 1, pz)) * (a + 1.0);
+              = (x1 * 2.0 - 1.0) * xt::col(result, hex_idx(0, py - 1, pz))
+                * (a + 1.0);
           if (ky > 0)
           {
             xt::col(result, hex_idx(0, py, pz))
@@ -855,7 +864,8 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
             for (std::size_t pz = 0; pz <= n; ++pz)
             {
               xt::col(result, hex_idx(px, py, pz))
-                  = X0 * xt::col(result, hex_idx(px - 1, py, pz)) * (a + 1.0);
+                  = (x0 * 2.0 - 1.0) * xt::col(result, hex_idx(px - 1, py, pz))
+                    * (a + 1.0);
               if (kx > 0)
               {
                 xt::col(result, hex_idx(px, py, pz))
@@ -896,13 +906,13 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
 
-  const auto X0 = xt::col(x, 0) * 2.0 - 1.0;
-  const auto X1 = xt::col(x, 1) * 2.0 - 1.0;
-  const auto X2 = xt::col(x, 2) * 2.0 - 1.0;
+  const auto x0 = xt::col(x, 0);
+  const auto x1 = xt::col(x, 1);
+  const auto x2 = xt::col(x, 2);
 
-  assert(X0.shape(0) > 0);
-  assert(X1.shape(0) > 0);
-  assert(X2.shape(0) > 0);
+  assert(x0.shape(0) > 0);
+  assert(x1.shape(0) > 0);
+  assert(x2.shape(0) > 0);
 
   // Indexing for hexahedral basis functions
   auto prism_idx
@@ -912,7 +922,7 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   };
 
   // f3 = ((1 - y) / 2)^2
-  const auto f3 = xt::square(1.0 - X1) * 0.25;
+  const auto f3 = xt::square(1.0 - (x1 * 2.0 - 1.0)) * 0.25;
 
   // Tabulate triangle for px=0
   for (std::size_t p = 0; p <= n; ++p)
@@ -933,7 +943,7 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 
         const double a
             = static_cast<double>(2 * p - 1) / static_cast<double>(p);
-        p0 = (X0 + 0.5 * X1 + 0.5)
+        p0 = ((x0 * 2.0 - 1.0) + 0.5 * (x1 * 2.0 - 1.0) + 0.5)
              * xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p - 1, 0, 0))
              * a;
         if (kx > 0)
@@ -960,7 +970,7 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
           {
             auto result0 = xt::view(P, idx(kx, ky - 1, 0), xt::all(),
                                     prism_idx(p - 2, 0, 0));
-            p0 -= ky * (X1 - 1.0) * result0 * (a - 1.0);
+            p0 -= ky * ((x1 * 2.0 - 1.0) - 1.0) * result0 * (a - 1.0);
           }
 
           if (ky > 1)
@@ -976,7 +986,7 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
       {
         auto p0 = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, 0, 0));
         auto p1 = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, 1, 0));
-        p1 = p0 * (X1 * (1.5 + p) + 0.5 + p);
+        p1 = p0 * ((x1 * 2.0 - 1.0) * (1.5 + p) + 0.5 + p);
         if (ky > 0)
         {
           auto result0
@@ -989,7 +999,7 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
           const auto [a1, a2, a3] = jrc(2 * p + 1, q);
           xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, q + 1, 0))
               = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, q, 0))
-                    * (X1 * a1 + a2)
+                    * ((x1 * 2.0 - 1.0) * a1 + a2)
                 - xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, q - 1, 0))
                       * a3;
           if (ky > 0)
@@ -1021,7 +1031,8 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
             for (std::size_t q = 0; q <= n - p; ++q)
             {
               xt::col(result, prism_idx(p, q, r))
-                  = X2 * xt::col(result, prism_idx(p, q, r - 1)) * (a + 1.0);
+                  = (x2 * 2.0 - 1.0) * xt::col(result, prism_idx(p, q, r - 1))
+                    * (a + 1.0);
               if (kz > 0)
                 xt::col(result, prism_idx(p, q, r))
                     += 2 * kz * xt::col(result0, prism_idx(p, q, r - 1))

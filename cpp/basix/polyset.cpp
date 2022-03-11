@@ -118,7 +118,7 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   // f3 = ((1 - y) / 2)^2
   const auto f3 = xt::square(1.0 - x1) * 0.25;
 
-  xt::view(P, xt::all(), xt::all(), 0) = 0.0;
+  std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, idx(0, 0), xt::all(), 0) = 1.0;
 
   // Iterate over derivatives in increasing order, since higher derivatives
@@ -135,14 +135,13 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
              * xt::view(P, idx(kx, ky), xt::all(), idx(p - 1, 0)) * a;
         if (kx > 0)
         {
-          auto result0 = xt::view(P, idx(kx - 1, ky), xt::all(), idx(p - 1, 0));
-          p0 += 2 * kx * a * result0;
+          p0 += 2 * kx * a
+                * xt::view(P, idx(kx - 1, ky), xt::all(), idx(p - 1, 0));
         }
 
         if (ky > 0)
         {
-          auto result0 = xt::view(P, idx(kx, ky - 1), xt::all(), idx(p - 1, 0));
-          p0 += ky * a * result0;
+          p0 += ky * a * xt::view(P, idx(kx, ky - 1), xt::all(), idx(p - 1, 0));
         }
 
         if (p > 1)
@@ -152,16 +151,16 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                 * (a - 1.0);
           if (ky > 0)
           {
-            auto result0
-                = xt::view(P, idx(kx, ky - 1), xt::all(), idx(p - 2, 0));
-            p0 -= ky * (x1 - 1.0) * result0 * (a - 1.0);
+            p0 -= ky * (x1 - 1.0)
+                  * xt::view(P, idx(kx, ky - 1), xt::all(), idx(p - 2, 0))
+                  * (a - 1.0);
           }
 
           if (ky > 1)
           {
-            auto result0
-                = xt::view(P, idx(kx, ky - 2), xt::all(), idx(p - 2, 0));
-            p0 -= ky * (ky - 1) * result0 * (a - 1.0);
+            p0 -= ky * (ky - 1)
+                  * xt::view(P, idx(kx, ky - 2), xt::all(), idx(p - 2, 0))
+                  * (a - 1.0);
           }
         }
       }
@@ -173,8 +172,8 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
         p1 = p0 * (x1 * (1.5 + p) + 0.5 + p);
         if (ky > 0)
         {
-          auto result0 = xt::view(P, idx(kx, ky - 1), xt::all(), idx(p, 0));
-          p1 += 2 * ky * (1.5 + p) * result0;
+          p1 += 2 * ky * (1.5 + p)
+                * xt::view(P, idx(kx, ky - 1), xt::all(), idx(p, 0));
         }
 
         for (std::size_t q = 1; q < n - p; ++q)
@@ -185,9 +184,9 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                 - xt::view(P, idx(kx, ky), xt::all(), idx(p, q - 1)) * a3;
           if (ky > 0)
           {
-            auto result0 = xt::view(P, idx(kx, ky - 1), xt::all(), idx(p, q));
             xt::view(P, idx(kx, ky), xt::all(), idx(p, q + 1))
-                += 2 * ky * a1 * result0;
+                += 2 * ky * a1
+                   * xt::view(P, idx(kx, ky - 1), xt::all(), idx(p, q));
           }
         }
       }

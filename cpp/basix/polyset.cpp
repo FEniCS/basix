@@ -800,15 +800,14 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   assert(P.shape(2) == m);
 
   std::fill(P.begin(), P.end(), 0.0);
-  xt::view(P, idx(0, 0, 1), xt::all(), hex_idx(0, 0, 0)) = 1.0;
+  xt::view(P, idx(0, 0, 0), xt::all(), hex_idx(0, 0, 0)) = 1.0;
 
   if (n == 0)
     return;
 
   // Tabulate interval for px=py=0
   // For kz = 0
-  {
-    // Get reference to this derivative
+  { // scope
     auto result = xt::view(P, idx(0, 0, 0), xt::all(), xt::all());
     // for pz = 1
     xt::col(result, hex_idx(0, 0, 1))
@@ -830,11 +829,9 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
     auto result = xt::view(P, idx(0, 0, kz), xt::all(), xt::all());
     auto result0 = xt::view(P, idx(0, 0, kz - 1), xt::all(), xt::all());
     // for pz = 1
-    {
-      xt::col(result, hex_idx(0, 0, 1))
-          = (x2 * 2.0 - 1.0) * xt::col(result, hex_idx(0, 0, 0))
-            + 2 * kz * xt::col(result0, hex_idx(0, 0, 0));
-    }
+    xt::col(result, hex_idx(0, 0, 1))
+        = (x2 * 2.0 - 1.0) * xt::col(result, hex_idx(0, 0, 0))
+          + 2 * kz * xt::col(result0, hex_idx(0, 0, 0));
     // for larger values of pz
     for (std::size_t pz = 2; pz <= n; ++pz)
     {
@@ -849,50 +846,44 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 
   // Take tensor product with interval to get quad for px=0
   // for ky = 0
+  // for py = 1
+  for (std::size_t kz = 0; kz <= nderiv; ++kz)
   {
-    // for py = 1
+    auto result = xt::view(P, idx(0, 0, kz), xt::all(), xt::all());
+    for (std::size_t pz = 0; pz <= n; ++pz)
     {
-      for (std::size_t kz = 0; kz <= nderiv; ++kz)
-      {
-        auto result = xt::view(P, idx(0, 0, kz), xt::all(), xt::all());
-        for (std::size_t pz = 0; pz <= n; ++pz)
-        {
-          xt::col(result, hex_idx(0, 1, pz))
-              = (x1 * 2.0 - 1.0) * xt::col(result, hex_idx(0, 0, pz));
-        }
-      }
+      xt::col(result, hex_idx(0, 1, pz))
+          = (x1 * 2.0 - 1.0) * xt::col(result, hex_idx(0, 0, pz));
     }
-    for (std::size_t py = 2; py <= n; ++py)
+  }
+  for (std::size_t py = 2; py <= n; ++py)
+  {
+    const double a = 1.0 - 1.0 / static_cast<double>(py);
+    for (std::size_t kz = 0; kz <= nderiv; ++kz)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(py);
-      for (std::size_t kz = 0; kz <= nderiv; ++kz)
+      auto result = xt::view(P, idx(0, 0, kz), xt::all(), xt::all());
+      for (std::size_t pz = 0; pz <= n; ++pz)
       {
-        auto result = xt::view(P, idx(0, 0, kz), xt::all(), xt::all());
-        for (std::size_t pz = 0; pz <= n; ++pz)
-        {
-          xt::col(result, hex_idx(0, py, pz))
-              = (x1 * 2.0 - 1.0) * xt::col(result, hex_idx(0, py - 1, pz))
-                    * (a + 1.0)
-                - xt::col(result, hex_idx(0, py - 2, pz)) * a;
+        xt::col(result, hex_idx(0, py, pz))
+            = (x1 * 2.0 - 1.0) * xt::col(result, hex_idx(0, py - 1, pz))
+                  * (a + 1.0)
+              - xt::col(result, hex_idx(0, py - 2, pz)) * a;
         }
-      }
     }
   }
   // for larger values of ky
   for (std::size_t ky = 1; ky <= nderiv; ++ky)
   {
     // for py = 1
+    for (std::size_t kz = 0; kz <= nderiv - ky; ++kz)
     {
-      for (std::size_t kz = 0; kz <= nderiv - ky; ++kz)
+      auto result = xt::view(P, idx(0, ky, kz), xt::all(), xt::all());
+      auto result0 = xt::view(P, idx(0, ky - 1, kz), xt::all(), xt::all());
+      for (std::size_t pz = 0; pz <= n; ++pz)
       {
-        auto result = xt::view(P, idx(0, ky, kz), xt::all(), xt::all());
-        auto result0 = xt::view(P, idx(0, ky - 1, kz), xt::all(), xt::all());
-        for (std::size_t pz = 0; pz <= n; ++pz)
-        {
-          xt::col(result, hex_idx(0, 1, pz))
-              = (x1 * 2.0 - 1.0) * xt::col(result, hex_idx(0, 0, pz))
-                + 2 * ky * xt::col(result0, hex_idx(0, 0, pz));
-        }
+        xt::col(result, hex_idx(0, 1, pz))
+            = (x1 * 2.0 - 1.0) * xt::col(result, hex_idx(0, 0, pz))
+              + 2 * ky * xt::col(result0, hex_idx(0, 0, pz));
       }
     }
     for (std::size_t py = 2; py <= n; ++py)
@@ -916,43 +907,39 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 
   // Take tensor product with interval to get hex
   // kx = 0
+  // for px = 1
+  for (std::size_t ky = 0; ky <= nderiv; ++ky)
   {
-    // for px = 1
+    for (std::size_t kz = 0; kz <= nderiv - ky; ++kz)
     {
-      for (std::size_t ky = 0; ky <= nderiv; ++ky)
+      auto result = xt::view(P, idx(0, ky, kz), xt::all(), xt::all());
+      for (std::size_t py = 0; py <= n; ++py)
       {
-        for (std::size_t kz = 0; kz <= nderiv - ky; ++kz)
+        for (std::size_t pz = 0; pz <= n; ++pz)
         {
-          auto result = xt::view(P, idx(0, ky, kz), xt::all(), xt::all());
-          for (std::size_t py = 0; py <= n; ++py)
-          {
-            for (std::size_t pz = 0; pz <= n; ++pz)
-            {
-              xt::col(result, hex_idx(1, py, pz))
-                  = (x0 * 2.0 - 1.0) * xt::col(result, hex_idx(0, py, pz));
-            }
-          }
+          xt::col(result, hex_idx(1, py, pz))
+              = (x0 * 2.0 - 1.0) * xt::col(result, hex_idx(0, py, pz));
         }
       }
     }
-    // For larger values of px
-    for (std::size_t px = 2; px <= n; ++px)
+  }
+  // For larger values of px
+  for (std::size_t px = 2; px <= n; ++px)
+  {
+    const double a = 1.0 - 1.0 / static_cast<double>(px);
+    for (std::size_t ky = 0; ky <= nderiv; ++ky)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(px);
-      for (std::size_t ky = 0; ky <= nderiv; ++ky)
+      for (std::size_t kz = 0; kz <= nderiv - ky; ++kz)
       {
-        for (std::size_t kz = 0; kz <= nderiv - ky; ++kz)
+        auto result = xt::view(P, idx(0, ky, kz), xt::all(), xt::all());
+        for (std::size_t py = 0; py <= n; ++py)
         {
-          auto result = xt::view(P, idx(0, ky, kz), xt::all(), xt::all());
-          for (std::size_t py = 0; py <= n; ++py)
+          for (std::size_t pz = 0; pz <= n; ++pz)
           {
-            for (std::size_t pz = 0; pz <= n; ++pz)
-            {
-              xt::col(result, hex_idx(px, py, pz))
-                  = (x0 * 2.0 - 1.0) * xt::col(result, hex_idx(px - 1, py, pz))
-                        * (a + 1.0)
-                    - xt::col(result, hex_idx(px - 2, py, pz)) * a;
-            }
+            xt::col(result, hex_idx(px, py, pz))
+                = (x0 * 2.0 - 1.0) * xt::col(result, hex_idx(px - 1, py, pz))
+                      * (a + 1.0)
+                  - xt::col(result, hex_idx(px - 2, py, pz)) * a;
           }
         }
       }

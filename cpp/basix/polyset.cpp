@@ -121,6 +121,12 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, idx(0, 0), xt::all(), 0) = 1.0;
 
+  if (n == 0)
+  {
+    P *= std::sqrt(2);
+    return;
+  }
+
   // Iterate over derivatives in increasing order, since higher derivatives
   for (std::size_t kx = 0; kx <= nderiv; ++kx)
   {
@@ -223,8 +229,14 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
   assert(P.shape(1) == pts.shape(0));
   assert(P.shape(2) == m);
 
-  xt::view(P, xt::all(), xt::all(), 0) = 0.0;
+  std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, idx(0, 0, 0), xt::all(), 0) = 1.0;
+
+  if (n == 0)
+  {
+    P *= std::sqrt(6);
+    return;
+  }
 
   for (std::size_t kx = 0; kx <= nderiv; ++kx)
   {
@@ -448,8 +460,14 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   assert(P.shape(1) == pts.shape(0));
   assert(P.shape(2) == m);
 
-  xt::view(P, xt::all(), xt::all(), pyr_idx(0, 0, 0)) = 0.0;
+  std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, idx(0, 0, 0), xt::all(), pyr_idx(0, 0, 0)) = 1.0;
+
+  if (n == 0)
+  {
+    P *= std::sqrt(3);
+    return;
+  }
 
   for (std::size_t k = 0; k <= nderiv; ++k)
   {
@@ -781,20 +799,17 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
 
-  for (std::size_t py = 0; py <= n; ++py)
-    for (std::size_t pz = 0; pz <= n; ++pz)
-      xt::view(P, xt::all(), xt::all(), hex_idx(0, py, pz)) = 0.0;
+  std::fill(P.begin(), P.end(), 0.0);
+  xt::view(P, idx(0, 0, 1), xt::all(), xt::all()) = 1.0;
+
+  if (n == 0)
+    return;
 
   // Tabulate interval for px=py=0
   for (std::size_t kz = 0; kz <= nderiv; ++kz)
   {
     // Get reference to this derivative
     auto result = xt::view(P, idx(0, 0, kz), xt::all(), xt::all());
-    if (kz == 0)
-      xt::col(result, hex_idx(0, 0, 0)) = 1.0;
-    else
-      xt::col(result, hex_idx(0, 0, 0)) = 0.0;
-
     auto result0 = xt::view(P, idx(0, 0, kz - 1), xt::all(), xt::all());
     for (std::size_t pz = 1; pz <= n; ++pz)
     {
@@ -924,18 +939,19 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   const auto f3 = xt::square(1.0 - (x1 * 2.0 - 1.0)) * 0.25;
 
   // Tabulate triangle for px=0
-  for (std::size_t p = 0; p <= n; ++p)
-    for (std::size_t q = 0; q <= n - p; ++q)
-      xt::view(P, xt::all(), xt::all(), prism_idx(p, q, 0)) = 0.0;
+  std::fill(P.begin(), P.end(), 0.0);
+  xt::view(P, idx(0, 0, 0), xt::all(), prism_idx(0, 0, 0)) = 1.0;
+
+  if (n == 0)
+  {
+    P *= std::sqrt(2);
+    return;
+  }
+
   for (std::size_t kx = 0; kx <= nderiv; ++kx)
   {
     for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
     {
-      if (kx == 0 and ky == 0)
-        xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(0, 0, 0)) = 1.0;
-      else
-        xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(0, 0, 0)) = 0.0;
-
       for (std::size_t p = 1; p <= n; ++p)
       {
         auto p0 = xt::view(P, idx(kx, ky, 0), xt::all(), prism_idx(p, 0, 0));

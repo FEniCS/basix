@@ -47,12 +47,12 @@ void tabulate_polyset_point_derivs(xt::xtensor<double, 3>& P, std::size_t,
 // Legendre Polynomials, with the recurrence relation given by
 // n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1, 1]. The
 // range is rescaled here to [0, 1].
-void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t degree,
+void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                   std::size_t nderiv,
                                   const xt::xtensor<double, 1>& x)
 {
   assert(x.shape(0) > 0);
-  const std::size_t m = (degree + 1);
+  const std::size_t m = (n + 1);
   assert(P.shape(0) == nderiv + 1);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
@@ -60,13 +60,13 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t degree,
   std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, 0, xt::all(), 0) = 1.0;
 
-  if (degree == 0)
+  if (n == 0)
     return;
 
   { // scope
     auto result = xt::view(P, 0, xt::all(), xt::all());
     xt::col(result, 1) = (x * 2.0 - 1.0) * xt::col(result, 0);
-    for (std::size_t p = 2; p <= degree; ++p)
+    for (std::size_t p = 2; p <= n; ++p)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(p);
       xt::col(result, p) = (x * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
@@ -78,7 +78,7 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t degree,
     // Get reference to this derivative
     auto result = xt::view(P, k, xt::all(), xt::all());
     auto result0 = xt::view(P, k - 1, xt::all(), xt::all());
-    for (std::size_t p = 1; p <= degree; ++p)
+    for (std::size_t p = 1; p <= n; ++p)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(p);
       xt::col(result, p) = (x * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
@@ -88,7 +88,7 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t degree,
   }
 
   // Normalise
-  for (std::size_t p = 0; p <= degree; ++p)
+  for (std::size_t p = 0; p <= n; ++p)
     xt::view(P, xt::all(), xt::all(), p) *= std::sqrt(2 * p + 1);
 }
 //-----------------------------------------------------------------------------

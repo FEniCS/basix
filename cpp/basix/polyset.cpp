@@ -645,26 +645,36 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, idx(0, 0), xt::all(), quad_idx(0, 0)) = 1.0;
 
-  for (std::size_t ky = 0; ky <= nderiv; ++ky)
+  if (n == 0)
+    return;
+
+  { // scope
+    auto result = xt::view(P, idx(0, 0), xt::all(), xt::all());
+    xt::col(result, quad_idx(0, 1))
+        = (x1 * 2.0 - 1.0) * xt::col(result, quad_idx(0, 0));
+    for (std::size_t py = 2; py <= n; ++py)
+    {
+      const double a = 1.0 - 1.0 / static_cast<double>(py);
+      xt::col(result, quad_idx(0, py))
+          = (x1 * 2.0 - 1.0) * xt::col(result, quad_idx(0, py - 1)) * (a + 1.0)
+            - xt::col(result, quad_idx(0, py - 2)) * a;
+    }
+  }
+  for (std::size_t ky = 1; ky <= nderiv; ++ky)
   {
     // Get reference to this derivative
     auto result = xt::view(P, idx(0, ky), xt::all(), xt::all());
     auto result0 = xt::view(P, idx(0, ky - 1), xt::all(), xt::all());
-    for (std::size_t py = 1; py <= n; ++py)
+    xt::col(result, quad_idx(0, 1))
+        = (x1 * 2.0 - 1.0) * xt::col(result, quad_idx(0, 0))
+          + 2 * ky * xt::col(result0, quad_idx(0, 0));
+    for (std::size_t py = 2; py <= n; ++py)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(py);
       xt::col(result, quad_idx(0, py))
-          = (x1 * 2.0 - 1.0) * xt::col(result, quad_idx(0, py - 1)) * (a + 1.0);
-      if (ky > 0)
-      {
-        xt::col(result, quad_idx(0, py))
-            += 2 * ky * xt::col(result0, quad_idx(0, py - 1)) * (a + 1.0);
-      }
-      if (py > 1)
-      {
-        xt::col(result, quad_idx(0, py))
-            -= xt::col(result, quad_idx(0, py - 2)) * a;
-      }
+          = (x1 * 2.0 - 1.0) * xt::col(result, quad_idx(0, py - 1)) * (a + 1.0)
+            + 2 * ky * xt::col(result0, quad_idx(0, py - 1)) * (a + 1.0)
+            - xt::col(result, quad_idx(0, py - 2)) * a;
     }
   }
 

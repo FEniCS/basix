@@ -679,9 +679,44 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   }
 
   // Take tensor product with another interval
-  for (std::size_t kx = 0; kx <= nderiv; ++kx)
+  for (std::size_t ky = 0; ky <= nderiv; ++ky)
   {
-    for (std::size_t px = 1; px <= n; ++px)
+    auto result = xt::view(P, idx(0, ky), xt::all(), xt::all());
+    for (std::size_t py = 0; py <= n; ++py)
+    {
+      xt::col(result, quad_idx(1, py))
+          = (x0 * 2.0 - 1.0) * xt::col(result, quad_idx(0, py));
+    }
+  }
+  for (std::size_t px = 2; px <= n; ++px)
+  {
+    const double a = 1.0 - 1.0 / static_cast<double>(px);
+    for (std::size_t ky = 0; ky <= nderiv; ++ky)
+    {
+      auto result = xt::view(P, idx(0, ky), xt::all(), xt::all());
+      for (std::size_t py = 0; py <= n; ++py)
+      {
+        xt::col(result, quad_idx(px, py))
+            = (x0 * 2.0 - 1.0) * xt::col(result, quad_idx(px - 1, py))
+                  * (a + 1.0)
+              - xt::col(result, quad_idx(px - 2, py)) * a;
+      }
+    }
+  }
+  for (std::size_t kx = 1; kx <= nderiv; ++kx)
+  {
+    for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
+    {
+      auto result = xt::view(P, idx(kx, ky), xt::all(), xt::all());
+      auto result0 = xt::view(P, idx(kx - 1, ky), xt::all(), xt::all());
+      for (std::size_t py = 0; py <= n; ++py)
+      {
+        xt::col(result, quad_idx(1, py))
+            = (x0 * 2.0 - 1.0) * xt::col(result, quad_idx(0, py))
+              + 2 * kx * xt::col(result0, quad_idx(0, py));
+      }
+    }
+    for (std::size_t px = 2; px <= n; ++px)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(px);
       for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
@@ -692,17 +727,9 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
         {
           xt::col(result, quad_idx(px, py))
               = (x0 * 2.0 - 1.0) * xt::col(result, quad_idx(px - 1, py))
-                * (a + 1.0);
-          if (kx > 0)
-          {
-            xt::col(result, quad_idx(px, py))
-                += 2 * kx * xt::col(result0, quad_idx(px - 1, py)) * (a + 1.0);
-          }
-          if (px > 1)
-          {
-            xt::col(result, quad_idx(px, py))
-                -= xt::col(result, quad_idx(px - 2, py)) * a;
-          }
+                    * (a + 1.0)
+                + 2 * kx * xt::col(result0, quad_idx(px - 1, py)) * (a + 1.0)
+                - xt::col(result, quad_idx(px - 2, py)) * a;
         }
       }
     }

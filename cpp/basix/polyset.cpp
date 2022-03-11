@@ -631,21 +631,18 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   { return (n + 1) * px + py; };
 
   // Compute 1D basis
-  const xt::xtensor<double, 1> x0 = xt::col(x, 0);
-  const xt::xtensor<double, 1> x1 = xt::col(x, 1);
+  const auto x0 = xt::col(x, 0);
+  const auto x1 = xt::col(x, 1);
 
   assert(x0.shape(0) > 0);
   assert(x1.shape(0) > 0);
-  const auto X0 = x0 * 2.0 - 1.0;
-  const auto X1 = x1 * 2.0 - 1.0;
 
   assert(P.shape(0) == md);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
 
   // Compute tabulation of interval for px = 0
-  for (std::size_t py = 0; py <= n; ++py)
-    xt::view(P, xt::all(), xt::all(), quad_idx(0, py)) = 0.0;
+  std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, idx(0, 0), xt::all(), quad_idx(0, 0)) = 1.0;
 
   for (std::size_t ky = 0; ky <= nderiv; ++ky)
@@ -657,7 +654,7 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
     {
       const double a = 1.0 - 1.0 / static_cast<double>(py);
       xt::col(result, quad_idx(0, py))
-          = X1 * xt::col(result, quad_idx(0, py - 1)) * (a + 1.0);
+          = (x1 * 2.0 - 1.0) * xt::col(result, quad_idx(0, py - 1)) * (a + 1.0);
       if (ky > 0)
       {
         xt::col(result, quad_idx(0, py))
@@ -684,7 +681,8 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
         for (std::size_t py = 0; py <= n; ++py)
         {
           xt::col(result, quad_idx(px, py))
-              = X0 * xt::col(result, quad_idx(px - 1, py)) * (a + 1.0);
+              = (x0 * 2.0 - 1.0) * xt::col(result, quad_idx(px - 1, py))
+                * (a + 1.0);
           if (kx > 0)
           {
             xt::col(result, quad_idx(px, py))

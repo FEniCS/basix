@@ -794,6 +794,10 @@ public:
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
   get_tensor_product_representation() const;
 
+  /// Indicates whether or not the interpolation matrix for this element is an
+  /// identity matrix
+  bool interpolation_is_identity() const;
+
 private:
   // Cell type
   cell::type _cell_type;
@@ -925,6 +929,9 @@ private:
   // scaling factor may additionally be needed.
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
       _tensor_factors;
+
+  // Is the interpolation matrix an identity?
+  bool _interpolation_is_identity;
 };
 
 /// Create an element using a given Lagrange variant

@@ -585,6 +585,21 @@ FiniteElement::FiniteElement(
       }
     }
   }
+
+  // Check if interpolation matrix is the identity
+  _interpolation_is_identity = _matM.shape(0) == _matM.shape(1);
+  for (std::size_t row = 0; _interpolation_is_identity && row < _matM.shape(0);
+       ++row)
+  {
+    for (std::size_t col = 0; col < _matM.shape(1); ++col)
+    {
+      if (!xt::allclose(_matM(row, col), col == row ? 1.0 : 0.0))
+      {
+        _interpolation_is_identity = false;
+        break;
+      }
+    }
+  }
 }
 //-----------------------------------------------------------------------------
 bool FiniteElement::operator==(const FiniteElement& e) const
@@ -972,6 +987,11 @@ element::lagrange_variant FiniteElement::lagrange_variant() const
 }
 //-----------------------------------------------------------------------------
 element::dpc_variant FiniteElement::dpc_variant() const { return _dpc_variant; }
+//-----------------------------------------------------------------------------
+bool FiniteElement::interpolation_is_identity() const
+{
+  return _interpolation_is_identity;
+}
 //-----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
 FiniteElement::get_tensor_product_representation() const

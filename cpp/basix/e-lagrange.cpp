@@ -926,6 +926,101 @@ FiniteElement create_legendre(cell::type celltype, int degree,
                        element::lagrange_variant::legendre);
 }
 //-----------------------------------------------------------------------------
+FiniteElement create_legendre_dpc(cell::type celltype, int degree,
+                                  bool discontinuous)
+{
+  if (!discontinuous)
+    throw std::runtime_error("Legendre variant must be discontinuous");
+
+  cell::type simplex_type;
+  switch (celltype)
+  {
+  case cell::type::quadrilateral:
+    simplex_type = cell::type::triangle;
+    break;
+  case cell::type::hexahedron:
+    simplex_type = cell::type::tetrahedron;
+    break;
+  default:
+    throw std::runtime_error("Invalid cell type");
+  }
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t psize = polyset::dim(celltype, degree);
+  const std::size_t ndofs = polyset::dim(simplex_type, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
+
+  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 celltype, degree * 2);
+  auto wts = xt::adapt(_wts);
+
+  // Evaluate moment space at quadrature points
+  const xt::xtensor<double, 2> phi = polynomials::tabulate(
+      polynomials::type::legendre, celltype, degree, pts);
+
+  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  {
+    M[dim].resize(topology[dim].size());
+    x[dim].resize(topology[dim].size());
+    if (dim < tdim)
+    {
+      entity_transformations[cell::sub_entity_type(celltype, dim, 0)]
+          = xt::xtensor<double, 3>({dim, 0, 0});
+      for (std::size_t e = 0; e < topology[dim].size(); ++e)
+      {
+        x[dim][e] = xt::xtensor<double, 2>({0, tdim});
+        M[dim][e] = xt::xtensor<double, 3>({0, 1, 0});
+      }
+    }
+  }
+  x[tdim][0] = pts.dimension() == 1 ? pts.reshape({pts.shape(0), 1}) : pts;
+  M[tdim][0] = xt::xtensor<double, 3>({ndofs, 1, pts.shape(0)});
+
+  if (celltype == cell::type::quadrilateral)
+  {
+    int col_n = 0;
+    for (int i = 0; i <= degree; ++i)
+      for (int j = 0; j <= degree - i; ++j)
+        xt::view(M[tdim][0], col_n++, 0, xt::all())
+            = xt::col(phi, i * (degree + 1) + j) * wts;
+  }
+  else
+  {
+    int col_n = 0;
+    for (int i = 0; i <= degree; ++i)
+      for (int j = 0; j <= degree - i; ++j)
+        for (int k = 0; k <= degree - i - j; ++k)
+          xt::view(M[tdim][0], col_n++, 0, xt::all())
+              = xt::col(phi,
+                        i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+                * wts;
+  }
+
+  xt::xtensor<double, 2> psi = xt::view(
+      polyset::tabulate(simplex_type, degree, 0, pts), 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> psi_quad = xt::view(
+      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
+
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+  for (std::size_t i = 0; i < ndofs; ++i)
+  {
+    auto p_i = xt::col(psi, i);
+    for (std::size_t k = 0; k < psize; ++k)
+      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(psi_quad, k))();
+  }
+
+  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs,
+                       entity_transformations, x, M, maps::type::identity,
+                       discontinuous, degree, degree, {},
+                       element::lagrange_variant::unset,
+                       element::dpc_variant::legendre);
+}
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
                                        element::dpc_variant variant)
 {
@@ -1357,6 +1452,9 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
     throw std::runtime_error("Invalid cell type");
   }
 
+  if (variant == element::dpc_variant::legendre)
+    return create_legendre_dpc(celltype, degree, discontinuous);
+
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
 
@@ -1369,7 +1467,6 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   xt::xtensor<double, 2> psi = xt::view(
       polyset::tabulate(simplex_type, degree, 0, pts), 0, xt::all(), xt::all());
 
-  // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   for (std::size_t i = 0; i < ndofs; ++i)
   {

@@ -35,6 +35,7 @@ enum class dpc_variant
   horizontal_gll = 3,
   diagonal_equispaced = 4,
   diagonal_gll = 5,
+  legendre = 6,
 };
 
 /// Available element families

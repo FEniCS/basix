@@ -40,3 +40,14 @@ def test_interpolation_matrix(cell_type, degree, element_type, element_args):
         coeffs[i, :] = i_m @ tabulated[:, i::i_m.shape[0]].T.reshape(i_m.shape[1])
 
     assert np.allclose(coeffs, np.identity(coeffs.shape[0]))
+
+
+@parametrize_over_elements(4)
+def test_interpolation_is_identity(cell_type, degree, element_type, element_args):
+    element = basix.create_element(element_type, cell_type, degree, *element_args)
+    i_m = element.interpolation_matrix
+
+    if i_m.shape[0] == i_m.shape[1]:
+        assert element.interpolation_is_identity == np.allclose(i_m, np.eye(i_m.shape[0]))
+    else:
+        assert not element.interpolation_is_identity

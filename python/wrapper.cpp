@@ -317,7 +317,8 @@ Interface to the Basix C++ library.
           basix::docstring::FiniteElement__entity_transformations.c_str())
       .def(
           "get_tensor_product_representation",
-          [](const FiniteElement& self) { return self.get_tensor_product_representation();
+          [](const FiniteElement& self) {
+            return self.get_tensor_product_representation();
           },
           basix::docstring::FiniteElement__get_tensor_product_representation
               .c_str())
@@ -347,6 +348,8 @@ Interface to the Basix C++ library.
           &FiniteElement::dof_transformations_are_permutations)
       .def_property_readonly("dof_transformations_are_identity",
                              &FiniteElement::dof_transformations_are_identity)
+      .def_property_readonly("interpolation_is_identity",
+                             &FiniteElement::interpolation_is_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
       .def_property_readonly("degree_bounds", &FiniteElement::degree_bounds)
       .def_property_readonly("points",

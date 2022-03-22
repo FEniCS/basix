@@ -981,37 +981,40 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   x[tdim][0] = pts.dimension() == 1 ? pts.reshape({pts.shape(0), 1}) : pts;
   M[tdim][0] = xt::xtensor<double, 3>({ndofs, 1, pts.shape(0)});
 
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+
   if (celltype == cell::type::quadrilateral)
   {
     int col_n = 0;
     for (int i = 0; i <= degree; ++i)
+    {
       for (int j = 0; j <= degree - i; ++j)
-        xt::view(M[tdim][0], col_n++, 0, xt::all())
+      {
+        xt::view(M[tdim][0], col_n, 0, xt::all())
             = xt::col(phi, i * (degree + 1) + j) * wts;
+        wcoeffs(col_n, i * (degree + 1) + j) = 1;
+        ++col_n;
+      }
+    }
   }
   else
   {
     int col_n = 0;
     for (int i = 0; i <= degree; ++i)
+    {
       for (int j = 0; j <= degree - i; ++j)
+      {
         for (int k = 0; k <= degree - i - j; ++k)
-          xt::view(M[tdim][0], col_n++, 0, xt::all())
+        {
+          xt::view(M[tdim][0], col_n, 0, xt::all())
               = xt::col(phi,
                         i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
                 * wts;
-  }
-
-  xt::xtensor<double, 2> psi = xt::view(
-      polyset::tabulate(simplex_type, degree, 0, pts), 0, xt::all(), xt::all());
-  xt::xtensor<double, 2> psi_quad = xt::view(
-      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
-
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-  for (std::size_t i = 0; i < ndofs; ++i)
-  {
-    auto p_i = xt::col(psi, i);
-    for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(psi_quad, k))();
+          wcoeffs(col_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k) = 1;
+          ++col_n;
+        }
+      }
+    }
   }
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs,

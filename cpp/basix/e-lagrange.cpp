@@ -985,34 +985,34 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
 
   if (celltype == cell::type::quadrilateral)
   {
-    int col_n = 0;
+    int row_n = 0;
     for (int i = 0; i <= degree; ++i)
     {
       for (int j = 0; j <= degree - i; ++j)
       {
-        xt::view(M[tdim][0], col_n, 0, xt::all())
+        xt::view(M[tdim][0], row_n, 0, xt::all())
             = xt::col(phi, i * (degree + 1) + j) * wts;
-        wcoeffs(col_n, i * (degree + 1) + j) = 1;
-        ++col_n;
+        wcoeffs(row_n, i * (degree + 1) + j) = 1;
+        ++row_n;
       }
     }
   }
   else
   {
-    int col_n = 0;
+    int row_n = 0;
     for (int i = 0; i <= degree; ++i)
     {
       for (int j = 0; j <= degree - i; ++j)
       {
         for (int k = 0; k <= degree - i - j; ++k)
         {
-          xt::view(M[tdim][0], col_n, 0, xt::all())
+          xt::view(M[tdim][0], row_n, 0, xt::all())
               = xt::col(phi,
                         i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
                 * wts;
-          wcoeffs(col_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+          wcoeffs(row_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
               = 1;
-          ++col_n;
+          ++row_n;
         }
       }
     }
@@ -1470,25 +1470,25 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
 
   if (celltype == cell::type::quadrilateral)
   {
-    int col_n = 0;
+    int row_n = 0;
     for (int i = 0; i <= degree; ++i)
     {
       for (int j = 0; j <= degree - i; ++j)
       {
-        wcoeffs(col_n++, i * (degree + 1) + j) = 1;
+        wcoeffs(row_n++, i * (degree + 1) + j) = 1;
       }
     }
   }
   else
   {
-    int col_n = 0;
+    int row_n = 0;
     for (int i = 0; i <= degree; ++i)
     {
       for (int j = 0; j <= degree - i; ++j)
       {
         for (int k = 0; k <= degree - i - j; ++k)
         {
-          wcoeffs(col_n++,
+          wcoeffs(row_n++,
                   i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
               = 1;
         }

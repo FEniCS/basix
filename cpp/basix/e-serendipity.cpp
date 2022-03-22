@@ -31,28 +31,22 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
   xt::xtensor<double, 2> Pq
       = xt::view(polyset::tabulate(cell::type::quadrilateral, degree, 0, pts),
                  0, xt::all(), xt::all());
-  xt::xtensor<double, 2> Pt
-      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
-                 xt::all(), xt::all());
 
   const std::size_t psize = Pq.shape(1);
-  const std::size_t nv = Pt.shape(1);
 
   // Create coefficients for order (degree) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-  for (std::size_t i = 0; i < nv; ++i)
-  {
-    auto p_i = xt::col(Pt, i);
-    for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(Pq, k))();
-  }
+  int row_n = 0;
+  for (int i = 0; i <= degree; ++i)
+    for (int j = 0; j <= degree - i; ++j)
+      wcoeffs(row_n++, i * (degree + 1) + j) = 1;
 
   auto q0 = xt::col(pts, 0);
   auto q1 = xt::col(pts, 1);
   if (degree == 1)
   {
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(nv, k) = xt::sum(wts * q0 * q1 * xt::col(Pq, k))();
+      wcoeffs(row_n, k) = xt::sum(wts * q0 * q1 * xt::col(Pq, k))();
     return wcoeffs;
   }
 
@@ -66,7 +60,7 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
       integrand = wts * q0 * q1 * pk;
       for (int i = 1; i < degree; ++i)
         integrand *= q_a;
-      wcoeffs(nv + a, k) = xt::sum(integrand)();
+      wcoeffs(row_n + a, k) = xt::sum(integrand)();
     }
   }
 
@@ -128,23 +122,18 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
   xt::xtensor<double, 2> Ph
       = xt::view(polyset::tabulate(cell::type::hexahedron, degree, 0, pts), 0,
                  xt::all(), xt::all());
-  xt::xtensor<double, 2> Pt
-      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,
-                 xt::all(), xt::all());
 
   const std::size_t psize = Ph.shape(1);
-  const std::size_t nv = Pt.shape(1);
 
   // Create coefficients for order (degree) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-  for (std::size_t i = 0; i < nv; ++i)
-  {
-    auto p_i = xt::col(Pt, i);
-    for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(Ph, k))();
-  }
+  int row_n = 0;
+  for (int i = 0; i <= degree; ++i)
+    for (int j = 0; j <= degree - i; ++j)
+      for (int k = 0; k <= degree - i - j; ++k)
+        wcoeffs(row_n++, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+            = 1;
 
-  std::size_t c = nv;
   xt::xtensor<double, 1> integrand;
   std::vector<std::array<int, 3>> indices;
   for (std::size_t s = 1; s <= 3; ++s)
@@ -162,9 +151,9 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
             integrand *= q_d;
         }
 
-        wcoeffs(c, k) = xt::sum(integrand)();
+        wcoeffs(row_n, k) = xt::sum(integrand)();
       }
-      ++c;
+      ++row_n;
     }
   }
 
@@ -183,24 +172,20 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
   xt::xtensor<double, 2> Pq = xt::view(
       polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts), 0,
       xt::all(), xt::all());
-  xt::xtensor<double, 2> Pt
-      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
-                 xt::all(), xt::all());
 
   const std::size_t psize = Pq.shape(1);
-  const std::size_t nv = Pt.shape(1);
+  const std::size_t nv = polyset::dim(cell::type::triangle, degree);
 
   // Create coefficients for order (degree) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * 2});
-  for (std::size_t i = 0; i < nv; ++i)
+  int row_n = 0;
+  for (int i = 0; i <= degree; ++i)
   {
-    for (int d = 0; d < 2; ++d)
+    for (int j = 0; j <= degree - i; ++j)
     {
-      auto p_i = xt::col(Pt, i);
-      for (std::size_t k = 0; k < psize; ++k)
+      for (int d = 0; d < 2; ++d)
       {
-        wcoeffs(d * nv + i, d * psize + k)
-            = xt::sum(wts * p_i * xt::col(Pq, k))();
+        wcoeffs(row_n++, d * psize + i * (degree + 2) + j) = 1;
       }
     }
   }
@@ -248,24 +233,25 @@ xt::xtensor<double, 2> make_serendipity_div_space_3d(int degree)
   xt::xtensor<double, 2> polyset_at_Qpts
       = xt::view(polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts),
                  0, xt::all(), xt::all());
-  xt::xtensor<double, 2> smaller_polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,
-                 xt::all(), xt::all());
 
   const std::size_t psize = polyset_at_Qpts.shape(1);
-  const std::size_t nv = smaller_polyset_at_Qpts.shape(1);
+  const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
 
   // Create coefficients for order (degree) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * 3});
-  for (std::size_t i = 0; i < nv; ++i)
+  int row_n = 0;
+  for (int i = 0; i <= degree; ++i)
   {
-    for (int d = 0; d < 3; ++d)
+    for (int j = 0; j <= degree - i; ++j)
     {
-      auto p_i = xt::col(smaller_polyset_at_Qpts, i);
-      for (std::size_t k = 0; k < psize; ++k)
+      for (int k = 0; k <= degree - i - j; ++k)
       {
-        wcoeffs(d * nv + i, d * psize + k)
-            = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+        for (int d = 0; d < 3; ++d)
+        {
+          wcoeffs(row_n++, d * psize + i * (degree + 2) * (degree + 2)
+                               + j * (degree + 2) + k)
+              = 1;
+        }
       }
     }
   }
@@ -349,24 +335,20 @@ xt::xtensor<double, 2> make_serendipity_curl_space_2d(int degree)
   xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
       polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts), 0,
       xt::all(), xt::all());
-  xt::xtensor<double, 2> smaller_polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
-                 xt::all(), xt::all());
 
   const std::size_t psize = polyset_at_Qpts.shape(1);
-  const std::size_t nv = smaller_polyset_at_Qpts.shape(1);
+  const std::size_t nv = polyset::dim(cell::type::triangle, degree);
 
   // Create coefficients for order (degree) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * 2});
-  for (std::size_t i = 0; i < nv; ++i)
+  int row_n = 0;
+  for (int i = 0; i <= degree; ++i)
   {
-    for (int d = 0; d < 2; ++d)
+    for (int j = 0; j <= degree - i; ++j)
     {
-      auto p_i = xt::col(smaller_polyset_at_Qpts, i);
-      for (std::size_t k = 0; k < psize; ++k)
+      for (int d = 0; d < 2; ++d)
       {
-        wcoeffs(d * nv + i, d * psize + k)
-            = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+        wcoeffs(row_n++, d * psize + i * (degree + 2) + j) = 1;
       }
     }
   }
@@ -417,24 +399,25 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
   xt::xtensor<double, 2> polyset_at_Qpts
       = xt::view(polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts),
                  0, xt::all(), xt::all());
-  xt::xtensor<double, 2> smaller_polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,
-                 xt::all(), xt::all());
 
   const std::size_t psize = polyset_at_Qpts.shape(1);
-  const std::size_t nv = smaller_polyset_at_Qpts.shape(1);
+  const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
 
   // Create coefficients for order (degree) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * 3});
-  for (std::size_t i = 0; i < nv; ++i)
+  int row_n = 0;
+  for (int i = 0; i <= degree; ++i)
   {
-    for (int d = 0; d < 3; ++d)
+    for (int j = 0; j <= degree - i; ++j)
     {
-      auto p_i = xt::col(smaller_polyset_at_Qpts, i);
-      for (std::size_t k = 0; k < psize; ++k)
+      for (int k = 0; k <= degree - i - j; ++k)
       {
-        wcoeffs(d * nv + i, d * psize + k)
-            = xt::sum(wts * p_i * xt::col(polyset_at_Qpts, k))();
+        for (int d = 0; d < 3; ++d)
+        {
+          wcoeffs(row_n++, d * psize + i * (degree + 2) * (degree + 2)
+                               + j * (degree + 2) + k)
+              = 1;
+        }
       }
     }
   }

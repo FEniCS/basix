@@ -679,10 +679,9 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
   FiniteElement facet_moment_space
       = facettype == cell::type::interval
             ? element::create_lagrange(
-                facettype, degree, element::lagrange_variant::equispaced, true)
+                facettype, degree, element::lagrange_variant::legendre, true)
             : element::create_dpc(facettype, degree,
-                                  element::dpc_variant::simplex_equispaced,
-                                  true);
+                                  element::dpc_variant::legendre, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, 2 * degree);
   if (tdim > 1)
@@ -695,7 +694,7 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
   {
     // TODO: DPC variant
     FiniteElement cell_moment_space = element::create_dpc(
-        celltype, degree - 2, element::dpc_variant::simplex_equispaced, true);
+        celltype, degree - 2, element::dpc_variant::legendre, true);
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         cell_moment_space, celltype, tdim, 2 * degree - 2);
   }
@@ -763,8 +762,8 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // TODO: Lagrange variants
-  FiniteElement edge_moment_space
-      = element::create_lagrange(cell::type::interval, degree, element::lagrange_variant::equispaced, true);
+  FiniteElement edge_moment_space = element::create_lagrange(
+      cell::type::interval, degree, element::lagrange_variant::legendre, true);
 
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, 2 * degree);
@@ -779,7 +778,7 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
     // TODO: DPC variant
     FiniteElement moment_space
         = element::create_dpc(cell::type::quadrilateral, degree - 2,
-                              element::dpc_variant::simplex_equispaced, true);
+                              element::dpc_variant::legendre, true);
     std::tie(x[2], M[2]) = moments::make_integral_moments(
         moment_space, celltype, tdim, 2 * degree - 2);
     if (tdim == 3)
@@ -792,7 +791,7 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
         // TODO: DPC variant
         std::tie(x[3], M[3]) = moments::make_integral_moments(
             element::create_dpc(cell::type::hexahedron, degree - 4,
-                                element::dpc_variant::simplex_equispaced, true),
+                                element::dpc_variant::legendre, true),
             celltype, tdim, 2 * degree - 4);
       }
     }

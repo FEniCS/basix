@@ -403,7 +403,8 @@ Interface to the Basix C++ library.
              element::dpc_variant::horizontal_equispaced)
       .value("horizontal_gll", element::dpc_variant::horizontal_gll)
       .value("diagonal_equispaced", element::dpc_variant::diagonal_equispaced)
-      .value("diagonal_gll", element::dpc_variant::diagonal_gll);
+      .value("diagonal_gll", element::dpc_variant::diagonal_gll)
+      .value("legendre", element::dpc_variant::legendre);
 
   // Create FiniteElement
   m.def(

@@ -45,32 +45,22 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
   auto q1 = xt::col(pts, 1);
   if (degree == 1)
   {
-    for (int i = 0; i <= degree; ++i)
-    {
-      for (int j = degree - i + 1; j <= degree; ++j)
-      {
-        const int col_n = i * (degree + 1) + j;
-        wcoeffs(row_n, col_n) = xt::sum(wts * q0 * q1 * xt::col(Pq, col_n))();
-      }
-    }
+    for (std::size_t k = 0; k < psize; ++k)
+      wcoeffs(row_n, k) = xt::sum(wts * q0 * q1 * xt::col(Pq, k))();
     return wcoeffs;
   }
 
   xt::xtensor<double, 1> integrand;
-  for (int i = 0; i <= degree; ++i)
+  for (std::size_t k = 0; k < psize; ++k)
   {
-    for (int j = degree - i + 1; j <= degree; ++j)
+    auto pk = xt::col(Pq, k);
+    for (std::size_t a = 0; a < 2; ++a)
     {
-      const int col_n = i * (degree + 1) + j;
-      auto p_n = xt::col(Pq, col_n);
-      for (std::size_t a = 0; a < 2; ++a)
-      {
-        auto q_a = xt::col(pts, a);
-        integrand = wts * q0 * q1 * p_n;
-        for (int i = 1; i < degree; ++i)
-          integrand *= q_a;
-        wcoeffs(row_n + a, col_n) = xt::sum(integrand)();
-      }
+      auto q_a = xt::col(pts, a);
+      integrand = wts * q0 * q1 * pk;
+      for (int i = 1; i < degree; ++i)
+        integrand *= q_a;
+      wcoeffs(row_n + a, k) = xt::sum(integrand)();
     }
   }
 
@@ -151,25 +141,17 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
     indices = serendipity_3d_indices(s + degree, s);
     for (std::array<int, 3> i : indices)
     {
-      for (int i = 0; i <= degree; ++i)
+      for (std::size_t k = 0; k < psize; ++k)
       {
-        for (int j = degree - i + 1; j <= degree; ++j)
+        integrand = wts * xt::col(Ph, k);
+        for (int d = 0; d < 3; ++d)
         {
-          for (int k = degree - i - j + 1; k <= degree; ++k)
-          {
-            const int col_n
-                = i * (degree + 1) * (degree + 1) + j * (degree + 1) + k;
-            integrand = wts * xt::col(Ph, col_n);
-            for (int d = 0; d < 3; ++d)
-            {
-              auto q_d = xt::col(pts, d);
-              for (int j = 0; j < i[d]; ++j)
-                integrand *= q_d;
-            }
-            wcoeffs(row_n, col_n) = xt::sum(integrand)();
-          }
+          auto q_d = xt::col(pts, d);
+          for (int j = 0; j < i[d]; ++j)
+            integrand *= q_d;
         }
 
+        wcoeffs(row_n, k) = xt::sum(integrand)();
       }
       ++row_n;
     }
@@ -697,9 +679,10 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
   FiniteElement facet_moment_space
       = facettype == cell::type::interval
             ? element::create_lagrange(
-                facettype, degree, element::lagrange_variant::legendre, true)
+                facettype, degree, element::lagrange_variant::equispaced, true)
             : element::create_dpc(facettype, degree,
-                                  element::dpc_variant::legendre, true);
+                                  element::dpc_variant::simplex_equispaced,
+                                  true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, 2 * degree);
   if (tdim > 1)

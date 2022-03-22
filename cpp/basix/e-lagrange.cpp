@@ -1010,7 +1010,8 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
               = xt::col(phi,
                         i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
                 * wts;
-          wcoeffs(col_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k) = 1;
+          wcoeffs(col_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+              = 1;
           ++col_n;
         }
       }
@@ -1465,17 +1466,34 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
                                                  celltype, 2 * degree);
   auto wts = xt::adapt(_wts);
 
-  xt::xtensor<double, 2> psi_quad = xt::view(
-      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
-  xt::xtensor<double, 2> psi = xt::view(
-      polyset::tabulate(simplex_type, degree, 0, pts), 0, xt::all(), xt::all());
-
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-  for (std::size_t i = 0; i < ndofs; ++i)
+
+  if (celltype == cell::type::quadrilateral)
   {
-    auto p_i = xt::col(psi, i);
-    for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(wts * p_i * xt::col(psi_quad, k))();
+    int col_n = 0;
+    for (int i = 0; i <= degree; ++i)
+    {
+      for (int j = 0; j <= degree - i; ++j)
+      {
+        wcoeffs(col_n++, i * (degree + 1) + j) = 1;
+      }
+    }
+  }
+  else
+  {
+    int col_n = 0;
+    for (int i = 0; i <= degree; ++i)
+    {
+      for (int j = 0; j <= degree - i; ++j)
+      {
+        for (int k = 0; k <= degree - i - j; ++k)
+        {
+          wcoeffs(col_n++,
+                  i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+              = 1;
+        }
+      }
+    }
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

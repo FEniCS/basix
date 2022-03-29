@@ -961,12 +961,12 @@ FiniteElement::entity_transformations() const
   return _entity_transformations;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> FiniteElement::dual_matrix() const
+const xt::xtensor<double, 2>& FiniteElement::dual_matrix() const
 {
   return _dual_matrix;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> FiniteElement::coefficient_matrix() const
+const xt::xtensor<double, 2>& FiniteElement::coefficient_matrix() const
 {
   return _coeffs;
 }

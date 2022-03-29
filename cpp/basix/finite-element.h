@@ -760,14 +760,14 @@ public:
   /// This is the matrix @f$BD^{T}@f$, as described in the documentation
   /// of the `FiniteElement()` constructor.
   /// @return The dual matrix
-  xt::xtensor<double, 2> dual_matrix() const;
+  const xt::xtensor<double, 2>& dual_matrix() const;
 
   /// Get the matrix of coefficients.
   ///
   /// This is the matrix @f$C@f$, as described in the documentation of
   /// the `FiniteElement()` constructor.
   /// @return The dual matrix
-  xt::xtensor<double, 2> coefficient_matrix() const;
+  const xt::xtensor<double, 2>& coefficient_matrix() const;
 
   /// Get [0] the lowest degree n such that the highest degree
   /// polynomial in this element is contained in a Lagrange (or vector

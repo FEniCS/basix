@@ -24,6 +24,9 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
+  if (degree < 1)
+    throw std::runtime_error("Degree must be at least 1");
+
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   const cell::type facettype

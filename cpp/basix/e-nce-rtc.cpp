@@ -27,6 +27,9 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
     throw std::runtime_error("Unsupported cell type");
   }
 
+  if (degree < 1)
+    throw std::runtime_error("Degree must be at least 1");
+
   if (degree > 4)
   {
     // TODO: suggest alternative with non-uniform points once implemented
@@ -163,6 +166,9 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
     throw std::runtime_error("Unsupported cell type");
+
+  if (degree < 1)
+    throw std::runtime_error("Degree must be at least 1");
 
   if (degree > 4)
   {

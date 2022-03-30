@@ -109,10 +109,13 @@ serendipity_3d_indices(int total, int linear, std::vector<int> done = {})
 xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
 {
   const std::size_t ndofs
-      = degree < 4 ? 12 * degree - 4
+      = degree == 0
+            ? 1
+            : (degree < 4
+                   ? 12 * degree - 4
                    : (degree < 6 ? 3 * degree * degree - 3 * degree + 14
                                  : degree * (degree - 1) * (degree + 1) / 6
-                                       + degree * degree + 5 * degree + 4);
+                                       + degree * degree + 5 * degree + 4));
   // Number of order (degree) polynomials
 
   // Evaluate the expansion polynomials at the quadrature points

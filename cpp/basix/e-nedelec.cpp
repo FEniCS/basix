@@ -156,6 +156,9 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
 FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
                                              bool discontinuous)
 {
+  if (degree < 1)
+    throw std::runtime_error("Degree must be at least 1");
+
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   xt::xtensor<double, 2> wcoeffs;
@@ -236,6 +239,9 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Invalid celltype in Nedelec");
+
+  if (degree < 1)
+    throw std::runtime_error("Degree must be at least 1");
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;

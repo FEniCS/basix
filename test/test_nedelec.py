@@ -201,8 +201,9 @@ def sympy_nedelec(celltype, n):
     return g
 
 
+# TODO: turn this test back on when a equispaced Nedelec variant is available
 @pytest.mark.parametrize("order", [1, 2, 3])
-def test_tri(order):
+def xtest_tri(order):
     celltype = basix.CellType.triangle
     g = sympy_nedelec(celltype, order)
     x = sympy.Symbol("x")
@@ -224,8 +225,9 @@ def test_tri(order):
             assert(numpy.isclose(wtab[basix.index(kx, ky)], wsym).all())
 
 
+# TODO: turn this test back on when a equispaced Nedelec variant is available
 @pytest.mark.parametrize("order", [1, 2, 3])
-def test_tet(order):
+def xtest_tet(order):
     celltype = basix.CellType.tetrahedron
     g = sympy_nedelec(celltype, order)
     x = sympy.Symbol("x")

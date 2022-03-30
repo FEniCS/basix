@@ -119,7 +119,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   FiniteElement moment_space = element::create_lagrange(
-      facettype, degree - 1, element::lagrange_variant::equispaced, true);
+      facettype, degree - 1, element::lagrange_variant::legendre, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       moment_space, celltype, tdim, 2 * degree - 1);
   xt::xtensor<double, 3> facet_transforms
@@ -291,7 +291,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
 
   FiniteElement edge_moment_space
       = element::create_lagrange(cell::type::interval, degree - 1,
-                                 element::lagrange_variant::equispaced, true);
+                                 element::lagrange_variant::legendre, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, 2 * degree - 1);
   xt::xtensor<double, 3> edge_transforms

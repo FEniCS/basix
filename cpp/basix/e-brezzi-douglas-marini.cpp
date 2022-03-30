@@ -33,7 +33,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
 
   // Add integral moments on facets
   const FiniteElement facet_moment_space = element::create_lagrange(
-      facettype, degree, element::lagrange_variant::equispaced, true);
+      facettype, degree, element::lagrange_variant::legendre, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, degree * 2);
 

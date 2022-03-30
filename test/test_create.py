@@ -11,7 +11,7 @@ import pytest
     basix.CellType.prism,
     basix.CellType.pyramid,
 ])
-@pytest.mark.parametrize("degree", range(5))
+@pytest.mark.parametrize("degree", range(-1, 5))
 @pytest.mark.parametrize("element, variant", [
     (basix.ElementFamily.P, [basix.LagrangeVariant.gll_isaac]),
     (basix.ElementFamily.RT, []),

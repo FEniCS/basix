@@ -141,6 +141,8 @@ basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
                                            bool discontinuous)
 {
+  if (degree < 0)
+    throw std::runtime_error("Cannot create an element with a negative degree");
   switch (family)
   {
   case element::family::P:
@@ -213,6 +215,8 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::dpc_variant dvariant,
                                            bool discontinuous)
 {
+  if (degree < 0)
+    throw std::runtime_error("Cannot create an element with a negative degree");
   switch (family)
   {
   case element::family::DPC:
@@ -231,6 +235,8 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::lagrange_variant lvariant,
                                            bool discontinuous)
 {
+  if (degree < 0)
+    throw std::runtime_error("Cannot create an element with a negative degree");
   switch (family)
   {
   case element::family::P:
@@ -249,6 +255,8 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::dpc_variant dvariant,
                                            bool discontinuous)
 {
+  if (degree < 0)
+    throw std::runtime_error("Cannot create an element with a negative degree");
   switch (family)
   {
   case element::family::serendipity:

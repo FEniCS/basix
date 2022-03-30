@@ -53,3 +53,8 @@ def test_create_element(cell, degree, element, variant):
         basix.create_element(element, cell, degree, *variant)
     except RuntimeError:
         pass
+
+    try:
+        basix.create_element(element, cell, degree, *variant, True)
+    except RuntimeError:
+        pass

@@ -958,6 +958,7 @@ private:
 /// @param[in] highest_complete_degree The highest degree n such that a
 /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
 /// element
+/// @return A custom finite element
 FiniteElement create_custom_element(
     cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,

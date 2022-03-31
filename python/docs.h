@@ -515,7 +515,7 @@ highest_complete_degree : int
 Returns
 =======
 basix.finite_element.FiniteElement
-    A finite element
+    A custom finite element
 )";
 
 const std::string create_element__family_cell_degree_discontinuous = R"(

@@ -1,9 +1,12 @@
+"""Functions to directly wrap Basix elements in UFL."""
+
 from ufl.finiteelement.finiteelementbase import FiniteElementBase
 import basix
 
 
 class BasixElement(FiniteElementBase):
     """A wrapper allowing Basix elements to be used with UFL."""
+
     def __init__(self, element):
         super().__init__(
             element.family.name, element.cell_type.name, element.degree, None, tuple(element.value_shape),
@@ -20,10 +23,12 @@ class BasixElement(FiniteElementBase):
         self.basix_element = element
 
     def mapping(self):
+        """Get the map type for this element."""
         return map_type_to_string(self.basix_element.map_type)
 
 
 def map_type_to_string(map_type):
+    """Convert map type to a UFL string."""
     if map_type == basix.MapType.identity:
         return "identity"
     if map_type == basix.MapType.contravariantPiola:
@@ -38,4 +43,5 @@ def map_type_to_string(map_type):
 
 
 def compute_hash(*items):
+    """Compute a hash of a list of items."""
     return hash("__".join([f"{i}" for i in items]))

@@ -355,6 +355,23 @@ basix::element::make_discontinuous(
   return {x_out, M_out, entity_transformations_out};
 }
 //-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_custom_element(
+    cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_degree,
+    int highest_complete_degree)
+{
+  return basix::FiniteElement(element::family::custom, cell_type, degree,
+                              value_shape, wcoeffs, entity_transformations, x,
+                              M, map_type, discontinuous, highest_degree,
+                              highest_complete_degree);
+}
+
+//-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,

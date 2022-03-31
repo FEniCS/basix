@@ -934,6 +934,40 @@ private:
   bool _interpolation_is_identity;
 };
 
+/// Create a custom finite element
+/// @param[in] cell_type The cell type
+/// @param[in] degree The degree of the element
+/// @param[in] value_shape The value shape of the element
+/// @param[in] wcoeffs Matrices for the kth value index containing the
+/// expansion coefficients defining a polynomial basis spanning the
+/// polynomial space for this element
+/// @param[in] entity_transformations Entity transformations
+/// representing the effect rotating and reflecting subentities of the
+/// cell has on the DOFs.
+/// @param[in] x Interpolation points. Shape is (tdim, entity index,
+/// point index, dim)
+/// @param[in] M The interpolation matrices. Indices are (tdim, entity
+/// index, dof, vs, point_index)
+/// @param[in] map_type The type of map to be used to map values from
+/// the reference to a cell
+/// @param[in] discontinuous Indicates whether or not this is the
+/// discontinuous version of the element
+/// @param[in] highest_degree The lowest degree n such that the highest degree
+/// polynomial in this element is contained in a Lagrange (or vector Lagrange)
+/// element of degree n
+/// @param[in] highest_complete_degree The highest degree n such that a
+/// Lagrange (or vector Lagrange) element of degree n is a subspace of this
+/// element
+FiniteElement create_custom_element(
+    cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_degree,
+    int highest_complete_degree);
+
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on

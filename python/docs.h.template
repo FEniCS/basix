@@ -266,6 +266,28 @@ Returns
 {{finite-element.h > get_tensor_product_representation > return : List[Tuple[List[basix.FiniteElement], List[int]]]}}
 )";
 
+{{DOCTYPE}} create_custom_element = R"(
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > cell_type : basix.CellType}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > degree : int}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > value_shape : List[int]}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > wcoeffs : TODO}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > entity_transformations : dict}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > x : TODO}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > M : TODO}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > map_type : basix.MapType}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > discontinuous : bool}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > highest_degree : int}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, entity_transformations, x, M, map_type, discontinuous, highest_degree, highest_complete_degree) > param > highest_complete_degree : int}}
+
+Returns
+=======
+{{finite-element.h > create_element(family, cell, degree, discontinuous) > return : basix.finite_element.FiniteElement}}
+)";
+
 {{DOCTYPE}} create_element__family_cell_degree_discontinuous = R"(
 {{finite-element.h > create_element(family, cell, degree, discontinuous) > doc}}
 

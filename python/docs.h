@@ -493,15 +493,15 @@ cell_type : basix.CellType
     The cell type
 degree : int
     The degree of the element
-value_shape : TODO
+value_shape : List[int]
     The value shape of the element
-wcoeffs : TODO
+wcoeffs : numpy.ndarray[numpy.float64]
     Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element
-entity_transformations : TODO
+entity_transformations : dict
     Entity transformations representing the effect rotating and reflecting subentities of the cell has on the DOFs.
-x : TODO
+x : List[List[numpy.ndarray[numpy.float64]]]
     Interpolation points. Shape is (tdim, entity index, point index, dim)
-M : TODO
+M : List[List[numpy.ndarray[numpy.float64]]]
     The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index)
 map_type : basix.MapType
     The type of map to be used to map values from the reference to a cell

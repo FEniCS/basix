@@ -762,6 +762,22 @@ public:
   /// @return The dual matrix
   const xt::xtensor<double, 2>& dual_matrix() const;
 
+  /// Get the coefficients that define the polynomial set in terms of the
+  /// orthonormal polynomials.
+  ///
+  /// These coefficients are only stored for custom elements. This function will
+  /// throw an exception if called on a non-custom element
+  const xt::xtensor<double, 2>& wcoeffs() const;
+
+  /// Get the interpolation points for each subentity.
+  const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x() const;
+
+  /// Get the interpolation matrices for each subentity.
+  ///
+  /// These matrices are only stored for custom elements. This function will
+  /// throw an exception if called on a non-custom element
+  const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M() const;
+
   /// Get the matrix of coefficients.
   ///
   /// This is the matrix @f$C@f$, as described in the documentation of
@@ -932,6 +948,13 @@ private:
 
   // Is the interpolation matrix an identity?
   bool _interpolation_is_identity;
+
+  // The coefficients that define the polynomial set in terms of the orthonormal
+  // polynomials
+  xt::xtensor<double, 2> _wcoeffs;
+
+  // Interpolation matrices for each entity
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
 };
 
 /// Create a custom finite element

@@ -9,7 +9,14 @@ class BasixElement(FiniteElementBase):
             element.family.name, element.cell_type.name, element.degree, None, tuple(element.value_shape),
             tuple(element.value_shape))
 
-        self._repr = f"Basix element ({element.family.name})"
+        if element.family == basix.ElementFamily.custom:
+            signature = compute_hash(
+                element.cell_type, element.degree, element.value_shape,
+                element.wcoeffs, element.entity_transformations,
+                element.x, element.M, element.map_type, element.discontinuous, element.degree_bounds)
+            self._repr = f"custom Basix element ({signature})"
+        else:
+            self._repr = f"Basix element ({element.family.name})"
         self.basix_element = element
 
     def mapping(self):
@@ -28,3 +35,7 @@ def map_type_to_string(map_type):
     if map_type == basix.MapType.doubleCovariantPiola:
         return "double covariant Piola"
     raise ValueError(f"Unsupported map type: {map_type}")
+
+
+def compute_hash(*items):
+    return hash("__".join([f"{i}" for i in items]))

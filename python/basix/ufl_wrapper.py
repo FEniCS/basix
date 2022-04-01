@@ -1,6 +1,7 @@
 """Functions to directly wrap Basix elements in UFL."""
 
 from ufl.finiteelement.finiteelementbase import FiniteElementBase
+import hashlib
 import basix
 
 
@@ -13,11 +14,7 @@ class BasixElement(FiniteElementBase):
             tuple(element.value_shape))
 
         if element.family == basix.ElementFamily.custom:
-            signature = compute_hash(
-                element.cell_type, element.degree, element.value_shape,
-                element.wcoeffs, element.entity_transformations,
-                element.x, element.M, element.map_type, element.discontinuous, element.degree_bounds)
-            self._repr = f"custom Basix element ({signature})"
+            self._repr = f"custom Basix element ({compute_signature(element)})"
         else:
             self._repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
                           f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
@@ -43,6 +40,24 @@ def map_type_to_string(map_type):
     raise ValueError(f"Unsupported map type: {map_type}")
 
 
-def compute_hash(*items):
-    """Compute a hash of a list of items."""
-    return hash("__".join([f"{i}" for i in items]))
+def compute_signature(element):
+    """Compute a signature of a custom element."""
+    signature = (f"{element.cell_type.name}, {element.degree}, {element.value_shape}, {element.map_type.name}, "
+                 f"{element.discontinuous}, {element.degree_bounds}, ")
+    data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
+    data += "__"
+    for entity in element.x:
+        for points in entity:
+            data = ",".join([f"{i}" for p in points for i in p])
+            data += "_"
+    data += "__"
+    for entity in element.M:
+        for matrices in entity:
+            data = ",".join([f"{i}" for mat in matrices for row in mat for i in row])
+            data += "_"
+    data += "__"
+    for mat in element.entity_transformations.values():
+        data = ",".join([f"{i}" for row in mat for i in row])
+        data += "__"
+    signature += hashlib.sha1(data.encode('utf-8')).hexdigest()
+    return signature

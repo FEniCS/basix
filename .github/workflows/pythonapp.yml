@@ -64,6 +64,7 @@ jobs:
       - name: Build documentation
         if: runner.os == 'Linux'
         run: |
+          pip install https://github.com/FEniCS/ufl.git
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/cpp
           doxygen

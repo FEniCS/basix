@@ -1,3 +1,7 @@
+# Copyright (c) 2022 Matthew Scroggs
+# FEniCS Project
+# SPDX-License-Identifier: MIT
+
 import basix
 import pytest
 

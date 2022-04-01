@@ -484,6 +484,40 @@ List[Tuple[List[basix.FiniteElement], List[int]]]
     The tensor product representation
 )";
 
+const std::string create_custom_element = R"(
+Create a custom finite element
+
+Parameters
+==========
+cell_type : basix.CellType
+    The cell type
+degree : int
+    The degree of the element
+value_shape : List[int]
+    The value shape of the element
+wcoeffs : numpy.ndarray[numpy.float64]
+    Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element
+entity_transformations : dict
+    Entity transformations representing the effect rotating and reflecting subentities of the cell has on the DOFs.
+x : List[List[numpy.ndarray[numpy.float64]]]
+    Interpolation points. Shape is (tdim, entity index, point index, dim)
+M : List[List[numpy.ndarray[numpy.float64]]]
+    The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index)
+map_type : basix.MapType
+    The type of map to be used to map values from the reference to a cell
+discontinuous : bool
+    Indicates whether or not this is the discontinuous version of the element
+highest_degree : int
+    The lowest degree n such that the highest degree polynomial in this element is contained in a Lagrange (or vector Lagrange) element of degree n
+highest_complete_degree : int
+    The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
+
+Returns
+=======
+basix.finite_element.FiniteElement
+    A custom finite element
+)";
+
 const std::string create_element__family_cell_degree_discontinuous = R"(
 Create an element
 

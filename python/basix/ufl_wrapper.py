@@ -19,7 +19,8 @@ class BasixElement(FiniteElementBase):
                 element.x, element.M, element.map_type, element.discontinuous, element.degree_bounds)
             self._repr = f"custom Basix element ({signature})"
         else:
-            self._repr = f"Basix element ({element.family.name})"
+            self._repr = (f"Basix element ({element.family.name}, {element.cell.name}, {element.degree}, "
+                          f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
         self.basix_element = element
 
     def mapping(self):

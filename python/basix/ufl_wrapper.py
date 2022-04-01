@@ -56,7 +56,7 @@ def compute_signature(element):
             data = ",".join([f"{i}" for mat in matrices for row in mat for i in row])
             data += "_"
     data += "__"
-    for mat in element.entity_transformations.values():
+    for mat in element.entity_transformations().values():
         data = ",".join([f"{i}" for row in mat for i in row])
         data += "__"
     signature += hashlib.sha1(data.encode('utf-8')).hexdigest()

@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "cell.h"
+#include "maps.h"
 #include <vector>
 
 /// Functions to transform DOFs in high degree Lagrange spaces
@@ -12,6 +14,14 @@
 /// to rotate and reflect DOF points in Lagrange spaces.
 namespace basix::doftransforms
 {
+
+/// TODO: document
+std::map<cell::type, xt::xtensor<double, 3>> compute_entity_transformations(
+    cell::type cell_type,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
+    maps::type map_type);
 
 /// Reflect the DOFs on an interval
 /// @param degree The number of DOFs on the interval

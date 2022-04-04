@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
+#include "dof-transformations.h"
 #include "e-brezzi-douglas-marini.h"
 #include "e-bubble.h"
 #include "e-crouzeix-raviart.h"
@@ -429,6 +430,21 @@ FiniteElement::FiniteElement(
     {
       num_dofs += M[d][e].shape(0);
       num_points1 += M[d][e].shape(2);
+    }
+  }
+
+  if (cell_type == cell::type::triangle)
+  {
+    // Compute entity transformations
+    auto et = doftransforms::compute_entity_transformations(
+        cell_type, x, M, _coeffs, degree, value_size, map_type);
+
+    for (auto item : _entity_transformations)
+    {
+      if (et.find(item.first) == et.end())
+        throw std::runtime_error("Entity transformation missing");
+      if (!xt::allclose(item.second, et[item.first]))
+        throw std::runtime_error("Entity transformations not equal");
     }
   }
 

@@ -240,6 +240,71 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     }
     return mapinfo;
   }
+  case cell::type::pyramid:
+  {
+    mapinfo_t mapinfo;
+    mapinfo[cell::type::interval] = {};
+    mapinfo[cell::type::triangle] = {};
+    mapinfo[cell::type::quadrilateral] = {};
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({1 - pt[0], pt[1], pt[2]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      mapinfo[cell::type::interval].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({1 - pt[1], pt[0], pt[2]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{0., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+      const double detJ = 1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 1., 0.}, {-1., 0., 0.}, {0., 0., 1.}};
+      mapinfo[cell::type::quadrilateral].push_back(
+          std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({pt[1], pt[0], pt[2]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+      mapinfo[cell::type::quadrilateral].push_back(
+          std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({1 - pt[2] - pt[0], pt[1], pt[0]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{-1., 0., -1.}, {0., 1., 0.}, {1., 0., 0.}};
+      const double detJ = 1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 0., 1.}, {0., 1., 0.}, {-1., 0., -1.}};
+      mapinfo[cell::type::triangle].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({pt[2], pt[1], pt[0]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+      mapinfo[cell::type::triangle].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    return mapinfo;
+  }
   default:
     throw std::runtime_error("Unsupported cell type");
   }

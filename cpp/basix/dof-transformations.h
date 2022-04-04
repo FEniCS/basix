@@ -15,7 +15,14 @@
 namespace basix::doftransforms
 {
 
-/// TODO: document
+/// Compute the entity DOF transformations for an element
+/// @param[in] x Interpolation points for the element
+/// @param[in] M Interpolation matrix fot the element
+/// @param[in] coeffs The coefficients that define the basis functions of the
+/// element in terms of the orthonormal basis
+/// @param[in] degree The degree of the element
+/// @param[in] vs The value size of the element
+/// @param[in] map_type The map type used by the element
 std::map<cell::type, xt::xtensor<double, 3>> compute_entity_transformations(
     cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,

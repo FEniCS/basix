@@ -29,16 +29,16 @@ void pull_back(maps::type map_type, xt::xtensor<double, 2>& u,
     u.assign(U);
     return;
   case maps::type::covariantPiola:
-    maps::covariant_piola(u, U, J, detJ, K);
+    maps::covariant_piola(u, U, K, 1.0 / detJ, J);
     return;
   case maps::type::contravariantPiola:
-    maps::contravariant_piola(u, U, J, detJ, K);
+    maps::contravariant_piola(u, U, K, 1.0 / detJ, J);
     return;
   case maps::type::doubleCovariantPiola:
-    maps::double_covariant_piola(u, U, J, detJ, K);
+    maps::double_covariant_piola(u, U, K, 1.0 / detJ, J);
     return;
   case maps::type::doubleContravariantPiola:
-    maps::double_contravariant_piola(u, U, J, detJ, K);
+    maps::double_contravariant_piola(u, U, K, 1.0 / detJ, J);
     return;
   default:
     throw std::runtime_error("Map not implemented");
@@ -54,13 +54,14 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::triangle:
   {
     mapinfo_t mapinfo;
+    mapinfo[cell::type::interval] = {};
     { // scope
-      const xt::xtensor<double, 2> J = {{0., 1.}, {1., 0.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K = {{0., 1.}, {1., 0.}};
       auto map = [](const xt::xtensor<double, 1>& pt) {
         return xt::xtensor<double, 1>({pt[1], pt[0]});
       };
+      const xt::xtensor<double, 2> J = {{0., 1.}, {1., 0.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K = {{0., 1.}, {1., 0.}};
       mapinfo[cell::type::interval].push_back(std::make_tuple(map, J, detJ, K));
     }
     return mapinfo;
@@ -68,14 +69,97 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::quadrilateral:
   {
     mapinfo_t mapinfo;
+    mapinfo[cell::type::interval] = {};
     { // scope
-      const xt::xtensor<double, 2> J = {{-1., 0.}, {0., 1.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K = {{-1., 0.}, {0., 1.}};
       auto map = [](const xt::xtensor<double, 1>& pt) {
         return xt::xtensor<double, 1>({1 - pt[0], pt[1]});
       };
+      const xt::xtensor<double, 2> J = {{-1., 0.}, {0., 1.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K = {{-1., 0.}, {0., 1.}};
       mapinfo[cell::type::interval].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    return mapinfo;
+  }
+  case cell::type::tetrahedron:
+  {
+    mapinfo_t mapinfo;
+    mapinfo[cell::type::interval] = {};
+    mapinfo[cell::type::triangle] = {};
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({pt[0], pt[2], pt[1]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
+      mapinfo[cell::type::interval].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({pt[2], pt[0], pt[1]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{0., 0., 1.}, {1., 0., 0.}, {0., 1., 0.}};
+      const double detJ = 1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 1., 0.}, {0., 0., 1.}, {1., 0., 0.}};
+      mapinfo[cell::type::triangle].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({pt[0], pt[2], pt[1]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
+      mapinfo[cell::type::triangle].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    return mapinfo;
+  }
+  case cell::type::hexahedron:
+  {
+    mapinfo_t mapinfo;
+    mapinfo[cell::type::interval] = {};
+    mapinfo[cell::type::quadrilateral] = {};
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({1 - pt[0], pt[1], pt[1]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      mapinfo[cell::type::interval].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({1 - pt[1], pt[0], pt[2]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{0., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+      const double detJ = 1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 1., 0.}, {-1., 0., 0.}, {0., 0., 1.}};
+      mapinfo[cell::type::quadrilateral].push_back(
+          std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({pt[1], pt[0], pt[2]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+      mapinfo[cell::type::quadrilateral].push_back(
+          std::make_tuple(map, J, detJ, K));
     }
     return mapinfo;
   }
@@ -106,8 +190,8 @@ xt::xtensor<double, 2> compute_transformation(
 
   std::size_t dofstart = 0;
   for (int d = 0; d < tdim; ++d)
-    for (std::size_t i = 0; i < M[0].size(); ++i)
-      dofstart += M[0][i].shape(0);
+    for (std::size_t i = 0; i < M[d].size(); ++i)
+      dofstart += M[d][i].shape(0);
 
   std::size_t total_ndofs = 0;
   for (int d = 0; d <= 3; ++d)
@@ -156,7 +240,7 @@ xt::xtensor<double, 2> compute_transformation(
     xt::xtensor<double, 2> mat = xt::view(imat, xt::all(), i, xt::all());
     xt::xtensor<double, 2> values = xt::view(dof_data, xt::all(), xt::all(), i);
 
-    transform += math::dot(mat, values);
+    transform += xt::transpose(math::dot(mat, values));
   }
   return transform;
 }

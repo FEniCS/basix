@@ -433,9 +433,7 @@ FiniteElement::FiniteElement(
     }
   }
 
-  if (cell_type == cell::type::triangle
-      or cell_type == cell::type::quadrilateral)
-  {
+  { // scope
     // Compute entity transformations
     auto et = doftransforms::compute_entity_transformations(
         cell_type, x, M, _coeffs, degree, value_size, map_type);
@@ -445,7 +443,37 @@ FiniteElement::FiniteElement(
       if (et.find(item.first) == et.end())
         throw std::runtime_error("Entity transformation missing");
       if (!xt::allclose(item.second, et[item.first]))
+      {
+        std::cout << "old = {\n";
+        for (std::size_t i = 0; i < item.second.shape(0); ++i)
+        {
+          std::cout << "  { ";
+          for (std::size_t j = 0; j < item.second.shape(1); ++j)
+          {
+            std::cout << "{ ";
+            for (std::size_t k = 0; k < item.second.shape(2); ++k)
+              std::cout << item.second(i, j, k) << " ";
+            std::cout << "} ";
+          }
+          std::cout << "}\n";
+        }
+        std::cout << "}\n";
+        std::cout << "new = {\n";
+        for (std::size_t i = 0; i < et[item.first].shape(0); ++i)
+        {
+          std::cout << "  { ";
+          for (std::size_t j = 0; j < et[item.first].shape(1); ++j)
+          {
+            std::cout << "{ ";
+            for (std::size_t k = 0; k < et[item.first].shape(2); ++k)
+              std::cout << et[item.first](i, j, k) << " ";
+            std::cout << "} ";
+          }
+          std::cout << "}\n";
+        }
+        std::cout << "}\n";
         throw std::runtime_error("Entity transformations not equal");
+      }
     }
   }
 

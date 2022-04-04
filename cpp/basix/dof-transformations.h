@@ -30,34 +30,4 @@ std::map<cell::type, xt::xtensor<double, 3>> compute_entity_transformations(
     const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
     maps::type map_type);
 
-/// Reflect the DOFs on an interval
-/// @param degree The number of DOFs on the interval
-/// @return A reordering of the numbers 0 to degree-1 representing the
-/// transformation
-std::vector<int> interval_reflection(int degree);
-
-/// Reflect the DOFs on a triangle
-/// @param degree The number of DOFs along one side of the triangle
-/// @return A reordering of the numbers 0 to (degree)*(degree+1)/2-1
-/// representing the transformation
-std::vector<int> triangle_reflection(int degree);
-
-/// Rotate the DOFs on a triangle
-/// @param degree The number of DOFs along one side of the triangle
-/// @return A reordering of the numbers 0 to (degree)*(degree+1)/2-1
-/// representing the transformation
-std::vector<int> triangle_rotation(int degree);
-
-/// Reflect the DOFs on a quadrilateral
-/// @param degree The number of DOFs along one side of the quadrilateral
-/// @return A reordering of the numbers 0 to degree*degree-1 representing the
-/// transformation
-std::vector<int> quadrilateral_reflection(int degree);
-
-/// Rotate the DOFs on a quadrilateral
-/// @param degree The number of DOFs along one side of the quadrilateral
-/// @return A reordering of the numbers 0 to degree*degree-1 representing the
-/// transformation
-std::vector<int> quadrilateral_rotation(int degree);
-
 } // namespace basix::doftransforms

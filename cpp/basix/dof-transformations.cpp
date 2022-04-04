@@ -39,33 +39,30 @@ void pull_back(maps::type map_type, xt::xtensor<double, 2>& u,
   }
 }
 //-----------------------------------------------------------------------------
-std::map<cell::type, xt::xtensor<double, 3>>
-compute_entity_transformations_triangle(
+xt::xtensor<double, 2> compute_transformation(
+    cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
-    maps::type map_type)
+    const xt::xtensor<double, 2>& coeffs, const xt::xtensor<double, 2> J,
+    const double detJ, const xt::xtensor<double, 2> K,
+    const std::function<xt::xtensor<double, 1>(const xt::xtensor<double, 1>&)>
+        map_point,
+    const int degree, const int tdim, const int vs, const maps::type map_type)
 {
-  std::map<cell::type, xt::xtensor<double, 3>> out;
-  if (x[1].size() == 0 or x[1][0].shape(0) == 0)
-  {
-    out[cell::type::interval] = xt::xtensor<double, 3>({1, 0, 0});
-    return out;
-  }
+  if (x[tdim].size() == 0 or x[tdim][0].shape(0) == 0)
+    return xt::xtensor<double, 2>({0, 0});
 
   const xt::xtensor<double, 2>& pts = x[1][0];
   const xt::xtensor<double, 3>& imat = M[1][0];
+
   const std::size_t ndofs = imat.shape(0);
   const std::size_t npts = pts.shape(0);
-  const int psize = polyset::dim(cell::type::triangle, degree);
-
-  std::size_t ptstart = 0;
-  for (std::size_t i = 0; i < x[0].size(); ++i)
-    ptstart += x[0][i].shape(0);
+  const int psize = polyset::dim(cell_type, degree);
 
   std::size_t dofstart = 0;
-  for (std::size_t i = 0; i < M[0].size(); ++i)
-    dofstart += M[0][i].shape(0);
+  for (int d = 0; d < tdim; ++d)
+    for (std::size_t i = 0; i < M[0].size(); ++i)
+      dofstart += M[0][i].shape(0);
 
   std::size_t total_ndofs = 0;
   for (int d = 0; d <= 3; ++d)
@@ -74,12 +71,12 @@ compute_entity_transformations_triangle(
 
   // Map the points to reverse the edge, then tabulate at those points
   xt::xtensor<double, 2> mapped_pts(pts.shape());
-  xt::col(mapped_pts, 0) = xt::col(pts, 1);
-  xt::col(mapped_pts, 1) = xt::col(pts, 0);
+  for (std::size_t p = 0; p < mapped_pts.shape(0); ++p)
+    xt::row(mapped_pts, p) = map_point(xt::row(pts, p));
 
   xt::xtensor<double, 2> polyset_vals
-      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, mapped_pts),
-                 0, xt::all(), xt::all());
+      = xt::view(polyset::tabulate(cell_type, degree, 0, mapped_pts), 0,
+                 xt::all(), xt::all());
   xt::xtensor<double, 3> tabulated_data(
       {npts, total_ndofs, static_cast<std::size_t>(vs)});
 
@@ -93,9 +90,6 @@ compute_entity_transformations_triangle(
   }
 
   // Pull back
-  const xt::xtensor<double, 2> J = {{0., 1.}, {1., 0.}};
-  const double detJ = -1.;
-  const xt::xtensor<double, 2> K = {{0., 1.}, {1., 0.}};
   xt::xtensor<double, 3> pulled_data(tabulated_data.shape());
 
   xt::xtensor<double, 2> temp_data(
@@ -111,15 +105,44 @@ compute_entity_transformations_triangle(
   // Interpolate to calculate coefficients
   xt::xtensor<double, 3> dof_data = xt::view(
       pulled_data, xt::all(), xt::range(dofstart, dofstart + ndofs), xt::all());
-  std::array<std::size_t, 3> sh = {1, ndofs, ndofs};
-  xt::xtensor<double, 3> transform = xt::zeros<double>(sh);
+  xt::xtensor<double, 2> transform = xt::zeros<double>({ndofs, ndofs});
   for (int i = 0; i < vs; ++i)
   {
     xt::xtensor<double, 2> mat = xt::view(imat, xt::all(), i, xt::all());
     xt::xtensor<double, 2> values = xt::view(dof_data, xt::all(), xt::all(), i);
 
-    xt::view(transform, 1, xt::all(), xt::all()) += math::dot(mat, values);
+    transform += math::dot(mat, values);
   }
+  return transform;
+}
+//-----------------------------------------------------------------------------
+std::map<cell::type, xt::xtensor<double, 3>>
+compute_entity_transformations_triangle(
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
+    maps::type map_type)
+{
+  std::map<cell::type, xt::xtensor<double, 3>> out;
+  if (x[1].size() == 0 or x[1][0].shape(0) == 0)
+  {
+    out[cell::type::interval] = xt::xtensor<double, 3>({1, 0, 0});
+    return out;
+  }
+
+  const xt::xtensor<double, 2> J = {{0., 1.}, {1., 0.}};
+  const double detJ = -1.;
+  const xt::xtensor<double, 2> K = {{0., 1.}, {1., 0.}};
+
+  xt::xtensor<double, 2> mat = compute_transformation(
+      cell::type::triangle, x, M, coeffs, J, detJ, K,
+      [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({pt[1], pt[0]});
+      },
+      degree, 1, vs, map_type);
+
+  xt::xtensor<double, 3> transform({1, mat.shape(0), mat.shape(1)});
+  xt::view(transform, 0, xt::all(), xt::all()) = mat;
 
   out[cell::type::interval] = transform;
 
@@ -145,10 +168,6 @@ compute_entity_transformations_quadrilateral(
   const std::size_t ndofs = imat.shape(0);
   const std::size_t npts = pts.shape(0);
   const int psize = polyset::dim(cell::type::quadrilateral, degree);
-
-  std::size_t ptstart = 0;
-  for (std::size_t i = 0; i < x[0].size(); ++i)
-    ptstart += x[0][i].shape(0);
 
   std::size_t dofstart = 0;
   for (std::size_t i = 0; i < M[0].size(); ++i)

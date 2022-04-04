@@ -441,9 +441,13 @@ FiniteElement::FiniteElement(
     for (auto item : _entity_transformations)
     {
       if (et.find(item.first) == et.end())
+      {
+        std::cout << int(item.first) << " missing\n";
         throw std::runtime_error("Entity transformation missing");
+      }
       if (!xt::allclose(item.second, et[item.first]))
       {
+        std::cout << "CELL " << int(item.first) << "\n";
         std::cout << "old = {\n";
         for (std::size_t i = 0; i < item.second.shape(0); ++i)
         {

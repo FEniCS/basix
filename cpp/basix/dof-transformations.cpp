@@ -19,6 +19,18 @@ typedef std::map<
 namespace
 {
 //-----------------------------------------------------------------------------
+int find_first_subentity(cell::type cell_type, cell::type entity_type)
+{
+  const int edim = cell::topological_dimension(entity_type);
+  std::vector<cell::type> entities = cell::subentity_types(cell_type)[edim];
+  for (std::size_t i = 0; i < entities.size(); ++i)
+  {
+    if (entities[i] == entity_type)
+      return i;
+  }
+  throw std::runtime_error("Entity not found");
+}
+//-----------------------------------------------------------------------------
 void pull_back(maps::type map_type, xt::xtensor<double, 2>& u,
                const xt::xtensor<double, 2>& U, const xt::xtensor<double, 2>& J,
                const double detJ, const xt::xtensor<double, 2>& K)
@@ -128,7 +140,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     mapinfo[cell::type::quadrilateral] = {};
     { // scope
       auto map = [](const xt::xtensor<double, 1>& pt) {
-        return xt::xtensor<double, 1>({1 - pt[0], pt[1], pt[1]});
+        return xt::xtensor<double, 1>({1 - pt[0], pt[1], pt[2]});
       };
       const xt::xtensor<double, 2> J
           = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
@@ -163,6 +175,71 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     }
     return mapinfo;
   }
+  case cell::type::prism:
+  {
+    mapinfo_t mapinfo;
+    mapinfo[cell::type::interval] = {};
+    mapinfo[cell::type::triangle] = {};
+    mapinfo[cell::type::quadrilateral] = {};
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({1 - pt[0], pt[1], pt[2]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      mapinfo[cell::type::interval].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({1 - pt[1] - pt[0], pt[0], pt[2]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{-1., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+      const double detJ = 1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 1., 0.}, {-1., -1., 0.}, {0., 0., 1.}};
+      mapinfo[cell::type::triangle].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({pt[1], pt[0], pt[2]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+      mapinfo[cell::type::triangle].push_back(std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({1 - pt[2], pt[1], pt[0]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{0., 0., -1.}, {0., 1., 0.}, {1., 0., 0.}};
+      const double detJ = 1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 0., 1.}, {0., 1., 0.}, {-1., 0., 0.}};
+      mapinfo[cell::type::quadrilateral].push_back(
+          std::make_tuple(map, J, detJ, K));
+    }
+    { // scope
+      auto map = [](const xt::xtensor<double, 1>& pt) {
+        return xt::xtensor<double, 1>({pt[2], pt[1], pt[0]});
+      };
+      const xt::xtensor<double, 2> J
+          = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+      const double detJ = -1.;
+      const xt::xtensor<double, 2> K
+          = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+      mapinfo[cell::type::quadrilateral].push_back(
+          std::make_tuple(map, J, detJ, K));
+    }
+    return mapinfo;
+  }
   default:
     throw std::runtime_error("Unsupported cell type");
   }
@@ -176,13 +253,14 @@ xt::xtensor<double, 2> compute_transformation(
     const double detJ, const xt::xtensor<double, 2> K,
     const std::function<xt::xtensor<double, 1>(const xt::xtensor<double, 1>&)>
         map_point,
-    const int degree, const int tdim, const int vs, const maps::type map_type)
+    const int degree, const int tdim, const int entity, const int vs,
+    const maps::type map_type)
 {
-  if (x[tdim].size() == 0 or x[tdim][0].shape(0) == 0)
+  if (x[tdim].size() == 0 or x[tdim][entity].shape(0) == 0)
     return xt::xtensor<double, 2>({0, 0});
 
-  const xt::xtensor<double, 2>& pts = x[tdim][0];
-  const xt::xtensor<double, 3>& imat = M[tdim][0];
+  const xt::xtensor<double, 2>& pts = x[tdim][entity];
+  const xt::xtensor<double, 3>& imat = M[tdim][entity];
 
   const std::size_t ndofs = imat.shape(0);
   const std::size_t npts = pts.shape(0);
@@ -192,6 +270,8 @@ xt::xtensor<double, 2> compute_transformation(
   for (int d = 0; d < tdim; ++d)
     for (std::size_t i = 0; i < M[d].size(); ++i)
       dofstart += M[d][i].shape(0);
+  for (int i = 0; i < entity; ++i)
+    dofstart += M[tdim][i].shape(0);
 
   std::size_t total_ndofs = 0;
   for (int d = 0; d <= 3; ++d)
@@ -261,13 +341,16 @@ doftransforms::compute_entity_transformations(
   for (auto item : mapinfo)
   {
     const int tdim = cell::topological_dimension(item.first);
-    const std::size_t ndofs = M[tdim].size() == 0 ? 0 : M[tdim][0].shape(0);
+    const int entity = find_first_subentity(cell_type, item.first);
+    const std::size_t ndofs
+        = M[tdim].size() == 0 ? 0 : M[tdim][entity].shape(0);
     xt::xtensor<double, 3> transform({item.second.size(), ndofs, ndofs});
     for (std::size_t i = 0; i < item.second.size(); ++i)
     {
       auto [map, J, detJ, K] = item.second[i];
-      xt::view(transform, i, xt::all(), xt::all()) = compute_transformation(
-          cell_type, x, M, coeffs, J, detJ, K, map, degree, tdim, vs, map_type);
+      xt::view(transform, i, xt::all(), xt::all())
+          = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, map,
+                                   degree, tdim, entity, vs, map_type);
     }
     out[item.first] = transform;
   }

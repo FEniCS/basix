@@ -906,8 +906,9 @@ FiniteElement create_legendre(cell::type celltype, int degree,
     x[dim].resize(topology[dim].size());
     if (dim < tdim)
     {
-      entity_transformations[cell::sub_entity_type(celltype, dim, 0)]
-          = xt::xtensor<double, 3>({dim, 0, 0});
+      if (dim > 0)
+        entity_transformations[cell::sub_entity_type(celltype, dim, 0)]
+            = xt::xtensor<double, 3>({dim, 0, 0});
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
         x[dim][e] = xt::xtensor<double, 2>({0, tdim});
@@ -969,8 +970,9 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     x[dim].resize(topology[dim].size());
     if (dim < tdim)
     {
-      entity_transformations[cell::sub_entity_type(celltype, dim, 0)]
-          = xt::xtensor<double, 3>({dim, 0, 0});
+      if (dim > 0)
+        entity_transformations[cell::sub_entity_type(celltype, dim, 0)]
+            = xt::xtensor<double, 3>({dim, 0, 0});
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
         x[dim][e] = xt::xtensor<double, 2>({0, tdim});

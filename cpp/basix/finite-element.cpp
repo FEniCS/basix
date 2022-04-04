@@ -433,7 +433,8 @@ FiniteElement::FiniteElement(
     }
   }
 
-  if (cell_type == cell::type::triangle)
+  if (cell_type == cell::type::triangle
+      or cell_type == cell::type::quadrilateral)
   {
     // Compute entity transformations
     auto et = doftransforms::compute_entity_transformations(

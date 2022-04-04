@@ -16,6 +16,7 @@ namespace basix::doftransforms
 {
 
 /// Compute the entity DOF transformations for an element
+/// @param[in] cell_type The cell type
 /// @param[in] x Interpolation points for the element
 /// @param[in] M Interpolation matrix fot the element
 /// @param[in] coeffs The coefficients that define the basis functions of the

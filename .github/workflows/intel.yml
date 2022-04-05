@@ -54,5 +54,6 @@ jobs:
 
       - name: Run units tests
         run: |
+          pip install pytest-xdist
           . /opt/intel/oneapi/setvars.sh
           pytest -v -n auto --durations 20 test/

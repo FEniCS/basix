@@ -415,9 +415,10 @@ doftransforms::compute_entity_transformations(
     for (std::size_t i = 0; i < item.second.size(); ++i)
     {
       auto [map, J, detJ, K] = item.second[i];
-      xt::view(transform, i, xt::all(), xt::all())
-          = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, map,
-                                   degree, tdim, entity, vs, map_type);
+      auto t = xt::view(transform, i, xt::all(), xt::all());
+      auto t2 = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, map,
+                                       degree, tdim, entity, vs, map_type);
+      t.assign(t2);
     }
     out[item.first] = transform;
   }

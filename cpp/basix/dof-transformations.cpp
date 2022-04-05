@@ -9,11 +9,12 @@
 #include <xtensor/xview.hpp>
 
 using namespace basix;
-typedef std::vector<std::tuple<
-    std::function<xt::xtensor<double, 1>(const xt::xtensor<double, 1>&)>,
-    xt::xtensor<double, 2>, double, xt::xtensor<double, 2>>>
-    mapinfo_vector_t;
-typedef std::map<cell::type, mapinfo_vector_t> mapinfo_t;
+typedef std::map<
+    cell::type,
+    std::vector<std::tuple<
+        std::function<xt::xtensor<double, 1>(const xt::xtensor<double, 1>&)>,
+        xt::xtensor<double, 2>, double, xt::xtensor<double, 2>>>>
+    mapinfo_t;
 
 namespace
 {
@@ -67,7 +68,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::triangle:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = mapinfo_vector_t();
+    mapinfo[cell::type::interval] = {};
     { // scope
       auto map = [](const xt::xtensor<double, 1>& pt) {
         return xt::xtensor<double, 1>({pt[1], pt[0]});
@@ -82,7 +83,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::quadrilateral:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = mapinfo_vector_t();
+    mapinfo[cell::type::interval] = {};
     { // scope
       auto map = [](const xt::xtensor<double, 1>& pt) {
         return xt::xtensor<double, 1>({1 - pt[0], pt[1]});
@@ -97,8 +98,8 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::tetrahedron:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = mapinfo_vector_t();
-    mapinfo[cell::type::triangle] = mapinfo_vector_t();
+    mapinfo[cell::type::interval] = {};
+    mapinfo[cell::type::triangle] = {};
     { // scope
       auto map = [](const xt::xtensor<double, 1>& pt) {
         return xt::xtensor<double, 1>({pt[0], pt[2], pt[1]});
@@ -137,8 +138,8 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::hexahedron:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = mapinfo_vector_t();
-    mapinfo[cell::type::quadrilateral] = mapinfo_vector_t();
+    mapinfo[cell::type::interval] = {};
+    mapinfo[cell::type::quadrilateral] = {};
     { // scope
       auto map = [](const xt::xtensor<double, 1>& pt) {
         return xt::xtensor<double, 1>({1 - pt[0], pt[1], pt[2]});
@@ -179,9 +180,9 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::prism:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = mapinfo_vector_t();
-    mapinfo[cell::type::triangle] = mapinfo_vector_t();
-    mapinfo[cell::type::quadrilateral] = mapinfo_vector_t();
+    mapinfo[cell::type::interval] = {};
+    mapinfo[cell::type::triangle] = {};
+    mapinfo[cell::type::quadrilateral] = {};
     { // scope
       auto map = [](const xt::xtensor<double, 1>& pt) {
         return xt::xtensor<double, 1>({1 - pt[0], pt[1], pt[2]});
@@ -244,9 +245,9 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::pyramid:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = mapinfo_vector_t();
-    mapinfo[cell::type::triangle] = mapinfo_vector_t();
-    mapinfo[cell::type::quadrilateral] = mapinfo_vector_t();
+    mapinfo[cell::type::interval] = {};
+    mapinfo[cell::type::triangle] = {};
+    mapinfo[cell::type::quadrilateral] = {};
     { // scope
       auto map = [](const xt::xtensor<double, 1>& pt) {
         return xt::xtensor<double, 1>({1 - pt[0], pt[1], pt[2]});

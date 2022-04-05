@@ -1,13 +1,9 @@
 name: Intel compilers
 
 on:
-  schedule:
-    # '*' is a special character in YAML, so string must be quoted
-    - cron: "0 2 * * TUE"
-  pull_request:
+  push:
     branches:
-      - main  
-  workflow_dispatch: ~
+      - "**" 
 
 jobs:
   build:
@@ -18,18 +14,10 @@ jobs:
       run:
         shell: bash
 
-    strategy:
-      matrix:
-        include:
-          - compiler: "LLVM-based"
-            c_compiler: icx
-            cxx_compiler: icpx
-
     env:
-      CC: ${{ matrix.c_compiler }}
-      CXX: ${{ matrix.cxx_compiler }}
+      CC: icx
+      CXX: icpx
       DEBIAN_FRONTEND: noninteractive
-
 
     steps:
       - uses: actions/checkout@v2

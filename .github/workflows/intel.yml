@@ -56,4 +56,5 @@ jobs:
         run: |
           pip install pytest-xdist
           . /opt/intel/oneapi/setvars.sh
-          pytest -v -n auto --durations 20 test/
+          pytest -v test/
+          # pytest -v -n auto --durations 20 test/

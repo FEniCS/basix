@@ -1,9 +1,13 @@
 name: Intel compilers
 
 on:
-  push:
+  schedule:
+    # '*' is a special character in YAML, so string must be quoted
+    - cron: "0 2 * * TUE"
+  pull_request:
     branches:
-      - "**" 
+      - main  
+  workflow_dispatch: ~
 
 jobs:
   build:

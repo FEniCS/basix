@@ -52,14 +52,6 @@ jobs:
           . /opt/intel/oneapi/setvars.sh
           pip install .[test]
 
-      - name: Run units tests ?
-        run: |
-          pip install pytest-xdist
-
-      - name: Run units tests ??
-        run: |
-          . /opt/intel/oneapi/setvars.sh
-
       - name: Run units tests
         run: |
           . /opt/intel/oneapi/setvars.sh

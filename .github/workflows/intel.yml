@@ -11,16 +11,23 @@ on:
 
 jobs:
   build:
-    name: Build and test
+    name: Build and test (
     runs-on: ubuntu-latest
 
     defaults:
       run:
         shell: bash
 
+    strategy:
+      matrix:
+        include:
+          - compiler: "LLVM-based"
+            c_compiler: icx
+            cxx_compiler: icpx
+
     env:
-      CC: icx
-      CXX: icpx
+      CC: ${{ matrix.c_compiler }}
+      CXX: ${{ matrix.cxx_compiler }}
       DEBIAN_FRONTEND: noninteractive
 
     steps:

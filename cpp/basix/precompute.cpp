@@ -56,6 +56,8 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
         }
       }
     }
+    if (xt::allclose(max_eval, 0))
+      throw std::runtime_error("Singular matrix");
 
     xt::col(permuted_matrix, i) = xt::col(matrix, col);
     perm[i] = col;

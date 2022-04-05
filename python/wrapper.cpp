@@ -453,7 +453,6 @@ Interface to the Basix C++ library.
       "create_custom_element",
       [](cell::type cell_type, int degree, const std::vector<int>& value_shape,
          const py::array_t<double, py::array::c_style>& wcoeffs,
-         const py::dict entity_transformations,
          const std::vector<
              std::vector<py::array_t<double, py::array::c_style>>>& x,
          const std::vector<
@@ -464,15 +463,6 @@ Interface to the Basix C++ library.
           throw std::runtime_error("x has the wrong size");
         if (M.size() != 4)
           throw std::runtime_error("M has the wrong size");
-
-        std::map<cell::type, xt::xtensor<double, 3>> _et;
-        for (auto item : entity_transformations)
-        {
-          cell::type ct = item.first.cast<cell::type>();
-          py::array_t<double, py::array::c_style> mat
-              = item.second.cast<py::array>();
-          _et[ct] = adapt_x(mat);
-        }
 
         xt::xtensor<double, 2> _wco = adapt_x(wcoeffs);
 
@@ -495,7 +485,7 @@ Interface to the Basix C++ library.
           _vs[i] = static_cast<std::size_t>(value_shape[i]);
 
         return basix::create_custom_element(
-            cell_type, degree, _vs, _wco, _et, _x, _M, map_type, discontinuous,
+            cell_type, degree, _vs, _wco, _x, _M, map_type, discontinuous,
             highest_degree, highest_complete_degree);
       },
       basix::docstring::create_custom_element.c_str());

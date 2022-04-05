@@ -33,18 +33,14 @@ namespace element
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
 /// index, dof, vs, point_index)
-/// @param[in] entity_transformations Entity transformations
 /// @param[in] tdim The topological dimension of the cell the element is
 /// defined on
 /// @param[in] value_size The value size of the element
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 3>>, 4>,
-           std::map<cell::type, xt::xtensor<double, 3>>>
-make_discontinuous(
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
-    int tdim, int value_size);
+           std::array<std::vector<xt::xtensor<double, 3>>, 4>>
+make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+                   const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+                   int tdim, int value_size);
 
 } // namespace element
 
@@ -205,9 +201,6 @@ public:
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
   /// polynomial space for this element
-  /// @param[in] entity_transformations Entity transformations
-  /// representing the effect rotating and reflecting subentities of the
-  /// cell has on the DOFs.
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
@@ -230,8 +223,6 @@ public:
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape,
       const xt::xtensor<double, 2>& wcoeffs,
-      const std::map<cell::type, xt::xtensor<double, 3>>&
-          entity_transformations,
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
       const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
       maps::type map_type, bool discontinuous, int highest_degree,
@@ -964,9 +955,6 @@ private:
 /// @param[in] wcoeffs Matrices for the kth value index containing the
 /// expansion coefficients defining a polynomial basis spanning the
 /// polynomial space for this element
-/// @param[in] entity_transformations Entity transformations
-/// representing the effect rotating and reflecting subentities of the
-/// cell has on the DOFs.
 /// @param[in] x Interpolation points. Shape is (tdim, entity index,
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
@@ -986,7 +974,6 @@ FiniteElement create_custom_element(
     cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
-    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_degree,

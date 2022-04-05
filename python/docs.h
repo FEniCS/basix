@@ -497,8 +497,6 @@ value_shape : List[int]
     The value shape of the element
 wcoeffs : numpy.ndarray[numpy.float64]
     Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element
-entity_transformations : dict
-    Entity transformations representing the effect rotating and reflecting subentities of the cell has on the DOFs.
 x : List[List[numpy.ndarray[numpy.float64]]]
     Interpolation points. Shape is (tdim, entity index, point index, dim)
 M : List[List[numpy.ndarray[numpy.float64]]]

@@ -37,9 +37,6 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, degree * 2);
 
-  const xt::xtensor<double, 3> facet_transforms
-      = moments::create_normal_moment_dof_transformations(facet_moment_space);
-
   // Add integral moments on interior
   if (degree > 1)
   {
@@ -52,30 +49,13 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  switch (tdim)
-  {
-  case 2:
-    entity_transformations[cell::type::interval] = facet_transforms;
-    break;
-  case 3:
-    entity_transformations[cell::type::interval]
-        = xt::xtensor<double, 3>({1, 0, 0});
-    entity_transformations[cell::type::triangle] = facet_transforms;
-    break;
-  default:
-    throw std::runtime_error("Invalid topological dimension.");
-  }
-
   if (discontinuous)
   {
-    std::tie(x, M, entity_transformations)
-        = element::make_discontinuous(x, M, entity_transformations, tdim, tdim);
+    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
 
-  return FiniteElement(element::family::BDM, celltype, degree, {tdim},
-                       xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::contravariantPiola, discontinuous, degree,
-                       degree);
+  return FiniteElement(
+      element::family::BDM, celltype, degree, {tdim}, xt::eye<double>(ndofs), x,
+      M, maps::type::contravariantPiola, discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------

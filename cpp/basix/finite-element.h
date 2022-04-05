@@ -913,7 +913,7 @@ private:
   // [1]: highest polynomial degree
   std::array<int, 2> _degree_bounds;
 
-  // Tensor pr  oduct representation
+  // Tensor product representation
   // Entries of tuple are (list of elements on an interval, permutation
   // of DOF numbers)
   // @todo: For vector-valued elements, a tensor product type and a

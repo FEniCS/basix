@@ -30,7 +30,6 @@ jobs:
       CXX: ${{ matrix.cxx_compiler }}
       DEBIAN_FRONTEND: noninteractive
 
-
     steps:
       - uses: actions/checkout@v2
 

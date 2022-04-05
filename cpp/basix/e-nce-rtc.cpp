@@ -122,8 +122,6 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
       facettype, degree - 1, element::lagrange_variant::equispaced, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       moment_space, celltype, tdim, 2 * degree - 1);
-  xt::xtensor<double, 3> facet_transforms
-      = moments::create_normal_moment_dof_transformations(moment_space);
 
   // Add integral moments on interior
   if (degree > 1)
@@ -136,28 +134,14 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  if (tdim == 2)
-  {
-    entity_transformations[cell::type::interval] = facet_transforms;
-  }
-  else if (tdim == 3)
-  {
-    entity_transformations[cell::type::interval]
-        = xt::xtensor<double, 3>({1, 0, 0});
-    entity_transformations[cell::type::quadrilateral] = facet_transforms;
-  }
-
   if (discontinuous)
   {
-    std::tie(x, M, entity_transformations)
-        = element::make_discontinuous(x, M, entity_transformations, tdim, tdim);
+    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, wcoeffs,
-                       entity_transformations, x, M,
-                       maps::type::contravariantPiola, discontinuous, degree,
-                       degree - 1);
+                       x, M, maps::type::contravariantPiola, discontinuous,
+                       degree, degree - 1);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_nce(cell::type celltype, int degree,
@@ -294,11 +278,8 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
                                  element::lagrange_variant::equispaced, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, 2 * degree - 1);
-  xt::xtensor<double, 3> edge_transforms
-      = moments::create_tangent_moment_dof_transformations(edge_moment_space);
 
   // Add integral moments on interior
-  xt::xtensor<double, 3> face_transforms;
   if (degree > 1)
   {
     // Face integral moment
@@ -309,9 +290,6 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
 
     if (tdim == 3)
     {
-      face_transforms
-          = moments::create_dot_moment_dof_transformations(moment_space);
-
       // Interior integral moment
       std::tie(x[3], M[3]) = moments::make_dot_integral_moments(
           element::create_rtc(cell::type::hexahedron, degree - 1, true),
@@ -322,31 +300,13 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-
-  entity_transformations[cell::type::interval] = edge_transforms;
-
-  if (tdim == 3)
-  {
-    if (degree == 1)
-    {
-      entity_transformations[cell::type::quadrilateral]
-          = xt::xtensor<double, 3>({2, 0, 0});
-    }
-    else
-    {
-      entity_transformations[cell::type::quadrilateral] = face_transforms;
-    }
-  }
-
   if (discontinuous)
   {
-    std::tie(x, M, entity_transformations)
-        = element::make_discontinuous(x, M, entity_transformations, tdim, tdim);
+    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, wcoeffs,
-                       entity_transformations, x, M, maps::type::covariantPiola,
-                       discontinuous, degree, degree - 1);
+                       x, M, maps::type::covariantPiola, discontinuous, degree,
+                       degree - 1);
 }
 //-----------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
+#include "dof-transformations.h"
 #include "e-brezzi-douglas-marini.h"
 #include "e-bubble.h"
 #include "e-crouzeix-raviart.h"
@@ -297,13 +298,11 @@ basix::FiniteElement basix::create_element(element::family family,
 }
 //-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 3>>, 4>,
-           std::map<cell::type, xt::xtensor<double, 3>>>
+           std::array<std::vector<xt::xtensor<double, 3>>, 4>>
 basix::element::make_discontinuous(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
-    int tdim, int value_size)
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M, int tdim,
+    int value_size)
 {
   std::size_t npoints = 0;
   std::size_t Mshape0 = 0;
@@ -316,7 +315,6 @@ basix::element::make_discontinuous(
     }
   }
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations_out;
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
 
@@ -345,30 +343,21 @@ basix::element::make_discontinuous(
   x_out[tdim].push_back(new_x);
   M_out[tdim].push_back(new_M);
 
-  for (auto it = entity_transformations.begin();
-       it != entity_transformations.end(); ++it)
-  {
-    entity_transformations_out[it->first]
-        = xt::xtensor<double, 3>({it->second.shape(0), 0, 0});
-  }
-
-  return {x_out, M_out, entity_transformations_out};
+  return {x_out, M_out};
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
     cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
-    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_degree,
     int highest_complete_degree)
 {
-  return basix::FiniteElement(element::family::custom, cell_type, degree,
-                              value_shape, wcoeffs, entity_transformations, x,
-                              M, map_type, discontinuous, highest_degree,
-                              highest_complete_degree);
+  return basix::FiniteElement(
+      element::family::custom, cell_type, degree, value_shape, wcoeffs, x, M,
+      map_type, discontinuous, highest_degree, highest_complete_degree);
 }
 
 //-----------------------------------------------------------------------------
@@ -376,7 +365,6 @@ FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
-    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_degree,
@@ -387,8 +375,7 @@ FiniteElement::FiniteElement(
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
-      _map_type(map_type), _entity_transformations(entity_transformations),
-      _x(x), _discontinuous(discontinuous),
+      _map_type(map_type), _x(x), _discontinuous(discontinuous),
       _degree_bounds({highest_complete_degree, highest_degree}),
       _tensor_factors(tensor_factors)
 {
@@ -432,7 +419,8 @@ FiniteElement::FiniteElement(
     }
   }
 
-  // Copy data into old _matM matrix
+  _entity_transformations = doftransforms::compute_entity_transformations(
+      cell_type, x, M, _coeffs, degree, value_size, map_type);
 
   _matM = xt::zeros<double>({num_dofs, value_size * num_points1});
   auto Mview = xt::reshape_view(_matM, {num_dofs, value_size, num_points1});

@@ -50,28 +50,15 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
     xt::row(x[tdim - 1][f], 0) = xt::mean(v, 0);
   }
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  if (celltype == cell::type::triangle)
-  {
-    entity_transformations[cell::type::interval] = {{{1.}}};
-  }
-  else if (celltype == cell::type::tetrahedron)
-  {
-    entity_transformations[cell::type::interval]
-        = xt::xtensor<double, 3>({1, 0, 0});
-    entity_transformations[cell::type::triangle] = {{{1}}, {{1}}};
-  }
-
   M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1}));
 
   if (discontinuous)
   {
-    std::tie(x, M, entity_transformations)
-        = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
+    std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
   }
 
   return FiniteElement(element::family::CR, celltype, 1, {1},
-                       xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, discontinuous, degree, degree);
+                       xt::eye<double>(ndofs), x, M, maps::type::identity,
+                       discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------

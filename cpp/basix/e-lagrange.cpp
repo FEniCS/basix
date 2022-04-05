@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "e-lagrange.h"
-#include "dof-transformations.h"
 #include "lattice.h"
 #include "maps.h"
 #include "moments.h"
@@ -114,37 +113,9 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   M[tdim].push_back(xt::xtensor<double, 3>(s));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-
-  // Entity transformations for edges
-  if (tdim > 1)
-  {
-    const std::array<std::size_t, 3> shape = {1, 0, 0};
-    xt::xtensor<double, 3> et = xt::zeros<double>(shape);
-    entity_transformations[cell::type::interval] = et;
-  }
-
-  // Entity transformations for triangular faces
-  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    const std::array<std::size_t, 3> shape = {2, 0, 0};
-    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
-    entity_transformations[cell::type::triangle] = ft;
-  }
-
-  // Entity transformations for quadrilateral faces
-  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    const std::array<std::size_t, 3> shape = {2, 0, 0};
-    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
-    entity_transformations[cell::type::quadrilateral] = ft;
-  }
-
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, true, degree, degree, {}, variant);
+                       xt::eye<double>(ndofs), x, M, maps::type::identity, true,
+                       degree, degree, {}, variant);
 }
 //----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -427,7 +398,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
   }
 
   // DOF transformation don't yet work on this element, so throw runtime error
-  // is trying to make continuous version
+  // if trying to make continuous version
   if (!discontinuous)
   {
     throw std::runtime_error("Continuous VTK element not yet supported.");
@@ -840,41 +811,14 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
   }
   }
 
-  // Initialise empty transformations, as these will be removed anyway when the
-  // discontinuous element is made
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  // Entity transformations for edges
-  if (tdim > 1)
-  {
-    entity_transformations[cell::type::interval]
-        = xt::xtensor<double, 3>({1, 0, 0});
-  }
-
-  // Entity transformations for triangular faces
-  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    entity_transformations[cell::type::triangle]
-        = xt::xtensor<double, 3>({2, 0, 0});
-  }
-
-  // Entity transformations for quadrilateral faces
-  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    entity_transformations[cell::type::quadrilateral]
-        = xt::xtensor<double, 3>({2, 0, 0});
-  }
-
   if (discontinuous)
   {
-    std::tie(x, M, entity_transformations)
-        = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
+    std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
   }
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, discontinuous, degree, degree);
+                       xt::eye<double>(ndofs), x, M, maps::type::identity,
+                       discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------
 FiniteElement create_legendre(cell::type celltype, int degree,
@@ -890,7 +834,6 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
 
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  celltype, degree * 2);
@@ -906,8 +849,6 @@ FiniteElement create_legendre(cell::type celltype, int degree,
     x[dim].resize(topology[dim].size());
     if (dim < tdim)
     {
-      entity_transformations[cell::sub_entity_type(celltype, dim, 0)]
-          = xt::xtensor<double, 3>({dim, 0, 0});
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
         x[dim][e] = xt::xtensor<double, 2>({0, tdim});
@@ -921,8 +862,8 @@ FiniteElement create_legendre(cell::type celltype, int degree,
     xt::view(M[tdim][0], i, 0, xt::all()) = xt::col(phi, i) * wts;
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, discontinuous, degree, degree, {},
+                       xt::eye<double>(ndofs), x, M, maps::type::identity,
+                       discontinuous, degree, degree, {},
                        element::lagrange_variant::legendre);
 }
 //-----------------------------------------------------------------------------
@@ -953,7 +894,6 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
 
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  celltype, degree * 2);
@@ -969,8 +909,6 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     x[dim].resize(topology[dim].size());
     if (dim < tdim)
     {
-      entity_transformations[cell::sub_entity_type(celltype, dim, 0)]
-          = xt::xtensor<double, 3>({dim, 0, 0});
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
         x[dim][e] = xt::xtensor<double, 2>({0, tdim});
@@ -1018,10 +956,9 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     }
   }
 
-  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs,
-                       entity_transformations, x, M, maps::type::identity,
-                       discontinuous, degree, degree, {},
-                       element::lagrange_variant::unset,
+  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
+                       M, maps::type::identity, discontinuous, degree, degree,
+                       {}, element::lagrange_variant::unset,
                        element::dpc_variant::legendre);
 }
 //-----------------------------------------------------------------------------
@@ -1233,12 +1170,11 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
     x[0].push_back(xt::zeros<double>({1, 0}));
     M[0].push_back({{{1}}});
-    std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
     xt::xtensor<double, 2> wcoeffs = {{1}};
 
     return FiniteElement(element::family::P, cell::type::point, 0, {}, wcoeffs,
-                         entity_transformations, x, M, maps::type::identity,
-                         discontinuous, degree, degree);
+                         x, M, maps::type::identity, discontinuous, degree,
+                         degree);
   }
 
   if (variant == element::lagrange_variant::unset)
@@ -1355,72 +1291,17 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     }
   }
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-
-  // Entity transformations for edges
-  if (tdim > 1)
-  {
-    const std::vector<int> edge_ref
-        = doftransforms::interval_reflection(degree - 1);
-    const std::array<std::size_t, 3> shape
-        = {1, edge_ref.size(), edge_ref.size()};
-    xt::xtensor<double, 3> et = xt::zeros<double>(shape);
-    for (std::size_t i = 0; i < edge_ref.size(); ++i)
-      et(0, i, edge_ref[i]) = 1;
-    entity_transformations[cell::type::interval] = et;
-  }
-
-  // Entity transformations for triangular faces
-  if (celltype == cell::type::tetrahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    const std::vector<int> face_rot
-        = doftransforms::triangle_rotation(degree - 2);
-    const std::vector<int> face_ref
-        = doftransforms::triangle_reflection(degree - 2);
-    const std::array<std::size_t, 3> shape
-        = {2, face_rot.size(), face_rot.size()};
-    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
-    for (std::size_t i = 0; i < face_rot.size(); ++i)
-    {
-      ft(0, i, face_rot[i]) = 1;
-      ft(1, i, face_ref[i]) = 1;
-    }
-    entity_transformations[cell::type::triangle] = ft;
-  }
-
-  // Entity transformations for quadrilateral faces
-  if (celltype == cell::type::hexahedron or celltype == cell::type::prism
-      or celltype == cell::type::pyramid)
-  {
-    const std::vector<int> face_rot
-        = doftransforms::quadrilateral_rotation(degree - 1);
-    const std::vector<int> face_ref
-        = doftransforms::quadrilateral_reflection(degree - 1);
-    const std::array<std::size_t, 3> shape
-        = {2, face_rot.size(), face_rot.size()};
-    xt::xtensor<double, 3> ft = xt::zeros<double>(shape);
-    for (std::size_t i = 0; i < face_rot.size(); ++i)
-    {
-      ft(0, i, face_rot[i]) = 1;
-      ft(1, i, face_ref[i]) = 1;
-    }
-    entity_transformations[cell::type::quadrilateral] = ft;
-  }
-
   if (discontinuous)
   {
-    std::tie(x, M, entity_transformations)
-        = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
+    std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
   }
 
   auto tensor_factors
       = create_tensor_product_factors(celltype, degree, variant);
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, discontinuous, degree, degree,
-                       tensor_factors, variant);
+                       xt::eye<double>(ndofs), x, M, maps::type::identity,
+                       discontinuous, degree, degree, tensor_factors, variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
@@ -1508,18 +1389,8 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   const auto pt = make_dpc_points(celltype, degree, variant);
   x[tdim].push_back(pt);
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  entity_transformations[cell::type::interval]
-      = xt::xtensor<double, 3>({1, 0, 0});
-  if (tdim == 3)
-  {
-    entity_transformations[cell::type::quadrilateral]
-        = xt::xtensor<double, 3>({2, 0, 0});
-  }
-
-  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs,
-                       entity_transformations, x, M, maps::type::identity,
-                       discontinuous, degree, degree, {},
-                       element::lagrange_variant::unset, variant);
+  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
+                       M, maps::type::identity, discontinuous, degree, degree,
+                       {}, element::lagrange_variant::unset, variant);
 }
 //-----------------------------------------------------------------------------

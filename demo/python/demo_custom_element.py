@@ -120,10 +120,9 @@ M[2].append(np.array([[[1.]]]))
 # - A bool indicating whether the element is discontinuous. In this example, this is `False`.
 # - The highest degree n such that all degree n polynomials are contained in this set. In this
 #   example, this is 1.
-# - The maximum degree polynomial for the element. In this example, this is 2.
 
 element = basix.create_custom_element(
-    CellType.quadrilateral, 2, [], wcoeffs, x, M, MapType.identity, False, 1, 2)
+    CellType.quadrilateral, 2, [], wcoeffs, x, M, MapType.identity, False, 1)
 
 # We can now use this element in the same way we can use a built-in element. For example, we
 # can tabulate the element at a set of points. If the points we use are the same as the points
@@ -206,7 +205,7 @@ M[2].append(np.zeros((0, 2, 0)))
 # --------------------
 
 element = basix.create_custom_element(
-    CellType.triangle, 1, [2], wcoeffs, x, M, MapType.contravariantPiola, False, 0, 1)
+    CellType.triangle, 1, [2], wcoeffs, x, M, MapType.contravariantPiola, False, 0)
 
 # To confirm that we have defined this element correctly, we compare it to the built-in
 # Raviart--Thomas element.

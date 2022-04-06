@@ -362,11 +362,6 @@ basix::FiniteElement basix::create_custom_element(
 
   std::size_t tdim = cell::topological_dimension(cell_type);
 
-  std::size_t npts = 0;
-  for (std::size_t i = 0; i <= 3; ++i)
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-      npts += x[i][j].shape(0);
-
   std::size_t ndofs = 0;
   for (std::size_t i = 0; i <= 3; ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
@@ -374,6 +369,8 @@ basix::FiniteElement basix::create_custom_element(
 
   // Check that wcoeffs have the correct shape
   if (wcoeffs.shape(1) != psize * value_size)
+    throw std::runtime_error("wcoeffs has the wrong shape");
+  if (wcoeffs.shape(0) != ndofs)
     throw std::runtime_error("wcoeffs has the wrong shape");
 
   // Check that x has the right shape

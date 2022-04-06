@@ -36,7 +36,7 @@ wcoeffs = np.zeros((5, 9))
 # The degree 3 orthonormal polynomials for a quadrilateral will have their highest
 # degree terms in the following order:
 #
-# ..math::
+# .. math::
 #   1, y, y^2, x, xy, xy^2, x^2, x^2y, x^2y^2
 #
 # As our polynomial space contains 1, y, x and xy. The first four rows of the matrix
@@ -164,7 +164,7 @@ wcoeffs = np.zeros((3, 6))
 
 # The highest degree terms in each polynomial will be:
 #
-# ..math::
+# .. math::
 #   (1, 0), (x, 0), (y, 0), (0, 1), (0, x), (0, y)
 #
 # We include (1,0) and (0,1) as the first two rows of the matrix, and use integrals to

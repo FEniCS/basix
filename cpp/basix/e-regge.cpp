@@ -8,6 +8,7 @@
 #include "maps.h"
 #include "math.h"
 #include "polyset.h"
+#include "quadrature.h"
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xview.hpp>
 
@@ -66,6 +67,7 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
 
       // Tabulate points in lattice
       cell::type ct = cell::sub_entity_type(celltype, d, e);
+      const auto [pts, wts] = quadrature::make_quadrature(ct, );
       const auto lattice
           = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
       const auto x0 = xt::row(entity_x, 0);

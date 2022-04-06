@@ -46,7 +46,7 @@ def test_lagrange_custom_triangle_degree4():
 
     element = basix.create_custom_element(
         basix.CellType.triangle, 4, [], wcoeffs,
-        x, M, basix.MapType.identity, False, 4, 4)
+        x, M, basix.MapType.identity, False, 4)
 
     points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
@@ -69,7 +69,7 @@ def test_lagrange_custom_quadrilateral_degree1():
 
     element = basix.create_custom_element(
         basix.CellType.quadrilateral, 1, [], wcoeffs,
-        x, M, basix.MapType.identity, False, 1, 1)
+        x, M, basix.MapType.identity, False, 1)
 
     points = basix.create_lattice(basix.CellType.quadrilateral, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))

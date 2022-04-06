@@ -86,3 +86,30 @@ basix::math::solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B)
   return _B;
 }
 //------------------------------------------------------------------
+bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
+{
+  assert(A.dimension() == 2);
+
+  // Copy to column major matrix
+  xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
+  _A.assign(A);
+  const std::array<std::size_t, 1> sh = {A.shape(1)};
+  xt::xtensor<double, 1> B(sh);
+  B.fill(1.0);
+
+  int N = _A.shape(0);
+  int nrhs = 1;
+  int LDA = _A.shape(0);
+  int LDB = B.shape(0);
+  std::vector<int> IPIV(N);
+  int info;
+  dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), B.data(), &LDB, &info);
+  if (info < 0)
+    throw std::runtime_error("dgesv failed due to invalid value: "
+                             + std::to_string(info));
+
+  if (info > 0)
+    return true;
+  return false;
+}
+//------------------------------------------------------------------

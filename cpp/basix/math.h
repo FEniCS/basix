@@ -79,4 +79,9 @@ eigh(const xt::xtensor<double, 2>& A);
 xt::xarray<double, xt::layout_type::column_major>
 solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B);
 
+/// Check if A is a singular matrix
+/// @param[in] A The matrix
+/// @return A bool indicating if the matrix is singular
+bool is_singular(const xt::xtensor<double, 2>& A);
+
 } // namespace basix::math

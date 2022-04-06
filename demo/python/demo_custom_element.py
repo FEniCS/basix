@@ -18,7 +18,7 @@ from basix import CellType, MapType, PolynomialType, LatticeType
 # on a quadrilateral cell. This element will span the following set of polynomials:
 #
 # .. math::
-#    \left\{1, x, y, xy, x(1-x)y(1-y)\right\}.
+#    \left\{1,\; x,\; y,\; xy,\; x(1-x)y(1-y)\right\}.
 #
 # We will define the degrees of freedom (DOFs) of this element by placing a point
 # evaluation at each vertex, plus one at the midpoint of the cell.
@@ -29,7 +29,7 @@ from basix import CellType, MapType, PolynomialType, LatticeType
 # When creating a custom element, we must input the coefficients that define
 # a basis of the set of polynomials that our element spans. In this example,
 # we will represent the 5 functions above in terms of the 9 orthogonal polynomials
-# of degree <=2 on a quadrilateral, so we create a 5 by 9 matrix.
+# of degree :math:`\leqslant2` on a quadrilateral, so we create a 5 by 9 matrix.
 
 wcoeffs = np.zeros((5, 9))
 
@@ -37,22 +37,22 @@ wcoeffs = np.zeros((5, 9))
 # degree terms in the following order:
 #
 # .. math::
-#   1, y, y^2, x, xy, xy^2, x^2, x^2y, x^2y^2
+#   1,\; y,\; y^2,\; x,\; xy,\; xy^2,\; x^2,\; x^2y,\; x^2y^2
 #
-# As our polynomial space contains 1, y, x and xy. The first four rows of the matrix
-# contain a single 1 for the four orthogonal polynomials with these are their highest
-# degree terms.
+# As our polynomial space contains 1, :math:`y`, :math:`x` and :math:`xy`. The first
+# four rows of the matrix contain a single 1 for the four orthogonal polynomials with
+# these are their highest degree terms.
 
 wcoeffs[0, 0] = 1
 wcoeffs[1, 1] = 1
 wcoeffs[2, 3] = 1
 wcoeffs[3, 4] = 1
 
-# The final row of the matrix defines the polynomials x(1-x)y(1-y). As the polynomials
+# The final row of the matrix defines the polynomials :math:`x(1-x)y(1-y)`. As the polynomials
 # are orthonormal, we can represent this as
 #
 # .. math::
-#    \sum_{i=0}^9\int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y p_i(x, y),
+#    \sum_{i=0}^9\int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y\; p_i(x, y),
 #
 # and so the coefficients we want to put in the final row of our matrix are:
 #
@@ -78,7 +78,7 @@ for i in range(9):
 #
 # First, we define the points. We create an array of points for each entity of each
 # dimension. For each vertex of the cell, we include the coordinates of that vertex.
-# For the interior of the cell, we include a point at (0.5,0.5).
+# For the interior of the cell, we include a point at :math:`(0.5,0.5)`.
 #
 # The shape of each of the point lists is (number of points, dimension).
 
@@ -125,8 +125,8 @@ for _ in range(4):
 # - The matrix used to define interpolation into the element. In this example, this is `M`.
 # - The map type. In this example, this is the identity map.
 # - A bool indicating whether the element is discontinuous. In this example, this is `False`.
-# - The highest degree n such that all degree n polynomials are contained in this set. In this
-#   example, this is 1.
+# - The highest degree :math:`n` such that all degree :math:`n` polynomials are contained in
+#   this set. In this example, this is 1.
 
 element = basix.create_custom_element(
     CellType.quadrilateral, 2, [], wcoeffs, x, M, MapType.identity, False, 1)
@@ -146,7 +146,7 @@ print(element.tabulate(0, points))
 # spans:
 #
 # .. math::
-#    \left\{(1, 0), (0, 1), (x, y)\right\}.
+#    \left\{(1, 0),\; (0, 1),\; (x, y)\right\}.
 #
 # The DOFs of this element are integrals along each edge of the cell of the dot product of the
 # function with the normal to the edge.
@@ -157,7 +157,7 @@ print(element.tabulate(0, points))
 # -----------------------
 #
 # In this example, we will represent the 3 functions above in terms of the 3 orthogonal
-# polynomials of degree <=1 on a triangle in each of the two coordinate directions.
+# polynomials of degree :math:`\leqslant1` on a triangle in each of the two coordinate directions.
 # We therefore create a 3 by 6 matrix.
 
 wcoeffs = np.zeros((3, 6))
@@ -165,10 +165,10 @@ wcoeffs = np.zeros((3, 6))
 # The highest degree terms in each polynomial will be:
 #
 # .. math::
-#   (1, 0), (x, 0), (y, 0), (0, 1), (0, x), (0, y)
+#   (1, 0),\; (x, 0),\; (y, 0),\; (0, 1),\; (0, x),\; (0, y)
 #
-# We include (1,0) and (0,1) as the first two rows of the matrix, and use integrals to
-# represent (x,y) as in the previous example.
+# We include :math:`(1,0)` and :math:`(0,1)` as the first two rows of the matrix, and use
+# integrals to represent :math:`(x,y)` as in the previous example.
 
 wcoeffs[0, 0] = 1
 wcoeffs[1, 3] = 1

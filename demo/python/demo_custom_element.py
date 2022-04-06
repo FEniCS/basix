@@ -27,7 +27,7 @@ from basix import CellType, MapType, PolynomialType, LatticeType
 # -----------------------
 #
 # When creating a custom element, we must input the coefficients that define
-# a basis of the set of polynomials that out element spans. In this example,
+# a basis of the set of polynomials that our element spans. In this example,
 # we will represent the 5 functions above in terms of the 9 orthogonal polynomials
 # of degree <=2 on a quadrilateral, so we create a 5 by 9 matrix.
 

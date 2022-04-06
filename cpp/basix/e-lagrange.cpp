@@ -115,7 +115,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity, true,
-                       degree, degree, {}, variant);
+                       degree, {}, variant);
 }
 //----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -818,7 +818,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
-                       discontinuous, degree, degree);
+                       discontinuous, degree);
 }
 //-----------------------------------------------------------------------------
 FiniteElement create_legendre(cell::type celltype, int degree,
@@ -863,7 +863,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
-                       discontinuous, degree, degree, {},
+                       discontinuous, degree, {},
                        element::lagrange_variant::legendre);
 }
 //-----------------------------------------------------------------------------
@@ -957,8 +957,8 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
-                       M, maps::type::identity, discontinuous, degree, degree,
-                       {}, element::lagrange_variant::unset,
+                       M, maps::type::identity, discontinuous, degree, {},
+                       element::lagrange_variant::unset,
                        element::dpc_variant::legendre);
 }
 //-----------------------------------------------------------------------------
@@ -1173,8 +1173,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     xt::xtensor<double, 2> wcoeffs = {{1}};
 
     return FiniteElement(element::family::P, cell::type::point, 0, {}, wcoeffs,
-                         x, M, maps::type::identity, discontinuous, degree,
-                         degree);
+                         x, M, maps::type::identity, discontinuous, degree);
   }
 
   if (variant == element::lagrange_variant::unset)
@@ -1301,7 +1300,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
-                       discontinuous, degree, degree, tensor_factors, variant);
+                       discontinuous, degree, tensor_factors, variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
@@ -1390,7 +1389,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   x[tdim].push_back(pt);
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
-                       M, maps::type::identity, discontinuous, degree, degree,
-                       {}, element::lagrange_variant::unset, variant);
+                       M, maps::type::identity, discontinuous, degree, {},
+                       element::lagrange_variant::unset, variant);
 }
 //-----------------------------------------------------------------------------

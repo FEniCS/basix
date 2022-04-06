@@ -505,8 +505,6 @@ map_type : basix.MapType
     The type of map to be used to map values from the reference to a cell
 discontinuous : bool
     Indicates whether or not this is the discontinuous version of the element
-highest_degree : int
-    The lowest degree n such that the highest degree polynomial in this element is contained in a Lagrange (or vector Lagrange) element of degree n
 highest_complete_degree : int
     The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
 

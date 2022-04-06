@@ -59,6 +59,6 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
 
   return FiniteElement(element::family::CR, celltype, 1, {1},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
-                       discontinuous, degree, degree);
+                       discontinuous, degree);
 }
 //-----------------------------------------------------------------------------

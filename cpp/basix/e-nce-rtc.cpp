@@ -141,7 +141,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, wcoeffs,
                        x, M, maps::type::contravariantPiola, discontinuous,
-                       degree, degree - 1);
+                       degree - 1);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_nce(cell::type celltype, int degree,
@@ -306,7 +306,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, wcoeffs,
-                       x, M, maps::type::covariantPiola, discontinuous, degree,
+                       x, M, maps::type::covariantPiola, discontinuous,
                        degree - 1);
 }
 //-----------------------------------------------------------------------------

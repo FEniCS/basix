@@ -209,9 +209,6 @@ public:
   /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
-  /// @param[in] highest_degree The lowest degree n such that the highest degree
-  /// polynomial in this element is contained in a Lagrange (or vector Lagrange)
-  /// element of degree n
   /// @param[in] highest_complete_degree The highest degree n such that a
   /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
   /// element
@@ -225,8 +222,7 @@ public:
       const xt::xtensor<double, 2>& wcoeffs,
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
       const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-      maps::type map_type, bool discontinuous, int highest_degree,
-      int highest_complete_degree,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {},
@@ -963,9 +959,6 @@ private:
 /// the reference to a cell
 /// @param[in] discontinuous Indicates whether or not this is the
 /// discontinuous version of the element
-/// @param[in] highest_degree The lowest degree n such that the highest degree
-/// polynomial in this element is contained in a Lagrange (or vector Lagrange)
-/// element of degree n
 /// @param[in] highest_complete_degree The highest degree n such that a
 /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
 /// element
@@ -976,8 +969,7 @@ FiniteElement create_custom_element(
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_degree,
-    int highest_complete_degree);
+    maps::type map_type, bool discontinuous, int highest_complete_degree);
 
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family

@@ -147,7 +147,6 @@ def assert_failure(**kwargs):
     try:
         create_lagrange1_quad(**kwargs)
     except RuntimeError as e:
-        print(e.args)
         if len(e.args) == 0:
             raise e
         if "dgesv" in e.args[0]:

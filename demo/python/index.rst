@@ -9,3 +9,4 @@ Demos
    demo_facet_integral.py
    demo_lagrange_variants.py
    demo_dof_transformations.py
+   demo_custom_element.py

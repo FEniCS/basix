@@ -354,6 +354,61 @@ basix::FiniteElement basix::create_custom_element(
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_complete_degree)
 {
+  // Check that inputs are valid
+  const std::size_t psize = polyset::dim(cell_type, degree);
+  std::size_t value_size = 1;
+  for (std::size_t i = 0; i < value_shape.size(); ++i)
+    value_size *= value_shape[i];
+
+  std::size_t tdim = cell::topological_dimension(cell_type);
+
+  std::size_t ndofs = 0;
+  for (std::size_t i = 0; i <= 3; ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      ndofs += M[i][j].shape(0);
+
+  // Check that wcoeffs have the correct shape
+  if (wcoeffs.shape(1) != psize * value_size)
+    throw std::runtime_error("wcoeffs has the wrong shape");
+  if (wcoeffs.shape(0) != ndofs)
+    throw std::runtime_error("wcoeffs has the wrong shape");
+
+  // Check that x has the right shape
+  for (std::size_t i = 0; i <= 3; ++i)
+  {
+    if (x[i].size()
+        != (i > tdim ? 0
+                     : static_cast<std::size_t>(
+                         cell::num_sub_entities(cell_type, i))))
+      throw std::runtime_error("x has the wrong shape");
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      if (x[i][j].shape(1) != tdim)
+        throw std::runtime_error("x has the wrong shape");
+  }
+
+  // Check that M has the right shape
+  for (std::size_t i = 0; i <= 3; ++i)
+  {
+    if (M[i].size()
+        != (i > tdim ? 0
+                     : static_cast<std::size_t>(
+                         cell::num_sub_entities(cell_type, i))))
+      throw std::runtime_error("M has the wrong shape");
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+    {
+      if (M[i][j].shape(2) != x[i][j].shape(0))
+        throw std::runtime_error("M has the wrong shape");
+      if (M[i][j].shape(1) != value_size)
+        throw std::runtime_error("M has the wrong shape");
+    }
+  }
+
+  xt::xtensor<double, 2> dual_matrix
+      = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
+  if (math::is_singular(dual_matrix))
+    throw std::runtime_error(
+        "Dual matrix is singular, there is an error in your inputs");
+
   return basix::FiniteElement(element::family::custom, cell_type, degree,
                               value_shape, wcoeffs, x, M, map_type,
                               discontinuous, highest_complete_degree);
@@ -377,6 +432,16 @@ FiniteElement::FiniteElement(
       _degree_bounds({highest_complete_degree, degree}),
       _tensor_factors(tensor_factors)
 {
+  // Check that discontinuous elements only have DOFs on interior
+  if (discontinuous)
+  {
+    for (std::size_t i = 0; i < _cell_tdim; ++i)
+      for (std::size_t j = 0; j < x[i].size(); ++j)
+        if (x[i][j].shape(0) > 0)
+          throw std::runtime_error(
+              "Discontinuous element can only have interior DOFs.");
+  }
+
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
   xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
   B_cmajor.assign(wcoeffs);

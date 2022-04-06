@@ -43,7 +43,6 @@ wcoeffs = np.zeros((5, 9))
 # contain a single 1 for the four orthogonal polynomials with these are their highest
 # degree terms.
 
-
 wcoeffs[0, 0] = 1
 wcoeffs[1, 1] = 1
 wcoeffs[2, 3] = 1
@@ -88,9 +87,13 @@ x[0].append(np.array([[0.0, 0.0]]))
 x[0].append(np.array([[1.0, 0.0]]))
 x[0].append(np.array([[0.0, 1.0]]))
 x[0].append(np.array([[1.0, 1.0]]))
+x[2].append(np.array([[0.5, 0.5]]))
+
+# There are no DOFs associates with the edges for this element, so we add an empty
+# array of points for each edge.
+
 for _ in range(4):
     x[1].append(np.zeros((0, 2)))
-x[2].append(np.array([[0.5, 0.5]]))
 
 # We then define the interpolation matrices that define how the evaluations at the points
 # are combined to evaluate the functionals. As all the DOFs are point evaluations in this
@@ -101,9 +104,13 @@ x[2].append(np.array([[0.5, 0.5]]))
 M = [[], [], [], []]
 for _ in range(4):
     M[0].append(np.array([[[1.]]]))
+M[2].append(np.array([[[1.]]]))
+
+# There are no DOFs associates with the edges for this element, so we add an empty
+# matrix for each edge.
+
 for _ in range(4):
     M[1].append(np.zeros((0, 1, 0)))
-M[2].append(np.array([[[1.]]]))
 
 # Creating the element
 # --------------------

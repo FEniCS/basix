@@ -13,15 +13,15 @@
 
 using namespace basix;
 
-namespace
-{
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_regge_space(cell::type celltype, int degree)
+FiniteElement basix::element::create_regge(cell::type celltype, int degree,
+                                           bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported celltype");
 
-  const int tdim = cell::topological_dimension(celltype);
+  const std::size_t tdim = cell::topological_dimension(celltype);
+
   const int nc = tdim * (tdim + 1) / 2;
   const int basis_size = polyset::dim(celltype, degree);
   const std::size_t ndofs = basis_size * nc;
@@ -29,9 +29,9 @@ xt::xtensor<double, 2> create_regge_space(cell::type celltype, int degree)
 
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   int s = basis_size;
-  for (int i = 0; i < tdim; ++i)
+  for (std::size_t i = 0; i < tdim; ++i)
   {
-    for (int j = 0; j < tdim; ++j)
+    for (std::size_t j = 0; j < tdim; ++j)
     {
       int xoff = i + tdim * j;
       int yoff = i + j;
@@ -44,14 +44,6 @@ xt::xtensor<double, 2> create_regge_space(cell::type celltype, int degree)
     }
   }
 
-  return wcoeffs;
-}
-//-----------------------------------------------------------------------------
-std::pair<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-          std::array<std::vector<xt::xtensor<double, 3>>, 4>>
-create_regge_interpolation(cell::type celltype, int degree)
-{
-  const std::size_t tdim = cell::topological_dimension(celltype);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
@@ -127,24 +119,8 @@ create_regge_interpolation(cell::type celltype, int degree)
     }
   }
 
-  return {x, M};
-}
-//-----------------------------------------------------------------------------
-} // namespace
-//-----------------------------------------------------------------------------
-FiniteElement basix::element::create_regge(cell::type celltype, int degree,
-                                           bool discontinuous)
-{
-  const std::size_t tdim = cell::topological_dimension(celltype);
-
-  const xt::xtensor<double, 2> wcoeffs = create_regge_space(celltype, degree);
-  auto [x, M] = create_regge_interpolation(celltype, degree);
-
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
   // and d(d-1)(d+1) on the interior in 3D
-
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
 
   if (discontinuous)
   {

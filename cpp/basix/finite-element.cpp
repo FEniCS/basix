@@ -379,6 +379,10 @@ FiniteElement::FiniteElement(
       _degree_bounds({highest_complete_degree, highest_degree}),
       _tensor_factors(tensor_factors)
 {
+
+  if (highest_degree != degree)
+    throw std::runtime_error("degree != highest degree (!)");
+
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
   xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
   B_cmajor.assign(wcoeffs);

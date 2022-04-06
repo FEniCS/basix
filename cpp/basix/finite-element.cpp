@@ -352,12 +352,11 @@ basix::FiniteElement basix::create_custom_element(
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_degree,
-    int highest_complete_degree)
+    maps::type map_type, bool discontinuous, int highest_complete_degree)
 {
-  return basix::FiniteElement(
-      element::family::custom, cell_type, degree, value_shape, wcoeffs, x, M,
-      map_type, discontinuous, highest_degree, highest_complete_degree);
+  return basix::FiniteElement(element::family::custom, cell_type, degree,
+                              value_shape, wcoeffs, x, M, map_type,
+                              discontinuous, highest_complete_degree);
 }
 
 //-----------------------------------------------------------------------------
@@ -367,8 +366,7 @@ FiniteElement::FiniteElement(
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_degree,
-    int highest_complete_degree,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors,
     element::lagrange_variant lvariant, element::dpc_variant dvariant)
@@ -376,7 +374,7 @@ FiniteElement::FiniteElement(
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
       _map_type(map_type), _x(x), _discontinuous(discontinuous),
-      _degree_bounds({highest_complete_degree, highest_degree}),
+      _degree_bounds({highest_complete_degree, degree}),
       _tensor_factors(tensor_factors)
 {
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);

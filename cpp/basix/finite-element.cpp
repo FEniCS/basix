@@ -7,6 +7,7 @@
 #include "e-brezzi-douglas-marini.h"
 #include "e-bubble.h"
 #include "e-crouzeix-raviart.h"
+#include "e-hhj.h"
 #include "e-lagrange.h"
 #include "e-nce-rtc.h"
 #include "e-nedelec.h"
@@ -195,6 +196,8 @@ basix::FiniteElement basix::create_element(element::family family,
     }
   case element::family::Regge:
     return element::create_regge(cell, degree, discontinuous);
+  case element::family::HHJ:
+    return element::create_hhj(cell, degree, discontinuous);
   case element::family::CR:
     return element::create_cr(cell, degree, discontinuous);
   case element::family::bubble:

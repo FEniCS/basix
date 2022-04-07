@@ -221,6 +221,7 @@ Interface to the Basix C++ library.
       .value("N1E", element::family::N1E)
       .value("N2E", element::family::N2E)
       .value("Regge", element::family::Regge)
+      .value("HHJ", element::family::HHJ)
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)

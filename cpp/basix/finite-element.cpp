@@ -73,9 +73,9 @@ constexpr int num_transformations(cell::type cell_type)
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2>
 compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
-                    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+                    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
                     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-                    int degree)
+                    int degree, int nderivs)
 {
   std::size_t num_dofs(0), vs(0);
   for (auto& Md : M)
@@ -102,28 +102,27 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
     {
       // Evaluate polynomial basis at x[d]
       const xt::xtensor<double, 2>& x_e = x[d][e];
-      xt::xtensor<double, 2> P;
+      xt::xtensor<double, 3> P;
       if (x_e.shape(1) == 1 and x_e.shape(0) != 0)
       {
         auto pts = xt::view(x_e, xt::all(), 0);
-        P = xt::view(polyset::tabulate(cell_type, degree, 0, pts), 0, xt::all(),
-                     xt::all());
+        P = polyset::tabulate(cell_type, degree, nderivs, pts);
       }
       else if (x_e.shape(0) != 0)
       {
-        P = xt::view(polyset::tabulate(cell_type, degree, 0, x_e), 0, xt::all(),
-                     xt::all());
+        P = polyset::tabulate(cell_type, degree, nderivs, x_e);
       }
 
       // Me: [dof, vs, point]
       const xt::xtensor<double, 3>& Me = M[d][e];
 
       // Compute dual matrix contribution
-      for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
-        for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
-          for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
-            for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
-              D(dof_index + i, j, l) += Me(i, j, k) * P(k, l);
+      for (std::size_t i = 0; i < Me.shape(1); ++i)        // Dof index
+        for (std::size_t j = 0; j < Me.shape(2); ++j)      // Value index
+          for (std::size_t k = 0; k < Me.shape(3); ++k)    // Point
+            for (std::size_t l = 0; l < Me.shape(0); ++l)  // Derivative
+              for (std::size_t m = 0; m < P.shape(1); ++m) // Polynomial term
+                D(dof_index + i, j, m) += Me(i, j, k, l) * P(l, k, m);
 
       dof_index += M[d][e].shape(0);
     }
@@ -298,10 +297,10 @@ basix::FiniteElement basix::create_element(element::family family,
 }
 //-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 3>>, 4>>
+           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
 basix::element::make_discontinuous(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M, int tdim,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M, int tdim,
     int value_size)
 {
   std::size_t npoints = 0;
@@ -315,7 +314,7 @@ basix::element::make_discontinuous(
     }
   }
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M_out;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
 
   xt::xtensor<double, 2> new_x
@@ -333,7 +332,7 @@ basix::element::make_discontinuous(
       xt::view(new_x, xt::range(x_n, x_n + x[i][j].shape(0)), xt::all())
           .assign(x[i][j]);
       xt::view(new_M, xt::range(M_n, M_n + M[i][j].shape(0)), xt::all(),
-               xt::range(x_n, x_n + x[i][j].shape(0)))
+               xt::range(x_n, x_n + x[i][j].shape(0)), xt::all())
           .assign(M[i][j]);
       x_n += x[i][j].shape(0);
       M_n += M[i][j].shape(0);
@@ -347,11 +346,11 @@ basix::element::make_discontinuous(
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
-    cell::type cell_type, int degree,
+    cell::type cell_type, int degree, int interpolation_nderivs,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_complete_degree)
 {
   // Check that inputs are valid
@@ -360,7 +359,10 @@ basix::FiniteElement basix::create_custom_element(
   for (std::size_t i = 0; i < value_shape.size(); ++i)
     value_size *= value_shape[i];
 
-  std::size_t tdim = cell::topological_dimension(cell_type);
+  const std::size_t deriv_count
+      = polyset::nderivs(cell_type, interpolation_nderivs);
+
+  const std::size_t tdim = cell::topological_dimension(cell_type);
 
   std::size_t ndofs = 0;
   for (std::size_t i = 0; i <= 3; ++i)
@@ -400,27 +402,29 @@ basix::FiniteElement basix::create_custom_element(
         throw std::runtime_error("M has the wrong shape");
       if (M[i][j].shape(1) != value_size)
         throw std::runtime_error("M has the wrong shape");
+      if (M[i][j].shape(3) != deriv_count)
+        throw std::runtime_error("M has the wrong shape");
     }
   }
 
-  xt::xtensor<double, 2> dual_matrix
-      = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
+  xt::xtensor<double, 2> dual_matrix = compute_dual_matrix(
+      cell_type, wcoeffs, M, x, degree, interpolation_nderivs);
   if (math::is_singular(dual_matrix))
     throw std::runtime_error(
         "Dual matrix is singular, there is an error in your inputs");
 
   return basix::FiniteElement(element::family::custom, cell_type, degree,
-                              value_shape, wcoeffs, x, M, map_type,
-                              discontinuous, highest_complete_degree);
+                              interpolation_nderivs, value_shape, wcoeffs, x, M,
+                              map_type, discontinuous, highest_complete_degree);
 }
 
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
+    int interpolation_nderivs, const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors,
@@ -428,10 +432,27 @@ FiniteElement::FiniteElement(
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
-      _map_type(map_type), _x(x), _discontinuous(discontinuous),
+      _interpolation_nderivs(interpolation_nderivs), _map_type(map_type), _x(x),
+      _discontinuous(discontinuous),
       _degree_bounds({highest_complete_degree, degree}),
       _tensor_factors(tensor_factors)
 {
+
+  std::cout << M[_cell_tdim][0].shape(0) << ",";
+  std::cout << M[_cell_tdim][0].shape(1) << ",";
+  std::cout << M[_cell_tdim][0].shape(2) << ",";
+  std::cout << M[_cell_tdim][0].shape(3) << "\n";
+  std::cout << "M = {\n";
+  for (std::size_t i = 0; i < M[_cell_tdim][0].shape(0); ++i)
+  {
+    std::cout << "  ";
+    for (std::size_t j = 0; j < M[_cell_tdim][0].shape(2); ++j)
+      std::cout << M[_cell_tdim][0](i, 0, j, 0) << " ";
+    std::cout << "\n";
+  }
+  std::cout << "}\n";
+
+  std::cout << "Aa\n";
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
   {
@@ -442,11 +463,17 @@ FiniteElement::FiniteElement(
               "Discontinuous element can only have interior DOFs.");
   }
 
-  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
+  std::cout << "Bb\n";
+  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree,
+                                     interpolation_nderivs);
+  std::cout << "Cc\n";
   xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
+  std::cout << "Dd\n";
   B_cmajor.assign(wcoeffs);
+  std::cout << "Ee\n";
   // Compute C = (BD^T)^{-1} B
   auto result = math::solve(_dual_matrix, B_cmajor);
+  std::cout << "Ff\n";
 
   _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
   _coeffs.assign(result);
@@ -485,8 +512,12 @@ FiniteElement::FiniteElement(
   _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M, _coeffs, degree, value_size, map_type);
 
-  _matM = xt::zeros<double>({num_dofs, value_size * num_points1});
-  auto Mview = xt::reshape_view(_matM, {num_dofs, value_size, num_points1});
+  const std::size_t nderivs
+      = polyset::nderivs(cell_type, interpolation_nderivs);
+
+  _matM = xt::zeros<double>({nderivs, value_size * num_points1 * nderivs});
+  auto Mview
+      = xt::reshape_view(_matM, {num_dofs, value_size, num_points1, nderivs});
 
   // Loop over each topological dimensions
   std::size_t dof_offset(0), point_offset(0);
@@ -498,7 +529,7 @@ FiniteElement::FiniteElement(
       auto dof_range = xt::range(dof_offset, dof_offset + M[d][e].shape(0));
       auto point_range
           = xt::range(point_offset, point_offset + M[d][e].shape(2));
-      xt::view(Mview, dof_range, xt::all(), point_range) = M[d][e];
+      xt::view(Mview, dof_range, xt::all(), point_range, xt::all()) = M[d][e];
       point_offset += M[d][e].shape(2);
       dof_offset += M[d][e].shape(0);
     }
@@ -633,30 +664,30 @@ FiniteElement::FiniteElement(
       {
         if (et.second.shape(1) > 0)
         {
-          const xt::xtensor<double, 2>& M
+          const xt::xtensor<double, 2>& mat
               = xt::view(et.second, i, xt::all(), xt::all());
-          _etrans[et.first][i] = precompute::prepare_matrix(M);
-          auto M_t = xt::transpose(M);
-          _etransT[et.first][i] = precompute::prepare_matrix(M_t);
+          _etrans[et.first][i] = precompute::prepare_matrix(mat);
+          auto mat_transpose = xt::transpose(mat);
+          _etransT[et.first][i] = precompute::prepare_matrix(mat_transpose);
 
-          xt::xtensor<double, 2> Minv;
+          xt::xtensor<double, 2> mat_inv;
           // Rotation of a face: this is in the only base transformation such
-          // that M^{-1} != M.
-          // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
-          // For a triangular face, M^3 = Id, so M^{-1} = M^2.
+          // that mat^{-1} != mat.
+          // For a quadrilateral face, mat^4 = Id, so mat^{-1} = mat^3.
+          // For a triangular face, mat^3 = Id, so mat^{-1} = mat^2.
           // This assumes that all faces of the cell are the same shape. For
           // prisms and pyramids, this will need updating to look at the face
           // type
           if (et.first == cell::type::quadrilateral and i == 0)
-            Minv = math::dot(math::dot(M, M), M);
+            mat_inv = math::dot(math::dot(mat, mat), mat);
           else if (et.first == cell::type::triangle and i == 0)
-            Minv = math::dot(M, M);
+            mat_inv = math::dot(mat, mat);
           else
-            Minv = M;
+            mat_inv = mat;
 
-          _etrans_inv[et.first][i] = precompute::prepare_matrix(Minv);
-          auto MinvT = xt::transpose(Minv);
-          _etrans_invT[et.first][i] = precompute::prepare_matrix(MinvT);
+          _etrans_inv[et.first][i] = precompute::prepare_matrix(mat_inv);
+          auto mat_invT = xt::transpose(mat_inv);
+          _etrans_invT[et.first][i] = precompute::prepare_matrix(mat_invT);
         }
       }
     }
@@ -676,6 +707,7 @@ FiniteElement::FiniteElement(
       }
     }
   }
+  std::cout << "Zz\n";
 }
 //-----------------------------------------------------------------------------
 bool FiniteElement::operator==(const FiniteElement& e) const

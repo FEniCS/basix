@@ -409,7 +409,8 @@ Interface to the Basix C++ library.
   // Create FiniteElement
   m.def(
       "create_custom_element",
-      [](cell::type cell_type, int degree, const std::vector<int>& value_shape,
+      [](cell::type cell_type, int degree, int interpolation_nderivs,
+         const std::vector<int>& value_shape,
          const py::array_t<double, py::array::c_style>& wcoeffs,
          const std::vector<
              std::vector<py::array_t<double, py::array::c_style>>>& x,
@@ -432,7 +433,7 @@ Interface to the Basix C++ library.
             _x[i].push_back(adapt_x(x[i][j]));
         }
 
-        std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
+        std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
@@ -443,9 +444,9 @@ Interface to the Basix C++ library.
         for (std::size_t i = 0; i < value_shape.size(); ++i)
           _vs[i] = static_cast<std::size_t>(value_shape[i]);
 
-        return basix::create_custom_element(cell_type, degree, _vs, _wco, _x,
-                                            _M, map_type, discontinuous,
-                                            highest_complete_degree);
+        return basix::create_custom_element(
+            cell_type, degree, interpolation_nderivs, _vs, _wco, _x, _M,
+            map_type, discontinuous, highest_complete_degree);
       },
       basix::docstring::create_custom_element.c_str());
 

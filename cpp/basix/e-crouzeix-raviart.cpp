@@ -38,7 +38,7 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
   const std::size_t ndofs = facet_topology.size();
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   x[tdim - 1].resize(facet_topology.size(),
                      xt::zeros<double>({static_cast<std::size_t>(1), tdim}));
@@ -50,14 +50,14 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
     xt::row(x[tdim - 1][f], 0) = xt::mean(v, 0);
   }
 
-  M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1}));
+  M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1, 1}));
 
   if (discontinuous)
   {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
   }
 
-  return FiniteElement(element::family::CR, celltype, 1, {1},
+  return FiniteElement(element::family::CR, celltype, 1, 0, {1},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
                        discontinuous, degree);
 }

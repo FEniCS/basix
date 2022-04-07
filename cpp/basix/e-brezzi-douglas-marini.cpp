@@ -28,7 +28,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   // The number of order (degree) scalar polynomials
   const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Add integral moments on facets
@@ -54,7 +54,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
 
-  return FiniteElement(element::family::BDM, celltype, degree, {tdim},
+  return FiniteElement(element::family::BDM, celltype, degree, 0, {tdim},
                        xt::eye<double>(ndofs), x, M,
                        maps::type::contravariantPiola, discontinuous, degree);
 }

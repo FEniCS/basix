@@ -48,7 +48,7 @@ xt::xtensor<double, 2> create_regge_space(cell::type celltype, int degree)
 }
 //-----------------------------------------------------------------------------
 std::pair<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-          std::array<std::vector<xt::xtensor<double, 3>>, 4>>
+          std::array<std::vector<xt::xtensor<double, 4>>, 4>>
 create_regge_interpolation(cell::type celltype, int degree)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
@@ -56,7 +56,7 @@ create_regge_interpolation(cell::type celltype, int degree)
       = cell::topology(celltype);
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Loop over edge and higher dimension entities
@@ -113,15 +113,16 @@ create_regge_interpolation(cell::type celltype, int degree)
         }
       }
 
-      M[d][e] = xt::zeros<double>(
-          {lattice.shape(0) * ntangents, tdim * tdim, lattice.shape(0)});
+      M[d][e]
+          = xt::zeros<double>({lattice.shape(0) * ntangents, tdim * tdim,
+                               lattice.shape(0), static_cast<std::size_t>(1)});
       for (std::size_t p = 0; p < lattice.shape(0); ++p)
       {
         for (std::size_t j = 0; j < ntangents; ++j)
         {
           auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
           for (std::size_t i = 0; i < tdim * tdim; ++i)
-            M[d][e](p * ntangents + j, i, p) = vvt_flat(i);
+            M[d][e](p * ntangents + j, i, p, 0) = vvt_flat(i);
         }
       }
     }
@@ -151,8 +152,8 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim * tdim);
   }
 
-  return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
-                       wcoeffs, x, M, maps::type::doubleCovariantPiola,
-                       discontinuous, -1);
+  return FiniteElement(element::family::Regge, celltype, degree, 0,
+                       {tdim, tdim}, wcoeffs, x, M,
+                       maps::type::doubleCovariantPiola, discontinuous, -1);
 }
 //-----------------------------------------------------------------------------

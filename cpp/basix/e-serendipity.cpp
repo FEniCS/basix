@@ -563,14 +563,14 @@ FiniteElement basix::element::create_serendipity(
       = cell::topology(celltype);
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // dim 0 (vertices)
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
   const std::size_t num_vertices = geometry.shape(0);
-  M[0] = std::vector<xt::xtensor<double, 3>>(num_vertices,
-                                             xt::ones<double>({1, 1, 1}));
+  M[0] = std::vector<xt::xtensor<double, 4>>(num_vertices,
+                                             xt::ones<double>({1, 1, 1, 1}));
   x[0].resize(geometry.shape(0));
   for (std::size_t i = 0; i < x[0].size(); ++i)
   {
@@ -615,7 +615,7 @@ FiniteElement basix::element::create_serendipity(
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
   }
 
-  return FiniteElement(element::family::serendipity, celltype, degree, {1},
+  return FiniteElement(element::family::serendipity, celltype, degree, 0, {1},
                        wcoeffs, x, M, maps::type::identity, discontinuous,
                        degree < static_cast<int>(tdim) ? 1 : degree / tdim, {},
                        lvariant, dvariant);
@@ -630,34 +630,46 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
     throw std::runtime_error("Invalid celltype");
   }
 
+  std::cout << "A\n";
+
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::size_t tdim = cell::topological_dimension(celltype);
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  std::cout << "B\n";
 
   // TODO: Lagrange variant here
   // TODO: DPC variant
+  std::cout << "pre DPC\n";
   FiniteElement facet_moment_space
       = facettype == cell::type::interval
             ? element::create_lagrange(
                 facettype, degree, element::lagrange_variant::legendre, true)
             : element::create_dpc(facettype, degree,
                                   element::dpc_variant::legendre, true);
+  std::cout << "post DPC\n";
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, 2 * degree);
+
+  std::cout << "C\n";
 
   if (tdim >= 2 and degree >= 2)
   {
     // TODO: DPC variant
+    std::cout << "pre DPC\n";
     FiniteElement cell_moment_space = element::create_dpc(
         celltype, degree - 2, element::dpc_variant::legendre, true);
+    std::cout << "post DPC\n";
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         cell_moment_space, celltype, tdim, 2 * degree - 2);
   }
+
+  std::cout << "D\n";
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 1)
@@ -667,13 +679,16 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
   else if (tdim == 3)
     wcoeffs = make_serendipity_div_space_3d(degree);
 
+  std::cout << "E\n";
 
   if (discontinuous)
   {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
 
-  return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
+  std::cout << "F\n";
+
+  return FiniteElement(element::family::BDM, celltype, degree + 1, 0, {tdim},
                        wcoeffs, x, M, maps::type::contravariantPiola,
                        discontinuous, degree / tdim);
 }
@@ -704,7 +719,7 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
   else if (tdim == 3)
     wcoeffs = make_serendipity_curl_space_3d(degree);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // TODO: Lagrange variants
@@ -742,7 +757,7 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
 
-  return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
+  return FiniteElement(element::family::N2E, celltype, degree + 1, 0, {tdim},
                        wcoeffs, x, M, maps::type::covariantPiola, discontinuous,
                        (degree == 2 && tdim == 3) ? 1 : degree / tdim);
 }

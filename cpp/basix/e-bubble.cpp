@@ -57,7 +57,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // Evaluate the expansion polynomials at the quadrature points
@@ -143,10 +143,10 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
-  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
+  M[tdim].push_back(xt::xtensor<double, 4>({ndofs, 1, ndofs, 1}));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
 
-  return FiniteElement(element::family::bubble, celltype, degree, {1}, wcoeffs,
-                       x, M, maps::type::identity, discontinuous, -1);
+  return FiniteElement(element::family::bubble, celltype, degree, 0, {1},
+                       wcoeffs, x, M, maps::type::identity, discontinuous, -1);
 }
 //-----------------------------------------------------------------------------

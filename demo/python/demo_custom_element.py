@@ -103,14 +103,14 @@ for _ in range(4):
 
 M = [[], [], [], []]
 for _ in range(4):
-    M[0].append(np.array([[[1.]]]))
-M[2].append(np.array([[[1.]]]))
+    M[0].append(np.array([[[[1.]]]]))
+M[2].append(np.array([[[[1.]]]]))
 
 # There are no DOFs associates with the edges for this element, so we add an empty
 # matrix for each edge.
 
 for _ in range(4):
-    M[1].append(np.zeros((0, 1, 0)))
+    M[1].append(np.zeros((0, 1, 0, 1)))
 
 # Creating the element
 # --------------------
@@ -129,7 +129,7 @@ for _ in range(4):
 #   this set. In this example, this is 1.
 
 element = basix.create_custom_element(
-    CellType.quadrilateral, 2, [], wcoeffs, x, M, MapType.identity, False, 1)
+    CellType.quadrilateral, 2, 0, [], wcoeffs, x, M, MapType.identity, False, 1)
 
 # We can now use this element in the same way we can use a built-in element. For example, we
 # can tabulate the element at a set of points. If the points we use are the same as the points
@@ -203,16 +203,19 @@ x[2].append(np.zeros((0, 2)))
 
 M = [[], [], [], []]
 for _ in range(3):
-    M[0].append(np.zeros((0, 2, 0)))
+    M[0].append(np.zeros((0, 2, 0, 1)))
 for normal in [[-1, -1], [-1, 0], [0, 1]]:
-    M[1].append(np.array([[normal[0] * wts, normal[1] * wts]]))
-M[2].append(np.zeros((0, 2, 0)))
+    mat = np.empty((1, 2, 2, 1))
+    mat[:, 0, :, :] = normal[0] * wts
+    mat[:, 1, :, :] = normal[1] * wts
+    M[1].append(mat)
+M[2].append(np.zeros((0, 2, 0, 1)))
 
 # Creating the element
 # --------------------
 
 element = basix.create_custom_element(
-    CellType.triangle, 1, [2], wcoeffs, x, M, MapType.contravariantPiola, False, 0)
+    CellType.triangle, 1, 0, [2], wcoeffs, x, M, MapType.contravariantPiola, False, 0)
 
 # To confirm that we have defined this element correctly, we compare it to the built-in
 # Raviart--Thomas element.

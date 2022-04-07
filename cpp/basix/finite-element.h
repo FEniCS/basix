@@ -32,14 +32,14 @@ namespace element
 /// @param[in] x Interpolation points. Shape is (tdim, entity index,
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
-/// index, dof, vs, point_index)
+/// index, dof, vs, point_index, derivative)
 /// @param[in] tdim The topological dimension of the cell the element is
 /// defined on
 /// @param[in] value_size The value size of the element
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 3>>, 4>>
+           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
 make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-                   const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+                   const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
                    int tdim, int value_size);
 
 } // namespace element
@@ -197,6 +197,8 @@ public:
   /// @param[in] family The element family
   /// @param[in] cell_type The cell type
   /// @param[in] degree The degree of the element
+  /// @param[in] interpolation_nderivs The number of derivatives that need to be
+  /// used during interpolation
   /// @param[in] value_shape The value shape of the element
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
@@ -204,7 +206,7 @@ public:
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
-  /// index, dof, vs, point_index)
+  /// index, dof, vs, point_index, derivative)
   /// @param[in] map_type The type of map to be used to map values from
   /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
@@ -218,10 +220,10 @@ public:
   /// @param[in] dvariant The DPC variant of the element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape,
+      int interpolation_nderivs, const std::vector<std::size_t>& value_shape,
       const xt::xtensor<double, 2>& wcoeffs,
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
       maps::type map_type, bool discontinuous, int highest_complete_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
@@ -807,6 +809,9 @@ private:
   // Degree
   int _degree;
 
+  // Degree
+  int _interpolation_nderivs;
+
   // Value shape
   std::vector<int> _value_shape;
 
@@ -924,6 +929,8 @@ private:
 /// Create a custom finite element
 /// @param[in] cell_type The cell type
 /// @param[in] degree The degree of the element
+/// @param[in] interpolation_nderivs The number of derivatives that need to be
+/// used during interpolation
 /// @param[in] value_shape The value shape of the element
 /// @param[in] wcoeffs Matrices for the kth value index containing the
 /// expansion coefficients defining a polynomial basis spanning the
@@ -941,11 +948,11 @@ private:
 /// element
 /// @return A custom finite element
 FiniteElement create_custom_element(
-    cell::type cell_type, int degree,
+    cell::type cell_type, int degree, int interpolation_nderivs,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_complete_degree);
 
 /// Create an element using a given Lagrange variant

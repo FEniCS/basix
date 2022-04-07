@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "e-regge.h"
+#include "e-lagrange.h"
 #include "element-families.h"
 #include "maps.h"
 #include "math.h"
@@ -51,13 +52,28 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
+  x[0].resize(topology[0].size());
+  M[0].resize(topology[0].size());
+  for (std::size_t e = 0; e < topology[0].size(); ++e)
+  {
+    x[0][e] = xt::xtensor<double, 2>({0, tdim});
+    M[0][e] = xt::xtensor<double, 3>({0, tdim * tdim, 0});
+  }
   // Loop over edge and higher dimension entities
   for (std::size_t d = 1; d < topology.size(); ++d)
   {
     x[d].resize(topology[d].size());
     M[d].resize(topology[d].size());
 
-    if (static_cast<std::size_t>(degree) + 1 >= d)
+    if (static_cast<std::size_t>(degree) + 1 < d)
+    {
+      for (std::size_t e = 0; e < topology[d].size(); ++e)
+      {
+        x[d][e] = xt::xtensor<double, 2>({0, tdim});
+        M[d][e] = xt::xtensor<double, 3>({0, tdim * tdim, 0});
+      }
+    }
+    else
     {
 
       // Loop over entities of dimension dim
@@ -69,8 +85,18 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
 
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
-        const auto [pts, wts] = quadrature::make_quadrature(ct, degree + 1 - d);
-        std::cout << wts[0] << "\n";
+
+        const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
+        const auto [_pts, wts]
+            = quadrature::make_quadrature(ct, degree + (degree + 1 - d));
+
+        xt::xarray<double> pts = _pts;
+        if (d == 1)
+          pts.reshape({pts.shape(0), 1});
+
+        FiniteElement moment_space = create_lagrange(
+            ct, degree + 1 - d, element::lagrange_variant::legendre, true);
+        const auto moment_values = moment_space.tabulate(0, pts);
         const auto x0 = xt::row(entity_x, 0);
         x[d][e] = xt::xtensor<double, 2>({pts.shape(0), tdim});
 
@@ -107,15 +133,19 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
           }
         }
 
-        M[d][e] = xt::zeros<double>(
-            {pts.shape(0) * ntangents, tdim * tdim, pts.shape(0)});
-        for (std::size_t p = 0; p < pts.shape(0); ++p)
+        M[d][e]
+            = xt::zeros<double>({ndofs * ntangents, tdim * tdim, pts.shape(0)});
+        for (int n = 0; n < moment_space.dim(); ++n)
         {
           for (std::size_t j = 0; j < ntangents; ++j)
           {
             auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
-            for (std::size_t i = 0; i < tdim * tdim; ++i)
-              M[d][e](p * ntangents + j, i, p) = vvt_flat(i);
+            for (std::size_t q = 0; q < pts.shape(0); ++q)
+            {
+              for (std::size_t i = 0; i < tdim * tdim; ++i)
+                M[d][e](n * ntangents + j, i, q)
+                    = vvt_flat(i) * wts[q] * moment_values(0, q, n, 0);
+            }
           }
         }
       }

@@ -4,7 +4,6 @@
 
 #include "e-regge.h"
 #include "element-families.h"
-#include "lattice.h"
 #include "maps.h"
 #include "math.h"
 #include "polyset.h"
@@ -58,64 +57,66 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
     x[d].resize(topology[d].size());
     M[d].resize(topology[d].size());
 
-    // Loop over entities of dimension dim
-    for (std::size_t e = 0; e < topology[d].size(); ++e)
+    if (static_cast<std::size_t>(degree) + 1 >= d)
     {
-      // Entity coordinates
-      const xt::xtensor<double, 2> entity_x
-          = cell::sub_entity_geometry(celltype, d, e);
 
-      // Tabulate points in lattice
-      cell::type ct = cell::sub_entity_type(celltype, d, e);
-      const auto [pts, wts] = quadrature::make_quadrature(ct, );
-      const auto lattice
-          = lattice::create(ct, degree + 2, lattice::type::equispaced, false);
-      const auto x0 = xt::row(entity_x, 0);
-      x[d][e] = xt::xtensor<double, 2>({lattice.shape(0), tdim});
-
-      // Copy points
-      for (std::size_t p = 0; p < lattice.shape(0); ++p)
+      // Loop over entities of dimension dim
+      for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
-        xt::row(x[d][e], p) = x0;
-        for (std::size_t k = 0; k < entity_x.shape(0) - 1; ++k)
+        // Entity coordinates
+        const xt::xtensor<double, 2> entity_x
+            = cell::sub_entity_geometry(celltype, d, e);
+
+        // Tabulate points in lattice
+        cell::type ct = cell::sub_entity_type(celltype, d, e);
+        const auto [pts, wts] = quadrature::make_quadrature(ct, degree + 1 - d);
+        std::cout << wts[0] << "\n";
+        const auto x0 = xt::row(entity_x, 0);
+        x[d][e] = xt::xtensor<double, 2>({pts.shape(0), tdim});
+
+        // Copy points
+        for (std::size_t p = 0; p < pts.shape(0); ++p)
         {
-          xt::row(x[d][e], p)
-              += (xt::row(entity_x, k + 1) - x0) * lattice(p, k);
+          xt::row(x[d][e], p) = x0;
+          for (std::size_t k = 0; k < entity_x.shape(0) - 1; ++k)
+          {
+            xt::row(x[d][e], p) += (xt::row(entity_x, k + 1) - x0) * pts(p, k);
+          }
         }
-      }
 
-      // Store up outer(t, t) for all tangents
-      const std::vector<int>& vert_ids = topology[d][e];
-      const std::size_t ntangents = d * (d + 1) / 2;
-      xt::xtensor<double, 3> vvt(
-          {ntangents, geometry.shape(1), geometry.shape(1)});
-      std::vector<double> _edge(geometry.shape(1));
-      auto edge_t = xt::adapt(_edge);
+        // Store up outer(t, t) for all tangents
+        const std::vector<int>& vert_ids = topology[d][e];
+        const std::size_t ntangents = d * (d + 1) / 2;
+        xt::xtensor<double, 3> vvt(
+            {ntangents, geometry.shape(1), geometry.shape(1)});
+        std::vector<double> _edge(geometry.shape(1));
+        auto edge_t = xt::adapt(_edge);
 
-      int c = 0;
-      for (std::size_t s = 0; s < d; ++s)
-      {
-        for (std::size_t r = s + 1; r < d + 1; ++r)
+        int c = 0;
+        for (std::size_t s = 0; s < d; ++s)
         {
-          for (std::size_t p = 0; p < geometry.shape(1); ++p)
-            edge_t[p] = geometry(vert_ids[r], p) - geometry(vert_ids[s], p);
+          for (std::size_t r = s + 1; r < d + 1; ++r)
+          {
+            for (std::size_t p = 0; p < geometry.shape(1); ++p)
+              edge_t[p] = geometry(vert_ids[r], p) - geometry(vert_ids[s], p);
 
-          // outer product v.v^T
-          auto result = basix::math::outer(edge_t, edge_t);
-          xt::view(vvt, c, xt::all(), xt::all()).assign(result);
-          ++c;
+            // outer product v.v^T
+            auto result = basix::math::outer(edge_t, edge_t);
+            xt::view(vvt, c, xt::all(), xt::all()).assign(result);
+            ++c;
+          }
         }
-      }
 
-      M[d][e] = xt::zeros<double>(
-          {lattice.shape(0) * ntangents, tdim * tdim, lattice.shape(0)});
-      for (std::size_t p = 0; p < lattice.shape(0); ++p)
-      {
-        for (std::size_t j = 0; j < ntangents; ++j)
+        M[d][e] = xt::zeros<double>(
+            {pts.shape(0) * ntangents, tdim * tdim, pts.shape(0)});
+        for (std::size_t p = 0; p < pts.shape(0); ++p)
         {
-          auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
-          for (std::size_t i = 0; i < tdim * tdim; ++i)
-            M[d][e](p * ntangents + j, i, p) = vvt_flat(i);
+          for (std::size_t j = 0; j < ntangents; ++j)
+          {
+            auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
+            for (std::size_t i = 0; i < tdim * tdim; ++i)
+              M[d][e](p * ntangents + j, i, p) = vvt_flat(i);
+          }
         }
       }
     }

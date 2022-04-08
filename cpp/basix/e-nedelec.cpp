@@ -165,6 +165,12 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
+  x[0] = std::vector<xt::xtensor<double, 2>>(
+      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
+  M[0] = std::vector<xt::xtensor<double, 3>>(
+      cell::num_sub_entities(celltype, 0),
+      xt::xtensor<double, 3>({0, tdim, 0}));
+
   switch (celltype)
   {
   case cell::type::triangle:
@@ -197,14 +203,34 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
     std::tie(x[2], M[2]) = moments::make_integral_moments(face_space, celltype,
                                                           tdim, 2 * degree - 2);
   }
+  else
+  {
+    x[2] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, 2), xt::xtensor<double, 2>({0, tdim}));
+    M[2] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, 2),
+        xt::xtensor<double, 3>({0, tdim, 0}));
+  }
 
   // Volume dofs
-  if (degree > 2 and tdim == 3)
+  if (tdim == 3)
   {
-    std::tie(x[3], M[3]) = moments::make_integral_moments(
-        element::create_lagrange(cell::type::tetrahedron, degree - 3,
-                                 element::lagrange_variant::equispaced, true),
-        cell::type::tetrahedron, 3, 2 * degree - 3);
+    if (degree > 2 and tdim == 3)
+    {
+      std::tie(x[3], M[3]) = moments::make_integral_moments(
+          element::create_lagrange(cell::type::tetrahedron, degree - 3,
+                                   element::lagrange_variant::equispaced, true),
+          cell::type::tetrahedron, 3, 2 * degree - 3);
+    }
+    else
+    {
+      x[3] = std::vector<xt::xtensor<double, 2>>(
+          cell::num_sub_entities(celltype, 3),
+          xt::xtensor<double, 2>({0, tdim}));
+      M[3] = std::vector<xt::xtensor<double, 3>>(
+          cell::num_sub_entities(celltype, 3),
+          xt::xtensor<double, 3>({0, tdim, 0}));
+    }
   }
 
   if (discontinuous)
@@ -231,6 +257,12 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
+  x[0] = std::vector<xt::xtensor<double, 2>>(
+      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
+  M[0] = std::vector<xt::xtensor<double, 3>>(
+      cell::num_sub_entities(celltype, 0),
+      xt::xtensor<double, 3>({0, tdim, 0}));
+
   // Integral representation for the edge dofs
   FiniteElement edge_space
       = element::create_lagrange(cell::type::interval, degree,
@@ -246,13 +278,32 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
     std::tie(x[2], M[2]) = moments::make_dot_integral_moments(
         face_space, celltype, tdim, 2 * degree - 1);
   }
-
-  if (degree > 2 and tdim == 3)
+  else
   {
-    // Interior integral moment
-    std::tie(x[3], M[3]) = moments::make_dot_integral_moments(
-        element::create_rt(cell::type::tetrahedron, degree - 2, true), celltype,
-        tdim, 2 * degree - 2);
+    x[2] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, 2), xt::xtensor<double, 2>({0, tdim}));
+    M[2] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, 2),
+        xt::xtensor<double, 3>({0, tdim, 0}));
+  }
+  if (tdim == 3)
+  {
+    if (degree > 2)
+    {
+      // Interior integral moment
+      std::tie(x[3], M[3]) = moments::make_dot_integral_moments(
+          element::create_rt(cell::type::tetrahedron, degree - 2, true),
+          celltype, tdim, 2 * degree - 2);
+    }
+    else
+    {
+      x[3] = std::vector<xt::xtensor<double, 2>>(
+          cell::num_sub_entities(celltype, 3),
+          xt::xtensor<double, 2>({0, tdim}));
+      M[3] = std::vector<xt::xtensor<double, 3>>(
+          cell::num_sub_entities(celltype, 3),
+          xt::xtensor<double, 3>({0, tdim, 0}));
+    }
   }
 
   const std::size_t psize = polyset::dim(celltype, degree);

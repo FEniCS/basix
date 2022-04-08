@@ -48,7 +48,7 @@ std::vector<int> axis_points(const cell::type celltype)
 // celltype0) and (1) local axes on each entity (num_entities,
 // entity_dim, tdim).
 template <typename P>
-std::pair<std::vector<xt::xtensor<double, 2>>, xt::xtensor<double, 4>>
+std::pair<std::vector<xt::xtensor<double, 2>>, xt::xtensor<double, 3>>
 map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
 {
   assert(x.dimension() == 2);

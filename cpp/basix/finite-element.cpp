@@ -91,7 +91,9 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
   }
 
   std::size_t pdim = polyset::dim(cell_type, degree);
-  xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
+  std::size_t deriv_count = polyset::nderivs(cell_type, nderivs);
+  xt::xtensor<double, 4> D
+      = xt::zeros<double>({num_dofs, vs, pdim, deriv_count});
 
   // Loop over different dimensions
   std::size_t dof_index = 0;
@@ -113,16 +115,16 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
         P = polyset::tabulate(cell_type, degree, nderivs, x_e);
       }
 
-      // Me: [dof, vs, point]
-      const xt::xtensor<double, 3>& Me = M[d][e];
+      // Me: [dof, vs, point, deriv]
+      const xt::xtensor<double, 4>& Me = M[d][e];
 
       // Compute dual matrix contribution
-      for (std::size_t i = 0; i < Me.shape(1); ++i)        // Dof index
-        for (std::size_t j = 0; j < Me.shape(2); ++j)      // Value index
-          for (std::size_t k = 0; k < Me.shape(3); ++k)    // Point
-            for (std::size_t l = 0; l < Me.shape(0); ++l)  // Derivative
-              for (std::size_t m = 0; m < P.shape(1); ++m) // Polynomial term
-                D(dof_index + i, j, m) += Me(i, j, k, l) * P(l, k, m);
+      for (std::size_t i = 0; i < Me.shape(0); ++i)        // Dof index
+        for (std::size_t j = 0; j < Me.shape(1); ++j)      // Value index
+          for (std::size_t k = 0; k < Me.shape(2); ++k)    // Point
+            for (std::size_t l = 0; l < Me.shape(3); ++l)  // Derivative
+              for (std::size_t m = 0; m < P.shape(2); ++m) // Polynomial term
+                D(dof_index + i, j, m, l) += Me(i, j, k, l) * P(l, k, m);
 
       dof_index += M[d][e].shape(0);
     }
@@ -130,7 +132,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
 
   /// Flatten D and take transpose
   auto Dt_flat = xt::transpose(
-      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
+      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)}));
 
   return math::dot(B, Dt_flat);
 }
@@ -366,9 +368,9 @@ basix::FiniteElement basix::create_custom_element(
 {
   // Check that inputs are valid
   const std::size_t psize = polyset::dim(cell_type, degree);
-  std::size_t value_size = 1;
-  for (std::size_t i = 0; i < value_shape.size(); ++i)
-    value_size *= value_shape[i];
+  const std::size_t value_size
+      = std::accumulate(value_shape.begin(), value_shape.end(), 1,
+                        std::multiplies<std::size_t>());
 
   const std::size_t deriv_count
       = polyset::nderivs(cell_type, interpolation_nderivs);
@@ -448,14 +450,6 @@ FiniteElement::FiniteElement(
       _degree_bounds({highest_complete_degree, degree}),
       _tensor_factors(tensor_factors)
 {
-
-  for (std::size_t i = 0; i <= 4; ++i)
-    if (M[i].size()
-        != (i > _cell_tdim ? 0
-                           : static_cast<std::size_t>(
-                               cell::num_sub_entities(cell_type, i))))
-      throw std::runtime_error("dgesv, dsegv, ERROR HGEREO");
-
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
   {
@@ -491,7 +485,6 @@ FiniteElement::FiniteElement(
         xt::row(_points, counter++) = xt::row(x_e, p);
 
   // Copy into _matM
-
   const std::size_t value_size
       = std::accumulate(value_shape.begin(), value_shape.end(), 1,
                         std::multiplies<std::size_t>());
@@ -513,7 +506,7 @@ FiniteElement::FiniteElement(
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);
 
-  _matM = xt::zeros<double>({nderivs, value_size * num_points1 * nderivs});
+  _matM = xt::zeros<double>({num_dofs, value_size * num_points1 * nderivs});
   auto Mview
       = xt::reshape_view(_matM, {num_dofs, value_size, num_points1, nderivs});
 
@@ -527,9 +520,10 @@ FiniteElement::FiniteElement(
       auto dof_range = xt::range(dof_offset, dof_offset + M[d][e].shape(0));
       auto point_range
           = xt::range(point_offset, point_offset + M[d][e].shape(2));
-      xt::view(Mview, dof_range, xt::all(), point_range, xt::all()) = M[d][e];
-      point_offset += M[d][e].shape(2);
+      xt::view(Mview, dof_range, xt::all(), point_range, xt::all())
+          .assign(M[d][e]);
       dof_offset += M[d][e].shape(0);
+      point_offset += M[d][e].shape(2);
     }
   }
 

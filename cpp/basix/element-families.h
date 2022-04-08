@@ -51,7 +51,8 @@ enum class family
   Regge = 7,
   DPC = 8,
   bubble = 9,
-  serendipity = 10
+  serendipity = 10,
+  Hermite = 11
 };
 
 } // namespace basix::element

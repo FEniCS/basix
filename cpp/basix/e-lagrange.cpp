@@ -1257,7 +1257,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)
   {
     if (!discontinuous)
@@ -1286,6 +1285,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   }
   else
   {
+    // Create points at nodes, ordered by topology (vertices first)
     for (std::size_t dim = 0; dim <= tdim; ++dim)
     {
       M[dim].resize(topology[dim].size());

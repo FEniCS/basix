@@ -7,6 +7,7 @@
 #include "e-brezzi-douglas-marini.h"
 #include "e-bubble.h"
 #include "e-crouzeix-raviart.h"
+#include "e-hermite.h"
 #include "e-lagrange.h"
 #include "e-nce-rtc.h"
 #include "e-nedelec.h"
@@ -91,9 +92,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
   }
 
   std::size_t pdim = polyset::dim(cell_type, degree);
-  std::size_t deriv_count = polyset::nderivs(cell_type, nderivs);
-  xt::xtensor<double, 4> D
-      = xt::zeros<double>({num_dofs, vs, pdim, deriv_count});
+  xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
 
   // Loop over different dimensions
   std::size_t dof_index = 0;
@@ -124,7 +123,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
           for (std::size_t k = 0; k < Me.shape(2); ++k)    // Point
             for (std::size_t l = 0; l < Me.shape(3); ++l)  // Derivative
               for (std::size_t m = 0; m < P.shape(2); ++m) // Polynomial term
-                D(dof_index + i, j, m, l) += Me(i, j, k, l) * P(l, k, m);
+                D(dof_index + i, j, m) += Me(i, j, k, l) * P(l, k, m);
 
       dof_index += M[d][e].shape(0);
     }
@@ -132,7 +131,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
 
   /// Flatten D and take transpose
   auto Dt_flat = xt::transpose(
-      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2) * D.shape(3)}));
+      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
   return math::dot(B, Dt_flat);
 }
@@ -207,6 +206,8 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::DPC:
     return element::create_dpc(cell, degree, element::dpc_variant::unset,
                                discontinuous);
+  case element::family::Hermite:
+    return element::create_hermite(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found.");
   }

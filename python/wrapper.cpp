@@ -224,7 +224,8 @@ Interface to the Basix C++ library.
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
-      .value("CR", element::family::CR);
+      .value("CR", element::family::CR)
+      .value("Hermite", element::family::Hermite);
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def(

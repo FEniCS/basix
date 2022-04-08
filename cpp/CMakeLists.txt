@@ -99,6 +99,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h)
 
 target_sources(basix PRIVATE
@@ -122,6 +123,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-regge.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp)
 
 # Configure the library

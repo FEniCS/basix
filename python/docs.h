@@ -493,6 +493,8 @@ cell_type : basix.CellType
     The cell type
 degree : int
     The degree of the element
+interpolation_nderivs : int
+    The number of derivatives that need to be used during interpolation
 value_shape : List[int]
     The value shape of the element
 wcoeffs : numpy.ndarray[numpy.float64]

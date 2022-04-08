@@ -438,21 +438,13 @@ FiniteElement::FiniteElement(
       _tensor_factors(tensor_factors)
 {
 
-  std::cout << M[_cell_tdim][0].shape(0) << ",";
-  std::cout << M[_cell_tdim][0].shape(1) << ",";
-  std::cout << M[_cell_tdim][0].shape(2) << ",";
-  std::cout << M[_cell_tdim][0].shape(3) << "\n";
-  std::cout << "M = {\n";
-  for (std::size_t i = 0; i < M[_cell_tdim][0].shape(0); ++i)
-  {
-    std::cout << "  ";
-    for (std::size_t j = 0; j < M[_cell_tdim][0].shape(2); ++j)
-      std::cout << M[_cell_tdim][0](i, 0, j, 0) << " ";
-    std::cout << "\n";
-  }
-  std::cout << "}\n";
+  for (std::size_t i = 0; i <= 4; ++i)
+    if (M[i].size()
+        != (i > _cell_tdim ? 0
+                           : static_cast<std::size_t>(
+                               cell::num_sub_entities(cell_type, i))))
+      throw std::runtime_error("dgesv, dsegv, ERROR HGEREO");
 
-  std::cout << "Aa\n";
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
   {
@@ -463,17 +455,12 @@ FiniteElement::FiniteElement(
               "Discontinuous element can only have interior DOFs.");
   }
 
-  std::cout << "Bb\n";
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree,
                                      interpolation_nderivs);
-  std::cout << "Cc\n";
   xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
-  std::cout << "Dd\n";
   B_cmajor.assign(wcoeffs);
-  std::cout << "Ee\n";
   // Compute C = (BD^T)^{-1} B
   auto result = math::solve(_dual_matrix, B_cmajor);
-  std::cout << "Ff\n";
 
   _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
   _coeffs.assign(result);
@@ -707,7 +694,6 @@ FiniteElement::FiniteElement(
       }
     }
   }
-  std::cout << "Zz\n";
 }
 //-----------------------------------------------------------------------------
 bool FiniteElement::operator==(const FiniteElement& e) const

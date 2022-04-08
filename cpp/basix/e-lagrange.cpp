@@ -883,7 +883,6 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 FiniteElement create_legendre_dpc(cell::type celltype, int degree,
                                   bool discontinuous)
 {
-  std::cout << "incoming\n";
   if (!discontinuous)
     throw std::runtime_error("Legendre variant must be discontinuous");
 
@@ -962,7 +961,6 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
               .assign(xt::col(phi, i * (degree + 1) * (degree + 1)
                                        + j * (degree + 1) + k)
                       * wts);
-          std::cout << M[tdim][0].shape(2) << " " << phi.shape(0) << "\n";
           wcoeffs(row_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
               = 1;
           ++row_n;
@@ -971,30 +969,6 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     }
   }
 
-  std::cout << M[tdim][0].shape(0) << ",";
-  std::cout << M[tdim][0].shape(1) << ",";
-  std::cout << M[tdim][0].shape(2) << ",";
-  std::cout << M[tdim][0].shape(3) << "\n";
-  std::cout << "M = {\n";
-  for (std::size_t i = 0; i < M[tdim][0].shape(0); ++i)
-  {
-    std::cout << "  ";
-    for (std::size_t j = 0; j < M[tdim][0].shape(2); ++j)
-      std::cout << M[tdim][0](i, 0, j, 0) << " ";
-    std::cout << "\n";
-  }
-  std::cout << "}\n";
-  std::cout << "x = {\n";
-  for (std::size_t i = 0; i < x[tdim][0].shape(0); ++i)
-  {
-    std::cout << "  ";
-    for (std::size_t j = 0; j < x[tdim][0].shape(1); ++j)
-      std::cout << x[tdim][0](i, j) << " ";
-    std::cout << "\n";
-  }
-  std::cout << "}\n";
-
-  std::cout << "outgoing\n";
   return FiniteElement(element::family::DPC, celltype, degree, 0, {}, wcoeffs,
                        x, M, maps::type::identity, discontinuous, degree, {},
                        element::lagrange_variant::unset,

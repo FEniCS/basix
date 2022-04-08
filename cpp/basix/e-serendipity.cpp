@@ -534,6 +534,8 @@ FiniteElement basix::element::create_serendipity(
     cell::type celltype, int degree, element::lagrange_variant lvariant,
     element::dpc_variant dvariant, bool discontinuous)
 {
+  if (degree == 0)
+    throw std::runtime_error("Cannot create degree 0 serendipity");
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
   {
@@ -585,20 +587,48 @@ FiniteElement basix::element::create_serendipity(
     std::tie(x[1], M[1]) = moments::make_integral_moments(
         moment_space, celltype, 1, 2 * degree - 2);
   }
-
-  if (tdim >= 2 and degree >= 4)
+  else
   {
-    FiniteElement moment_space = element::create_dpc(
-        cell::type::quadrilateral, degree - 4, dvariant, true);
-    std::tie(x[2], M[2]) = moments::make_integral_moments(
-        moment_space, celltype, 1, 2 * degree - 4);
+    x[1] = std::vector<xt::xtensor<double, 2>>(
+        topology[1].size(), xt::xtensor<double, 2>({0, tdim}));
+    M[1] = std::vector<xt::xtensor<double, 4>>(topology[1].size(),
+                                               xt::ones<double>({0, 1, 0, 1}));
   }
 
-  if (tdim == 3 and degree >= 6)
+  if (tdim >= 2)
   {
-    std::tie(x[3], M[3]) = moments::make_integral_moments(
-        element::create_dpc(cell::type::hexahedron, degree - 6, dvariant, true),
-        celltype, 1, 2 * degree - 6);
+    if (degree >= 4)
+    {
+      FiniteElement moment_space = element::create_dpc(
+          cell::type::quadrilateral, degree - 4, dvariant, true);
+      std::tie(x[2], M[2]) = moments::make_integral_moments(
+          moment_space, celltype, 1, 2 * degree - 4);
+    }
+    else
+    {
+      x[2] = std::vector<xt::xtensor<double, 2>>(
+          topology[2].size(), xt::xtensor<double, 2>({0, tdim}));
+      M[2] = std::vector<xt::xtensor<double, 4>>(
+          topology[2].size(), xt::ones<double>({0, 1, 0, 1}));
+    }
+  }
+
+  if (tdim == 3)
+  {
+    if (degree >= 6)
+    {
+      std::tie(x[3], M[3]) = moments::make_integral_moments(
+          element::create_dpc(cell::type::hexahedron, degree - 6, dvariant,
+                              true),
+          celltype, 1, 2 * degree - 6);
+    }
+    else
+    {
+      x[3] = std::vector<xt::xtensor<double, 2>>(
+          topology[3].size(), xt::xtensor<double, 2>({0, tdim}));
+      M[3] = std::vector<xt::xtensor<double, 4>>(
+          topology[3].size(), xt::ones<double>({0, 1, 0, 1}));
+    }
   }
 
   xt::xtensor<double, 2> wcoeffs;
@@ -608,7 +638,6 @@ FiniteElement basix::element::create_serendipity(
     wcoeffs = make_serendipity_space_2d(degree);
   else if (tdim == 3)
     wcoeffs = make_serendipity_space_3d(degree);
-
 
   if (discontinuous)
   {
@@ -630,8 +659,6 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
     throw std::runtime_error("Invalid celltype");
   }
 
-  std::cout << "A\n";
-
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const std::size_t tdim = cell::topological_dimension(celltype);
@@ -641,35 +668,25 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  std::cout << "B\n";
-
   // TODO: Lagrange variant here
   // TODO: DPC variant
-  std::cout << "pre DPC\n";
   FiniteElement facet_moment_space
       = facettype == cell::type::interval
             ? element::create_lagrange(
                 facettype, degree, element::lagrange_variant::legendre, true)
             : element::create_dpc(facettype, degree,
                                   element::dpc_variant::legendre, true);
-  std::cout << "post DPC\n";
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, 2 * degree);
-
-  std::cout << "C\n";
 
   if (tdim >= 2 and degree >= 2)
   {
     // TODO: DPC variant
-    std::cout << "pre DPC\n";
     FiniteElement cell_moment_space = element::create_dpc(
         celltype, degree - 2, element::dpc_variant::legendre, true);
-    std::cout << "post DPC\n";
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         cell_moment_space, celltype, tdim, 2 * degree - 2);
   }
-
-  std::cout << "D\n";
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 1)
@@ -679,14 +696,10 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
   else if (tdim == 3)
     wcoeffs = make_serendipity_div_space_3d(degree);
 
-  std::cout << "E\n";
-
   if (discontinuous)
   {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
-
-  std::cout << "F\n";
 
   return FiniteElement(element::family::BDM, celltype, degree + 1, 0, {tdim},
                        wcoeffs, x, M, maps::type::contravariantPiola,

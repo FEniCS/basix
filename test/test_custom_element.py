@@ -90,7 +90,7 @@ def test_raviart_thomas_triangle_degree1():
         wcoeffs[2, i] = sum(pts[:, 0] * poly[:, i] * wts)
         wcoeffs[2, 3 + i] = sum(pts[:, 1] * poly[:, i] * wts)
 
-    pts, wts = basix.make_quadrature(basix.CellType.interval, 1)
+    pts, wts = basix.make_quadrature(basix.CellType.interval, 2)
 
     x = [[], [], [], []]
     for _ in range(3):
@@ -104,9 +104,9 @@ def test_raviart_thomas_triangle_degree1():
     for _ in range(3):
         M[0].append(np.zeros((0, 2, 0, 1)))
     for normal in [[-1, -1], [-1, 0], [0, 1]]:
-        mat = np.empty(1, 2, 2, 1)
-        mat[:, 0, :, :] = normal[0] * wts
-        mat[:, 1, :, :] = normal[1] * wts
+        mat = np.empty((1, 2, len(wts), 1))
+        mat[0, 0, :, 0] = normal[0] * wts
+        mat[0, 1, :, 0] = normal[1] * wts
         M[1].append(mat)
     M[2].append(np.zeros((0, 2, 0, 1)))
 
@@ -137,7 +137,7 @@ def create_lagrange1_quad(cell_type=basix.CellType.quadrilateral, degree=1, wcoe
     if value_shape is None:
         value_shape = []
     basix.create_custom_element(
-        cell_type, degree, value_shape, interpolation_nderivs, wcoeffs, x, M, basix.MapType.identity, discontinuous, 1)
+        cell_type, degree, interpolation_nderivs, value_shape, wcoeffs, x, M, basix.MapType.identity, discontinuous, 1)
 
 
 def test_create_lagrange1_quad():
@@ -235,7 +235,7 @@ def test_M_too_many_points():
 def test_M_wrong_entities():
     """Test that a runtime error is thrown when the shape of M does not match x."""
     z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[1.]]]), np.array([[[1.]]]), np.array([[[1.]]], [[[1.]]]), z],
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]], [[[1.]]]]), z],
          [z, z, z, z], [z], []]
     assert_failure(M=M)
 

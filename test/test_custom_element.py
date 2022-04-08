@@ -216,19 +216,16 @@ def test_x_wrong_entity_count():
     assert_failure(x=x)
 
 
-def test_M_wrong_value_size():
-    """Test that a runtime error is thrown when M has the wrong shape."""
-    z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.], [1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
-         [z, z, z, z], [z], []]
-    assert_failure(M=M)
-
-
 def test_M_too_many_points():
     """Test that a runtime error is thrown when M is the wrong shape."""
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
          [z, z, z, z], [np.array([[[[1.]]]])], []]
+    assert_failure(M=M)
+
+    z = np.zeros((0, 1, 0, 1))
+    M = [[np.array([[[[1.], [1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
+         [z, z, z, z], [z], []]
     assert_failure(M=M)
 
 

@@ -40,6 +40,19 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  for (std::size_t i = 0; i < tdim - 1; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        topology[i].size(), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        topology[i].size(), xt::xtensor<double, 3>({0, 1, 0}));
+  }
+  x[tdim] = std::vector<xt::xtensor<double, 2>>(
+      topology[tdim].size(), xt::xtensor<double, 2>({0, tdim}));
+  M[tdim] = std::vector<xt::xtensor<double, 3>>(
+      topology[tdim].size(), xt::xtensor<double, 3>({0, 1, 0}));
+
   x[tdim - 1].resize(facet_topology.size(),
                      xt::zeros<double>({static_cast<std::size_t>(1), tdim}));
 

@@ -56,10 +56,13 @@ def test_create_element(cell, degree, element, variant):
     """Check that either the element is created or a RuntimeError is thrown."""
     try:
         basix.create_element(element, cell, degree, *variant)
-    except RuntimeError:
-        pass
+    except RuntimeError as e:
+        # Don't allow cryptic "dgesv failed" messages
+        if len(e.args) == 0 or "dgesv" in e.args[0]:
+            raise e
 
     try:
         basix.create_element(element, cell, degree, *variant, True)
-    except RuntimeError:
-        pass
+    except RuntimeError as e:
+        if len(e.args) == 0 or "dgesv" in e.args[0]:
+            raise e

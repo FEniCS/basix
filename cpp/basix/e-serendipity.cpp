@@ -534,6 +534,9 @@ FiniteElement basix::element::create_serendipity(
     cell::type celltype, int degree, element::lagrange_variant lvariant,
     element::dpc_variant dvariant, bool discontinuous)
 {
+  if (degree == 0)
+    throw std::runtime_error("Cannot create degree 0 serendipity");
+
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
   {
@@ -585,20 +588,48 @@ FiniteElement basix::element::create_serendipity(
     std::tie(x[1], M[1]) = moments::make_integral_moments(
         moment_space, celltype, 1, 2 * degree - 2);
   }
-
-  if (tdim >= 2 and degree >= 4)
+  else
   {
-    FiniteElement moment_space = element::create_dpc(
-        cell::type::quadrilateral, degree - 4, dvariant, true);
-    std::tie(x[2], M[2]) = moments::make_integral_moments(
-        moment_space, celltype, 1, 2 * degree - 4);
+    x[1] = std::vector<xt::xtensor<double, 2>>(
+        topology[1].size(), xt::xtensor<double, 2>({0, tdim}));
+    M[1] = std::vector<xt::xtensor<double, 3>>(
+        topology[1].size(), xt::xtensor<double, 3>({0, 1, 0}));
   }
 
-  if (tdim == 3 and degree >= 6)
+  if (tdim >= 2)
   {
-    std::tie(x[3], M[3]) = moments::make_integral_moments(
-        element::create_dpc(cell::type::hexahedron, degree - 6, dvariant, true),
-        celltype, 1, 2 * degree - 6);
+    if (degree >= 4)
+    {
+      FiniteElement moment_space = element::create_dpc(
+          cell::type::quadrilateral, degree - 4, dvariant, true);
+      std::tie(x[2], M[2]) = moments::make_integral_moments(
+          moment_space, celltype, 1, 2 * degree - 4);
+    }
+    else
+    {
+      x[2] = std::vector<xt::xtensor<double, 2>>(
+          topology[2].size(), xt::xtensor<double, 2>({0, tdim}));
+      M[2] = std::vector<xt::xtensor<double, 3>>(
+          topology[2].size(), xt::xtensor<double, 3>({0, 1, 0}));
+    }
+  }
+
+  if (tdim == 3)
+  {
+    if (degree >= 6)
+    {
+      std::tie(x[3], M[3]) = moments::make_integral_moments(
+          element::create_dpc(cell::type::hexahedron, degree - 6, dvariant,
+                              true),
+          celltype, 1, 2 * degree - 6);
+    }
+    else
+    {
+      x[3] = std::vector<xt::xtensor<double, 2>>(
+          topology[3].size(), xt::xtensor<double, 2>({0, tdim}));
+      M[3] = std::vector<xt::xtensor<double, 3>>(
+          topology[3].size(), xt::xtensor<double, 3>({0, 1, 0}));
+    }
   }
 
   xt::xtensor<double, 2> wcoeffs;
@@ -639,6 +670,15 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
+  for (std::size_t i = 0; i < tdim - 1; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, i),
+        xt::xtensor<double, 3>({0, tdim, 0}));
+  }
+
   // TODO: Lagrange variant here
   // TODO: DPC variant
   FiniteElement facet_moment_space
@@ -650,7 +690,7 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, 2 * degree);
 
-  if (tdim >= 2 and degree >= 2)
+  if (degree >= 2)
   {
     // TODO: DPC variant
     FiniteElement cell_moment_space = element::create_dpc(
@@ -658,11 +698,18 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         cell_moment_space, celltype, tdim, 2 * degree - 2);
   }
+  else
+  {
+    x[tdim] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, tdim),
+        xt::xtensor<double, 2>({0, tdim}));
+    M[tdim] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, tdim),
+        xt::xtensor<double, 3>({0, tdim, 0}));
+  }
 
   xt::xtensor<double, 2> wcoeffs;
-  if (tdim == 1)
-    wcoeffs = xt::eye<double>(degree + 1);
-  else if (tdim == 2)
+  if (tdim == 2)
     wcoeffs = make_serendipity_div_space_2d(degree);
   else if (tdim == 3)
     wcoeffs = make_serendipity_div_space_3d(degree);
@@ -697,15 +744,19 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
       polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
 
   xt::xtensor<double, 2> wcoeffs;
-  if (tdim == 1)
-    wcoeffs = xt::eye<double>(degree + 1);
-  else if (tdim == 2)
+  if (tdim == 2)
     wcoeffs = make_serendipity_curl_space_2d(degree);
   else if (tdim == 3)
     wcoeffs = make_serendipity_curl_space_3d(degree);
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  x[0] = std::vector<xt::xtensor<double, 2>>(
+      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
+  M[0] = std::vector<xt::xtensor<double, 3>>(
+      cell::num_sub_entities(celltype, 0),
+      xt::xtensor<double, 3>({0, tdim, 0}));
 
   // TODO: Lagrange variants
   FiniteElement edge_moment_space = element::create_lagrange(
@@ -723,14 +774,35 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
                               element::dpc_variant::legendre, true);
     std::tie(x[2], M[2]) = moments::make_integral_moments(
         moment_space, celltype, tdim, 2 * degree - 2);
-    if (tdim == 3 and degree >= 4)
+  }
+  else
+  {
+    x[2] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, 2), xt::xtensor<double, 2>({0, tdim}));
+    M[2] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, 2),
+        xt::xtensor<double, 3>({0, tdim, 0}));
+  }
+
+  if (tdim == 3)
+  {
+    if (degree >= 4)
     {
-        // Interior integral moment
-        // TODO: DPC variant
-        std::tie(x[3], M[3]) = moments::make_integral_moments(
-            element::create_dpc(cell::type::hexahedron, degree - 4,
-                                element::dpc_variant::legendre, true),
-            celltype, tdim, 2 * degree - 4);
+      // Interior integral moment
+      // TODO: DPC variant
+      std::tie(x[3], M[3]) = moments::make_integral_moments(
+          element::create_dpc(cell::type::hexahedron, degree - 4,
+                              element::dpc_variant::legendre, true),
+          celltype, tdim, 2 * degree - 4);
+    }
+    else
+    {
+      x[3] = std::vector<xt::xtensor<double, 2>>(
+          cell::num_sub_entities(celltype, 3),
+          xt::xtensor<double, 2>({0, tdim}));
+      M[3] = std::vector<xt::xtensor<double, 3>>(
+          cell::num_sub_entities(celltype, 3),
+          xt::xtensor<double, 3>({0, tdim, 0}));
     }
   }
 

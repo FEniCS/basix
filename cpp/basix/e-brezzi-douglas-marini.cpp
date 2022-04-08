@@ -31,6 +31,15 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
+  for (std::size_t i = 0; i < tdim - 1; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, i),
+        xt::xtensor<double, 3>({0, tdim, 0}));
+  }
+
   // Add integral moments on facets
   const FiniteElement facet_moment_space = element::create_lagrange(
       facettype, degree, element::lagrange_variant::equispaced, true);
@@ -44,6 +53,15 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
     std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
         element::create_nedelec(celltype, degree - 1, true), celltype, tdim,
         2 * degree - 1);
+  }
+  else
+  {
+    x[tdim] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, tdim),
+        xt::xtensor<double, 2>({0, tdim}));
+    M[tdim] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, tdim),
+        xt::xtensor<double, 3>({0, tdim, 0}));
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

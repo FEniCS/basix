@@ -656,6 +656,9 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
                                                      int degree,
                                                      bool discontinuous)
 {
+  if (degree == 0)
+    throw std::runtime_error("Cannot create degree 0 serendipity");
+
   if (celltype != cell::type::quadrilateral and celltype != cell::type::hexahedron)
   {
     throw std::runtime_error("Invalid celltype");
@@ -729,6 +732,9 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
                                                       int degree,
                                                       bool discontinuous)
 {
+  if (degree == 0)
+    throw std::runtime_error("Cannot create degree 0 serendipity");
+
   if (celltype != cell::type::quadrilateral and celltype != cell::type::hexahedron)
   {
     throw std::runtime_error("Invalid celltype");

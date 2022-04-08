@@ -99,7 +99,8 @@ for _ in range(4):
 # are combined to evaluate the functionals. As all the DOFs are point evaluations in this
 # example, the matrices are all identity matrices for the entities that have a point.
 #
-# The shape of each matrix is (number of DOFs, value size, number of points).
+# The shape of each matrix is (number of DOFs, value size, number of points, number of
+# derivatives).
 
 M = [[], [], [], []]
 for _ in range(4):
@@ -197,17 +198,18 @@ x[1].append(np.array([[0, p[0]] for p in pts]))
 x[1].append(np.array([[p[0], 0] for p in pts]))
 x[2].append(np.zeros((0, 2)))
 
-# The interpolation matrices for the edges in this example will be have shape (1, 2, len(pts)), as
-# there is one DOF per edge, the value size is 2, and we have len(pts) quadrature points on each
-# edge. The entries of these matrices are the quadrature weights multiplied by the normal directions.
+# The interpolation matrices for the edges in this example will be have shape (1, 2, len(pts), 1),
+# as there is one DOF per edge, the value size is 2, and we have len(pts) quadrature points on each
+# edge, and no extra derivatives are used. The entries of these matrices are the quadrature weights
+# multiplied by the normal directions.
 
 M = [[], [], [], []]
 for _ in range(3):
     M[0].append(np.zeros((0, 2, 0, 1)))
 for normal in [[-1, -1], [-1, 0], [0, 1]]:
-    mat = np.empty((1, 2, 2, 1))
-    mat[:, 0, :, :] = normal[0] * wts
-    mat[:, 1, :, :] = normal[1] * wts
+    mat = np.empty((1, 2, len(wts), 1))
+    mat[0, 0, :, 0] = normal[0] * wts
+    mat[0, 1, :, 0] = normal[1] * wts
     M[1].append(mat)
 M[2].append(np.zeros((0, 2, 0, 1)))
 

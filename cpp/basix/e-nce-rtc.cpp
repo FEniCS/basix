@@ -261,8 +261,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
           {
             if (d != c)
             {
-              const std::size_t e
-                  = (c == 0 || d == 0) ? ((c == 1 || d == 1) ? 2 : 1) : 0;
+              const std::size_t e = 3 - c - d;
               if (c < e and j == degree)
                 continue;
 

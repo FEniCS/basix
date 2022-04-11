@@ -320,6 +320,15 @@ basix::element::make_discontinuous(
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
+  for (int i = 0; i < tdim; ++i)
+  {
+    x_out[i] = std::vector<xt::xtensor<double, 2>>(
+        x[i].size(),
+        xt::xtensor<double, 2>({0, static_cast<std::size_t>(tdim)}));
+    M_out[i] = std::vector<xt::xtensor<double, 3>>(
+        M[i].size(),
+        xt::xtensor<double, 3>({0, static_cast<std::size_t>(value_size), 0}));
+  }
 
   xt::xtensor<double, 2> new_x
       = xt::zeros<double>({npoints, static_cast<std::size_t>(tdim)});

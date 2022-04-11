@@ -60,6 +60,14 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+  }
+
   // Evaluate the expansion polynomials at the quadrature points
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  celltype, 2 * degree);

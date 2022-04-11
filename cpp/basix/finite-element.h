@@ -428,8 +428,8 @@ public:
     case maps::type::identity:
       return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
     case maps::type::scaledIdentity:
-      return [](O& u, const P& U, const Q&, double, const R&) {
-        maps::scaled_identity(u, U, J, detJ, J)
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
+        maps::scaled_identity(u, U, J, detJ, K);
       };
     case maps::type::covariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K) {

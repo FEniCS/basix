@@ -93,6 +93,14 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+  }
+
   if (celltype == cell::type::prism or celltype == cell::type::pyramid)
   {
     throw std::runtime_error(
@@ -414,6 +422,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
   for (std::size_t dim = 0; dim <= tdim; ++dim)
   {
+
     M[dim].resize(topology[dim].size());
     x[dim].resize(topology[dim].size());
   }
@@ -835,6 +844,14 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+  }
+
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  celltype, degree * 2);
   auto wts = xt::adapt(_wts);
@@ -894,6 +911,14 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+  }
 
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  celltype, degree * 2);
@@ -1223,6 +1248,17 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       throw std::runtime_error(
           "Cannot create a continuous order 0 Lagrange basis function");
     }
+
+    for (std::size_t i = 0; i < tdim; ++i)
+    {
+      x[i] = std::vector<xt::xtensor<double, 2>>(
+          cell::num_sub_entities(celltype, i),
+          xt::xtensor<double, 2>({0, tdim}));
+      M[i] = std::vector<xt::xtensor<double, 3>>(
+          cell::num_sub_entities(celltype, i),
+          xt::xtensor<double, 3>({0, 1, 0}));
+    }
+
     auto pt = lattice::create(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
@@ -1381,10 +1417,19 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   const std::size_t tdim = topology.size() - 1;
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+  }
+
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   const auto pt = make_dpc_points(celltype, degree, variant);
   x[tdim].push_back(pt);
 

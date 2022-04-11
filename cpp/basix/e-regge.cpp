@@ -52,13 +52,11 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  x[0].resize(topology[0].size());
-  M[0].resize(topology[0].size());
-  for (std::size_t e = 0; e < topology[0].size(); ++e)
-  {
-    x[0][e] = xt::xtensor<double, 2>({0, tdim});
-    M[0][e] = xt::xtensor<double, 3>({0, tdim * tdim, 0});
-  }
+  x[0] = std::vector<xt::xtensor<double, 2>>(
+      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
+  M[0] = std::vector<xt::xtensor<double, 3>>(
+      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 3>({0, tdim * tdim, 0}));
+
   // Loop over edge and higher dimension entities
   for (std::size_t d = 1; d < topology.size(); ++d)
   {

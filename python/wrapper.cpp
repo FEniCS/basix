@@ -153,6 +153,7 @@ Interface to the Basix C++ library.
 
   py::enum_<maps::type>(m, "MapType")
       .value("identity", maps::type::identity)
+      .value("scaledIdentity", maps::type::sclaedIdentity)
       .value("covariantPiola", maps::type::covariantPiola)
       .value("contravariantPiola", maps::type::contravariantPiola)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)

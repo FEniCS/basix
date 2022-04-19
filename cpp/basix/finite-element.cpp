@@ -749,13 +749,13 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
 xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
-  xt::xarray<double> __x = x;
-  if (__x.dimension() == 1)
-    __x.reshape({__x.shape(0), 1});
+  xt::xarray<double> x_copy = x;
+  if (x_copy.dimension() == 1)
+    x_copy.reshape({x_copy.shape(0), 1});
 
   auto shape = tabulate_shape(nd, x.shape(0));
   xt::xtensor<double, 4> data(shape);
-  tabulate(nd, __x, data);
+  tabulate(nd, x_copy, data);
 
   return data;
 }
@@ -763,17 +763,17 @@ FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
                              xt::xtensor<double, 4>& basis_data) const
 {
-  xt::xarray<double> __x = x;
-  if (__x.dimension() == 2 and x.shape(1) == 1)
-    __x.reshape({x.shape(0)});
+  xt::xarray<double> x_copy = x;
+  if (x_copy.dimension() == 2 and x.shape(1) == 1)
+    x_copy.reshape({x.shape(0)});
 
-  if (__x.shape(1) != _cell_tdim)
+  if (x_copy.shape(1) != _cell_tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
   xt::xtensor<double, 3> basis(
-      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), __x.shape(0),
+      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), x_copy.shape(0),
        static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
-  polyset::tabulate(basis, _cell_type, _degree, nd, __x);
+  polyset::tabulate(basis, _cell_type, _degree, nd, x_copy);
   const int psize = polyset::dim(_cell_type, _degree);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());

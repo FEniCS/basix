@@ -1122,8 +1122,8 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
       }
     }
   }
-  // 0 < kx < nderiv
-  for (std::size_t kx = 1; kx < nderiv; ++kx)
+  // 0 < kx < nderiv - 1
+  for (std::size_t kx = 1; kx < nderiv - 1; ++kx)
   {
     // ky = 0 and kz = 0
     // p = 1
@@ -1446,8 +1446,95 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
         }
       }
     }
-    // kz > 0
-    for (std::size_t kz = 1; kz <= nderiv - kx - 1; ++kz)
+    // kz = 1
+    // p = 1
+    { // scope
+      auto p00 = xt::view(P, idx(kx, 1, 1), xt::all(), idx(1, 0, 0));
+      p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+             + 1.0)
+                * xt::view(P, idx(kx, 1, 1), xt::all(), idx(0, 0, 0))
+            + 2 * kx * xt::view(P, idx(kx - 1, 1, 1), xt::all(), idx(0, 0, 0))
+            + xt::view(P, idx(kx, 0, 1), xt::all(), idx(0, 0, 0))
+            + xt::view(P, idx(kx, 1, 0), xt::all(), idx(0, 0, 0));
+    }
+    // p > 1
+    for (std::size_t p = 2; p <= n; ++p)
+    {
+      auto p00 = xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, 0, 0));
+      double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+      p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+             + 1.0)
+                * xt::view(P, idx(kx, 1, 1), xt::all(), idx(p - 1, 0, 0)) * a
+            + 2 * kx * a
+                  * xt::view(P, idx(kx - 1, 1, 1), xt::all(), idx(p - 1, 0, 0))
+            + a * xt::view(P, idx(kx, 0, 1), xt::all(), idx(p - 1, 0, 0))
+            + a * xt::view(P, idx(kx, 1, 0), xt::all(), idx(p - 1, 0, 0))
+            - f2 * xt::view(P, idx(kx, 1, 1), xt::all(), idx(p - 2, 0, 0))
+                  * (a - 1.0)
+            - ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                  * xt::view(P, idx(kx, 0, 1), xt::all(), idx(p - 2, 0, 0))
+                  * (a - 1.0)
+            - ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                  * xt::view(P, idx(kx, 1, 0), xt::all(), idx(p - 2, 0, 0))
+                  * (a - 1.0)
+            - 2.0 * xt::view(P, idx(kx, 0, 0), xt::all(), idx(p - 2, 0, 0))
+                  * (a - 1.0);
+    }
+
+    for (std::size_t p = 0; p < n; ++p)
+    {
+      auto p10 = xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, 1, 0));
+      p10 = xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, 0, 0))
+            * ((1.0 + (x1 * 2.0 - 1.0)) * p
+               + (2.0 + (x1 * 2.0 - 1.0) * 3.0 + (x2 * 2.0 - 1.0)) * 0.5);
+      +2 * xt::view(P, idx(kx, 0, 1), xt::all(), idx(p, 0, 0)) * (1.5 + p)
+          + xt::view(P, idx(kx, 1, 0), xt::all(), idx(p, 0, 0));
+
+      for (std::size_t q = 1; q < n - p; ++q)
+      {
+        auto [aq, bq, cq] = jrc(2 * p + 1, q);
+        auto pq1 = xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, q + 1, 0));
+        pq1 = xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, q, 0))
+                  * (f3 * aq + f4 * bq)
+              - xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, q - 1, 0)) * f5
+                    * cq
+              + 2 * xt::view(P, idx(kx, 0, 1), xt::all(), idx(p, q, 0)) * aq
+              + xt::view(P, idx(kx, 1, 0), xt::all(), idx(p, q, 0)) * (aq - bq)
+              + (1.0 - (x2 * 2.0 - 1.0))
+                    * xt::view(P, idx(kx, 1, 0), xt::all(), idx(p, q - 1, 0))
+                    * cq;
+      }
+    }
+
+    for (std::size_t p = 0; p < n; ++p)
+    {
+      for (std::size_t q = 0; q < n - p; ++q)
+      {
+        auto pq = xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, q, 1));
+        pq = xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, q, 0))
+                 * ((1.0 + p + q) + (x2 * 2.0 - 1.0) * (2.0 + p + q))
+             + 2 * (2.0 + p + q)
+                   * xt::view(P, idx(kx, 1, 0), xt::all(), idx(p, q, 0));
+      }
+    }
+
+    for (std::size_t p = 0; p + 1 < n; ++p)
+    {
+      for (std::size_t q = 0; q + 1 < n - p; ++q)
+      {
+        for (std::size_t r = 1; r < n - p - q; ++r)
+        {
+          auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+          xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, q, r + 1))
+              = xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, q, r))
+                    * ((x2 * 2.0 - 1.0) * ar + br)
+                - xt::view(P, idx(kx, 1, 1), xt::all(), idx(p, q, r - 1)) * cr
+                + 2 * ar * xt::view(P, idx(kx, 1, 0), xt::all(), idx(p, q, r));
+        }
+      }
+    }
+    // kz > 1
+    for (std::size_t kz = 2; kz <= nderiv - kx - 1; ++kz)
     {
       // p = 1
       { // scope
@@ -1471,31 +1558,27 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
               + 2 * kx * a
                     * xt::view(P, idx(kx - 1, 1, kz), xt::all(),
                                idx(p - 1, 0, 0))
-              + a * xt::view(P, idx(kx, 0, kz), xt::all(), idx(p - 1, 0, 0));
-
-        p00 += kz * a
-               * xt::view(P, idx(kx, 1, kz - 1), xt::all(), idx(p - 1, 0, 0));
-
-        p00 -= f2 * xt::view(P, idx(kx, 1, kz), xt::all(), idx(p - 2, 0, 0))
-               * (a - 1.0);
-        p00 -= ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
-               * xt::view(P, idx(kx, 0, kz), xt::all(), idx(p - 2, 0, 0))
-               * (a - 1.0);
-
-        p00 -= kz * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
-               * xt::view(P, idx(kx, 1, kz - 1), xt::all(), idx(p - 2, 0, 0))
-               * (a - 1.0);
-
-        if (kz > 1)
-        {
-          p00 -= kz * (kz - 1)
-                 * xt::view(P, idx(kx, 1, kz - 2), xt::all(), idx(p - 2, 0, 0))
-                 * (a - 1.0);
-        }
-
-        p00 -= 2.0 * kz
-               * xt::view(P, idx(kx, 0, kz - 1), xt::all(), idx(p - 2, 0, 0))
-               * (a - 1.0);
+              + a * xt::view(P, idx(kx, 0, kz), xt::all(), idx(p - 1, 0, 0))
+              + kz * a
+                    * xt::view(P, idx(kx, 1, kz - 1), xt::all(),
+                               idx(p - 1, 0, 0))
+              - f2 * xt::view(P, idx(kx, 1, kz), xt::all(), idx(p - 2, 0, 0))
+                    * (a - 1.0)
+              - ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                    * xt::view(P, idx(kx, 0, kz), xt::all(), idx(p - 2, 0, 0))
+                    * (a - 1.0)
+              - kz * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                    * xt::view(P, idx(kx, 1, kz - 1), xt::all(),
+                               idx(p - 2, 0, 0))
+                    * (a - 1.0)
+              - kz * (kz - 1)
+                    * xt::view(P, idx(kx, 1, kz - 2), xt::all(),
+                               idx(p - 2, 0, 0))
+                    * (a - 1.0)
+              - 2.0 * kz
+                    * xt::view(P, idx(kx, 0, kz - 1), xt::all(),
+                               idx(p - 2, 0, 0))
+                    * (a - 1.0);
       }
 
       for (std::size_t p = 0; p < n; ++p)
@@ -1521,16 +1604,11 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
                 + kz * (1.0 - (x2 * 2.0 - 1.0))
                       * xt::view(P, idx(kx, 1, kz - 1), xt::all(),
                                  idx(p, q - 1, 0))
+                      * cq
+                - kz * (kz - 1)
+                      * xt::view(P, idx(kx, 1, kz - 2), xt::all(),
+                                 idx(p, q - 1, 0))
                       * cq;
-
-          if (kz > 1)
-          {
-            // Quadratic term in z
-            pq1 -= kz * (kz - 1)
-                   * xt::view(P, idx(kx, 1, kz - 2), xt::all(),
-                              idx(p, q - 1, 0))
-                   * cq;
-          }
         }
       }
 
@@ -1653,8 +1731,111 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
           }
         }
       }
-      // kz > 0
-      for (std::size_t kz = 1; kz <= nderiv - kx - ky; ++kz)
+      // kz = 1
+      // p = 1
+      { // scope
+        auto p00 = xt::view(P, idx(kx, ky, 1), xt::all(), idx(1, 0, 0));
+        p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+               + 1.0)
+                  * xt::view(P, idx(kx, ky, 1), xt::all(), idx(0, 0, 0))
+              + 2 * kx
+                    * xt::view(P, idx(kx - 1, ky, 1), xt::all(), idx(0, 0, 0))
+              + ky * xt::view(P, idx(kx, ky - 1, 1), xt::all(), idx(0, 0, 0))
+              + xt::view(P, idx(kx, ky, 0), xt::all(), idx(0, 0, 0));
+      }
+      // p > 1
+      for (std::size_t p = 2; p <= n; ++p)
+      {
+        auto p00 = xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, 0, 0));
+        double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+        p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+               + 1.0)
+                  * xt::view(P, idx(kx, ky, 1), xt::all(), idx(p - 1, 0, 0)) * a
+              + 2 * kx * a
+                    * xt::view(P, idx(kx - 1, ky, 1), xt::all(),
+                               idx(p - 1, 0, 0))
+              + ky * a
+                    * xt::view(P, idx(kx, ky - 1, 1), xt::all(),
+                               idx(p - 1, 0, 0))
+              + a * xt::view(P, idx(kx, ky, 0), xt::all(), idx(p - 1, 0, 0))
+              - f2 * xt::view(P, idx(kx, ky, 1), xt::all(), idx(p - 2, 0, 0))
+                    * (a - 1.0)
+              - ky * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                    * xt::view(P, idx(kx, ky - 1, 1), xt::all(),
+                               idx(p - 2, 0, 0))
+                    * (a - 1.0)
+              - ky * (ky - 1)
+                    * xt::view(P, idx(kx, ky - 2, 1), xt::all(),
+                               idx(p - 2, 0, 0))
+              - ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                    * xt::view(P, idx(kx, ky, 0), xt::all(), idx(p - 2, 0, 0))
+                    * (a - 1.0)
+              - 2.0 * ky
+                    * xt::view(P, idx(kx, ky - 1, 0), xt::all(),
+                               idx(p - 2, 0, 0))
+                    * (a - 1.0);
+      }
+
+      for (std::size_t p = 0; p < n; ++p)
+      {
+        auto p10 = xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, 1, 0));
+        p10 = xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, 0, 0))
+              * ((1.0 + (x1 * 2.0 - 1.0)) * p
+                 + (2.0 + (x1 * 2.0 - 1.0) * 3.0 + (x2 * 2.0 - 1.0)) * 0.5);
+        +2 * ky* xt::view(P, idx(kx, ky - 1, 1), xt::all(), idx(p, 0, 0))
+                * (1.5 + p)
+            + xt::view(P, idx(kx, ky, 0), xt::all(), idx(p, 0, 0));
+
+        for (std::size_t q = 1; q < n - p; ++q)
+        {
+          auto [aq, bq, cq] = jrc(2 * p + 1, q);
+          auto pq1 = xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, q + 1, 0));
+          pq1 = xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, q, 0))
+                    * (f3 * aq + f4 * bq)
+                - xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, q - 1, 0)) * f5
+                      * cq
+                + 2 * ky
+                      * xt::view(P, idx(kx, ky - 1, 1), xt::all(), idx(p, q, 0))
+                      * aq
+                + xt::view(P, idx(kx, ky, 0), xt::all(), idx(p, q, 0))
+                      * (aq - bq)
+                + (1.0 - (x2 * 2.0 - 1.0))
+                      * xt::view(P, idx(kx, ky, 0), xt::all(), idx(p, q - 1, 0))
+                      * cq;
+        }
+      }
+
+      for (std::size_t p = 0; p < n; ++p)
+      {
+        for (std::size_t q = 0; q < n - p; ++q)
+        {
+          auto pq = xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, q, 1));
+          pq = xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, q, 0))
+                   * ((1.0 + p + q) + (x2 * 2.0 - 1.0) * (2.0 + p + q))
+               + 2 * (2.0 + p + q)
+                     * xt::view(P, idx(kx, ky, 0), xt::all(), idx(p, q, 0));
+        }
+      }
+
+      for (std::size_t p = 0; p + 1 < n; ++p)
+      {
+        for (std::size_t q = 0; q + 1 < n - p; ++q)
+        {
+          for (std::size_t r = 1; r < n - p - q; ++r)
+          {
+            auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+            xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, q, r + 1))
+                = xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, q, r))
+                      * ((x2 * 2.0 - 1.0) * ar + br)
+                  - xt::view(P, idx(kx, ky, 1), xt::all(), idx(p, q, r - 1))
+                        * cr
+                  + 2 * ar
+                        * xt::view(P, idx(kx, ky, 0), xt::all(), idx(p, q, r));
+          }
+        }
+      }
+      // kz > 1
+      for (std::size_t kz = 2; kz <= nderiv - kx - ky; ++kz)
       {
         // p = 1
         { // scope
@@ -1684,41 +1865,31 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
                                  idx(p - 1, 0, 0))
                 + ky * a
                       * xt::view(P, idx(kx, ky - 1, kz), xt::all(),
-                                 idx(p - 1, 0, 0));
-
-            p00 += kz * a
-                   * xt::view(P, idx(kx, ky, kz - 1), xt::all(),
-                              idx(p - 1, 0, 0));
-
-            p00 -= f2
-                   * xt::view(P, idx(kx, ky, kz), xt::all(), idx(p - 2, 0, 0))
-                   * (a - 1.0);
-            p00 -= ky * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
-                   * xt::view(P, idx(kx, ky - 1, kz), xt::all(),
-                              idx(p - 2, 0, 0))
-                   * (a - 1.0);
-
-            p00 -= ky * (ky - 1)
-                   * xt::view(P, idx(kx, ky - 2, kz), xt::all(),
-                              idx(p - 2, 0, 0));
-
-            p00 -= kz * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
-                   * xt::view(P, idx(kx, ky, kz - 1), xt::all(),
-                              idx(p - 2, 0, 0))
-                   * (a - 1.0);
-
-            if (kz > 1)
-            {
-              p00 -= kz * (kz - 1)
-                     * xt::view(P, idx(kx, ky, kz - 2), xt::all(),
-                                idx(p - 2, 0, 0))
-                     * (a - 1.0);
-            }
-
-              p00 -= 2.0 * ky * kz
-                     * xt::view(P, idx(kx, ky - 1, kz - 1), xt::all(),
-                                idx(p - 2, 0, 0))
-                     * (a - 1.0);
+                                 idx(p - 1, 0, 0))
+                + kz * a
+                      * xt::view(P, idx(kx, ky, kz - 1), xt::all(),
+                                 idx(p - 1, 0, 0))
+                - f2 * xt::view(P, idx(kx, ky, kz), xt::all(), idx(p - 2, 0, 0))
+                      * (a - 1.0)
+                - ky * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                      * xt::view(P, idx(kx, ky - 1, kz), xt::all(),
+                                 idx(p - 2, 0, 0))
+                      * (a - 1.0)
+                - ky * (ky - 1)
+                      * xt::view(P, idx(kx, ky - 2, kz), xt::all(),
+                                 idx(p - 2, 0, 0))
+                - kz * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                      * xt::view(P, idx(kx, ky, kz - 1), xt::all(),
+                                 idx(p - 2, 0, 0))
+                      * (a - 1.0)
+                - kz * (kz - 1)
+                      * xt::view(P, idx(kx, ky, kz - 2), xt::all(),
+                                 idx(p - 2, 0, 0))
+                      * (a - 1.0)
+                - 2.0 * ky * kz
+                      * xt::view(P, idx(kx, ky - 1, kz - 1), xt::all(),
+                                 idx(p - 2, 0, 0))
+                      * (a - 1.0);
         }
 
         for (std::size_t p = 0; p < n; ++p)
@@ -1751,16 +1922,11 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
                   + kz * (1.0 - (x2 * 2.0 - 1.0))
                         * xt::view(P, idx(kx, ky, kz - 1), xt::all(),
                                    idx(p, q - 1, 0))
+                        * cq
+                  - kz * (kz - 1)
+                        * xt::view(P, idx(kx, ky, kz - 2), xt::all(),
+                                   idx(p, q - 1, 0))
                         * cq;
-
-            if (kz > 1)
-            {
-              // Quadratic term in z
-              pq1 -= kz * (kz - 1)
-                     * xt::view(P, idx(kx, ky, kz - 2), xt::all(),
-                                idx(p, q - 1, 0))
-                     * cq;
-            }
           }
         }
 
@@ -1794,6 +1960,269 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
                                      idx(p, q, r));
             }
           }
+        }
+      }
+    }
+  }
+  // kx = nderiv - 1
+  if (nderiv >= 2)
+  {
+    // ky = 0 and kz = 0
+    // p = 1
+    {
+      auto p00 = xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(1, 0, 0));
+      p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+             + 1.0)
+                * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(0, 0, 0))
+            + 2 * (nderiv - 1)
+                  * xt::view(P, idx(nderiv - 2, 0, 0), xt::all(), idx(0, 0, 0));
+    }
+    // p > 1
+    for (std::size_t p = 2; p <= n; ++p)
+    {
+      auto p00 = xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, 0, 0));
+      double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+      p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+             + 1.0)
+                * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(),
+                           idx(p - 1, 0, 0))
+                * a
+            + 2 * (nderiv - 1) * a
+                  * xt::view(P, idx(nderiv - 2, 0, 0), xt::all(),
+                             idx(p - 1, 0, 0))
+            - f2
+                  * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(),
+                             idx(p - 2, 0, 0))
+                  * (a - 1.0);
+    }
+
+    for (std::size_t p = 0; p < n; ++p)
+    {
+      auto p10 = xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, 1, 0));
+      p10 = xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, 0, 0))
+            * ((1.0 + (x1 * 2.0 - 1.0)) * p
+               + (2.0 + (x1 * 2.0 - 1.0) * 3.0 + (x2 * 2.0 - 1.0)) * 0.5);
+
+      for (std::size_t q = 1; q < n - p; ++q)
+      {
+        auto [aq, bq, cq] = jrc(2 * p + 1, q);
+        auto pq1
+            = xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q + 1, 0));
+        pq1 = xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q, 0))
+                  * (f3 * aq + f4 * bq)
+              - xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q - 1, 0))
+                    * f5 * cq;
+      }
+    }
+
+    for (std::size_t p = 0; p < n; ++p)
+    {
+      for (std::size_t q = 0; q < n - p; ++q)
+      {
+        auto pq = xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q, 1));
+        pq = xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q, 0))
+             * ((1.0 + p + q) + (x2 * 2.0 - 1.0) * (2.0 + p + q));
+      }
+    }
+
+    for (std::size_t p = 0; p + 1 < n; ++p)
+    {
+      for (std::size_t q = 0; q + 1 < n - p; ++q)
+      {
+        for (std::size_t r = 1; r < n - p - q; ++r)
+        {
+          auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+          xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q, r + 1))
+              = xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q, r))
+                    * ((x2 * 2.0 - 1.0) * ar + br)
+                - xt::view(P, idx(nderiv - 1, 0, 0), xt::all(),
+                           idx(p, q, r - 1))
+                      * cr;
+        }
+      }
+    }
+    // ky = 0 and kz = 1
+    { // scope
+      // p = 1
+      for (std::size_t p = 1; p <= n; ++p)
+      {
+        auto p00 = xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(1, 0, 0));
+        p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+               + 1.0)
+                  * xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(0, 0, 0))
+              + 2 * (nderiv - 1)
+                    * xt::view(P, idx(nderiv - 2, 0, 1), xt::all(),
+                               idx(0, 0, 0))
+              + xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(0, 0, 0));
+      }
+      // p > 1
+      for (std::size_t p = 2; p <= n; ++p)
+      {
+        auto p00 = xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(p, 0, 0));
+        double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+        p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+               + 1.0)
+                  * xt::view(P, idx(nderiv - 1, 0, 1), xt::all(),
+                             idx(p - 1, 0, 0))
+                  * a
+              + 2 * (nderiv - 1) * a
+                    * xt::view(P, idx(nderiv - 2, 0, 1), xt::all(),
+                               idx(p - 1, 0, 0))
+              + a
+                    * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(),
+                               idx(p - 1, 0, 0))
+              - f2
+                    * xt::view(P, idx(nderiv - 1, 0, 1), xt::all(),
+                               idx(p - 2, 0, 0))
+                    * (a - 1.0)
+              - ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                    * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(),
+                               idx(p - 2, 0, 0))
+                    * (a - 1.0);
+      }
+
+      for (std::size_t p = 0; p < n; ++p)
+      {
+        auto p10 = xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(p, 1, 0));
+        p10 = xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(p, 0, 0))
+                  * ((1.0 + (x1 * 2.0 - 1.0)) * p
+                     + (2.0 + (x1 * 2.0 - 1.0) * 3.0 + (x2 * 2.0 - 1.0)) * 0.5)
+              + xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, 0, 0));
+
+        for (std::size_t q = 1; q < n - p; ++q)
+        {
+          auto [aq, bq, cq] = jrc(2 * p + 1, q);
+          auto pq1
+              = xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(p, q + 1, 0));
+          pq1 = xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(p, q, 0))
+                    * (f3 * aq + f4 * bq)
+                - xt::view(P, idx(nderiv - 1, 0, 1), xt::all(),
+                           idx(p, q - 1, 0))
+                      * f5 * cq
+                + xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q, 0))
+                      * (aq - bq)
+                + (1.0 - (x2 * 2.0 - 1.0))
+                      * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(),
+                                 idx(p, q - 1, 0))
+                      * cq;
+        }
+      }
+
+      for (std::size_t p = 0; p < n; ++p)
+      {
+        for (std::size_t q = 0; q < n - p; ++q)
+        {
+          auto pq = xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(p, q, 1));
+          pq = xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(p, q, 0))
+               * ((1.0 + p + q) + (x2 * 2.0 - 1.0) * (2.0 + p + q));
+          +2 * (2.0 + p + q)
+              * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q, 0));
+        }
+      }
+
+      for (std::size_t p = 0; p + 1 < n; ++p)
+      {
+        for (std::size_t q = 0; q + 1 < n - p; ++q)
+        {
+          for (std::size_t r = 1; r < n - p - q; ++r)
+          {
+            auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+            xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(p, q, r + 1))
+                = xt::view(P, idx(nderiv - 1, 0, 1), xt::all(), idx(p, q, r))
+                      * ((x2 * 2.0 - 1.0) * ar + br)
+                  - xt::view(P, idx(nderiv - 1, 0, 1), xt::all(),
+                             idx(p, q, r - 1))
+                        * cr
+                  + 2 * ar
+                        * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(),
+                                   idx(p, q, r));
+          }
+        }
+      }
+    }
+    // ky = 1 and kz = 0
+    // p = 1
+    { // scope
+      auto p00 = xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(1, 0, 0));
+      p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+             + 1.0)
+                * xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(0, 0, 0))
+            + 2 * (nderiv - 1)
+                  * xt::view(P, idx(nderiv - 2, 1, 0), xt::all(), idx(0, 0, 0))
+            + xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(0, 0, 0));
+    }
+    // p > 1
+    for (std::size_t p = 2; p <= n; ++p)
+    {
+      auto p00 = xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, 0, 0));
+      double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+      p00 = ((x0 * 2.0 - 1.0) + 0.5 * ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+             + 1.0)
+                * xt::view(P, idx(nderiv - 1, 1, 0), xt::all(),
+                           idx(p - 1, 0, 0))
+                * a
+            + 2 * (nderiv - 1) * a
+                  * xt::view(P, idx(nderiv - 2, 1, 0), xt::all(),
+                             idx(p - 1, 0, 0))
+            + a
+                  * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(),
+                             idx(p - 1, 0, 0))
+            - f2
+                  * xt::view(P, idx(nderiv - 1, 1, 0), xt::all(),
+                             idx(p - 2, 0, 0))
+                  * (a - 1.0)
+            - ((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0))
+                  * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(),
+                             idx(p - 2, 0, 0))
+                  * (a - 1.0);
+    }
+
+    for (std::size_t p = 0; p < n; ++p)
+    {
+      auto p10 = xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, 1, 0));
+      p10 = xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, 0, 0))
+            * ((1.0 + (x1 * 2.0 - 1.0)) * p
+               + (2.0 + (x1 * 2.0 - 1.0) * 3.0 + (x2 * 2.0 - 1.0)) * 0.5);
+      +2 * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, 0, 0))
+          * (1.5 + p);
+
+      for (std::size_t q = 1; q < n - p; ++q)
+      {
+        auto [aq, bq, cq] = jrc(2 * p + 1, q);
+        auto pq1
+            = xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, q + 1, 0));
+        pq1 = xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, q, 0))
+                  * (f3 * aq + f4 * bq)
+              - xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, q - 1, 0))
+                    * f5 * cq
+              + 2 * xt::view(P, idx(nderiv - 1, 0, 0), xt::all(), idx(p, q, 0))
+                    * aq;
+      }
+    }
+
+    for (std::size_t p = 0; p < n; ++p)
+    {
+      for (std::size_t q = 0; q < n - p; ++q)
+      {
+        auto pq = xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, q, 1));
+        pq = xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, q, 0))
+             * ((1.0 + p + q) + (x2 * 2.0 - 1.0) * (2.0 + p + q));
+      }
+    }
+
+    for (std::size_t p = 0; p + 1 < n; ++p)
+    {
+      for (std::size_t q = 0; q + 1 < n - p; ++q)
+      {
+        for (std::size_t r = 1; r < n - p - q; ++r)
+        {
+          auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+          xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, q, r + 1))
+              = xt::view(P, idx(nderiv - 1, 1, 0), xt::all(), idx(p, q, r))
+                    * ((x2 * 2.0 - 1.0) * ar + br)
+                - xt::view(P, idx(nderiv - 1, 1, 0), xt::all(),
+                           idx(p, q, r - 1))
+                      * cr;
         }
       }
     }

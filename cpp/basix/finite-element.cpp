@@ -143,10 +143,15 @@ basix::FiniteElement basix::create_element(element::family family,
                                            bool discontinuous)
 {
   if (family == element::family::custom)
+  {
     throw std::runtime_error("Cannot create a custom element directly. Try "
                              "using `create_custom_element` instead");
+  }
   if (degree < 0)
+  {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
   switch (family)
   {
   case element::family::P:
@@ -220,10 +225,15 @@ basix::FiniteElement basix::create_element(element::family family,
                                            bool discontinuous)
 {
   if (family == element::family::custom)
+  {
     throw std::runtime_error("Cannot create a custom element directly. Try "
                              "using `create_custom_element` instead");
+  }
   if (degree < 0)
+  {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
   switch (family)
   {
   case element::family::DPC:
@@ -243,10 +253,15 @@ basix::FiniteElement basix::create_element(element::family family,
                                            bool discontinuous)
 {
   if (family == element::family::custom)
+  {
     throw std::runtime_error("Cannot create a custom element directly. Try "
                              "using `create_custom_element` instead");
+  }
   if (degree < 0)
+  {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
   switch (family)
   {
   case element::family::P:
@@ -266,10 +281,15 @@ basix::FiniteElement basix::create_element(element::family family,
                                            bool discontinuous)
 {
   if (family == element::family::custom)
+  {
     throw std::runtime_error("Cannot create a custom element directly. Try "
                              "using `create_custom_element` instead");
+  }
   if (degree < 0)
+  {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
   switch (family)
   {
   case element::family::serendipity:

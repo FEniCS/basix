@@ -783,9 +783,39 @@ public:
   const xt::xtensor<double, 2>& wcoeffs() const;
 
   /// Get the interpolation points for each subentity.
+  ///
+  /// The shape of this data is (tdim, entity index, point index, dim).
   const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x() const;
 
   /// Get the interpolation matrices for each subentity.
+  ///
+  /// The shape of this data is (tdim, entity index, dof, value size,
+  /// point_index).
+  ///
+  /// These matrices define how to evaluate the DOF functionals accociated with
+  /// each sub-entity of the cell. Given a functional f, the functionals
+  /// associated with the `e`-th entity of dimension `d` can be computed as
+  /// follows:
+  ///
+  /// \code{.pseudo}
+  /// matrix = element.M()[d][e]
+  /// pts = element.x()[d][e]
+  /// values = f(pts)
+  /// result = ZEROS(matrix.shape(0))
+  /// FOR i IN RANGE(matrix.shape(0)):
+  ///     FOR j IN RANGE(matrix.shape(1)):
+  ///         FOR k IN RANGE(matrix.shape(2)):
+  ///             result[i] += matrix[i, j, k] * values[k][j]
+  /// \endcode
+  ///
+  /// For example, for a degree 1 Raviart-Thomas (RT) element on a triangle, the
+  /// DOF functionals are integrals over the edges of the dot product of the
+  /// function with the normal to the edge. In this case, `x()` would contain
+  /// quadrature points for each edge, and `M()` would by a 1 by 2 by `npoints`
+  /// array for each edge. For each point, the `[1, :, point]` slice of this
+  /// would be the quadrature weight multiplied by the normal. For all entities
+  /// that are not edges, the entries in `x()` and `M()` for a degree 1 RT
+  /// element would have size 0.
   ///
   /// These matrices are only stored for custom elements. This function will
   /// throw an exception if called on a non-custom element

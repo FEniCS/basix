@@ -297,6 +297,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
       }
     }
   }
+
   // kx = 0 and ky = 0 and kz = 1
   if (nderiv >= 1)
   {
@@ -374,6 +375,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
       }
     }
   }
+
   // kx = 0 and ky = 0 and kz > 1
   for (std::size_t kz = 2; kz <= nderiv; ++kz)
   {
@@ -463,6 +465,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
       }
     }
   }
+
   // kx = 0 and ky = 1
   if (nderiv >= 1)
   {
@@ -626,7 +629,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
       }
     }
     // kz > 1
-    for (std::size_t kz = 2; kz <= nderiv - 1; ++kz)
+    for (std::size_t kz = 2; kz + 1 <= nderiv; ++kz)
     {
       // p = 1
       { // scope
@@ -1122,8 +1125,9 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
       }
     }
   }
+
   // 0 < kx < nderiv - 1
-  for (std::size_t kx = 1; kx < nderiv - 1; ++kx)
+  for (std::size_t kx = 1; kx + 1 < nderiv; ++kx)
   {
     // ky = 0 and kz = 0
     // p = 1
@@ -1446,6 +1450,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
         }
       }
     }
+
     // kz = 1
     // p = 1
     { // scope
@@ -1457,6 +1462,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
             + xt::view(P, idx(kx, 0, 1), xt::all(), idx(0, 0, 0))
             + xt::view(P, idx(kx, 1, 0), xt::all(), idx(0, 0, 0));
     }
+
     // p > 1
     for (std::size_t p = 2; p <= n; ++p)
     {
@@ -1533,8 +1539,9 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
         }
       }
     }
+
     // kz > 1
-    for (std::size_t kz = 2; kz <= nderiv - kx - 1; ++kz)
+    for (std::size_t kz = 2; kz + 1 <= nderiv - kx; ++kz)
     {
       // p = 1
       { // scope
@@ -2227,6 +2234,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
       }
     }
   }
+
   // kx = nderiv
   if (nderiv >= 1)
   {

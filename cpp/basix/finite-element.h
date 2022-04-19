@@ -752,6 +752,32 @@ public:
   /// Get the coefficients that define the polynomial set in terms of the
   /// orthonormal polynomials.
   ///
+  /// The polynomials spanned by each finite element in Basix are represented as
+  /// a linear combination of the orthonormal polynomials of a given degree on
+  /// the cell. Each row of this matrix defines a polynomial in the set spanned
+  /// by the finite element.
+  ///
+  /// For example, the orthonormal polynomials of degree <= 1 on a triangle are
+  /// (where a, b, c, d are some constants):
+  ///
+  ///  - (sqrt(2), 0)
+  ///  - (a*x - b, 0)
+  ///  - (c*y - d, 0)
+  ///  - (0, sqrt(2))
+  ///  - (0, a*x - b)
+  ///  - (0, c*y - d)
+  ///
+  /// For a degree 1 Raviart-Thomas element, the first two rows of wcoeffs would
+  /// be the following, as (1, 0) and (0, 1) are spanned by the element
+  ///
+  ///  - [1, 0, 0, 0, 0, 0]
+  ///  - [0, 0, 0, 1, 0, 0]
+  ///
+  /// The third row of wcoeffs in this example would give coefficients that
+  /// represent (x, y) in terms of the orthonormal polynomials:
+  ///
+  ///  - [-b/(a*sqrt(2)), 1/a, 0, -d/(c*sqrt(2)), 0, 1/c]
+  ///
   /// These coefficients are only stored for custom elements. This function will
   /// throw an exception if called on a non-custom element
   const xt::xtensor<double, 2>& wcoeffs() const;

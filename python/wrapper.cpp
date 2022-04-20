@@ -388,7 +388,7 @@ Interface to the Basix C++ library.
       .def_property_readonly(
           "M",
           [](const FiniteElement& self) {
-            const std::array<std::vector<xt::xtensor<double, 3>>, 4>& _M
+            const std::array<std::vector<xt::xtensor<double, 4>>, 4>& _M
                 = self.M();
             std::vector<std::vector<py::array_t<double, py::array::c_style>>> M(
                 4);
@@ -420,7 +420,9 @@ Interface to the Basix C++ library.
             return x;
           })
       .def_property_readonly("has_tensor_product_factorisation",
-                             &FiniteElement::has_tensor_product_factorisation);
+                             &FiniteElement::has_tensor_product_factorisation)
+      .def_property_readonly("interpolation_nderivs",
+                             &FiniteElement::interpolation_nderivs);
 
   py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("unset", element::lagrange_variant::unset)

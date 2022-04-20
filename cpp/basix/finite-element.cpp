@@ -1121,7 +1121,7 @@ FiniteElement::x() const
   return _x;
 }
 //-----------------------------------------------------------------------------
-const std::array<std::vector<xt::xtensor<double, 3>>, 4>&
+const std::array<std::vector<xt::xtensor<double, 4>>, 4>&
 FiniteElement::M() const
 {
   if (family() != element::family::custom)
@@ -1154,6 +1154,11 @@ element::dpc_variant FiniteElement::dpc_variant() const { return _dpc_variant; }
 bool FiniteElement::interpolation_is_identity() const
 {
   return _interpolation_is_identity;
+}
+//-----------------------------------------------------------------------------
+int FiniteElement::interpolation_nderivs() const
+{
+  return _interpolation_nderivs;
 }
 //-----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>

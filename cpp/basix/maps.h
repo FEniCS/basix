@@ -18,11 +18,11 @@ namespace basix::maps
 /// Map type
 enum class type
 {
-  identity,
-  covariantPiola,
-  contravariantPiola,
-  doubleCovariantPiola,
-  doubleContravariantPiola,
+  identity = 0,
+  covariantPiola = 1,
+  contravariantPiola = 2,
+  doubleCovariantPiola = 3,
+  doubleContravariantPiola = 4,
 };
 
 namespace impl

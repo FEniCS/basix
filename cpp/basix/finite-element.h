@@ -418,7 +418,7 @@ public:
   /// - `u` [in] The data on the physical cell that should be pulled
   /// back , flattened with row-major layout, shape=(num_points,
   /// value_size)
-  /// - `K` [in] The inverse oif the Jacobian matrix of the map
+  /// - `K` [in] The inverse of the Jacobian matrix of the map
   /// ,shape=(tdim, gdim)
   /// - `detJ_inv` [in] 1/det(J)
   /// - `J` [in] The Jacobian matrix, shape=(gdim, tdim)
@@ -792,36 +792,38 @@ public:
   /// Get the interpolation matrices for each subentity.
   ///
   /// The shape of this data is (tdim, entity index, dof, value size,
-  /// point_index).
+  /// point_index, derivative).
   ///
   /// These matrices define how to evaluate the DOF functionals accociated with
-  /// each sub-entity of the cell. Given a functional f, the functionals
+  /// each sub-entity of the cell. Given a function f, the functionals
   /// associated with the `e`-th entity of dimension `d` can be computed as
   /// follows:
   ///
   /// \code{.pseudo}
   /// matrix = element.M()[d][e]
   /// pts = element.x()[d][e]
-  /// values = f(pts)
+  /// nderivs = element
+  /// values = f.eval_derivs(nderivs, pts)
   /// result = ZEROS(matrix.shape(0))
   /// FOR i IN RANGE(matrix.shape(0)):
   ///     FOR j IN RANGE(matrix.shape(1)):
   ///         FOR k IN RANGE(matrix.shape(2)):
-  ///             result[i] += matrix[i, j, k] * values[k][j]
+  ///             FOR l IN RANGE(matrix.shape(3)):
+  ///                 result[i] += matrix[i, j, k, l] * values[l][k][j]
   /// \endcode
   ///
   /// For example, for a degree 1 Raviart-Thomas (RT) element on a triangle, the
   /// DOF functionals are integrals over the edges of the dot product of the
   /// function with the normal to the edge. In this case, `x()` would contain
   /// quadrature points for each edge, and `M()` would by a 1 by 2 by `npoints`
-  /// array for each edge. For each point, the `[1, :, point]` slice of this
-  /// would be the quadrature weight multiplied by the normal. For all entities
-  /// that are not edges, the entries in `x()` and `M()` for a degree 1 RT
-  /// element would have size 0.
+  /// by 1 array for each edge. For each point, the `[0, :, point, 0]` slice of
+  /// this would be the quadrature weight multiplied by the normal. For all
+  /// entities that are not edges, the entries in `x()` and `M()` for a degree 1
+  /// RT element would have size 0.
   ///
   /// These matrices are only stored for custom elements. This function will
   /// throw an exception if called on a non-custom element
-  const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M() const;
+  const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M() const;
 
   /// Get the matrix of coefficients.
   ///
@@ -858,6 +860,9 @@ public:
   /// Indicates whether or not the interpolation matrix for this element is an
   /// identity matrix
   bool interpolation_is_identity() const;
+
+  /// The number of derivatives needed when interpolating
+  int interpolation_nderivs() const;
 
 private:
   // Cell type
@@ -1002,7 +1007,7 @@ private:
   xt::xtensor<double, 2> _wcoeffs;
 
   // Interpolation matrices for each entity
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
 };
 
 /// Create a custom finite element

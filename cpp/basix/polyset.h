@@ -9,6 +9,9 @@
 #include <xtensor/xtensor.hpp>
 
 /// Polynomial expansion sets
+///
+/// \section Interval
+///
 namespace basix::polyset
 {
 /// Tabulate the orthonormal polynomial basis, and derivatives, at

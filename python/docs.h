@@ -728,7 +728,6 @@ numpy.ndarray[numpy.float64]
 )";
 
 const std::string tabulate_polynomial_set = R"(
-Polynomial expansion sets
 Tabulate the orthonormal polynomial basis, and derivatives, at
 points on the reference cell.
 
@@ -835,7 +834,6 @@ numpy.ndarray[numpy.float64]
 )";
 
 const std::string index__p = R"(
-Indexing
 Compute trivial indexing in a 1D array (for completeness)
 
 Parameters

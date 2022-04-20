@@ -40,7 +40,7 @@ def prepare_cpp(content):
             else:
                 out += line + "\n"
 
-    out = re.sub(r"namespace [^{]*\{", "", out)
+    out = re.sub(r"namespace [^{]*\{", ";", out)
     out = re.sub(r"class [^{]*\{", "", out)
 
     while "{" in out:
@@ -125,7 +125,6 @@ def get_docstring(matches):
                 p = i
                 pdoc = "TODO: document this"
             params[p] = "\n    ".join(pdoc.split("\n"))
-
         return f"{info} : {typename}\n    {params[info]}"
 
     if info_type == "return":

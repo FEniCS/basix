@@ -751,6 +751,78 @@ public:
   /// @return The dual matrix
   const xt::xtensor<double, 2>& dual_matrix() const;
 
+  /// Get the coefficients that define the polynomial set in terms of the
+  /// orthonormal polynomials.
+  ///
+  /// The polynomials spanned by each finite element in Basix are represented as
+  /// a linear combination of the orthonormal polynomials of a given degree on
+  /// the cell. Each row of this matrix defines a polynomial in the set spanned
+  /// by the finite element.
+  ///
+  /// For example, the orthonormal polynomials of degree <= 1 on a triangle are
+  /// (where a, b, c, d are some constants):
+  ///
+  ///  - (sqrt(2), 0)
+  ///  - (a*x - b, 0)
+  ///  - (c*y - d, 0)
+  ///  - (0, sqrt(2))
+  ///  - (0, a*x - b)
+  ///  - (0, c*y - d)
+  ///
+  /// For a degree 1 Raviart-Thomas element, the first two rows of wcoeffs would
+  /// be the following, as (1, 0) and (0, 1) are spanned by the element
+  ///
+  ///  - [1, 0, 0, 0, 0, 0]
+  ///  - [0, 0, 0, 1, 0, 0]
+  ///
+  /// The third row of wcoeffs in this example would give coefficients that
+  /// represent (x, y) in terms of the orthonormal polynomials:
+  ///
+  ///  - [-b/(a*sqrt(2)), 1/a, 0, -d/(c*sqrt(2)), 0, 1/c]
+  ///
+  /// These coefficients are only stored for custom elements. This function will
+  /// throw an exception if called on a non-custom element
+  const xt::xtensor<double, 2>& wcoeffs() const;
+
+  /// Get the interpolation points for each subentity.
+  ///
+  /// The shape of this data is (tdim, entity index, point index, dim).
+  const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x() const;
+
+  /// Get the interpolation matrices for each subentity.
+  ///
+  /// The shape of this data is (tdim, entity index, dof, value size,
+  /// point_index).
+  ///
+  /// These matrices define how to evaluate the DOF functionals accociated with
+  /// each sub-entity of the cell. Given a functional f, the functionals
+  /// associated with the `e`-th entity of dimension `d` can be computed as
+  /// follows:
+  ///
+  /// \code{.pseudo}
+  /// matrix = element.M()[d][e]
+  /// pts = element.x()[d][e]
+  /// values = f(pts)
+  /// result = ZEROS(matrix.shape(0))
+  /// FOR i IN RANGE(matrix.shape(0)):
+  ///     FOR j IN RANGE(matrix.shape(1)):
+  ///         FOR k IN RANGE(matrix.shape(2)):
+  ///             result[i] += matrix[i, j, k] * values[k][j]
+  /// \endcode
+  ///
+  /// For example, for a degree 1 Raviart-Thomas (RT) element on a triangle, the
+  /// DOF functionals are integrals over the edges of the dot product of the
+  /// function with the normal to the edge. In this case, `x()` would contain
+  /// quadrature points for each edge, and `M()` would by a 1 by 2 by `npoints`
+  /// array for each edge. For each point, the `[1, :, point]` slice of this
+  /// would be the quadrature weight multiplied by the normal. For all entities
+  /// that are not edges, the entries in `x()` and `M()` for a degree 1 RT
+  /// element would have size 0.
+  ///
+  /// These matrices are only stored for custom elements. This function will
+  /// throw an exception if called on a non-custom element
+  const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M() const;
+
   /// Get the matrix of coefficients.
   ///
   /// This is the matrix @f$C@f$, as described in the documentation of
@@ -924,6 +996,13 @@ private:
 
   // Is the interpolation matrix an identity?
   bool _interpolation_is_identity;
+
+  // The coefficients that define the polynomial set in terms of the orthonormal
+  // polynomials
+  xt::xtensor<double, 2> _wcoeffs;
+
+  // Interpolation matrices for each entity
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
 };
 
 /// Create a custom finite element

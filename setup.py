@@ -19,7 +19,8 @@ setup(name="fenics-basix",
           "lint": ["flake8", "pydocstyle"],
           "optional": ["numba"],
           "test": ["pytest", "sympy", "numba", "scipy"],
-          "ci": ["pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]", "fenics-basix[test]"]
+          "ci": ["pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]",
+                 "fenics-basix[test]"]
       },
       cmake_args=[
           '-DPython3_EXECUTABLE=' + sys.executable,

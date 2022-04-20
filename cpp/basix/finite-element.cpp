@@ -142,8 +142,16 @@ basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
                                            bool discontinuous)
 {
+  if (family == element::family::custom)
+  {
+    throw std::runtime_error("Cannot create a custom element directly. Try "
+                             "using `create_custom_element` instead");
+  }
   if (degree < 0)
+  {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
   switch (family)
   {
   case element::family::P:
@@ -218,8 +226,16 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::dpc_variant dvariant,
                                            bool discontinuous)
 {
+  if (family == element::family::custom)
+  {
+    throw std::runtime_error("Cannot create a custom element directly. Try "
+                             "using `create_custom_element` instead");
+  }
   if (degree < 0)
+  {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
   switch (family)
   {
   case element::family::DPC:
@@ -238,8 +254,16 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::lagrange_variant lvariant,
                                            bool discontinuous)
 {
+  if (family == element::family::custom)
+  {
+    throw std::runtime_error("Cannot create a custom element directly. Try "
+                             "using `create_custom_element` instead");
+  }
   if (degree < 0)
+  {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
   switch (family)
   {
   case element::family::P:
@@ -258,8 +282,16 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::dpc_variant dvariant,
                                            bool discontinuous)
 {
+  if (family == element::family::custom)
+  {
+    throw std::runtime_error("Cannot create a custom element directly. Try "
+                             "using `create_custom_element` instead");
+  }
   if (degree < 0)
+  {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
   switch (family)
   {
   case element::family::serendipity:
@@ -463,10 +495,20 @@ FiniteElement::FiniteElement(
 
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree,
                                      interpolation_nderivs);
-  xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
-  B_cmajor.assign(wcoeffs);
+
+  if (family == element::family::custom)
+  {
+    _wcoeffs = xt::xtensor<double, 2>({wcoeffs.shape(0), wcoeffs.shape(1)});
+    _wcoeffs.assign(wcoeffs);
+    for (int d = 0; d <= 3; ++d)
+    {
+      for (std::size_t i = 0; i < M[d].size(); ++i)
+        _M[d].push_back(M[d][i]);
+    }
+  }
+
   // Compute C = (BD^T)^{-1} B
-  auto result = math::solve(_dual_matrix, B_cmajor);
+  auto result = math::solve(_dual_matrix, wcoeffs);
 
   _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
   _coeffs.assign(result);
@@ -727,13 +769,13 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
 xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 {
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 1)
-    _x.reshape({_x.shape(0), 1});
+  xt::xarray<double> x_copy = x;
+  if (x_copy.dimension() == 1)
+    x_copy.reshape({x_copy.shape(0), 1});
 
   auto shape = tabulate_shape(nd, x.shape(0));
   xt::xtensor<double, 4> data(shape);
-  tabulate(nd, _x, data);
+  tabulate(nd, x_copy, data);
 
   return data;
 }
@@ -741,17 +783,17 @@ FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
 void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
                              xt::xtensor<double, 4>& basis_data) const
 {
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 2 and x.shape(1) == 1)
-    _x.reshape({x.shape(0)});
+  xt::xarray<double> x_copy = x;
+  if (x_copy.dimension() == 2 and x.shape(1) == 1)
+    x_copy.reshape({x.shape(0)});
 
-  if (_x.shape(1) != _cell_tdim)
+  if (x_copy.shape(1) != _cell_tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
   xt::xtensor<double, 3> basis(
-      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), _x.shape(0),
+      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), x_copy.shape(0),
        static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
-  polyset::tabulate(basis, _cell_type, _degree, nd, _x);
+  polyset::tabulate(basis, _cell_type, _degree, nd, x_copy);
   const int psize = polyset::dim(_cell_type, _degree);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());
@@ -1064,6 +1106,27 @@ FiniteElement::entity_transformations() const
 const xt::xtensor<double, 2>& FiniteElement::dual_matrix() const
 {
   return _dual_matrix;
+}
+//-----------------------------------------------------------------------------
+const xt::xtensor<double, 2>& FiniteElement::wcoeffs() const
+{
+  if (family() != element::family::custom)
+    throw std::runtime_error("wcoeffs is only stored for custom elements");
+  return _wcoeffs;
+}
+//-----------------------------------------------------------------------------
+const std::array<std::vector<xt::xtensor<double, 2>>, 4>&
+FiniteElement::x() const
+{
+  return _x;
+}
+//-----------------------------------------------------------------------------
+const std::array<std::vector<xt::xtensor<double, 3>>, 4>&
+FiniteElement::M() const
+{
+  if (family() != element::family::custom)
+    throw std::runtime_error("M is only stored for custom elements");
+  return _M;
 }
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::coefficient_matrix() const

@@ -1,5 +1,6 @@
 import basix
 
+
 def to_x(p):
     if len(p) == 1:
         return 100 * p[0]
@@ -7,6 +8,7 @@ def to_x(p):
         return 100 * p[0]
     if len(p) == 3:
         return 100 * p[0] + 30 * p[1]
+
 
 def to_y(p):
     if len(p) == 1:
@@ -41,7 +43,8 @@ for shape in ["interval", "triangle", "tetrahedron",
         svg += (f"<line x1='20' y1='{120 + yadd}' x2='50' y2='{120 + yadd}' />\n"
                 f"<line x1='40' y1='{115 + yadd}' x2='50' y2='{120 + yadd}' />\n"
                 f"<line x1='40' y1='{125 + yadd}' x2='50' y2='{120 + yadd}' />\n"
-                f"<text x='60' y='{120 + yadd}' fill='#000000' dy='.3em' style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>x</text>\n")
+                f"<text x='60' y='{120 + yadd}' fill='#000000' dy='.3em' "
+                "style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>x</text>\n")
     elif geometry.shape[1] == 2:
         svg += (f"<line x1='20' y1='{120 + yadd}' x2='20' y2='{90 + yadd}' />\n"
                 f"<line x1='15' y1='{100 + yadd}' x2='20' y2='{90 + yadd}' />\n"
@@ -49,8 +52,10 @@ for shape in ["interval", "triangle", "tetrahedron",
                 f"<line x1='20' y1='{120 + yadd}' x2='50' y2='{120 + yadd}' />\n"
                 f"<line x1='40' y1='{115 + yadd}' x2='50' y2='{120 + yadd}' />\n"
                 f"<line x1='40' y1='{125 + yadd}' x2='50' y2='{120 + yadd}' />\n"
-                f"<text x='60' y='{120 + yadd}' fill='#000000' dy='.3em' style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>x</text>\n"
-                f"<text x='20' y='{75 + yadd}' fill='#000000' dy='.3em' style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>y</text>\n")
+                f"<text x='60' y='{120 + yadd}' fill='#000000' dy='.3em' "
+                "style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>x</text>\n"
+                f"<text x='20' y='{75 + yadd}' fill='#000000' dy='.3em' "
+                "style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>y</text>\n")
     elif geometry.shape[1] == 3:
         svg += (f"<line x1='20' y1='{120 + yadd}' x2='20' y2='{90 + yadd}' />\n"
                 f"<line x1='15' y1='{100 + yadd}' x2='20' y2='{90 + yadd}' />\n"
@@ -61,9 +66,12 @@ for shape in ["interval", "triangle", "tetrahedron",
                 f"<line x1='20' y1='{120 + yadd}' x2='44' y2='{102 + yadd}' />\n"
                 f"<line x1='33' y1='{104 + yadd}' x2='44' y2='{102 + yadd}' />\n"
                 f"<line x1='39' y1='{112 + yadd}' x2='44' y2='{102 + yadd}' />\n"
-                f"<text x='60' y='{120 + yadd}' fill='#000000' dy='.3em' style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>x</text>\n"
-                f"<text x='52' y='{91 + yadd}' fill='#000000' dy='.3em' style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>y</text>\n"
-                f"<text x='20' y='{75 + yadd}' fill='#000000' dy='.3em' style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>z</text>\n")
+                f"<text x='60' y='{120 + yadd}' fill='#000000' dy='.3em' "
+                "style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>x</text>\n"
+                f"<text x='52' y='{91 + yadd}' fill='#000000' dy='.3em' "
+                "style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>y</text>\n"
+                f"<text x='20' y='{75 + yadd}' fill='#000000' dy='.3em' "
+                "style='font-family:\"Libertinus Serif Semibold Italic\";font-size:20px'>z</text>\n")
 
     xpos = 100
     for dim, es in enumerate(topology):

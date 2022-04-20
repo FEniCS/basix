@@ -216,6 +216,7 @@ Interface to the Basix C++ library.
       basix::docstring::cell_facet_jacobians.c_str());
 
   py::enum_<element::family>(m, "ElementFamily")
+      .value("custom", element::family::custom)
       .value("P", element::family::P)
       .value("BDM", element::family::BDM)
       .value("RT", element::family::RT)
@@ -340,6 +341,7 @@ Interface to the Basix C++ library.
                                    std::multiplies<int>());
                              })
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
+      .def_property_readonly("discontinuous", &FiniteElement::discontinuous)
       .def_property_readonly("family", &FiniteElement::family)
       .def_property_readonly("lagrange_variant",
                              &FiniteElement::lagrange_variant)
@@ -376,6 +378,46 @@ Interface to the Basix C++ library.
           [](const FiniteElement& self) {
             const xt::xtensor<double, 2>& P = self.coefficient_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
+          })
+      .def_property_readonly("wcoeffs",
+                             [](const FiniteElement& self) {
+                               const xt::xtensor<double, 2>& P = self.wcoeffs();
+                               return py::array_t<double>(P.shape(), P.data(),
+                                                          py::cast(self));
+                             })
+      .def_property_readonly(
+          "M",
+          [](const FiniteElement& self) {
+            const std::array<std::vector<xt::xtensor<double, 3>>, 4>& _M
+                = self.M();
+            std::vector<std::vector<py::array_t<double, py::array::c_style>>> M(
+                4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _M[i].size(); ++j)
+              {
+                M[i].push_back(py::array_t<double>(
+                    _M[i][j].shape(), _M[i][j].data(), py::cast(self)));
+              }
+            }
+            return M;
+          })
+      .def_property_readonly(
+          "x",
+          [](const FiniteElement& self) {
+            const std::array<std::vector<xt::xtensor<double, 2>>, 4>& _x
+                = self.x();
+            std::vector<std::vector<py::array_t<double, py::array::c_style>>> x(
+                4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _x[i].size(); ++j)
+              {
+                x[i].push_back(py::array_t<double>(
+                    _x[i][j].shape(), _x[i][j].data(), py::cast(self)));
+              }
+            }
+            return x;
           })
       .def_property_readonly("has_tensor_product_factorisation",
                              &FiniteElement::has_tensor_product_factorisation);

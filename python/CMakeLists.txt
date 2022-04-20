@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-PROJECT(basix_pybind11 VERSION "0.3.1.0"  LANGUAGES CXX)
+PROJECT(basix_nanobind VERSION "0.3.1.0"  LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -36,19 +36,26 @@ if(SKBUILD)
   list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
 endif()
 
-find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
+# find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
+#   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
+
+find_package(Python COMPONENTS Interpreter Development REQUIRED)
+
+message("Hints: $ENV{PYBIND11_ROOT}")
+find_package(nanobind REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
 
-# Create the binding library
-pybind11_add_module(_basixcpp MODULE wrapper.cpp)
+  # Create the binding library
+# pybind11_add_module(_basixcpp MODULE wrapper.cpp)
+nanobind_add_module(_basixcpp MODULE wrapper.cpp)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)
 
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-Wall -Werror  -Wextra -Wno-comment -pedantic" HAVE_PEDANTIC)
-if (HAVE_PEDANTIC)
-  target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment;-pedantic)
-endif()
+# CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_PEDANTIC)
+# if (HAVE_PEDANTIC)
+#   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment;-pedantic)
+# endif()
 
 # In Debug mode override pybind11 symbols visibility. Symbols must be
 # visible to backtrace_symbols() to produce nice logs

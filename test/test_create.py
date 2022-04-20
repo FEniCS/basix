@@ -28,6 +28,7 @@ elements = [
     (basix.ElementFamily.serendipity, [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre]),
     (basix.ElementFamily.DPC, [basix.DPCVariant.legendre]),
     (basix.ElementFamily.CR, []),
+    (basix.ElementFamily.custom, []),
 ]
 
 

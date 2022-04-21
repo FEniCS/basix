@@ -30,7 +30,7 @@ if(SKBUILD)
   execute_process(
     COMMAND
       "${Python3_EXECUTABLE}" -c
-      "import pybind11; print(pybind11.get_cmake_dir())"
+      "import nanobind; print(nanobind.cmake_dir())"
     OUTPUT_VARIABLE _tmp_dir
     OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
   list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")

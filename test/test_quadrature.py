@@ -73,7 +73,6 @@ def test_xiao_gimbutas_tet(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
-    print(q / s)
     assert(np.isclose(float(q), float(s)))
 
 

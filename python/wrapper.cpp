@@ -151,7 +151,7 @@ Interface to the Basix C++ library.
       basix::docstring::create_lattice__celltype_n_type_exterior_method
           .c_str());
 
-  py::enum_<maps::type>(m, "MappingType")
+  py::enum_<maps::type>(m, "MapType")
       .value("identity", maps::type::identity)
       .value("covariantPiola", maps::type::covariantPiola)
       .value("contravariantPiola", maps::type::contravariantPiola)
@@ -215,12 +215,14 @@ Interface to the Basix C++ library.
       basix::docstring::cell_facet_jacobians.c_str());
 
   py::enum_<element::family>(m, "ElementFamily")
+      .value("custom", element::family::custom)
       .value("P", element::family::P)
       .value("BDM", element::family::BDM)
       .value("RT", element::family::RT)
       .value("N1E", element::family::N1E)
       .value("N2E", element::family::N2E)
       .value("Regge", element::family::Regge)
+      .value("HHJ", element::family::HHJ)
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
@@ -339,6 +341,7 @@ Interface to the Basix C++ library.
                                    std::multiplies<int>());
                              })
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
+      .def_property_readonly("discontinuous", &FiniteElement::discontinuous)
       .def_property_readonly("family", &FiniteElement::family)
       .def_property_readonly("lagrange_variant",
                              &FiniteElement::lagrange_variant)
@@ -376,6 +379,46 @@ Interface to the Basix C++ library.
             const xt::xtensor<double, 2>& P = self.coefficient_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           })
+      .def_property_readonly("wcoeffs",
+                             [](const FiniteElement& self) {
+                               const xt::xtensor<double, 2>& P = self.wcoeffs();
+                               return py::array_t<double>(P.shape(), P.data(),
+                                                          py::cast(self));
+                             })
+      .def_property_readonly(
+          "M",
+          [](const FiniteElement& self) {
+            const std::array<std::vector<xt::xtensor<double, 3>>, 4>& _M
+                = self.M();
+            std::vector<std::vector<py::array_t<double, py::array::c_style>>> M(
+                4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _M[i].size(); ++j)
+              {
+                M[i].push_back(py::array_t<double>(
+                    _M[i][j].shape(), _M[i][j].data(), py::cast(self)));
+              }
+            }
+            return M;
+          })
+      .def_property_readonly(
+          "x",
+          [](const FiniteElement& self) {
+            const std::array<std::vector<xt::xtensor<double, 2>>, 4>& _x
+                = self.x();
+            std::vector<std::vector<py::array_t<double, py::array::c_style>>> x(
+                4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _x[i].size(); ++j)
+              {
+                x[i].push_back(py::array_t<double>(
+                    _x[i][j].shape(), _x[i][j].data(), py::cast(self)));
+              }
+            }
+            return x;
+          })
       .def_property_readonly("has_tensor_product_factorisation",
                              &FiniteElement::has_tensor_product_factorisation);
 
@@ -407,6 +450,56 @@ Interface to the Basix C++ library.
       .value("legendre", element::dpc_variant::legendre);
 
   // Create FiniteElement
+  m.def(
+      "create_custom_element",
+      [](cell::type cell_type, int degree, const std::vector<int>& value_shape,
+         const py::array_t<double, py::array::c_style>& wcoeffs,
+         const std::vector<
+             std::vector<py::array_t<double, py::array::c_style>>>& x,
+         const std::vector<
+             std::vector<py::array_t<double, py::array::c_style>>>& M,
+         maps::type map_type, bool discontinuous,
+         int highest_complete_degree) -> FiniteElement
+      {
+        if (x.size() != 4)
+          throw std::runtime_error("x has the wrong size");
+        if (M.size() != 4)
+          throw std::runtime_error("M has the wrong size");
+
+        xt::xtensor<double, 2> _wco = adapt_x(wcoeffs);
+
+        std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+        for (int i = 0; i < 4; ++i)
+        {
+          for (std::size_t j = 0; j < x[i].size(); ++j)
+          {
+            if (x[i][j].ndim() != 2)
+              throw std::runtime_error("x has the wrong number of dimensions");
+            _x[i].push_back(adapt_x(x[i][j]));
+          }
+        }
+
+        std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
+        for (int i = 0; i < 4; ++i)
+        {
+          for (std::size_t j = 0; j < M[i].size(); ++j)
+          {
+            if (M[i][j].ndim() != 3)
+              throw std::runtime_error("M has the wrong number of dimensions");
+            _M[i].push_back(adapt_x(M[i][j]));
+          }
+        }
+
+        std::vector<std::size_t> _vs(value_shape.size());
+        for (std::size_t i = 0; i < value_shape.size(); ++i)
+          _vs[i] = static_cast<std::size_t>(value_shape[i]);
+
+        return basix::create_custom_element(cell_type, degree, _vs, _wco, _x,
+                                            _M, map_type, discontinuous,
+                                            highest_complete_degree);
+      },
+      basix::docstring::create_custom_element.c_str());
+
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,

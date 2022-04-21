@@ -40,6 +40,19 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
 
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  for (std::size_t i = 0; i < tdim - 1; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        topology[i].size(), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        topology[i].size(), xt::xtensor<double, 3>({0, 1, 0}));
+  }
+  x[tdim] = std::vector<xt::xtensor<double, 2>>(
+      topology[tdim].size(), xt::xtensor<double, 2>({0, tdim}));
+  M[tdim] = std::vector<xt::xtensor<double, 3>>(
+      topology[tdim].size(), xt::xtensor<double, 3>({0, 1, 0}));
+
   x[tdim - 1].resize(facet_topology.size(),
                      xt::zeros<double>({static_cast<std::size_t>(1), tdim}));
 
@@ -50,28 +63,15 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
     xt::row(x[tdim - 1][f], 0) = xt::mean(v, 0);
   }
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  if (celltype == cell::type::triangle)
-  {
-    entity_transformations[cell::type::interval] = {{{1.}}};
-  }
-  else if (celltype == cell::type::tetrahedron)
-  {
-    entity_transformations[cell::type::interval]
-        = xt::xtensor<double, 3>({1, 0, 0});
-    entity_transformations[cell::type::triangle] = {{{1}}, {{1}}};
-  }
-
   M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1}));
 
   if (discontinuous)
   {
-    std::tie(x, M, entity_transformations)
-        = element::make_discontinuous(x, M, entity_transformations, tdim, 1);
+    std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
   }
 
   return FiniteElement(element::family::CR, celltype, 1, {1},
-                       xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::identity, discontinuous, degree, degree);
+                       xt::eye<double>(ndofs), x, M, maps::type::identity,
+                       discontinuous, degree);
 }
 //-----------------------------------------------------------------------------

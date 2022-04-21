@@ -33,18 +33,14 @@ namespace element
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
 /// index, dof, vs, point_index)
-/// @param[in] entity_transformations Entity transformations
 /// @param[in] tdim The topological dimension of the cell the element is
 /// defined on
 /// @param[in] value_size The value size of the element
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 3>>, 4>,
-           std::map<cell::type, xt::xtensor<double, 3>>>
-make_discontinuous(
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
-    int tdim, int value_size);
+           std::array<std::vector<xt::xtensor<double, 3>>, 4>>
+make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+                   const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+                   int tdim, int value_size);
 
 } // namespace element
 
@@ -205,9 +201,6 @@ public:
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
   /// polynomial space for this element
-  /// @param[in] entity_transformations Entity transformations
-  /// representing the effect rotating and reflecting subentities of the
-  /// cell has on the DOFs.
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
@@ -216,9 +209,6 @@ public:
   /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
-  /// @param[in] highest_degree The lowest degree n such that the highest degree
-  /// polynomial in this element is contained in a Lagrange (or vector Lagrange)
-  /// element of degree n
   /// @param[in] highest_complete_degree The highest degree n such that a
   /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
   /// element
@@ -230,12 +220,9 @@ public:
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape,
       const xt::xtensor<double, 2>& wcoeffs,
-      const std::map<cell::type, xt::xtensor<double, 3>>&
-          entity_transformations,
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
       const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-      maps::type map_type, bool discontinuous, int highest_degree,
-      int highest_complete_degree,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {},
@@ -762,6 +749,78 @@ public:
   /// @return The dual matrix
   const xt::xtensor<double, 2>& dual_matrix() const;
 
+  /// Get the coefficients that define the polynomial set in terms of the
+  /// orthonormal polynomials.
+  ///
+  /// The polynomials spanned by each finite element in Basix are represented as
+  /// a linear combination of the orthonormal polynomials of a given degree on
+  /// the cell. Each row of this matrix defines a polynomial in the set spanned
+  /// by the finite element.
+  ///
+  /// For example, the orthonormal polynomials of degree <= 1 on a triangle are
+  /// (where a, b, c, d are some constants):
+  ///
+  ///  - (sqrt(2), 0)
+  ///  - (a*x - b, 0)
+  ///  - (c*y - d, 0)
+  ///  - (0, sqrt(2))
+  ///  - (0, a*x - b)
+  ///  - (0, c*y - d)
+  ///
+  /// For a degree 1 Raviart-Thomas element, the first two rows of wcoeffs would
+  /// be the following, as (1, 0) and (0, 1) are spanned by the element
+  ///
+  ///  - [1, 0, 0, 0, 0, 0]
+  ///  - [0, 0, 0, 1, 0, 0]
+  ///
+  /// The third row of wcoeffs in this example would give coefficients that
+  /// represent (x, y) in terms of the orthonormal polynomials:
+  ///
+  ///  - [-b/(a*sqrt(2)), 1/a, 0, -d/(c*sqrt(2)), 0, 1/c]
+  ///
+  /// These coefficients are only stored for custom elements. This function will
+  /// throw an exception if called on a non-custom element
+  const xt::xtensor<double, 2>& wcoeffs() const;
+
+  /// Get the interpolation points for each subentity.
+  ///
+  /// The shape of this data is (tdim, entity index, point index, dim).
+  const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x() const;
+
+  /// Get the interpolation matrices for each subentity.
+  ///
+  /// The shape of this data is (tdim, entity index, dof, value size,
+  /// point_index).
+  ///
+  /// These matrices define how to evaluate the DOF functionals accociated with
+  /// each sub-entity of the cell. Given a functional f, the functionals
+  /// associated with the `e`-th entity of dimension `d` can be computed as
+  /// follows:
+  ///
+  /// \code{.pseudo}
+  /// matrix = element.M()[d][e]
+  /// pts = element.x()[d][e]
+  /// values = f(pts)
+  /// result = ZEROS(matrix.shape(0))
+  /// FOR i IN RANGE(matrix.shape(0)):
+  ///     FOR j IN RANGE(matrix.shape(1)):
+  ///         FOR k IN RANGE(matrix.shape(2)):
+  ///             result[i] += matrix[i, j, k] * values[k][j]
+  /// \endcode
+  ///
+  /// For example, for a degree 1 Raviart-Thomas (RT) element on a triangle, the
+  /// DOF functionals are integrals over the edges of the dot product of the
+  /// function with the normal to the edge. In this case, `x()` would contain
+  /// quadrature points for each edge, and `M()` would by a 1 by 2 by `npoints`
+  /// array for each edge. For each point, the `[1, :, point]` slice of this
+  /// would be the quadrature weight multiplied by the normal. For all entities
+  /// that are not edges, the entries in `x()` and `M()` for a degree 1 RT
+  /// element would have size 0.
+  ///
+  /// These matrices are only stored for custom elements. This function will
+  /// throw an exception if called on a non-custom element
+  const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M() const;
+
   /// Get the matrix of coefficients.
   ///
   /// This is the matrix @f$C@f$, as described in the documentation of
@@ -932,7 +991,41 @@ private:
 
   // Is the interpolation matrix an identity?
   bool _interpolation_is_identity;
+
+  // The coefficients that define the polynomial set in terms of the orthonormal
+  // polynomials
+  xt::xtensor<double, 2> _wcoeffs;
+
+  // Interpolation matrices for each entity
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
 };
+
+/// Create a custom finite element
+/// @param[in] cell_type The cell type
+/// @param[in] degree The degree of the element
+/// @param[in] value_shape The value shape of the element
+/// @param[in] wcoeffs Matrices for the kth value index containing the
+/// expansion coefficients defining a polynomial basis spanning the
+/// polynomial space for this element
+/// @param[in] x Interpolation points. Shape is (tdim, entity index,
+/// point index, dim)
+/// @param[in] M The interpolation matrices. Indices are (tdim, entity
+/// index, dof, vs, point_index)
+/// @param[in] map_type The type of map to be used to map values from
+/// the reference to a cell
+/// @param[in] discontinuous Indicates whether or not this is the
+/// discontinuous version of the element
+/// @param[in] highest_complete_degree The highest degree n such that a
+/// Lagrange (or vector Lagrange) element of degree n is a subspace of this
+/// element
+/// @return A custom finite element
+FiniteElement create_custom_element(
+    cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree);
 
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family

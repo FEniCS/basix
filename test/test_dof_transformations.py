@@ -114,15 +114,10 @@ def test_hexahedron_transformation_degrees(element_type, degree, element_args):
     identity = np.identity(e.dim)
     for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
                                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
-        if not np.allclose(
-            np.linalg.matrix_power(bt[i], degree),
-            identity
-        ):
-            for i in np.linalg.matrix_power(bt[i], degree):
-                print(list(i))
+        # TODO: remove the atol here once non-equispaced variants are implemented
         assert np.allclose(
             np.linalg.matrix_power(bt[i], degree),
-            identity)
+            identity, atol=1e-6)
 
 
 @parametrize_over_elements(5, basix.CellType.prism)

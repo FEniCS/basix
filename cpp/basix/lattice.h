@@ -7,6 +7,7 @@
 #include "cell.h"
 #include <xtensor/xtensor.hpp>
 
+/// Lattices of points
 namespace basix::lattice
 {
 /// The type of point spacing to be used in a lattice.

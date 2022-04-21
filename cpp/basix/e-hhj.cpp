@@ -1,8 +1,8 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2022 Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "e-regge.h"
+#include "e-hhj.h"
 #include "e-lagrange.h"
 #include "element-families.h"
 #include "maps.h"
@@ -15,10 +15,10 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::element::create_regge(cell::type celltype, int degree,
-                                           bool discontinuous)
+FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
+                                         bool discontinuous)
 {
-  if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
+  if (celltype != cell::type::triangle)
     throw std::runtime_error("Unsupported celltype");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
@@ -52,11 +52,13 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  x[0] = std::vector<xt::xtensor<double, 2>>(
-      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
-  M[0] = std::vector<xt::xtensor<double, 3>>(
-      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 3>({0, tdim * tdim, 0}));
-
+  x[0].resize(topology[0].size());
+  M[0].resize(topology[0].size());
+  for (std::size_t e = 0; e < topology[0].size(); ++e)
+  {
+    x[0][e] = xt::xtensor<double, 2>({0, tdim});
+    M[0][e] = xt::xtensor<double, 3>({0, tdim * tdim, 0});
+  }
   // Loop over edge and higher dimension entities
   for (std::size_t d = 1; d < topology.size(); ++d)
   {
@@ -121,8 +123,10 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
         {
           for (std::size_t r = s + 1; r < d + 1; ++r)
           {
-            for (std::size_t p = 0; p < geometry.shape(1); ++p)
-              edge_t[p] = geometry(vert_ids[r], p) - geometry(vert_ids[s], p);
+            if (geometry.shape(1) != 2)
+              throw std::runtime_error("Not implemented");
+            edge_t[0] = geometry(vert_ids[s], 1) - geometry(vert_ids[r], 1);
+            edge_t[1] = geometry(vert_ids[r], 0) - geometry(vert_ids[s], 0);
 
             // outer product v.v^T
             auto result = basix::math::outer(edge_t, edge_t);
@@ -150,16 +154,13 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
     }
   }
 
-  // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
-  // and d(d-1)(d+1) on the interior in 3D
-
   if (discontinuous)
   {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim * tdim);
   }
 
-  return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
-                       wcoeffs, x, M, maps::type::doubleCovariantPiola,
+  return FiniteElement(element::family::HHJ, celltype, degree, {tdim, tdim},
+                       wcoeffs, x, M, maps::type::doubleContravariantPiola,
                        discontinuous, -1);
 }
 //-----------------------------------------------------------------------------

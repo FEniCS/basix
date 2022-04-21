@@ -7,6 +7,7 @@
 #include "e-brezzi-douglas-marini.h"
 #include "e-bubble.h"
 #include "e-crouzeix-raviart.h"
+#include "e-hhj.h"
 #include "e-lagrange.h"
 #include "e-nce-rtc.h"
 #include "e-nedelec.h"
@@ -203,6 +204,8 @@ basix::FiniteElement basix::create_element(element::family family,
     }
   case element::family::Regge:
     return element::create_regge(cell, degree, discontinuous);
+  case element::family::HHJ:
+    return element::create_hhj(cell, degree, discontinuous);
   case element::family::CR:
     return element::create_cr(cell, degree, discontinuous);
   case element::family::bubble:
@@ -410,9 +413,9 @@ basix::FiniteElement basix::create_custom_element(
 
   // Check that wcoeffs have the correct shape
   if (wcoeffs.shape(1) != psize * value_size)
-    throw std::runtime_error("wcoeffs has the wrong shape");
+    throw std::runtime_error("wcoeffs has the wrong number of columns");
   if (wcoeffs.shape(0) != ndofs)
-    throw std::runtime_error("wcoeffs has the wrong shape");
+    throw std::runtime_error("wcoeffs has the wrong number of rows");
 
   // Check that x has the right shape
   for (std::size_t i = 0; i <= 3; ++i)
@@ -421,10 +424,12 @@ basix::FiniteElement basix::create_custom_element(
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
                          cell::num_sub_entities(cell_type, i))))
-      throw std::runtime_error("x has the wrong shape");
+      throw std::runtime_error("x has the wrong number of entities");
     for (std::size_t j = 0; j < x[i].size(); ++j)
+    {
       if (x[i][j].shape(1) != tdim)
-        throw std::runtime_error("x has the wrong shape");
+        throw std::runtime_error("x has a point with the wrong tdim");
+    }
   }
 
   // Check that M has the right shape
@@ -434,13 +439,15 @@ basix::FiniteElement basix::create_custom_element(
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
                          cell::num_sub_entities(cell_type, i))))
-      throw std::runtime_error("M has the wrong shape");
+      throw std::runtime_error("M has the wrong number of entities");
     for (std::size_t j = 0; j < M[i].size(); ++j)
     {
       if (M[i][j].shape(2) != x[i][j].shape(0))
-        throw std::runtime_error("M has the wrong shape");
+        throw std::runtime_error(
+            "M has the wrong shape (dimension 2 is wrong)");
       if (M[i][j].shape(1) != value_size)
-        throw std::runtime_error("M has the wrong shape");
+        throw std::runtime_error(
+            "M has the wrong shape (dimension 1 is wrong)");
     }
   }
 

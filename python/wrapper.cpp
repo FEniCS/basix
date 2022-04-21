@@ -49,7 +49,8 @@ const std::string& cell_type_to_str(cell::type type)
   return it->second;
 }
 
-auto adapt_x(const nb::tensor<double>& x)
+template <typename T>
+auto adapt_x(const T& x)
 {
   std::size_t xsize = 1;
   std::vector<std::size_t> shape;
@@ -255,6 +256,7 @@ NB_MODULE(_basixcpp, m)
       .value("N1E", element::family::N1E)
       .value("N2E", element::family::N2E)
       .value("Regge", element::family::Regge)
+      .value("HHJ", element::family::HHJ)
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
@@ -277,88 +279,136 @@ NB_MODULE(_basixcpp, m)
           },
           basix::docstring::FiniteElement__tabulate.c_str())
       .def("__eq__", &FiniteElement::operator==)
-      // .def(
-      //     "push_forward",
-      //     [](const FiniteElement& self,
-      //        const py::array_t<double, py::array::c_style>& U,
-      //        const py::array_t<double, py::array::c_style>& J,
-      //        const py::array_t<double, py::array::c_style>& detJ,
-      //        const py::array_t<double, py::array::c_style>& K) {
-      //       auto u = self.push_forward(
-      //           adapt_x(U), adapt_x(J),
-      //           xtl::span<const double>(detJ.data(), detJ.size()),
-      //           adapt_x(K));
-      //       return py::array_t<double>(u.shape(), u.data());
-      //     },
-      //     basix::docstring::FiniteElement__push_forward.c_str())
-      // .def(
-      //     "pull_back",
-      //     [](const FiniteElement& self,
-      //        const py::array_t<double, py::array::c_style>& u,
-      //        const py::array_t<double, py::array::c_style>& J,
-      //        const py::array_t<double, py::array::c_style>& detJ,
-      //        const py::array_t<double, py::array::c_style>& K) {
-      //       auto U = self.pull_back(
-      //           adapt_x(u), adapt_x(J),
-      //           xtl::span<const double>(detJ.data(), detJ.size()),
-      //           adapt_x(K));
-      //       return py::array_t<double>(U.shape(), U.data());
-      //     },
-      //     basix::docstring::FiniteElement__pull_back.c_str())
-      // .def(
-      //     "apply_dof_transformation",
-      //     [](const FiniteElement& self, py::array_t<double>& data,
-      //        int block_size, std::uint32_t cell_info) {
-      //       xtl::span<double> data_span(data.mutable_data(), data.size());
-      //       self.apply_dof_transformation(data_span, block_size, cell_info);
-      //       return py::array_t<double>(data_span.size(), data_span.data());
-      //     },
-      //     basix::docstring::FiniteElement__apply_dof_transformation.c_str())
-      // .def(
-      //     "apply_dof_transformation_to_transpose",
-      //     [](const FiniteElement& self, py::array_t<double>& data,
-      //        int block_size, std::uint32_t cell_info) {
-      //       xtl::span<double> data_span(data.mutable_data(), data.size());
-      //       self.apply_dof_transformation_to_transpose(data_span, block_size,
-      //                                                  cell_info);
-      //       return py::array_t<double>(data_span.size(), data_span.data());
-      //     },
-      //     basix::docstring::FiniteElement__apply_dof_transformation_to_transpose
-      //         .c_str())
-      // .def(
-      //     "apply_inverse_transpose_dof_transformation",
-      //     [](const FiniteElement& self, py::array_t<double>& data,
-      //        int block_size, std::uint32_t cell_info) {
-      //       xtl::span<double> data_span(data.mutable_data(), data.size());
-      //       self.apply_inverse_transpose_dof_transformation(
-      //           data_span, block_size, cell_info);
-      //       return py::array_t<double>(data_span.size(), data_span.data());
-      //     },
-      //     basix::docstring::
-      //         FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
-      // .def(
-      //     "base_transformations",
-      //     [](const FiniteElement& self) {
-      //       xt::xtensor<double, 3> t = self.base_transformations();
-      //       return py::array_t<double>(t.shape(), t.data());
-      //     },
-      //     basix::docstring::FiniteElement__base_transformations.c_str())
-      // .def(
-      //     "entity_transformations",
-      //     [](const FiniteElement& self)
-      //     {
-      //       std::map<cell::type, xt::xtensor<double, 3>> t
-      //           = self.entity_transformations();
-      //       py::dict t2;
-      //       for (auto tpart : t)
-      //       {
-      //         t2[cell_type_to_str(tpart.first).c_str()] =
-      //         py::array_t<double>(
-      //             tpart.second.shape(), tpart.second.data());
-      //       }
-      //       return t2;
-      //     },
-      //     basix::docstring::FiniteElement__entity_transformations.c_str())
+      .def(
+          "push_forward",
+          [](const FiniteElement& self,
+             nb::tensor<double, nb::shape<nb::any, nb::any, nb::any>,
+                        nb::c_contig>
+                 U,
+             nb::tensor<double, nb::shape<nb::any, nb::any, nb::any>,
+                        nb::c_contig>
+                 J,
+             nb::tensor<double, nb::shape<nb::any>, nb::c_contig> detJ,
+             nb::tensor<double, nb::shape<nb::any, nb::any, nb::any>,
+                        nb::c_contig>
+                 K)
+          {
+            xt::xtensor<double, 3> u = self.push_forward(
+                adapt_x(U), adapt_x(J),
+                xtl::span<const double>(static_cast<double*>(detJ.data()),
+                                        detJ.shape(0)),
+                adapt_x(K));
+            std::array<std::size_t, 3> shape
+                = {u.shape(0), u.shape(1), u.shape(2)};
+            return nb::tensor<nb::numpy, double,
+                              nb::shape<nb::any, nb::any, nb::any>>(
+                u.data(), shape.size(), shape.data());
+          },
+          basix::docstring::FiniteElement__push_forward.c_str())
+      .def(
+          "pull_back",
+          [](const FiniteElement& self,
+             nb::tensor<double, nb::shape<nb::any, nb::any, nb::any>,
+                        nb::c_contig>
+                 u,
+             nb::tensor<double, nb::shape<nb::any, nb::any, nb::any>,
+                        nb::c_contig>
+                 J,
+             nb::tensor<double, nb::shape<nb::any>, nb::c_contig> detJ,
+             nb::tensor<double, nb::shape<nb::any, nb::any, nb::any>,
+                        nb::c_contig>
+                 K)
+          {
+            xt::xtensor<double, 3> U = self.pull_back(
+                adapt_x(u), adapt_x(J),
+                xtl::span<const double>(static_cast<double*>(detJ.data()),
+                                        detJ.shape(0)),
+                adapt_x(K));
+            std::array<std::size_t, 3> shape
+                = {U.shape(0), U.shape(1), U.shape(2)};
+            return nb::tensor<nb::numpy, double,
+                              nb::shape<nb::any, nb::any, nb::any>>(
+                U.data(), shape.size(), shape.data());
+          },
+          basix::docstring::FiniteElement__pull_back.c_str())
+      .def(
+          "apply_dof_transformation",
+          [](const FiniteElement& self,
+             nb::tensor<double, nb::shape<nb::any>, nb::c_contig> data,
+             int block_size, std::uint32_t cell_info)
+          {
+            xtl::span<double> data_span(static_cast<double*>(data.data()),
+                                        data.shape(0));
+            self.apply_dof_transformation(data_span, block_size, cell_info);
+            std::size_t size = data.shape(0);
+            return nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
+                data_span.data(), 1, &size);
+          },
+          basix::docstring::FiniteElement__apply_dof_transformation.c_str())
+      .def(
+          "apply_dof_transformation_to_transpose",
+          [](const FiniteElement& self,
+             nb::tensor<double, nb::shape<nb::any>, nb::c_contig> data,
+             int block_size, std::uint32_t cell_info)
+          {
+            xtl::span<double> data_span(static_cast<double*>(data.data()),
+                                        data.shape(0));
+            self.apply_dof_transformation_to_transpose(data_span, block_size,
+                                                       cell_info);
+            std::size_t size = data.shape(0);
+            return nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
+                data_span.data(), 1, &size);
+          },
+          basix::docstring::FiniteElement__apply_dof_transformation_to_transpose
+              .c_str())
+      .def(
+          "apply_inverse_transpose_dof_transformation",
+          [](const FiniteElement& self,
+             nb::tensor<double, nb::shape<nb::any>, nb::c_contig> data,
+             int block_size, std::uint32_t cell_info)
+          {
+            xtl::span<double> data_span(static_cast<double*>(data.data()),
+                                        data.shape(0));
+            self.apply_inverse_transpose_dof_transformation(
+                data_span, block_size, cell_info);
+            std::size_t size = data.shape(0);
+            return nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
+                data_span.data(), 1, &size);
+          },
+          basix::docstring::
+              FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
+      .def(
+          "base_transformations",
+          [](const FiniteElement& self)
+          {
+            xt::xtensor<double, 3> t = self.base_transformations();
+            std::array<std::size_t, 3> shape
+                = {t.shape(0), t.shape(1), t.shape(2)};
+            return nb::tensor<nb::numpy, double,
+                              nb::shape<nb::any, nb::any, nb::any>>(
+                t.data(), shape.size(), shape.data());
+          },
+          basix::docstring::FiniteElement__base_transformations.c_str())
+      .def(
+          "entity_transformations",
+          [](const FiniteElement& self)
+          {
+            std::map<cell::type, xt::xtensor<double, 3>> t
+                = self.entity_transformations();
+            nb::dict t2;
+            for (auto tpart : t)
+            {
+              std::array<std::size_t, 3> shape
+                  = {tpart.second.shape(0), tpart.second.shape(1),
+                     tpart.second.shape(2)};
+              t2[cell_type_to_str(tpart.first).c_str()]
+                  = nb::tensor<nb::numpy, double,
+                               nb::shape<nb::any, nb::any, nb::any>>(
+                      tpart.second.data(), shape.size(), shape.data());
+            }
+            return t2;
+          },
+          basix::docstring::FiniteElement__entity_transformations.c_str())
       .def(
           "get_tensor_product_representation",
           [](const FiniteElement& self)

@@ -228,6 +228,7 @@ def test_M_wrong_value_size():
          [z, z, z, z], [z], []]
     assert_failure(M=M)
 
+
 def test_M_wrong_ndims():
     """Test that a runtime error is thrown when M has the wrong shape."""
     z = np.zeros((0, 1, 0))

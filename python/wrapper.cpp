@@ -266,7 +266,6 @@ NB_MODULE(_basixcpp, m)
       .def(
           "tabulate",
           [](const FiniteElement& self, int n, nb::tensor<double> x)
-          //  const py::array_t<double, py::array::c_style>& x)
           {
             auto _x = adapt_x(x);
             xt::xtensor<double, 4> t = self.tabulate(n, _x);
@@ -447,74 +446,113 @@ NB_MODULE(_basixcpp, m)
                              &FiniteElement::interpolation_is_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
       .def_property_readonly("degree_bounds", &FiniteElement::degree_bounds)
-      // .def_property_readonly("points",
-      //                        [](const FiniteElement& self) {
-      //                          const xt::xtensor<double, 2>& x =
-      //                          self.points(); return
-      //                          py::array_t<double>(x.shape(), x.data(),
-      //                                                     py::cast(self));
-      //                        })
-      // .def_property_readonly(
-      //     "interpolation_matrix",
-      //     [](const FiniteElement& self) {
-      //       const xt::xtensor<double, 2>& P = self.interpolation_matrix();
-      //       return py::array_t<double>(P.shape(), P.data(), py::cast(self));
-      //     })
-      // .def_property_readonly(
-      //     "dual_matrix",
-      //     [](const FiniteElement& self) {
-      //       const xt::xtensor<double, 2>& P = self.dual_matrix();
-      //       return py::array_t<double>(P.shape(), P.data(), py::cast(self));
-      //     })
-      // .def_property_readonly(
-      //     "coefficient_matrix",
-      //     [](const FiniteElement& self) {
-      //       const xt::xtensor<double, 2>& P = self.coefficient_matrix();
-      //       return py::array_t<double>(P.shape(), P.data(), py::cast(self));
-      //     })
-      // .def_property_readonly("wcoeffs",
-      //                        [](const FiniteElement& self) {
-      //                          const xt::xtensor<double, 2>& P =
-      //                          self.wcoeffs(); return
-      //                          py::array_t<double>(P.shape(), P.data(),
-      //                                                     py::cast(self));
-      //                        })
-      // .def_property_readonly(
-      //     "M",
-      //     [](const FiniteElement& self) {
-      //       const std::array<std::vector<xt::xtensor<double, 3>>, 4>& _M
-      //           = self.M();
-      //       std::vector<std::vector<py::array_t<double, py::array::c_style>>>
-      //       M(
-      //           4);
-      //       for (int i = 0; i < 4; ++i)
-      //       {
-      //         for (std::size_t j = 0; j < _M[i].size(); ++j)
-      //         {
-      //           M[i].push_back(py::array_t<double>(
-      //               _M[i][j].shape(), _M[i][j].data(), py::cast(self)));
-      //         }
-      //       }
-      //       return M;
-      //     })
-      // .def_property_readonly(
-      //     "x",
-      //     [](const FiniteElement& self) {
-      //       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& _x
-      //           = self.x();
-      //       std::vector<std::vector<py::array_t<double, py::array::c_style>>>
-      //       x(
-      //           4);
-      //       for (int i = 0; i < 4; ++i)
-      //       {
-      //         for (std::size_t j = 0; j < _x[i].size(); ++j)
-      //         {
-      //           x[i].push_back(py::array_t<double>(
-      //               _x[i][j].shape(), _x[i][j].data(), py::cast(self)));
-      //         }
-      //       }
-      //       return x;
-      //     })
+      .def_property_readonly(
+          "points",
+          [](const FiniteElement& self)
+          {
+            // const xt::xtensor<double, 2>& x = self.points();
+            xt::xtensor<double, 2> x = self.points();
+            std::array<std::size_t, 2> shape = {x.shape(0), x.shape(1)};
+            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                x.data(), shape.size(), shape.data(), nb::cast(self));
+          })
+      .def_property_readonly(
+          "interpolation_matrix",
+          [](const FiniteElement& self)
+          {
+            // const xt::xtensor<double, 2>& P = self.interpolation_matrix();
+            xt::xtensor<double, 2> P = self.interpolation_matrix();
+            std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
+            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                P.data(), shape.size(), shape.data());
+          })
+      .def_property_readonly(
+          "dual_matrix",
+          [](const FiniteElement& self)
+          {
+            // const xt::xtensor<double, 2>& P = self.dual_matrix();
+            xt::xtensor<double, 2> P = self.dual_matrix();
+            std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
+            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                P.data(), shape.size(), shape.data());
+          })
+      .def_property_readonly(
+          "coefficient_matrix",
+          [](const FiniteElement& self)
+          {
+            // const xt::xtensor<double, 2>& P = self.coefficient_matrix();
+            xt::xtensor<double, 2> P = self.coefficient_matrix();
+            std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
+            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                P.data(), shape.size(), shape.data());
+          })
+      .def_property_readonly(
+          "wcoeffs",
+          [](const FiniteElement& self)
+          {
+            //  const xt::xtensor<double, 2>& P =
+            //  self.wcoeffs();
+            xt::xtensor<double, 2> P = self.wcoeffs();
+            std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
+            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                P.data(), shape.size(), shape.data());
+          })
+      .def_property_readonly(
+          "M",
+          [](const FiniteElement& self)
+          {
+            // const std::array<std::vector<xt::xtensor<double, 3>>, 4>& _M
+            //     = self.M();
+            // std::vector<std::vector<py::array_t<double, py::array::c_style>>>
+            // M(
+            //     4);
+            std::array<std::vector<xt::xtensor<double, 3>>, 4> _M = self.M();
+            std::vector<std::vector<nb::tensor<
+                nb::numpy, double, nb::shape<nb::any, nb::any, nb::any>>>>
+                M(4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _M[i].size(); ++j)
+              {
+                // M[i].push_back(py::array_t<double>(
+                //     _M[i][j].shape(), _M[i][j].data(), py::cast(self)));
+                std::array<std::size_t, 3> shape
+                    = {_M[i][j].shape(0), _M[i][j].shape(1), _M[i][j].shape(2)};
+                M[i].push_back(nb::tensor<nb::numpy, double,
+                                          nb::shape<nb::any, nb::any, nb::any>>(
+                    _M[i][j].data(), shape.size(), shape.data()));
+              }
+            }
+            return M;
+          })
+      .def_property_readonly(
+          "x",
+          [](const FiniteElement& self)
+          {
+            // const std::array<std::vector<xt::xtensor<double, 2>>, 4>& _x
+            //     = self.x();
+            std::array<std::vector<xt::xtensor<double, 2>>, 4> _x = self.x();
+            // std::vector<std::vector<py::array_t<double, py::array::c_style>>>
+            // x(
+            //     4);
+            std::vector<std::vector<
+                nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>>>
+                x(4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _x[i].size(); ++j)
+              {
+                // x[i].push_back(py::array_t<double>(
+                //     _x[i][j].shape(), _x[i][j].data(), py::cast(self)));
+                std::array<std::size_t, 2> shape
+                    = {_x[i][j].shape(0), _x[i][j].shape(1)};
+                x[i].push_back(
+                    nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+                        _x[i][j].data(), shape.size(), shape.data()));
+              }
+            }
+            return x;
+          })
       .def_property_readonly("has_tensor_product_factorisation",
                              &FiniteElement::has_tensor_product_factorisation);
 

@@ -410,9 +410,9 @@ basix::FiniteElement basix::create_custom_element(
 
   // Check that wcoeffs have the correct shape
   if (wcoeffs.shape(1) != psize * value_size)
-    throw std::runtime_error("wcoeffs has the wrong number of rows");
-  if (wcoeffs.shape(0) != ndofs)
     throw std::runtime_error("wcoeffs has the wrong number of columns");
+  if (wcoeffs.shape(0) != ndofs)
+    throw std::runtime_error("wcoeffs has the wrong number of rows");
 
   // Check that x has the right shape
   for (std::size_t i = 0; i <= 3; ++i)

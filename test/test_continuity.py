@@ -16,37 +16,35 @@ elements = [
     (basix.ElementFamily.CR, []),
 ]
 
-MapType = basix._basixcpp.MappingType
-
 
 def cross2d(x):
     return [x[1], -x[0]]
 
 
 def create_continuity_map_interval(map_type, start, end):
-    if map_type == MapType.identity:
+    if map_type == basix.MapType.identity:
         return lambda x: x
-    if map_type == MapType.covariantPiola:
+    if map_type == basix.MapType.covariantPiola:
         return lambda x: np.dot(x, end - start)
-    if map_type == MapType.contravariantPiola:
+    if map_type == basix.MapType.contravariantPiola:
         return lambda x: np.dot(x, cross2d(end - start))
-    if map_type == MapType.doubleCovariantPiola:
+    if map_type == basix.MapType.doubleCovariantPiola:
         return lambda x: np.dot(start - end, np.dot(x, end - start))
-    if map_type == MapType.doubleContravariantPiola:
+    if map_type == basix.MapType.doubleContravariantPiola:
         return lambda x: np.dot(cross2d(end - start), np.dot(x, cross2d(end - start)))
 
     raise NotImplementedError
 
 
 def create_continuity_map_triangle(map_type, v0, v1, v2):
-    if map_type == MapType.identity:
+    if map_type == basix.MapType.identity:
         return lambda x: x
 
     raise NotImplementedError
 
 
 def create_continuity_map_quadrilateral(map_type, v0, v1, v2):
-    if map_type == MapType.identity:
+    if map_type == basix.MapType.identity:
         return lambda x: x
 
     raise NotImplementedError

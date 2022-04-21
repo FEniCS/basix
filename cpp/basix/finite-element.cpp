@@ -424,8 +424,6 @@ basix::FiniteElement basix::create_custom_element(
       throw std::runtime_error("x has the wrong number of entities");
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
-      if (x[i][j].dimension() != 2)
-        throw std::runtime_error("x has the wrong dimension");
       if (x[i][j].shape(1) != tdim)
         throw std::runtime_error("x has a point with the wrong tdim");
     }
@@ -441,8 +439,6 @@ basix::FiniteElement basix::create_custom_element(
       throw std::runtime_error("M has the wrong number of entities");
     for (std::size_t j = 0; j < M[i].size(); ++j)
     {
-      if (M[i][j].dimension() != 3)
-        throw std::runtime_error("M has the wrong dimension");
       if (M[i][j].shape(2) != x[i][j].shape(0))
         throw std::runtime_error(
             "M has the wrong shape (dimension 2 is wrong)");

@@ -18,7 +18,7 @@ using namespace basix;
 FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
                                          bool discontinuous)
 {
-  if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
+  if (celltype != cell::type::triangle)
     throw std::runtime_error("Unsupported celltype");
 
   const std::size_t tdim = cell::topological_dimension(celltype);

@@ -129,7 +129,7 @@ plt.savefig("ccr_triangle_3.png")
 #  :width: 100%
 #  :alt: The basis functions of a degree 3 conforming CR element
 
-# We also visualise a degree 4 conforming CR element.
+# We also visualise the basis functions of a degree 4 conforming CR element.
 
 e = create_ccr_triangle(4)
 

@@ -189,6 +189,14 @@ def test_x_wrong_tdim():
     assert_failure(x=x)
 
 
+def test_x_wrong_ndims():
+    """Test that a runtime error is thrown when x has the wrong shape."""
+    z = np.zeros((0, 2))
+    x = [[np.array([0., 0.]), np.array([[1., 0.]]), np.array([[0., 1.]]), np.array([[1., 1.]])],
+         [z, z, z, z], [z], []]
+    assert_failure(x=x)
+
+
 def test_x_too_many_points():
     """Test that a runtime error is thrown when x has too many points."""
     z = np.zeros((0, 2))
@@ -217,6 +225,13 @@ def test_M_wrong_value_size():
     """Test that a runtime error is thrown when M has the wrong shape."""
     z = np.zeros((0, 1, 0))
     M = [[np.array([[[1.], [1.]]]), np.array([[[1.]]]), np.array([[[1.]]]), np.array([[[1.]]])],
+         [z, z, z, z], [z], []]
+    assert_failure(M=M)
+
+def test_M_wrong_ndims():
+    """Test that a runtime error is thrown when M has the wrong shape."""
+    z = np.zeros((0, 1, 0))
+    M = [[np.array([[1.]]), np.array([[[1.]]]), np.array([[[1.]]]), np.array([[[1.]]])],
          [z, z, z, z], [z], []]
     assert_failure(M=M)
 

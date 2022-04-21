@@ -77,6 +77,7 @@ The following elements are supported on a triangle:
   - [Nédélec second kind](https://defelement.com/elements/nedelec2.html)
   - [Brezzi-Douglas-Marini](https://defelement.com/elements/brezzi-douglas-marini.html)
   - [Regge](https://defelement.com/elements/regge.html)
+  - [Hellan-Herrmann-Johnson](https://defelement.com/elements/hellan-hermann-johnson.html)
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
 

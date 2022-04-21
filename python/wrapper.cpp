@@ -223,6 +223,7 @@ Interface to the Basix C++ library.
       .value("N1E", element::family::N1E)
       .value("N2E", element::family::N2E)
       .value("Regge", element::family::Regge)
+      .value("HHJ", element::family::HHJ)
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
@@ -472,14 +473,22 @@ Interface to the Basix C++ library.
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
+          {
+            if (x[i][j].ndim() != 2)
+              throw std::runtime_error("x has the wrong number of dimensions");
             _x[i].push_back(adapt_x(x[i][j]));
+          }
         }
 
         std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
+          {
+            if (M[i][j].ndim() != 3)
+              throw std::runtime_error("M has the wrong number of dimensions");
             _M[i].push_back(adapt_x(M[i][j]));
+          }
         }
 
         std::vector<std::size_t> _vs(value_shape.size());

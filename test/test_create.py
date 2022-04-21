@@ -23,6 +23,7 @@ elements = [
     (basix.ElementFamily.N1E, []),
     (basix.ElementFamily.N2E, []),
     (basix.ElementFamily.Regge, []),
+    (basix.ElementFamily.HHJ, []),
     (basix.ElementFamily.bubble, []),
     (basix.ElementFamily.serendipity, [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre]),
     (basix.ElementFamily.DPC, [basix.DPCVariant.legendre]),

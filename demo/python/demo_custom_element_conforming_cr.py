@@ -1,6 +1,6 @@
-# =====================================
-# Conforming Crouzeix--Raviart elements
-# =====================================
+# ==============================================
+# Defining conforming Crouzeix--Raviart elements
+# ==============================================
 #
 # In this demo, we show how Basix's custom element functionality can be used to
 # create a conforming Crouzeix--Raviart element.
@@ -101,7 +101,7 @@ def create_ccr_triangle(degree):
         CellType.triangle, degree, [], wcoeffs, x, M, MapType.identity, False, degree - 1)
 
 
-# We can then create a conforming CR element.
+# We can then create a degree 3 conforming CR element.
 
 e = create_ccr_triangle(3)
 
@@ -112,8 +112,6 @@ pts = basix.create_lattice(CellType.triangle, 30, LatticeType.equispaced, True)
 x = pts[:, 0]
 y = pts[:, 1]
 z = e.tabulate(0, pts)[0]
-print(pts.shape)
-print(z.shape)
 
 fig = plt.figure(figsize=(8, 8))
 
@@ -125,8 +123,31 @@ for n in range(7):
     ax.plot([0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0], "k-")
     ax.scatter(x, y, z[:, n, 0])
 
-plt.savefig("diagram.png")
+plt.savefig("ccr_triangle_3.png")
 
-# .. image:: diagram.png
+# .. image:: ccr_triangle_3.png
+#  :width: 100%
+#  :alt: The basis functions of a degree 3 conforming CR element
+
+# We also visualise a degree 4 conforming CR element.
+
+e = create_ccr_triangle(4)
+
+pts = basix.create_lattice(CellType.triangle, 30, LatticeType.equispaced, True)
+
+x = pts[:, 0]
+y = pts[:, 1]
+z = e.tabulate(0, pts)[0]
+
+fig = plt.figure(figsize=(11, 8))
+
+for n in range(12):
+    ax = plt.subplot(3, 4, n + 1, projection='3d')
+    ax.plot([0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0], "k-")
+    ax.scatter(x, y, z[:, n, 0])
+
+plt.savefig("ccr_triangle_4.png")
+
+# .. image:: ccr_triangle_4.png
 #  :width: 100%
 #  :alt: The basis functions of a degree 3 conforming CR element

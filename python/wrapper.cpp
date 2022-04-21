@@ -14,6 +14,7 @@
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/string.h>
 #include <nanobind/tensor.h>
 // #include <pybind11/numpy.h>
 // #include <pybind11/operators.h>
@@ -710,17 +711,19 @@ NB_MODULE(_basixcpp, m)
           .c_str());
 
   // Interpolate between elements
-  // m.def(
-  //     "compute_interpolation_operator",
-  //     [](const FiniteElement& element_from, const FiniteElement& element_to)
-  //         -> const py::array_t<double, py::array::c_style>
-  //     {
-  //       xt::xtensor<double, 2> out
-  //           = basix::compute_interpolation_operator(element_from,
-  //           element_to);
-  //       return py::array_t<double>(out.shape(), out.data());
-  //     },
-  //     basix::docstring::compute_interpolation_operator.c_str());
+  m.def(
+      "compute_interpolation_operator",
+      [](const FiniteElement& element_from, const FiniteElement& element_to)
+      // -> const py::array_t<double, py::array::c_style>
+      {
+        xt::xtensor<double, 2> out
+            = basix::compute_interpolation_operator(element_from, element_to);
+        std::array<std::size_t, 2> shape = {out.shape(0), .shape(1)};
+        return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
+            out.data(), shape.size(), shape.data());
+        // return py::array_t<double>(out.shape(), out.data());
+      },
+      basix::docstring::compute_interpolation_operator.c_str());
 
   // m.def(
   //     "tabulate_polynomial_set",

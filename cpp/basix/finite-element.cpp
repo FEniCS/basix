@@ -308,34 +308,6 @@ basix::FiniteElement basix::create_element(element::family family,
                         element::dpc_variant::unset, discontinuous);
 }
 //-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant)
-{
-  return create_element(family, cell, degree, lvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::dpc_variant dvariant)
-{
-  return create_element(family, cell, degree, dvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           element::dpc_variant dvariant)
-{
-  return create_element(family, cell, degree, lvariant, dvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree)
-{
-  return create_element(family, cell, degree, false);
-}
-//-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 3>>, 4>>
 basix::element::make_discontinuous(

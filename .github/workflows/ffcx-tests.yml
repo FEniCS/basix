@@ -20,7 +20,8 @@ jobs:
           python-version: 3.9
 
       - name: Install dependencies
-        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+        run: |
+          sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build graphviz libgraphviz-dev pkg-config
 
       - name: Install UFL
         run: pip install git+https://github.com/FEniCS/ufl.git

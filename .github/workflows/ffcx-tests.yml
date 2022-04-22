@@ -33,7 +33,7 @@ jobs:
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
-          ref: main
+          ref: mscroggs/no-variants
 
       - name: Install FFCx
         run: |

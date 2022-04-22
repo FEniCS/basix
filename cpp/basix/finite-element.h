@@ -427,9 +427,9 @@ public:
     {
     case maps::type::identity:
       return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
-    case maps::type::scaledIdentity:
+    case maps::type::L2Piola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::scaled_identity(u, U, J, detJ, K);
+        maps::l2_piola(u, U, J, detJ, K);
       };
     case maps::type::covariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K) {

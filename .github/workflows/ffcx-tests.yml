@@ -22,15 +22,10 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
 
+      - name: Install UFL
+        run: pip install git+https://github.com/FEniCS/ufl.git
       - name: Install Basix
-        run: |
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp
-          cmake --build build-dir
-          cmake --install build-dir
-          python3 -m pip install ./python
-      - name: Install FEniCS Python components
-        run: |
-          python3 -m pip install git+https://github.com/FEniCS/ufl.git
+        run: pip -v install .[ci]
 
       - name: Get FFCx
         uses: actions/checkout@v2
@@ -42,7 +37,7 @@ jobs:
       - name: Install FFCx
         run: |
           cd ffcx
-          python -m pip install .[ci]
+          pip install .[ci]
 
       - name: Build FFCx unit tests
         run: |

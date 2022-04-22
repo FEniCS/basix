@@ -19,6 +19,9 @@ jobs:
         with:
           python-version: 3.9
 
+      - name: Install dependencies
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+
       - name: Install Basix
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp

@@ -1116,7 +1116,7 @@ FiniteElement basix::element::create_serendipity_div(
 
   return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
                        wcoeffs, x, M, maps::type::contravariantPiola,
-                       discontinuous, degree / tdim);
+                       discontinuous, degree / tdim, {}, lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_curl(
@@ -1209,6 +1209,7 @@ FiniteElement basix::element::create_serendipity_curl(
 
   return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
                        wcoeffs, x, M, maps::type::covariantPiola, discontinuous,
-                       (degree == 2 && tdim == 3) ? 1 : degree / tdim);
+                       (degree == 2 && tdim == 3) ? 1 : degree / tdim, {},
+                       lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------

@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    name: Run FFC tests
+    name: Run FFCx tests
     runs-on: ubuntu-latest
 
     steps:

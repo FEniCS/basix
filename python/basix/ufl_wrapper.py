@@ -29,6 +29,8 @@ def map_type_to_string(map_type):
     """Convert map type to a UFL string."""
     if map_type == basix.MapType.identity:
         return "identity"
+    if map_type == basix.MapType.L2Piola:
+        return "L2 Piola"
     if map_type == basix.MapType.contravariantPiola:
         return "contravariant Piola"
     if map_type == basix.MapType.covariantPiola:

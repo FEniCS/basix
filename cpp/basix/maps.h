@@ -18,11 +18,12 @@ namespace basix::maps
 /// Map type
 enum class type
 {
-  identity,
-  covariantPiola,
-  contravariantPiola,
-  doubleCovariantPiola,
-  doubleContravariantPiola,
+  identity = 0,
+  L2Piola = 1,
+  covariantPiola = 2,
+  contravariantPiola = 3,
+  doubleCovariantPiola = 4,
+  doubleContravariantPiola = 5,
 };
 
 namespace impl
@@ -56,6 +57,14 @@ void dot21(Vec&& r, const Mat0& A, const Mat1& B)
   }
 }
 } // namespace impl
+
+/// L2 Piola map
+template <typename O, typename P, typename Q, typename R>
+void l2_piola(O&& r, const P& U, const Q& /*J*/, double detJ, const R& /*K*/)
+{
+  r.assign(U);
+  std::for_each(r.begin(), r.end(), [detJ](auto& ri) { ri /= detJ; });
+}
 
 /// Covariant Piola map
 template <typename O, typename P, typename Q, typename R>

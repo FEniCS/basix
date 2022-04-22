@@ -190,7 +190,7 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
   // Integral representation for the boundary (edge) dofs
   FiniteElement edge_space
       = element::create_lagrange(cell::type::interval, degree - 1,
-                                 element::lagrange_variant::equispaced, true);
+                                 element::lagrange_variant::legendre, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_space, celltype, tdim, 2 * degree - 1);
 
@@ -199,7 +199,7 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
   {
     FiniteElement face_space
         = element::create_lagrange(cell::type::triangle, degree - 2,
-                                   element::lagrange_variant::equispaced, true);
+                                   element::lagrange_variant::legendre, true);
     std::tie(x[2], M[2]) = moments::make_integral_moments(face_space, celltype,
                                                           tdim, 2 * degree - 2);
   }
@@ -219,7 +219,7 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
     {
       std::tie(x[3], M[3]) = moments::make_integral_moments(
           element::create_lagrange(cell::type::tetrahedron, degree - 3,
-                                   element::lagrange_variant::equispaced, true),
+                                   element::lagrange_variant::legendre, true),
           cell::type::tetrahedron, 3, 2 * degree - 3);
     }
     else
@@ -264,9 +264,8 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
       xt::xtensor<double, 3>({0, tdim, 0}));
 
   // Integral representation for the edge dofs
-  FiniteElement edge_space
-      = element::create_lagrange(cell::type::interval, degree,
-                                 element::lagrange_variant::equispaced, true);
+  FiniteElement edge_space = element::create_lagrange(
+      cell::type::interval, degree, element::lagrange_variant::legendre, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_space, celltype, tdim, 2 * degree);
 

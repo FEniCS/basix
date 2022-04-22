@@ -221,6 +221,7 @@ os.system(f"rm {path('../../demo/python/*.py.rst')}")
 system(f"cd {path('../../demo/python')} && python3 convert_to_rst.py")
 system(f"mkdir {path('python/source/demo')}")
 system(f"cp {path('../../demo/python/*.rst')} {path('python/source/demo')}")
+system(f"cp {path('../../demo/python/*.png')} {path('python/source/demo')}")
 for file in os.listdir(path("python/source/demo")):
     if file.endswith(".py.rst"):
         with open(path(f"python/source/demo/{file}")) as f:

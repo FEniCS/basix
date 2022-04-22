@@ -1,0 +1,46 @@
+# This workflow will install Basix and FFCx and run the FFCx unit tests.
+
+name: FFCx integration
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Run FFC tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install Basix
+        run: |
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build-dir -S ./cpp
+          cmake --build build-dir
+          cmake --install build-dir
+          python3 -m pip install ./python
+      - name: Install FEniCS Python components
+        run: |
+          python3 -m pip install git+https://github.com/FEniCS/ufl.git
+
+      - name: Get FFCx
+        uses: actions/checkout@v2
+        with:
+          path: ./ffcx
+          repository: FEniCS/ffcx
+          ref: main
+
+      - name: Install FFCx
+        run: |
+          cd ffcx
+          python -m pip install .[ci]
+
+      - name: Build FFCx unit tests
+        run: |
+          python -m pytest -n auto ffcx/test

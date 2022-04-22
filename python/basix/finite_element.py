@@ -80,6 +80,12 @@ def string_to_family(family: str, cell: str) -> _EF:
             "CR": _EF.CR,
             "Crouzeix-Raviart": _EF.CR,
         })
+    # Family names that are valid for triangles
+    if cell in "triangle":
+        families.update({
+            "HHJ": _EF.HHJ,
+            "Hellan-Herrmann-Johnson": _EF.HHJ,
+        })
 
     if family in families:
         return families[family]

@@ -140,13 +140,13 @@ def sympy_rt(celltype, n):
 
 
 # TODO: turn this test back on when a equispaced Nedelec variant is available
-@pytest.mark.parametrize("order", [1, 2, 3])
-def xtest_tri(order):
+@pytest.mark.parametrize("degree", [1, 2, 3])
+def xtest_tri(degree):
     celltype = basix.CellType.triangle
-    g = sympy_rt(celltype, order)
+    g = sympy_rt(celltype, degree)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    rt = basix.create_element(basix.ElementFamily.RT, basix.CellType.triangle, order)
+    rt = basix.create_element(basix.ElementFamily.RT, basix.CellType.triangle, degree, basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype, 1, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = rt.tabulate(nderiv, pts)
@@ -164,14 +164,15 @@ def xtest_tri(order):
 
 
 # TODO: turn this test back on when a equispaced Nedelec variant is available
-@pytest.mark.parametrize("order", [1, 2, 3])
-def xtest_tet(order):
+@pytest.mark.parametrize("degree", [1, 2, 3])
+def xtest_tet(degree):
     celltype = basix.CellType.tetrahedron
-    g = sympy_rt(celltype, order)
+    g = sympy_rt(celltype, degree)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    rt = basix.create_element(basix.ElementFamily.RT, basix.CellType.tetrahedron, order)
+    rt = basix.create_element(
+        basix.ElementFamily.RT, basix.CellType.tetrahedron, degree, basix.LagrangeVariant.equispaced)
 
     pts = basix.create_lattice(celltype, 5, basix.LatticeType.equispaced, True)
     nderiv = 1

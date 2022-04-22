@@ -5,8 +5,10 @@
 #include "e-serendipity.h"
 #include "e-lagrange.h"
 #include "element-families.h"
+#include "lattice.h"
 #include "maps.h"
 #include "moments.h"
+#include "polynomials.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include <xtensor/xadapt.hpp>
@@ -527,6 +529,301 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
+FiniteElement create_legendre_dpc(cell::type celltype, int degree,
+                                  bool discontinuous)
+{
+  if (!discontinuous)
+    throw std::runtime_error("Legendre variant must be discontinuous");
+
+  cell::type simplex_type;
+  switch (celltype)
+  {
+  case cell::type::quadrilateral:
+    simplex_type = cell::type::triangle;
+    break;
+  case cell::type::hexahedron:
+    simplex_type = cell::type::tetrahedron;
+    break;
+  default:
+    throw std::runtime_error("Invalid cell type");
+  }
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t psize = polyset::dim(celltype, degree);
+  const std::size_t ndofs = polyset::dim(simplex_type, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+  }
+
+  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 celltype, degree * 2);
+  auto wts = xt::adapt(_wts);
+
+  // Evaluate moment space at quadrature points
+  const xt::xtensor<double, 2> phi = polynomials::tabulate(
+      polynomials::type::legendre, celltype, degree, pts);
+
+  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  {
+    M[dim].resize(topology[dim].size());
+    x[dim].resize(topology[dim].size());
+    if (dim < tdim)
+    {
+      for (std::size_t e = 0; e < topology[dim].size(); ++e)
+      {
+        x[dim][e] = xt::xtensor<double, 2>({0, tdim});
+        M[dim][e] = xt::xtensor<double, 3>({0, 1, 0});
+      }
+    }
+  }
+  x[tdim][0] = pts.dimension() == 1 ? pts.reshape({pts.shape(0), 1}) : pts;
+  M[tdim][0] = xt::xtensor<double, 3>({ndofs, 1, pts.shape(0)});
+
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+
+  if (celltype == cell::type::quadrilateral)
+  {
+    int row_n = 0;
+    for (int i = 0; i <= degree; ++i)
+    {
+      for (int j = 0; j <= degree - i; ++j)
+      {
+        xt::view(M[tdim][0], row_n, 0, xt::all())
+            = xt::col(phi, i * (degree + 1) + j) * wts;
+        wcoeffs(row_n, i * (degree + 1) + j) = 1;
+        ++row_n;
+      }
+    }
+  }
+  else
+  {
+    int row_n = 0;
+    for (int i = 0; i <= degree; ++i)
+    {
+      for (int j = 0; j <= degree - i; ++j)
+      {
+        for (int k = 0; k <= degree - i - j; ++k)
+        {
+          xt::view(M[tdim][0], row_n, 0, xt::all())
+              = xt::col(phi,
+                        i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+                * wts;
+          wcoeffs(row_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+              = 1;
+          ++row_n;
+        }
+      }
+    }
+  }
+
+  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
+                       M, maps::type::identity, discontinuous, degree, {},
+                       element::lagrange_variant::unset,
+                       element::dpc_variant::legendre);
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
+                                       element::dpc_variant variant)
+{
+  if (degree == 0)
+    return lattice::create(celltype, 0, lattice::type::equispaced, true);
+
+  if (variant == element::dpc_variant::simplex_equispaced
+      or variant == element::dpc_variant::simplex_gll)
+  {
+    lattice::type latticetype;
+    lattice::simplex_method latticesm = lattice::simplex_method::isaac;
+    if (variant == element::dpc_variant::simplex_equispaced)
+      latticetype = lattice::type::equispaced;
+    else if (variant == element::dpc_variant::simplex_gll)
+      latticetype = lattice::type::gll;
+
+    switch (celltype)
+    {
+    case cell::type::quadrilateral:
+      return lattice::create(cell::type::triangle, degree, latticetype, true,
+                             latticesm);
+    case cell::type::hexahedron:
+      return lattice::create(cell::type::tetrahedron, degree, latticetype, true,
+                             latticesm);
+    default:
+      throw std::runtime_error("Invalid cell type");
+    }
+  }
+  else if (variant == element::dpc_variant::horizontal_equispaced
+           or variant == element::dpc_variant::horizontal_gll)
+  {
+    lattice::type latticetype;
+    if (variant == element::dpc_variant::horizontal_equispaced)
+      latticetype = lattice::type::equispaced;
+    else if (variant == element::dpc_variant::horizontal_gll)
+      latticetype = lattice::type::gll;
+
+    switch (celltype)
+    {
+    case cell::type::quadrilateral:
+    {
+      xt::xtensor<double, 2> pts(
+          {static_cast<std::size_t>((degree + 2) * (degree + 1) / 2), 2});
+      std::size_t n = 0;
+      for (int j = 0; j <= degree; ++j)
+      {
+        const auto interval_pts = lattice::create(
+            cell::type::interval, degree - j, latticetype, true);
+        for (int i = 0; i <= degree - j; ++i)
+        {
+          pts(n, 0) = interval_pts(i, 0);
+          pts(n, 1) = j % 2 == 0
+                          ? static_cast<double>(j / 2) / degree
+                          : 1 - static_cast<double>((j - 1) / 2) / degree;
+          ++n;
+        }
+      }
+      return pts;
+    }
+    case cell::type::hexahedron:
+    {
+      xt::xtensor<double, 2> pts(
+          {static_cast<std::size_t>((degree + 3) * (degree + 2) * (degree + 1)
+                                    / 6),
+           3});
+      std::size_t n = 0;
+      for (int k = 0; k <= degree; ++k)
+      {
+        for (int j = 0; j <= degree - k; ++j)
+        {
+          const auto interval_pts = lattice::create(
+              cell::type::interval, degree - j - k, latticetype, true);
+          for (int i = 0; i <= degree - j - k; ++i)
+          {
+            pts(n, 0) = interval_pts(i, 0);
+            pts(n, 1)
+                = degree - k == 0
+                      ? 0.5
+                      : (j % 2 == 0 ? static_cast<double>(j / 2) / (degree - k)
+                                    : 1
+                                          - static_cast<double>((j - 1) / 2)
+                                                / (degree - k));
+            pts(n, 2) = k % 2 == 0
+                            ? static_cast<double>(k / 2) / degree
+                            : 1 - static_cast<double>((k - 1) / 2) / degree;
+            ++n;
+          }
+        }
+      }
+      return pts;
+    }
+    default:
+      throw std::runtime_error("Invalid cell type");
+    }
+  }
+  else if (variant == element::dpc_variant::diagonal_equispaced
+           or variant == element::dpc_variant::diagonal_gll)
+  {
+    lattice::type latticetype;
+    lattice::simplex_method latticesm = lattice::simplex_method::isaac;
+    if (variant == element::dpc_variant::diagonal_equispaced)
+      latticetype = lattice::type::equispaced;
+    else if (variant == element::dpc_variant::diagonal_gll)
+      latticetype = lattice::type::gll;
+
+    switch (celltype)
+    {
+    case cell::type::quadrilateral:
+    {
+      xt::xtensor<double, 2> pts(
+          {static_cast<std::size_t>((degree + 2) * (degree + 1) / 2), 2});
+
+      const double gap = static_cast<double>(2 * (degree + 1))
+                         / (degree * degree + degree + 1);
+
+      std::size_t n = 0;
+      for (int j = 0; j <= degree; ++j)
+      {
+        const auto interval_pts
+            = lattice::create(cell::type::interval, j, latticetype, true);
+        const double y = gap * (j % 2 == 0 ? j / 2 : degree - (j - 1) / 2);
+        const double coord0 = y < 1 ? y : y - 1;
+        const double coord1 = y < 1 ? 0 : 1;
+        for (int i = 0; i <= j; ++i)
+        {
+          const double x = interval_pts(i, 0);
+          pts(n, 0) = coord0 * (1 - x) + coord1 * x;
+          pts(n, 1) = coord1 * (1 - x) + coord0 * x;
+          ++n;
+        }
+      }
+      return pts;
+    }
+    case cell::type::hexahedron:
+    {
+      xt::xtensor<double, 2> pts(
+          {static_cast<std::size_t>((degree + 3) * (degree + 2) * (degree + 1)
+                                    / 6),
+           3});
+
+      const double gap
+          = static_cast<double>(3 * degree) / (degree * degree + 1);
+
+      std::size_t n = 0;
+      for (int k = 0; k <= degree; ++k)
+      {
+        const double z = gap * (k % 2 == 0 ? k / 2 : degree - (k - 1) / 2);
+        const auto triangle_pts = lattice::create(cell::type::triangle, k,
+                                                  latticetype, true, latticesm);
+        if (z < 1)
+          for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
+          {
+            const double coord0 = triangle_pts(p, 0);
+            const double coord1 = triangle_pts(p, 1);
+            pts(n, 0) = coord0 * z;
+            pts(n, 1) = coord1 * z;
+            pts(n, 2) = (1 - coord0 - coord1) * z;
+            ++n;
+          }
+        else if (z > 2)
+          for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
+          {
+            const double coord0 = triangle_pts(p, 0);
+            const double coord1 = triangle_pts(p, 1);
+            pts(n, 0) = 1 - (3 - z) * coord0;
+            pts(n, 1) = 1 - (3 - z) * coord1;
+            pts(n, 2) = 1 - (3 - z) * (1 - coord0 - coord1);
+            ++n;
+          }
+        else
+        {
+          for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
+          {
+            const double coord0 = triangle_pts(p, 0);
+            const double coord1 = triangle_pts(p, 1);
+            pts(n, 0) = 1 - (2 - z) * coord0 - coord1;
+            pts(n, 1) = coord0 + (z - 1) * coord1;
+            pts(n, 2) = z - 1 - (z - 1) * coord0 + (2 - z) * coord1;
+            ++n;
+          }
+        }
+      }
+      return pts;
+    }
+    default:
+      throw std::runtime_error("Invalid cell type");
+    }
+  }
+  else
+    throw std::runtime_error("Unsupported_variant");
+}
+//----------------------------------------------------------------------------
 } // namespace
 
 //----------------------------------------------------------------------------
@@ -652,9 +949,108 @@ FiniteElement basix::element::create_serendipity(
                        lvariant, dvariant);
 }
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_serendipity_div(cell::type celltype,
-                                                     int degree,
-                                                     bool discontinuous)
+FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
+                                         element::dpc_variant variant,
+                                         bool discontinuous)
+{
+  // Only tabulate for scalar. Vector spaces can easily be built from
+  // the scalar space.
+  if (!discontinuous)
+  {
+    throw std::runtime_error("Cannot create a continuous DPC element.");
+  }
+
+  if (variant == element::dpc_variant::unset)
+  {
+    if (degree == 0)
+      variant = element::dpc_variant::simplex_equispaced;
+    else
+      throw std::runtime_error(
+          "DPC elements of degree > 0 need to be given a variant.");
+  }
+
+  cell::type simplex_type;
+  switch (celltype)
+  {
+  case cell::type::quadrilateral:
+    simplex_type = cell::type::triangle;
+    break;
+  case cell::type::hexahedron:
+    simplex_type = cell::type::tetrahedron;
+    break;
+  default:
+    throw std::runtime_error("Invalid cell type");
+  }
+
+  if (variant == element::dpc_variant::legendre)
+    return create_legendre_dpc(celltype, degree, discontinuous);
+
+  const std::size_t ndofs = polyset::dim(simplex_type, degree);
+  const std::size_t psize = polyset::dim(celltype, degree);
+
+  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 celltype, 2 * degree);
+  auto wts = xt::adapt(_wts);
+
+  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+
+  if (celltype == cell::type::quadrilateral)
+  {
+    int row_n = 0;
+    for (int i = 0; i <= degree; ++i)
+    {
+      for (int j = 0; j <= degree - i; ++j)
+      {
+        wcoeffs(row_n++, i * (degree + 1) + j) = 1;
+      }
+    }
+  }
+  else
+  {
+    int row_n = 0;
+    for (int i = 0; i <= degree; ++i)
+    {
+      for (int j = 0; j <= degree - i; ++j)
+      {
+        for (int k = 0; k <= degree - i - j; ++k)
+        {
+          wcoeffs(row_n++,
+                  i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
+              = 1;
+        }
+      }
+    }
+  }
+
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  const std::size_t tdim = topology.size() - 1;
+
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 3>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+  }
+
+  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
+
+  const auto pt = make_dpc_points(celltype, degree, variant);
+  x[tdim].push_back(pt);
+
+  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
+                       M, maps::type::identity, discontinuous, degree, {},
+                       element::lagrange_variant::unset, variant);
+}
+//-----------------------------------------------------------------------------
+FiniteElement basix::element::create_serendipity_div(
+    cell::type celltype, int degree, element::lagrange_variant lvariant,
+    element::dpc_variant dvariant, bool discontinuous)
 {
   if (degree == 0)
     throw std::runtime_error("Cannot create degree 0 serendipity");
@@ -682,22 +1078,17 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
         xt::xtensor<double, 3>({0, tdim, 0}));
   }
 
-  // TODO: Lagrange variant here
-  // TODO: DPC variant
   FiniteElement facet_moment_space
       = facettype == cell::type::interval
-            ? element::create_lagrange(
-                facettype, degree, element::lagrange_variant::legendre, true)
-            : element::create_dpc(facettype, degree,
-                                  element::dpc_variant::legendre, true);
+            ? element::create_lagrange(facettype, degree, lvariant, true)
+            : element::create_dpc(facettype, degree, dvariant, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, 2 * degree);
 
   if (degree >= 2)
   {
-    // TODO: DPC variant
-    FiniteElement cell_moment_space = element::create_dpc(
-        celltype, degree - 2, element::dpc_variant::legendre, true);
+    FiniteElement cell_moment_space
+        = element::create_dpc(celltype, degree - 2, dvariant, true);
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
         cell_moment_space, celltype, tdim, 2 * degree - 2);
   }
@@ -728,9 +1119,9 @@ FiniteElement basix::element::create_serendipity_div(cell::type celltype,
                        discontinuous, degree / tdim);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
-                                                      int degree,
-                                                      bool discontinuous)
+FiniteElement basix::element::create_serendipity_curl(
+    cell::type celltype, int degree, element::lagrange_variant lvariant,
+    element::dpc_variant dvariant, bool discontinuous)
 {
   if (degree == 0)
     throw std::runtime_error("Cannot create degree 0 serendipity");
@@ -764,9 +1155,8 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
       cell::num_sub_entities(celltype, 0),
       xt::xtensor<double, 3>({0, tdim, 0}));
 
-  // TODO: Lagrange variants
-  FiniteElement edge_moment_space = element::create_lagrange(
-      cell::type::interval, degree, element::lagrange_variant::legendre, true);
+  FiniteElement edge_moment_space
+      = element::create_lagrange(cell::type::interval, degree, lvariant, true);
 
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, 2 * degree);
@@ -774,10 +1164,8 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
   if (degree >= 2)
   {
     // Face integral moment
-    // TODO: DPC variant
-    FiniteElement moment_space
-        = element::create_dpc(cell::type::quadrilateral, degree - 2,
-                              element::dpc_variant::legendre, true);
+    FiniteElement moment_space = element::create_dpc(
+        cell::type::quadrilateral, degree - 2, dvariant, true);
     std::tie(x[2], M[2]) = moments::make_integral_moments(
         moment_space, celltype, tdim, 2 * degree - 2);
   }
@@ -795,10 +1183,9 @@ FiniteElement basix::element::create_serendipity_curl(cell::type celltype,
     if (degree >= 4)
     {
       // Interior integral moment
-      // TODO: DPC variant
       std::tie(x[3], M[3]) = moments::make_integral_moments(
-          element::create_dpc(cell::type::hexahedron, degree - 4,
-                              element::dpc_variant::legendre, true),
+          element::create_dpc(cell::type::hexahedron, degree - 4, dvariant,
+                              true),
           celltype, tdim, 2 * degree - 4);
     }
     else

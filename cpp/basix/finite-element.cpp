@@ -155,29 +155,23 @@ basix::FiniteElement basix::create_element(element::family family,
 
   switch (family)
   {
+  // P family
   case element::family::P:
     return element::create_lagrange(
         cell, degree, element::lagrange_variant::unset, discontinuous);
-  case element::family::BDM:
-    switch (cell)
-    {
-    case cell::type::quadrilateral:
-      return element::create_serendipity_div(cell, degree, discontinuous);
-    case cell::type::hexahedron:
-      return element::create_serendipity_div(cell, degree, discontinuous);
-    default:
-      return element::create_bdm(cell, degree, discontinuous);
-    }
   case element::family::RT:
   {
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_rtc(cell, degree, discontinuous);
+      return element::create_rtc(cell, degree, element::lagrange_variant::unset,
+                                 discontinuous);
     case cell::type::hexahedron:
-      return element::create_rtc(cell, degree, discontinuous);
+      return element::create_rtc(cell, degree, element::lagrange_variant::unset,
+                                 discontinuous);
     default:
-      return element::create_rt(cell, degree, discontinuous);
+      return element::create_rt(cell, degree, element::lagrange_variant::unset,
+                                discontinuous);
     }
   }
   case element::family::N1E:
@@ -185,38 +179,64 @@ basix::FiniteElement basix::create_element(element::family family,
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_nce(cell, degree, discontinuous);
+      return element::create_nce(cell, degree, element::lagrange_variant::unset,
+                                 discontinuous);
     case cell::type::hexahedron:
-      return element::create_nce(cell, degree, discontinuous);
+      return element::create_nce(cell, degree, element::lagrange_variant::unset,
+                                 discontinuous);
     default:
-      return element::create_nedelec(cell, degree, discontinuous);
+      return element::create_nedelec(
+          cell, degree, element::lagrange_variant::unset, discontinuous);
     }
   }
-  case element::family::N2E:
-    switch (cell)
-    {
-    case cell::type::quadrilateral:
-      return element::create_serendipity_curl(cell, degree, discontinuous);
-    case cell::type::hexahedron:
-      return element::create_serendipity_curl(cell, degree, discontinuous);
-    default:
-      return element::create_nedelec2(cell, degree, discontinuous);
-    }
-  case element::family::Regge:
-    return element::create_regge(cell, degree, discontinuous);
-  case element::family::HHJ:
-    return element::create_hhj(cell, degree, discontinuous);
-  case element::family::CR:
-    return element::create_cr(cell, degree, discontinuous);
-  case element::family::bubble:
-    return element::create_bubble(cell, degree, discontinuous);
+  // S family
   case element::family::serendipity:
     return element::create_serendipity(
         cell, degree, element::lagrange_variant::unset,
         element::dpc_variant::unset, discontinuous);
+  case element::family::BDM:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_div(
+          cell, degree, element::lagrange_variant::unset,
+          element::dpc_variant::unset, discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_div(
+          cell, degree, element::lagrange_variant::unset,
+          element::dpc_variant::unset, discontinuous);
+    default:
+      return element::create_bdm(cell, degree, element::lagrange_variant::unset,
+                                 discontinuous);
+    }
+  case element::family::N2E:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_curl(
+          cell, degree, element::lagrange_variant::unset,
+          element::dpc_variant::unset, discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_curl(
+          cell, degree, element::lagrange_variant::unset,
+          element::dpc_variant::unset, discontinuous);
+    default:
+      return element::create_nedelec2(
+          cell, degree, element::lagrange_variant::unset, discontinuous);
+    }
   case element::family::DPC:
     return element::create_dpc(cell, degree, element::dpc_variant::unset,
                                discontinuous);
+  // Matrix elements
+  case element::family::Regge:
+    return element::create_regge(cell, degree, discontinuous);
+  case element::family::HHJ:
+    return element::create_hhj(cell, degree, discontinuous);
+  // Other elements
+  case element::family::CR:
+    return element::create_cr(cell, degree, discontinuous);
+  case element::family::bubble:
+    return element::create_bubble(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found.");
   }
@@ -239,12 +259,43 @@ basix::FiniteElement basix::create_element(element::family family,
 
   switch (family)
   {
-  case element::family::DPC:
-    return element::create_dpc(cell, degree, dvariant, discontinuous);
+  // S family
   case element::family::serendipity:
     return element::create_serendipity(cell, degree,
                                        element::lagrange_variant::unset,
                                        dvariant, discontinuous);
+  case element::family::BDM:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_div(cell, degree,
+                                             element::lagrange_variant::unset,
+                                             dvariant, discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_div(cell, degree,
+                                             element::lagrange_variant::unset,
+                                             dvariant, discontinuous);
+    default:
+      return element::create_bdm(cell, degree, element::lagrange_variant::unset,
+                                 discontinuous);
+    }
+  case element::family::N2E:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_curl(cell, degree,
+                                              element::lagrange_variant::unset,
+                                              dvariant, discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_curl(cell, degree,
+                                              element::lagrange_variant::unset,
+                                              dvariant, discontinuous);
+    default:
+      return element::create_nedelec2(
+          cell, degree, element::lagrange_variant::unset, discontinuous);
+    }
+  case element::family::DPC:
+    return element::create_dpc(cell, degree, dvariant, discontinuous);
   default:
     throw std::runtime_error("Cannot pass a DPC variant to this element.");
   }
@@ -267,11 +318,61 @@ basix::FiniteElement basix::create_element(element::family family,
 
   switch (family)
   {
+  // P family
   case element::family::P:
     return element::create_lagrange(cell, degree, lvariant, discontinuous);
+  case element::family::RT:
+  {
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_rtc(cell, degree, lvariant, discontinuous);
+    case cell::type::hexahedron:
+      return element::create_rtc(cell, degree, lvariant, discontinuous);
+    default:
+      return element::create_rt(cell, degree, lvariant, discontinuous);
+    }
+  }
+  case element::family::N1E:
+  {
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_nce(cell, degree, lvariant, discontinuous);
+    case cell::type::hexahedron:
+      return element::create_nce(cell, degree, lvariant, discontinuous);
+    default:
+      return element::create_nedelec(cell, degree, lvariant, discontinuous);
+    }
+  }
+  // S family
   case element::family::serendipity:
     return element::create_serendipity(
         cell, degree, lvariant, element::dpc_variant::unset, discontinuous);
+  case element::family::BDM:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_div(
+          cell, degree, lvariant, element::dpc_variant::unset, discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_div(
+          cell, degree, lvariant, element::dpc_variant::unset, discontinuous);
+    default:
+      return element::create_bdm(cell, degree, lvariant, discontinuous);
+    }
+  case element::family::N2E:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_curl(
+          cell, degree, lvariant, element::dpc_variant::unset, discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_curl(
+          cell, degree, lvariant, element::dpc_variant::unset, discontinuous);
+    default:
+      return element::create_nedelec2(cell, degree, lvariant, discontinuous);
+    }
   default:
     throw std::runtime_error("Cannot pass a Lagrange variant to this element.");
   }
@@ -295,9 +396,34 @@ basix::FiniteElement basix::create_element(element::family family,
 
   switch (family)
   {
+  // S family
   case element::family::serendipity:
     return element::create_serendipity(cell, degree, lvariant, dvariant,
                                        discontinuous);
+  case element::family::BDM:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_div(cell, degree, lvariant, dvariant,
+                                             discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_div(cell, degree, lvariant, dvariant,
+                                             discontinuous);
+    default:
+      return element::create_bdm(cell, degree, lvariant, discontinuous);
+    }
+  case element::family::N2E:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_curl(cell, degree, lvariant, dvariant,
+                                              discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_curl(cell, degree, lvariant, dvariant,
+                                              discontinuous);
+    default:
+      return element::create_nedelec2(cell, degree, lvariant, discontinuous);
+    }
   default:
     throw std::runtime_error(
         "Cannot pass a Lagrange variant and a DPC variant to this element.");

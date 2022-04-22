@@ -10,3 +10,4 @@ Demos
    demo_lagrange_variants.py
    demo_dof_transformations.py
    demo_custom_element.py
+   demo_custom_element_conforming_cr.py

@@ -9,8 +9,8 @@ import numpy as np
 
 elements = [
     (basix.ElementFamily.P, [basix.LagrangeVariant.gll_warped]),  # identity
-    (basix.ElementFamily.N1E, []),  # covariant Piola
-    (basix.ElementFamily.RT, []),  # contravariant Piola
+    (basix.ElementFamily.N1E, [basix.LagrangeVariant.legendre]),  # covariant Piola
+    (basix.ElementFamily.RT, [basix.LagrangeVariant.legendre]),  # contravariant Piola
     (basix.ElementFamily.Regge, []),  # double covariant Piola
 ]
 
@@ -73,6 +73,7 @@ def test_mappings_2d_to_3d(element_type, element_args):
 
 @pytest.mark.parametrize("element_type, element_args", elements)
 def test_mappings_3d_to_3d(element_type, element_args):
+    random.seed(42)
     e = basix.create_element(element_type, basix.CellType.tetrahedron, 1, *element_args)
 
     J = np.array([[random.random() + 2, random.random(), random.random()],

@@ -30,10 +30,10 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
 
         # Elements on all cells except prism, pyramid and interval
         for c in [CellType.triangle, CellType.tetrahedron, CellType.quadrilateral, CellType.hexahedron]:
-            elementlist.append((c, ElementFamily.N1E, k, []))
-            elementlist.append((c, ElementFamily.N2E, k, []))
-            elementlist.append((c, ElementFamily.RT, k, []))
-            elementlist.append((c, ElementFamily.BDM, k, []))
+            elementlist.append((c, ElementFamily.N1E, k, [LagrangeVariant.legendre]))
+            elementlist.append((c, ElementFamily.N2E, k, [LagrangeVariant.legendre, DPCVariant.legendre]))
+            elementlist.append((c, ElementFamily.RT, k, [LagrangeVariant.legendre]))
+            elementlist.append((c, ElementFamily.BDM, k, [LagrangeVariant.legendre, DPCVariant.legendre]))
 
         # Elements on simplex cells
         for c in [CellType.triangle, CellType.tetrahedron]:

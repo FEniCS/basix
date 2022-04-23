@@ -19,6 +19,7 @@ using namespace basix;
 
 //----------------------------------------------------------------------------
 FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
+                                         element::lagrange_variant lvariant,
                                          bool discontinuous)
 {
   if (celltype != cell::type::quadrilateral
@@ -127,8 +128,8 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
         xt::xtensor<double, 3>({0, tdim, 0}));
   }
 
-  FiniteElement moment_space = element::create_lagrange(
-      facettype, degree - 1, element::lagrange_variant::legendre, true);
+  FiniteElement moment_space
+      = element::create_lagrange(facettype, degree - 1, lvariant, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       moment_space, celltype, tdim, 2 * degree - 1);
 
@@ -136,8 +137,8 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   if (degree > 1)
   {
     std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
-        element::create_nce(celltype, degree - 1, true), celltype, tdim,
-        2 * degree - 1);
+        element::create_nce(celltype, degree - 1, lvariant, true), celltype,
+        tdim, 2 * degree - 1);
   }
   else
   {
@@ -159,10 +160,11 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, wcoeffs,
                        x, M, maps::type::contravariantPiola, discontinuous,
-                       degree - 1);
+                       degree - 1, {}, lvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_nce(cell::type celltype, int degree,
+                                         element::lagrange_variant lvariant,
                                          bool discontinuous)
 {
   if (celltype != cell::type::quadrilateral
@@ -296,9 +298,8 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
       cell::num_sub_entities(celltype, 0),
       xt::xtensor<double, 3>({0, tdim, 0}));
 
-  FiniteElement edge_moment_space
-      = element::create_lagrange(cell::type::interval, degree - 1,
-                                 element::lagrange_variant::legendre, true);
+  FiniteElement edge_moment_space = element::create_lagrange(
+      cell::type::interval, degree - 1, lvariant, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_moment_space, celltype, tdim, 2 * degree - 1);
 
@@ -306,8 +307,8 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   if (degree > 1)
   {
     // Face integral moment
-    FiniteElement moment_space
-        = element::create_rtc(cell::type::quadrilateral, degree - 1, true);
+    FiniteElement moment_space = element::create_rtc(
+        cell::type::quadrilateral, degree - 1, lvariant, true);
     std::tie(x[2], M[2]) = moments::make_dot_integral_moments(
         moment_space, celltype, tdim, 2 * degree - 1);
   }
@@ -325,7 +326,8 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     {
       // Interior integral moment
       std::tie(x[3], M[3]) = moments::make_dot_integral_moments(
-          element::create_rtc(cell::type::hexahedron, degree - 1, true),
+          element::create_rtc(cell::type::hexahedron, degree - 1, lvariant,
+                              true),
           celltype, tdim, 2 * degree - 1);
     }
     else
@@ -349,6 +351,6 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, wcoeffs,
                        x, M, maps::type::covariantPiola, discontinuous,
-                       degree - 1);
+                       degree - 1, {}, lvariant);
 }
 //-----------------------------------------------------------------------------

@@ -141,6 +141,8 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
+                                           element::lagrange_variant lvariant,
+                                           element::dpc_variant dvariant,
                                            bool discontinuous)
 {
   if (family == element::family::custom)
@@ -155,68 +157,126 @@ basix::FiniteElement basix::create_element(element::family family,
 
   switch (family)
   {
+  // P family
   case element::family::P:
-    return element::create_lagrange(
-        cell, degree, element::lagrange_variant::unset, discontinuous);
-  case element::family::BDM:
-    switch (cell)
+    if (dvariant != element::dpc_variant::unset)
     {
-    case cell::type::quadrilateral:
-      return element::create_serendipity_div(cell, degree, discontinuous);
-    case cell::type::hexahedron:
-      return element::create_serendipity_div(cell, degree, discontinuous);
-    default:
-      return element::create_bdm(cell, degree, discontinuous);
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     }
+    return element::create_lagrange(cell, degree, lvariant, discontinuous);
   case element::family::RT:
   {
+    if (dvariant != element::dpc_variant::unset)
+    {
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
+    }
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_rtc(cell, degree, discontinuous);
+      return element::create_rtc(cell, degree, lvariant, discontinuous);
     case cell::type::hexahedron:
-      return element::create_rtc(cell, degree, discontinuous);
+      return element::create_rtc(cell, degree, lvariant, discontinuous);
     default:
-      return element::create_rt(cell, degree, discontinuous);
+      return element::create_rt(cell, degree, lvariant, discontinuous);
     }
   }
   case element::family::N1E:
   {
+    if (dvariant != element::dpc_variant::unset)
+    {
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
+    }
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_nce(cell, degree, discontinuous);
+      return element::create_nce(cell, degree, lvariant, discontinuous);
     case cell::type::hexahedron:
-      return element::create_nce(cell, degree, discontinuous);
+      return element::create_nce(cell, degree, lvariant, discontinuous);
     default:
-      return element::create_nedelec(cell, degree, discontinuous);
+      return element::create_nedelec(cell, degree, lvariant, discontinuous);
     }
   }
+  // S family
+  case element::family::serendipity:
+    return element::create_serendipity(cell, degree, lvariant, dvariant,
+                                       discontinuous);
+  case element::family::BDM:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_div(cell, degree, lvariant, dvariant,
+                                             discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_div(cell, degree, lvariant, dvariant,
+                                             discontinuous);
+    default:
+      return element::create_bdm(cell, degree, lvariant, discontinuous);
+    }
   case element::family::N2E:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_serendipity_curl(cell, degree, discontinuous);
+      return element::create_serendipity_curl(cell, degree, lvariant, dvariant,
+                                              discontinuous);
     case cell::type::hexahedron:
-      return element::create_serendipity_curl(cell, degree, discontinuous);
+      return element::create_serendipity_curl(cell, degree, lvariant, dvariant,
+                                              discontinuous);
     default:
-      return element::create_nedelec2(cell, degree, discontinuous);
+      return element::create_nedelec2(cell, degree, lvariant, discontinuous);
     }
+  case element::family::DPC:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    return element::create_dpc(cell, degree, dvariant, discontinuous);
+  // Matrix elements
   case element::family::Regge:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (dvariant != element::dpc_variant::unset)
+    {
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
+    }
     return element::create_regge(cell, degree, discontinuous);
   case element::family::HHJ:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (dvariant != element::dpc_variant::unset)
+    {
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
+    }
     return element::create_hhj(cell, degree, discontinuous);
+  // Other elements
   case element::family::CR:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (dvariant != element::dpc_variant::unset)
+    {
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
+    }
     return element::create_cr(cell, degree, discontinuous);
   case element::family::bubble:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (dvariant != element::dpc_variant::unset)
+    {
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
+    }
     return element::create_bubble(cell, degree, discontinuous);
-  case element::family::serendipity:
-    return element::create_serendipity(
-        cell, degree, element::lagrange_variant::unset,
-        element::dpc_variant::unset, discontinuous);
-  case element::family::DPC:
-    return element::create_dpc(cell, degree, element::dpc_variant::unset,
-                               discontinuous);
   default:
     throw std::runtime_error("Element family not found.");
   }
@@ -227,27 +287,8 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::dpc_variant dvariant,
                                            bool discontinuous)
 {
-  if (family == element::family::custom)
-  {
-    throw std::runtime_error("Cannot create a custom element directly. Try "
-                             "using `create_custom_element` instead");
-  }
-  if (degree < 0)
-  {
-    throw std::runtime_error("Cannot create an element with a negative degree");
-  }
-
-  switch (family)
-  {
-  case element::family::DPC:
-    return element::create_dpc(cell, degree, dvariant, discontinuous);
-  case element::family::serendipity:
-    return element::create_serendipity(cell, degree,
-                                       element::lagrange_variant::unset,
-                                       dvariant, discontinuous);
-  default:
-    throw std::runtime_error("Cannot pass a DPC variant to this element.");
-  }
+  return create_element(family, cell, degree, element::lagrange_variant::unset,
+                        dvariant, discontinuous);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
@@ -255,53 +296,16 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::lagrange_variant lvariant,
                                            bool discontinuous)
 {
-  if (family == element::family::custom)
-  {
-    throw std::runtime_error("Cannot create a custom element directly. Try "
-                             "using `create_custom_element` instead");
-  }
-  if (degree < 0)
-  {
-    throw std::runtime_error("Cannot create an element with a negative degree");
-  }
-
-  switch (family)
-  {
-  case element::family::P:
-    return element::create_lagrange(cell, degree, lvariant, discontinuous);
-  case element::family::serendipity:
-    return element::create_serendipity(
-        cell, degree, lvariant, element::dpc_variant::unset, discontinuous);
-  default:
-    throw std::runtime_error("Cannot pass a Lagrange variant to this element.");
-  }
+  return create_element(family, cell, degree, lvariant,
+                        element::dpc_variant::unset, discontinuous);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           element::dpc_variant dvariant,
                                            bool discontinuous)
 {
-  if (family == element::family::custom)
-  {
-    throw std::runtime_error("Cannot create a custom element directly. Try "
-                             "using `create_custom_element` instead");
-  }
-  if (degree < 0)
-  {
-    throw std::runtime_error("Cannot create an element with a negative degree");
-  }
-
-  switch (family)
-  {
-  case element::family::serendipity:
-    return element::create_serendipity(cell, degree, lvariant, dvariant,
-                                       discontinuous);
-  default:
-    throw std::runtime_error(
-        "Cannot pass a Lagrange variant and a DPC variant to this element.");
-  }
+  return create_element(family, cell, degree, element::lagrange_variant::unset,
+                        element::dpc_variant::unset, discontinuous);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,

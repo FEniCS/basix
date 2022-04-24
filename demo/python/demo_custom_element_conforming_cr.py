@@ -29,7 +29,6 @@ import matplotlib.pyplot as plt
 
 
 def create_ccr_triangle(degree):
-
     if degree in [1, 2]:
         wcoeffs = np.eye(3)
 

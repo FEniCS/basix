@@ -145,7 +145,9 @@ print(element.tabulate(0, points))
 # Degree 1 Ravairt--Thomas element
 # ================================
 #
-# As a second example, we create a degree 1 Raviart--Thomas element on a triangle. This element
+# As a second example, we create a degree 1 Raviart--Thomas element on a triangle. Details of
+# the definition of this element can be found at
+# https://defelement.com/elements/raviart-thomas.html. This element
 # spans:
 #
 # .. math::

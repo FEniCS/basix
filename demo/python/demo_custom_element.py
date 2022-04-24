@@ -52,7 +52,7 @@ wcoeffs[3, 4] = 1
 # are orthonormal, we can represent this as
 #
 # .. math::
-#    \sum_{i=0}^9\int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y\; p_i(x, y),
+#    x(1-x)y(1-y) = \sum_{i=0}^9\int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y\; p_i(x, y),
 #
 # and so the coefficients we want to put in the final row of our matrix are:
 #

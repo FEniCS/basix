@@ -18,7 +18,7 @@ from basix import CellType, MapType, PolynomialType, LatticeType
 # on a quadrilateral cell. This element will span the following set of polynomials:
 #
 # .. math::
-#    \left\{1,\; x,\; y,\; xy,\; x(1-x)y(1-y)\right\}.
+#    \left\{1,\; y,\; x,\; xy,\; x(1-x)y(1-y)\right\}.
 #
 # We will define the degrees of freedom (DOFs) of this element by placing a point
 # evaluation at each vertex, plus one at the midpoint of the cell.

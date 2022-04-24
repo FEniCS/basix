@@ -190,7 +190,8 @@ for i in range(3):
 # -------------
 #
 # For this element, there will be multiple points used per DOF, as the functionals that define
-# the element are integrals. We begin by defining a degree 2 quadrature rule on a triangle.
+# the element are integrals. We begin by defining a degree 1 quadrature rule on an interval.
+# This quadrature rule will be used to integrate on the edges of the triangle.
 
 pts, wts = basix.make_quadrature(CellType.interval, 1)
 

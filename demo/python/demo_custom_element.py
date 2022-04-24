@@ -65,7 +65,9 @@ wcoeffs[3, 4] = 1
 
 pts, wts = basix.make_quadrature(CellType.quadrilateral, 4)
 poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.quadrilateral, 2, pts)
-f = pts[:, 0] * (1 - pts[:, 0]) * pts[:, 1] * (1 - pts[:, 1])
+x = pts[:, 0]
+y = pts[:, 1]
+f = x * (1 - x) * y * (1 - y)
 for i in range(9):
     wcoeffs[4, i] = sum(f * poly[:, i] * wts)
 
@@ -176,9 +178,11 @@ wcoeffs[1, 3] = 1
 
 pts, wts = basix.make_quadrature(CellType.triangle, 2)
 poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, 1, pts)
+x = pts[:, 0]
+y = pts[:, 1]
 for i in range(3):
-    wcoeffs[2, i] = sum(pts[:, 0] * poly[:, i] * wts)
-    wcoeffs[2, 3 + i] = sum(pts[:, 1] * poly[:, i] * wts)
+    wcoeffs[2, i] = sum(x * poly[:, i] * wts)
+    wcoeffs[2, 3 + i] = sum(y * poly[:, i] * wts)
 
 # Interpolation
 # -------------

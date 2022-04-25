@@ -35,46 +35,46 @@ On an interval, Basix orders its polynomials by lowest degree first, ie
 
 ### Triangle
 On a triangle, Basix orders its polynomials by degree (lowest first).
-Polynomials of the same degree are ordered so that higher powers of \\(x\\)
+Polynomials of the same degree are ordered so that higher powers of \\(y\\)
 appear first, ie
 
 \\(1\\),
-\\(x\\),
 \\(y\\),
-\\(x^2\\),
-\\(xy\\),
+\\(x\\),
 \\(y^2\\),
-\\(x^3\\),
-\\(xy^2\\),
-\\(x^2y\\),
+\\(xy\\),
+\\(x^2\\),
 \\(y^3\\),
+\\(x^2y\\),
+\\(xy^2\\),
+\\(x^3\\),
 ...
 
 ### Tetrahedron
 On a tetrahedron, Basix orders its polynomials by degree (lowest first).
-Polynomials of the same degree are ordered so that higher powers of \\(x\\)
+Polynomials of the same degree are ordered so that higher powers of \\(z\\)
 appear first then higher powers of \\(y\\), ie
 
 \\(1\\),
-\\(x\\),
-\\(y\\),
 \\(z\\),
-\\(x^2\\),
-\\(xy\\),
+\\(y\\),
+\\(x\\),
+\\(z^2\\),
+\\(yz\\),
 \\(xz\\),
 \\(y^2\\),
-\\(yz\\),
-\\(z^2\\),
-\\(x^3\\),
-\\(x^2y\\),
-\\(x^2z\\),
-\\(xy^2\\),
-\\(xyz\\),
-\\(xz^2\\),
-\\(y^3\\),
-\\(y^2z\\),
-\\(yz^2\\),
+\\(xy\\),
+\\(x^2\\),
 \\(z^3\\),
+\\(yz^2\\),
+\\(xz^2\\),
+\\(y^2z\\),
+\\(xyz\\),
+\\(x^2z\\),
+\\(y^3\\),
+\\(xy^2\\),
+\\(x^2y\\),
+\\(x^3\\),
 ...
 
 ### Quadrilateral

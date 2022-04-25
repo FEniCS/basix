@@ -1027,9 +1027,8 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 
   // Indexing for hexahedral basis functions
   auto prism_idx
-      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t
-  {
-    return (n + 1) * (py * n + 1 - (py - 2) * (py - 1) / 2) + (n + 1) * px + pz;
+      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t {
+    return (n + 1) * idx(py, px) + pz;
   };
 
   // f3 = ((1 - y) / 2)^2

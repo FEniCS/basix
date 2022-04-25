@@ -104,7 +104,7 @@ polynomials times \\(x^2\\), and so on; ie
 ### Hexahedron
 On a hexahedron, we take a tensor product of the polynomials on an interval
 with \\(z\\) as the varibles and the polynomials on a quadrilateral with
-\\((x,y)\\) as the variables. The resulting ordering has polynomials
+\\((x,y)\\) as the variables. The resulting ordering has polynomials containing
 only \\(z\\) first (low-to-high degree) then these polynomials times \\(y\\),
 then the same polynomials times \\(y^2\\), then \\(y^3\\) and so on (following
 the order on a quadrilateral); ie
@@ -175,5 +175,31 @@ the order on a quadrilateral); ie
 \\(x^3y^3z^3\\)
 
 ### Prism
+On a hexahedron, we take a tensor product of the polynomials on an interval
+with \\(z\\) as the varibles and the polynomials on a triangle with
+\\((x,y)\\) as the variables. The resulting ordering has polynomials containing
+only \\(z\\) first (low-to-high degree) then these polynomials times \\(y\\),
+then the same polynomials times \\(x\\), then \\(y^2\\) and so on (following
+the order on a triangle); ie
+
+\\(1\\),
+\\(z\\),
+\\(z^2\\),
+\\(y\\),
+\\(yz\\),
+\\(yz^2\\),
+\\(x\\),
+\\(xz\\),
+\\(xz^2\\),
+\\(y^2\\),
+\\(y^2z\\),
+\\(y^2z^2\\),
+\\(xy\\),
+\\(xyz\\),
+\\(xyz^2\\),
+\\(x^2\\),
+\\(x^2z\\),
+\\(x^2z^2\\),
+...
 
 ### Pyramid

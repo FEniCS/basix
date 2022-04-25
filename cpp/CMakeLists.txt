@@ -96,6 +96,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nedelec.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-raviart-thomas.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-regge.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hhj.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
@@ -120,6 +121,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nedelec.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-raviart-thomas.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-regge.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hhj.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp)
@@ -158,9 +160,6 @@ list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
 list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)
 target_compile_options(basix PRIVATE "$<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:${basix_compiler_flags}>")
 target_compile_options(basix PRIVATE $<$<CONFIG:Developer>:${BASIX_DEVELOPER_FLAGS}>)
-
-# Set debug definitions (private)
-target_compile_definitions(basix PRIVATE $<$<OR:$<CONFIG:Debug>,$<CONFIG:Developer>>:DEBUG>)
 
 # Install the Basix library
 install(TARGETS basix

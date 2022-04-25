@@ -426,18 +426,154 @@ def test_vtk_element(celltype, degree):
 
 
 @pytest.mark.parametrize("variant", [
-    basix.LagrangeVariant.integral_legendre
+    basix.LagrangeVariant.legendre,
 ])
 @pytest.mark.parametrize("celltype", [
+    basix.CellType.interval,
     basix.CellType.triangle, basix.CellType.tetrahedron,
     basix.CellType.quadrilateral, basix.CellType.hexahedron,
 ])
 @pytest.mark.parametrize("degree", range(1, 5))
-def test_integral_lagrange(celltype, degree, variant):
+def test_legendre(celltype, degree, variant):
     e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
     for p in e.points:
         assert in_cell(celltype, p)
 
-    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant)
+
+@pytest.mark.parametrize("variant", [
+    basix.DPCVariant.simplex_equispaced,
+    basix.DPCVariant.simplex_gll,
+    basix.DPCVariant.horizontal_equispaced,
+    basix.DPCVariant.horizontal_gll,
+    basix.DPCVariant.diagonal_equispaced,
+    basix.DPCVariant.diagonal_gll,
+])
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("degree", range(5))
+def test_dpc(celltype, degree, variant):
+    e = basix.create_element(basix.ElementFamily.DPC, celltype, degree, variant, True)
     for p in e.points:
         assert in_cell(celltype, p)
+
+
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.interval,
+    basix.CellType.triangle, basix.CellType.tetrahedron,
+    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("degree", range(1, 5))
+def test_legendre_lagrange_variant(celltype, degree):
+    e = basix.create_element(
+        basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.legendre, True)
+
+    # Test that the basis functions are orthogonal
+    pts, wts = basix.make_quadrature(celltype, degree * 2)
+    values = e.tabulate(0, pts)[0, :, :, 0].T
+    for i, row_i in enumerate(values):
+        for j, row_j in enumerate(values):
+            integral = numpy.sum(row_i * row_j * wts)
+            if i == j:
+                assert numpy.isclose(integral, 1)
+            else:
+                assert numpy.isclose(integral, 0)
+
+    # Test that the basis function span the correct set
+    pts = basix.create_lattice(celltype, 2 * (degree + 1), basix.LatticeType.equispaced, True)
+    values = e.tabulate(0, pts)[0, :, :, 0]
+    i_pts = e.points
+    i_mat = e.interpolation_matrix
+
+    tdim = len(basix.topology(celltype)) - 1
+    if tdim == 1:
+        for px in range(degree + 1):
+            evals = i_pts[:, 0] ** px
+            coeffs = i_mat @ evals
+            computed_values = [numpy.dot(v, coeffs) for v in values]
+            actual_values = pts[:, 0] ** px
+            assert numpy.allclose(computed_values, actual_values)
+
+    elif tdim == 2:
+        powers = []
+        if celltype == basix.CellType.triangle:
+            for px in range(degree + 1):
+                for py in range(degree + 1 - px):
+                    powers.append((px, py))
+        if celltype == basix.CellType.quadrilateral:
+            for px in range(degree + 1):
+                for py in range(degree + 1):
+                    powers.append((px, py))
+        for px, py in powers:
+            evals = i_pts[:, 0] ** px * i_pts[:, 1] ** py
+            coeffs = i_mat @ evals
+            computed_values = [numpy.dot(v, coeffs) for v in values]
+            actual_values = pts[:, 0] ** px * pts[:, 1] ** py
+            assert numpy.allclose(computed_values, actual_values)
+
+    else:
+        assert tdim == 3
+        powers = []
+        if celltype == basix.CellType.tetrahedron:
+            for px in range(degree + 1):
+                for py in range(degree + 1 - px):
+                    for pz in range(degree + 1 - px - py):
+                        powers.append((px, py, pz))
+        if celltype == basix.CellType.hexahedron:
+            for px in range(degree + 1):
+                for py in range(degree + 1):
+                    for pz in range(degree + 1):
+                        powers.append((px, py, pz))
+        for px, py, pz in powers:
+            evals = i_pts[:, 0] ** px * i_pts[:, 1] ** py * i_pts[:, 2] ** pz
+            coeffs = i_mat @ evals
+            computed_values = [numpy.dot(v, coeffs) for v in values]
+            actual_values = pts[:, 0] ** px * pts[:, 1] ** py * pts[:, 2] ** pz
+            assert numpy.allclose(computed_values, actual_values)
+
+
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+])
+@pytest.mark.parametrize("degree", range(1, 5))
+def test_legendre_dpc_variant(celltype, degree):
+    e = basix.create_element(
+        basix.ElementFamily.DPC, celltype, degree, basix.DPCVariant.legendre, True)
+
+    # Test that the basis functions are orthogonal
+    pts, wts = basix.make_quadrature(celltype, degree * 2)
+    values = e.tabulate(0, pts)[0, :, :, 0].T
+    for i, row_i in enumerate(values):
+        for j, row_j in enumerate(values):
+            integral = numpy.sum(row_i * row_j * wts)
+            if i == j:
+                assert numpy.isclose(integral, 1)
+            else:
+                assert numpy.isclose(integral, 0)
+
+    # Test that the basis function span the correct set
+    pts = basix.create_lattice(celltype, 2 * (degree + 1), basix.LatticeType.equispaced, True)
+    values = e.tabulate(0, pts)[0, :, :, 0]
+    i_pts = e.points
+    i_mat = e.interpolation_matrix
+
+    tdim = len(basix.topology(celltype)) - 1
+    if tdim == 2:
+        for px in range(degree + 1):
+            for py in range(degree + 1 - px):
+                evals = i_pts[:, 0] ** px * i_pts[:, 1] ** py
+                coeffs = i_mat @ evals
+                computed_values = [numpy.dot(v, coeffs) for v in values]
+                actual_values = pts[:, 0] ** px * pts[:, 1] ** py
+                assert numpy.allclose(computed_values, actual_values)
+
+    else:
+        assert tdim == 3
+        for px in range(degree + 1):
+            for py in range(degree + 1 - px):
+                for pz in range(degree + 1 - px - py):
+                    evals = i_pts[:, 0] ** px * i_pts[:, 1] ** py * i_pts[:, 2] ** pz
+                    coeffs = i_mat @ evals
+                    computed_values = [numpy.dot(v, coeffs) for v in values]
+                    actual_values = pts[:, 0] ** px * pts[:, 1] ** py * pts[:, 2] ** pz
+                    assert numpy.allclose(computed_values, actual_values)

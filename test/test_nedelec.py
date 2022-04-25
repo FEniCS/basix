@@ -201,13 +201,14 @@ def sympy_nedelec(celltype, n):
     return g
 
 
-@pytest.mark.parametrize("order", [1, 2, 3])
-def test_tri(order):
+@pytest.mark.parametrize("degree", [1, 2, 3])
+def test_tri(degree):
     celltype = basix.CellType.triangle
-    g = sympy_nedelec(celltype, order)
+    g = sympy_nedelec(celltype, degree)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    nedelec = basix.create_element(basix.ElementFamily.N1E, basix.CellType.triangle, order)
+    nedelec = basix.create_element(
+        basix.ElementFamily.N1E, basix.CellType.triangle, degree, basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
@@ -224,14 +225,15 @@ def test_tri(order):
             assert(numpy.isclose(wtab[basix.index(kx, ky)], wsym).all())
 
 
-@pytest.mark.parametrize("order", [1, 2, 3])
-def test_tet(order):
+@pytest.mark.parametrize("degree", [1, 2, 3])
+def test_tet(degree):
     celltype = basix.CellType.tetrahedron
-    g = sympy_nedelec(celltype, order)
+    g = sympy_nedelec(celltype, degree)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    nedelec = basix.create_element(basix.ElementFamily.N1E, basix.CellType.tetrahedron, order)
+    nedelec = basix.create_element(
+        basix.ElementFamily.N1E, basix.CellType.tetrahedron, degree, basix.LagrangeVariant.equispaced)
 
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 1

@@ -33,18 +33,14 @@ namespace element
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
 /// index, dof, vs, point_index)
-/// @param[in] entity_transformations Entity transformations
 /// @param[in] tdim The topological dimension of the cell the element is
 /// defined on
 /// @param[in] value_size The value size of the element
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 3>>, 4>,
-           std::map<cell::type, xt::xtensor<double, 3>>>
-make_discontinuous(
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
-    int tdim, int value_size);
+           std::array<std::vector<xt::xtensor<double, 3>>, 4>>
+make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+                   const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+                   int tdim, int value_size);
 
 } // namespace element
 
@@ -205,9 +201,6 @@ public:
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
   /// polynomial space for this element
-  /// @param[in] entity_transformations Entity transformations
-  /// representing the effect rotating and reflecting subentities of the
-  /// cell has on the DOFs.
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
@@ -216,29 +209,25 @@ public:
   /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
-  /// @param[in] highest_degree The lowest degree n such that the highest degree
-  /// polynomial in this element is contained in a Lagrange (or vector Lagrange)
-  /// element of degree n
   /// @param[in] highest_complete_degree The highest degree n such that a
   /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
   /// element
   /// @param[in] tensor_factors The factors in the tensor product representation
   /// of this element
   /// @param[in] lvariant The Lagrange variant of the element
+  /// @param[in] dvariant The DPC variant of the element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape,
       const xt::xtensor<double, 2>& wcoeffs,
-      const std::map<cell::type, xt::xtensor<double, 3>>&
-          entity_transformations,
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
       const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-      maps::type map_type, bool discontinuous, int highest_degree,
-      int highest_complete_degree,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {},
-      element::lagrange_variant lvariant = element::lagrange_variant::unset);
+      element::lagrange_variant lvariant = element::lagrange_variant::unset,
+      element::dpc_variant dvariant = element::dpc_variant::unset);
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -255,7 +244,14 @@ public:
   /// Move assignment operator
   FiniteElement& operator=(FiniteElement&& element) = default;
 
-  /// Compute basis values and derivatives at set of points.
+  /// Check if two elements are the same
+  /// @note This operator compares the element properties, e.g. family,
+  /// degree, etc, and not computed numerical data
+  /// @return True if elements are the same
+  bool operator==(const FiniteElement& e) const;
+
+  /// Array shape for tabulate basis values and derivatives at set of
+  /// points.
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
@@ -325,17 +321,13 @@ public:
   /// @return Polynomial degree
   int degree() const;
 
-  /// Get the element value size
-  /// This is just a convenience function returning product(value_shape)
-  /// @return Value size
-  int value_size() const;
-
-  /// Get the element value tensor shape, e.g. returning [1] for scalars.
+  /// The element value tensor shape, e.g. returning {} for scalars, {3}
+  /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
   /// @return Value shape
   const std::vector<int>& value_shape() const;
 
-  /// Dimension of the finite element space (number of degrees of
-  /// freedom for the element)
+  /// Dimension of the finite element space (number of
+  /// degrees-of-freedom for the element)
   /// @return Number of degrees of freedom
   int dim() const;
 
@@ -343,18 +335,21 @@ public:
   /// @return The family
   element::family family() const;
 
-  /// Get the Lagrange variant of the element, or throw an error if element has
-  /// no Lagrange variant
+  /// Get the Lagrange variant of the element.
   /// @return The Lagrange variant
   element::lagrange_variant lagrange_variant() const;
+
+  /// Get the DPC variant of the element.
+  /// @return The DPC variant
+  element::dpc_variant dpc_variant() const;
 
   /// Get the map type for this element
   /// @return The map type
   maps::type map_type() const;
 
   /// Indicates whether this element is the discontinuous variant
-  /// @return True if this element is a discontinuous version
-  /// of the element
+  /// @return True if this element is a discontinuous version of the
+  /// element
   bool discontinuous() const;
 
   /// Indicates whether the dof transformations are all permutations
@@ -370,12 +365,12 @@ public:
   /// points that share a common Jacobian.
   /// @param[in] U The function values on the reference. The indices are
   /// [Jacobian index, point index, components].
-  /// @param[in] J The Jacobian of the mapping. The indices are [Jacobian
-  /// index, J_i, J_j].
-  /// @param[in] detJ The determinant of the Jacobian of the mapping. It has
-  /// length `J.shape(0)`
-  /// @param[in] K The inverse of the Jacobian of the mapping. The indices
-  /// are [Jacobian index, K_i, K_j].
+  /// @param[in] J The Jacobian of the mapping. The indices are
+  /// [Jacobian index, J_i, J_j].
+  /// @param[in] detJ The determinant of the Jacobian of the mapping. It
+  /// has length `J.shape(0)`
+  /// @param[in] K The inverse of the Jacobian of the mapping. The
+  /// indices are [Jacobian index, K_i, K_j].
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
   xt::xtensor<double, 3> push_forward(const xt::xtensor<double, 3>& U,
@@ -432,18 +427,26 @@ public:
     {
     case maps::type::identity:
       return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
+    case maps::type::L2Piola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
+        maps::l2_piola(u, U, J, detJ, K);
+      };
     case maps::type::covariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::covariant_piola(u, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
+        maps::covariant_piola(u, U, J, detJ, K);
+      };
     case maps::type::contravariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::contravariant_piola(u, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
+        maps::contravariant_piola(u, U, J, detJ, K);
+      };
     case maps::type::doubleCovariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::double_covariant_piola(u, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
+        maps::double_covariant_piola(u, U, J, detJ, K);
+      };
     case maps::type::doubleContravariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::double_contravariant_piola(u, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
+        maps::double_contravariant_piola(u, U, J, detJ, K);
+      };
     default:
       throw std::runtime_error("Map not implemented");
     }
@@ -719,19 +722,20 @@ public:
   /// coefficients = i_m * values
   /// \endcode
   ///
-  /// To interpolate into a Raviart-Thomas space, the following should be done:
+  /// To interpolate into a Raviart-Thomas space, the following should
+  /// be done:
   /// \code{.pseudo}
   /// i_m = element.interpolation_matrix()
   /// pts = element.points()
-  /// vs = element.value_size()
+  /// vs = prod(element.value_shape())
   /// values = VECTOR(pts.shape(0) * vs)
   /// FOR i, p IN ENUMERATE(pts):
   ///     values[i::pts.shape(0)] = f.evaluate_at(p)
   /// coefficients = i_m * values
   /// \endcode
   ///
-  /// To interpolate into a Lagrange space with a block size, the following
-  /// should be done:
+  /// To interpolate into a Lagrange space with a block size, the
+  /// following should be done:
   /// \code{.pseudo}
   /// i_m = element.interpolation_matrix()
   /// pts = element.points()
@@ -748,17 +752,89 @@ public:
 
   /// Get the dual matrix.
   ///
-  /// This is the matrix @f$BD^{T}@f$, as described in the documentation of the
-  /// `FiniteElement()` constructor.
+  /// This is the matrix @f$BD^{T}@f$, as described in the documentation
+  /// of the `FiniteElement()` constructor.
   /// @return The dual matrix
-  xt::xtensor<double, 2> dual_matrix() const;
+  const xt::xtensor<double, 2>& dual_matrix() const;
+
+  /// Get the coefficients that define the polynomial set in terms of the
+  /// orthonormal polynomials.
+  ///
+  /// The polynomials spanned by each finite element in Basix are represented as
+  /// a linear combination of the orthonormal polynomials of a given degree on
+  /// the cell. Each row of this matrix defines a polynomial in the set spanned
+  /// by the finite element.
+  ///
+  /// For example, the orthonormal polynomials of degree <= 1 on a triangle are
+  /// (where a, b, c, d are some constants):
+  ///
+  ///  - (sqrt(2), 0)
+  ///  - (a*x - b, 0)
+  ///  - (c*y - d, 0)
+  ///  - (0, sqrt(2))
+  ///  - (0, a*x - b)
+  ///  - (0, c*y - d)
+  ///
+  /// For a degree 1 Raviart-Thomas element, the first two rows of wcoeffs would
+  /// be the following, as (1, 0) and (0, 1) are spanned by the element
+  ///
+  ///  - [1, 0, 0, 0, 0, 0]
+  ///  - [0, 0, 0, 1, 0, 0]
+  ///
+  /// The third row of wcoeffs in this example would give coefficients that
+  /// represent (x, y) in terms of the orthonormal polynomials:
+  ///
+  ///  - [-b/(a*sqrt(2)), 1/a, 0, -d/(c*sqrt(2)), 0, 1/c]
+  ///
+  /// These coefficients are only stored for custom elements. This function will
+  /// throw an exception if called on a non-custom element
+  const xt::xtensor<double, 2>& wcoeffs() const;
+
+  /// Get the interpolation points for each subentity.
+  ///
+  /// The shape of this data is (tdim, entity index, point index, dim).
+  const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x() const;
+
+  /// Get the interpolation matrices for each subentity.
+  ///
+  /// The shape of this data is (tdim, entity index, dof, value size,
+  /// point_index).
+  ///
+  /// These matrices define how to evaluate the DOF functionals accociated with
+  /// each sub-entity of the cell. Given a functional f, the functionals
+  /// associated with the `e`-th entity of dimension `d` can be computed as
+  /// follows:
+  ///
+  /// \code{.pseudo}
+  /// matrix = element.M()[d][e]
+  /// pts = element.x()[d][e]
+  /// values = f(pts)
+  /// result = ZEROS(matrix.shape(0))
+  /// FOR i IN RANGE(matrix.shape(0)):
+  ///     FOR j IN RANGE(matrix.shape(1)):
+  ///         FOR k IN RANGE(matrix.shape(2)):
+  ///             result[i] += matrix[i, j, k] * values[k][j]
+  /// \endcode
+  ///
+  /// For example, for a degree 1 Raviart-Thomas (RT) element on a triangle, the
+  /// DOF functionals are integrals over the edges of the dot product of the
+  /// function with the normal to the edge. In this case, `x()` would contain
+  /// quadrature points for each edge, and `M()` would by a 1 by 2 by `npoints`
+  /// array for each edge. For each point, the `[1, :, point]` slice of this
+  /// would be the quadrature weight multiplied by the normal. For all entities
+  /// that are not edges, the entries in `x()` and `M()` for a degree 1 RT
+  /// element would have size 0.
+  ///
+  /// These matrices are only stored for custom elements. This function will
+  /// throw an exception if called on a non-custom element
+  const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M() const;
 
   /// Get the matrix of coefficients.
   ///
-  /// This is the matrix @f$C@f$, as described in the documentation of the
-  /// `FiniteElement()` constructor.
+  /// This is the matrix @f$C@f$, as described in the documentation of
+  /// the `FiniteElement()` constructor.
   /// @return The dual matrix
-  xt::xtensor<double, 2> coefficient_matrix() const;
+  const xt::xtensor<double, 2>& coefficient_matrix() const;
 
   /// Get [0] the lowest degree n such that the highest degree
   /// polynomial in this element is contained in a Lagrange (or vector
@@ -767,21 +843,27 @@ public:
   /// subspace of this element
   std::array<int, 2> degree_bounds() const;
 
-  /// Indicates whether or not this element has a tensor product representation.
+  /// Indicates whether or not this element has a tensor product
+  /// representation.
   bool has_tensor_product_factorisation() const;
 
-  /// Get the tensor product representation of this element, or throw an error
-  /// if no such factorisation exists.
+  /// Get the tensor product representation of this element, or throw an
+  /// error if no such factorisation exists.
   ///
-  /// The tensor product representation will be a vector of tuples. Each tuple
-  /// contains a vector of finite elements, and a vector on integers. The vector
-  /// of finite elements gives the elements on an interval that appear in the
-  /// tensor product representation. The vector of integers gives the
-  /// permutation between the numbering of the tensor product DOFs and the
-  /// number of the DOFs of this Basix element.
+  /// The tensor product representation will be a vector of tuples. Each
+  /// tuple contains a vector of finite elements, and a vector on
+  /// integers. The vector of finite elements gives the elements on an
+  /// interval that appear in the tensor product representation. The
+  /// vector of integers gives the permutation between the numbering of
+  /// the tensor product DOFs and the number of the DOFs of this Basix
+  /// element.
   /// @return The tensor product representation
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
   get_tensor_product_representation() const;
+
+  /// Indicates whether or not the interpolation matrix for this element is an
+  /// identity matrix
+  bool interpolation_is_identity() const;
 
 private:
   // Cell type
@@ -798,6 +880,9 @@ private:
 
   // Lagrange variant
   element::lagrange_variant _lagrange_variant;
+
+  // Lagrange variant
+  element::dpc_variant _dpc_variant;
 
   // Degree
   int _degree;
@@ -823,7 +908,8 @@ private:
   // count on the associated entity, as listed by cell::topology.
   std::vector<std::vector<int>> _num_edofs;
 
-  // Number of dofs associated with the closure of each cell (sub-)entity
+  // Number of dofs associated with the closure of each cell
+  // (sub-)entity
   std::vector<std::vector<int>> _num_e_closure_dofs;
 
   // Dofs associated with each cell (sub-)entity
@@ -849,47 +935,49 @@ private:
   /// The interpolation weights and points
   xt::xtensor<double, 2> _matM;
 
-  /// Indicates whether or not the DOF transformations are all permutations
+  // Indicates whether or not the DOF transformations are all
+  // permutations
   bool _dof_transformations_are_permutations;
 
-  /// Indicates whether or not the DOF transformations are all identity
+  // Indicates whether or not the DOF transformations are all identity
   bool _dof_transformations_are_identity;
 
-  /// The entity permutations (factorised). This will only be set if
-  /// _dof_transformations_are_permutations is True and
-  /// _dof_transformations_are_identity is False
+  // The entity permutations (factorised). This will only be set if
+  // _dof_transformations_are_permutations is True and
+  // _dof_transformations_are_identity is False
   std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm;
 
-  /// The reverse entity permutations (factorised). This will only be set if
-  /// _dof_transformations_are_permutations is True and
-  /// _dof_transformations_are_identity is False
+  // The reverse entity permutations (factorised). This will only be set
+  // if _dof_transformations_are_permutations is True and
+  // _dof_transformations_are_identity is False
   std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm_rev;
 
-  /// The entity transformations in precomputed form
+  // The entity transformations in precomputed form
   std::map<cell::type,
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etrans;
 
-  /// The transposed entity transformations in precomputed form
+  // The transposed entity transformations in precomputed form
   std::map<cell::type,
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etransT;
 
-  /// The inverse entity transformations in precomputed form
+  // The inverse entity transformations in precomputed form
   std::map<cell::type,
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etrans_inv;
 
-  /// The inverse transpose entity transformations in precomputed form
+  // The inverse transpose entity transformations in precomputed form
   std::map<cell::type,
            std::vector<std::tuple<std::vector<std::size_t>, std::vector<double>,
                                   xt::xtensor<double, 2>>>>
       _etrans_invT;
 
-  // Indicates whether or not this is the discontinuous version of the element
+  // Indicates whether or not this is the discontinuous version of the
+  // element
   bool _discontinuous;
 
   // The dual matrix
@@ -902,50 +990,141 @@ private:
   std::array<int, 2> _degree_bounds;
 
   // Tensor product representation
-  // Entries of tuple are (list of elements on an interval, permutation of DOF
-  // numbers)
-  // @todo: For vector-valued elements, a tensor product type and a scaling
-  // factor may additionally be needed.
+  // Entries of tuple are (list of elements on an interval, permutation
+  // of DOF numbers)
+  // @todo: For vector-valued elements, a tensor product type and a
+  // scaling factor may additionally be needed.
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
       _tensor_factors;
+
+  // Is the interpolation matrix an identity?
+  bool _interpolation_is_identity;
+
+  // The coefficients that define the polynomial set in terms of the orthonormal
+  // polynomials
+  xt::xtensor<double, 2> _wcoeffs;
+
+  // Interpolation matrices for each entity
+  std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
 };
+
+/// Create a custom finite element
+/// @param[in] cell_type The cell type
+/// @param[in] degree The degree of the element
+/// @param[in] value_shape The value shape of the element
+/// @param[in] wcoeffs Matrices for the kth value index containing the
+/// expansion coefficients defining a polynomial basis spanning the
+/// polynomial space for this element
+/// @param[in] x Interpolation points. Shape is (tdim, entity index,
+/// point index, dim)
+/// @param[in] M The interpolation matrices. Indices are (tdim, entity
+/// index, dof, vs, point_index)
+/// @param[in] map_type The type of map to be used to map values from
+/// the reference to a cell
+/// @param[in] discontinuous Indicates whether or not this is the
+/// discontinuous version of the element
+/// @param[in] highest_complete_degree The highest degree n such that a
+/// Lagrange (or vector Lagrange) element of degree n is a subspace of this
+/// element
+/// @return A custom finite element
+FiniteElement create_custom_element(
+    cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree);
 
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-/// @param[in] variant The variant of Lagrange to use
+/// @param[in] lvariant The variant of Lagrange to use
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant variant,
+                             int degree, element::lagrange_variant lvariant,
+                             bool discontinuous);
+
+/// Create an element using a given Lagrange variant and a given DPC variant
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+/// @param[in] lvariant The variant of Lagrange to use
+/// @param[in] dvariant The variant of DPC to use
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, element::lagrange_variant lvariant,
+                             element::dpc_variant dvariant, bool discontinuous);
+
+/// Create an element using a given DPC variant
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+/// @param[in] dvariant The variant of DPC to use
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, element::dpc_variant dvariant,
                              bool discontinuous);
 
 /// Create an element
 /// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] cell The reference cell type that the element is defined
+/// on
 /// @param[in] degree The degree of the element
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
+/// @param[in] discontinuous Indicates whether the element is
+/// discontinuous between cells points of the element. The discontinuous
+/// element will have the same DOFs, but they will all be associated
+/// with the interior of the cell.
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, bool discontinuous);
 
 /// Create a continuous element using a given Lagrange variant
 /// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] cell The reference cell type that the element is defined
+/// on
 /// @param[in] degree The degree of the element
-/// @param[in] variant The variant of Lagrange to use
+/// @param[in] lvariant The variant of Lagrange to use
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant variant);
+                             int degree, element::lagrange_variant lvariant);
+
+/// Create a continuous element using a given Lagrange variant and a given DPC
+/// variant
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined
+/// on
+/// @param[in] degree The degree of the element
+/// @param[in] lvariant The variant of Lagrange to use
+/// @param[in] dvariant The variant of DPC to use
+/// @return A finite element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, element::lagrange_variant lvariant,
+                             element::dpc_variant dvariant);
+
+/// Create a continuous element using a given DPC variant
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined
+/// on
+/// @param[in] degree The degree of the element
+/// @param[in] dvariant The variant of DPC to use
+/// @return A finite element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, element::dpc_variant dvariant);
 
 /// Create a continuous element
 /// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] cell The reference cell type that the element is defined
+/// on
 /// @param[in] degree The degree of the element
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
@@ -1055,8 +1234,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
 
   if (_cell_tdim >= 2)
   {
-    // This assumes 3 bits are used per face. This will need updating if 3D
-    // cells with faces with more than 4 sides are implemented
+    // This assumes 3 bits are used per face. This will need updating if
+    // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
     int dofstart
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
@@ -1102,8 +1281,8 @@ void FiniteElement::apply_inverse_dof_transformation(
 
   if (_cell_tdim >= 2)
   {
-    // This assumes 3 bits are used per face. This will need updating if 3D
-    // cells with faces with more than 4 sides are implemented
+    // This assumes 3 bits are used per face. This will need updating if
+    // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
     int dofstart
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);

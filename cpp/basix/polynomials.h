@@ -15,8 +15,6 @@ namespace basix::polynomials
 enum class type
 {
   legendre = 0,
-  chebyshev = 1,
-  legendre_bubble = 2,
 };
 
 /// Tabulate a set of polynomials.

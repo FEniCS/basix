@@ -25,7 +25,7 @@ def unreplace(txt):
 
 def remove_types(matches):
     """Remove the types from a function declaration."""
-    vars = [i.strip().split(" ")[-1] for i in matches[1].split(",")]
+    vars = [i.strip().split(" ")[-1].split("=")[0] for i in matches[1].split(",")]
     return "(" + ", ".join(vars) + ")"
 
 
@@ -40,7 +40,7 @@ def prepare_cpp(content):
             else:
                 out += line + "\n"
 
-    out = re.sub(r"namespace [^{]*\{", "", out)
+    out = re.sub(r"namespace [^{]*\{", ";", out)
     out = re.sub(r"class [^{]*\{", "", out)
 
     while "{" in out:
@@ -125,7 +125,6 @@ def get_docstring(matches):
                 p = i
                 pdoc = "TODO: document this"
             params[p] = "\n    ".join(pdoc.split("\n"))
-
         return f"{info} : {typename}\n    {params[info]}"
 
     if info_type == "return":

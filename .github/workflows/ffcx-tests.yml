@@ -1,0 +1,45 @@
+# This workflow will install Basix and FFCx and run the FFCx unit tests.
+
+name: FFCx integration
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Run FFCx tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build graphviz libgraphviz-dev pkg-config
+
+      - name: Install UFL
+        run: pip install git+https://github.com/FEniCS/ufl.git
+      - name: Install Basix
+        run: pip -v install .[ci]
+
+      - name: Get FFCx
+        uses: actions/checkout@v2
+        with:
+          path: ./ffcx
+          repository: FEniCS/ffcx
+          ref: main
+
+      - name: Install FFCx
+        run: |
+          cd ffcx
+          pip install .[ci]
+
+      - name: Build FFCx unit tests
+        run: |
+          python -m pytest -n auto ffcx/test

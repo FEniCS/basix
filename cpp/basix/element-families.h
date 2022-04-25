@@ -4,15 +4,10 @@
 
 #pragma once
 
-namespace basix
+/// Interfaces for creating finite elements
+namespace basix::element
 {
-
-/// Finite elements
-
-/// The functions in this namespace can be used to create finite elements.
-namespace element
-{
-/// An enum defining the variants of a Lagrange space that can be created
+/// Variants of a Lagrange space that can be created
 enum class lagrange_variant
 {
   unset = -1,
@@ -26,12 +21,24 @@ enum class lagrange_variant
   gl_warped = 7,
   gl_isaac = 8,
   gl_centroid = 9,
-  integral_legendre = 10,
-  integral_chebyshev = 11,
+  legendre = 10,
   vtk = 20,
 };
 
-/// Enum of available element families
+/// Variants of a DPC space that can be created
+enum class dpc_variant
+{
+  unset = -1,
+  simplex_equispaced = 0,
+  simplex_gll = 1,
+  horizontal_equispaced = 2,
+  horizontal_gll = 3,
+  diagonal_equispaced = 4,
+  diagonal_gll = 5,
+  legendre = 6,
+};
+
+/// Available element families
 enum class family
 {
   custom = 0,
@@ -44,9 +51,8 @@ enum class family
   Regge = 7,
   DPC = 8,
   bubble = 9,
-  serendipity = 10
+  serendipity = 10,
+  HHJ = 11,
 };
 
-} // namespace element
-
-} // namespace basix
+} // namespace basix::element

@@ -3,10 +3,10 @@
 # SPDX-License-Identifier: MIT
 
 import pytest
-from basix import ElementFamily, CellType, LagrangeVariant
+from basix import ElementFamily, CellType, LagrangeVariant, DPCVariant
 
 
-def parametrize_over_elements(degree, reference=None):
+def parametrize_over_elements(degree, reference=None, discontinuous=False):
     elementlist = []
 
     for k in range(1, degree + 1):
@@ -25,14 +25,15 @@ def parametrize_over_elements(degree, reference=None):
         # Elements on all cells except prism and pyramid
         for c in [CellType.interval, CellType.triangle, CellType.tetrahedron, CellType.quadrilateral,
                   CellType.hexahedron]:
-            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.integral_legendre]))
+            if discontinuous:
+                elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.legendre]))
 
         # Elements on all cells except prism, pyramid and interval
         for c in [CellType.triangle, CellType.tetrahedron, CellType.quadrilateral, CellType.hexahedron]:
-            elementlist.append((c, ElementFamily.N1E, k, []))
-            elementlist.append((c, ElementFamily.N2E, k, []))
-            elementlist.append((c, ElementFamily.RT, k, []))
-            elementlist.append((c, ElementFamily.BDM, k, []))
+            elementlist.append((c, ElementFamily.N1E, k, [LagrangeVariant.legendre]))
+            elementlist.append((c, ElementFamily.N2E, k, [LagrangeVariant.legendre, DPCVariant.legendre]))
+            elementlist.append((c, ElementFamily.RT, k, [LagrangeVariant.legendre]))
+            elementlist.append((c, ElementFamily.BDM, k, [LagrangeVariant.legendre, DPCVariant.legendre]))
 
         # Elements on simplex cells
         for c in [CellType.triangle, CellType.tetrahedron]:
@@ -40,10 +41,19 @@ def parametrize_over_elements(degree, reference=None):
                 elementlist.append((c, ElementFamily.CR, k, []))
             elementlist.append((c, ElementFamily.Regge, k, []))
 
-        # Elements on all cells except tensor product cells
+        # Elements on tensor product cells
         for c in [CellType.interval, CellType.quadrilateral, CellType.hexahedron]:
-            elementlist.append((c, ElementFamily.P, k, [LagrangeVariant.integral_chebyshev]))
-            elementlist.append((c, ElementFamily.serendipity, k, []))
+            for lv in [LagrangeVariant.equispaced, LagrangeVariant.gll_warped]:
+                for dv in [DPCVariant.simplex_equispaced, DPCVariant.diagonal_gll]:
+                    elementlist.append((c, ElementFamily.serendipity, k, [lv, dv]))
+
+        # Elements on quads and hexes
+        for c in [CellType.quadrilateral, CellType.hexahedron]:
+            if discontinuous:
+                for v in [DPCVariant.simplex_equispaced, DPCVariant.simplex_gll,
+                          DPCVariant.horizontal_equispaced, DPCVariant.horizontal_gll,
+                          DPCVariant.diagonal_equispaced, DPCVariant.diagonal_gll]:
+                    elementlist.append((c, ElementFamily.dpc, k, [v]))
 
         # Bubble elements
         if k >= 2:

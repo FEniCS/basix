@@ -54,10 +54,10 @@ def test_different_variant_interpolation(cell_type, order, variant1, variant2):
 
 
 @pytest.mark.parametrize("family, args", [
-    [basix.ElementFamily.RT, tuple()],
-    [basix.ElementFamily.N1E, tuple()],
-    [basix.ElementFamily.BDM, tuple()],
-    [basix.ElementFamily.N2E, tuple()],
+    [basix.ElementFamily.RT, (basix.LagrangeVariant.legendre, )],
+    [basix.ElementFamily.N1E, (basix.LagrangeVariant.legendre, )],
+    [basix.ElementFamily.BDM, (basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)],
+    [basix.ElementFamily.N2E, (basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)],
 ])
 @pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron])
@@ -80,16 +80,16 @@ def test_different_order_interpolation_matrix(family, args, cell_type, orders):
 
 
 @pytest.mark.parametrize("family1, args1", [
-    [basix.ElementFamily.RT, tuple()],
-    [basix.ElementFamily.N1E, tuple()],
-    [basix.ElementFamily.BDM, tuple()],
-    [basix.ElementFamily.N2E, tuple()],
+    [basix.ElementFamily.RT, (basix.LagrangeVariant.legendre, )],
+    [basix.ElementFamily.N1E, (basix.LagrangeVariant.legendre, )],
+    [basix.ElementFamily.BDM, (basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)],
+    [basix.ElementFamily.N2E, (basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)],
 ])
 @pytest.mark.parametrize("family2, args2", [
-    [basix.ElementFamily.RT, tuple()],
-    [basix.ElementFamily.N1E, tuple()],
-    [basix.ElementFamily.BDM, tuple()],
-    [basix.ElementFamily.N2E, tuple()],
+    [basix.ElementFamily.RT, (basix.LagrangeVariant.legendre, )],
+    [basix.ElementFamily.N1E, (basix.LagrangeVariant.legendre, )],
+    [basix.ElementFamily.BDM, (basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)],
+    [basix.ElementFamily.N2E, (basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)],
 ])
 @pytest.mark.parametrize("cell_type", [basix.CellType.triangle, basix.CellType.tetrahedron,
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron])
@@ -106,7 +106,8 @@ def test_different_element_interpolation(family1, args1, family2, args2, cell_ty
 @pytest.mark.parametrize("order", [1, 4])
 def test_blocked_interpolation(cell_type, order):
     """Test interpolation of Nedelec's componenets into a Lagrange space."""
-    nedelec = basix.create_element(basix.ElementFamily.N2E, cell_type, order)
+    nedelec = basix.create_element(
+        basix.ElementFamily.N2E, cell_type, order, basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)
     lagrange = basix.create_element(basix.ElementFamily.P, cell_type, order, basix.LagrangeVariant.gll_isaac)
 
     n_points = nedelec.points

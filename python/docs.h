@@ -35,10 +35,10 @@ const std::string sub_entity_connectivity = R"(
 Get the numbers of entities connected to each subentity of the cell.
 
 Returns a vector of the form: output[dim][entity_n][connected_dim] =
-[connected_entity_n0, connected_entity_n1, ...] This indicates that the
-entity of dimension `dim` and number `entity_n` is connected to the entities
-of dimension `connected_dim` and numbers `connected_entity_n0`,
-`connected_entity_n1`, ...
+[connected_entity_n0, connected_entity_n1, ...] This indicates that
+the entity of dimension `dim` and number `entity_n` is connected to
+the entities of dimension `connected_dim` and numbers
+`connected_entity_n0`, `connected_entity_n1`, ...
 
 Parameters
 ==========
@@ -191,8 +191,8 @@ numpy.ndarray[numpy.float64]
 )";
 
 const std::string cell_facet_orientations = R"(
-Get a array of bools indicating whether or not the facet normals are outward
-pointing
+Get an array of bools indicating whether or not the facet normals are
+outward pointing
 
 Parameters
 ==========
@@ -467,20 +467,51 @@ dict
 )";
 
 const std::string FiniteElement__get_tensor_product_representation = R"(
-Get the tensor product representation of this element, or throw an error
-if no such factorisation exists.
+Get the tensor product representation of this element, or throw an
+error if no such factorisation exists.
 
-The tensor product representation will be a vector of tuples. Each tuple
-contains a vector of finite elements, and a vector on integers. The vector
-of finite elements gives the elements on an interval that appear in the
-tensor product representation. The vector of integers gives the
-permutation between the numbering of the tensor product DOFs and the
-number of the DOFs of this Basix element.
+The tensor product representation will be a vector of tuples. Each
+tuple contains a vector of finite elements, and a vector on
+integers. The vector of finite elements gives the elements on an
+interval that appear in the tensor product representation. The
+vector of integers gives the permutation between the numbering of
+the tensor product DOFs and the number of the DOFs of this Basix
+element.
 
 Returns
 =======
 List[Tuple[List[basix.FiniteElement], List[int]]]
     The tensor product representation
+)";
+
+const std::string create_custom_element = R"(
+Create a custom finite element
+
+Parameters
+==========
+cell_type : basix.CellType
+    The cell type
+degree : int
+    The degree of the element
+value_shape : List[int]
+    The value shape of the element
+wcoeffs : numpy.ndarray[numpy.float64]
+    Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element
+x : List[List[numpy.ndarray[numpy.float64]]]
+    Interpolation points. Shape is (tdim, entity index, point index, dim)
+M : List[List[numpy.ndarray[numpy.float64]]]
+    The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index)
+map_type : basix.MapType
+    The type of map to be used to map values from the reference to a cell
+discontinuous : bool
+    Indicates whether or not this is the discontinuous version of the element
+highest_complete_degree : int
+    The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
+
+Returns
+=======
+basix.finite_element.FiniteElement
+    A custom finite element
 )";
 
 const std::string create_element__family_cell_degree_discontinuous = R"(
@@ -503,7 +534,8 @@ basix.finite_element.FiniteElement
     A finite element
 )";
 
-const std::string create_element__family_cell_degree_variant_discontinuous = R"(
+const std::string create_element__family_cell_degree_lvariant_discontinuous
+    = R"(
 Create an element using a given Lagrange variant
 
 Parameters
@@ -514,7 +546,7 @@ cell : basix.CellType
     The reference cell type that the element is defined on
 degree : int
     The degree of the element
-variant : basix.LagrangeVariant
+lvariant : basix.LagrangeVariant
     The variant of Lagrange to use
 discontinuous : bool
     Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
@@ -525,7 +557,7 @@ basix.finite_element.FiniteElement
     A finite element
 )";
 
-const std::string create_element__family_cell_degree_variant = R"(
+const std::string create_element__family_cell_degree_lvariant = R"(
 Create a continuous element using a given Lagrange variant
 
 Parameters
@@ -536,8 +568,100 @@ cell : basix.CellType
     The reference cell type that the element is defined on
 degree : int
     The degree of the element
-variant : basix.LagrangeVariant
+lvariant : basix.LagrangeVariant
     The variant of Lagrange to use
+
+Returns
+=======
+basix.finite_element.FiniteElement
+    A finite element
+)";
+
+const std::string create_element__family_cell_degree_dvariant_discontinuous
+    = R"(
+Create an element using a given DPC variant
+
+Parameters
+==========
+family : basix.ElementFamily
+    The element family
+cell : basix.CellType
+    The reference cell type that the element is defined on
+degree : int
+    The degree of the element
+dvariant : basix.DPCVariant
+    The variant of DPC to use
+discontinuous : bool
+    Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
+
+Returns
+=======
+basix.finite_element.FiniteElement
+    A finite element
+)";
+
+const std::string
+    create_element__family_cell_degree_lvariant_dvariant_discontinuous
+    = R"(
+Create an element using a given Lagrange variant and a given DPC variant
+
+Parameters
+==========
+family : basix.ElementFamily
+    The element family
+cell : basix.CellType
+    The reference cell type that the element is defined on
+degree : int
+    The degree of the element
+lvariant : basix.LagrangeVariant
+    The variant of Lagrange to use
+dvariant : basix.DPCVariant
+    The variant of DPC to use
+discontinuous : bool
+    Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
+
+Returns
+=======
+basix.finite_element.FiniteElement
+    A finite element
+)";
+
+const std::string create_element__family_cell_degree_dvariant = R"(
+Create a continuous element using a given DPC variant
+
+Parameters
+==========
+family : basix.ElementFamily
+    The element family
+cell : basix.CellType
+    The reference cell type that the element is defined on
+degree : int
+    The degree of the element
+dvariant : basix.DPCVariant
+    The variant of DPC to use
+
+Returns
+=======
+basix.finite_element.FiniteElement
+    A finite element
+)";
+
+const std::string create_element__family_cell_degree_lvariant_dvariant = R"(
+Create a continuous element using a given Lagrange variant and a given DPC
+variant
+
+Parameters
+==========
+family : basix.ElementFamily
+    The element family
+cell : basix.CellType
+    The reference cell type that the element is defined on
+degree : int
+    The degree of the element
+lvariant : basix.LagrangeVariant
+    The variant of Lagrange to use
+dvariant : basix.DPCVariant
+    The variant of DPC to use
 
 Returns
 =======
@@ -604,7 +728,6 @@ numpy.ndarray[numpy.float64]
 )";
 
 const std::string tabulate_polynomial_set = R"(
-Polynomial expansion sets
 Tabulate the orthonormal polynomial basis, and derivatives, at
 points on the reference cell.
 
@@ -711,7 +834,6 @@ numpy.ndarray[numpy.float64]
 )";
 
 const std::string index__p = R"(
-Indexing
 Compute trivial indexing in a 1D array (for completeness)
 
 Parameters

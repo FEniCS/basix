@@ -102,13 +102,13 @@ Interface to the Basix C++ library.
       .value("centroid", lattice::simplex_method::centroid);
 
   py::enum_<polynomials::type>(m, "PolynomialType")
-      .value("legendre", polynomials::type::legendre)
-      .value("chebyshev", polynomials::type::chebyshev);
+      .value("legendre", polynomials::type::legendre);
 
   m.def(
       "tabulate_polynomials",
       [](polynomials::type polytype, cell::type celltype, int d,
-         const py::array_t<double, py::array::c_style>& x) {
+         const py::array_t<double, py::array::c_style>& x)
+      {
         std::vector<std::size_t> shape;
         if (x.ndim() == 2 and x.shape(1) == 1)
           shape.push_back(x.shape(0));
@@ -151,8 +151,9 @@ Interface to the Basix C++ library.
       basix::docstring::create_lattice__celltype_n_type_exterior_method
           .c_str());
 
-  py::enum_<maps::type>(m, "MappingType")
+  py::enum_<maps::type>(m, "MapType")
       .value("identity", maps::type::identity)
+      .value("L2Piola", maps::type::L2Piola)
       .value("covariantPiola", maps::type::covariantPiola)
       .value("contravariantPiola", maps::type::contravariantPiola)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
@@ -215,12 +216,14 @@ Interface to the Basix C++ library.
       basix::docstring::cell_facet_jacobians.c_str());
 
   py::enum_<element::family>(m, "ElementFamily")
+      .value("custom", element::family::custom)
       .value("P", element::family::P)
       .value("BDM", element::family::BDM)
       .value("RT", element::family::RT)
       .value("N1E", element::family::N1E)
       .value("N2E", element::family::N2E)
       .value("Regge", element::family::Regge)
+      .value("HHJ", element::family::HHJ)
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
@@ -236,6 +239,7 @@ Interface to the Basix C++ library.
             return py::array_t<double>(t.shape(), t.data());
           },
           basix::docstring::FiniteElement__tabulate.c_str())
+      .def("__eq__", &FiniteElement::operator==)
       .def(
           "push_forward",
           [](const FiniteElement& self,
@@ -330,16 +334,26 @@ Interface to the Basix C++ library.
                              &FiniteElement::num_entity_closure_dofs)
       .def_property_readonly("entity_closure_dofs",
                              &FiniteElement::entity_closure_dofs)
-      .def_property_readonly("value_size", &FiniteElement::value_size)
+      .def_property_readonly("value_size",
+                             [](const FiniteElement& self) {
+                               return std::accumulate(
+                                   self.value_shape().begin(),
+                                   self.value_shape().end(), 1,
+                                   std::multiplies<int>());
+                             })
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
+      .def_property_readonly("discontinuous", &FiniteElement::discontinuous)
       .def_property_readonly("family", &FiniteElement::family)
       .def_property_readonly("lagrange_variant",
                              &FiniteElement::lagrange_variant)
+      .def_property_readonly("dpc_variant", &FiniteElement::dpc_variant)
       .def_property_readonly(
           "dof_transformations_are_permutations",
           &FiniteElement::dof_transformations_are_permutations)
       .def_property_readonly("dof_transformations_are_identity",
                              &FiniteElement::dof_transformations_are_identity)
+      .def_property_readonly("interpolation_is_identity",
+                             &FiniteElement::interpolation_is_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
       .def_property_readonly("degree_bounds", &FiniteElement::degree_bounds)
       .def_property_readonly("points",
@@ -366,6 +380,46 @@ Interface to the Basix C++ library.
             const xt::xtensor<double, 2>& P = self.coefficient_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           })
+      .def_property_readonly("wcoeffs",
+                             [](const FiniteElement& self) {
+                               const xt::xtensor<double, 2>& P = self.wcoeffs();
+                               return py::array_t<double>(P.shape(), P.data(),
+                                                          py::cast(self));
+                             })
+      .def_property_readonly(
+          "M",
+          [](const FiniteElement& self) {
+            const std::array<std::vector<xt::xtensor<double, 3>>, 4>& _M
+                = self.M();
+            std::vector<std::vector<py::array_t<double, py::array::c_style>>> M(
+                4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _M[i].size(); ++j)
+              {
+                M[i].push_back(py::array_t<double>(
+                    _M[i][j].shape(), _M[i][j].data(), py::cast(self)));
+              }
+            }
+            return M;
+          })
+      .def_property_readonly(
+          "x",
+          [](const FiniteElement& self) {
+            const std::array<std::vector<xt::xtensor<double, 2>>, 4>& _x
+                = self.x();
+            std::vector<std::vector<py::array_t<double, py::array::c_style>>> x(
+                4);
+            for (int i = 0; i < 4; ++i)
+            {
+              for (std::size_t j = 0; j < _x[i].size(); ++j)
+              {
+                x[i].push_back(py::array_t<double>(
+                    _x[i][j].shape(), _x[i][j].data(), py::cast(self)));
+              }
+            }
+            return x;
+          })
       .def_property_readonly("has_tensor_product_factorisation",
                              &FiniteElement::has_tensor_product_factorisation);
 
@@ -382,12 +436,71 @@ Interface to the Basix C++ library.
       .value("gl_warped", element::lagrange_variant::gl_warped)
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
-      .value("integral_legendre", element::lagrange_variant::integral_legendre)
-      .value("integral_chebyshev",
-             element::lagrange_variant::integral_chebyshev)
+      .value("legendre", element::lagrange_variant::legendre)
       .value("vtk", element::lagrange_variant::vtk);
 
+  py::enum_<element::dpc_variant>(m, "DPCVariant")
+      .value("unset", element::dpc_variant::unset)
+      .value("simplex_equispaced", element::dpc_variant::simplex_equispaced)
+      .value("simplex_gll", element::dpc_variant::simplex_gll)
+      .value("horizontal_equispaced",
+             element::dpc_variant::horizontal_equispaced)
+      .value("horizontal_gll", element::dpc_variant::horizontal_gll)
+      .value("diagonal_equispaced", element::dpc_variant::diagonal_equispaced)
+      .value("diagonal_gll", element::dpc_variant::diagonal_gll)
+      .value("legendre", element::dpc_variant::legendre);
+
   // Create FiniteElement
+  m.def(
+      "create_custom_element",
+      [](cell::type cell_type, int degree, const std::vector<int>& value_shape,
+         const py::array_t<double, py::array::c_style>& wcoeffs,
+         const std::vector<
+             std::vector<py::array_t<double, py::array::c_style>>>& x,
+         const std::vector<
+             std::vector<py::array_t<double, py::array::c_style>>>& M,
+         maps::type map_type, bool discontinuous,
+         int highest_complete_degree) -> FiniteElement
+      {
+        if (x.size() != 4)
+          throw std::runtime_error("x has the wrong size");
+        if (M.size() != 4)
+          throw std::runtime_error("M has the wrong size");
+
+        xt::xtensor<double, 2> _wco = adapt_x(wcoeffs);
+
+        std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+        for (int i = 0; i < 4; ++i)
+        {
+          for (std::size_t j = 0; j < x[i].size(); ++j)
+          {
+            if (x[i][j].ndim() != 2)
+              throw std::runtime_error("x has the wrong number of dimensions");
+            _x[i].push_back(adapt_x(x[i][j]));
+          }
+        }
+
+        std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
+        for (int i = 0; i < 4; ++i)
+        {
+          for (std::size_t j = 0; j < M[i].size(); ++j)
+          {
+            if (M[i][j].ndim() != 3)
+              throw std::runtime_error("M has the wrong number of dimensions");
+            _M[i].push_back(adapt_x(M[i][j]));
+          }
+        }
+
+        std::vector<std::size_t> _vs(value_shape.size());
+        for (std::size_t i = 0; i < value_shape.size(); ++i)
+          _vs[i] = static_cast<std::size_t>(value_shape[i]);
+
+        return basix::create_custom_element(cell_type, degree, _vs, _wco, _x,
+                                            _M, map_type, discontinuous,
+                                            highest_complete_degree);
+      },
+      basix::docstring::create_custom_element.c_str());
+
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
@@ -402,13 +515,35 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant variant, bool discontinuous) -> FiniteElement
-      {
-        return basix::create_element(family_name, cell_name, degree, variant,
+         element::lagrange_variant lvariant,
+         bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
                                      discontinuous);
       },
-      basix::docstring::create_element__family_cell_degree_variant_discontinuous
-          .c_str());
+      basix::docstring::
+          create_element__family_cell_degree_lvariant_discontinuous.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::dpc_variant dvariant, bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, dvariant,
+                                     discontinuous);
+      },
+      basix::docstring::
+          create_element__family_cell_degree_dvariant_discontinuous.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::lagrange_variant lvariant, element::dpc_variant dvariant,
+         bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     dvariant, discontinuous);
+      },
+      basix::docstring::
+          create_element__family_cell_degree_lvariant_dvariant_discontinuous
+              .c_str());
 
   m.def(
       "create_element",
@@ -420,10 +555,29 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant variant) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree, variant);
+         element::lagrange_variant lvariant) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, lvariant);
       },
-      basix::docstring::create_element__family_cell_degree_variant.c_str());
+      basix::docstring::create_element__family_cell_degree_lvariant.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::dpc_variant dvariant) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, dvariant);
+      },
+      basix::docstring::create_element__family_cell_degree_dvariant.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::lagrange_variant lvariant,
+         element::dpc_variant dvariant) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     dvariant);
+      },
+      basix::docstring::create_element__family_cell_degree_lvariant_dvariant
+          .c_str());
 
   // Interpolate between elements
   m.def(

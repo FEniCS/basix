@@ -266,6 +266,26 @@ Returns
 {{finite-element.h > get_tensor_product_representation > return : List[Tuple[List[basix.FiniteElement], List[int]]]}}
 )";
 
+{{DOCTYPE}} create_custom_element = R"(
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > param > cell_type : basix.CellType}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > param > degree : int}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > param > value_shape : List[int]}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > param > wcoeffs : numpy.ndarray[numpy.float64]}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > param > x : List[List[numpy.ndarray[numpy.float64]]]}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > param > M : List[List[numpy.ndarray[numpy.float64]]]}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > param > map_type : basix.MapType}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > param > discontinuous : bool}}
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > param > highest_complete_degree : int}}
+
+Returns
+=======
+{{finite-element.h > create_custom_element(cell_type, degree, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree) > return : basix.finite_element.FiniteElement}}
+)";
+
 {{DOCTYPE}} create_element__family_cell_degree_discontinuous = R"(
 {{finite-element.h > create_element(family, cell, degree, discontinuous) > doc}}
 
@@ -281,35 +301,103 @@ Returns
 {{finite-element.h > create_element(family, cell, degree, discontinuous) > return : basix.finite_element.FiniteElement}}
 )";
 
-{{DOCTYPE}} create_element__family_cell_degree_variant_discontinuous = R"(
-{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > doc}}
+{{DOCTYPE}} create_element__family_cell_degree_lvariant_discontinuous
+    = R"(
+{{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > doc}}
 
 Parameters
 ==========
-{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > family : basix.ElementFamily}}
-{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > cell : basix.CellType}}
-{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > degree : int}}
-{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > variant : basix.LagrangeVariant}}
-{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > param > discontinuous : bool}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > degree : int}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > lvariant : basix.LagrangeVariant}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > discontinuous : bool}}
 
 Returns
 =======
-{{finite-element.h > create_element(family, cell, degree, variant, discontinuous) > return : basix.finite_element.FiniteElement}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > return : basix.finite_element.FiniteElement}}
 )";
 
-{{DOCTYPE}} create_element__family_cell_degree_variant = R"(
-{{finite-element.h > create_element(family, cell, degree, variant) > doc}}
+{{DOCTYPE}} create_element__family_cell_degree_lvariant = R"(
+{{finite-element.h > create_element(family, cell, degree, lvariant) > doc}}
 
 Parameters
 ==========
-{{finite-element.h > create_element(family, cell, degree, variant) > param > family : basix.ElementFamily}}
-{{finite-element.h > create_element(family, cell, degree, variant) > param > cell : basix.CellType}}
-{{finite-element.h > create_element(family, cell, degree, variant) > param > degree : int}}
-{{finite-element.h > create_element(family, cell, degree, variant) > param > variant : basix.LagrangeVariant}}
+{{finite-element.h > create_element(family, cell, degree, lvariant) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree, lvariant) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree, lvariant) > param > degree : int}}
+{{finite-element.h > create_element(family, cell, degree, lvariant) > param > lvariant : basix.LagrangeVariant}}
 
 Returns
 =======
-{{finite-element.h > create_element(family, cell, degree, variant) > return : basix.finite_element.FiniteElement}}
+{{finite-element.h > create_element(family, cell, degree, lvariant) > return : basix.finite_element.FiniteElement}}
+)";
+
+{{DOCTYPE}} create_element__family_cell_degree_dvariant_discontinuous
+    = R"(
+{{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > degree : int}}
+{{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > dvariant : basix.DPCVariant}}
+{{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > discontinuous : bool}}
+
+Returns
+=======
+{{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > return : basix.finite_element.FiniteElement}}
+)";
+
+{{DOCTYPE}}
+    create_element__family_cell_degree_lvariant_dvariant_discontinuous
+    = R"(
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > degree : int}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > lvariant : basix.LagrangeVariant}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > dvariant : basix.DPCVariant}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > discontinuous : bool}}
+
+Returns
+=======
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > return : basix.finite_element.FiniteElement}}
+)";
+
+{{DOCTYPE}} create_element__family_cell_degree_dvariant = R"(
+{{finite-element.h > create_element(family, cell, degree, dvariant) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_element(family, cell, degree, dvariant) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree, dvariant) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree, dvariant) > param > degree : int}}
+{{finite-element.h > create_element(family, cell, degree, dvariant) > param > dvariant : basix.DPCVariant}}
+
+Returns
+=======
+{{finite-element.h > create_element(family, cell, degree, dvariant) > return : basix.finite_element.FiniteElement}}
+)";
+
+{{DOCTYPE}} create_element__family_cell_degree_lvariant_dvariant = R"(
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > doc}}
+
+Parameters
+==========
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > family : basix.ElementFamily}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > cell : basix.CellType}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > degree : int}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > lvariant : basix.LagrangeVariant}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > dvariant : basix.DPCVariant}}
+
+Returns
+=======
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > return : basix.finite_element.FiniteElement}}
 )";
 
 {{DOCTYPE}} create_element__family_cell_degree = R"(

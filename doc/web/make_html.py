@@ -30,12 +30,17 @@ def markdown(txt):
     # Convert code inside ```s (as these are not handled by the markdown library
     tsp = txt.split("```")
     out = ""
-    for t, code in zip(tsp[::2], tsp[1::2] + [""]):
-        code = code.strip().split("\n")
-        if code[0] in ["console", "bash", "python", "c", "cpp"]:
-            code = code[1:]
-        code = "\n".join(code)
-        out += f"{t}<pre><code>{code}</code></pre>"
+    code = False
+    for part in tsp:
+        if code:
+            part = part.strip().split("\n")
+            if part[0] in ["console", "bash", "python", "c", "cpp"]:
+                part = part[1:]
+            part = "\n".join(part)
+            out += f"<pre><code>{part}</code></pre>"
+        else:
+            out += part
+        code = not code
     return _markdown(out)
 
 

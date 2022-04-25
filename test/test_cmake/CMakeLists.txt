@@ -1,4 +1,4 @@
-# Example of CMakeLists.txt for downstream C++ project (e.g. DOLFINx)
+# Example of CMakeLists.txt for downstream C++ project (eg DOLFINx)
 # Used to check correctly installed package during wheel creation.:
 cmake_minimum_required(VERSION 3.16)
 

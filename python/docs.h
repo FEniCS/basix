@@ -74,7 +74,7 @@ Create a lattice of points on a reference cell
 optionally including the outer surface points
 
 For a given celltype, this creates a set of points on a regular grid
-which covers the cell, e.g. for a quadrilateral, with n=2, the points are:
+which covers the cell, eg for a quadrilateral, with n=2, the points are:
 [0,0],[0.5,0],[1,0],[0,0.5],[0.5,0.5],[1,0.5],[0,1],[0.5,1],[1,1]
 If the parameter exterior is set to false, the points lying on the external
 boundary are omitted, in this case for a quadrilateral with n=2, the points
@@ -105,7 +105,7 @@ Create a lattice of points on a reference cell
 optionally including the outer surface points
 
 For a given celltype, this creates a set of points on a regular grid
-which covers the cell, e.g. for a quadrilateral, with n=2, the points are:
+which covers the cell, eg for a quadrilateral, with n=2, the points are:
 [0,0],[0.5,0],[1,0],[0,0.5],[0.5,0.5],[1,0.5],[0,1],[0.5,1],[1,1]
 If the parameter exterior is set to false, the points lying on the external
 boundary are omitted, in this case for a quadrilateral with n=2, the points
@@ -239,7 +239,7 @@ numpy.ndarray[numpy.float64]
     The basis functions (and derivatives). The shape is
     (derivative, point, basis fn index, value index).
     - The first index is the derivative, with higher derivatives are
-    stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+    stored in triangular (2D) or tetrahedral (3D) ordering, ie for
     the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
     (0,2), (3,0)... The function basix::indexing::idx can be used to find the
     appropriate derivative.
@@ -762,7 +762,7 @@ numpy.ndarray[numpy.float64]
     
     - The first index is the derivative. The first entry is the basis
     itself. Derivatives are stored in triangular (2D) or tetrahedral
-    (3D) ordering, e.g. if `(p, q)` denotes `p` order dervative with
+    (3D) ordering, eg if `(p, q)` denotes `p` order dervative with
     repsect to `x` and `q` order derivative with respect to `y`, [0] ->
     (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
     [5] -> (0, 2), [6] -> (3, 0),...

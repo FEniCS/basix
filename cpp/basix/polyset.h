@@ -147,7 +147,7 @@ namespace basix::polyset
 ///
 /// - The first index is the derivative. The first entry is the basis
 /// itself. Derivatives are stored in triangular (2D) or tetrahedral
-/// (3D) ordering, e.g. if `(p, q)` denotes `p` order dervative with
+/// (3D) ordering, eg if `(p, q)` denotes `p` order dervative with
 /// repsect to `x` and `q` order derivative with respect to `y`, [0] ->
 /// (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
 /// [5] -> (0, 2), [6] -> (3, 0),...
@@ -185,7 +185,7 @@ xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
 ///
 /// - The first index is the derivative. The first entry is the basis
 /// itself. Derivatives are stored in triangular (2D) or tetrahedral
-/// (3D) ordering, e.g. if `(p, q)` denotes `p` order dervative with
+/// (3D) ordering, eg if `(p, q)` denotes `p` order dervative with
 /// repsect to `x` and `q` order derivative with respect to `y`, [0] ->
 /// (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
 /// [5] -> (0, 2), [6] -> (3, 0),...

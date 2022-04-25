@@ -170,8 +170,8 @@ the order on a quadrilateral); ie
 \\(x^3y^2z^2\\),
 \\(x^3y^2z^3\\),
 \\(x^3y^3\\)
-\\(x^3y^3z\\)
-\\(x^3y^3z^2\\)
+\\(x^3y^3z\\),
+\\(x^3y^3z^2\\),
 \\(x^3y^3z^3\\)
 
 ### Prism

@@ -40,21 +40,17 @@ def evaluate(function, pt):
         return function.subs(x, pt[0]).subs(y, pt[1]).subs(z, pt[2])
 
 
-# TODO: tetrahedron, prism, pyramid
+# TODO: prism, pyramid
 @pytest.mark.parametrize("cell_type, functions, degree", [
     [basix.CellType.interval, [one, x], 1],
     [basix.CellType.interval, [one, x, x**2], 2],
     [basix.CellType.interval, [one, x, x**2, x**3], 3],
-    [basix.CellType.triangle, [one, 2*x+y, y], 1],
-    [basix.CellType.triangle, [
-        one, 2*x+y, y,
-        6*x**2 + 6*x*y + y**2, 2*x*y + y**2, y**2,
-    ], 2],
-    [basix.CellType.triangle, [
-        one, 2*x+y, y,
-        6*x**2 + 6*x*y + y**2, 2*x*y + y**2, y**2,
-        20*x**3 + 30*x**2*y + 12*x*y**2 + y**3, 6*x**2*y + 6*x*y**2 + y**3, 2*x*y**2 + y**3, y**3
-    ], 3],
+    [basix.CellType.triangle, [one, y, x], 1],
+    [basix.CellType.triangle, [one, y, x, y**2, x * y, x**2], 2],
+    [basix.CellType.triangle, [one, y, x, y**2, x * y, x**2, y**3, x*y**2, x**2*y, x**3], 3],
+    [basix.CellType.tetrahedron, [one], 0],
+    [basix.CellType.tetrahedron, [one, z, y, x], 1],
+    [basix.CellType.tetrahedron, [one, z, y, x, z**2, y * z, x * z, y ** 2, x * y, x**2], 2],
     [basix.CellType.quadrilateral, [one, y, x, x * y], 1],
     [basix.CellType.quadrilateral, [one, y, y**2, x, x * y, x * y**2, x**2, x**2 * y, x**2 * y**2], 2],
     [basix.CellType.hexahedron, [one, z, y, y * z, x, x * z, x * y, x * y * z], 1],

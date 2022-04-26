@@ -245,7 +245,7 @@ public:
   FiniteElement& operator=(FiniteElement&& element) = default;
 
   /// Check if two elements are the same
-  /// @note This operator compares the element properties, e.g. family,
+  /// @note This operator compares the element properties, eg family,
   /// degree, etc, and not computed numerical data
   /// @return True if elements are the same
   bool operator==(const FiniteElement& e) const;
@@ -275,7 +275,7 @@ public:
   /// @return The basis functions (and derivatives). The shape is
   /// (derivative, point, basis fn index, value index).
   /// - The first index is the derivative, with higher derivatives are
-  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
   /// (0,2), (3,0)... The function basix::indexing::idx can be used to find the
   /// appropriate derivative.
@@ -299,7 +299,7 @@ public:
   /// value_size). The function `FiniteElement::tabulate_shape` can be
   /// used to get the required shape.
   /// - The first index is the derivative, with higher derivatives are
-  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
   /// (0,2), (3,0)... The function basix::indexing::idx can be used to
   /// find the appropriate derivative.
@@ -321,7 +321,7 @@ public:
   /// @return Polynomial degree
   int degree() const;
 
-  /// The element value tensor shape, e.g. returning {} for scalars, {3}
+  /// The element value tensor shape, eg returning {} for scalars, {3}
   /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
   /// @return Value shape
   const std::vector<int>& value_shape() const;
@@ -693,7 +693,7 @@ public:
   void apply_inverse_dof_transformation_to_transpose(
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
-  /// Return the interpolation points, i.e. the coordinates on the
+  /// Return the interpolation points, ie the coordinates on the
   /// reference element where a function need to be evaluated in order
   /// to interpolate it in the finite element space.
   /// @return Array of coordinate with shape `(num_points, tdim)`
@@ -895,7 +895,7 @@ private:
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k}
-  // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e.,
+  // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. ie
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
   xt::xtensor<double, 2> _coeffs;

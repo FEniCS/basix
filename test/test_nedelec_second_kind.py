@@ -9,6 +9,7 @@ import sympy
 
 
 def sympy_nedelec(celltype, n):
+    # These basis functions were computed using symfem
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")

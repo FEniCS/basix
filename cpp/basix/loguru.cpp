@@ -989,7 +989,7 @@ bool add_file(const char* path_in, FileMode mode, Verbosity verbosity)
         Any logging message with a verbosity lower or equal to
         the given verbosity will be included.
 
-        This works for Unix like systems (i.e. Linux/Mac)
+        This works for Unix like systems (ie Linux/Mac)
         There is no current implementation for Windows (as I don't know the
         equivalent calls or have a way to test them). If you know please
         add and send a pull request.
@@ -2026,7 +2026,7 @@ EcEntryBase::~EcEntryBase() { get_thread_ec_head_ref() = _previous; }
 Text ec_to_text(const char* value)
 {
   // Add quotes around the string to make it obvious where it begin and ends.
-  // This is great for detecting erroneous leading or trailing spaces in e.g. an
+  // This is great for detecting erroneous leading or trailing spaces in eg an
   // identifier.
   auto str = "\"" + std::string(value) + "\"";
   return Text{STRDUP(str.c_str())};

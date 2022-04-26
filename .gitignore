@@ -36,3 +36,9 @@ joss/paper.pdf
 *.egg-info
 _skbuild
 dist
+
+*.png
+*.jpg
+*.svg
+!joss/img/*.png
+!joss/img/*.svg

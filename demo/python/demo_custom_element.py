@@ -39,6 +39,10 @@ wcoeffs = np.zeros((5, 9))
 # .. math::
 #   1,\; y,\; y^2,\; x,\; xy,\; xy^2,\; x^2,\; x^2y,\; x^2y^2
 #
+# The order in which the polynomials appear in the orthonormal polynomial sets for
+# each cell are documented at
+# https://docs.fenicsproject.org/basix/main/polyset-order.html.
+#
 # As our polynomial space contains 1, :math:`y`, :math:`x` and :math:`xy`. The first
 # four rows of the matrix contain a single 1 for the four orthogonal polynomials with
 # these are their highest degree terms.

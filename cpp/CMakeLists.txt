@@ -26,7 +26,7 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 option(DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git." OFF)
 add_feature_info(DOWNLOAD_XTENSOR_LIBS DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git.")
 
-# Enable xtensor with target-specific optimization, i.e. -march=native
+# Enable xtensor with target-specific optimization, ie -march=native
 option(XTENSOR_OPTIMIZE "Enable xtensor target-specific optimization" OFF)
 add_feature_info(XTENSOR_OPTIMIZE XTENSOR_OPTIMIZE "Enable architecture-specific optimizations as defined by xtensor.")
 

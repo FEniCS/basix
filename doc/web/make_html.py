@@ -223,6 +223,16 @@ system(f"cp -r {path('cpp/html')} {path('html/cpp')}")
 
 # Make demos
 os.system(f"rm {path('../../demo/python/*.py.rst')}")
+# If file saves matplotlib images, run the demo
+for file in os.listdir(path("../../demo/python")):
+    if file.endswith(".py"):
+        with open(path(f"../../demo/python/{file}")) as f:
+            content = f.read()
+    if "savefig" in content:
+        here = os.getcwd()
+        os.chdir(path("../../demo/python"))
+        system(f"python3 {file}")
+        os.chdir(here)
 system(f"cd {path('../../demo/python')} && python3 convert_to_rst.py")
 system(f"mkdir {path('python/source/demo')}")
 system(f"cp {path('../../demo/python/*.rst')} {path('python/source/demo')}")

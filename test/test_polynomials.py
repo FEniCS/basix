@@ -63,6 +63,7 @@ def evaluate(function, pt):
     [basix.CellType.prism, [one, z, z**2, y, y * z, y * z**2, x, x * z, x * z**2,
                             y**2, y**2 * z, y**2 * z**2, x * y, x * y * z, x * y * z**2,
                             x**2, x**2 * z, x**2 * z**2], 2],
+    [basix.CellType.pyramid, [one], 0],
 ])
 def test_order(cell_type, functions, degree):
     points, weights = basix.make_quadrature(cell_type, 2 * degree)

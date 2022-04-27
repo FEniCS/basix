@@ -12,6 +12,7 @@ elements = [
     (basix.ElementFamily.N1E, [basix.LagrangeVariant.legendre]),  # covariant Piola
     (basix.ElementFamily.RT, [basix.LagrangeVariant.legendre]),  # contravariant Piola
     (basix.ElementFamily.Regge, []),  # double covariant Piola
+    (basix.ElementFamily.HHJ, []),  # double contravariant Piola
 ]
 
 

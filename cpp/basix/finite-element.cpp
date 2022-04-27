@@ -131,7 +131,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
   }
 
   /// Flatten D and take transpose
-  auto Dt_flat = xt::transpose(
+  xt::xtensor<double, 2> Dt_flat = xt::transpose(
       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
   return math::dot(B, Dt_flat);
@@ -705,7 +705,10 @@ FiniteElement::FiniteElement(
           // prisms and pyramids, this will need updating to look at the face
           // type
           if (et.first == cell::type::quadrilateral and i == 0)
-            Minv = math::dot(math::dot(M, M), M);
+          {
+            auto Mint = math::dot(M, M);
+            Minv = math::dot(Mint, M);
+          }
           else if (et.first == cell::type::triangle and i == 0)
             Minv = math::dot(M, M);
           else
@@ -782,7 +785,8 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
     throw std::runtime_error("Point dim does not match element dim.");
 
   xt::xtensor<double, 3> basis(
-      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), x_copy.shape(0),
+      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)),
+       x_copy.shape(0),
        static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
   polyset::tabulate(basis, _cell_type, _degree, nd, x_copy);
   const int psize = polyset::dim(_cell_type, _degree);
@@ -795,8 +799,9 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
     {
       auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
       B = xt::view(basis, p, xt::all(), xt::all());
-      C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-      auto result = math::dot(B, xt::transpose(C));
+      C = xt::transpose(xt::view(_coeffs, xt::all(),
+                                 xt::range(psize * j, psize * j + psize)));
+      auto result = math::dot(B, C);
       basis_view.assign(result);
     }
   }

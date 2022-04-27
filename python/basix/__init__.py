@@ -11,3 +11,4 @@ from ._basixcpp import (CellType, LatticeType, LatticeSimplexMethod, ElementFami
                         DPCVariant, QuadratureType, PolynomialType, MapType)
 from ._basixcpp import (create_lattice, create_element, compute_interpolation_operator, topology,
                         geometry, make_quadrature, index, tabulate_polynomials, create_custom_element)
+from ._basixcpp import FiniteElement

@@ -73,6 +73,8 @@ def get_docstring(matches):
     if "(" not in function:
         function += "("
 
+    if function not in content:
+        print(function)
     assert function in content
     doc = content.split(function)[0].split(";")[-1]
 

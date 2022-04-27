@@ -50,10 +50,14 @@ xt::xtensor_fixed<typename U::value_type, xt::xshape<3>> cross(const U& u,
 /// Compute C = A * B
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
-/// return A * B
+/// @param[in, out] C The output matrix
 template <typename U, typename V, typename W>
-void dot(U& A, V& B, W& C)
+void dot(const U& A, const V& B, W& C)
 {
+  static_assert(std::is_same<typename U::value_type, double>());
+  static_assert(std::is_same<typename V::value_type, double>());
+  static_assert(std::is_same<typename W::value_type, double>());
+
   int m = A.shape(0);
   int n = B.shape(1);
   int k = A.shape(1);
@@ -83,7 +87,7 @@ void dot(U& A, V& B, W& C)
 /// @param[in] B Input matrix
 /// return A * B
 template <typename U, typename V>
-xt::xtensor<typename U::value_type, 2> dot(U& A, V& B)
+xt::xtensor<typename U::value_type, 2> dot(const U& A, const V& B)
 {
   xt::xtensor<typename U::value_type, 2> C
       = xt::zeros<typename U::value_type>({A.shape(0), B.shape(1)});

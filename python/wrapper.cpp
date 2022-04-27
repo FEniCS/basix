@@ -455,15 +455,14 @@ Interface to the Basix C++ library.
   // Create FiniteElement
   m.def(
       "create_custom_element",
-      [](cell::type cell_type, int degree, const std::vector<int>& value_shape,
+      [](cell::type cell_type, const std::vector<int>& value_shape,
          const py::array_t<double, py::array::c_style>& wcoeffs,
          const std::vector<
              std::vector<py::array_t<double, py::array::c_style>>>& x,
          const std::vector<
              std::vector<py::array_t<double, py::array::c_style>>>& M,
-         maps::type map_type, bool discontinuous,
-         int highest_complete_degree) -> FiniteElement
-      {
+         maps::type map_type, bool discontinuous, int highest_complete_degree,
+         int highest_degree) -> FiniteElement {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
         if (M.size() != 4)
@@ -497,9 +496,9 @@ Interface to the Basix C++ library.
         for (std::size_t i = 0; i < value_shape.size(); ++i)
           _vs[i] = static_cast<std::size_t>(value_shape[i]);
 
-        return basix::create_custom_element(cell_type, degree, _vs, _wco, _x,
-                                            _M, map_type, discontinuous,
-                                            highest_complete_degree);
+        return basix::create_custom_element(
+            cell_type, _vs, _wco, _x, _M, map_type, discontinuous,
+            highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());
 

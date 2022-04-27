@@ -1018,7 +1018,6 @@ private:
 
 /// Create a custom finite element
 /// @param[in] cell_type The cell type
-/// @param[in] degree The degree of the element
 /// @param[in] value_shape The value shape of the element
 /// @param[in] wcoeffs Matrices for the kth value index containing the
 /// expansion coefficients defining a polynomial basis spanning the
@@ -1034,14 +1033,16 @@ private:
 /// @param[in] highest_complete_degree The highest degree n such that a
 /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
 /// element
+/// @param[in] highest_degree The degree of a polynomial in this element's
+/// polyset
 /// @return A custom finite element
 FiniteElement create_custom_element(
-    cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
+    cell::type cell_type, const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_complete_degree);
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree);
 
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family

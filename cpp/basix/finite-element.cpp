@@ -395,15 +395,15 @@ basix::element::make_discontinuous(
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
-    cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
+    cell::type cell_type, const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_complete_degree)
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree)
 {
   // Check that inputs are valid
-  const std::size_t psize = polyset::dim(cell_type, degree);
+  const std::size_t psize = polyset::dim(cell_type, highest_degree);
   std::size_t value_size = 1;
   for (std::size_t i = 0; i < value_shape.size(); ++i)
     value_size *= value_shape[i];
@@ -456,14 +456,14 @@ basix::FiniteElement basix::create_custom_element(
   }
 
   xt::xtensor<double, 2> dual_matrix
-      = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
+      = compute_dual_matrix(cell_type, wcoeffs, M, x, highest_degree);
   if (math::is_singular(dual_matrix))
     throw std::runtime_error(
         "Dual matrix is singular, there is an error in your inputs");
 
-  return basix::FiniteElement(element::family::custom, cell_type, degree,
-                              value_shape, wcoeffs, x, M, map_type,
-                              discontinuous, highest_complete_degree, degree);
+  return basix::FiniteElement(
+      element::family::custom, cell_type, -1, value_shape, wcoeffs, x, M,
+      map_type, discontinuous, highest_complete_degree, highest_degree);
 }
 
 //-----------------------------------------------------------------------------

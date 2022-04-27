@@ -9,7 +9,11 @@ import sympy
 
 
 def sympy_rt(celltype, n):
-    # These basis functions were computed using symfem
+    # These basis functions were computed using symfem. They can be recomputed
+    # by running (eg):
+    #    import symfem
+    #    e = symfem.create_element("triangle", "Raviart-Thomas", 2)
+    #    print(e.get_basis_functions())
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")

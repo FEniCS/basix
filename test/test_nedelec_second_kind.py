@@ -7,139 +7,110 @@ import numpy
 import pytest
 import sympy
 
-from .test_lagrange import sympy_lagrange
-from .test_rt import sympy_rt
-
 
 def sympy_nedelec(celltype, n):
+    # These basis functions were computed using symfem. They can be recomputed
+    # by running (eg):
+    #    import symfem
+    #    e = symfem.create_element("triangle", "N2curl", 2)
+    #    print(e.get_basis_functions())
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
 
-    from sympy import S
-    topology = basix.topology(celltype)
-    geometry = S(basix.geometry(celltype).astype(int))
-    dummy = [sympy.Symbol("DUMMY1"), sympy.Symbol("DUMMY2"), sympy.Symbol("DUMMY3")]
-
-    funcs = []
     if celltype == basix.CellType.triangle:
-        tdim = 2
-        for i in range(n + 1):
-            for j in range(n + 1 - i):
-                for d in range(2):
-                    funcs += [[x**j * y**i if k == d else 0 for k in range(2)]]
-        mat = numpy.empty((len(funcs), len(funcs)), dtype=object)
+        if n == 1:
+            return [[2*y, 4*x],
+                    [-4*y, -2*x],
+                    [-2*y, -4*x - 6*y + 4],
+                    [4*y, 2*x + 6*y - 2],
+                    [-6*x - 4*y + 4, -2*x],
+                    [6*x + 2*y - 2, 4*x]]
+        if n == 2:
+            return [[12*x*y - 3*y, 18*x**2 - 9*x],
+                    [-18*y**2 + 9*y, -12*x*y + 3*x],
+                    [-9*x*y - 3*y**2/2 + 3*y, 3*x**2/2 + 9*x*y - 3*x],
+                    [12*x*y + 12*y**2 - 9*y, 18*x**2 + 48*x*y - 27*x + 30*y**2 - 36*y + 9],
+                    [18*y**2 - 9*y, 12*x*y - 3*x + 30*y**2 - 24*y + 3],
+                    [-9*x*y - 15*y**2/2 + 6*y, 3*x**2/2 - 15*x*y - 15*y**2 + 15*y - 3/2],
+                    [30*x**2 + 48*x*y - 36*x + 18*y**2 - 27*y + 9, 12*x**2 + 12*x*y - 9*x],
+                    [30*x**2 + 12*x*y - 24*x - 3*y + 3, 18*x**2 - 9*x],
+                    [-15*x**2 - 15*x*y + 15*x + 3*y**2/2 - 3/2, -15*x**2/2 - 9*x*y + 6*x],
+                    [-48*x*y - 12*y**2 + 12*y, -12*x**2 - 48*x*y + 12*x],
+                    [48*x*y + 36*y**2 - 36*y, 12*x**2 + 24*x*y - 12*x],
+                    [-24*x*y - 12*y**2 + 12*y, -36*x**2 - 48*x*y + 36*x]]
+        if n == 3:
+            return [
+                [60*x**2*y - 40*x*y + 4*y, 80*x**3 - 80*x**2 + 16*x],
+                [-80*y**3 + 80*y**2 - 16*y, -60*x*y**2 + 40*x*y - 4*x],
+                [-320*x**2*y/9 - 80*x*y**2/9 + 80*x*y/3 + 40*y**3/27 - 8*y/3, 400*x**3/27 + 640*x**2*y/9 - 80*x**2/3 + 220*x*y**2/9 - 40*x*y + 28*x/3],  # noqa: E501
+                [-220*x**2*y/9 - 640*x*y**2/9 + 40*x*y - 400*y**3/27 + 80*y**2/3 - 28*y/3, -40*x**3/27 + 80*x**2*y/9 + 320*x*y**2/9 - 80*x*y/3 + 8*x/3],  # noqa: E501
+                [-60*x**2*y - 120*x*y**2 + 80*x*y - 60*y**3 + 80*y**2 - 24*y, -80*x**3 - 300*x**2*y + 160*x**2 - 360*x*y**2 + 400*x*y - 96*x - 140*y**3 + 240*y**2 - 120*y + 16],  # noqa: E501
+                [80*y**3 - 80*y**2 + 16*y, 60*x*y**2 - 40*x*y + 4*x + 140*y**3 - 180*y**2 + 60*y - 4],
+                [320*x**2*y/9 + 560*x*y**2/9 - 400*x*y/9 + 680*y**3/27 - 320*y**2/9 + 104*y/9, -400*x**3/27 + 560*x**2*y/9 + 160*x**2/9 + 1220*x*y**2/9 - 1000*x*y/9 - 4*x/9 + 1540*y**3/27 - 860*y**2/9 + 380*y/9 - 68/27],  # noqa: E501
+                [220*x**2*y/9 - 200*x*y**2/9 - 80*x*y/9 - 860*y**3/27 + 320*y**2/9 - 56*y/9, 40*x**3/27 + 340*x**2*y/9 - 40*x**2/9 - 320*x*y**2/9 - 80*x*y/9 + 16*x/9 - 1540*y**3/27 + 680*y**2/9 - 200*y/9 + 32/27],  # noqa: E501
+                [-140*x**3 - 360*x**2*y + 240*x**2 - 300*x*y**2 + 400*x*y - 120*x - 80*y**3 + 160*y**2 - 96*y + 16, -60*x**3 - 120*x**2*y + 80*x**2 - 60*x*y**2 + 80*x*y - 24*x],  # noqa: E501
+                [140*x**3 + 60*x**2*y - 180*x**2 - 40*x*y + 60*x + 4*y - 4, 80*x**3 - 80*x**2 + 16*x],
+                [1540*x**3/27 + 1220*x**2*y/9 - 860*x**2/9 + 560*x*y**2/9 - 1000*x*y/9 + 380*x/9 - 400*y**3/27 + 160*y**2/9 - 4*y/9 - 68/27, 680*x**3/27 + 560*x**2*y/9 - 320*x**2/9 + 320*x*y**2/9 - 400*x*y/9 + 104*x/9],  # noqa: E501
+                [-1540*x**3/27 - 320*x**2*y/9 + 680*x**2/9 + 340*x*y**2/9 - 80*x*y/9 - 200*x/9 + 40*y**3/27 - 40*y**2/9 + 16*y/9 + 32/27, -860*x**3/27 - 200*x**2*y/9 + 320*x**2/9 + 220*x*y**2/9 - 80*x*y/9 - 56*x/9],  # noqa: E501
+                [-240*x**2*y - 180*x*y**2 + 180*x*y - 20*y**3 + 40*y**2 - 20*y, -40*x**3 - 240*x**2*y + 60*x**2 - 120*x*y**2 + 140*x*y - 20*x],  # noqa: E501
+                [-120*x**2*y - 240*x*y**2 + 140*x*y - 40*y**3 + 60*y**2 - 20*y, -20*x**3 - 180*x**2*y + 40*x**2 - 240*x*y**2 + 180*x*y - 20*x],  # noqa: E501
+                [-240*x**2*y - 300*x*y**2 + 300*x*y - 80*y**3 + 160*y**2 - 80*y, -40*x**3 - 120*x**2*y + 60*x**2 - 60*x*y**2 + 80*x*y - 20*x],  # noqa: E501
+                [-120*x**2*y + 100*x*y + 80*y**3 - 80*y**2, -20*x**3 + 20*x**2 + 60*x*y**2 - 40*x*y],
+                [60*x**2*y + 120*x*y**2 - 80*x*y + 40*y**3 - 60*y**2 + 20*y, 80*x**3 + 300*x**2*y - 160*x**2 + 240*x*y**2 - 300*x*y + 80*x],  # noqa: E501
+                [-60*x**2*y + 40*x*y + 20*y**3 - 20*y**2, -80*x**3 + 80*x**2 + 120*x*y**2 - 100*x*y],
+                [-15*x**2*y - 30*x*y**2 + 20*x*y - 5*y**2 + 5*y, 15*x**3 + 30*x**2*y - 20*x**2 - 10*x*y + 5*x],  # noqa: E501
+                [30*x*y**2 - 10*x*y + 15*y**3 - 20*y**2 + 5*y, -30*x**2*y - 5*x**2 - 15*x*y**2 + 20*x*y + 5*x]  # noqa: E501
+            ]
+    if celltype == basix.CellType.tetrahedron:
+        if n == 1:
+            return [[0, 2*z, 4*y],
+                    [0, -4*z, -2*y],
+                    [2*z, 0, 4*x],
+                    [-4*z, 0, -2*x],
+                    [2*y, 4*x, 0],
+                    [-4*y, -2*x, 0],
+                    [-2*z, -2*z, -4*x - 4*y - 6*z + 4],
+                    [4*z, 4*z, 2*x + 2*y + 6*z - 2],
+                    [-2*y, -4*x - 6*y - 4*z + 4, -2*y],
+                    [4*y, 2*x + 6*y + 2*z - 2, 4*y],
+                    [-6*x - 4*y - 4*z + 4, -2*x, -2*x],
+                    [6*x + 2*y + 2*z - 2, 4*x, 4*x]]
+        if n == 2:
+            return [
+                [0, 12*y*z - 3*z, 18*y**2 - 9*y],
+                [0, -18*z**2 + 9*z, -12*y*z + 3*y],
+                [0, -9*y*z - 3*z**2/2 + 3*z, 3*y**2/2 + 9*y*z - 3*y],
+                [12*x*z - 3*z, 0, 18*x**2 - 9*x],
+                [-18*z**2 + 9*z, 0, -12*x*z + 3*x],
+                [-9*x*z - 3*z**2/2 + 3*z, 0, 3*x**2/2 + 9*x*z - 3*x],
+                [12*x*y - 3*y, 18*x**2 - 9*x, 0],
+                [-18*y**2 + 9*y, -12*x*y + 3*x, 0],
+                [-9*x*y - 3*y**2/2 + 3*y, 3*x**2/2 + 9*x*y - 3*x, 0],
+                [12*x*z + 12*y*z + 12*z**2 - 9*z, 12*x*z + 12*y*z + 12*z**2 - 9*z, 18*x**2 + 36*x*y + 48*x*z - 27*x + 18*y**2 + 48*y*z - 27*y + 30*z**2 - 36*z + 9],  # noqa: E501
+                [18*z**2 - 9*z, 18*z**2 - 9*z, 12*x*z - 3*x + 12*y*z - 3*y + 30*z**2 - 24*z + 3],
+                [-9*x*z - 9*y*z - 15*z**2/2 + 6*z, -9*x*z - 9*y*z - 15*z**2/2 + 6*z, 3*x**2/2 + 3*x*y - 15*x*z + 3*y**2/2 - 15*y*z - 15*z**2 + 15*z - 3/2],  # noqa: E501
+                [12*x*y + 12*y**2 + 12*y*z - 9*y, 18*x**2 + 48*x*y + 36*x*z - 27*x + 30*y**2 + 48*y*z - 36*y + 18*z**2 - 27*z + 9, 12*x*y + 12*y**2 + 12*y*z - 9*y],  # noqa: E501
+                [18*y**2 - 9*y, 12*x*y - 3*x + 30*y**2 + 12*y*z - 24*y - 3*z + 3, 18*y**2 - 9*y],
+                [-9*x*y - 15*y**2/2 - 9*y*z + 6*y, 3*x**2/2 - 15*x*y + 3*x*z - 15*y**2 - 15*y*z + 15*y + 3*z**2/2 - 3/2, -9*x*y - 15*y**2/2 - 9*y*z + 6*y],  # noqa: E501
+                [30*x**2 + 48*x*y + 48*x*z - 36*x + 18*y**2 + 36*y*z - 27*y + 18*z**2 - 27*z + 9, 12*x**2 + 12*x*y + 12*x*z - 9*x, 12*x**2 + 12*x*y + 12*x*z - 9*x],  # noqa: E501
+                [30*x**2 + 12*x*y + 12*x*z - 24*x - 3*y - 3*z + 3, 18*x**2 - 9*x, 18*x**2 - 9*x],
+                [-15*x**2 - 15*x*y - 15*x*z + 15*x + 3*y**2/2 + 3*y*z + 3*z**2/2 - 3/2, -15*x**2/2 - 9*x*y - 9*x*z + 6*x, -15*x**2/2 - 9*x*y - 9*x*z + 6*x],  # noqa: E501
+                [36*y*z, 12*x*z, 12*x*y],
+                [-12*y*z, -36*x*z, -12*x*y],
+                [12*y*z, 12*x*z, 36*x*y],
+                [-36*y*z, -12*x*z - 48*y*z - 12*z**2 + 12*z, -12*x*y - 12*y**2 - 48*y*z + 12*y],
+                [12*y*z, 36*x*z + 48*y*z + 36*z**2 - 36*z, 12*x*y + 12*y**2 + 24*y*z - 12*y],
+                [-12*y*z, -12*x*z - 24*y*z - 12*z**2 + 12*z, -36*x*y - 36*y**2 - 48*y*z + 36*y],
+                [-48*x*z - 12*y*z - 12*z**2 + 12*z, -36*x*z, -12*x**2 - 12*x*y - 48*x*z + 12*x],
+                [48*x*z + 36*y*z + 36*z**2 - 36*z, 12*x*z, 12*x**2 + 12*x*y + 24*x*z - 12*x],
+                [-24*x*z - 12*y*z - 12*z**2 + 12*z, -12*x*z, -36*x**2 - 36*x*y - 48*x*z + 36*x],
+                [-48*x*y - 12*y**2 - 12*y*z + 12*y, -12*x**2 - 48*x*y - 12*x*z + 12*x, -36*x*y],
+                [48*x*y + 36*y**2 + 36*y*z - 36*y, 12*x**2 + 24*x*y + 12*x*z - 12*x, 12*x*y],
+                [-24*x*y - 12*y**2 - 12*y*z + 12*y, -36*x**2 - 48*x*y - 36*x*z + 36*x, -12*x*y]
+            ]
 
-        # edge tangents
-        edge_basis = sympy_lagrange(basix.CellType.interval, n)
-        edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
-        for i, f in enumerate(funcs):
-            j = 0
-            for edge in topology[1]:
-                edge_geom = [geometry[t, :] for t in edge]
-                tangent = edge_geom[1] - edge_geom[0]
-                norm = sympy.sqrt(sum(i ** 2 for i in tangent))
-                tangent = [i / norm for i in tangent]
-                param = [(1 - dummy[0]) * a + dummy[0] * b for a, b in zip(edge_geom[0], edge_geom[1])]
-
-                for g in edge_basis:
-                    integrand = sum((f_i * v_i) for f_i, v_i in zip(f, tangent))
-
-                    integrand = integrand.subs(x, param[0]).subs(y, param[1])
-
-                    integrand *= g * norm
-
-                    mat[i, j] = integrand.integrate((dummy[0], 0, 1))
-                    j += 1
-
-        # interior dofs
-        if n > 1:
-            face_basis = sympy_rt(basix.CellType.triangle, n - 1)
-            for i, f in enumerate(funcs):
-                j = (n + 1) * 3
-                for g in face_basis:
-                    integrand = sum((f_i * v_i) for f_i, v_i in zip(f, g))
-
-                    mat[i, j] = integrand.integrate((x, 0, 1 - y)).integrate((y, 0, 1))
-                    j += 1
-
-    elif celltype == basix.CellType.tetrahedron:
-        tdim = 3
-        for i in range(n + 1):
-            for j in range(n + 1 - i):
-                for k in range(n + 1 - i - j):
-                    for d in range(3):
-                        funcs += [[x**k * y**j * z**i if m == d else 0 for m in range(3)]]
-
-        mat = numpy.empty((len(funcs), len(funcs)), dtype=object)
-
-        # edge tangents
-        edge_basis = sympy_lagrange(basix.CellType.interval, n)
-        edge_basis = [a.subs(x, dummy[0]) for a in edge_basis]
-        for i, f in enumerate(funcs):
-            j = 0
-            for edge in topology[1]:
-                edge_geom = [geometry[t, :] for t in edge]
-                tangent = edge_geom[1] - edge_geom[0]
-                norm = sympy.sqrt(sum(i ** 2 for i in tangent))
-                tangent = [i / norm for i in tangent]
-                param = [(1 - dummy[0]) * a + dummy[0] * b for a, b in zip(edge_geom[0], edge_geom[1])]
-
-                for g in edge_basis:
-                    integrand = sum((f_i * v_i) for f_i, v_i in zip(f, tangent))
-                    integrand = integrand.subs(x, param[0]).subs(y, param[1]).subs(z, param[2])
-                    integrand *= g * norm
-                    mat[i, j] = integrand.integrate((dummy[0], 0, 1))
-                    j += 1
-
-        # face dofs
-        if n > 1:
-            face_basis = sympy_rt(basix.CellType.triangle, n - 1)
-            face_basis = [[b.subs(x, dummy[0]).subs(y, dummy[1]) for b in a] for a in face_basis]
-            for i, f in enumerate(funcs):
-                j = (n + 1) * 6
-                for face in topology[2]:
-                    face_geom = [geometry[t, :] for t in face]
-                    axes = [face_geom[1] - face_geom[0], face_geom[2] - face_geom[0]]
-                    norm = sympy.sqrt(sum(i**2 for i in
-                                      [axes[0][1] * axes[1][2] - axes[0][2] * axes[1][1],
-                                       axes[0][2] * axes[1][0] - axes[0][0] * axes[1][2],
-                                       axes[0][0] * axes[1][1] - axes[0][1] * axes[1][0]]))
-                    scaled_axes = []
-                    for a in axes:
-                        scaled_axes.append([k / norm for k in a])
-                    param = [a + dummy[0] * b + dummy[1] * c for a, b, c in zip(face_geom[0], *axes)]
-                    this_face_basis = [[a[0] * b + a[1] * c for b, c in zip(*scaled_axes)] for a in face_basis]
-
-                    for g in this_face_basis:
-                        integrand = sum(f_i * v_i for f_i, v_i in zip(f, g))
-                        integrand = integrand.subs(x, param[0]).subs(y, param[1]).subs(z, param[2])
-                        integrand *= norm
-
-                        mat[i, j] = integrand.integrate((dummy[0], 0, 1 - dummy[1])).integrate((dummy[1], 0, 1))
-                        j += 1
-
-        # interior dofs
-        if n > 2:
-            interior_basis = sympy_rt(basix.CellType.tetrahedron, n - 2)
-            for i, f in enumerate(funcs):
-                j = (n + 1) * 6 + 4 * (n - 1) * (n + 1)
-                for g in interior_basis:
-                    integrand = sum(f_i * v_i for f_i, v_i in zip(f, g))
-
-                    mat[i, j] = integrand.integrate((x, 0, 1 - y - z)).integrate((y, 0, 1 - z)).integrate((z, 0, 1))
-                    j += 1
-
-    mat = sympy.Matrix(mat)
-    mat = mat.inv()
-    g = []
-    for r in range(mat.shape[0]):
-        row = []
-        for dim in range(tdim):
-            row.append(sum([v * funcs[i][dim] for i, v in enumerate(mat.row(r))]))
-        g.append(row)
-
-    return g
+    raise NotImplementedError
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3])

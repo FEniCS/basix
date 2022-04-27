@@ -943,7 +943,7 @@ FiniteElement basix::element::create_serendipity(
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
   }
 
-  return FiniteElement(element::family::serendipity, celltype, degree, {1},
+  return FiniteElement(element::family::serendipity, celltype, degree, {},
                        wcoeffs, x, M, maps::type::identity, discontinuous,
                        degree < static_cast<int>(tdim) ? 1 : degree / tdim,
                        degree, lvariant, dvariant);

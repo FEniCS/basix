@@ -45,7 +45,7 @@ def map_type_to_string(map_type):
 def compute_signature(element):
     """Compute a signature of a custom element."""
     signature = (f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
-                 f"{element.discontinuous}, {element.highest_complete_degree}, {element.highest_degree}")
+                 f"{element.discontinuous}, {element.highest_complete_degree}, {element.highest_degree}, ")
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"
     for entity in element.x:

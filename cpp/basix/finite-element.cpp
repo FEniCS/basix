@@ -462,8 +462,8 @@ basix::FiniteElement basix::create_custom_element(
         "Dual matrix is singular, there is an error in your inputs");
 
   return basix::FiniteElement(
-      element::family::custom, cell_type, -1, value_shape, wcoeffs, x, M,
-      map_type, discontinuous, highest_complete_degree, highest_degree);
+      element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
+      x, M, map_type, discontinuous, highest_complete_degree, highest_degree);
 }
 
 //-----------------------------------------------------------------------------
@@ -810,7 +810,11 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
-int FiniteElement::degree() const { return _degree; }
+int FiniteElement::degree() const
+{
+  throw std::runtime_error("here");
+  return _degree;
+}
 //-----------------------------------------------------------------------------
 int FiniteElement::highest_degree() const { return _highest_degree; }
 //-----------------------------------------------------------------------------

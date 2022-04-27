@@ -65,6 +65,7 @@ def test_all_elements_included():
 @pytest.mark.parametrize("variant", variants)
 def test_create_element(cell, degree, family, variant):
     """Check that either the element is created or a RuntimeError is thrown."""
+    print(cell, degree, family)
     try:
         element = basix.create_element(family, cell, degree, *variant)
         assert element.degree == degree

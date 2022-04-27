@@ -33,7 +33,7 @@ jobs:
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
-          ref: main
+          ref: mscroggs/degree
 
       - name: Install FFCx
         run: |

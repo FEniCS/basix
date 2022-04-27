@@ -212,10 +212,12 @@ public:
   /// @param[in] highest_complete_degree The highest degree n such that a
   /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
   /// element
-  /// @param[in] tensor_factors The factors in the tensor product representation
-  /// of this element
+  /// @param[in] highest_degree The highest degree n such that at least one
+  /// polynomial of degree n is included in this element's polymonial set
   /// @param[in] lvariant The Lagrange variant of the element
   /// @param[in] dvariant The DPC variant of the element
+  /// @param[in] tensor_factors The factors in the tensor product representation
+  /// of this element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape,
@@ -223,11 +225,12 @@ public:
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
       const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
       maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree,
+      element::lagrange_variant lvariant = element::lagrange_variant::unset,
+      element::dpc_variant dvariant = element::dpc_variant::unset,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
-      = {},
-      element::lagrange_variant lvariant = element::lagrange_variant::unset,
-      element::dpc_variant dvariant = element::dpc_variant::unset);
+      = {});
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -320,6 +323,17 @@ public:
   /// Get the element polynomial degree
   /// @return Polynomial degree
   int degree() const;
+
+  /// Get the lowest degree n such that the highest degree
+  /// polynomial in this element is contained in a Lagrange (or vector
+  /// Lagrange) element of degree n
+  /// @return Polynomial degree
+  int highest_degree() const;
+
+  /// Get the highest degree n such that a Lagrange (or vector Lagrange) element
+  /// of degree n is a subspace of this element
+  /// @return Polynomial degree
+  int highest_complete_degree() const;
 
   /// The element value tensor shape, eg returning {} for scalars, {3}
   /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
@@ -836,12 +850,6 @@ public:
   /// @return The dual matrix
   const xt::xtensor<double, 2>& coefficient_matrix() const;
 
-  /// Get [0] the lowest degree n such that the highest degree
-  /// polynomial in this element is contained in a Lagrange (or vector
-  /// Lagrange) element of degree n, and [1] the highest degree n such
-  /// that a Lagrange (or vector Lagrange) element of degree n is a
-  /// subspace of this element
-  std::array<int, 2> degree_bounds() const;
 
   /// Indicates whether or not this element has a tensor product
   /// representation.
@@ -884,8 +892,14 @@ private:
   // Lagrange variant
   element::dpc_variant _dpc_variant;
 
-  // Degree
+  // Degree that was input when creating the element
   int _degree;
+
+  // Highest degree polynomial in element's polyset
+  int _highest_degree;
+
+  // Highest degree space that is a subspace of element's polyset
+  int _highest_complete_degree;
 
   // Value shape
   std::vector<int> _value_shape;
@@ -982,12 +996,6 @@ private:
 
   // The dual matrix
   xt::xtensor<double, 2> _dual_matrix;
-
-  // Polynomial degree bounds
-  // [0]: highest degree n such that Lagrange order n is a subspace of
-  // this space
-  // [1]: highest polynomial degree
-  std::array<int, 2> _degree_bounds;
 
   // Tensor product representation
   // Entries of tuple are (list of elements on an interval, permutation

@@ -326,6 +326,9 @@ Interface to the Basix C++ library.
           basix::docstring::FiniteElement__get_tensor_product_representation
               .c_str())
       .def_property_readonly("degree", &FiniteElement::degree)
+      .def_property_readonly("highest_degree", &FiniteElement::highest_degree)
+      .def_property_readonly("highest_complete_degree",
+                             &FiniteElement::highest_complete_degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
       .def_property_readonly("num_entity_dofs", &FiniteElement::num_entity_dofs)
@@ -355,7 +358,6 @@ Interface to the Basix C++ library.
       .def_property_readonly("interpolation_is_identity",
                              &FiniteElement::interpolation_is_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
-      .def_property_readonly("degree_bounds", &FiniteElement::degree_bounds)
       .def_property_readonly("points",
                              [](const FiniteElement& self) {
                                const xt::xtensor<double, 2>& x = self.points();

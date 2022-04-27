@@ -124,6 +124,6 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, B, x, M,
                        maps::type::contravariantPiola, discontinuous,
-                       degree - 1, {}, lvariant);
+                       degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------

@@ -13,6 +13,7 @@
 // #include <cblas.h>
 // #endif
 
+#ifndef __APPLE__
 extern "C"
 {
   void dsyevd_(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
@@ -21,6 +22,7 @@ extern "C"
   void dgesv_(int* N, int* NRHS, double* A, int* LDA, int* IPIV, double* B,
               int* LDB, int* INFO);
 }
+#endif
 
 //------------------------------------------------------------------
 std::pair<xt::xtensor<double, 1>,

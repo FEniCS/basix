@@ -18,7 +18,7 @@ setup(name="fenics-basix",
           "docs": ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"],
           "lint": ["flake8", "pydocstyle"],
           "optional": ["numba"],
-          "test": ["pytest", "sympy", "numba", "scipy", "matplotlib"],
+          "test": ["pytest", "sympy", "numba", "scipy", "matplotlib", "fenics-ufl"],
           "ci": ["pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]",
                  "fenics-basix[test]"]
       },

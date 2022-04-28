@@ -7,13 +7,10 @@
 #include "math.h"
 #include <vector>
 
-// #ifdef __APPLE__
-// #include <Accelerate/Accelerate.h>
-// #else
-// #include <cblas.h>
-// #endif
-
-#ifndef __APPLE__
+#ifdef __APPLE__
+#include <Accelerate/Accelerate.h>
+#else
+#include <cblas.h>
 extern "C"
 {
   void dsyevd_(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
@@ -115,3 +112,38 @@ bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
   return false;
 }
 //------------------------------------------------------------------
+void basix::math::dot(const xt::xtensor<double, 2>& A,
+                      const xt::xtensor<double, 2>& B,
+                      xt::xtensor<double, 2>& C)
+{
+  int m = A.shape(0);
+  int n = B.shape(1);
+  int k = A.shape(1);
+
+  assert(A.shape(1) == B.shape(0));
+  assert(C.shape(0) == C.shape(0));
+  assert(C.shape(1) == B.shape(1));
+
+  if (m * n * k < 4096)
+    for (std::size_t i = 0; i < A.shape(0); i++)
+      for (std::size_t j = 0; j < B.shape(1); j++)
+        for (std::size_t k = 0; k < A.shape(1); k++)
+          C(i, j) += A(i, k) * B(k, j);
+  else
+  {
+    double alpha = 1;
+    double beta = 0;
+    cblas_dgemm(CBLAS_ORDER::CblasRowMajor, CBLAS_TRANSPOSE::CblasNoTrans,
+                CBLAS_TRANSPOSE::CblasNoTrans, m, n, k, alpha,
+                const_cast<double*>(A.data()), k, const_cast<double*>(B.data()),
+                n, beta, const_cast<double*>(C.data()), n);
+  }
+}
+
+xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
+                                        const xt::xtensor<double, 2>& B)
+{
+  xt::xtensor<double, 2> C = xt::zeros<double>({A.shape(0), B.shape(1)});
+  dot(A, B, C);
+  return C;
+}

@@ -20,7 +20,7 @@ jobs:
 
       - name: Install Basix
         run: |
-          python3 -m pip install .[test]
+          CPATH=/usr/include/openblas python3 -m pip install .[test]
 
       - name: Run units tests
         run: |

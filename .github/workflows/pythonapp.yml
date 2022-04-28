@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
+        run: sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
 
       - name: Install Basix
         run: pip -v install .[ci]

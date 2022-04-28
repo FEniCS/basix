@@ -16,7 +16,7 @@
 #include "e-serendipity.h"
 #include "math.h"
 #include "polyset.h"
-#include "version.h"
+#include <basix/version.h>
 #include <numeric>
 #include <xtensor/xbuilder.hpp>
 
@@ -782,7 +782,8 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
     throw std::runtime_error("Point dim does not match element dim.");
 
   xt::xtensor<double, 3> basis(
-      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), x_copy.shape(0),
+      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)),
+       x_copy.shape(0),
        static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
   polyset::tabulate(basis, _cell_type, _degree, nd, x_copy);
   const int psize = polyset::dim(_cell_type, _degree);

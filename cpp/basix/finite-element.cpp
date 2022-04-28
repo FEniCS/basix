@@ -701,9 +701,6 @@ FiniteElement::FiniteElement(
           // that M^{-1} != M.
           // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
           // For a triangular face, M^3 = Id, so M^{-1} = M^2.
-          // This assumes that all faces of the cell are the same shape. For
-          // prisms and pyramids, this will need updating to look at the face
-          // type
           if (et.first == cell::type::quadrilateral and i == 0)
             Minv = math::dot(math::dot(M, M), M);
           else if (et.first == cell::type::triangle and i == 0)
@@ -895,10 +892,6 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
         const int ndofs = _num_edofs[2][f];
         if (ndofs > 0)
         {
-          // TODO: This assumes that every face has the same shape
-          //       _entity_transformations should be replaced with a map from
-          //       a subentity type to a matrix to allow for prisms and
-          //       pyramids.
           xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
                    xt::range(dof_start, dof_start + ndofs))
               = xt::view(

@@ -13,7 +13,7 @@ on:
 
 jobs:
   build:
-    name: Build and test
+    name: Build and test (Red Hat)
     runs-on: ubuntu-20.04
     container: fenicsproject/test-env:latest-redhat
 
@@ -22,7 +22,7 @@ jobs:
 
       - name: Install Basix
         run: |
-          python3 -m pip install .[test]
+          CPATH=/usr/include/openblas python3 -m pip install .[test]
 
       - name: Run units tests
         run: |

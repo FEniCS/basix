@@ -16,7 +16,7 @@
 #include "e-serendipity.h"
 #include "math.h"
 #include "polyset.h"
-#include "version.h"
+#include <basix/version.h>
 #include <numeric>
 #include <xtensor/xbuilder.hpp>
 

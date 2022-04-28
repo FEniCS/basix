@@ -3,6 +3,7 @@
 from ufl.finiteelement.finiteelementbase import FiniteElementBase as _FiniteElementBase
 import hashlib as _hashlib
 import basix as _basix
+import typing as _typing
 
 
 class BasixElement(_FiniteElementBase):
@@ -69,3 +70,24 @@ def _compute_signature(element: _basix.finite_element.FiniteElement):
         data += "__"
     signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
     return signature
+
+
+def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+                   degree: int, lagrange_variant: _basix.LagrangeVariant=_basix.LagrangeVariant.unset,
+                   dpc_variant: _basix.DPCVariant=_basix.DPCVariant.unset, discontinuous=False) -> BasixElement:
+    if isinstance(cell, str):
+        cell = _basix.cell.str_to_type(cell)
+    if isinstance(family, str):
+        if family.startswith("Discontinuous "):
+            family = family[14:]
+            discontinuous = True
+        if family in ["DP", "DG", "DQ"]:
+            family = "P"
+            discontinuous = True
+        if family == "DPC":
+            discontinuous = True
+
+        family = _basix.element.str_to_family(family, cell.name)
+
+    e = _basix.create_element(family, call, degree, lagrange_variant, dpc_variand, discontinuous)
+    return BasixElement(e)

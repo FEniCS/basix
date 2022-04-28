@@ -50,7 +50,7 @@ else()
   FetchContent_Declare(
     xtl
     GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
-    GIT_TAG        0.7.3
+    GIT_TAG        0.7.4
   )
   FetchContent_MakeAvailable(xtl)
 
@@ -58,7 +58,7 @@ else()
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.24.0
+    GIT_TAG        0.24.1
   )
   FetchContent_MakeAvailable(xtensor)
 endif()
@@ -72,7 +72,8 @@ feature_summary(WHAT ALL)
 
 add_library(basix)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.h
@@ -100,7 +101,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
 
 target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.cpp

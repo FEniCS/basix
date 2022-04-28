@@ -8,7 +8,7 @@ on:
     - cron: "0 2 * * TUE"
   pull_request:
     branches:
-      - main  
+      - main
   workflow_dispatch: ~
 
 jobs:

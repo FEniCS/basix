@@ -75,7 +75,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement):
 
 def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
                    degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False) -> BasixElement:
+                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False) -> _FiniteElementBase:
     """Create a UFL element using Basix."""
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)

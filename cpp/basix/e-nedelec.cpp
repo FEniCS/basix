@@ -239,7 +239,7 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, wcoeffs,
                        x, M, maps::type::covariantPiola, discontinuous,
-                       degree - 1, {}, lvariant);
+                       degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement
@@ -317,6 +317,6 @@ basix::element::create_nedelec2(cell::type celltype, int degree,
 
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, wcoeffs,
                        x, M, maps::type::covariantPiola, discontinuous, degree,
-                       {}, lvariant);
+                       degree, lvariant);
 }
 //-----------------------------------------------------------------------------

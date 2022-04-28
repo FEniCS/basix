@@ -73,8 +73,9 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
 
-  return FiniteElement(
-      element::family::BDM, celltype, degree, {tdim}, xt::eye<double>(ndofs), x,
-      M, maps::type::contravariantPiola, discontinuous, degree, {}, lvariant);
+  return FiniteElement(element::family::BDM, celltype, degree, {tdim},
+                       xt::eye<double>(ndofs), x, M,
+                       maps::type::contravariantPiola, discontinuous, degree,
+                       degree, lvariant);
 }
 //-----------------------------------------------------------------------------

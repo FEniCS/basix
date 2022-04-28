@@ -78,7 +78,7 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
                    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False) -> BasixElement:
     """Create a UFL element using Basix."""
     if isinstance(cell, str):
-        cell = _basix.cell.str_to_type(cell)
+        cell = _basix.cell.string_to_type(cell)
     if isinstance(family, str):
         if family.startswith("Discontinuous "):
             family = family[14:]
@@ -89,7 +89,7 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         if family == "DPC":
             discontinuous = True
 
-        family = _basix.element.str_to_family(family, cell.name)
+        family = _basix.element.string_to_family(family, cell.name)
 
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return BasixElement(e)

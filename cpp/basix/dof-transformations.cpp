@@ -361,7 +361,8 @@ xt::xtensor<double, 2> compute_transformation(
     auto data_view = xt::view(tabulated_data, xt::all(), xt::all(), j);
     xt::xtensor<double, 2> C
         = xt::view(coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-    auto result = math::dot(polyset_vals, xt::transpose(C));
+    xt::xtensor<double, 2> Ct = xt::transpose(C);
+    auto result = math::dot(polyset_vals, Ct);
     data_view.assign(result);
   }
 

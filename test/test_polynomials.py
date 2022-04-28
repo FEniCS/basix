@@ -57,8 +57,6 @@ def evaluate(function, pt):
     [basix.CellType.quadrilateral, [one, y, x, x * y], 1],
     [basix.CellType.quadrilateral, [one, y, y**2, x, x * y, x * y**2, x**2, x**2 * y, x**2 * y**2], 2],
     [basix.CellType.hexahedron, [one, z, y, y * z, x, x * z, x * y, x * y * z], 1],
-    [basix.CellType.hexahedron, [i * j * k for i in [one, x, x**2]
-                                 for j in [one, y, y**2] for k in [one, z, z**2]], 2],
     [basix.CellType.prism, [one, z, y, y * z, x, x * z], 1],
     [basix.CellType.prism, [one, z, z**2, y, y * z, y * z**2, x, x * z, x * z**2,
                             y**2, y**2 * z, y**2 * z**2, x * y, x * y * z, x * y * z**2,

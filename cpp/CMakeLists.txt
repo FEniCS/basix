@@ -139,7 +139,7 @@ target_include_directories(basix PUBLIC
 # The commented lines need CMake >= 3.18
 # target_link_libraries(basix PRIVATE BLAS::BLAS)
 # target_link_libraries(basix PRIVATE LAPACK::LAPACK)
-if(BLAS_LIBRARIES MATCHES "accelerate")
+if(BLAS_LIBRARIES MATCHES "Accelerate")
   target_compile_definitions(basix PRIVATE USE_ACCELERATE_BLAS)
 endif()
 target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})

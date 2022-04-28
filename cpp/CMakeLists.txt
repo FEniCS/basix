@@ -63,8 +63,10 @@ else()
   FetchContent_MakeAvailable(xtensor)
 endif()
 
+
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
+
 
 feature_summary(WHAT ALL)
 
@@ -137,6 +139,9 @@ target_include_directories(basix PUBLIC
 # The commented lines need CMake >= 3.18
 # target_link_libraries(basix PRIVATE BLAS::BLAS)
 # target_link_libraries(basix PRIVATE LAPACK::LAPACK)
+if(BLAS_LIBRARIES MATCHES "accelerate")
+  target_compile_definitions(basix PRIVATE USE_ACCELERATE_BLAS)
+endif()
 target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})
 target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 

@@ -7,7 +7,7 @@
 #include "math.h"
 #include <vector>
 
-#ifdef __APPLE__
+#ifdef USE_ACCELERATE_BLAS
 #include <Accelerate/Accelerate.h>
 #else
 #include <cblas.h>

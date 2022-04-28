@@ -45,9 +45,10 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
       if (!used)
       {
         xt::col(permuted_matrix, i) = xt::col(matrix, j);
-        auto mat = xt::view(permuted_matrix, xt::range(0, i + 1),
-                            xt::range(0, i + 1));
-        xt::xtensor<double, 2> mat2 = math::dot(mat, xt::transpose(mat));
+        xt::xtensor<double, 2> mat = xt::view(
+            permuted_matrix, xt::range(0, i + 1), xt::range(0, i + 1));
+        xt::xtensor<double, 2> mat_t = xt::transpose(mat);
+        xt::xtensor<double, 2> mat2 = math::dot(mat, mat_t);
         auto [evals, evecs] = math::eigh(mat2);
         if (double lambda = std::abs(evals.front()); lambda > max_eval)
         {

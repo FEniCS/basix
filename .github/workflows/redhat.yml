@@ -1,0 +1,33 @@
+name: Red Hat clone
+
+on:
+  schedule:
+    # '*' is a special character in YAML, so string must be quoted
+    - cron: "0 2 * * TUE"
+  pull_request:
+    branches:
+      - main  
+  workflow_dispatch: ~
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: ubuntu-20.04
+    container: fenicsproject/test-env:latest-redhat
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+
+      - name: Install Basix
+        run: |
+          pip install .[test]
+
+      - name: Run units tests
+        run: |
+          pip install pytest-xdist
+          pytest -v -n auto --durations 20 test/

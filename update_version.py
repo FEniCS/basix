@@ -8,11 +8,11 @@ python3 update_version.py -v 1.0.0
 python3 update_version.py --version 1.0.0
 ```
 
-To update the C++ version numbers to "1.0.0" and the Python version numbers to "1.0.0dev3", run
+To update the C++ version numbers to "1.0.0.3" and the Python version numbers to "1.0.0dev3", run
 either of the following:
 ```bash
-python3 update_version.py -v 1.0.0 -d 3
-python3 update_version.py --version 1.0.0 --dev 3
+python3 update_version.py -v 1.0.0.dev3
+python3 update_version.py --version 1.0.0.dev3
 ```
 """
 
@@ -22,23 +22,23 @@ import re
 
 
 def replace_version(content, version):
-    content = re.sub(r"((?:VERSION)|(?:version))([\s=]+)([\"']).+\3",
-                     lambda matches: matches[1] + matches[2] + matches[3] + version + matches[3], content)
+    content = re.sub(r"((?:VERSION)|(?:version))([\s=]+)([\"']).+?\3",
+                     lambda matches: f"{matches[1]}{matches[2]}{matches[3]}{version}{matches[3]}", content)
+    content = re.sub(r"(\s+)(\"?)fenics-((?:basix)|(?:ffcx)|(?:dolfinx))\>\=.+(\2|\n)",
+                     lambda matches: f"{matches[1]}{matches[2]}fenics-{matches[3]}>={version},<{next_version}{matches[4]}",
+                     content)
     return content
 
 
 parser = argparse.ArgumentParser(description="Update version numbering")
 parser.add_argument('-v', '--version', metavar='version', help="Version number to update to", required=True)
-parser.add_argument('-d', '--dev', metavar='dev', default=None,
-                    help="Number to place after dev in Python version number")
 
 args = parser.parse_args()
 
 version = args.version
 pyversion = version
-if args.dev is not None:
-    version += "." + args.dev
-    pyversion += ".dev" + args.dev
+if ".dev" in version:
+    version = version.replace("dev", "")
 
 print("About to update version numbers to:")
 print(f"    C++ version: {version}")

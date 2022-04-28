@@ -89,7 +89,7 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         if family == "DPC":
             discontinuous = True
 
-        family = _basix.element.string_to_family(family, cell.name)
+        family = _basix.finite_element.string_to_family(family, cell.name)
 
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return BasixElement(e)

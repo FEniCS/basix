@@ -627,7 +627,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
-                       M, maps::type::identity, discontinuous, degree, {},
+                       M, maps::type::identity, discontinuous, degree, degree,
                        element::lagrange_variant::unset,
                        element::dpc_variant::legendre);
 }
@@ -945,8 +945,8 @@ FiniteElement basix::element::create_serendipity(
 
   return FiniteElement(element::family::serendipity, celltype, degree, {},
                        wcoeffs, x, M, maps::type::identity, discontinuous,
-                       degree < static_cast<int>(tdim) ? 1 : degree / tdim, {},
-                       lvariant, dvariant);
+                       degree < static_cast<int>(tdim) ? 1 : degree / tdim,
+                       degree, lvariant, dvariant);
 }
 //----------------------------------------------------------------------------
 FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
@@ -1044,7 +1044,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   x[tdim].push_back(pt);
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
-                       M, maps::type::identity, discontinuous, degree, {},
+                       M, maps::type::identity, discontinuous, degree, degree,
                        element::lagrange_variant::unset, variant);
 }
 //-----------------------------------------------------------------------------
@@ -1083,14 +1083,14 @@ FiniteElement basix::element::create_serendipity_div(
             ? element::create_lagrange(facettype, degree, lvariant, true)
             : element::create_dpc(facettype, degree, dvariant, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
-      facet_moment_space, celltype, tdim, 2 * degree);
+      facet_moment_space, celltype, tdim, 2 * degree + 1);
 
   if (degree >= 2)
   {
     FiniteElement cell_moment_space
         = element::create_dpc(celltype, degree - 2, dvariant, true);
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
-        cell_moment_space, celltype, tdim, 2 * degree - 2);
+        cell_moment_space, celltype, tdim, 2 * degree - 1);
   }
   else
   {
@@ -1114,9 +1114,9 @@ FiniteElement basix::element::create_serendipity_div(
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
 
-  return FiniteElement(element::family::BDM, celltype, degree + 1, {tdim},
-                       wcoeffs, x, M, maps::type::contravariantPiola,
-                       discontinuous, degree / tdim, {}, lvariant, dvariant);
+  return FiniteElement(element::family::BDM, celltype, degree, {tdim}, wcoeffs,
+                       x, M, maps::type::contravariantPiola, discontinuous,
+                       degree / tdim, degree + 1, lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_curl(
@@ -1135,10 +1135,11 @@ FiniteElement basix::element::create_serendipity_curl(
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [Qpts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                  celltype, 2 * degree);
+                                                  celltype, 2 * degree + 1);
   auto wts = xt::adapt(_wts);
-  xt::xtensor<double, 2> polyset_at_Qpts = xt::view(
-      polyset::tabulate(celltype, degree, 0, Qpts), 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> polyset_at_Qpts
+      = xt::view(polyset::tabulate(celltype, degree + 1, 0, Qpts), 0, xt::all(),
+                 xt::all());
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 2)
@@ -1159,7 +1160,7 @@ FiniteElement basix::element::create_serendipity_curl(
       = element::create_lagrange(cell::type::interval, degree, lvariant, true);
 
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      edge_moment_space, celltype, tdim, 2 * degree);
+      edge_moment_space, celltype, tdim, 2 * degree + 1);
 
   if (degree >= 2)
   {
@@ -1167,7 +1168,7 @@ FiniteElement basix::element::create_serendipity_curl(
     FiniteElement moment_space = element::create_dpc(
         cell::type::quadrilateral, degree - 2, dvariant, true);
     std::tie(x[2], M[2]) = moments::make_integral_moments(
-        moment_space, celltype, tdim, 2 * degree - 2);
+        moment_space, celltype, tdim, 2 * degree - 1);
   }
   else
   {
@@ -1186,7 +1187,7 @@ FiniteElement basix::element::create_serendipity_curl(
       std::tie(x[3], M[3]) = moments::make_integral_moments(
           element::create_dpc(cell::type::hexahedron, degree - 4, dvariant,
                               true),
-          celltype, tdim, 2 * degree - 4);
+          celltype, tdim, 2 * degree - 3);
     }
     else
     {
@@ -1207,9 +1208,9 @@ FiniteElement basix::element::create_serendipity_curl(
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   }
 
-  return FiniteElement(element::family::N2E, celltype, degree + 1, {tdim},
-                       wcoeffs, x, M, maps::type::covariantPiola, discontinuous,
-                       (degree == 2 && tdim == 3) ? 1 : degree / tdim, {},
-                       lvariant, dvariant);
+  return FiniteElement(element::family::N2E, celltype, degree, {tdim}, wcoeffs,
+                       x, M, maps::type::covariantPiola, discontinuous,
+                       (degree == 2 && tdim == 3) ? 1 : degree / tdim,
+                       degree + 1, lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------

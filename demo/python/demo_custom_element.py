@@ -125,7 +125,6 @@ for _ in range(4):
 # We now create the custom element. The inputs into `basix.create_custom_element` are:
 #
 # - The cell type. In this example, this is a quadrilateral.
-# - The polynomial degree of the element. In this example, this is 2.
 # - The value shape of the element. In this example, this is `[]` as the element is scalar.
 # - The coefficients that define the polynomial set. In this example, this is `wcoeffs`.
 # - The points used to define interpolation into the element. In this example, this is `x`.
@@ -134,9 +133,12 @@ for _ in range(4):
 # - A bool indicating whether the element is discontinuous. In this example, this is `False`.
 # - The highest degree :math:`n` such that all degree :math:`n` polynomials are contained in
 #   this set. In this example, this is 1.
+# - The highest degree of a polynomial in the element. In this example, this is 2. It is
+#   important that this value is correct, as it will be used to determine the number of
+#   polynomials to use when creating and tabulating the element.
 
 element = basix.create_custom_element(
-    CellType.quadrilateral, 2, [], wcoeffs, x, M, MapType.identity, False, 1)
+    CellType.quadrilateral, [], wcoeffs, x, M, MapType.identity, False, 1, 2)
 
 # We can now use this element in the same way we can use a built-in element. For example, we
 # can tabulate the element at a set of points. If the points we use are the same as the points
@@ -224,7 +226,7 @@ M[2].append(np.zeros((0, 2, 0)))
 # --------------------
 
 element = basix.create_custom_element(
-    CellType.triangle, 1, [2], wcoeffs, x, M, MapType.contravariantPiola, False, 0)
+    CellType.triangle, [2], wcoeffs, x, M, MapType.contravariantPiola, False, 0, 1)
 
 # To confirm that we have defined this element correctly, we compare it to the built-in
 # Raviart--Thomas element.

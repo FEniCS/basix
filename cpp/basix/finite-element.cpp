@@ -395,15 +395,15 @@ basix::element::make_discontinuous(
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
-    cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
+    cell::type cell_type, const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_complete_degree)
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree)
 {
   // Check that inputs are valid
-  const std::size_t psize = polyset::dim(cell_type, degree);
+  const std::size_t psize = polyset::dim(cell_type, highest_degree);
   std::size_t value_size = 1;
   for (std::size_t i = 0; i < value_shape.size(); ++i)
     value_size *= value_shape[i];
@@ -456,14 +456,14 @@ basix::FiniteElement basix::create_custom_element(
   }
 
   xt::xtensor<double, 2> dual_matrix
-      = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
+      = compute_dual_matrix(cell_type, wcoeffs, M, x, highest_degree);
   if (math::is_singular(dual_matrix))
     throw std::runtime_error(
         "Dual matrix is singular, there is an error in your inputs");
 
-  return basix::FiniteElement(element::family::custom, cell_type, degree,
-                              value_shape, wcoeffs, x, M, map_type,
-                              discontinuous, highest_complete_degree);
+  return basix::FiniteElement(
+      element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
+      x, M, map_type, discontinuous, highest_complete_degree, highest_degree);
 }
 
 //-----------------------------------------------------------------------------
@@ -474,15 +474,16 @@ FiniteElement::FiniteElement(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::lagrange_variant lvariant,
+    element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors,
-    element::lagrange_variant lvariant, element::dpc_variant dvariant)
+        tensor_factors)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
-      _map_type(map_type), _x(x), _discontinuous(discontinuous),
-      _degree_bounds({highest_complete_degree, degree}),
-      _tensor_factors(tensor_factors)
+      _highest_degree(highest_degree),
+      _highest_complete_degree(highest_complete_degree), _map_type(map_type),
+      _x(x), _discontinuous(discontinuous), _tensor_factors(tensor_factors)
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
@@ -494,7 +495,7 @@ FiniteElement::FiniteElement(
               "Discontinuous element can only have interior DOFs.");
   }
 
-  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
+  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, highest_degree);
 
   if (family == element::family::custom)
   {
@@ -540,7 +541,7 @@ FiniteElement::FiniteElement(
   }
 
   _entity_transformations = doftransforms::compute_entity_transformations(
-      cell_type, x, M, _coeffs, degree, value_size, map_type);
+      cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
 
   _matM = xt::zeros<double>({num_dofs, value_size * num_points1});
   auto Mview = xt::reshape_view(_matM, {num_dofs, value_size, num_points1});
@@ -737,6 +738,10 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 bool FiniteElement::operator==(const FiniteElement& e) const
 {
+  if (family() == basix::element::family::custom
+      and e.family() == basix::element::family::custom)
+    throw std::runtime_error("== not implemented for custom elements yet.");
+
   return cell_type() == e.cell_type() and family() == e.family()
          and degree() == e.degree() and discontinuous() == e.discontinuous()
          and lagrange_variant() == e.lagrange_variant()
@@ -784,9 +789,9 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
   xt::xtensor<double, 3> basis(
       {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)),
        x_copy.shape(0),
-       static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
-  polyset::tabulate(basis, _cell_type, _degree, nd, x_copy);
-  const int psize = polyset::dim(_cell_type, _degree);
+       static_cast<std::size_t>(polyset::dim(_cell_type, _highest_degree))});
+  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x_copy);
+  const int psize = polyset::dim(_cell_type, _highest_degree);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());
   xt::xtensor<double, 2> B, C;
@@ -806,7 +811,14 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
-int FiniteElement::degree() const { return _degree; }
+int FiniteElement::degree() const { return _degree;}
+//-----------------------------------------------------------------------------
+int FiniteElement::highest_degree() const { return _highest_degree; }
+//-----------------------------------------------------------------------------
+int FiniteElement::highest_complete_degree() const
+{
+  return _highest_complete_degree;
+}
 //-----------------------------------------------------------------------------
 const std::vector<int>& FiniteElement::value_shape() const
 {
@@ -1121,11 +1133,6 @@ FiniteElement::M() const
 const xt::xtensor<double, 2>& FiniteElement::coefficient_matrix() const
 {
   return _coeffs;
-}
-//-----------------------------------------------------------------------------
-std::array<int, 2> FiniteElement::degree_bounds() const
-{
-  return _degree_bounds;
 }
 //-----------------------------------------------------------------------------
 bool FiniteElement::has_tensor_product_factorisation() const

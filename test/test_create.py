@@ -61,19 +61,21 @@ def test_all_elements_included():
 
 @pytest.mark.parametrize("cell", cells)
 @pytest.mark.parametrize("degree", range(-1, 5))
-@pytest.mark.parametrize("element", elements)
+@pytest.mark.parametrize("family", elements)
 @pytest.mark.parametrize("variant", variants)
-def test_create_element(cell, degree, element, variant):
+def test_create_element(cell, degree, family, variant):
     """Check that either the element is created or a RuntimeError is thrown."""
     try:
-        basix.create_element(element, cell, degree, *variant)
+        element = basix.create_element(family, cell, degree, *variant)
+        assert element.degree == degree
     except RuntimeError as e:
         # Don't allow cryptic "dgesv failed" messages
         if len(e.args) == 0 or "dgesv" in e.args[0]:
             raise e
 
     try:
-        basix.create_element(element, cell, degree, *variant, True)
+        element = basix.create_element(family, cell, degree, *variant, True)
+        assert element.degree == degree
     except RuntimeError as e:
         if len(e.args) == 0 or "dgesv" in e.args[0]:
             raise e

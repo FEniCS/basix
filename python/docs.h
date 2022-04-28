@@ -491,8 +491,6 @@ Parameters
 ==========
 cell_type : basix.CellType
     The cell type
-degree : int
-    The degree of the element
 value_shape : List[int]
     The value shape of the element
 wcoeffs : numpy.ndarray[numpy.float64]
@@ -507,6 +505,8 @@ discontinuous : bool
     Indicates whether or not this is the discontinuous version of the element
 highest_complete_degree : int
     The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
+highest_degree : int
+    The degree of a polynomial in this element's polyset
 
 Returns
 =======

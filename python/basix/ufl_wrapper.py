@@ -23,7 +23,7 @@ class BasixElement(_FiniteElementBase):
         self.basix_element = element
 
     def mapping(self) -> str:
-        """Return the map type"""
+        """Return the map type."""
         return _map_type_to_string(self.basix_element.map_type)
 
     def __eq__(self, other):

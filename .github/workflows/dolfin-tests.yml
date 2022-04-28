@@ -1,6 +1,6 @@
-# This workflow will install Basix, FFCx, DOLFINx and run the DOLFINx unit tests.
-
 name: DOLFINx integration
+
+# This workflow will install Basix, FFCx, DOLFINx and run the DOLFINx unit tests.
 
 on:
   pull_request:

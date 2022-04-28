@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <cblas.h>
 #include <xtensor/xarray.hpp>
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xtensor.hpp>
@@ -47,56 +46,6 @@ xt::xtensor_fixed<typename U::value_type, xt::xshape<3>> cross(const U& u,
           u[0] * v[1] - u[1] * v[0]};
 }
 
-/// Compute C = A * B
-/// @param[in] A Input matrix
-/// @param[in] B Input matrix
-/// @param[in, out] C The output matrix
-template <typename U, typename V, typename W>
-void dot(const U& A, const V& B, W& C)
-{
-  static_assert(std::is_same<typename U::value_type, double>());
-  static_assert(std::is_same<typename V::value_type, double>());
-  static_assert(std::is_same<typename W::value_type, double>());
-
-  int m = A.shape(0);
-  int n = B.shape(1);
-  int k = A.shape(1);
-
-  assert(A.shape(1) == B.shape(0));
-  assert(C.shape(0) == C.shape(0));
-  assert(C.shape(1) == B.shape(1));
-
-  if (m * n * k < 4096)
-    for (std::size_t i = 0; i < A.shape(0); i++)
-      for (std::size_t j = 0; j < B.shape(1); j++)
-        for (std::size_t k = 0; k < A.shape(1); k++)
-          C(i, j) += A(i, k) * B(k, j);
-  else
-  {
-    double alpha = 1;
-    double beta = 0;
-    cblas_dgemm(CBLAS_ORDER::CblasRowMajor, CBLAS_TRANSPOSE::CblasNoTrans,
-                CBLAS_TRANSPOSE::CblasNoTrans, m, n, k, alpha,
-                const_cast<double*>(A.data()), k, const_cast<double*>(B.data()),
-                n, beta, const_cast<double*>(C.data()), n);
-  }
-}
-
-/// Compute C = A * B
-/// @param[in] A Input matrix
-/// @param[in] B Input matrix
-/// return A * B
-template <typename U, typename V>
-xt::xtensor<typename U::value_type, 2> dot(const U& A, const V& B)
-{
-  xt::xtensor<typename U::value_type, 2> C
-      = xt::zeros<typename U::value_type>({A.shape(0), B.shape(1)});
-
-  dot(A, B, C);
-
-  return C;
-}
-
 /// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
 /// @param[in] A Input matrix
 /// @return Eigenvalues and eigenvectors
@@ -115,5 +64,19 @@ solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B);
 /// @param[in] A The matrix
 /// @return A bool indicating if the matrix is singular
 bool is_singular(const xt::xtensor<double, 2>& A);
+
+/// Compute C = A * B
+/// @param[in] A Input matrix
+/// @param[in] B Input matrix
+/// @param[in, out] C The output matrix
+void dot(const xt::xtensor<double, 2>& A, const xt::xtensor<double, 2>& B,
+         xt::xtensor<double, 2>& C);
+
+/// Compute C = A * B
+/// @param[in] A Input matrix
+/// @param[in] B Input matrix
+/// return A * B
+xt::xtensor<double, 2> dot(const xt::xtensor<double, 2>& A,
+                           const xt::xtensor<double, 2>& B);
 
 } // namespace basix::math

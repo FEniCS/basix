@@ -18,16 +18,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-
       - name: Install Basix
         run: |
-          pip install .[test]
+          python3 -m pip install .[test]
 
       - name: Run units tests
         run: |
-          pip install pytest-xdist
-          pytest -v -n auto --durations 20 test/
+          python3 -m pip install pytest-xdist
+          python3 -m pytest -v -n auto --durations 20 test/

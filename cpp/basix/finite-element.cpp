@@ -496,8 +496,8 @@ FiniteElement::FiniteElement(
         tensor_factors)
     : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
                     map_type, discontinuous, highest_complete_degree,
-                    highest_degree, element::lagrange_variant::unset,
-                    dvariant tensor_factors)
+                    highest_degree, element::lagrange_variant::unset, dvariant,
+                    tensor_factors)
 {
 }
 //-----------------------------------------------------------------------------

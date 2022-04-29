@@ -34,8 +34,7 @@ xt::xtensor<double, 2> create_interval_gll(int n, bool exterior)
   const xt::xtensor<double, 2> _pts = quadrature::get_gll_points(n + 1);
 
   const std::size_t b = exterior ? 0 : 1;
-  std::array<std::size_t, 2> s
-      = {static_cast<std::size_t>(n + 1 - 2 * b), (std::size_t)1};
+  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1 - 2 * b), 1};
   xt::xtensor<double, 2> x(s);
   if (exterior)
   {
@@ -55,8 +54,7 @@ xt::xtensor<double, 2> create_interval_chebyshev(int n, bool exterior)
         "Chebyshev points including endpoints are not supported.");
   }
 
-  std::array<std::size_t, 2> s
-      = {static_cast<std::size_t>(n - 1), (std::size_t)1};
+  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n - 1), 1};
   xt::xtensor<double, 2> x(s);
 
   for (int i = 1; i < n; ++i)
@@ -76,8 +74,7 @@ xt::xtensor<double, 2> create_interval_gl(int n, bool exterior)
   if (n == 0)
     return {{0.5}};
   const xt::xtensor<double, 2> pts = quadrature::get_gl_points(n - 1);
-  std::array<std::size_t, 2> s
-      = {static_cast<std::size_t>(n - 1), (std::size_t)1};
+  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n - 1), 1};
   xt::xtensor<double, 2> x(s);
 
   for (int i = 0; i < n - 1; ++i)
@@ -93,8 +90,7 @@ xt::xtensor<double, 2> create_interval_gl_plus_endpoints(int n, bool exterior)
   if (!exterior)
     return x_gl;
 
-  std::array<std::size_t, 2> s
-      = {static_cast<std::size_t>(n + 1), (std::size_t)1};
+  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1), 1};
   xt::xtensor<double, 2> x(s);
 
   x(0, 0) = 0.;
@@ -113,8 +109,7 @@ xt::xtensor<double, 2> create_interval_chebyshev_plus_endpoints(int n,
   if (!exterior)
     return x_cheb;
 
-  std::array<std::size_t, 2> s
-      = {static_cast<std::size_t>(n + 1), (std::size_t)1};
+  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1), 1};
   xt::xtensor<double, 2> x(s);
 
   x(0, 0) = 0.;

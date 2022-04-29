@@ -192,7 +192,7 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
   auto [points, axes] = map_points(celltype, sub_celltype, pts);
 
   // Shape (num dofs, value size, num points)
-  const std::array shape = {phi.shape(1), value_size, pts.shape(0)};
+  const std::array<std::size_t, 3> shape = {phi.shape(1), value_size, pts.shape(0)};
   std::vector<xt::xtensor<double, 3>> D(num_entities, xt::zeros<double>(shape));
 
   // Compute entity integral moments
@@ -252,7 +252,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
 
   std::vector<xt::xtensor<double, 2>> points(
       num_entities, xt::zeros<double>({pts.shape(0), tdim}));
-  const std::array shape = {phi.shape(1), value_size, phi.shape(0)};
+  const std::array<std::size_t, 3> shape = {phi.shape(1), value_size, phi.shape(0)};
   std::vector<xt::xtensor<double, 3>> D(num_entities, xt::zeros<double>(shape));
 
   // Iterate over cell entities
@@ -313,7 +313,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
       num_entities, xt::zeros<double>({pts.shape(0), tdim}));
 
   // Storage for interpolation matrix
-  const std::array shape = {phi.shape(1), value_size, phi.shape(0)};
+  const std::array<std::size_t, 3> shape = {phi.shape(1), value_size, phi.shape(0)};
   std::vector<xt::xtensor<double, 3>> D(num_entities, xt::zeros<double>(shape));
 
   // Evaluate moment space at quadrature points

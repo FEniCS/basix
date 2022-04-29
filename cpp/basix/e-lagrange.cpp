@@ -827,7 +827,8 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
-                       discontinuous, degree, degree);
+                       discontinuous, degree, degree,
+                       element::lagrange_variant::vtk);
 }
 //-----------------------------------------------------------------------------
 FiniteElement create_legendre(cell::type celltype, int degree,
@@ -1042,7 +1043,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
-                       discontinuous, degree, degree, variant,
-                       basix::element::dpc_variant::unset, tensor_factors);
+                       discontinuous, degree, degree, variant, tensor_factors);
 }
 //-----------------------------------------------------------------------------

@@ -240,7 +240,7 @@ std::pair<xt::xtensor<double, 2>, std::vector<double>>
 compute_gauss_jacobi_rule(double a, int m)
 {
   /// @note Computes on [-1, 1]
-  std::vector<double> pts = compute_gauss_jacobi_points(a, m);
+  const std::vector<double> pts = compute_gauss_jacobi_points(a, m);
   const xt::xtensor<double, 1> Jd
       = xt::row(compute_jacobi_deriv(a, m, 1, pts), 1);
 
@@ -395,13 +395,13 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
     throw std::runtime_error("Unsupported celltype for make_quadrature");
   }
 }
+
 //-----------------------------------------------------------------------------
+// The Gauss-Lobatto-Legendre quadrature rules on the interval using Greg von
+// Winckel's implementation. This facilitates implementing spectral elements.
+// The quadrature rule uses m points for a degree of precision of 2m-3.
 std::pair<xt::xtensor<double, 2>, std::vector<double>> compute_gll_rule(int m)
 {
-  // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval
-  // using Greg von Winckel's implementation. This facilitates implementing
-  // spectral elements
-  // The quadrature rule uses m points for a degree of precision of 2m-3.
 
   if (m < 2)
   {

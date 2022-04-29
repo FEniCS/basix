@@ -418,7 +418,7 @@ std::pair<xt::xtensor<double, 2>, std::vector<double>> compute_gll_rule(int m)
   // Reorder to match 1d dof  ordering
   std::rotate(xs_ref.rbegin(), xs_ref.rbegin() + 1, xs_ref.rend() - 1);
   std::rotate(ws_ref.rbegin(), ws_ref.rbegin() + 1, ws_ref.rend() - 1);
-  const xt::xtensor<double, 2> points
+  xt::xtensor<double, 2> points
       = xt::adapt(xs_ref, {xs_ref.size(), (std::size_t)1});
   return {points, ws_ref};
 }

@@ -80,22 +80,22 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   const std::size_t psize = phi.shape(1);
 
   // Create points at nodes on interior
-  const auto points
+  const xt::xtensor<double, 2> points
       = lattice::create(celltype, degree, lattice::type::equispaced, false);
   const std::size_t ndofs = points.shape(0);
   x[tdim].push_back(points);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> phi1;
-  xt::xtensor<double, 1> bubble;
+  xt::xtensor<double, 2> bubble({pts.shape(0), (std::size_t)1});
   switch (celltype)
   {
   case cell::type::interval:
   {
     phi1 = xt::view(polyset::tabulate(celltype, degree - 2, 0, pts), 0,
                     xt::all(), xt::all());
-    auto p = pts;
-    bubble = p * (1.0 - p);
+    auto p0 = xt::col(pts, 0);
+    xt::col(bubble, 0) = p0 * (1.0 - p0);
     break;
   }
   case cell::type::triangle:
@@ -104,7 +104,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
                     xt::all(), xt::all());
     auto p0 = xt::col(pts, 0);
     auto p1 = xt::col(pts, 1);
-    bubble = p0 * p1 * (1 - p0 - p1);
+    xt::col(bubble, 0) = p0 * p1 * (1 - p0 - p1);
     break;
   }
   case cell::type::tetrahedron:
@@ -114,7 +114,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
     auto p0 = xt::col(pts, 0);
     auto p1 = xt::col(pts, 1);
     auto p2 = xt::col(pts, 2);
-    bubble = p0 * p1 * p2 * (1 - p0 - p1 - p2);
+    xt::col(bubble, 0) = p0 * p1 * p2 * (1 - p0 - p1 - p2);
     break;
   }
   case cell::type::quadrilateral:
@@ -123,7 +123,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
                     xt::all(), xt::all());
     auto p0 = xt::col(pts, 0);
     auto p1 = xt::col(pts, 1);
-    bubble = p0 * (1 - p0) * p1 * (1 - p1);
+    xt::col(bubble, 0) = p0 * (1 - p0) * p1 * (1 - p1);
     break;
   }
   case cell::type::hexahedron:
@@ -133,7 +133,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
     auto p0 = xt::col(pts, 0);
     auto p1 = xt::col(pts, 1);
     auto p2 = xt::col(pts, 2);
-    bubble = p0 * (1 - p0) * p1 * (1 - p1) * p2 * (1 - p2);
+    xt::col(bubble, 0) = p0 * (1 - p0) * p1 * (1 - p1) * p2 * (1 - p2);
     break;
   }
   default:
@@ -143,7 +143,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
   for (std::size_t i = 0; i < phi1.shape(1); ++i)
   {
-    auto integrand = xt::col(phi1, i) * bubble;
+    auto integrand = xt::col(phi1, i) * xt::col(bubble, 0);
     for (std::size_t k = 0; k < psize; ++k)
       wcoeffs(i, k) = xt::sum(wts * integrand * xt::col(phi, k))();
   }

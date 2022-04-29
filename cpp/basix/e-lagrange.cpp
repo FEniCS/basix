@@ -873,7 +873,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
       }
     }
   }
-  x[tdim][0] = pts.dimension() == 1 ? pts.reshape({pts.shape(0), 1}) : pts;
+  x[tdim][0] = pts;
   M[tdim][0] = xt::xtensor<double, 3>({ndofs, 1, pts.shape(0)});
   for (std::size_t i = 0; i < ndofs; ++i)
     xt::view(M[tdim][0], i, 0, xt::all()) = xt::col(phi, i) * wts;
@@ -963,8 +963,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           cell::num_sub_entities(celltype, i),
           xt::xtensor<double, 3>({0, 1, 0}));
     }
-
-    auto pt = lattice::create(celltype, 0, lattice_type, true, simplex_method);
+    const xt::xtensor<double, 2> pt
+        = lattice::create(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
     std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};

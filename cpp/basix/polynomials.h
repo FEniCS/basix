@@ -27,7 +27,7 @@ enum class type
 /// @return Polynomial sets, for each derivative, tabulated at points.
 /// The shape is `(number of points, basis index)`.
 xt::xtensor<double, 2> tabulate(polynomials::type polytype, cell::type celltype,
-                                int d, const xt::xarray<double>& x);
+                                int d, const xt::xtensor<double, 2>& x);
 
 /// Dimension of a polynomial space
 /// @param[in] polytype The polynomial type

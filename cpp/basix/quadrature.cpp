@@ -240,21 +240,21 @@ std::pair<xt::xtensor<double, 2>, std::vector<double>>
 compute_gauss_jacobi_rule(double a, int m)
 {
   /// @note Computes on [-1, 1]
-  std::vector<double> _pts = compute_gauss_jacobi_points(a, m);
+  std::vector<double> pts = compute_gauss_jacobi_points(a, m);
   const xt::xtensor<double, 1> Jd
-      = xt::row(compute_jacobi_deriv(a, m, 1, _pts), 1);
+      = xt::row(compute_jacobi_deriv(a, m, 1, pts), 1);
 
   const double a1 = std::pow(2.0, a + 1.0);
 
   std::vector<double> wts(m);
   for (int i = 0; i < m; ++i)
   {
-    const double x = _pts[i];
+    const double x = pts[i];
     const double f = Jd[i];
     wts[i] = a1 / (1.0 - x * x) / (f * f);
   }
 
-  return {xt::adapt(_pts, {_pts.size(), (std::size_t)1}), wts};
+  return {xt::adapt(pts, {pts.size(), (std::size_t)1}), wts};
 }
 //-----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, std::vector<double>>

@@ -32,6 +32,9 @@ class BasixElement(_FiniteElementBase):
             return self.basix_element == other.basix_element
         return False
 
+    def __hash__(self):
+        return hash(self._repr)
+
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:
     """Convert map type to a UFL string."""
@@ -75,7 +78,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement):
 
 def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
                    degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False) -> _FiniteElementBase:
+                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False) -> BasixElement:
     """Create a UFL element using Basix."""
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)

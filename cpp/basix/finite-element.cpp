@@ -790,8 +790,15 @@ FiniteElement::FiniteElement(
 bool FiniteElement::operator==(const FiniteElement& e) const
 {
   if (family() == basix::element::family::custom
-      and e.family() == basix::element::family::custom)
-    throw std::runtime_error("== not implemented for custom elements yet.");
+      or e.family() == basix::element::family::custom)
+  {
+    return cell_type() == e.cell_type() and discontinuous() == e.discontinuous()
+           and map_type() == e.map_type() and value_shape() == e.value_shape()
+           and highest_degree() == e.highest_degree()
+           and highest_complete_degree() == e.highest_complete_degree()
+           and xt::allclose(coefficient_matrix(), e.coefficient_matrix())
+           and num_entity_dofs() == e.num_entity_dofs();
+  }
 
   return cell_type() == e.cell_type() and family() == e.family()
          and degree() == e.degree() and discontinuous() == e.discontinuous()

@@ -123,7 +123,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity, true,
-                       degree, {}, variant);
+                       degree, degree, variant);
 }
 //----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -827,7 +827,8 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
-                       discontinuous, degree);
+                       discontinuous, degree, degree,
+                       element::lagrange_variant::vtk);
 }
 //-----------------------------------------------------------------------------
 FiniteElement create_legendre(cell::type celltype, int degree,
@@ -880,7 +881,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
-                       discontinuous, degree, {},
+                       discontinuous, degree, degree,
                        element::lagrange_variant::legendre);
 }
 //-----------------------------------------------------------------------------
@@ -903,7 +904,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     xt::xtensor<double, 2> wcoeffs = {{1}};
 
     return FiniteElement(element::family::P, cell::type::point, 0, {}, wcoeffs,
-                         x, M, maps::type::identity, discontinuous, degree);
+                         x, M, maps::type::identity, discontinuous, degree,
+                         degree);
   }
 
   if (variant == element::lagrange_variant::unset)
@@ -1041,6 +1043,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, maps::type::identity,
-                       discontinuous, degree, tensor_factors, variant);
+                       discontinuous, degree, degree, variant, tensor_factors);
 }
 //-----------------------------------------------------------------------------

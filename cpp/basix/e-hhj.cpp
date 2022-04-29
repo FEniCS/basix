@@ -157,6 +157,6 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
 
   return FiniteElement(element::family::HHJ, celltype, degree, {tdim, tdim},
                        wcoeffs, x, M, maps::type::doubleContravariantPiola,
-                       discontinuous, -1);
+                       discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

@@ -154,7 +154,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  return FiniteElement(element::family::bubble, celltype, degree, {1}, wcoeffs,
-                       x, M, maps::type::identity, discontinuous, -1);
+  return FiniteElement(element::family::bubble, celltype, degree, {}, wcoeffs,
+                       x, M, maps::type::identity, discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

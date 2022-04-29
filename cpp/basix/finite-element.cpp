@@ -16,7 +16,7 @@
 #include "e-serendipity.h"
 #include "math.h"
 #include "polyset.h"
-#include "version.h"
+#include <basix/version.h>
 #include <numeric>
 #include <xtensor/xbuilder.hpp>
 
@@ -126,7 +126,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
   }
 
   /// Flatten D and take transpose
-  auto Dt_flat = xt::transpose(
+  xt::xtensor<double, 2> Dt_flat = xt::transpose(
       xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
 
   return math::dot(B, Dt_flat);
@@ -390,15 +390,15 @@ basix::element::make_discontinuous(
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
-    cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
+    cell::type cell_type, const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_complete_degree)
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree)
 {
   // Check that inputs are valid
-  const std::size_t psize = polyset::dim(cell_type, degree);
+  const std::size_t psize = polyset::dim(cell_type, highest_degree);
   std::size_t value_size = 1;
   for (std::size_t i = 0; i < value_shape.size(); ++i)
     value_size *= value_shape[i];
@@ -451,14 +451,14 @@ basix::FiniteElement basix::create_custom_element(
   }
 
   xt::xtensor<double, 2> dual_matrix
-      = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
+      = compute_dual_matrix(cell_type, wcoeffs, M, x, highest_degree);
   if (math::is_singular(dual_matrix))
     throw std::runtime_error(
         "Dual matrix is singular, there is an error in your inputs");
 
-  return basix::FiniteElement(element::family::custom, cell_type, degree,
-                              value_shape, wcoeffs, x, M, map_type,
-                              discontinuous, highest_complete_degree);
+  return basix::FiniteElement(
+      element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
+      x, M, map_type, discontinuous, highest_complete_degree, highest_degree);
 }
 
 //-----------------------------------------------------------------------------
@@ -469,15 +469,67 @@ FiniteElement::FiniteElement(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::lagrange_variant lvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors,
-    element::lagrange_variant lvariant, element::dpc_variant dvariant)
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    map_type, discontinuous, highest_complete_degree,
+                    highest_degree, lvariant, element::dpc_variant::unset,
+                    tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::dpc_variant dvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    map_type, discontinuous, highest_complete_degree,
+                    highest_degree, element::lagrange_variant::unset, dvariant,
+                    tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    map_type, discontinuous, highest_complete_degree,
+                    highest_degree, element::lagrange_variant::unset,
+                    element::dpc_variant::unset, tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::lagrange_variant lvariant,
+    element::dpc_variant dvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
-      _map_type(map_type), _x(x), _discontinuous(discontinuous),
-      _degree_bounds({highest_complete_degree, degree}),
-      _tensor_factors(tensor_factors)
+      _highest_degree(highest_degree),
+      _highest_complete_degree(highest_complete_degree), _map_type(map_type),
+      _x(x), _discontinuous(discontinuous), _tensor_factors(tensor_factors)
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
@@ -489,7 +541,7 @@ FiniteElement::FiniteElement(
               "Discontinuous element can only have interior DOFs.");
   }
 
-  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
+  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, highest_degree);
 
   if (family == element::family::custom)
   {
@@ -535,7 +587,7 @@ FiniteElement::FiniteElement(
   }
 
   _entity_transformations = doftransforms::compute_entity_transformations(
-      cell_type, x, M, _coeffs, degree, value_size, map_type);
+      cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
 
   _matM = xt::zeros<double>({num_dofs, value_size * num_points1});
   auto Mview = xt::reshape_view(_matM, {num_dofs, value_size, num_points1});
@@ -696,11 +748,11 @@ FiniteElement::FiniteElement(
           // that M^{-1} != M.
           // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
           // For a triangular face, M^3 = Id, so M^{-1} = M^2.
-          // This assumes that all faces of the cell are the same shape. For
-          // prisms and pyramids, this will need updating to look at the face
-          // type
           if (et.first == cell::type::quadrilateral and i == 0)
-            Minv = math::dot(math::dot(M, M), M);
+          {
+            auto Mint = math::dot(M, M);
+            Minv = math::dot(Mint, M);
+          }
           else if (et.first == cell::type::triangle and i == 0)
             Minv = math::dot(M, M);
           else
@@ -732,6 +784,17 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 bool FiniteElement::operator==(const FiniteElement& e) const
 {
+  if (family() == basix::element::family::custom
+      or e.family() == basix::element::family::custom)
+  {
+    return cell_type() == e.cell_type() and discontinuous() == e.discontinuous()
+           and map_type() == e.map_type() and value_shape() == e.value_shape()
+           and highest_degree() == e.highest_degree()
+           and highest_complete_degree() == e.highest_complete_degree()
+           and xt::allclose(coefficient_matrix(), e.coefficient_matrix())
+           and num_entity_dofs() == e.num_entity_dofs();
+  }
+
   return cell_type() == e.cell_type() and family() == e.family()
          and degree() == e.degree() and discontinuous() == e.discontinuous()
          and lagrange_variant() == e.lagrange_variant()
@@ -769,11 +832,11 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
   if (x.shape(1) != _cell_tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
+  const int psize = polyset::dim(_cell_type, _highest_degree);
   xt::xtensor<double, 3> basis(
       {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), x.shape(0),
-       static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
-  polyset::tabulate(basis, _cell_type, _degree, nd, x);
-  const int psize = polyset::dim(_cell_type, _degree);
+       static_cast<std::size_t>(psize)});
+  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());
   xt::xtensor<double, 2> B, C;
@@ -783,8 +846,9 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
     {
       auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
       B = xt::view(basis, p, xt::all(), xt::all());
-      C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-      auto result = math::dot(B, xt::transpose(C));
+      C = xt::transpose(xt::view(_coeffs, xt::all(),
+                                 xt::range(psize * j, psize * j + psize)));
+      auto result = math::dot(B, C);
       basis_view.assign(result);
     }
   }
@@ -793,6 +857,13 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }
+//-----------------------------------------------------------------------------
+int FiniteElement::highest_degree() const { return _highest_degree; }
+//-----------------------------------------------------------------------------
+int FiniteElement::highest_complete_degree() const
+{
+  return _highest_complete_degree;
+}
 //-----------------------------------------------------------------------------
 const std::vector<int>& FiniteElement::value_shape() const
 {
@@ -882,10 +953,6 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
         const int ndofs = _num_edofs[2][f];
         if (ndofs > 0)
         {
-          // TODO: This assumes that every face has the same shape
-          //       _entity_transformations should be replaced with a map from
-          //       a subentity type to a matrix to allow for prisms and
-          //       pyramids.
           xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
                    xt::range(dof_start, dof_start + ndofs))
               = xt::view(
@@ -1111,11 +1178,6 @@ FiniteElement::M() const
 const xt::xtensor<double, 2>& FiniteElement::coefficient_matrix() const
 {
   return _coeffs;
-}
-//-----------------------------------------------------------------------------
-std::array<int, 2> FiniteElement::degree_bounds() const
-{
-  return _degree_bounds;
 }
 //-----------------------------------------------------------------------------
 bool FiniteElement::has_tensor_product_factorisation() const

@@ -157,6 +157,6 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
                        wcoeffs, x, M, maps::type::doubleCovariantPiola,
-                       discontinuous, -1);
+                       discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

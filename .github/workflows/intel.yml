@@ -1,5 +1,7 @@
 name: Intel compilers
 
+# This workflow will test Basix built using Intel compilers
+
 on:
   schedule:
     # '*' is a special character in YAML, so string must be quoted

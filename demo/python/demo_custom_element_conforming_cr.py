@@ -22,15 +22,15 @@ import matplotlib.pyplot as plt
 # this element can be found at
 # https://defelement.com/elements/conforming-crouzeix-raviart.html.
 #
-# For degrees 1 and 2, this element is equal to a degree 1 Lagrange element.
-# For higher degrees, we define the element. Note that in Basix, an element's degree
-# is necessarily equal to the highest degree polynomial in the space is spans, so
-# the degree we use here is one higher than that shown on DefElement.
+# As the input to this function, we use the degree of the element as shown on
+# DefElement. For most degrees, the highest degree polynomial in this elements
+# polynomial space is actually one degree higher, so we pass `degree + 1` into
+# `create_custom_element`.
 
 
 def create_ccr_triangle(degree):
 
-    if degree in [1, 2]:
+    if degree == 1:
         wcoeffs = np.eye(3)
 
         x = [[], [], [], []]
@@ -51,23 +51,23 @@ def create_ccr_triangle(degree):
         M[2].append(np.zeros((0, 1, 0)))
 
         return basix.create_custom_element(
-            CellType.triangle, 1, [], wcoeffs, x, M, MapType.identity, False, 1)
+            CellType.triangle, [], wcoeffs, x, M, MapType.identity, False, 1, 1)
 
-    npoly = (degree + 1) * (degree + 2) // 2
-    ndofs = (degree - 1) * (degree + 4) // 2
+    npoly = (degree + 2) * (degree + 3) // 2
+    ndofs = degree * (degree + 5) // 2
     wcoeffs = np.zeros((ndofs, npoly))
 
     dof_n = 0
-    for i in range(degree * (degree + 1) // 2):
+    for i in range((degree + 1) * (degree + 2) // 2):
         wcoeffs[dof_n, dof_n] = 1
         dof_n += 1
 
-    pts, wts = basix.make_quadrature(CellType.triangle, 2 * degree)
-    poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, degree, pts)
-    for i in range(1, degree - 1):
+    pts, wts = basix.make_quadrature(CellType.triangle, 2 * (degree + 1))
+    poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, degree + 1, pts)
+    for i in range(1, degree):
         x = pts[:, 0]
         y = pts[:, 1]
-        f = x ** i * y ** (degree - 1 - i) * (x + y)
+        f = x ** i * y ** (degree - i) * (x + y)
 
         for j in range(npoly):
             wcoeffs[dof_n, j] = sum(f * poly[:, j] * wts)
@@ -80,7 +80,7 @@ def create_ccr_triangle(degree):
     for v in topology[0]:
         x[0].append(np.array(geometry[v]))
         M[0].append(np.array([[[1.]]]))
-    pts = basix.create_lattice(CellType.interval, degree - 1, LatticeType.equispaced, False)
+    pts = basix.create_lattice(CellType.interval, degree, LatticeType.equispaced, False)
     mat = np.zeros((len(pts), 1, len(pts)))
     mat[:, 0, :] = np.eye(len(pts))
     for e in topology[1]:
@@ -91,19 +91,19 @@ def create_ccr_triangle(degree):
             edge_pts.append(v0 + p * (v1 - v0))
         x[1].append(np.array(edge_pts))
         M[1].append(mat)
-    pts = basix.create_lattice(CellType.triangle, degree, LatticeType.equispaced, False)
+    pts = basix.create_lattice(CellType.triangle, degree + 1, LatticeType.equispaced, False)
     x[2].append(pts)
     mat = np.zeros((len(pts), 1, len(pts)))
     mat[:, 0, :] = np.eye(len(pts))
     M[2].append(mat)
 
     return basix.create_custom_element(
-        CellType.triangle, degree, [], wcoeffs, x, M, MapType.identity, False, degree - 1)
+        CellType.triangle, [], wcoeffs, x, M, MapType.identity, False, degree, degree + 1)
 
 
-# We can then create a degree 3 conforming CR element.
+# We can then create a degree 2 conforming CR element.
 
-e = create_ccr_triangle(3)
+e = create_ccr_triangle(2)
 
 # We now visualise the basis functions of the element we have created.
 
@@ -123,15 +123,15 @@ for n in range(7):
     ax.plot([0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0], "k-")
     ax.scatter(x, y, z[:, n, 0])
 
-plt.savefig("ccr_triangle_3.png")
+plt.savefig("ccr_triangle_2.png")
 
-# .. image:: ccr_triangle_3.png
+# .. image:: ccr_triangle_2.png
 #  :width: 100%
-#  :alt: The basis functions of a degree 3 conforming CR element
+#  :alt: The basis functions of a degree 2 conforming CR element
 
-# We also visualise the basis functions of a degree 4 conforming CR element.
+# We also visualise the basis functions of a degree 3 conforming CR element.
 
-e = create_ccr_triangle(4)
+e = create_ccr_triangle(3)
 
 pts = basix.create_lattice(CellType.triangle, 30, LatticeType.equispaced, True)
 
@@ -146,8 +146,8 @@ for n in range(12):
     ax.plot([0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0], "k-")
     ax.scatter(x, y, z[:, n, 0])
 
-plt.savefig("ccr_triangle_4.png")
+plt.savefig("ccr_triangle_3.png")
 
-# .. image:: ccr_triangle_4.png
+# .. image:: ccr_triangle_3.png
 #  :width: 100%
 #  :alt: The basis functions of a degree 3 conforming CR element

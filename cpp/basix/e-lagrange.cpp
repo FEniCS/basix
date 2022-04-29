@@ -113,8 +113,8 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
             : (celltype == cell::type::tetrahedron ? degree + 4 : degree + 2);
 
   // Create points in interior
-  auto pt = lattice::create(celltype, lattice_degree, lattice_type, false,
-                            simplex_method);
+  const xt::xtensor<double, 2> pt = lattice::create(
+      celltype, lattice_degree, lattice_type, false, simplex_method);
   x[tdim].push_back(pt);
   const std::size_t num_dofs = pt.shape(0);
   std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};

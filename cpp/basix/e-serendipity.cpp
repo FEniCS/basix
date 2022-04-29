@@ -1034,7 +1034,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  const auto pt = make_dpc_points(celltype, degree, variant);
+  const xt::xtensor<double, 2> pt = make_dpc_points(celltype, degree, variant);
   x[tdim].push_back(pt);
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,

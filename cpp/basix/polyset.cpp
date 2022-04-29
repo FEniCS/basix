@@ -52,7 +52,7 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                   const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(0) > 0);
-  const std::size_t m = (n + 1);
+  [[maybe_unused]] const std::size_t m = (n + 1);
   assert(P.shape(0) == nderiv + 1);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
@@ -108,8 +108,8 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   auto x0 = xt::col(x, 0);
   auto x1 = xt::col(x, 1);
 
-  const std::size_t m = (n + 1) * (n + 2) / 2;
-  const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
+  [[maybe_unused]] const std::size_t m = (n + 1) * (n + 2) / 2;
+  [[maybe_unused]] const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
   assert(P.shape(0) == md);
   assert(P.shape(1) == x.shape(0));
   assert(P.shape(2) == m);
@@ -211,8 +211,9 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
                                          const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(1) == 3);
-  const std::size_t m = (n + 1) * (n + 2) * (n + 3) / 6;
-  const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
+  [[maybe_unused]] const std::size_t m = (n + 1) * (n + 2) * (n + 3) / 6;
+  [[maybe_unused]] const std::size_t md
+      = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
   const auto x0 = xt::col(x, 0);
   const auto x1 = xt::col(x, 1);
@@ -437,8 +438,9 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                      const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(1) == 3);
-  const std::size_t m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
-  const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
+  [[maybe_unused]] const std::size_t m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
+  [[maybe_unused]] const std::size_t md
+      = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
   // Indexing for pyramidal basis functions
   auto pyr_idx = [n](std::size_t p, std::size_t q, std::size_t r) -> std::size_t
@@ -650,8 +652,8 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                   const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(1) == 2);
-  const std::size_t m = (n + 1) * (n + 1);
-  const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
+  [[maybe_unused]] const std::size_t m = (n + 1) * (n + 1);
+  [[maybe_unused]] const std::size_t md = (nderiv + 1) * (nderiv + 2) / 2;
 
   // Indexing for quadrilateral basis functions
   auto quad_idx = [n](std::size_t px, std::size_t py) -> std::size_t
@@ -778,8 +780,9 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                  const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(1) == 3);
-  const std::size_t m = (n + 1) * (n + 1) * (n + 1);
-  const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
+  [[maybe_unused]] const std::size_t m = (n + 1) * (n + 1) * (n + 1);
+  [[maybe_unused]] const std::size_t md
+      = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
   // Indexing for hexahedral basis functions
   auto hex_idx
@@ -1010,8 +1013,9 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                    const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(1) == 3);
-  const std::size_t m = (n + 1) * (n + 1) * (n + 2) / 2;
-  const std::size_t md = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
+  [[maybe_unused]] const std::size_t m = (n + 1) * (n + 1) * (n + 2) / 2;
+  [[maybe_unused]] const std::size_t md
+      = (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6;
 
   assert(P.shape(0) == md);
   assert(P.shape(1) == x.shape(0));

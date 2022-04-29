@@ -225,9 +225,47 @@ public:
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
       const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
       maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree, element::lagrange_variant lvariant,
+      element::dpc_variant dvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree, element::lagrange_variant lvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree, element::dpc_variant dvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
       int highest_degree,
-      element::lagrange_variant lvariant = element::lagrange_variant::unset,
-      element::dpc_variant dvariant = element::dpc_variant::unset,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {});

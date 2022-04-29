@@ -475,6 +475,57 @@ FiniteElement::FiniteElement(
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree, element::lagrange_variant lvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    map_type, discontinuous, highest_complete_degree,
+                    highest_degree, lvariant, element::dpc_variant::unset,
+                    tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::dpc_variant dvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    map_type, discontinuous, highest_complete_degree,
+                    highest_degree, element::lagrange_variant::unset, dvariant,
+                    tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    map_type, discontinuous, highest_complete_degree,
+                    highest_degree, element::lagrange_variant::unset,
+                    element::dpc_variant::unset, tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::lagrange_variant lvariant,
     element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors)
@@ -739,8 +790,15 @@ FiniteElement::FiniteElement(
 bool FiniteElement::operator==(const FiniteElement& e) const
 {
   if (family() == basix::element::family::custom
-      and e.family() == basix::element::family::custom)
-    throw std::runtime_error("== not implemented for custom elements yet.");
+      or e.family() == basix::element::family::custom)
+  {
+    return cell_type() == e.cell_type() and discontinuous() == e.discontinuous()
+           and map_type() == e.map_type() and value_shape() == e.value_shape()
+           and highest_degree() == e.highest_degree()
+           and highest_complete_degree() == e.highest_complete_degree()
+           and xt::allclose(coefficient_matrix(), e.coefficient_matrix())
+           and num_entity_dofs() == e.num_entity_dofs();
+  }
 
   return cell_type() == e.cell_type() and family() == e.family()
          and degree() == e.degree() and discontinuous() == e.discontinuous()

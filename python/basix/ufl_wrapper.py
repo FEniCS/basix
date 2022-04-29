@@ -33,6 +33,7 @@ class BasixElement(_FiniteElementBase):
         return False
 
     def __hash__(self):
+        """Return a hash."""
         return hash(self._repr)
 
 

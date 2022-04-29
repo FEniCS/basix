@@ -8,7 +8,6 @@
 #include "math.h"
 #include "quadrature.h"
 #include <xtensor/xadapt.hpp>
-#include <xtensor/xarray.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>
@@ -100,9 +99,6 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  sub_celltype, q_deg);
   auto wts = xt::adapt(_wts);
-  if (pts.dimension() == 1)
-    pts = pts.reshape({pts.shape(0), 1});
-
   // Evaluate moment space at quadrature points
   assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(), 1,
                          std::multiplies<int>())
@@ -267,7 +263,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
 
     // Map quadrature points onto triangle edge
     for (std::size_t i = 0; i < pts.shape(0); ++i)
-      xt::view(points[e], i, xt::all()) = X0 + pts[i] * tangent;
+      xt::view(points[e], i, xt::all()) = X0 + pts(i, 0) * tangent;
 
     // Compute edge tangent integral moments
     for (std::size_t i = 0; i < phi.shape(1); ++i)
@@ -333,7 +329,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
       auto tangent = xt::row(facet_x, 1) - x0;
       normal = {-tangent(1), tangent(0)};
       for (std::size_t p = 0; p < pts.shape(0); ++p)
-        xt::view(points[e], p, xt::all()) = x0 + pts[p] * tangent;
+        xt::view(points[e], p, xt::all()) = x0 + pts(p, 0) * tangent;
     }
     else if (tdim == 3)
     {
@@ -359,7 +355,6 @@ moments::make_normal_integral_moments(const FiniteElement& V,
         xt::view(D[e], i, j, xt::all()) = phi_i * wts * normal[j];
     }
   }
-
   return {points, D};
 }
 //----------------------------------------------------------------------------

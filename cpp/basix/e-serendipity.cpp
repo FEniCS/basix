@@ -586,7 +586,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
       }
     }
   }
-  x[tdim][0] = pts.dimension() == 1 ? pts.reshape({pts.shape(0), 1}) : pts;
+  x[tdim][0] = pts;
   M[tdim][0] = xt::xtensor<double, 3>({ndofs, 1, pts.shape(0)});
 
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
@@ -677,7 +677,7 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
       std::size_t n = 0;
       for (int j = 0; j <= degree; ++j)
       {
-        const auto interval_pts = lattice::create(
+        const xt::xtensor<double, 2> interval_pts = lattice::create(
             cell::type::interval, degree - j, latticetype, true);
         for (int i = 0; i <= degree - j; ++i)
         {
@@ -701,7 +701,7 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
       {
         for (int j = 0; j <= degree - k; ++j)
         {
-          const auto interval_pts = lattice::create(
+          const xt::xtensor<double, 2> interval_pts = lattice::create(
               cell::type::interval, degree - j - k, latticetype, true);
           for (int i = 0; i <= degree - j - k; ++i)
           {
@@ -749,7 +749,7 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
       std::size_t n = 0;
       for (int j = 0; j <= degree; ++j)
       {
-        const auto interval_pts
+        const xt::xtensor<double, 2> interval_pts
             = lattice::create(cell::type::interval, j, latticetype, true);
         const double y = gap * (j % 2 == 0 ? j / 2 : degree - (j - 1) / 2);
         const double coord0 = y < 1 ? y : y - 1;
@@ -778,8 +778,8 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
       for (int k = 0; k <= degree; ++k)
       {
         const double z = gap * (k % 2 == 0 ? k / 2 : degree - (k - 1) / 2);
-        const auto triangle_pts = lattice::create(cell::type::triangle, k,
-                                                  latticetype, true, latticesm);
+        const xt::xtensor<double, 2> triangle_pts = lattice::create(
+            cell::type::triangle, k, latticetype, true, latticesm);
         if (z < 1)
           for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
           {
@@ -936,7 +936,6 @@ FiniteElement basix::element::create_serendipity(
   else if (tdim == 3)
     wcoeffs = make_serendipity_space_3d(degree);
 
-
   if (discontinuous)
   {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
@@ -987,10 +986,6 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
 
-  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                 celltype, 2 * degree);
-  auto wts = xt::adapt(_wts);
-
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
 
   if (celltype == cell::type::quadrilateral)
@@ -1039,7 +1034,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  const auto pt = make_dpc_points(celltype, degree, variant);
+  const xt::xtensor<double, 2> pt = make_dpc_points(celltype, degree, variant);
   x[tdim].push_back(pt);
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
@@ -1054,7 +1049,8 @@ FiniteElement basix::element::create_serendipity_div(
   if (degree == 0)
     throw std::runtime_error("Cannot create degree 0 serendipity");
 
-  if (celltype != cell::type::quadrilateral and celltype != cell::type::hexahedron)
+  if (celltype != cell::type::quadrilateral
+      and celltype != cell::type::hexahedron)
   {
     throw std::runtime_error("Invalid celltype");
   }
@@ -1107,7 +1103,6 @@ FiniteElement basix::element::create_serendipity_div(
   else if (tdim == 3)
     wcoeffs = make_serendipity_div_space_3d(degree);
 
-
   if (discontinuous)
   {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
@@ -1125,7 +1120,8 @@ FiniteElement basix::element::create_serendipity_curl(
   if (degree == 0)
     throw std::runtime_error("Cannot create degree 0 serendipity");
 
-  if (celltype != cell::type::quadrilateral and celltype != cell::type::hexahedron)
+  if (celltype != cell::type::quadrilateral
+      and celltype != cell::type::hexahedron)
   {
     throw std::runtime_error("Invalid celltype");
   }

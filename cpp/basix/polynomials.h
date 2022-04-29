@@ -5,7 +5,6 @@
 #pragma once
 
 #include "cell.h"
-#include <xtensor/xarray.hpp>
 #include <xtensor/xtensor.hpp>
 
 /// Polynomials

@@ -8,7 +8,6 @@
 #include "math.h"
 #include "quadrature.h"
 #include <xtensor/xadapt.hpp>
-#include <xtensor/xarray.hpp>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>

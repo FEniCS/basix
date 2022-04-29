@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <xtensor/xarray.hpp>
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xtensor.hpp>
 

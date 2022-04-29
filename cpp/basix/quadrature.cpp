@@ -236,13 +236,11 @@ std::vector<double> compute_gauss_jacobi_points(double a, int m)
   return x;
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 compute_gauss_jacobi_rule(double a, int m)
 {
   /// @note Computes on [-1, 1]
-  std::vector<double> _pts = compute_gauss_jacobi_points(a, m);
-  auto pts = xt::adapt(_pts);
-
+  std::vector<double> pts = compute_gauss_jacobi_points(a, m);
   const xt::xtensor<double, 1> Jd
       = xt::row(compute_jacobi_deriv(a, m, 1, pts), 1);
 
@@ -256,10 +254,11 @@ compute_gauss_jacobi_rule(double a, int m)
     wts[i] = a1 / (1.0 - x * x) / (f * f);
   }
 
-  return {pts, wts};
+  return {xt::adapt(pts, {pts.size(), (std::size_t)1}), wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>> make_quadrature_line(int m)
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
+make_quadrature_line(int m)
 {
   auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
   std::transform(wx.begin(), wx.end(), wx.begin(),
@@ -267,7 +266,7 @@ std::pair<xt::xarray<double>, std::vector<double>> make_quadrature_line(int m)
   return {0.5 * (ptx + 1.0), wx};
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_quadrature_triangle_collapsed(std::size_t m)
 {
   auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
@@ -279,8 +278,8 @@ make_quadrature_triangle_collapsed(std::size_t m)
   {
     for (std::size_t j = 0; j < m; ++j)
     {
-      pts(c, 0) = 0.25 * (1.0 + ptx[i]) * (1.0 - pty[j]);
-      pts(c, 1) = 0.5 * (1.0 + pty[j]);
+      pts(c, 0) = 0.25 * (1.0 + ptx(i, 0)) * (1.0 - pty(j, 0));
+      pts(c, 1) = 0.5 * (1.0 + pty(j, 0));
       wts[c] = wx[i] * wy[j] * 0.125;
       ++c;
     }
@@ -289,7 +288,7 @@ make_quadrature_triangle_collapsed(std::size_t m)
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_quadrature_tetrahedron_collapsed(std::size_t m)
 {
   auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
@@ -305,9 +304,10 @@ make_quadrature_tetrahedron_collapsed(std::size_t m)
     {
       for (std::size_t k = 0; k < m; ++k)
       {
-        pts(c, 0) = 0.125 * (1.0 + ptx[i]) * (1.0 - pty[j]) * (1.0 - ptz[k]);
-        pts(c, 1) = 0.25 * (1. + pty[j]) * (1. - ptz[k]);
-        pts(c, 2) = 0.5 * (1.0 + ptz[k]);
+        pts(c, 0)
+            = 0.125 * (1.0 + ptx(i, 0)) * (1.0 - pty(j, 0)) * (1.0 - ptz(k, 0));
+        pts(c, 1) = 0.25 * (1. + pty(j, 0)) * (1. - ptz(k, 0));
+        pts(c, 2) = 0.5 * (1.0 + ptz(k, 0));
         wts[c] = wx[i] * wy[j] * wz[k] * 0.125 * 0.125;
         ++c;
       }
@@ -317,7 +317,7 @@ make_quadrature_tetrahedron_collapsed(std::size_t m)
   return {pts, wts};
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
 {
   const std::size_t np = (m + 2) / 2;
@@ -335,8 +335,8 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
     {
       for (std::size_t j = 0; j < np; ++j)
       {
-        Qpts(c, 0) = QptsL[i];
-        Qpts(c, 1) = QptsL[j];
+        Qpts(c, 0) = QptsL(i, 0);
+        Qpts(c, 1) = QptsL(j, 0);
         Qwts[c] = QwtsL[i] * QwtsL[j];
         ++c;
       }
@@ -355,9 +355,9 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
       {
         for (std::size_t k = 0; k < np; ++k)
         {
-          Qpts(c, 0) = QptsL[i];
-          Qpts(c, 1) = QptsL[j];
-          Qpts(c, 2) = QptsL[k];
+          Qpts(c, 0) = QptsL(i, 0);
+          Qpts(c, 1) = QptsL(j, 0);
+          Qpts(c, 2) = QptsL(k, 0);
           Qwts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
           ++c;
         }
@@ -378,7 +378,7 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
       {
         Qpts(c, 0) = QptsT(i, 0);
         Qpts(c, 1) = QptsT(i, 1);
-        Qpts(c, 2) = QptsL[k];
+        Qpts(c, 2) = QptsL(k, 0);
         Qwts[c] = QwtsT[i] * QwtsL[k];
         ++c;
       }
@@ -395,13 +395,13 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
     throw std::runtime_error("Unsupported celltype for make_quadrature");
   }
 }
+
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>> compute_gll_rule(int m)
+// The Gauss-Lobatto-Legendre quadrature rules on the interval using Greg von
+// Winckel's implementation. This facilitates implementing spectral elements.
+// The quadrature rule uses m points for a degree of precision of 2m-3.
+std::pair<xt::xtensor<double, 2>, std::vector<double>> compute_gll_rule(int m)
 {
-  // Implement the Gauss-Lobatto-Legendre quadrature rules on the interval
-  // using Greg von Winckel's implementation. This facilitates implementing
-  // spectral elements
-  // The quadrature rule uses m points for a degree of precision of 2m-3.
 
   if (m < 2)
   {
@@ -418,11 +418,12 @@ std::pair<xt::xarray<double>, std::vector<double>> compute_gll_rule(int m)
   // Reorder to match 1d dof  ordering
   std::rotate(xs_ref.rbegin(), xs_ref.rbegin() + 1, xs_ref.rend() - 1);
   std::rotate(ws_ref.rbegin(), ws_ref.rbegin() + 1, ws_ref.rend() - 1);
-
-  return {xt::adapt(xs_ref), ws_ref};
+  xt::xtensor<double, 2> points
+      = xt::adapt(xs_ref, {xs_ref.size(), (std::size_t)1});
+  return {points, ws_ref};
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>> make_gll_line(int m)
+std::pair<xt::xtensor<double, 2>, std::vector<double>> make_gll_line(int m)
 {
   auto [ptx, wx] = compute_gll_rule(m);
   std::transform(wx.begin(), wx.end(), wx.begin(),
@@ -430,7 +431,7 @@ std::pair<xt::xarray<double>, std::vector<double>> make_gll_line(int m)
   return {0.5 * (ptx + 1.0), wx};
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_gll_quadrature(cell::type celltype, std::size_t m)
 {
   const std::size_t np = (m + 4) / 2;
@@ -448,12 +449,13 @@ make_gll_quadrature(cell::type celltype, std::size_t m)
     {
       for (std::size_t j = 0; j < np; ++j)
       {
-        Qpts(c, 0) = QptsL[i];
-        Qpts(c, 1) = QptsL[j];
+        Qpts(c, 0) = QptsL(i, 0);
+        Qpts(c, 1) = QptsL(j, 0);
         Qwts[c] = QwtsL[i] * QwtsL[j];
         ++c;
       }
     }
+    assert(Qpts.shape().size() == 2);
     return {Qpts, Qwts};
   }
   case cell::type::hexahedron:
@@ -468,9 +470,9 @@ make_gll_quadrature(cell::type celltype, std::size_t m)
       {
         for (std::size_t k = 0; k < np; ++k)
         {
-          Qpts(c, 0) = QptsL[i];
-          Qpts(c, 1) = QptsL[j];
-          Qpts(c, 2) = QptsL[k];
+          Qpts(c, 0) = QptsL(i, 0);
+          Qpts(c, 1) = QptsL(j, 0);
+          Qpts(c, 2) = QptsL(k, 0);
           Qwts[c] = QwtsL[i] * QwtsL[j] * QwtsL[k];
           ++c;
         }
@@ -493,7 +495,7 @@ make_gll_quadrature(cell::type celltype, std::size_t m)
   }
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_strang_fix_quadrature(cell::type celltype, std::size_t m)
 {
   if (celltype == cell::type::triangle)
@@ -583,7 +585,7 @@ make_strang_fix_quadrature(cell::type celltype, std::size_t m)
   throw std::runtime_error("Strang-Fix not implemented for this cell type.");
 }
 //-------------------------------------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_zienkiewicz_taylor_quadrature(cell::type celltype, std::size_t m)
 {
   if (celltype == cell::type::triangle)
@@ -634,7 +636,7 @@ make_zienkiewicz_taylor_quadrature(cell::type celltype, std::size_t m)
       "Zienkiewicz-Taylor not implemented for this cell type.");
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_keast_quadrature(cell::type celltype, std::size_t m)
 {
   if (celltype == cell::type::tetrahedron)
@@ -868,7 +870,7 @@ make_keast_quadrature(cell::type celltype, std::size_t m)
   throw std::runtime_error("Keast not implemented for this cell type.");
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_xiao_gimbutas_quadrature(cell::type celltype, int m)
 {
   if (celltype == cell::type::triangle)
@@ -5302,7 +5304,7 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
     return type::gauss_jacobi;
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 quadrature::make_quadrature(quadrature::type rule, cell::type celltype, int m)
 {
   switch (rule)
@@ -5326,23 +5328,23 @@ quadrature::make_quadrature(quadrature::type rule, cell::type celltype, int m)
   }
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 quadrature::make_quadrature(cell::type celltype, int m)
 {
   return make_quadrature(quadrature::type::Default, celltype, m);
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 1> quadrature::get_gl_points(int m)
+xt::xtensor<double, 2> quadrature::get_gl_points(int m)
 {
   std::vector<double> _pts = compute_gauss_jacobi_points(0, m);
-  std::array<std::size_t, 1> shape = {_pts.size()};
-  xt::xtensor<double, 1> pts(shape);
+  std::array<std::size_t, 2> shape = {_pts.size(), (std::size_t)1};
+  xt::xtensor<double, 2> pts(shape);
   for (std::size_t i = 0; i < _pts.size(); ++i)
-    pts(i) = 0.5 + 0.5 * _pts[i];
+    pts(i, 0) = 0.5 + 0.5 * _pts[i];
   return pts;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 1> quadrature::get_gll_points(int m)
+xt::xtensor<double, 2> quadrature::get_gll_points(int m)
 {
   [[maybe_unused]] auto [pts, wts] = make_gll_line(m);
   return pts;

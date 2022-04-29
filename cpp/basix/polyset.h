@@ -5,7 +5,6 @@
 #pragma once
 
 #include "cell.h"
-#include <xtensor/xarray.hpp>
 #include <xtensor/xtensor.hpp>
 
 /// Polynomial expansion sets
@@ -160,7 +159,7 @@ namespace basix::polyset
 /// - The third index is the basis function index.
 /// @todo Does the order for the third index need to be documented?
 xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
-                                const xt::xarray<double>& x);
+                                const xt::xtensor<double, 2>& x);
 
 /// Tabulate the orthonormal polynomial basis, and derivatives, at
 /// points on the reference cell.
@@ -203,7 +202,7 @@ xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// (number of points, geometric dimension).
 void tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d, int n,
-              const xt::xarray<double>& x);
+              const xt::xtensor<double, 2>& x);
 
 /// Dimension of a polynomial space
 /// @param[in] cell The cell type

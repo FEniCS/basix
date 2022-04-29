@@ -80,7 +80,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   const std::size_t psize = phi.shape(1);
 
   // Create points at nodes on interior
-  const auto points
+  const xt::xtensor<double, 2> points
       = lattice::create(celltype, degree, lattice::type::equispaced, false);
   const std::size_t ndofs = points.shape(0);
   x[tdim].push_back(points);
@@ -94,8 +94,8 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   {
     phi1 = xt::view(polyset::tabulate(celltype, degree - 2, 0, pts), 0,
                     xt::all(), xt::all());
-    auto p = pts;
-    bubble = p * (1.0 - p);
+    auto p0 = xt::col(pts, 0);
+    bubble = p0 * (1.0 - p0);
     break;
   }
   case cell::type::triangle:
@@ -154,7 +154,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
 
-  return FiniteElement(element::family::bubble, celltype, degree, {1}, wcoeffs,
+  return FiniteElement(element::family::bubble, celltype, degree, {}, wcoeffs,
                        x, M, maps::type::identity, discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

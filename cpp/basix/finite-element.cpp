@@ -104,13 +104,8 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
       // Evaluate polynomial basis at x[d]
       const xt::xtensor<double, 2>& x_e = x[d][e];
       xt::xtensor<double, 2> P;
-      if (x_e.shape(1) == 1 and x_e.shape(0) != 0)
-      {
-        auto pts = xt::view(x_e, xt::all(), 0);
-        P = xt::view(polyset::tabulate(cell_type, degree, 0, pts), 0, xt::all(),
-                     xt::all());
-      }
-      else if (x_e.shape(0) != 0)
+
+      if (x_e.shape(0) != 0)
       {
         P = xt::view(polyset::tabulate(cell_type, degree, 0, x_e), 0, xt::all(),
                      xt::all());
@@ -475,6 +470,57 @@ FiniteElement::FiniteElement(
     const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree, element::lagrange_variant lvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    map_type, discontinuous, highest_complete_degree,
+                    highest_degree, lvariant, element::dpc_variant::unset,
+                    tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::dpc_variant dvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    map_type, discontinuous, highest_complete_degree,
+                    highest_degree, element::lagrange_variant::unset, dvariant,
+                    tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    map_type, discontinuous, highest_complete_degree,
+                    highest_degree, element::lagrange_variant::unset,
+                    element::dpc_variant::unset, tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape,
+    const xt::xtensor<double, 2>& wcoeffs,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::lagrange_variant lvariant,
     element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors)
@@ -739,8 +785,15 @@ FiniteElement::FiniteElement(
 bool FiniteElement::operator==(const FiniteElement& e) const
 {
   if (family() == basix::element::family::custom
-      and e.family() == basix::element::family::custom)
-    throw std::runtime_error("== not implemented for custom elements yet.");
+      or e.family() == basix::element::family::custom)
+  {
+    return cell_type() == e.cell_type() and discontinuous() == e.discontinuous()
+           and map_type() == e.map_type() and value_shape() == e.value_shape()
+           and highest_degree() == e.highest_degree()
+           and highest_complete_degree() == e.highest_complete_degree()
+           and xt::allclose(coefficient_matrix(), e.coefficient_matrix())
+           and num_entity_dofs() == e.num_entity_dofs();
+  }
 
   return cell_type() == e.cell_type() and family() == e.family()
          and degree() == e.degree() and discontinuous() == e.discontinuous()
@@ -763,35 +816,27 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 4>
-FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
+FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x) const
 {
-  xt::xarray<double> x_copy = x;
-  if (x_copy.dimension() == 1)
-    x_copy.reshape({x_copy.shape(0), 1});
 
   auto shape = tabulate_shape(nd, x.shape(0));
   xt::xtensor<double, 4> data(shape);
-  tabulate(nd, x_copy, data);
+  tabulate(nd, x, data);
 
   return data;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
+void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
                              xt::xtensor<double, 4>& basis_data) const
 {
-  xt::xarray<double> x_copy = x;
-  if (x_copy.dimension() == 2 and x.shape(1) == 1)
-    x_copy.reshape({x.shape(0)});
-
-  if (x_copy.shape(1) != _cell_tdim)
+  if (x.shape(1) != _cell_tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
-  xt::xtensor<double, 3> basis(
-      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)),
-       x_copy.shape(0),
-       static_cast<std::size_t>(polyset::dim(_cell_type, _highest_degree))});
-  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x_copy);
   const int psize = polyset::dim(_cell_type, _highest_degree);
+  xt::xtensor<double, 3> basis(
+      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), x.shape(0),
+       static_cast<std::size_t>(psize)});
+  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());
   xt::xtensor<double, 2> B, C;
@@ -811,7 +856,7 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
-int FiniteElement::degree() const { return _degree;}
+int FiniteElement::degree() const { return _degree; }
 //-----------------------------------------------------------------------------
 int FiniteElement::highest_degree() const { return _highest_degree; }
 //-----------------------------------------------------------------------------

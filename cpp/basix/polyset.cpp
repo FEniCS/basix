@@ -49,7 +49,7 @@ void tabulate_polyset_point_derivs(xt::xtensor<double, 3>& P, std::size_t,
 // range is rescaled here to [0, 1].
 void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                                   std::size_t nderiv,
-                                  const xt::xtensor<double, 1>& x)
+                                  const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(0) > 0);
   const std::size_t m = (n + 1);
@@ -59,17 +59,17 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 
   std::fill(P.begin(), P.end(), 0.0);
   xt::view(P, 0, xt::all(), 0) = 1.0;
-
+  const auto x0 = xt::col(x, 0);
   if (n == 0)
     return;
 
   { // scope
     auto result = xt::view(P, 0, xt::all(), xt::all());
-    xt::col(result, 1) = (x * 2.0 - 1.0) * xt::col(result, 0);
+    xt::col(result, 1) = (x0 * 2.0 - 1.0) * xt::col(result, 0);
     for (std::size_t p = 2; p <= n; ++p)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(p);
-      xt::col(result, p) = (x * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
+      xt::col(result, p) = (x0 * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
                            - xt::col(result, p - 2) * a;
     }
   }
@@ -81,7 +81,7 @@ void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t n,
     for (std::size_t p = 1; p <= n; ++p)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(p);
-      xt::col(result, p) = (x * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
+      xt::col(result, p) = (x0 * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
                            + 2 * k * xt::col(result0, p - 1) * (a + 1.0)
                            - xt::col(result, p - 2) * a;
     }
@@ -868,7 +868,7 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
             = (x1 * 2.0 - 1.0) * xt::col(result, hex_idx(0, py - 1, pz))
                   * (a + 1.0)
               - xt::col(result, hex_idx(0, py - 2, pz)) * a;
-        }
+      }
     }
   }
   // for larger values of ky
@@ -1027,9 +1027,8 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 
   // Indexing for hexahedral basis functions
   auto prism_idx
-      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t {
-    return (n + 1) * idx(py, px) + pz;
-  };
+      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t
+  { return (n + 1) * idx(py, px) + pz; };
 
   // f3 = ((1 - y) / 2)^2
   const auto f3 = xt::square(1.0 - (x1 * 2.0 - 1.0)) * 0.25;
@@ -1168,14 +1167,13 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 } // namespace
 //-----------------------------------------------------------------------------
 void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
-                       int n, const xt::xarray<double>& x)
+                       int n, const xt::xtensor<double, 2>& x)
 {
   switch (celltype)
   {
   case cell::type::point:
     return tabulate_polyset_point_derivs(P, d, n, x);
   case cell::type::interval:
-    assert(x.dimension() == 1);
     return tabulate_polyset_line_derivs(P, d, n, x);
   case cell::type::triangle:
     return tabulate_polyset_triangle_derivs(P, d, n, x);
@@ -1195,7 +1193,7 @@ void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
-                                         const xt::xarray<double>& x)
+                                         const xt::xtensor<double, 2>& x)
 {
   xt::xtensor<double, 3> out(
       {static_cast<std::size_t>(polyset::nderivs(celltype, n)), x.shape(0),

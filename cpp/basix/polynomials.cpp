@@ -11,7 +11,7 @@ using namespace basix;
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> polynomials::tabulate(polynomials::type polytype,
                                              cell::type celltype, int d,
-                                             const xt::xarray<double>& x)
+                                             const xt::xtensor<double, 2>& x)
 {
   switch (polytype)
   {

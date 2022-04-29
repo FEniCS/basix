@@ -225,9 +225,47 @@ public:
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
       const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
       maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree, element::lagrange_variant lvariant,
+      element::dpc_variant dvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree, element::lagrange_variant lvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree, element::dpc_variant dvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
       int highest_degree,
-      element::lagrange_variant lvariant = element::lagrange_variant::unset,
-      element::dpc_variant dvariant = element::dpc_variant::unset,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {});
@@ -286,7 +324,8 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
+  xt::xtensor<double, 4> tabulate(int nd,
+                                  const xt::xtensor<double, 2>& x) const;
 
   /// Compute basis values and derivatives at set of points.
   ///
@@ -313,7 +352,7 @@ public:
   ///
   /// @todo Remove all internal dynamic memory allocation, pass scratch
   /// space as required
-  void tabulate(int nd, const xt::xarray<double>& x,
+  void tabulate(int nd, const xt::xtensor<double, 2>& x,
                 xt::xtensor<double, 4>& basis) const;
 
   /// Get the element cell type
@@ -442,25 +481,20 @@ public:
     case maps::type::identity:
       return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
     case maps::type::L2Piola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::l2_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::l2_piola(u, U, J, detJ, K); };
     case maps::type::covariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::covariant_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::covariant_piola(u, U, J, detJ, K); };
     case maps::type::contravariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::contravariant_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::contravariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleCovariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::double_covariant_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::double_covariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleContravariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::double_contravariant_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::double_contravariant_piola(u, U, J, detJ, K); };
     default:
       throw std::runtime_error("Map not implemented");
     }

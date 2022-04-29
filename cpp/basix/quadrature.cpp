@@ -240,7 +240,7 @@ std::pair<xt::xtensor<double, 2>, std::vector<double>>
 compute_gauss_jacobi_rule(double a, int m)
 {
   /// @note Computes on [-1, 1]
-  std::vector<double> pts = compute_gauss_jacobi_points(a, m);
+  const std::vector<double> pts = compute_gauss_jacobi_points(a, m);
   const xt::xtensor<double, 1> Jd
       = xt::row(compute_jacobi_deriv(a, m, 1, pts), 1);
 

@@ -628,7 +628,6 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
                        M, maps::type::identity, discontinuous, degree, degree,
-                       element::lagrange_variant::unset,
                        element::dpc_variant::legendre);
 }
 //-----------------------------------------------------------------------------
@@ -1045,7 +1044,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
                        M, maps::type::identity, discontinuous, degree, degree,
-                       element::lagrange_variant::unset, variant);
+                       variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_div(

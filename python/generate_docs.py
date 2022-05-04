@@ -126,8 +126,8 @@ def get_docstring(matches):
             else:
                 p = i
                 pdoc = "TODO: document this"
-            params[p] = "\n    ".join(pdoc.split("\n"))
-        return f"{info} : {typename}\n    {params[info]}"
+            params[p] = "\n        ".join(pdoc.split("\n"))
+        return f"{info} ({typename}): {params[info]}"
 
     if info_type == "return":
         assert typename is not None
@@ -136,7 +136,7 @@ def get_docstring(matches):
             returns.append("TODO: document this")
         assert len(returns) == 1
         returns = "\n    ".join(returns[0].split("\n"))
-        return f"{typename}\n    {returns}"
+        return f"{typename}: {returns}"
 
 
 def generate_docs():

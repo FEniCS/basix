@@ -4,7 +4,7 @@ import numpy as _np
 import numpy.typing as _npt
 try:
     import numba
-    from numba.typed import List
+    from numba.typed import List, Dict
     from numba.core import types
 except ImportError:
     raise RuntimeError("You must have Numba installed to use the Numba helper functions.")
@@ -62,7 +62,7 @@ def apply_dof_transformation(
 
 @numba.njit
 def apply_dof_transformation_interval(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on an interval.
@@ -78,7 +78,7 @@ def apply_dof_transformation_interval(
 
 @numba.njit
 def apply_dof_transformation_triangle(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on a triangle.
@@ -95,7 +95,7 @@ def apply_dof_transformation_triangle(
 
 @numba.njit
 def apply_dof_transformation_quadrilateral(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on an quadrilateral.
@@ -112,7 +112,7 @@ def apply_dof_transformation_quadrilateral(
 
 @numba.njit
 def apply_dof_transformation_tetrahedron(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on a tetrahedron.
@@ -129,7 +129,7 @@ def apply_dof_transformation_tetrahedron(
 
 @numba.njit
 def apply_dof_transformation_hexahedron(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on a hexahedron.
@@ -146,7 +146,7 @@ def apply_dof_transformation_hexahedron(
 
 @numba.njit
 def apply_dof_transformation_prism(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on an prism.
@@ -163,7 +163,7 @@ def apply_dof_transformation_prism(
 
 @numba.njit
 def apply_dof_transformation_pyramid(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on an prism.
@@ -203,7 +203,7 @@ def apply_dof_transformation_to_transpose(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_interval(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on an interval.
@@ -219,7 +219,7 @@ def apply_dof_transformation_to_transpose_interval(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_triangle(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on a triangle.
@@ -236,7 +236,7 @@ def apply_dof_transformation_to_transpose_triangle(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_quadrilateral(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on an quadrilateral.
@@ -253,7 +253,7 @@ def apply_dof_transformation_to_transpose_quadrilateral(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_tetrahedron(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on a tetrahedron.
@@ -270,7 +270,7 @@ def apply_dof_transformation_to_transpose_tetrahedron(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_hexahedron(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on a hexahedron.
@@ -287,7 +287,7 @@ def apply_dof_transformation_to_transpose_hexahedron(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_prism(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on an prism.
@@ -304,7 +304,7 @@ def apply_dof_transformation_to_transpose_prism(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_pyramid(
-    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    entity_transformations: Dict[_npt.NDArray[_np.float64]], entity_dofs: Dict[_npt.NDArray[_np.int32]],
     data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on an prism.

@@ -50,7 +50,7 @@ $(R, \mathcal{V}, \mathcal{L})$, where:
 
 The basis functions of the finite element are the polynomials in
 $\mathcal{V}$ such that one functional in $\mathcal{L}$ gives the value
-1 for that function and all other functions in $\mathcal{L}$ give 0. The
+1 for that function and all other functionals in $\mathcal{L}$ give 0. The
 examples given above define a degree 2 Lagrange space on a triangle; the
 basis functions of this space are shown in \autoref{fig:fe}.
 
@@ -96,16 +96,48 @@ Basix allows users to:
   arbitrary meshes; and
 - interpolate into a finite element space and between finite element
   spaces.
+- define custom finite elements.
 
-In many FEM libraries, the definitions of elements are included within
-the code of the library rather than separating the element definition
-and tabulation into a standalone library as we do. Following the latter
-approach allows us to adjust how elements are implemented
-and add new elements to Basix without needing to make changes to the rest
-of the library. This also allows users who want to create custom
+In order to compute the basis functions of a finite element, each functional
+in $\mathcal{L}$ can be applied to the elements of a basis of the polynomial
+set $\mathcal{V}$ to compute the *dual matrix*. This dual matrix can then be
+inverted to obtain the coefficients that define the finite element basis
+functions in terms of the basis of $\mathcal{V}$. In NGSolve [@ngsolve], the
+functionals for this approach are implemented in C++ using lambda functions.
+In MFEM [@mfem], the functionals are described in C++ using a set of points and
+weights: for point evaluation functionals, there will be one point and the
+weight will be 1; for integral functions, quadrature points and weights are used.
+In FIAT [@fiat] and Symfem [@symfem], the functionals are implemented as
+Python objects. In Basix, we follow an approach similar to that taken my MFEM,
+and define the functionals in C++ using a set of points and weights.
+
+In many other libraries---including Dune [@dune] and Bempp [@bempp; @bempp-cl]---the
+basis functions of the finite element space are implemented explicitly.
+
+In a large number of finite element libraries---including NGSolve and MFEM---the
+finite element definitions are included in the core of the library. In Dune,
+the finite element definitions are separated into the `dune-localfunctions` module.
+FIAT and Basix are the finite element definition and tabulations libraries used
+by legacy FEniCS and FEniCSx (respectively). Symfem is a standalone element definition
+libraries that computed basis functions symbolically. By separating the finite element
+definitions from the core of the code, users are able to tabulate elements and
+obtain information about them without having to interact with the other components of the library.
+In FEniCSx for example, this allows users who want to create custom
 integration kernels to get information about elements from Basix without
 having to extract information from the core of the full finite element
 library.
+
+An additional advantage of this modular approach is that it allows
+us to adjust how elements are implemented
+and add new elements without needing to make changes to the other components
+of FEniCSx.
+
+For some high order finite elements on tensor product cells (quadrilaterals and hexahedra),
+elements can be more efficiently tabulated using sum factorisation: the elements
+can be represented as the product of elements defined on an interval, and so can be
+tabulated by combining copies of tabulated data on an interval rather than tabulating on the full cell.
+This tensor product evaluation is implemented in FInAT [@finat1; @finat2] and deal.ii [@dealii].
+We have experimented with supporting these factorisations in Basix, and plan to support them more fully in a future release.
 
 The Python library FIAT [@fiat] (which is part of the legacy FEniCS
 library alongside UFL, FFC [@ffc] and DOLFIN [@dolfin]) serves a
@@ -152,6 +184,7 @@ The following elements are supported on a triangle:
 - Nédélec second kind [@nedelec2]
 - Brezzi--Douglas--Marini [@bdm]
 - Regge [@regge; @regge2]
+- Hellan--Herrmann--Johnson [@hhj]
 - Crouzeix--Raviart [@cr]
 - bubble
 

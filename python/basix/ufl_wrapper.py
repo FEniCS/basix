@@ -81,7 +81,18 @@ def _compute_signature(element: _basix.finite_element.FiniteElement):
 def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
                    degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
                    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False) -> BasixElement:
-    """Create a UFL element using Basix."""
+    """Create a UFL element using Basix.
+
+    Args:
+        family (Union[basix.ElementFamily, str]): The element's family as a Basix enum or a string.
+        cell (Union[basix.CellType, str]): The cell type as a Basix enum or a string.
+        degree (int): The degree of the finite element.
+        lagrange_variant (basix.LagrangeVariant): The Lagrange variant. This can be used to control which points are
+            used to define a Lagrange element's functionals.
+        dpc_variant (basix.DPCVariant): The DPC varint. This can be used to control which points are
+            used to define a DPC element's functionals.
+        discontinuous (bool): If set to True, the discontinuous version of this element will be created.
+    """
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
     if isinstance(family, str):
@@ -105,7 +116,21 @@ def create_vector_element(
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
     dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False
 ) -> _ufl.VectorElement:
-    """Create a UFL vector element using Basix."""
+    """Create a UFL vector element using Basix.
+
+    A vector element is an element which uses multiple copies of a scalar element to represent a
+    vector-valued function.
+
+    Args:
+        family (Union[basix.ElementFamily, str]): The element's family as a Basix enum or a string.
+        cell (Union[basix.CellType, str]): The cell type as a Basix enum or a string.
+        degree (int): The degree of the finite element.
+        lagrange_variant (basix.LagrangeVariant): The Lagrange variant. This can be used to control which points are
+            used to define a Lagrange element's functionals.
+        dpc_variant (basix.DPCVariant): The DPC varint. This can be used to control which points are
+            used to define a DPC element's functionals.
+        discontinuous (bool): If set to True, the discontinuous version of this element will be created.
+    """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return _ufl.VectorElement(e)
 
@@ -115,6 +140,20 @@ def create_tensor_element(
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
     dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False
 ) -> _ufl.TensorElement:
-    """Create a UFL tensor element using Basix."""
+    """Create a UFL tensor element using Basix.
+
+    A tensor element is an element which uses multiple copies of a scalar element to represent a
+    tensor-valued function.
+
+    Args:
+        family (Union[basix.ElementFamily, str]): The element's family as a Basix enum or a string.
+        cell (Union[basix.CellType, str]): The cell type as a Basix enum or a string.
+        degree (int): The degree of the finite element.
+        lagrange_variant (basix.LagrangeVariant): The Lagrange variant. This can be used to control which points are
+            used to define a Lagrange element's functionals.
+        dpc_variant (basix.DPCVariant): The DPC varint. This can be used to control which points are
+            used to define a DPC element's functionals.
+        discontinuous (bool): If set to True, the discontinuous version of this element will be created.
+    """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return _ufl.TensorElement(e)

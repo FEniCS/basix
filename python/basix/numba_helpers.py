@@ -14,8 +14,8 @@ except ImportError:
 
 @_numba.njit
 def apply_dof_transformation(
-    tdim: int, edge_count: int, face_count: int, entity_transformations: ListT[int], entity_dofs: ListT[int],
-    data: _np.array, cell_info: int, face_types: ListT[str]
+    tdim: int, edge_count: int, face_count: int, entity_transformations: _ListT[int], entity_dofs: _ListT[int],
+    data: _np.array, cell_info: int, face_types: _ListT[str]
 ):
     """Apply dof transformations to some data.
 
@@ -182,8 +182,8 @@ def apply_dof_transformation_pyramid(
 
 @_numba.njit
 def apply_dof_transformation_to_transpose(
-    tdim: int, edge_count: int, face_count: int, entity_transformations: ListT[int], entity_dofs: ListT[int],
-    data: _np.array, cell_info: int, face_types: ListT[str]
+    tdim: int, edge_count: int, face_count: int, entity_transformations: _ListT[int], entity_dofs: _ListT[int],
+    data: _np.array, cell_info: int, face_types: _ListT[str]
 ):
     """Apply dof transformations to some transposed data.
 

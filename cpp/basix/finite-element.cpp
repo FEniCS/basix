@@ -104,13 +104,8 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
       // Evaluate polynomial basis at x[d]
       const xt::xtensor<double, 2>& x_e = x[d][e];
       xt::xtensor<double, 2> P;
-      if (x_e.shape(1) == 1 and x_e.shape(0) != 0)
-      {
-        auto pts = xt::view(x_e, xt::all(), 0);
-        P = xt::view(polyset::tabulate(cell_type, degree, 0, pts), 0, xt::all(),
-                     xt::all());
-      }
-      else if (x_e.shape(0) != 0)
+
+      if (x_e.shape(0) != 0)
       {
         P = xt::view(polyset::tabulate(cell_type, degree, 0, x_e), 0, xt::all(),
                      xt::all());
@@ -821,35 +816,27 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 4>
-FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
+FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x) const
 {
-  xt::xarray<double> x_copy = x;
-  if (x_copy.dimension() == 1)
-    x_copy.reshape({x_copy.shape(0), 1});
 
   auto shape = tabulate_shape(nd, x.shape(0));
   xt::xtensor<double, 4> data(shape);
-  tabulate(nd, x_copy, data);
+  tabulate(nd, x, data);
 
   return data;
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
+void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
                              xt::xtensor<double, 4>& basis_data) const
 {
-  xt::xarray<double> x_copy = x;
-  if (x_copy.dimension() == 2 and x.shape(1) == 1)
-    x_copy.reshape({x.shape(0)});
-
-  if (x_copy.shape(1) != _cell_tdim)
+  if (x.shape(1) != _cell_tdim)
     throw std::runtime_error("Point dim does not match element dim.");
 
-  xt::xtensor<double, 3> basis(
-      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)),
-       x_copy.shape(0),
-       static_cast<std::size_t>(polyset::dim(_cell_type, _highest_degree))});
-  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x_copy);
   const int psize = polyset::dim(_cell_type, _highest_degree);
+  xt::xtensor<double, 3> basis(
+      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), x.shape(0),
+       static_cast<std::size_t>(psize)});
+  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());
   xt::xtensor<double, 2> B, C;
@@ -869,7 +856,7 @@ void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
-int FiniteElement::degree() const { return _degree;}
+int FiniteElement::degree() const { return _degree; }
 //-----------------------------------------------------------------------------
 int FiniteElement::highest_degree() const { return _highest_degree; }
 //-----------------------------------------------------------------------------

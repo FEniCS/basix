@@ -55,7 +55,8 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
   x[0] = std::vector<xt::xtensor<double, 2>>(
       cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
   M[0] = std::vector<xt::xtensor<double, 3>>(
-      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 3>({0, tdim * tdim, 0}));
+      cell::num_sub_entities(celltype, 0),
+      xt::xtensor<double, 3>({0, tdim * tdim, 0}));
 
   // Loop over edge and higher dimension entities
   for (std::size_t d = 1; d < topology.size(); ++d)
@@ -85,12 +86,8 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
         cell::type ct = cell::sub_entity_type(celltype, d, e);
 
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
-        const auto [_pts, wts]
+        const auto [pts, wts]
             = quadrature::make_quadrature(ct, degree + (degree + 1 - d));
-
-        xt::xarray<double> pts = _pts;
-        if (d == 1)
-          pts.reshape({pts.shape(0), 1});
 
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);

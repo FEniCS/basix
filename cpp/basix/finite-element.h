@@ -324,7 +324,8 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
+  xt::xtensor<double, 4> tabulate(int nd,
+                                  const xt::xtensor<double, 2>& x) const;
 
   /// Compute basis values and derivatives at set of points.
   ///
@@ -351,7 +352,7 @@ public:
   ///
   /// @todo Remove all internal dynamic memory allocation, pass scratch
   /// space as required
-  void tabulate(int nd, const xt::xarray<double>& x,
+  void tabulate(int nd, const xt::xtensor<double, 2>& x,
                 xt::xtensor<double, 4>& basis) const;
 
   /// Get the element cell type
@@ -480,25 +481,20 @@ public:
     case maps::type::identity:
       return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
     case maps::type::L2Piola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::l2_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::l2_piola(u, U, J, detJ, K); };
     case maps::type::covariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::covariant_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::covariant_piola(u, U, J, detJ, K); };
     case maps::type::contravariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::contravariant_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::contravariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleCovariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::double_covariant_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::double_covariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleContravariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K) {
-        maps::double_contravariant_piola(u, U, J, detJ, K);
-      };
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::double_contravariant_piola(u, U, J, detJ, K); };
     default:
       throw std::runtime_error("Map not implemented");
     }

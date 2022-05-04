@@ -2,10 +2,11 @@
 
 import numpy as _np
 import numpy.typing as _npt
+from types import List as _ListT
+from types import Dict as _Dict
 try:
     import numba as _numba
     from numba.typed import List as _List
-    from numba.typed import Dict as _Dict
     from numba.core import types as _types
 except ImportError:
     raise RuntimeError("You must have Numba installed to use the Numba helper functions.")
@@ -13,8 +14,8 @@ except ImportError:
 
 @_numba.njit
 def apply_dof_transformation(
-    tdim: int, edge_count: int, face_count: int, entity_transformations: _List[int], entity_dofs: _List[int],
-    data: _np.array, cell_info: int, face_types: _List[str]
+    tdim: int, edge_count: int, face_count: int, entity_transformations: ListT[int], entity_dofs: ListT[int],
+    data: _np.array, cell_info: int, face_types: ListT[str]
 ):
     """Apply dof transformations to some data.
 
@@ -181,8 +182,8 @@ def apply_dof_transformation_pyramid(
 
 @_numba.njit
 def apply_dof_transformation_to_transpose(
-    tdim: int, edge_count: int, face_count: int, entity_transformations: _List[int], entity_dofs: _List[int],
-    data: _np.array, cell_info: int, face_types: _List[str]
+    tdim: int, edge_count: int, face_count: int, entity_transformations: ListT[int], entity_dofs: ListT[int],
+    data: _np.array, cell_info: int, face_types: ListT[str]
 ):
     """Apply dof transformations to some transposed data.
 

@@ -103,10 +103,8 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         family: The element's family as a Basix enum or a string.
         cell: The cell type as a Basix enum or a string.
         degree: The degree of the finite element.
-        lagrange_variant: The Lagrange variant. This can be used to control which points are used to
-            define a Lagrange element's functionals.
-        dpc_variant: The DPC varint. This can be used to control which points are used to define a DPC
-            element's functionals.
+        lagrange_variant: The variant of Lagrange to be used.
+        dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
     """
     if isinstance(cell, str):
@@ -141,10 +139,8 @@ def create_vector_element(
         family: The element's family as a Basix enum or a string.
         cell: The cell type as a Basix enum or a string.
         degree: The degree of the finite element.
-        lagrange_variant: The Lagrange variant. This can be used to control which points are used to
-            define a Lagrange element's functionals.
-        dpc_variant: The DPC varint. This can be used to control which points are used to define a DPC
-            element's functionals.
+        lagrange_variant: The variant of Lagrange to be used.
+        dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
@@ -165,10 +161,8 @@ def create_tensor_element(
         family: The element's family as a Basix enum or a string.
         cell: The cell type as a Basix enum or a string.
         degree: The degree of the finite element.
-        lagrange_variant: The Lagrange variant. This can be used to control which points are used to
-            define a Lagrange element's functionals.
-        dpc_variant: The DPC varint. This can be used to control which points are used to define a DPC
-            element's functionals.
+        lagrange_variant: The variant of Lagrange to be used.
+        dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)

@@ -108,7 +108,7 @@ In MFEM [@mfem], the functionals are described in C++ using a set of points and
 weights: for point evaluation functionals, there will be one point and the
 weight will be 1; for integral functions, quadrature points and weights are used.
 In FIAT [@fiat] and Symfem [@symfem], the functionals are implemented as
-Python objects. In Basix, we follow an approach similar to that taken my MFEM,
+Python objects. In Basix, we follow an approach similar to that taken by MFEM,
 and define the functionals in C++ using a set of points and weights.
 
 In many other libraries---including Dune [@dune] and Bempp [@bempp; @bempp-cl]---the

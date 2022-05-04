@@ -7,10 +7,10 @@ def string_to_type(rule: str) -> _QT:
     """Convert a string to a Basix QuadratureType enum.
 
     Args:
-        rule (str): The quadrature rule as a string.
+        rule: The quadrature rule as a string.
 
     Returns:
-        basix.QuadratureRule: The quadrature type
+        The quadrature type
     """
     if rule == "default":
         return _QT.Default
@@ -31,9 +31,9 @@ def type_to_string(quadraturetype: _QT) -> str:
     """Convert a Basix QuadratureType enum to a string.
 
     Args:
-        quadraturetype (basix.QuadratureType): The quadrature type
+        quadraturetype: The quadrature type
 
     Returns:
-        str: The quadrature rule as a string.
+        The quadrature rule as a string.
     """
     return quadraturetype.name

@@ -14,10 +14,10 @@ def string_to_type(cell: str) -> _CT:
     """Convert a string to a Basix CellType.
 
     Args:
-        cell (str): The name of the cell as a string.
+        cell: The name of the cell as a string.
 
     Returns:
-        basix.CellType: The cell type
+        The cell type
     """
     if not hasattr(_CT, cell):
         raise ValueError(f"Unknown cell: {cell}")
@@ -28,9 +28,9 @@ def type_to_string(celltype: _CT) -> str:
     """Convert a Basix CellType to a string.
 
     Args:
-        celltype (basix.CellType): The cell type.
+        celltype: The cell type.
 
     Returns:
-        str: The name of the cell as a string.
+        The name of the cell as a string.
     """
     return celltype.name

@@ -39,7 +39,14 @@ class BasixElement(_FiniteElementBase):
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:
-    """Convert map type to a UFL string."""
+    """Convert map type to a UFL string.
+
+    Args:
+        map_type: A map type.
+
+    Returns:
+        A string representing this map type.
+    """
     if map_type == _basix.MapType.identity:
         return "identity"
     if map_type == _basix.MapType.L2Piola:
@@ -55,8 +62,17 @@ def _map_type_to_string(map_type: _basix.MapType) -> str:
     raise ValueError(f"Unsupported map type: {map_type}")
 
 
-def _compute_signature(element: _basix.finite_element.FiniteElement):
-    """Compute a signature of a custom element."""
+def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
+    """Compute a signature of a custom element.
+
+    Args:
+        element: A Basix custom element.
+
+    Returns:
+        A hash identifying this element.
+    """
+    assert element.family == _basix.ElementFamily.custom
+
     signature = (f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
                  f"{element.discontinuous}, {element.highest_complete_degree}, {element.highest_degree}, ")
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
@@ -84,14 +100,14 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
     """Create a UFL element using Basix.
 
     Args:
-        family (Union[basix.ElementFamily, str]): The element's family as a Basix enum or a string.
-        cell (Union[basix.CellType, str]): The cell type as a Basix enum or a string.
-        degree (int): The degree of the finite element.
-        lagrange_variant (basix.LagrangeVariant): The Lagrange variant. This can be used to control which points are
-            used to define a Lagrange element's functionals.
-        dpc_variant (basix.DPCVariant): The DPC varint. This can be used to control which points are
-            used to define a DPC element's functionals.
-        discontinuous (bool): If set to True, the discontinuous version of this element will be created.
+        family: The element's family as a Basix enum or a string.
+        cell: The cell type as a Basix enum or a string.
+        degree: The degree of the finite element.
+        lagrange_variant: The Lagrange variant. This can be used to control which points are used to
+            define a Lagrange element's functionals.
+        dpc_variant: The DPC varint. This can be used to control which points are used to define a DPC
+            element's functionals.
+        discontinuous: If set to True, the discontinuous version of this element will be created.
     """
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
@@ -122,14 +138,14 @@ def create_vector_element(
     vector-valued function.
 
     Args:
-        family (Union[basix.ElementFamily, str]): The element's family as a Basix enum or a string.
-        cell (Union[basix.CellType, str]): The cell type as a Basix enum or a string.
-        degree (int): The degree of the finite element.
-        lagrange_variant (basix.LagrangeVariant): The Lagrange variant. This can be used to control which points are
-            used to define a Lagrange element's functionals.
-        dpc_variant (basix.DPCVariant): The DPC varint. This can be used to control which points are
-            used to define a DPC element's functionals.
-        discontinuous (bool): If set to True, the discontinuous version of this element will be created.
+        family: The element's family as a Basix enum or a string.
+        cell: The cell type as a Basix enum or a string.
+        degree: The degree of the finite element.
+        lagrange_variant: The Lagrange variant. This can be used to control which points are used to
+            define a Lagrange element's functionals.
+        dpc_variant: The DPC varint. This can be used to control which points are used to define a DPC
+            element's functionals.
+        discontinuous: If set to True, the discontinuous version of this element will be created.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return _ufl.VectorElement(e)
@@ -146,14 +162,14 @@ def create_tensor_element(
     tensor-valued function.
 
     Args:
-        family (Union[basix.ElementFamily, str]): The element's family as a Basix enum or a string.
-        cell (Union[basix.CellType, str]): The cell type as a Basix enum or a string.
-        degree (int): The degree of the finite element.
-        lagrange_variant (basix.LagrangeVariant): The Lagrange variant. This can be used to control which points are
-            used to define a Lagrange element's functionals.
-        dpc_variant (basix.DPCVariant): The DPC varint. This can be used to control which points are
-            used to define a DPC element's functionals.
-        discontinuous (bool): If set to True, the discontinuous version of this element will be created.
+        family: The element's family as a Basix enum or a string.
+        cell: The cell type as a Basix enum or a string.
+        degree: The degree of the finite element.
+        lagrange_variant: The Lagrange variant. This can be used to control which points are used to
+            define a Lagrange element's functionals.
+        dpc_variant: The DPC varint. This can be used to control which points are used to define a DPC
+            element's functionals.
+        discontinuous: If set to True, the discontinuous version of this element will be created.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return _ufl.TensorElement(e)

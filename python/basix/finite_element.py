@@ -8,11 +8,11 @@ def string_to_family(family: str, cell: str) -> _EF:
     """Get a Basix ElementFamily enum representing the family type on the given cell.
 
     Args:
-        family (str): The element family as a string.
-        cell (str): The cell type as a string.
+        family: The element family as a string.
+        cell: The cell type as a string.
 
     Returns:
-        basix.ElementFamily: The element family.
+        The element family.
     """
     # Family names that are valid for all cells
     families = {

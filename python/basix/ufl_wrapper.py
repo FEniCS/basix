@@ -11,6 +11,7 @@ class BasixElement(_FiniteElementBase):
     """A wrapper allowing Basix elements to be used with UFL."""
 
     def __init__(self, element: _basix.finite_element.FiniteElement):
+        """Create a basix element."""
         super().__init__(
             element.family.name, element.cell_type.name, element.degree, None, tuple(element.value_shape),
             tuple(element.value_shape))

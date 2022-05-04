@@ -14,24 +14,15 @@ def apply_dof_transformation(tdim, edge_count, face_count, entity_transformation
                              data, cell_info, face_types):
     """Apply dof transformations to some data.
 
-    Parameters
-    ----------
-    tdim : int
-        The topological dimension of the cell.
-    edge_cout : int
-        The number of edges the cell has.
-    face_count : int
-        The number of faces the cell has.
-    entity_transformations : list
-        The DOF transformations for each entity.
-    entity_dofs : list
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
-    face_types: list
-        A list of strings giving the shapes of the faces of the cell.
+    Args:
+        tdim (int): The topological dimension of the cell.
+        edge_count (int): The number of edges the cell has.
+        face_count (int): The number of faces the cell has.
+        entity_transformations (list): The DOF transformations for each entity.
+        entity_dofs (list): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
+        face_types (list): A list of strings giving the shapes of the faces of the cell.
     """
     if tdim >= 2:
         if tdim == 3:
@@ -71,16 +62,11 @@ def apply_dof_transformation_interval(entity_transformations, entity_dofs,
                                       data, cell_info):
     """Apply dof transformations to some data on an interval.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     return
 
@@ -90,16 +76,11 @@ def apply_dof_transformation_triangle(entity_transformations, entity_dofs,
                                       data, cell_info):
     """Apply dof transformations to some data on a triangle.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 3, 1, entity_transformations, entity_dofs,
                              data, cell_info, List.empty_list(types.string))
@@ -111,16 +92,11 @@ def apply_dof_transformation_quadrilateral(
 ):
     """Apply dof transformations to some data on an quadrilateral.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 4, 1, entity_transformations, entity_dofs,
                              data, cell_info, List.empty_list(types.string))
@@ -132,16 +108,11 @@ def apply_dof_transformation_tetrahedron(
 ):
     """Apply dof transformations to some data on a tetrahedron.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 6, 4, entity_transformations, entity_dofs,
                              data, cell_info, List(["triangle"] * 4))
@@ -153,16 +124,11 @@ def apply_dof_transformation_hexahedron(
 ):
     """Apply dof transformations to some data on a hexahedron.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 12, 6, entity_transformations, entity_dofs,
                              data, cell_info, List(["quadrilateral"] * 6))
@@ -174,16 +140,11 @@ def apply_dof_transformation_prism(
 ):
     """Apply dof transformations to some data on an prism.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 9, 5, entity_transformations, entity_dofs,
                              data, cell_info, List(["triangle"] + ["quadrilateral"] * 4 + ["triangle"]))
@@ -195,16 +156,11 @@ def apply_dof_transformation_pyramid(
 ):
     """Apply dof transformations to some data on an prism.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 8, 5, entity_transformations, entity_dofs,
                              data, cell_info, List(["quadrilateral"] + ["triangle"] * 4))
@@ -215,24 +171,15 @@ def apply_dof_transformation_to_transpose(tdim, edge_count, face_count, entity_t
                                           data, cell_info, face_types):
     """Apply dof transformations to some transposed data.
 
-    Parameters
-    ----------
-    tdim : int
-        The topological dimension of the cell.
-    edge_cout : int
-        The number of edges the cell has.
-    face_count : int
-        The number of faces the cell has.
-    entity_transformations : list
-        The DOF transformations for each entity.
-    entity_dofs : list
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
-    face_types: list
-        A list of strings giving the shapes of the faces of the cell.
+    Args:
+        tdim (int): The topological dimension of the cell.
+        edge_count (int): The number of edges the cell has.
+        face_count (int): The number of faces the cell has.
+        entity_transformations (list): The DOF transformations for each entity.
+        entity_dofs (list): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
+        face_types (list): A list of strings giving the shapes of the faces of the cell.
     """
     transposed_data = data.transpose().copy()
     apply_dof_transformation(tdim, edge_count, face_count, entity_transformations, entity_dofs,
@@ -245,16 +192,11 @@ def apply_dof_transformation_to_transpose_interval(entity_transformations, entit
                                                    data, cell_info):
     """Apply dof transformations to some transposed data on an interval.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     return
 
@@ -264,16 +206,11 @@ def apply_dof_transformation_to_transpose_triangle(entity_transformations, entit
                                                    data, cell_info):
     """Apply dof transformations to some transposed data on a triangle.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(2, 3, 1, entity_transformations, entity_dofs,
                                           data, cell_info, List.empty_list(types.string))
@@ -285,16 +222,11 @@ def apply_dof_transformation_to_transpose_quadrilateral(
 ):
     """Apply dof transformations to some transposed data on an quadrilateral.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(2, 4, 1, entity_transformations, entity_dofs,
                                           data, cell_info, List.empty_list(types.string))
@@ -306,16 +238,11 @@ def apply_dof_transformation_to_transpose_tetrahedron(
 ):
     """Apply dof transformations to some transposed data on a tetrahedron.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 6, 4, entity_transformations, entity_dofs,
                                           data, cell_info, List(["triangle"] * 4))
@@ -327,16 +254,11 @@ def apply_dof_transformation_to_transpose_hexahedron(
 ):
     """Apply dof transformations to some transposed data on a hexahedron.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 12, 6, entity_transformations, entity_dofs,
                                           data, cell_info, List(["quadrilateral"] * 6))
@@ -348,16 +270,11 @@ def apply_dof_transformation_to_transpose_prism(
 ):
     """Apply dof transformations to some transposed data on an prism.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 9, 5, entity_transformations, entity_dofs,
                                           data, cell_info, List(["triangle"] + ["quadrilateral"] * 4 + ["triangle"]))
@@ -369,16 +286,11 @@ def apply_dof_transformation_to_transpose_pyramid(
 ):
     """Apply dof transformations to some transposed data on an prism.
 
-    Parameters
-    ----------
-    entity_transformations : Dict(ndarray(float64))
-        The DOF transformations for each entity.
-    entity_dofs : Dict(ndarray(int32))
-        The number of DOFs on each entity.
-    data : np.array
-        The data. This will be changed by this function.
-    cell_info : int
-        An integer representing the orientations of the subentities of the cell.
+    Args:
+        entity_transformations (Dict(ndarray(float64))): The DOF transformations for each entity.
+        entity_dofs (Dict(ndarray(int32))): The number of DOFs on each entity.
+        data (np.array): The data. This will be changed by this function.
+        cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 8, 5, entity_transformations, entity_dofs,
                                           data, cell_info, List(["quadrilateral"] + ["triangle"] * 4))

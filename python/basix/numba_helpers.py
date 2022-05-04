@@ -2,8 +2,8 @@
 
 import numpy as _np
 import numpy.typing as _npt
-from types import List as _ListT
-from types import Dict as _Dict
+from typing import List as _ListT
+from typing import Dict as _Dict
 try:
     import numba as _numba
     from numba.typed import List as _List

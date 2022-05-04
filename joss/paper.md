@@ -119,7 +119,7 @@ finite element definitions are included in the core of the library. In Dune,
 the finite element definitions are separated into the `dune-localfunctions` module.
 FIAT and Basix are the finite element definition and tabulations libraries used
 by legacy FEniCS and FEniCSx (respectively). Symfem is a standalone element definition
-libraries that computed basis functions symbolically. By separating the finite element
+library that computed basis functions symbolically. By separating the finite element
 definitions from the core of the code, users are able to tabulate elements and
 obtain information about them without having to interact with the other components of the library.
 In FEniCSx for example, this allows users who want to create custom

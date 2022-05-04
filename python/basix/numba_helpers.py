@@ -1,6 +1,7 @@
 """Helper functions for writing DOLFINx custom kernels using Numba."""
 
-import numpy
+import numpy as _np
+import numpy.typing as _npt
 try:
     import numba
     from numba.typed import List
@@ -12,7 +13,7 @@ except ImportError:
 @numba.njit
 def apply_dof_transformation(
     tdim: int, edge_count: int, face_count: int, entity_transformations: List[int], entity_dofs: List[int],
-    data: numpy.array, cell_info: int, face_types: List[str]
+    data: _np.array, cell_info: int, face_types: List[str]
 ):
     """Apply dof transformations to some data.
 
@@ -22,7 +23,7 @@ def apply_dof_transformation(
         face_count (int): The number of faces the cell has.
         entity_transformations (list): The DOF transformations for each entity.
         entity_dofs (list): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
         face_types (list): A list of strings giving the shapes of the faces of the cell.
     """
@@ -42,7 +43,7 @@ def apply_dof_transformation(
             if edofs == 0:
                 continue
             if cell_info >> (face_start + e) & 1:
-                data[dofstart:dofstart+edofs] = numpy.dot(edge_reflection, data[dofstart:dofstart+edofs])
+                data[dofstart:dofstart+edofs] = _np.dot(edge_reflection, data[dofstart:dofstart+edofs])
             dofstart += edofs
 
         if tdim == 3:
@@ -53,23 +54,23 @@ def apply_dof_transformation(
                 if fdofs == 0:
                     continue
                 if cell_info >> (3 * f) & 1:
-                    data[dofstart:dofstart+fdofs] = numpy.dot(face_reflection, data[dofstart:dofstart+fdofs])
+                    data[dofstart:dofstart+fdofs] = _np.dot(face_reflection, data[dofstart:dofstart+fdofs])
                 for _ in range(cell_info >> (3 * f + 1) & 3):
-                    data[dofstart:dofstart+fdofs] = numpy.dot(face_rotation, data[dofstart:dofstart+fdofs])
+                    data[dofstart:dofstart+fdofs] = _np.dot(face_rotation, data[dofstart:dofstart+fdofs])
                 dofstart += fdofs
 
 
 @numba.njit
 def apply_dof_transformation_interval(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on an interval.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     return
@@ -77,15 +78,15 @@ def apply_dof_transformation_interval(
 
 @numba.njit
 def apply_dof_transformation_triangle(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on a triangle.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 3, 1, entity_transformations, entity_dofs,
@@ -94,15 +95,15 @@ def apply_dof_transformation_triangle(
 
 @numba.njit
 def apply_dof_transformation_quadrilateral(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on an quadrilateral.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 4, 1, entity_transformations, entity_dofs,
@@ -111,15 +112,15 @@ def apply_dof_transformation_quadrilateral(
 
 @numba.njit
 def apply_dof_transformation_tetrahedron(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on a tetrahedron.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 6, 4, entity_transformations, entity_dofs,
@@ -128,15 +129,15 @@ def apply_dof_transformation_tetrahedron(
 
 @numba.njit
 def apply_dof_transformation_hexahedron(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on a hexahedron.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 12, 6, entity_transformations, entity_dofs,
@@ -145,15 +146,15 @@ def apply_dof_transformation_hexahedron(
 
 @numba.njit
 def apply_dof_transformation_prism(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on an prism.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 9, 5, entity_transformations, entity_dofs,
@@ -162,15 +163,15 @@ def apply_dof_transformation_prism(
 
 @numba.njit
 def apply_dof_transformation_pyramid(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some data on an prism.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 8, 5, entity_transformations, entity_dofs,
@@ -180,7 +181,7 @@ def apply_dof_transformation_pyramid(
 @numba.njit
 def apply_dof_transformation_to_transpose(
     tdim: int, edge_count: int, face_count: int, entity_transformations: List[int], entity_dofs: List[int],
-    data: numpy.array, cell_info: int, face_types: List[str]
+    data: _np.array, cell_info: int, face_types: List[str]
 ):
     """Apply dof transformations to some transposed data.
 
@@ -190,7 +191,7 @@ def apply_dof_transformation_to_transpose(
         face_count (int): The number of faces the cell has.
         entity_transformations (list): The DOF transformations for each entity.
         entity_dofs (list): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
         face_types (list): A list of strings giving the shapes of the faces of the cell.
     """
@@ -202,15 +203,15 @@ def apply_dof_transformation_to_transpose(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_interval(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on an interval.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     return
@@ -218,15 +219,15 @@ def apply_dof_transformation_to_transpose_interval(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_triangle(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on a triangle.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(2, 3, 1, entity_transformations, entity_dofs,
@@ -235,15 +236,15 @@ def apply_dof_transformation_to_transpose_triangle(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_quadrilateral(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on an quadrilateral.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(2, 4, 1, entity_transformations, entity_dofs,
@@ -252,15 +253,15 @@ def apply_dof_transformation_to_transpose_quadrilateral(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_tetrahedron(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on a tetrahedron.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 6, 4, entity_transformations, entity_dofs,
@@ -269,15 +270,15 @@ def apply_dof_transformation_to_transpose_tetrahedron(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_hexahedron(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on a hexahedron.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 12, 6, entity_transformations, entity_dofs,
@@ -286,15 +287,15 @@ def apply_dof_transformation_to_transpose_hexahedron(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_prism(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on an prism.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 9, 5, entity_transformations, entity_dofs,
@@ -303,15 +304,15 @@ def apply_dof_transformation_to_transpose_prism(
 
 @numba.njit
 def apply_dof_transformation_to_transpose_pyramid(
-    entity_transformations: dict[numpy.ndarray[numpy.float64]], entity_dofs: dict[numpy.ndarray[numpy.int32]],
-    data: numpy.array, cell_info: int
+    entity_transformations: dict[_npt.NDArray[_np.float64]], entity_dofs: dict[_npt.NDArray[_np.int32]],
+    data: _np.array, cell_info: int
 ):
     """Apply dof transformations to some transposed data on an prism.
 
     Args:
         entity_transformations (dict(ndarray(float64))): The DOF transformations for each entity.
         entity_dofs (dict(ndarray(int32))): The number of DOFs on each entity.
-        data (numpy.array): The data. This will be changed by this function.
+        data (_np.array): The data. This will be changed by this function.
         cell_info (int): An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 8, 5, entity_transformations, entity_dofs,

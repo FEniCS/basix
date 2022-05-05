@@ -101,10 +101,22 @@ A full list of the built-in elements currently supported in Basix is included be
 In addition to these element, users can create their own custom elements via either
 C++ or Python.
 
-Basix's support for permuting and transforming DOFs of higher degree elements is
-one of its key features. As described in @dof-transformations, these operations
-are necessary when solving problems on arbitrary meshes, as differences in how
-neighbouring cells orient their sub-entities can otherwise cause issues.
+Basix's support for permuting and transforming DOFs is one of its key features. In
+an arbitrary mesh, neighbouring cells will not necessarily agree on the orientation
+of shared sub-entities. For higher degree elements, this will lead to a mismatch
+in the positioning and orientation of the DOFs associated with these sub-entities,
+as shown in \autoref{fig:mismatched-orientations}.
+Our use of permuting and transforming to rectify this issue is described in full
+detail in @dof-transformations.
+
+![Left: In a degree 4 Lagrange space on a triangle, there are three DOFs associated
+  with each edge. If two neighbouring triangles disagree on the orientation of a
+  shared edge, then the positions of the DOFs will not match up. Right: In a degree 1
+  Nédélec first kind element on a tetrahedron, there are two DOFs associated with each
+  triangular face. These DOFs will be associated with a vector tangential to the face
+  of the triangles. If two neighbouring cells do not agree on the orientation of the
+  triangle, then the directions of these vectors will not match.
+  \label{fig:mismatched-orientations}](img/mismatched-orientations.png){ width=65% }
 
 In order to compute the basis functions of a finite element, each functional
 in $\mathcal{L}$ can be applied to the elements of a basis of the polynomial

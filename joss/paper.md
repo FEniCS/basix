@@ -136,8 +136,10 @@ For some high order finite elements on tensor product cells (quadrilaterals and 
 elements can be more efficiently tabulated using sum factorisation: the elements
 can be represented as the product of elements defined on an interval, and so can be
 tabulated by combining copies of tabulated data on an interval rather than tabulating on the full cell.
-This tensor product evaluation is implemented in FInAT [@finat1; @finat2] and deal.ii [@dealii].
-We have experimented with supporting these factorisations in Basix, and plan to support them more fully in a future release.
+This tensor product evaluation is implemented in MFEM, FInAT [@finat1; @finat2] and deal.ii [@dealii].
+We have experimented with supporting these factorisations in Basix: in particular, details
+of the factorisations for Lagrange elements are currently supported in the library.
+We plan to support them more fully and for a wider range of elements in a future release.
 
 The Python library FIAT [@fiat] (which is part of the legacy FEniCS
 library alongside UFL, FFC [@ffc] and DOLFIN [@dolfin]) serves a

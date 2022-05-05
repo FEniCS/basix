@@ -67,7 +67,7 @@ jobs:
         run: python -m pip install scikit-build
 
       - name: Build sdist
-        run: python setup.py sdist --formats=bztar,gztar
+        run: python setup.py sdist --formats=gztar
 
       - uses: actions/upload-artifact@v2
         with:

@@ -115,6 +115,19 @@ def link_markup(matches):
 
 
 def insert_info(txt):
+    if "{{SUMMARY}}" in txt:
+        started = False
+        info = ""
+        with open(path("../../README.md")) as f:
+            for line in f:
+                if not started and line.strip() != "" and line[0] not in ["!", "#"]:
+                    started = True
+                if started:
+                    if line.startswith("#"):
+                        break
+                    info += line
+        info = info.replace("joss/img", "img")
+        txt = txt.replace("{{SUMMARY}}", info)
     if "{{SUPPORTED ELEMENTS}}" in txt:
         with open(path("../../README.md")) as f:
             info = "## Supported elements" + f.read().split("## Supported elements")[1].split("\n## ")[0]

@@ -96,7 +96,9 @@ Basix allows users to:
   arbitrary meshes; and
 - interpolate into a finite element space and between finite element
   spaces.
-- define custom finite elements.
+
+Basix includes a range of built-in elements, and also allows the user to define
+their own custom elements.
 
 In order to compute the basis functions of a finite element, each functional
 in $\mathcal{L}$ can be applied to the elements of a basis of the polynomial

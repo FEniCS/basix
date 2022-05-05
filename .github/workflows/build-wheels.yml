@@ -83,16 +83,16 @@ jobs:
           name: artifact
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v1.4.2
+      - uses: pypa/gh-action-pypi-publish@v1.5.0
         if: ${{ github.event.inputs.test_pypi_publish }}
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
-          repository_url: https://pypi.org/legacy/
+          repository_url: https://pypi.org
 
-      - uses: pypa/gh-action-pypi-publish@v1.4.2
+      - uses: pypa/gh-action-pypi-publish@v1.5.0
         if: ${{ github.event.inputs.pypi_publish }}
         with:
           user: __token__
           password: ${{ secrets.PYPI_TEST_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+          repository_url: https://test.pypi.org

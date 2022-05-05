@@ -54,7 +54,7 @@ $\mathcal{V}$ such that one functional in $\mathcal{L}$ gives the value
 examples given above define a degree 2 Lagrange space on a triangle; the
 basis functions of this space are shown in \autoref{fig:fe}.
 
-![The six basis functions of an order 2 Lagrange space on a triangle.
+![The six basis functions of a degree 2 Lagrange space on a triangle.
 The upper three functions arise from point evaluations at the vertices.
 The lower three arise from point evaluations at the midpoints of the
 edges. These diagrams are taken from DefElement
@@ -69,15 +69,15 @@ element space the desired continuity properties.
 
 Basix is a C++ library that creates and tabulates a range of finite
 elements on triangles, tetrahedra, quadrilaterals, hexahedra, pyramids,
-and prisms. A full list of currently supported elements is included
-below.
+and prisms. The majority of the Basix's functionality can be used via
+its Python interface. A full list of currently supported elements is
+included below.
 
 For many elements, the functionals in $\mathcal{L}$ are defined to be integrals
 on a sub-entity of the cell. Basix provides a range of quadrature rules to compute 
 these integrals, including Gauss--Jacobi, Gauss--Lobatto--Legendre,
 and Xiao--Gimbutas [@xiao-gimbutas]. Internally, Basix uses xtensor [@xtensor]
-for matrix and tensor storage and manipulation. The majority of Basix's
-functionality can be used via the library's Python interface.
+for matrix and tensor storage and manipulation.
 
 Basix forms part of FEniCSx alongside DOLFINx [@dolfinx], FFCx [@ffcx],
 and UFL [@ufl]. FEniCSx is the latest development version of FEniCS, a
@@ -92,13 +92,19 @@ Basix allows users to:
 - access geometric and topological information about reference cells;
 - apply push forward and pull back operations to map data between a
   reference cell and a physical cell;
-- permute and transform DOFs to allow higher-order elements to be used on
+- permute and transform DOFs to allow higher degree elements to be used on
   arbitrary meshes; and
 - interpolate into a finite element space and between finite element
   spaces.
 
-Basix includes a range of built-in elements, and also allows the user to define
-their own custom elements.
+A full list of the built-in elements currently supported in Basix is included below.
+In addition to these element, users can create their own custom elements via either
+C++ or Python.
+
+Basix's support for permuting and transforming DOFs of higher degree elements is
+one of its key features. As described in @dof-transformations, these operations
+are necessary when solving problems on arbitrary meshes, as differences in how
+neighbouring cells orient their sub-entities can otherwise cause issues.
 
 In order to compute the basis functions of a finite element, each functional
 in $\mathcal{L}$ can be applied to the elements of a basis of the polynomial
@@ -108,7 +114,7 @@ functions in terms of the basis of $\mathcal{V}$. In NGSolve [@ngsolve], the
 functionals for this approach are implemented in C++ using lambda functions.
 In MFEM [@mfem], the functionals are described in C++ using a set of points and
 weights: for point evaluation functionals, there will be one point and the
-weight will be 1; for integral functions, quadrature points and weights are used.
+weight will be 1; for integral functionals, quadrature points and weights are used.
 In FIAT [@fiat] and Symfem [@symfem], the functionals are implemented as
 Python objects. In Basix, we follow an approach similar to that taken by MFEM,
 and define the functionals in C++ using a set of points and weights.
@@ -134,18 +140,18 @@ us to adjust how elements are implemented
 and add new elements without needing to make changes to the other components
 of FEniCSx.
 
-For some high order finite elements on tensor product cells (quadrilaterals and hexahedra),
+For some high degree finite elements on tensor product cells (quadrilaterals and hexahedra),
 elements can be more efficiently tabulated using sum factorisation: the elements
 can be represented as the product of elements defined on an interval, and so can be
 tabulated by combining copies of tabulated data on an interval rather than tabulating on the full cell.
 This tensor product evaluation is implemented in MFEM, FInAT [@finat1; @finat2] and deal.ii [@dealii].
 We have experimented with supporting these factorisations in Basix: in particular, details
-of the factorisations for Lagrange elements are currently supported in the library.
+of the factorisations for Lagrange elements are currently provided by the library.
 We plan to support them more fully and for a wider range of elements in a future release.
 
 The Python library FIAT [@fiat] (which is part of the legacy FEniCS
 library alongside UFL, FFC [@ffc] and DOLFIN [@dolfin]) serves a
-similar purpose as Basix and can perform many of the same operations
+similar purpose to Basix and can perform many of the same operations
 (with the exception of permutations and transformations) on triangles,
 tetrahedra, quadrilaterals, and hexahedra. As FIAT is written in Python,
 the FFC library would use the information from FIAT to generate code
@@ -156,12 +162,6 @@ at runtime. This has allowed us to greatly reduce the amount of code
 generated in FFCx compared to FFC, as well as simplifying much of the
 implementation, while still allowing FFCx to access the information it
 needs using Basix's Python interface.
-
-Another key advantage of Basix is its support for permuting and
-transforming DOFs for higher-order elements. As described in
-@dof-transformations, these operations are necessary when solving
-problems on arbitrary meshes, as differences in how neighbouring cells
-orient their sub-entities can otherwise cause issues.
 
 # Supported elements
 

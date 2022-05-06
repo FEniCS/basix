@@ -11,17 +11,12 @@ from ._basixcpp import CellType as _CT
 
 
 def string_to_type(cell: str) -> _CT:
-    """
-    Convert a string to a Basix CellType.
+    """Convert a string to a Basix CellType.
 
-    Parameters
-    ----------
-    cell : str
-        The name of the cell as a string.
+    Args:
+        cell: The name of the cell as a string.
 
-    Returns
-    -------
-    basix.CellType
+    Returns:
         The cell type
     """
     if not hasattr(_CT, cell):
@@ -30,17 +25,12 @@ def string_to_type(cell: str) -> _CT:
 
 
 def type_to_string(celltype: _CT) -> str:
-    """
-    Convert a Basix CellType to a string.
+    """Convert a Basix CellType to a string.
 
-    Parameters
-    ----------
-    celltype : basix.CellType
-        The cell type.
+    Args:
+        celltype: The cell type.
 
-    Returns
-    -------
-    str
+    Returns:
         The name of the cell as a string.
     """
     return celltype.name

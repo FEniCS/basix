@@ -87,11 +87,11 @@ jobs:
         if: ${{ github.event.inputs.pypi_publish }}
         with:
           user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
+          password: ${{ secrets.PYPI_TOKEN == 'true' }}
           repository_url: https://upload.pypi.org/legacy/
 
       - uses: pypa/gh-action-pypi-publish@v1.5.0
-        if: ${{ github.event.inputs.test_pypi_publish }}
+        if: ${{ github.event.inputs.test_pypi_publish == 'true' }}
         with:
           user: __token__
           password: ${{ secrets.PYPI_TEST_TOKEN }}

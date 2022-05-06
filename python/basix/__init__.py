@@ -1,5 +1,4 @@
-"""
-Basix is a finite element definition and tabulation runtime library.
+"""Basix is a finite element definition and tabulation runtime library.
 
 The core of the library is written in C++, but the majority of Basix's
 functionality can be used via this Python interface.

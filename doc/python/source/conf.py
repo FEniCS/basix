@@ -136,5 +136,6 @@ autodoc_default_options = {'members': True, 'show-inheritance': True, 'imported-
 autosummary_generate = True
 autoclass_content = "both"
 
-napoleon_google_docstring = False
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
 napoleon_use_admonition_for_notes = False

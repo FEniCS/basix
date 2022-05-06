@@ -48,7 +48,7 @@ jobs:
           ref: ${{ github.event.inputs.basix_ref }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.1.2
+        uses: pypa/cibuildwheel@v2.5.0
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v2

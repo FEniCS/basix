@@ -26,7 +26,8 @@ FiniteElement create_serendipity(cell::type celltype, int degree,
                                  element::dpc_variant dvariant,
                                  bool discontinuous);
 
-/// Create a DPC element on cell with given degree
+/// Create a DPC (discontinuous polynomial cubical) element on cell with given
+/// degree.
 /// @note DPC elements must be discontinuous
 /// @param[in] celltype The cell type
 /// @param[in] degree The degree of the element

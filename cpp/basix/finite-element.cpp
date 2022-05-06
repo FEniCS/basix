@@ -550,7 +550,7 @@ FiniteElement::FiniteElement(
     _M = M;
   }
   // Compute C = (BD^T)^{-1} B
-  xt::xtensor<double, 2> result = math::solve(_dual_matrix, wcoeffs);
+  auto result = math::solve(_dual_matrix, wcoeffs);
 
   _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
   _coeffs.assign(result);

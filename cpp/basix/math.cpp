@@ -60,8 +60,8 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
   return {std::move(w), std::move(M)};
 }
 //------------------------------------------------------------------
-xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
-                                          const xt::xtensor<double, 2>& B)
+xt::xarray<double, xt::layout_type::column_major>
+basix::math::solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B)
 {
   assert(A.dimension() == 2);
   assert(B.dimension() == 1 or B.dimension() == 2);
@@ -69,11 +69,11 @@ xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
   // Copy to column major matrix
   xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
   _A.assign(A);
-  xt::xtensor<double, 2, xt::layout_type::column_major> _B(B.shape());
+  xt::xarray<double, xt::layout_type::column_major> _B(B.shape());
   _B.assign(B);
 
   int N = _A.shape(0);
-  int nrhs = _B.shape(1);
+  int nrhs = _B.dimension() == 1 ? 1 : _B.shape(1);
   int LDA = _A.shape(0);
   int LDB = B.shape(0);
   std::vector<int> IPIV(N);

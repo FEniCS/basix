@@ -4,7 +4,6 @@
 
 #include "precompute.h"
 #include "math.h"
-#include <numeric>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
@@ -80,14 +79,12 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
 
     if (i > 0)
     {
-      xt::xtensor<double, 2> A = xt::transpose(
-          xt::view(permuted_matrix, xt::range(0, i), xt::range(0, i)));
-      xt::xtensor<double, 2> B = xt::view(permuted_matrix, i, xt::range(0, i));
+      xt::xtensor<T, 1> v
+          = math::solve(xt::transpose(xt::view(permuted_matrix, xt::range(0, i),
+                                               xt::range(0, i))),
+                        xt::view(permuted_matrix, i, xt::range(0, i)));
 
-      // Solve A X = B
-      xt::xtensor<T, 2> v = math::solve(A, B);
-      auto matrix_slice = xt::view(prepared_matrix, i, xt::range(0, i));
-      std::copy(v.begin(), v.end(), matrix_slice.begin());
+      xt::view(prepared_matrix, i, xt::range(0, i)) = v;
 
       xt::xtensor<T, 1> t = xt::view(permuted_matrix, xt::range(0, i), i);
       diag[i] -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.);

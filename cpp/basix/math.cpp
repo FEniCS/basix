@@ -7,10 +7,6 @@
 #include "math.h"
 #include <vector>
 
-#ifdef __APPLE__
-#include <Accelerate/Accelerate.h>
-#else
-#include <cblas.h>
 extern "C"
 {
   void dsyevd_(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
@@ -18,8 +14,11 @@ extern "C"
 
   void dgesv_(int* N, int* NRHS, double* A, int* LDA, int* IPIV, double* B,
               int* LDB, int* INFO);
+
+  // void dgemm_(char* TRANSA, char* TRANSB, int M, int N, int K, double alpha,
+  //             double* A, int LDA, double* B, int LDB, double BETA, double* C,
+  //             int LDC);
 }
-#endif
 
 //------------------------------------------------------------------
 std::pair<xt::xtensor<double, 1>,
@@ -124,20 +123,20 @@ void basix::math::dot(const xt::xtensor<double, 2>& A,
   assert(C.shape(0) == C.shape(0));
   assert(C.shape(1) == B.shape(1));
 
-  if (m * n * k < 4096)
-    for (std::size_t i = 0; i < A.shape(0); i++)
-      for (std::size_t j = 0; j < B.shape(1); j++)
-        for (std::size_t k = 0; k < A.shape(1); k++)
-          C(i, j) += A(i, k) * B(k, j);
-  else
-  {
-    double alpha = 1;
-    double beta = 0;
-    cblas_dgemm(CBLAS_ORDER::CblasRowMajor, CBLAS_TRANSPOSE::CblasNoTrans,
-                CBLAS_TRANSPOSE::CblasNoTrans, m, n, k, alpha,
-                const_cast<double*>(A.data()), k, const_cast<double*>(B.data()),
-                n, beta, const_cast<double*>(C.data()), n);
-  }
+  // if (m * n * k < 4096)
+  for (std::size_t i = 0; i < A.shape(0); i++)
+    for (std::size_t j = 0; j < B.shape(1); j++)
+      for (std::size_t k = 0; k < A.shape(1); k++)
+        C(i, j) += A(i, k) * B(k, j);
+  // else
+  // {
+  //   double alpha = 1;
+  //   double beta = 0;
+  //   char transpose = 'T';
+  //   dgemm_(&transpose, &transpose, m, n, k, alpha,
+  //          const_cast<double*>(A.data()), m, const_cast<double*>(B.data()),
+  //          k, beta, const_cast<double*>(C.data()), m);
+  // }
 }
 
 xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,

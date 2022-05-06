@@ -14,7 +14,8 @@ manylinux-x86_64-image = "manylinux2014"
 
 [tool.cibuildwheel.linux]
 before-build = "yum -y update && yum install -y openblas-devel ninja-build"
-environment-pass = { CPATH="/usr/include/openblas" }
+environment = { CPATH="/usr/include/openblas" }
+environment-pass = [ "CPATH" ]
 
 [tool.cibuildwheel.macos]
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"

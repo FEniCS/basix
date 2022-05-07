@@ -11,6 +11,10 @@ if _typing.TYPE_CHECKING:
 else:
     _nda_i32 = None
     _nda_f64 = None
+try:
+    import numba as _numba
+    from numba.typed import List as _List
+    from numba.core import types as _types
 except ImportError:
     raise RuntimeError("You must have Numba installed to use the Numba helper functions.")
 

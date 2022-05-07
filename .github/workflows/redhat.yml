@@ -21,8 +21,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install Basix
-        run: |
-          CPATH=/usr/include/openblas python3 -m pip install .[test]
+        run: python3 -m pip install .[test]
 
       - name: Run units tests
         run: |

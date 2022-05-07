@@ -125,14 +125,14 @@ void basix::math::dot(const xt::xtensor<double, 2>& A,
   int N = B.shape(1);
   int K = A.shape(1);
 
-  if (M * N * K < 4096)
-  {
-    for (int i = 0; i < M; ++i)
-      for (int j = 0; j < N; ++j)
-        for (int k = 0; k < K; ++k)
-          C(i, j) += A(i, k) * B(k, j);
-  }
-  else
+  // if (M * N * K < 4096)
+  // {
+  //   for (int i = 0; i < M; ++i)
+  //     for (int j = 0; j < N; ++j)
+  //       for (int k = 0; k < K; ++k)
+  //         C(i, j) += A(i, k) * B(k, j);
+  // }
+  // else
   {
     double alpha = 1;
     double beta = 0;

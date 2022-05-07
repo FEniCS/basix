@@ -15,9 +15,9 @@ extern "C"
   void dgesv_(int* N, int* NRHS, double* A, int* LDA, int* IPIV, double* B,
               int* LDB, int* INFO);
 
-  // void dgemm_(char* TRANSA, char* TRANSB, int M, int N, int K, double alpha,
-  //             double* A, int LDA, double* B, int LDB, double BETA, double* C,
-  //             int LDC);
+  void dgemm_(char* transa, char* transb, int* m, int* n, int* k, double* alpha,
+              double* a, int* lda, double* b, int* ldb, double* beta, double* c,
+              int* ldc);
 }
 
 //------------------------------------------------------------------
@@ -103,42 +103,49 @@ bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
   int info;
   dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), B.data(), &LDB, &info);
   if (info < 0)
+  {
     throw std::runtime_error("dgesv failed due to invalid value: "
                              + std::to_string(info));
-
-  if (info > 0)
+  }
+  else if (info > 0)
     return true;
-  return false;
+  else
+    return false;
 }
 //------------------------------------------------------------------
 void basix::math::dot(const xt::xtensor<double, 2>& A,
                       const xt::xtensor<double, 2>& B,
                       xt::xtensor<double, 2>& C)
 {
-  int m = A.shape(0);
-  int n = B.shape(1);
-  int k = A.shape(1);
-
   assert(A.shape(1) == B.shape(0));
   assert(C.shape(0) == C.shape(0));
   assert(C.shape(1) == B.shape(1));
 
-  // if (m * n * k < 4096)
-  for (std::size_t i = 0; i < A.shape(0); i++)
-    for (std::size_t j = 0; j < B.shape(1); j++)
-      for (std::size_t k = 0; k < A.shape(1); k++)
-        C(i, j) += A(i, k) * B(k, j);
-  // else
-  // {
-  //   double alpha = 1;
-  //   double beta = 0;
-  //   char transpose = 'T';
-  //   dgemm_(&transpose, &transpose, m, n, k, alpha,
-  //          const_cast<double*>(A.data()), m, const_cast<double*>(B.data()),
-  //          k, beta, const_cast<double*>(C.data()), m);
-  // }
-}
+  int m = A.shape(0);
+  int n = B.shape(1);
+  int k = A.shape(1);
 
+  // if (m * n * k < 4096)
+  // {
+  //   for (std::size_t i = 0; i < A.shape(0); i++)
+  //     for (std::size_t j = 0; j < B.shape(1); j++)
+  //       for (std::size_t k = 0; k < A.shape(1); k++)
+  //         C(i, j) += A(i, k) * B(k, j);
+  // }
+  // else
+  {
+    double alpha = 1;
+    double beta = 0;
+    int lda = k;
+    int ldb = n;
+    int ldc = n;
+    char trans = 'N';
+    dgemm_(&trans, &trans, &n, &m, &k, &alpha, const_cast<double*>(B.data()),
+           &ldb, const_cast<double*>(A.data()), &lda, &beta,
+           const_cast<double*>(C.data()), &ldc);
+  }
+}
+//------------------------------------------------------------------
 xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
                                         const xt::xtensor<double, 2>& B)
 {
@@ -146,3 +153,5 @@ xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
   dot(A, B, C);
   return C;
 }
+//------------------------------------------------------------------
+

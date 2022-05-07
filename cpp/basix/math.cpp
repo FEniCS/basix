@@ -121,26 +121,26 @@ void basix::math::dot(const xt::xtensor<double, 2>& A,
   assert(C.shape(0) == C.shape(0));
   assert(C.shape(1) == B.shape(1));
 
-  int m = A.shape(0);
-  int n = B.shape(1);
-  int k = A.shape(1);
+  int M = A.shape(0);
+  int N = B.shape(1);
+  int K = A.shape(1);
 
-  // if (m * n * k < 4096)
-  // {
-  //   for (std::size_t i = 0; i < A.shape(0); i++)
-  //     for (std::size_t j = 0; j < B.shape(1); j++)
-  //       for (std::size_t k = 0; k < A.shape(1); k++)
-  //         C(i, j) += A(i, k) * B(k, j);
-  // }
-  // else
+  if (M * N * K < 4096)
+  {
+    for (std::size_t i = 0; i < A.shape(0); i++)
+      for (std::size_t j = 0; j < B.shape(1); j++)
+        for (std::size_t k = 0; k < A.shape(1); k++)
+          C(i, j) += A(i, k) * B(k, j);
+  }
+  else
   {
     double alpha = 1;
     double beta = 0;
-    int lda = k;
-    int ldb = n;
-    int ldc = n;
+    int lda = K;
+    int ldb = N;
+    int ldc = N;
     char trans = 'N';
-    dgemm_(&trans, &trans, &n, &m, &k, &alpha, const_cast<double*>(B.data()),
+    dgemm_(&trans, &trans, &N, &M, &K, &alpha, const_cast<double*>(B.data()),
            &ldb, const_cast<double*>(A.data()), &lda, &beta,
            const_cast<double*>(C.data()), &ldc);
   }
@@ -154,4 +154,3 @@ xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
   return C;
 }
 //------------------------------------------------------------------
-

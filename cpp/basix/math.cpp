@@ -127,9 +127,9 @@ void basix::math::dot(const xt::xtensor<double, 2>& A,
 
   if (M * N * K < 4096)
   {
-    for (std::size_t i = 0; i < A.shape(0); i++)
-      for (std::size_t j = 0; j < B.shape(1); j++)
-        for (std::size_t k = 0; k < A.shape(1); k++)
+    for (std::size_t i = 0; i < M; ++i)
+      for (std::size_t j = 0; j < N; ++j)
+        for (std::size_t k = 0; k < K; ++k)
           C(i, j) += A(i, k) * B(k, j);
   }
   else

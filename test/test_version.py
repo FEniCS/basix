@@ -20,11 +20,11 @@ def test_version_numbering():
     py_version = pkg_resources.get_distribution("fenics-basix").version
     cpp_version = py_version.replace('dev', '')
 
-    path = os.path.dirname(os.path.realpath(__file__))
-    if not os.path.isfile(os.path.join(path, "../python/docs.h")):
+    path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
+    if not os.path.isfile(os.path.join(path, "LICENSE")):
         pytest.skip("This test can only be run from the source directory.")
 
-    for file in ["../CMakeLists.txt", "../cpp/CMakeLists.txt", "../python/CMakeLists.txt"]:
+    for file in ["CMakeLists.txt", "cpp/CMakeLists.txt", "python/CMakeLists.txt"]:
         print(f"Checking version numbers in {file}.")
 
         with open(os.path.join(path, file)) as f:
@@ -34,7 +34,7 @@ def test_version_numbering():
         for m in matches:
             assert m[1] == cpp_version
 
-    for file in ["../setup.py", "../python/setup.py"]:
+    for file in ["setup.py", "python/setup.py"]:
         print(f"Checking version numbers in {file}.")
 
         with open(os.path.join(path, file)) as f:

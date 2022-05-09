@@ -43,6 +43,11 @@ jobs:
           flake8 --statistics python/
           flake8 --statistics demo/python
 
+      - name: Run mypy checks
+        run: |
+          pip install mypy
+          python -m mypy python/basix
+
       - name: pydocstyle checks
         run: |
           pip install pydocstyle

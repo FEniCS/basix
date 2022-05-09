@@ -5,7 +5,7 @@ import sysconfig
 
 setup(name="fenics-basix",
       python_requires='>=3.7.0',
-      version="0.4.1.dev0",
+      version="0.4.2.dev0",
       description='Basix Python interface',
       url="https://github.com/FEniCS/basix",
       author='FEniCS Project',
@@ -13,7 +13,7 @@ setup(name="fenics-basix",
       maintainer_email="fenics-dev@googlegroups.com",
       license="MIT",
       packages=["basix"],
-      install_requires=["numpy>=1.20"],
+      install_requires=["numpy"],
       extras_require={
           "docs": ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"],
           "lint": ["flake8", "pydocstyle"],

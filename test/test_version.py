@@ -29,7 +29,9 @@ def test_version_numbering():
 
         with open(os.path.join(path, file)) as f:
             content = f.read()
-        for m in re.findall(r"(?:(?:VERSION)|(?:version))[\s=]+([\"'])(.+?)\1", content):
+        matches = re.findall(r"(?:(?:VERSION)|(?:version))[\s=]+([\"'])(.+?)\1", content)
+        assert len(matches) > 0
+        for m in matches:
             assert m[1] == cpp_version
 
     for file in ["../setup.py", "../python/setup.py"]:
@@ -37,5 +39,7 @@ def test_version_numbering():
 
         with open(os.path.join(path, file)) as f:
             content = f.read()
-        for m in re.findall(r"(?:(?:VERSION)|(?:version))[\s=]+([\"'])(.+?)\1", content):
+        matches = re.findall(r"(?:(?:VERSION)|(?:version))[\s=]+([\"'])(.+?)\1", content)
+        assert len(matches) > 0
+        for m in matches:
             assert m[1] == py_version

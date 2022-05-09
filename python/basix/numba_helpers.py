@@ -14,14 +14,10 @@ if _typing.TYPE_CHECKING:
     _nda = _npt.NDArray
     _nda_i32 = _npt.NDArray[_np.int32]
     _nda_f64 = _npt.NDArray[_np.float64]
-    from numba.typed import List as _List
-    from numba.core import types as _types
 else:
     _nda = None
     _nda_i32 = None
     _nda_f64 = None
-    _List = None
-    _types = None
 
 
 @_numba.jit(nopython=True)
@@ -106,7 +102,7 @@ def apply_dof_transformation_triangle(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 3, 1, entity_transformations, entity_dofs,
-                             data, cell_info, _List.empty_list(_types.string))
+                             data, cell_info, _numba.typed.List.empty_list(_numba.core.types.string))
 
 
 @_numba.jit(nopython=True)
@@ -124,7 +120,7 @@ def apply_dof_transformation_quadrilateral(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(2, 4, 1, entity_transformations, entity_dofs,
-                             data, cell_info, _List.empty_list(_types.string))
+                             data, cell_info, _numba.typed.List.empty_list(_numba.core.types.string))
 
 
 @_numba.jit(nopython=True)
@@ -142,7 +138,7 @@ def apply_dof_transformation_tetrahedron(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 6, 4, entity_transformations, entity_dofs,
-                             data, cell_info, _List(["triangle"] * 4))
+                             data, cell_info, _numba.typed.List(["triangle"] * 4))
 
 
 @_numba.jit(nopython=True)
@@ -160,7 +156,7 @@ def apply_dof_transformation_hexahedron(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 12, 6, entity_transformations, entity_dofs,
-                             data, cell_info, _List(["quadrilateral"] * 6))
+                             data, cell_info, _numba.typed.List(["quadrilateral"] * 6))
 
 
 @_numba.jit(nopython=True)
@@ -178,7 +174,7 @@ def apply_dof_transformation_prism(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 9, 5, entity_transformations, entity_dofs,
-                             data, cell_info, _List(["triangle"] + ["quadrilateral"] * 4 + ["triangle"]))
+                             data, cell_info, _numba.typed.List(["triangle"] + ["quadrilateral"] * 4 + ["triangle"]))
 
 
 @_numba.jit(nopython=True)
@@ -196,7 +192,7 @@ def apply_dof_transformation_pyramid(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation(3, 8, 5, entity_transformations, entity_dofs,
-                             data, cell_info, _List(["quadrilateral"] + ["triangle"] * 4))
+                             data, cell_info, _numba.typed.List(["quadrilateral"] + ["triangle"] * 4))
 
 
 @_numba.jit(nopython=True)
@@ -254,7 +250,7 @@ def apply_dof_transformation_to_transpose_triangle(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(2, 3, 1, entity_transformations, entity_dofs,
-                                          data, cell_info, _List.empty_list(_types.string))
+                                          data, cell_info, _numba.typed.List.empty_list(_numba.core.types.string))
 
 
 @_numba.jit(nopython=True)
@@ -272,7 +268,7 @@ def apply_dof_transformation_to_transpose_quadrilateral(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(2, 4, 1, entity_transformations, entity_dofs,
-                                          data, cell_info, _List.empty_list(_types.string))
+                                          data, cell_info, _numba.typed.List.empty_list(_numba.core.types.string))
 
 
 @_numba.jit(nopython=True)
@@ -290,7 +286,7 @@ def apply_dof_transformation_to_transpose_tetrahedron(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 6, 4, entity_transformations, entity_dofs,
-                                          data, cell_info, _List(["triangle"] * 4))
+                                          data, cell_info, _numba.typed.List(["triangle"] * 4))
 
 
 @_numba.jit(nopython=True)
@@ -308,7 +304,7 @@ def apply_dof_transformation_to_transpose_hexahedron(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 12, 6, entity_transformations, entity_dofs,
-                                          data, cell_info, _List(["quadrilateral"] * 6))
+                                          data, cell_info, _numba.typed.List(["quadrilateral"] * 6))
 
 
 @_numba.jit(nopython=True)
@@ -325,8 +321,9 @@ def apply_dof_transformation_to_transpose_prism(
         data: The data. This will be changed by this function.
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
-    apply_dof_transformation_to_transpose(3, 9, 5, entity_transformations, entity_dofs,
-                                          data, cell_info, _List(["triangle"] + ["quadrilateral"] * 4 + ["triangle"]))
+    apply_dof_transformation_to_transpose(
+        3, 9, 5, entity_transformations, entity_dofs,
+        data, cell_info, _numba.typed.List(["triangle"] + ["quadrilateral"] * 4 + ["triangle"]))
 
 
 @_numba.jit(nopython=True)
@@ -344,4 +341,4 @@ def apply_dof_transformation_to_transpose_pyramid(
         cell_info: An integer representing the orientations of the subentities of the cell.
     """
     apply_dof_transformation_to_transpose(3, 8, 5, entity_transformations, entity_dofs,
-                                          data, cell_info, _List(["quadrilateral"] + ["triangle"] * 4))
+                                          data, cell_info, _numba.typed.List(["quadrilateral"] + ["triangle"] * 4))

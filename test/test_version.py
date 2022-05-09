@@ -24,7 +24,6 @@ def test_version_numbering():
     if not os.path.isfile(os.path.join(path, "../python/docs.h")):
         pytest.skip("This test can only be run from the source directory.")
 
-
     for file in ["../CMakeLists.txt", "../cpp/CMakeLists.txt", "../python/CMakeLists.txt"]:
         print(f"Checking version numbers in {file}.")
 

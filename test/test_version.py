@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Chris Richardson and Garth Wells
+# Copyright (c) 2021-2022 Chris Richardson, Garth Wells, Matthew Scroggs
 # FEniCS Project
 # SPDX-License-Identifier: MIT
 

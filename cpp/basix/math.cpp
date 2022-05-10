@@ -62,9 +62,6 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
 xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
                                           const xt::xtensor<double, 2>& B)
 {
-  assert(A.dimension() == 2);
-  assert(B.dimension() == 1 or B.dimension() == 2);
-
   // Copy to column major matrix
   xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
   _A.assign(A);
@@ -73,11 +70,12 @@ xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
 
   int N = _A.shape(0);
   int nrhs = _B.shape(1);
-  int LDA = _A.shape(0);
-  int LDB = B.shape(0);
-  std::vector<int> IPIV(N);
+  int lda = _A.shape(0);
+  int ldb = B.shape(0);
+  // Pivot indices that define the permutation matrix for the LU solver
+  std::vector<int> piv(N);
   int info;
-  dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), _B.data(), &LDB, &info);
+  dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), _B.data(), &ldb, &info);
   if (info != 0)
     throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
 
@@ -86,8 +84,6 @@ xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
 //------------------------------------------------------------------
 bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
 {
-  assert(A.dimension() == 2);
-
   // Copy to column major matrix
   xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
   _A.assign(A);
@@ -97,11 +93,12 @@ bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
 
   int N = _A.shape(0);
   int nrhs = 1;
-  int LDA = _A.shape(0);
-  int LDB = B.shape(0);
-  std::vector<int> IPIV(N);
+  int lda = _A.shape(0);
+  int ldb = B.shape(0);
+  // Pivot indices that define the permutation matrix for the LU solver
+  std::vector<int> piv(N);
   int info;
-  dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), B.data(), &LDB, &info);
+  dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), B.data(), &ldb, &info);
   if (info < 0)
   {
     throw std::runtime_error("dgesv failed due to invalid value: "

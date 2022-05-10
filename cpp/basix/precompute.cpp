@@ -79,10 +79,12 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
 
     if (i > 0)
     {
-      xt::xtensor<T, 1> v
-          = math::solve(xt::transpose(xt::view(permuted_matrix, xt::range(0, i),
-                                               xt::range(0, i))),
-                        xt::view(permuted_matrix, i, xt::range(0, i)));
+
+      xt::xtensor<T, 2> A = xt::transpose(
+          xt::view(permuted_matrix, xt::range(0, i), xt::range(0, i)));
+
+      xt::xtensor<T, 1> B = xt::view(permuted_matrix, i, xt::range(0, i));
+      xt::xtensor<T, 1> v = math::solve(A, B);
 
       xt::view(prepared_matrix, i, xt::range(0, i)) = v;
 

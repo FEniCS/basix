@@ -84,31 +84,6 @@ xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
   return _B;
 }
 //------------------------------------------------------------------
-xt::xtensor<double, 1> basix::math::solve(const xt::xtensor<double, 2>& A,
-                                          const xt::xtensor<double, 1>& B)
-{
-  assert(A.dimension() == 2);
-  assert(B.dimension() == 1);
-
-  // Copy to column major matrix
-  xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
-  _A.assign(A);
-  xt::xtensor<double, 1> _B(B.shape());
-  _B.assign(B);
-
-  int N = _A.shape(0);
-  int nrhs = 1;
-  int LDA = _A.shape(0);
-  int LDB = B.shape(0);
-  std::vector<int> IPIV(N);
-  int info;
-  dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), _B.data(), &LDB, &info);
-  if (info != 0)
-    throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
-
-  return _B;
-}
-//------------------------------------------------------------------
 bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
 {
   assert(A.dimension() == 2);

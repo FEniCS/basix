@@ -59,13 +59,6 @@ eigh(const xt::xtensor<double, 2>& A);
 xt::xtensor<double, 2> solve(const xt::xtensor<double, 2>& A,
                              const xt::xtensor<double, 2>& B);
 
-/// Solve A X = B
-/// @param[in] A The matrix
-/// @param[in] B Right-hand side matrix/vector
-/// @return A^{-1} B
-xt::xtensor<double, 1> solve(const xt::xtensor<double, 2>& A,
-                             const xt::xtensor<double, 1>& B);
-
 /// Check if A is a singular matrix
 /// @param[in] A The matrix
 /// @return A bool indicating if the matrix is singular

@@ -79,7 +79,13 @@ xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
   if (info != 0)
     throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
 
-  return _B;
+  // Note: using assign, instead of returning the object, to get around an
+  // xtensor bug with Intel Compilers
+  // https://github.com/xtensor-stack/xtensor/issues/2351
+  xt::xtensor<double, 2> out(_B.shape());
+  out.assign(_B);
+
+  return out;
 }
 //------------------------------------------------------------------
 bool basix::math::is_singular(const xt::xtensor<double, 2>& A)

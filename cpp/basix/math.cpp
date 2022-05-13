@@ -59,35 +59,37 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
   return {std::move(w), std::move(M)};
 }
 //------------------------------------------------------------------
-xt::xarray<double, xt::layout_type::column_major>
-basix::math::solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B)
+xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
+                                          const xt::xtensor<double, 2>& B)
 {
-  assert(A.dimension() == 2);
-  assert(B.dimension() == 1 or B.dimension() == 2);
-
   // Copy to column major matrix
   xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
   _A.assign(A);
-  xt::xarray<double, xt::layout_type::column_major> _B(B.shape());
+  xt::xtensor<double, 2, xt::layout_type::column_major> _B(B.shape());
   _B.assign(B);
 
   int N = _A.shape(0);
-  int nrhs = _B.dimension() == 1 ? 1 : _B.shape(1);
-  int LDA = _A.shape(0);
-  int LDB = B.shape(0);
-  std::vector<int> IPIV(N);
+  int nrhs = _B.shape(1);
+  int lda = _A.shape(0);
+  int ldb = B.shape(0);
+  // Pivot indices that define the permutation matrix for the LU solver
+  std::vector<int> piv(N);
   int info;
-  dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), _B.data(), &LDB, &info);
+  dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), _B.data(), &ldb, &info);
   if (info != 0)
     throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
 
-  return _B;
+  // Note: using assign, instead of returning the object, to get around an
+  // xtensor bug with Intel Compilers
+  // https://github.com/xtensor-stack/xtensor/issues/2351
+  xt::xtensor<double, 2> out(_B.shape());
+  out.assign(_B);
+
+  return out;
 }
 //------------------------------------------------------------------
 bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
 {
-  assert(A.dimension() == 2);
-
   // Copy to column major matrix
   xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
   _A.assign(A);
@@ -97,11 +99,12 @@ bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
 
   int N = _A.shape(0);
   int nrhs = 1;
-  int LDA = _A.shape(0);
-  int LDB = B.shape(0);
-  std::vector<int> IPIV(N);
+  int lda = _A.shape(0);
+  int ldb = B.shape(0);
+  // Pivot indices that define the permutation matrix for the LU solver
+  std::vector<int> piv(N);
   int info;
-  dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), B.data(), &LDB, &info);
+  dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), B.data(), &ldb, &info);
   if (info < 0)
   {
     throw std::runtime_error("dgesv failed due to invalid value: "

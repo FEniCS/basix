@@ -28,6 +28,8 @@ using namespace basix;
 namespace
 {
 //-----------------------------------------------------------------------------
+void orthogonalise(xt::xtensor<double, 2>& /*wcoeffs*/) {}
+//-----------------------------------------------------------------------------
 constexpr int compute_value_size(maps::type map_type, int dim)
 {
   switch (map_type)
@@ -543,14 +545,19 @@ FiniteElement::FiniteElement(
 
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, highest_degree);
 
+  xt::xtensor<double, 2> wcoeffs_ortho({wcoeffs.shape(0), wcoeffs.shape(1)});
+  wcoeffs_ortho.assign(wcoeffs);
+  orthogonalise(wcoeffs_ortho);
+
   if (family == element::family::custom)
   {
-    _wcoeffs = xt::xtensor<double, 2>({wcoeffs.shape(0), wcoeffs.shape(1)});
-    _wcoeffs.assign(wcoeffs);
+    _wcoeffs = xt::xtensor<double, 2>(
+        {wcoeffs_ortho.shape(0), wcoeffs_ortho.shape(1)});
+    _wcoeffs.assign(wcoeffs_ortho);
     _M = M;
   }
   // Compute C = (BD^T)^{-1} B
-  xt::xtensor<double, 2> result = math::solve(_dual_matrix, wcoeffs);
+  xt::xtensor<double, 2> result = math::solve(_dual_matrix, wcoeffs_ortho);
 
   _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
   _coeffs.assign(result);

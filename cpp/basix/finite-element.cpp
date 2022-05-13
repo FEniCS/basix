@@ -28,7 +28,19 @@ using namespace basix;
 namespace
 {
 //-----------------------------------------------------------------------------
-void orthogonalise(xt::xtensor<double, 2>& /*wcoeffs*/) {}
+void orthogonalise(xt::xtensor<double, 2>& wcoeffs)
+{
+  for (std::size_t i = 0; i < wcoeffs.shape(0); ++i)
+  {
+    for (std::size_t j = 0; j < i; ++j)
+    {
+      const double a = xt::sum(xt::row(wcoeffs, i) * xt::row(wcoeffs, j))();
+      xt::row(wcoeffs, i) -= a * xt::row(wcoeffs, j);
+    }
+    xt::row(wcoeffs, i)
+        /= std::sqrt(xt::sum(xt::row(wcoeffs, i) * xt::row(wcoeffs, i))());
+  }
+}
 //-----------------------------------------------------------------------------
 constexpr int compute_value_size(maps::type map_type, int dim)
 {
@@ -543,11 +555,12 @@ FiniteElement::FiniteElement(
               "Discontinuous element can only have interior DOFs.");
   }
 
-  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, highest_degree);
-
   xt::xtensor<double, 2> wcoeffs_ortho({wcoeffs.shape(0), wcoeffs.shape(1)});
   wcoeffs_ortho.assign(wcoeffs);
   orthogonalise(wcoeffs_ortho);
+
+  _dual_matrix
+      = compute_dual_matrix(cell_type, wcoeffs_ortho, M, x, highest_degree);
 
   if (family == element::family::custom)
   {

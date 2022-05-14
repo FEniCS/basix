@@ -20,7 +20,7 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
-    container: ubuntu:latest
+    container: ubuntu:latest  # Run in container to test with minimal pre-installed packages
 
     env:
       CC: icx
@@ -29,7 +29,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install require packages to install Intel compilers and to build
+      - name: Install required packages to install Intel compilers and to build
         run: |
           apt-get update && apt-get install -y cmake git gnupg ninja-build python3-pip wget ninja-build
       - name: Install Intel compilers
@@ -48,4 +48,4 @@ jobs:
         run: |
           . /opt/intel/oneapi/setvars.sh
           pip install pytest-xdist
-          pytest -v -n auto --durations 20 test/
+          pytest -vs -n auto --durations 20 test/

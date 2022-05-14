@@ -57,6 +57,7 @@ jobs:
       - name: Install Basix
         run: |
           export VERBOSE=1
+          export CMAKE_ARGS="-DDOWNLOAD_XTENSOR_LIBS"
           pip -v install .[test]
 
       - name: Run units tests

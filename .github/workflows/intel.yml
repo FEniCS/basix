@@ -1,6 +1,6 @@
 name: Intel compilers
 
-# This workflow will test Basix built using Intel compilers
+# This workflow will test Basix built using Intel compilers and MKL
 
 on:
   push:
@@ -46,5 +46,6 @@ jobs:
           pip -v install .[test]
       - name: Run units tests
         run: |
+          . /opt/intel/oneapi/setvars.sh
           pip install pytest-xdist
           pytest -v -n auto --durations 20 test/

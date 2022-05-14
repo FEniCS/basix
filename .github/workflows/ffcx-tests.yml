@@ -12,6 +12,7 @@ on:
         description: "FFCx branch or tag"
         default: "main"
         type: string
+
       ufl_branch:
         description: "UFL branch or tag"
         default: "main"
@@ -34,7 +35,8 @@ jobs:
           sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build graphviz libgraphviz-dev pkg-config
 
       - name: Install UFL
-        run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
+        run: pip install git+https://github.com/FEniCS/ufl.git
+        # run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
       - name: Install Basix
         run: pip -v install .[ci]
 

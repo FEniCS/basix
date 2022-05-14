@@ -3,34 +3,40 @@ name: Intel compilers
 # This workflow will test Basix built using Intel compilers
 
 on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
   schedule:
     # '*' is a special character in YAML, so string must be quoted
     - cron: "0 2 * * TUE"
   pull_request:
     branches:
-      - main  
+      - main
   workflow_dispatch: ~
 
 jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
+    container: intel/oneapi
 
     defaults:
       run:
         shell: bash
 
-    strategy:
-      matrix:
-        include:
-          - compiler: "LLVM-based"
-            c_compiler: icx
-            cxx_compiler: icpx
+    # strategy:
+    #   matrix:
+    #     include:
+    #       - compiler: "LLVM-based"
+    #         c_compiler: icx
+    #         cxx_compiler: icpx
 
-    env:
-      CC: ${{ matrix.c_compiler }}
-      CXX: ${{ matrix.cxx_compiler }}
-      DEBIAN_FRONTEND: noninteractive
+    # env:
+    #   CC: ${{ matrix.c_compiler }}
+    #   CXX: ${{ matrix.cxx_compiler }}
+    #   DEBIAN_FRONTEND: noninteractive
 
     steps:
       - uses: actions/checkout@v2
@@ -40,18 +46,19 @@ jobs:
         with:
           python-version: 3.8
 
-      - name: Install Intel compilers
-        run: |
-          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-          sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-          echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-          sudo apt update
-          sudo apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp
+      # - name: Install Intel compilers
+      #   run: |
+      #     wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+      #     sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+      #     echo "deb https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+      #     sudo apt update
+      #     sudo apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp
 
       - name: Install Basix
         run: |
           . /opt/intel/oneapi/setvars.sh
-          pip install .[test]
+          export VERBOSE=1
+          pip -v install .[test]
 
       - name: Run units tests
         run: |

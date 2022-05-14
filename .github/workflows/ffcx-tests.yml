@@ -39,17 +39,8 @@ jobs:
       - name: Install Basix
         run: pip -v install .[ci]
 
-      - name: Get FFCx
-        uses: actions/checkout@v2
-        with:
-          path: ./ffcx
-          repository: FEniCS/ffcx
-          ref: ${{ github.event.inputs.ffcx_branch }}
-
       - name: Install FFCx
-        run: |
-          cd ffcx
-          pip install .[ci]
+        run: run: pip install git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ufl_branch }}[ci]
 
       - name: Build FFCx unit tests
         run: |

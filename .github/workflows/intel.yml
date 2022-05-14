@@ -28,6 +28,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install git
+        run: apt-get update && apt-get install -y git
       - name: Install Basix
         run: |
           export CMAKE_ARGS="-DDOWNLOAD_XTENSOR_LIBS:BOOL=true"

@@ -44,12 +44,12 @@ jobs:
       - name: Install Basix
         run: pip -v install .[ci]
 
-      - name: Install FFCx (default branch)
-        if: "${{ github.event.inputs.ffcx_branch == '' }}"
-        run: pip install "fenics-ffcx[ci] @ git+https://github.com/FEniCS/ffcx.git"
-      - name: Install FFCx (specified branch)
-        if: "${{ github.event.inputs.ffcx_branch != '' }}"
-        run: pip install "fenics-ffcx[ci] @ git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ffcx_branch }}"
+      - name: Get FFCx source (to access tests)
+        uses: actions/checkout@v2
+        with:
+          path: ./ffcx
+          repository: FEniCS/ffcx
+          ref: ${{ github.event.inputs.ffcx_branch }}
 
       - name: Build FFCx unit tests
         run: |

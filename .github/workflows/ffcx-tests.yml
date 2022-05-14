@@ -6,6 +6,17 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+    inputs:
+      ffcx_branch:
+        description: "FFCx branch or tag"
+        default: "main"
+        type: string
+
+      ufl_branch:
+        description: "UFL branch or tag"
+        default: "main"
+        type: string
 
 jobs:
   build:
@@ -25,6 +36,7 @@ jobs:
 
       - name: Install UFL
         run: pip install git+https://github.com/FEniCS/ufl.git
+        # run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
       - name: Install Basix
         run: pip -v install .[ci]
 
@@ -33,7 +45,7 @@ jobs:
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
-          ref: main
+          ref: ${{ github.event.inputs.ffcx_branch }}
 
       - name: Install FFCx
         run: |

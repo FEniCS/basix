@@ -72,7 +72,7 @@ class CMakeBuild(build_ext):
 
 
 setup(name='fenics-basix',
-      version='0.4.1',
+      version='0.4.2',
       description='Basix Python interface',
       url="https://github.com/FEniCS/basix",
       author='FEniCS Project',

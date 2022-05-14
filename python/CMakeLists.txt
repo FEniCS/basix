@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-PROJECT(basix_pybind11 VERSION "0.4.1"  LANGUAGES CXX)
+PROJECT(basix_pybind11 VERSION "0.4.2"  LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)

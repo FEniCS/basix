@@ -5,7 +5,7 @@ import sysconfig
 
 setup(name="fenics-basix",
       python_requires='>=3.7.0',
-      version="0.4.1",
+      version="0.4.2",
       description='Basix Python interface',
       url="https://github.com/FEniCS/basix",
       author='FEniCS Project',

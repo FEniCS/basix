@@ -40,7 +40,7 @@ jobs:
         run: pip -v install .[ci]
 
       - name: Install FFCx
-        run: run: pip install git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ufl_branch }}[ci]
+        run: run: pip install "ffcx[ci] @ git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ufl_branch }}"
 
       - name: Build FFCx unit tests
         run: |

@@ -20,16 +20,26 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
-    container: intel/oneapi
+    container: ubuntu:latest
 
     env:
       CC: icx
       CXX: icpx
+      DEBIAN_FRONTEND: noninteractive
 
     steps:
       - uses: actions/checkout@v2
-      - name: Install git and ninja
-        run: apt-get update && apt-get install -y git ninja-build
+      - name: Install Intel compilers
+        run: |
+          apt-get update && apt-get install wget gnupg git python3-pip cmake
+      - name: Install Intel compilers
+        run: |
+          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
+          echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+          apt update
+          apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp
+
       - name: Install Basix
         run: |
           export CMAKE_ARGS="-DDOWNLOAD_XTENSOR_LIBS:BOOL=true"

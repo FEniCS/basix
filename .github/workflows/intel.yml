@@ -32,19 +32,19 @@ jobs:
       - name: Install Intel compilers
         run: |
           # apt-get update && apt-get install -y wget gnupg git python3-pip cmake
-          apt-get update && apt-get install -y cmake git gnupg ninja-build python3-pip wget ninja-build
+          apt-get update && apt-get install -y gnupg ninja-build python3-pip wget ninja-build
       - name: Install Intel compilers
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
           apt update
-          apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp
+          apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl
 
       - name: Install Basix
         run: |
           . /opt/intel/oneapi/setvars.sh
-          . /opt/intel/oneapi/mkl/latest/env/vars.sh
+          # . /opt/intel/oneapi/mkl/latest/env/vars.sh
           export CMAKE_ARGS="-DDOWNLOAD_XTENSOR_LIBS:BOOL=true"
           pip -v install .[test]
       - name: Run units tests

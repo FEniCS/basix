@@ -34,12 +34,21 @@ jobs:
         run: |
           sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build graphviz libgraphviz-dev pkg-config
 
-      - name: Install UFL
+      - name: Install UFL (default branch)
+        if: "${{ github.event.inputs.ufl_branch == '' }}"
+        run: pip install git+https://github.com/FEniCS/ufl.git
+      - name: Install UFL (specified branch)
+        if: "${{ github.event.inputs.ufl_branch != '' }}"
         run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
+
       - name: Install Basix
         run: pip -v install .[ci]
 
-      - name: Install FFCx
+      - name: Install FFCx (default branch)
+        if: "${{ github.event.inputs.ffcx_branch == '' }}"
+        run: pip install "fenics-ffcx[ci] @ git+https://github.com/FEniCS/ffcx.git"
+      - name: Install FFCx (specified branch)
+        if: "${{ github.event.inputs.ffcx_branch != '' }}"
         run: pip install "fenics-ffcx[ci] @ git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ffcx_branch }}"
 
       - name: Build FFCx unit tests

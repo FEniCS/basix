@@ -44,7 +44,7 @@ jobs:
       - name: Install Basix
         run: |
           . /opt/intel/oneapi/setvars.sh
-          # . /opt/intel/oneapi/mkl/latest/env/vars.sh
+          . /opt/intel/oneapi/mkl/latest/env/vars.sh
           export CMAKE_ARGS="-DDOWNLOAD_XTENSOR_LIBS:BOOL=true"
           pip -v install .[test]
       - name: Run units tests

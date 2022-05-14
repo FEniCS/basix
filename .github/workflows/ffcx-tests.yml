@@ -1,6 +1,6 @@
 name: FFCx integration
 
-# This workflow will install Basix and FFCx and run the FFCx unit tests.
+# Install Basix and FFCx and run the FFCx unit tests.
 
 on:
   pull_request:

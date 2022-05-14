@@ -47,7 +47,7 @@ jobs:
       - name: Get git refs
         id: refs
         run: |
-          USER_FFCX_INPUT=${{github.event.inputs.ffcx_branch }}
+          USER_INPUT=${{ github.event.inputs.ffcx_branch }}
           echo "::set-output name=FFCX_REF::${USER_INPUT:-main}"
 
       - name: Get FFCx source (to access tests)

@@ -44,12 +44,18 @@ jobs:
       - name: Install Basix
         run: pip -v install .[ci]
 
+      - name: Get git refs
+        id: refs
+        run: |
+          USER_FFCX_INPUT=${{github.event.inputs.ffcx_branch }}
+          echo "::set-output name=FFCX_REF::${USER_INPUT:-main}"
+
       - name: Get FFCx source (to access tests)
         uses: actions/checkout@v2
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
-          ref: ${{ github.event.inputs.ffcx_branch }}
+          ref: ${{ steps.refs.outputs.FFCX_REF }}
 
       - name: Build FFCx unit tests
         run: |

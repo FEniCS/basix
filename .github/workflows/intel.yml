@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install required packages to install Intel compilers and to build
         run: |
-          apt-get update && apt-get install -y cmake git gnupg ninja-build wget ninja-build
+          apt-get update && apt-get install -y cmake git gnupg ninja-build python3-pip wget
       - name: Install Intel compilers
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -45,7 +45,10 @@ jobs:
           export CMAKE_ARGS="-DDOWNLOAD_XTENSOR_LIBS:BOOL=true"
           pip -v install .[test]
       - name: Run units tests
+        # LD_PRELOAD is required to 'fix' library resolution problems
+        # when Numpy is not built against MKL
         run: |
           . /opt/intel/oneapi/setvars.sh
           pip install pytest-xdist
+          export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
           pytest -vs -n auto --durations 20 test/

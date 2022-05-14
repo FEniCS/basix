@@ -31,8 +31,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install Intel compilers
         run: |
-          # apt-get update && apt-get install wget gnupg git python3-pip cmake
-          apt-get update && apt-get install wget gnupg git python3-pip ninja-build
+          # apt-get update && apt-get install -y wget gnupg git python3-pip cmake
+          apt-get update && apt-get install -y cmake git gnupg ninja-build python3-pip wget ninja-build
       - name: Install Intel compilers
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB

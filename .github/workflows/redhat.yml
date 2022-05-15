@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: dnf install -y gcc-toolset-11-toolchain python39 python39-pip
+        run: dnf install -y gcc-toolset-11-toolchain python39 python39-pip which
 
       - name: Install Basix
         run: |

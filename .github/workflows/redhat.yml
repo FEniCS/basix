@@ -25,11 +25,11 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Install dependencies
-        run: yum install -y gcc-toolset-11 python39-pip
+        run: dnf install -y gcc-toolset-11-toolchain python39-pip
 
       - name: Install Basix
         run: |
-          scl enable gcc-toolset-11 'bash'
+          scl enable gcc-toolset-11 bash
           python3 -m pip install .[test]
 
       - name: Run units tests

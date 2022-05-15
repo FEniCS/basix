@@ -32,32 +32,25 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build graphviz libgraphviz-dev pkg-config
+          apt-get install -y libopenblas-dev liblapack-dev graphviz libgraphviz-dev ninja-build
 
       - name: Install UFL (default branch)
-        if: "${{ github.event.inputs.ufl_branch == '' }}"
+        if: "${{ github.event != 'workflow_dispatch' }}"
         run: pip install git+https://github.com/FEniCS/ufl.git
-      # - name: Install UFL (specified branch)
-      #   if: "${{ github.event.inputs.ufl_branch != '' }}"
-      #   run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
+      - name: Install UFL (specified branch)
+        if: "${{ github.event == 'workflow_dispatch' }}"
+        run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
 
       - name: Install Basix
         run: pip -v install .[ci]
 
-      # - name: Get git refs
-      #   id: refs
-      #   run: |
-      #     USER_INPUT=${{ github.event.inputs.ffcx_branch }}
-      #     echo "::set-output name=FFCX_REF::${USER_INPUT:-main}"
-
-      - name: Get FFCx source (to access tests, default branch)
+      - name: Get FFCx source (default branch)
         if: ${{ github.event != 'workflow_dispatch' }}
         uses: actions/checkout@v2
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
-          ref: main
-      - name: Get FFCx source (to access tests, specific branch)
+      - name: Get FFCx source (specified branch)
         if: ${{ github.event == 'workflow_dispatch' }}
         uses: actions/checkout@v2
         with:
@@ -68,5 +61,4 @@ jobs:
       - name: Install FFCx
         run: pip install ./ffcx[ci]
       - name: Run FFCx tests
-        run: |
-          python -m pytest -n auto ffcx/test
+        run: python -m pytest -n auto ffcx/test

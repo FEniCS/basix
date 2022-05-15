@@ -31,7 +31,7 @@ jobs:
         run: |
           scl enable gcc-toolset-11 bash
           echo ${CXX}
-          echo which g++
+          which g++
           python3 -m pip install .[test]
 
       - name: Run units tests

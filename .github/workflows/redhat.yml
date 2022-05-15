@@ -14,14 +14,25 @@ on:
 jobs:
   build:
     name: Build and test (Red Hat)
-    runs-on: ubuntu-20.04
-    container: fenicsproject/test-env:latest-redhat
+    runs-on: ubuntu-latest
+    container: rockylinux/rockylinux:8
+
+    env:
+      CC: gcc
+      CXX: g++
 
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install dependencies
+        run: |
+          sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/Rocky-PowerTools.repo
+          dnf install -y gcc-toolset-11-toolchain git blas-devel lapack-devel python39 python39-devel python39-pip
+
       - name: Install Basix
-        run: python3 -m pip install .[test]
+        run: |
+          source /opt/rh/gcc-toolset-11/enable
+          python3 -m pip install .[test]
 
       - name: Run units tests
         run: |

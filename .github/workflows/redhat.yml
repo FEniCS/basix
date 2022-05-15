@@ -17,10 +17,6 @@ jobs:
     runs-on: ubuntu-latest
     container: rockylinux/rockylinux:8
 
-    defaults:
-      run:
-        shell: bash
-
     env:
       CC: gcc
       CXX: g++

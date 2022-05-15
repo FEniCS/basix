@@ -18,13 +18,13 @@ jobs:
     container: rockylinux/rockylinux:8
 
     env:
-      CC: clang
-      CXX: clang++
+      CC: gcc
+      CXX: g++
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install Basix
+      - name: Install dependencies
         run: yum install -y gcc-toolset-11 python39-pip
 
       - name: Install Basix

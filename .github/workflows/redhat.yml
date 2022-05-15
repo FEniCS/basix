@@ -17,6 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     container: rockylinux/rockylinux:8
 
+    defaults:
+      run:
+        shell: bash
+
     env:
       CC: gcc
       CXX: g++
@@ -29,7 +33,7 @@ jobs:
 
       - name: Install Basix
         run: |
-          scl enable gcc-toolset-11 sh
+          scl enable gcc-toolset-11 bash
           echo ${CXX}
           ps -p $$
           which g++

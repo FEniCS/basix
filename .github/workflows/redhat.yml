@@ -29,8 +29,9 @@ jobs:
 
       - name: Install Basix
         run: |
-          scl enable gcc-toolset-11 bash
+          scl enable gcc-toolset-11 'bash'
           echo ${CXX}
+          ps -p $$
           which g++
           python3 -m pip install .[test]
 

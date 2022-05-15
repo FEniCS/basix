@@ -40,16 +40,16 @@ jobs:
         run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
 
       - name: Install Basix
-        run: pip -v install .[ci]
+        run: pip -v install .
 
       - name: Get FFCx source (default branch)
-        if: "${{ !github.event.workflow_dispatch }}"
+        if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@v2
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
       - name: Get FFCx source (specified branch)
-        if: "${{ github.event.workflow_dispatch }}"
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v2
         with:
           path: ./ffcx

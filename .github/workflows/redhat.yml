@@ -30,7 +30,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          dnf install -y gcc-toolset-11-toolchain git blas python39 python39-pip
+          sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/Rocky-PowerTools.repo
+          dnf install -y gcc-toolset-11-toolchain git blas-devel python39 python39-pip
 
       - name: Install Basix
         run: |

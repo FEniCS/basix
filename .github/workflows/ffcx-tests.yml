@@ -6,8 +6,6 @@ on:
   pull_request:
     branches:
       - main
-<<<<<<< HEAD
-=======
   workflow_dispatch:
     inputs:
       ffcx_branch:
@@ -18,7 +16,6 @@ on:
         description: "UFL branch or tag"
         default: "main"
         type: string
->>>>>>> b2f30b3 (FFCx CI fix(handle default case) (#500))
 
 jobs:
   build:

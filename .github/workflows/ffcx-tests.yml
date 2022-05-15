@@ -37,25 +37,33 @@ jobs:
       - name: Install UFL (default branch)
         if: "${{ github.event.inputs.ufl_branch == '' }}"
         run: pip install git+https://github.com/FEniCS/ufl.git
-      - name: Install UFL (specified branch)
-        if: "${{ github.event.inputs.ufl_branch != '' }}"
-        run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
+      # - name: Install UFL (specified branch)
+      #   if: "${{ github.event.inputs.ufl_branch != '' }}"
+      #   run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
 
       - name: Install Basix
         run: pip -v install .[ci]
 
-      - name: Get git refs
-        id: refs
-        run: |
-          USER_INPUT=${{ github.event.inputs.ffcx_branch }}
-          echo "::set-output name=FFCX_REF::${USER_INPUT:-main}"
+      # - name: Get git refs
+      #   id: refs
+      #   run: |
+      #     USER_INPUT=${{ github.event.inputs.ffcx_branch }}
+      #     echo "::set-output name=FFCX_REF::${USER_INPUT:-main}"
 
-      - name: Get FFCx source (to access tests)
+      - name: Get FFCx source (to access tests, default branch)
+        if: ${{ github.event != 'workflow_dispatch' }}
         uses: actions/checkout@v2
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
-          ref: ${{ steps.refs.outputs.FFCX_REF }}
+
+      - name: Get FFCx source (to access tests, specific branch)
+        if: ${{ github.event == 'workflow_dispatch' }}
+        uses: actions/checkout@v2
+        with:
+          path: ./ffcx
+          repository: FEniCS/ffcx
+          ref: ${{ github.event.inputs.ffcx_branch }}
 
       - name: Build FFCx unit tests
         run: |

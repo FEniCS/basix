@@ -12,7 +12,6 @@ on:
         description: "FFCx branch or tag"
         default: "main"
         type: string
-
       ufl_branch:
         description: "UFL branch or tag"
         default: "main"
@@ -31,8 +30,7 @@ jobs:
           python-version: 3.9
 
       - name: Install dependencies
-        run: |
-          apt-get install -y libopenblas-dev liblapack-dev graphviz libgraphviz-dev ninja-build
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev graphviz libgraphviz-dev ninja-build
 
       - name: Install UFL (default branch)
         if: "${{ github.event != 'workflow_dispatch' }}"

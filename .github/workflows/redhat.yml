@@ -17,6 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     container: rockylinux/rockylinux:8
 
+    env:
+      CC: clang
+      CXX: clang++
+
     steps:
       - uses: actions/checkout@v2
 

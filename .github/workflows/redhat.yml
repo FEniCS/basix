@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          dnf install -y gcc-toolset-11-toolchain python39 python39-pip which
+          dnf install -y gcc-toolset-11-toolchain git python39 python39-pip which
 
       - name: Install Basix
         run: |

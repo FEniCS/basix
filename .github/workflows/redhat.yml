@@ -30,14 +30,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          dnf install -y gcc-toolset-11-toolchain git python39 python39-pip which
+          dnf install -y gcc-toolset-11-toolchain git openblas python39 python39-pip which
 
       - name: Install Basix
         run: |
           source /opt/rh/gcc-toolset-11/enable
-          echo ${CXX}
-          ps -p $$
-          which g++
           python3 -m pip install .[test]
 
       - name: Run units tests

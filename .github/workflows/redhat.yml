@@ -31,8 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           dnf install -y gcc-toolset-11-toolchain python39 python39-pip which
-          scl enable gcc-toolset-11 bash
-          which g++
+          scl enable gcc-toolset-11 'which g++'
 
       - name: Install Basix
         run: |

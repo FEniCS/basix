@@ -29,7 +29,7 @@ jobs:
 
       - name: Install Basix
         run: |
-          scl enable gcc-toolset-11 'bash'
+          scl enable gcc-toolset-11 sh
           echo ${CXX}
           ps -p $$
           which g++

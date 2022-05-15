@@ -58,7 +58,7 @@ else()
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.24.1
+    GIT_TAG        0.24.2
   )
   FetchContent_MakeAvailable(xtensor)
 endif()

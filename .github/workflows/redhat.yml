@@ -14,14 +14,19 @@ on:
 jobs:
   build:
     name: Build and test (Red Hat)
-    runs-on: ubuntu-20.04
-    container: fenicsproject/test-env:latest-redhat
+    runs-on: ubuntu-latest
+    container: rockylinux/rockylinux:8
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Install Basix
-        run: python3 -m pip install .[test]
+        run: yum install -y gcc-toolset-11 python39-pip
+
+      - name: Install Basix
+        run: |
+          scl enable gcc-toolset-11 'bash'
+          python3 -m pip install .[test]
 
       - name: Run units tests
         run: |

@@ -22,7 +22,7 @@ def test_version():
     # Strip Python-specific versioning (dev, post) and compare with C++
     # versioning
     stripped_version = re.sub(r"(\.post(0|[1-9][0-9]*))", "", version)
-    stripped_version = re.sub(r"(\.dev(0|[1-9][0-9]*))", "", stripped_version)
+    stripped_version = version.replace("dev", "")
     if stripped_version != basix.__version__:
         raise RuntimeError(
             f"The version numbers of the Python (${pkg_resources.get_distribution('fenics-basix').version} "

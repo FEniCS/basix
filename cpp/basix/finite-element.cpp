@@ -28,6 +28,7 @@ using namespace basix;
 namespace
 {
 //-----------------------------------------------------------------------------
+/// This function orthogonalises and normalises the rows of a matrix in place
 void orthogonalise(xt::xtensor<double, 2>& wcoeffs)
 {
   for (std::size_t i = 0; i < wcoeffs.shape(0); ++i)

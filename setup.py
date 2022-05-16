@@ -5,8 +5,10 @@ import sysconfig
 
 setup(name="fenics-basix",
       python_requires='>=3.7.0',
-      version="0.4.2",
+      version="0.4.2.post0",
       description='Basix Python interface',
+      long_description="README.md",
+      long_description_content_type="text/markdown",
       url="https://github.com/FEniCS/basix",
       author='FEniCS Project',
       author_email="fenics-dev@googlegroups.com",

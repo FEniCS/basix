@@ -3,11 +3,15 @@ from skbuild import setup
 import sys
 import sysconfig
 
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+
 setup(name="fenics-basix",
       python_requires='>=3.7.0',
-      version="0.4.2.post0",
+      version="0.4.2.post1",
       description='Basix Python interface',
-      long_description="README.md",
+      long_description=long_description,
       long_description_content_type="text/markdown",
       url="https://github.com/FEniCS/basix",
       author='FEniCS Project',
@@ -15,7 +19,7 @@ setup(name="fenics-basix",
       maintainer_email="fenics-dev@googlegroups.com",
       license="MIT",
       packages=["basix"],
-      install_requires=["numpy>=1.20"],
+      install_requires=["numpy"],
       extras_require={
           "docs": ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"],
           "lint": ["flake8", "pydocstyle"],

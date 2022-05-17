@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <xtensor/xarray.hpp>
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xtensor.hpp>
 
@@ -57,8 +56,8 @@ eigh(const xt::xtensor<double, 2>& A);
 /// @param[in] A The matrix
 /// @param[in] B Right-hand side matrix/vector
 /// @return A^{-1} B
-xt::xarray<double, xt::layout_type::column_major>
-solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B);
+xt::xtensor<double, 2> solve(const xt::xtensor<double, 2>& A,
+                             const xt::xtensor<double, 2>& B);
 
 /// Check if A is a singular matrix
 /// @param[in] A The matrix

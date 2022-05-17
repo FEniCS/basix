@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Set the version
-project(Basix VERSION "0.4.2.0" LANGUAGES CXX)
+project(Basix VERSION "0.4.3.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if (SKBUILD)
@@ -58,7 +58,7 @@ else()
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.24.1
+    GIT_TAG        0.24.2
   )
   FetchContent_MakeAvailable(xtensor)
 endif()

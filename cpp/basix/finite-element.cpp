@@ -28,6 +28,21 @@ using namespace basix;
 namespace
 {
 //-----------------------------------------------------------------------------
+/// This function orthogonalises and normalises the rows of a matrix in place
+void orthogonalise(xt::xtensor<double, 2>& wcoeffs)
+{
+  for (std::size_t i = 0; i < wcoeffs.shape(0); ++i)
+  {
+    for (std::size_t j = 0; j < i; ++j)
+    {
+      const double a = xt::sum(xt::row(wcoeffs, i) * xt::row(wcoeffs, j))();
+      xt::row(wcoeffs, i) -= a * xt::row(wcoeffs, j);
+    }
+    xt::row(wcoeffs, i)
+        /= std::sqrt(xt::sum(xt::row(wcoeffs, i) * xt::row(wcoeffs, i))());
+  }
+}
+//-----------------------------------------------------------------------------
 constexpr int compute_value_size(maps::type map_type, int dim)
 {
   switch (map_type)
@@ -541,16 +556,22 @@ FiniteElement::FiniteElement(
               "Discontinuous element can only have interior DOFs.");
   }
 
-  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, highest_degree);
+  xt::xtensor<double, 2> wcoeffs_ortho({wcoeffs.shape(0), wcoeffs.shape(1)});
+  wcoeffs_ortho.assign(wcoeffs);
+  orthogonalise(wcoeffs_ortho);
+
+  _dual_matrix
+      = compute_dual_matrix(cell_type, wcoeffs_ortho, M, x, highest_degree);
 
   if (family == element::family::custom)
   {
-    _wcoeffs = xt::xtensor<double, 2>({wcoeffs.shape(0), wcoeffs.shape(1)});
-    _wcoeffs.assign(wcoeffs);
+    _wcoeffs = xt::xtensor<double, 2>(
+        {wcoeffs_ortho.shape(0), wcoeffs_ortho.shape(1)});
+    _wcoeffs.assign(wcoeffs_ortho);
     _M = M;
   }
   // Compute C = (BD^T)^{-1} B
-  auto result = math::solve(_dual_matrix, wcoeffs);
+  xt::xtensor<double, 2> result = math::solve(_dual_matrix, wcoeffs_ortho);
 
   _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
   _coeffs.assign(result);

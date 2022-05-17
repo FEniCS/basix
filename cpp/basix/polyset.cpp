@@ -33,17 +33,18 @@ constexpr std::array<double, 3> jrc(int a, int n)
 //-----------------------------------------------------------------------------
 // At a point, only the constant polynomial can be used. This has value 1 and
 // derivative 0.
-void tabulate_polyset_point_derivs(xt::xtensor<double, 3>& P, std::size_t,
-                                   std::size_t nderiv,
+void tabulate_polyset_point_derivs(stdex::mdspan<double, extents3d> P,
+                                   std::size_t, std::size_t nderiv,
                                    const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(0) > 0);
-  assert(P.shape(0) == nderiv + 1);
-  assert(P.shape(1) == x.shape(0));
-  assert(P.shape(2) == 1);
+  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(1) == x.shape(0));
+  assert(P.extent(2) == 1);
 
-  std::fill(P.begin(), P.end(), 0.0);
-  xt::view(P, 0, xt::all(), 0) = 1.0;
+  std::fill(P.data(), P.data() + P.size(), 0.0);
+  for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+    P(0, i, 0) = 1.0;
 }
 //-----------------------------------------------------------------------------
 // Compute the complete set of derivatives from 0 to nderiv, for all the
@@ -1214,21 +1215,29 @@ void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
   switch (celltype)
   {
   case cell::type::point:
-    return tabulate_polyset_point_derivs(P, d, n, x);
+    tabulate_polyset_point_derivs(Pmd, d, n, x);
+    return;
   case cell::type::interval:
-    return tabulate_polyset_line_derivs(Pmd, d, n, x);
+    tabulate_polyset_line_derivs(Pmd, d, n, x);
+    return;
   case cell::type::triangle:
-    return tabulate_polyset_triangle_derivs(Pmd, d, n, x);
+    tabulate_polyset_triangle_derivs(Pmd, d, n, x);
+    return;
   case cell::type::tetrahedron:
-    return tabulate_polyset_tetrahedron_derivs(P, d, n, x);
+    tabulate_polyset_tetrahedron_derivs(P, d, n, x);
+    return;
   case cell::type::quadrilateral:
-    return tabulate_polyset_quad_derivs(P, d, n, x);
+    tabulate_polyset_quad_derivs(P, d, n, x);
+    return;
   case cell::type::prism:
-    return tabulate_polyset_prism_derivs(P, d, n, x);
+    tabulate_polyset_prism_derivs(P, d, n, x);
+    return;
   case cell::type::pyramid:
-    return tabulate_polyset_pyramid_derivs(P, d, n, x);
+    tabulate_polyset_pyramid_derivs(P, d, n, x);
+    return;
   case cell::type::hexahedron:
-    return tabulate_polyset_hex_derivs(P, d, n, x);
+    tabulate_polyset_hex_derivs(P, d, n, x);
+    return;
   default:
     throw std::runtime_error("Polynomial set: unsupported cell type");
   }

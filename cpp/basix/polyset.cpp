@@ -7,11 +7,15 @@
 #include "indexing.h"
 #include <array>
 #include <cmath>
+#include <experimental/mdspan>
 #include <stdexcept>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
 using namespace basix::indexing;
+namespace stdex = std::experimental;
+using extents3d = stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent,
+                                 stdex::dynamic_extent>;
 
 namespace
 {
@@ -47,48 +51,62 @@ void tabulate_polyset_point_derivs(xt::xtensor<double, 3>& P, std::size_t,
 // Legendre Polynomials, with the recurrence relation given by
 // n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1, 1]. The
 // range is rescaled here to [0, 1].
-void tabulate_polyset_line_derivs(xt::xtensor<double, 3>& P, std::size_t n,
-                                  std::size_t nderiv,
+void tabulate_polyset_line_derivs(stdex::mdspan<double, extents3d> P,
+                                  std::size_t n, std::size_t nderiv,
                                   const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(0) > 0);
-  assert(P.shape(0) == nderiv + 1);
-  assert(P.shape(1) == x.shape(0));
-  assert(P.shape(2) == n + 1);
+  assert(P.extent(0) == nderiv + 1);
+  assert(P.extent(1) == x.shape(0));
+  assert(P.extent(2) == n + 1);
 
-  std::fill(P.begin(), P.end(), 0.0);
-  xt::view(P, 0, xt::all(), 0) = 1.0;
+  std::fill(P.data(), P.data() + P.extent(0) * P.extent(1) * P.extent(2), 0.0);
+  for (std::ptrdiff_t j = 0; j < P.extent(1); ++j)
+    P(0, j, 0) = 1.0;
+
   const auto x0 = xt::col(x, 0);
   if (n == 0)
     return;
 
   { // scope
-    auto result = xt::view(P, 0, xt::all(), xt::all());
-    xt::col(result, 1) = (x0 * 2.0 - 1.0) * xt::col(result, 0);
+    auto result
+        = stdex::submdspan(P, 0, stdex::full_extent, stdex::full_extent);
+    for (std::ptrdiff_t i = 0; i < result.extent(0); ++i)
+      result(i, 1) = (x0[i] * 2.0 - 1.0) * result(i, 0);
     for (std::size_t p = 2; p <= n; ++p)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(p);
-      xt::col(result, p) = (x0 * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
-                           - xt::col(result, p - 2) * a;
+      for (std::ptrdiff_t i = 0; i < result.extent(0); ++i)
+        result(i, p) = (x0[i] * 2.0 - 1.0) * result(i, p - 1) * (a + 1.0)
+                       - result(i, p - 2) * a;
     }
   }
+
   for (std::size_t k = 1; k <= nderiv; ++k)
   {
     // Get reference to this derivative
-    auto result = xt::view(P, k, xt::all(), xt::all());
-    auto result0 = xt::view(P, k - 1, xt::all(), xt::all());
+    auto result
+        = stdex::submdspan(P, k, stdex::full_extent, stdex::full_extent);
+    auto result0
+        = stdex::submdspan(P, k - 1, stdex::full_extent, stdex::full_extent);
     for (std::size_t p = 1; p <= n; ++p)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(p);
-      xt::col(result, p) = (x0 * 2.0 - 1.0) * xt::col(result, p - 1) * (a + 1.0)
-                           + 2 * k * xt::col(result0, p - 1) * (a + 1.0)
-                           - xt::col(result, p - 2) * a;
+      for (std::ptrdiff_t i = 0; i < result.extent(0); ++i)
+        result(i, p) = (x0[i] * 2.0 - 1.0) * result(i, p - 1) * (a + 1.0)
+                       + 2 * k * result0(i, p - 1) * (a + 1.0)
+                       - result(i, p - 2) * a;
     }
   }
 
   // Normalise
-  for (std::size_t p = 0; p <= n; ++p)
-    xt::view(P, xt::all(), xt::all(), p) *= std::sqrt(2 * p + 1);
+  for (std::ptrdiff_t p = 0; p < P.extent(2); ++p)
+  {
+    const double sp = std::sqrt(2 * p + 1);
+    for (std::ptrdiff_t i = 0; i < P.extent(0); ++i)
+      for (std::ptrdiff_t j = 0; j < P.extent(1); ++j)
+        P(i, j, p) *= sp;
+  }
 }
 //-----------------------------------------------------------------------------
 // Compute the complete set of derivatives from 0 to nderiv, for all the
@@ -436,8 +454,8 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   assert(P.shape(2) == (n + 1) * (n + 2) * (2 * n + 3) / 6);
 
   // Indexing for pyramidal basis functions
-  auto pyr_idx = [n](std::size_t p, std::size_t q, std::size_t r) -> std::size_t
-  {
+  auto pyr_idx
+      = [n](std::size_t p, std::size_t q, std::size_t r) -> std::size_t {
     const std::size_t rv = n - r + 1;
     const std::size_t r0
         = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
@@ -646,8 +664,9 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   assert(P.shape(2) == (n + 1) * (n + 1));
 
   // Indexing for quadrilateral basis functions
-  auto quad_idx = [n](std::size_t px, std::size_t py) -> std::size_t
-  { return (n + 1) * px + py; };
+  auto quad_idx = [n](std::size_t px, std::size_t py) -> std::size_t {
+    return (n + 1) * px + py;
+  };
 
   // Compute 1D basis
   const auto x0 = xt::col(x, 0);
@@ -772,8 +791,9 @@ void tabulate_polyset_hex_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 
   // Indexing for hexahedral basis functions
   auto hex_idx
-      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t
-  { return (n + 1) * (n + 1) * px + (n + 1) * py + pz; };
+      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t {
+    return (n + 1) * (n + 1) * px + (n + 1) * py + pz;
+  };
 
   // Compute 1D basis
   const auto x0 = xt::col(x, 0);
@@ -1009,8 +1029,9 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 
   // Indexing for hexahedral basis functions
   auto prism_idx
-      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t
-  { return (n + 1) * idx(py, px) + pz; };
+      = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t {
+    return (n + 1) * idx(py, px) + pz;
+  };
 
   // f3 = ((1 - y) / 2)^2
   const auto f3 = xt::square(1.0 - (x1 * 2.0 - 1.0)) * 0.25;
@@ -1151,12 +1172,18 @@ void tabulate_polyset_prism_derivs(xt::xtensor<double, 3>& P, std::size_t n,
 void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
                        int n, const xt::xtensor<double, 2>& x)
 {
+  // Shadow xtensor with mdspan
+  stdex::mdspan<double,
+                stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent,
+                               stdex::dynamic_extent>>
+      Pmd(P.data(), P.shape(0), P.shape(1), P.shape(2));
+
   switch (celltype)
   {
   case cell::type::point:
     return tabulate_polyset_point_derivs(P, d, n, x);
   case cell::type::interval:
-    return tabulate_polyset_line_derivs(P, d, n, x);
+    return tabulate_polyset_line_derivs(Pmd, d, n, x);
   case cell::type::triangle:
     return tabulate_polyset_triangle_derivs(P, d, n, x);
   case cell::type::tetrahedron:

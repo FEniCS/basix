@@ -126,6 +126,9 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
   auto x0 = xt::col(x, 0);
   auto x1 = xt::col(x, 1);
 
+    auto t_start = std::chrono::high_resolution_clock::now();
+
+
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
   assert(P.extent(1) == x.shape(0));
   assert(P.extent(2) == (n + 1) * (n + 2) / 2);
@@ -255,6 +258,11 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
         for (std::ptrdiff_t j = 0; j < P.extent(1); ++j)
           P(i, j, idx(q, p)) *= norm;
     }
+
+
+  auto t_stop = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_stop - t_start);
+  std::cout << "time = " << duration.count() << "ms.\n";
 }
 //-----------------------------------------------------------------------------
 void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,

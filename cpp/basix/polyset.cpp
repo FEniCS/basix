@@ -61,7 +61,7 @@ void tabulate_polyset_line_derivs(stdex::mdspan<double, extents3d> P,
   assert(P.extent(1) == x.shape(0));
   assert(P.extent(2) == n + 1);
 
-  std::fill(P.data(), P.data() + P.extent(0) * P.extent(1) * P.extent(2), 0.0);
+  std::fill(P.data(), P.data() + P.size(), 0.0);
   for (std::ptrdiff_t j = 0; j < P.extent(1); ++j)
     P(0, j, 0) = 1.0;
 

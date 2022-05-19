@@ -149,7 +149,7 @@ jobs:
 
       - name: Install Basix
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
+          cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_XTENSOR_LIBS=ON -B build-dir -S .
           cmake --build build-dir
           cmake --install build-dir
           cd python && pip install .

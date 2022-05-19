@@ -15,10 +15,6 @@ else()
   find_package(Basix REQUIRED)
 endif()
 
-# Correct COMPONENT specification Development.Module added only in CMake 3.18
-# and above.
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
-
 if(SKBUILD)
   # Scikit-Build does not add your site-packages to the search path
   # automatically, so we need to add it or the pybind11 specific

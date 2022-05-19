@@ -22,10 +22,6 @@ setup(name="fenics-basix",
           "ci": ["pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]",
                  "fenics-basix[test]"]
       },
-      cmake_args=[
-          '-DPython3_EXECUTABLE=' + sys.executable,
-          '-DPython3_LIBRARIES=' + sysconfig.get_config_var("LIBDEST"),
-          '-DPython3_INCLUDE_DIRS=' + sysconfig.get_config_var("INCLUDEPY"),
-          '-DDOWNLOAD_XTENSOR_LIBS=ON'],
+      cmake_args=['-DDOWNLOAD_XTENSOR_LIBS=ON'],
       package_dir={"": "python"},
       cmake_install_dir="python/basix/")

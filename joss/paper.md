@@ -69,7 +69,7 @@ element space the desired continuity properties.
 
 Basix is a C++ library that creates and tabulates a range of finite
 elements on triangles, tetrahedra, quadrilaterals, hexahedra, pyramids,
-and prisms. The majority of the Basix's functionality can be used via
+and prisms. The majority of Basix's functionality can be used via
 its Python interface. A full list of currently supported elements is
 included below.
 

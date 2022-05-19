@@ -71,7 +71,7 @@ jobs:
           make html
 
       - name: Upload C++ documentation artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: doc-cpp
           path: |
@@ -79,7 +79,7 @@ jobs:
           retention-days: 2
           if-no-files-found: error
       - name: Upload Python documentation artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: doc-python
           path: |

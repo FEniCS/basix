@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -44,13 +44,13 @@ jobs:
 
       - name: Get FFCx source (default branch)
         if: github.event_name != 'workflow_dispatch'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
       - name: Get FFCx source (specified branch)
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ./ffcx
           repository: FEniCS/ffcx

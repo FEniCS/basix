@@ -22,7 +22,7 @@ jobs:
       CXX: g++
 
     steps:
-      - run: sudo apt-get install xz-utils
+      - run: apt-get install -y xz-utils
       - uses: actions/checkout@v3
 
       - name: Install dependencies

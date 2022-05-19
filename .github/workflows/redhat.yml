@@ -14,7 +14,7 @@ on:
 jobs:
   build:
     name: Build and test (Red Hat)
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     container: rockylinux/rockylinux:8
 
     env:

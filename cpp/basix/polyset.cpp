@@ -126,27 +126,23 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
   auto x0 = xt::col(x, 0);
   auto x1 = xt::col(x, 1);
 
-    auto t_start = std::chrono::high_resolution_clock::now();
-
+  auto t_start = std::chrono::high_resolution_clock::now();
 
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
-  assert(P.extent(1) == x.shape(0));
-  assert(P.extent(2) == (n + 1) * (n + 2) / 2);
-
-  // f3 = ((1 - y) / 2)^2
-  const auto f3 = xt::square(1.0 - (x1 * 2.0 - 1.0)) * 0.25;
+  assert(P.extent(1) == (n + 1) * (n + 2) / 2);
+  assert(P.extent(2) == x.shape(0));
 
   std::fill(P.data(), P.data() + P.size(), 0.0);
   if (n == 0)
   {
-    for (std::ptrdiff_t j = 0; j < P.extent(1); ++j)
-      P(idx(0, 0), j, 0) = std::sqrt(2.0);
+    for (std::ptrdiff_t j = 0; j < P.extent(2); ++j)
+      P(idx(0, 0), 0, j) = std::sqrt(2.0);
     return;
   }
   else
   {
-    for (std::ptrdiff_t j = 0; j < P.extent(1); ++j)
-      P(idx(0, 0), j, 0) = 1.0;
+    for (std::ptrdiff_t j = 0; j < P.extent(2); ++j)
+      P(idx(0, 0), 0, j) = 1.0;
   }
 
   // Iterate over derivatives in increasing order, since higher derivatives
@@ -157,51 +153,54 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
       for (std::size_t p = 1; p <= n; ++p)
       {
         auto p0
-            = stdex::submdspan(P, idx(kx, ky), stdex::full_extent, idx(0, p));
-        auto p1 = stdex::submdspan(P, idx(kx, ky), stdex::full_extent,
-                                   idx(0, p - 1));
+            = stdex::submdspan(P, idx(kx, ky), idx(0, p), stdex::full_extent);
+        auto p1 = stdex::submdspan(P, idx(kx, ky), idx(0, p - 1),
+                                   stdex::full_extent);
         const double a
             = static_cast<double>(2 * p - 1) / static_cast<double>(p);
-        for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+        for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
           p0[i] = ((x0[i] * 2.0 - 1.0) + 0.5 * (x1[i] * 2.0 - 1.0) + 0.5)
                   * p1[i] * a;
         if (kx > 0)
         {
-          auto px = stdex::submdspan(P, idx(kx - 1, ky), stdex::full_extent,
-                                     idx(0, p - 1));
-          for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+          auto px = stdex::submdspan(P, idx(kx - 1, ky), idx(0, p - 1),
+                                     stdex::full_extent);
+          for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
             p0[i] += 2 * kx * a * px[i];
         }
 
         if (ky > 0)
         {
-          auto py = stdex::submdspan(P, idx(kx, ky - 1), stdex::full_extent,
-                                     idx(0, p - 1));
-          for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+          auto py = stdex::submdspan(P, idx(kx, ky - 1), idx(0, p - 1),
+                                     stdex::full_extent);
+          for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
             p0[i] += ky * a * py[i];
         }
 
         if (p > 1)
         {
-          auto p2 = stdex::submdspan(P, idx(kx, ky), stdex::full_extent,
-                                     idx(0, p - 2));
+          auto p2 = stdex::submdspan(P, idx(kx, ky), idx(0, p - 2),
+                                     stdex::full_extent);
+
+          // f3 = ((1 - y) / 2)^2
+          //          const auto f3 = xt::square(0.5 * (1.0 - x1));
           // y^2 terms
-          for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
-            p0[i] -= f3[i] * p2[i] * (a - 1.0);
+          for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
+            p0[i] -= 0.25 * (1.0 - x1[i]) * (1.0 - x1[i]) * p2[i] * (a - 1.0);
 
           if (ky > 0)
           {
-            auto p2y = stdex::submdspan(P, idx(kx, ky - 1), stdex::full_extent,
-                                        idx(0, p - 2));
-            for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+            auto p2y = stdex::submdspan(P, idx(kx, ky - 1), idx(0, p - 2),
+                                        stdex::full_extent);
+            for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
               p0[i] -= ky * ((x1[i] * 2.0 - 1.0) - 1.0) * p2y[i] * (a - 1.0);
           }
 
           if (ky > 1)
           {
-            auto p2y2 = stdex::submdspan(P, idx(kx, ky - 2), stdex::full_extent,
-                                         idx(0, p - 2));
-            for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+            auto p2y2 = stdex::submdspan(P, idx(kx, ky - 2), idx(0, p - 2),
+                                         stdex::full_extent);
+            for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
               p0[i] -= ky * (ky - 1) * p2y2[i] * (a - 1.0);
           }
         }
@@ -210,38 +209,38 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
       for (std::size_t p = 0; p < n; ++p)
       {
         auto p0
-            = stdex::submdspan(P, idx(kx, ky), stdex::full_extent, idx(0, p));
+            = stdex::submdspan(P, idx(kx, ky), idx(0, p), stdex::full_extent);
         auto p1
-            = stdex::submdspan(P, idx(kx, ky), stdex::full_extent, idx(1, p));
-        for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+            = stdex::submdspan(P, idx(kx, ky), idx(1, p), stdex::full_extent);
+        for (std::ptrdiff_t i = 0; i < p1.size(); ++i)
           p1[i] = p0[i] * ((x1[i] * 2.0 - 1.0) * (1.5 + p) + 0.5 + p);
 
         if (ky > 0)
         {
-          auto py = stdex::submdspan(P, idx(kx, ky - 1), stdex::full_extent,
-                                     idx(0, p));
+          auto py = stdex::submdspan(P, idx(kx, ky - 1), idx(0, p),
+                                     stdex::full_extent);
 
-          for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+          for (std::ptrdiff_t i = 0; i < p1.size(); ++i)
             p1[i] += 2 * ky * (1.5 + p) * py[i];
         }
 
         for (std::size_t q = 1; q < n - p; ++q)
         {
           const auto [a1, a2, a3] = jrc(2 * p + 1, q);
-          auto pqp1 = stdex::submdspan(P, idx(kx, ky), stdex::full_extent,
-                                       idx(q + 1, p));
-          auto pqm1 = stdex::submdspan(P, idx(kx, ky), stdex::full_extent,
-                                       idx(q - 1, p));
+          auto pqp1 = stdex::submdspan(P, idx(kx, ky), idx(q + 1, p),
+                                       stdex::full_extent);
+          auto pqm1 = stdex::submdspan(P, idx(kx, ky), idx(q - 1, p),
+                                       stdex::full_extent);
           auto pq
-              = stdex::submdspan(P, idx(kx, ky), stdex::full_extent, idx(q, p));
+              = stdex::submdspan(P, idx(kx, ky), idx(q, p), stdex::full_extent);
 
-          for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+          for (std::ptrdiff_t i = 0; i < pqp1.size(); ++i)
             pqp1[i] = pq[i] * ((x1[i] * 2.0 - 1.0) * a1 + a2) - pqm1[i] * a3;
           if (ky > 0)
           {
-            auto py = stdex::submdspan(P, idx(kx, ky - 1), stdex::full_extent,
-                                       idx(q, p));
-            for (std::ptrdiff_t i = 0; i < P.extent(1); ++i)
+            auto py = stdex::submdspan(P, idx(kx, ky - 1), idx(q, p),
+                                       stdex::full_extent);
+            for (std::ptrdiff_t i = 0; i < pqp1.size(); ++i)
               pqp1[i] += 2 * ky * a1 * py[i];
           }
         }
@@ -249,20 +248,34 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
     }
   }
 
-  // Normalisation
-  for (std::size_t p = 0; p <= n; ++p)
-    for (std::size_t q = 0; q <= n - p; ++q)
-    {
-      const double norm = std::sqrt((p + 0.5) * (p + q + 1)) * 2;
-      for (std::ptrdiff_t i = 0; i < P.extent(0); ++i)
-        for (std::ptrdiff_t j = 0; j < P.extent(1); ++j)
-          P(i, j, idx(q, p)) *= norm;
-    }
+  auto t_mid = std::chrono::high_resolution_clock::now();
 
+  // Normalisation
+  // std::vector<double> norm(P.extent(1));
+  // for (std::size_t p = 0; p <= n; ++p)
+  //   for (std::size_t q = 0; q <= n - p; ++q)
+  //     norm[idx(q, p)] = std::sqrt((p + 0.5) * (p + q + 1)) * 2;
+
+  {
+    for (std::ptrdiff_t i = 0; i < P.extent(0); ++i)
+      for (std::size_t p = 0; p <= n; ++p)
+        for (std::size_t q = 0; q <= n - p; ++q)
+        {
+          const double norm = std::sqrt((p + 0.5) * (p + q + 1)) * 2;
+          const int j = idx(q, p);
+          for (std::ptrdiff_t k = 0; k < P.extent(2); ++k)
+            P(i, j, k) *= norm;
+        }
+  }
 
   auto t_stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_stop - t_start);
-  std::cout << "time = " << duration.count() << "ms.\n";
+
+  auto duration1
+      = std::chrono::duration_cast<std::chrono::milliseconds>(t_mid - t_start);
+  std::cout << "time1 = " << duration1.count() << "ms.\n";
+  auto duration2
+      = std::chrono::duration_cast<std::chrono::milliseconds>(t_stop - t_mid);
+  std::cout << "time2 = " << duration2.count() << "ms.\n";
 }
 //-----------------------------------------------------------------------------
 void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
@@ -458,7 +471,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
               xt::view(P, idx(kx, ky, kz), xt::all(), idx(r + 1, q, p))
                   = xt::view(P, idx(kx, ky, kz), xt::all(), idx(r, q, p))
                         * ((x2 * 2.0 - 1.0) * ar + br)
-                    - xt::view(P, idx(kx, ky, kz), xt::all(), idx(r - 1, q, p))
+                - xt::view(P, idx(kx, ky, kz), xt::all(), idx(r - 1, q, p))
                           * cr;
               if (kz > 0)
               {
@@ -1217,8 +1230,8 @@ void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
                        int n, const xt::xtensor<double, 2>& x)
 {
   // Shadow xtensor with mdspan
-  stdex::mdspan<double, extents3d> Pmd(P.data(), P.shape(0), P.shape(1),
-                                       P.shape(2));
+  stdex::mdspan<double, extents3d> Pmd(P.data(), P.shape(0), P.shape(2),
+                                       P.shape(1));
 
   switch (celltype)
   {

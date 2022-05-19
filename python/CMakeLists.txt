@@ -17,11 +17,11 @@ endif()
 
 # Correct COMPONENT specification Development.Module added only in CMake 3.18
 # and above.
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
-  find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
-else()
-  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
-endif()
+# if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+#   find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+# else()
+#   find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+# endif()
 
 if(SKBUILD)
   # Scikit-Build does not add your site-packages to the search path

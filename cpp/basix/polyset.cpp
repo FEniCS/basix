@@ -7,6 +7,7 @@
 #include "indexing.h"
 #include <array>
 #include <cmath>
+#include <chrono>
 #include <stdexcept>
 #include <xtensor/xview.hpp>
 
@@ -207,6 +208,9 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
                                          std::size_t n, std::size_t nderiv,
                                          const xt::xtensor<double, 2>& x)
 {
+
+  auto t_start = std::chrono::high_resolution_clock::now();
+    
   assert(x.shape(1) == 3);
   assert(P.shape(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.shape(1) == (n + 1) * (n + 2) * (n + 3) / 6);
@@ -412,6 +416,8 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
     }
   }
 
+  auto t_mid = std::chrono::high_resolution_clock::now();
+  
   // Normalise
   for (std::size_t p = 0; p <= n; ++p)
   {
@@ -424,6 +430,15 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
       }
     }
   }
+
+  auto t_stop = std::chrono::high_resolution_clock::now();
+
+  auto duration1
+      = std::chrono::duration_cast<std::chrono::milliseconds>(t_mid - t_start);
+  std::cout << "time1 = " << duration1.count() << "ms.\n";
+  auto duration2
+      = std::chrono::duration_cast<std::chrono::milliseconds>(t_stop - t_mid);
+  std::cout << "time2 = " << duration2.count() << "ms.\n";
 }
 //-----------------------------------------------------------------------------
 void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,

@@ -163,7 +163,7 @@ xt::xtensor<double, 2> tabulate_dlagrange(int n,
   xt::xtensor<double, 2> tabulated
       = xt::view(tabulated_values, 0, xt::all(), xt::all());
 
-  return xt::transpose(math::solve(dualmat, tabulated));
+  return math::solve(dualmat, tabulated);
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 1> warp_function(lattice::type lattice_type, int n,
@@ -172,13 +172,12 @@ xt::xtensor<double, 1> warp_function(lattice::type lattice_type, int n,
   xt::xtensor<double, 2> pts = create_interval(n, lattice_type, true);
   for (int i = 0; i < n + 1; ++i)
     pts(i, 0) -= static_cast<double>(i) / static_cast<double>(n);
-
   const xt::xtensor<double, 2> v = tabulate_dlagrange(n, x);
 
-  xt::xtensor<double, 1> w = xt::zeros<double>({v.shape(0)});
+  xt::xtensor<double, 1> w = xt::zeros<double>({v.shape(1)});
   for (std::size_t i = 0; i < v.shape(0); ++i)
     for (std::size_t j = 0; j < v.shape(1); ++j)
-      w[i] += v(i, j) * pts(j, 0);
+      w[j] += v(i, j) * pts(i, 0);
 
   return w;
 }
@@ -641,7 +640,7 @@ xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
   auto w = [&](double r) -> double {
     xt::xtensor<double, 2> rr = {{0.5 * (r + 1.0)}};
     xt::xtensor<double, 1> v
-        = xt::view(tabulate_dlagrange(n, rr), 0, xt::all());
+        = xt::view(tabulate_dlagrange(n, rr), xt::all(), 0);
     double d = 0.0;
     for (std::size_t i = 0; i < pts.shape(0); ++i)
       d += v[i] * pts(i, 0);

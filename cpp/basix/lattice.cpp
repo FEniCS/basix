@@ -156,14 +156,13 @@ xt::xtensor<double, 2> tabulate_dlagrange(int n,
   xt::xtensor<double, 3> dual_values
       = polyset::tabulate(cell::type::interval, n, 0, equi_pts);
   xt::xtensor<double, 2> dualmat({dual_values.shape(2), dual_values.shape(1)});
-  dualmat.assign(xt::transpose(xt::view(dual_values, 0, xt::all(), xt::all())));
+  dualmat.assign(xt::view(dual_values, 0, xt::all(), xt::all()));
 
   xt::xtensor<double, 3> tabulated_values
       = polyset::tabulate(cell::type::interval, n, 0, x);
   xt::xtensor<double, 2> tabulated(
       {tabulated_values.shape(2), tabulated_values.shape(1)});
-  tabulated.assign(
-      xt::transpose(xt::view(tabulated_values, 0, xt::all(), xt::all())));
+  tabulated.assign(xt::view(tabulated_values, 0, xt::all(), xt::all()));
 
   return xt::transpose(math::solve(dualmat, tabulated));
 }
@@ -640,8 +639,7 @@ xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
     pts(i, 0) += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
   // Get interpolated value at r in range [-1, 1]
-  auto w = [&](double r) -> double
-  {
+  auto w = [&](double r) -> double {
     xt::xtensor<double, 2> rr = {{0.5 * (r + 1.0)}};
     xt::xtensor<double, 1> v
         = xt::view(tabulate_dlagrange(n, rr), 0, xt::all());

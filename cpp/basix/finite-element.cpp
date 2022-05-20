@@ -19,6 +19,7 @@
 #include <basix/version.h>
 #include <numeric>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xio.hpp>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -132,8 +133,8 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
       // Compute dual matrix contribution
       for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
         for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
-          for (std::size_t l = 0; l < P.shape(0); ++l) // Polynomial term
-            for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
+          for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
+            for (std::size_t l = 0; l < P.shape(0); ++l) // Polynomial term
               D(dof_index + i, j, l) += Me(i, j, k) * P(l, k);
 
       dof_index += M[d][e].shape(0);
@@ -855,20 +856,20 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
 
   const int psize = polyset::dim(_cell_type, _highest_degree);
   xt::xtensor<double, 3> basis(
-      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), 
+      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)),
        static_cast<std::size_t>(psize), x.shape(0)});
   polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());
   xt::xtensor<double, 2> B, C;
-  for (std::size_t p = 0; p < basis.shape(2); ++p)
+  for (std::size_t p = 0; p < basis.shape(0); ++p)
   {
     for (int j = 0; j < vs; ++j)
     {
       auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
-      B = xt::view(basis, p, xt::all(), xt::all());
-      C = xt::view(_coeffs, xt::all(),
-                                 xt::range(psize * j, psize * j + psize));
+      B = xt::transpose(xt::view(basis, p, xt::all(), xt::all()));
+      C = xt::transpose(xt::view(_coeffs, xt::all(),
+                                 xt::range(psize * j, psize * j + psize)));
       auto result = math::dot(B, C);
       basis_view.assign(result);
     }

@@ -155,14 +155,13 @@ xt::xtensor<double, 2> tabulate_dlagrange(int n,
     equi_pts(i, 0) = static_cast<double>(i) / static_cast<double>(n);
   xt::xtensor<double, 3> dual_values
       = polyset::tabulate(cell::type::interval, n, 0, equi_pts);
-  xt::xtensor<double, 2> dualmat({dual_values.shape(2), dual_values.shape(1)});
-  dualmat.assign(xt::view(dual_values, 0, xt::all(), xt::all()));
+  xt::xtensor<double, 2> dualmat
+      = xt::view(dual_values, 0, xt::all(), xt::all());
 
   xt::xtensor<double, 3> tabulated_values
       = polyset::tabulate(cell::type::interval, n, 0, x);
-  xt::xtensor<double, 2> tabulated(
-      {tabulated_values.shape(2), tabulated_values.shape(1)});
-  tabulated.assign(xt::view(tabulated_values, 0, xt::all(), xt::all()));
+  xt::xtensor<double, 2> tabulated
+      = xt::view(tabulated_values, 0, xt::all(), xt::all());
 
   return xt::transpose(math::solve(dualmat, tabulated));
 }

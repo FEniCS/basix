@@ -113,7 +113,7 @@ def test_hexahedron_transformation_degrees(element_type, degree, element_args):
     assert len(bt) == 24
     identity = np.identity(e.dim)
     for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-                               4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
+                                4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2]):
         # TODO: remove the atol here once non-equispaced variants are implemented
         assert np.allclose(
             np.linalg.matrix_power(bt[i], degree),
@@ -127,7 +127,7 @@ def test_prism_transformation_degrees(element_type, degree, element_args):
     assert len(bt) == 19
     identity = np.identity(e.dim)
     for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2, 2,
-                               3, 2, 4, 2, 4, 2, 4, 2, 3, 2]):
+                                3, 2, 4, 2, 4, 2, 4, 2, 3, 2]):
         assert np.allclose(
             np.linalg.matrix_power(bt[i], degree),
             identity)
@@ -140,7 +140,7 @@ def test_pyramid_transformation_degrees(element_type, degree, element_args):
     assert len(bt) == 18
     identity = np.identity(e.dim)
     for i, degree in enumerate([2, 2, 2, 2, 2, 2, 2, 2,
-                               4, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
+                                4, 2, 3, 2, 3, 2, 3, 2, 3, 2]):
         assert np.allclose(
             np.linalg.matrix_power(bt[i], degree),
             identity)

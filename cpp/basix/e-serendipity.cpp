@@ -34,7 +34,7 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
       = xt::view(polyset::tabulate(cell::type::quadrilateral, degree, 0, pts),
                  0, xt::all(), xt::all());
 
-  const std::size_t psize = Pq.shape(1);
+  const std::size_t psize = Pq.shape(0);
 
   // Create coefficients for order (degree) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
@@ -48,14 +48,14 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
   if (degree == 1)
   {
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(row_n, k) = xt::sum(wts * q0 * q1 * xt::col(Pq, k))();
+      wcoeffs(row_n, k) = xt::sum(wts * q0 * q1 * xt::row(Pq, k))();
     return wcoeffs;
   }
 
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::col(Pq, k);
+    auto pk = xt::row(Pq, k);
     for (std::size_t a = 0; a < 2; ++a)
     {
       auto q_a = xt::col(pts, a);
@@ -128,7 +128,7 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
       = xt::view(polyset::tabulate(cell::type::hexahedron, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
-  const std::size_t psize = Ph.shape(1);
+  const std::size_t psize = Ph.shape(0);
 
   // Create coefficients for order (degree) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
@@ -148,7 +148,7 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
     {
       for (std::size_t k = 0; k < psize; ++k)
       {
-        integrand = wts * xt::col(Ph, k);
+        integrand = wts * xt::row(Ph, k);
         for (int d = 0; d < 3; ++d)
         {
           auto q_d = xt::col(pts, d);
@@ -178,7 +178,7 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
       polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts), 0,
       xt::all(), xt::all());
 
-  const std::size_t psize = Pq.shape(1);
+  const std::size_t psize = Pq.shape(0);
   const std::size_t nv = polyset::dim(cell::type::triangle, degree);
 
   // Create coefficients for order (degree) vector polynomials
@@ -200,7 +200,7 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::col(Pq, k);
+    auto pk = xt::row(Pq, k);
     for (std::size_t d = 0; d < 2; ++d)
     {
       for (std::size_t a = 0; a < 2; ++a)
@@ -239,7 +239,7 @@ xt::xtensor<double, 2> make_serendipity_div_space_3d(int degree)
       = xt::view(polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts),
                  0, xt::all(), xt::all());
 
-  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t psize = polyset_at_Qpts.shape(0);
   const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
 
   // Create coefficients for order (degree) vector polynomials
@@ -267,7 +267,7 @@ xt::xtensor<double, 2> make_serendipity_div_space_3d(int degree)
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::col(polyset_at_Qpts, k);
+    auto pk = xt::row(polyset_at_Qpts, k);
     for (std::size_t d = 0; d < 3; ++d)
     {
       for (std::size_t a = 0; a < 3; ++a)
@@ -341,7 +341,7 @@ xt::xtensor<double, 2> make_serendipity_curl_space_2d(int degree)
       polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts), 0,
       xt::all(), xt::all());
 
-  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t psize = polyset_at_Qpts.shape(0);
   const std::size_t nv = polyset::dim(cell::type::triangle, degree);
 
   // Create coefficients for order (degree) vector polynomials
@@ -363,7 +363,7 @@ xt::xtensor<double, 2> make_serendipity_curl_space_2d(int degree)
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::col(polyset_at_Qpts, k);
+    auto pk = xt::row(polyset_at_Qpts, k);
     for (std::size_t d = 0; d < 2; ++d)
     {
       for (std::size_t a = 0; a < 2; ++a)
@@ -405,7 +405,7 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
       = xt::view(polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts),
                  0, xt::all(), xt::all());
 
-  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t psize = polyset_at_Qpts.shape(0);
   const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
 
   // Create coefficients for order (degree) vector polynomials
@@ -433,7 +433,7 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
   xt::xtensor<double, 1> integrand;
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::col(polyset_at_Qpts, k);
+    auto pk = xt::row(polyset_at_Qpts, k);
     for (std::size_t d = 0; d < 3; ++d)
     {
       for (std::size_t a = 0; a < (degree > 1 ? 3 : 2); ++a)
@@ -502,7 +502,7 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
       {
         for (int d = 0; d < 3; ++d)
         {
-          integrand = wts * xt::col(polyset_at_Qpts, k);
+          integrand = wts * xt::row(polyset_at_Qpts, k);
           for (int d2 = 0; d2 < 3; ++d2)
           {
             auto q_d2 = xt::col(pts, d2);
@@ -1132,9 +1132,6 @@ FiniteElement basix::element::create_serendipity_curl(
   auto [Qpts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                   celltype, 2 * degree + 1);
   auto wts = xt::adapt(_wts);
-  xt::xtensor<double, 2> polyset_at_Qpts
-      = xt::view(polyset::tabulate(celltype, degree + 1, 0, Qpts), 0, xt::all(),
-                 xt::all());
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 2)

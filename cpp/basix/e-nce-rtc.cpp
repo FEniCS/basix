@@ -51,7 +51,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
       polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.shape(0);
 
   const int facet_count = tdim == 2 ? 4 : 6;
   const int facet_dofs = polyset::dim(facettype, degree - 1);
@@ -109,7 +109,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
 
       for (std::size_t k = 0; k < psize; ++k)
       {
-        const double w_sum = xt::sum(Qwts * integrand * xt::col(phi, k))();
+        const double w_sum = xt::sum(Qwts * integrand * xt::row(phi, k))();
         wcoeffs(dof, k + psize * d) = w_sum;
       }
       ++dof;
@@ -191,7 +191,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
       polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const int psize = phi.shape(1);
+  const int psize = phi.shape(0);
 
   const int edge_count = tdim == 2 ? 4 : 12;
   const int edge_dofs = polyset::dim(cell::type::interval, degree - 1);
@@ -244,7 +244,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
           integrand *= xt::col(pts, d);
         for (int k = 0; k < psize; ++k)
         {
-          const double w_sum = xt::sum(wts * integrand * xt::col(phi, k))();
+          const double w_sum = xt::sum(wts * integrand * xt::row(phi, k))();
           wcoeffs(dof, k + psize * d) = w_sum;
         }
         ++dof;
@@ -278,7 +278,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
               for (int k = 0; k < psize; ++k)
               {
                 const double w_sum
-                    = xt::sum(wts * integrand * xt::col(phi, k))();
+                    = xt::sum(wts * integrand * xt::row(phi, k))();
                 wcoeffs(dof, k + psize * d) = w_sum;
               }
               ++dof;

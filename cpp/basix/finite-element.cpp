@@ -867,10 +867,9 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
     for (int j = 0; j < vs; ++j)
     {
       auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
-      B = xt::transpose(xt::view(basis, p, xt::all(), xt::all()));
-      C = xt::transpose(xt::view(_coeffs, xt::all(),
-                                 xt::range(psize * j, psize * j + psize)));
-      auto result = math::dot(B, C);
+      B = xt::view(basis, p, xt::all(), xt::all());
+      C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
+      auto result = xt::transpose(math::dot(C, B));
       basis_view.assign(result);
     }
   }

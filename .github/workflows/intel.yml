@@ -23,10 +23,11 @@ jobs:
       DEBIAN_FRONTEND: noninteractive
 
     steps:
-      - uses: actions/checkout@v2
       - name: Install required packages to install Intel compilers and to build
-        run: |
-          apt-get update && apt-get install -y cmake git gnupg ninja-build python3-pip wget
+        run: apt-get update && apt-get install -y cmake git gnupg ninja-build python3-pip wget
+
+      - uses: actions/checkout@v3
+
       - name: Install Intel compilers
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB

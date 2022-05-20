@@ -51,7 +51,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
                             xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.shape(0);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> B = xt::zeros<double>({nv * tdim + ns, psize * tdim});
@@ -66,10 +66,10 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   // polynomial basis
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::col(phi, ns0 + i);
+    auto p = xt::row(phi, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      auto pk = xt::col(phi, k);
+      auto pk = xt::row(phi, k);
       for (std::size_t j = 0; j < tdim; ++j)
       {
         B(nv * tdim + i, k + psize * j)

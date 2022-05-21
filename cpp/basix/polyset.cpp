@@ -555,7 +555,7 @@ void tabulate_polyset_tetrahedron_derivs(
 //-----------------------------------------------------------------------------
 void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
                                      std::size_t n, std::size_t nderiv,
-                                     const xt::xtensor<double, 2>& x)
+                                     stdex::mdspan<const double, extents2d> x)
 {
   assert(x.shape(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
@@ -571,11 +571,9 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
     return r0 + p * rv + q;
   };
 
-  const auto x0 = xt::col(x, 0);
-  const auto x1 = xt::col(x, 1);
-  const auto x2 = xt::col(x, 2);
-
-  const auto f2 = 0.25 * xt::square(1.0 - (x2 * 2.0 - 1.0));
+  const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  const auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
+  const auto x2 = stdex::submdspan(x, stdex::full_extent, 2);
 
   // Traverse derivatives in increasing order
   std::fill(P.data(), P.data() + P.size(), 0.0);
@@ -640,7 +638,10 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
               auto p2 = stdex::submdspan(
                   P, idx(kx, ky, kz), pyr_idx(p - 2, 0, 0), stdex::full_extent);
               for (std::ptrdiff_t i = 0; i < p00.size(); ++i)
-                p00[i] -= f2[i] * p2[i] * a;
+              {
+                const double f2 = 1.0 - x2[i];
+                p00[i] -= f2 * f2 * p2[i] * a;
+              }
 
               if (kz > 0)
               {
@@ -699,11 +700,14 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
             if (q > 1)
             {
               for (std::ptrdiff_t i = 0; i < r_pq.size(); ++i)
-                r_pq[i] -= f2[i]
+              {
+                const double f2 = 1.0 - x2[i];
+                r_pq[i] -= f2 * f2
                            * stdex::submdspan(P, idx(kx, ky, kz),
                                               pyr_idx(p, q - 2, 0),
                                               stdex::full_extent)[i]
                            * a;
+              }
 
               if (kz > 0)
               {
@@ -1428,7 +1432,7 @@ void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
     tabulate_polyset_prism_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::pyramid:
-    tabulate_polyset_pyramid_derivs(Pmd, d, n, x);
+    tabulate_polyset_pyramid_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::hexahedron:
     tabulate_polyset_hex_derivs(Pmd, d, n, xmd);

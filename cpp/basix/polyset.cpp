@@ -251,11 +251,6 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
   auto t_mid = std::chrono::high_resolution_clock::now();
 
   // Normalisation
-  // std::vector<double> norm(P.extent(1));
-  // for (std::size_t p = 0; p <= n; ++p)
-  //   for (std::size_t q = 0; q <= n - p; ++q)
-  //     norm[idx(q, p)] = std::sqrt((p + 0.5) * (p + q + 1)) * 2;
-
   {
     for (std::ptrdiff_t i = 0; i < P.extent(0); ++i)
       for (std::size_t p = 0; p <= n; ++p)

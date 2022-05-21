@@ -436,10 +436,8 @@ void tabulate_polyset_tetrahedron_derivs(
                                          stdex::full_extent);
             for (std::ptrdiff_t i = 0; i < pq1.size(); ++i)
             {
-              const double f4 = 0.5 * (1.0 - (x2[i] * 2.0 - 1.0));
-              const double f3
-                  = 0.5
-                    * (1.0 + (x1[i] * 2.0 - 1.0) * 2.0 + (x2[i] * 2.0 - 1.0));
+              const double f4 = 1.0 - x2[i];
+              const double f3 = (x1[i] * 2.0 - 1.0 + x2[i]);
 
               pq1[i] = pq[i] * (f3 * aq + f4 * bq) - pqm1[i] * f4 * f4 * cq;
             }
@@ -1173,29 +1171,26 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
 //-----------------------------------------------------------------------------
 void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
                                    std::size_t n, std::size_t nderiv,
-                                   const xt::xtensor<double, 2>& x)
+                                   stdex::mdspan<const double, extents2d> x)
 {
-  assert(x.shape(1) == 3);
+  assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.extent(1) == (n + 1) * (n + 1) * (n + 2) / 2);
-  assert(P.extent(2) == x.shape(0));
+  assert(P.extent(2) == x.extent(0));
 
-  const auto x0 = xt::col(x, 0);
-  const auto x1 = xt::col(x, 1);
-  const auto x2 = xt::col(x, 2);
+  const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  const auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
+  const auto x2 = stdex::submdspan(x, stdex::full_extent, 2);
 
-  assert(x0.shape(0) > 0);
-  assert(x1.shape(0) > 0);
-  assert(x2.shape(0) > 0);
+  assert(x0.extent(0) > 0);
+  assert(x1.extent(0) > 0);
+  assert(x2.extent(0) > 0);
 
   // Indexing for hexahedral basis functions
   auto prism_idx
       = [n](std::size_t px, std::size_t py, std::size_t pz) -> std::size_t {
     return (n + 1) * idx(py, px) + pz;
   };
-
-  // f3 = ((1 - y) / 2)^2
-  const auto f3 = xt::square(1.0 - (x1 * 2.0 - 1.0)) * 0.25;
 
   // Tabulate triangle for px=0
   std::fill(P.data(), P.data() + P.size(), 0.0);
@@ -1248,7 +1243,10 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
           auto p2 = stdex::submdspan(P, idx(kx, ky, 0), prism_idx(p - 2, 0, 0),
                                      stdex::full_extent);
           for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
-            p0[i] -= f3[i] * p2[i] * (a - 1.0);
+          {
+            const double f2 = (1.0 - x1[i]);
+            p0[i] -= f2 * f2 * p2[i] * (a - 1.0);
+          }
           if (ky > 0)
           {
             auto result0
@@ -1388,7 +1386,7 @@ void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
     tabulate_polyset_quad_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::prism:
-    tabulate_polyset_prism_derivs(Pmd, d, n, x);
+    tabulate_polyset_prism_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::pyramid:
     tabulate_polyset_pyramid_derivs(P, d, n, x);

@@ -14,6 +14,7 @@
 using namespace basix;
 using namespace basix::indexing;
 namespace stdex = std::experimental;
+using extents2d = stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent>;
 using extents3d = stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent,
                                  stdex::dynamic_extent>;
 
@@ -288,14 +289,11 @@ void tabulate_polyset_tetrahedron_derivs(stdex::mdspan<double, extents3d> P,
 
   auto t_start = std::chrono::high_resolution_clock::now();
 
-  const auto x0 = xt::col(x, 0);
-  const auto x1 = xt::col(x, 1);
-  const auto x2 = xt::col(x, 2);
+  stdex::mdspan<const double, extents2d> xmd(x.data(), x.shape(0), x.shape(1));
 
-  const auto f2 = 0.25 * xt::square((x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0));
-  const auto f3 = 0.5 * (1.0 + (x1 * 2.0 - 1.0) * 2.0 + (x2 * 2.0 - 1.0));
-  const auto f4 = 0.5 * (1.0 - (x2 * 2.0 - 1.0));
-  const auto f5 = f4 * f4;
+  const auto x0 = stdex::submdspan(xmd, stdex::full_extent, 0);
+  const auto x1 = stdex::submdspan(xmd, stdex::full_extent, 1);
+  const auto x2 = stdex::submdspan(xmd, stdex::full_extent, 2);
 
   // Traverse derivatives in increasing order
   std::fill(P.data(), P.data() + P.size(), 0.0);
@@ -356,7 +354,10 @@ void tabulate_polyset_tetrahedron_derivs(stdex::mdspan<double, extents3d> P,
             auto p0m2 = stdex::submdspan(P, idx(kx, ky, kz), idx(0, 0, p - 2),
                                          stdex::full_extent);
             for (std::ptrdiff_t i = 0; i < p00.size(); ++i)
-              p00[i] -= f2[i] * p0m2[i] * (a - 1.0);
+            {
+              const double f2 = x1[i] + x2[i] - 1.0;
+              p00[i] -= f2 * f2 * p0m2[i] * (a - 1.0);
+            }
             if (ky > 0)
             {
               auto p0m2y = stdex::submdspan(
@@ -441,8 +442,14 @@ void tabulate_polyset_tetrahedron_derivs(stdex::mdspan<double, extents3d> P,
             auto pqm1 = stdex::submdspan(P, idx(kx, ky, kz), idx(0, q - 1, p),
                                          stdex::full_extent);
             for (std::ptrdiff_t i = 0; i < pq1.size(); ++i)
-              pq1[i] = pq[i] * (f3[i] * aq + f4[i] * bq) - pqm1[i] * f5[i] * cq;
+            {
+              const double f4 = 0.5 * (1.0 - (x2[i] * 2.0 - 1.0));
+              const double f3
+                  = 0.5
+                    * (1.0 + (x1[i] * 2.0 - 1.0) * 2.0 + (x2[i] * 2.0 - 1.0));
 
+              pq1[i] = pq[i] * (f3 * aq + f4 * bq) - pqm1[i] * f4 * f4 * cq;
+            }
             if (ky > 0)
             {
               auto pqy = stdex::submdspan(P, idx(kx, ky - 1, kz), idx(0, q, p),

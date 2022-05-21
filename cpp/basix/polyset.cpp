@@ -147,11 +147,6 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
           p0 += ky * a * xt::view(P, idx(kx, ky - 1), idx(0, p - 1), xt::all());
         }
 
-        std::cout << "*p = " << p << ", p0 = [";
-        for (int i = 0; i < p0.size(); ++i)
-          std::cout << p0[i] << " ";
-        std::cout << "]\n";
-
         if (p > 1)
         {
           // y^2 terms
@@ -170,11 +165,6 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                   * xt::view(P, idx(kx, ky - 2), idx(0, p - 2), xt::all())
                   * (a - 1.0);
           }
-
-          std::cout << "p = " << p << ", p0 = [";
-          for (int i = 0; i < p0.size(); ++i)
-            std::cout << p0[i] << " ";
-          std::cout << "]\n";
         }
       }
 

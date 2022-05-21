@@ -36,12 +36,12 @@ constexpr std::array<double, 3> jrc(int a, int n)
 // derivative 0.
 void tabulate_polyset_point_derivs(stdex::mdspan<double, extents3d> P,
                                    std::size_t, std::size_t nderiv,
-                                   const xt::xtensor<double, 2>& x)
+                                   stdex::mdspan<const double, extents2d> x)
 {
-  assert(x.shape(0) > 0);
+  assert(x.extent(0) > 0);
   assert(P.extent(0) == nderiv + 1);
   assert(P.extent(1) == 1);
-  assert(P.extent(2) == x.shape(0));
+  assert(P.extent(2) == x.extent(0));
 
   std::fill(P.data(), P.data() + P.size(), 0.0);
   for (std::ptrdiff_t i = 0; i < P.extent(2); ++i)
@@ -55,20 +55,20 @@ void tabulate_polyset_point_derivs(stdex::mdspan<double, extents3d> P,
 // range is rescaled here to [0, 1].
 void tabulate_polyset_line_derivs(stdex::mdspan<double, extents3d> P,
                                   std::size_t n, std::size_t nderiv,
-                                  const xt::xtensor<double, 2>& x)
+                                  stdex::mdspan<const double, extents2d> x)
 {
-  assert(x.shape(0) > 0);
+  assert(x.extent(0) > 0);
   assert(P.extent(0) == nderiv + 1);
   assert(P.extent(1) == n + 1);
-  assert(P.extent(2) == x.shape(0));
+  assert(P.extent(2) == x.extent(0));
 
   std::fill(P.data(), P.data() + P.size(), 0.0);
   for (std::ptrdiff_t j = 0; j < P.extent(2); ++j)
     P(0, 0, j) = 1.0;
-
-  const auto x0 = xt::col(x, 0);
   if (n == 0)
     return;
+
+  const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
 
   { // scope
     auto result
@@ -104,10 +104,10 @@ void tabulate_polyset_line_derivs(stdex::mdspan<double, extents3d> P,
   // Normalise
   for (std::ptrdiff_t p = 0; p < P.extent(1); ++p)
   {
-    const double sp = std::sqrt(2 * p + 1);
+    const double norm = std::sqrt(2 * p + 1);
     for (std::ptrdiff_t i = 0; i < P.extent(0); ++i)
       for (std::ptrdiff_t j = 0; j < P.extent(2); ++j)
-        P(i, p, j) *= sp;
+        P(i, p, j) *= norm;
   }
 }
 //-----------------------------------------------------------------------------
@@ -120,18 +120,18 @@ void tabulate_polyset_line_derivs(stdex::mdspan<double, extents3d> P,
 // Karniadakis 1995 (https://doi.org/10.1016/0045-7825(94)00745-9).
 void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
                                       std::size_t n, std::size_t nderiv,
-                                      const xt::xtensor<double, 2>& x)
+                                      stdex::mdspan<const double, extents2d> x)
 {
-  assert(x.shape(1) == 2);
+  assert(x.extent(1) == 2);
 
-  auto x0 = xt::col(x, 0);
-  auto x1 = xt::col(x, 1);
+  const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  const auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
 
   auto t_start = std::chrono::high_resolution_clock::now();
 
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
   assert(P.extent(1) == (n + 1) * (n + 2) / 2);
-  assert(P.extent(2) == x.shape(0));
+  assert(P.extent(2) == x.extent(0));
 
   std::fill(P.data(), P.data() + P.size(), 0.0);
   if (n == 0)
@@ -273,22 +273,20 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
   std::cout << "time2 = " << duration2.count() << "ms.\n";
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_tetrahedron_derivs(stdex::mdspan<double, extents3d> P,
-                                         std::size_t n, std::size_t nderiv,
-                                         const xt::xtensor<double, 2>& x)
+void tabulate_polyset_tetrahedron_derivs(
+    stdex::mdspan<double, extents3d> P, std::size_t n, std::size_t nderiv,
+    stdex::mdspan<const double, extents2d> x)
 {
-  assert(x.shape(1) == 3);
+  assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.extent(1) == (n + 1) * (n + 2) * (n + 3) / 6);
-  assert(P.extent(2) == x.shape(0));
+  assert(P.extent(2) == x.extent(0));
 
   auto t_start = std::chrono::high_resolution_clock::now();
 
-  stdex::mdspan<const double, extents2d> xmd(x.data(), x.shape(0), x.shape(1));
-
-  const auto x0 = stdex::submdspan(xmd, stdex::full_extent, 0);
-  const auto x1 = stdex::submdspan(xmd, stdex::full_extent, 1);
-  const auto x2 = stdex::submdspan(xmd, stdex::full_extent, 2);
+  const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  const auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
+  const auto x2 = stdex::submdspan(x, stdex::full_extent, 2);
 
   // Traverse derivatives in increasing order
   std::fill(P.data(), P.data() + P.size(), 0.0);
@@ -767,14 +765,14 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
-                                  std::size_t nderiv,
-                                  const xt::xtensor<double, 2>& x)
+void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
+                                  std::size_t n, std::size_t nderiv,
+                                  stdex::mdspan<const double, extents2d> x)
 {
-  assert(x.shape(1) == 2);
-  assert(P.shape(0) == (nderiv + 1) * (nderiv + 2) / 2);
-  assert(P.shape(1) == (n + 1) * (n + 1));
-  assert(P.shape(2) == x.shape(0));
+  assert(x.extent(1) == 2);
+  assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
+  assert(P.extent(1) == (n + 1) * (n + 1));
+  assert(P.extent(2) == x.extent(0));
 
   // Indexing for quadrilateral basis functions
   auto quad_idx = [n](std::size_t px, std::size_t py) -> std::size_t {
@@ -782,57 +780,68 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   };
 
   // Compute 1D basis
-  const auto x0 = xt::col(x, 0);
-  const auto x1 = xt::col(x, 1);
+  const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  const auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
 
-  assert(x0.shape(0) > 0);
-  assert(x1.shape(0) > 0);
+  assert(x0.extent(0) > 0);
+  assert(x1.extent(0) > 0);
 
   // Compute tabulation of interval for px = 0
-  std::fill(P.begin(), P.end(), 0.0);
-  xt::view(P, idx(0, 0), quad_idx(0, 0), xt::all()) = 1.0;
+  std::fill(P.data(), P.data() + P.size(), 0.0);
+  for (std::ptrdiff_t j = 0; j < P.extent(2); ++j)
+    P(idx(0, 0), quad_idx(0, 0), j) = 1.0;
 
   if (n == 0)
     return;
 
   { // scope
-    auto result = xt::view(P, idx(0, 0), xt::all(), xt::all());
-    xt::row(result, quad_idx(0, 1))
-        = (x1 * 2.0 - 1.0) * xt::row(result, quad_idx(0, 0));
+    auto result = stdex::submdspan(P, idx(0, 0), stdex::full_extent,
+                                   stdex::full_extent);
+    for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
+      result(quad_idx(0, 1), i)
+          = (x1[i] * 2.0 - 1.0) * result(quad_idx(0, 0), i);
+
     for (std::size_t py = 2; py <= n; ++py)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(py);
-      xt::row(result, quad_idx(0, py))
-          = (x1 * 2.0 - 1.0) * xt::row(result, quad_idx(0, py - 1)) * (a + 1.0)
-            - xt::row(result, quad_idx(0, py - 2)) * a;
+      for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
+        result(quad_idx(0, py), i)
+            = (x1[i] * 2.0 - 1.0) * result(quad_idx(0, py - 1), i) * (a + 1.0)
+              - result(quad_idx(0, py - 2), i) * a;
     }
   }
   for (std::size_t ky = 1; ky <= nderiv; ++ky)
   {
     // Get reference to this derivative
-    auto result = xt::view(P, idx(0, ky), xt::all(), xt::all());
-    auto result0 = xt::view(P, idx(0, ky - 1), xt::all(), xt::all());
-    xt::row(result, quad_idx(0, 1))
-        = (x1 * 2.0 - 1.0) * xt::row(result, quad_idx(0, 0))
-          + 2 * ky * xt::row(result0, quad_idx(0, 0));
+    auto result = stdex::submdspan(P, idx(0, ky), stdex::full_extent,
+                                   stdex::full_extent);
+    auto result0 = stdex::submdspan(P, idx(0, ky - 1), stdex::full_extent,
+                                    stdex::full_extent);
+    for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
+      result(quad_idx(0, 1), i)
+          = (x1[i] * 2.0 - 1.0) * result(quad_idx(0, 0), i)
+            + 2 * ky * result0(quad_idx(0, 0), i);
     for (std::size_t py = 2; py <= n; ++py)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(py);
-      xt::row(result, quad_idx(0, py))
-          = (x1 * 2.0 - 1.0) * xt::row(result, quad_idx(0, py - 1)) * (a + 1.0)
-            + 2 * ky * xt::row(result0, quad_idx(0, py - 1)) * (a + 1.0)
-            - xt::row(result, quad_idx(0, py - 2)) * a;
+      for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
+        result(quad_idx(0, py), i)
+            = (x1[i] * 2.0 - 1.0) * result(quad_idx(0, py - 1), i) * (a + 1.0)
+              + 2 * ky * result0(quad_idx(0, py - 1), i) * (a + 1.0)
+              - result(quad_idx(0, py - 2), i) * a;
     }
   }
 
   // Take tensor product with another interval
   for (std::size_t ky = 0; ky <= nderiv; ++ky)
   {
-    auto result = xt::view(P, idx(0, ky), xt::all(), xt::all());
+    auto result = stdex::submdspan(P, idx(0, ky), stdex::full_extent,
+                                   stdex::full_extent);
     for (std::size_t py = 0; py <= n; ++py)
     {
-      xt::row(result, quad_idx(1, py))
-          = (x0 * 2.0 - 1.0) * xt::row(result, quad_idx(0, py));
+      for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
+        result(quad_idx(1, py), i)
+            = (x0[i] * 2.0 - 1.0) * result(quad_idx(0, py), i);
     }
   }
   for (std::size_t px = 2; px <= n; ++px)
@@ -840,13 +849,15 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
     const double a = 1.0 - 1.0 / static_cast<double>(px);
     for (std::size_t ky = 0; ky <= nderiv; ++ky)
     {
-      auto result = xt::view(P, idx(0, ky), xt::all(), xt::all());
+      auto result = stdex::submdspan(P, idx(0, ky), stdex::full_extent,
+                                     stdex::full_extent);
       for (std::size_t py = 0; py <= n; ++py)
       {
-        xt::row(result, quad_idx(px, py))
-            = (x0 * 2.0 - 1.0) * xt::row(result, quad_idx(px - 1, py))
-                  * (a + 1.0)
-              - xt::row(result, quad_idx(px - 2, py)) * a;
+        for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
+          result(quad_idx(px, py), i) = (x0[i] * 2.0 - 1.0)
+                                            * result(quad_idx(px - 1, py), i)
+                                            * (a + 1.0)
+                                        - result(quad_idx(px - 2, py), i) * a;
       }
     }
   }
@@ -854,13 +865,16 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   {
     for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
     {
-      auto result = xt::view(P, idx(kx, ky), xt::all(), xt::all());
-      auto result0 = xt::view(P, idx(kx - 1, ky), xt::all(), xt::all());
+      auto result = stdex::submdspan(P, idx(kx, ky), stdex::full_extent,
+                                     stdex::full_extent);
+      auto result0 = stdex::submdspan(P, idx(kx - 1, ky), stdex::full_extent,
+                                      stdex::full_extent);
       for (std::size_t py = 0; py <= n; ++py)
       {
-        xt::row(result, quad_idx(1, py))
-            = (x0 * 2.0 - 1.0) * xt::row(result, quad_idx(0, py))
-              + 2 * kx * xt::row(result0, quad_idx(0, py));
+        for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
+          result(quad_idx(1, py), i)
+              = (x0[i] * 2.0 - 1.0) * result(quad_idx(0, py), i)
+                + 2 * kx * result0(quad_idx(0, py), i);
       }
     }
     for (std::size_t px = 2; px <= n; ++px)
@@ -868,15 +882,18 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
       const double a = 1.0 - 1.0 / static_cast<double>(px);
       for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
       {
-        auto result = xt::view(P, idx(kx, ky), xt::all(), xt::all());
-        auto result0 = xt::view(P, idx(kx - 1, ky), xt::all(), xt::all());
+        auto result = stdex::submdspan(P, idx(kx, ky), stdex::full_extent,
+                                       stdex::full_extent);
+        auto result0 = stdex::submdspan(P, idx(kx - 1, ky), stdex::full_extent,
+                                        stdex::full_extent);
         for (std::size_t py = 0; py <= n; ++py)
         {
-          xt::row(result, quad_idx(px, py))
-              = (x0 * 2.0 - 1.0) * xt::row(result, quad_idx(px - 1, py))
-                    * (a + 1.0)
-                + 2 * kx * xt::row(result0, quad_idx(px - 1, py)) * (a + 1.0)
-                - xt::row(result, quad_idx(px - 2, py)) * a;
+          for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
+            result(quad_idx(px, py), i)
+                = (x0[i] * 2.0 - 1.0) * result(quad_idx(px - 1, py), i)
+                      * (a + 1.0)
+                  + 2 * kx * result0(quad_idx(px - 1, py), i) * (a + 1.0)
+                  - result(quad_idx(px - 2, py), i) * a;
         }
       }
     }
@@ -887,8 +904,11 @@ void tabulate_polyset_quad_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   {
     for (std::size_t py = 0; py <= n; ++py)
     {
-      xt::view(P, xt::all(), quad_idx(px, py), xt::all())
-          *= std::sqrt((2 * px + 1) * (2 * py + 1));
+      auto pxy = stdex::submdspan(P, stdex::full_extent, quad_idx(px, py),
+                                  stdex::full_extent);
+      for (std::ptrdiff_t i = 0; i < pxy.extent(0); ++i)
+        for (std::ptrdiff_t j = 0; j < pxy.extent(1); ++j)
+          pxy(i, j) *= std::sqrt((2 * px + 1) * (2 * py + 1));
     }
   }
 }
@@ -1288,23 +1308,24 @@ void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
   // Shadow xtensor with mdspan
   stdex::mdspan<double, extents3d> Pmd(P.data(), P.shape(0), P.shape(1),
                                        P.shape(2));
+  stdex::mdspan<const double, extents2d> xmd(x.data(), x.shape(0), x.shape(1));
 
   switch (celltype)
   {
   case cell::type::point:
-    tabulate_polyset_point_derivs(Pmd, d, n, x);
+    tabulate_polyset_point_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::interval:
-    tabulate_polyset_line_derivs(Pmd, d, n, x);
+    tabulate_polyset_line_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::triangle:
-    tabulate_polyset_triangle_derivs(Pmd, d, n, x);
+    tabulate_polyset_triangle_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::tetrahedron:
-    tabulate_polyset_tetrahedron_derivs(Pmd, d, n, x);
+    tabulate_polyset_tetrahedron_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::quadrilateral:
-    tabulate_polyset_quad_derivs(P, d, n, x);
+    tabulate_polyset_quad_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::prism:
     tabulate_polyset_prism_derivs(P, d, n, x);

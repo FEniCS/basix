@@ -9,7 +9,6 @@
 #include <array>
 #include <cmath>
 #include <stdexcept>
-#include <xtensor/xio.hpp>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
@@ -1328,18 +1327,18 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
           {
             for (std::size_t q = 0; q <= n - p; ++q)
             {
-              for (std::ptrdiff_t i = 0; i < result.size(); ++i)
+              for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
                 result(prism_idx(p, q, r), i)
                     = (x2[i] * 2.0 - 1.0) * result(prism_idx(p, q, r - 1), i)
                       * (a + 1.0);
               if (kz > 0)
-                for (std::ptrdiff_t i = 0; i < result.size(); ++i)
+                for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
 
                   result(prism_idx(p, q, r), i)
                       += 2 * kz * result0(prism_idx(p, q, r - 1), i)
                          * (a + 1.0);
               if (r > 1)
-                for (std::ptrdiff_t i = 0; i < result.size(); ++i)
+                for (std::ptrdiff_t i = 0; i < result.extent(1); ++i)
                   result(prism_idx(p, q, r), i)
                       -= result(prism_idx(p, q, r - 2), i) * a;
             }
@@ -1354,18 +1353,12 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
     for (std::size_t q = 0; q <= n - p; ++q)
       for (std::size_t r = 0; r <= n; ++r)
       {
-        std::cout << "pqr = " << p << q << r << "\n";
         auto pqr = stdex::submdspan(P, stdex::full_extent, prism_idx(p, q, r),
                                     stdex::full_extent);
         for (std::ptrdiff_t i = 0; i < pqr.extent(0); ++i)
           for (std::ptrdiff_t j = 0; j < pqr.extent(1); ++j)
-          {
-            std::cout << "i = " << i << ", j=" << j << ": " << pqr(i, j)
-                      << "\n";
             pqr(i, j) *= std::sqrt((p + 0.5) * (p + q + 1) * (2 * r + 1)) * 2;
-          }
       }
-  std::cout << "---\n";
 }
 } // namespace
 //-----------------------------------------------------------------------------

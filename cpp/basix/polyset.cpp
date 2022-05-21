@@ -175,22 +175,17 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
             p0[i] += ky * a * py[i];
         }
 
-        std::cout << "*p = " << p << ", p0 = [";
-        for (int i = 0; i < p0.size(); ++i)
-          std::cout << p0[i] << " ";
-        std::cout << "]\n";
-
         if (p > 1)
         {
           auto p2 = stdex::submdspan(P, idx(kx, ky), idx(0, p - 2),
                                      stdex::full_extent);
 
-          // f3 = ((1 - y) / 2)^2
-          const auto f3 = xt::square(0.5 * (1.0 - x1));
           // y^2 terms
-
           for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
-            p0[i] -= f3[i] * p2[i] * (a - 1.0);
+          {
+            const double f3 = 1.0 - x1[i];
+            p0[i] -= f3 * f3 * p2[i] * (a - 1.0);
+          }
 
           if (ky > 0)
           {
@@ -207,11 +202,6 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
             for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
               p0[i] -= ky * (ky - 1) * p2y2[i] * (a - 1.0);
           }
-
-          std::cout << "p = " << p << ", p0 = [";
-          for (int i = 0; i < p0.size(); ++i)
-            std::cout << p0[i] << " ";
-          std::cout << "]\n";
         }
       }
 

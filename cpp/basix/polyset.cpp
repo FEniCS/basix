@@ -553,14 +553,14 @@ void tabulate_polyset_tetrahedron_derivs(
   std::cout << "time2 = " << duration2.count() << "ms.\n";
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
-                                     std::size_t nderiv,
+void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
+                                     std::size_t n, std::size_t nderiv,
                                      const xt::xtensor<double, 2>& x)
 {
   assert(x.shape(1) == 3);
-  assert(P.shape(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
-  assert(P.shape(1) == (n + 1) * (n + 2) * (2 * n + 3) / 6);
-  assert(P.shape(2) == x.shape(0));
+  assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
+  assert(P.extent(1) == (n + 1) * (n + 2) * (2 * n + 3) / 6);
+  assert(P.extent(2) == x.shape(0));
 
   // Indexing for pyramidal basis functions
   auto pyr_idx
@@ -578,12 +578,15 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
   const auto f2 = 0.25 * xt::square(1.0 - (x2 * 2.0 - 1.0));
 
   // Traverse derivatives in increasing order
-  std::fill(P.begin(), P.end(), 0.0);
-  xt::view(P, idx(0, 0, 0), pyr_idx(0, 0, 0), xt::all()) = 1.0;
+  std::fill(P.data(), P.data() + P.size(), 0.0);
+
+  for (std::ptrdiff_t j = 0; j < P.extent(2); ++j)
+    P(idx(0, 0, 0), pyr_idx(0, 0, 0), j) = 1.0;
 
   if (n == 0)
   {
-    P *= std::sqrt(3);
+    for (std::ptrdiff_t j = 0; j < P.extent(2); ++j)
+      P(idx(0, 0, 0), pyr_idx(0, 0, 0), j) = std::sqrt(3);
     return;
   }
 
@@ -603,51 +606,60 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
           {
             const double a
                 = static_cast<double>(p - 1) / static_cast<double>(p);
-            auto p00
-                = xt::view(P, idx(kx, ky, kz), pyr_idx(p, 0, 0), xt::all());
-            p00 = (0.5 + (x0 * 2.0 - 1.0) + (x2 * 2.0 - 1.0) * 0.5)
-                  * xt::view(P, idx(kx, ky, kz), pyr_idx(p - 1, 0, 0),
-                             xt::all())
-                  * (a + 1.0);
+            auto p00 = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, 0, 0),
+                                        stdex::full_extent);
+            auto p1 = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p - 1, 0, 0),
+                                       stdex::full_extent);
+
+            for (std::ptrdiff_t i = 0; i < p00.size(); ++i)
+              p00[i] = (0.5 + (x0[i] * 2.0 - 1.0) + (x2[i] * 2.0 - 1.0) * 0.5)
+                       * p1[i] * (a + 1.0);
 
             if (kx > 0)
             {
-              p00 += 2.0 * kx
-                     * xt::view(P, idx(kx - 1, ky, kz), pyr_idx(p - 1, 0, 0),
-                                xt::all())
-                     * (a + 1.0);
+              auto p11
+                  = stdex::submdspan(P, idx(kx - 1, ky, kz),
+                                     pyr_idx(p - 1, 0, 0), stdex::full_extent);
+
+              for (std::ptrdiff_t i = 0; i < p00.size(); ++i)
+                p00[i] += 2.0 * kx * p11[i] * (a + 1.0);
             }
 
             if (kz > 0)
             {
-              p00 += kz
-                     * xt::view(P, idx(kx, ky, kz - 1), pyr_idx(p - 1, 0, 0),
-                                xt::all())
-                     * (a + 1.0);
+              auto pz
+                  = stdex::submdspan(P, idx(kx, ky, kz - 1),
+                                     pyr_idx(p - 1, 0, 0), stdex::full_extent);
+
+              for (std::ptrdiff_t i = 0; i < p00.size(); ++i)
+                p00[i] += kz * pz[i] * (a + 1.0);
             }
 
             if (p > 1)
             {
-              p00 -= f2
-                     * xt::view(P, idx(kx, ky, kz), pyr_idx(p - 2, 0, 0),
-                                xt::all())
-                     * a;
+              auto p2 = stdex::submdspan(
+                  P, idx(kx, ky, kz), pyr_idx(p - 2, 0, 0), stdex::full_extent);
+              for (std::ptrdiff_t i = 0; i < p00.size(); ++i)
+                p00[i] -= f2[i] * p2[i] * a;
 
               if (kz > 0)
               {
-                p00 += kz * (1.0 - (x2 * 2.0 - 1.0))
-                       * xt::view(P, idx(kx, ky, kz - 1), pyr_idx(p - 2, 0, 0),
-                                  xt::all())
-                       * a;
+                auto p2z = stdex::submdspan(P, idx(kx, ky, kz - 1),
+                                            pyr_idx(p - 2, 0, 0),
+                                            stdex::full_extent);
+                for (std::ptrdiff_t i = 0; i < p00.size(); ++i)
+                  p00[i] += kz * (1.0 - (x2[i] * 2.0 - 1.0)) * p2z[i] * a;
               }
 
               if (kz > 1)
               {
                 // quadratic term in z
-                p00 -= kz * (kz - 1)
-                       * xt::view(P, idx(kx, ky, kz - 2), pyr_idx(p - 2, 0, 0),
-                                  xt::all())
-                       * a;
+                for (std::ptrdiff_t i = 0; i < p00.size(); ++i)
+                  p00[i] -= kz * (kz - 1)
+                            * stdex::submdspan(P, idx(kx, ky, kz - 2),
+                                               pyr_idx(p - 2, 0, 0),
+                                               stdex::full_extent)[i]
+                            * a;
               }
             }
           }
@@ -656,49 +668,61 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
           {
             const double a
                 = static_cast<double>(q - 1) / static_cast<double>(q);
-            auto r_pq
-                = xt::view(P, idx(kx, ky, kz), pyr_idx(p, q, 0), xt::all());
-            r_pq = (0.5 + (x1 * 2.0 - 1.0) + (x2 * 2.0 - 1.0) * 0.5)
-                   * xt::view(P, idx(kx, ky, kz), pyr_idx(p, q - 1, 0),
-                              xt::all())
-                   * (a + 1.0);
+            auto r_pq = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
+                                         stdex::full_extent);
+            for (std::ptrdiff_t i = 0; i < r_pq.size(); ++i)
+              r_pq[i]
+                  = (0.5 + (x1[i] * 2.0 - 1.0) + (x2[i] * 2.0 - 1.0) * 0.5)
+                    * stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q - 1, 0),
+                                       stdex::full_extent)[i]
+                    * (a + 1.0);
             if (ky > 0)
             {
-              r_pq += 2.0 * ky
-                      * xt::view(P, idx(kx, ky - 1, kz), pyr_idx(p, q - 1, 0),
-                                 xt::all())
-                      * (a + 1.0);
+              for (std::ptrdiff_t i = 0; i < r_pq.size(); ++i)
+                r_pq[i] += 2.0 * ky
+                           * stdex::submdspan(P, idx(kx, ky - 1, kz),
+                                              pyr_idx(p, q - 1, 0),
+                                              stdex::full_extent)[i]
+                           * (a + 1.0);
             }
 
             if (kz > 0)
             {
-              r_pq += kz
-                      * xt::view(P, idx(kx, ky, kz - 1), pyr_idx(p, q - 1, 0),
-                                 xt::all())
-                      * (a + 1.0);
+              for (std::ptrdiff_t i = 0; i < r_pq.size(); ++i)
+                r_pq[i] += kz
+                           * stdex::submdspan(P, idx(kx, ky, kz - 1),
+                                              pyr_idx(p, q - 1, 0),
+                                              stdex::full_extent)[i]
+                           * (a + 1.0);
             }
 
             if (q > 1)
             {
-              r_pq -= f2
-                      * xt::view(P, idx(kx, ky, kz), pyr_idx(p, q - 2, 0),
-                                 xt::all())
-                      * a;
+              for (std::ptrdiff_t i = 0; i < r_pq.size(); ++i)
+                r_pq[i] -= f2[i]
+                           * stdex::submdspan(P, idx(kx, ky, kz),
+                                              pyr_idx(p, q - 2, 0),
+                                              stdex::full_extent)[i]
+                           * a;
 
               if (kz > 0)
               {
-                r_pq += kz * (1.0 - (x2 * 2.0 - 1.0))
-                        * xt::view(P, idx(kx, ky, kz - 1), pyr_idx(p, q - 2, 0),
-                                   xt::all())
-                        * a;
+                for (std::ptrdiff_t i = 0; i < r_pq.size(); ++i)
+                  r_pq[i] += kz * (1.0 - (x2[i] * 2.0 - 1.0))
+                             * stdex::submdspan(P, idx(kx, ky, kz - 1),
+                                                pyr_idx(p, q - 2, 0),
+                                                stdex::full_extent)[i]
+                             * a;
               }
 
               if (kz > 1)
               {
-                r_pq -= kz * (kz - 1)
-                        * xt::view(P, idx(kx, ky, kz - 2), pyr_idx(p, q - 2, 0),
-                                   xt::all())
-                        * a;
+                for (std::ptrdiff_t i = 0; i < r_pq.size(); ++i)
+                  r_pq[i] -= kz * (kz - 1)
+                             * stdex::submdspan(P, idx(kx, ky, kz - 2),
+                                                pyr_idx(p, q - 2, 0),
+                                                stdex::full_extent)[i]
+                             * a;
               }
             }
           }
@@ -709,16 +733,21 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
         {
           for (std::size_t q = 0; q < n; ++q)
           {
-            auto r_pq1
-                = xt::view(P, idx(kx, ky, kz), pyr_idx(p, q, 1), xt::all());
-            r_pq1 = xt::view(P, idx(kx, ky, kz), pyr_idx(p, q, 0), xt::all())
-                    * ((1.0 + p + q) + (x2 * 2.0 - 1.0) * (2.0 + p + q));
+            auto r_pq1 = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 1),
+                                          stdex::full_extent);
+            for (std::ptrdiff_t i = 0; i < r_pq1.size(); ++i)
+              r_pq1[i]
+                  = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
+                                     stdex::full_extent)[i]
+                    * ((1.0 + p + q) + (x2[i] * 2.0 - 1.0) * (2.0 + p + q));
             if (kz > 0)
             {
-              r_pq1 += 2 * kz
-                       * xt::view(P, idx(kx, ky, kz - 1), pyr_idx(p, q, 0),
-                                  xt::all())
-                       * (2.0 + p + q);
+              for (std::ptrdiff_t i = 0; i < r_pq1.size(); ++i)
+                r_pq1[i] += 2 * kz
+                            * stdex::submdspan(P, idx(kx, ky, kz - 1),
+                                               pyr_idx(p, q, 0),
+                                               stdex::full_extent)[i]
+                            * (2.0 + p + q);
             }
           }
         }
@@ -730,18 +759,24 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
             for (std::size_t q = 0; q < n - r; ++q)
             {
               auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
-              auto r_pqr = xt::view(P, idx(kx, ky, kz), pyr_idx(p, q, r + 1),
-                                    xt::all());
-              r_pqr = xt::view(P, idx(kx, ky, kz), pyr_idx(p, q, r), xt::all())
-                          * ((x2 * 2.0 - 1.0) * ar + br)
-                      - xt::view(P, idx(kx, ky, kz), pyr_idx(p, q, r - 1),
-                                 xt::all())
+              auto r_pqr = stdex::submdspan(
+                  P, idx(kx, ky, kz), pyr_idx(p, q, r + 1), stdex::full_extent);
+              for (std::ptrdiff_t i = 0; i < r_pqr.size(); ++i)
+                r_pqr[i]
+                    = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, r),
+                                       stdex::full_extent)[i]
+                          * ((x2[i] * 2.0 - 1.0) * ar + br)
+                      - stdex::submdspan(P, idx(kx, ky, kz),
+                                         pyr_idx(p, q, r - 1),
+                                         stdex::full_extent)[i]
                             * cr;
               if (kz > 0)
               {
-                r_pqr += ar * 2 * kz
-                         * xt::view(P, idx(kx, ky, kz - 1), pyr_idx(p, q, r),
-                                    xt::all());
+                for (std::ptrdiff_t i = 0; i < r_pqr.size(); ++i)
+                  r_pqr[i] += ar * 2 * kz
+                              * stdex::submdspan(P, idx(kx, ky, kz - 1),
+                                                 pyr_idx(p, q, r),
+                                                 stdex::full_extent)[i];
               }
             }
           }
@@ -756,8 +791,12 @@ void tabulate_polyset_pyramid_derivs(xt::xtensor<double, 3>& P, std::size_t n,
     {
       for (std::size_t q = 0; q <= n - r; ++q)
       {
-        xt::view(P, xt::all(), pyr_idx(p, q, r), xt::all())
-            *= std::sqrt(2 * (q + 0.5) * (p + 0.5) * (p + q + r + 1.5)) * 2;
+        auto pqr = stdex::submdspan(P, stdex::full_extent, pyr_idx(p, q, r),
+                                    stdex::full_extent);
+        for (std::ptrdiff_t i = 0; i < pqr.extent(0); ++i)
+          for (std::ptrdiff_t j = 0; j < pqr.extent(1); ++j)
+            pqr(i, j)
+                *= std::sqrt(2 * (q + 0.5) * (p + 0.5) * (p + q + r + 1.5)) * 2;
       }
     }
   }
@@ -1389,7 +1428,7 @@ void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
     tabulate_polyset_prism_derivs(Pmd, d, n, xmd);
     return;
   case cell::type::pyramid:
-    tabulate_polyset_pyramid_derivs(P, d, n, x);
+    tabulate_polyset_pyramid_derivs(Pmd, d, n, x);
     return;
   case cell::type::hexahedron:
     tabulate_polyset_hex_derivs(Pmd, d, n, xmd);

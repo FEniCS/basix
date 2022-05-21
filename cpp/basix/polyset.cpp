@@ -6,8 +6,8 @@
 #include "cell.h"
 #include "indexing.h"
 #include <array>
-#include <cmath>
 #include <chrono>
+#include <cmath>
 #include <stdexcept>
 #include <xtensor/xview.hpp>
 
@@ -165,6 +165,11 @@ void tabulate_polyset_triangle_derivs(xt::xtensor<double, 3>& P, std::size_t n,
                   * xt::view(P, idx(kx, ky - 2), idx(0, p - 2), xt::all())
                   * (a - 1.0);
           }
+
+          std::cout << "p = " << p << ", p0 = [";
+          for (int i = 0; i < p0.size(); ++i)
+            std::cout << p0[i] << " ";
+          std::cout << "]\n";
         }
       }
 
@@ -210,7 +215,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
 {
 
   auto t_start = std::chrono::high_resolution_clock::now();
-    
+
   assert(x.shape(1) == 3);
   assert(P.shape(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.shape(1) == (n + 1) * (n + 2) * (n + 3) / 6);
@@ -417,7 +422,7 @@ void tabulate_polyset_tetrahedron_derivs(xt::xtensor<double, 3>& P,
   }
 
   auto t_mid = std::chrono::high_resolution_clock::now();
-  
+
   // Normalise
   for (std::size_t p = 0; p <= n; ++p)
   {

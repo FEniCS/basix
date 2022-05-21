@@ -66,14 +66,6 @@ endif()
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
-message("Downloading mdspan source...")
-  FetchContent_Declare(
-    mdspan
-    GIT_REPOSITORY https://github.com/kokkos/mdspan.git
-    GIT_TAG stable
-  )
-  FetchContent_MakeAvailable(mdspan)
-
 feature_summary(WHAT ALL)
 
 # Source files
@@ -81,7 +73,7 @@ feature_summary(WHAT ALL)
 add_library(basix)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
-include_directories(${CMAKE_CURRENT_BINARY_DIR} )
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.h
@@ -155,7 +147,7 @@ target_link_libraries(basix PUBLIC xtl)
 # that -isystem flag is applied to allow us to use strict compiler flags
 get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
 set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
-target_link_libraries(basix PUBLIC xtensor mdspan)
+target_link_libraries(basix PUBLIC xtensor)
 
 # Handle -march=native
 if (XTENSOR_OPTIMIZE AND TARGET xtensor::optimize)

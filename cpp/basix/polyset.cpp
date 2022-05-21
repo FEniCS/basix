@@ -4,10 +4,10 @@
 
 #include "polyset.h"
 #include "cell.h"
+#include "experimental/mdspan"
 #include "indexing.h"
 #include <array>
 #include <cmath>
-#include <experimental/mdspan>
 #include <stdexcept>
 #include <xtensor/xview.hpp>
 

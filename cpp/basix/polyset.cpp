@@ -175,6 +175,11 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
             p0[i] += ky * a * py[i];
         }
 
+        std::cout << "*p = " << p << ", p0 = [";
+        for (int i = 0; i < p0.size(); ++i)
+          std::cout << p0[i] << " ";
+        std::cout << "]\n";
+
         if (p > 1)
         {
           auto p2 = stdex::submdspan(P, idx(kx, ky), idx(0, p - 2),

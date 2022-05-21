@@ -139,11 +139,9 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
       P(idx(0, 0), 0, j) = std::sqrt(2.0);
     return;
   }
-  else
-  {
-    for (std::ptrdiff_t j = 0; j < P.extent(2); ++j)
-      P(idx(0, 0), 0, j) = 1.0;
-  }
+
+  for (std::ptrdiff_t j = 0; j < P.extent(2); ++j)
+    P(idx(0, 0), 0, j) = 1.0;
 
   // Iterate over derivatives in increasing order, since higher derivatives
   for (std::size_t kx = 0; kx <= nderiv; ++kx)
@@ -183,11 +181,11 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
                                      stdex::full_extent);
 
           // f3 = ((1 - y) / 2)^2
-          //          const auto f3 = xt::square(0.5 * (1.0 - x1));
+          const auto f3 = xt::square(0.5 * (1.0 - x1));
           // y^2 terms
 
           for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
-            p0[i] -= 0.25 * (1.0 - x1[i]) * (1.0 - x1[i]) * p2[i] * (a - 1.0);
+            p0[i] -= f3[i] * p2[i] * (a - 1.0);
 
           if (ky > 0)
           {
@@ -204,6 +202,11 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
             for (std::ptrdiff_t i = 0; i < p0.size(); ++i)
               p0[i] -= ky * (ky - 1) * p2y2[i] * (a - 1.0);
           }
+
+          std::cout << "p = " << p << ", p0 = [";
+          for (int i = 0; i < p0.size(); ++i)
+            std::cout << p0[i] << " ";
+          std::cout << "]\n";
         }
       }
 

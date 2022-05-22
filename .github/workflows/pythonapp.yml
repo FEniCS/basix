@@ -55,7 +55,6 @@ jobs:
 
       - name: Run units tests
         run: |
-          pytest -s -v test/test_timing.py
           pytest -n auto --durations 20 test/
 
       - name: Run python demos

@@ -127,8 +127,6 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
   const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
   const auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
 
-  auto t_start = std::chrono::high_resolution_clock::now();
-
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
   assert(P.extent(1) == (n + 1) * (n + 2) / 2);
   assert(P.extent(2) == x.extent(0));
@@ -248,8 +246,6 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
     }
   }
 
-  auto t_mid = std::chrono::high_resolution_clock::now();
-
   // Normalisation
   {
     for (std::ptrdiff_t i = 0; i < P.extent(0); ++i)
@@ -262,15 +258,6 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
             P(i, j, k) *= norm;
         }
   }
-
-  auto t_stop = std::chrono::high_resolution_clock::now();
-
-  auto duration1
-      = std::chrono::duration_cast<std::chrono::milliseconds>(t_mid - t_start);
-  std::cout << "time1 = " << duration1.count() << "ms.\n";
-  auto duration2
-      = std::chrono::duration_cast<std::chrono::milliseconds>(t_stop - t_mid);
-  std::cout << "time2 = " << duration2.count() << "ms.\n";
 }
 //-----------------------------------------------------------------------------
 void tabulate_polyset_tetrahedron_derivs(
@@ -281,8 +268,6 @@ void tabulate_polyset_tetrahedron_derivs(
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.extent(1) == (n + 1) * (n + 2) * (n + 3) / 6);
   assert(P.extent(2) == x.extent(0));
-
-  auto t_start = std::chrono::high_resolution_clock::now();
 
   const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
   const auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
@@ -523,8 +508,6 @@ void tabulate_polyset_tetrahedron_derivs(
     }
   }
 
-  auto t_mid = std::chrono::high_resolution_clock::now();
-
   // Normalise
   for (std::size_t p = 0; p <= n; ++p)
   {
@@ -543,24 +526,16 @@ void tabulate_polyset_tetrahedron_derivs(
     }
   }
 
-  auto t_stop = std::chrono::high_resolution_clock::now();
-
-  auto duration1
-      = std::chrono::duration_cast<std::chrono::milliseconds>(t_mid - t_start);
-  std::cout << "time1 = " << duration1.count() << "ms.\n";
-  auto duration2
-      = std::chrono::duration_cast<std::chrono::milliseconds>(t_stop - t_mid);
-  std::cout << "time2 = " << duration2.count() << "ms.\n";
 }
 //-----------------------------------------------------------------------------
 void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
                                      std::size_t n, std::size_t nderiv,
                                      stdex::mdspan<const double, extents2d> x)
 {
-  assert(x.shape(1) == 3);
+  assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.extent(1) == (n + 1) * (n + 2) * (2 * n + 3) / 6);
-  assert(P.extent(2) == x.shape(0));
+  assert(P.extent(2) == x.extent(0));
 
   // Indexing for pyramidal basis functions
   auto pyr_idx
@@ -958,7 +933,7 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
                                  std::size_t n, std::size_t nderiv,
                                  stdex::mdspan<const double, extents2d> x)
 {
-  assert(x.shape(1) == 3);
+  assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
   assert(P.extent(1) == (n + 1) * (n + 1) * (n + 1));
   assert(P.extent(2) == x.extent(0));

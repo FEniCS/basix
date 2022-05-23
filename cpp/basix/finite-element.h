@@ -214,22 +214,65 @@ public:
   /// @param[in] highest_complete_degree The highest degree n such that a
   /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
   /// element
-  /// @param[in] tensor_factors The factors in the tensor product representation
-  /// of this element
+  /// @param[in] highest_degree The highest degree n such that at least one
+  /// polynomial of degree n is included in this element's polymonial set
   /// @param[in] lvariant The Lagrange variant of the element
   /// @param[in] dvariant The DPC variant of the element
+  /// @param[in] tensor_factors The factors in the tensor product representation
+  /// of this element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
-      int interpolation_nderivs, const std::vector<std::size_t>& value_shape,
+      const std::vector<std::size_t>& value_shape,
       const xt::xtensor<double, 2>& wcoeffs,
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
       const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-      maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int highest_complete_degree, int highest_degree,
+      element::lagrange_variant lvariant, element::dpc_variant dvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
-      = {},
-      element::lagrange_variant lvariant = element::lagrange_variant::unset,
-      element::dpc_variant dvariant = element::dpc_variant::unset);
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int highest_complete_degree, int highest_degree,
+      element::lagrange_variant lvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int highest_complete_degree, int highest_degree,
+      element::dpc_variant dvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int highest_complete_degree, int highest_degree,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -247,7 +290,7 @@ public:
   FiniteElement& operator=(FiniteElement&& element) = default;
 
   /// Check if two elements are the same
-  /// @note This operator compares the element properties, e.g. family,
+  /// @note This operator compares the element properties, eg family,
   /// degree, etc, and not computed numerical data
   /// @return True if elements are the same
   bool operator==(const FiniteElement& e) const;
@@ -277,7 +320,7 @@ public:
   /// @return The basis functions (and derivatives). The shape is
   /// (derivative, point, basis fn index, value index).
   /// - The first index is the derivative, with higher derivatives are
-  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
   /// (0,2), (3,0)... The function basix::indexing::idx can be used to find the
   /// appropriate derivative.
@@ -285,7 +328,8 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  xt::xtensor<double, 4> tabulate(int nd, const xt::xarray<double>& x) const;
+  xt::xtensor<double, 4> tabulate(int nd,
+                                  const xt::xtensor<double, 2>& x) const;
 
   /// Compute basis values and derivatives at set of points.
   ///
@@ -301,7 +345,7 @@ public:
   /// value_size). The function `FiniteElement::tabulate_shape` can be
   /// used to get the required shape.
   /// - The first index is the derivative, with higher derivatives are
-  /// stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
   /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
   /// (0,2), (3,0)... The function basix::indexing::idx can be used to
   /// find the appropriate derivative.
@@ -312,7 +356,7 @@ public:
   ///
   /// @todo Remove all internal dynamic memory allocation, pass scratch
   /// space as required
-  void tabulate(int nd, const xt::xarray<double>& x,
+  void tabulate(int nd, const xt::xtensor<double, 2>& x,
                 xt::xtensor<double, 4>& basis) const;
 
   /// Get the element cell type
@@ -323,7 +367,18 @@ public:
   /// @return Polynomial degree
   int degree() const;
 
-  /// The element value tensor shape, e.g. returning {} for scalars, {3}
+  /// Get the lowest degree n such that the highest degree
+  /// polynomial in this element is contained in a Lagrange (or vector
+  /// Lagrange) element of degree n
+  /// @return Polynomial degree
+  int highest_degree() const;
+
+  /// Get the highest degree n such that a Lagrange (or vector Lagrange) element
+  /// of degree n is a subspace of this element
+  /// @return Polynomial degree
+  int highest_complete_degree() const;
+
+  /// The element value tensor shape, eg returning {} for scalars, {3}
   /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
   /// @return Value shape
   const std::vector<int>& value_shape() const;
@@ -429,6 +484,9 @@ public:
     {
     case maps::type::identity:
       return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
+    case maps::type::L2Piola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::l2_piola(u, U, J, detJ, K); };
     case maps::type::covariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
       { maps::covariant_piola(u, U, J, detJ, K); };
@@ -687,7 +745,7 @@ public:
   void apply_inverse_dof_transformation_to_transpose(
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
-  /// Return the interpolation points, i.e. the coordinates on the
+  /// Return the interpolation points, ie the coordinates on the
   /// reference element where a function need to be evaluated in order
   /// to interpolate it in the finite element space.
   /// @return Array of coordinate with shape `(num_points, tdim)`
@@ -832,12 +890,6 @@ public:
   /// @return The dual matrix
   const xt::xtensor<double, 2>& coefficient_matrix() const;
 
-  /// Get [0] the lowest degree n such that the highest degree
-  /// polynomial in this element is contained in a Lagrange (or vector
-  /// Lagrange) element of degree n, and [1] the highest degree n such
-  /// that a Lagrange (or vector Lagrange) element of degree n is a
-  /// subspace of this element
-  std::array<int, 2> degree_bounds() const;
 
   /// Indicates whether or not this element has a tensor product
   /// representation.
@@ -883,11 +935,17 @@ private:
   // Lagrange variant
   element::dpc_variant _dpc_variant;
 
-  // Degree
+  // Degree that was input when creating the element
   int _degree;
 
   // Degree
   int _interpolation_nderivs;
+
+  // Highest degree polynomial in element's polyset
+  int _highest_degree;
+
+  // Highest degree space that is a subspace of element's polyset
+  int _highest_complete_degree;
 
   // Value shape
   std::vector<int> _value_shape;
@@ -897,7 +955,7 @@ private:
 
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k}
-  // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. i.e.,
+  // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. ie
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
   xt::xtensor<double, 2> _coeffs;
@@ -985,12 +1043,6 @@ private:
   // The dual matrix
   xt::xtensor<double, 2> _dual_matrix;
 
-  // Polynomial degree bounds
-  // [0]: highest degree n such that Lagrange order n is a subspace of
-  // this space
-  // [1]: highest polynomial degree
-  std::array<int, 2> _degree_bounds;
-
   // Tensor product representation
   // Entries of tuple are (list of elements on an interval, permutation
   // of DOF numbers)
@@ -1012,9 +1064,6 @@ private:
 
 /// Create a custom finite element
 /// @param[in] cell_type The cell type
-/// @param[in] degree The degree of the element
-/// @param[in] interpolation_nderivs The number of derivatives that need to be
-/// used during interpolation
 /// @param[in] value_shape The value shape of the element
 /// @param[in] wcoeffs Matrices for the kth value index containing the
 /// expansion coefficients defining a polynomial basis spanning the
@@ -1023,6 +1072,8 @@ private:
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
 /// index, dof, vs, point_index)
+/// @param[in] interpolation_nderivs The number of derivatives that need to be
+/// used during interpolation
 /// @param[in] map_type The type of map to be used to map values from
 /// the reference to a cell
 /// @param[in] discontinuous Indicates whether or not this is the
@@ -1030,14 +1081,16 @@ private:
 /// @param[in] highest_complete_degree The highest degree n such that a
 /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
 /// element
+/// @param[in] highest_degree The degree of a polynomial in this element's
+/// polyset
 /// @return A custom finite element
 FiniteElement create_custom_element(
-    cell::type cell_type, int degree, int interpolation_nderivs,
-    const std::vector<std::size_t>& value_shape,
+    cell::type cell_type, const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_complete_degree);
+    int interpolation_nderivs, maps::type map_type, bool discontinuous,
+    int highest_complete_degree, int highest_degree);
 
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family

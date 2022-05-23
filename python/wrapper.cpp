@@ -109,14 +109,10 @@ Interface to the Basix C++ library.
       [](polynomials::type polytype, cell::type celltype, int d,
          const py::array_t<double, py::array::c_style>& x)
       {
-        std::vector<std::size_t> shape;
-        if (x.ndim() == 2 and x.shape(1) == 1)
-          shape.push_back(x.shape(0));
-        else
-        {
-          for (pybind11::ssize_t i = 0; i < x.ndim(); ++i)
-            shape.push_back(x.shape(i));
-        }
+        if (x.ndim() != 2)
+          throw std::runtime_error("x has the wrong number of dimensions");
+        std::array<std::size_t, 2> shape
+            = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
         auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
         xt::xtensor<double, 2> t
             = polynomials::tabulate(polytype, celltype, d, _x);
@@ -153,6 +149,7 @@ Interface to the Basix C++ library.
 
   py::enum_<maps::type>(m, "MapType")
       .value("identity", maps::type::identity)
+      .value("L2Piola", maps::type::L2Piola)
       .value("covariantPiola", maps::type::covariantPiola)
       .value("contravariantPiola", maps::type::contravariantPiola)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
@@ -222,6 +219,7 @@ Interface to the Basix C++ library.
       .value("N1E", element::family::N1E)
       .value("N2E", element::family::N2E)
       .value("Regge", element::family::Regge)
+      .value("HHJ", element::family::HHJ)
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
@@ -232,8 +230,13 @@ Interface to the Basix C++ library.
       .def(
           "tabulate",
           [](const FiniteElement& self, int n,
-             const py::array_t<double, py::array::c_style>& x) {
-            auto _x = adapt_x(x);
+             const py::array_t<double, py::array::c_style>& x)
+          {
+            if (x.ndim() != 2)
+              throw std::runtime_error("x has the wrong size");
+            std::array<std::size_t, 2> shape
+                = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
+            auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
             auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
           },
@@ -245,7 +248,8 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& U,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K) {
+             const py::array_t<double, py::array::c_style>& K)
+          {
             auto u = self.push_forward(
                 adapt_x(U), adapt_x(J),
                 xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
@@ -258,7 +262,8 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& u,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K) {
+             const py::array_t<double, py::array::c_style>& K)
+          {
             auto U = self.pull_back(
                 adapt_x(u), adapt_x(J),
                 xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
@@ -268,7 +273,8 @@ Interface to the Basix C++ library.
       .def(
           "apply_dof_transformation",
           [](const FiniteElement& self, py::array_t<double>& data,
-             int block_size, std::uint32_t cell_info) {
+             int block_size, std::uint32_t cell_info)
+          {
             xtl::span<double> data_span(data.mutable_data(), data.size());
             self.apply_dof_transformation(data_span, block_size, cell_info);
             return py::array_t<double>(data_span.size(), data_span.data());
@@ -277,7 +283,8 @@ Interface to the Basix C++ library.
       .def(
           "apply_dof_transformation_to_transpose",
           [](const FiniteElement& self, py::array_t<double>& data,
-             int block_size, std::uint32_t cell_info) {
+             int block_size, std::uint32_t cell_info)
+          {
             xtl::span<double> data_span(data.mutable_data(), data.size());
             self.apply_dof_transformation_to_transpose(data_span, block_size,
                                                        cell_info);
@@ -288,7 +295,8 @@ Interface to the Basix C++ library.
       .def(
           "apply_inverse_transpose_dof_transformation",
           [](const FiniteElement& self, py::array_t<double>& data,
-             int block_size, std::uint32_t cell_info) {
+             int block_size, std::uint32_t cell_info)
+          {
             xtl::span<double> data_span(data.mutable_data(), data.size());
             self.apply_inverse_transpose_dof_transformation(
                 data_span, block_size, cell_info);
@@ -298,14 +306,16 @@ Interface to the Basix C++ library.
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
       .def(
           "base_transformations",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             xt::xtensor<double, 3> t = self.base_transformations();
             return py::array_t<double>(t.shape(), t.data());
           },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             std::map<cell::type, xt::xtensor<double, 3>> t
                 = self.entity_transformations();
             py::dict t2;
@@ -319,12 +329,14 @@ Interface to the Basix C++ library.
           basix::docstring::FiniteElement__entity_transformations.c_str())
       .def(
           "get_tensor_product_representation",
-          [](const FiniteElement& self) {
-            return self.get_tensor_product_representation();
-          },
+          [](const FiniteElement& self)
+          { return self.get_tensor_product_representation(); },
           basix::docstring::FiniteElement__get_tensor_product_representation
               .c_str())
       .def_property_readonly("degree", &FiniteElement::degree)
+      .def_property_readonly("highest_degree", &FiniteElement::highest_degree)
+      .def_property_readonly("highest_complete_degree",
+                             &FiniteElement::highest_complete_degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
       .def_property_readonly("num_entity_dofs", &FiniteElement::num_entity_dofs)
@@ -334,7 +346,8 @@ Interface to the Basix C++ library.
       .def_property_readonly("entity_closure_dofs",
                              &FiniteElement::entity_closure_dofs)
       .def_property_readonly("value_size",
-                             [](const FiniteElement& self) {
+                             [](const FiniteElement& self)
+                             {
                                return std::accumulate(
                                    self.value_shape().begin(),
                                    self.value_shape().end(), 1,
@@ -354,40 +367,45 @@ Interface to the Basix C++ library.
       .def_property_readonly("interpolation_is_identity",
                              &FiniteElement::interpolation_is_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
-      .def_property_readonly("degree_bounds", &FiniteElement::degree_bounds)
       .def_property_readonly("points",
-                             [](const FiniteElement& self) {
+                             [](const FiniteElement& self)
+                             {
                                const xt::xtensor<double, 2>& x = self.points();
                                return py::array_t<double>(x.shape(), x.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly(
           "interpolation_matrix",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             const xt::xtensor<double, 2>& P = self.interpolation_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           })
       .def_property_readonly(
           "dual_matrix",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             const xt::xtensor<double, 2>& P = self.dual_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           })
       .def_property_readonly(
           "coefficient_matrix",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             const xt::xtensor<double, 2>& P = self.coefficient_matrix();
             return py::array_t<double>(P.shape(), P.data(), py::cast(self));
           })
       .def_property_readonly("wcoeffs",
-                             [](const FiniteElement& self) {
+                             [](const FiniteElement& self)
+                             {
                                const xt::xtensor<double, 2>& P = self.wcoeffs();
                                return py::array_t<double>(P.shape(), P.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly(
           "M",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             const std::array<std::vector<xt::xtensor<double, 4>>, 4>& _M
                 = self.M();
             std::vector<std::vector<py::array_t<double, py::array::c_style>>> M(
@@ -404,7 +422,8 @@ Interface to the Basix C++ library.
           })
       .def_property_readonly(
           "x",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             const std::array<std::vector<xt::xtensor<double, 2>>, 4>& _x
                 = self.x();
             std::vector<std::vector<py::array_t<double, py::array::c_style>>> x(
@@ -454,15 +473,14 @@ Interface to the Basix C++ library.
   // Create FiniteElement
   m.def(
       "create_custom_element",
-      [](cell::type cell_type, int degree, int interpolation_nderivs,
-         const std::vector<int>& value_shape,
+      [](cell::type cell_type, const std::vector<int>& value_shape,
          const py::array_t<double, py::array::c_style>& wcoeffs,
          const std::vector<
              std::vector<py::array_t<double, py::array::c_style>>>& x,
          const std::vector<
              std::vector<py::array_t<double, py::array::c_style>>>& M,
-         maps::type map_type, bool discontinuous,
-         int highest_complete_degree) -> FiniteElement
+         int interpolation_nderivs, maps::type map_type, bool discontinuous,
+         int highest_complete_degree, int highest_degree) -> FiniteElement
       {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
@@ -475,14 +493,22 @@ Interface to the Basix C++ library.
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
+          {
+            if (x[i][j].ndim() != 2)
+              throw std::runtime_error("x has the wrong number of dimensions");
             _x[i].push_back(adapt_x(x[i][j]));
+          }
         }
 
         std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
+          {
+            if (M[i][j].ndim() != 3)
+              throw std::runtime_error("M has the wrong number of dimensions");
             _M[i].push_back(adapt_x(M[i][j]));
+          }
         }
 
         std::vector<std::size_t> _vs(value_shape.size());
@@ -490,8 +516,8 @@ Interface to the Basix C++ library.
           _vs[i] = static_cast<std::size_t>(value_shape[i]);
 
         return basix::create_custom_element(
-            cell_type, degree, interpolation_nderivs, _vs, _wco, _x, _M,
-            map_type, discontinuous, highest_complete_degree);
+            cell_type, _vs, _wco, _x, _M, interpolation_nderivs, map_type,
+            discontinuous, highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());
 
@@ -510,7 +536,8 @@ Interface to the Basix C++ library.
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant,
-         bool discontinuous) -> FiniteElement {
+         bool discontinuous) -> FiniteElement
+      {
         return basix::create_element(family_name, cell_name, degree, lvariant,
                                      discontinuous);
       },
@@ -520,7 +547,8 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         element::dpc_variant dvariant, bool discontinuous) -> FiniteElement {
+         element::dpc_variant dvariant, bool discontinuous) -> FiniteElement
+      {
         return basix::create_element(family_name, cell_name, degree, dvariant,
                                      discontinuous);
       },
@@ -531,7 +559,8 @@ Interface to the Basix C++ library.
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant, element::dpc_variant dvariant,
-         bool discontinuous) -> FiniteElement {
+         bool discontinuous) -> FiniteElement
+      {
         return basix::create_element(family_name, cell_name, degree, lvariant,
                                      dvariant, discontinuous);
       },
@@ -566,7 +595,8 @@ Interface to the Basix C++ library.
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant,
-         element::dpc_variant dvariant) -> FiniteElement {
+         element::dpc_variant dvariant) -> FiniteElement
+      {
         return basix::create_element(family_name, cell_name, degree, lvariant,
                                      dvariant);
       },
@@ -590,14 +620,10 @@ Interface to the Basix C++ library.
       [](cell::type celltype, int d, int n,
          const py::array_t<double, py::array::c_style>& x)
       {
-        std::vector<std::size_t> shape;
-        if (x.ndim() == 2 and x.shape(1) == 1)
-          shape.push_back(x.shape(0));
-        else
-        {
-          for (pybind11::ssize_t i = 0; i < x.ndim(); ++i)
-            shape.push_back(x.shape(i));
-        }
+        if (x.ndim() != 2)
+          throw std::runtime_error("x has the wrong number of dimensions");
+        std::array<std::size_t, 2> shape
+            = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
         auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
         xt::xtensor<double, 3> P = polyset::tabulate(celltype, d, n, _x);
         return py::array_t<double>(P.shape(), P.data());
@@ -609,19 +635,8 @@ Interface to the Basix C++ library.
       [](quadrature::type rule, cell::type celltype, int m)
       {
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
-        // FIXME: it would be more elegant to handle 1D case as a 1D
-        // array, but FFCx would need updating
-        if (pts.dimension() == 1)
-        {
-          std::array<std::size_t, 2> s = {pts.shape(0), 1};
-          return std::pair(py::array_t<double>(s, pts.data()),
-                           py::array_t<double>(w.size(), w.data()));
-        }
-        else
-        {
-          return std::pair(py::array_t<double>(pts.shape(), pts.data()),
-                           py::array_t<double>(w.size(), w.data()));
-        }
+        return std::pair(py::array_t<double>(pts.shape(), pts.data()),
+                         py::array_t<double>(w.size(), w.data()));
       },
       basix::docstring::make_quadrature__rule_celltype_m.c_str());
 
@@ -630,19 +645,8 @@ Interface to the Basix C++ library.
       [](cell::type celltype, int m)
       {
         auto [pts, w] = quadrature::make_quadrature(celltype, m);
-        // FIXME: it would be more elegant to handle 1D case as a 1D
-        // array, but FFCx would need updating
-        if (pts.dimension() == 1)
-        {
-          std::array<std::size_t, 2> s = {pts.shape(0), 1};
-          return std::pair(py::array_t<double>(s, pts.data()),
-                           py::array_t<double>(w.size(), w.data()));
-        }
-        else
-        {
-          return std::pair(py::array_t<double>(pts.shape(), pts.data()),
-                           py::array_t<double>(w.size(), w.data()));
-        }
+        return std::pair(py::array_t<double>(pts.shape(), pts.data()),
+                         py::array_t<double>(w.size(), w.data()));
       },
       basix::docstring::make_quadrature__celltype_m.c_str());
 

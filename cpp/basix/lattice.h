@@ -7,6 +7,7 @@
 #include "cell.h"
 #include <xtensor/xtensor.hpp>
 
+/// Lattices of points
 namespace basix::lattice
 {
 /// The type of point spacing to be used in a lattice.
@@ -66,7 +67,7 @@ enum class simplex_method
 /// optionally including the outer surface points
 ///
 /// For a given celltype, this creates a set of points on a regular grid
-/// which covers the cell, e.g. for a quadrilateral, with n=2, the points are:
+/// which covers the cell, eg for a quadrilateral, with n=2, the points are:
 /// [0,0],[0.5,0],[1,0],[0,0.5],[0.5,0.5],[1,0.5],[0,1],[0.5,1],[1,1]
 /// If the parameter exterior is set to false, the points lying on the external
 /// boundary are omitted, in this case for a quadrilateral with n=2, the points

@@ -6,29 +6,21 @@ namespace basix::docstring
 const std::string topology = R"(
 Cell topology
 
-Parameters
-==========
-celltype : basix.CellType
-    Cell Type
+Args:
+    celltype (basix.CellType): Cell Type
 
-Returns
-=======
-List[List[List[int]]]
-    List of topology (vertex indices) for each dimension (0..tdim)
+Returns::
+    List[List[List[int]]]: List of topology (vertex indices) for each dimension (0..tdim)
 )";
 
 const std::string geometry = R"(
 Cell geometry
 
-Parameters
-==========
-celltype : basix.CellType
-    Cell Type
+Args:
+    celltype (basix.CellType): Cell Type
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    Set of vertex points of the cell
+Returns::
+    numpy.ndarray[numpy.float64]: Set of vertex points of the cell
 )";
 
 const std::string sub_entity_connectivity = R"(
@@ -40,33 +32,23 @@ the entity of dimension `dim` and number `entity_n` is connected to
 the entities of dimension `connected_dim` and numbers
 `connected_entity_n0`, `connected_entity_n1`, ...
 
-Parameters
-==========
-celltype : basix.CellType
-    Cell Type
+Args:
+    celltype (basix.CellType): Cell Type
 
-Returns
-=======
-List[List[List[List[int]]]]
-    List of topology (vertex indices) for each dimension (0..tdim)
+Returns:
+    List[List[List[List[int]]]]: List of topology (vertex indices) for each dimension (0..tdim)
 )";
 
 const std::string sub_entity_geometry = R"(
 Sub-entity of a cell, given by topological dimension and index
 
-Parameters
-==========
-celltype : basix.CellType
-    The cell::type
-dim : int
-    Dimension of sub-entity
-index : int
-    Local index of sub-entity
+Args:
+    celltype (basix.CellType): The cell::type
+    dim (int): Dimension of sub-entity
+    index (int): Local index of sub-entity
 
-Returns
-=======
-List[List[List[List[int]]]]
-    Set of vertex points of the sub-entity
+Returns:
+    List[List[List[List[int]]]]: Set of vertex points of the sub-entity
 )";
 
 const std::string create_lattice__celltype_n_type_exterior = R"(
@@ -74,7 +56,7 @@ Create a lattice of points on a reference cell
 optionally including the outer surface points
 
 For a given celltype, this creates a set of points on a regular grid
-which covers the cell, e.g. for a quadrilateral, with n=2, the points are:
+which covers the cell, eg for a quadrilateral, with n=2, the points are:
 [0,0],[0.5,0],[1,0],[0,0.5],[0.5,0.5],[1,0.5],[0,1],[0.5,1],[1,1]
 If the parameter exterior is set to false, the points lying on the external
 boundary are omitted, in this case for a quadrilateral with n=2, the points
@@ -83,21 +65,14 @@ are: [0.5,0.5]. The lattice type can be chosen as "equispaced" or
 the Gauss-Lobatto-Legendre quadrature points. These are the same as
 "equispaced" when n<3.
 
-Parameters
-==========
-celltype : basix.CellType
-    The cell::type
-n : int
-    Size in each direction. There are n+1 points along each edge of the cell.
-type : basix.LatticeType
-    A lattice type
-exterior : bool
-    If set, includes outer boundaries
+Args:
+    celltype (basix.CellType): The cell::type
+    n (int): Size in each direction. There are n+1 points along each edge of the cell.
+    type (basix.LatticeType): A lattice type
+    exterior (bool): If set, includes outer boundaries
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    Set of points
+Returns:
+    numpy.ndarray[numpy.float64]: Set of points
 )";
 
 const std::string create_lattice__celltype_n_type_exterior_method = R"(
@@ -105,7 +80,7 @@ Create a lattice of points on a reference cell
 optionally including the outer surface points
 
 For a given celltype, this creates a set of points on a regular grid
-which covers the cell, e.g. for a quadrilateral, with n=2, the points are:
+which covers the cell, eg for a quadrilateral, with n=2, the points are:
 [0,0],[0.5,0],[1,0],[0,0.5],[0.5,0.5],[1,0.5],[0,1],[0.5,1],[1,1]
 If the parameter exterior is set to false, the points lying on the external
 boundary are omitted, in this case for a quadrilateral with n=2, the points
@@ -114,109 +89,77 @@ are: [0.5,0.5]. The lattice type can be chosen as "equispaced" or
 the Gauss-Lobatto-Legendre quadrature points. These are the same as
 "equispaced" when n<3.
 
-Parameters
-==========
-celltype : basix.CellType
-    The cell::type
-n : int
-    Size in each direction. There are n+1 points along each edge of the cell.
-type : basix.LatticeType
-    A lattice type
-exterior : bool
-    If set, includes outer boundaries
-simplex_method : basix.LatticeSimplexMethod
-    The method used to generate points on simplices
+Args:
+    celltype (basix.CellType): The cell::type
+    n (int): Size in each direction. There are n+1 points along each edge of the cell.
+    type (basix.LatticeType): A lattice type
+    exterior (bool): If set, includes outer boundaries
+    simplex_method (basix.LatticeSimplexMethod): The method used to generate points on simplices
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    Set of points
+Returns:
+    numpy.ndarray[numpy.float64]: Set of points
 )";
 
 const std::string cell_volume = R"(
 Get the volume of a reference cell
 
-Parameters
-==========
-cell_type : basix.CellType
-    Type of cell
+Args:
+    cell_type (basix.CellType): Type of cell
 
-Returns
-=======
-float
-    The volume of the cell
+Returns:
+    float: The volume of the cell
 )";
 
 const std::string cell_facet_normals = R"(
 Get the normals to the facets of a reference cell oriented using the
 low-to-high ordering of the facet
 
-Parameters
-==========
-cell_type : basix.CellType
-    Type of cell
+Args:
+    cell_type (basix.CellType): Type of cell
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    The normals
+Returns:
+    numpy.ndarray[numpy.float64]: The normals
 )";
 
 const std::string cell_facet_reference_volumes = R"(
 Get the reference volumes of the facets of a reference cell
 
-Parameters
-==========
-cell_type : basix.CellType
-    Type of cell
+Args:
+    cell_type (basix.CellType): Type of cell
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    The volumes of the references associated with each facet
+Returns:
+    numpy.ndarray[numpy.float64]: The volumes of the references associated with each facet
 )";
 
 const std::string cell_facet_outward_normals = R"(
 Get the (outward) normals to the facets of a reference cell
 
-Parameters
-==========
-cell_type : basix.CellType
-    Type of cell
+Args:
+    cell_type (basix.CellType): Type of cell
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    The outward normals
+Returns:
+    numpy.ndarray[numpy.float64]: The outward normals
 )";
 
 const std::string cell_facet_orientations = R"(
 Get an array of bools indicating whether or not the facet normals are
 outward pointing
 
-Parameters
-==========
-cell_type : basix.CellType
-    Type of cell
+Args:
+    cell_type (basix.CellType): Type of cell
 
-Returns
-=======
-List[bool]
-    The orientations
+Returns:
+    List[bool]: The orientations
 )";
 
 const std::string cell_facet_jacobians = R"(
 Get the jacobians of the facets of a reference cell
 
-Parameters
-==========
-cell_type : basix.CellType
-    Type of cell
+Args:
+    cell_type (basix.CellType): Type of cell
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    The jacobians of the facets
+Returns:
+    numpy.ndarray[numpy.float64]: The jacobians of the facets
 )";
 
 const std::string FiniteElement__tabulate = R"(
@@ -226,20 +169,15 @@ NOTE: The version of `FiniteElement::tabulate` with the basis data
 as an out argument should be preferred for repeated call where
 performance is critical
 
-Parameters
-==========
-nd : int
-    The order of derivatives, up to and including, to compute. Use 0 for the basis functions only.
-x : numpy.ndarray[numpy.float64]
-    The points at which to compute the basis functions. The shape of x is (number of points, geometric dimension).
+Args:
+    nd (int): The order of derivatives, up to and including, to compute. Use 0 for the basis functions only.
+    x (numpy.ndarray[numpy.float64]): The points at which to compute the basis functions. The shape of x is (number of points, geometric dimension).
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    The basis functions (and derivatives). The shape is
+Returns:
+    numpy.ndarray[numpy.float64]: The basis functions (and derivatives). The shape is
     (derivative, point, basis fn index, value index).
     - The first index is the derivative, with higher derivatives are
-    stored in triangular (2D) or tetrahedral (3D) ordering, i.e. for
+    stored in triangular (2D) or tetrahedral (3D) ordering, ie for
     the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
     (0,2), (3,0)... The function basix::indexing::idx can be used to find the
     appropriate derivative.
@@ -254,42 +192,28 @@ Map function values from the reference to a physical cell. This
 function can perform the mapping for multiple points, grouped by
 points that share a common Jacobian.
 
-Parameters
-==========
-U : numpy.ndarray[numpy.float64]
-    The function values on the reference. The indices are [Jacobian index, point index, components].
-J : numpy.ndarray[numpy.float64]
-    The Jacobian of the mapping. The indices are [Jacobian index, J_i, J_j].
-detJ : numpy.ndarray[numpy.float64]
-    The determinant of the Jacobian of the mapping. It has length `J.shape(0)`
-K : numpy.ndarray[numpy.float64]
-    The inverse of the Jacobian of the mapping. The indices are [Jacobian index, K_i, K_j].
+Args:
+    U (numpy.ndarray[numpy.float64]): The function values on the reference. The indices are [Jacobian index, point index, components].
+    J (numpy.ndarray[numpy.float64]): The Jacobian of the mapping. The indices are [Jacobian index, J_i, J_j].
+    detJ (numpy.ndarray[numpy.float64]): The determinant of the Jacobian of the mapping. It has length `J.shape(0)`
+    K (numpy.ndarray[numpy.float64]): The inverse of the Jacobian of the mapping. The indices are [Jacobian index, K_i, K_j].
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    The function values on the cell. The indices are [Jacobian
+Returns:
+    numpy.ndarray[numpy.float64]: The function values on the cell. The indices are [Jacobian
     index, point index, components].
 )";
 
 const std::string FiniteElement__pull_back = R"(
 Map function values from a physical cell to the reference
 
-Parameters
-==========
-u : numpy.ndarray[numpy.float64]
-    The function values on the cell
-J : numpy.ndarray[numpy.float64]
-    The Jacobian of the mapping
-detJ : numpy.ndarray[numpy.float64]
-    The determinant of the Jacobian of the mapping
-K : numpy.ndarray[numpy.float64]
-    The inverse of the Jacobian of the mapping
+Args:
+    u (numpy.ndarray[numpy.float64]): The function values on the cell
+    J (numpy.ndarray[numpy.float64]): The Jacobian of the mapping
+    detJ (numpy.ndarray[numpy.float64]): The determinant of the Jacobian of the mapping
+    K (numpy.ndarray[numpy.float64]): The inverse of the Jacobian of the mapping
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    The function values on the reference
+Returns:
+    numpy.ndarray[numpy.float64]: The function values on the reference
 )";
 
 const std::string FiniteElement__apply_dof_transformation = R"(
@@ -298,19 +222,13 @@ Apply DOF transformations to some data
 NOTE: This function is designed to be called at runtime, so its
 performance is critical.
 
-Parameters
-==========
-data : numpy.ndarray[numpy.float64]
-    The data
-block_size : int
-    The number of data points per DOF
-cell_info : int
-    The permutation info for the cell
+Args:
+    data (numpy.ndarray[numpy.float64]): The data
+    block_size (int): The number of data points per DOF
+    cell_info (int): The permutation info for the cell
 
-Returns
-=======
-data : numpy.ndarray[numpy.float64]
-    The data
+Returns:
+    data (numpy.ndarray[numpy.float64]): The data
 )";
 
 const std::string FiniteElement__apply_dof_transformation_to_transpose = R"(
@@ -319,19 +237,13 @@ Apply DOF transformations to some transposed data
 NOTE: This function is designed to be called at runtime, so its
 performance is critical.
 
-Parameters
-==========
-data : numpy.ndarray[numpy.float64]
-    The data
-block_size : int
-    The number of data points per DOF
-cell_info : int
-    The permutation info for the cell
+Args:
+    data (numpy.ndarray[numpy.float64]): The data
+    block_size (int): The number of data points per DOF
+    cell_info (int): The permutation info for the cell
 
-Returns
-=======
-data : numpy.ndarray[numpy.float64]
-    The data
+Returns:
+    data (numpy.ndarray[numpy.float64]): The data
 )";
 
 const std::string FiniteElement__apply_inverse_transpose_dof_transformation
@@ -341,19 +253,13 @@ Apply inverse transpose DOF transformations to some data
 NOTE: This function is designed to be called at runtime, so its
 performance is critical.
 
-Parameters
-==========
-data : numpy.ndarray[numpy.float64]
-    The data
-block_size : int
-    The number of data points per DOF
-cell_info : int
-    The permutation info for the cell
+Args:
+    data (numpy.ndarray[numpy.float64]): The data
+    block_size (int): The number of data points per DOF
+    cell_info (int): The permutation info for the cell
 
-Returns
-=======
-data : numpy.ndarray[numpy.float64]
-    The data
+Returns:
+    data (numpy.ndarray[numpy.float64]): The data
 )";
 
 const std::string FiniteElement__base_transformations = R"(
@@ -451,19 +357,15 @@ For these DOFs, the subblocks of the base transformation matrices are:
 
 
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    The base transformations for this element
+Returns:
+    numpy.ndarray[numpy.float64]: The base transformations for this element
 )";
 
 const std::string FiniteElement__entity_transformations = R"(
 Return the entity dof transformation matrices
 
-Returns
-=======
-dict
-    The base transformations for this element
+Returns:
+    dict: The base transformations for this element
 )";
 
 const std::string FiniteElement__get_tensor_product_representation = R"(
@@ -478,128 +380,83 @@ vector of integers gives the permutation between the numbering of
 the tensor product DOFs and the number of the DOFs of this Basix
 element.
 
-Returns
-=======
-List[Tuple[List[basix.FiniteElement], List[int]]]
-    The tensor product representation
+Returns:
+    List[Tuple[List[basix.FiniteElement], List[int]]]: The tensor product representation
 )";
 
 const std::string create_custom_element = R"(
 Create a custom finite element
 
-Parameters
-==========
-cell_type : basix.CellType
-    The cell type
-degree : int
-    The degree of the element
-interpolation_nderivs : int
-    The number of derivatives that need to be used during interpolation
-value_shape : List[int]
-    The value shape of the element
-wcoeffs : numpy.ndarray[numpy.float64]
-    Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element
-x : List[List[numpy.ndarray[numpy.float64]]]
-    Interpolation points. Shape is (tdim, entity index, point index, dim)
-M : List[List[numpy.ndarray[numpy.float64]]]
-    The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index)
-map_type : basix.MapType
-    The type of map to be used to map values from the reference to a cell
-discontinuous : bool
-    Indicates whether or not this is the discontinuous version of the element
-highest_complete_degree : int
-    The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
+Args:
+    cell_type (basix.CellType): The cell type
+    value_shape (List[int]): The value shape of the element
+    wcoeffs (numpy.ndarray[numpy.float64]): Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element
+    x (List[List[numpy.ndarray[numpy.float64]]]): Interpolation points. Shape is (tdim, entity index, point index, dim)
+    M (List[List[numpy.ndarray[numpy.float64]]]): The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index)
+    interpolation_nderivs (int): The number of derivatives that need to be used during interpolation
+    map_type (basix.MapType): The type of map to be used to map values from the reference to a cell
+    discontinuous (bool): Indicates whether or not this is the discontinuous version of the element
+    highest_complete_degree (int): The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
+    highest_degree (int): The degree of a polynomial in this element's polyset
 
-Returns
-=======
-basix.finite_element.FiniteElement
-    A custom finite element
+Returns:
+    basix.finite_element.FiniteElement: A custom finite element
 )";
 
 const std::string create_element__family_cell_degree_discontinuous = R"(
 Create an element
 
-Parameters
-==========
-family : basix.ElementFamily
-    The element family
-cell : basix.CellType
-    The reference cell type that the element is defined on
-degree : int
-    The degree of the element
-discontinuous : bool
-    Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
+Args:
+    family (basix.ElementFamily): The element family
+    cell (basix.CellType): The reference cell type that the element is defined on
+    degree (int): The degree of the element
+    discontinuous (bool): Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
 
-Returns
-=======
-basix.finite_element.FiniteElement
-    A finite element
+Returns:
+    basix.finite_element.FiniteElement: A finite element
 )";
 
 const std::string create_element__family_cell_degree_lvariant_discontinuous
     = R"(
 Create an element using a given Lagrange variant
 
-Parameters
-==========
-family : basix.ElementFamily
-    The element family
-cell : basix.CellType
-    The reference cell type that the element is defined on
-degree : int
-    The degree of the element
-lvariant : basix.LagrangeVariant
-    The variant of Lagrange to use
-discontinuous : bool
-    Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
+Args:
+    family (basix.ElementFamily): The element family
+    cell (basix.CellType): The reference cell type that the element is defined on
+    degree (int): The degree of the element
+    lvariant (basix.LagrangeVariant): The variant of Lagrange to use
+    discontinuous (bool): Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
 
-Returns
-=======
-basix.finite_element.FiniteElement
-    A finite element
+Returns:
+    basix.finite_element.FiniteElement: A finite element
 )";
 
 const std::string create_element__family_cell_degree_lvariant = R"(
 Create a continuous element using a given Lagrange variant
 
-Parameters
-==========
-family : basix.ElementFamily
-    The element family
-cell : basix.CellType
-    The reference cell type that the element is defined on
-degree : int
-    The degree of the element
-lvariant : basix.LagrangeVariant
-    The variant of Lagrange to use
+Args:
+    family (basix.ElementFamily): The element family
+    cell (basix.CellType): The reference cell type that the element is defined on
+    degree (int): The degree of the element
+    lvariant (basix.LagrangeVariant): The variant of Lagrange to use
 
-Returns
-=======
-basix.finite_element.FiniteElement
-    A finite element
+Returns:
+    basix.finite_element.FiniteElement: A finite element
 )";
 
 const std::string create_element__family_cell_degree_dvariant_discontinuous
     = R"(
 Create an element using a given DPC variant
 
-Parameters
-==========
-family : basix.ElementFamily
-    The element family
-cell : basix.CellType
-    The reference cell type that the element is defined on
-degree : int
-    The degree of the element
-dvariant : basix.DPCVariant
-    The variant of DPC to use
-discontinuous : bool
-    Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
+Args:
+    family (basix.ElementFamily): The element family
+    cell (basix.CellType): The reference cell type that the element is defined on
+    degree (int): The degree of the element
+    dvariant (basix.DPCVariant): The variant of DPC to use
+    discontinuous (bool): Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
 
-Returns
-=======
-basix.finite_element.FiniteElement
-    A finite element
+Returns:
+    basix.finite_element.FiniteElement: A finite element
 )";
 
 const std::string
@@ -607,86 +464,56 @@ const std::string
     = R"(
 Create an element using a given Lagrange variant and a given DPC variant
 
-Parameters
-==========
-family : basix.ElementFamily
-    The element family
-cell : basix.CellType
-    The reference cell type that the element is defined on
-degree : int
-    The degree of the element
-lvariant : basix.LagrangeVariant
-    The variant of Lagrange to use
-dvariant : basix.DPCVariant
-    The variant of DPC to use
-discontinuous : bool
-    Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
+Args:
+    family (basix.ElementFamily): The element family
+    cell (basix.CellType): The reference cell type that the element is defined on
+    degree (int): The degree of the element
+    lvariant (basix.LagrangeVariant): The variant of Lagrange to use
+    dvariant (basix.DPCVariant): The variant of DPC to use
+    discontinuous (bool): Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
 
-Returns
-=======
-basix.finite_element.FiniteElement
-    A finite element
+Returns:
+    basix.finite_element.FiniteElement: A finite element
 )";
 
 const std::string create_element__family_cell_degree_dvariant = R"(
 Create a continuous element using a given DPC variant
 
-Parameters
-==========
-family : basix.ElementFamily
-    The element family
-cell : basix.CellType
-    The reference cell type that the element is defined on
-degree : int
-    The degree of the element
-dvariant : basix.DPCVariant
-    The variant of DPC to use
+Args:
+    family (basix.ElementFamily): The element family
+    cell (basix.CellType): The reference cell type that the element is defined on
+    degree (int): The degree of the element
+    dvariant (basix.DPCVariant): The variant of DPC to use
 
-Returns
-=======
-basix.finite_element.FiniteElement
-    A finite element
+Returns:
+    basix.finite_element.FiniteElement: A finite element
 )";
 
 const std::string create_element__family_cell_degree_lvariant_dvariant = R"(
 Create a continuous element using a given Lagrange variant and a given DPC
 variant
 
-Parameters
-==========
-family : basix.ElementFamily
-    The element family
-cell : basix.CellType
-    The reference cell type that the element is defined on
-degree : int
-    The degree of the element
-lvariant : basix.LagrangeVariant
-    The variant of Lagrange to use
-dvariant : basix.DPCVariant
-    The variant of DPC to use
+Args:
+    family (basix.ElementFamily): The element family
+    cell (basix.CellType): The reference cell type that the element is defined on
+    degree (int): The degree of the element
+    lvariant (basix.LagrangeVariant): The variant of Lagrange to use
+    dvariant (basix.DPCVariant): The variant of DPC to use
 
-Returns
-=======
-basix.finite_element.FiniteElement
-    A finite element
+Returns:
+    basix.finite_element.FiniteElement: A finite element
 )";
 
 const std::string create_element__family_cell_degree = R"(
 Create a continuous element
 
-Parameters
-==========
-family : basix.ElementFamily
-    The element family
-cell : basix.CellType
-    The reference cell type that the element is defined on
-degree : int
-    The degree of the element
+Args:
+    family (basix.ElementFamily): The element family
+    cell (basix.CellType): The reference cell type that the element is defined on
+    degree (int): The degree of the element
 
-Returns
-=======
-basix.finite_element.FiniteElement
-    A finite element
+Returns:
+    basix.finite_element.FiniteElement: A finite element
 )";
 
 const std::string compute_interpolation_operator = R"(
@@ -715,22 +542,16 @@ element_from and element_to have the same map type, then only the DOF
 transformations need to be applied, as the pull back and push forward cancel
 each other out.
 
-Parameters
-==========
-element_from : basix.finite_element.FiniteElement
-    The element to interpolate from
-element_to : basix.finite_element.FiniteElement
-    The element to interpolate to
+Args:
+    element_from (basix.finite_element.FiniteElement): The element to interpolate from
+    element_to (basix.finite_element.FiniteElement): The element to interpolate to
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    Matrix operator that maps the 'from' degrees-of-freedom to
+Returns:
+    numpy.ndarray[numpy.float64]: Matrix operator that maps the 'from' degrees-of-freedom to
     the 'to' degrees-of-freedom
 )";
 
 const std::string tabulate_polynomial_set = R"(
-Polynomial expansion sets
 Tabulate the orthonormal polynomial basis, and derivatives, at
 points on the reference cell.
 
@@ -745,27 +566,20 @@ cell, there are `(nderiv + 1)(nderiv + 2)/2` derivatives, and in 3D,
 there are `(nderiv + 1)(nderiv + 2)(nderiv + 3)/6`. The ordering is
 'triangular' with the lower derivatives appearing first.
 
-Parameters
-==========
-celltype : basix.CellType
-    Cell type
-d : int
-    Polynomial degree
-n : int
-    Maximum derivative order. Use n = 0 for the basis only.
-x : numpy.ndarray[numpy.float64]
-    Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
+Args:
+    celltype (basix.CellType): Cell type
+    d (int): Polynomial degree
+    n (int): Maximum derivative order. Use n = 0 for the basis only.
+    x (numpy.ndarray[numpy.float64]): Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    Polynomial sets, for each derivative, tabulated at points.
+Returns:
+    numpy.ndarray[numpy.float64]: Polynomial sets, for each derivative, tabulated at points.
     The shape is `(number of derivatives computed, number of points,
     basis index)`.
     
     - The first index is the derivative. The first entry is the basis
     itself. Derivatives are stored in triangular (2D) or tetrahedral
-    (3D) ordering, e.g. if `(p, q)` denotes `p` order dervative with
+    (3D) ordering, eg if `(p, q)` denotes `p` order dervative with
     repsect to `x` and `q` order derivative with respect to `y`, [0] ->
     (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
     [5] -> (0, 2), [6] -> (3, 0),...
@@ -782,73 +596,50 @@ numpy.ndarray[numpy.float64]
 const std::string tabulate_polynomials = R"(
 Tabulate a set of polynomials.
 
-Parameters
-==========
-polytype : basix.PolynomialType
-    Polynomial type
-celltype : basix.CellType
-    Cell type
-d : int
-    Polynomial degree
-x : numpy.ndarray[numpy.float64]
-    Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
+Args:
+    polytype (basix.PolynomialType): Polynomial type
+    celltype (basix.CellType): Cell type
+    d (int): Polynomial degree
+    x (numpy.ndarray[numpy.float64]): Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    Polynomial sets, for each derivative, tabulated at points.
+Returns:
+    numpy.ndarray[numpy.float64]: Polynomial sets, for each derivative, tabulated at points.
     The shape is `(number of points, basis index)`.
 )";
 
 const std::string make_quadrature__rule_celltype_m = R"(
 Make a quadrature rule on a reference cell
 
-Parameters
-==========
-rule : basix.QuadratureType
-    Type of quadrature rule (or use quadrature::Default)
-celltype : basix.CellType
-    The cell type
-m : int
-    Maximum degree of polynomial that this quadrature rule will integrate exactly
+Args:
+    rule (basix.QuadratureType): Type of quadrature rule (or use quadrature::Default)
+    celltype (basix.CellType): The cell type
+    m (int): Maximum degree of polynomial that this quadrature rule will integrate exactly
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    List of points and list of weights. The number of points
+Returns:
+    numpy.ndarray[numpy.float64]: List of points and list of weights. The number of points
     arrays has shape (num points, gdim)
 )";
 
 const std::string make_quadrature__celltype_m = R"(
 Make a default quadrature rule on reference cell
 
-Parameters
-==========
-celltype : basix.CellType
-    The cell type
-m : int
-    Maximum degree of polynomial that this quadrature rule will integrate exactly
+Args:
+    celltype (basix.CellType): The cell type
+    m (int): Maximum degree of polynomial that this quadrature rule will integrate exactly
 
-Returns
-=======
-numpy.ndarray[numpy.float64]
-    List of points and list of weights. The number of points
+Returns:
+    numpy.ndarray[numpy.float64]: List of points and list of weights. The number of points
     arrays has shape (num points, gdim)
 )";
 
 const std::string index__p = R"(
-Indexing
 Compute trivial indexing in a 1D array (for completeness)
 
-Parameters
-==========
-p : int
-    Index in x
+Args:
+    p (int): Index in x
 
-Returns
-=======
-int
-    1D Index
+Returns:
+    int: 1D Index
 )";
 
 const std::string index__p_q = R"(
@@ -857,35 +648,24 @@ This can be used to find the index of a derivative returned by
 `FiniteElement::tabulate`. For instance to find d2N/dx2, use
 `FiniteElement::tabulate(2, points)[idx(2, 0)];`
 
-Parameters
-==========
-p : int
-    Index in x
-q : int
-    Index in y
+Args:
+    p (int): Index in x
+    q (int): Index in y
 
-Returns
-=======
-int
-    1D Index
+Returns:
+    int: 1D Index
 )";
 
 const std::string index__p_q_r = R"(
 Compute indexing in a 3D tetrahedral array compressed into a 1D array
 
-Parameters
-==========
-p : int
-    Index in x
-q : int
-    Index in y
-r : int
-    Index in z
+Args:
+    p (int): Index in x
+    q (int): Index in y
+    r (int): Index in z
 
-Returns
-=======
-int
-    1D Index
+Returns:
+    int: 1D Index
 )";
 
 } // namespace basix::docstring

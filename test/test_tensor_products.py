@@ -52,7 +52,7 @@ def test_tensor_product_factorisation(cell_type, degree, element_type, element_a
 
             values2 = np.empty((element.dim, 1))
             for fs, perm in factors:
-                evals = [e.tabulate(d, [p])[d, 0, :, 0] for e, p, d in zip(fs, point, ds)]
+                evals = [e.tabulate(d, p.reshape(1, -1))[d, 0, :, 0] for e, p, d in zip(fs, point, ds)]
                 tab2 = tensor_product(*evals)
                 for a, b in enumerate(perm):
                     if b != -1:

@@ -97,7 +97,8 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
   }
 
-  return FiniteElement(element::family::Hermite, celltype, degree, 1, {1},
-                       wcoeffs, x, M, maps::type::identity, discontinuous, -1);
+  return FiniteElement(element::family::Hermite, celltype, degree, {}, wcoeffs,
+                       x, M, 1, maps::type::identity, discontinuous, -1,
+                       degree);
 }
 //-----------------------------------------------------------------------------

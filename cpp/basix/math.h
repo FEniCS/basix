@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <xtensor/xarray.hpp>
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xtensor.hpp>
 
@@ -46,25 +45,6 @@ xt::xtensor_fixed<typename U::value_type, xt::xshape<3>> cross(const U& u,
           u[0] * v[1] - u[1] * v[0]};
 }
 
-/// Compute C = A * B
-/// @param[in] A Input matrix
-/// @param[in] B Input matrix
-/// return A * B
-template <typename U, typename V>
-xt::xtensor<typename U::value_type, 2> dot(const U& A, const V& B)
-{
-  xt::xtensor<typename U::value_type, 2> C
-      = xt::zeros<typename U::value_type>({A.shape(0), B.shape(1)});
-
-  assert(A.shape(1) == B.shape(0));
-  for (std::size_t i = 0; i < A.shape(0); i++)
-    for (std::size_t j = 0; j < B.shape(1); j++)
-      for (std::size_t k = 0; k < A.shape(1); k++)
-        C(i, j) += A(i, k) * B(k, j);
-
-  return C;
-}
-
 /// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
 /// @param[in] A Input matrix
 /// @return Eigenvalues and eigenvectors
@@ -76,12 +56,26 @@ eigh(const xt::xtensor<double, 2>& A);
 /// @param[in] A The matrix
 /// @param[in] B Right-hand side matrix/vector
 /// @return A^{-1} B
-xt::xarray<double, xt::layout_type::column_major>
-solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B);
+xt::xtensor<double, 2> solve(const xt::xtensor<double, 2>& A,
+                             const xt::xtensor<double, 2>& B);
 
 /// Check if A is a singular matrix
 /// @param[in] A The matrix
 /// @return A bool indicating if the matrix is singular
 bool is_singular(const xt::xtensor<double, 2>& A);
+
+/// Compute C = A * B
+/// @param[in] A Input matrix
+/// @param[in] B Input matrix
+/// @param[in, out] C The output matrix
+void dot(const xt::xtensor<double, 2>& A, const xt::xtensor<double, 2>& B,
+         xt::xtensor<double, 2>& C);
+
+/// Compute C = A * B
+/// @param[in] A Input matrix
+/// @param[in] B Input matrix
+/// return A * B
+xt::xtensor<double, 2> dot(const xt::xtensor<double, 2>& A,
+                           const xt::xtensor<double, 2>& B);
 
 } // namespace basix::math

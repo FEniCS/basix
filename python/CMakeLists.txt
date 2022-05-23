@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-PROJECT(basix_pybind11 VERSION "0.3.1.0"  LANGUAGES CXX)
+PROJECT(basix_pybind11 VERSION "0.4.3.0"  LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -17,24 +17,21 @@ endif()
 
 # Correct COMPONENT specification Development.Module added only in CMake 3.18
 # and above.
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
-  find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
-else()
-  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+if(NOT SKBUILD)
+  if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.18.0")
+    find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+  else()
+    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+  endif()
 endif()
 
-if(SKBUILD)
-  # Scikit-Build does not add your site-packages to the search path
-  # automatically, so we need to add it or the pybind11 specific
-  # directory here.
-  execute_process(
-    COMMAND
-      "${Python3_EXECUTABLE}" -c
-      "import pybind11; print(pybind11.get_cmake_dir())"
-    OUTPUT_VARIABLE _tmp_dir
-    OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
-  list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
-endif()
+execute_process(
+  COMMAND
+    "${Python3_EXECUTABLE}" -c
+    "import pybind11; print(pybind11.get_cmake_dir())"
+  OUTPUT_VARIABLE _tmp_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ECHO STDOUT)
+list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
 
 find_package(pybind11 REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})

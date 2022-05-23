@@ -4,6 +4,7 @@
 
 #include "precompute.h"
 #include "math.h"
+#include <numeric>
 #include <xtensor/xview.hpp>
 
 using namespace basix;
@@ -45,9 +46,10 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
       if (!used)
       {
         xt::col(permuted_matrix, i) = xt::col(matrix, j);
-        auto mat = xt::view(permuted_matrix, xt::range(0, i + 1),
-                            xt::range(0, i + 1));
-        xt::xtensor<double, 2> mat2 = math::dot(mat, xt::transpose(mat));
+        xt::xtensor<double, 2> mat = xt::view(
+            permuted_matrix, xt::range(0, i + 1), xt::range(0, i + 1));
+        xt::xtensor<double, 2> mat_t = xt::transpose(mat);
+        xt::xtensor<double, 2> mat2 = math::dot(mat, mat_t);
         auto [evals, evecs] = math::eigh(mat2);
         if (double lambda = std::abs(evals.front()); lambda > max_eval)
         {
@@ -65,7 +67,7 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
 
   // Create the precomputed representation of the matrix
   xt::xtensor<T, 2> prepared_matrix({dim, dim});
-
+  xt::xtensor<T, 2> A, B;
   for (std::size_t i = 0; i < dim; ++i)
   {
     diag[i] = permuted_matrix(i, i);
@@ -78,12 +80,11 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
 
     if (i > 0)
     {
-      xt::xtensor<T, 1> v
-          = math::solve(xt::transpose(xt::view(permuted_matrix, xt::range(0, i),
-                                               xt::range(0, i))),
-                        xt::view(permuted_matrix, i, xt::range(0, i)));
 
-      xt::view(prepared_matrix, i, xt::range(0, i)) = v;
+      A.assign(xt::view(permuted_matrix, xt::range(0, i), xt::range(0, i)));
+      B.assign(xt::view(permuted_matrix, xt::range(i, i + 1), xt::range(0, i)));
+      xt::xtensor<T, 2> v = math::solve(xt::transpose(A), xt::transpose(B));
+      xt::view(prepared_matrix, i, xt::range(0, i)).assign(xt::col(v, 0));
 
       xt::xtensor<T, 1> t = xt::view(permuted_matrix, xt::range(0, i), i);
       diag[i] -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.);

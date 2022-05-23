@@ -5,17 +5,12 @@ from ._basixcpp import LatticeSimplexMethod as _LSM
 
 
 def string_to_type(lattice: str) -> _LT:
-    """
-    Convert a string to a Basix LatticeType enum.
+    """Convert a string to a Basix LatticeType enum.
 
-    Parameters
-    ----------
-    lattice : str
-        The lattice type as a string.
+    Args:
+        lattice: The lattice type as a string.
 
-    Returns
-    -------
-    basix.LatticeType
+    Returns:
         The lattice type
     """
     if not hasattr(_LT, lattice):
@@ -24,34 +19,24 @@ def string_to_type(lattice: str) -> _LT:
 
 
 def type_to_string(latticetype: _LT) -> str:
-    """
-    Convert a Basix LatticeType enum to a string.
+    """Convert a Basix LatticeType enum to a string.
 
-    Parameters
-    ----------
-    latticetype : basix.LatticeType
-        The lattice type
+    Args:
+        latticetype: The lattice type
 
-    Returns
-    -------
-    str
+    Returns:
         The lattice type as a string.
     """
     return latticetype.name
 
 
 def string_to_simplex_method(method: str) -> _LSM:
-    """
-    Convert a string to a Basix LatticeSimplexMethod enum.
+    """Convert a string to a Basix LatticeSimplexMethod enum.
 
-    Parameters
-    ----------
-    method : str
-        The simplex method as a string.
+    Args:
+        method: The simplex method as a string.
 
-    Returns
-    -------
-    basix.LatticeSimplexMethod
+    Returns:
         The simplex method
     """
     if not hasattr(_LSM, method):
@@ -60,17 +45,12 @@ def string_to_simplex_method(method: str) -> _LSM:
 
 
 def simplex_method_to_string(simplex_method: _LSM) -> str:
-    """
-    Convert a Basix LatticeSimplexMethod enum to a string.
+    """Convert a Basix LatticeSimplexMethod enum to a string.
 
-    Parameters
-    ----------
-    simplex_method : basix.LatticeSimplexMethod
-        The simplex method
+    Args:
+        simplex_method: The simplex method
 
-    Returns
-    -------
-    str
+    Returns:
         The simplex method as a string.
     """
     return simplex_method.name

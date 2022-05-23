@@ -5,17 +5,12 @@ from ._basixcpp import DPCVariant as _DV
 
 
 def string_to_lagrange_variant(variant: str) -> _LV:
-    """
-    Convert a string to a Basix LagrangeVariant enum.
+    """Convert a string to a Basix LagrangeVariant enum.
 
-    Parameters
-    ----------
-    variant : str
-        The Lagrange variant as a string.
+    Args:
+        variant: The Lagrange variant as a string.
 
-    Returns
-    -------
-    basix.LagrangeVariant
+    Returns:
         The Lagrange variant
     """
     if variant.lower() == "gll":
@@ -31,34 +26,24 @@ def string_to_lagrange_variant(variant: str) -> _LV:
 
 
 def lagrange_variant_to_string(variant: _LV) -> str:
-    """
-    Convert a Basix LagrangeVariant enum to a string.
+    """Convert a Basix LagrangeVariant enum to a string.
 
-    Parameters
-    ----------
-    variant : basix.LagrangeVariant
-        The Lagrange variant
+    Args:
+        variant: The Lagrange variant
 
-    Returns
-    -------
-    str
+    Returns:
         The Lagrange variant as a string.
     """
     return variant.name
 
 
 def string_to_dpc_variant(variant: str) -> _DV:
-    """
-    Convert a string to a Basix DPCVariant enum.
+    """Convert a string to a Basix DPCVariant enum.
 
-    Parameters
-    ----------
-    variant : str
-        The DPC variant as a string.
+    Args:
+        variant: The DPC variant as a string.
 
-    Returns
-    -------
-    basix.DPCVariant
+    Returns:
         The DPC variant
     """
     if not hasattr(_DV, variant.lower()):
@@ -67,17 +52,12 @@ def string_to_dpc_variant(variant: str) -> _DV:
 
 
 def dpc_variant_to_string(variant: _DV) -> str:
-    """
-    Convert a Basix DPCVariant enum to a string.
+    """Convert a Basix DPCVariant enum to a string.
 
-    Parameters
-    ----------
-    variant : basix.DPCVariant
-        The DPC variant
+    Args:
+        variant: The DPC variant
 
-    Returns
-    -------
-    str
+    Returns:
         The DPC variant as a string.
     """
     return variant.name

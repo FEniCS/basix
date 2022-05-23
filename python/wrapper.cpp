@@ -505,7 +505,7 @@ Interface to the Basix C++ library.
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
           {
-            if (M[i][j].ndim() != 3)
+            if (M[i][j].ndim() != 4)
               throw std::runtime_error("M has the wrong number of dimensions");
             _M[i].push_back(adapt_x(M[i][j]));
           }

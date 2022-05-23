@@ -37,8 +37,8 @@ def test_lagrange_custom_triangle_degree1_l2piola():
     z = np.zeros((0, 2))
     x = [[np.array([[0., 0.]]), np.array([[1., 0.]]), np.array([[0., 1.]])],
          [z, z, z], [z], []]
-    z = np.zeros((0, 1, 0))
-    M = [[np.array([[[1.]]]), np.array([[[1.]]]), np.array([[[1.]]])],
+    z = np.zeros((0, 1, 0, 1))
+    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]]])],
          [z, z, z], [z], []]
 
     lagrange = basix.create_element(
@@ -160,7 +160,8 @@ def create_lagrange1_quad(cell_type=basix.CellType.quadrilateral, degree=1, wcoe
     if value_shape is None:
         value_shape = []
     basix.create_custom_element(
-        cell_type, value_shape, wcoeffs, x, M, 0, basix.MapType.identity, discontinuous, 1, degree)
+        cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, basix.MapType.identity,
+        discontinuous, 1, degree)
 
 
 def test_create_lagrange1_quad():
@@ -280,14 +281,6 @@ def test_M_wrong_entities():
     """Test that a runtime error is thrown when the shape of M does not match x."""
     z = np.zeros((0, 1, 0, 1))
     M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]]], [[[1.]]]]), z],
-         [z, z, z, z], [z], []]
-    assert_failure(M=M)
-
-
-def test_M_wrong_value_size():
-    """Test that a runtime error is thrown when M is the wrong shape."""
-    z = np.zeros((0, 1, 0, 1))
-    M = [[np.array([[[[1.]]]]), np.array([[[[1.]]]]), np.array([[[[1.]], [[1.]]]]), np.array([[[[1.]]]])],
          [z, z, z, z], [z], []]
     assert_failure(M=M)
 

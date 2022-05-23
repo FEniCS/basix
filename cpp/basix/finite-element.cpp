@@ -134,8 +134,8 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
         for (std::size_t j = 0; j < Me.shape(1); ++j)      // Value index
           for (std::size_t k = 0; k < Me.shape(2); ++k)    // Point
             for (std::size_t l = 0; l < Me.shape(3); ++l)  // Derivative
-              for (std::size_t m = 0; m < P.shape(2); ++m) // Polynomial term
-                D(dof_index + i, j, m) += Me(i, j, k, l) * P(l, k, m);
+              for (std::size_t m = 0; m < P.shape(1); ++m) // Polynomial term
+                D(dof_index + i, j, m) += Me(i, j, k, l) * P(l, m, k);
 
       dof_index += M[d][e].shape(0);
     }

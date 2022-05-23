@@ -42,7 +42,7 @@ message("Hints: $ENV{PYBIND11_ROOT}")
 find_package(nanobind REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
   $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
 
-  # Create the binding library
+# Create the binding library
 # pybind11_add_module(_basixcpp MODULE wrapper.cpp)
 nanobind_add_module(_basixcpp MODULE wrapper.cpp)
 target_link_libraries(_basixcpp PRIVATE Basix::basix)

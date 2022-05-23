@@ -207,7 +207,6 @@ def test_line(n):
             wd = sympy.diff(g[i], x, k)
             for j, p in enumerate(pts):
                 wsym[j, i] = wd.subs(x, p[0])
-
         assert numpy.allclose(wtab[k], wsym)
 
 

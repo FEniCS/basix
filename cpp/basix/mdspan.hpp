@@ -26,7 +26,7 @@
 #include <cassert>
 #include <vector>
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/mdarray
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/mdarray
 /*
 //@HEADER
 // ************************************************************************
@@ -71,7 +71,7 @@
 */
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/mdspan
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/mdspan
 /*
 //@HEADER
 // ************************************************************************
@@ -116,7 +116,7 @@
 */
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/default_accessor.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/default_accessor.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -161,7 +161,7 @@
 */
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/macros.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/macros.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -207,7 +207,7 @@
 
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/config.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/config.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -505,7 +505,7 @@ static_assert(_MDSPAN_CPLUSPLUS >= MDSPAN_CXX_STD_14, "mdspan requires C++14 or 
 #  define __MDSPAN_OP5(mds, a, b, c, d, e) mds(a,b,c,d,e)
 #  define __MDSPAN_OP6(mds, a, b, c, d, e, f) mds(a,b,c,d,e,f)
 #endif
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/config.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/config.hpp
 
 
 #ifndef _MDSPAN_HOST_DEVICE
@@ -536,8 +536,6 @@ static_assert(_MDSPAN_CPLUSPLUS >= MDSPAN_CXX_STD_14, "mdspan requires C++14 or 
 //==============================================================================
 // <editor-fold desc="Preprocessor helpers"> {{{1
 
-#if defined(_MDSPAN_COMPILER_MSVC) // Microsoft compilers
-
 #define MDSPAN_PP_COUNT(...) \
   _MDSPAN_PP_INTERNAL_EXPAND_ARGS_PRIVATE( \
     _MDSPAN_PP_INTERNAL_ARGS_AUGMENTER(__VA_ARGS__) \
@@ -566,29 +564,6 @@ static_assert(_MDSPAN_CPLUSPLUS >= MDSPAN_CXX_STD_14, "mdspan requires C++14 or 
     _60, _61, _62, _63, _64, _65, _66, _67, _68, _69, \
     _70, count, ...) count \
     /**/
-
-#else // Non-Microsoft compilers
-
-# define MDSPAN_PP_COUNT(...) \
-   _MDSPAN_PP_INTERNAL_COUNT_PRIVATE( \
-     0, ## __VA_ARGS__, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61,  \
-     60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, \
-     45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, \
-     30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, \
-     15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0) \
-     /**/
-# define _MDSPAN_PP_INTERNAL_COUNT_PRIVATE( \
-    _0_, _1_, _2_, _3_, _4_, _5_, _6_, _7_, _8_, _9_, \
-    _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, \
-    _20, _21, _22, _23, _24, _25, _26, _27, _28, _29, \
-    _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, \
-    _40, _41, _42, _43, _44, _45, _46, _47, _48, _49, \
-    _50, _51, _52, _53, _54, _55, _56, _57, _58, _59, \
-    _60, _61, _62, _63, _64, _65, _66, _67, _68, _69, \
-    _70, count, ...) count \
-    /**/
-
-#endif
 
 #define MDSPAN_PP_STRINGIFY_IMPL(x) #x
 #define MDSPAN_PP_STRINGIFY(x) MDSPAN_PP_STRINGIFY_IMPL(x)
@@ -1130,7 +1105,7 @@ struct __bools;
 
 // </editor-fold> end Pre-C++14 constexpr }}}1
 //==============================================================================
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/macros.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/macros.hpp
 
 
 namespace std {
@@ -1170,8 +1145,8 @@ struct default_accessor {
 
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/default_accessor.hpp
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/full_extent_t.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/default_accessor.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/full_extent_t.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1226,8 +1201,8 @@ _MDSPAN_INLINE_VARIABLE constexpr auto full_extent = full_extent_t{ };
 
 } // end namespace experimental
 } // namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/full_extent_t.hpp
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/mdspan.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/full_extent_t.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/mdspan.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1273,7 +1248,7 @@ _MDSPAN_INLINE_VARIABLE constexpr auto full_extent = full_extent_t{ };
 
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/layout_right.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/layout_right.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1318,7 +1293,7 @@ _MDSPAN_INLINE_VARIABLE constexpr auto full_extent = full_extent_t{ };
 */
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/trait_backports.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/trait_backports.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1475,8 +1450,8 @@ using enable_if_t = typename enable_if<_B, _T>::type;
 //==============================================================================
 
 #endif //MDSPAN_INCLUDE_EXPERIMENTAL_BITS_TRAIT_BACKPORTS_HPP_
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/trait_backports.hpp
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/extents.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/trait_backports.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/extents.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1521,7 +1496,7 @@ using enable_if_t = typename enable_if<_B, _T>::type;
 */
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/static_array.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/static_array.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1567,7 +1542,7 @@ using enable_if_t = typename enable_if<_B, _T>::type;
 
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/dynamic_extent.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/dynamic_extent.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1637,8 +1612,8 @@ constexpr auto __make_dynamic_extent_integral() {
 } // namespace std
 
 //==============================================================================================================
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/dynamic_extent.hpp
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/maybe_static_value.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/dynamic_extent.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/maybe_static_value.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1685,7 +1660,7 @@ constexpr auto __make_dynamic_extent_integral() {
 
 
 #if !defined(_MDSPAN_USE_ATTRIBUTE_NO_UNIQUE_ADDRESS)
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/no_unique_address.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/no_unique_address.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1810,7 +1785,7 @@ struct __no_unique_address_emulation<
 } // end namespace detail
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/no_unique_address.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/no_unique_address.hpp
 #endif
 
 // This is only needed for the non-standard-layout version of partially
@@ -1914,8 +1889,8 @@ struct __maybe_static_value<_T, __is_dynamic_sentinal, __is_dynamic_sentinal,
 } // end namespace std
 
 #endif // !_MDSPAN_PRESERVE_STANDARD_LAYOUT
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/maybe_static_value.hpp
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/standard_layout_static_array.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/maybe_static_value.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/standard_layout_static_array.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -1960,7 +1935,7 @@ struct __maybe_static_value<_T, __is_dynamic_sentinal, __is_dynamic_sentinal,
 */
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/compressed_pair.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/compressed_pair.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -2182,7 +2157,7 @@ struct __compressed_pair<
 } // end namespace detail
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/compressed_pair.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/compressed_pair.hpp
 
 #if !defined(_MDSPAN_USE_ATTRIBUTE_NO_UNIQUE_ADDRESS)
 #endif
@@ -2732,8 +2707,8 @@ public:
 } // end namespace detail
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/standard_layout_static_array.hpp
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/type_list.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/standard_layout_static_array.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/type_list.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -2848,7 +2823,7 @@ struct __type_at<3, __type_list<_T0, _T1, _T2, _T3, _Ts...>> {
 
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/type_list.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/type_list.hpp
 
 // Needs to be after the includes above to work with the single header generator
 #if !_MDSPAN_PRESERVE_STANDARD_LAYOUT
@@ -3078,7 +3053,7 @@ using __partially_static_sizes_tagged = __partially_static_sizes<__values_or_sen
 } // end namespace std
 
 #endif // !_MDSPAN_PRESERVE_STANDARD_LAYOUT
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/static_array.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/static_array.hpp
 
 #if !defined(_MDSPAN_USE_ATTRIBUTE_NO_UNIQUE_ADDRESS)
 #endif
@@ -3477,7 +3452,7 @@ using __extents_to_partially_static_sizes_t = typename __extents_to_partially_st
 } // end namespace detail
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/extents.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/extents.hpp
 
 namespace std {
 namespace experimental {
@@ -3650,7 +3625,7 @@ private:
 
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/layout_right.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/layout_right.hpp
 
 namespace std {
 namespace experimental {
@@ -3963,8 +3938,8 @@ mdspan(const typename AccessorType::pointer, const MappingType&, const AccessorT
 
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/mdspan.hpp
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/layout_stride.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/mdspan.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/layout_stride.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -4352,8 +4327,8 @@ struct layout_stride {
 
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/layout_stride.hpp
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/layout_left.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/layout_stride.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/layout_left.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -4569,8 +4544,8 @@ private:
 
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/layout_left.hpp
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/submdspan.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/layout_left.hpp
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/submdspan.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -5051,9 +5026,9 @@ _MDSPAN_DEDUCE_RETURN_TYPE_SINGLE_LINE(
 
 } // end namespace experimental
 } // namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p0009_bits/submdspan.hpp
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/mdspan
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p1684_bits/mdarray.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p0009_bits/submdspan.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/mdspan
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p1684_bits/mdarray.hpp
 /*
 //@HEADER
 // ************************************************************************
@@ -5099,7 +5074,7 @@ _MDSPAN_DEDUCE_RETURN_TYPE_SINGLE_LINE(
 
 
 
-//BEGIN_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p1684_bits/../mdspan
+//BEGIN_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p1684_bits/../mdspan
 /*
 //@HEADER
 // ************************************************************************
@@ -5144,7 +5119,7 @@ _MDSPAN_DEDUCE_RETURN_TYPE_SINGLE_LINE(
 */
 
 
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p1684_bits/../mdspan
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p1684_bits/../mdspan
 
 namespace std {
 namespace experimental {
@@ -5580,8 +5555,8 @@ private:
 
 } // end namespace experimental
 } // end namespace std
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/__p1684_bits/mdarray.hpp
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/__p1684_bits/mdarray.hpp
 
-//END_FILE_INCLUDE: /home/runner/work/mdspan/mdspan/include/experimental/mdarray
+//END_FILE_INCLUDE: /Users/chrisrichardson/Work/basix/cpp/basix/mdspan/include/experimental/mdarray
 #endif // _MDSPAN_SINGLE_HEADER_INCLUDE_GUARD_
 

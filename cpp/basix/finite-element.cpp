@@ -576,8 +576,8 @@ FiniteElement::FiniteElement(
   wcoeffs_ortho.assign(wcoeffs);
   orthogonalise(wcoeffs_ortho);
 
-  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, M, x, degree,
-                                     interpolation_nderivs);
+  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, M, x,
+                                     highest_degree, interpolation_nderivs);
 
   if (family == element::family::custom)
   {

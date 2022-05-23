@@ -11,11 +11,11 @@ on:
     inputs:
       dolfinx_branch:
         description: "DOLFINx branch or tag"
-        default: "main"
+        default: "mscroggs/hermite"
         type: string
       ffcx_branch:
         description: "FFCx branch or tag"
-        default: "main"
+        default: "mscroggs/hermite"
         type: string
       ufl_branch:
         description: "UFL branch or tag"
@@ -54,7 +54,7 @@ jobs:
         if: github.event_name != 'workflow_dispatch'
         run: |
           python3 -m pip install git+https://github.com/FEniCS/ufl.git
-          python3 -m pip install git+https://github.com/FEniCS/ffcx.git
+          python3 -m pip install git+https://github.com/FEniCS/ffcx.git@mscroggs/hermite
       - name: Install FEniCS Python components
         if: github.event_name == 'workflow_dispatch'
         run: |
@@ -71,6 +71,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
+          ref: mscroggs/hermite
       - name: Get DOLFINx
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v3

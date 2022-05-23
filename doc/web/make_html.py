@@ -30,12 +30,17 @@ def markdown(txt):
     # Convert code inside ```s (as these are not handled by the markdown library
     tsp = txt.split("```")
     out = ""
-    for t, code in zip(tsp[::2], tsp[1::2] + [""]):
-        code = code.strip().split("\n")
-        if code[0] in ["console", "bash", "python", "c", "cpp"]:
-            code = code[1:]
-        code = "\n".join(code)
-        out += f"{t}<pre><code>{code}</code></pre>"
+    code = False
+    for part in tsp:
+        if code:
+            part = part.strip().split("\n")
+            if part[0] in ["console", "bash", "python", "c", "cpp"]:
+                part = part[1:]
+            part = "\n".join(part)
+            out += f"<pre><code>{part}</code></pre>"
+        else:
+            out += part
+        code = not code
     return _markdown(out)
 
 
@@ -110,6 +115,19 @@ def link_markup(matches):
 
 
 def insert_info(txt):
+    if "{{SUMMARY}}" in txt:
+        started = False
+        info = ""
+        with open(path("../../README.md")) as f:
+            for line in f:
+                if not started and line.strip() != "" and line[0] not in ["!", "#"]:
+                    started = True
+                if started:
+                    if line.startswith("#"):
+                        break
+                    info += line
+        info = info.replace("joss/img", "img")
+        txt = txt.replace("{{SUMMARY}}", info)
     if "{{SUPPORTED ELEMENTS}}" in txt:
         with open(path("../../README.md")) as f:
             info = "## Supported elements" + f.read().split("## Supported elements")[1].split("\n## ")[0]
@@ -218,9 +236,21 @@ system(f"cp -r {path('cpp/html')} {path('html/cpp')}")
 
 # Make demos
 os.system(f"rm {path('../../demo/python/*.py.rst')}")
+os.system(f"rm {path('../../demo/python/*.png')}")
+# If file saves matplotlib images, run the demo
+for file in os.listdir(path("../../demo/python")):
+    if file.endswith(".py"):
+        with open(path(f"../../demo/python/{file}")) as f:
+            content = f.read()
+        if "savefig" in content:
+            here = os.getcwd()
+            os.chdir(path("../../demo/python"))
+            system(f"python3 {file}")
+            os.chdir(here)
 system(f"cd {path('../../demo/python')} && python3 convert_to_rst.py")
 system(f"mkdir {path('python/source/demo')}")
 system(f"cp {path('../../demo/python/*.rst')} {path('python/source/demo')}")
+system(f"cp {path('../../demo/python/*.png')} {path('python/source/demo')}")
 for file in os.listdir(path("python/source/demo")):
     if file.endswith(".py.rst"):
         with open(path(f"python/source/demo/{file}")) as f:

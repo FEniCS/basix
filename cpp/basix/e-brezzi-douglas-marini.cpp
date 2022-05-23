@@ -17,6 +17,7 @@ using namespace basix;
 
 //----------------------------------------------------------------------------
 FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
+                                         element::lagrange_variant lvariant,
                                          bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
@@ -41,8 +42,8 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   }
 
   // Add integral moments on facets
-  const FiniteElement facet_moment_space = element::create_lagrange(
-      facettype, degree, element::lagrange_variant::equispaced, true);
+  const FiniteElement facet_moment_space
+      = element::create_lagrange(facettype, degree, lvariant, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, degree * 2);
 
@@ -51,8 +52,8 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   {
     // Interior integral moment
     std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
-        element::create_nedelec(celltype, degree - 1, true), celltype, tdim,
-        2 * degree - 1);
+        element::create_nedelec(celltype, degree - 1, lvariant, true), celltype,
+        tdim, 2 * degree - 1);
   }
   else
   {
@@ -74,6 +75,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim},
                        xt::eye<double>(ndofs), x, M,
-                       maps::type::contravariantPiola, discontinuous, degree);
+                       maps::type::contravariantPiola, discontinuous, degree,
+                       degree, lvariant);
 }
 //-----------------------------------------------------------------------------

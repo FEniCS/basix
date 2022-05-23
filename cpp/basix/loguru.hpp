@@ -392,7 +392,7 @@ struct Message
 /* Everything with a verbosity equal or greater than g_stderr_verbosity will be
 written to stderr. You can set this in code or via the -v argument.
 Set to loguru::Verbosity_OFF to write nothing to stderr.
-Default is 0, i.e. only log ERROR, WARNING and INFO are written to stderr.
+Default is 0, ie only log ERROR, WARNING and INFO are written to stderr.
 */
 LOGURU_EXPORT extern Verbosity g_stderr_verbosity;
 LOGURU_EXPORT extern bool g_colorlogtostderr;      // True by default.
@@ -530,7 +530,7 @@ void init(int& argc, char* argv[], const Options& options = {});
 LOGURU_EXPORT
 void shutdown();
 
-// What ~ will be replaced with, e.g. "/home/your_user_name/"
+// What ~ will be replaced with, eg "/home/your_user_name/"
 LOGURU_EXPORT
 const char* home_dir();
 
@@ -553,11 +553,11 @@ const char* current_dir();
 LOGURU_EXPORT
 const char* filename(const char* path);
 
-// e.g. "foo/bar/baz.ext" will create the directories "foo/" and "foo/bar/"
+// eg "foo/bar/baz.ext" will create the directories "foo/" and "foo/bar/"
 LOGURU_EXPORT
 bool create_directories(const char* file_path_const);
 
-// Writes date and time with millisecond precision, e.g. "20151017_161503.123"
+// Writes date and time with millisecond precision, eg "20151017_161503.123"
 LOGURU_EXPORT
 void write_date_time(char* buff, unsigned buff_size);
 
@@ -565,7 +565,7 @@ void write_date_time(char* buff, unsigned buff_size);
 LOGURU_EXPORT
 Text errno_as_text();
 
-/* Given a prefix of e.g. "~/loguru/" this might return
+/* Given a prefix of eg "~/loguru/" this might return
    "/home/your_username/loguru/app_name/20151017_161503.123.log"
 
    where "app_name" is a sanitized version of argv[0].
@@ -1132,14 +1132,14 @@ some.cpp:
         namespace loguru {
                 Text ec_to_text(MySmallType small_value)
                 {
-                        // Called only when needed, i.e. on a crash.
+                        // Called only when needed, ie on a crash.
                         std::string str = small_value.as_string(); // Format
 'small_value' here somehow. return Text{STRDUP(str.c_str())};
                 }
 
                 Text ec_to_text(const MyBigType* big_value)
                 {
-                        // Called only when needed, i.e. on a crash.
+                        // Called only when needed, ie on a crash.
                         std::string str = big_value->as_string(); // Format
 'big_value' here somehow. return Text{STRDUP(str.c_str())};
                 }

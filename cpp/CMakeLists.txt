@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Set the version
-project(Basix VERSION "0.3.1.0" LANGUAGES CXX)
+project(Basix VERSION "0.4.3.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if (SKBUILD)
@@ -26,7 +26,7 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 option(DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git." OFF)
 add_feature_info(DOWNLOAD_XTENSOR_LIBS DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git.")
 
-# Enable xtensor with target-specific optimization, i.e. -march=native
+# Enable xtensor with target-specific optimization, ie -march=native
 option(XTENSOR_OPTIMIZE "Enable xtensor target-specific optimization" OFF)
 add_feature_info(XTENSOR_OPTIMIZE XTENSOR_OPTIMIZE "Enable architecture-specific optimizations as defined by xtensor.")
 
@@ -50,7 +50,7 @@ else()
   FetchContent_Declare(
     xtl
     GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
-    GIT_TAG        0.7.3
+    GIT_TAG        0.7.4
   )
   FetchContent_MakeAvailable(xtl)
 
@@ -58,7 +58,7 @@ else()
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.24.0
+    GIT_TAG        0.24.2
   )
   FetchContent_MakeAvailable(xtensor)
 endif()
@@ -72,7 +72,8 @@ feature_summary(WHAT ALL)
 
 add_library(basix)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.h
@@ -100,7 +101,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
 
 target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.cpp

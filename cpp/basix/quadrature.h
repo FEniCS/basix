@@ -33,7 +33,7 @@ enum class type
 /// will integrate exactly
 /// @return List of points and list of weights. The number of points
 /// arrays has shape (num points, gdim)
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_quadrature(const quadrature::type rule, cell::type celltype, int m);
 
 /// Make a default quadrature rule on reference cell
@@ -42,7 +42,7 @@ make_quadrature(const quadrature::type rule, cell::type celltype, int m);
 /// will integrate exactly
 /// @return List of points and list of weights. The number of points
 /// arrays has shape (num points, gdim)
-std::pair<xt::xarray<double>, std::vector<double>>
+std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_quadrature(cell::type celltype, int m);
 
 /// Get the default quadrature type for the given cell and order
@@ -55,11 +55,11 @@ quadrature::type get_default_rule(cell::type celltype, int m);
 /// Get Gauss-Lobatto-Legendre (GLL) points on the interval [0, 1].
 /// @param[in] m The number of points
 /// @return An array of GLL points
-xt::xtensor<double, 1> get_gll_points(int m);
+xt::xtensor<double, 2> get_gll_points(int m);
 
 /// Get Gauss-Legendre (GL) points on the interval [0, 1].
 /// @param[in] m The number of points
 /// @return An array of GL points
-xt::xtensor<double, 1> get_gl_points(int m);
+xt::xtensor<double, 2> get_gl_points(int m);
 
 } // namespace basix::quadrature

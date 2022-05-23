@@ -17,18 +17,27 @@ cells = [
 ]
 
 elements = [
-    (basix.ElementFamily.P, [basix.LagrangeVariant.gll_isaac]),
-    (basix.ElementFamily.RT, []),
-    (basix.ElementFamily.BDM, []),
-    (basix.ElementFamily.N1E, []),
-    (basix.ElementFamily.N2E, []),
-    (basix.ElementFamily.Regge, []),
-    (basix.ElementFamily.HHJ, []),
-    (basix.ElementFamily.bubble, []),
-    (basix.ElementFamily.serendipity, [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre]),
-    (basix.ElementFamily.DPC, [basix.DPCVariant.legendre]),
-    (basix.ElementFamily.CR, []),
-    (basix.ElementFamily.custom, []),
+    basix.ElementFamily.P,
+    basix.ElementFamily.RT,
+    basix.ElementFamily.BDM,
+    basix.ElementFamily.N1E,
+    basix.ElementFamily.N2E,
+    basix.ElementFamily.Regge,
+    basix.ElementFamily.HHJ,
+    basix.ElementFamily.bubble,
+    basix.ElementFamily.serendipity,
+    basix.ElementFamily.DPC,
+    basix.ElementFamily.CR,
+    basix.ElementFamily.custom,
+]
+
+variants = [
+    [basix.LagrangeVariant.gll_isaac],
+    [basix.LagrangeVariant.gll_warped],
+    [basix.LagrangeVariant.legendre],
+    [basix.DPCVariant.diagonal_gll],
+    [basix.DPCVariant.legendre],
+    [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre],
 ]
 
 
@@ -47,23 +56,26 @@ def test_all_elements_included():
         if not c.startswith("_") and c not in ["name", "value"]:
             all_elements.add(getattr(basix.ElementFamily, c))
 
-    assert all_elements == set(e[0] for e in elements)
+    assert all_elements == set(elements)
 
 
 @pytest.mark.parametrize("cell", cells)
 @pytest.mark.parametrize("degree", range(-1, 5))
-@pytest.mark.parametrize("element, variant", elements)
-def test_create_element(cell, degree, element, variant):
+@pytest.mark.parametrize("family", elements)
+@pytest.mark.parametrize("variant", variants)
+def test_create_element(cell, degree, family, variant):
     """Check that either the element is created or a RuntimeError is thrown."""
     try:
-        basix.create_element(element, cell, degree, *variant)
+        element = basix.create_element(family, cell, degree, *variant)
+        assert element.degree == degree
     except RuntimeError as e:
         # Don't allow cryptic "dgesv failed" messages
         if len(e.args) == 0 or "dgesv" in e.args[0]:
             raise e
 
     try:
-        basix.create_element(element, cell, degree, *variant, True)
+        element = basix.create_element(family, cell, degree, *variant, True)
+        assert element.degree == degree
     except RuntimeError as e:
         if len(e.args) == 0 or "dgesv" in e.args[0]:
             raise e

@@ -40,7 +40,7 @@ xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
       = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
                  xt::all(), xt::all());
 
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.shape(0);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({nv * 2 + ns, psize * 2});
@@ -51,10 +51,10 @@ xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
   // Create coefficients for the additional Nedelec polynomials
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::col(phi, ns0 + i);
+    auto p = xt::row(phi, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      auto pk = xt::col(phi, k);
+      auto pk = xt::row(phi, k);
       wcoeffs(2 * nv + i, k) = xt::sum(wts * p * xt::col(pts, 1) * pk)();
       wcoeffs(2 * nv + i, k + psize)
           = xt::sum(-wts * p * xt::col(pts, 0) * pk)();
@@ -93,7 +93,7 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
   xt::xtensor<double, 2> phi
       = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,
                  xt::all(), xt::all());
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.shape(0);
 
   // Create coefficients for order (degree-1) polynomials
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * tdim});
@@ -110,10 +110,10 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
   auto p2 = xt::col(pts, 2);
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::col(phi, ns0 + i);
+    auto p = xt::row(phi, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      const double w = xt::sum(wts * p * p2 * xt::col(phi, k))();
+      const double w = xt::sum(wts * p * p2 * xt::row(phi, k))();
 
       // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
@@ -124,10 +124,10 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
 
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::col(phi, ns0 + i);
+    auto p = xt::row(phi, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      const double w = xt::sum(wts * p * p1 * xt::col(phi, k))();
+      const double w = xt::sum(wts * p * p1 * xt::row(phi, k))();
       wcoeffs(tdim * nv + i + ns * 2 - ns_remove, k) = -w;
 
       // Don't include polynomials (*, *, 0) that are dependant
@@ -138,10 +138,10 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
 
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::col(phi, ns0 + i);
+    auto p = xt::row(phi, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      const double w = xt::sum(wts * p * p0 * xt::col(phi, k))();
+      const double w = xt::sum(wts * p * p0 * xt::row(phi, k))();
       wcoeffs(tdim * nv + i + ns - ns_remove, psize * 2 + k) = -w;
       wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + k) = w;
     }
@@ -154,6 +154,7 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
 
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
+                                             element::lagrange_variant lvariant,
                                              bool discontinuous)
 {
   if (degree < 1)
@@ -188,18 +189,16 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
   }
 
   // Integral representation for the boundary (edge) dofs
-  FiniteElement edge_space
-      = element::create_lagrange(cell::type::interval, degree - 1,
-                                 element::lagrange_variant::equispaced, true);
+  FiniteElement edge_space = element::create_lagrange(
+      cell::type::interval, degree - 1, lvariant, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_space, celltype, tdim, 2 * degree - 1);
 
   // Face dofs
   if (degree > 1)
   {
-    FiniteElement face_space
-        = element::create_lagrange(cell::type::triangle, degree - 2,
-                                   element::lagrange_variant::equispaced, true);
+    FiniteElement face_space = element::create_lagrange(
+        cell::type::triangle, degree - 2, lvariant, true);
     std::tie(x[2], M[2]) = moments::make_integral_moments(face_space, celltype,
                                                           tdim, 2 * degree - 2);
   }
@@ -219,7 +218,7 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
     {
       std::tie(x[3], M[3]) = moments::make_integral_moments(
           element::create_lagrange(cell::type::tetrahedron, degree - 3,
-                                   element::lagrange_variant::equispaced, true),
+                                   lvariant, true),
           cell::type::tetrahedron, 3, 2 * degree - 3);
     }
     else
@@ -240,11 +239,13 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, wcoeffs,
                        x, M, maps::type::covariantPiola, discontinuous,
-                       degree - 1);
+                       degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
-                                              bool discontinuous)
+FiniteElement
+basix::element::create_nedelec2(cell::type celltype, int degree,
+                                element::lagrange_variant lvariant,
+                                bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Invalid celltype in Nedelec");
@@ -265,8 +266,7 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
 
   // Integral representation for the edge dofs
   FiniteElement edge_space
-      = element::create_lagrange(cell::type::interval, degree,
-                                 element::lagrange_variant::equispaced, true);
+      = element::create_lagrange(cell::type::interval, degree, lvariant, true);
   std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
       edge_space, celltype, tdim, 2 * degree);
 
@@ -274,7 +274,7 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
   {
     // Integral moments on faces
     FiniteElement face_space
-        = element::create_rt(cell::type::triangle, degree - 1, true);
+        = element::create_rt(cell::type::triangle, degree - 1, lvariant, true);
     std::tie(x[2], M[2]) = moments::make_dot_integral_moments(
         face_space, celltype, tdim, 2 * degree - 1);
   }
@@ -292,7 +292,8 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
     {
       // Interior integral moment
       std::tie(x[3], M[3]) = moments::make_dot_integral_moments(
-          element::create_rt(cell::type::tetrahedron, degree - 2, true),
+          element::create_rt(cell::type::tetrahedron, degree - 2, lvariant,
+                             true),
           celltype, tdim, 2 * degree - 2);
     }
     else
@@ -315,6 +316,7 @@ FiniteElement basix::element::create_nedelec2(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, wcoeffs,
-                       x, M, maps::type::covariantPiola, discontinuous, degree);
+                       x, M, maps::type::covariantPiola, discontinuous, degree,
+                       degree, lvariant);
 }
 //-----------------------------------------------------------------------------

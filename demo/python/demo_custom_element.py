@@ -39,6 +39,10 @@ wcoeffs = np.zeros((5, 9))
 # .. math::
 #   1,\; y,\; y^2,\; x,\; xy,\; xy^2,\; x^2,\; x^2y,\; x^2y^2
 #
+# The order in which the polynomials appear in the orthonormal polynomial sets for
+# each cell are documented at
+# https://docs.fenicsproject.org/basix/main/polyset-order.html.
+#
 # As our polynomial space contains 1, :math:`y`, :math:`x` and :math:`xy`. The first
 # four rows of the matrix contain a single 1 for the four orthogonal polynomials with
 # these are their highest degree terms.
@@ -52,9 +56,10 @@ wcoeffs[3, 4] = 1
 # are orthonormal, we can represent this as
 #
 # .. math::
-#    \sum_{i=0}^9\int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y\; p_i(x, y),
+#    x(1-x)y(1-y) = \sum_{i=0}^8\int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y\; p_i(x, y),
 #
-# and so the coefficients we want to put in the final row of our matrix are:
+# where $p_0$ to $p_8$ are the orthonormal polynomials. Therefore the coefficients we want
+# to put in the final row of our matrix are:
 #
 # .. math::
 #    \int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y.
@@ -64,7 +69,9 @@ wcoeffs[3, 4] = 1
 
 pts, wts = basix.make_quadrature(CellType.quadrilateral, 4)
 poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.quadrilateral, 2, pts)
-f = pts[:, 0] * (1 - pts[:, 0]) * pts[:, 1] * (1 - pts[:, 1])
+x = pts[:, 0]
+y = pts[:, 1]
+f = x * (1 - x) * y * (1 - y)
 for i in range(9):
     wcoeffs[4, i] = sum(f * poly[:, i] * wts)
 
@@ -118,7 +125,6 @@ for _ in range(4):
 # We now create the custom element. The inputs into `basix.create_custom_element` are:
 #
 # - The cell type. In this example, this is a quadrilateral.
-# - The polynomial degree of the element. In this example, this is 2.
 # - The value shape of the element. In this example, this is `[]` as the element is scalar.
 # - The coefficients that define the polynomial set. In this example, this is `wcoeffs`.
 # - The points used to define interpolation into the element. In this example, this is `x`.
@@ -127,9 +133,12 @@ for _ in range(4):
 # - A bool indicating whether the element is discontinuous. In this example, this is `False`.
 # - The highest degree :math:`n` such that all degree :math:`n` polynomials are contained in
 #   this set. In this example, this is 1.
+# - The highest degree of a polynomial in the element. In this example, this is 2. It is
+#   important that this value is correct, as it will be used to determine the number of
+#   polynomials to use when creating and tabulating the element.
 
 element = basix.create_custom_element(
-    CellType.quadrilateral, 2, [], wcoeffs, x, M, MapType.identity, False, 1)
+    CellType.quadrilateral, [], wcoeffs, x, M, MapType.identity, False, 1, 2)
 
 # We can now use this element in the same way we can use a built-in element. For example, we
 # can tabulate the element at a set of points. If the points we use are the same as the points
@@ -142,7 +151,9 @@ print(element.tabulate(0, points))
 # Degree 1 Ravairt--Thomas element
 # ================================
 #
-# As a second example, we create a degree 1 Raviart--Thomas element on a triangle. This element
+# As a second example, we create a degree 1 Raviart--Thomas element on a triangle. Details of
+# the definition of this element can be found at
+# https://defelement.com/elements/raviart-thomas.html. This element
 # spans:
 #
 # .. math::
@@ -175,15 +186,18 @@ wcoeffs[1, 3] = 1
 
 pts, wts = basix.make_quadrature(CellType.triangle, 2)
 poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, 1, pts)
+x = pts[:, 0]
+y = pts[:, 1]
 for i in range(3):
-    wcoeffs[2, i] = sum(pts[:, 0] * poly[:, i] * wts)
-    wcoeffs[2, 3 + i] = sum(pts[:, 1] * poly[:, i] * wts)
+    wcoeffs[2, i] = sum(x * poly[:, i] * wts)
+    wcoeffs[2, 3 + i] = sum(y * poly[:, i] * wts)
 
 # Interpolation
 # -------------
 #
 # For this element, there will be multiple points used per DOF, as the functionals that define
-# the element are integrals. We begin by defining a degree 2 quadrature rule on a triangle.
+# the element are integrals. We begin by defining a degree 1 quadrature rule on an interval.
+# This quadrature rule will be used to integrate on the edges of the triangle.
 
 pts, wts = basix.make_quadrature(CellType.interval, 1)
 
@@ -212,7 +226,7 @@ M[2].append(np.zeros((0, 2, 0)))
 # --------------------
 
 element = basix.create_custom_element(
-    CellType.triangle, 1, [2], wcoeffs, x, M, MapType.contravariantPiola, False, 0)
+    CellType.triangle, [2], wcoeffs, x, M, MapType.contravariantPiola, False, 0, 1)
 
 # To confirm that we have defined this element correctly, we compare it to the built-in
 # Raviart--Thomas element.

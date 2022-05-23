@@ -16,10 +16,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/tensor.h>
-// #include <pybind11/numpy.h>
-// #include <pybind11/operators.h>
-// #include <pybind11/pybind11.h>
-// #include <pybind11/stl.h>
+
 #include <string>
 #include <vector>
 #include <xtensor/xadapt.hpp>
@@ -125,24 +122,13 @@ NB_MODULE(_basixcpp, m)
       [](polynomials::type polytype, cell::type celltype, int d,
          nb::tensor<double> x)
       {
-        std::size_t xsize = 1;
-        std::vector<std::size_t> shape;
-        if (x.ndim() == 2 and x.shape(1) == 1)
-        {
-          shape.push_back(x.shape(0));
-          xsize = x.shape(0);
-        }
-        else
-        {
-          for (std::size_t i = 0; i < x.ndim(); ++i)
-          {
-            shape.push_back(x.shape(i));
-            xsize *= x.shape(i);
-          }
-        }
-
-        auto _x = xt::adapt(static_cast<double*>(x.data()), xsize,
-                            xt::no_ownership(), shape);
+        if (x.ndim() != 2)
+          throw std::runtime_error("x has the wrong number of dimensions");
+        std::array<std::size_t, 2> shape
+            = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
+        auto _x
+            = xt::adapt((double*)x.data(), (std::size_t)(shape[0] * shape[1]),
+                        xt::no_ownership(), shape);
         xt::xtensor<double, 2> t
             = polynomials::tabulate(polytype, celltype, d, _x);
 
@@ -180,6 +166,7 @@ NB_MODULE(_basixcpp, m)
 
   nb::enum_<maps::type>(m, "MapType")
       .value("identity", maps::type::identity)
+      .value("L2Piola", maps::type::L2Piola)
       .value("covariantPiola", maps::type::covariantPiola)
       .value("contravariantPiola", maps::type::contravariantPiola)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
@@ -266,16 +253,21 @@ NB_MODULE(_basixcpp, m)
   nb::class_<FiniteElement>(m, "FiniteElement")
       .def(
           "tabulate",
-          [](const FiniteElement& self, int n, nb::tensor<double> x)
+          [](const FiniteElement& self, int n,
+             const nb::tensor<double, nb::shape<nb::any, nb::any>,
+                              nb::c_contig>& x)
           {
-            auto _x = adapt_x(x);
-            xt::xtensor<double, 4> t = self.tabulate(n, _x);
-
-            std::array<std::size_t, 4> shape
-                = {t.shape(0), t.shape(1), t.shape(2), t.shape(3)};
-            return nb::tensor<nb::numpy, double,
-                              nb::shape<nb::any, nb::any, nb::any, nb::any>>(
-                t.data(), shape.size(), shape.data());
+            if (x.ndim() != 2)
+              throw std::runtime_error("x has the wrong size");
+            std::array<std::size_t, 2> shape
+                = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
+            auto _x = xt::adapt((double*)x.data(), shape[0] * shape[1],
+                                xt::no_ownership(), shape);
+            auto t = self.tabulate(n, _x);
+            std::array<std::size_t, 3> tshape
+                = {t.shape(0), t.shape(1), t.shape(2)};
+            return nb::tensor<double, nb::shape<nb::any, nb::any, nb::any>,
+                              nb::c_contig>(t.data(), 3, tshape.data());
           },
           basix::docstring::FiniteElement__tabulate.c_str())
       .def("__eq__", &FiniteElement::operator==)
@@ -416,6 +408,9 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__get_tensor_product_representation
               .c_str())
       .def_property_readonly("degree", &FiniteElement::degree)
+      .def_property_readonly("highest_degree", &FiniteElement::highest_degree)
+      .def_property_readonly("highest_complete_degree",
+                             &FiniteElement::highest_complete_degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
       .def_property_readonly("num_entity_dofs", &FiniteElement::num_entity_dofs)
@@ -446,7 +441,6 @@ NB_MODULE(_basixcpp, m)
       .def_property_readonly("interpolation_is_identity",
                              &FiniteElement::interpolation_is_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
-      .def_property_readonly("degree_bounds", &FiniteElement::degree_bounds)
       .def_property_readonly(
           "points",
           [](const FiniteElement& self)
@@ -601,7 +595,6 @@ NB_MODULE(_basixcpp, m)
   //         throw std::runtime_error("x has the wrong size");
   //       if (M.size() != 4)
   //         throw std::runtime_error("M has the wrong size");
-
   //       xt::xtensor<double, 2> _wco = adapt_x(wcoeffs);
 
   //       std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
@@ -718,7 +711,7 @@ NB_MODULE(_basixcpp, m)
       {
         xt::xtensor<double, 2> out
             = basix::compute_interpolation_operator(element_from, element_to);
-        std::array<std::size_t, 2> shape = {out.shape(0), .shape(1)};
+        std::array<std::size_t, 2> shape = {out.shape(0), out.shape(1)};
         return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
             out.data(), shape.size(), shape.data());
         // return py::array_t<double>(out.shape(), out.data());

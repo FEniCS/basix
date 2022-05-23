@@ -15,6 +15,9 @@ Basix allows users to:
 - interpolate into a finite element space and between finite element
   spaces.
 
+Basix includes a range of built-in elements, and also allows the user to define
+their own custom elements.
+
 Basix is one of the components of FEniCSx, alongside
 [UFL](https://github.com/fenics/ufl),
 [FFCx](https://github.com/fenics/ffcx), and

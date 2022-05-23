@@ -25,7 +25,7 @@ def unreplace(txt):
 
 def remove_types(matches):
     """Remove the types from a function declaration."""
-    vars = [i.strip().split(" ")[-1] for i in matches[1].split(",")]
+    vars = [i.strip().split(" ")[-1].split("=")[0] for i in matches[1].split(",")]
     return "(" + ", ".join(vars) + ")"
 
 
@@ -73,6 +73,8 @@ def get_docstring(matches):
     if "(" not in function:
         function += "("
 
+    if function not in content:
+        print(function)
     assert function in content
     doc = content.split(function)[0].split(";")[-1]
 
@@ -124,8 +126,8 @@ def get_docstring(matches):
             else:
                 p = i
                 pdoc = "TODO: document this"
-            params[p] = "\n    ".join(pdoc.split("\n"))
-        return f"{info} : {typename}\n    {params[info]}"
+            params[p] = "\n        ".join(pdoc.split("\n"))
+        return f"{info} ({typename}): {params[info]}"
 
     if info_type == "return":
         assert typename is not None
@@ -134,7 +136,7 @@ def get_docstring(matches):
             returns.append("TODO: document this")
         assert len(returns) == 1
         returns = "\n    ".join(returns[0].split("\n"))
-        return f"{typename}\n    {returns}"
+        return f"{typename}: {returns}"
 
 
 def generate_docs():

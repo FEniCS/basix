@@ -19,6 +19,7 @@ using namespace basix;
 
 //----------------------------------------------------------------------------
 FiniteElement basix::element::create_rt(cell::type celltype, int degree,
+                                        element::lagrange_variant lvariant,
                                         bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
@@ -50,7 +51,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
                             xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.shape(0);
 
   // Create coefficients for order (degree-1) vector polynomials
   xt::xtensor<double, 2> B = xt::zeros<double>({nv * tdim + ns, psize * tdim});
@@ -65,10 +66,10 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   // polynomial basis
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::col(phi, ns0 + i);
+    auto p = xt::row(phi, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      auto pk = xt::col(phi, k);
+      auto pk = xt::row(phi, k);
       for (std::size_t j = 0; j < tdim; ++j)
       {
         B(nv * tdim + i, k + psize * j)
@@ -90,8 +91,8 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   }
 
   // Add integral moments on facets
-  const FiniteElement facet_moment_space = element::create_lagrange(
-      facettype, degree - 1, element::lagrange_variant::equispaced, true);
+  const FiniteElement facet_moment_space
+      = element::create_lagrange(facettype, degree - 1, lvariant, true);
   std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
       facet_moment_space, celltype, tdim, 2 * degree - 1);
 
@@ -100,8 +101,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   {
     // Interior integral moment
     std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
-        element::create_lagrange(celltype, degree - 2,
-                                 element::lagrange_variant::equispaced, true),
+        element::create_lagrange(celltype, degree - 2, lvariant, true),
         celltype, tdim, 2 * degree - 2);
   }
   else
@@ -124,6 +124,6 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, B, x, M,
                        maps::type::contravariantPiola, discontinuous,
-                       degree - 1);
+                       degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------

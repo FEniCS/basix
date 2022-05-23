@@ -87,12 +87,8 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         cell::type ct = cell::sub_entity_type(celltype, d, e);
 
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
-        const auto [_pts, wts]
+        const auto [pts, wts]
             = quadrature::make_quadrature(ct, degree + (degree + 1 - d));
-
-        xt::xarray<double> pts = _pts;
-        if (d == 1)
-          pts.reshape({pts.shape(0), 1});
 
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
@@ -161,6 +157,6 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
 
   return FiniteElement(element::family::HHJ, celltype, degree, {tdim, tdim},
                        wcoeffs, x, M, maps::type::doubleContravariantPiola,
-                       discontinuous, -1);
+                       discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

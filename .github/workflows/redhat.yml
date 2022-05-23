@@ -1,0 +1,40 @@
+name: Red Hat clone
+
+# This workflow will test Basix on Red Hat
+
+on:
+  schedule:
+    # '*' is a special character in YAML, so string must be quoted
+    - cron: "0 2 * * TUE"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch: ~
+
+jobs:
+  build:
+    name: Build and test (Red Hat)
+    runs-on: ubuntu-latest
+    container: rockylinux/rockylinux:8
+
+    env:
+      CC: gcc
+      CXX: g++
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/Rocky-PowerTools.repo
+          dnf install -y gcc-toolset-11-toolchain git blas-devel lapack-devel python39 python39-devel python39-pip
+
+      - uses: actions/checkout@v3
+
+      - name: Install Basix
+        run: |
+          source /opt/rh/gcc-toolset-11/enable
+          python3 -m pip install .[test]
+
+      - name: Run units tests
+        run: |
+          python3 -m pip install pytest-xdist
+          python3 -m pytest -n auto --durations 20 test/

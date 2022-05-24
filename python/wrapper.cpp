@@ -75,6 +75,29 @@ auto adapt_x(const nb::tensor<nb::numpy, double>& x)
                    xt::no_ownership(), shape);
 }
 
+/// Create a py::array_t that shares data with an
+/// xtensor array. The C++ object owns the data, and the
+/// py::array_t object keeps the C++ object alive.
+// From https://github.com/pybind/pybind11/issues/1042
+template <typename shape_t, typename U>
+auto xt_as_pyarray(U&& x)
+{
+  auto shape = x.shape();
+  auto data = x.data();
+  auto size = x.size();
+  // std::array<std::size_t, 2> shape = {x.shape(0), x.shape(1)};
+
+  // auto strides = x.strides();
+  // std::transform(strides.begin(), strides.end(), strides.begin(),
+  //                [](auto s) { return s * sizeof(typename U::value_type); });
+  std::unique_ptr<U> x_ptr = std::make_unique<U>(std::move(x));
+  auto capsule = nb::capsule(x_ptr.get(), [](void* p) noexcept
+                             { std::unique_ptr<U>(reinterpret_cast<U*>(p)); });
+  x_ptr.release();
+  return nb::tensor<nb::numpy, typename U::value_type, shape_t>(
+      data, size, shape.data(), capsule);
+}
+
 template <typename T, std::size_t dim>
 nb::capsule make_copy_owner(xt::xtensor<T, dim>& x)
 {
@@ -168,11 +191,7 @@ NB_MODULE(_basixcpp, m)
       {
         xt::xtensor<double, 2> l = lattice::create(
             celltype, n, type, exterior, lattice::simplex_method::none);
-        std::array<std::size_t, 2> lshape = {l.shape(0), l.shape(1)};
-
-        auto owner = make_copy_owner(l);
-        return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            owner.data(), lshape.size(), lshape.data(), owner);
+        return xt_as_pyarray<nb::shape<nb::any, nb::any>>(std::move(l));
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
 
@@ -183,9 +202,7 @@ NB_MODULE(_basixcpp, m)
       {
         xt::xtensor<double, 2> l
             = lattice::create(celltype, n, type, exterior, method);
-        std::array<std::size_t, 2> lshape = {l.shape(0), l.shape(1)};
-        return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            l.data(), lshape.size(), lshape.data());
+        return xt_as_pyarray<nb::shape<nb::any, nb::any>>(std::move(l));
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method
           .c_str());
@@ -296,15 +313,10 @@ NB_MODULE(_basixcpp, m)
                 = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
             auto _x = xt::adapt((double*)x.data(), shape[0] * shape[1],
                                 xt::no_ownership(), shape);
-            auto t = self.tabulate(n, _x);
-            std::array<std::size_t, 4> tshape
-                = {t.shape(0), t.shape(1), t.shape(2), t.shape(3)};
 
-            auto owner = make_copy_owner(t);
-            return nb::tensor<nb::numpy, double,
-                              nb::shape<nb::any, nb::any, nb::any, nb::any>,
-                              nb::c_contig>(owner.data(), 4, tshape.data(),
-                                            owner);
+            xt::xtensor<double, 4> t = self.tabulate(n, _x);
+            return xt_as_pyarray<nb::shape<nb::any, nb::any, nb::any, nb::any>>(
+                std::move(t));
           },
           basix::docstring::FiniteElement__tabulate.c_str())
       .def("__eq__", &FiniteElement::operator==)

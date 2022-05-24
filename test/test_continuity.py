@@ -47,7 +47,6 @@ def create_continuity_map_triangle(map_type, v0, v1, v2):
 def create_continuity_map_quadrilateral(map_type, v0, v1, v2):
     if map_type == basix.MapType.identity:
         return lambda x: x
-
     raise NotImplementedError
 
 
@@ -58,7 +57,7 @@ def test_continuity_interval_facet(degree, element, variant):
     elements = {}
     for cell in [basix.CellType.triangle, basix.CellType.quadrilateral]:
         try:
-            elements[cell] = basix.create_element(element, cell, degree, *variant)
+            elements[int(cell)] = basix.create_element(element, cell, degree, *variant)
         except RuntimeError:
             pass
 
@@ -66,8 +65,8 @@ def test_continuity_interval_facet(degree, element, variant):
         pytest.skip()
 
     facets = [
-        [np.array([0, 0]), np.array([1, 0]), {basix.CellType.triangle: 2, basix.CellType.quadrilateral: 0}],
-        [np.array([0, 0]), np.array([0, 1]), {basix.CellType.triangle: 1, basix.CellType.quadrilateral: 1}],
+        [np.array([0, 0]), np.array([1, 0]), {int(basix.CellType.triangle): 2, int(basix.CellType.quadrilateral): 0}],
+        [np.array([0, 0]), np.array([0, 1]), {int(basix.CellType.triangle): 1, int(basix.CellType.quadrilateral): 1}],
     ]
 
     for start, end, cellmap in facets:
@@ -77,7 +76,7 @@ def test_continuity_interval_facet(degree, element, variant):
 
         for c, e in elements.items():
             tab = e.tabulate(0, points)[0]
-            continuity_map = create_continuity_map_interval(e.map_type, start, end)
+            continuity_map = create_continuity_map_interval(int(e.map_type), start, end)
             entity_tab = [continuity_map(tab[:, i, :]) for i in e.entity_dofs[1][cellmap[c]]]
             if data is None:
                 data = entity_tab
@@ -92,7 +91,7 @@ def test_continuity_triangle_facet(degree, element, variant):
     elements = {}
     for cell in [basix.CellType.tetrahedron, basix.CellType.prism]:  # , basix.CellType.pyramid]:
         try:
-            elements[cell] = basix.create_element(element, cell, degree, *variant)
+            elements[int(cell)] = basix.create_element(element, cell, degree, *variant)
         except RuntimeError:
             pass
 
@@ -102,13 +101,13 @@ def test_continuity_triangle_facet(degree, element, variant):
     facets = [
         [
             np.array([0, 0, 0]), np.array([1, 0, 0]), np.array([0, 1, 0]),
-            {basix.CellType.tetrahedron: 3, basix.CellType.prism: 0}
+            {int(basix.CellType.tetrahedron): 3, int(basix.CellType.prism): 0}
         ], [
             np.array([0, 0, 0]), np.array([1, 0, 0]), np.array([0, 0, 1]),
-            {basix.CellType.tetrahedron: 2, basix.CellType.pyramid: 1}
+            {int(basix.CellType.tetrahedron): 2, int(basix.CellType.pyramid): 1}
         ], [
             np.array([0, 0, 0]), np.array([0, 1, 0]), np.array([0, 0, 1]),
-            {basix.CellType.tetrahedron: 1, basix.CellType.pyramid: 2}
+            {int(basix.CellType.tetrahedron): 1, int(basix.CellType.pyramid): 2}
         ],
     ]
 
@@ -135,7 +134,7 @@ def test_continuity_quadrilateral_facet(degree, element, variant):
     elements = {}
     for cell in [basix.CellType.hexahedron, basix.CellType.prism]:  # , basix.CellType.pyramid]:
         try:
-            elements[cell] = basix.create_element(element, cell, degree, *variant)
+            elements[int(cell)] = basix.create_element(element, cell, degree, *variant)
         except RuntimeError:
             pass
 
@@ -145,13 +144,13 @@ def test_continuity_quadrilateral_facet(degree, element, variant):
     facets = [
         [
             np.array([0, 0, 0]), np.array([1, 0, 0]), np.array([0, 1, 0]), np.array([1, 1, 0]),
-            {basix.CellType.hexahedron: 0, basix.CellType.pyramid: 0}
+            {int(basix.CellType.hexahedron): 0, int(basix.CellType.pyramid): 0}
         ], [
             np.array([0, 0, 0]), np.array([1, 0, 0]), np.array([0, 0, 1]), np.array([1, 0, 1]),
-            {basix.CellType.hexahedron: 1, basix.CellType.prism: 1}
+            {int(basix.CellType.hexahedron): 1, int(basix.CellType.prism): 1}
         ], [
             np.array([0, 0, 0]), np.array([0, 1, 0]), np.array([0, 0, 1]), np.array([0, 1, 1]),
-            {basix.CellType.hexahedron: 2, basix.CellType.prism: 2}
+            {int(basix.CellType.hexahedron): 2, int(basix.CellType.prism): 2}
         ],
     ]
 

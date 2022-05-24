@@ -80,13 +80,13 @@ auto adapt_x(const nb::tensor<nb::numpy, double>& x)
 /// py::array_t object keeps the C++ object alive.
 // From https://github.com/pybind/pybind11/issues/1042
 template <typename shape_t, typename U>
-auto xt_as_pyarray(U&& x)
+auto xt_as_nbtensor(U&& x)
 {
   auto shape = x.shape();
   auto data = x.data();
   auto size = x.size();
+  auto dim = x.dimension();
   // std::array<std::size_t, 2> shape = {x.shape(0), x.shape(1)};
-
   // auto strides = x.strides();
   // std::transform(strides.begin(), strides.end(), strides.begin(),
   //                [](auto s) { return s * sizeof(typename U::value_type); });
@@ -95,7 +95,7 @@ auto xt_as_pyarray(U&& x)
                              { std::unique_ptr<U>(reinterpret_cast<U*>(p)); });
   x_ptr.release();
   return nb::tensor<nb::numpy, typename U::value_type, shape_t>(
-      data, size, shape.data(), capsule);
+      data, dim, shape.data(), capsule);
 }
 
 template <typename T, std::size_t dim>
@@ -191,7 +191,7 @@ NB_MODULE(_basixcpp, m)
       {
         xt::xtensor<double, 2> l = lattice::create(
             celltype, n, type, exterior, lattice::simplex_method::none);
-        return xt_as_pyarray<nb::shape<nb::any, nb::any>>(std::move(l));
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(l));
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
 
@@ -202,7 +202,7 @@ NB_MODULE(_basixcpp, m)
       {
         xt::xtensor<double, 2> l
             = lattice::create(celltype, n, type, exterior, method);
-        return xt_as_pyarray<nb::shape<nb::any, nb::any>>(std::move(l));
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(l));
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method
           .c_str());
@@ -221,7 +221,7 @@ NB_MODULE(_basixcpp, m)
       .value("gll", quadrature::type::gll)
       .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);
 
-  nb::enum_<cell::type>(m, "CellType")
+  nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic())
       .value("point", cell::type::point)
       .value("interval", cell::type::interval)
       .value("triangle", cell::type::triangle)
@@ -307,16 +307,14 @@ NB_MODULE(_basixcpp, m)
              const nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>,
                               nb::c_contig>& x)
           {
-            if (x.ndim() != 2)
-              throw std::runtime_error("x has the wrong size");
-            std::array<std::size_t, 2> shape
+            std::vector<std::size_t> shape
                 = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
             auto _x = xt::adapt((double*)x.data(), shape[0] * shape[1],
                                 xt::no_ownership(), shape);
 
             xt::xtensor<double, 4> t = self.tabulate(n, _x);
-            return xt_as_pyarray<nb::shape<nb::any, nb::any, nb::any, nb::any>>(
-                std::move(t));
+            return xt_as_nbtensor<
+                nb::shape<nb::any, nb::any, nb::any, nb::any>>(std::move(t));
           },
           basix::docstring::FiniteElement__tabulate.c_str())
       .def("__eq__", &FiniteElement::operator==)
@@ -339,11 +337,8 @@ NB_MODULE(_basixcpp, m)
                 xtl::span<const double>(static_cast<double*>(detJ.data()),
                                         detJ.shape(0)),
                 adapt_x(K));
-            std::array<std::size_t, 3> shape
-                = {u.shape(0), u.shape(1), u.shape(2)};
-            return nb::tensor<nb::numpy, double,
-                              nb::shape<nb::any, nb::any, nb::any>>(
-                u.data(), shape.size(), shape.data());
+            return xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
+                std::move(u));
           },
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
@@ -365,11 +360,8 @@ NB_MODULE(_basixcpp, m)
                 xtl::span<const double>(static_cast<double*>(detJ.data()),
                                         detJ.shape(0)),
                 adapt_x(K));
-            std::array<std::size_t, 3> shape
-                = {U.shape(0), U.shape(1), U.shape(2)};
-            return nb::tensor<nb::numpy, double,
-                              nb::shape<nb::any, nb::any, nb::any>>(
-                U.data(), shape.size(), shape.data());
+            return xt_as_nbtensor<
+                nb::shape<nb::any, nb::any, nb::any, nb::any>>(std::move(U));
           },
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(

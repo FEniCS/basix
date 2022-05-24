@@ -472,7 +472,7 @@ basix::FiniteElement basix::create_custom_element(
             "M has the wrong shape (dimension 1 is wrong)");
       if (M[i][j].shape(3) != deriv_count)
         throw std::runtime_error(
-            "M has the wrong shape (dimension 2 is wrong)");
+            "M has the wrong shape (dimension 3 is wrong)");
     }
   }
 

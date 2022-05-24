@@ -15,6 +15,7 @@
 #include <basix/quadrature.h>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 #include <nanobind/tensor.h>
 
 #include <string>
@@ -74,6 +75,24 @@ auto adapt_x(const nb::tensor<nb::numpy, double>& x)
                    xt::no_ownership(), shape);
 }
 
+template <typename T, std::size_t dim>
+nb::capsule make_copy_owner(xt::xtensor<T, dim>& x)
+{
+  double* data = (double*)malloc(x.size() * sizeof(double));
+  std::copy(x.begin(), x.end(), data);
+  // Delete 'data' when the 'owner' capsule expires
+  return nb::capsule(data, [](void* ptr) noexcept { free(ptr); });
+}
+
+template <typename T>
+nb::capsule make_copy_owner(const std::vector<T>& x)
+{
+  double* data = (double*)malloc(x.size() * sizeof(double));
+  std::copy(x.begin(), x.end(), data);
+  // Delete 'data' when the 'owner' capsule expires
+  return nb::capsule(data, [](void* ptr) noexcept { free(ptr); });
+}
+
 } // namespace
 
 NB_MODULE(_basixcpp, m)
@@ -87,7 +106,8 @@ NB_MODULE(_basixcpp, m)
   m.def("topology", &cell::topology, basix::docstring::topology.c_str());
   m.def(
       "geometry",
-      [](cell::type celltype) {
+      [](cell::type celltype)
+      {
         xt::xtensor<double, 2> g = cell::geometry(celltype);
         std::array<std::size_t, 2> shape = {g.shape(0), g.shape(1)};
         return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
@@ -98,7 +118,8 @@ NB_MODULE(_basixcpp, m)
         basix::docstring::sub_entity_connectivity.c_str());
   m.def(
       "sub_entity_geometry",
-      [](cell::type celltype, int dim, int index) {
+      [](cell::type celltype, int dim, int index)
+      {
         xt::xtensor<double, 2> g
             = cell::sub_entity_geometry(celltype, dim, index);
         std::array<std::size_t, 2> shape = {g.shape(0), g.shape(1)};
@@ -123,7 +144,8 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "tabulate_polynomials",
       [](polynomials::type polytype, cell::type celltype, int d,
-         nb::tensor<double> x) {
+         nb::tensor<double> x)
+      {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
         std::array<std::size_t, 2> shape
@@ -142,25 +164,23 @@ NB_MODULE(_basixcpp, m)
 
   m.def(
       "create_lattice",
-      [](cell::type celltype, int n, lattice::type type, bool exterior) {
+      [](cell::type celltype, int n, lattice::type type, bool exterior)
+      {
         xt::xtensor<double, 2> l = lattice::create(
             celltype, n, type, exterior, lattice::simplex_method::none);
         std::array<std::size_t, 2> lshape = {l.shape(0), l.shape(1)};
 
-        double* data = (double*)malloc(l.size() * sizeof(double));
-        std::copy(l.begin(), l.end(), data);
-        // Delete 'data' when the 'owner' capsule expires
-        nb::capsule owner(data, [](void* ptr) noexcept { free(ptr); });
-
+        auto owner = make_copy_owner(l);
         return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            data, lshape.size(), lshape.data(), owner);
+            owner.data(), lshape.size(), lshape.data(), owner);
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
 
   m.def(
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior,
-         lattice::simplex_method method) {
+         lattice::simplex_method method)
+      {
         xt::xtensor<double, 2> l
             = lattice::create(celltype, n, type, exterior, method);
         std::array<std::size_t, 2> lshape = {l.shape(0), l.shape(1)};
@@ -200,7 +220,8 @@ NB_MODULE(_basixcpp, m)
       basix::docstring::cell_volume.c_str());
   m.def(
       "cell_facet_normals",
-      [](cell::type cell_type) {
+      [](cell::type cell_type)
+      {
         xt::xtensor<double, 2> n = cell::facet_normals(cell_type);
         std::array<std::size_t, 2> shape = {n.shape(0), n.shape(1)};
         return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
@@ -209,7 +230,8 @@ NB_MODULE(_basixcpp, m)
       basix::docstring::cell_facet_normals.c_str());
   m.def(
       "cell_facet_reference_volumes",
-      [](cell::type cell_type) {
+      [](cell::type cell_type)
+      {
         xt::xtensor<double, 1> v = cell::facet_reference_volumes(cell_type);
         std::array<std::size_t, 1> shape = {v.shape(0)};
         return nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
@@ -218,18 +240,27 @@ NB_MODULE(_basixcpp, m)
       basix::docstring::cell_facet_reference_volumes.c_str());
   m.def(
       "cell_facet_outward_normals",
-      [](cell::type cell_type) {
+      [](cell::type cell_type)
+      {
         xt::xtensor<double, 2> n = cell::facet_outward_normals(cell_type);
         std::array<std::size_t, 2> shape = {n.shape(0), n.shape(1)};
         return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
             n.data(), shape.size(), shape.data());
       },
       basix::docstring::cell_facet_outward_normals.c_str());
-  m.def("cell_facet_orientations", &cell::facet_orientations,
-        basix::docstring::cell_facet_orientations.c_str());
+  m.def(
+      "cell_facet_orientations",
+      [](cell::type cell_type)
+      {
+        std::vector<bool> c = cell::facet_orientations(cell_type);
+        std::vector<std::uint8_t> c8(c.begin(), c.end());
+        return c8;
+      },
+      basix::docstring::cell_facet_orientations.c_str());
   m.def(
       "cell_facet_jacobians",
-      [](cell::type cell_type) {
+      [](cell::type cell_type)
+      {
         xt::xtensor<double, 3> J = cell::facet_jacobians(cell_type);
         std::array<std::size_t, 3> shape = {J.shape(0), J.shape(1), J.shape(2)};
         return nb::tensor<nb::numpy, double,
@@ -257,7 +288,8 @@ NB_MODULE(_basixcpp, m)
           "tabulate",
           [](const FiniteElement& self, int n,
              const nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>,
-                              nb::c_contig>& x) {
+                              nb::c_contig>& x)
+          {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
             std::array<std::size_t, 2> shape
@@ -268,15 +300,11 @@ NB_MODULE(_basixcpp, m)
             std::array<std::size_t, 4> tshape
                 = {t.shape(0), t.shape(1), t.shape(2), t.shape(3)};
 
-            double* data = (double*)malloc(t.size() * sizeof(double));
-            std::copy(t.begin(), t.end(), data);
-
-            // Delete 'data' when the 'owner' capsule expires
-            nb::capsule owner(data, [](void* ptr) noexcept { free(ptr); });
-
+            auto owner = make_copy_owner(t);
             return nb::tensor<nb::numpy, double,
                               nb::shape<nb::any, nb::any, nb::any, nb::any>,
-                              nb::c_contig>(data, 4, tshape.data(), owner);
+                              nb::c_contig>(owner.data(), 4, tshape.data(),
+                                            owner);
           },
           basix::docstring::FiniteElement__tabulate.c_str())
       .def("__eq__", &FiniteElement::operator==)
@@ -292,7 +320,8 @@ NB_MODULE(_basixcpp, m)
              nb::tensor<double, nb::shape<nb::any>, nb::c_contig> detJ,
              nb::tensor<double, nb::shape<nb::any, nb::any, nb::any>,
                         nb::c_contig>
-                 K) {
+                 K)
+          {
             xt::xtensor<double, 3> u = self.push_forward(
                 adapt_x(U), adapt_x(J),
                 xtl::span<const double>(static_cast<double*>(detJ.data()),
@@ -317,7 +346,8 @@ NB_MODULE(_basixcpp, m)
              nb::tensor<double, nb::shape<nb::any>, nb::c_contig> detJ,
              nb::tensor<double, nb::shape<nb::any, nb::any, nb::any>,
                         nb::c_contig>
-                 K) {
+                 K)
+          {
             xt::xtensor<double, 3> U = self.pull_back(
                 adapt_x(u), adapt_x(J),
                 xtl::span<const double>(static_cast<double*>(detJ.data()),
@@ -334,7 +364,8 @@ NB_MODULE(_basixcpp, m)
           "apply_dof_transformation",
           [](const FiniteElement& self,
              nb::tensor<double, nb::shape<nb::any>, nb::c_contig> data,
-             int block_size, std::uint32_t cell_info) {
+             int block_size, std::uint32_t cell_info)
+          {
             xtl::span<double> data_span(static_cast<double*>(data.data()),
                                         data.shape(0));
             self.apply_dof_transformation(data_span, block_size, cell_info);
@@ -347,7 +378,8 @@ NB_MODULE(_basixcpp, m)
           "apply_dof_transformation_to_transpose",
           [](const FiniteElement& self,
              nb::tensor<double, nb::shape<nb::any>, nb::c_contig> data,
-             int block_size, std::uint32_t cell_info) {
+             int block_size, std::uint32_t cell_info)
+          {
             xtl::span<double> data_span(static_cast<double*>(data.data()),
                                         data.shape(0));
             self.apply_dof_transformation_to_transpose(data_span, block_size,
@@ -362,7 +394,8 @@ NB_MODULE(_basixcpp, m)
           "apply_inverse_transpose_dof_transformation",
           [](const FiniteElement& self,
              nb::tensor<double, nb::shape<nb::any>, nb::c_contig> data,
-             int block_size, std::uint32_t cell_info) {
+             int block_size, std::uint32_t cell_info)
+          {
             xtl::span<double> data_span(static_cast<double*>(data.data()),
                                         data.shape(0));
             self.apply_inverse_transpose_dof_transformation(
@@ -375,24 +408,22 @@ NB_MODULE(_basixcpp, m)
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
       .def(
           "base_transformations",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             xt::xtensor<double, 3> t = self.base_transformations();
             std::array<std::size_t, 3> shape
                 = {t.shape(0), t.shape(1), t.shape(2)};
 
-            double* data = (double*)malloc(t.size() * sizeof(double));
-            std::copy(t.begin(), t.end(), data);
-            // Delete 'data' when the 'owner' capsule expires
-            nb::capsule owner(data, [](void* ptr) noexcept { free(ptr); });
-
+            auto owner = make_copy_owner(t);
             return nb::tensor<nb::numpy, double,
                               nb::shape<nb::any, nb::any, nb::any>>(
-                data, shape.size(), shape.data(), owner);
+                owner.data(), shape.size(), shape.data(), owner);
           },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             std::map<cell::type, xt::xtensor<double, 3>> t
                 = self.entity_transformations();
             nb::dict t2;
@@ -411,9 +442,8 @@ NB_MODULE(_basixcpp, m)
           basix::docstring::FiniteElement__entity_transformations.c_str())
       .def(
           "get_tensor_product_representation",
-          [](const FiniteElement& self) {
-            return self.get_tensor_product_representation();
-          },
+          [](const FiniteElement& self)
+          { return self.get_tensor_product_representation(); },
           basix::docstring::FiniteElement__get_tensor_product_representation
               .c_str())
       .def_property_readonly("degree", &FiniteElement::degree)
@@ -429,7 +459,8 @@ NB_MODULE(_basixcpp, m)
       .def_property_readonly("entity_closure_dofs",
                              &FiniteElement::entity_closure_dofs)
       .def_property_readonly("value_size",
-                             [](const FiniteElement& self) {
+                             [](const FiniteElement& self)
+                             {
                                return std::accumulate(
                                    self.value_shape().begin(),
                                    self.value_shape().end(), 1,
@@ -451,7 +482,8 @@ NB_MODULE(_basixcpp, m)
       .def_property_readonly("map_type", &FiniteElement::map_type)
       .def_property_readonly(
           "points",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             // const xt::xtensor<double, 2>& x = self.points();
             const xt::xtensor<double, 2>& x = self.points();
             std::array<std::size_t, 2> shape = {x.shape(0), x.shape(1)};
@@ -461,25 +493,32 @@ NB_MODULE(_basixcpp, m)
           })
       .def_property_readonly(
           "interpolation_matrix",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             // const xt::xtensor<double, 2>& P = self.interpolation_matrix();
             xt::xtensor<double, 2> P = self.interpolation_matrix();
             std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
+
+            auto owner = make_copy_owner(P);
             return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                P.data(), shape.size(), shape.data());
+                owner.data(), shape.size(), shape.data(), owner);
           })
       .def_property_readonly(
           "dual_matrix",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             // const xt::xtensor<double, 2>& P = self.dual_matrix();
             xt::xtensor<double, 2> P = self.dual_matrix();
             std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
+
+            auto owner = make_copy_owner(P);
             return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                P.data(), shape.size(), shape.data());
+                owner.data(), shape.size(), shape.data(), owner);
           })
       .def_property_readonly(
           "coefficient_matrix",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             // const xt::xtensor<double, 2>& P = self.coefficient_matrix();
             xt::xtensor<double, 2> P = self.coefficient_matrix();
             std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
@@ -488,7 +527,8 @@ NB_MODULE(_basixcpp, m)
           })
       .def_property_readonly(
           "wcoeffs",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             //  const xt::xtensor<double, 2>& P =
             //  self.wcoeffs();
             xt::xtensor<double, 2> P = self.wcoeffs();
@@ -498,7 +538,8 @@ NB_MODULE(_basixcpp, m)
           })
       .def_property_readonly(
           "M",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             // const std::array<std::vector<xt::xtensor<double, 3>>, 4>& _M
             //     = self.M();
             // std::vector<std::vector<py::array_t<double, py::array::c_style>>>
@@ -525,7 +566,8 @@ NB_MODULE(_basixcpp, m)
           })
       .def_property_readonly(
           "x",
-          [](const FiniteElement& self) {
+          [](const FiniteElement& self)
+          {
             // const std::array<std::vector<xt::xtensor<double, 2>>, 4>& _x
             //     = self.x();
             std::array<std::vector<xt::xtensor<double, 2>>, 4> _x = self.x();
@@ -588,7 +630,8 @@ NB_MODULE(_basixcpp, m)
          const std::vector<std::vector<nb::tensor<nb::numpy, double>>>& x,
          const std::vector<std::vector<nb::tensor<nb::numpy, double>>>& M,
          maps::type map_type, bool discontinuous, int highest_complete_degree,
-         int highest_degree) -> FiniteElement {
+         int highest_degree) -> FiniteElement
+      {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
         if (M.size() != 4)
@@ -622,7 +665,8 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         bool discontinuous) -> FiniteElement {
+         bool discontinuous) -> FiniteElement
+      {
         return basix::create_element(family_name, cell_name, degree,
                                      discontinuous);
       },
@@ -633,7 +677,8 @@ NB_MODULE(_basixcpp, m)
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant,
-         bool discontinuous) -> FiniteElement {
+         bool discontinuous) -> FiniteElement
+      {
         return basix::create_element(family_name, cell_name, degree, lvariant,
                                      discontinuous);
       },
@@ -643,7 +688,8 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         element::dpc_variant dvariant, bool discontinuous) -> FiniteElement {
+         element::dpc_variant dvariant, bool discontinuous) -> FiniteElement
+      {
         return basix::create_element(family_name, cell_name, degree, dvariant,
                                      discontinuous);
       },
@@ -654,7 +700,8 @@ NB_MODULE(_basixcpp, m)
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant, element::dpc_variant dvariant,
-         bool discontinuous) -> FiniteElement {
+         bool discontinuous) -> FiniteElement
+      {
         return basix::create_element(family_name, cell_name, degree, lvariant,
                                      dvariant, discontinuous);
       },
@@ -665,9 +712,8 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name,
-         int degree) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree);
-      },
+         int degree) -> FiniteElement
+      { return basix::create_element(family_name, cell_name, degree); },
       basix::docstring::create_element__family_cell_degree.c_str());
 
   m.def(
@@ -690,7 +736,8 @@ NB_MODULE(_basixcpp, m)
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant,
-         element::dpc_variant dvariant) -> FiniteElement {
+         element::dpc_variant dvariant) -> FiniteElement
+      {
         return basix::create_element(family_name, cell_name, degree, lvariant,
                                      dvariant);
       },
@@ -733,7 +780,8 @@ NB_MODULE(_basixcpp, m)
 
   m.def(
       "make_quadrature",
-      [](quadrature::type rule, cell::type celltype, int m) {
+      [](quadrature::type rule, cell::type celltype, int m)
+      {
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
         // FIXME: it would be more elegant to handle 1D case as a 1D
         // array, but FFCx would need updating
@@ -751,7 +799,8 @@ NB_MODULE(_basixcpp, m)
 
   m.def(
       "make_quadrature",
-      [](cell::type celltype, int m) {
+      [](cell::type celltype, int m)
+      {
         auto [pts, w] = quadrature::make_quadrature(celltype, m);
         // FIXME: it would be more elegant to handle 1D case as a 1D
         // array, but FFCx would need updating
@@ -760,21 +809,13 @@ NB_MODULE(_basixcpp, m)
           s[1] = pts.shape(1);
         const std::size_t wsize = w.size();
 
-        double* pdata = (double*)malloc(pts.size() * sizeof(double));
-        std::copy(pts.begin(), pts.end(), pdata);
-        // Delete 'data' when the 'owner' capsule expires
-        nb::capsule ownerp(pdata, [](void* ptr) noexcept { free(ptr); });
-
-        double* wdata = (double*)malloc(w.size() * sizeof(double));
-        std::copy(w.begin(), w.end(), wdata);
-        // Delete 'data' when the 'owner' capsule expires
-        nb::capsule ownerw(wdata, [](void* ptr) noexcept { free(ptr); });
-
+        auto ownerp = make_copy_owner(pts);
+        auto ownerw = make_copy_owner(w);
         nb::list l;
         l.append(nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            pdata, s.size(), s.data(), ownerp));
+            ownerp.data(), s.size(), s.data(), ownerp));
         l.append(nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
-            wdata, 1, &wsize, ownerw));
+            ownerw.data(), 1, &wsize, ownerw));
         return l;
       },
       basix::docstring::make_quadrature__celltype_m.c_str());

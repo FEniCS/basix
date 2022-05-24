@@ -20,7 +20,7 @@ Args:
     celltype (basix.CellType): Cell Type
 
 Returns::
-    numpy.ndarray[numpy.float64]: Set of vertex points of the cell
+    numpy.ndarray[numpy.float64]: Set of vertex points of the cell. Shape is (npoints, gdim)
 )";
 
 const std::string sub_entity_connectivity = R"(
@@ -48,7 +48,7 @@ Args:
     index (int): Local index of sub-entity
 
 Returns:
-    List[List[List[List[int]]]]: Set of vertex points of the sub-entity
+    List[List[List[List[int]]]]: Set of vertex points of the sub-entity. Shape is (npoints, gdim)
 )";
 
 const std::string create_lattice__celltype_n_type_exterior = R"(
@@ -72,7 +72,7 @@ Args:
     exterior (bool): If set, includes outer boundaries
 
 Returns:
-    numpy.ndarray[numpy.float64]: Set of points
+    numpy.ndarray[numpy.float64]: Set of points. Shape is (npoints, tdim)
 )";
 
 const std::string create_lattice__celltype_n_type_exterior_method = R"(
@@ -97,7 +97,7 @@ Args:
     simplex_method (basix.LatticeSimplexMethod): The method used to generate points on simplices
 
 Returns:
-    numpy.ndarray[numpy.float64]: Set of points
+    numpy.ndarray[numpy.float64]: Set of points. Shape is (npoints, tdim)
 )";
 
 const std::string cell_volume = R"(
@@ -118,7 +118,7 @@ Args:
     cell_type (basix.CellType): Type of cell
 
 Returns:
-    numpy.ndarray[numpy.float64]: The normals
+    numpy.ndarray[numpy.float64]: The normals. Shape is (nfacets, gdim)
 )";
 
 const std::string cell_facet_reference_volumes = R"(
@@ -138,7 +138,7 @@ Args:
     cell_type (basix.CellType): Type of cell
 
 Returns:
-    numpy.ndarray[numpy.float64]: The outward normals
+    numpy.ndarray[numpy.float64]: The outward normals. Shape is (nfacets, gdim)
 )";
 
 const std::string cell_facet_orientations = R"(
@@ -159,7 +159,7 @@ Args:
     cell_type (basix.CellType): Type of cell
 
 Returns:
-    numpy.ndarray[numpy.float64]: The jacobians of the facets
+    numpy.ndarray[numpy.float64]: The jacobians of the facets. Shape is (nfacets, gdim, gdim - 1)
 )";
 
 const std::string FiniteElement__tabulate = R"(
@@ -213,7 +213,8 @@ Args:
     K (numpy.ndarray[numpy.float64]): The inverse of the Jacobian of the mapping
 
 Returns:
-    numpy.ndarray[numpy.float64]: The function values on the reference
+    numpy.ndarray[numpy.float64]: The function values on the reference. The indices are [Jacobian
+    index, point index, components].
 )";
 
 const std::string FiniteElement__apply_dof_transformation = R"(
@@ -358,14 +359,16 @@ For these DOFs, the subblocks of the base transformation matrices are:
 
 
 Returns:
-    numpy.ndarray[numpy.float64]: The base transformations for this element
+    numpy.ndarray[numpy.float64]: The base transformations for this element. The shape is
+    (ntranformations, ndofs, ndofs)
 )";
 
 const std::string FiniteElement__entity_transformations = R"(
 Return the entity dof transformation matrices
 
 Returns:
-    dict: The base transformations for this element
+    dict: The base transformations for this element. The shape is
+    (ntranformations, ndofs, ndofs)
 )";
 
 const std::string FiniteElement__get_tensor_product_representation = R"(
@@ -390,8 +393,8 @@ Create a custom finite element
 Args:
     cell_type (basix.CellType): The cell type
     value_shape (List[int]): The value shape of the element
-    wcoeffs (numpy.ndarray[numpy.float64]): Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element
-    x (List[List[numpy.ndarray[numpy.float64]]]): Interpolation points. Shape is (tdim, entity index, point index, dim)
+    wcoeffs (numpy.ndarray[numpy.float64]): Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element. Shape is (dim(Legendre polynomials), dim(finite element polyset))
+    x (List[List[numpy.ndarray[numpy.float64]]]): Interpolation points. Indices are (tdim, entity index, point index, dim)
     M (List[List[numpy.ndarray[numpy.float64]]]): The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index)
     map_type (basix.MapType): The type of map to be used to map values from the reference to a cell
     discontinuous (bool): Indicates whether or not this is the discontinuous version of the element
@@ -547,7 +550,8 @@ Args:
 
 Returns:
     numpy.ndarray[numpy.float64]: Matrix operator that maps the 'from' degrees-of-freedom to
-    the 'to' degrees-of-freedom
+    the 'to' degrees-of-freedom. Shape is (ndofs(element_to),
+    ndofs(element_from))
 )";
 
 const std::string tabulate_polynomial_set = R"(

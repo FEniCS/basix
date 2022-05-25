@@ -108,7 +108,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
   }
 
   std::size_t pdim = polyset::dim(cell_type, degree);
-  xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
+  xt::xtensor<double, 2> D = xt::zeros<double>({vs * pdim, num_dofs});
 
   // Loop over different dimensions
   std::size_t dof_index = 0;
@@ -135,17 +135,13 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
           for (std::size_t k = 0; k < Me.shape(2); ++k)    // Point
             for (std::size_t l = 0; l < Me.shape(3); ++l)  // Derivative
               for (std::size_t m = 0; m < P.shape(1); ++m) // Polynomial term
-                D(dof_index + i, j, m) += Me(i, j, k, l) * P(l, m, k);
+                D(j * pdim + m, dof_index + i) += Me(i, j, k, l) * P(l, m, k);
 
       dof_index += M[d][e].shape(0);
     }
   }
 
-  /// Flatten D and take transpose
-  xt::xtensor<double, 2> Dt_flat = xt::transpose(
-      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
-
-  return math::dot(B, Dt_flat);
+  return math::dot(B, D);
 }
 //-----------------------------------------------------------------------------
 } // namespace

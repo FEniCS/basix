@@ -49,7 +49,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
       = cell::topology(celltype);
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   x[0].resize(topology[0].size());
@@ -57,7 +57,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
   for (std::size_t e = 0; e < topology[0].size(); ++e)
   {
     x[0][e] = xt::xtensor<double, 2>({0, tdim});
-    M[0][e] = xt::xtensor<double, 3>({0, tdim * tdim, 0});
+    M[0][e] = xt::xtensor<double, 4>({0, tdim * tdim, 0, 1});
   }
   // Loop over edge and higher dimension entities
   for (std::size_t d = 1; d < topology.size(); ++d)
@@ -70,7 +70,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
         x[d][e] = xt::xtensor<double, 2>({0, tdim});
-        M[d][e] = xt::xtensor<double, 3>({0, tdim * tdim, 0});
+        M[d][e] = xt::xtensor<double, 4>({0, tdim * tdim, 0, 1});
       }
     }
     else
@@ -132,7 +132,8 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         }
 
         M[d][e]
-            = xt::zeros<double>({ndofs * ntangents, tdim * tdim, pts.shape(0)});
+            = xt::zeros<double>({ndofs * ntangents, tdim * tdim, pts.shape(0),
+                                 static_cast<std::size_t>(1)});
         for (int n = 0; n < moment_space.dim(); ++n)
         {
           for (std::size_t j = 0; j < ntangents; ++j)
@@ -141,7 +142,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
             for (std::size_t q = 0; q < pts.shape(0); ++q)
             {
               for (std::size_t i = 0; i < tdim * tdim; ++i)
-                M[d][e](n * ntangents + j, i, q)
+                M[d][e](n * ntangents + j, i, q, 0)
                     = vvt_flat(i) * wts[q] * moment_values(0, q, n, 0);
             }
           }
@@ -156,7 +157,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::HHJ, celltype, degree, {tdim, tdim},
-                       wcoeffs, x, M, maps::type::doubleContravariantPiola,
+                       wcoeffs, x, M, 0, maps::type::doubleContravariantPiola,
                        discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

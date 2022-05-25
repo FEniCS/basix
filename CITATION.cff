@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: If you use this software, please cite it as below.
+license: MIT
+url: https://github.com/FEniCS/basix
+preferred-citation:
+  type: article
+  authors:
+  - family-names: Scroggs
+    given-names: Matthew W.
+    orcid: 0000-0002-4658-2443
+  - family-names: Baratta
+    given-names: Igor A.
+    orcid: 0000-0003-4298-2973
+  - family-names: Richardson
+    given-names: Chris N.
+    orcid: 0000-0003-3137-1392
+  - family-names: Wells
+    given-names: Garth N.
+    orcid: 0000-0001-5291-7951
+  doi: 10.21105/joss.03982
+  journal: Journal of Open Source Software
+  title: "Basix: a runtime finite element basis evaluation library"
+  volume: 7
+  issue: 73
+  start: 3982
+  month: 5
+  year: 2022

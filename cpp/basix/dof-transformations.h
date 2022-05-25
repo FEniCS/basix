@@ -27,7 +27,7 @@ namespace basix::doftransforms
 std::map<cell::type, xt::xtensor<double, 3>> compute_entity_transformations(
     cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
     const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
     maps::type map_type);
 

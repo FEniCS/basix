@@ -32,14 +32,14 @@ namespace element
 /// @param[in] x Interpolation points. Shape is (tdim, entity index,
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
-/// index, dof, vs, point_index)
+/// index, dof, vs, point_index, derivative)
 /// @param[in] tdim The topological dimension of the cell the element is
 /// defined on
 /// @param[in] value_size The value size of the element
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 3>>, 4>>
+           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
 make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-                   const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+                   const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
                    int tdim, int value_size);
 
 } // namespace element
@@ -197,6 +197,8 @@ public:
   /// @param[in] family The element family
   /// @param[in] cell_type The cell type
   /// @param[in] degree The degree of the element
+  /// @param[in] interpolation_nderivs The number of derivatives that need to be
+  /// used during interpolation
   /// @param[in] value_shape The value shape of the element
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
@@ -204,7 +206,7 @@ public:
   /// @param[in] x Interpolation points. Shape is (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
-  /// index, dof, vs, point_index)
+  /// index, dof, vs, point_index, derivative)
   /// @param[in] map_type The type of map to be used to map values from
   /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
@@ -223,9 +225,37 @@ public:
       const std::vector<std::size_t>& value_shape,
       const xt::xtensor<double, 2>& wcoeffs,
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-      maps::type map_type, bool discontinuous, int highest_complete_degree,
-      int highest_degree, element::lagrange_variant lvariant,
+      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int highest_complete_degree, int highest_degree,
+      element::lagrange_variant lvariant, element::dpc_variant dvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int highest_complete_degree, int highest_degree,
+      element::lagrange_variant lvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// Overload
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape,
+      const xt::xtensor<double, 2>& wcoeffs,
+      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int highest_complete_degree, int highest_degree,
       element::dpc_variant dvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
@@ -237,35 +267,9 @@ public:
       const std::vector<std::size_t>& value_shape,
       const xt::xtensor<double, 2>& wcoeffs,
       const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-      maps::type map_type, bool discontinuous, int highest_complete_degree,
-      int highest_degree, element::lagrange_variant lvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// Overload
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape,
-      const xt::xtensor<double, 2>& wcoeffs,
-      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-      maps::type map_type, bool discontinuous, int highest_complete_degree,
-      int highest_degree, element::dpc_variant dvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// Overload
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape,
-      const xt::xtensor<double, 2>& wcoeffs,
-      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-      const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-      maps::type map_type, bool discontinuous, int highest_complete_degree,
-      int highest_degree,
+      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int highest_complete_degree, int highest_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {});
@@ -469,7 +473,7 @@ public:
   /// - `u` [in] The data on the physical cell that should be pulled
   /// back , flattened with row-major layout, shape=(num_points,
   /// value_size)
-  /// - `K` [in] The inverse oif the Jacobian matrix of the map
+  /// - `K` [in] The inverse of the Jacobian matrix of the map
   /// ,shape=(tdim, gdim)
   /// - `detJ_inv` [in] 1/det(J)
   /// - `J` [in] The Jacobian matrix, shape=(gdim, tdim)
@@ -846,36 +850,38 @@ public:
   /// Get the interpolation matrices for each subentity.
   ///
   /// The shape of this data is (tdim, entity index, dof, value size,
-  /// point_index).
+  /// point_index, derivative).
   ///
   /// These matrices define how to evaluate the DOF functionals accociated with
-  /// each sub-entity of the cell. Given a functional f, the functionals
+  /// each sub-entity of the cell. Given a function f, the functionals
   /// associated with the `e`-th entity of dimension `d` can be computed as
   /// follows:
   ///
   /// \code{.pseudo}
   /// matrix = element.M()[d][e]
   /// pts = element.x()[d][e]
-  /// values = f(pts)
+  /// nderivs = element
+  /// values = f.eval_derivs(nderivs, pts)
   /// result = ZEROS(matrix.shape(0))
   /// FOR i IN RANGE(matrix.shape(0)):
   ///     FOR j IN RANGE(matrix.shape(1)):
   ///         FOR k IN RANGE(matrix.shape(2)):
-  ///             result[i] += matrix[i, j, k] * values[k][j]
+  ///             FOR l IN RANGE(matrix.shape(3)):
+  ///                 result[i] += matrix[i, j, k, l] * values[l][k][j]
   /// \endcode
   ///
   /// For example, for a degree 1 Raviart-Thomas (RT) element on a triangle, the
   /// DOF functionals are integrals over the edges of the dot product of the
   /// function with the normal to the edge. In this case, `x()` would contain
   /// quadrature points for each edge, and `M()` would by a 1 by 2 by `npoints`
-  /// array for each edge. For each point, the `[1, :, point]` slice of this
-  /// would be the quadrature weight multiplied by the normal. For all entities
-  /// that are not edges, the entries in `x()` and `M()` for a degree 1 RT
-  /// element would have size 0.
+  /// by 1 array for each edge. For each point, the `[0, :, point, 0]` slice of
+  /// this would be the quadrature weight multiplied by the normal. For all
+  /// entities that are not edges, the entries in `x()` and `M()` for a degree 1
+  /// RT element would have size 0.
   ///
   /// These matrices are only stored for custom elements. This function will
   /// throw an exception if called on a non-custom element
-  const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M() const;
+  const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M() const;
 
   /// Get the matrix of coefficients.
   ///
@@ -907,6 +913,9 @@ public:
   /// identity matrix
   bool interpolation_is_identity() const;
 
+  /// The number of derivatives needed when interpolating
+  int interpolation_nderivs() const;
+
 private:
   // Cell type
   cell::type _cell_type;
@@ -928,6 +937,9 @@ private:
 
   // Degree that was input when creating the element
   int _degree;
+
+  // Degree
+  int _interpolation_nderivs;
 
   // Highest degree polynomial in element's polyset
   int _highest_degree;
@@ -1047,7 +1059,7 @@ private:
   xt::xtensor<double, 2> _wcoeffs;
 
   // Interpolation matrices for each entity
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
 };
 
 /// Create a custom finite element
@@ -1060,6 +1072,8 @@ private:
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
 /// index, dof, vs, point_index)
+/// @param[in] interpolation_nderivs The number of derivatives that need to be
+/// used during interpolation
 /// @param[in] map_type The type of map to be used to map values from
 /// the reference to a cell
 /// @param[in] discontinuous Indicates whether or not this is the
@@ -1074,9 +1088,9 @@ FiniteElement create_custom_element(
     cell::type cell_type, const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_complete_degree,
-    int highest_degree);
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+    int interpolation_nderivs, maps::type map_type, bool discontinuous,
+    int highest_complete_degree, int highest_degree);
 
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family

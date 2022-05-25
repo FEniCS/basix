@@ -315,7 +315,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
 xt::xtensor<double, 2> compute_transformation(
     cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
     const xt::xtensor<double, 2>& coeffs, const xt::xtensor<double, 2> J,
     const double detJ, const xt::xtensor<double, 2> K,
     const std::function<xt::xtensor<double, 1>(const xt::xtensor<double, 1>&)>
@@ -327,7 +327,7 @@ xt::xtensor<double, 2> compute_transformation(
     return xt::xtensor<double, 2>({0, 0});
 
   const xt::xtensor<double, 2>& pts = x[tdim][entity];
-  const xt::xtensor<double, 3>& imat = M[tdim][entity];
+  const xt::xtensor<double, 4>& imat = M[tdim][entity];
 
   const std::size_t ndofs = imat.shape(0);
   const std::size_t npts = pts.shape(0);
@@ -382,12 +382,16 @@ xt::xtensor<double, 2> compute_transformation(
   xt::xtensor<double, 3> dof_data = xt::view(
       pulled_data, xt::all(), xt::range(dofstart, dofstart + ndofs), xt::all());
   xt::xtensor<double, 2> transform = xt::zeros<double>({ndofs, ndofs});
-  for (int i = 0; i < vs; ++i)
+  for (std::size_t d = 0; d < imat.shape(3); ++d)
   {
-    xt::xtensor<double, 2> mat = xt::view(imat, xt::all(), i, xt::all());
-    xt::xtensor<double, 2> values = xt::view(dof_data, xt::all(), xt::all(), i);
+    for (int i = 0; i < vs; ++i)
+    {
+      xt::xtensor<double, 2> mat = xt::view(imat, xt::all(), i, xt::all(), d);
+      xt::xtensor<double, 2> values
+          = xt::view(dof_data, xt::all(), xt::all(), i);
 
-    transform += xt::transpose(math::dot(mat, values));
+      transform += xt::transpose(math::dot(mat, values));
+    }
   }
   return transform;
 }
@@ -398,7 +402,7 @@ std::map<cell::type, xt::xtensor<double, 3>>
 doftransforms::compute_entity_transformations(
     cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
     const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
     maps::type map_type)
 {

@@ -554,15 +554,16 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   for (std::size_t i = 0; i < tdim; ++i)
   {
     x[i] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 3>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+    M[i] = std::vector<xt::xtensor<double, 4>>(
+        cell::num_sub_entities(celltype, i),
+        xt::xtensor<double, 4>({0, 1, 0, 1}));
   }
 
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
@@ -582,12 +583,12 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
         x[dim][e] = xt::xtensor<double, 2>({0, tdim});
-        M[dim][e] = xt::xtensor<double, 3>({0, 1, 0});
+        M[dim][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
       }
     }
   }
   x[tdim][0] = pts;
-  M[tdim][0] = xt::xtensor<double, 3>({ndofs, 1, pts.shape(0)});
+  M[tdim][0] = xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1});
 
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
 
@@ -598,7 +599,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     {
       for (int j = 0; j <= degree - i; ++j)
       {
-        xt::view(M[tdim][0], row_n, 0, xt::all())
+        xt::view(M[tdim][0], row_n, 0, xt::all(), 0)
             = xt::col(phi, i * (degree + 1) + j) * wts;
         wcoeffs(row_n, i * (degree + 1) + j) = 1;
         ++row_n;
@@ -614,7 +615,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
       {
         for (int k = 0; k <= degree - i - j; ++k)
         {
-          xt::view(M[tdim][0], row_n, 0, xt::all())
+          xt::view(M[tdim][0], row_n, 0, xt::all(), 0)
               = xt::col(phi,
                         i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
                 * wts;
@@ -627,8 +628,8 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
-                       M, maps::type::identity, discontinuous, degree, degree,
-                       element::dpc_variant::legendre);
+                       M, 0, maps::type::identity, discontinuous, degree,
+                       degree, element::dpc_variant::legendre);
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
@@ -862,14 +863,14 @@ FiniteElement basix::element::create_serendipity(
       = cell::topology(celltype);
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   // dim 0 (vertices)
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
   const std::size_t num_vertices = geometry.shape(0);
-  M[0] = std::vector<xt::xtensor<double, 3>>(num_vertices,
-                                             xt::ones<double>({1, 1, 1}));
+  M[0] = std::vector<xt::xtensor<double, 4>>(num_vertices,
+                                             xt::ones<double>({1, 1, 1, 1}));
   x[0].resize(geometry.shape(0));
   for (std::size_t i = 0; i < x[0].size(); ++i)
   {
@@ -888,8 +889,8 @@ FiniteElement basix::element::create_serendipity(
   {
     x[1] = std::vector<xt::xtensor<double, 2>>(
         topology[1].size(), xt::xtensor<double, 2>({0, tdim}));
-    M[1] = std::vector<xt::xtensor<double, 3>>(
-        topology[1].size(), xt::xtensor<double, 3>({0, 1, 0}));
+    M[1] = std::vector<xt::xtensor<double, 4>>(topology[1].size(),
+                                               xt::ones<double>({0, 1, 0, 1}));
   }
 
   if (tdim >= 2)
@@ -905,8 +906,8 @@ FiniteElement basix::element::create_serendipity(
     {
       x[2] = std::vector<xt::xtensor<double, 2>>(
           topology[2].size(), xt::xtensor<double, 2>({0, tdim}));
-      M[2] = std::vector<xt::xtensor<double, 3>>(
-          topology[2].size(), xt::xtensor<double, 3>({0, 1, 0}));
+      M[2] = std::vector<xt::xtensor<double, 4>>(
+          topology[2].size(), xt::ones<double>({0, 1, 0, 1}));
     }
   }
 
@@ -923,8 +924,8 @@ FiniteElement basix::element::create_serendipity(
     {
       x[3] = std::vector<xt::xtensor<double, 2>>(
           topology[3].size(), xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector<xt::xtensor<double, 3>>(
-          topology[3].size(), xt::xtensor<double, 3>({0, 1, 0}));
+      M[3] = std::vector<xt::xtensor<double, 4>>(
+          topology[3].size(), xt::ones<double>({0, 1, 0, 1}));
     }
   }
 
@@ -942,7 +943,7 @@ FiniteElement basix::element::create_serendipity(
   }
 
   return FiniteElement(element::family::serendipity, celltype, degree, {},
-                       wcoeffs, x, M, maps::type::identity, discontinuous,
+                       wcoeffs, x, M, 0, maps::type::identity, discontinuous,
                        degree < static_cast<int>(tdim) ? 1 : degree / tdim,
                        degree, lvariant, dvariant);
 }
@@ -1020,26 +1021,27 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
       = cell::topology(celltype);
   const std::size_t tdim = topology.size() - 1;
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   for (std::size_t i = 0; i < tdim; ++i)
   {
     x[i] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 3>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+    M[i] = std::vector<xt::xtensor<double, 4>>(
+        cell::num_sub_entities(celltype, i),
+        xt::xtensor<double, 4>({0, 1, 0, 1}));
   }
 
-  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
-  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
+  M[tdim].push_back(xt::xtensor<double, 4>({ndofs, 1, ndofs, 1}));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
 
   const xt::xtensor<double, 2> pt = make_dpc_points(celltype, degree, variant);
   x[tdim].push_back(pt);
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
-                       M, maps::type::identity, discontinuous, degree, degree,
-                       variant);
+                       M, 0, maps::type::identity, discontinuous, degree,
+                       degree, variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_div(
@@ -1061,16 +1063,16 @@ FiniteElement basix::element::create_serendipity_div(
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     x[i] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 3>>(
+    M[i] = std::vector<xt::xtensor<double, 4>>(
         cell::num_sub_entities(celltype, i),
-        xt::xtensor<double, 3>({0, tdim, 0}));
+        xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   FiniteElement facet_moment_space
@@ -1092,9 +1094,9 @@ FiniteElement basix::element::create_serendipity_div(
     x[tdim] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, tdim),
         xt::xtensor<double, 2>({0, tdim}));
-    M[tdim] = std::vector<xt::xtensor<double, 3>>(
+    M[tdim] = std::vector<xt::xtensor<double, 4>>(
         cell::num_sub_entities(celltype, tdim),
-        xt::xtensor<double, 3>({0, tdim, 0}));
+        xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   xt::xtensor<double, 2> wcoeffs;
@@ -1109,7 +1111,7 @@ FiniteElement basix::element::create_serendipity_div(
   }
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, wcoeffs,
-                       x, M, maps::type::contravariantPiola, discontinuous,
+                       x, M, 0, maps::type::contravariantPiola, discontinuous,
                        degree / tdim, degree + 1, lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------
@@ -1139,14 +1141,14 @@ FiniteElement basix::element::create_serendipity_curl(
   else if (tdim == 3)
     wcoeffs = make_serendipity_curl_space_3d(degree);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   x[0] = std::vector<xt::xtensor<double, 2>>(
       cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
-  M[0] = std::vector<xt::xtensor<double, 3>>(
+  M[0] = std::vector<xt::xtensor<double, 4>>(
       cell::num_sub_entities(celltype, 0),
-      xt::xtensor<double, 3>({0, tdim, 0}));
+      xt::xtensor<double, 4>({0, tdim, 0, 1}));
 
   FiniteElement edge_moment_space
       = element::create_lagrange(cell::type::interval, degree, lvariant, true);
@@ -1166,9 +1168,9 @@ FiniteElement basix::element::create_serendipity_curl(
   {
     x[2] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, 2), xt::xtensor<double, 2>({0, tdim}));
-    M[2] = std::vector<xt::xtensor<double, 3>>(
+    M[2] = std::vector<xt::xtensor<double, 4>>(
         cell::num_sub_entities(celltype, 2),
-        xt::xtensor<double, 3>({0, tdim, 0}));
+        xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   if (tdim == 3)
@@ -1186,9 +1188,9 @@ FiniteElement basix::element::create_serendipity_curl(
       x[3] = std::vector<xt::xtensor<double, 2>>(
           cell::num_sub_entities(celltype, 3),
           xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector<xt::xtensor<double, 3>>(
+      M[3] = std::vector<xt::xtensor<double, 4>>(
           cell::num_sub_entities(celltype, 3),
-          xt::xtensor<double, 3>({0, tdim, 0}));
+          xt::xtensor<double, 4>({0, tdim, 0, 1}));
     }
   }
 
@@ -1201,7 +1203,7 @@ FiniteElement basix::element::create_serendipity_curl(
   }
 
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, wcoeffs,
-                       x, M, maps::type::covariantPiola, discontinuous,
+                       x, M, 0, maps::type::covariantPiola, discontinuous,
                        (degree == 2 && tdim == 3) ? 1 : degree / tdim,
                        degree + 1, lvariant, dvariant);
 }

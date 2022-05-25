@@ -10,7 +10,7 @@ on:
     inputs:
       ffcx_branch:
         description: "FFCx branch or tag"
-        default: "mscroggs/hermite"
+        default: "main"
         type: string
       ufl_branch:
         description: "UFL branch or tag"
@@ -48,7 +48,6 @@ jobs:
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
-          ref: mscroggs/hermite
       - name: Get FFCx source (specified branch)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v3

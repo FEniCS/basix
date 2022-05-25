@@ -75,10 +75,10 @@ auto adapt_x(const nb::tensor<nb::numpy, double>& x)
                    xt::no_ownership(), shape);
 }
 
-/// Create a py::array_t that shares data with an
+/// Create a nb::tensor that shares data with an
 /// xtensor array. The C++ object owns the data, and the
-/// py::array_t object keeps the C++ object alive.
-// From https://github.com/pybind/pybind11/issues/1042
+/// nb::tensor object keeps the C++ object alive.
+// Similar to https://github.com/pybind/pybind11/issues/1042
 template <typename shape_t, typename U>
 auto xt_as_nbtensor(U&& x)
 {

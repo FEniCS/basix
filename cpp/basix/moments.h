@@ -34,7 +34,7 @@ namespace moments
 /// @return (interpolation points, interpolation matrix). The indices of the
 /// interpolation points are (number of entities, npoints, gdim). The indices on
 /// the interpolation matrix are (number of entities, ndofs, value_size,
-/// npoints)
+/// npoints, derivative)
 std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 4>>>
 make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
@@ -60,7 +60,7 @@ make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
 /// @return (interpolation points, interpolation matrix). The indices of the
 /// interpolation points are (number of entities, npoints, gdim). The indices on
 /// the interpolation matrix are (number of entities, ndofs, value_size,
-/// npoints)
+/// npoints, derivative)
 std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 4>>>
 make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
@@ -80,7 +80,7 @@ make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
 /// @return (interpolation points, interpolation matrix). The indices of the
 /// interpolation points are (number of entities, npoints, gdim). The indices on
 /// the interpolation matrix are (number of entities, ndofs, value_size,
-/// npoints)
+/// npoints, derivative)
 std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 4>>>
 make_tangent_integral_moments(const FiniteElement& V, cell::type celltype,
@@ -99,7 +99,7 @@ make_tangent_integral_moments(const FiniteElement& V, cell::type celltype,
 /// @return (interpolation points, interpolation matrix). The indices of the
 /// interpolation points are (number of entities, npoints, gdim). The indices on
 /// the interpolation matrix are (number of entities, ndofs, value_size,
-/// npoints)
+/// npoints, derivative)
 std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 4>>>
 make_normal_integral_moments(const FiniteElement& V, cell::type celltype,

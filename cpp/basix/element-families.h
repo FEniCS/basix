@@ -55,6 +55,7 @@ enum class family
   bubble = 9,
   serendipity = 10,
   HHJ = 11,
+  Hermite = 12
 };
 
 } // namespace basix::element

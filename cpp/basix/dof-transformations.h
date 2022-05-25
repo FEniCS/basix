@@ -20,7 +20,7 @@ namespace basix::doftransforms
 /// @param[in] x Interpolation points for the element. Indices are (tdim, entity
 /// index, point index, dim)
 /// @param[in] M Interpolation matrix for the element. Indices are (tdim, entity
-/// index, dof, vs, point_index)
+/// index, dof, vs, point_index, derivative)
 /// @param[in] coeffs The coefficients that define the basis functions of the
 /// element in terms of the orthonormal basis. Shape is (dim(Legendre
 /// polynomials), dim(finite element polyset))
@@ -32,7 +32,7 @@ namespace basix::doftransforms
 std::map<cell::type, xt::xtensor<double, 3>> compute_entity_transformations(
     cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
     const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
     maps::type map_type);
 

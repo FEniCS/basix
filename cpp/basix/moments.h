@@ -36,7 +36,7 @@ namespace moments
 /// the interpolation matrix are (number of entities, ndofs, value_size,
 /// npoints)
 std::pair<std::vector<xt::xtensor<double, 2>>,
-          std::vector<xt::xtensor<double, 3>>>
+          std::vector<xt::xtensor<double, 4>>>
 make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
                       std::size_t value_size, int q_deg);
 
@@ -62,7 +62,7 @@ make_integral_moments(const FiniteElement& moment_space, cell::type celltype,
 /// the interpolation matrix are (number of entities, ndofs, value_size,
 /// npoints)
 std::pair<std::vector<xt::xtensor<double, 2>>,
-          std::vector<xt::xtensor<double, 3>>>
+          std::vector<xt::xtensor<double, 4>>>
 make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
                           std::size_t value_size, int q_deg);
 
@@ -82,7 +82,7 @@ make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
 /// the interpolation matrix are (number of entities, ndofs, value_size,
 /// npoints)
 std::pair<std::vector<xt::xtensor<double, 2>>,
-          std::vector<xt::xtensor<double, 3>>>
+          std::vector<xt::xtensor<double, 4>>>
 make_tangent_integral_moments(const FiniteElement& V, cell::type celltype,
                               std::size_t value_size, int q_deg);
 
@@ -101,7 +101,7 @@ make_tangent_integral_moments(const FiniteElement& V, cell::type celltype,
 /// the interpolation matrix are (number of entities, ndofs, value_size,
 /// npoints)
 std::pair<std::vector<xt::xtensor<double, 2>>,
-          std::vector<xt::xtensor<double, 3>>>
+          std::vector<xt::xtensor<double, 4>>>
 make_normal_integral_moments(const FiniteElement& V, cell::type celltype,
                              std::size_t value_size, int q_deg);
 

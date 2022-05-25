@@ -29,16 +29,16 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   // The number of order (degree) scalar polynomials
   const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     x[i] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 3>>(
+    M[i] = std::vector<xt::xtensor<double, 4>>(
         cell::num_sub_entities(celltype, i),
-        xt::xtensor<double, 3>({0, tdim, 0}));
+        xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   // Add integral moments on facets
@@ -60,9 +60,9 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
     x[tdim] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, tdim),
         xt::xtensor<double, 2>({0, tdim}));
-    M[tdim] = std::vector<xt::xtensor<double, 3>>(
+    M[tdim] = std::vector<xt::xtensor<double, 4>>(
         cell::num_sub_entities(celltype, tdim),
-        xt::xtensor<double, 3>({0, tdim, 0}));
+        xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
@@ -74,7 +74,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim},
-                       xt::eye<double>(ndofs), x, M,
+                       xt::eye<double>(ndofs), x, M, 0,
                        maps::type::contravariantPiola, discontinuous, degree,
                        degree, lvariant);
 }

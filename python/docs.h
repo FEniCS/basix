@@ -395,7 +395,7 @@ Args:
     value_shape (List[int]): The value shape of the element
     wcoeffs (numpy.ndarray[numpy.float64]): Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element. Shape is (dim(Legendre polynomials), dim(finite element polyset))
     x (List[List[numpy.ndarray[numpy.float64]]]): Interpolation points. Indices are (tdim, entity index, point index, dim)
-    M (List[List[numpy.ndarray[numpy.float64]]]): The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index)
+    M (List[List[numpy.ndarray[numpy.float64]]]): The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index, derivative)
     interpolation_nderivs (int): The number of derivatives that need to be used during interpolation
     map_type (basix.MapType): The type of map to be used to map values from the reference to a cell
     discontinuous (bool): Indicates whether or not this is the discontinuous version of the element

@@ -14,8 +14,6 @@
 #include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>
 
-#include <xtensor/xio.hpp>
-
 namespace stdex = std::experimental;
 
 using namespace basix;
@@ -965,9 +963,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       = cell::topology(celltype);
 
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
-  std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4> xspan;
+  using mdspan2_t = stdex::mdspan<double, stdex::dextents<2>>;
+  std::array<std::vector<mdspan2_t>, 4> xspan;
 
   if (degree == 0)
   {
@@ -980,11 +978,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     for (std::size_t i = 0; i < tdim; ++i)
     {
       std::size_t num_entities = cell::num_sub_entities(celltype, i);
-      x[i] = std::vector<xt::xtensor<double, 2>>(
-          num_entities, xt::xtensor<double, 2>({0, tdim}));
-      xspan[i] = std::vector<stdex::mdspan<double, stdex::dextents<2>>>(
-          num_entities,
-          stdex::mdspan<double, stdex::dextents<2>>(nullptr, 0, tdim));
+      xspan[i]
+          = std::vector<mdspan2_t>(num_entities, mdspan2_t(nullptr, 0, tdim));
 
       M[i] = std::vector<xt::xtensor<double, 4>>(
           num_entities, xt::xtensor<double, 4>({0, 1, 0, 1}));
@@ -992,10 +987,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
     const xt::xtensor<double, 2> pt
         = lattice::create(celltype, 0, lattice_type, true, simplex_method);
-    x[tdim].push_back(pt);
     xbuffer[tdim].push_back(std::vector<double>(pt.begin(), pt.end()));
-    xspan[tdim].push_back(stdex::mdspan<double, stdex::dextents<2>>(
-        xbuffer[tdim].back().data(), pt.shape(0), pt.shape(1)));
+    xspan[tdim].push_back(
+        mdspan2_t(xbuffer[tdim].back().data(), pt.shape(0), pt.shape(1)));
 
     const std::size_t num_dofs = pt.shape(0);
     std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
@@ -1009,8 +1003,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     for (std::size_t dim = 0; dim <= tdim; ++dim)
     {
       M[dim].resize(topology[dim].size());
-      x[dim].resize(topology[dim].size());
-
       xbuffer[dim].resize(topology[dim].size());
       xspan[dim].resize(topology[dim].size());
 
@@ -1021,11 +1013,10 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
             = cell::sub_entity_geometry(celltype, dim, e);
         if (dim == 0)
         {
-          x[dim][e] = entity_x;
           xbuffer[dim][e] = std::vector<double>(
               entity_x.data(), entity_x.data() + entity_x.size());
-          xspan[dim][e] = stdex::mdspan<double, stdex::dextents<2>>(
-              xbuffer[dim][e].data(), entity_x.shape(0), entity_x.shape(1));
+          xspan[dim][e] = mdspan2_t(xbuffer[dim][e].data(), entity_x.shape(0),
+                                    entity_x.shape(1));
 
           const std::size_t num_dofs = entity_x.shape(0);
           M[dim][e] = xt::xtensor<double, 4>({num_dofs, 1, num_dofs, 1});
@@ -1034,16 +1025,13 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         }
         else if (dim == tdim)
         {
-          x[dim][e] = lattice::create(celltype, degree, lattice_type, false,
-                                      simplex_method);
-
           const xt::xtensor<double, 2> pt = lattice::create(
               celltype, degree, lattice_type, false, simplex_method);
           xbuffer[dim][e] = std::vector<double>(pt.begin(), pt.end());
-          xspan[dim][e] = stdex::mdspan<double, stdex::dextents<2>>(
-              xbuffer[dim][e].data(), x[dim][e].shape(0), x[dim][e].shape(1));
+          xspan[dim][e]
+              = mdspan2_t(xbuffer[dim][e].data(), pt.shape(0), pt.shape(1));
 
-          const std::size_t num_dofs = x[dim][e].shape(0);
+          const std::size_t num_dofs = pt.shape(0);
           std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
           M[dim][e] = xt::xtensor<double, 4>(s);
           xt::view(M[dim][e], xt::all(), 0, xt::all(), 0)
@@ -1060,34 +1048,19 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           xt::view(M[dim][e], xt::all(), 0, xt::all(), 0)
               = xt::eye<double>(num_dofs);
 
-          auto x0s = xt::reshape_view(
-              xt::row(entity_x, 0),
-              {static_cast<std::size_t>(1), entity_x.shape(1)});
-          x[dim][e] = xt::tile(x0s, lattice.shape(0));
-
-          xtl::span<const double> x0_new(entity_x.data(), entity_x.shape(1));
-          std::vector<double> x_new;
+          xtl::span<const double> x0(entity_x.data(), entity_x.shape(1));
           for (std::size_t i = 0; i < lattice.shape(0); ++i)
-            xbuffer[dim][e].insert(xbuffer[dim][e].end(), x0_new.begin(),
-                                   x0_new.end());
-          xspan[dim][e] = stdex::mdspan<double, stdex::dextents<2>>(
-              xbuffer[dim][e].data(), x[dim][e].shape(0), x[dim][e].shape(1));
+            xbuffer[dim][e].insert(xbuffer[dim][e].end(), x0.begin(), x0.end());
+          xspan[dim][e] = mdspan2_t(xbuffer[dim][e].data(), lattice.shape(0),
+                                    entity_x.shape(1));
 
-          // xspan[dim][e] = stdex::mdspan<double, stdex::dextents<2>>(
-          //     x[dim][e].data(), x[dim][e].shape(0), x[dim][e].shape(1));
-
-          auto x0 = xt::row(entity_x, 0);
+          mdspan2_t& x = xspan[dim][e];
           for (std::size_t j = 0; j < lattice.shape(0); ++j)
           {
             for (std::size_t k = 0; k < lattice.shape(1); ++k)
             {
               for (std::size_t q = 0; q < tdim; ++q)
-              {
-                xspan[dim][e](j, q)
-                    += (entity_x(k + 1, q) - x0_new[q]) * lattice(j, k);
-              }
-              xt::row(x[dim][e], j)
-                  += (xt::row(entity_x, k + 1) - x0) * lattice(j, k);
+                x(j, q) += (entity_x(k + 1, q) - x0[q]) * lattice(j, k);
             }
           }
         }
@@ -1104,22 +1077,11 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       std::vector<std::size_t> shape
           = {xspan[i][j].extent(0), xspan[i][j].extent(1)};
       _x[i][j] = xt::adapt(xspan[i][j].data(), shape);
-
-      if (_x[i][j] != x[i][j])
-      {
-        std::cout << "Value problem: " << i << ", " << j << std::endl;
-        std::cout << "Shpe: " << xspan[i][j].extent(0) << ", "
-                  << xspan[i][j].extent(1) << std::endl;
-        std::cout << _x[i][j] << std::endl;
-        std::cout << x[i][j] << std::endl;
-      }
     }
   }
 
   if (discontinuous)
-  {
     std::tie(_x, M) = element::make_discontinuous(_x, M, tdim, 1);
-  }
 
   auto tensor_factors
       = create_tensor_product_factors(celltype, degree, variant);

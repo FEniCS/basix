@@ -82,38 +82,24 @@ auto adapt_x(const nb::tensor<nb::numpy, double>& x)
 template <typename shape_t, typename U>
 auto xt_as_nbtensor(U&& x)
 {
-  auto shape = x.shape();
+  std::vector<std::size_t> shape;
+  std::size_t dim = 1;
+  if constexpr (std::is_same<std::vector<typename U::value_type>, U>())
+    shape = {x.size()};
+  else
+  {
+    dim = x.dimension();
+    shape.resize(dim);
+    std::copy(x.shape().data(), x.shape().data() + dim, shape.begin());
+  }
   auto data = x.data();
   auto size = x.size();
-  auto dim = x.dimension();
-  // std::array<std::size_t, 2> shape = {x.shape(0), x.shape(1)};
-  // auto strides = x.strides();
-  // std::transform(strides.begin(), strides.end(), strides.begin(),
-  //                [](auto s) { return s * sizeof(typename U::value_type); });
   std::unique_ptr<U> x_ptr = std::make_unique<U>(std::move(x));
   auto capsule = nb::capsule(x_ptr.get(), [](void* p) noexcept
                              { std::unique_ptr<U>(reinterpret_cast<U*>(p)); });
   x_ptr.release();
   return nb::tensor<nb::numpy, typename U::value_type, shape_t>(
       data, dim, shape.data(), capsule);
-}
-
-template <typename T, std::size_t dim>
-nb::capsule make_copy_owner(xt::xtensor<T, dim>& x)
-{
-  double* data = (double*)malloc(x.size() * sizeof(double));
-  std::copy(x.begin(), x.end(), data);
-  // Delete 'data' when the 'owner' capsule expires
-  return nb::capsule(data, [](void* ptr) noexcept { free(ptr); });
-}
-
-template <typename T>
-nb::capsule make_copy_owner(const std::vector<T>& x)
-{
-  double* data = (double*)malloc(x.size() * sizeof(double));
-  std::copy(x.begin(), x.end(), data);
-  // Delete 'data' when the 'owner' capsule expires
-  return nb::capsule(data, [](void* ptr) noexcept { free(ptr); });
 }
 
 } // namespace
@@ -415,13 +401,8 @@ NB_MODULE(_basixcpp, m)
           [](const FiniteElement& self)
           {
             xt::xtensor<double, 3> t = self.base_transformations();
-            std::array<std::size_t, 3> shape
-                = {t.shape(0), t.shape(1), t.shape(2)};
-
-            auto owner = make_copy_owner(t);
-            return nb::tensor<nb::numpy, double,
-                              nb::shape<nb::any, nb::any, nb::any>>(
-                owner.data(), shape.size(), shape.data(), owner);
+            return xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
+                std::move(t));
           },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
@@ -488,7 +469,8 @@ NB_MODULE(_basixcpp, m)
           "points",
           [](const FiniteElement& self)
           {
-            // const xt::xtensor<double, 2>& x = self.points();
+            // const xt::xtensor<double, 2>& x =
+            // self.points();
             const xt::xtensor<double, 2>& x = self.points();
             std::array<std::size_t, 2> shape = {x.shape(0), x.shape(1)};
             return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
@@ -499,13 +481,10 @@ NB_MODULE(_basixcpp, m)
           "interpolation_matrix",
           [](const FiniteElement& self)
           {
-            // const xt::xtensor<double, 2>& P = self.interpolation_matrix();
+            // const xt::xtensor<double, 2>& P =
+            // self.interpolation_matrix();
             xt::xtensor<double, 2> P = self.interpolation_matrix();
-            std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
-
-            auto owner = make_copy_owner(P);
-            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                owner.data(), shape.size(), shape.data(), owner);
+            return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(P));
           })
       .def_property_readonly(
           "dual_matrix",
@@ -513,17 +492,14 @@ NB_MODULE(_basixcpp, m)
           {
             // const xt::xtensor<double, 2>& P = self.dual_matrix();
             xt::xtensor<double, 2> P = self.dual_matrix();
-            std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
-
-            auto owner = make_copy_owner(P);
-            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                owner.data(), shape.size(), shape.data(), owner);
+            return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(P));
           })
       .def_property_readonly(
           "coefficient_matrix",
           [](const FiniteElement& self)
           {
-            // const xt::xtensor<double, 2>& P = self.coefficient_matrix();
+            // const xt::xtensor<double, 2>& P =
+            // self.coefficient_matrix();
             xt::xtensor<double, 2> P = self.coefficient_matrix();
             std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
             return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
@@ -544,10 +520,12 @@ NB_MODULE(_basixcpp, m)
           "M",
           [](const FiniteElement& self)
           {
-            // const std::array<std::vector<xt::xtensor<double, 3>>, 4>& _M
+            // const
+            // std::array<std::vector<xt::xtensor<double,
+            // 3>>, 4>& _M
             //     = self.M();
-            // std::vector<std::vector<py::array_t<double, py::array::c_style>>>
-            // M(
+            // std::vector<std::vector<py::array_t<double,
+            // py::array::c_style>>> M(
             //     4);
             std::array<std::vector<xt::xtensor<double, 3>>, 4> _M = self.M();
             std::vector<std::vector<nb::tensor<
@@ -558,7 +536,8 @@ NB_MODULE(_basixcpp, m)
               for (std::size_t j = 0; j < _M[i].size(); ++j)
               {
                 // M[i].push_back(py::array_t<double>(
-                //     _M[i][j].shape(), _M[i][j].data(), py::cast(self)));
+                //     _M[i][j].shape(), _M[i][j].data(),
+                //     py::cast(self)));
                 std::array<std::size_t, 3> shape
                     = {_M[i][j].shape(0), _M[i][j].shape(1), _M[i][j].shape(2)};
                 M[i].push_back(nb::tensor<nb::numpy, double,
@@ -572,11 +551,13 @@ NB_MODULE(_basixcpp, m)
           "x",
           [](const FiniteElement& self)
           {
-            // const std::array<std::vector<xt::xtensor<double, 2>>, 4>& _x
+            // const
+            // std::array<std::vector<xt::xtensor<double,
+            // 2>>, 4>& _x
             //     = self.x();
             std::array<std::vector<xt::xtensor<double, 2>>, 4> _x = self.x();
-            // std::vector<std::vector<py::array_t<double, py::array::c_style>>>
-            // x(
+            // std::vector<std::vector<py::array_t<double,
+            // py::array::c_style>>> x(
             //     4);
             std::vector<std::vector<
                 nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>>>
@@ -586,7 +567,8 @@ NB_MODULE(_basixcpp, m)
               for (std::size_t j = 0; j < _x[i].size(); ++j)
               {
                 // x[i].push_back(py::array_t<double>(
-                //     _x[i][j].shape(), _x[i][j].data(), py::cast(self)));
+                //     _x[i][j].shape(), _x[i][j].data(),
+                //     py::cast(self)));
                 std::array<std::size_t, 2> shape
                     = {_x[i][j].shape(0), _x[i][j].shape(1)};
                 x[i].push_back(
@@ -808,18 +790,26 @@ NB_MODULE(_basixcpp, m)
         auto [pts, w] = quadrature::make_quadrature(celltype, m);
         // FIXME: it would be more elegant to handle 1D case as a 1D
         // array, but FFCx would need updating
-        std::array<std::size_t, 2> s = {pts.shape(0), 1};
-        if (pts.dimension() == 2)
-          s[1] = pts.shape(1);
-        const std::size_t wsize = w.size();
 
-        auto ownerp = make_copy_owner(pts);
-        auto ownerw = make_copy_owner(w);
+        auto pt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(pts));
+        auto wt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(w));
+
+        // auto w_ptr = std::make_unique<std::vector<double>>(std::move(w));
+        // auto capsule
+        //     = nb::capsule(w_ptr.get(),
+        //                   [](void* p) noexcept
+        //                   {
+        //                     std::unique_ptr<std::vector<double>>(
+        //                         reinterpret_cast<std::vector<double>*>(p));
+        //                   });
+        // w_ptr.release();
+        // const std::size_t wsize = w.size();
+        // auto wt = nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
+        //     w.data(), 1, &wsize, capsule);
+
         nb::list l;
-        l.append(nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            ownerp.data(), s.size(), s.data(), ownerp));
-        l.append(nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
-            ownerw.data(), 1, &wsize, ownerw));
+        l.append(pt);
+        l.append(wt);
         return l;
       },
       basix::docstring::make_quadrature__celltype_m.c_str());

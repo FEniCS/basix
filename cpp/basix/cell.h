@@ -58,6 +58,10 @@ sub_entity_connectivity(cell::type celltype);
 xt::xtensor<double, 2> sub_entity_geometry(cell::type celltype, int dim,
                                            int index);
 
+/// NEW
+std::vector<double> sub_entity_geometry_new(cell::type celltype, int dim,
+                                            int index);
+
 /// Number of sub-entities of a cell by topological dimension
 /// @todo Optimise this function
 /// @warning This function is expensive to call. Do not use in

@@ -338,6 +338,13 @@ xt::xtensor<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
   return sub_entity;
 }
 //----------------------------------------------------------------------------
+std::vector<double> cell::sub_entity_geometry_new(cell::type celltype, int dim,
+                                                  int index)
+{
+  xt::xtensor<double, 2> x = sub_entity_geometry(celltype, dim, index);
+  return std::vector<double>(x.data(), x.data() + x.size());
+}
+//----------------------------------------------------------------------------
 int cell::num_sub_entities(cell::type celltype, int dim)
 {
   const std::vector<std::vector<std::vector<int>>> cell_topology

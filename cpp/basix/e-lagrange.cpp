@@ -960,7 +960,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       = cell::topology(celltype);
 
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  // std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::array<std::vector<std::vector<double>>, 4> x;
 
   if (degree == 0)
   {
@@ -972,17 +973,21 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
     for (std::size_t i = 0; i < tdim; ++i)
     {
-      x[i] = std::vector<xt::xtensor<double, 2>>(
-          cell::num_sub_entities(celltype, i),
-          xt::xtensor<double, 2>({0, tdim}));
+      const std::size_t num_entities = cell::num_sub_entities(celltype, i);
+      x[i] = std::vector<std::vector<double>>(num_entities,
+                                              std::vector<double>(0 * tdim));
+      // x[i] = std::vector<xt::xtensor<double, 2>>(
+      //     num_entities, xt::xtensor<double, 2>({0, tdim}));
       M[i] = std::vector<xt::xtensor<double, 4>>(
-          cell::num_sub_entities(celltype, i),
-          xt::xtensor<double, 4>({0, 1, 0, 1}));
+          num_entities, xt::xtensor<double, 4>({0, 1, 0, 1}));
     }
-    const xt::xtensor<double, 2> pt
-        = lattice::create(celltype, 0, lattice_type, true, simplex_method);
+    // const xt::xtensor<double, 2> pt
+    //     = lattice::create(celltype, 0, lattice_type, true, simplex_method);
+    const std::vector<double> pt
+        = lattice::create_new(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].push_back(pt);
-    const std::size_t num_dofs = pt.shape(0);
+    const std::size_t num_dofs = pt.size() / tdim;
+    // const std::size_t num_dofs = pt.shape(0);
     std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
     M[tdim].push_back(xt::xtensor<double, 4>(s));
     xt::view(M[tdim][0], xt::all(), 0, xt::all(), 0)
@@ -999,21 +1004,24 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       // Loop over entities of dimension 'dim'
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
-        const xt::xtensor<double, 2> entity_x
-            = cell::sub_entity_geometry(celltype, dim, e);
+        const std::vector<double> entity_x
+            = cell::sub_entity_geometry_new(celltype, dim, e);
+        // const xt::xtensor<double, 2> entity_x
+        //     = cell::sub_entity_geometry(celltype, dim, e);
         if (dim == 0)
         {
           x[dim][e] = entity_x;
-          const std::size_t num_dofs = entity_x.shape(0);
+          // const std::size_t num_dofs = entity_x.shape(0);
+          const std::size_t num_dofs = entity_x.size() / tdim;
           M[dim][e] = xt::xtensor<double, 4>({num_dofs, 1, num_dofs, 1});
           xt::view(M[dim][e], xt::all(), 0, xt::all(), 0)
               = xt::eye<double>(num_dofs);
         }
         else if (dim == tdim)
         {
-          x[dim][e] = lattice::create(celltype, degree, lattice_type, false,
-                                      simplex_method);
-          const std::size_t num_dofs = x[dim][e].shape(0);
+          x[dim][e] = lattice::create_new(celltype, degree, lattice_type, false,
+                                          simplex_method);
+          const std::size_t num_dofs = x[dim][e].size() / tdim;
           std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
           M[dim][e] = xt::xtensor<double, 4>(s);
           xt::view(M[dim][e], xt::all(), 0, xt::all(), 0)
@@ -1022,25 +1030,28 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const auto lattice = lattice::create(ct, degree, lattice_type, false,
-                                               simplex_method);
-          const std::size_t num_dofs = lattice.shape(0);
+          const std::vector<double> lattice = lattice::create_new(
+              ct, degree, lattice_type, false, simplex_method);
+          const std::size_t num_dofs = lattice.size() / tdim;
+          // const std::size_t num_dofs = lattice.shape(0);
           std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
           M[dim][e] = xt::xtensor<double, 4>(s);
           xt::view(M[dim][e], xt::all(), 0, xt::all(), 0)
               = xt::eye<double>(num_dofs);
 
+          xtl::span<double> x0s(entity_x.data(), tdim);
           auto x0s = xt::reshape_view(
-              xt::row(entity_x, 0),
-              {static_cast<std::size_t>(1), entity_x.shape(1)});
-          x[dim][e] = xt::tile(x0s, lattice.shape(0));
-          auto x0 = xt::row(entity_x, 0);
+              // xt::row(entity_x, 0),
+              // {static_cast<std::size_t>(1), entity_x.shape(1)});
+          // x[dim][e] = xt::tile(x0s, lattice.shape(0));
+
+          // auto x0 = xt::row(entity_x, 0);
           for (std::size_t j = 0; j < lattice.shape(0); ++j)
           {
             for (std::size_t k = 0; k < lattice.shape(1); ++k)
             {
-              xt::row(x[dim][e], j)
-                  += (xt::row(entity_x, k + 1) - x0) * lattice(j, k);
+              // xt::row(x[dim][e], j)
+              //     += (xt::row(entity_x, k + 1) - x0) * lattice(j, k);
             }
           }
         }
@@ -1049,9 +1060,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   }
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
-  }
 
   auto tensor_factors
       = create_tensor_product_factors(celltype, degree, variant);

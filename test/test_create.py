@@ -42,21 +42,21 @@ variants = [
 
 
 def test_all_cells_included():
-    all_cells = set()
+    all_cells = list()
     for c in dir(basix.CellType):
         if not c.startswith("_") and c not in ["name", "value"]:
-            all_cells.add(getattr(basix.CellType, c))
+            all_cells.append(getattr(basix.CellType, c))
 
-    assert all_cells == set(cells)
+    assert sorted(all_cells) == sorted(cells)
 
 
 def test_all_elements_included():
-    all_elements = set()
+    all_elements = list()
     for c in dir(basix.ElementFamily):
         if not c.startswith("_") and c not in ["name", "value"]:
-            all_elements.add(getattr(basix.ElementFamily, c))
+            all_elements.append(getattr(basix.ElementFamily, c))
 
-    assert all_elements == set(elements)
+    assert sorted(all_elements) == sorted(elements)
 
 
 @pytest.mark.parametrize("cell", cells)

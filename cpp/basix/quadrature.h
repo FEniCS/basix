@@ -54,12 +54,12 @@ quadrature::type get_default_rule(cell::type celltype, int m);
 
 /// Get Gauss-Lobatto-Legendre (GLL) points on the interval [0, 1].
 /// @param[in] m The number of points
-/// @return An array of GLL points
+/// @return An array of GLL points. Shape is (num points, gdim)
 xt::xtensor<double, 2> get_gll_points(int m);
 
 /// Get Gauss-Legendre (GL) points on the interval [0, 1].
 /// @param[in] m The number of points
-/// @return An array of GL points
+/// @return An array of GL points. Shape is (num points, gdim)
 xt::xtensor<double, 2> get_gl_points(int m);
 
 } // namespace basix::quadrature

@@ -29,13 +29,15 @@ namespace element
 /// version of the element. This discontinuous version will have the
 /// same DOFs but they will all be associated with the interior of the
 /// reference cell.
-/// @param[in] x Interpolation points. Shape is (tdim, entity index,
+/// @param[in] x Interpolation points. Indices are (tdim, entity index,
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
 /// index, dof, vs, point_index, derivative)
 /// @param[in] tdim The topological dimension of the cell the element is
 /// defined on
 /// @param[in] value_size The value size of the element
+/// @return Versions of x and M that define a discontinuous version of the
+/// element (with the same shapes as x and M)
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 4>>, 4>>
 make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
@@ -202,8 +204,9 @@ public:
   /// @param[in] value_shape The value shape of the element
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
-  /// polynomial space for this element
-  /// @param[in] x Interpolation points. Shape is (tdim, entity index,
+  /// polynomial space for this element. Shape is (dim(Legendre polynomials),
+  /// dim(finite element polyset))
+  /// @param[in] x Interpolation points. Indices are (tdim, entity index,
   /// point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
   /// index, dof, vs, point_index, derivative)
@@ -440,7 +443,8 @@ public:
   /// @param[in] J The Jacobian of the mapping
   /// @param[in] detJ The determinant of the Jacobian of the mapping
   /// @param[in] K The inverse of the Jacobian of the mapping
-  /// @return The function values on the reference
+  /// @return The function values on the reference. The indices are [Jacobian
+  /// index, point index, components].
   xt::xtensor<double, 3> pull_back(const xt::xtensor<double, 3>& u,
                                    const xt::xtensor<double, 3>& J,
                                    const xtl::span<const double>& detJ,
@@ -619,11 +623,13 @@ public:
   ///   reflection: [[0, 1],
   ///                [1, 0]]
   /// ~~~~~~~~~~~~~~~~
-  /// @return The base transformations for this element
+  /// @return The base transformations for this element. The shape is
+  /// (ntranformations, ndofs, ndofs)
   xt::xtensor<double, 3> base_transformations() const;
 
   /// Return the entity dof transformation matrices
-  /// @return The entity transformations for the subentities of this element
+  /// @return The entity transformations for the subentities of this element.
+  /// The shape for each cell is (ntransformations, ndofs, ndofs)
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations() const;
 
   /// Permute the dof numbering on a cell
@@ -799,14 +805,15 @@ public:
   ///     coefficients[::block_size] = i_m * values
   /// \endcode
   ///
-  /// @return The interpolation matrix
+  /// @return The interpolation matrix. Shape is (ndofs, number of interpolation
+  /// points)
   const xt::xtensor<double, 2>& interpolation_matrix() const;
 
   /// Get the dual matrix.
   ///
   /// This is the matrix @f$BD^{T}@f$, as described in the documentation
   /// of the `FiniteElement()` constructor.
-  /// @return The dual matrix
+  /// @return The dual matrix. Shape is (ndofs, ndofs)
   const xt::xtensor<double, 2>& dual_matrix() const;
 
   /// Get the coefficients that define the polynomial set in terms of the
@@ -840,11 +847,13 @@ public:
   ///
   /// These coefficients are only stored for custom elements. This function will
   /// throw an exception if called on a non-custom element
+  /// @return Coefficient matrix. Shape is (dim(Lagrange polynomials),
+  /// dim(finite element polyset))
   const xt::xtensor<double, 2>& wcoeffs() const;
 
   /// Get the interpolation points for each subentity.
   ///
-  /// The shape of this data is (tdim, entity index, point index, dim).
+  /// The indices of this data are (tdim, entity index, point index, dim).
   const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x() const;
 
   /// Get the interpolation matrices for each subentity.
@@ -881,13 +890,15 @@ public:
   ///
   /// These matrices are only stored for custom elements. This function will
   /// throw an exception if called on a non-custom element
+  /// @return The interpolation matrices. The indices of this data are (tdim,
+  /// entity index, dof, vs, point_index, derivative)
   const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M() const;
 
   /// Get the matrix of coefficients.
   ///
   /// This is the matrix @f$C@f$, as described in the documentation of
   /// the `FiniteElement()` constructor.
-  /// @return The dual matrix
+  /// @return The coefficient matrix. Shape is (ndofs, ndofs)
   const xt::xtensor<double, 2>& coefficient_matrix() const;
 
 
@@ -1067,11 +1078,12 @@ private:
 /// @param[in] value_shape The value shape of the element
 /// @param[in] wcoeffs Matrices for the kth value index containing the
 /// expansion coefficients defining a polynomial basis spanning the
-/// polynomial space for this element
-/// @param[in] x Interpolation points. Shape is (tdim, entity index,
+/// polynomial space for this element. Shape is (dim(Legendre polynomials),
+/// dim(finite element polyset))
+/// @param[in] x Interpolation points. Indices are (tdim, entity index,
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity
-/// index, dof, vs, point_index)
+/// index, dof, vs, point_index, derivative)
 /// @param[in] interpolation_nderivs The number of derivatives that need to be
 /// used during interpolation
 /// @param[in] map_type The type of map to be used to map values from

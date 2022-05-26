@@ -761,18 +761,10 @@ NB_MODULE(_basixcpp, m)
       {
         std::vector<std::size_t> shape;
         std::size_t xsize = 1;
-        if (x.ndim() == 2 and x.shape(1) == 1)
+        for (std::size_t i = 0; i < x.ndim(); ++i)
         {
-          shape.push_back(x.shape(0));
-          xsize = x.shape(0);
-        }
-        else
-        {
-          for (std::size_t i = 0; i < x.ndim(); ++i)
-          {
-            shape.push_back(x.shape(i));
-            xsize *= x.shape(i);
-          }
+          shape.push_back(x.shape(i));
+          xsize *= x.shape(i);
         }
         auto _x = xt::adapt(static_cast<const double*>(x.data()), xsize,
                             xt::no_ownership(), shape);

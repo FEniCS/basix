@@ -44,6 +44,14 @@ make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
                    int tdim, int value_size);
 
+/// TODO
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
+make_discontinuous_new(
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M, int tdim,
+    int value_size);
+
 } // namespace element
 
 /// A finite element
@@ -900,7 +908,6 @@ public:
   /// the `FiniteElement()` constructor.
   /// @return The coefficient matrix. Shape is (ndofs, ndofs)
   const xt::xtensor<double, 2>& coefficient_matrix() const;
-
 
   /// Indicates whether or not this element has a tensor product
   /// representation.

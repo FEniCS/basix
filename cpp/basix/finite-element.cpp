@@ -405,6 +405,28 @@ basix::element::make_discontinuous(
   return {x_out, M_out};
 }
 //-----------------------------------------------------------------------------
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
+basix::element::make_discontinuous_new(
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M, int tdim,
+    int value_size)
+{
+  auto [_x, _M] = make_discontinuous_new(x, M, tdim, value_size);
+
+  std::array<std::vector<std::vector<double>>, 4> x_new;
+  for (std::size_t i = 0; i < _x.size(); ++i)
+  {
+    x_new[i].resize(x[i].size());
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+    {
+      x_new[i][j].assign(_x[i][j].data(), _x[i][j].data() + _x[i][j].size());
+    }
+  }
+
+  return {x_new, _M};
+}
+//-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
     cell::type cell_type, const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,

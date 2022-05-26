@@ -227,17 +227,20 @@ create_tensor_product_factors(cell::type celltype, int degree,
     }
     return {{{sub_element, sub_element, sub_element}, perm}};
   }
+
   return {};
 }
 //----------------------------------------------------------------------------
-xt::xtensor<double, 2> vtk_triangle_points(int degree)
+std::vector<double> vtk_triangle_points(int degree)
 {
   const double d = static_cast<double>(1) / static_cast<double>(degree + 3);
   if (degree == 0)
     return {{d, d}};
 
   const std::size_t npoints = polyset::dim(cell::type::triangle, degree);
-  xt::xtensor<double, 2> out({npoints, 2});
+  std::vector<double> outdata(npoints * 2);
+  stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> out(
+      outdata.data(), npoints, 2);
 
   out(0, 0) = d;
   out(0, 1) = d;
@@ -269,19 +272,24 @@ xt::xtensor<double, 2> vtk_triangle_points(int degree)
   }
   if (degree >= 3)
   {
-    xt::xtensor<double, 2> pts = vtk_triangle_points(degree - 3);
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    // xt::xtensor<double, 2> pts = vtk_triangle_points(degree - 3);
+
+    std::vector<double> pts_data = vtk_triangle_points(degree - 3);
+    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> pts(
+        pts_data.data(), pts_data.size() / 2, 2);
+
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
-      for (std::size_t j = 0; j < pts.shape(1); ++j)
+      for (std::size_t j = 0; j < pts.extent(1); ++j)
         out(n, j) = d + (1 - 3 * d) * pts(i, j);
       ++n;
     }
   }
 
-  return out;
+  return outdata;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> vtk_tetrahedron_points(int degree)
+std::vector<double> vtk_tetrahedron_points(int degree)
 {
   const double d = static_cast<double>(1) / static_cast<double>(degree + 4);
 
@@ -289,7 +297,9 @@ xt::xtensor<double, 2> vtk_tetrahedron_points(int degree)
     return {{d, d, d}};
 
   const std::size_t npoints = polyset::dim(cell::type::tetrahedron, degree);
-  xt::xtensor<double, 2> out({npoints, 3});
+  std::vector<double> outdata(npoints * 3);
+  stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 3>> out(
+      outdata.data(), npoints, 3);
 
   out(0, 0) = d;
   out(0, 1) = d;
@@ -349,31 +359,36 @@ xt::xtensor<double, 2> vtk_tetrahedron_points(int degree)
       ++n;
     }
   }
+
   if (degree >= 3)
   {
-    xt::xtensor<double, 2> pts = vtk_triangle_points(degree - 3);
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    // xt::xtensor<double, 2> pts = vtk_triangle_points(degree - 3);
+    std::vector<double> pts_data = vtk_triangle_points(degree - 3);
+    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> pts(
+        pts_data.data(), pts_data.size() / 2, 2);
+
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       out(n, 0) = d + pts(i, 0) * (1 - 4 * d);
       out(n, 1) = d;
       out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
       ++n;
     }
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       out(n, 0) = 1 - 3 * d - (pts(i, 0) + pts(i, 1)) * (1 - 4 * d);
       out(n, 1) = d + pts(i, 0) * (1 - 4 * d);
       out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
       ++n;
     }
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       out(n, 0) = d;
       out(n, 1) = d + pts(i, 0) * (1 - 4 * d);
       out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
       ++n;
     }
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       out(n, 0) = d + pts(i, 0) * (1 - 4 * d);
       out(n, 1) = d + pts(i, 1) * (1 - 4 * d);
@@ -381,21 +396,36 @@ xt::xtensor<double, 2> vtk_tetrahedron_points(int degree)
       ++n;
     }
   }
+
   if (degree >= 4)
   {
-    xt::view(out, xt::range(n, npoints), xt::all())
-        = vtk_tetrahedron_points(degree - 4);
+    std::vector<double> pts_data = vtk_tetrahedron_points(degree - 4);
+    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 3>> pts(
+        pts_data.data(), pts_data.size() / 3, 3);
 
-    xt::xtensor<double, 2> pts = vtk_tetrahedron_points(degree - 4);
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    auto out_view = stdex::submdspan(out, std::pair<int, int>{n, npoints},
+                                     stdex::full_extent);
+    for (std::size_t i = 0; i < out_view.extent(0); ++i)
+      for (std::size_t j = 0; j < out_view.extent(1); ++j)
+        out_view(i, j) = pts(i, j);
+
+    // xt::view(out, xt::range(n, npoints), xt::all())
+    //     = vtk_tetrahedron_points(degree - 4);
+
+    // xt::xtensor<double, 2> pts = vtk_tetrahedron_points(degree - 4);
+    // std::vector<double> pts_data = vtk_tetrahedron_points(degree - 4);
+    // stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 3>> pts(
+    //     pts_data.data(), pts_data.size() / 3, 3);
+
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
-      for (std::size_t j = 0; j < pts.shape(1); ++j)
+      for (std::size_t j = 0; j < pts.extent(1); ++j)
         out(n, j) = d + (1 - 4 * d) * pts(i, j);
       ++n;
     }
   }
 
-  return out;
+  return outdata;
 }
 //-----------------------------------------------------------------------------
 FiniteElement create_vtk_element(cell::type celltype, int degree,

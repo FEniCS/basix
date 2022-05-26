@@ -224,9 +224,7 @@ NB_MODULE(_basixcpp, m)
       [](cell::type cell_type)
       {
         xt::xtensor<double, 2> n = cell::facet_normals(cell_type);
-        std::array<std::size_t, 2> shape = {n.shape(0), n.shape(1)};
-        return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            n.data(), shape.size(), shape.data());
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(n));
       },
       basix::docstring::cell_facet_normals.c_str());
   m.def(
@@ -234,9 +232,7 @@ NB_MODULE(_basixcpp, m)
       [](cell::type cell_type)
       {
         xt::xtensor<double, 1> v = cell::facet_reference_volumes(cell_type);
-        std::array<std::size_t, 1> shape = {v.shape(0)};
-        return nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
-            v.data(), shape.size(), shape.data());
+        return xt_as_nbtensor<nb::shape<nb::any>>(std::move(v));
       },
       basix::docstring::cell_facet_reference_volumes.c_str());
   m.def(
@@ -244,9 +240,7 @@ NB_MODULE(_basixcpp, m)
       [](cell::type cell_type)
       {
         xt::xtensor<double, 2> n = cell::facet_outward_normals(cell_type);
-        std::array<std::size_t, 2> shape = {n.shape(0), n.shape(1)};
-        return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            n.data(), shape.size(), shape.data());
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(n));
       },
       basix::docstring::cell_facet_outward_normals.c_str());
   m.def(
@@ -263,10 +257,8 @@ NB_MODULE(_basixcpp, m)
       [](cell::type cell_type)
       {
         xt::xtensor<double, 3> J = cell::facet_jacobians(cell_type);
-        std::array<std::size_t, 3> shape = {J.shape(0), J.shape(1), J.shape(2)};
-        return nb::tensor<nb::numpy, double,
-                          nb::shape<nb::any, nb::any, nb::any>>(
-            J.data(), shape.size(), shape.data());
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
+            std::move(J));
       },
       basix::docstring::cell_facet_jacobians.c_str());
 

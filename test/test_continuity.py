@@ -76,7 +76,7 @@ def test_continuity_interval_facet(degree, element, variant):
 
         for c, e in elements.items():
             tab = e.tabulate(0, points)[0]
-            continuity_map = create_continuity_map_interval(int(e.map_type), start, end)
+            continuity_map = create_continuity_map_interval(e.map_type, start, end)
             entity_tab = [continuity_map(tab[:, i, :]) for i in e.entity_dofs[1][cellmap[c]]]
             if data is None:
                 data = entity_tab

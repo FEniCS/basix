@@ -159,15 +159,13 @@ NB_MODULE(_basixcpp, m)
           throw std::runtime_error("x has the wrong number of dimensions");
         std::array<std::size_t, 2> shape
             = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
-        auto _x
-            = xt::adapt((double*)x.data(), (std::size_t)(shape[0] * shape[1]),
-                        xt::no_ownership(), shape);
+        auto _x = xt::adapt(static_cast<const double*>(x.data()),
+                            (std::size_t)(shape[0] * shape[1]),
+                            xt::no_ownership(), shape);
         xt::xtensor<double, 2> t
             = polynomials::tabulate(polytype, celltype, d, _x);
 
-        std::array<std::size_t, 2> tshape = {t.shape(0), t.shape(1)};
-        return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            t.data(), tshape.size(), tshape.data());
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(t));
       },
       basix::docstring::tabulate_polynomials.c_str());
 
@@ -428,7 +426,18 @@ NB_MODULE(_basixcpp, m)
       .def(
           "get_tensor_product_representation",
           [](const FiniteElement& self)
-          { return self.get_tensor_product_representation(); },
+          {
+            auto w = self.get_tensor_product_representation();
+            nb::list l;
+            for (auto v : w)
+            {
+              nb::list a_list;
+              a_list.append(std::get<0>(v));
+              a_list.append(std::get<1>(v));
+              l.append(a_list);
+            }
+            return l;
+          },
           basix::docstring::FiniteElement__get_tensor_product_representation
               .c_str())
       .def_property_readonly("degree", &FiniteElement::degree)
@@ -745,24 +754,33 @@ NB_MODULE(_basixcpp, m)
       },
       basix::docstring::compute_interpolation_operator.c_str());
 
-  // m.def(
-  //     "tabulate_polynomial_set",
-  //     [](cell::type celltype, int d, int n,
-  //        const py::array_t<double, py::array::c_style>& x)
-  //     {
-  //       std::vector<std::size_t> shape;
-  //       if (x.ndim() == 2 and x.shape(1) == 1)
-  //         shape.push_back(x.shape(0));
-  //       else
-  //       {
-  //         for (pybind11::ssize_t i = 0; i < x.ndim(); ++i)
-  //           shape.push_back(x.shape(i));
-  //       }
-  //       auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
-  //       xt::xtensor<double, 3> P = polyset::tabulate(celltype, d, n, _x);
-  //       return py::array_t<double>(P.shape(), P.data());
-  //     },
-  //     basix::docstring::tabulate_polynomial_set.c_str());
+  m.def(
+      "tabulate_polynomial_set",
+      [](cell::type celltype, int d, int n,
+         const nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>& x)
+      {
+        std::vector<std::size_t> shape;
+        std::size_t xsize = 1;
+        if (x.ndim() == 2 and x.shape(1) == 1)
+        {
+          shape.push_back(x.shape(0));
+          xsize = x.shape(0);
+        }
+        else
+        {
+          for (std::size_t i = 0; i < x.ndim(); ++i)
+          {
+            shape.push_back(x.shape(i));
+            xsize *= x.shape(i);
+          }
+        }
+        auto _x = xt::adapt(static_cast<const double*>(x.data()), xsize,
+                            xt::no_ownership(), shape);
+        xt::xtensor<double, 3> P = polyset::tabulate(celltype, d, n, _x);
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
+            std::move(P));
+      },
+      basix::docstring::tabulate_polynomial_set.c_str());
 
   m.def(
       "make_quadrature",
@@ -771,15 +789,14 @@ NB_MODULE(_basixcpp, m)
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
         // FIXME: it would be more elegant to handle 1D case as a 1D
         // array, but FFCx would need updating
-        std::array<std::size_t, 2> s = {pts.shape(0), 1};
-        if (pts.dimension() == 2)
-          s[1] = pts.shape(1);
-        const std::size_t wsize = w.size();
-        return std::pair(
-            nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                pts.data(), s.size(), s.data()),
-            nb::tensor<nb::numpy, double, nb::shape<nb::any>>(w.data(), 1,
-                                                              &wsize));
+
+        auto pt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(pts));
+        auto wt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(w));
+
+        nb::list l;
+        l.append(pt);
+        l.append(wt);
+        return l;
       },
       basix::docstring::make_quadrature__rule_celltype_m.c_str());
 
@@ -793,19 +810,6 @@ NB_MODULE(_basixcpp, m)
 
         auto pt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(pts));
         auto wt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(w));
-
-        // auto w_ptr = std::make_unique<std::vector<double>>(std::move(w));
-        // auto capsule
-        //     = nb::capsule(w_ptr.get(),
-        //                   [](void* p) noexcept
-        //                   {
-        //                     std::unique_ptr<std::vector<double>>(
-        //                         reinterpret_cast<std::vector<double>*>(p));
-        //                   });
-        // w_ptr.release();
-        // const std::size_t wsize = w.size();
-        // auto wt = nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
-        //     w.data(), 1, &wsize, capsule);
 
         nb::list l;
         l.append(pt);

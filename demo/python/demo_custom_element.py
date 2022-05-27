@@ -193,7 +193,7 @@ x = pts[:, 0]
 y = pts[:, 1]
 for i in range(3):
     wcoeffs[2, i] = sum(x * poly[i, :] * wts)
-    wcoeffs[2, 3 + i] = sum(y * poly[i. :] * wts)
+    wcoeffs[2, 3 + i] = sum(y * poly[i, :] * wts)
 
 # Interpolation
 # -------------

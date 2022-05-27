@@ -70,7 +70,7 @@ def create_ccr_triangle(degree):
         f = x ** i * y ** (degree - i) * (x + y)
 
         for j in range(npoly):
-            wcoeffs[dof_n, j] = sum(f * poly[:, j] * wts)
+            wcoeffs[dof_n, j] = sum(f * poly[j, :] * wts)
         dof_n += 1
 
     geometry = basix.geometry(CellType.triangle)

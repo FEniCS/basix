@@ -73,7 +73,7 @@ x = pts[:, 0]
 y = pts[:, 1]
 f = x * (1 - x) * y * (1 - y)
 for i in range(9):
-    wcoeffs[4, i] = sum(f * poly[:, i] * wts)
+    wcoeffs[4, i] = sum(f * poly[i, :] * wts)
 
 # Interpolation
 # -------------
@@ -192,8 +192,8 @@ poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, 1,
 x = pts[:, 0]
 y = pts[:, 1]
 for i in range(3):
-    wcoeffs[2, i] = sum(x * poly[:, i] * wts)
-    wcoeffs[2, 3 + i] = sum(y * poly[:, i] * wts)
+    wcoeffs[2, i] = sum(x * poly[i, :] * wts)
+    wcoeffs[2, 3 + i] = sum(y * poly[i. :] * wts)
 
 # Interpolation
 # -------------

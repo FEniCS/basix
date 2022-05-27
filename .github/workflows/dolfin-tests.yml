@@ -11,7 +11,7 @@ on:
     inputs:
       dolfinx_branch:
         description: "DOLFINx branch or tag"
-        default: "main"
+        default: "mscroggs/transpose-polynomials-tabulate"
         type: string
       ffcx_branch:
         description: "FFCx branch or tag"
@@ -71,6 +71,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
+          ref: mscroggs/transpose-polynomials-tabulate
       - name: Get DOLFINx
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v3

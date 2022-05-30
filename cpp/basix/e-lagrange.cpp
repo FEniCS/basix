@@ -235,7 +235,7 @@ std::vector<double> vtk_triangle_points(int degree)
 {
   const double d = static_cast<double>(1) / static_cast<double>(degree + 3);
   if (degree == 0)
-    return {{d, d}};
+    return {d, d};
 
   const std::size_t npoints = polyset::dim(cell::type::triangle, degree);
   std::vector<double> outdata(npoints * 2);
@@ -272,12 +272,9 @@ std::vector<double> vtk_triangle_points(int degree)
   }
   if (degree >= 3)
   {
-    // xt::xtensor<double, 2> pts = vtk_triangle_points(degree - 3);
-
     std::vector<double> pts_data = vtk_triangle_points(degree - 3);
     stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> pts(
         pts_data.data(), pts_data.size() / 2, 2);
-
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       for (std::size_t j = 0; j < pts.extent(1); ++j)
@@ -292,9 +289,8 @@ std::vector<double> vtk_triangle_points(int degree)
 std::vector<double> vtk_tetrahedron_points(int degree)
 {
   const double d = static_cast<double>(1) / static_cast<double>(degree + 4);
-
   if (degree == 0)
-    return {{d, d, d}};
+    return {d, d, d};
 
   const std::size_t npoints = polyset::dim(cell::type::tetrahedron, degree);
   std::vector<double> outdata(npoints * 3);
@@ -362,7 +358,6 @@ std::vector<double> vtk_tetrahedron_points(int degree)
 
   if (degree >= 3)
   {
-    // xt::xtensor<double, 2> pts = vtk_triangle_points(degree - 3);
     std::vector<double> pts_data = vtk_triangle_points(degree - 3);
     stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> pts(
         pts_data.data(), pts_data.size() / 2, 2);
@@ -435,16 +430,12 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     throw std::runtime_error("Invalid celltype");
 
   if (degree == 0)
-  {
     throw std::runtime_error("Cannot create an order 0 VTK element.");
-  }
 
-  // DOF transformation don't yet work on this element, so throw runtime error
-  // if trying to make continuous version
+  // DOF transformation don't yet work on this element, so throw runtime
+  // error if trying to make continuous version
   if (!discontinuous)
-  {
     throw std::runtime_error("Continuous VTK element not yet supported.");
-  }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t ndofs = polyset::dim(celltype, degree);
@@ -453,10 +444,8 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-
   for (std::size_t dim = 0; dim <= tdim; ++dim)
   {
-
     M[dim].resize(topology[dim].size());
     x[dim].resize(topology[dim].size());
   }
@@ -600,8 +589,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     if (degree >= 3)
     {
       std::vector<double> pts_data = vtk_triangle_points(degree - 3);
+
       xt::xtensor<double, 2> pts = xt::adapt(
-          pts_data, std::vector<std::size_t>(pts_data.size() / 2, 2));
+          pts_data, std::vector<std::size_t>{pts_data.size() / 2, 2});
 
       std::array<std::size_t, 2> s
           = {pts.shape(0), static_cast<std::size_t>(3)};
@@ -651,7 +641,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     {
       std::vector<double> pts_data = vtk_tetrahedron_points(degree - 4);
       xt::xtensor<double, 2> pts = xt::adapt(
-          pts_data, std::vector<std::size_t>(pts_data.size() / 3, 3));
+          pts_data, std::vector<std::size_t>{pts_data.size() / 3, 3});
 
       x[3][0] = pts;
       M[3][0]
@@ -872,15 +862,11 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     break;
   }
   default:
-  {
     throw std::runtime_error("Unsupported cell type.");
-  }
   }
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
-  }
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
@@ -932,6 +918,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
       }
     }
   }
+
   x[tdim][0] = pts;
   M[tdim][0] = xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1});
   for (std::size_t i = 0; i < ndofs; ++i)
@@ -960,7 +947,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     x[0].push_back(xt::zeros<double>({1, 0}));
     M[0].push_back({{{{1.}}}});
     xt::xtensor<double, 2> wcoeffs = {{1}};
-
     return FiniteElement(element::family::P, cell::type::point, 0, {}, wcoeffs,
                          x, M, 0, maps::type::identity, discontinuous, degree,
                          degree);
@@ -986,13 +972,14 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   if (!exterior)
   {
-    // Points used to define this variant are all interior to the cell, so this
-    // variant requires that the element is discontinuous
+    // Points used to define this variant are all interior to the cell,
+    // so this variant requires that the element is discontinuous
     if (!discontinuous)
     {
       throw std::runtime_error("This variant of Lagrange is only supported for "
                                "discontinuous elements");
     }
+
     return create_d_lagrange(celltype, degree, variant, lattice_type,
                              simplex_method);
   }

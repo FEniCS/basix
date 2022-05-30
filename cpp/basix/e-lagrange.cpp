@@ -524,7 +524,11 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     // Points in triangle
     if (degree >= 3)
     {
-      x[2][0] = vtk_triangle_points(degree - 3);
+      std::vector<double> pts_data = vtk_triangle_points(degree - 3);
+      auto pts = xt::adapt(pts_data,
+                           std::vector<std::size_t>{pts_data.size() / 2, 2});
+      x[2][0] = pts;
+      // x[2][0] = vtk_triangle_points(degree - 3);
       M[2][0]
           = xt::xtensor<double, 4>({x[2][0].shape(0), 1, x[2][0].shape(0), 1});
       xt::view(M[2][0], xt::all(), 0, xt::all(), 0)
@@ -595,7 +599,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     // Points on faces
     if (degree >= 3)
     {
-      xt::xtensor<double, 2> pts = vtk_triangle_points(degree - 3);
+      std::vector<double> pts_data = vtk_triangle_points(degree - 3);
+      xt::xtensor<double, 2> pts = xt::adapt(
+          pts_data, std::vector<std::size_t>(pts_data.size() / 2, 2));
 
       std::array<std::size_t, 2> s
           = {pts.shape(0), static_cast<std::size_t>(3)};
@@ -643,7 +649,11 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
     if (degree >= 4)
     {
-      x[3][0] = vtk_tetrahedron_points(degree - 4);
+      std::vector<double> pts_data = vtk_tetrahedron_points(degree - 4);
+      xt::xtensor<double, 2> pts = xt::adapt(
+          pts_data, std::vector<std::size_t>(pts_data.size() / 3, 3));
+
+      x[3][0] = pts;
       M[3][0]
           = xt::xtensor<double, 4>({x[3][0].shape(0), 1, x[3][0].shape(0), 1});
       xt::view(M[3][0], xt::all(), 0, xt::all(), 0)

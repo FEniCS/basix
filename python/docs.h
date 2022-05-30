@@ -72,7 +72,8 @@ Args:
     exterior (bool): If set, includes outer boundaries
 
 Returns:
-    numpy.ndarray[numpy.float64]: Set of points. Shape is (npoints, tdim)
+    numpy.ndarray[numpy.float64]: Set of points. Shape is (npoints, tdim) and storage is
+    row-major.
 )";
 
 const std::string create_lattice__celltype_n_type_exterior_method = R"(
@@ -97,7 +98,8 @@ Args:
     simplex_method (basix.LatticeSimplexMethod): The method used to generate points on simplices
 
 Returns:
-    numpy.ndarray[numpy.float64]: Set of points. Shape is (npoints, tdim)
+    numpy.ndarray[numpy.float64]: Set of points. Shape is (npoints, tdim) and storage is
+    row-major.
 )";
 
 const std::string cell_volume = R"(

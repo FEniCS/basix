@@ -1,0 +1,3 @@
+from ._basixcpp import ElementFamily as _EF, FiniteElement as FiniteElement
+
+def string_to_family(family: str, cell: str) -> _EF: ...

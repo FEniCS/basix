@@ -34,7 +34,9 @@ jobs:
         run: sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
 
       - name: Install Basix
-        run: pip -v install .[ci]
+        run: |
+          pip install git+https://git@github.com/wjakob/nanobind
+          pip -v install .[ci]
 
       - name: Lint with flake8
         run: |

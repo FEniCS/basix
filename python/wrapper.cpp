@@ -2,6 +2,8 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#include <iostream>
+
 #include "docs.h"
 #include <basix/cell.h>
 #include <basix/element-families.h>
@@ -205,7 +207,7 @@ NB_MODULE(_basixcpp, m)
       .value("gll", quadrature::type::gll)
       .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);
 
-  nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic())
+  nb::enum_<cell::type>(m, "CellType")
       .value("point", cell::type::point)
       .value("interval", cell::type::interval)
       .value("triangle", cell::type::triangle)
@@ -349,6 +351,7 @@ NB_MODULE(_basixcpp, m)
             xtl::span<double> data_span(static_cast<double*>(data.data()),
                                         data.shape(0));
             self.apply_dof_transformation(data_span, block_size, cell_info);
+
             std::size_t size = data.shape(0);
             return nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
                 data_span.data(), 1, &size);
@@ -365,8 +368,8 @@ NB_MODULE(_basixcpp, m)
             self.apply_dof_transformation_to_transpose(data_span, block_size,
                                                        cell_info);
             std::size_t size = data.shape(0);
-            return nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
-                data_span.data(), 1, &size);
+            nb::tensor<nb::numpy, double, nb::shape<nb::any>>(data_span.data(),
+                                                              1, &size);
           },
           basix::docstring::FiniteElement__apply_dof_transformation_to_transpose
               .c_str())
@@ -629,14 +632,22 @@ NB_MODULE(_basixcpp, m)
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
+          {
+            if (x[i][j].ndim() != 2)
+              throw std::runtime_error("Incorrect dim in x");
             _x[i].push_back(adapt_x(x[i][j]));
+          }
         }
 
         std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
+          {
+            if (M[i][j].ndim() != 3)
+              throw std::runtime_error("Incorrect dim in M");
             _M[i].push_back(adapt_x(M[i][j]));
+          }
         }
 
         std::vector<std::size_t> _vs(value_shape.size());

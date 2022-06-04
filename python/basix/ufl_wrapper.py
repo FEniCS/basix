@@ -13,14 +13,14 @@ class BasixElement(_FiniteElementBase):
     def __init__(self, element: _basix.finite_element.FiniteElement):
         """Create a basix element."""
         super().__init__(
-            element.family.name, element.cell_type.name, element.degree, None, tuple(element.value_shape),
+            element.family.__name__, element.cell_type.__name__, element.degree, None, tuple(element.value_shape),
             tuple(element.value_shape))
 
         if element.family == _basix.ElementFamily.custom:
             self._repr = f"custom Basix element ({_compute_signature(element)})"
         else:
-            self._repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
-                          f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
+            self._repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
+                          f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous})")
         self.basix_element = element
 
     def mapping(self) -> str:
@@ -119,7 +119,7 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         if family == "DPC":
             discontinuous = True
 
-        family = _basix.finite_element.string_to_family(family, cell.name)
+        family = _basix.finite_element.string_to_family(family, cell.__name__)
 
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return BasixElement(e)

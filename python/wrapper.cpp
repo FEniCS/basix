@@ -746,14 +746,11 @@ NB_MODULE(_basixcpp, m)
   m.def(
       "compute_interpolation_operator",
       [](const FiniteElement& element_from, const FiniteElement& element_to)
-      // -> const py::array_t<double, py::array::c_style>
       {
         xt::xtensor<double, 2> out
             = basix::compute_interpolation_operator(element_from, element_to);
         std::array<std::size_t, 2> shape = {out.shape(0), out.shape(1)};
-        return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            out.data(), shape.size(), shape.data());
-        // return py::array_t<double>(out.shape(), out.data());
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(out));
       },
       basix::docstring::compute_interpolation_operator.c_str());
 

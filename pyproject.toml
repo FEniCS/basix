@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "nanobind", "cmake>=3.16", "scikit-build>=0.12"]
+requires = ["setuptools>=42", "nanobind @ git+https://github.com/wjakob/nanobind.git", "wheel", "cmake>=3.16", "scikit-build>=0.12"]
 
 build-backend = "setuptools.build_meta"
 

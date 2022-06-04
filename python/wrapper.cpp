@@ -207,7 +207,7 @@ NB_MODULE(_basixcpp, m)
       .value("gll", quadrature::type::gll)
       .value("xiao_gimbutas", quadrature::type::xiao_gimbutas);
 
-  nb::enum_<cell::type>(m, "CellType")
+  nb::enum_<cell::type>(m, "CellType", nb::is_arithmetic())
       .value("point", cell::type::point)
       .value("interval", cell::type::interval)
       .value("triangle", cell::type::triangle)
@@ -216,7 +216,7 @@ NB_MODULE(_basixcpp, m)
       .value("hexahedron", cell::type::hexahedron)
       .value("prism", cell::type::prism)
       .value("pyramid", cell::type::pyramid);
-
+      
   m.def(
       "cell_volume",
       [](cell::type cell_type) -> double { return cell::volume(cell_type); },

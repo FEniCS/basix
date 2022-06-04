@@ -276,7 +276,8 @@ NB_MODULE(_basixcpp, m)
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
-      .value("CR", element::family::CR);
+      .value("CR", element::family::CR)
+      .value("Hermite", element::family::Hermite);
 
   nb::class_<FiniteElement>(m, "FiniteElement")
       .def(
@@ -524,28 +525,18 @@ NB_MODULE(_basixcpp, m)
           "M",
           [](const FiniteElement& self)
           {
-            // const
-            // std::array<std::vector<xt::xtensor<double,
-            // 3>>, 4>& _M
-            //     = self.M();
-            // std::vector<std::vector<py::array_t<double,
-            // py::array::c_style>>> M(
-            //     4);
-            std::array<std::vector<xt::xtensor<double, 3>>, 4> _M = self.M();
+           std::array<std::vector<xt::xtensor<double, 4>>, 4> _M = self.M();
             std::vector<std::vector<nb::tensor<
-                nb::numpy, double, nb::shape<nb::any, nb::any, nb::any>>>>
+                nb::numpy, double, nb::shape<nb::any, nb::any, nb::any, nb::any>>>>
                 M(4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _M[i].size(); ++j)
               {
-                // M[i].push_back(py::array_t<double>(
-                //     _M[i][j].shape(), _M[i][j].data(),
-                //     py::cast(self)));
-                std::array<std::size_t, 3> shape
-                    = {_M[i][j].shape(0), _M[i][j].shape(1), _M[i][j].shape(2)};
+                std::array<std::size_t, 4> shape
+                    = {_M[i][j].shape(0), _M[i][j].shape(1), _M[i][j].shape(2), _M[i][j].shape(3)};
                 M[i].push_back(nb::tensor<nb::numpy, double,
-                                          nb::shape<nb::any, nb::any, nb::any>>(
+                                          nb::shape<nb::any, nb::any, nb::any, nb::any>>(
                     _M[i][j].data(), shape.size(), shape.data()));
               }
             }
@@ -583,7 +574,9 @@ NB_MODULE(_basixcpp, m)
             return x;
           })
       .def_property_readonly("has_tensor_product_factorisation",
-                             &FiniteElement::has_tensor_product_factorisation);
+                             &FiniteElement::has_tensor_product_factorisation)
+      .def_property_readonly("interpolation_nderivs",
+                             &FiniteElement::interpolation_nderivs);
 
   nb::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("unset", element::lagrange_variant::unset)
@@ -619,7 +612,7 @@ NB_MODULE(_basixcpp, m)
          const nb::tensor<nb::numpy, double>& wcoeffs,
          const std::vector<std::vector<nb::tensor<nb::numpy, double>>>& x,
          const std::vector<std::vector<nb::tensor<nb::numpy, double>>>& M,
-         maps::type map_type, bool discontinuous, int highest_complete_degree,
+         int interpolation_nderivs, maps::type map_type, bool discontinuous, int highest_complete_degree,
          int highest_degree) -> FiniteElement
       {
         if (x.size() != 4)
@@ -639,13 +632,13 @@ NB_MODULE(_basixcpp, m)
           }
         }
 
-        std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
+        std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
           {
-            if (M[i][j].ndim() != 3)
-              throw std::runtime_error("Incorrect dim in M");
+            if (M[i][j].ndim() != 4)
+              throw std::runtime_error("M has the wrong number of dimensions");
             _M[i].push_back(adapt_x(M[i][j]));
           }
         }
@@ -655,8 +648,8 @@ NB_MODULE(_basixcpp, m)
           _vs[i] = static_cast<std::size_t>(value_shape[i]);
 
         return basix::create_custom_element(
-            cell_type, _vs, _wco, _x, _M, map_type, discontinuous,
-            highest_complete_degree, highest_degree);
+            cell_type, _vs, _wco, _x, _M, interpolation_nderivs, map_type,
+            discontinuous, highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());
 

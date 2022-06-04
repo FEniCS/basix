@@ -63,6 +63,7 @@ The following elements are supported on an interval:
   - [Lagrange](https://defelement.com/elements/lagrange.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
+  - [Hermite](https://defelement.com/elements/hermite.html)
 
 
 ### Triangle
@@ -83,6 +84,7 @@ The following elements are supported on a triangle:
   - [Hellan-Herrmann-Johnson](https://defelement.com/elements/hellan-hermann-johnson.html)
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
+  - [Hermite](https://defelement.com/elements/hermite.html)
 
 
 ### Quadrilateral
@@ -121,6 +123,7 @@ The following elements are supported on a tetrahedron:
   - [Regge](https://defelement.com/elements/regge.html)
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
+  - [Hermite](https://defelement.com/elements/hermite.html)
 
 
 ### Hexahedron

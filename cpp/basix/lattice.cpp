@@ -637,7 +637,8 @@ xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
     pts(i, 0) += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
   // Get interpolated value at r in range [-1, 1]
-  auto w = [&](double r) -> double {
+  auto w = [&](double r) -> double
+  {
     xt::xtensor<double, 2> rr = {{0.5 * (r + 1.0)}};
     xt::xtensor<double, 1> v
         = xt::view(tabulate_dlagrange(n, rr), xt::all(), 0);

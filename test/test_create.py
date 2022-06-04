@@ -28,6 +28,7 @@ elements = [
     basix.ElementFamily.serendipity,
     basix.ElementFamily.DPC,
     basix.ElementFamily.CR,
+    basix.ElementFamily.Hermite,
     basix.ElementFamily.custom,
 ]
 

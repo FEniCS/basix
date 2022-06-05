@@ -216,7 +216,7 @@ NB_MODULE(_basixcpp, m)
       .value("hexahedron", cell::type::hexahedron)
       .value("prism", cell::type::prism)
       .value("pyramid", cell::type::pyramid);
-      
+
   m.def(
       "cell_volume",
       [](cell::type cell_type) -> double { return cell::volume(cell_type); },
@@ -412,9 +412,8 @@ NB_MODULE(_basixcpp, m)
                   = {tpart.second.shape(0), tpart.second.shape(1),
                      tpart.second.shape(2)};
               t2[cell_type_to_str(tpart.first).c_str()]
-                  = nb::tensor<nb::numpy, double,
-                               nb::shape<nb::any, nb::any, nb::any>>(
-                      tpart.second.data(), shape.size(), shape.data());
+                  = xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
+                      std::move(tpart.second));
             }
             return t2;
           },
@@ -495,7 +494,8 @@ NB_MODULE(_basixcpp, m)
           "dual_matrix",
           [](const FiniteElement& self)
           {
-            // const xt::xtensor<double, 2>& P = self.dual_matrix();
+            // const xt::xtensor<double, 2>& P =
+            // self.dual_matrix();
             xt::xtensor<double, 2> P = self.dual_matrix();
             return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(P));
           })
@@ -525,19 +525,22 @@ NB_MODULE(_basixcpp, m)
           "M",
           [](const FiniteElement& self)
           {
-           std::array<std::vector<xt::xtensor<double, 4>>, 4> _M = self.M();
-            std::vector<std::vector<nb::tensor<
-                nb::numpy, double, nb::shape<nb::any, nb::any, nb::any, nb::any>>>>
+            std::array<std::vector<xt::xtensor<double, 4>>, 4> _M = self.M();
+            std::vector<std::vector<
+                nb::tensor<nb::numpy, double,
+                           nb::shape<nb::any, nb::any, nb::any, nb::any>>>>
                 M(4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _M[i].size(); ++j)
               {
                 std::array<std::size_t, 4> shape
-                    = {_M[i][j].shape(0), _M[i][j].shape(1), _M[i][j].shape(2), _M[i][j].shape(3)};
-                M[i].push_back(nb::tensor<nb::numpy, double,
-                                          nb::shape<nb::any, nb::any, nb::any, nb::any>>(
-                    _M[i][j].data(), shape.size(), shape.data()));
+                    = {_M[i][j].shape(0), _M[i][j].shape(1), _M[i][j].shape(2),
+                       _M[i][j].shape(3)};
+                M[i].push_back(
+                    nb::tensor<nb::numpy, double,
+                               nb::shape<nb::any, nb::any, nb::any, nb::any>>(
+                        _M[i][j].data(), shape.size(), shape.data()));
               }
             }
             return M;
@@ -612,8 +615,8 @@ NB_MODULE(_basixcpp, m)
          const nb::tensor<nb::numpy, double>& wcoeffs,
          const std::vector<std::vector<nb::tensor<nb::numpy, double>>>& x,
          const std::vector<std::vector<nb::tensor<nb::numpy, double>>>& M,
-         int interpolation_nderivs, maps::type map_type, bool discontinuous, int highest_complete_degree,
-         int highest_degree) -> FiniteElement
+         int interpolation_nderivs, maps::type map_type, bool discontinuous,
+         int highest_complete_degree, int highest_degree) -> FiniteElement
       {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");

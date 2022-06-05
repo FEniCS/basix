@@ -45,7 +45,7 @@ def test_dof_transformations(cell, element, degree, element_args, block_size):
         cell_info = random.randrange(2 ** 30)
 
         data1 = data.copy()
-        data1 = e.apply_dof_transformation(data1, block_size, cell_info)
+        e.apply_dof_transformation(data1, block_size, cell_info)
         # Numba function does not use blocked data
         data2 = data.copy().reshape(e.dim, block_size)
         # Mapping lists to numba dictionaries
@@ -98,7 +98,7 @@ def test_dof_transformations_to_transpose(cell, element, degree, block_size, ele
         cell_info = random.randrange(2 ** 30)
 
         data1 = data.copy()
-        data1 = e.apply_dof_transformation_to_transpose(data1, block_size, cell_info)
+        e.apply_dof_transformation_to_transpose(data1, block_size, cell_info)
         # Numba function does not use blocked data
         data2 = data.copy().reshape(block_size, e.dim)
         # Mapping lists to numba dictionaries

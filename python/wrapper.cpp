@@ -279,8 +279,8 @@ NB_MODULE(_basixcpp, m)
       .def(
           "tabulate",
           [](const FiniteElement& self, int n,
-             const nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>,
-                              nb::c_contig>& x)
+             const nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>&
+                 x)
           {
             std::vector<std::size_t> shape
                 = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};

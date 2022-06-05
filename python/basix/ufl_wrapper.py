@@ -20,7 +20,8 @@ class BasixElement(_FiniteElementBase):
             self._repr = f"custom Basix element ({_compute_signature(element)})"
         else:
             self._repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
-                          f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous})")
+                          f"{element.lagrange_variant.__name__}, "
+                          f"{element.dpc_variant.__name__}, {element.discontinuous})")
         self.basix_element = element
 
     def mapping(self) -> str:

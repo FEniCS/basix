@@ -120,9 +120,7 @@ NB_MODULE(_basixcpp, m)
       [](cell::type celltype)
       {
         xt::xtensor<double, 2> g = cell::geometry(celltype);
-        std::array<std::size_t, 2> shape = {g.shape(0), g.shape(1)};
-        return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            g.data(), shape.size(), shape.data());
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(g));
       },
       basix::docstring::geometry.c_str());
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
@@ -133,9 +131,7 @@ NB_MODULE(_basixcpp, m)
       {
         xt::xtensor<double, 2> g
             = cell::sub_entity_geometry(celltype, dim, index);
-        std::array<std::size_t, 2> shape = {g.shape(0), g.shape(1)};
-        return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-            g.data(), shape.size(), shape.data());
+        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(g));
       },
       basix::docstring::sub_entity_geometry.c_str());
 
@@ -352,10 +348,6 @@ NB_MODULE(_basixcpp, m)
             xtl::span<double> data_span(static_cast<double*>(data.data()),
                                         data.shape(0));
             self.apply_dof_transformation(data_span, block_size, cell_info);
-
-            std::size_t size = data.shape(0);
-            return nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
-                data_span.data(), 1, &size);
           },
           basix::docstring::FiniteElement__apply_dof_transformation.c_str())
       .def(
@@ -368,9 +360,6 @@ NB_MODULE(_basixcpp, m)
                                         data.shape(0));
             self.apply_dof_transformation_to_transpose(data_span, block_size,
                                                        cell_info);
-            std::size_t size = data.shape(0);
-            nb::tensor<nb::numpy, double, nb::shape<nb::any>>(data_span.data(),
-                                                              1, &size);
           },
           basix::docstring::FiniteElement__apply_dof_transformation_to_transpose
               .c_str())

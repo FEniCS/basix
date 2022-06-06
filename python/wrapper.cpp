@@ -462,8 +462,6 @@ NB_MODULE(_basixcpp, m)
           "points",
           [](const FiniteElement& self)
           {
-            // const xt::xtensor<double, 2>& x =
-            // self.points();
             const xt::xtensor<double, 2>& x = self.points();
             std::array<std::size_t, 2> shape = {x.shape(0), x.shape(1)};
             return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
@@ -474,8 +472,6 @@ NB_MODULE(_basixcpp, m)
           "interpolation_matrix",
           [](const FiniteElement& self)
           {
-            // const xt::xtensor<double, 2>& P =
-            // self.interpolation_matrix();
             xt::xtensor<double, 2> P = self.interpolation_matrix();
             return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(P));
           })
@@ -483,8 +479,6 @@ NB_MODULE(_basixcpp, m)
           "dual_matrix",
           [](const FiniteElement& self)
           {
-            // const xt::xtensor<double, 2>& P =
-            // self.dual_matrix();
             xt::xtensor<double, 2> P = self.dual_matrix();
             return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(P));
           })
@@ -492,8 +486,6 @@ NB_MODULE(_basixcpp, m)
           "coefficient_matrix",
           [](const FiniteElement& self)
           {
-            // const xt::xtensor<double, 2>& P =
-            // self.coefficient_matrix();
             xt::xtensor<double, 2> P = self.coefficient_matrix();
             std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
             return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
@@ -503,8 +495,6 @@ NB_MODULE(_basixcpp, m)
           "wcoeffs",
           [](const FiniteElement& self)
           {
-            //  const xt::xtensor<double, 2>& P =
-            //  self.wcoeffs();
             xt::xtensor<double, 2> P = self.wcoeffs();
             std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
             return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
@@ -538,14 +528,7 @@ NB_MODULE(_basixcpp, m)
           "x",
           [](const FiniteElement& self)
           {
-            // const
-            // std::array<std::vector<xt::xtensor<double,
-            // 2>>, 4>& _x
-            //     = self.x();
             std::array<std::vector<xt::xtensor<double, 2>>, 4> _x = self.x();
-            // std::vector<std::vector<py::array_t<double,
-            // py::array::c_style>>> x(
-            //     4);
             std::vector<std::vector<
                 nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>>>
                 x(4);
@@ -553,9 +536,6 @@ NB_MODULE(_basixcpp, m)
             {
               for (std::size_t j = 0; j < _x[i].size(); ++j)
               {
-                // x[i].push_back(py::array_t<double>(
-                //     _x[i][j].shape(), _x[i][j].data(),
-                //     py::cast(self)));
                 std::array<std::size_t, 2> shape
                     = {_x[i][j].shape(0), _x[i][j].shape(1)};
                 x[i].push_back(

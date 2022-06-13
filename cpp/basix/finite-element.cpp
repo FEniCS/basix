@@ -3,6 +3,7 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
+#include "docs.h"
 #include "dof-transformations.h"
 #include "e-brezzi-douglas-marini.h"
 #include "e-bubble.h"
@@ -18,7 +19,6 @@
 #include "math.h"
 #include "polyset.h"
 #include <basix/version.h>
-#include <basix/pybind-docs.h>
 #include <numeric>
 #include <xtensor/xbuilder.hpp>
 

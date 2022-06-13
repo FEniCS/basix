@@ -140,7 +140,7 @@ def get_docstring(matches):
 
 
 def generate_docs():
-    with open(os.path.join(path, "pybind-docs.h.template")) as f:
+    with open(os.path.join(path, "docs.template")) as f:
         docs = f.read()
 
     docs = docs.replace("{{DOCTYPE}}", "const std::string")

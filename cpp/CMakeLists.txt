@@ -88,8 +88,7 @@ endif()
 message(STATUS "_DOCS=${_DOCS}")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/pybind-docs.h.in basix/pybind-docs.h)
-
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h.in basix/docs.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(HEADERS_basix
@@ -118,7 +117,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
-  ${CMAKE_CURRENT_BINARY_DIR}/basix/pybind-docs.h
+  ${CMAKE_CURRENT_BINARY_DIR}/basix/docs.h
   ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
 
 target_sources(basix PRIVATE

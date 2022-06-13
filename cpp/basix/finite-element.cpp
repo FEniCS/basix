@@ -3,7 +3,6 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
-#include "docs.h"
 #include "dof-transformations.h"
 #include "e-brezzi-douglas-marini.h"
 #include "e-bubble.h"

@@ -180,7 +180,7 @@ jobs:
 
       - name: Install Basix
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_XTENSOR_LIBS=ON -B build-dir -S .
+          cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_XTENSOR_LIBS=ON -B build-dir -S cpp
           cmake --build build-dir
           sudo cmake --install build-dir
 

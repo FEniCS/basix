@@ -74,7 +74,6 @@ add_library(basix)
 
 find_package(Python3 COMPONENTS Interpreter)
 if(Python3_FOUND)
-  message(STATUS "FOUND PYTHON")
   execute_process(
     COMMAND "${Python3_EXECUTABLE}" ${CMAKE_CURRENT_SOURCE_DIR}/generate_docs.py
     OUTPUT_VARIABLE WRAPPER_DOCS

@@ -18,6 +18,7 @@
 #include "math.h"
 #include "polyset.h"
 #include <basix/version.h>
+#include <basix/pybind-docs.h>
 #include <numeric>
 #include <xtensor/xbuilder.hpp>
 

@@ -3,6 +3,6 @@
 namespace basix::docstring
 {
 
-@_DOCS@
+@WRAPPER_DOCS@
 
 } // namespace basix::docstring

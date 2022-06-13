@@ -72,23 +72,17 @@ feature_summary(WHAT ALL)
 
 add_library(basix)
 
-message(STATUS "_DOCS=${_DOCS}")
-
 find_package(Python3 COMPONENTS Interpreter)
 if(Python3_FOUND)
   message(STATUS "FOUND PYTHON")
   execute_process(
     COMMAND "${Python3_EXECUTABLE}" ${CMAKE_CURRENT_SOURCE_DIR}/generate_docs.py
-    OUTPUT_VARIABLE _DOCS
+    OUTPUT_VARIABLE WRAPPER_DOCS
   )
-else()
-  message(STATUS "DID NOT FIND PYTHON")
 endif()
-
-message(STATUS "_DOCS=${_DOCS}")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h.in ${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h.in basix/docs.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(HEADERS_basix

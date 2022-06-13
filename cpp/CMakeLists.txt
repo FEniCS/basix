@@ -83,7 +83,6 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/indexing.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/maps.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.h
@@ -110,7 +109,6 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polynomials.cpp

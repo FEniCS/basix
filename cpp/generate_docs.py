@@ -4,7 +4,7 @@ import os
 import re
 
 path = os.path.dirname(os.path.realpath(__file__))
-cpp_path = os.path.join(path, "../cpp/basix")
+cpp_path = os.path.join(path, "basix")
 
 replacements = [(";", "@semicolon@"), ("{", "@openbrace@"), ("}", "@closebrace@"),
                 ("<", "@opentri@"), (">", "@closetri@"), ("(", "@openb@"), (")", "@closeb@"),
@@ -140,7 +140,7 @@ def get_docstring(matches):
 
 
 def generate_docs():
-    with open(os.path.join(path, "docs.h.template")) as f:
+    with open(os.path.join(path, "pybind-docs.h.template")) as f:
         docs = f.read()
 
     docs = docs.replace("{{DOCTYPE}}", "const std::string")
@@ -150,5 +150,4 @@ def generate_docs():
 
 
 if __name__ == "__main__":
-    with open(os.path.join(path, "docs.h"), "w") as f:
-        f.write(generate_docs())
+    print(generate_docs())

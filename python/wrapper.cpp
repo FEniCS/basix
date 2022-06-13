@@ -2,7 +2,6 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "docs.h"
 #include <basix/cell.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
@@ -12,6 +11,7 @@
 #include <basix/maps.h>
 #include <basix/polynomials.h>
 #include <basix/polyset.h>
+#include <basix/pybind-docs.h>
 #include <basix/quadrature.h>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>

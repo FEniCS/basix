@@ -1,0 +1,8 @@
+#include <string>
+
+namespace basix::docstring
+{
+
+@_DOCS@
+
+} // namespace basix::docstring

@@ -20,7 +20,7 @@ Args:
     celltype (basix.CellType): Cell Type
 
 Returns::
-    numpy.ndarray[numpy.float64]: Set of vertex points of the cell. Shape is (npoints, gdim)
+    numpy.typing.NDArray[numpy.float64]: Set of vertex points of the cell. Shape is (npoints, gdim)
 )";
 
 const std::string sub_entity_connectivity = R"(
@@ -72,7 +72,7 @@ Args:
     exterior (bool): If set, includes outer boundaries
 
 Returns:
-    numpy.ndarray[numpy.float64]: Set of points. Shape is (npoints, tdim)
+    numpy.typing.NDArray[numpy.float64]: Set of points. Shape is (npoints, tdim)
 )";
 
 const std::string create_lattice__celltype_n_type_exterior_method = R"(
@@ -97,7 +97,7 @@ Args:
     simplex_method (basix.LatticeSimplexMethod): The method used to generate points on simplices
 
 Returns:
-    numpy.ndarray[numpy.float64]: Set of points. Shape is (npoints, tdim)
+    numpy.typing.NDArray[numpy.float64]: Set of points. Shape is (npoints, tdim)
 )";
 
 const std::string cell_volume = R"(
@@ -118,7 +118,7 @@ Args:
     cell_type (basix.CellType): Type of cell
 
 Returns:
-    numpy.ndarray[numpy.float64]: The normals. Shape is (nfacets, gdim)
+    numpy.typing.NDArray[numpy.float64]: The normals. Shape is (nfacets, gdim)
 )";
 
 const std::string cell_facet_reference_volumes = R"(
@@ -128,7 +128,7 @@ Args:
     cell_type (basix.CellType): Type of cell
 
 Returns:
-    numpy.ndarray[numpy.float64]: The volumes of the references associated with each facet
+    numpy.typing.NDArray[numpy.float64]: The volumes of the references associated with each facet
 )";
 
 const std::string cell_facet_outward_normals = R"(
@@ -138,7 +138,7 @@ Args:
     cell_type (basix.CellType): Type of cell
 
 Returns:
-    numpy.ndarray[numpy.float64]: The outward normals. Shape is (nfacets, gdim)
+    numpy.typing.NDArray[numpy.float64]: The outward normals. Shape is (nfacets, gdim)
 )";
 
 const std::string cell_facet_orientations = R"(
@@ -159,7 +159,7 @@ Args:
     cell_type (basix.CellType): Type of cell
 
 Returns:
-    numpy.ndarray[numpy.float64]: The jacobians of the facets. Shape is (nfacets, gdim, gdim - 1)
+    numpy.typing.NDArray[numpy.float64]: The jacobians of the facets. Shape is (nfacets, gdim, gdim - 1)
 )";
 
 const std::string FiniteElement__tabulate = R"(
@@ -171,10 +171,10 @@ performance is critical
 
 Args:
     nd (int): The order of derivatives, up to and including, to compute. Use 0 for the basis functions only.
-    x (numpy.ndarray[numpy.float64]): The points at which to compute the basis functions. The shape of x is (number of points, geometric dimension).
+    x (numpy.typing.NDArray[numpy.float64]): The points at which to compute the basis functions. The shape of x is (number of points, geometric dimension).
 
 Returns:
-    numpy.ndarray[numpy.float64]: The basis functions (and derivatives). The shape is
+    numpy.typing.NDArray[numpy.float64]: The basis functions (and derivatives). The shape is
     (derivative, point, basis fn index, value index).
     - The first index is the derivative, with higher derivatives are
     stored in triangular (2D) or tetrahedral (3D) ordering, ie for
@@ -193,13 +193,13 @@ function can perform the mapping for multiple points, grouped by
 points that share a common Jacobian.
 
 Args:
-    U (numpy.ndarray[numpy.float64]): The function values on the reference. The indices are [Jacobian index, point index, components].
-    J (numpy.ndarray[numpy.float64]): The Jacobian of the mapping. The indices are [Jacobian index, J_i, J_j].
-    detJ (numpy.ndarray[numpy.float64]): The determinant of the Jacobian of the mapping. It has length `J.shape(0)`
-    K (numpy.ndarray[numpy.float64]): The inverse of the Jacobian of the mapping. The indices are [Jacobian index, K_i, K_j].
+    U (numpy.typing.NDArray[numpy.float64]): The function values on the reference. The indices are [Jacobian index, point index, components].
+    J (numpy.typing.NDArray[numpy.float64]): The Jacobian of the mapping. The indices are [Jacobian index, J_i, J_j].
+    detJ (numpy.typing.NDArray[numpy.float64]): The determinant of the Jacobian of the mapping. It has length `J.shape(0)`
+    K (numpy.typing.NDArray[numpy.float64]): The inverse of the Jacobian of the mapping. The indices are [Jacobian index, K_i, K_j].
 
 Returns:
-    numpy.ndarray[numpy.float64]: The function values on the cell. The indices are [Jacobian
+    numpy.typing.NDArray[numpy.float64]: The function values on the cell. The indices are [Jacobian
     index, point index, components].
 )";
 
@@ -207,13 +207,13 @@ const std::string FiniteElement__pull_back = R"(
 Map function values from a physical cell to the reference
 
 Args:
-    u (numpy.ndarray[numpy.float64]): The function values on the cell
-    J (numpy.ndarray[numpy.float64]): The Jacobian of the mapping
-    detJ (numpy.ndarray[numpy.float64]): The determinant of the Jacobian of the mapping
-    K (numpy.ndarray[numpy.float64]): The inverse of the Jacobian of the mapping
+    u (numpy.typing.NDArray[numpy.float64]): The function values on the cell
+    J (numpy.typing.NDArray[numpy.float64]): The Jacobian of the mapping
+    detJ (numpy.typing.NDArray[numpy.float64]): The determinant of the Jacobian of the mapping
+    K (numpy.typing.NDArray[numpy.float64]): The inverse of the Jacobian of the mapping
 
 Returns:
-    numpy.ndarray[numpy.float64]: The function values on the reference. The indices are [Jacobian
+    numpy.typing.NDArray[numpy.float64]: The function values on the reference. The indices are [Jacobian
     index, point index, components].
 )";
 
@@ -224,12 +224,12 @@ NOTE: This function is designed to be called at runtime, so its
 performance is critical.
 
 Args:
-    data (numpy.ndarray[numpy.float64]): The data
+    data (numpy.typing.NDArray[numpy.float64]): The data
     block_size (int): The number of data points per DOF
     cell_info (int): The permutation info for the cell
 
 Returns:
-    data (numpy.ndarray[numpy.float64]): The data
+    data (numpy.typing.NDArray[numpy.float64]): The data
 )";
 
 const std::string FiniteElement__apply_dof_transformation_to_transpose = R"(
@@ -239,12 +239,12 @@ NOTE: This function is designed to be called at runtime, so its
 performance is critical.
 
 Args:
-    data (numpy.ndarray[numpy.float64]): The data
+    data (numpy.typing.NDArray[numpy.float64]): The data
     block_size (int): The number of data points per DOF
     cell_info (int): The permutation info for the cell
 
 Returns:
-    data (numpy.ndarray[numpy.float64]): The data
+    data (numpy.typing.NDArray[numpy.float64]): The data
 )";
 
 const std::string FiniteElement__apply_inverse_transpose_dof_transformation
@@ -255,12 +255,12 @@ NOTE: This function is designed to be called at runtime, so its
 performance is critical.
 
 Args:
-    data (numpy.ndarray[numpy.float64]): The data
+    data (numpy.typing.NDArray[numpy.float64]): The data
     block_size (int): The number of data points per DOF
     cell_info (int): The permutation info for the cell
 
 Returns:
-    data (numpy.ndarray[numpy.float64]): The data
+    data (numpy.typing.NDArray[numpy.float64]): The data
 )";
 
 const std::string FiniteElement__base_transformations = R"(
@@ -359,7 +359,7 @@ For these DOFs, the subblocks of the base transformation matrices are:
 
 
 Returns:
-    numpy.ndarray[numpy.float64]: The base transformations for this element. The shape is
+    numpy.typing.NDArray[numpy.float64]: The base transformations for this element. The shape is
     (ntranformations, ndofs, ndofs)
 )";
 
@@ -393,9 +393,9 @@ Create a custom finite element
 Args:
     cell_type (basix.CellType): The cell type
     value_shape (List[int]): The value shape of the element
-    wcoeffs (numpy.ndarray[numpy.float64]): Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element. Shape is (dim(Legendre polynomials), dim(finite element polyset))
-    x (List[List[numpy.ndarray[numpy.float64]]]): Interpolation points. Indices are (tdim, entity index, point index, dim)
-    M (List[List[numpy.ndarray[numpy.float64]]]): The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index, derivative)
+    wcoeffs (numpy.typing.NDArray[numpy.float64]): Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element. Shape is (dim(Legendre polynomials), dim(finite element polyset))
+    x (List[List[numpy.typing.NDArray[numpy.float64]]]): Interpolation points. Indices are (tdim, entity index, point index, dim)
+    M (List[List[numpy.typing.NDArray[numpy.float64]]]): The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index, derivative)
     interpolation_nderivs (int): The number of derivatives that need to be used during interpolation
     map_type (basix.MapType): The type of map to be used to map values from the reference to a cell
     discontinuous (bool): Indicates whether or not this is the discontinuous version of the element
@@ -550,7 +550,7 @@ Args:
     element_to (basix.finite_element.FiniteElement): The element to interpolate to
 
 Returns:
-    numpy.ndarray[numpy.float64]: Matrix operator that maps the 'from' degrees-of-freedom to
+    numpy.typing.NDArray[numpy.float64]: Matrix operator that maps the 'from' degrees-of-freedom to
     the 'to' degrees-of-freedom. Shape is (ndofs(element_to),
     ndofs(element_from))
 )";
@@ -574,10 +574,10 @@ Args:
     celltype (basix.CellType): Cell type
     d (int): Polynomial degree
     n (int): Maximum derivative order. Use n = 0 for the basis only.
-    x (numpy.ndarray[numpy.float64]): Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
+    x (numpy.typing.NDArray[numpy.float64]): Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
 
 Returns:
-    numpy.ndarray[numpy.float64]: Polynomial sets, for each derivative, tabulated at points.
+    numpy.typing.NDArray[numpy.float64]: Polynomial sets, for each derivative, tabulated at points.
     The shape is `(number of derivatives computed, number of points,
     basis index)`.
     
@@ -604,10 +604,10 @@ Args:
     polytype (basix.PolynomialType): Polynomial type
     celltype (basix.CellType): Cell type
     d (int): Polynomial degree
-    x (numpy.ndarray[numpy.float64]): Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
+    x (numpy.typing.NDArray[numpy.float64]): Points at which to evaluate the basis. The shape is (number of points, geometric dimension).
 
 Returns:
-    numpy.ndarray[numpy.float64]: Polynomial sets, for each derivative, tabulated at points.
+    numpy.typing.NDArray[numpy.float64]: Polynomial sets, for each derivative, tabulated at points.
     The shape is `(basis index, number of points)`.
 )";
 
@@ -620,7 +620,7 @@ Args:
     m (int): Maximum degree of polynomial that this quadrature rule will integrate exactly
 
 Returns:
-    numpy.ndarray[numpy.float64]: List of points and list of weights. The number of points
+    numpy.typing.NDArray[numpy.float64]: List of points and list of weights. The number of points
     arrays has shape (num points, gdim)
 )";
 
@@ -632,7 +632,7 @@ Args:
     m (int): Maximum degree of polynomial that this quadrature rule will integrate exactly
 
 Returns:
-    numpy.ndarray[numpy.float64]: List of points and list of weights. The number of points
+    numpy.typing.NDArray[numpy.float64]: List of points and list of weights. The number of points
     arrays has shape (num points, gdim)
 )";
 

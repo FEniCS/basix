@@ -5,7 +5,6 @@
 #include "e-nce-rtc.h"
 #include "e-lagrange.h"
 #include "element-families.h"
-#include "log.h"
 #include "maps.h"
 #include "moments.h"
 #include "polyset.h"
@@ -30,13 +29,6 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
 
   if (degree < 1)
     throw std::runtime_error("Degree must be at least 1");
-
-  if (degree > 4)
-  {
-    // TODO: suggest alternative with non-uniform points once implemented
-    LOG(WARNING) << "RTC spaces with high degree using equally spaced"
-                 << " points are unstable.";
-  }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
@@ -173,13 +165,6 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
 
   if (degree < 1)
     throw std::runtime_error("Degree must be at least 1");
-
-  if (degree > 4)
-  {
-    // TODO: suggest alternative with non-uniform points once implemented
-    LOG(WARNING) << "NC spaces with high degree using equally spaced"
-                 << " points are unstable.";
-  }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 

@@ -5,6 +5,8 @@ import numpy
 
 import numpy.typing as npt
 
+__version__: str = ...
+
 class CellType:
     __members__: ClassVar[dict] = ...  # read-only
     __entries: ClassVar[dict] = ...

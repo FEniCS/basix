@@ -65,6 +65,7 @@ jobs:
         run: |
           export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
           export Basix_DIR=$INSTALL_DIR/python/basix/lib/cmake/basix/
+          echo $Basix_DIR
           export PATH=$PATH:$INSTALL_DIR/python/basix/include:$INSTALL_DIR/python/basix/lib
           pytest demo/cpp/test.py
 

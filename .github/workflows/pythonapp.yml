@@ -63,6 +63,7 @@ jobs:
 
       - name: Run C++ demos
         run: |
+          export Basix_DIR=/root/basix/root/basix/_skbuild/linux-x86_64-3.10/cmake-install/python/basix/lib/cmake/basix/
           pytest demo/cpp/test.py
 
       - name: Build documentation

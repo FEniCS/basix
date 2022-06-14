@@ -5,7 +5,6 @@
 #include "e-nce-rtc.h"
 #include "e-lagrange.h"
 #include "element-families.h"
-#include "log.h"
 #include "maps.h"
 #include "moments.h"
 #include "polyset.h"
@@ -30,13 +29,6 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
 
   if (degree < 1)
     throw std::runtime_error("Degree must be at least 1");
-
-  if (degree > 4)
-  {
-    // TODO: suggest alternative with non-uniform points once implemented
-    LOG(WARNING) << "RTC spaces with high degree using equally spaced"
-                 << " points are unstable.";
-  }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
@@ -116,16 +108,16 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     x[i] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 3>>(
+    M[i] = std::vector<xt::xtensor<double, 4>>(
         cell::num_sub_entities(celltype, i),
-        xt::xtensor<double, 3>({0, tdim, 0}));
+        xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   FiniteElement moment_space
@@ -145,9 +137,9 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
     x[tdim] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, tdim),
         xt::xtensor<double, 2>({0, tdim}));
-    M[tdim] = std::vector<xt::xtensor<double, 3>>(
+    M[tdim] = std::vector<xt::xtensor<double, 4>>(
         cell::num_sub_entities(celltype, tdim),
-        xt::xtensor<double, 3>({0, tdim, 0}));
+        xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
@@ -159,7 +151,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, wcoeffs,
-                       x, M, maps::type::contravariantPiola, discontinuous,
+                       x, M, 0, maps::type::contravariantPiola, discontinuous,
                        degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------
@@ -173,13 +165,6 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
 
   if (degree < 1)
     throw std::runtime_error("Degree must be at least 1");
-
-  if (degree > 4)
-  {
-    // TODO: suggest alternative with non-uniform points once implemented
-    LOG(WARNING) << "NC spaces with high degree using equally spaced"
-                 << " points are unstable.";
-  }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
@@ -289,14 +274,14 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   x[0] = std::vector<xt::xtensor<double, 2>>(
       cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
-  M[0] = std::vector<xt::xtensor<double, 3>>(
+  M[0] = std::vector<xt::xtensor<double, 4>>(
       cell::num_sub_entities(celltype, 0),
-      xt::xtensor<double, 3>({0, tdim, 0}));
+      xt::xtensor<double, 4>({0, tdim, 0, 1}));
 
   FiniteElement edge_moment_space = element::create_lagrange(
       cell::type::interval, degree - 1, lvariant, true);
@@ -316,9 +301,9 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   {
     x[2] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, 2), xt::xtensor<double, 2>({0, tdim}));
-    M[2] = std::vector<xt::xtensor<double, 3>>(
+    M[2] = std::vector<xt::xtensor<double, 4>>(
         cell::num_sub_entities(celltype, 2),
-        xt::xtensor<double, 3>({0, tdim, 0}));
+        xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
   if (tdim == 3)
   {
@@ -335,9 +320,9 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
       x[3] = std::vector<xt::xtensor<double, 2>>(
           cell::num_sub_entities(celltype, 3),
           xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector<xt::xtensor<double, 3>>(
+      M[3] = std::vector<xt::xtensor<double, 4>>(
           cell::num_sub_entities(celltype, 3),
-          xt::xtensor<double, 3>({0, tdim, 0}));
+          xt::xtensor<double, 4>({0, tdim, 0, 1}));
     }
   }
 
@@ -350,7 +335,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, wcoeffs,
-                       x, M, maps::type::covariantPiola, discontinuous,
+                       x, M, 0, maps::type::covariantPiola, discontinuous,
                        degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------

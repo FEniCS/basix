@@ -82,7 +82,7 @@ enum class simplex_method
 /// @param type A lattice type
 /// @param exterior If set, includes outer boundaries
 /// @param simplex_method The method used to generate points on simplices
-/// @return Set of points
+/// @return Set of points. Shape is (npoints, tdim)
 xt::xtensor<double, 2>
 create(cell::type celltype, int n, lattice::type type, bool exterior,
        lattice::simplex_method simplex_method = lattice::simplex_method::none);

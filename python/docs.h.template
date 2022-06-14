@@ -20,7 +20,7 @@ Args:
     {{cell.h > geometry > param > celltype : basix.CellType}}
 
 Returns::
-    {{cell.h > geometry > return : numpy.ndarray[numpy.float64]}}
+    {{cell.h > geometry > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} sub_entity_connectivity = R"(
@@ -55,7 +55,7 @@ Args:
     {{lattice.h > create > param > exterior : bool}}
 
 Returns:
-    {{lattice.h > create > return : numpy.ndarray[numpy.float64]}}
+    {{lattice.h > create > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} create_lattice__celltype_n_type_exterior_method = R"(
@@ -69,7 +69,7 @@ Args:
     {{lattice.h > create > param > simplex_method : basix.LatticeSimplexMethod}}
 
 Returns:
-    {{lattice.h > create > return : numpy.ndarray[numpy.float64]}}
+    {{lattice.h > create > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} cell_volume = R"(
@@ -89,7 +89,7 @@ Args:
     {{cell.h > facet_normals > param > cell_type : basix.CellType}}
 
 Returns:
-    {{cell.h > facet_normals > return : numpy.ndarray[numpy.float64]}}
+    {{cell.h > facet_normals > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} cell_facet_reference_volumes = R"(
@@ -99,7 +99,7 @@ Args:
     {{cell.h > facet_reference_volumes > param > cell_type : basix.CellType}}
 
 Returns:
-    {{cell.h > facet_reference_volumes > return : numpy.ndarray[numpy.float64]}}
+    {{cell.h > facet_reference_volumes > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} cell_facet_outward_normals = R"(
@@ -109,7 +109,7 @@ Args:
     {{cell.h > facet_outward_normals > param > cell_type : basix.CellType}}
 
 Returns:
-    {{cell.h > facet_outward_normals > return : numpy.ndarray[numpy.float64]}}
+    {{cell.h > facet_outward_normals > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} cell_facet_orientations = R"(
@@ -129,7 +129,7 @@ Args:
     {{cell.h > facet_jacobians > param > cell_type : basix.CellType}}
 
 Returns:
-    {{cell.h > facet_jacobians > return : numpy.ndarray[numpy.float64]}}
+    {{cell.h > facet_jacobians > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} FiniteElement__tabulate = R"(
@@ -137,60 +137,60 @@ Returns:
 
 Args:
     {{finite-element.h > FiniteElement::tabulate > param > nd : int}}
-    {{finite-element.h > FiniteElement::tabulate > param > x : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::tabulate > param > x : numpy.typing.NDArray[numpy.float64]}}
 
 Returns:
-    {{finite-element.h > FiniteElement::tabulate > return : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::tabulate > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} FiniteElement__push_forward = R"(
 {{finite-element.h > FiniteElement::push_forward > doc}}
 
 Args:
-    {{finite-element.h > FiniteElement::push_forward > param > U : numpy.ndarray[numpy.float64]}}
-    {{finite-element.h > FiniteElement::push_forward > param > J : numpy.ndarray[numpy.float64]}}
-    {{finite-element.h > FiniteElement::push_forward > param > detJ : numpy.ndarray[numpy.float64]}}
-    {{finite-element.h > FiniteElement::push_forward > param > K : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::push_forward > param > U : numpy.typing.NDArray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::push_forward > param > J : numpy.typing.NDArray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::push_forward > param > detJ : numpy.typing.NDArray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::push_forward > param > K : numpy.typing.NDArray[numpy.float64]}}
 
 Returns:
-    {{finite-element.h > FiniteElement::push_forward > return : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::push_forward > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} FiniteElement__pull_back = R"(
 {{finite-element.h > FiniteElement::pull_back > doc}}
 
 Args:
-    {{finite-element.h > FiniteElement::pull_back > param > u : numpy.ndarray[numpy.float64]}}
-    {{finite-element.h > FiniteElement::pull_back > param > J : numpy.ndarray[numpy.float64]}}
-    {{finite-element.h > FiniteElement::pull_back > param > detJ : numpy.ndarray[numpy.float64]}}
-    {{finite-element.h > FiniteElement::pull_back > param > K : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::pull_back > param > u : numpy.typing.NDArray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::pull_back > param > J : numpy.typing.NDArray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::pull_back > param > detJ : numpy.typing.NDArray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::pull_back > param > K : numpy.typing.NDArray[numpy.float64]}}
 
 Returns:
-    {{finite-element.h > FiniteElement::pull_back > return : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::pull_back > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} FiniteElement__apply_dof_transformation = R"(
 {{finite-element.h > FiniteElement::apply_dof_transformation > doc}}
 
 Args:
-    {{finite-element.h > FiniteElement::apply_dof_transformation > param > data : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::apply_dof_transformation > param > data : numpy.typing.NDArray[numpy.float64]}}
     {{finite-element.h > FiniteElement::apply_dof_transformation > param > block_size : int}}
     {{finite-element.h > FiniteElement::apply_dof_transformation > param > cell_info : int}}
 
 Returns:
-    {{finite-element.h > FiniteElement::apply_dof_transformation > param > data : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::apply_dof_transformation > param > data : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} FiniteElement__apply_dof_transformation_to_transpose = R"(
 {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > doc}}
 
 Args:
-    {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > data : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > data : numpy.typing.NDArray[numpy.float64]}}
     {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > block_size : int}}
     {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > cell_info : int}}
 
 Returns:
-    {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > data : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::apply_dof_transformation_to_transpose > param > data : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} FiniteElement__apply_inverse_transpose_dof_transformation
@@ -198,19 +198,19 @@ Returns:
 {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > doc}}
 
 Args:
-    {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > data : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > data : numpy.typing.NDArray[numpy.float64]}}
     {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > block_size : int}}
     {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > cell_info : int}}
 
 Returns:
-    {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > data : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > FiniteElement::apply_inverse_transpose_dof_transformation > param > data : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} FiniteElement__base_transformations = R"(
 {{finite-element.h > base_transformations > doc}}
 
 Returns:
-    {{finite-element.h > base_transformations > return : numpy.ndarray[numpy.float64]}}
+    {{finite-element.h > base_transformations > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} FiniteElement__entity_transformations = R"(
@@ -228,21 +228,22 @@ Returns:
 )";
 
 {{DOCTYPE}} create_custom_element = R"(
-{{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > doc}}
+{{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > doc}}
 
 Args:
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > param > cell_type : basix.CellType}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > param > value_shape : List[int]}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > param > wcoeffs : numpy.ndarray[numpy.float64]}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > param > x : List[List[numpy.ndarray[numpy.float64]]]}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > param > M : List[List[numpy.ndarray[numpy.float64]]]}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > param > map_type : basix.MapType}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > param > discontinuous : bool}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > param > highest_complete_degree : int}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > param > highest_degree : int}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > cell_type : basix.CellType}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > value_shape : List[int]}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > wcoeffs : numpy.typing.NDArray[numpy.float64]}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > x : List[List[numpy.typing.NDArray[numpy.float64]]]}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > M : List[List[numpy.typing.NDArray[numpy.float64]]]}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > interpolation_nderivs : int}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > map_type : basix.MapType}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > discontinuous : bool}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > highest_complete_degree : int}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > highest_degree : int}}
 
 Returns:
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, map_type, discontinuous, highest_complete_degree, highest_degree) > return : basix.finite_element.FiniteElement}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > return : basix.finite_element.FiniteElement}}
 )";
 
 {{DOCTYPE}} create_element__family_cell_degree_discontinuous = R"(
@@ -365,7 +366,7 @@ Args:
     {{interpolation.h > compute_interpolation_operator > param > element_to : basix.finite_element.FiniteElement}}
 
 Returns:
-    {{interpolation.h > compute_interpolation_operator > return : numpy.ndarray[numpy.float64]}}
+    {{interpolation.h > compute_interpolation_operator > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} tabulate_polynomial_set = R"(
@@ -375,10 +376,10 @@ Args:
     {{polyset.h > tabulate > param > celltype : basix.CellType}}
     {{polyset.h > tabulate > param > d : int}}
     {{polyset.h > tabulate > param > n : int}}
-    {{polyset.h > tabulate > param > x : numpy.ndarray[numpy.float64]}}
+    {{polyset.h > tabulate > param > x : numpy.typing.NDArray[numpy.float64]}}
 
 Returns:
-    {{polyset.h > tabulate > return : numpy.ndarray[numpy.float64]}}
+    {{polyset.h > tabulate > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} tabulate_polynomials = R"(
@@ -388,10 +389,10 @@ Args:
     {{polynomials.h > tabulate > param > polytype : basix.PolynomialType}}
     {{polynomials.h > tabulate > param > celltype : basix.CellType}}
     {{polynomials.h > tabulate > param > d : int}}
-    {{polynomials.h > tabulate > param > x : numpy.ndarray[numpy.float64]}}
+    {{polynomials.h > tabulate > param > x : numpy.typing.NDArray[numpy.float64]}}
 
 Returns:
-    {{polynomials.h > tabulate > return : numpy.ndarray[numpy.float64]}}
+    {{polynomials.h > tabulate > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} make_quadrature__rule_celltype_m = R"(
@@ -403,7 +404,7 @@ Args:
     {{quadrature.h > make_quadrature(rule, celltype, m) > param > m : int}}
 
 Returns:
-    {{quadrature.h > make_quadrature(rule, celltype, m) > return : numpy.ndarray[numpy.float64]}}
+    {{quadrature.h > make_quadrature(rule, celltype, m) > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} make_quadrature__celltype_m = R"(
@@ -414,7 +415,7 @@ Args:
     {{quadrature.h > make_quadrature(celltype, m) > param > m : int}}
 
 Returns:
-    {{quadrature.h > make_quadrature(rule, celltype, m) > return : numpy.ndarray[numpy.float64]}}
+    {{quadrature.h > make_quadrature(rule, celltype, m) > return : numpy.typing.NDArray[numpy.float64]}}
 )";
 
 {{DOCTYPE}} index__p = R"(

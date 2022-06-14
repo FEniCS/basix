@@ -61,6 +61,10 @@ jobs:
         run: |
           pytest demo/python/test.py
 
+      - name: Run C++ demos
+        run: |
+          pytest demo/cpp/test.py
+
       - name: Build documentation
         run: |
           pip install git+https://github.com/FEniCS/ufl.git
@@ -142,7 +146,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
 
       - name: Install CI dependencies
         run: pip install pytest sympy numba scipy matplotlib fenics-ufl pytest-xdist pybind11
@@ -161,3 +165,30 @@ jobs:
       - name: Run python demos
         run: |
           pytest demo/python/test.py
+
+  build-cpp-only:
+    name: Build C++ only and run demos
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+
+      - name: Install Basix
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_XTENSOR_LIBS=ON -B build-dir -S cpp
+          cmake --build build-dir
+          sudo cmake --install build-dir
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Run C++ demos
+        run: |
+          pip install pytest
+          pytest demo/cpp/test.py

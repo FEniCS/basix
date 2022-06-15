@@ -33,7 +33,7 @@ from basix import CellType, MapType, PolynomialType, LatticeType
 
 wcoeffs = np.zeros((5, 9))
 
-# The degree 3 orthonormal polynomials for a quadrilateral will have their highest
+# The degree 2 orthonormal polynomials for a quadrilateral will have their highest
 # degree terms in the following order:
 #
 # .. math::
@@ -58,7 +58,7 @@ wcoeffs[3, 4] = 1
 # .. math::
 #    x(1-x)y(1-y) = \sum_{i=0}^8\int_0^1\int_0^1p_i(x, y)x(1-x)y(1-y)\,\mathrm{d}x\,\mathrm{d}y\; p_i(x, y),
 #
-# where $p_0$ to $p_8$ are the orthonormal polynomials. Therefore the coefficients we want
+# where :math:`p_0` to :math:`p_8` are the orthonormal polynomials. Therefore the coefficients we want
 # to put in the final row of our matrix are:
 #
 # .. math::

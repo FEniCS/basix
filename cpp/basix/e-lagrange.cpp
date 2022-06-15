@@ -903,8 +903,12 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 FiniteElement create_bernstein(cell::type celltype, int degree,
                                bool discontinuous)
 {
-  if (!discontinuous)
-    throw std::runtime_error("Bernstein variant must be discontinuous");
+  if (celltype != cell::type::interval and celltype != cell::type::triangle
+      and celltype != cell::type::tetrahedron)
+  {
+    throw std::runtime_error(
+        "Bernstein elements are currently only supported on simplices.");
+  }
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t ndofs = polyset::dim(celltype, degree);
@@ -929,7 +933,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 
   // Evaluate moment space at quadrature points
   const xt::xtensor<double, 2> phi = polynomials::tabulate(
-      polynomials::type::bernstein, celltype, degree, pts);
+      polynomials::type::legendre, celltype, degree, pts);
 
   for (std::size_t dim = 0; dim <= tdim; ++dim)
   {
@@ -992,6 +996,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   if (variant == element::lagrange_variant::legendre)
     return create_legendre(celltype, degree, discontinuous);
+
+  if (variant == element::lagrange_variant::bernstein)
+    return create_bernstein(celltype, degree, discontinuous);
 
   auto [lattice_type, simplex_method, exterior]
       = variant_to_lattice(celltype, variant);

@@ -608,7 +608,7 @@ Args:
 
 Returns:
     numpy.typing.NDArray[numpy.float64]: Polynomial sets, for each derivative, tabulated at points.
-    The shape is `(number of points, basis index)`.
+    The shape is `(basis index, number of points)`.
 )";
 
 const std::string make_quadrature__rule_celltype_m = R"(

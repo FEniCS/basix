@@ -892,7 +892,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   x[tdim][0] = pts;
   M[tdim][0] = xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1});
   for (std::size_t i = 0; i < ndofs; ++i)
-    xt::view(M[tdim][0], i, 0, xt::all(), 0) = xt::col(phi, i) * wts;
+    xt::view(M[tdim][0], i, 0, xt::all(), 0) = xt::row(phi, i) * wts;
 
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, 0, maps::type::identity,

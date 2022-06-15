@@ -900,6 +900,61 @@ FiniteElement create_legendre(cell::type celltype, int degree,
                        element::lagrange_variant::legendre);
 }
 //-----------------------------------------------------------------------------
+FiniteElement create_bernstein(cell::type celltype, int degree,
+                               bool discontinuous)
+{
+  if (!discontinuous)
+    throw std::runtime_error("Bernstein variant must be discontinuous");
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    x[i] = std::vector<xt::xtensor<double, 2>>(
+        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector<xt::xtensor<double, 4>>(
+        cell::num_sub_entities(celltype, i),
+        xt::xtensor<double, 4>({0, 1, 0, 1}));
+  }
+
+  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 celltype, degree * 2);
+  auto wts = xt::adapt(_wts);
+
+  // Evaluate moment space at quadrature points
+  const xt::xtensor<double, 2> phi = polynomials::tabulate(
+      polynomials::type::bernstein, celltype, degree, pts);
+
+  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  {
+    M[dim].resize(topology[dim].size());
+    x[dim].resize(topology[dim].size());
+    if (dim < tdim)
+    {
+      for (std::size_t e = 0; e < topology[dim].size(); ++e)
+      {
+        x[dim][e] = xt::xtensor<double, 2>({0, tdim});
+        M[dim][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
+      }
+    }
+  }
+  x[tdim][0] = pts;
+  M[tdim][0] = xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1});
+  for (std::size_t i = 0; i < ndofs; ++i)
+    xt::view(M[tdim][0], i, 0, xt::all(), 0) = xt::col(phi, i) * wts;
+
+  return FiniteElement(element::family::P, celltype, degree, {},
+                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
+                       discontinuous, degree, degree,
+                       element::lagrange_variant::bernstein);
+}
+//-----------------------------------------------------------------------------
 } // namespace
 
 //----------------------------------------------------------------------------

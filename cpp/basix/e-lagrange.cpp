@@ -118,27 +118,28 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
                                 lattice::type lattice_type,
                                 lattice::simplex_method simplex_method)
 {
+  if (celltype == cell::type::prism or celltype == cell::type::pyramid)
+  {
+    throw std::runtime_error(
+        "This variant is not yet supported on prisms and pyramids.");
+  }
+
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t ndofs = polyset::dim(celltype, degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-
+  std::array<std::vector<std::vector<double>>, 4> x;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+  std::array<std::vector<std::vector<double>>, 4> M;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
   for (std::size_t i = 0; i < tdim; ++i)
   {
-    x[i] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, i),
-        xt::xtensor<double, 4>({0, 1, 0, 1}));
-  }
-
-  if (celltype == cell::type::prism or celltype == cell::type::pyramid)
-  {
-    throw std::runtime_error(
-        "This variant is not yet supported on prisms and pyramids.");
+    std::size_t num_ent = cell::num_sub_entities(celltype, i);
+    x[i] = std::vector<std::vector<double>>(num_ent, std::vector<double>(0));
+    xshape[i] = std::vector<std::array<std::size_t, 2>>(num_ent, {0, tdim});
+    M[i] = std::vector<std::vector<double>>(num_ent, std::vector<double>(0));
+    Mshape[i] = std::vector<std::array<std::size_t, 4>>(num_ent, {0, 1, 0, 1});
   }
 
   const int lattice_degree
@@ -149,14 +150,33 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   // Create points in interior
   const xt::xtensor<double, 2> pt = lattice::create(
       celltype, lattice_degree, lattice_type, false, simplex_method);
-  x[tdim].push_back(pt);
-  const std::size_t num_dofs = pt.shape(0);
-  std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
-  M[tdim].push_back(xt::xtensor<double, 4>(s));
-  xt::view(M[tdim][0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(num_dofs);
+  x[tdim].emplace_back(pt.data(), pt.data() + pt.size());
+  xshape[tdim].push_back({pt.shape(0), pt.shape(1)});
 
+  const std::size_t num_dofs = pt.shape(0);
+  M[tdim].emplace_back(num_dofs * num_dofs);
+  Mshape[tdim].push_back({num_dofs, 1, num_dofs, 1});
+  mdspan4_t Mview(M[tdim].back().data(), num_dofs, 1, num_dofs, 1);
+  for (std::size_t i = 0; i < num_dofs; ++i)
+    Mview(i, 0, i, 0) = 1.0;
+
+  // Convert data to xtensor
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      _x[i].push_back(
+          mdspan_to_xtensor2(mdspan2_t(x[i][j].data(), xshape[i][j])));
+  }
+  for (std::size_t i = 0; i < M.size(); ++i)
+  {
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      _M[i].push_back(
+          mdspan_to_xtensor4(mdspan4_t(M[i][j].data(), Mshape[i][j])));
+  }
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
+                       xt::eye<double>(ndofs), _x, _M, 0, maps::type::identity,
                        true, degree, degree, variant);
 }
 //----------------------------------------------------------------------------
@@ -193,6 +213,7 @@ create_tensor_product_factors(cell::type celltype, int degree,
     }
     return {{{sub_element, sub_element}, perm}};
   }
+
   if (celltype == cell::type::hexahedron)
   {
     FiniteElement sub_element
@@ -1141,14 +1162,13 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   // Convert data to xtensor
   std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
   for (std::size_t i = 0; i < x.size(); ++i)
   {
     _x[i].resize(x[i].size());
     for (std::size_t j = 0; j < x[i].size(); ++j)
       _x[i][j] = mdspan_to_xtensor2(x[i][j]);
   }
-
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
   for (std::size_t i = 0; i < M.size(); ++i)
   {
     _M[i].resize(M[i].size());

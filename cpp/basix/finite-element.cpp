@@ -412,7 +412,7 @@ basix::element::make_discontinuous_new(
     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M, int tdim,
     int value_size)
 {
-  auto [_x, _M] = make_discontinuous_new(x, M, tdim, value_size);
+  auto [_x, _M] = make_discontinuous(x, M, tdim, value_size);
 
   std::array<std::vector<std::vector<double>>, 4> x_new;
   for (std::size_t i = 0; i < _x.size(); ++i)

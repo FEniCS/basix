@@ -993,13 +993,8 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 
   xbuffer[tdim][0] = std::vector<double>(pts.data(), pts.data() + pts.size());
   x[tdim][0] = mdspan2_t(xbuffer[tdim][0].data(), pts.shape(0), pts.shape(1));
-  // x[tdim][0] = pts;
   Mbuffer[tdim][0] = std::vector<double>(ndofs * pts.shape(0));
   M[tdim][0] = mdspan4_t(Mbuffer[tdim][0].data(), ndofs, 1, pts.shape(0), 1);
-  // M[tdim][0] = xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1});
-  // for (std::size_t i = 0; i < ndofs; ++i)
-  //   xt::view(M[tdim][0], i, 0, xt::all(), 0) = xt::row(phi, i) * wts;
-
   for (std::size_t i = 0; i < ndofs; ++i)
     for (std::size_t j = 0; j < pts.shape(0); ++j)
       M[tdim][0](i, 0, j, 0) = phi(i, j) * wts(j);

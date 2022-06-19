@@ -976,14 +976,34 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   const xt::xtensor<double, 2> phi = polynomials::tabulate(
       polynomials::type::legendre, celltype, degree, pts);
 
+  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  {
+    xbuffer[dim].resize(topology[dim].size());
+    x[dim].resize(topology[dim].size());
+    Mbuffer[dim].resize(topology[dim].size());
+    M[dim].resize(topology[dim].size());
+    if (dim < tdim)
+    {
+      for (std::size_t e = 0; e < topology[dim].size(); ++e)
+      {
+        x[dim][e] = mdspan2_t(nullptr, 0, tdim);
+        M[dim][e] = mdspan4_t(nullptr, 0, 1, 0, 1);
+      }
+    }
+  }
+
   xbuffer[tdim][0] = std::vector<double>(pts.data(), pts.data() + pts.size());
   x[tdim][0] = mdspan2_t(xbuffer[tdim][0].data(), pts.shape(0), pts.shape(1));
-  Mbuffer[tdim][0].resize(ndofs * pts.shape(0), 0);
+  // x[tdim][0] = pts;
+  Mbuffer[tdim][0] = std::vector<double>(ndofs * pts.shape(0));
   M[tdim][0] = mdspan4_t(Mbuffer[tdim][0].data(), ndofs, 1, pts.shape(0), 1);
+  // M[tdim][0] = xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1});
+  // for (std::size_t i = 0; i < ndofs; ++i)
+  //   xt::view(M[tdim][0], i, 0, xt::all(), 0) = xt::row(phi, i) * wts;
 
   for (std::size_t i = 0; i < ndofs; ++i)
     for (std::size_t j = 0; j < pts.shape(0); ++j)
-      M[tdim][0](i, 0, j, 0) = phi(j, i) * wts(j);
+      M[tdim][0](i, 0, j, 0) = phi(i, j) * wts(j);
 
   // Convert data to xtensor
   std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;

@@ -51,6 +51,102 @@ xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
   return y;
 }
 //----------------------------------------------------------------------------
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+vtk_data_interval(std::size_t degree)
+{
+  constexpr std::size_t tdim = 1;
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(cell::type::interval);
+
+  std::array<std::vector<std::vector<double>>, 4> x;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+  std::array<std::vector<std::vector<double>>, 4> M;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+  for (std::size_t d = 0; d <= tdim; ++d)
+  {
+    x[d].resize(topology[d].size());
+    xshape[d].resize(topology[d].size());
+    M[d].resize(topology[d].size());
+    Mshape[d].resize(topology[d].size());
+  }
+
+  // Points at vertices
+  x[0][0] = {0.0};
+  x[0][1] = {1.0};
+  for (int i = 0; i < 2; ++i)
+  {
+    xshape[0][i] = {1, 1};
+    M[0][i] = {1.0};
+    Mshape[0][i] = {1, 1, 1, 1};
+  }
+
+  // Points on interval
+  xshape[1][0] = {degree - 1, 1};
+  x[1][0].resize(degree - 1, 0);
+  for (std::size_t i = 1; i < degree; ++i)
+    x[1][0][i - 1] = i / static_cast<double>(degree);
+
+  Mshape[1][0] = {degree - 1, 1, degree - 1, 1};
+  M[1][0] = std::vector<double>((degree - 1) * (degree - 1), 0.0);
+  mdspan4_t Mview(M[1][0].data(), Mshape[1][0]);
+  for (std::size_t i = 0; i < degree - 1; ++i)
+    Mview(i, 0, i, 0) = 1.0;
+
+  return {x, xshape, M, Mshape};
+}
+//----------------------------------------------------------------------------
+/*
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+vtk_data_triangle(std::size_t degree)
+{
+  constexpr std::size_t tdim = 2;
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(cell::type::triangle);
+
+  std::array<std::vector<std::vector<double>>, 4> x;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+  std::array<std::vector<std::vector<double>>, 4> M;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+  for (std::size_t d = 0; d <= tdim; ++d)
+  {
+    x[d].resize(topology[d].size());
+    xshape[d].resize(topology[d].size());
+    M[d].resize(topology[d].size());
+    Mshape[d].resize(topology[d].size());
+  }
+
+  // Points at vertices
+  x[0][0] = {0.0};
+  x[0][1] = {1.0};
+  for (int i = 0; i < 2; ++i)
+  {
+    xshape[0][i] = {1, 1};
+    M[0][i] = {1.0};
+    Mshape[0][i] = {1, 1, 1, 1};
+  }
+
+  // Points on interval
+  xshape[1][0] = {degree - 1, 1};
+  x[1][0].resize(degree - 1, 0);
+  for (std::size_t i = 1; i < degree; ++i)
+    x[1][0][i - 1] = i / static_cast<double>(degree);
+
+  Mshape[1][0] = {degree - 1, 1, degree - 1, 1};
+  M[1][0] = std::vector<double>((degree - 1) * (degree - 1), 0.0);
+  mdspan4_t Mview(M[1][0].data(), Mshape[1][0]);
+  for (std::size_t i = 0; i < degree - 1; ++i)
+    Mview(i, 0, i, 0) = 1.0;
+
+  return {x, xshape, M, Mshape};
+}
+*/
+//----------------------------------------------------------------------------
 std::tuple<lattice::type, lattice::simplex_method, bool>
 variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
 {
@@ -515,24 +611,42 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
     x[dim].resize(topology[dim].size());
   }
 
+  auto to_xtensor
+      = [](std::array<std::vector<std::vector<double>>, 4>& x,
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>& xshape,
+           std::array<std::vector<std::vector<double>>, 4>& M,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>& Mshape)
+  {
+    std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+    std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+    for (std::size_t d = 0; d < x.size(); ++d)
+    {
+      _x[d].resize(x[d].size());
+      _M[d].resize(x[d].size());
+    }
+
+    for (std::size_t i = 0; i < x.size(); ++i)
+    {
+      _x[i].resize(x[i].size());
+      for (std::size_t j = 0; j < x[i].size(); ++j)
+        _x[i][j] = mdspan_to_xtensor2(mdspan2_t(x[i][j].data(), xshape[i][j]));
+    }
+    for (std::size_t i = 0; i < M.size(); ++i)
+    {
+      _M[i].resize(M[i].size());
+      for (std::size_t j = 0; j < M[i].size(); ++j)
+        _M[i][j] = mdspan_to_xtensor4(mdspan4_t(M[i][j].data(), Mshape[i][j]));
+    }
+
+    return std::pair(_x, _M);
+  };
+
   switch (celltype)
   {
   case cell::type::interval:
   {
-    // Points at vertices
-    x[0][0] = {{0.}};
-    x[0][1] = {{1.}};
-    for (int i = 0; i < 2; ++i)
-      M[0][i] = {{{{1.}}}};
-
-    // Points on interval
-    x[1][0] = xt::xtensor<double, 2>({degree - 1, 1});
-    for (std::size_t i = 1; i < degree; ++i)
-      x[1][0](i - 1, 0) = i / static_cast<double>(degree);
-
-    M[1][0] = xt::xtensor<double, 4>({degree - 1, 1, degree - 1, 1});
-    xt::view(M[1][0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(degree - 1);
-
+    auto [xnew, xshape, Mnew, Mshape] = vtk_data_interval(degree);
+    std::tie(x, M) = to_xtensor(xnew, xshape, Mnew, Mshape);
     break;
   }
   case cell::type::triangle:

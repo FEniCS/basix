@@ -935,12 +935,9 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
          static_cast<std::size_t>(polynomials::dim(
              polynomials::type::bernstein, cell::type::tetrahedron, degree))};
 
-  std::array<std::size_t, 4> nb_interior;
-  nb_interior[0] = 1;
-  nb_interior[1] = degree < 2 ? 0 : nb[1] - 2;
-  nb_interior[2] = degree < 3 ? 0 : nb[2] - 3 * nb_interior[1] - 3;
-  nb_interior[3]
-      = degree < 4 ? 0 : nb[3] - 4 * nb_interior[2] - 6 * nb_interior[1] - 4;
+  const std::array<std::size_t, 4> nb_interior
+      = {1, degree < 2 ? 0 : nb[1] - 2, degree < 3 ? 0 : nb[2] + 3 - 3 * nb[1],
+         degree < 4 ? 0 : nb[3] + 6 * nb[1] - 4 * nb[2] - 4};
 
   for (std::size_t v = 0; v < topology[0].size(); ++v)
   {

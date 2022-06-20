@@ -1320,7 +1320,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   std::array<std::vector<mdspan4_t>, 4> M;
-
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<mdspan2_t>, 4> x;
 

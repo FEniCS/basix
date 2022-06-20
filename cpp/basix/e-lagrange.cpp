@@ -935,6 +935,10 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
          static_cast<std::size_t>(polynomials::dim(
              polynomials::type::bernstein, cell::type::tetrahedron, degree))};
 
+  const std::array<cell::type, 4> ct
+      = {cell::type::point, cell::type::interval, cell::type::triangle,
+         cell::type::tetrahedron};
+
   const std::array<std::size_t, 4> nb_interior
       = {1, degree < 2 ? 0 : nb[1] - 2, degree < 3 ? 0 : nb[2] + 3 - 3 * nb[1],
          degree < 4 ? 0 : nb[3] + 6 * nb[1] - 4 * nb[2] - 4};
@@ -980,193 +984,65 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
     M[0][v] = {{{{1.}}}};
   }
 
-  if (tdim >= 1)
+  for (std::size_t d = 1; d <= tdim; ++d)
   {
-    if (nb_interior[1] == 0)
+    if (nb_interior[d] == 0)
     {
-      for (std::size_t e = 0; e < topology[1].size(); ++e)
+      for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
-        x[1][e] = xt::xtensor<double, 2>({0, tdim});
-        M[1][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
+        x[d][e] = xt::xtensor<double, 2>({0, tdim});
+        M[d][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
       }
     }
     else
     {
-      auto [pts, _wts] = quadrature::make_quadrature(
-          quadrature::type::Default, cell::type::interval, degree * 2);
+      auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                     ct[d], degree * 2);
       auto wts = xt::adapt(_wts);
 
       const xt::xtensor<double, 2> phi = polynomials::tabulate(
-          polynomials::type::legendre, cell::type::interval, degree, pts);
+          polynomials::type::legendre, ct[d], degree, pts);
       const xt::xtensor<double, 2> bern = polynomials::tabulate(
-          polynomials::type::bernstein, cell::type::interval, degree, pts);
+          polynomials::type::bernstein, ct[d], degree, pts);
 
-      assert(phi.shape(0) == nb[1]);
+      assert(phi.shape(0) == nb[d]);
       const std::size_t npts = pts.shape(0);
 
-      xt::xtensor<double, 2> mat({nb[1], nb[1]});
-      for (std::size_t i = 0; i < nb[1]; ++i)
-        for (std::size_t j = 0; j < nb[1]; ++j)
+      xt::xtensor<double, 2> mat({nb[d], nb[d]});
+      for (std::size_t i = 0; i < nb[d]; ++i)
+        for (std::size_t j = 0; j < nb[d]; ++j)
           mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
 
-      xt::xtensor<double, 2> id = xt::eye<double>(nb[1]);
+      xt::xtensor<double, 2> id = xt::eye<double>(nb[d]);
 
       xt::xtensor<double, 2> minv = math::solve(mat, id);
 
-      M[1] = std::vector<xt::xtensor<double, 4>>(
-          cell::num_sub_entities(celltype, 1),
-          xt::xtensor<double, 4>({nb_interior[1], 1, npts, 1}));
-      for (std::size_t e = 0; e < topology[1].size(); ++e)
+      M[d] = std::vector<xt::xtensor<double, 4>>(
+          cell::num_sub_entities(celltype, d),
+          xt::xtensor<double, 4>({nb_interior[d], 1, npts, 1}));
+      for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
         const xt::xtensor<double, 2> entity_x
-            = cell::sub_entity_geometry(celltype, 1, e);
+            = cell::sub_entity_geometry(celltype, d, e);
         auto x0s = xt::reshape_view(
             xt::row(entity_x, 0),
             {static_cast<std::size_t>(1), entity_x.shape(1)});
-        x[1][e] = xt::tile(x0s, pts.shape(0));
+        x[d][e] = xt::tile(x0s, pts.shape(0));
         auto x0 = xt::row(entity_x, 0);
         for (std::size_t j = 0; j < pts.shape(0); ++j)
         {
           for (std::size_t k = 0; k < pts.shape(1); ++k)
           {
-            xt::row(x[1][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
+            xt::row(x[d][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
           }
         }
-        for (std::size_t i = 0; i < bernstein_bubbles[1].size(); ++i)
+        for (std::size_t i = 0; i < bernstein_bubbles[d].size(); ++i)
         {
           for (std::size_t p = 0; p < npts; ++p)
-            M[1][e](i, 0, p, 0)
+            M[d][e](i, 0, p, 0)
                 = wts(p)
                   * xt::sum(xt::col(phi, p)
-                            * xt::row(minv, bernstein_bubbles[1][i]))();
-        }
-      }
-    }
-  }
-  if (tdim >= 2)
-  {
-    if (nb_interior[2] == 0)
-    {
-      for (std::size_t e = 0; e < topology[2].size(); ++e)
-      {
-        x[2][e] = xt::xtensor<double, 2>({0, tdim});
-        M[2][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
-      }
-    }
-    else
-    {
-      auto [pts, _wts] = quadrature::make_quadrature(
-          quadrature::type::Default, cell::type::triangle, degree * 2);
-      auto wts = xt::adapt(_wts);
-
-      const xt::xtensor<double, 2> phi = polynomials::tabulate(
-          polynomials::type::legendre, cell::type::triangle, degree, pts);
-      const xt::xtensor<double, 2> bern = polynomials::tabulate(
-          polynomials::type::bernstein, cell::type::triangle, degree, pts);
-
-      assert(phi.shape(0) == nb[2]);
-      const std::size_t npts = pts.shape(0);
-
-      xt::xtensor<double, 2> mat({nb[2], nb[2]});
-      for (std::size_t i = 0; i < nb[2]; ++i)
-        for (std::size_t j = 0; j < nb[2]; ++j)
-          mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
-
-      xt::xtensor<double, 2> id = xt::eye<double>(nb[2]);
-
-      xt::xtensor<double, 2> minv = math::solve(mat, id);
-
-      M[2] = std::vector<xt::xtensor<double, 4>>(
-          cell::num_sub_entities(celltype, 2),
-          xt::xtensor<double, 4>({nb_interior[2], 1, npts, 1}));
-      for (std::size_t e = 0; e < topology[2].size(); ++e)
-      {
-        const xt::xtensor<double, 2> entity_x
-            = cell::sub_entity_geometry(celltype, 2, e);
-        auto x0s = xt::reshape_view(
-            xt::row(entity_x, 0),
-            {static_cast<std::size_t>(1), entity_x.shape(1)});
-        x[2][e] = xt::tile(x0s, pts.shape(0));
-        auto x0 = xt::row(entity_x, 0);
-        for (std::size_t j = 0; j < pts.shape(0); ++j)
-        {
-          for (std::size_t k = 0; k < pts.shape(1); ++k)
-          {
-            xt::row(x[2][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
-          }
-        }
-
-        for (std::size_t i = 0; i < bernstein_bubbles[2].size(); ++i)
-        {
-          for (std::size_t p = 0; p < npts; ++p)
-            M[2][e](i, 0, p, 0)
-                = wts(p)
-                  * xt::sum(xt::col(phi, p)
-                            * xt::row(minv, bernstein_bubbles[2][i]))();
-        }
-      }
-    }
-  }
-  if (tdim >= 3)
-  { // scope
-    if (nb_interior[3] == 0)
-    {
-      for (std::size_t e = 0; e < topology[3].size(); ++e)
-      {
-        x[3][e] = xt::xtensor<double, 2>({0, tdim});
-        M[3][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
-      }
-    }
-    else
-    {
-      auto [pts, _wts] = quadrature::make_quadrature(
-          quadrature::type::Default, cell::type::tetrahedron, degree * 2);
-      auto wts = xt::adapt(_wts);
-
-      const xt::xtensor<double, 2> phi = polynomials::tabulate(
-          polynomials::type::legendre, cell::type::tetrahedron, degree, pts);
-      const xt::xtensor<double, 2> bern = polynomials::tabulate(
-          polynomials::type::bernstein, cell::type::tetrahedron, degree, pts);
-
-      assert(phi.shape(0) == nb[3]);
-      const std::size_t npts = pts.shape(0);
-
-      xt::xtensor<double, 2> mat({nb[3], nb[3]});
-      for (std::size_t i = 0; i < nb[3]; ++i)
-        for (std::size_t j = 0; j < nb[3]; ++j)
-          mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
-
-      xt::xtensor<double, 2> id = xt::eye<double>(nb[3]);
-
-      xt::xtensor<double, 2> minv = math::solve(mat, id);
-
-      M[3] = std::vector<xt::xtensor<double, 4>>(
-          cell::num_sub_entities(celltype, 3),
-          xt::xtensor<double, 4>({nb_interior[3], 1, npts, 1}));
-      for (std::size_t e = 0; e < topology[3].size(); ++e)
-      {
-        const xt::xtensor<double, 2> entity_x
-            = cell::sub_entity_geometry(celltype, 3, e);
-        auto x0s = xt::reshape_view(
-            xt::row(entity_x, 0),
-            {static_cast<std::size_t>(1), entity_x.shape(1)});
-        x[3][e] = xt::tile(x0s, pts.shape(0));
-        auto x0 = xt::row(entity_x, 0);
-        for (std::size_t j = 0; j < pts.shape(0); ++j)
-        {
-          for (std::size_t k = 0; k < pts.shape(1); ++k)
-          {
-            xt::row(x[3][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
-          }
-        }
-
-        for (std::size_t i = 0; i < bernstein_bubbles[3].size(); ++i)
-        {
-          for (std::size_t p = 0; p < npts; ++p)
-            M[3][e](i, 0, p, 0)
-                = wts(p)
-                  * xt::sum(xt::col(phi, p)
-                            * xt::row(minv, bernstein_bubbles[3][i]))();
+                            * xt::row(minv, bernstein_bubbles[d][i]))();
         }
       }
     }

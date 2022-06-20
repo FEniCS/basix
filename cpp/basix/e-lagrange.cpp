@@ -936,8 +936,9 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   {
     const std::size_t nb = polynomials::dim(polynomials::type::bernstein,
                                             cell::type::interval, degree);
+    const std::size_t nb_interior = degree < 2 ? 0 : nb - 2;
 
-    if (nb <= 2)
+    if (nb_interior == 0)
     {
       for (std::size_t e = 0; e < topology[1].size(); ++e)
       {
@@ -970,7 +971,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 
       M[1] = std::vector<xt::xtensor<double, 4>>(
           cell::num_sub_entities(celltype, 1),
-          xt::xtensor<double, 4>({nb - 2, 1, npts, 1}));
+          xt::xtensor<double, 4>({nb_interior, 1, npts, 1}));
       for (std::size_t e = 0; e < topology[1].size(); ++e)
       {
         const xt::xtensor<double, 2> entity_x
@@ -989,18 +990,103 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
         }
 
         int dof = 0;
-        for (std::size_t i = 1; i + 1 < nb; ++i)
+        int ib = 0;
+        for (int i = 0; i <= degree; ++i)
         {
-          for (std::size_t j = 0; j < npts; ++j)
-            M[1][e](dof, 0, j, 0)
-                = wts(j) * xt::sum(xt::col(phi, j) * xt::row(minv, i))();
-          ++dof;
+          if (i > 0 and i < degree)
+          {
+            for (std::size_t p = 0; p < npts; ++p)
+              M[1][e](dof, 0, p, 0)
+                  = wts(p) * xt::sum(xt::col(phi, p) * xt::row(minv, ib))();
+            ++dof;
+          }
+          ++ib;
         }
       }
     }
   }
+  if (tdim >= 2)
+  {
+    const std::size_t nb = polynomials::dim(polynomials::type::bernstein,
+                                            cell::type::triangle, degree);
+    const std::size_t nb_edge_interior
+        = degree < 2 ? 0
+                     : polynomials::dim(polynomials::type::bernstein,
+                                        cell::type::interval, degree)
+                           - 2;
+    const std::size_t nb_interior
+        = degree < 3 ? 0 : nb - 3 * nb_edge_interior - 3;
 
-  for (std::size_t dim = 2; dim <= tdim; ++dim)
+    if (nb_interior == 0)
+    {
+      for (std::size_t e = 0; e < topology[2].size(); ++e)
+      {
+        x[2][e] = xt::xtensor<double, 2>({0, tdim});
+        M[2][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
+      }
+    }
+    else
+    {
+      auto [pts, _wts] = quadrature::make_quadrature(
+          quadrature::type::Default, cell::type::triangle, degree * 2);
+      auto wts = xt::adapt(_wts);
+
+      const xt::xtensor<double, 2> phi = polynomials::tabulate(
+          polynomials::type::legendre, cell::type::triangle, degree, pts);
+      const xt::xtensor<double, 2> bern = polynomials::tabulate(
+          polynomials::type::bernstein, cell::type::triangle, degree, pts);
+
+      assert(phi.shape(0) == nb);
+      const std::size_t npts = pts.shape(0);
+
+      xt::xtensor<double, 2> mat({nb, nb});
+      for (std::size_t i = 0; i < nb; ++i)
+        for (std::size_t j = 0; j < nb; ++j)
+          mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
+
+      xt::xtensor<double, 2> id = xt::eye<double>(nb);
+
+      xt::xtensor<double, 2> minv = math::solve(mat, id);
+
+      M[2] = std::vector<xt::xtensor<double, 4>>(
+          cell::num_sub_entities(celltype, 2),
+          xt::xtensor<double, 4>({nb_interior, 1, npts, 1}));
+      for (std::size_t e = 0; e < topology[2].size(); ++e)
+      {
+        const xt::xtensor<double, 2> entity_x
+            = cell::sub_entity_geometry(celltype, 2, e);
+        auto x0s = xt::reshape_view(
+            xt::row(entity_x, 0),
+            {static_cast<std::size_t>(1), entity_x.shape(1)});
+        x[2][e] = xt::tile(x0s, pts.shape(0));
+        auto x0 = xt::row(entity_x, 0);
+        for (std::size_t j = 0; j < pts.shape(0); ++j)
+        {
+          for (std::size_t k = 0; k < pts.shape(1); ++k)
+          {
+            xt::row(x[2][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
+          }
+        }
+
+        int dof = 0;
+        int ib = 0;
+        for (int i = 0; i <= degree; ++i)
+          for (int j = 0; j <= degree - i; ++j)
+          {
+            if (i > 0 and j > 0 and i + j < degree)
+            {
+              for (std::size_t p = 0; p < npts; ++p)
+                M[2][e](dof, 0, p, 0)
+                    = wts(p) * xt::sum(xt::col(phi, p) * xt::row(minv, ib))();
+              ++dof;
+            }
+            ++ib;
+          }
+      }
+    }
+  }
+
+  for (std::size_t dim = 3; dim <= tdim; ++dim)
   {
     for (std::size_t e = 0; e < topology[dim].size(); ++e)
     {

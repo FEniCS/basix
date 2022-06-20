@@ -114,3 +114,28 @@ def test_element(celltype, degree):
                 wsym[j, i] = wd.subs(list(zip([x, y, z], p)))
 
         assert numpy.allclose(wtab[basix.index(*k)], wsym)
+
+
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.interval, basix.CellType.triangle,
+    # basix.CellType.tetrahedron
+])
+@pytest.mark.parametrize("degree", range(1, 6))
+def test_basis_is_polynomials(celltype, degree):
+    lagrange = basix.create_element(basix.ElementFamily.P, celltype, degree,
+                                    basix.LagrangeVariant.bernstein)
+    pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
+    wtab = lagrange.tabulate(0, pts)[0, : , :, 0]
+
+    bern = basix.tabulate_polynomials(basix.PolynomialType.bernstein, celltype, degree, pts)
+
+    remaining = [i for i, _ in enumerate(bern)]
+    for row in wtab.T:
+        for i in remaining:
+            if numpy.allclose(row, bern[i]):
+                remaining.remove(i)
+                break
+        else:
+            raise AssertionError
+
+    assert len(remaining) == 0

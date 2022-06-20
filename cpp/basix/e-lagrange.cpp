@@ -5,6 +5,7 @@
 #include "e-lagrange.h"
 #include "lattice.h"
 #include "maps.h"
+#include "math.h"
 #include "moments.h"
 #include "polynomials.h"
 #include "polyset.h"
@@ -903,6 +904,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 FiniteElement create_bernstein(cell::type celltype, int degree,
                                bool discontinuous)
 {
+  assert(degree > 0);
   if (celltype != cell::type::interval and celltype != cell::type::triangle
       and celltype != cell::type::tetrahedron)
   {
@@ -918,41 +920,132 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  for (std::size_t i = 0; i < tdim; ++i)
-  {
-    x[i] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, i),
-        xt::xtensor<double, 4>({0, 1, 0, 1}));
-  }
-
-  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                 celltype, degree * 2);
-  auto wts = xt::adapt(_wts);
-
-  // Evaluate moment space at quadrature points
-  const xt::xtensor<double, 2> phi = polynomials::tabulate(
-      polynomials::type::legendre, celltype, degree, pts);
-
   for (std::size_t dim = 0; dim <= tdim; ++dim)
   {
     M[dim].resize(topology[dim].size());
     x[dim].resize(topology[dim].size());
-    if (dim < tdim)
+  }
+
+  for (std::size_t v = 0; v < topology[0].size(); ++v)
+  {
+    x[0][v] = cell::sub_entity_geometry(celltype, 0, v);
+    M[0][v] = {{{{1.}}}};
+  }
+
+  if (tdim >= 1)
+  {
+    const std::size_t nb = polynomials::dim(polynomials::type::bernstein,
+                                            cell::type::interval, degree);
+
+    if (nb <= 2)
     {
-      for (std::size_t e = 0; e < topology[dim].size(); ++e)
+      for (std::size_t e = 0; e < topology[1].size(); ++e)
       {
-        x[dim][e] = xt::xtensor<double, 2>({0, tdim});
-        M[dim][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
+        x[1][e] = xt::xtensor<double, 2>({0, tdim});
+        M[1][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
+      }
+    }
+    else
+    {
+      auto [pts, _wts] = quadrature::make_quadrature(
+          quadrature::type::Default, cell::type::interval, degree * 2);
+      auto wts = xt::adapt(_wts);
+
+      const xt::xtensor<double, 2> phi = polynomials::tabulate(
+          polynomials::type::legendre, cell::type::interval, degree, pts);
+      const xt::xtensor<double, 2> bern = polynomials::tabulate(
+          polynomials::type::bernstein, cell::type::interval, degree, pts);
+
+      assert(phi.shape(0) == nb);
+      const std::size_t npts = pts.shape(0);
+
+      xt::xtensor<double, 2> mat({nb, nb});
+      for (std::size_t i = 0; i < nb; ++i)
+        for (std::size_t j = 0; j < nb; ++j)
+          mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
+
+      xt::xtensor<double, 2> id = xt::eye<double>(nb);
+
+      xt::xtensor<double, 2> minv = math::solve(mat, id);
+
+      M[1] = std::vector<xt::xtensor<double, 4>>(
+          cell::num_sub_entities(celltype, 1),
+          xt::xtensor<double, 4>({nb - 2, 1, npts, 1}));
+      for (std::size_t e = 0; e < topology[1].size(); ++e)
+      {
+        const xt::xtensor<double, 2> entity_x
+            = cell::sub_entity_geometry(celltype, 1, e);
+        auto x0s = xt::reshape_view(
+            xt::row(entity_x, 0),
+            {static_cast<std::size_t>(1), entity_x.shape(1)});
+        x[1][e] = xt::tile(x0s, pts.shape(0));
+        auto x0 = xt::row(entity_x, 0);
+        for (std::size_t j = 0; j < pts.shape(0); ++j)
+        {
+          for (std::size_t k = 0; k < pts.shape(1); ++k)
+          {
+            xt::row(x[1][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
+          }
+        }
+
+        int dof = 0;
+        for (std::size_t i = 1; i + 1 < nb; ++i)
+        {
+          for (std::size_t j = 0; j < npts; ++j)
+            M[1][e](dof, 0, j, 0)
+                = wts(j) * xt::sum(xt::col(phi, j) * xt::row(minv, i))();
+          ++dof;
+        }
       }
     }
   }
-  x[tdim][0] = pts;
-  M[tdim][0] = xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1});
-  for (std::size_t i = 0; i < ndofs; ++i)
-    xt::view(M[tdim][0], i, 0, xt::all(), 0) = xt::col(phi, i) * wts;
 
+  for (std::size_t dim = 2; dim <= tdim; ++dim)
+  {
+    for (std::size_t e = 0; e < topology[dim].size(); ++e)
+    {
+      x[dim][e] = xt::xtensor<double, 2>({0, tdim});
+      M[dim][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
+    }
+  }
+
+  std::cout << "M = {\n";
+  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  {
+    std::cout << "  " << dim << " -> ";
+    for (std::size_t e = 0; e < topology[dim].size(); ++e)
+    {
+      if (e > 0)
+        std::cout << "       ";
+      for (std::size_t i = 0; i < M[dim][e].shape(0); ++i)
+      {
+        for (std::size_t j = 0; j < M[dim][e].shape(2); ++j)
+          std::cout << M[dim][e](i, 0, j, 0) << " ";
+        std::cout << "; ";
+      }
+      std::cout << "\n";
+    }
+  }
+  std::cout << "}\n";
+
+  std::cout << "pts = {\n";
+  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  {
+    std::cout << "  " << dim << " -> ";
+    for (std::size_t e = 0; e < topology[dim].size(); ++e)
+    {
+      if (e > 0)
+        std::cout << "       ";
+      for (std::size_t i = 0; i < x[dim][e].shape(0); ++i)
+      {
+        for (std::size_t j = 0; j < x[dim][e].shape(1); ++j)
+          std::cout << x[dim][e](i, j) << " ";
+        std::cout << "; ";
+      }
+      std::cout << "\n";
+    }
+  }
+  std::cout << "}\n";
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
                        discontinuous, degree, degree,
@@ -982,6 +1075,20 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
                          degree);
   }
 
+  if (variant == element::lagrange_variant::vtk)
+    return create_vtk_element(celltype, degree, discontinuous);
+
+  if (variant == element::lagrange_variant::legendre)
+    return create_legendre(celltype, degree, discontinuous);
+
+  if (variant == element::lagrange_variant::bernstein)
+  {
+    if (degree == 0)
+      variant = element::lagrange_variant::unset;
+    else
+      return create_bernstein(celltype, degree, discontinuous);
+  }
+
   if (variant == element::lagrange_variant::unset)
   {
     if (degree < 3)
@@ -990,15 +1097,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       throw std::runtime_error(
           "Lagrange elements of degree > 2 need to be given a variant.");
   }
-
-  if (variant == element::lagrange_variant::vtk)
-    return create_vtk_element(celltype, degree, discontinuous);
-
-  if (variant == element::lagrange_variant::legendre)
-    return create_legendre(celltype, degree, discontinuous);
-
-  if (variant == element::lagrange_variant::bernstein)
-    return create_bernstein(celltype, degree, discontinuous);
 
   auto [lattice_type, simplex_method, exterior]
       = variant_to_lattice(celltype, variant);

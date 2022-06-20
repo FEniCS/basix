@@ -51,6 +51,14 @@ def get_bernstein_polynomials(celltype, degree):
 
 
 def get_bernstein_polynomials_entity_order(celltype, degree):
+    if celltype == basix.CellType.interval:
+        if degree == 1:
+            return [1 - x, x]
+        if degree == 2:
+            return [(1 - x)**2, x**2, x*(2 - 2*x)]
+        if degree == 3:
+            return [(1 - x)**3, x**3, 3*x*(1 - x)**2, x**2*(3 - 3*x)]
+
     if celltype == basix.CellType.triangle:
         if degree == 1:
             return [1 - x - y, x, y]
@@ -80,23 +88,27 @@ def test_poly(celltype, degree):
     assert numpy.allclose(wtab, wsym)
 
 
-@pytest.mark.parametrize("celltype", [basix.CellType.triangle])
+@pytest.mark.parametrize("celltype", [basix.CellType.interval])  # basix.CellType.triangle])
 @pytest.mark.parametrize("degree", range(1, 4))
-def test_element_tri(celltype, degree):
+def test_element(celltype, degree):
     bern = get_bernstein_polynomials_entity_order(celltype, degree)
 
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, degree,
+    lagrange = basix.create_element(basix.ElementFamily.P, celltype, degree,
                                     basix.LagrangeVariant.bernstein)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)
 
-    for kx in range(nderiv):
-        for ky in range(0, nderiv - kx):
-            wsym = numpy.zeros_like(wtab[0])
-            for i, b in enumerate(bern):
-                wd = sympy.diff(b, x, kx, y, ky)
-                for j, p in enumerate(pts):
-                    wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
+    if celltype == basix.CellType.interval:
+        derivs = [(0,), (1,), (2,), (3,)]
 
-            assert numpy.allclose(wtab[basix.index(kx, ky)], wsym)
+    for k in derivs:
+        wsym = numpy.zeros_like(wtab[0])
+        for i, b in enumerate(bern):
+            wd = b
+            for v, n in zip([x, y, z], k):
+                wd = sympy.diff(wd, v, n)
+            for j, p in enumerate(pts):
+                wsym[j, i] = wd.subs(list(zip([x, y, z], p)))
+
+        assert numpy.allclose(wtab[basix.index(*k)], wsym)

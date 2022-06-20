@@ -125,7 +125,7 @@ def test_basis_is_polynomials(celltype, degree):
     lagrange = basix.create_element(basix.ElementFamily.P, celltype, degree,
                                     basix.LagrangeVariant.bernstein)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
-    wtab = lagrange.tabulate(0, pts)[0, : , :, 0]
+    wtab = lagrange.tabulate(0, pts)[0, :, :, 0]
 
     bern = basix.tabulate_polynomials(basix.PolynomialType.bernstein, celltype, degree, pts)
 

@@ -89,9 +89,9 @@ create(cell::type celltype, int n, lattice::type type, bool exterior,
        lattice::simplex_method simplex_method = lattice::simplex_method::none);
 
 /// NEW
-std::vector<double> create_new(cell::type celltype, int n, lattice::type type,
-                               bool exterior,
-                               lattice::simplex_method simplex_method
-                               = lattice::simplex_method::none);
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_new(cell::type celltype, int n, lattice::type type, bool exterior,
+           lattice::simplex_method simplex_method
+           = lattice::simplex_method::none);
 
 } // namespace basix::lattice

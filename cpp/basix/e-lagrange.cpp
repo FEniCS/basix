@@ -935,12 +935,12 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
             : (celltype == cell::type::tetrahedron ? degree + 4 : degree + 2);
 
   // Create points in interior
-  const xt::xtensor<double, 2> pt = lattice::create(
+  const auto [pt, shape] = lattice::create_new(
       celltype, lattice_degree, lattice_type, false, simplex_method);
-  x[tdim].emplace_back(pt.data(), pt.data() + pt.size());
-  xshape[tdim].push_back({pt.shape(0), pt.shape(1)});
+  x[tdim].push_back(pt);
+  xshape[tdim].push_back(shape);
 
-  const std::size_t num_dofs = pt.shape(0);
+  const std::size_t num_dofs = shape[0];
   M[tdim].emplace_back(num_dofs * num_dofs);
   Mshape[tdim].push_back({num_dofs, 1, num_dofs, 1});
   mdspan4_t Mview(M[tdim].back().data(), num_dofs, 1, num_dofs, 1);
@@ -1341,13 +1341,12 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         M[i].push_back(mdspan4_t(Mbuffer[i][j].data(), 0, 1, 0, 1));
     }
 
-    const xt::xtensor<double, 2> pt
-        = lattice::create(celltype, 0, lattice_type, true, simplex_method);
-    xbuffer[tdim].push_back(std::vector<double>(pt.begin(), pt.end()));
-    x[tdim].push_back(
-        mdspan2_t(xbuffer[tdim].back().data(), pt.shape(0), pt.shape(1)));
+    const auto [pt, shape]
+        = lattice::create_new(celltype, 0, lattice_type, true, simplex_method);
+    xbuffer[tdim].push_back(pt);
+    x[tdim].push_back(mdspan2_t(xbuffer[tdim].back().data(), shape));
 
-    const std::size_t num_dofs = pt.shape(0);
+    const std::size_t num_dofs = shape[0];
     Mbuffer[tdim].push_back(std::vector<double>(num_dofs * num_dofs));
     M[tdim].push_back(
         mdspan4_t(Mbuffer[tdim].back().data(), num_dofs, 1, num_dofs, 1));
@@ -1390,13 +1389,12 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         }
         else if (dim == tdim)
         {
-          const xt::xtensor<double, 2> pt = lattice::create(
+          const auto [pt, shape] = lattice::create_new(
               celltype, degree, lattice_type, false, simplex_method);
-          xbuffer[dim][e] = std::vector<double>(pt.begin(), pt.end());
-          x[dim][e]
-              = mdspan2_t(xbuffer[dim][e].data(), pt.shape(0), pt.shape(1));
+          xbuffer[dim][e] = pt;
+          x[dim][e] = mdspan2_t(xbuffer[dim][e].data(), shape);
 
-          const std::size_t num_dofs = pt.shape(0);
+          const std::size_t num_dofs = shape[0];
           Mbuffer[dim][e] = std::vector<double>(num_dofs * num_dofs);
           M[dim][e]
               = mdspan4_t(Mbuffer[dim][e].data(), num_dofs, 1, num_dofs, 1);
@@ -1408,9 +1406,11 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const xt::xtensor<double, 2> lattice = lattice::create(
-              ct, degree, lattice_type, false, simplex_method);
-          const std::size_t num_dofs = lattice.shape(0);
+          const auto [pt, shape] = lattice::create_new(ct, degree, lattice_type,
+                                                       false, simplex_method);
+          stdex::mdspan<const double, stdex::dextents<2>> lattice(pt.data(),
+                                                                  shape);
+          const std::size_t num_dofs = shape[0];
 
           Mbuffer[dim][e] = std::vector<double>(num_dofs * num_dofs);
           M[dim][e]
@@ -1421,14 +1421,14 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
             Mview(i, i) = 1;
 
           xtl::span<const double> x0(entity_x.data(), entity_x.shape(1));
-          for (std::size_t i = 0; i < lattice.shape(0); ++i)
+          for (std::size_t i = 0; i < shape[0]; ++i)
             xbuffer[dim][e].insert(xbuffer[dim][e].end(), x0.begin(), x0.end());
-          x[dim][e] = mdspan2_t(xbuffer[dim][e].data(), lattice.shape(0),
-                                entity_x.shape(1));
+          x[dim][e]
+              = mdspan2_t(xbuffer[dim][e].data(), shape[0], entity_x.shape(1));
 
           mdspan2_t& _x = x[dim][e];
-          for (std::size_t j = 0; j < lattice.shape(0); ++j)
-            for (std::size_t k = 0; k < lattice.shape(1); ++k)
+          for (std::size_t j = 0; j < shape[0]; ++j)
+            for (std::size_t k = 0; k < shape[1]; ++k)
               for (std::size_t q = 0; q < tdim; ++q)
                 _x(j, q) += (entity_x(k + 1, q) - x0[q]) * lattice(j, k);
         }

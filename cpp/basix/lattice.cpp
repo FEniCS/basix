@@ -802,12 +802,16 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
   }
 }
 //-----------------------------------------------------------------------------
-std::vector<double> lattice::create_new(cell::type celltype, int n,
-                                        lattice::type type, bool exterior,
-                                        lattice::simplex_method simplex_method)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+lattice::create_new(cell::type celltype, int n, lattice::type type,
+                    bool exterior, lattice::simplex_method simplex_method)
 {
   xt::xtensor<double, 2> x
       = create(celltype, n, type, exterior, simplex_method);
-  return std::vector<double>(x.data(), x.data() + x.size());
+  return {std::vector<double>(x.data(), x.data() + x.size()),
+          {
+              x.shape(0),
+              x.shape(0),
+          }};
 }
 //-----------------------------------------------------------------------------

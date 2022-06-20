@@ -106,6 +106,135 @@ std::vector<double> vtk_triangle_points(std::size_t degree)
   return outdata;
 }
 //-----------------------------------------------------------------------------
+std::vector<double> vtk_tetrahedron_points(std::size_t degree)
+{
+  const double d = 1 / static_cast<double>(degree + 4);
+  if (degree == 0)
+    return {d, d, d};
+
+  const std::size_t npoints = polyset::dim(cell::type::tetrahedron, degree);
+  std::vector<double> outdata(npoints * 3);
+  stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 3>> out(
+      outdata.data(), npoints, 3);
+
+  out(0, 0) = d;
+  out(0, 1) = d;
+  out(0, 2) = d;
+  out(1, 0) = 1 - 3 * d;
+  out(1, 1) = d;
+  out(1, 2) = d;
+  out(2, 0) = d;
+  out(2, 1) = 1 - 3 * d;
+  out(2, 2) = d;
+  out(3, 0) = d;
+  out(3, 1) = d;
+  out(3, 2) = 1 - 3 * d;
+  int n = 4;
+  if (degree >= 2)
+  {
+    for (std::size_t i = 1; i < degree; ++i)
+    {
+      out(n, 0) = d + ((1 - 4 * d) * i) / (degree);
+      out(n, 1) = d;
+      out(n, 2) = d;
+      ++n;
+    }
+    for (std::size_t i = 1; i < degree; ++i)
+    {
+      out(n, 0) = d + ((1 - 4 * d) * (degree - i)) / degree;
+      out(n, 1) = d + ((1 - 4 * d) * i) / degree;
+      out(n, 2) = d;
+      ++n;
+    }
+    for (std::size_t i = 1; i < degree; ++i)
+    {
+      out(n, 0) = d;
+      out(n, 1) = d + ((1 - 4 * d) * (degree - i)) / degree;
+      out(n, 2) = d;
+      ++n;
+    }
+    for (std::size_t i = 1; i < degree; ++i)
+    {
+      out(n, 0) = d;
+      out(n, 1) = d;
+      out(n, 2) = d + ((1 - 4 * d) * i) / degree;
+      ++n;
+    }
+    for (std::size_t i = 1; i < degree; ++i)
+    {
+      out(n, 0) = d + ((1 - 4 * d) * (degree - i)) / degree;
+      out(n, 1) = d;
+      out(n, 2) = d + ((1 - 4 * d) * i) / degree;
+      ++n;
+    }
+    for (std::size_t i = 1; i < degree; ++i)
+    {
+      out(n, 0) = d;
+      out(n, 1) = d + ((1 - 4 * d) * (degree - i)) / degree;
+      out(n, 2) = d + ((1 - 4 * d) * i) / degree;
+      ++n;
+    }
+  }
+
+  if (degree >= 3)
+  {
+    std::vector<double> pts_data = vtk_triangle_points(degree - 3);
+    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> pts(
+        pts_data.data(), pts_data.size() / 2, 2);
+
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
+    {
+      out(n, 0) = d + pts(i, 0) * (1 - 4 * d);
+      out(n, 1) = d;
+      out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
+      ++n;
+    }
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
+    {
+      out(n, 0) = 1 - 3 * d - (pts(i, 0) + pts(i, 1)) * (1 - 4 * d);
+      out(n, 1) = d + pts(i, 0) * (1 - 4 * d);
+      out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
+      ++n;
+    }
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
+    {
+      out(n, 0) = d;
+      out(n, 1) = d + pts(i, 0) * (1 - 4 * d);
+      out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
+      ++n;
+    }
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
+    {
+      out(n, 0) = d + pts(i, 0) * (1 - 4 * d);
+      out(n, 1) = d + pts(i, 1) * (1 - 4 * d);
+      out(n, 2) = d;
+      ++n;
+    }
+  }
+
+  if (degree >= 4)
+  {
+    std::vector<double> pts_data = vtk_tetrahedron_points(degree - 4);
+    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 3>> pts(
+        pts_data.data(), pts_data.size() / 3, 3);
+
+    auto out_view = stdex::submdspan(out, std::pair<int, int>{n, npoints},
+                                     stdex::full_extent);
+    for (std::size_t i = 0; i < out_view.extent(0); ++i)
+      for (std::size_t j = 0; j < out_view.extent(1); ++j)
+        out_view(i, j) = pts(i, j);
+
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
+    {
+      for (std::size_t j = 0; j < pts.extent(1); ++j)
+        out(n, j) = d + (1 - 4 * d) * pts(i, j);
+      ++n;
+    }
+  }
+
+  return outdata;
+}
+//-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
            std::array<std::vector<std::vector<double>>, 4>,
@@ -236,6 +365,167 @@ vtk_data_triangle(std::size_t degree)
     x[2][0] = {};
     Mshape[2][0] = {0, 1, 0, 1};
     M[2][0] = {};
+  }
+
+  return {x, xshape, M, Mshape};
+}
+//----------------------------------------------------------------------------
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+vtk_data_tetrahedron(std::size_t degree)
+{
+  constexpr std::size_t tdim = 3;
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(cell::type::tetrahedron);
+
+  std::array<std::vector<std::vector<double>>, 4> x;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+  std::array<std::vector<std::vector<double>>, 4> M;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+  for (std::size_t d = 0; d <= tdim; ++d)
+  {
+    x[d].resize(topology[d].size());
+    xshape[d].resize(topology[d].size());
+    M[d].resize(topology[d].size());
+    Mshape[d].resize(topology[d].size());
+  }
+
+  // Points at vertices
+  x[0][0] = {0., 0., 0.};
+  x[0][1] = {1., 0., 0.};
+  x[0][2] = {0., 1., 0.};
+  x[0][3] = {0., 0., 1.};
+  for (int i = 0; i < 4; ++i)
+  {
+    xshape[0][i] = {1, 3};
+    M[0][i] = {1.0};
+    Mshape[0][i] = {1, 1, 1, 1};
+  }
+
+  // Points on edges
+  {
+    std::array<mdspan2_t, 6> xview;
+    for (int i = 0; i < 6; ++i)
+    {
+      xshape[1][i] = {degree - 1, 3};
+      x[1][i].resize(3 * (degree - 1), 0);
+      xview[i] = mdspan2_t(x[1][i].data(), degree - 1, 3);
+    }
+
+    for (std::size_t i = 1; i < degree; ++i)
+    {
+      xview[0](i - 1, 0) = i / static_cast<double>(degree);
+      xview[0](i - 1, 1) = 0;
+      xview[0](i - 1, 2) = 0;
+
+      xview[1](i - 1, 0) = (degree - i) / static_cast<double>(degree);
+      xview[1](i - 1, 1) = i / static_cast<double>(degree);
+      xview[1](i - 1, 2) = 0;
+
+      xview[2](i - 1, 0) = 0;
+      xview[2](i - 1, 1) = (degree - i) / static_cast<double>(degree);
+      xview[2](i - 1, 2) = 0;
+
+      xview[3](i - 1, 0) = 0;
+      xview[3](i - 1, 1) = 0;
+      xview[3](i - 1, 2) = i / static_cast<double>(degree);
+
+      xview[4](i - 1, 0) = (degree - i) / static_cast<double>(degree);
+      xview[4](i - 1, 1) = 0;
+      xview[4](i - 1, 2) = i / static_cast<double>(degree);
+
+      xview[5](i - 1, 0) = 0;
+      xview[5](i - 1, 1) = (degree - i) / static_cast<double>(degree);
+      xview[5](i - 1, 2) = i / static_cast<double>(degree);
+    }
+
+    for (int i = 0; i < 6; ++i)
+    {
+      M[1][i].resize((degree - 1) * (degree - 1));
+      Mshape[1][i] = {degree - 1, 1, degree - 1, 1};
+      mdspan4_t Mview(M[1][i].data(), degree - 1, 1, degree - 1, 1);
+      for (std::size_t k = 0; k < degree - 1; ++k)
+        Mview(k, 0, k, 0) = 1.0;
+    }
+  }
+
+  // Points on faces
+  if (degree >= 3)
+  {
+    std::vector<double> pts_data = vtk_triangle_points(degree - 3);
+    mdspan2_t pts(pts_data.data(), pts_data.size() / 2, 2);
+    std::array<mdspan2_t, 4> xview;
+    for (int i = 0; i < 4; ++i)
+    {
+      x[2][i].resize(3 * pts.extent(0), 0);
+      xshape[2][i] = {pts.extent(0), 3};
+      xview[i] = mdspan2_t(x[2][i].data(), xshape[2][i]);
+    }
+
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
+    {
+      const double x0 = pts(i, 0);
+      const double x1 = pts(i, 1);
+
+      xview[0](i, 0) = x0;
+      xview[0](i, 1) = 0;
+      xview[0](i, 2) = x1;
+
+      xview[1](i, 0) = 1 - x0 - x1;
+      xview[1](i, 1) = x0;
+      xview[1](i, 2) = x1;
+
+      xview[2](i, 0) = 0;
+      xview[2](i, 1) = x0;
+      xview[2](i, 2) = x1;
+
+      xview[3](i, 0) = x0;
+      xview[3](i, 1) = x1;
+      xview[3](i, 2) = 0;
+    }
+
+    for (int i = 0; i < 4; ++i)
+    {
+      Mshape[2][i] = {pts.extent(0), 1, pts.extent(0), 1};
+      M[2][i].resize(pts.extent(0) * pts.extent(0));
+      mdspan4_t Mview(M[2][i].data(), Mshape[2][i]);
+      for (std::size_t k = 0; k < Mshape[2][i][0]; ++k)
+        Mview(k, 0, k, 0) = 1.0;
+    }
+  }
+  else
+  {
+    for (int i = 0; i < 4; ++i)
+    {
+      xshape[2][i] = {0, 3};
+      x[2][i] = {};
+      Mshape[2][i] = {0, 1, 0, 1};
+      M[2][i] = {};
+    }
+  }
+
+  // Points on volume
+  if (degree >= 4)
+  {
+    std::vector<double> pts_data = vtk_tetrahedron_points(degree - 4);
+    mdspan2_t pts(pts_data.data(), pts_data.size() / 3, 3);
+    xshape[3][0] = {pts_data.size() / 3, 3};
+    x[3][0] = pts_data;
+    Mshape[3][0] = {pts_data.size() / 3, 1, pts_data.size() / 3, 1};
+    M[3][0].resize(Mshape[3][0][0] * Mshape[3][0][0], 0);
+
+    mdspan4_t Mview(M[3][0].data(), Mshape[3][0]);
+    for (std::size_t k = 0; k < Mview.extent(0); ++k)
+      Mview(k, 0, k, 0) = 1.0;
+  }
+  else
+  {
+    xshape[3][0] = {0, 3};
+    x[3][0] = {};
+    Mshape[3][0] = {0, 1, 0, 1};
+    M[3][0] = {};
   }
 
   return {x, xshape, M, Mshape};
@@ -494,135 +784,6 @@ create_tensor_product_factors(cell::type celltype, int degree,
   }
 }
 //----------------------------------------------------------------------------
-std::vector<double> vtk_tetrahedron_points(std::size_t degree)
-{
-  const double d = 1 / static_cast<double>(degree + 4);
-  if (degree == 0)
-    return {d, d, d};
-
-  const std::size_t npoints = polyset::dim(cell::type::tetrahedron, degree);
-  std::vector<double> outdata(npoints * 3);
-  stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 3>> out(
-      outdata.data(), npoints, 3);
-
-  out(0, 0) = d;
-  out(0, 1) = d;
-  out(0, 2) = d;
-  out(1, 0) = 1 - 3 * d;
-  out(1, 1) = d;
-  out(1, 2) = d;
-  out(2, 0) = d;
-  out(2, 1) = 1 - 3 * d;
-  out(2, 2) = d;
-  out(3, 0) = d;
-  out(3, 1) = d;
-  out(3, 2) = 1 - 3 * d;
-  int n = 4;
-  if (degree >= 2)
-  {
-    for (std::size_t i = 1; i < degree; ++i)
-    {
-      out(n, 0) = d + ((1 - 4 * d) * i) / (degree);
-      out(n, 1) = d;
-      out(n, 2) = d;
-      ++n;
-    }
-    for (std::size_t i = 1; i < degree; ++i)
-    {
-      out(n, 0) = d + ((1 - 4 * d) * (degree - i)) / degree;
-      out(n, 1) = d + ((1 - 4 * d) * i) / degree;
-      out(n, 2) = d;
-      ++n;
-    }
-    for (std::size_t i = 1; i < degree; ++i)
-    {
-      out(n, 0) = d;
-      out(n, 1) = d + ((1 - 4 * d) * (degree - i)) / degree;
-      out(n, 2) = d;
-      ++n;
-    }
-    for (std::size_t i = 1; i < degree; ++i)
-    {
-      out(n, 0) = d;
-      out(n, 1) = d;
-      out(n, 2) = d + ((1 - 4 * d) * i) / degree;
-      ++n;
-    }
-    for (std::size_t i = 1; i < degree; ++i)
-    {
-      out(n, 0) = d + ((1 - 4 * d) * (degree - i)) / degree;
-      out(n, 1) = d;
-      out(n, 2) = d + ((1 - 4 * d) * i) / degree;
-      ++n;
-    }
-    for (std::size_t i = 1; i < degree; ++i)
-    {
-      out(n, 0) = d;
-      out(n, 1) = d + ((1 - 4 * d) * (degree - i)) / degree;
-      out(n, 2) = d + ((1 - 4 * d) * i) / degree;
-      ++n;
-    }
-  }
-
-  if (degree >= 3)
-  {
-    std::vector<double> pts_data = vtk_triangle_points(degree - 3);
-    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> pts(
-        pts_data.data(), pts_data.size() / 2, 2);
-
-    for (std::size_t i = 0; i < pts.extent(0); ++i)
-    {
-      out(n, 0) = d + pts(i, 0) * (1 - 4 * d);
-      out(n, 1) = d;
-      out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
-      ++n;
-    }
-    for (std::size_t i = 0; i < pts.extent(0); ++i)
-    {
-      out(n, 0) = 1 - 3 * d - (pts(i, 0) + pts(i, 1)) * (1 - 4 * d);
-      out(n, 1) = d + pts(i, 0) * (1 - 4 * d);
-      out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
-      ++n;
-    }
-    for (std::size_t i = 0; i < pts.extent(0); ++i)
-    {
-      out(n, 0) = d;
-      out(n, 1) = d + pts(i, 0) * (1 - 4 * d);
-      out(n, 2) = d + pts(i, 1) * (1 - 4 * d);
-      ++n;
-    }
-    for (std::size_t i = 0; i < pts.extent(0); ++i)
-    {
-      out(n, 0) = d + pts(i, 0) * (1 - 4 * d);
-      out(n, 1) = d + pts(i, 1) * (1 - 4 * d);
-      out(n, 2) = d;
-      ++n;
-    }
-  }
-
-  if (degree >= 4)
-  {
-    std::vector<double> pts_data = vtk_tetrahedron_points(degree - 4);
-    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 3>> pts(
-        pts_data.data(), pts_data.size() / 3, 3);
-
-    auto out_view = stdex::submdspan(out, std::pair<int, int>{n, npoints},
-                                     stdex::full_extent);
-    for (std::size_t i = 0; i < out_view.extent(0); ++i)
-      for (std::size_t j = 0; j < out_view.extent(1); ++j)
-        out_view(i, j) = pts(i, j);
-
-    for (std::size_t i = 0; i < pts.extent(0); ++i)
-    {
-      for (std::size_t j = 0; j < pts.extent(1); ++j)
-        out(n, j) = d + (1 - 4 * d) * pts(i, j);
-      ++n;
-    }
-  }
-
-  return outdata;
-}
-//-----------------------------------------------------------------------------
 FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
                                  bool discontinuous)
 {
@@ -696,6 +857,11 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
   }
   case cell::type::tetrahedron:
   {
+    auto [xnew, xshape, Mnew, Mshape] = vtk_data_tetrahedron(degree);
+    std::tie(x, M) = to_xtensor(xnew, xshape, Mnew, Mshape);
+    break;
+
+    /*
     // Points at vertices
     x[0][0] = {{0., 0., 0.}};
     x[0][1] = {{1., 0., 0.}};
@@ -811,6 +977,7 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
     }
 
     break;
+    */
   }
   case cell::type::quadrilateral:
   {

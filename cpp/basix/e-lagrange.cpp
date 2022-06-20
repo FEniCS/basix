@@ -634,7 +634,7 @@ vtk_data_hexahedron(std::size_t degree)
 {
   constexpr std::size_t tdim = 3;
   const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(cell::type::tetrahedron);
+      = cell::topology(cell::type::hexahedron);
 
   std::array<std::vector<std::vector<double>>, 4> x;
   std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
@@ -651,9 +651,13 @@ vtk_data_hexahedron(std::size_t degree)
   // Points at vertices
   x[0][0] = {0., 0., 0.};
   x[0][1] = {1., 0., 0.};
-  x[0][2] = {0., 1., 0.};
-  x[0][3] = {0., 0., 1.};
-  for (int i = 0; i < 4; ++i)
+  x[0][2] = {1., 1., 0.};
+  x[0][3] = {0., 1., 0.};
+  x[0][4] = {0., 0., 1.};
+  x[0][5] = {1., 0., 1.};
+  x[0][6] = {1., 1., 1.};
+  x[0][7] = {0., 1., 1.};
+  for (int i = 0; i < 8; ++i)
   {
     xshape[0][i] = {1, 3};
     M[0][i] = {1.0};
@@ -662,8 +666,8 @@ vtk_data_hexahedron(std::size_t degree)
 
   // Points on edges
   {
-    std::array<mdspan2_t, 6> xview;
-    for (int i = 0; i < 6; ++i)
+    std::array<mdspan2_t, 12> xview;
+    for (int i = 0; i < 12; ++i)
     {
       xshape[1][i] = {degree - 1, 3};
       x[1][i].resize(3 * (degree - 1), 0);
@@ -676,28 +680,52 @@ vtk_data_hexahedron(std::size_t degree)
       xview[0](i - 1, 1) = 0;
       xview[0](i - 1, 2) = 0;
 
-      xview[1](i - 1, 0) = (degree - i) / static_cast<double>(degree);
+      xview[1](i - 1, 0) = 1;
       xview[1](i - 1, 1) = i / static_cast<double>(degree);
       xview[1](i - 1, 2) = 0;
 
-      xview[2](i - 1, 0) = 0;
-      xview[2](i - 1, 1) = (degree - i) / static_cast<double>(degree);
+      xview[2](i - 1, 0) = i / static_cast<double>(degree);
+      xview[2](i - 1, 1) = 1;
       xview[2](i - 1, 2) = 0;
 
       xview[3](i - 1, 0) = 0;
-      xview[3](i - 1, 1) = 0;
-      xview[3](i - 1, 2) = i / static_cast<double>(degree);
+      xview[3](i - 1, 1) = i / static_cast<double>(degree);
+      xview[3](i - 1, 2) = 0;
 
-      xview[4](i - 1, 0) = (degree - i) / static_cast<double>(degree);
+      xview[4](i - 1, 0) = i / static_cast<double>(degree);
       xview[4](i - 1, 1) = 0;
-      xview[4](i - 1, 2) = i / static_cast<double>(degree);
+      xview[4](i - 1, 2) = 1;
 
-      xview[5](i - 1, 0) = 0;
-      xview[5](i - 1, 1) = (degree - i) / static_cast<double>(degree);
-      xview[5](i - 1, 2) = i / static_cast<double>(degree);
+      xview[5](i - 1, 0) = 1;
+      xview[5](i - 1, 1) = i / static_cast<double>(degree);
+      xview[5](i - 1, 2) = 1;
+
+      xview[6](i - 1, 0) = i / static_cast<double>(degree);
+      xview[6](i - 1, 1) = 1;
+      xview[6](i - 1, 2) = 1;
+
+      xview[7](i - 1, 0) = 0;
+      xview[7](i - 1, 1) = i / static_cast<double>(degree);
+      xview[7](i - 1, 2) = 1;
+
+      xview[8](i - 1, 0) = 0;
+      xview[8](i - 1, 1) = 0;
+      xview[8](i - 1, 2) = i / static_cast<double>(degree);
+
+      xview[9](i - 1, 0) = 1;
+      xview[9](i - 1, 1) = 0;
+      xview[9](i - 1, 2) = i / static_cast<double>(degree);
+
+      xview[10](i - 1, 0) = 1;
+      xview[10](i - 1, 1) = 1;
+      xview[10](i - 1, 2) = i / static_cast<double>(degree);
+
+      xview[11](i - 1, 0) = 0;
+      xview[11](i - 1, 1) = 1;
+      xview[11](i - 1, 2) = i / static_cast<double>(degree);
     }
 
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 12; ++i)
     {
       M[1][i].resize((degree - 1) * (degree - 1));
       Mshape[1][i] = {degree - 1, 1, degree - 1, 1};
@@ -708,80 +736,83 @@ vtk_data_hexahedron(std::size_t degree)
   }
 
   // Points on faces
-  if (degree >= 3)
   {
-    std::vector<double> pts_data = vtk_triangle_points(degree - 3);
-    mdspan2_t pts(pts_data.data(), pts_data.size() / 2, 2);
-    std::array<mdspan2_t, 4> xview;
-    for (int i = 0; i < 4; ++i)
+    std::array<mdspan2_t, 6> xview;
+    for (int i = 0; i < 6; ++i)
     {
-      x[2][i].resize(3 * pts.extent(0), 0);
-      xshape[2][i] = {pts.extent(0), 3};
+      xshape[2][i] = {(degree - 1) * (degree - 1), 3};
+      x[2][i].resize(xshape[2][i][0] * xshape[2][i][1], 0);
       xview[i] = mdspan2_t(x[2][i].data(), xshape[2][i]);
     }
 
-    for (std::size_t i = 0; i < pts.extent(0); ++i)
+    int n = 0;
+    for (std::size_t j = 1; j < degree; ++j)
     {
-      const double x0 = pts(i, 0);
-      const double x1 = pts(i, 1);
+      for (std::size_t i = 1; i < degree; ++i)
+      {
+        xview[0](n, 0) = 0;
+        xview[0](n, 1) = i / static_cast<double>(degree);
+        xview[0](n, 2) = j / static_cast<double>(degree);
 
-      xview[0](i, 0) = x0;
-      xview[0](i, 1) = 0;
-      xview[0](i, 2) = x1;
+        xview[1](n, 0) = 1;
+        xview[1](n, 1) = i / static_cast<double>(degree);
+        xview[1](n, 2) = j / static_cast<double>(degree);
 
-      xview[1](i, 0) = 1 - x0 - x1;
-      xview[1](i, 1) = x0;
-      xview[1](i, 2) = x1;
+        xview[2](n, 0) = i / static_cast<double>(degree);
+        xview[2](n, 1) = 0;
+        xview[2](n, 2) = j / static_cast<double>(degree);
 
-      xview[2](i, 0) = 0;
-      xview[2](i, 1) = x0;
-      xview[2](i, 2) = x1;
+        xview[3](n, 0) = i / static_cast<double>(degree);
+        xview[3](n, 1) = 1;
+        xview[3](n, 2) = j / static_cast<double>(degree);
 
-      xview[3](i, 0) = x0;
-      xview[3](i, 1) = x1;
-      xview[3](i, 2) = 0;
+        xview[4](n, 0) = i / static_cast<double>(degree);
+        xview[4](n, 1) = j / static_cast<double>(degree);
+        xview[4](n, 2) = 0;
+
+        xview[5](n, 0) = i / static_cast<double>(degree);
+        xview[5](n, 1) = j / static_cast<double>(degree);
+        xview[5](n, 2) = 1;
+
+        ++n;
+      }
     }
 
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 6; ++i)
     {
-      Mshape[2][i] = {pts.extent(0), 1, pts.extent(0), 1};
-      M[2][i].resize(pts.extent(0) * pts.extent(0));
+      Mshape[2][i] = {xview[0].extent(0), 1, xview[0].extent(0), 1};
+      M[2][i].resize(xview[0].extent(0) * xview[0].extent(0));
       mdspan4_t Mview(M[2][i].data(), Mshape[2][i]);
-      for (std::size_t k = 0; k < Mshape[2][i][0]; ++k)
+      for (std::size_t k = 0; k < Mview.extent(0); ++k)
         Mview(k, 0, k, 0) = 1.0;
     }
   }
-  else
+
+  // Interior points
   {
-    for (int i = 0; i < 4; ++i)
+    xshape[3][0] = {(degree - 1) * (degree - 1) * (degree - 1), 3};
+    x[3][0].resize(xshape[3][0][0] * xshape[3][0][1], 0);
+    mdspan2_t xview(x[3][0].data(), xshape[3][0]);
+    int n = 0;
+    for (std::size_t k = 1; k < degree; ++k)
     {
-      xshape[2][i] = {0, 3};
-      x[2][i] = {};
-      Mshape[2][i] = {0, 1, 0, 1};
-      M[2][i] = {};
+      for (std::size_t j = 1; j < degree; ++j)
+      {
+        for (std::size_t i = 1; i < degree; ++i)
+        {
+          xview(n, 0) = i / static_cast<double>(degree);
+          xview(n, 1) = j / static_cast<double>(degree);
+          xview(n, 2) = k / static_cast<double>(degree);
+          ++n;
+        }
+      }
     }
-  }
 
-  // Points on volume
-  if (degree >= 4)
-  {
-    std::vector<double> pts_data = vtk_tetrahedron_points(degree - 4);
-    mdspan2_t pts(pts_data.data(), pts_data.size() / 3, 3);
-    xshape[3][0] = {pts_data.size() / 3, 3};
-    x[3][0] = pts_data;
-    Mshape[3][0] = {pts_data.size() / 3, 1, pts_data.size() / 3, 1};
-    M[3][0].resize(Mshape[3][0][0] * Mshape[3][0][0], 0);
-
+    Mshape[3][0] = {xview.extent(0), 1, xview.extent(0), 1};
+    M[3][0].resize(xview.extent(0) * xview.extent(0), 0);
     mdspan4_t Mview(M[3][0].data(), Mshape[3][0]);
     for (std::size_t k = 0; k < Mview.extent(0); ++k)
       Mview(k, 0, k, 0) = 1.0;
-  }
-  else
-  {
-    xshape[3][0] = {0, 3};
-    x[3][0] = {};
-    Mshape[3][0] = {0, 1, 0, 1};
-    M[3][0] = {};
   }
 
   return {x, xshape, M, Mshape};
@@ -1120,156 +1151,14 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
   }
   case cell::type::quadrilateral:
   {
-    // std::cout << "Degree: " << degree << std::endl;
     auto [xnew, xshape, Mnew, Mshape] = vtk_data_quadrilateral(degree);
     std::tie(x, M) = to_xtensor(xnew, xshape, Mnew, Mshape);
     break;
   }
   case cell::type::hexahedron:
   {
-    // Points at vertices
-    x[0][0] = {{0., 0., 0.}};
-    x[0][1] = {{1., 0., 0.}};
-    x[0][2] = {{1., 1., 0.}};
-    x[0][3] = {{0., 1., 0.}};
-    x[0][4] = {{0., 0., 1.}};
-    x[0][5] = {{1., 0., 1.}};
-    x[0][6] = {{1., 1., 1.}};
-    x[0][7] = {{0., 1., 1.}};
-    for (int i = 0; i < 8; ++i)
-      M[0][i] = {{{{1.}}}};
-
-    // Points on edges
-    std::array<std::size_t, 2> s = {degree - 1, 3};
-    for (int i = 0; i < 12; ++i)
-      x[1][i] = xt::xtensor<double, 2>(s);
-    for (std::size_t i = 1; i < degree; ++i)
-    {
-      x[1][0](i - 1, 0) = i / static_cast<double>(degree);
-      x[1][0](i - 1, 1) = 0;
-      x[1][0](i - 1, 2) = 0;
-
-      x[1][1](i - 1, 0) = 1;
-      x[1][1](i - 1, 1) = i / static_cast<double>(degree);
-      x[1][1](i - 1, 2) = 0;
-
-      x[1][2](i - 1, 0) = i / static_cast<double>(degree);
-      x[1][2](i - 1, 1) = 1;
-      x[1][2](i - 1, 2) = 0;
-
-      x[1][3](i - 1, 0) = 0;
-      x[1][3](i - 1, 1) = i / static_cast<double>(degree);
-      x[1][3](i - 1, 2) = 0;
-
-      x[1][4](i - 1, 0) = i / static_cast<double>(degree);
-      x[1][4](i - 1, 1) = 0;
-      x[1][4](i - 1, 2) = 1;
-
-      x[1][5](i - 1, 0) = 1;
-      x[1][5](i - 1, 1) = i / static_cast<double>(degree);
-      x[1][5](i - 1, 2) = 1;
-
-      x[1][6](i - 1, 0) = i / static_cast<double>(degree);
-      x[1][6](i - 1, 1) = 1;
-      x[1][6](i - 1, 2) = 1;
-
-      x[1][7](i - 1, 0) = 0;
-      x[1][7](i - 1, 1) = i / static_cast<double>(degree);
-      x[1][7](i - 1, 2) = 1;
-
-      x[1][8](i - 1, 0) = 0;
-      x[1][8](i - 1, 1) = 0;
-      x[1][8](i - 1, 2) = i / static_cast<double>(degree);
-
-      x[1][9](i - 1, 0) = 1;
-      x[1][9](i - 1, 1) = 0;
-      x[1][9](i - 1, 2) = i / static_cast<double>(degree);
-
-      x[1][10](i - 1, 0) = 1;
-      x[1][10](i - 1, 1) = 1;
-      x[1][10](i - 1, 2) = i / static_cast<double>(degree);
-
-      x[1][11](i - 1, 0) = 0;
-      x[1][11](i - 1, 1) = 1;
-      x[1][11](i - 1, 2) = i / static_cast<double>(degree);
-    }
-    for (int i = 0; i < 12; ++i)
-    {
-      M[1][i] = xt::xtensor<double, 4>({degree - 1, 1, degree - 1, 1});
-      xt::view(M[1][i], xt::all(), 0, xt::all(), 0)
-          = xt::eye<double>(degree - 1);
-    }
-
-    // Points on faces
-    std::array<std::size_t, 2> s2 = {(degree - 1) * (degree - 1), 3};
-    for (int i = 0; i < 6; ++i)
-      x[2][i] = xt::xtensor<double, 2>(s2);
-
-    int n = 0;
-    for (std::size_t j = 1; j < degree; ++j)
-    {
-      for (std::size_t i = 1; i < degree; ++i)
-      {
-        x[2][0](n, 0) = 0;
-        x[2][0](n, 1) = i / static_cast<double>(degree);
-        x[2][0](n, 2) = j / static_cast<double>(degree);
-
-        x[2][1](n, 0) = 1;
-        x[2][1](n, 1) = i / static_cast<double>(degree);
-        x[2][1](n, 2) = j / static_cast<double>(degree);
-
-        x[2][2](n, 0) = i / static_cast<double>(degree);
-        x[2][2](n, 1) = 0;
-        x[2][2](n, 2) = j / static_cast<double>(degree);
-
-        x[2][3](n, 0) = i / static_cast<double>(degree);
-        x[2][3](n, 1) = 1;
-        x[2][3](n, 2) = j / static_cast<double>(degree);
-
-        x[2][4](n, 0) = i / static_cast<double>(degree);
-        x[2][4](n, 1) = j / static_cast<double>(degree);
-        x[2][4](n, 2) = 0;
-
-        x[2][5](n, 0) = i / static_cast<double>(degree);
-        x[2][5](n, 1) = j / static_cast<double>(degree);
-        x[2][5](n, 2) = 1;
-
-        ++n;
-      }
-    }
-
-    for (int i = 0; i < 6; ++i)
-    {
-      M[2][i]
-          = xt::xtensor<double, 4>({x[2][0].shape(0), 1, x[2][0].shape(0), 1});
-      xt::view(M[2][i], xt::all(), 0, xt::all(), 0)
-          = xt::eye<double>(x[2][0].shape(0));
-    }
-
-    // Points in hexahedron
-    x[3][0] = xt::xtensor<double, 2>(
-        {(degree - 1) * (degree - 1) * (degree - 1), 3});
-
-    n = 0;
-    for (std::size_t k = 1; k < degree; ++k)
-    {
-      for (std::size_t j = 1; j < degree; ++j)
-      {
-        for (std::size_t i = 1; i < degree; ++i)
-        {
-          x[3][0](n, 0) = i / static_cast<double>(degree);
-          x[3][0](n, 1) = j / static_cast<double>(degree);
-          x[3][0](n, 2) = k / static_cast<double>(degree);
-          ++n;
-        }
-      }
-    }
-
-    M[3][0]
-        = xt::xtensor<double, 4>({x[3][0].shape(0), 1, x[3][0].shape(0), 1});
-    xt::view(M[3][0], xt::all(), 0, xt::all(), 0)
-        = xt::eye<double>(x[3][0].shape(0));
-
+    auto [xnew, xshape, Mnew, Mshape] = vtk_data_hexahedron(degree);
+    std::tie(x, M) = to_xtensor(xnew, xshape, Mnew, Mshape);
     break;
   }
   default:
@@ -1278,7 +1167,6 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
 
   if (discontinuous)
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
-
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
                        discontinuous, degree, degree,

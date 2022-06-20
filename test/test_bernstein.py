@@ -118,7 +118,7 @@ def test_element(celltype, degree):
 
 @pytest.mark.parametrize("celltype", [
     basix.CellType.interval, basix.CellType.triangle,
-    # basix.CellType.tetrahedron
+    basix.CellType.tetrahedron
 ])
 @pytest.mark.parametrize("degree", range(1, 6))
 def test_basis_is_polynomials(celltype, degree):

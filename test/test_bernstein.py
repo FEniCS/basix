@@ -88,7 +88,7 @@ def test_poly(celltype, degree):
     assert numpy.allclose(wtab, wsym)
 
 
-@pytest.mark.parametrize("celltype", [basix.CellType.interval])  # basix.CellType.triangle])
+@pytest.mark.parametrize("celltype", [basix.CellType.interval, basix.CellType.triangle])
 @pytest.mark.parametrize("degree", range(1, 4))
 def test_element(celltype, degree):
     bern = get_bernstein_polynomials_entity_order(celltype, degree)
@@ -101,6 +101,8 @@ def test_element(celltype, degree):
 
     if celltype == basix.CellType.interval:
         derivs = [(0,), (1,), (2,), (3,)]
+    elif celltype == basix.CellType.triangle:
+        derivs = [(n - i, i) for n in range(4) for i in range(n + 1)]
 
     for k in derivs:
         wsym = numpy.zeros_like(wtab[0])

@@ -939,6 +939,41 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
       = {1, degree < 2 ? 0 : nb[1] - 2, degree < 3 ? 0 : nb[2] + 3 - 3 * nb[1],
          degree < 4 ? 0 : nb[3] + 6 * nb[1] - 4 * nb[2] - 4};
 
+  std::array<std::vector<int>, 4> bernstein_bubbles;
+  bernstein_bubbles[0].push_back(0);
+  { // scope
+    int ib = 0;
+    for (int i = 0; i <= degree; ++i)
+    {
+      if (i > 0 and i < degree)
+      {
+        bernstein_bubbles[1].push_back(ib);
+      }
+      ++ib;
+    }
+  }
+  { // scope
+    int ib = 0;
+    for (int i = 0; i <= degree; ++i)
+      for (int j = 0; j <= degree - i; ++j)
+      {
+        if (i > 0 and j > 0 and i + j < degree)
+          bernstein_bubbles[2].push_back(ib);
+        ++ib;
+      }
+  }
+  { // scope
+    int ib = 0;
+    for (int i = 0; i <= degree; ++i)
+      for (int j = 0; j <= degree - i; ++j)
+        for (int k = 0; k <= degree - i - j; ++k)
+        {
+          if (i > 0 and j > 0 and k > 0 and i + j + k < degree)
+            bernstein_bubbles[3].push_back(ib);
+          ++ib;
+        }
+  }
+
   for (std::size_t v = 0; v < topology[0].size(); ++v)
   {
     x[0][v] = cell::sub_entity_geometry(celltype, 0, v);
@@ -997,19 +1032,13 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
             xt::row(x[1][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
           }
         }
-
-        int dof = 0;
-        int ib = 0;
-        for (int i = 0; i <= degree; ++i)
+        for (std::size_t i = 0; i < bernstein_bubbles[1].size(); ++i)
         {
-          if (i > 0 and i < degree)
-          {
-            for (std::size_t p = 0; p < npts; ++p)
-              M[1][e](dof, 0, p, 0)
-                  = wts(p) * xt::sum(xt::col(phi, p) * xt::row(minv, ib))();
-            ++dof;
-          }
-          ++ib;
+          for (std::size_t p = 0; p < npts; ++p)
+            M[1][e](i, 0, p, 0)
+                = wts(p)
+                  * xt::sum(xt::col(phi, p)
+                            * xt::row(minv, bernstein_bubbles[1][i]))();
         }
       }
     }
@@ -1067,20 +1096,14 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
           }
         }
 
-        int dof = 0;
-        int ib = 0;
-        for (int i = 0; i <= degree; ++i)
-          for (int j = 0; j <= degree - i; ++j)
-          {
-            if (i > 0 and j > 0 and i + j < degree)
-            {
-              for (std::size_t p = 0; p < npts; ++p)
-                M[2][e](dof, 0, p, 0)
-                    = wts(p) * xt::sum(xt::col(phi, p) * xt::row(minv, ib))();
-              ++dof;
-            }
-            ++ib;
-          }
+        for (std::size_t i = 0; i < bernstein_bubbles[2].size(); ++i)
+        {
+          for (std::size_t p = 0; p < npts; ++p)
+            M[2][e](i, 0, p, 0)
+                = wts(p)
+                  * xt::sum(xt::col(phi, p)
+                            * xt::row(minv, bernstein_bubbles[2][i]))();
+        }
       }
     }
   }
@@ -1137,21 +1160,14 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
           }
         }
 
-        int dof = 0;
-        int ib = 0;
-        for (int i = 0; i <= degree; ++i)
-          for (int j = 0; j <= degree - i; ++j)
-            for (int k = 0; k <= degree - i - j; ++k)
-            {
-              if (i > 0 and j > 0 and k > 0 and i + j + k < degree)
-              {
-                for (std::size_t p = 0; p < npts; ++p)
-                  M[3][e](dof, 0, p, 0)
-                      = wts(p) * xt::sum(xt::col(phi, p) * xt::row(minv, ib))();
-                ++dof;
-              }
-              ++ib;
-            }
+        for (std::size_t i = 0; i < bernstein_bubbles[3].size(); ++i)
+        {
+          for (std::size_t p = 0; p < npts; ++p)
+            M[3][e](i, 0, p, 0)
+                = wts(p)
+                  * xt::sum(xt::col(phi, p)
+                            * xt::row(minv, bernstein_bubbles[3][i]))();
+        }
       }
     }
   }

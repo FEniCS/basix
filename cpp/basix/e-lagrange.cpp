@@ -1078,7 +1078,7 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
     throw std::runtime_error("Invalid celltype");
 
   if (degree == 0)
-    throw std::runtime_error("Cannot create an order 0 VTK element.");
+    throw std::runtime_error("Cannot create a degree 0 VTK element.");
 
   // DOF transformation don't yet work on this element, so throw runtime
   // error if trying to make continuous version
@@ -1090,12 +1090,39 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  std::array<std::vector<std::vector<double>>, 4> x;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+  std::array<std::vector<std::vector<double>>, 4> M;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+  switch (celltype)
   {
-    M[dim].resize(topology[dim].size());
-    x[dim].resize(topology[dim].size());
+  case cell::type::interval:
+  {
+    std::tie(x, xshape, M, Mshape) = vtk_data_interval(degree);
+    break;
+  }
+  case cell::type::triangle:
+  {
+    std::tie(x, xshape, M, Mshape) = vtk_data_triangle(degree);
+    break;
+  }
+  case cell::type::tetrahedron:
+  {
+    std::tie(x, xshape, M, Mshape) = vtk_data_tetrahedron(degree);
+    break;
+  }
+  case cell::type::quadrilateral:
+  {
+    std::tie(x, xshape, M, Mshape) = vtk_data_quadrilateral(degree);
+    break;
+  }
+  case cell::type::hexahedron:
+  {
+    std::tie(x, xshape, M, Mshape) = vtk_data_hexahedron(degree);
+    break;
+  }
+  default:
+    throw std::runtime_error("Unsupported cell type.");
   }
 
   auto to_xtensor
@@ -1128,47 +1155,11 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
     return std::pair(_x, _M);
   };
 
-  switch (celltype)
-  {
-  case cell::type::interval:
-  {
-    auto [xnew, xshape, Mnew, Mshape] = vtk_data_interval(degree);
-    std::tie(x, M) = to_xtensor(xnew, xshape, Mnew, Mshape);
-    break;
-  }
-  case cell::type::triangle:
-  {
-    auto [xnew, xshape, Mnew, Mshape] = vtk_data_triangle(degree);
-    std::tie(x, M) = to_xtensor(xnew, xshape, Mnew, Mshape);
-    break;
-  }
-  case cell::type::tetrahedron:
-  {
-    auto [xnew, xshape, Mnew, Mshape] = vtk_data_tetrahedron(degree);
-    auto [_x, _M] = to_xtensor(xnew, xshape, Mnew, Mshape);
-    std::tie(x, M) = to_xtensor(xnew, xshape, Mnew, Mshape);
-    break;
-  }
-  case cell::type::quadrilateral:
-  {
-    auto [xnew, xshape, Mnew, Mshape] = vtk_data_quadrilateral(degree);
-    std::tie(x, M) = to_xtensor(xnew, xshape, Mnew, Mshape);
-    break;
-  }
-  case cell::type::hexahedron:
-  {
-    auto [xnew, xshape, Mnew, Mshape] = vtk_data_hexahedron(degree);
-    std::tie(x, M) = to_xtensor(xnew, xshape, Mnew, Mshape);
-    break;
-  }
-  default:
-    throw std::runtime_error("Unsupported cell type.");
-  }
-
+  auto [_x, _M] = to_xtensor(x, xshape, M, Mshape);
   if (discontinuous)
-    std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
+    std::tie(_x, _M) = element::make_discontinuous(_x, _M, tdim, 1);
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
+                       xt::eye<double>(ndofs), _x, _M, 0, maps::type::identity,
                        discontinuous, degree, degree,
                        element::lagrange_variant::vtk);
 }

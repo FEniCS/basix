@@ -926,6 +926,22 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
     x[dim].resize(topology[dim].size());
   }
 
+  const std::array<std::size_t, 4> nb
+      = {1,
+         static_cast<std::size_t>(polynomials::dim(
+             polynomials::type::bernstein, cell::type::interval, degree)),
+         static_cast<std::size_t>(polynomials::dim(
+             polynomials::type::bernstein, cell::type::triangle, degree)),
+         static_cast<std::size_t>(polynomials::dim(
+             polynomials::type::bernstein, cell::type::tetrahedron, degree))};
+
+  std::array<std::size_t, 4> nb_interior;
+  nb_interior[0] = 1;
+  nb_interior[1] = degree < 2 ? 0 : nb[1] - 2;
+  nb_interior[2] = degree < 3 ? 0 : nb[2] - 3 * nb_interior[1] - 3;
+  nb_interior[3]
+      = degree < 4 ? 0 : nb[3] - 4 * nb_interior[2] - 6 * nb_interior[1] - 4;
+
   for (std::size_t v = 0; v < topology[0].size(); ++v)
   {
     x[0][v] = cell::sub_entity_geometry(celltype, 0, v);
@@ -934,11 +950,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 
   if (tdim >= 1)
   {
-    const std::size_t nb = polynomials::dim(polynomials::type::bernstein,
-                                            cell::type::interval, degree);
-    const std::size_t nb_interior = degree < 2 ? 0 : nb - 2;
-
-    if (nb_interior == 0)
+    if (nb_interior[1] == 0)
     {
       for (std::size_t e = 0; e < topology[1].size(); ++e)
       {
@@ -957,21 +969,21 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
       const xt::xtensor<double, 2> bern = polynomials::tabulate(
           polynomials::type::bernstein, cell::type::interval, degree, pts);
 
-      assert(phi.shape(0) == nb);
+      assert(phi.shape(0) == nb[1]);
       const std::size_t npts = pts.shape(0);
 
-      xt::xtensor<double, 2> mat({nb, nb});
-      for (std::size_t i = 0; i < nb; ++i)
-        for (std::size_t j = 0; j < nb; ++j)
+      xt::xtensor<double, 2> mat({nb[1], nb[1]});
+      for (std::size_t i = 0; i < nb[1]; ++i)
+        for (std::size_t j = 0; j < nb[1]; ++j)
           mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
 
-      xt::xtensor<double, 2> id = xt::eye<double>(nb);
+      xt::xtensor<double, 2> id = xt::eye<double>(nb[1]);
 
       xt::xtensor<double, 2> minv = math::solve(mat, id);
 
       M[1] = std::vector<xt::xtensor<double, 4>>(
           cell::num_sub_entities(celltype, 1),
-          xt::xtensor<double, 4>({nb_interior, 1, npts, 1}));
+          xt::xtensor<double, 4>({nb_interior[1], 1, npts, 1}));
       for (std::size_t e = 0; e < topology[1].size(); ++e)
       {
         const xt::xtensor<double, 2> entity_x
@@ -1007,17 +1019,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   }
   if (tdim >= 2)
   {
-    const std::size_t nb = polynomials::dim(polynomials::type::bernstein,
-                                            cell::type::triangle, degree);
-    const std::size_t nb_edge_interior
-        = degree < 2 ? 0
-                     : polynomials::dim(polynomials::type::bernstein,
-                                        cell::type::interval, degree)
-                           - 2;
-    const std::size_t nb_interior
-        = degree < 3 ? 0 : nb - 3 * nb_edge_interior - 3;
-
-    if (nb_interior == 0)
+    if (nb_interior[2] == 0)
     {
       for (std::size_t e = 0; e < topology[2].size(); ++e)
       {
@@ -1036,21 +1038,21 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
       const xt::xtensor<double, 2> bern = polynomials::tabulate(
           polynomials::type::bernstein, cell::type::triangle, degree, pts);
 
-      assert(phi.shape(0) == nb);
+      assert(phi.shape(0) == nb[2]);
       const std::size_t npts = pts.shape(0);
 
-      xt::xtensor<double, 2> mat({nb, nb});
-      for (std::size_t i = 0; i < nb; ++i)
-        for (std::size_t j = 0; j < nb; ++j)
+      xt::xtensor<double, 2> mat({nb[2], nb[2]});
+      for (std::size_t i = 0; i < nb[2]; ++i)
+        for (std::size_t j = 0; j < nb[2]; ++j)
           mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
 
-      xt::xtensor<double, 2> id = xt::eye<double>(nb);
+      xt::xtensor<double, 2> id = xt::eye<double>(nb[2]);
 
       xt::xtensor<double, 2> minv = math::solve(mat, id);
 
       M[2] = std::vector<xt::xtensor<double, 4>>(
           cell::num_sub_entities(celltype, 2),
-          xt::xtensor<double, 4>({nb_interior, 1, npts, 1}));
+          xt::xtensor<double, 4>({nb_interior[2], 1, npts, 1}));
       for (std::size_t e = 0; e < topology[2].size(); ++e)
       {
         const xt::xtensor<double, 2> entity_x
@@ -1087,25 +1089,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   }
   if (tdim >= 3)
   { // scope
-    const std::size_t nb = polynomials::dim(polynomials::type::bernstein,
-                                            cell::type::tetrahedron, degree);
-    const std::size_t nb_edge_interior
-        = degree < 2 ? 0
-                     : polynomials::dim(polynomials::type::bernstein,
-                                        cell::type::interval, degree)
-                           - 2;
-    const std::size_t nb_face_interior
-        = degree < 3 ? 0
-                     : polynomials::dim(polynomials::type::bernstein,
-                                        cell::type::triangle, degree)
-                           - 3 * nb_edge_interior - 3;
-    const std::size_t nb_interior
-        = degree < 4 ? 0
-                     : polynomials::dim(polynomials::type::bernstein,
-                                        cell::type::tetrahedron, degree)
-                           - 4 * nb_face_interior - 6 * nb_edge_interior - 4;
-
-    if (nb_interior == 0)
+    if (nb_interior[3] == 0)
     {
       for (std::size_t e = 0; e < topology[3].size(); ++e)
       {
@@ -1124,21 +1108,21 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
       const xt::xtensor<double, 2> bern = polynomials::tabulate(
           polynomials::type::bernstein, cell::type::tetrahedron, degree, pts);
 
-      assert(phi.shape(0) == nb);
+      assert(phi.shape(0) == nb[3]);
       const std::size_t npts = pts.shape(0);
 
-      xt::xtensor<double, 2> mat({nb, nb});
-      for (std::size_t i = 0; i < nb; ++i)
-        for (std::size_t j = 0; j < nb; ++j)
+      xt::xtensor<double, 2> mat({nb[3], nb[3]});
+      for (std::size_t i = 0; i < nb[3]; ++i)
+        for (std::size_t j = 0; j < nb[3]; ++j)
           mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
 
-      xt::xtensor<double, 2> id = xt::eye<double>(nb);
+      xt::xtensor<double, 2> id = xt::eye<double>(nb[3]);
 
       xt::xtensor<double, 2> minv = math::solve(mat, id);
 
       M[3] = std::vector<xt::xtensor<double, 4>>(
           cell::num_sub_entities(celltype, 3),
-          xt::xtensor<double, 4>({nb_interior, 1, npts, 1}));
+          xt::xtensor<double, 4>({nb_interior[3], 1, npts, 1}));
       for (std::size_t e = 0; e < topology[3].size(); ++e)
       {
         const xt::xtensor<double, 2> entity_x

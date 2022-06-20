@@ -811,7 +811,7 @@ lattice::create_new(cell::type celltype, int n, lattice::type type,
   return {std::vector<double>(x.data(), x.data() + x.size()),
           {
               x.shape(0),
-              x.shape(0),
+              x.shape(1),
           }};
 }
 //-----------------------------------------------------------------------------

@@ -420,13 +420,14 @@ def in_cell(celltype, p):
     basix.LagrangeVariant.vtk
 ])
 @pytest.mark.parametrize("celltype", [
-    basix.CellType.triangle, basix.CellType.tetrahedron,
-    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+    basix.CellType.triangle,
+    basix.CellType.tetrahedron,
+    basix.CellType.quadrilateral,
+    basix.CellType.hexahedron,
 ])
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_variant_points(celltype, degree, variant):
     e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
-
     for p in e.points:
         assert in_cell(celltype, p)
 
@@ -441,8 +442,8 @@ def test_variant_points(celltype, degree, variant):
     basix.CellType.quadrilateral, basix.CellType.hexahedron,
 ])
 def test_continuous_lagrange(celltype, variant):
-    # The variants used in this test can only be used for discontinuous Lagrange,
-    # so trying to create them should throw a runtime error
+    # The variants used in this test can only be used for discontinuous
+    # Lagrange, so trying to create them should throw a runtime error
     with pytest.raises(RuntimeError):
         basix.create_element(basix.ElementFamily.P, celltype, 4, variant, False)
 

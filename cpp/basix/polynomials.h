@@ -14,6 +14,7 @@ namespace basix::polynomials
 enum class type
 {
   legendre = 0,
+  bernstein = 1,
 };
 
 /// Tabulate a set of polynomials.

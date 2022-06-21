@@ -36,6 +36,7 @@ variants = [
     [basix.LagrangeVariant.gll_isaac],
     [basix.LagrangeVariant.gll_warped],
     [basix.LagrangeVariant.legendre],
+    [basix.LagrangeVariant.bernstein],
     [basix.DPCVariant.diagonal_gll],
     [basix.DPCVariant.legendre],
     [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre],

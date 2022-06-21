@@ -102,7 +102,8 @@ Interface to the Basix C++ library.
       .value("centroid", lattice::simplex_method::centroid);
 
   py::enum_<polynomials::type>(m, "PolynomialType")
-      .value("legendre", polynomials::type::legendre);
+      .value("legendre", polynomials::type::legendre)
+      .value("bernstein", polynomials::type::bernstein);
 
   m.def(
       "tabulate_polynomials",
@@ -457,6 +458,7 @@ Interface to the Basix C++ library.
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
       .value("legendre", element::lagrange_variant::legendre)
+      .value("bernstein", element::lagrange_variant::bernstein)
       .value("vtk", element::lagrange_variant::vtk);
 
   py::enum_<element::dpc_variant>(m, "DPCVariant")

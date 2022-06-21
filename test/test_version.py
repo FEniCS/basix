@@ -4,8 +4,6 @@
 
 import pytest
 import pkg_resources
-import pytest
-import re
 import basix
 import os
 import re

@@ -110,8 +110,8 @@ def test_raviart_thomas_triangle_degree1():
     pts, wts = basix.make_quadrature(basix.CellType.triangle, 2)
     poly = basix.tabulate_polynomials(basix.PolynomialType.legendre, basix.CellType.triangle, 1, pts)
     for i in range(3):
-        wcoeffs[2, i] = sum(pts[:, 0] * poly[:, i] * wts)
-        wcoeffs[2, 3 + i] = sum(pts[:, 1] * poly[:, i] * wts)
+        wcoeffs[2, i] = sum(pts[:, 0] * poly[i, :] * wts)
+        wcoeffs[2, 3 + i] = sum(pts[:, 1] * poly[i, :] * wts)
 
     pts, wts = basix.make_quadrature(basix.CellType.interval, 2)
 

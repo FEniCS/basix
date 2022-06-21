@@ -113,7 +113,6 @@ def get_docstring(matches):
         return "\n".join(doclines)
 
     if info_type == "param":
-        assert typename is not None
         params = {}
         for i in doc.split("@param")[1:]:
             i = i.split("@return")[0]
@@ -127,16 +126,15 @@ def get_docstring(matches):
                 p = i
                 pdoc = "TODO: document this"
             params[p] = "\n        ".join(pdoc.split("\n"))
-        return f"{info} ({typename}): {params[info]}"
+        return f"{info}: {params[info]}"
 
     if info_type == "return":
-        assert typename is not None
         returns = [i.split("@param")[0].strip() for i in doc.split("@return")[1:]]
         if len(returns) == 0:
             returns.append("TODO: document this")
         assert len(returns) == 1
         returns = "\n    ".join(returns[0].split("\n"))
-        return f"{typename}: {returns}"
+        return f"{returns}"
 
 
 def generate_docs():

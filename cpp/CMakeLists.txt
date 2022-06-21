@@ -72,6 +72,15 @@ feature_summary(WHAT ALL)
 
 add_library(basix)
 
+find_package(Python3 COMPONENTS Interpreter)
+if(Python3_FOUND)
+  execute_process(
+    COMMAND "${Python3_EXECUTABLE}" ${CMAKE_CURRENT_SOURCE_DIR}/generate_docs.py
+    OUTPUT_VARIABLE WRAPPER_DOCS
+  )
+endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h.in ${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h)
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
@@ -101,6 +110,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h
   ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
 
 target_sources(basix PRIVATE

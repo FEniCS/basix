@@ -2,8 +2,8 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "docs.h"
 #include <basix/cell.h>
+#include <basix/docs.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
 #include <basix/indexing.h>

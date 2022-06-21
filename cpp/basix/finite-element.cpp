@@ -25,9 +25,37 @@
 #define str(X) str_macro(X)
 
 using namespace basix;
+namespace stdex = std::experimental;
 
 namespace
 {
+//----------------------------------------------------------------------------
+template <typename U>
+xt::xtensor<typename U::value_type, 2> mdspan_to_xtensor2(const U& x)
+{
+  auto e = x.extents();
+  xt::xtensor<typename U::value_type, 2> y({e.extent(0), e.extent(1)});
+  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
+    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
+      y(k0, k1) = x(k0, k1);
+  return y;
+}
+//----------------------------------------------------------------------------
+template <typename U>
+xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
+{
+  auto e = x.extents();
+  std::array<std::size_t, 4> shape
+      = {e.extent(0), e.extent(1), e.extent(2), e.extent(3)};
+  xt::xtensor<double, 4> y(shape);
+  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
+    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
+      for (std::size_t k2 = 0; k2 < e.extent(2); ++k2)
+        for (std::size_t k3 = 0; k3 < e.extent(3); ++k3)
+          y(k0, k1, k2, k3) = x(k0, k1, k2, k3);
+
+  return y;
+}
 //-----------------------------------------------------------------------------
 /// This function orthogonalises and normalises the rows of a matrix in place
 void orthogonalise(xt::xtensor<double, 2>& wcoeffs)
@@ -406,25 +434,61 @@ basix::element::make_discontinuous(
 }
 //-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
+           std::array<std::vector<std::vector<double>>, 4>>
 basix::element::make_discontinuous_new(
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M, int tdim,
-    int value_size)
+    const std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>&
+        x,
+    const std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4>&
+        M,
+    int tdim, int value_size)
 {
-  auto [_x, _M] = make_discontinuous(x, M, tdim, value_size);
+
+  auto to_xtensor = [](auto& x, auto& M)
+  {
+    std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+    std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+    for (std::size_t d = 0; d < x.size(); ++d)
+    {
+      _x[d].resize(x[d].size());
+      _M[d].resize(x[d].size());
+    }
+
+    for (std::size_t i = 0; i < x.size(); ++i)
+    {
+      _x[i].resize(x[i].size());
+      for (std::size_t j = 0; j < x[i].size(); ++j)
+        _x[i][j] = mdspan_to_xtensor2(x[i][j]);
+    }
+    for (std::size_t i = 0; i < M.size(); ++i)
+    {
+      _M[i].resize(M[i].size());
+      for (std::size_t j = 0; j < M[i].size(); ++j)
+        _M[i][j] = mdspan_to_xtensor4(M[i][j]);
+    }
+
+    return std::pair(_x, _M);
+  };
+
+  auto [_x, _M] = to_xtensor(x, M);
+  std::tie(_x, _M) = make_discontinuous(_x, _M, tdim, value_size);
 
   std::array<std::vector<std::vector<double>>, 4> x_new;
   for (std::size_t i = 0; i < _x.size(); ++i)
   {
-    x_new[i].resize(x[i].size());
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-    {
+    x_new[i].resize(_x[i].size());
+    for (std::size_t j = 0; j < _x[i].size(); ++j)
       x_new[i][j].assign(_x[i][j].data(), _x[i][j].data() + _x[i][j].size());
-    }
   }
 
-  return {x_new, _M};
+  std::array<std::vector<std::vector<double>>, 4> M_new;
+  for (std::size_t i = 0; i < _M.size(); ++i)
+  {
+    M_new[i].resize(_M[i].size());
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      M_new[i][j].assign(_M[i][j].data(), _M[i][j].data() + _M[i][j].size());
+  }
+
+  return {x_new, M_new};
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(

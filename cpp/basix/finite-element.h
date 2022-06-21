@@ -7,6 +7,7 @@
 #include "cell.h"
 #include "element-families.h"
 #include "maps.h"
+#include "mdspan.hpp"
 #include "precompute.h"
 #include <array>
 #include <functional>
@@ -23,6 +24,8 @@ namespace basix
 
 namespace element
 {
+
+namespace stdex = std::experimental;
 
 /// Creates a version of the interpolation points, interpolation
 /// matrices and entity transformation that represent a discontinuous
@@ -46,11 +49,13 @@ make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
 
 /// TODO
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
+           std::array<std::vector<std::vector<double>>, 4>>
 make_discontinuous_new(
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M, int tdim,
-    int value_size);
+    const std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>&
+        x,
+    const std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4>&
+        M,
+    int tdim, int value_size);
 
 } // namespace element
 

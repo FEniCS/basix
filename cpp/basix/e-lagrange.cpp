@@ -51,6 +51,64 @@ xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
   return y;
 }
 //----------------------------------------------------------------------------
+auto to_xtensor(std::array<std::vector<std::vector<double>>, 4>& x,
+                std::array<std::vector<std::array<std::size_t, 2>>, 4>& xshape,
+                std::array<std::vector<std::vector<double>>, 4>& M,
+                std::array<std::vector<std::array<std::size_t, 4>>, 4>& Mshape)
+{
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+  for (std::size_t d = 0; d < x.size(); ++d)
+  {
+    _x[d].resize(x[d].size());
+    _M[d].resize(x[d].size());
+  }
+
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    _x[i].resize(x[i].size());
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      _x[i][j] = mdspan_to_xtensor2(mdspan2_t(x[i][j].data(), xshape[i][j]));
+  }
+  for (std::size_t i = 0; i < M.size(); ++i)
+  {
+    _M[i].resize(M[i].size());
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      _M[i][j] = mdspan_to_xtensor4(mdspan4_t(M[i][j].data(), Mshape[i][j]));
+  }
+
+  return std::pair(_x, _M);
+};
+//----------------------------------------------------------------------------
+auto to_mdspan(std::array<std::vector<std::vector<double>>, 4>& x,
+               std::array<std::vector<std::array<std::size_t, 2>>, 4>& xshape,
+               std::array<std::vector<std::vector<double>>, 4>& M,
+               std::array<std::vector<std::array<std::size_t, 4>>, 4>& Mshape)
+{
+  std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4> x1;
+  std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4> M1;
+
+  for (std::size_t d = 0; d < x.size(); ++d)
+  {
+    x1[d].resize(x[d].size());
+    M1[d].resize(x[d].size());
+  }
+
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      x1[i].emplace_back(x[i][j].data(), xshape[i][j]);
+  }
+  for (std::size_t i = 0; i < M.size(); ++i)
+  {
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      M1[i].emplace_back(M[i][j].data(), Mshape[i][j]);
+  }
+
+  return std::pair(x1, M1);
+};
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 std::vector<double> vtk_triangle_points(std::size_t degree)
 {
   const double d = 1 / static_cast<double>(degree + 3);
@@ -1097,67 +1155,35 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
   switch (celltype)
   {
   case cell::type::interval:
-  {
     std::tie(x, xshape, M, Mshape) = vtk_data_interval(degree);
     break;
-  }
   case cell::type::triangle:
-  {
     std::tie(x, xshape, M, Mshape) = vtk_data_triangle(degree);
     break;
-  }
   case cell::type::tetrahedron:
-  {
     std::tie(x, xshape, M, Mshape) = vtk_data_tetrahedron(degree);
     break;
-  }
   case cell::type::quadrilateral:
-  {
     std::tie(x, xshape, M, Mshape) = vtk_data_quadrilateral(degree);
     break;
-  }
   case cell::type::hexahedron:
-  {
     std::tie(x, xshape, M, Mshape) = vtk_data_hexahedron(degree);
     break;
-  }
   default:
     throw std::runtime_error("Unsupported cell type.");
   }
 
-  auto to_xtensor
-      = [](std::array<std::vector<std::vector<double>>, 4>& x,
-           std::array<std::vector<std::array<std::size_t, 2>>, 4>& xshape,
-           std::array<std::vector<std::vector<double>>, 4>& M,
-           std::array<std::vector<std::array<std::size_t, 4>>, 4>& Mshape)
+  auto [xspan, Mspan] = to_mdspan(x, xshape, M, Mshape);
+
+  if (discontinuous)
   {
-    std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
-    std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-    for (std::size_t d = 0; d < x.size(); ++d)
-    {
-      _x[d].resize(x[d].size());
-      _M[d].resize(x[d].size());
-    }
-
-    for (std::size_t i = 0; i < x.size(); ++i)
-    {
-      _x[i].resize(x[i].size());
-      for (std::size_t j = 0; j < x[i].size(); ++j)
-        _x[i][j] = mdspan_to_xtensor2(mdspan2_t(x[i][j].data(), xshape[i][j]));
-    }
-    for (std::size_t i = 0; i < M.size(); ++i)
-    {
-      _M[i].resize(M[i].size());
-      for (std::size_t j = 0; j < M[i].size(); ++j)
-        _M[i][j] = mdspan_to_xtensor4(mdspan4_t(M[i][j].data(), Mshape[i][j]));
-    }
-
-    return std::pair(_x, _M);
-  };
+    std::tie(x, M) = element::make_discontinuous_new(xspan, Mspan, tdim, 1);
+    std::tie(xspan, Mspan) = to_mdspan(x, xshape, M, Mshape);
+  }
 
   auto [_x, _M] = to_xtensor(x, xshape, M, Mshape);
-  if (discontinuous)
-    std::tie(_x, _M) = element::make_discontinuous(_x, _M, tdim, 1);
+  // if (discontinuous)
+  //   std::tie(_x, _M) = element::make_discontinuous(_x, _M, tdim, 1);
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), _x, _M, 0, maps::type::identity,
                        discontinuous, degree, degree,

@@ -22,6 +22,7 @@ enum class lagrange_variant
   gl_isaac = 8,
   gl_centroid = 9,
   legendre = 10,
+  bernstein = 11,
   vtk = 20,
 };
 
@@ -55,6 +56,7 @@ enum class family
   bubble = 9,
   serendipity = 10,
   HHJ = 11,
+  Hermite = 12
 };
 
 } // namespace basix::element

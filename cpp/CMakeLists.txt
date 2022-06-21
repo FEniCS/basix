@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Set the version
-project(Basix VERSION "0.4.2.0" LANGUAGES CXX)
+project(Basix VERSION "0.4.3.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if (SKBUILD)
@@ -58,7 +58,7 @@ else()
   FetchContent_Declare(
     xtensor
     GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.24.1
+    GIT_TAG        0.24.2
   )
   FetchContent_MakeAvailable(xtensor)
 endif()
@@ -83,7 +83,6 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/indexing.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/maps.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.h
@@ -101,6 +100,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
   ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
 
 target_sources(basix PRIVATE
@@ -109,7 +109,6 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/finite-element.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/interpolation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/lattice.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/log.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/math.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/moments.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polynomials.cpp
@@ -125,6 +124,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hhj.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp)
 
 # Configure the library

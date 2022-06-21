@@ -57,15 +57,16 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   for (std::size_t i = 0; i < tdim; ++i)
   {
     x[i] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 3>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+    M[i] = std::vector<xt::xtensor<double, 4>>(
+        cell::num_sub_entities(celltype, i),
+        xt::xtensor<double, 4>({0, 1, 0, 1}));
   }
 
   // Evaluate the expansion polynomials at the quadrature points
@@ -77,7 +78,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
       polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.shape(0);
 
   // Create points at nodes on interior
   const xt::xtensor<double, 2> points
@@ -141,20 +142,21 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   }
 
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-  for (std::size_t i = 0; i < phi1.shape(1); ++i)
+  for (std::size_t i = 0; i < phi1.shape(0); ++i)
   {
-    auto integrand = xt::col(phi1, i) * bubble;
+    auto integrand = xt::row(phi1, i) * bubble;
     for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(i, k) = xt::sum(wts * integrand * xt::col(phi, k))();
+      wcoeffs(i, k) = xt::sum(wts * integrand * xt::row(phi, k))();
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  M[tdim].push_back(xt::xtensor<double, 3>({ndofs, 1, ndofs}));
-  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(ndofs);
+  M[tdim].push_back(xt::xtensor<double, 4>({ndofs, 1, ndofs, 1}));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
 
   return FiniteElement(element::family::bubble, celltype, degree, {}, wcoeffs,
-                       x, M, maps::type::identity, discontinuous, -1, degree);
+                       x, M, 0, maps::type::identity, discontinuous, -1,
+                       degree);
 }
 //-----------------------------------------------------------------------------

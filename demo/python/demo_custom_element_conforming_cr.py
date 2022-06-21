@@ -48,10 +48,10 @@ def create_ccr_triangle(degree):
 
         for _ in range(3):
             M[1].append(np.zeros((0, 1, 0)))
-        M[2].append(np.zeros((0, 1, 0)))
+        M[2].append(np.zeros((0, 1, 0, 1)))
 
         return basix.create_custom_element(
-            CellType.triangle, [], wcoeffs, x, M, MapType.identity, False, 1, 1)
+            CellType.triangle, [], wcoeffs, x, M, 0, MapType.identity, False, 1, 1)
 
     npoly = (degree + 2) * (degree + 3) // 2
     ndofs = degree * (degree + 5) // 2
@@ -70,7 +70,7 @@ def create_ccr_triangle(degree):
         f = x ** i * y ** (degree - i) * (x + y)
 
         for j in range(npoly):
-            wcoeffs[dof_n, j] = sum(f * poly[:, j] * wts)
+            wcoeffs[dof_n, j] = sum(f * poly[j, :] * wts)
         dof_n += 1
 
     geometry = basix.geometry(CellType.triangle)
@@ -79,10 +79,10 @@ def create_ccr_triangle(degree):
     M = [[], [], [], []]
     for v in topology[0]:
         x[0].append(np.array(geometry[v]))
-        M[0].append(np.array([[[1.]]]))
+        M[0].append(np.array([[[[1.]]]]))
     pts = basix.create_lattice(CellType.interval, degree, LatticeType.equispaced, False)
-    mat = np.zeros((len(pts), 1, len(pts)))
-    mat[:, 0, :] = np.eye(len(pts))
+    mat = np.zeros((len(pts), 1, len(pts), 1))
+    mat[:, 0, :, 0] = np.eye(len(pts))
     for e in topology[1]:
         edge_pts = []
         v0 = geometry[e[0]]
@@ -93,12 +93,12 @@ def create_ccr_triangle(degree):
         M[1].append(mat)
     pts = basix.create_lattice(CellType.triangle, degree + 1, LatticeType.equispaced, False)
     x[2].append(pts)
-    mat = np.zeros((len(pts), 1, len(pts)))
-    mat[:, 0, :] = np.eye(len(pts))
+    mat = np.zeros((len(pts), 1, len(pts), 1))
+    mat[:, 0, :, 0] = np.eye(len(pts))
     M[2].append(mat)
 
     return basix.create_custom_element(
-        CellType.triangle, [], wcoeffs, x, M, MapType.identity, False, degree, degree + 1)
+        CellType.triangle, [], wcoeffs, x, M, 0, MapType.identity, False, degree, degree + 1)
 
 
 # We can then create a degree 2 conforming CR element.

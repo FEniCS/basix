@@ -5,6 +5,7 @@
 #include "e-lagrange.h"
 #include "lattice.h"
 #include "maps.h"
+#include "math.h"
 #include "moments.h"
 #include "polynomials.h"
 #include "polyset.h"
@@ -90,15 +91,16 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   for (std::size_t i = 0; i < tdim; ++i)
   {
     x[i] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 3>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+    M[i] = std::vector<xt::xtensor<double, 4>>(
+        cell::num_sub_entities(celltype, i),
+        xt::xtensor<double, 4>({0, 1, 0, 1}));
   }
 
   if (celltype == cell::type::prism or celltype == cell::type::pyramid)
@@ -117,13 +119,13 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
       celltype, lattice_degree, lattice_type, false, simplex_method);
   x[tdim].push_back(pt);
   const std::size_t num_dofs = pt.shape(0);
-  std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
-  M[tdim].push_back(xt::xtensor<double, 3>(s));
-  xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
+  std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
+  M[tdim].push_back(xt::xtensor<double, 4>(s));
+  xt::view(M[tdim][0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(num_dofs);
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), x, M, maps::type::identity, true,
-                       degree, degree, variant);
+                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
+                       true, degree, degree, variant);
 }
 //----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -417,7 +419,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   for (std::size_t dim = 0; dim <= tdim; ++dim)
@@ -435,7 +437,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     x[0][0] = {{0.}};
     x[0][1] = {{1.}};
     for (int i = 0; i < 2; ++i)
-      M[0][i] = {{{1.}}};
+      M[0][i] = {{{{1.}}}};
 
     // Points on interval
     x[1][0] = xt::xtensor<double, 2>(
@@ -443,9 +445,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     for (int i = 1; i < degree; ++i)
       x[1][0](i - 1, 0) = static_cast<double>(i) / static_cast<double>(degree);
 
-    M[1][0] = xt::xtensor<double, 3>({static_cast<std::size_t>(degree - 1), 1,
-                                      static_cast<std::size_t>(degree - 1)});
-    xt::view(M[1][0], xt::all(), 0, xt::all()) = xt::eye<double>(degree - 1);
+    M[1][0] = xt::xtensor<double, 4>({static_cast<std::size_t>(degree - 1), 1,
+                                      static_cast<std::size_t>(degree - 1), 1});
+    xt::view(M[1][0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(degree - 1);
 
     break;
   }
@@ -456,7 +458,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     x[0][1] = {{1., 0.}};
     x[0][2] = {{0., 1.}};
     for (int i = 0; i < 3; ++i)
-      M[0][i] = {{{1.}}};
+      M[0][i] = {{{{1.}}}};
 
     // Points on edges
     std::array<std::size_t, 2> s
@@ -480,23 +482,26 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
     for (int i = 0; i < 3; ++i)
     {
-      M[1][i] = xt::xtensor<double, 3>({static_cast<std::size_t>(degree - 1), 1,
-                                        static_cast<std::size_t>(degree - 1)});
-      xt::view(M[1][i], xt::all(), 0, xt::all()) = xt::eye<double>(degree - 1);
+      M[1][i]
+          = xt::xtensor<double, 4>({static_cast<std::size_t>(degree - 1), 1,
+                                    static_cast<std::size_t>(degree - 1), 1});
+      xt::view(M[1][i], xt::all(), 0, xt::all(), 0)
+          = xt::eye<double>(degree - 1);
     }
 
     // Points in triangle
     if (degree >= 3)
     {
       x[2][0] = vtk_triangle_points(degree - 3);
-      M[2][0] = xt::xtensor<double, 3>({x[2][0].shape(0), 1, x[2][0].shape(0)});
-      xt::view(M[2][0], xt::all(), 0, xt::all())
+      M[2][0]
+          = xt::xtensor<double, 4>({x[2][0].shape(0), 1, x[2][0].shape(0), 1});
+      xt::view(M[2][0], xt::all(), 0, xt::all(), 0)
           = xt::eye<double>(x[2][0].shape(0));
     }
     else
     {
       x[2][0] = xt::xtensor<double, 2>({0, 2});
-      M[2][0] = xt::xtensor<double, 3>({0, 1, 0});
+      M[2][0] = xt::xtensor<double, 4>({0, 1, 0, 1});
     }
 
     break;
@@ -509,7 +514,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     x[0][2] = {{0., 1., 0.}};
     x[0][3] = {{0., 0., 1.}};
     for (int i = 0; i < 4; ++i)
-      M[0][i] = {{{1.}}};
+      M[0][i] = {{{{1.}}}};
 
     // Points on edges
     std::array<std::size_t, 2> s
@@ -548,9 +553,11 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     }
     for (int i = 0; i < 6; ++i)
     {
-      M[1][i] = xt::xtensor<double, 3>({static_cast<std::size_t>(degree - 1), 1,
-                                        static_cast<std::size_t>(degree - 1)});
-      xt::view(M[1][i], xt::all(), 0, xt::all()) = xt::eye<double>(degree - 1);
+      M[1][i]
+          = xt::xtensor<double, 4>({static_cast<std::size_t>(degree - 1), 1,
+                                    static_cast<std::size_t>(degree - 1), 1});
+      xt::view(M[1][i], xt::all(), 0, xt::all(), 0)
+          = xt::eye<double>(degree - 1);
     }
 
     // Points on faces
@@ -587,9 +594,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
       for (int i = 0; i < 4; ++i)
       {
-        M[2][i]
-            = xt::xtensor<double, 3>({x[2][0].shape(0), 1, x[2][0].shape(0)});
-        xt::view(M[2][i], xt::all(), 0, xt::all())
+        M[2][i] = xt::xtensor<double, 4>(
+            {x[2][0].shape(0), 1, x[2][0].shape(0), 1});
+        xt::view(M[2][i], xt::all(), 0, xt::all(), 0)
             = xt::eye<double>(x[2][0].shape(0));
       }
     }
@@ -598,21 +605,22 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
       for (int i = 0; i < 4; ++i)
       {
         x[2][i] = xt::xtensor<double, 2>({0, 3});
-        M[2][i] = xt::xtensor<double, 3>({0, 1, 0});
+        M[2][i] = xt::xtensor<double, 4>({0, 1, 0, 1});
       }
     }
 
     if (degree >= 4)
     {
       x[3][0] = vtk_tetrahedron_points(degree - 4);
-      M[3][0] = xt::xtensor<double, 3>({x[3][0].shape(0), 1, x[3][0].shape(0)});
-      xt::view(M[3][0], xt::all(), 0, xt::all())
+      M[3][0]
+          = xt::xtensor<double, 4>({x[3][0].shape(0), 1, x[3][0].shape(0), 1});
+      xt::view(M[3][0], xt::all(), 0, xt::all(), 0)
           = xt::eye<double>(x[3][0].shape(0));
     }
     else
     {
       x[3][0] = xt::xtensor<double, 2>({0, 3});
-      M[3][0] = xt::xtensor<double, 3>({0, 1, 0});
+      M[3][0] = xt::xtensor<double, 4>({0, 1, 0, 1});
     }
 
     break;
@@ -625,7 +633,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     x[0][2] = {{1., 1.}};
     x[0][3] = {{0., 1.}};
     for (int i = 0; i < 4; ++i)
-      M[0][i] = {{{1.}}};
+      M[0][i] = {{{{1.}}}};
 
     // Points on edges
     std::array<std::size_t, 2> s = {static_cast<std::size_t>(degree - 1), 2};
@@ -649,9 +657,11 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
     for (int i = 0; i < 4; ++i)
     {
-      M[1][i] = xt::xtensor<double, 3>({static_cast<std::size_t>(degree - 1), 1,
-                                        static_cast<std::size_t>(degree - 1)});
-      xt::view(M[1][i], xt::all(), 0, xt::all()) = xt::eye<double>(degree - 1);
+      M[1][i]
+          = xt::xtensor<double, 4>({static_cast<std::size_t>(degree - 1), 1,
+                                    static_cast<std::size_t>(degree - 1), 1});
+      xt::view(M[1][i], xt::all(), 0, xt::all(), 0)
+          = xt::eye<double>(degree - 1);
     }
 
     // Points in quadrilateral
@@ -667,8 +677,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
         ++n;
       }
 
-    M[2][0] = xt::xtensor<double, 3>({x[2][0].shape(0), 1, x[2][0].shape(0)});
-    xt::view(M[2][0], xt::all(), 0, xt::all())
+    M[2][0]
+        = xt::xtensor<double, 4>({x[2][0].shape(0), 1, x[2][0].shape(0), 1});
+    xt::view(M[2][0], xt::all(), 0, xt::all(), 0)
         = xt::eye<double>(x[2][0].shape(0));
 
     break;
@@ -685,7 +696,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     x[0][6] = {{1., 1., 1.}};
     x[0][7] = {{0., 1., 1.}};
     for (int i = 0; i < 8; ++i)
-      M[0][i] = {{{1.}}};
+      M[0][i] = {{{{1.}}}};
 
     // Points on edges
     std::array<std::size_t, 2> s = {static_cast<std::size_t>(degree - 1), 3};
@@ -743,9 +754,11 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
     }
     for (int i = 0; i < 12; ++i)
     {
-      M[1][i] = xt::xtensor<double, 3>({static_cast<std::size_t>(degree - 1), 1,
-                                        static_cast<std::size_t>(degree - 1)});
-      xt::view(M[1][i], xt::all(), 0, xt::all()) = xt::eye<double>(degree - 1);
+      M[1][i]
+          = xt::xtensor<double, 4>({static_cast<std::size_t>(degree - 1), 1,
+                                    static_cast<std::size_t>(degree - 1), 1});
+      xt::view(M[1][i], xt::all(), 0, xt::all(), 0)
+          = xt::eye<double>(degree - 1);
     }
 
     // Points on faces
@@ -787,8 +800,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
 
     for (int i = 0; i < 6; ++i)
     {
-      M[2][i] = xt::xtensor<double, 3>({x[2][0].shape(0), 1, x[2][0].shape(0)});
-      xt::view(M[2][i], xt::all(), 0, xt::all())
+      M[2][i]
+          = xt::xtensor<double, 4>({x[2][0].shape(0), 1, x[2][0].shape(0), 1});
+      xt::view(M[2][i], xt::all(), 0, xt::all(), 0)
           = xt::eye<double>(x[2][0].shape(0));
     }
 
@@ -808,8 +822,9 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
           ++n;
         }
 
-    M[3][0] = xt::xtensor<double, 3>({x[3][0].shape(0), 1, x[3][0].shape(0)});
-    xt::view(M[3][0], xt::all(), 0, xt::all())
+    M[3][0]
+        = xt::xtensor<double, 4>({x[3][0].shape(0), 1, x[3][0].shape(0), 1});
+    xt::view(M[3][0], xt::all(), 0, xt::all(), 0)
         = xt::eye<double>(x[3][0].shape(0));
 
     break;
@@ -826,7 +841,7 @@ FiniteElement create_vtk_element(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), x, M, maps::type::identity,
+                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
                        discontinuous, degree, degree,
                        element::lagrange_variant::vtk);
 }
@@ -842,15 +857,16 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
   for (std::size_t i = 0; i < tdim; ++i)
   {
     x[i] = std::vector<xt::xtensor<double, 2>>(
         cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 3>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 3>({0, 1, 0}));
+    M[i] = std::vector<xt::xtensor<double, 4>>(
+        cell::num_sub_entities(celltype, i),
+        xt::xtensor<double, 4>({0, 1, 0, 1}));
   }
 
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
@@ -870,19 +886,172 @@ FiniteElement create_legendre(cell::type celltype, int degree,
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
         x[dim][e] = xt::xtensor<double, 2>({0, tdim});
-        M[dim][e] = xt::xtensor<double, 3>({0, 1, 0});
+        M[dim][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
       }
     }
   }
   x[tdim][0] = pts;
-  M[tdim][0] = xt::xtensor<double, 3>({ndofs, 1, pts.shape(0)});
+  M[tdim][0] = xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1});
   for (std::size_t i = 0; i < ndofs; ++i)
-    xt::view(M[tdim][0], i, 0, xt::all()) = xt::col(phi, i) * wts;
+    xt::view(M[tdim][0], i, 0, xt::all(), 0) = xt::row(phi, i) * wts;
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), x, M, maps::type::identity,
+                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
                        discontinuous, degree, degree,
                        element::lagrange_variant::legendre);
+}
+//-----------------------------------------------------------------------------
+FiniteElement create_bernstein(cell::type celltype, int degree,
+                               bool discontinuous)
+{
+  assert(degree > 0);
+  if (celltype != cell::type::interval and celltype != cell::type::triangle
+      and celltype != cell::type::tetrahedron)
+  {
+    throw std::runtime_error(
+        "Bernstein elements are currently only supported on simplices.");
+  }
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  {
+    M[dim].resize(topology[dim].size());
+    x[dim].resize(topology[dim].size());
+  }
+
+  const std::array<std::size_t, 4> nb
+      = {1,
+         static_cast<std::size_t>(polynomials::dim(
+             polynomials::type::bernstein, cell::type::interval, degree)),
+         static_cast<std::size_t>(polynomials::dim(
+             polynomials::type::bernstein, cell::type::triangle, degree)),
+         static_cast<std::size_t>(polynomials::dim(
+             polynomials::type::bernstein, cell::type::tetrahedron, degree))};
+
+  const std::array<cell::type, 4> ct
+      = {cell::type::point, cell::type::interval, cell::type::triangle,
+         cell::type::tetrahedron};
+
+  const std::array<std::size_t, 4> nb_interior
+      = {1, degree < 2 ? 0 : nb[1] - 2, degree < 3 ? 0 : nb[2] + 3 - 3 * nb[1],
+         degree < 4 ? 0 : nb[3] + 6 * nb[1] - 4 * nb[2] - 4};
+
+  std::array<std::vector<int>, 4> bernstein_bubbles;
+  bernstein_bubbles[0].push_back(0);
+  { // scope
+    int ib = 0;
+    for (int i = 0; i <= degree; ++i)
+    {
+      if (i > 0 and i < degree)
+      {
+        bernstein_bubbles[1].push_back(ib);
+      }
+      ++ib;
+    }
+  }
+  { // scope
+    int ib = 0;
+    for (int i = 0; i <= degree; ++i)
+      for (int j = 0; j <= degree - i; ++j)
+      {
+        if (i > 0 and j > 0 and i + j < degree)
+          bernstein_bubbles[2].push_back(ib);
+        ++ib;
+      }
+  }
+  { // scope
+    int ib = 0;
+    for (int i = 0; i <= degree; ++i)
+      for (int j = 0; j <= degree - i; ++j)
+        for (int k = 0; k <= degree - i - j; ++k)
+        {
+          if (i > 0 and j > 0 and k > 0 and i + j + k < degree)
+            bernstein_bubbles[3].push_back(ib);
+          ++ib;
+        }
+  }
+
+  for (std::size_t v = 0; v < topology[0].size(); ++v)
+  {
+    x[0][v] = cell::sub_entity_geometry(celltype, 0, v);
+    M[0][v] = {{{{1.}}}};
+  }
+
+  for (std::size_t d = 1; d <= tdim; ++d)
+  {
+    if (nb_interior[d] == 0)
+    {
+      for (std::size_t e = 0; e < topology[d].size(); ++e)
+      {
+        x[d][e] = xt::xtensor<double, 2>({0, tdim});
+        M[d][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
+      }
+    }
+    else
+    {
+      auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                     ct[d], degree * 2);
+      auto wts = xt::adapt(_wts);
+
+      const xt::xtensor<double, 2> phi = polynomials::tabulate(
+          polynomials::type::legendre, ct[d], degree, pts);
+      const xt::xtensor<double, 2> bern = polynomials::tabulate(
+          polynomials::type::bernstein, ct[d], degree, pts);
+
+      assert(phi.shape(0) == nb[d]);
+      const std::size_t npts = pts.shape(0);
+
+      xt::xtensor<double, 2> mat({nb[d], nb[d]});
+      for (std::size_t i = 0; i < nb[d]; ++i)
+        for (std::size_t j = 0; j < nb[d]; ++j)
+          mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
+
+      xt::xtensor<double, 2> id = xt::eye<double>(nb[d]);
+
+      xt::xtensor<double, 2> minv = math::solve(mat, id);
+
+      M[d] = std::vector<xt::xtensor<double, 4>>(
+          cell::num_sub_entities(celltype, d),
+          xt::xtensor<double, 4>({nb_interior[d], 1, npts, 1}));
+      for (std::size_t e = 0; e < topology[d].size(); ++e)
+      {
+        const xt::xtensor<double, 2> entity_x
+            = cell::sub_entity_geometry(celltype, d, e);
+        auto x0s = xt::reshape_view(
+            xt::row(entity_x, 0),
+            {static_cast<std::size_t>(1), entity_x.shape(1)});
+        x[d][e] = xt::tile(x0s, pts.shape(0));
+        auto x0 = xt::row(entity_x, 0);
+        for (std::size_t j = 0; j < pts.shape(0); ++j)
+        {
+          for (std::size_t k = 0; k < pts.shape(1); ++k)
+          {
+            xt::row(x[d][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
+          }
+        }
+        for (std::size_t i = 0; i < bernstein_bubbles[d].size(); ++i)
+        {
+          for (std::size_t p = 0; p < npts; ++p)
+            M[d][e](i, 0, p, 0)
+                = wts(p)
+                  * xt::sum(xt::col(phi, p)
+                            * xt::row(minv, bernstein_bubbles[d][i]))();
+        }
+      }
+    }
+  }
+
+  return FiniteElement(element::family::P, celltype, degree, {},
+                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
+                       discontinuous, degree, degree,
+                       element::lagrange_variant::bernstein);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -897,15 +1066,29 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     if (degree != 0)
       throw std::runtime_error("Can only create order 0 Lagrange on a point");
 
-    std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+    std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
     std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
     x[0].push_back(xt::zeros<double>({1, 0}));
-    M[0].push_back({{{1}}});
+    M[0].push_back({{{{1.}}}});
     xt::xtensor<double, 2> wcoeffs = {{1}};
 
     return FiniteElement(element::family::P, cell::type::point, 0, {}, wcoeffs,
-                         x, M, maps::type::identity, discontinuous, degree,
+                         x, M, 0, maps::type::identity, discontinuous, degree,
                          degree);
+  }
+
+  if (variant == element::lagrange_variant::vtk)
+    return create_vtk_element(celltype, degree, discontinuous);
+
+  if (variant == element::lagrange_variant::legendre)
+    return create_legendre(celltype, degree, discontinuous);
+
+  if (variant == element::lagrange_variant::bernstein)
+  {
+    if (degree == 0)
+      variant = element::lagrange_variant::unset;
+    else
+      return create_bernstein(celltype, degree, discontinuous);
   }
 
   if (variant == element::lagrange_variant::unset)
@@ -916,12 +1099,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       throw std::runtime_error(
           "Lagrange elements of degree > 2 need to be given a variant.");
   }
-
-  if (variant == element::lagrange_variant::vtk)
-    return create_vtk_element(celltype, degree, discontinuous);
-
-  if (variant == element::lagrange_variant::legendre)
-    return create_legendre(celltype, degree, discontinuous);
 
   auto [lattice_type, simplex_method, exterior]
       = variant_to_lattice(celltype, variant);
@@ -944,10 +1121,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  // Create points at nodes, ordered by topology (vertices first)
   if (degree == 0)
   {
     if (!discontinuous)
@@ -961,20 +1137,22 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       x[i] = std::vector<xt::xtensor<double, 2>>(
           cell::num_sub_entities(celltype, i),
           xt::xtensor<double, 2>({0, tdim}));
-      M[i] = std::vector<xt::xtensor<double, 3>>(
+      M[i] = std::vector<xt::xtensor<double, 4>>(
           cell::num_sub_entities(celltype, i),
-          xt::xtensor<double, 3>({0, 1, 0}));
+          xt::xtensor<double, 4>({0, 1, 0, 1}));
     }
     const xt::xtensor<double, 2> pt
         = lattice::create(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].push_back(pt);
     const std::size_t num_dofs = pt.shape(0);
-    std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
-    M[tdim].push_back(xt::xtensor<double, 3>(s));
-    xt::view(M[tdim][0], xt::all(), 0, xt::all()) = xt::eye<double>(num_dofs);
+    std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
+    M[tdim].push_back(xt::xtensor<double, 4>(s));
+    xt::view(M[tdim][0], xt::all(), 0, xt::all(), 0)
+        = xt::eye<double>(num_dofs);
   }
   else
   {
+    // Create points at nodes, ordered by topology (vertices first)
     for (std::size_t dim = 0; dim <= tdim; ++dim)
     {
       M[dim].resize(topology[dim].size());
@@ -989,9 +1167,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         {
           x[dim][e] = entity_x;
           const std::size_t num_dofs = entity_x.shape(0);
-          M[dim][e] = xt::xtensor<double, 3>(
-              {num_dofs, static_cast<std::size_t>(1), num_dofs});
-          xt::view(M[dim][e], xt::all(), 0, xt::all())
+          M[dim][e] = xt::xtensor<double, 4>({num_dofs, 1, num_dofs, 1});
+          xt::view(M[dim][e], xt::all(), 0, xt::all(), 0)
               = xt::eye<double>(num_dofs);
         }
         else if (dim == tdim)
@@ -999,9 +1176,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           x[dim][e] = lattice::create(celltype, degree, lattice_type, false,
                                       simplex_method);
           const std::size_t num_dofs = x[dim][e].shape(0);
-          std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
-          M[dim][e] = xt::xtensor<double, 3>(s);
-          xt::view(M[dim][e], xt::all(), 0, xt::all())
+          std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
+          M[dim][e] = xt::xtensor<double, 4>(s);
+          xt::view(M[dim][e], xt::all(), 0, xt::all(), 0)
               = xt::eye<double>(num_dofs);
         }
         else
@@ -1010,9 +1187,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           const auto lattice = lattice::create(ct, degree, lattice_type, false,
                                                simplex_method);
           const std::size_t num_dofs = lattice.shape(0);
-          std::array<std::size_t, 3> s = {num_dofs, 1, num_dofs};
-          M[dim][e] = xt::xtensor<double, 3>(s);
-          xt::view(M[dim][e], xt::all(), 0, xt::all())
+          std::array<std::size_t, 4> s = {num_dofs, 1, num_dofs, 1};
+          M[dim][e] = xt::xtensor<double, 4>(s);
+          xt::view(M[dim][e], xt::all(), 0, xt::all(), 0)
               = xt::eye<double>(num_dofs);
 
           auto x0s = xt::reshape_view(
@@ -1042,7 +1219,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       = create_tensor_product_factors(celltype, degree, variant);
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), x, M, maps::type::identity,
+                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
                        discontinuous, degree, degree, variant, tensor_factors);
 }
 //-----------------------------------------------------------------------------

@@ -102,7 +102,8 @@ Interface to the Basix C++ library.
       .value("centroid", lattice::simplex_method::centroid);
 
   py::enum_<polynomials::type>(m, "PolynomialType")
-      .value("legendre", polynomials::type::legendre);
+      .value("legendre", polynomials::type::legendre)
+      .value("bernstein", polynomials::type::bernstein);
 
   m.def(
       "tabulate_polynomials",
@@ -223,7 +224,8 @@ Interface to the Basix C++ library.
       .value("bubble", element::family::bubble)
       .value("serendipity", element::family::serendipity)
       .value("DPC", element::family::DPC)
-      .value("CR", element::family::CR);
+      .value("CR", element::family::CR)
+      .value("Hermite", element::family::Hermite);
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def(
@@ -405,7 +407,7 @@ Interface to the Basix C++ library.
           "M",
           [](const FiniteElement& self)
           {
-            const std::array<std::vector<xt::xtensor<double, 3>>, 4>& _M
+            const std::array<std::vector<xt::xtensor<double, 4>>, 4>& _M
                 = self.M();
             std::vector<std::vector<py::array_t<double, py::array::c_style>>> M(
                 4);
@@ -438,7 +440,9 @@ Interface to the Basix C++ library.
             return x;
           })
       .def_property_readonly("has_tensor_product_factorisation",
-                             &FiniteElement::has_tensor_product_factorisation);
+                             &FiniteElement::has_tensor_product_factorisation)
+      .def_property_readonly("interpolation_nderivs",
+                             &FiniteElement::interpolation_nderivs);
 
   py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("unset", element::lagrange_variant::unset)
@@ -454,6 +458,7 @@ Interface to the Basix C++ library.
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
       .value("legendre", element::lagrange_variant::legendre)
+      .value("bernstein", element::lagrange_variant::bernstein)
       .value("vtk", element::lagrange_variant::vtk);
 
   py::enum_<element::dpc_variant>(m, "DPCVariant")
@@ -476,8 +481,9 @@ Interface to the Basix C++ library.
              std::vector<py::array_t<double, py::array::c_style>>>& x,
          const std::vector<
              std::vector<py::array_t<double, py::array::c_style>>>& M,
-         maps::type map_type, bool discontinuous, int highest_complete_degree,
-         int highest_degree) -> FiniteElement {
+         int interpolation_nderivs, maps::type map_type, bool discontinuous,
+         int highest_complete_degree, int highest_degree) -> FiniteElement
+      {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
         if (M.size() != 4)
@@ -496,12 +502,12 @@ Interface to the Basix C++ library.
           }
         }
 
-        std::array<std::vector<xt::xtensor<double, 3>>, 4> _M;
+        std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
           {
-            if (M[i][j].ndim() != 3)
+            if (M[i][j].ndim() != 4)
               throw std::runtime_error("M has the wrong number of dimensions");
             _M[i].push_back(adapt_x(M[i][j]));
           }
@@ -512,8 +518,8 @@ Interface to the Basix C++ library.
           _vs[i] = static_cast<std::size_t>(value_shape[i]);
 
         return basix::create_custom_element(
-            cell_type, _vs, _wco, _x, _M, map_type, discontinuous,
-            highest_complete_degree, highest_degree);
+            cell_type, _vs, _wco, _x, _M, interpolation_nderivs, map_type,
+            discontinuous, highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());
 

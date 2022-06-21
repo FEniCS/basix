@@ -38,6 +38,16 @@ jobs:
       - name: Install Basix
         run: pip -v install .[ci]
 
+      - name: Run C++ demos
+        run: |
+          export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
+          export Basix_DIR=$INSTALL_DIR/python/basix/lib/cmake/basix/
+          export PATH=$PATH:$INSTALL_DIR/python/basix/include:$INSTALL_DIR/python/basix/lib
+          export xtl_DIR=$INSTALL_DIR/python/basix/include/xtl
+          ls $INSTALL_DIR
+          ls $xtl_DIR
+          pytest demo/cpp/test.py
+
       - name: Lint with flake8
         run: |
           pip install flake8
@@ -67,8 +77,10 @@ jobs:
         run: |
           export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
           export Basix_DIR=$INSTALL_DIR/python/basix/lib/cmake/basix/
-          echo $Basix_DIR
           export PATH=$PATH:$INSTALL_DIR/python/basix/include:$INSTALL_DIR/python/basix/lib
+          export xtl_DIR=$INSTALL_DIR/python/basix/include/xtl
+          ls $INSTALL_DIR
+          ls $xtl_DIR
           pytest demo/cpp/test.py
 
       - name: Build documentation

@@ -26,7 +26,10 @@ namespace element
 {
 
 namespace stdex = std::experimental;
+
+/// Typedef for mdspan
 using mdspan2_t = stdex::mdspan<double, stdex::dextents<2>>;
+/// Typedef for mdspan
 using mdspan4_t = stdex::mdspan<double, stdex::dextents<4>>;
 
 /// Creates a version of the interpolation points, interpolation
@@ -255,7 +258,7 @@ public:
           tensor_factors
       = {});
 
-  // TODO
+  /// TODO
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape,

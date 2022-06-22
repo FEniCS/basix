@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <array>
+#include <utility>
 #include <vector>
 #include <xtensor/xtensor.hpp>
 
@@ -59,8 +61,8 @@ xt::xtensor<double, 2> sub_entity_geometry(cell::type celltype, int dim,
                                            int index);
 
 /// NEW
-std::vector<double> sub_entity_geometry_new(cell::type celltype, int dim,
-                                            int index);
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+sub_entity_geometry_new(cell::type celltype, int dim, int index);
 
 /// Number of sub-entities of a cell by topological dimension
 /// @todo Optimise this function

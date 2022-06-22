@@ -15,8 +15,6 @@
 #include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>
 
-#include <xtensor/xio.hpp>
-
 namespace stdex = std::experimental;
 
 using namespace basix;
@@ -1310,16 +1308,16 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       // Loop over entities of dimension 'dim'
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
-        const xt::xtensor<double, 2> entity_x
-            = cell::sub_entity_geometry(celltype, dim, e);
+        // const xt::xtensor<double, 2> entity_x
+        //     = cell::sub_entity_geometry(celltype, dim, e);
+        const auto [entity_x, entity_x_shape]
+            = cell::sub_entity_geometry_new(celltype, dim, e);
         if (dim == 0)
         {
-          xbuffer[dim][e] = std::vector<double>(
-              entity_x.data(), entity_x.data() + entity_x.size());
-          x[dim][e] = mdspan2_t(xbuffer[dim][e].data(), entity_x.shape(0),
-                                entity_x.shape(1));
+          xbuffer[dim][e] = entity_x;
+          x[dim][e] = mdspan2_t(xbuffer[dim][e].data(), entity_x_shape);
 
-          const std::size_t num_dofs = entity_x.shape(0);
+          const std::size_t num_dofs = entity_x_shape[0];
           Mbuffer[dim][e] = std::vector<double>(num_dofs * num_dofs);
           M[dim][e]
               = mdspan4_t(Mbuffer[dim][e].data(), num_dofs, 1, num_dofs, 1);
@@ -1361,17 +1359,19 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           for (std::size_t i = 0; i < num_dofs; ++i)
             Mview(i, i) = 1;
 
-          xtl::span<const double> x0(entity_x.data(), entity_x.shape(1));
+          xtl::span<const double> x0(entity_x.data(), entity_x_shape[1]);
           for (std::size_t i = 0; i < shape[0]; ++i)
             xbuffer[dim][e].insert(xbuffer[dim][e].end(), x0.begin(), x0.end());
           x[dim][e]
-              = mdspan2_t(xbuffer[dim][e].data(), shape[0], entity_x.shape(1));
+              = mdspan2_t(xbuffer[dim][e].data(), shape[0], entity_x_shape[1]);
 
           mdspan2_t& _x = x[dim][e];
+          stdex::mdspan<const double, stdex::dextents<2>> entity_x_view(
+              entity_x.data(), entity_x_shape);
           for (std::size_t j = 0; j < shape[0]; ++j)
             for (std::size_t k = 0; k < shape[1]; ++k)
               for (std::size_t q = 0; q < tdim; ++q)
-                _x(j, q) += (entity_x(k + 1, q) - x0[q]) * lattice(j, k);
+                _x(j, q) += (entity_x_view(k + 1, q) - x0[q]) * lattice(j, k);
         }
       }
     }

@@ -21,8 +21,6 @@
 #include <numeric>
 #include <xtensor/xbuilder.hpp>
 
-#include <xtensor/xio.hpp>
-
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 

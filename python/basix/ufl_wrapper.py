@@ -5,7 +5,7 @@ from ufl.finiteelement.finiteelementbase import FiniteElementBase as _FiniteElem
 import hashlib as _hashlib
 import numpy as _numpy
 import basix as _basix
-import _typing as _typing
+import typing as _typing
 
 
 class _BasixElementBase(_FiniteElementBase):

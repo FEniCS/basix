@@ -14,6 +14,8 @@
 #include <xtensor/xpad.hpp>
 #include <xtensor/xview.hpp>
 
+#include <xtensor/xio.hpp>
+
 namespace stdex = std::experimental;
 
 using namespace basix;
@@ -32,6 +34,7 @@ xt::xtensor<typename U::value_type, 2> mdspan_to_xtensor2(const U& x)
   for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
     for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
       y(k0, k1) = x(k0, k1);
+
   return y;
 }
 //----------------------------------------------------------------------------
@@ -58,54 +61,44 @@ auto to_xtensor(std::array<std::vector<std::vector<double>>, 4>& x,
 {
   std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-  for (std::size_t d = 0; d < x.size(); ++d)
-  {
-    _x[d].resize(x[d].size());
-    _M[d].resize(x[d].size());
-  }
-
   for (std::size_t i = 0; i < x.size(); ++i)
   {
-    _x[i].resize(x[i].size());
     for (std::size_t j = 0; j < x[i].size(); ++j)
-      _x[i][j] = mdspan_to_xtensor2(mdspan2_t(x[i][j].data(), xshape[i][j]));
+    {
+      _x[i].push_back(
+          mdspan_to_xtensor2(mdspan2_t(x[i][j].data(), xshape[i][j])));
+    }
   }
   for (std::size_t i = 0; i < M.size(); ++i)
   {
-    _M[i].resize(M[i].size());
     for (std::size_t j = 0; j < M[i].size(); ++j)
-      _M[i][j] = mdspan_to_xtensor4(mdspan4_t(M[i][j].data(), Mshape[i][j]));
+    {
+      _M[i].push_back(
+          mdspan_to_xtensor4(mdspan4_t(M[i][j].data(), Mshape[i][j])));
+    }
   }
 
   return std::pair(_x, _M);
 };
 //----------------------------------------------------------------------------
-auto to_mdspan(std::array<std::vector<std::vector<double>>, 4>& x,
-               std::array<std::vector<std::array<std::size_t, 2>>, 4>& xshape,
-               std::array<std::vector<std::vector<double>>, 4>& M,
-               std::array<std::vector<std::array<std::size_t, 4>>, 4>& Mshape)
+std::pair<std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>,
+          std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4>>
+to_mdspan(std::array<std::vector<std::vector<double>>, 4>& x,
+          std::array<std::vector<std::array<std::size_t, 2>>, 4>& xshape,
+          std::array<std::vector<std::vector<double>>, 4>& M,
+          std::array<std::vector<std::array<std::size_t, 4>>, 4>& Mshape)
 {
   std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4> x1;
   std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4> M1;
 
-  for (std::size_t d = 0; d < x.size(); ++d)
-  {
-    x1[d].resize(x[d].size());
-    M1[d].resize(x[d].size());
-  }
-
   for (std::size_t i = 0; i < x.size(); ++i)
-  {
     for (std::size_t j = 0; j < x[i].size(); ++j)
-      x1[i].emplace_back(x[i][j].data(), xshape[i][j]);
-  }
+      x1[i].push_back(mdspan2_t(x[i][j].data(), xshape[i][j]));
   for (std::size_t i = 0; i < M.size(); ++i)
-  {
     for (std::size_t j = 0; j < M[i].size(); ++j)
-      M1[i].emplace_back(M[i][j].data(), Mshape[i][j]);
-  }
+      M1[i].push_back(mdspan4_t(M[i][j].data(), Mshape[i][j]));
 
-  return std::pair(x1, M1);
+  return {std::move(x1), std::move(M1)};
 };
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
@@ -1173,17 +1166,14 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
     throw std::runtime_error("Unsupported cell type.");
   }
 
-  auto [xspan, Mspan] = to_mdspan(x, xshape, M, Mshape);
-
   if (discontinuous)
   {
-    std::tie(x, M) = element::make_discontinuous_new(xspan, Mspan, tdim, 1);
-    std::tie(xspan, Mspan) = to_mdspan(x, xshape, M, Mshape);
+    auto [xspan, Mspan] = to_mdspan(x, xshape, M, Mshape);
+    std::tie(x, xshape, M, Mshape)
+        = element::make_discontinuous_new(xspan, Mspan, tdim, 1);
   }
 
   auto [_x, _M] = to_xtensor(x, xshape, M, Mshape);
-  // if (discontinuous)
-  //   std::tie(_x, _M) = element::make_discontinuous(_x, _M, tdim, 1);
   return FiniteElement(element::family::P, celltype, degree, {},
                        xt::eye<double>(ndofs), _x, _M, 0, maps::type::identity,
                        discontinuous, degree, degree,

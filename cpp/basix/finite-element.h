@@ -49,7 +49,9 @@ make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
 
 /// TODO
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::vector<double>>, 4>>
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
 make_discontinuous_new(
     const std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>&
         x,

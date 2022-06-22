@@ -21,6 +21,8 @@
 #include <numeric>
 #include <xtensor/xbuilder.hpp>
 
+#include <xtensor/xio.hpp>
+
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -434,7 +436,9 @@ basix::element::make_discontinuous(
 }
 //-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::vector<double>>, 4>>
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
 basix::element::make_discontinuous_new(
     const std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>&
         x,
@@ -444,51 +448,49 @@ basix::element::make_discontinuous_new(
 {
 
   auto to_xtensor = [](auto& x, auto& M)
+      -> std::pair<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
+                   std::array<std::vector<xt::xtensor<double, 4>>, 4>>
   {
-    std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
     std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-    for (std::size_t d = 0; d < x.size(); ++d)
-    {
-      _x[d].resize(x[d].size());
-      _M[d].resize(x[d].size());
-    }
-
+    std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
     for (std::size_t i = 0; i < x.size(); ++i)
-    {
-      _x[i].resize(x[i].size());
       for (std::size_t j = 0; j < x[i].size(); ++j)
-        _x[i][j] = mdspan_to_xtensor2(x[i][j]);
-    }
+        _x[i].push_back(mdspan_to_xtensor2(x[i][j]));
     for (std::size_t i = 0; i < M.size(); ++i)
-    {
-      _M[i].resize(M[i].size());
       for (std::size_t j = 0; j < M[i].size(); ++j)
-        _M[i][j] = mdspan_to_xtensor4(M[i][j]);
-    }
+        _M[i].push_back(mdspan_to_xtensor4(M[i][j]));
 
-    return std::pair(_x, _M);
+    return {std::move(_x), std::move(_M)};
   };
 
   auto [_x, _M] = to_xtensor(x, M);
   std::tie(_x, _M) = make_discontinuous(_x, _M, tdim, value_size);
 
   std::array<std::vector<std::vector<double>>, 4> x_new;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
   for (std::size_t i = 0; i < _x.size(); ++i)
   {
-    x_new[i].resize(_x[i].size());
     for (std::size_t j = 0; j < _x[i].size(); ++j)
-      x_new[i][j].assign(_x[i][j].data(), _x[i][j].data() + _x[i][j].size());
+    {
+      xshape[i].push_back({_x[i][j].shape(0), _x[i][j].shape(1)});
+      x_new[i].emplace_back(_x[i][j].data(), _x[i][j].data() + _x[i][j].size());
+    }
   }
 
   std::array<std::vector<std::vector<double>>, 4> M_new;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
   for (std::size_t i = 0; i < _M.size(); ++i)
   {
-    M_new[i].resize(_M[i].size());
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-      M_new[i][j].assign(_M[i][j].data(), _M[i][j].data() + _M[i][j].size());
+    for (std::size_t j = 0; j < _M[i].size(); ++j)
+    {
+      Mshape[i].push_back({_M[i][j].shape(0), _M[i][j].shape(1),
+                           _M[i][j].shape(2), _M[i][j].shape(3)});
+      M_new[i].emplace_back(_M[i][j].data(), _M[i][j].data() + _M[i][j].size());
+    }
   }
 
-  return {x_new, M_new};
+  return {std::move(x_new), std::move(xshape), std::move(M_new),
+          std::move(Mshape)};
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(

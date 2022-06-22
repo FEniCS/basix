@@ -146,9 +146,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
       = cell::topology(celltype);
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
-  }
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, wcoeffs,
                        x, M, 0, maps::type::contravariantPiola, discontinuous,
@@ -330,9 +328,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
       = cell::topology(celltype);
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
-  }
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, wcoeffs,
                        x, M, 0, maps::type::covariantPiola, discontinuous,

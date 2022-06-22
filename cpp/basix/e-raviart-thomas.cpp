@@ -118,9 +118,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
       = cell::topology(celltype);
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
-  }
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim}, B, x, M,
                        0, maps::type::contravariantPiola, discontinuous,

@@ -74,8 +74,13 @@ void dot(const xt::xtensor<double, 2>& A, const xt::xtensor<double, 2>& B,
 /// Compute C = A * B
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
-/// return A * B
+/// @return A * B
 xt::xtensor<double, 2> dot(const xt::xtensor<double, 2>& A,
                            const xt::xtensor<double, 2>& B);
+
+/// Build an identity matrix
+/// @param[in] n The number of rows/columns
+/// @return Identity matrix using row-major storage
+std::vector<double> eye(std::size_t n);
 
 } // namespace basix::math

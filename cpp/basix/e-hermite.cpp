@@ -93,9 +93,7 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
   xt::xtensor<double, 2> wcoeffs = xt::eye<double>({ndofs, ndofs});
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
-  }
 
   return FiniteElement(element::family::Hermite, celltype, degree, {}, wcoeffs,
                        x, M, 1, maps::type::identity, discontinuous, -1,

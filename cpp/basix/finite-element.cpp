@@ -614,8 +614,7 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
+    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
     const std::array<std::vector<mdspan2_t>, 4>& x,
     const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
@@ -649,8 +648,7 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
+    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
     const std::array<std::vector<mdspan2_t>, 4>& x,
     const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
@@ -684,8 +682,7 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
+    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
     const std::array<std::vector<mdspan2_t>, 4>& x,
     const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
@@ -983,8 +980,7 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
+    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
     const std::array<std::vector<mdspan2_t>, 4>& x,
     const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
@@ -992,10 +988,11 @@ FiniteElement::FiniteElement(
     element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs,
-                    to_xtensor(x), to_xtensor(M), interpolation_nderivs,
-                    map_type, discontinuous, highest_complete_degree,
-                    highest_degree, lvariant, dvariant, tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape,
+                    mdspan_to_xtensor2(wcoeffs), to_xtensor(x), to_xtensor(M),
+                    interpolation_nderivs, map_type, discontinuous,
+                    highest_complete_degree, highest_degree, lvariant, dvariant,
+                    tensor_factors)
 {
 }
 //-----------------------------------------------------------------------------

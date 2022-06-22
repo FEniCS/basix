@@ -69,9 +69,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
       = cell::topology(celltype);
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
-  }
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim},
                        xt::eye<double>(ndofs), x, M, 0,

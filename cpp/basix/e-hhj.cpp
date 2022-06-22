@@ -152,9 +152,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
   }
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim * tdim);
-  }
 
   return FiniteElement(element::family::HHJ, celltype, degree, {tdim, tdim},
                        wcoeffs, x, M, 0, maps::type::doubleContravariantPiola,

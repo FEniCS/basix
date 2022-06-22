@@ -5,6 +5,7 @@
 #include "e-lagrange.h"
 #include "lattice.h"
 #include "maps.h"
+#include "math.h"
 #include "mdspan.hpp"
 #include "moments.h"
 #include "polynomials.h"
@@ -948,9 +949,9 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
     Mview(i, 0, i, 0) = 1.0;
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), to_mdspan(x, xshape),
-                       to_mdspan(M, Mshape), 0, maps::type::identity, true,
-                       degree, degree, variant);
+                       mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
+                       to_mdspan(x, xshape), to_mdspan(M, Mshape), 0,
+                       maps::type::identity, true, degree, degree, variant);
 }
 //----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -1107,10 +1108,11 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
         to_mdspan(x, xshape), to_mdspan(M, Mshape), tdim, 1);
   }
 
-  return FiniteElement(
-      element::family::P, celltype, degree, {}, xt::eye<double>(ndofs),
-      to_mdspan(x, xshape), to_mdspan(M, Mshape), 0, maps::type::identity,
-      discontinuous, degree, degree, element::lagrange_variant::vtk);
+  return FiniteElement(element::family::P, celltype, degree, {},
+                       mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
+                       to_mdspan(x, xshape), to_mdspan(M, Mshape), 0,
+                       maps::type::identity, discontinuous, degree, degree,
+                       element::lagrange_variant::vtk);
 }
 //-----------------------------------------------------------------------------
 FiniteElement create_legendre(cell::type celltype, int degree,
@@ -1189,8 +1191,8 @@ FiniteElement create_legendre(cell::type celltype, int degree,
       M[tdim][0](i, 0, j, 0) = phi(i, j) * wts(j);
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
-                       discontinuous, degree, degree,
+                       mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs), x, M,
+                       0, maps::type::identity, discontinuous, degree, degree,
                        element::lagrange_variant::legendre);
 }
 //-----------------------------------------------------------------------------
@@ -1216,10 +1218,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     Mbuffer[0].push_back({1.0});
     M[0].push_back(mdspan4_t(Mbuffer[0].back().data(), 1, 1, 1, 1));
 
-    xt::xtensor<double, 2> wcoeffs = {{1}};
-    return FiniteElement(element::family::P, cell::type::point, 0, {}, wcoeffs,
-                         x, M, 0, maps::type::identity, discontinuous, degree,
-                         degree);
+    return FiniteElement(element::family::P, cell::type::point, 0, {},
+                         mdspan2_t(math::eye(1).data(), 1, 1), x, M, 0,
+                         maps::type::identity, discontinuous, degree, degree);
   }
 
   if (variant == element::lagrange_variant::unset)
@@ -1389,7 +1390,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   auto tensor_factors
       = create_tensor_product_factors(celltype, degree, variant);
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
-                       discontinuous, degree, degree, variant, tensor_factors);
+                       mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs), x, M,
+                       0, maps::type::identity, discontinuous, degree, degree,
+                       variant, tensor_factors);
 }
 //-----------------------------------------------------------------------------

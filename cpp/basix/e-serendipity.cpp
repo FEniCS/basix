@@ -938,9 +938,7 @@ FiniteElement basix::element::create_serendipity(
     wcoeffs = make_serendipity_space_3d(degree);
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
-  }
 
   return FiniteElement(element::family::serendipity, celltype, degree, {},
                        wcoeffs, x, M, 0, maps::type::identity, discontinuous,
@@ -1106,9 +1104,7 @@ FiniteElement basix::element::create_serendipity_div(
     wcoeffs = make_serendipity_div_space_3d(degree);
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
-  }
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim}, wcoeffs,
                        x, M, 0, maps::type::contravariantPiola, discontinuous,

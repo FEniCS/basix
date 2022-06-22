@@ -464,11 +464,8 @@ std::tuple<std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::array<std::size_t, 4>>, 4>>
 basix::element::make_discontinuous(
-    const std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>&
-        x,
-    const std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4>&
-        M,
-    int tdim, int value_size)
+    const std::array<std::vector<mdspan2_t>, 4>& x,
+    const std::array<std::vector<mdspan4_t>, 4>& M, int tdim, int value_size)
 {
 
   auto to_xtensor = [](auto& x, auto& M)

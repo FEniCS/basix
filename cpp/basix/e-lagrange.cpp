@@ -26,34 +26,6 @@ using mdspan2_t = stdex::mdspan<double, stdex::dextents<2>>;
 using mdspan4_t = stdex::mdspan<double, stdex::dextents<4>>;
 
 //----------------------------------------------------------------------------
-template <typename U>
-xt::xtensor<typename U::value_type, 2> mdspan_to_xtensor2(const U& x)
-{
-  auto e = x.extents();
-  xt::xtensor<typename U::value_type, 2> y({e.extent(0), e.extent(1)});
-  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
-    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
-      y(k0, k1) = x(k0, k1);
-
-  return y;
-}
-//----------------------------------------------------------------------------
-template <typename U>
-xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
-{
-  auto e = x.extents();
-  std::array<std::size_t, 4> shape
-      = {e.extent(0), e.extent(1), e.extent(2), e.extent(3)};
-  xt::xtensor<double, 4> y(shape);
-  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
-    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
-      for (std::size_t k2 = 0; k2 < e.extent(2); ++k2)
-        for (std::size_t k3 = 0; k3 < e.extent(3); ++k3)
-          y(k0, k1, k2, k3) = x(k0, k1, k2, k3);
-
-  return y;
-}
-//----------------------------------------------------------------------------
 std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>
 to_mdspan(std::array<std::vector<std::vector<double>>, 4>& x,
           std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)

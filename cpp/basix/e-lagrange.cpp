@@ -54,52 +54,29 @@ xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
   return y;
 }
 //----------------------------------------------------------------------------
-auto to_xtensor(std::array<std::vector<std::vector<double>>, 4>& x,
-                std::array<std::vector<std::array<std::size_t, 2>>, 4>& xshape,
-                std::array<std::vector<std::vector<double>>, 4>& M,
-                std::array<std::vector<std::array<std::size_t, 4>>, 4>& Mshape)
-{
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-  for (std::size_t i = 0; i < x.size(); ++i)
-  {
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-    {
-      _x[i].push_back(
-          mdspan_to_xtensor2(mdspan2_t(x[i][j].data(), xshape[i][j])));
-    }
-  }
-  for (std::size_t i = 0; i < M.size(); ++i)
-  {
-    for (std::size_t j = 0; j < M[i].size(); ++j)
-    {
-      _M[i].push_back(
-          mdspan_to_xtensor4(mdspan4_t(M[i][j].data(), Mshape[i][j])));
-    }
-  }
-
-  return std::pair(_x, _M);
-};
-//----------------------------------------------------------------------------
-std::pair<std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>,
-          std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4>>
+std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>
 to_mdspan(std::array<std::vector<std::vector<double>>, 4>& x,
-          std::array<std::vector<std::array<std::size_t, 2>>, 4>& xshape,
-          std::array<std::vector<std::vector<double>>, 4>& M,
-          std::array<std::vector<std::array<std::size_t, 4>>, 4>& Mshape)
+          std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
 {
   std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4> x1;
-  std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4> M1;
-
   for (std::size_t i = 0; i < x.size(); ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
-      x1[i].push_back(mdspan2_t(x[i][j].data(), xshape[i][j]));
+      x1[i].push_back(mdspan2_t(x[i][j].data(), shape[i][j]));
+
+  return x1;
+}
+//----------------------------------------------------------------------------
+std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4>
+to_mdspan(std::array<std::vector<std::vector<double>>, 4>& M,
+          std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
+{
+  std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4> M1;
   for (std::size_t i = 0; i < M.size(); ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
-      M1[i].push_back(mdspan4_t(M[i][j].data(), Mshape[i][j]));
+      M1[i].push_back(mdspan4_t(M[i][j].data(), shape[i][j]));
 
-  return {std::move(x1), std::move(M1)};
-};
+  return M1;
+}
 //----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 std::vector<double> vtk_triangle_points(std::size_t degree)
@@ -998,24 +975,10 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   for (std::size_t i = 0; i < num_dofs; ++i)
     Mview(i, 0, i, 0) = 1.0;
 
-  // Convert data to xtensor
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
-  for (std::size_t i = 0; i < x.size(); ++i)
-  {
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-      _x[i].push_back(
-          mdspan_to_xtensor2(mdspan2_t(x[i][j].data(), xshape[i][j])));
-  }
-  for (std::size_t i = 0; i < M.size(); ++i)
-  {
-    for (std::size_t j = 0; j < M[i].size(); ++j)
-      _M[i].push_back(
-          mdspan_to_xtensor4(mdspan4_t(M[i][j].data(), Mshape[i][j])));
-  }
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), _x, _M, 0, maps::type::identity,
-                       true, degree, degree, variant);
+                       xt::eye<double>(ndofs), to_mdspan(x, xshape),
+                       to_mdspan(M, Mshape), 0, maps::type::identity, true,
+                       degree, degree, variant);
 }
 //----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -1168,16 +1131,14 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
 
   if (discontinuous)
   {
-    auto [xspan, Mspan] = to_mdspan(x, xshape, M, Mshape);
-    std::tie(x, xshape, M, Mshape)
-        = element::make_discontinuous_new(xspan, Mspan, tdim, 1);
+    std::tie(x, xshape, M, Mshape) = element::make_discontinuous(
+        to_mdspan(x, xshape), to_mdspan(M, Mshape), tdim, 1);
   }
 
-  auto [_x, _M] = to_xtensor(x, xshape, M, Mshape);
-  return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), _x, _M, 0, maps::type::identity,
-                       discontinuous, degree, degree,
-                       element::lagrange_variant::vtk);
+  return FiniteElement(
+      element::family::P, celltype, degree, {}, xt::eye<double>(ndofs),
+      to_mdspan(x, xshape), to_mdspan(M, Mshape), 0, maps::type::identity,
+      discontinuous, degree, degree, element::lagrange_variant::vtk);
 }
 //-----------------------------------------------------------------------------
 FiniteElement create_legendre(cell::type celltype, int degree,
@@ -1255,23 +1216,8 @@ FiniteElement create_legendre(cell::type celltype, int degree,
     for (std::size_t j = 0; j < pts.shape(0); ++j)
       M[tdim][0](i, 0, j, 0) = phi(i, j) * wts(j);
 
-  // Convert data to xtensor
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
-  for (std::size_t i = 0; i < x.size(); ++i)
-  {
-    _x[i].resize(x[i].size());
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-      _x[i][j] = mdspan_to_xtensor2(x[i][j]);
-  }
-  for (std::size_t i = 0; i < M.size(); ++i)
-  {
-    _M[i].resize(M[i].size());
-    for (std::size_t j = 0; j < M[i].size(); ++j)
-      _M[i][j] = mdspan_to_xtensor4(M[i][j]);
-  }
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), _x, _M, 0, maps::type::identity,
+                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
                        discontinuous, degree, degree,
                        element::lagrange_variant::legendre);
 }
@@ -1288,10 +1234,16 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     if (degree != 0)
       throw std::runtime_error("Can only create order 0 Lagrange on a point");
 
-    std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-    std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-    x[0].push_back(xt::zeros<double>({1, 0}));
-    M[0].push_back({{{{1.}}}});
+    std::array<std::vector<std::vector<double>>, 4> xbuffer;
+    std::array<std::vector<mdspan2_t>, 4> x;
+    xbuffer[0].push_back({});
+    x[0].push_back(mdspan2_t(nullptr, 1, 0));
+
+    std::array<std::vector<std::vector<double>>, 4> Mbuffer;
+    std::array<std::vector<mdspan4_t>, 4> M;
+    Mbuffer[0].push_back({1.0});
+    M[0].push_back(mdspan4_t(Mbuffer[0].back().data(), 1, 1, 1, 1));
+
     xt::xtensor<double, 2> wcoeffs = {{1}};
     return FiniteElement(element::family::P, cell::type::point, 0, {}, wcoeffs,
                          x, M, 0, maps::type::identity, discontinuous, degree,
@@ -1452,29 +1404,20 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     }
   }
 
-  // Convert data to xtensor
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
-  for (std::size_t i = 0; i < x.size(); ++i)
-  {
-    _x[i].resize(x[i].size());
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-      _x[i][j] = mdspan_to_xtensor2(x[i][j]);
-  }
-  for (std::size_t i = 0; i < M.size(); ++i)
-  {
-    _M[i].resize(M[i].size());
-    for (std::size_t j = 0; j < M[i].size(); ++j)
-      _M[i][j] = mdspan_to_xtensor4(M[i][j]);
-  }
-
   if (discontinuous)
-    std::tie(_x, _M) = element::make_discontinuous(_x, _M, tdim, 1);
+  {
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = element::make_discontinuous(x, M, tdim, 1);
+    x = to_mdspan(xbuffer, xshape);
+    M = to_mdspan(Mbuffer, Mshape);
+  }
 
   auto tensor_factors
       = create_tensor_product_factors(celltype, degree, variant);
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), _x, _M, 0, maps::type::identity,
+                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
                        discontinuous, degree, degree, variant, tensor_factors);
 }
 //-----------------------------------------------------------------------------

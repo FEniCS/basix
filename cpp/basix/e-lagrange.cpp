@@ -6,7 +6,6 @@
 #include "lattice.h"
 #include "maps.h"
 #include "math.h"
-#include "mdspan.hpp"
 #include "moments.h"
 #include "polynomials.h"
 #include "polyset.h"
@@ -1194,6 +1193,159 @@ FiniteElement create_legendre(cell::type celltype, int degree,
                        element::lagrange_variant::legendre);
 }
 //-----------------------------------------------------------------------------
+FiniteElement create_bernstein(cell::type celltype, int degree,
+                               bool discontinuous)
+{
+  assert(degree > 0);
+  if (celltype != cell::type::interval and celltype != cell::type::triangle
+      and celltype != cell::type::tetrahedron)
+  {
+    throw std::runtime_error(
+        "Bernstein elements are currently only supported on simplices.");
+  }
+
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs = polyset::dim(celltype, degree);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+
+  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  {
+    M[dim].resize(topology[dim].size());
+    x[dim].resize(topology[dim].size());
+  }
+
+  const std::array<std::size_t, 4> nb
+      = {1,
+         static_cast<std::size_t>(polynomials::dim(
+             polynomials::type::bernstein, cell::type::interval, degree)),
+         static_cast<std::size_t>(polynomials::dim(
+             polynomials::type::bernstein, cell::type::triangle, degree)),
+         static_cast<std::size_t>(polynomials::dim(
+             polynomials::type::bernstein, cell::type::tetrahedron, degree))};
+
+  const std::array<cell::type, 4> ct
+      = {cell::type::point, cell::type::interval, cell::type::triangle,
+         cell::type::tetrahedron};
+
+  const std::array<std::size_t, 4> nb_interior
+      = {1, degree < 2 ? 0 : nb[1] - 2, degree < 3 ? 0 : nb[2] + 3 - 3 * nb[1],
+         degree < 4 ? 0 : nb[3] + 6 * nb[1] - 4 * nb[2] - 4};
+
+  std::array<std::vector<int>, 4> bernstein_bubbles;
+  bernstein_bubbles[0].push_back(0);
+  { // scope
+    int ib = 0;
+    for (int i = 0; i <= degree; ++i)
+    {
+      if (i > 0 and i < degree)
+      {
+        bernstein_bubbles[1].push_back(ib);
+      }
+      ++ib;
+    }
+  }
+  { // scope
+    int ib = 0;
+    for (int i = 0; i <= degree; ++i)
+      for (int j = 0; j <= degree - i; ++j)
+      {
+        if (i > 0 and j > 0 and i + j < degree)
+          bernstein_bubbles[2].push_back(ib);
+        ++ib;
+      }
+  }
+  { // scope
+    int ib = 0;
+    for (int i = 0; i <= degree; ++i)
+      for (int j = 0; j <= degree - i; ++j)
+        for (int k = 0; k <= degree - i - j; ++k)
+        {
+          if (i > 0 and j > 0 and k > 0 and i + j + k < degree)
+            bernstein_bubbles[3].push_back(ib);
+          ++ib;
+        }
+  }
+
+  for (std::size_t v = 0; v < topology[0].size(); ++v)
+  {
+    x[0][v] = cell::sub_entity_geometry(celltype, 0, v);
+    M[0][v] = {{{{1.}}}};
+  }
+
+  for (std::size_t d = 1; d <= tdim; ++d)
+  {
+    if (nb_interior[d] == 0)
+    {
+      for (std::size_t e = 0; e < topology[d].size(); ++e)
+      {
+        x[d][e] = xt::xtensor<double, 2>({0, tdim});
+        M[d][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
+      }
+    }
+    else
+    {
+      auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                     ct[d], degree * 2);
+      auto wts = xt::adapt(_wts);
+
+      const xt::xtensor<double, 2> phi = polynomials::tabulate(
+          polynomials::type::legendre, ct[d], degree, pts);
+      const xt::xtensor<double, 2> bern = polynomials::tabulate(
+          polynomials::type::bernstein, ct[d], degree, pts);
+
+      assert(phi.shape(0) == nb[d]);
+      const std::size_t npts = pts.shape(0);
+
+      xt::xtensor<double, 2> mat({nb[d], nb[d]});
+      for (std::size_t i = 0; i < nb[d]; ++i)
+        for (std::size_t j = 0; j < nb[d]; ++j)
+          mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
+
+      xt::xtensor<double, 2> id = xt::eye<double>(nb[d]);
+
+      xt::xtensor<double, 2> minv = math::solve(mat, id);
+
+      M[d] = std::vector<xt::xtensor<double, 4>>(
+          cell::num_sub_entities(celltype, d),
+          xt::xtensor<double, 4>({nb_interior[d], 1, npts, 1}));
+      for (std::size_t e = 0; e < topology[d].size(); ++e)
+      {
+        const xt::xtensor<double, 2> entity_x
+            = cell::sub_entity_geometry(celltype, d, e);
+        auto x0s = xt::reshape_view(
+            xt::row(entity_x, 0),
+            {static_cast<std::size_t>(1), entity_x.shape(1)});
+        x[d][e] = xt::tile(x0s, pts.shape(0));
+        auto x0 = xt::row(entity_x, 0);
+        for (std::size_t j = 0; j < pts.shape(0); ++j)
+        {
+          for (std::size_t k = 0; k < pts.shape(1); ++k)
+          {
+            xt::row(x[d][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
+          }
+        }
+        for (std::size_t i = 0; i < bernstein_bubbles[d].size(); ++i)
+        {
+          for (std::size_t p = 0; p < npts; ++p)
+            M[d][e](i, 0, p, 0)
+                = wts(p)
+                  * xt::sum(xt::col(phi, p)
+                            * xt::row(minv, bernstein_bubbles[d][i]))();
+        }
+      }
+    }
+  }
+
+  return FiniteElement(element::family::P, celltype, degree, {},
+                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
+                       discontinuous, degree, degree,
+                       element::lagrange_variant::bernstein);
+}
+//-----------------------------------------------------------------------------
 } // namespace
 
 //----------------------------------------------------------------------------
@@ -1221,6 +1373,20 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
                          maps::type::identity, discontinuous, degree, degree);
   }
 
+  if (variant == element::lagrange_variant::vtk)
+    return create_vtk_element(celltype, degree, discontinuous);
+
+  if (variant == element::lagrange_variant::legendre)
+    return create_legendre(celltype, degree, discontinuous);
+
+  if (variant == element::lagrange_variant::bernstein)
+  {
+    if (degree == 0)
+      variant = element::lagrange_variant::unset;
+    else
+      return create_bernstein(celltype, degree, discontinuous);
+  }
+
   if (variant == element::lagrange_variant::unset)
   {
     if (degree < 3)
@@ -1229,12 +1395,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       throw std::runtime_error(
           "Lagrange elements of degree > 2 need to be given a variant.");
   }
-
-  if (variant == element::lagrange_variant::vtk)
-    return create_vtk_element(celltype, degree, discontinuous);
-
-  if (variant == element::lagrange_variant::legendre)
-    return create_legendre(celltype, degree, discontinuous);
 
   auto [lattice_type, simplex_method, exterior]
       = variant_to_lattice(celltype, variant);

@@ -180,7 +180,7 @@ class BasixElement(_BasixElementBase):
 
     def __init__(self, element: _basix.finite_element.FiniteElement):
         """Create a Basix element."""
-        value_shape: _typing.Tuple[int] = tuple(element.value_shape)
+        value_shape: _typing.Tuple[int] = tuple(int(i) for i in element.value_shape)
         super().__init__(
             element.family.name, element.cell_type.name, element.degree, value_shape)
 

@@ -23,7 +23,6 @@ class _BasixElementBase(_FiniteElementBase):
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
                  degree: int = None, mapname: str = None):
         """Initialise the element."""
-        print(degree)
         super().__init__(name, cellname, degree, None, value_shape, value_shape)
         self._repr = repr
         self._map = mapname

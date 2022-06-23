@@ -15,7 +15,7 @@ class _BasixElementBase(_FiniteElementBase):
     """
 
     def __init__(self, name: str, cellname: str, degree: int,
-                 value_shape: _typing.Tuple[int]):
+                 value_shape: _typing.Tuple[int, ...]):
         """Initialise the element."""
         super().__init__(self, name, cellname, degree, None, value_shape, value_shape)
 
@@ -87,7 +87,7 @@ class _BasixElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
     @property
-    def value_shape(self) -> _typing.Tuple[int]:
+    def value_shape(self) -> _typing.Tuple[int, ...]:
         """Value shape of the element basis function.
 
         Note:
@@ -180,9 +180,8 @@ class BasixElement(_BasixElementBase):
 
     def __init__(self, element: _basix.finite_element.FiniteElement):
         """Create a Basix element."""
-        value_shape: _typing.Tuple[int] = tuple(int(i) for i in element.value_shape)
         super().__init__(
-            element.family.name, element.cell_type.name, element.degree, value_shape)
+            element.family.name, element.cell_type.name, element.degree, tuple(element.value_shape))
 
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
@@ -268,7 +267,7 @@ class BasixElement(_BasixElementBase):
         return self.basix_element.value_size
 
     @property
-    def value_shape(self) -> _typing.Tuple[int]:
+    def value_shape(self) -> _typing.Tuple[int, ...]:
         """Value shape of the element basis function.
 
         Note:
@@ -429,7 +428,7 @@ class ComponentElement(_BasixElementBase):
         raise NotImplementedError()
 
     @property
-    def value_shape(self) -> _typing.Tuple[int]:
+    def value_shape(self) -> _typing.Tuple[int, ...]:
         """Value shape of the element basis function.
 
         Note:
@@ -590,7 +589,7 @@ class MixedElement(_BasixElementBase):
         return sum(e.value_size for e in self.sub_elements)
 
     @property
-    def value_shape(self) -> _typing.Tuple[int]:
+    def value_shape(self) -> _typing.Tuple[int, ...]:
         """Value shape of the element basis function.
 
         Note:
@@ -696,7 +695,7 @@ class MixedElement(_BasixElementBase):
 class BlockedElement(_BasixElementBase):
     """An element with a block size that contains multiple copies of a sub element."""
 
-    def __init__(self, sub_element: _BasixElementBase, block_size: int, block_shape: _typing.Tuple[int] = None):
+    def __init__(self, sub_element: _BasixElementBase, block_size: int, block_shape: _typing.Tuple[int, ...] = None):
         """Initialise the element."""
         assert block_size > 0
         if sub_element.value_size != 1:
@@ -765,7 +764,7 @@ class BlockedElement(_BasixElementBase):
         return self.block_size * self.sub_element.value_size
 
     @property
-    def value_shape(self) -> _typing.Tuple[int]:
+    def value_shape(self) -> _typing.Tuple[int, ...]:
         """Value shape of the element basis function.
 
         Note:
@@ -934,7 +933,7 @@ class QuadratureElement(_BasixElementBase):
         return 1
 
     @property
-    def value_shape(self) -> _typing.Tuple[int]:
+    def value_shape(self) -> _typing.Tuple[int, ...]:
         """Value shape of the element basis function.
 
         Note:

@@ -37,7 +37,7 @@ jobs:
       - name: Run units tests
         run: |
           python3 -m pip install pytest-xdist
-          # python3 -m pytest -n auto --durations 20 test/
+          python3 -m pytest -n auto --durations 20 test/
 
       - name: Run Python demos
         run: python3 -m pytest demo/python/test.py

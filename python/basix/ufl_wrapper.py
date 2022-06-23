@@ -23,9 +23,11 @@ class _BasixElementBase(_FiniteElementBase):
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
                  degree: int = None, mapname: str = None):
         """Initialise the element."""
+        print(degree)
         super().__init__(name, cellname, degree, None, value_shape, value_shape)
         self._repr = repr
         self._map = mapname
+        self._degree = degree
 
     def mapping(self) -> _typing.Union[str, None]:
         """Return the map type."""
@@ -38,6 +40,11 @@ class _BasixElementBase(_FiniteElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return hash(self._repr)
+
+    @property
+    def degree(self) -> int:
+        """The degree of the element."""
+        return self._degree
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -349,11 +356,6 @@ class BasixElement(_BasixElementBase):
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
         return self.element.cell_type
-
-    @property
-    def degree(self) -> int:
-        """The degree of the element."""
-        return self.element.degree
 
     @property
     def discontinuous(self) -> bool:

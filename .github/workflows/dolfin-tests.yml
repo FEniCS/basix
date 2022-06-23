@@ -59,11 +59,24 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: |
           python3 -m pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
-          python3 -m pip install git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ffcx_branch }}
 
-      - name: Run cpp demos
+      - name: Get FFCx
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@v3
+        with:
+          path: ./ffcx
+          repository: FEniCS/ffcx
+      - name: Get FFCx
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v3
+        with:
+          path: ./ffcx
+          repository: FEniCS/ffcx
+          ref: ${{ github.event.inputs.ffcx_branch }}
+      - name: Install FFCx
         run: |
-          python3 -m pytest demo/cpp/test.py
+            cd ffcx
+            python3 -m pip install .
 
       - name: Get DOLFINx
         if: github.event_name != 'workflow_dispatch'
@@ -78,13 +91,17 @@ jobs:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: ${{ github.event.inputs.dolfinx_branch }}
-
       - name: Install DOLFINx
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/
           cmake --build build
           cmake --install build
           python3 -m pip -v install --global-option build --global-option --debug dolfinx/python/
+
+      - name: Run mypy checks
+        run:
+            python3 -m mypy ffcx/ffcx
+            python3 -m mypy dolfinx/python/dolfinx
 
       - name: Build DOLFINx C++ unit tests
         run: |

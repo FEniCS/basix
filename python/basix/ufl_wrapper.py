@@ -32,8 +32,8 @@ class _BasixElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
     def tabulate(
-        self, nderivs: int, points: _numpy._typing.NDArray[_numpy.float64]
-    ) -> _numpy._typing.NDArray[_numpy.float64]:
+        self, nderivs: int, points: _numpy.typing.NDArray[_numpy.float64]
+    ) -> _numpy.typing.NDArray[_numpy.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -128,7 +128,7 @@ class _BasixElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _numpy._typing.NDArray[_numpy.float64]:
+    def reference_geometry(self) -> _numpy.typing.NDArray[_numpy.float64]:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -207,8 +207,8 @@ class BasixElement(_BasixElementBase):
         return hash(self._repr)
 
     def tabulate(
-        self, nderivs: int, points: _numpy._typing.NDArray[_numpy.float64]
-    ) -> _numpy._typing.NDArray[_numpy.float64]:
+        self, nderivs: int, points: _numpy.typing.NDArray[_numpy.float64]
+    ) -> _numpy.typing.NDArray[_numpy.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -311,7 +311,7 @@ class BasixElement(_BasixElementBase):
         return _basix.topology(self.element.cell_type)
 
     @property
-    def reference_geometry(self) -> _numpy._typing.NDArray[_numpy.float64]:
+    def reference_geometry(self) -> _numpy.typing.NDArray[_numpy.float64]:
         """Geometry of the reference element."""
         return _basix.geometry(self.element.cell_type)
 
@@ -373,8 +373,8 @@ class ComponentElement(_BasixElementBase):
         self.component = component
 
     def tabulate(
-        self, nderivs: int, points: _numpy._typing.NDArray[_numpy.float64]
-    ) -> _numpy._typing.NDArray[_numpy.float64]:
+        self, nderivs: int, points: _numpy.typing.NDArray[_numpy.float64]
+    ) -> _numpy.typing.NDArray[_numpy.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -474,7 +474,7 @@ class ComponentElement(_BasixElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _numpy._typing.NDArray[_numpy.float64]:
+    def reference_geometry(self) -> _numpy.typing.NDArray[_numpy.float64]:
         """Geometry of the reference element."""
         raise NotImplementedError()
 
@@ -520,8 +520,8 @@ class MixedElement(_BasixElementBase):
         self.sub_elements = sub_elements
 
     def tabulate(
-        self, nderivs: int, points: _numpy._typing.NDArray[_numpy.float64]
-    ) -> _numpy._typing.NDArray[_numpy.float64]:
+        self, nderivs: int, points: _numpy.typing.NDArray[_numpy.float64]
+    ) -> _numpy.typing.NDArray[_numpy.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -657,7 +657,7 @@ class MixedElement(_BasixElementBase):
         return self.sub_elements[0].reference_topology
 
     @property
-    def reference_geometry(self) -> _numpy._typing.NDArray[_numpy.float64]:
+    def reference_geometry(self) -> _numpy.typing.NDArray[_numpy.float64]:
         """Geometry of the reference element."""
         return self.sub_elements[0].reference_geometry
 
@@ -711,8 +711,8 @@ class BlockedElement(_BasixElementBase):
             self.block_shape = block_shape
 
     def tabulate(
-        self, nderivs: int, points: _numpy._typing.NDArray[_numpy.float64]
-    ) -> _numpy._typing.NDArray[_numpy.float64]:
+        self, nderivs: int, points: _numpy.typing.NDArray[_numpy.float64]
+    ) -> _numpy.typing.NDArray[_numpy.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -816,7 +816,7 @@ class BlockedElement(_BasixElementBase):
         return self.sub_element.reference_topology
 
     @property
-    def reference_geometry(self) -> _numpy._typing.NDArray[_numpy.float64]:
+    def reference_geometry(self) -> _numpy.typing.NDArray[_numpy.float64]:
         """Geometry of the reference element."""
         return self.sub_element.reference_geometry
 
@@ -874,7 +874,7 @@ class TensorElement(_BasixElementBase):
 class QuadratureElement(_BasixElementBase):
     """A quadrature element."""
 
-    _points: _numpy._typing.NDArray[_numpy.float64]
+    _points: _numpy.typing.NDArray[_numpy.float64]
     _element: _BasixElementBase
 
     def __init__(self, element: _BasixElementBase):
@@ -883,8 +883,8 @@ class QuadratureElement(_BasixElementBase):
         self._element = element
 
     def tabulate(
-        self, nderivs: int, points: _numpy._typing.NDArray[_numpy.float64]
-    ) -> _numpy._typing.NDArray[_numpy.float64]:
+        self, nderivs: int, points: _numpy.typing.NDArray[_numpy.float64]
+    ) -> _numpy.typing.NDArray[_numpy.float64]:
         """Tabulate the basis functions of the element.
 
         Args:
@@ -995,7 +995,7 @@ class QuadratureElement(_BasixElementBase):
         raise NotImplementedError()
 
     @property
-    def reference_geometry(self) -> _numpy._typing.NDArray[_numpy.float64]:
+    def reference_geometry(self) -> _numpy.typing.NDArray[_numpy.float64]:
         """Geometry of the reference element."""
         raise NotImplementedError()
 

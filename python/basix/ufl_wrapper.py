@@ -22,7 +22,7 @@ class _BasixElementBase(_FiniteElementBase):
     def __init__(self, name: str, cellname: str, degree: int,
                  value_shape: _typing.Tuple[int, ...]):
         """Initialise the element."""
-        super().__init__(self, name, cellname, degree, None, value_shape, value_shape)
+        super().__init__(name, cellname, degree, None, value_shape, value_shape)
 
     def mapping(self) -> str:
         """Return the map type."""

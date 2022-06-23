@@ -1022,51 +1022,74 @@ def convert_ufl_element(
     if isinstance(element, _BasixElementBase):
         return element
 
-    if isinstance(element, _ufl.VectorElement):
+    elif isinstance(element, _ufl.VectorElement):
         return VectorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
-    if isinstance(element, _ufl.TensorElement):
+    elif isinstance(element, _ufl.TensorElement):
         return TensorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
 
-    if isinstance(element, _ufl.MixedElement):
+    elif isinstance(element, _ufl.MixedElement):
         return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])
 
-    family_name = element.family()
-    discontinuous = False
-    if family_name.startswith("Discontinuous "):
-        family_name = family_name[14:]
-        discontinuous = True
-    if family_name == "DP":
-        family_name = "P"
-        discontinuous = True
-    if family_name == "DQ":
-        family_name = "Q"
-        discontinuous = True
-    if family_name == "DPC":
-        discontinuous = True
+    # Elements not yet supported
+    elif isinstance(element, _ufl.EnrichedElement):
+        raise NotImplementedError()
 
-    family_type = _basix.finite_element.string_to_family(family_name, element.cell().cellname())
-    cell_type = _basix.cell.string_to_type(element.cell().cellname())
+    # Elements that will not be supported
+    elif isinstance(element, _ufl.NodalEnrichedElement):
+        raise RuntimeError("NodalEnrichedElement is not supported. Use EnrichedElement instead.")
+    elif isinstance(element, _ufl.BrokenElement):
+        raise RuntimeError("BrokenElement not supported.")
+    elif isinstance(element, _ufl.HCurlElement):
+        raise RuntimeError("HCurlElement not supported.")
+    elif isinstance(element, _ufl.HDivElement):
+        raise RuntimeError("HDivElement not supported.")
+    elif isinstance(element, _ufl.TensorProductElement):
+        raise RuntimeError("TensorProductElement not supported.")
+    elif isinstance(element, _ufl.RestrictedElement):
+        raise RuntimeError("RestricedElement not supported.")
 
-    variant_info = {
-        "lagrange_variant": _basix.LagrangeVariant.unset,
-        "dpc_variant": _basix.DPCVariant.unset
-    }
-    if family_type == _basix.ElementFamily.P and element.variant() == "equispaced":
-        # This is used for elements defining cells
-        variant_info["lagrange_variant"] = _basix.LagrangeVariant.equispaced
+    elif isinstance(element, _ufl.FiniteElement):
+        # Create a basix element from family name, cell type and degree
+        family_name = element.family()
+        discontinuous = False
+        if family_name.startswith("Discontinuous "):
+            family_name = family_name[14:]
+            discontinuous = True
+        if family_name == "DP":
+            family_name = "P"
+            discontinuous = True
+        if family_name == "DQ":
+            family_name = "Q"
+            discontinuous = True
+        if family_name == "DPC":
+            discontinuous = True
+
+        family_type = _basix.finite_element.string_to_family(family_name, element.cell().cellname())
+        cell_type = _basix.cell.string_to_type(element.cell().cellname())
+
+        variant_info = {
+            "lagrange_variant": _basix.LagrangeVariant.unset,
+            "dpc_variant": _basix.DPCVariant.unset
+        }
+        if family_type == _basix.ElementFamily.P and element.variant() == "equispaced":
+            # This is used for elements defining cells
+            variant_info["lagrange_variant"] = _basix.LagrangeVariant.equispaced
+        else:
+            if element.variant() is not None:
+                raise ValueError("UFL variants are not supported by FFCx. Please wrap a Basix element directly.")
+
+            EF = _basix.ElementFamily
+            if family_type == EF.P:
+                variant_info["lagrange_variant"] = _basix.LagrangeVariant.gll_warped
+            elif family_type in [EF.RT, EF.N1E]:
+                variant_info["lagrange_variant"] = _basix.LagrangeVariant.legendre
+            elif family_type in [EF.serendipity, EF.BDM, EF.N2E]:
+                variant_info["lagrange_variant"] = _basix.LagrangeVariant.legendre
+                variant_info["dpc_variant"] = _basix.DPCVariant.legendre
+            elif family_type == EF.DPC:
+                variant_info["dpc_variant"] = _basix.DPCVariant.diagonal_gll
+
+        return create_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous)
+
     else:
-        if element.variant() is not None:
-            raise ValueError("UFL variants are not supported by FFCx. Please wrap a Basix element directly.")
-
-        EF = _basix.ElementFamily
-        if family_type == EF.P:
-            variant_info["lagrange_variant"] = _basix.LagrangeVariant.gll_warped
-        elif family_type in [EF.RT, EF.N1E]:
-            variant_info["lagrange_variant"] = _basix.LagrangeVariant.legendre
-        elif family_type in [EF.serendipity, EF.BDM, EF.N2E]:
-            variant_info["lagrange_variant"] = _basix.LagrangeVariant.legendre
-            variant_info["dpc_variant"] = _basix.DPCVariant.legendre
-        elif family_type == EF.DPC:
-            variant_info["dpc_variant"] = _basix.DPCVariant.diagonal_gll
-
-    return create_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous)
+        raise ValueError(f"Unrecognised element type: {element.__class__.__name__}")

@@ -195,16 +195,16 @@ class BasixElement(_BasixElementBase):
             self._is_custom = False
             self._repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
                           f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
-        self.basix_element = element
+        self.element = element
 
     def mapping(self) -> str:
         """Return the map type."""
-        return _map_type_to_string(self.basix_element.map_type)
+        return _map_type_to_string(self.element.map_type)
 
     def __eq__(self, other):
         """Check if two elements are equal."""
         if isinstance(other, BasixElement):
-            return self.basix_element == other.basix_element
+            return self.element == other.basix_element
         return False
 
     def __hash__(self):
@@ -223,7 +223,7 @@ class BasixElement(_BasixElementBase):
         Returns:
             Tabulated basis functions
         """
-        tab = self.basix_element.tabulate(nderivs, points)
+        tab = self.element.tabulate(nderivs, points)
         # TODO: update FFCx to remove the need for transposing here
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
 
@@ -260,7 +260,7 @@ class BasixElement(_BasixElementBase):
     @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
-        return self.basix_element.dim
+        return self.element.dim
 
     @property
     def value_size(self) -> int:
@@ -269,7 +269,7 @@ class BasixElement(_BasixElementBase):
         Equal to ``_numpy.prod(value_shape)``.
 
         """
-        return self.basix_element.value_size
+        return self.element.value_size
 
     @property
     def value_shape(self) -> _typing.Tuple[int, ...]:
@@ -280,10 +280,10 @@ class BasixElement(_BasixElementBase):
             from Basix where the value shape for scalar elements is
             ``(,)``.
         """
-        if len(self.basix_element.value_shape) == 0:
+        if len(self.element.value_shape) == 0:
             return (1,)
         else:
-            return self.basix_element.value_shape
+            return self.element.value_shape
 
     @property
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
@@ -1178,8 +1178,54 @@ def create_tensor_element(
 def convert_ufl_element(
     element: _FiniteElementBase
 ) -> _BasixElementBase:
-    """Document this."""
+    """Convert a UFL element to a wrapped Basix element."""
     if isinstance(element, _BasixElementBase):
         return element
 
-    raise ValueError("Unsupported element: {element}")
+    if isinstance(element, _ufl.VectorElement):
+        return VectorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
+    if isinstance(element, ufl.TensorElement):
+        return TensorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
+
+    if isinstance(element, ufl.MixedElement):
+        return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])
+
+    if element.family() == "Quadrature":
+        return QuadratureElement(element)
+
+    family_name = element.family()
+    discontinuous = False
+    if family_name.startswith("Discontinuous "):
+        family_name = family_name[14:]
+        discontinuous = True
+    if family_name == "DP":
+        family_name = "P"
+        discontinuous = True
+    if family_name == "DQ":
+        family_name = "Q"
+        discontinuous = True
+    if family_name == "DPC":
+        discontinuous = True
+
+    family_type = basix.finite_element.string_to_family(family_name, element.cell().cellname())
+    cell_type = basix.cell.string_to_type(element.cell().cellname())
+
+    variant_info = []
+    if family_type == basix.ElementFamily.P and element.variant() == "equispaced":
+        # This is used for elements defining cells
+        variant_info = [basix.LagrangeVariant.equispaced]
+    else:
+        if element.variant() is not None:
+            raise ValueError("UFL variants are not supported by FFCx. Please wrap a Basix element directly.")
+
+        EF = basix.ElementFamily
+        if family_type == EF.P:
+            variant_info = [basix.LagrangeVariant.gll_warped]
+        elif family_type in [EF.RT, EF.N1E]:
+            variant_info = [basix.LagrangeVariant.legendre]
+        elif family_type in [EF.serendipity, EF.BDM, EF.N2E]:
+            variant_info = [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre]
+        elif family_type == EF.DPC:
+            variant_info = [basix.DPCVariant.diagonal_gll]
+
+    return create_element(family_type, cell_type, element.degree(), *variant_info, discontinuous=discontinuous)

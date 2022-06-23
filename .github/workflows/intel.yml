@@ -48,7 +48,7 @@ jobs:
           . /opt/intel/oneapi/setvars.sh
           pip install pytest-xdist
           export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
-          pytest -vs -n auto --durations 20 test/
+          # pytest -vs -n auto --durations 20 test/
 
       - name: Run Python demos
         run: |

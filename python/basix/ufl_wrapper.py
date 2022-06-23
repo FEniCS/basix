@@ -6,6 +6,7 @@ import hashlib as _hashlib
 import numpy as _numpy
 import basix as _basix
 import typing as _typing
+import functools as _functools
 
 if _typing.TYPE_CHECKING:
     _nda_f64 = _numpy.typing.NDArray[_numpy.float64]
@@ -880,170 +881,6 @@ class TensorElement(_BasixElementBase):
         super.__init__(sub_element, size, (size, size))
 
 
-class QuadratureElement(_BasixElementBase):
-    """A quadrature element."""
-
-    _points: _nda_f64
-    _element: _BasixElementBase
-
-    def __init__(self, element: _BasixElementBase):
-        """Initialise the element."""
-        self._points, _ = _basix.make_quadrature(element.cell_type, element.degree)
-        self._element = element
-
-    def tabulate(
-        self, nderivs: int, points: _nda_f64
-    ) -> _nda_f64:
-        """Tabulate the basis functions of the element.
-
-        Args:
-            nderivs: Number of derivatives to tabulate.
-            points: Points to tabulate at
-
-        Returns:
-            Tabulated basis functions
-        """
-        if nderivs > 0:
-            raise ValueError("Cannot take derivatives of Quadrature element.")
-
-        if points.shape != self._points.shape:
-            raise ValueError("Mismatch of tabulation points and element points.")
-        tables = _numpy.asarray([_numpy.eye(points.shape[0], points.shape[0])])
-        return tables
-
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
-        """Get element that represents a component of the element, and the offset and stride of the component.
-
-        Args:
-            flat_component: The component
-
-        Returns:
-            component element, offset of the component, stride of the component
-        """
-        return self, 0, 1
-
-    @property
-    def ufcx_element_type(self) -> str:
-        """Element type."""
-        return "ufcx_quadrature_element"
-
-    @property
-    def dim(self) -> int:
-        """Number of DOFs the element has."""
-        return self._points.shape[0]
-
-    @property
-    def value_size(self) -> int:
-        """Value size of the element.
-
-        Equal to ``_numpy.prod(value_shape)``.
-
-        """
-        return 1
-
-    @property
-    def value_shape(self) -> _typing.Tuple[int, ...]:
-        """Value shape of the element basis function.
-
-        Note:
-            For scalar elements, ``(1,)`` is returned. This is different
-            from Basix where the value shape for scalar elements is
-            ``(,)``.
-        """
-        return (1,)
-
-    @property
-    def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
-        """Number of DOFs associated with each entity."""
-        dofs = []
-        tdim = self._element.cell().topological_dimension()
-
-        if tdim >= 1:
-            dofs += [[0] * self._element.cell().num_vertices()]
-
-        if tdim >= 2:
-            dofs += [[0] * self._element.cell().num_edges()]
-
-        if tdim >= 3:
-            dofs += [[0] * self._element.cell().num_facets()]
-
-        dofs += [[self.dim]]
-        return dofs
-
-    @property
-    def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
-        """DOF numbers associated with each entity."""
-        start_dof = 0
-        entity_dofs = []
-        for i in self.num_entity_dofs:
-            dofs_list = []
-            for j in i:
-                dofs_list.append([start_dof + k for k in range(j)])
-                start_dof += j
-            entity_dofs.append(dofs_list)
-        return entity_dofs
-
-    @property
-    def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
-        """Number of DOFs associated with the closure of each entity."""
-        return self.num_entity_dofs
-
-    @property
-    def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
-        """DOF numbers associated with the closure of each entity."""
-        return self.entity_dofs
-
-    @property
-    def num_global_support_dofs(self) -> int:
-        """Get the number of global support DOFs."""
-        return 0
-
-    @property
-    def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
-        """Topology of the reference element."""
-        raise NotImplementedError()
-
-    @property
-    def reference_geometry(self) -> _nda_f64:
-        """Geometry of the reference element."""
-        raise NotImplementedError()
-
-    @property
-    def family_name(self) -> str:
-        """Family name of the element."""
-        return self._element.family()
-
-    @property
-    def lagrange_variant(self) -> _basix.LagrangeVariant:
-        """Basix Lagrange variant used to initialise the element."""
-        return None
-
-    @property
-    def dpc_variant(self) -> _basix.DPCVariant:
-        """Basix DPC variant used to initialise the element."""
-        return None
-
-    @property
-    def element_family(self) -> _basix.ElementFamily:
-        """Basix element family used to initialise the element."""
-        return None
-
-    @property
-    def cell_type(self) -> _basix.CellType:
-        """Basix cell type used to initialise the element."""
-        return None
-
-    @property
-    def discontinuous(self) -> bool:
-        """True if the discontinuous version of the element is used."""
-        return False
-
-    @property
-    def interpolation_nderivs(self) -> int:
-        """The number of derivatives needed when interpolating."""
-        return 0
-
-
 def _map_type_to_string(map_type: _basix.MapType) -> str:
     """Convert map type to a UFL string.
 
@@ -1100,6 +937,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     return signature
 
 
+@_functools.lru_cache()
 def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
                    degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
                    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False) -> BasixElement:
@@ -1131,6 +969,7 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
     return BasixElement(e)
 
 
+@_functools.lru_cache()
 def create_vector_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
@@ -1153,6 +992,7 @@ def create_vector_element(
     return VectorElement(e)
 
 
+@_functools.lru_cache()
 def create_tensor_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
@@ -1189,9 +1029,6 @@ def convert_ufl_element(
 
     if isinstance(element, ufl.MixedElement):
         return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])
-
-    if element.family() == "Quadrature":
-        return QuadratureElement(element)
 
     family_name = element.family()
     discontinuous = False

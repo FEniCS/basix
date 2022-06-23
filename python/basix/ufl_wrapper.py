@@ -87,7 +87,7 @@ class _BasixElementBase(_FiniteElementBase):
     def value_size(self) -> int:
         """Value size of the element.
 
-        Equal to ``_numpy.prod(value_shape)``.
+        Equal to ``numpy.prod(value_shape)``.
 
         """
         raise NotImplementedError()
@@ -267,7 +267,7 @@ class BasixElement(_BasixElementBase):
     def value_size(self) -> int:
         """Value size of the element.
 
-        Equal to ``_numpy.prod(value_shape)``.
+        Equal to ``numpy.prod(value_shape)``.
 
         """
         return self.element.value_size
@@ -428,7 +428,7 @@ class ComponentElement(_BasixElementBase):
     def value_size(self) -> int:
         """Value size of the element.
 
-        Equal to ``_numpy.prod(value_shape)``.
+        Equal to ``numpy.prod(value_shape)``.
 
         """
         raise NotImplementedError()
@@ -589,7 +589,7 @@ class MixedElement(_BasixElementBase):
     def value_size(self) -> int:
         """Value size of the element.
 
-        Equal to ``_numpy.prod(value_shape)``.
+        Equal to ``numpy.prod(value_shape)``.
 
         """
         return sum(e.value_size for e in self.sub_elements)
@@ -768,7 +768,7 @@ class BlockedElement(_BasixElementBase):
     def value_size(self) -> int:
         """Value size of the element.
 
-        Equal to ``_numpy.prod(value_shape)``.
+        Equal to ``numpy.prod(value_shape)``.
 
         """
         return self.block_size * self.sub_element.value_size

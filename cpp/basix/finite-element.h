@@ -28,9 +28,9 @@ namespace element
 namespace stdex = std::experimental;
 
 /// Typedef for mdspan
-using mdspan2_t = stdex::mdspan<double, stdex::dextents<2>>;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
 /// Typedef for mdspan
-using mdspan4_t = stdex::mdspan<double, stdex::dextents<4>>;
+using mdspan4_t = stdex::mdspan<double, stdex::dextents<std::size_t, 4>>;
 
 /// Creates a version of the interpolation points, interpolation
 /// matrices and entity transformation that represent a discontinuous
@@ -72,9 +72,11 @@ class FiniteElement
 {
   // namespace stdex = std::experimental;
   using mdspan2_t
-      = std::experimental::mdspan<double, std::experimental::dextents<2>>;
+      = std::experimental::mdspan<double,
+                                  std::experimental::dextents<std::size_t, 2>>;
   using mdspan4_t
-      = std::experimental::mdspan<double, std::experimental::dextents<4>>;
+      = std::experimental::mdspan<double,
+                                  std::experimental::dextents<std::size_t, 4>>;
 
 public:
   /// A finite element

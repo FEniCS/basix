@@ -161,8 +161,8 @@ xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
 std::vector<double> basix::math::eye(std::size_t n)
 {
   std::vector<double> I(n * n, 0);
-  std::experimental::mdspan<double, std::experimental::dextents<2>> Iview(
-      I.data(), n, n);
+  std::experimental::mdspan<double, std::experimental::dextents<std::size_t, 2>>
+      Iview(I.data(), n, n);
   for (std::size_t i = 0; i < n; ++i)
     Iview(i, i) = 1.0;
   return I;

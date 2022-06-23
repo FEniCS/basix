@@ -20,15 +20,18 @@ using namespace basix;
 
 namespace
 {
-using mdspan2_t = stdex::mdspan<double, stdex::dextents<2>>;
-using mdspan4_t = stdex::mdspan<double, stdex::dextents<4>>;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using mdspan4_t = stdex::mdspan<double, stdex::dextents<std::size_t, 4>>;
 
 //----------------------------------------------------------------------------
-std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4>
+std::array<std::vector<stdex::mdspan<double, stdex::dextents<std::size_t, 2>>>,
+           4>
 to_mdspan(std::array<std::vector<std::vector<double>>, 4>& x,
           std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
 {
-  std::array<std::vector<stdex::mdspan<double, stdex::dextents<2>>>, 4> x1;
+  std::array<
+      std::vector<stdex::mdspan<double, stdex::dextents<std::size_t, 2>>>, 4>
+      x1;
   for (std::size_t i = 0; i < x.size(); ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
       x1[i].push_back(mdspan2_t(x[i][j].data(), shape[i][j]));
@@ -36,11 +39,14 @@ to_mdspan(std::array<std::vector<std::vector<double>>, 4>& x,
   return x1;
 }
 //----------------------------------------------------------------------------
-std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4>
+std::array<std::vector<stdex::mdspan<double, stdex::dextents<std::size_t, 4>>>,
+           4>
 to_mdspan(std::array<std::vector<std::vector<double>>, 4>& M,
           std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
 {
-  std::array<std::vector<stdex::mdspan<double, stdex::dextents<4>>>, 4> M1;
+  std::array<
+      std::vector<stdex::mdspan<double, stdex::dextents<std::size_t, 4>>>, 4>
+      M1;
   for (std::size_t i = 0; i < M.size(); ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
       M1[i].push_back(mdspan4_t(M[i][j].data(), shape[i][j]));
@@ -57,8 +63,8 @@ std::vector<double> vtk_triangle_points(std::size_t degree)
 
   const std::size_t npoints = polyset::dim(cell::type::triangle, degree);
   std::vector<double> outdata(npoints * 2);
-  stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> out(
-      outdata.data(), npoints, 2);
+  stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
+      out(outdata.data(), npoints, 2);
 
   out(0, 0) = d;
   out(0, 1) = d;
@@ -91,8 +97,8 @@ std::vector<double> vtk_triangle_points(std::size_t degree)
   if (degree >= 3)
   {
     std::vector<double> pts_data = vtk_triangle_points(degree - 3);
-    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> pts(
-        pts_data.data(), pts_data.size() / 2, 2);
+    stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
+        pts(pts_data.data(), pts_data.size() / 2, 2);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       for (std::size_t j = 0; j < pts.extent(1); ++j)
@@ -112,8 +118,8 @@ std::vector<double> vtk_tetrahedron_points(std::size_t degree)
 
   const std::size_t npoints = polyset::dim(cell::type::tetrahedron, degree);
   std::vector<double> outdata(npoints * 3);
-  stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 3>> out(
-      outdata.data(), npoints, 3);
+  stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+      out(outdata.data(), npoints, 3);
 
   out(0, 0) = d;
   out(0, 1) = d;
@@ -177,8 +183,8 @@ std::vector<double> vtk_tetrahedron_points(std::size_t degree)
   if (degree >= 3)
   {
     std::vector<double> pts_data = vtk_triangle_points(degree - 3);
-    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 2>> pts(
-        pts_data.data(), pts_data.size() / 2, 2);
+    stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
+        pts(pts_data.data(), pts_data.size() / 2, 2);
 
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
@@ -213,8 +219,8 @@ std::vector<double> vtk_tetrahedron_points(std::size_t degree)
   if (degree >= 4)
   {
     std::vector<double> pts_data = vtk_tetrahedron_points(degree - 4);
-    stdex::mdspan<double, stdex::extents<stdex::dynamic_extent, 3>> pts(
-        pts_data.data(), pts_data.size() / 3, 3);
+    stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+        pts(pts_data.data(), pts_data.size() / 3, 3);
 
     auto out_view = stdex::submdspan(out, std::pair<int, int>{n, npoints},
                                      stdex::full_extent);
@@ -1507,8 +1513,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
           const auto [pt, shape] = lattice::create_new(ct, degree, lattice_type,
                                                        false, simplex_method);
-          stdex::mdspan<const double, stdex::dextents<2>> lattice(pt.data(),
-                                                                  shape);
+          stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> lattice(
+              pt.data(), shape);
           const std::size_t num_dofs = shape[0];
 
           Mbuffer[dim][e] = std::vector<double>(num_dofs * num_dofs);
@@ -1526,8 +1532,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
               = mdspan2_t(xbuffer[dim][e].data(), shape[0], entity_x_shape[1]);
 
           mdspan2_t& _x = x[dim][e];
-          stdex::mdspan<const double, stdex::dextents<2>> entity_x_view(
-              entity_x.data(), entity_x_shape);
+          stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>
+              entity_x_view(entity_x.data(), entity_x_shape);
           for (std::size_t j = 0; j < shape[0]; ++j)
             for (std::size_t k = 0; k < shape[1]; ++k)
               for (std::size_t q = 0; q < tdim; ++q)

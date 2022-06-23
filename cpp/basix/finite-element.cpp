@@ -26,8 +26,8 @@
 
 using namespace basix;
 namespace stdex = std::experimental;
-using mdspan2_t = stdex::mdspan<double, stdex::dextents<2>>;
-using mdspan4_t = stdex::mdspan<double, stdex::dextents<4>>;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using mdspan4_t = stdex::mdspan<double, stdex::dextents<std::size_t, 4>>;
 
 namespace
 {

@@ -44,9 +44,8 @@ class _BasixElementBase(_FiniteElementBase):
     @property
     def value_size(self) -> int:
         """Value size of the element."""
-        return _numpy.prod(self.value_shape)
+        return _numpy.prod(self._value_shape)
 
-    @property
     def value_shape(self) -> _typing.Tuple[int, ...]:
         """Value shape of the element basis function."""
         return self._value_shape
@@ -194,7 +193,7 @@ class BasixElement(_BasixElementBase):
                     f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
 
         super().__init__(
-            repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
+            repr, element.family.name, element.cell_type.name, tuple(element._value_shape), element.degree,
             _map_type_to_string(element.map_type))
 
         self.element = element
@@ -379,16 +378,16 @@ class ComponentElement(_BasixElementBase):
         tables = self.element.tabulate(nderivs, points)
         output = []
         for tbl in tables:
-            shape = (tbl.shape[0],) + self.element.value_shape + (-1,)
+            shape = (tbl.shape[0],) + self.element._value_shape + (-1,)
             tbl = tbl.reshape(shape)
-            if len(self.element.value_shape) == 0:
+            if len(self.element._value_shape) == 0:
                 output.append(tbl)
-            elif len(self.element.value_shape) == 1:
+            elif len(self.element._value_shape) == 1:
                 output.append(tbl[:, self.component, :])
-            elif len(self.element.value_shape) == 2:
+            elif len(self.element._value_shape) == 2:
                 # TODO: Something different may need doing here if
                 # tensor is symmetric
-                vs0 = self.element.value_shape[0]
+                vs0 = self.element._value_shape[0]
                 output.append(tbl[:, self.component // vs0, self.component % vs0, :])
             else:
                 raise NotImplementedError()
@@ -493,7 +492,7 @@ class MixedElement(_BasixElementBase):
         assert len(sub_elements) > 0
         vs: _typing.Tuple[int, ...] = tuple()
         for i in sub_elements:
-            vs += i.value_shape
+            vs += i._value_shape
         self.sub_elements = sub_elements
         super().__init__(
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
@@ -879,7 +878,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     """
     assert element.family == _basix.ElementFamily.custom
 
-    signature = (f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
+    signature = (f"{element.cell_type.name}, {element._value_shape}, {element.map_type.name}, "
                  f"{element.discontinuous}, {element.highest_complete_degree}, {element.highest_degree}, ")
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"
@@ -988,7 +987,7 @@ def convert_ufl_element(
     elif isinstance(element, _ufl.VectorElement):
         return VectorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
     elif isinstance(element, _ufl.TensorElement):
-        return TensorElement(convert_ufl_element(element.sub_elements()[0]), element.value_shape())
+        return TensorElement(convert_ufl_element(element.sub_elements()[0]), element._value_shape)
 
     elif isinstance(element, _ufl.MixedElement):
         return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])

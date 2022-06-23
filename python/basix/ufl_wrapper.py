@@ -974,7 +974,7 @@ def create_vector_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
     dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False
-) -> _ufl.VectorElement:
+) -> VectorElement:
     """Create a UFL vector element using Basix.
 
     A vector element is an element which uses multiple copies of a scalar element to represent a
@@ -997,7 +997,7 @@ def create_tensor_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
     dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False
-) -> _ufl.TensorElement:
+) -> TensorElement:
     """Create a UFL tensor element using Basix.
 
     A tensor element is an element which uses multiple copies of a scalar element to represent a
@@ -1024,10 +1024,10 @@ def convert_ufl_element(
 
     if isinstance(element, _ufl.VectorElement):
         return VectorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
-    if isinstance(element, ufl.TensorElement):
+    if isinstance(element, _ufl.TensorElement):
         return TensorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
 
-    if isinstance(element, ufl.MixedElement):
+    if isinstance(element, _ufl.MixedElement):
         return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])
 
     family_name = element.family()
@@ -1044,25 +1044,25 @@ def convert_ufl_element(
     if family_name == "DPC":
         discontinuous = True
 
-    family_type = basix.finite_element.string_to_family(family_name, element.cell().cellname())
-    cell_type = basix.cell.string_to_type(element.cell().cellname())
+    family_type = _basix.finite_element.string_to_family(family_name, element.cell().cellname())
+    cell_type = _basix.cell.string_to_type(element.cell().cellname())
 
     variant_info = []
-    if family_type == basix.ElementFamily.P and element.variant() == "equispaced":
+    if family_type == _basix.ElementFamily.P and element.variant() == "equispaced":
         # This is used for elements defining cells
-        variant_info = [basix.LagrangeVariant.equispaced]
+        variant_info = [_basix.LagrangeVariant.equispaced]
     else:
         if element.variant() is not None:
             raise ValueError("UFL variants are not supported by FFCx. Please wrap a Basix element directly.")
 
-        EF = basix.ElementFamily
+        EF = _basix.ElementFamily
         if family_type == EF.P:
-            variant_info = [basix.LagrangeVariant.gll_warped]
+            variant_info = [_basix.LagrangeVariant.gll_warped]
         elif family_type in [EF.RT, EF.N1E]:
-            variant_info = [basix.LagrangeVariant.legendre]
+            variant_info = [_basix.LagrangeVariant.legendre]
         elif family_type in [EF.serendipity, EF.BDM, EF.N2E]:
-            variant_info = [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre]
+            variant_info = [_basix.LagrangeVariant.legendre, _basix.DPCVariant.legendre]
         elif family_type == EF.DPC:
-            variant_info = [basix.DPCVariant.diagonal_gll]
+            variant_info = [_basix.DPCVariant.diagonal_gll]
 
     return create_element(family_type, cell_type, element.degree(), *variant_info, discontinuous=discontinuous)

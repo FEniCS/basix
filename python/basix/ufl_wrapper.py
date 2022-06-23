@@ -20,8 +20,8 @@ class _BasixElementBase(_FiniteElementBase):
     This class includes methods and properties needed by UFL and FFCx.
     """
 
-    def __init__(self, repr: str, name: str, cellname: str, degree: int = None,
-                 value_shape: _typing.Tuple[int, ...] = None, mapname: str = None):
+    def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
+                 degree: int = None, mapname: str = None):
         """Initialise the element."""
         super().__init__(name, cellname, degree, None, value_shape, value_shape)
         self._repr = repr
@@ -197,7 +197,7 @@ class BasixElement(_BasixElementBase):
                     f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
 
         super().__init__(
-            repr, element.family.name, element.cell_type.name, element.degree, tuple(element.value_shape),
+            repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
             _map_type_to_string(element.map_type))
 
         self.element = element
@@ -373,7 +373,7 @@ class ComponentElement(_BasixElementBase):
         self.component = component
         super().__init__(
             f"ComponentElement({element._repr}, {component})", f"Component of {element.family.name}",
-            element.cell_type.name, element.degree)
+            element.cell_type.name, (1, ), element.degree)
 
     def __eq__(self, other):
         """Check if two elements are equal."""
@@ -526,10 +526,13 @@ class MixedElement(_BasixElementBase):
     def __init__(self, sub_elements: _typing.List[_BasixElementBase]):
         """Initialise the element."""
         assert len(sub_elements) > 0
+        vs = tuple()
+        for i in sub_elements:
+            vs += i.value_shape
         self.sub_elements = sub_elements
         super().__init__(
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
-            "mixed element", sub_elements[0].cell_type.name)
+            "mixed element", sub_elements[0].cell_type.name, vs)
 
     def __eq__(self, other):
         """Check if two elements are equal."""
@@ -736,8 +739,8 @@ class BlockedElement(_BasixElementBase):
         else:
             self.block_shape = block_shape
         super().__init__(
-            repr, "blocked element", sub_element.cell_type.name, sub_element.degree,
-            self.block_shape, sub_element.mapping())
+            repr, "blocked element", sub_element.cell_type.name, self.block_shape,
+            sub_element.degree, sub_element._map)
 
     def __eq__(self, other):
         """Check if two elements are equal."""

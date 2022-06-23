@@ -34,12 +34,23 @@ def test_create_tensor_element(inputs):
     basix.ufl_wrapper.create_tensor_element(*inputs)
 
 
+@pytest.mark.parametrize("e", [
+    ufl.FiniteElement("Q", "quadrilateral", 1),
+    ufl.FiniteElement("Lagrange", "triangle", 2),
+    ufl.VectorElement("Lagrange", "triangle", 2),
+    ufl.TensorElement("Lagrange", "triangle", 2),
+    ufl.MixedElement(ufl.VectorElement("Lagrange", "triangle", 2), ufl.VectorElement("Lagrange", "triangle", 1)),
+])
+def test_convert_ufl_element(e):
+    basix.ufl_wrapper.convert_ufl_element(e)
+
+
 @pytest.mark.parametrize("celltype, family, degree, variants", [
     ("Lagrange", "triangle", 1, []),
     ("Lagrange", "triangle", 3, [basix.LagrangeVariant.gll_warped]),
     ("Lagrange", "tetrahedron", 2, [])
 ])
-def test_convert_ufl_element(celltype, family, degree, variants):
+def test_converted_elements(celltype, family, degree, variants):
     e1 = basix.ufl_wrapper.create_element(celltype, family, degree, *variants)
 
     e2 = ufl.FiniteElement(celltype, family, degree)

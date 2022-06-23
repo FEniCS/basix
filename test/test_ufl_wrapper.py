@@ -42,7 +42,9 @@ def test_create_tensor_element(inputs):
     ufl.MixedElement(ufl.VectorElement("Lagrange", "triangle", 2), ufl.VectorElement("Lagrange", "triangle", 1)),
 ])
 def test_convert_ufl_element(e):
-    basix.ufl_wrapper.convert_ufl_element(e)
+    e2 = basix.ufl_wrapper.convert_ufl_element(e)
+    # Check that element is hashable
+    hash(e2)
 
 
 @pytest.mark.parametrize("celltype, family, degree, variants", [
@@ -52,8 +54,13 @@ def test_convert_ufl_element(e):
 ])
 def test_converted_elements(celltype, family, degree, variants):
     e1 = basix.ufl_wrapper.create_element(celltype, family, degree, *variants)
-
     e2 = ufl.FiniteElement(celltype, family, degree)
+
+    assert e1 == basix.ufl_wrapper.convert_ufl_element(e1)
+    assert e1 == basix.ufl_wrapper.convert_ufl_element(e2)
+
+    e1 = basix.ufl_wrapper.create_vector_element(celltype, family, degree, *variants)
+    e2 = ufl.VectorElement(celltype, family, degree)
 
     assert e1 == basix.ufl_wrapper.convert_ufl_element(e1)
     assert e1 == basix.ufl_wrapper.convert_ufl_element(e2)

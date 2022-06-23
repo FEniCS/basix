@@ -31,11 +31,11 @@ class _BasixElementBase(_FiniteElementBase):
         """Return the map type."""
         return self._map
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         raise NotImplementedError()
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         """Return a hash."""
         return hash(self._repr)
 
@@ -76,7 +76,7 @@ class _BasixElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
     @property
-    def ufcx_element_type(self):
+    def ufcx_element_type(self) -> str:
         """Element type."""
         raise NotImplementedError()
 
@@ -202,9 +202,13 @@ class BasixElement(_BasixElementBase):
 
         self.element = element
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return isinstance(other, BasixElement) and self.element == other.element
+
+    def __hash__(self) -> int:
+        """Return a hash."""
+        return super().__hash__()
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -245,7 +249,7 @@ class BasixElement(_BasixElementBase):
         return ComponentElement(self, flat_component), 0, 1
 
     @property
-    def ufcx_element_type(self):
+    def ufcx_element_type(self) -> str:
         """Element type."""
         if self._is_custom:
             return "ufcx_basix_custom_element"
@@ -375,11 +379,15 @@ class ComponentElement(_BasixElementBase):
             f"ComponentElement({element._repr}, {component})", f"Component of {element.family_name}",
             element.cell_type.name, (1, ), element.degree)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
             isinstance(other, ComponentElement) and self.element == other.element
             and self.component == other.component)
+
+    def __hash__(self) -> int:
+        """Return a hash."""
+        return super().__hash__()
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -534,7 +542,7 @@ class MixedElement(_BasixElementBase):
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
             "mixed element", sub_elements[0].cell_type.name, vs)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         if isinstance(other, MixedElement) and len(self.sub_elements) == len(other.sub_elements):
             for i, j in zip(self.sub_elements, other.sub_elements):
@@ -542,6 +550,10 @@ class MixedElement(_BasixElementBase):
                     return False
             return True
         return False
+
+    def __hash__(self) -> int:
+        """Return a hash."""
+        return super().__hash__()
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -742,11 +754,15 @@ class BlockedElement(_BasixElementBase):
             repr, "blocked element", sub_element.cell_type.name, self.block_shape,
             sub_element.degree, sub_element._map)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
             isinstance(other, BlockedElement) and self.block_size == other.block_size
             and self.block_shape == other.block_shape and self.sub_element == other.sub_element)
+
+    def __hash__(self) -> int:
+        """Return a hash."""
+        return super().__hash__()
 
     def tabulate(
         self, nderivs: int, points: _nda_f64

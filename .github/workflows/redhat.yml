@@ -38,3 +38,8 @@ jobs:
         run: |
           python3 -m pip install pytest-xdist
           python3 -m pytest -n auto --durations 20 test/
+
+      - name: Run Python demos
+        run: python3 -m pytest demo/python/test.py
+      - name: Run C++ demos
+        run: python3 -m pytest demo/cpp/test.py

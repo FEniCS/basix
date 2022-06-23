@@ -202,6 +202,12 @@ class BasixElement(_BasixElementBase):
 
         self.element = element
 
+    # TODO: remove this once FFCx PR is merged
+    @property
+    def basix_element(self) -> _basix.finite_element.FiniteElement:
+        """The Basix element."""
+        return self.element
+
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return isinstance(other, BasixElement) and self.element == other.element

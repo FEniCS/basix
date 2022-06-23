@@ -1154,37 +1154,8 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<std::vector<double>>, 4> xbuffer;
-  std::array<std::vector<mdspan2_t>, 4> x;
-  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
-  std::array<std::vector<mdspan4_t>, 4> M;
-  for (std::size_t i = 0; i < tdim; ++i)
-  {
-    std::size_t num_entities = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector<mdspan2_t>(num_entities, mdspan2_t(nullptr, 0, tdim));
-    Mbuffer[i] = std::vector<std::vector<double>>(num_entities,
-                                                  std::vector<double>(0));
-    for (std::size_t j = 0; j < num_entities; ++j)
-      M[i].push_back(mdspan4_t(Mbuffer[i][j].data(), 0, 1, 0, 1));
-  }
-
-  for (std::size_t dim = 0; dim <= tdim; ++dim)
-  {
-    xbuffer[dim].resize(topology[dim].size());
-    x[dim].resize(topology[dim].size());
-    Mbuffer[dim].resize(topology[dim].size());
-    M[dim].resize(topology[dim].size());
-    if (dim < tdim)
-    {
-      for (std::size_t e = 0; e < topology[dim].size(); ++e)
-      {
-        xbuffer[dim][e] = {};
-        x[dim][e] = mdspan2_t(xbuffer[dim][e].data(), 0, tdim);
-        Mbuffer[dim][e] = {};
-        M[dim][e] = mdspan4_t(Mbuffer[dim][e].data(), 0, 1, 0, 1);
-      }
-    }
-  }
+  std::array<std::vector<mdarray2_t>, 4> x;
+  std::array<std::vector<mdarray4_t>, 4> M;
 
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  celltype, degree * 2);
@@ -1193,34 +1164,26 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   // Evaluate moment space at quadrature points
   const xt::xtensor<double, 2> phi = polynomials::tabulate(
       polynomials::type::legendre, celltype, degree, pts);
-
-  for (std::size_t dim = 0; dim <= tdim; ++dim)
+  for (std::size_t dim = 0; dim < tdim; ++dim)
   {
-    xbuffer[dim].resize(topology[dim].size());
-    x[dim].resize(topology[dim].size());
-    Mbuffer[dim].resize(topology[dim].size());
-    M[dim].resize(topology[dim].size());
-    if (dim < tdim)
+    for (std::size_t e = 0; e < topology[dim].size(); ++e)
     {
-      for (std::size_t e = 0; e < topology[dim].size(); ++e)
-      {
-        x[dim][e] = mdspan2_t(nullptr, 0, tdim);
-        M[dim][e] = mdspan4_t(nullptr, 0, 1, 0, 1);
-      }
+      x[dim].emplace_back(0, tdim);
+      M[dim].emplace_back(0, 1, 0, 1);
     }
   }
 
-  xbuffer[tdim][0] = std::vector<double>(pts.data(), pts.data() + pts.size());
-  x[tdim][0] = mdspan2_t(xbuffer[tdim][0].data(), pts.shape(0), pts.shape(1));
-  Mbuffer[tdim][0] = std::vector<double>(ndofs * pts.shape(0));
-  M[tdim][0] = mdspan4_t(Mbuffer[tdim][0].data(), ndofs, 1, pts.shape(0), 1);
+  x[tdim].emplace_back(std::vector<double>(pts.data(), pts.data() + pts.size()),
+                       pts.shape(0), pts.shape(1));
+  auto& _M = M[tdim].emplace_back(ndofs, 1, pts.shape(0), 1);
   for (std::size_t i = 0; i < ndofs; ++i)
     for (std::size_t j = 0; j < pts.shape(0); ++j)
-      M[tdim][0](i, 0, j, 0) = phi(i, j) * wts(j);
+      _M(i, 0, j, 0) = phi(i, j) * wts(j);
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs), x, M,
-                       0, maps::type::identity, discontinuous, degree, degree,
+                       mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
+                       to_mdspan(x), to_mdspan(M), 0, maps::type::identity,
+                       discontinuous, degree, degree,
                        element::lagrange_variant::legendre);
 }
 //-----------------------------------------------------------------------------
@@ -1258,7 +1221,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
          static_cast<std::size_t>(polynomials::dim(
              polynomials::type::bernstein, cell::type::tetrahedron, degree))};
 
-  const std::array<cell::type, 4> ct
+  constexpr std::array<cell::type, 4> ct
       = {cell::type::point, cell::type::interval, cell::type::triangle,
          cell::type::tetrahedron};
 

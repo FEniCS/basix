@@ -868,7 +868,7 @@ class VectorElement(BlockedElement):
         """Initialise the element."""
         if size is None:
             size = len(_basix.topology(sub_element.cell_type)) - 1
-        super.__init__(sub_element, size)
+        super().__init__(sub_element, size)
 
 
 class TensorElement(_BasixElementBase):
@@ -878,7 +878,7 @@ class TensorElement(_BasixElementBase):
         """Initialise the element."""
         if size is None:
             size = len(_basix.topology(sub_element.cell_type)) - 1
-        super.__init__(sub_element, size, (size, size))
+        super().__init__(sub_element, size, (size, size))
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:

@@ -32,6 +32,7 @@ jobs:
       - name: Install Basix
         run: |
           source /opt/rh/gcc-toolset-11/enable
+          python3 -m pip install scikit-build
           python3 -m pip install .[test]
 
       - name: Run units tests
@@ -42,4 +43,7 @@ jobs:
       - name: Run Python demos
         run: python3 -m pytest demo/python/test.py
       - name: Run C++ demos
-        run: python3 -m pytest demo/cpp/test.py
+        run: |
+          export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
+          export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$INSTALL_DIR/python/basix/lib/cmake:$INSTALL_DIR/python/basix/share/cmake
+          python3 -m pytest demo/cpp/test.py

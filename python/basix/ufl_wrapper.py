@@ -526,7 +526,7 @@ class MixedElement(_BasixElementBase):
     def __init__(self, sub_elements: _typing.List[_BasixElementBase]):
         """Initialise the element."""
         assert len(sub_elements) > 0
-        vs = tuple()
+        vs: _typing.Tuple[int, ...] = tuple()
         for i in sub_elements:
             vs += i.value_shape
         self.sub_elements = sub_elements

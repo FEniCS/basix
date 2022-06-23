@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/Rocky-PowerTools.repo
-          dnf install -y gcc-toolset-11-toolchain git blas-devel lapack-devel python39 python39-devel python39-pip
+          dnf install -y gcc-toolset-11-toolchain git blas-devel lapack-devel python39 python39-devel python39-pip cmake
 
       - uses: actions/checkout@v3
 

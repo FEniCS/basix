@@ -181,7 +181,7 @@ class BasixElement(_BasixElementBase):
     def __init__(self, element: _basix.finite_element.FiniteElement):
         """Create a Basix element."""
         super().__init__(
-            element.family.name, element.cell_type.name, element.degree, tuple(element.value_shape))
+            element.family.name, element.cell_type.name, element.degree, tuple(int(i) for i in element.value_shape))
 
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
@@ -398,7 +398,7 @@ class ComponentElement(_BasixElementBase):
                 output.append(tbl[:, self.component // vs0, self.component % vs0, :])
             else:
                 raise NotImplementedError()
-        return output
+        return _numpy.asarray(output, dtype=_numpy.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
@@ -541,7 +541,7 @@ class MixedElement(_BasixElementBase):
                     new_table[:, start: start + e.value_size] = t[:, i: i + e.value_size]
                     start += self.value_size
             tables.append(new_table)
-        return tables
+        return _numpy.as_array(tables, dtype=_numpy.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
@@ -731,7 +731,7 @@ class BlockedElement(_BasixElementBase):
                 col = block * (self.block_size + 1)
                 new_table[:, col: col + table.shape[1] * self.block_size**2: self.block_size**2] = table
             output.append(new_table)
-        return output
+        return _numpy.asarray(output, dtype=_numpy.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.

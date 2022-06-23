@@ -41,7 +41,7 @@ class _BasixElementBase(_FiniteElementBase):
         return hash(self._repr)
 
     @property
-    def degree(self) -> int:
+    def degree(self) -> _typing.Union[int, None]:
         """The degree of the element."""
         return self._degree
 

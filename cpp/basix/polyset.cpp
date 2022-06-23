@@ -14,9 +14,10 @@
 using namespace basix;
 using namespace basix::indexing;
 namespace stdex = std::experimental;
-using extents2d = stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent>;
-using extents3d = stdex::extents<stdex::dynamic_extent, stdex::dynamic_extent,
-                                 stdex::dynamic_extent>;
+using extents2d
+    = stdex::extents<std::size_t, stdex::dynamic_extent, stdex::dynamic_extent>;
+using extents3d = stdex::extents<std::size_t, stdex::dynamic_extent,
+                                 stdex::dynamic_extent, stdex::dynamic_extent>;
 
 namespace
 {

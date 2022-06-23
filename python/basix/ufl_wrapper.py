@@ -44,7 +44,10 @@ class _BasixElementBase(_FiniteElementBase):
     @property
     def value_size(self) -> int:
         """Value size of the element."""
-        return _numpy.prod(self._value_shape)
+        vs = 1
+        for i in self._value_shape:
+            vs *= i
+        return vs
 
     def value_shape(self) -> _typing.Tuple[int, ...]:
         """Value shape of the element basis function."""

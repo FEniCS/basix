@@ -695,6 +695,10 @@ class MixedElement(_BasixElementBase):
 class BlockedElement(_BasixElementBase):
     """An element with a block size that contains multiple copies of a sub element."""
 
+    block_shape: _typing.Tuple[int, ...]
+    sub_element: _BasixElementBase
+    block_size: int
+
     def __init__(self, sub_element: _BasixElementBase, block_size: int, block_shape: _typing.Tuple[int, ...] = None):
         """Initialise the element."""
         assert block_size > 0

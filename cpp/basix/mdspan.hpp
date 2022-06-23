@@ -10,7 +10,7 @@
 #include <cstddef>  // size_t
 #include <limits>   // numeric_limits
 #include <array>
-#include <span>
+// #include <span>
 #include <utility> // integer_sequence
 #include <cstddef>
 #include <cstddef> // size_t
@@ -1735,13 +1735,13 @@ struct __no_unique_address_emulation<
                 // If the type isn't trivially destructible, its destructor
                 // won't be called at the right time, so don't use this
                 // specialization
-                _MDSPAN_TRAIT(is_trivially_destructible, _T)>> : 
+                _MDSPAN_TRAIT(is_trivially_destructible, _T)>> :
 #ifdef _MDSPAN_COMPILER_MSVC
     // MSVC doesn't allow you to access public static member functions of a type
     // when you *happen* to privately inherit from that type.
     protected
 #else
-    // But we still want this to be private if possible so that we don't accidentally 
+    // But we still want this to be private if possible so that we don't accidentally
     // access members of _T directly rather than calling __ref() first, which wouldn't
     // work if _T happens to be stateful and thus we're using the unspecialized definition
     // of __no_unique_address_emulation above.
@@ -3638,7 +3638,7 @@ struct __extents_to_partially_static_sizes;
 template <class SizeType, size_t... ExtentsPack>
 struct __extents_to_partially_static_sizes<::std::experimental::extents<SizeType, ExtentsPack...>> {
   using type = detail::__partially_static_sizes<
-          typename ::std::experimental::extents<SizeType, ExtentsPack...>::size_type, size_t, 
+          typename ::std::experimental::extents<SizeType, ExtentsPack...>::size_type, size_t,
           ExtentsPack...>;
 };
 

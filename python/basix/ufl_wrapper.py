@@ -874,7 +874,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     """
     assert element.family == _basix.ElementFamily.custom
 
-    signature = (f"{element.cell_type.name}, {element._value_shape}, {element.map_type.name}, "
+    signature = (f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
                  f"{element.discontinuous}, {element.highest_complete_degree}, {element.highest_degree}, ")
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"

@@ -364,7 +364,7 @@ class BasixElement(_BasixElementBase):
 class ComponentElement(_BasixElementBase):
     """An element representing one component of a BasixElement."""
 
-    element: BasixElement
+    element: _BasixElementBase
     component: int
 
     def __init__(self, element: _BasixElementBase, component: int):
@@ -372,7 +372,7 @@ class ComponentElement(_BasixElementBase):
         self.element = element
         self.component = component
         super().__init__(
-            f"ComponentElement({element._repr}, {component})", f"Component of {element.family.name}",
+            f"ComponentElement({element._repr}, {component})", f"Component of {element.family_name}",
             element.cell_type.name, (1, ), element.degree)
 
     def __eq__(self, other):
@@ -896,17 +896,19 @@ class VectorElement(BlockedElement):
         """Initialise the element."""
         if size is None:
             size = len(_basix.topology(sub_element.cell_type)) - 1
-        super().__init__(f"VectorElement({sub_element._repr}, {size})", sub_element, size)
+        super().__init__(f"VectorElement({sub_element._repr}, {size})", sub_element, size, (size, ))
 
 
 class TensorElement(BlockedElement):
     """A tensor element."""
 
-    def __init__(self, sub_element: _BasixElementBase, size: int = None):
+    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, int] = None):
         """Initialise the element."""
-        if size is None:
+        if shape is None:
             size = len(_basix.topology(sub_element.cell_type)) - 1
-        super().__init__(f"TensorElement({sub_element._repr}, {size})", sub_element, size ** 2, (size, size))
+            shape = (size, size)
+        assert len(shape) == 2
+        super().__init__(f"TensorElement({sub_element._repr}, {shape})", sub_element, shape[0] * shape[1], shape)
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:
@@ -1053,7 +1055,7 @@ def convert_ufl_element(
     elif isinstance(element, _ufl.VectorElement):
         return VectorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
     elif isinstance(element, _ufl.TensorElement):
-        return TensorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
+        return TensorElement(convert_ufl_element(element.sub_elements()[0]), element.value_shape())
 
     elif isinstance(element, _ufl.MixedElement):
         return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])

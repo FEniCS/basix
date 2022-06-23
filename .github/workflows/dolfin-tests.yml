@@ -98,7 +98,7 @@ jobs:
           python3 -m pip -v install --global-option build --global-option --debug dolfinx/python/
 
       - name: Run mypy checks
-        run:
+        run: |
             python3 -m mypy ffcx/ffcx
             python3 -m mypy dolfinx/python/dolfinx
 

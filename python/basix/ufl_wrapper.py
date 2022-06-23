@@ -866,7 +866,7 @@ class VectorElement(BlockedElement):
     def __init__(self, sub_element: _BasixElementBase, size: int = None):
         """Initialise the element."""
         if size is None:
-            size = len(_basix.topology(sub_element.cell_Type)) - 1
+            size = len(_basix.topology(sub_element.cell_type)) - 1
         super.__init__(sub_element, size)
 
 
@@ -876,7 +876,7 @@ class TensorElement(_BasixElementBase):
     def __init__(self, sub_element: _BasixElementBase, size: int = None):
         """Initialise the element."""
         if size is None:
-            size = len(_basix.topology(sub_element.cell_Type)) - 1
+            size = len(_basix.topology(sub_element.cell_type)) - 1
         super.__init__(sub_element, size, (size, size))
 
 

@@ -193,7 +193,7 @@ class BasixElement(_BasixElementBase):
                     f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
 
         super().__init__(
-            repr, element.family.name, element.cell_type.name, tuple(element._value_shape), element.degree,
+            repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
             _map_type_to_string(element.map_type))
 
         self.element = element

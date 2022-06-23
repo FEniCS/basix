@@ -27,7 +27,7 @@ class _BasixElementBase(_FiniteElementBase):
         self._repr = repr
         self._map = mapname
 
-    def mapping(self) -> str:
+    def mapping(self) -> _typing.Union[str, None]:
         """Return the map type."""
         return self._map
 

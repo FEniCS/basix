@@ -21,7 +21,7 @@ class _BasixElementBase(_FiniteElementBase):
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: int = None, mapname: str = None):
+                 degree: int = -1, mapname: str = None):
         """Initialise the element."""
         super().__init__(name, cellname, degree, None, value_shape, value_shape)
         self._repr = repr
@@ -41,7 +41,7 @@ class _BasixElementBase(_FiniteElementBase):
         return hash(self._repr)
 
     @property
-    def degree(self) -> _typing.Union[int, None]:
+    def degree(self) -> int:
         """The degree of the element."""
         return self._degree
 

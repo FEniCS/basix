@@ -20,14 +20,16 @@ class _BasixElementBase(_FiniteElementBase):
     This class includes methods and properties needed by UFL and FFCx.
     """
 
-    def __init__(self, name: str, cellname: str, degree: int,
-                 value_shape: _typing.Tuple[int, ...]):
+    def __init__(self, repr: str, name: str, cellname: str, degree: int = None,
+                 value_shape: _typing.Tuple[int, ...] = None, mapname: str = None):
         """Initialise the element."""
         super().__init__(name, cellname, degree, None, value_shape, value_shape)
+        self._repr = repr
+        self._map = mapname
 
     def mapping(self) -> str:
         """Return the map type."""
-        raise NotImplementedError()
+        return self._map
 
     def __eq__(self, other):
         """Check if two elements are equal."""
@@ -35,7 +37,7 @@ class _BasixElementBase(_FiniteElementBase):
 
     def __hash__(self):
         """Return a hash."""
-        raise NotImplementedError()
+        return hash(self._repr)
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -186,31 +188,23 @@ class BasixElement(_BasixElementBase):
 
     def __init__(self, element: _basix.finite_element.FiniteElement):
         """Create a Basix element."""
-        super().__init__(
-            element.family.name, element.cell_type.name, element.degree, tuple(element.value_shape))
-
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
-            self._repr = f"custom Basix element ({_compute_signature(element)})"
+            repr = f"custom Basix element ({_compute_signature(element)})"
         else:
             self._is_custom = False
-            self._repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
-                          f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
-        self.element = element
+            repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
+                    f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
 
-    def mapping(self) -> str:
-        """Return the map type."""
-        return _map_type_to_string(self.element.map_type)
+        super().__init__(
+            repr, element.family.name, element.cell_type.name, element.degree, tuple(element.value_shape),
+            _map_type_to_string(element.map_type))
+
+        self.element = element
 
     def __eq__(self, other):
         """Check if two elements are equal."""
-        if isinstance(other, BasixElement):
-            return self.element == other.basix_element
-        return False
-
-    def __hash__(self):
-        """Return a hash."""
-        return hash(self._repr)
+        return isinstance(other, BasixElement) and self.element == other.element
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -373,10 +367,19 @@ class ComponentElement(_BasixElementBase):
     element: BasixElement
     component: int
 
-    def __init__(self, element: BasixElement, component: int):
+    def __init__(self, element: _BasixElementBase, component: int):
         """Initialise the element."""
         self.element = element
         self.component = component
+        super().__init__(
+            f"ComponentElement({element._repr}, {component})", f"Component of {element.family.name}",
+            element.cell_type.name, element.degree)
+
+    def __eq__(self, other):
+        """Check if two elements are equal."""
+        return (
+            isinstance(other, ComponentElement) and self.element == other.element
+            and self.component == other.component)
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -524,6 +527,18 @@ class MixedElement(_BasixElementBase):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self.sub_elements = sub_elements
+        super().__init__(
+            "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
+            "mixed element", sub_elements[0].cell_type.name)
+
+    def __eq__(self, other):
+        """Check if two elements are equal."""
+        if isinstance(other, MixedElement) and len(self.sub_elements) == len(other.sub_elements):
+            for i, j in zip(self.sub_elements, other.sub_elements):
+                if i != j:
+                    return False
+            return True
+        return False
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -705,7 +720,8 @@ class BlockedElement(_BasixElementBase):
     sub_element: _BasixElementBase
     block_size: int
 
-    def __init__(self, sub_element: _BasixElementBase, block_size: int, block_shape: _typing.Tuple[int, ...] = None):
+    def __init__(self, repr: str, sub_element: _BasixElementBase, block_size: int,
+                 block_shape: _typing.Tuple[int, ...] = None):
         """Initialise the element."""
         assert block_size > 0
         if sub_element.value_size != 1:
@@ -719,6 +735,15 @@ class BlockedElement(_BasixElementBase):
             self.block_shape = (block_size, )
         else:
             self.block_shape = block_shape
+        super().__init__(
+            repr, "blocked element", sub_element.cell_type.name, sub_element.degree,
+            self.block_shape, sub_element.mapping())
+
+    def __eq__(self, other):
+        """Check if two elements are equal."""
+        return (
+            isinstance(other, BlockedElement) and self.block_size == other.block_size
+            and self.block_shape == other.block_shape and self.sub_element == other.sub_element)
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -868,7 +893,7 @@ class VectorElement(BlockedElement):
         """Initialise the element."""
         if size is None:
             size = len(_basix.topology(sub_element.cell_type)) - 1
-        super().__init__(sub_element, size)
+        super().__init__(f"VectorElement({sub_element._repr}, {size})", sub_element, size)
 
 
 class TensorElement(BlockedElement):
@@ -878,7 +903,7 @@ class TensorElement(BlockedElement):
         """Initialise the element."""
         if size is None:
             size = len(_basix.topology(sub_element.cell_type)) - 1
-        super().__init__(sub_element, size, (size, size))
+        super().__init__(f"TensorElement({sub_element._repr}, {size})", sub_element, size ** 2, (size, size))
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:

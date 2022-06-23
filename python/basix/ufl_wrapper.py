@@ -757,7 +757,7 @@ class BlockedElement(_BasixElementBase):
     @property
     def ufcx_element_type(self) -> str:
         """Element type."""
-        return self.sub_element.element_type
+        return self.sub_element.ufcx_element_type
 
     @property
     def dim(self) -> int:

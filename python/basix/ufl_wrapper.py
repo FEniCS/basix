@@ -180,8 +180,9 @@ class BasixElement(_BasixElementBase):
 
     def __init__(self, element: _basix.finite_element.FiniteElement):
         """Create a Basix element."""
+        value_shape: _typing.Tuple[int] = tuple(element.value_shape)
         super().__init__(
-            element.family.name, element.cell_type.name, element.degree, tuple(int(i) for i in element.value_shape))
+            element.family.name, element.cell_type.name, element.degree, value_shape)
 
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
@@ -541,7 +542,7 @@ class MixedElement(_BasixElementBase):
                     new_table[:, start: start + e.value_size] = t[:, i: i + e.value_size]
                     start += self.value_size
             tables.append(new_table)
-        return _numpy.as_array(tables, dtype=_numpy.float64)
+        return _numpy.asarray(tables, dtype=_numpy.float64)
 
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.

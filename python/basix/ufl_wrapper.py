@@ -144,17 +144,17 @@ class _BasixElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
     @property
-    def element_family(self) -> _basix.ElementFamily:
+    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
         raise NotImplementedError()
 
     @property
-    def lagrange_variant(self) -> _basix.LagrangeVariant:
+    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
         raise NotImplementedError()
 
     @property
-    def dpc_variant(self) -> _basix.DPCVariant:
+    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
         raise NotImplementedError()
 
@@ -284,7 +284,7 @@ class BasixElement(_BasixElementBase):
         if len(self.element.value_shape) == 0:
             return (1,)
         else:
-            return self.element.value_shape
+            return tuple(self.element.value_shape)
 
     @property
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
@@ -327,17 +327,17 @@ class BasixElement(_BasixElementBase):
         return self.element.family.name
 
     @property
-    def element_family(self) -> _basix.ElementFamily:
+    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
         return self.element.family
 
     @property
-    def lagrange_variant(self) -> _basix.LagrangeVariant:
+    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
         return self.element.lagrange_variant
 
     @property
-    def dpc_variant(self) -> _basix.DPCVariant:
+    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
         return self.element.dpc_variant
 
@@ -349,7 +349,7 @@ class BasixElement(_BasixElementBase):
     @property
     def degree(self) -> int:
         """The degree of the element."""
-        return self.element.cell_type
+        return self.element.degree
 
     @property
     def discontinuous(self) -> bool:
@@ -485,17 +485,17 @@ class ComponentElement(_BasixElementBase):
         raise NotImplementedError()
 
     @property
-    def element_family(self) -> _basix.ElementFamily:
+    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
         return self.element.element_family
 
     @property
-    def lagrange_variant(self) -> _basix.LagrangeVariant:
+    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
         return self.element.lagrange_variant
 
     @property
-    def dpc_variant(self) -> _basix.DPCVariant:
+    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
         return self.element.dpc_variant
 
@@ -668,24 +668,24 @@ class MixedElement(_BasixElementBase):
         return self.sub_elements[0].reference_geometry
 
     @property
-    def lagrange_variant(self) -> _basix.LagrangeVariant:
+    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
         return None
 
     @property
-    def dpc_variant(self) -> _basix.DPCVariant:
+    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
         return None
 
     @property
-    def element_family(self) -> _basix.ElementFamily:
+    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
         return None
 
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return None
+        return self.sub_elements[0].cell_type
 
     @property
     def discontinuous(self) -> bool:
@@ -831,17 +831,17 @@ class BlockedElement(_BasixElementBase):
         return self.sub_element.reference_geometry
 
     @property
-    def lagrange_variant(self) -> _basix.LagrangeVariant:
+    def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
         return self.sub_element.lagrange_variant
 
     @property
-    def dpc_variant(self) -> _basix.DPCVariant:
+    def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
         return self.sub_element.dpc_variant
 
     @property
-    def element_family(self) -> _basix.ElementFamily:
+    def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
         return self.sub_element.element_family
 
@@ -871,7 +871,7 @@ class VectorElement(BlockedElement):
         super().__init__(sub_element, size)
 
 
-class TensorElement(_BasixElementBase):
+class TensorElement(BlockedElement):
     """A tensor element."""
 
     def __init__(self, sub_element: _BasixElementBase, size: int = None):
@@ -1047,22 +1047,26 @@ def convert_ufl_element(
     family_type = _basix.finite_element.string_to_family(family_name, element.cell().cellname())
     cell_type = _basix.cell.string_to_type(element.cell().cellname())
 
-    variant_info = []
+    variant_info = {
+        "lagrange_variant": _basix.LagrangeVariant.unset,
+        "dpc_variant": _basix.DPCVariant.unset
+    }
     if family_type == _basix.ElementFamily.P and element.variant() == "equispaced":
         # This is used for elements defining cells
-        variant_info = [_basix.LagrangeVariant.equispaced]
+        variant_info["lagrange_variant"] = _basix.LagrangeVariant.equispaced
     else:
         if element.variant() is not None:
             raise ValueError("UFL variants are not supported by FFCx. Please wrap a Basix element directly.")
 
         EF = _basix.ElementFamily
         if family_type == EF.P:
-            variant_info = [_basix.LagrangeVariant.gll_warped]
+            variant_info["lagrange_variant"] = _basix.LagrangeVariant.gll_warped
         elif family_type in [EF.RT, EF.N1E]:
-            variant_info = [_basix.LagrangeVariant.legendre]
+            variant_info["lagrange_variant"] = _basix.LagrangeVariant.legendre
         elif family_type in [EF.serendipity, EF.BDM, EF.N2E]:
-            variant_info = [_basix.LagrangeVariant.legendre, _basix.DPCVariant.legendre]
+            variant_info["lagrange_variant"] = _basix.LagrangeVariant.legendre
+            variant_info["dpc_variant"] = _basix.DPCVariant.legendre
         elif family_type == EF.DPC:
-            variant_info = [_basix.DPCVariant.diagonal_gll]
+            variant_info["dpc_variant"] = _basix.DPCVariant.diagonal_gll
 
-    return create_element(family_type, cell_type, element.degree(), *variant_info, discontinuous=discontinuous)
+    return create_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous)

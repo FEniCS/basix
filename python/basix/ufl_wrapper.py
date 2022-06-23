@@ -27,6 +27,7 @@ class _BasixElementBase(_FiniteElementBase):
         self._repr = repr
         self._map = mapname
         self._degree = degree
+        self._value_shape = value_shape
 
     def mapping(self) -> _typing.Union[str, None]:
         """Return the map type."""
@@ -39,6 +40,16 @@ class _BasixElementBase(_FiniteElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return hash(self._repr)
+
+    @property
+    def value_size(self) -> int:
+        """Value size of the element."""
+        return _numpy.prod(self.value_shape)
+
+    @property
+    def value_shape(self) -> _typing.Tuple[int, ...]:
+        """Value shape of the element basis function."""
+        return self._value_shape
 
     @property
     def degree(self) -> int:
@@ -89,26 +100,6 @@ class _BasixElementBase(_FiniteElementBase):
     @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
-        raise NotImplementedError()
-
-    @property
-    def value_size(self) -> int:
-        """Value size of the element.
-
-        Equal to ``numpy.prod(value_shape)``.
-
-        """
-        raise NotImplementedError()
-
-    @property
-    def value_shape(self) -> _typing.Tuple[int, ...]:
-        """Value shape of the element basis function.
-
-        Note:
-            For scalar elements, ``(1,)`` is returned. This is different
-            from Basix where the value shape for scalar elements is
-            ``(,)``.
-        """
         raise NotImplementedError()
 
     @property
@@ -274,29 +265,6 @@ class BasixElement(_BasixElementBase):
         return self.element.dim
 
     @property
-    def value_size(self) -> int:
-        """Value size of the element.
-
-        Equal to ``numpy.prod(value_shape)``.
-
-        """
-        return self.element.value_size
-
-    @property
-    def value_shape(self) -> _typing.Tuple[int, ...]:
-        """Value shape of the element basis function.
-
-        Note:
-            For scalar elements, ``(1,)`` is returned. This is different
-            from Basix where the value shape for scalar elements is
-            ``(,)``.
-        """
-        if len(self.element.value_shape) == 0:
-            return (1,)
-        else:
-            return tuple(self.element.value_shape)
-
-    @property
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
         return self.element.num_entity_dofs
@@ -411,9 +379,11 @@ class ComponentElement(_BasixElementBase):
         tables = self.element.tabulate(nderivs, points)
         output = []
         for tbl in tables:
-            shape = (tbl.shape[0],) + tuple(self.element.value_shape) + (-1,)
+            shape = (tbl.shape[0],) + self.element.value_shape + (-1,)
             tbl = tbl.reshape(shape)
-            if len(self.element.value_shape) == 1:
+            if len(self.element.value_shape) == 0:
+                output.append(tbl)
+            elif len(self.element.value_shape) == 1:
                 output.append(tbl[:, self.component, :])
             elif len(self.element.value_shape) == 2:
                 # TODO: Something different may need doing here if
@@ -440,26 +410,6 @@ class ComponentElement(_BasixElementBase):
     @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
-        raise NotImplementedError()
-
-    @property
-    def value_size(self) -> int:
-        """Value size of the element.
-
-        Equal to ``numpy.prod(value_shape)``.
-
-        """
-        raise NotImplementedError()
-
-    @property
-    def value_shape(self) -> _typing.Tuple[int, ...]:
-        """Value shape of the element basis function.
-
-        Note:
-            For scalar elements, ``(1,)`` is returned. This is different
-            from Basix where the value shape for scalar elements is
-            ``(,)``.
-        """
         raise NotImplementedError()
 
     @property
@@ -623,26 +573,6 @@ class MixedElement(_BasixElementBase):
         return sum(e.dim for e in self.sub_elements)
 
     @property
-    def value_size(self) -> int:
-        """Value size of the element.
-
-        Equal to ``numpy.prod(value_shape)``.
-
-        """
-        return sum(e.value_size for e in self.sub_elements)
-
-    @property
-    def value_shape(self) -> _typing.Tuple[int, ...]:
-        """Value shape of the element basis function.
-
-        Note:
-            For scalar elements, ``(1,)`` is returned. This is different
-            from Basix where the value shape for scalar elements is
-            ``(,)``.
-        """
-        return (sum(e.value_size for e in self.sub_elements), )
-
-    @property
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
         data = [e.num_entity_dofs for e in self.sub_elements]
@@ -754,11 +684,11 @@ class BlockedElement(_BasixElementBase):
         self.sub_element = sub_element
         self.block_size = block_size
         if block_shape is None:
-            self.block_shape = (block_size, )
-        else:
-            self.block_shape = block_shape
+            block_shape = (block_size, )
+        self.block_shape = block_shape
+
         super().__init__(
-            repr, "blocked element", sub_element.cell_type.name, self.block_shape,
+            repr, "blocked element", sub_element.cell_type.name, block_shape,
             sub_element.degree, sub_element._map)
 
     def __eq__(self, other) -> bool:
@@ -814,26 +744,6 @@ class BlockedElement(_BasixElementBase):
     def dim(self) -> int:
         """Number of DOFs the element has."""
         return self.sub_element.dim * self.block_size
-
-    @property
-    def value_size(self) -> int:
-        """Value size of the element.
-
-        Equal to ``numpy.prod(value_shape)``.
-
-        """
-        return self.block_size * self.sub_element.value_size
-
-    @property
-    def value_shape(self) -> _typing.Tuple[int, ...]:
-        """Value shape of the element basis function.
-
-        Note:
-            For scalar elements, ``(1,)`` is returned. This is different
-            from Basix where the value shape for scalar elements is
-            ``(,)``.
-        """
-        return (self.value_size, )
 
     @property
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:

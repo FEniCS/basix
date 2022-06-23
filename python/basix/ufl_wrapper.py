@@ -50,7 +50,6 @@ class _BasixElementBase(_FiniteElementBase):
         """Value shape of the element basis function."""
         return self._value_shape
 
-    @property
     def degree(self) -> int:
         """The degree of the element."""
         return self._degree
@@ -345,7 +344,7 @@ class ComponentElement(_BasixElementBase):
         self.component = component
         super().__init__(
             f"ComponentElement({element._repr}, {component})", f"Component of {element.family_name}",
-            element.cell_type.name, (1, ), element.degree)
+            element.cell_type.name, (1, ), element._degree)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
@@ -682,7 +681,7 @@ class BlockedElement(_BasixElementBase):
 
         super().__init__(
             repr, "blocked element", sub_element.cell_type.name, block_shape,
-            sub_element.degree, sub_element._map)
+            sub_element._degree, sub_element._map)
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""

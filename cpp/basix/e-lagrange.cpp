@@ -1316,12 +1316,32 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
         for (std::size_t j = 0; j < nb[d]; ++j)
           mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
 
+      mdarray2_t matnew(nb[d], nb[d]);
+      for (std::size_t i = 0; i < nb[d]; ++i)
+      {
+        for (std::size_t j = 0; j < nb[d]; ++j)
+        {
+          matnew(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
+        }
+      }
       xt::xtensor<double, 2> id = xt::eye<double>(nb[d]);
       xt::xtensor<double, 2> minv = math::solve(mat, id);
+
+      mdarray2_t minvnew(matnew.extents());
+      {
+        std::vector<double> id = math::eye(nb[d]);
+        mdspan2_t _id(id.data(), nb[d], nb[d]);
+
+        mdspan2_t _mat(matnew.data(), matnew.extents());
+        std::vector<double> minv_data = math::solve(_mat, _id);
+        std::copy(minv_data.begin(), minv_data.end(), minvnew.data());
+      }
 
       M[d] = std::vector<xt::xtensor<double, 4>>(
           cell::num_sub_entities(celltype, d),
           xt::xtensor<double, 4>({nb_interior[d], 1, npts, 1}));
+      Mnew[d] = std::vector<mdarray4_t>(cell::num_sub_entities(celltype, d),
+                                        mdarray4_t(nb_interior[d], 1, npts, 1));
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
         const xt::xtensor<double, 2> entity_x
@@ -1329,6 +1349,37 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
         auto x0s = xt::reshape_view(
             xt::row(entity_x, 0),
             {static_cast<std::size_t>(1), entity_x.shape(1)});
+
+        auto [_entity_x, _shape]
+            = cell::sub_entity_geometry_new(celltype, d, e);
+        xtl::span<const double> x0new(_entity_x.data(), _shape[1]);
+        {
+          auto& _x = xnew[d].emplace_back(pts.shape(0), _shape[1]);
+          for (std::size_t i = 0; i < _x.extent(0); ++i)
+            for (std::size_t j = 0; j < _x.extent(1); ++j)
+              _x(i, j) = x0new[j];
+        }
+
+        for (std::size_t j = 0; j < pts.shape(0); ++j)
+        {
+          for (std::size_t k0 = 0; k0 < pts.shape(1); ++k0)
+            for (std::size_t k1 = 0; k1 < _shape[1]; ++k1)
+              xnew[d][e](j, k1)
+                  += (entity_x(k0 + 1, k1) - x0new[k1]) * pts(j, k0);
+          // xt::row(x[d][e], j) += (xt::row(entity_x, k0 + 1) - x0) * pts(j,
+          // k0);
+        }
+        for (std::size_t i = 0; i < bernstein_bubbles[d].size(); ++i)
+        {
+          for (std::size_t p = 0; p < npts; ++p)
+          {
+            Mnew[d][e](i, 0, p, 0)
+                = wts[p]
+                  * xt::sum(xt::col(phi, p)
+                            * xt::row(minv, bernstein_bubbles[d][i]))();
+          }
+        }
+
         x[d][e] = xt::tile(x0s, pts.shape(0));
         auto x0 = xt::row(entity_x, 0);
         for (std::size_t j = 0; j < pts.shape(0); ++j)

@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "mdspan.hpp"
 #include <xtensor/xfixed.hpp>
 #include <xtensor/xtensor.hpp>
 
@@ -58,6 +59,16 @@ eigh(const xt::xtensor<double, 2>& A);
 /// @return A^{-1} B
 xt::xtensor<double, 2> solve(const xt::xtensor<double, 2>& A,
                              const xt::xtensor<double, 2>& B);
+
+/// Solve A X = B
+/// @param[in] A The matrix
+/// @param[in] B Right-hand side matrix/vector
+/// @return A^{-1} B
+std::vector<double>
+solve(const std::experimental::mdspan<
+          double, std::experimental::dextents<std::size_t, 2>>& A,
+      const std::experimental::mdspan<
+          double, std::experimental::dextents<std::size_t, 2>>& B);
 
 /// Check if A is a singular matrix
 /// @param[in] A The matrix

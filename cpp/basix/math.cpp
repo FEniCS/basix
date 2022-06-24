@@ -7,6 +7,9 @@
 #include "math.h"
 #include "mdspan.hpp"
 #include <vector>
+#include <xtensor/xadapt.hpp>
+
+namespace stdex = std::experimental;
 
 extern "C"
 {
@@ -87,6 +90,19 @@ xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
   out.assign(_B);
 
   return out;
+}
+//------------------------------------------------------------------
+std::vector<double> basix::math::solve(
+    const stdex::mdspan<double, stdex::dextents<std::size_t, 2>>& A,
+    const stdex::mdspan<double, stdex::dextents<std::size_t, 2>>& B)
+{
+  auto _A = xt::adapt(A.data(), A.size(), xt::no_ownership(),
+                      std::array<std::size_t, 2>{A.extent(0), A.extent(1)});
+  auto _B = xt::adapt(B.data(), B.size(), xt::no_ownership(),
+                      std::array<std::size_t, 2>{B.extent(0), B.extent(1)});
+
+  xt::xtensor<double, 2> C = solve(_A, _B);
+  return std::vector<double>(C.data(), C.data() + C.size());
 }
 //------------------------------------------------------------------
 bool basix::math::is_singular(const xt::xtensor<double, 2>& A)

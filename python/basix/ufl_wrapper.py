@@ -53,6 +53,11 @@ class _BasixElementBase(_FiniteElementBase):
         """Value shape of the element basis function."""
         return self._value_shape
 
+    @property
+    def block_size(self) -> int:
+        """The block size of the element."""
+        return 1
+
     def degree(self) -> int:
         """The degree of the element."""
         return self._degree
@@ -665,7 +670,7 @@ class BlockedElement(_BasixElementBase):
 
     block_shape: _typing.Tuple[int, ...]
     sub_element: _BasixElementBase
-    block_size: int
+    _block_size: int
 
     def __init__(self, repr: str, sub_element: _BasixElementBase, block_size: int,
                  block_shape: _typing.Tuple[int, ...] = None):
@@ -677,7 +682,7 @@ class BlockedElement(_BasixElementBase):
                              "instead.")
 
         self.sub_element = sub_element
-        self.block_size = block_size
+        self._block_size = block_size
         if block_shape is None:
             block_shape = (block_size, )
         self.block_shape = block_shape
@@ -689,12 +694,17 @@ class BlockedElement(_BasixElementBase):
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
-            isinstance(other, BlockedElement) and self.block_size == other.block_size
+            isinstance(other, BlockedElement) and self._block_size == other._block_size
             and self.block_shape == other.block_shape and self.sub_element == other.sub_element)
 
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
+
+    @property
+    def block_size(self) -> int:
+        """The block size of the element."""
+        return self._block_size
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -709,13 +719,13 @@ class BlockedElement(_BasixElementBase):
             Tabulated basis functions
         """
         assert len(self.block_shape) == 1  # TODO: block shape
-        assert self.value_size == self.block_size  # TODO: remove this assumption
+        assert self.value_size == self._block_size  # TODO: remove this assumption
         output = []
         for table in self.sub_element.tabulate(nderivs, points):
-            new_table = _numpy.zeros((table.shape[0], table.shape[1] * self.block_size**2))
-            for block in range(self.block_size):
-                col = block * (self.block_size + 1)
-                new_table[:, col: col + table.shape[1] * self.block_size**2: self.block_size**2] = table
+            new_table = _numpy.zeros((table.shape[0], table.shape[1] * self._block_size**2))
+            for block in range(self._block_size):
+                col = block * (self._block_size + 1)
+                new_table[:, col: col + table.shape[1] * self._block_size**2: self._block_size**2] = table
             output.append(new_table)
         return _numpy.asarray(output, dtype=_numpy.float64)
 
@@ -728,7 +738,7 @@ class BlockedElement(_BasixElementBase):
         Returns:
             component element, offset of the component, stride of the component
         """
-        return self.sub_element, flat_component, self.block_size
+        return self.sub_element, flat_component, self._block_size
 
     @property
     def ufcx_element_type(self) -> str:
@@ -738,38 +748,38 @@ class BlockedElement(_BasixElementBase):
     @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
-        return self.sub_element.dim * self.block_size
+        return self.sub_element.dim * self._block_size
 
     @property
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
-        return [[j * self.block_size for j in i] for i in self.sub_element.num_entity_dofs]
+        return [[j * self._block_size for j in i] for i in self.sub_element.num_entity_dofs]
 
     @property
     def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
-        return [[[k * self.block_size + b for k in j for b in range(self.block_size)]
+        return [[[k * self._block_size + b for k in j for b in range(self._block_size)]
                  for j in i] for i in self.sub_element.entity_dofs]
 
     @property
     def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with the closure of each entity."""
-        return [[j * self.block_size for j in i] for i in self.sub_element.num_entity_closure_dofs]
+        return [[j * self._block_size for j in i] for i in self.sub_element.num_entity_closure_dofs]
 
     @property
     def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with the closure of each entity."""
         # TODO: should this return this, or should it take blocks into
         # account?
-        return [[[k * self.block_size + b for k in j for b in range(self.block_size)]
+        return [[[k * self._block_size + b for k in j for b in range(self._block_size)]
                  for j in i] for i in self.sub_element.entity_closure_dofs]
 
     @property
     def num_global_support_dofs(self) -> int:
         """Get the number of global support DOFs."""
-        return self.sub_element.num_global_support_dofs * self.block_size
+        return self.sub_element.num_global_support_dofs * self._block_size
 
     @property
     def family_name(self) -> str:

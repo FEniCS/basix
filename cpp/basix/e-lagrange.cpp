@@ -1206,6 +1206,9 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
+  std::array<std::vector<mdarray2_t>, 4> xnew;
+  std::array<std::vector<mdarray4_t>, 4> Mnew;
+
   for (std::size_t dim = 0; dim <= tdim; ++dim)
   {
     M[dim].resize(topology[dim].size());
@@ -1245,29 +1248,40 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   { // scope
     int ib = 0;
     for (int i = 0; i <= degree; ++i)
+    {
       for (int j = 0; j <= degree - i; ++j)
       {
         if (i > 0 and j > 0 and i + j < degree)
           bernstein_bubbles[2].push_back(ib);
         ++ib;
       }
+    }
   }
   { // scope
     int ib = 0;
     for (int i = 0; i <= degree; ++i)
+    {
       for (int j = 0; j <= degree - i; ++j)
+      {
         for (int k = 0; k <= degree - i - j; ++k)
         {
           if (i > 0 and j > 0 and k > 0 and i + j + k < degree)
             bernstein_bubbles[3].push_back(ib);
           ++ib;
         }
+      }
+    }
   }
 
   for (std::size_t v = 0; v < topology[0].size(); ++v)
   {
     x[0][v] = cell::sub_entity_geometry(celltype, 0, v);
     M[0][v] = {{{{1.}}}};
+
+    const auto [entity, shape] = cell::sub_entity_geometry_new(celltype, 0, v);
+    xnew[0].emplace_back(entity, shape[0], shape[1]);
+    auto& _M = Mnew[0].emplace_back(1, 1, 1, 1);
+    _M(0, 0, 0, 0) = 1.0;
   }
 
   for (std::size_t d = 1; d <= tdim; ++d)
@@ -1278,6 +1292,9 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
       {
         x[d][e] = xt::xtensor<double, 2>({0, tdim});
         M[d][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
+
+        xnew[d].emplace_back(0, tdim);
+        Mnew[d].emplace_back(0, 1, 0, 1);
       }
     }
     else
@@ -1300,7 +1317,6 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
           mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
 
       xt::xtensor<double, 2> id = xt::eye<double>(nb[d]);
-
       xt::xtensor<double, 2> minv = math::solve(mat, id);
 
       M[d] = std::vector<xt::xtensor<double, 4>>(

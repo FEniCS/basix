@@ -298,7 +298,6 @@ std::pair<std::array<std::vector<mdarray2_t>, 4>,
           std::array<std::vector<mdarray4_t>, 4>>
 vtk_data_triangle(std::size_t degree)
 {
-  // constexpr std::size_t tdim = 2;
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::triangle);
 
@@ -346,7 +345,7 @@ vtk_data_triangle(std::size_t degree)
   {
     auto& _x = x[2].emplace_back(vtk_triangle_points(degree - 3));
     auto& _M = M[2].emplace_back(_x.extent(0), 1, _x.extent(0), 1);
-    for (std::size_t k = 0; k < _x.extent(0); ++k)
+    for (std::size_t k = 0; k < _M.extent(0); ++k)
       _M(k, 0, k, 0) = 1.0;
   }
   else
@@ -358,48 +357,31 @@ vtk_data_triangle(std::size_t degree)
   return {x, M};
 }
 //----------------------------------------------------------------------------
-std::tuple<std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
-           std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+std::pair<std::array<std::vector<mdarray2_t>, 4>,
+          std::array<std::vector<mdarray4_t>, 4>>
 vtk_data_quadrilateral(std::size_t degree)
 {
-  constexpr std::size_t tdim = 2;
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::quadrilateral);
 
-  std::array<std::vector<std::vector<double>>, 4> x;
-  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
-  std::array<std::vector<std::vector<double>>, 4> M;
-  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
-  for (std::size_t d = 0; d <= tdim; ++d)
-  {
-    x[d].resize(topology[d].size());
-    xshape[d].resize(topology[d].size());
-    M[d].resize(topology[d].size());
-    Mshape[d].resize(topology[d].size());
-  }
+  std::array<std::vector<mdarray2_t>, 4> x;
+  std::array<std::vector<mdarray4_t>, 4> M;
 
   // Points at vertices
-  x[0][0] = {0., 0.};
-  x[0][1] = {1., 0.};
-  x[0][2] = {1., 1.};
-  x[0][3] = {0., 1.};
+  x[0].emplace_back(std::vector<double>{0., 0.}, 1, 2);
+  x[0].emplace_back(std::vector<double>{1., 0.}, 1, 2);
+  x[0].emplace_back(std::vector<double>{1., 1.}, 1, 2);
+  x[0].emplace_back(std::vector<double>{0., 1.}, 1, 2);
   for (int i = 0; i < 4; ++i)
-  {
-    xshape[0][i] = {1, 2};
-    M[0][i] = {1.0};
-    Mshape[0][i] = {1, 1, 1, 1};
-  }
+    M[0].emplace_back(std::vector<double>{1.0}, 1, 1, 1, 1);
 
   // Points on edges
   {
     std::array<mdspan2_t, 4> xview;
     for (int i = 0; i < 4; ++i)
     {
-      xshape[1][i] = {degree - 1, 2};
-      x[1][i].resize(2 * (degree - 1), 0);
-      xview[i] = mdspan2_t(x[1][i].data(), xshape[1][i]);
+      auto& _x = x[1].emplace_back(degree - 1, 2);
+      xview[i] = mdspan2_t(_x.data(), _x.extents());
     }
 
     for (std::size_t i = 1; i < degree; ++i)
@@ -419,82 +401,59 @@ vtk_data_quadrilateral(std::size_t degree)
 
     for (int i = 0; i < 4; ++i)
     {
-      M[1][i].resize((degree - 1) * (degree - 1));
-      Mshape[1][i] = {degree - 1, 1, degree - 1, 1};
-      mdspan4_t Mview(M[1][i].data(), Mshape[1][i]);
+      auto& _M = M[1].emplace_back(degree - 1, 1, degree - 1, 1);
       for (std::size_t k = 0; k < degree - 1; ++k)
-        Mview(k, 0, k, 0) = 1.0;
+        _M(k, 0, k, 0) = 1.0;
     }
   }
 
   // Interior points
-  xshape[2][0] = {(degree - 1) * (degree - 1), 2};
-  x[2][0].resize(2 * xshape[2][0][0], 0);
   {
-    mdspan2_t xview(x[2][0].data(), xshape[2][0]);
+    auto& _x = x[2].emplace_back((degree - 1) * (degree - 1), 2);
     int n = 0;
     for (std::size_t j = 1; j < degree; ++j)
     {
       for (std::size_t i = 1; i < degree; ++i)
       {
-        xview(n, 0) = i / static_cast<double>(degree);
-        xview(n, 1) = j / static_cast<double>(degree);
+        _x(n, 0) = i / static_cast<double>(degree);
+        _x(n, 1) = j / static_cast<double>(degree);
         ++n;
       }
     }
 
-    Mshape[2][0] = {xview.extent(0), 1, xview.extent(0), 1};
-    M[2][0].resize(xview.extent(0) * xview.extent(0), 0);
-    mdspan4_t Mview(M[2][0].data(), Mshape[2][0]);
-    for (std::size_t k = 0; k < Mview.extent(0); ++k)
-      Mview(k, 0, k, 0) = 1.0;
+    auto& _M = M[2].emplace_back(_x.extent(0), 1, _x.extent(0), 1);
+    for (std::size_t k = 0; k < _x.extent(0); ++k)
+      _M(k, 0, k, 0) = 1.0;
   }
 
-  return {x, xshape, M, Mshape};
+  return {x, M};
 }
 //----------------------------------------------------------------------------
-std::tuple<std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
-           std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+std::pair<std::array<std::vector<mdarray2_t>, 4>,
+          std::array<std::vector<mdarray4_t>, 4>>
 vtk_data_tetrahedron(std::size_t degree)
 {
-  constexpr std::size_t tdim = 3;
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::tetrahedron);
 
-  std::array<std::vector<std::vector<double>>, 4> x;
-  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
-  std::array<std::vector<std::vector<double>>, 4> M;
-  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
-  for (std::size_t d = 0; d <= tdim; ++d)
-  {
-    x[d].resize(topology[d].size());
-    xshape[d].resize(topology[d].size());
-    M[d].resize(topology[d].size());
-    Mshape[d].resize(topology[d].size());
-  }
+  std::array<std::vector<mdarray2_t>, 4> x;
+  std::array<std::vector<mdarray4_t>, 4> M;
 
   // Points at vertices
-  x[0][0] = {0., 0., 0.};
-  x[0][1] = {1., 0., 0.};
-  x[0][2] = {0., 1., 0.};
-  x[0][3] = {0., 0., 1.};
+  x[0].emplace_back(std::vector<double>{0., 0., 0.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{1., 0., 0.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{0., 1., 0.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{0., 0., 1.}, 1, 3);
   for (int i = 0; i < 4; ++i)
-  {
-    xshape[0][i] = {1, 3};
-    M[0][i] = {1.0};
-    Mshape[0][i] = {1, 1, 1, 1};
-  }
+    M[0].emplace_back(std::vector<double>{1.0}, 1, 1, 1, 1);
 
   // Points on edges
   {
     std::array<mdspan2_t, 6> xview;
     for (int i = 0; i < 6; ++i)
     {
-      xshape[1][i] = {degree - 1, 3};
-      x[1][i].resize(3 * (degree - 1), 0);
-      xview[i] = mdspan2_t(x[1][i].data(), degree - 1, 3);
+      auto& _x = x[1].emplace_back(degree - 1, 3);
+      xview[i] = mdspan2_t(_x.data(), _x.extents());
     }
 
     for (std::size_t i = 1; i < degree; ++i)
@@ -526,11 +485,9 @@ vtk_data_tetrahedron(std::size_t degree)
 
     for (int i = 0; i < 6; ++i)
     {
-      M[1][i].resize((degree - 1) * (degree - 1));
-      Mshape[1][i] = {degree - 1, 1, degree - 1, 1};
-      mdspan4_t Mview(M[1][i].data(), degree - 1, 1, degree - 1, 1);
+      auto& _M = M[1].emplace_back(degree - 1, 1, degree - 1, 1);
       for (std::size_t k = 0; k < degree - 1; ++k)
-        Mview(k, 0, k, 0) = 1.0;
+        _M(k, 0, k, 0) = 1.0;
     }
   }
 
@@ -541,9 +498,8 @@ vtk_data_tetrahedron(std::size_t degree)
     std::array<mdspan2_t, 4> xview;
     for (int i = 0; i < 4; ++i)
     {
-      x[2][i].resize(3 * pts.extent(0), 0);
-      xshape[2][i] = {pts.extent(0), 3};
-      xview[i] = mdspan2_t(x[2][i].data(), xshape[2][i]);
+      auto& _x = x[2].emplace_back(pts.extent(0), 3);
+      xview[i] = mdspan2_t(_x.data(), _x.extents());
     }
 
     for (std::size_t i = 0; i < pts.extent(0); ++i)
@@ -570,94 +526,66 @@ vtk_data_tetrahedron(std::size_t degree)
 
     for (int i = 0; i < 4; ++i)
     {
-      Mshape[2][i] = {pts.extent(0), 1, pts.extent(0), 1};
-      M[2][i].resize(pts.extent(0) * pts.extent(0));
-      mdspan4_t Mview(M[2][i].data(), Mshape[2][i]);
-      for (std::size_t k = 0; k < Mshape[2][i][0]; ++k)
-        Mview(k, 0, k, 0) = 1.0;
+      auto& _M = M[2].emplace_back(pts.extent(0), 1, pts.extent(0), 1);
+      for (std::size_t k = 0; k < _M.extent(0); ++k)
+        _M(k, 0, k, 0) = 1.0;
     }
   }
   else
   {
     for (int i = 0; i < 4; ++i)
     {
-      xshape[2][i] = {0, 3};
-      x[2][i] = {};
-      Mshape[2][i] = {0, 1, 0, 1};
-      M[2][i] = {};
+      x[2].emplace_back(0, 3);
+      M[2].emplace_back(0, 1, 0, 1);
     }
   }
 
   // Points on volume
   if (degree >= 4)
   {
-    const auto pts = vtk_tetrahedron_points(degree - 4);
-    xshape[3][0] = {pts.extent(0), pts.extent(1)};
-    x[3][0].assign(pts.data(), pts.data() + pts.size());
-    Mshape[3][0] = {pts.extent(0), 1, pts.extent(0), 1};
-    M[3][0].resize(Mshape[3][0][0] * Mshape[3][0][0], 0);
-
-    mdspan4_t Mview(M[3][0].data(), Mshape[3][0]);
-    for (std::size_t k = 0; k < Mview.extent(0); ++k)
-      Mview(k, 0, k, 0) = 1.0;
+    auto& _x = x[3].emplace_back(vtk_tetrahedron_points(degree - 4));
+    auto& _M = M[3].emplace_back(_x.extent(0), 1, _x.extent(0), 1);
+    for (std::size_t k = 0; k < _M.extent(0); ++k)
+      _M(k, 0, k, 0) = 1.0;
   }
   else
   {
-    xshape[3][0] = {0, 3};
-    x[3][0] = {};
-    Mshape[3][0] = {0, 1, 0, 1};
-    M[3][0] = {};
+    x[3].emplace_back(0, 3);
+    M[3].emplace_back(0, 1, 0, 1);
   }
 
-  return {x, xshape, M, Mshape};
+  return {x, M};
 }
 //----------------------------------------------------------------------------
-std::tuple<std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
-           std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+std::pair<std::array<std::vector<mdarray2_t>, 4>,
+          std::array<std::vector<mdarray4_t>, 4>>
 vtk_data_hexahedron(std::size_t degree)
 {
-  constexpr std::size_t tdim = 3;
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::hexahedron);
 
-  std::array<std::vector<std::vector<double>>, 4> x;
-  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
-  std::array<std::vector<std::vector<double>>, 4> M;
-  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
-  for (std::size_t d = 0; d <= tdim; ++d)
-  {
-    x[d].resize(topology[d].size());
-    xshape[d].resize(topology[d].size());
-    M[d].resize(topology[d].size());
-    Mshape[d].resize(topology[d].size());
-  }
+  std::array<std::vector<mdarray2_t>, 4> x;
+  std::array<std::vector<mdarray4_t>, 4> M;
 
   // Points at vertices
-  x[0][0] = {0., 0., 0.};
-  x[0][1] = {1., 0., 0.};
-  x[0][2] = {1., 1., 0.};
-  x[0][3] = {0., 1., 0.};
-  x[0][4] = {0., 0., 1.};
-  x[0][5] = {1., 0., 1.};
-  x[0][6] = {1., 1., 1.};
-  x[0][7] = {0., 1., 1.};
+  x[0].emplace_back(std::vector<double>{0., 0., 0.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{1., 0., 0.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{1., 1., 0.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{0., 1., 0.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{0., 0., 1.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{1., 0., 1.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{1., 1., 1.}, 1, 3);
+  x[0].emplace_back(std::vector<double>{0., 1., 1.}, 1, 3);
   for (int i = 0; i < 8; ++i)
-  {
-    xshape[0][i] = {1, 3};
-    M[0][i] = {1.0};
-    Mshape[0][i] = {1, 1, 1, 1};
-  }
+    M[0].emplace_back(std::vector<double>{1.0}, 1, 1, 1, 1);
 
   // Points on edges
   {
     std::array<mdspan2_t, 12> xview;
     for (int i = 0; i < 12; ++i)
     {
-      xshape[1][i] = {degree - 1, 3};
-      x[1][i].resize(3 * (degree - 1), 0);
-      xview[i] = mdspan2_t(x[1][i].data(), degree - 1, 3);
+      auto& _x = x[1].emplace_back(degree - 1, 3);
+      xview[i] = mdspan2_t(_x.data(), _x.extents());
     }
 
     for (std::size_t i = 1; i < degree; ++i)
@@ -713,11 +641,9 @@ vtk_data_hexahedron(std::size_t degree)
 
     for (int i = 0; i < 12; ++i)
     {
-      M[1][i].resize((degree - 1) * (degree - 1));
-      Mshape[1][i] = {degree - 1, 1, degree - 1, 1};
-      mdspan4_t Mview(M[1][i].data(), degree - 1, 1, degree - 1, 1);
+      auto& _M = M[1].emplace_back(degree - 1, 1, degree - 1, 1);
       for (std::size_t k = 0; k < degree - 1; ++k)
-        Mview(k, 0, k, 0) = 1.0;
+        _M(k, 0, k, 0) = 1.0;
     }
   }
 
@@ -726,9 +652,8 @@ vtk_data_hexahedron(std::size_t degree)
     std::array<mdspan2_t, 6> xview;
     for (int i = 0; i < 6; ++i)
     {
-      xshape[2][i] = {(degree - 1) * (degree - 1), 3};
-      x[2][i].resize(xshape[2][i][0] * xshape[2][i][1], 0);
-      xview[i] = mdspan2_t(x[2][i].data(), xshape[2][i]);
+      auto& _x = x[2].emplace_back((degree - 1) * (degree - 1), 3);
+      xview[i] = mdspan2_t(_x.data(), _x.extents());
     }
 
     int n = 0;
@@ -766,19 +691,16 @@ vtk_data_hexahedron(std::size_t degree)
 
     for (int i = 0; i < 6; ++i)
     {
-      Mshape[2][i] = {xview[0].extent(0), 1, xview[0].extent(0), 1};
-      M[2][i].resize(xview[0].extent(0) * xview[0].extent(0));
-      mdspan4_t Mview(M[2][i].data(), Mshape[2][i]);
-      for (std::size_t k = 0; k < Mview.extent(0); ++k)
-        Mview(k, 0, k, 0) = 1.0;
+      auto& _M = M[2].emplace_back(xview.front().extent(0), 1,
+                                   xview.front().extent(0), 1);
+      for (std::size_t k = 0; k < _M.extent(0); ++k)
+        _M(k, 0, k, 0) = 1.0;
     }
   }
 
   // Interior points
   {
-    xshape[3][0] = {(degree - 1) * (degree - 1) * (degree - 1), 3};
-    x[3][0].resize(xshape[3][0][0] * xshape[3][0][1], 0);
-    mdspan2_t xview(x[3][0].data(), xshape[3][0]);
+    auto& _x = x[3].emplace_back((degree - 1) * (degree - 1) * (degree - 1), 3);
     int n = 0;
     for (std::size_t k = 1; k < degree; ++k)
     {
@@ -786,22 +708,20 @@ vtk_data_hexahedron(std::size_t degree)
       {
         for (std::size_t i = 1; i < degree; ++i)
         {
-          xview(n, 0) = i / static_cast<double>(degree);
-          xview(n, 1) = j / static_cast<double>(degree);
-          xview(n, 2) = k / static_cast<double>(degree);
+          _x(n, 0) = i / static_cast<double>(degree);
+          _x(n, 1) = j / static_cast<double>(degree);
+          _x(n, 2) = k / static_cast<double>(degree);
           ++n;
         }
       }
     }
 
-    Mshape[3][0] = {xview.extent(0), 1, xview.extent(0), 1};
-    M[3][0].resize(xview.extent(0) * xview.extent(0), 0);
-    mdspan4_t Mview(M[3][0].data(), Mshape[3][0]);
-    for (std::size_t k = 0; k < Mview.extent(0); ++k)
-      Mview(k, 0, k, 0) = 1.0;
+    auto& _M = M[3].emplace_back(_x.extent(0), 1, _x.extent(0), 1);
+    for (std::size_t k = 0; k < _x.extent(0); ++k)
+      _M(k, 0, k, 0) = 1.0;
   }
 
-  return {x, xshape, M, Mshape};
+  return {x, M};
 }
 //----------------------------------------------------------------------------
 std::tuple<lattice::type, lattice::simplex_method, bool>
@@ -1050,85 +970,35 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
   if (!discontinuous)
     throw std::runtime_error("Continuous VTK element not yet supported.");
 
-  const std::size_t tdim = cell::topological_dimension(celltype);
-  const std::size_t ndofs = polyset::dim(celltype, degree);
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-
-  std::array<std::vector<std::vector<double>>, 4> x;
-  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
-  std::array<std::vector<std::vector<double>>, 4> M;
-  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
-
-  std::array<std::vector<mdarray2_t>, 4> xnew;
-  std::array<std::vector<mdarray4_t>, 4> Mnew;
-
+  std::array<std::vector<mdarray2_t>, 4> x;
+  std::array<std::vector<mdarray4_t>, 4> M;
   switch (celltype)
   {
   case cell::type::interval:
-  {
-    // std::tie(x, xshape, M, Mshape) = vtk_data_interval(degree);
-    std::tie(xnew, Mnew) = vtk_data_interval(degree);
-    if (discontinuous)
-    {
-      auto [_x, _xshape, _M, _Mshape] = element::make_discontinuous(
-          to_mdspan(xnew), to_mdspan(Mnew), tdim, 1);
-      return FiniteElement(element::family::P, celltype, degree, {},
-                           mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                           to_mdspan(_x, _xshape), to_mdspan(_M, _Mshape), 0,
-                           maps::type::identity, discontinuous, degree, degree,
-                           element::lagrange_variant::vtk);
-    }
-    else
-    {
-      return FiniteElement(element::family::P, celltype, degree, {},
-                           mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                           to_mdspan(xnew), to_mdspan(Mnew), 0,
-                           maps::type::identity, discontinuous, degree, degree,
-                           element::lagrange_variant::vtk);
-    }
+    std::tie(x, M) = vtk_data_interval(degree);
     break;
-  }
   case cell::type::triangle:
-  {
-    std::tie(xnew, Mnew) = vtk_data_triangle(degree);
-    if (discontinuous)
-    {
-      auto [_x, _xshape, _M, _Mshape] = element::make_discontinuous(
-          to_mdspan(xnew), to_mdspan(Mnew), tdim, 1);
-      return FiniteElement(element::family::P, celltype, degree, {},
-                           mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                           to_mdspan(_x, _xshape), to_mdspan(_M, _Mshape), 0,
-                           maps::type::identity, discontinuous, degree, degree,
-                           element::lagrange_variant::vtk);
-    }
-    else
-    {
-      return FiniteElement(element::family::P, celltype, degree, {},
-                           mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                           to_mdspan(xnew), to_mdspan(Mnew), 0,
-                           maps::type::identity, discontinuous, degree, degree,
-                           element::lagrange_variant::vtk);
-    }
-    break;
-  }
-  case cell::type::tetrahedron:
-    std::tie(x, xshape, M, Mshape) = vtk_data_tetrahedron(degree);
+    std::tie(x, M) = vtk_data_triangle(degree);
     break;
   case cell::type::quadrilateral:
-    std::tie(x, xshape, M, Mshape) = vtk_data_quadrilateral(degree);
+    std::tie(x, M) = vtk_data_quadrilateral(degree);
+    break;
+  case cell::type::tetrahedron:
+    std::tie(x, M) = vtk_data_tetrahedron(degree);
     break;
   case cell::type::hexahedron:
-    std::tie(x, xshape, M, Mshape) = vtk_data_hexahedron(degree);
+    std::tie(x, M) = vtk_data_hexahedron(degree);
     break;
   default:
     throw std::runtime_error("Unsupported cell type.");
   }
 
+  const std::size_t tdim = cell::topological_dimension(celltype);
+  const std::size_t ndofs = polyset::dim(celltype, degree);
   if (discontinuous)
   {
-    auto [_x, _xshape, _M, _Mshape] = element::make_discontinuous(
-        to_mdspan(x, xshape), to_mdspan(M, Mshape), tdim, 1);
+    auto [_x, _xshape, _M, _Mshape]
+        = element::make_discontinuous(to_mdspan(x), to_mdspan(M), tdim, 1);
     return FiniteElement(element::family::P, celltype, degree, {},
                          mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                          to_mdspan(_x, _xshape), to_mdspan(_M, _Mshape), 0,
@@ -1139,8 +1009,8 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
   {
     return FiniteElement(element::family::P, celltype, degree, {},
                          mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                         to_mdspan(x, xshape), to_mdspan(M, Mshape), 0,
-                         maps::type::identity, discontinuous, degree, degree,
+                         to_mdspan(x), to_mdspan(M), 0, maps::type::identity,
+                         discontinuous, degree, degree,
                          element::lagrange_variant::vtk);
   }
 }
@@ -1442,8 +1312,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     for (std::size_t i = 0; i < tdim; ++i)
     {
       std::size_t num_entities = cell::num_sub_entities(celltype, i);
-      x[i] = std::vector<mdarray2_t>(num_entities, mdarray2_t(0, tdim));
-      M[i] = std::vector<mdarray4_t>(num_entities, mdarray4_t(0, 1, 0, 1));
+      x[i] = std::vector(num_entities, mdarray2_t(0, tdim));
+      M[i] = std::vector(num_entities, mdarray4_t(0, 1, 0, 1));
     }
 
     const auto [pt, shape]
@@ -1515,7 +1385,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
 
   std::array<std::vector<mdspan2_t>, 4> xview = to_mdspan(x);
   std::array<std::vector<mdspan4_t>, 4> Mview = to_mdspan(M);
-
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)

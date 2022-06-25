@@ -10,12 +10,8 @@
 #include "polynomials.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xpad.hpp>
-#include <xtensor/xview.hpp>
 
 namespace stdex = std::experimental;
-
 using namespace basix;
 
 namespace
@@ -1158,10 +1154,15 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   std::array<std::vector<mdarray4_t>, 4> M;
 
   // Evaluate moment space at quadrature points
-  auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                celltype, degree * 2);
-  const xt::xtensor<double, 2> phi = polynomials::tabulate(
-      polynomials::type::legendre, celltype, degree, pts);
+  const auto [_pts, wts] = quadrature::make_quadrature_new(
+      quadrature::type::Default, celltype, degree * 2);
+  assert(!wts.empty());
+  stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> pts(
+      _pts.data(), wts.size(), _pts.size() / wts.size());
+  const auto [_phi, pshape] = polynomials::tabulate(polynomials::type::legendre,
+                                                    celltype, degree, pts);
+  stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> phi(_phi.data(),
+                                                                   pshape);
   for (std::size_t dim = 0; dim < tdim; ++dim)
   {
     for (std::size_t e = 0; e < topology[dim].size(); ++e)
@@ -1171,11 +1172,11 @@ FiniteElement create_legendre(cell::type celltype, int degree,
     }
   }
 
-  x[tdim].emplace_back(std::vector<double>(pts.data(), pts.data() + pts.size()),
-                       pts.shape(0), pts.shape(1));
-  auto& _M = M[tdim].emplace_back(ndofs, 1, pts.shape(0), 1);
+  auto& _x = x[tdim].emplace_back(pts.extents());
+  std::copy_n(pts.data(), pts.size(), _x.data());
+  auto& _M = M[tdim].emplace_back(ndofs, 1, pts.extent(0), 1);
   for (std::size_t i = 0; i < ndofs; ++i)
-    for (std::size_t j = 0; j < pts.shape(0); ++j)
+    for (std::size_t j = 0; j < pts.extent(0); ++j)
       _M(i, 0, j, 0) = phi(i, j) * wts[j];
 
   return FiniteElement(element::family::P, celltype, degree, {},
@@ -1281,14 +1282,23 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
     }
     else
     {
-      auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                    ct[d], degree * 2);
-      const xt::xtensor<double, 2> phi = polynomials::tabulate(
+      const auto [_pts, wts] = quadrature::make_quadrature_new(
+          quadrature::type::Default, ct[d], degree * 2);
+      assert(!wts.empty());
+      stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> pts(
+          _pts.data(), wts.size(), _pts.size() / wts.size());
+
+      const auto [_phi, pshape] = polynomials::tabulate(
           polynomials::type::legendre, ct[d], degree, pts);
-      const xt::xtensor<double, 2> bern = polynomials::tabulate(
+      stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> phi(
+          _phi.data(), pshape);
+      const auto [_bern, bshape] = polynomials::tabulate(
           polynomials::type::bernstein, ct[d], degree, pts);
-      assert(phi.shape(0) == nb[d]);
-      const std::size_t npts = pts.shape(0);
+      stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> bern(
+          _bern.data(), bshape);
+
+      assert(phi.extent(0) == nb[d]);
+      const std::size_t npts = pts.extent(0);
 
       mdarray2_t mat(nb[d], nb[d]);
       for (std::size_t i = 0; i < nb[d]; ++i)
@@ -1314,14 +1324,14 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
         mdspan2_t entity_x(_entity_x.data(), shape);
         xtl::span<const double> x0(entity_x.data(), shape[1]);
         {
-          auto& _x = x[d].emplace_back(pts.shape(0), shape[1]);
+          auto& _x = x[d].emplace_back(pts.extent(0), shape[1]);
           for (std::size_t i = 0; i < _x.extent(0); ++i)
             for (std::size_t j = 0; j < _x.extent(1); ++j)
               _x(i, j) = x0[j];
         }
 
-        for (std::size_t j = 0; j < pts.shape(0); ++j)
-          for (std::size_t k0 = 0; k0 < pts.shape(1); ++k0)
+        for (std::size_t j = 0; j < pts.extent(0); ++j)
+          for (std::size_t k0 = 0; k0 < pts.extent(1); ++k0)
             for (std::size_t k1 = 0; k1 < shape[1]; ++k1)
               x[d][e](j, k1) += (entity_x(k0 + 1, k1) - x0[k1]) * pts(j, k0);
         for (std::size_t i = 0; i < bernstein_bubbles[d].size(); ++i)
@@ -1329,7 +1339,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
           for (std::size_t p = 0; p < npts; ++p)
           {
             double tmp = 0.0;
-            for (std::size_t k = 0; k < phi.shape(0); ++k)
+            for (std::size_t k = 0; k < phi.extent(0); ++k)
               tmp += phi(k, p) * minv(bernstein_bubbles[d][i], k);
             M[d][e](i, 0, p, 0) = wts[p] * tmp;
           }

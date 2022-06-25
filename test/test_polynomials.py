@@ -23,12 +23,12 @@ def test_legendre(cell_type, degree):
 
     polys = basix.tabulate_polynomials(basix.PolynomialType.legendre, cell_type, degree, points)
 
-    matrix = numpy.empty((polys.shape[1], polys.shape[1]))
-    for i, col_i in enumerate(polys.T):
-        for j, col_j in enumerate(polys.T):
+    matrix = numpy.empty((polys.shape[0], polys.shape[0]))
+    for i, col_i in enumerate(polys):
+        for j, col_j in enumerate(polys):
             matrix[i, j] = sum(col_i * col_j * weights)
 
-    assert numpy.allclose(matrix, numpy.identity(polys.shape[1]))
+    assert numpy.allclose(matrix, numpy.identity(polys.shape[0]))
 
 
 def evaluate(function, pt):
@@ -66,7 +66,7 @@ def test_order(cell_type, functions, degree):
     points, weights = basix.make_quadrature(cell_type, 2 * degree)
     polys = basix.tabulate_polynomials(basix.PolynomialType.legendre, cell_type, degree, points)
 
-    assert len(functions) == polys.shape[1]
+    assert len(functions) == polys.shape[0]
 
     eval_points = basix.create_lattice(cell_type, 10, basix.LatticeType.equispaced, True)
     eval_polys = basix.tabulate_polynomials(basix.PolynomialType.legendre, cell_type, degree, eval_points)
@@ -79,8 +79,8 @@ def test_order(cell_type, functions, degree):
         coeffs = []
         values = numpy.array([evaluate(function, i) for i in points])
         for p in range(n):
-            coeffs.append(sum(values * polys[:, p] * weights))
-        actual_eval = [float(sum(coeffs * p[:n])) for p in eval_polys]
+            coeffs.append(sum(values * polys[p, :] * weights))
+        actual_eval = [float(sum(coeffs * p[:n])) for p in eval_polys.T]
         assert not numpy.allclose(expected_eval, actual_eval)
 
         # Using n+1 polynomials
@@ -88,6 +88,6 @@ def test_order(cell_type, functions, degree):
         coeffs = []
         values = numpy.array([evaluate(function, i) for i in points])
         for p in range(n + 1):
-            coeffs.append(sum(values * polys[:, p] * weights))
-        actual_eval = [float(sum(coeffs * p[:n+1])) for p in eval_polys]
+            coeffs.append(sum(values * polys[p, :] * weights))
+        actual_eval = [float(sum(coeffs * p[:n+1])) for p in eval_polys.T]
         assert numpy.allclose(expected_eval, actual_eval)

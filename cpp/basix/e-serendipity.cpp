@@ -600,7 +600,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
       for (int j = 0; j <= degree - i; ++j)
       {
         xt::view(M[tdim][0], row_n, 0, xt::all(), 0)
-            = xt::col(phi, i * (degree + 1) + j) * wts;
+            = xt::row(phi, i * (degree + 1) + j) * wts;
         wcoeffs(row_n, i * (degree + 1) + j) = 1;
         ++row_n;
       }
@@ -616,7 +616,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
         for (int k = 0; k <= degree - i - j; ++k)
         {
           xt::view(M[tdim][0], row_n, 0, xt::all(), 0)
-              = xt::col(phi,
+              = xt::row(phi,
                         i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
                 * wts;
           wcoeffs(row_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)

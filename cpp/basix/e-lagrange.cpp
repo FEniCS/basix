@@ -1203,17 +1203,8 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-
   std::array<std::vector<mdarray2_t>, 4> xnew;
   std::array<std::vector<mdarray4_t>, 4> Mnew;
-
-  for (std::size_t dim = 0; dim <= tdim; ++dim)
-  {
-    M[dim].resize(topology[dim].size());
-    x[dim].resize(topology[dim].size());
-  }
 
   const std::array<std::size_t, 4> nb
       = {1,
@@ -1275,9 +1266,6 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 
   for (std::size_t v = 0; v < topology[0].size(); ++v)
   {
-    x[0][v] = cell::sub_entity_geometry(celltype, 0, v);
-    M[0][v] = {{{{1.}}}};
-
     const auto [entity, shape] = cell::sub_entity_geometry_new(celltype, 0, v);
     xnew[0].emplace_back(entity, shape[0], shape[1]);
     auto& _M = Mnew[0].emplace_back(1, 1, 1, 1);
@@ -1290,9 +1278,6 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
     {
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
-        x[d][e] = xt::xtensor<double, 2>({0, tdim});
-        M[d][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
-
         xnew[d].emplace_back(0, tdim);
         Mnew[d].emplace_back(0, 1, 0, 1);
       }
@@ -1302,30 +1287,18 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
       auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                      ct[d], degree * 2);
       auto wts = xt::adapt(_wts);
-
       const xt::xtensor<double, 2> phi = polynomials::tabulate(
           polynomials::type::legendre, ct[d], degree, pts);
       const xt::xtensor<double, 2> bern = polynomials::tabulate(
           polynomials::type::bernstein, ct[d], degree, pts);
-
       assert(phi.shape(0) == nb[d]);
       const std::size_t npts = pts.shape(0);
 
-      xt::xtensor<double, 2> mat({nb[d], nb[d]});
-      for (std::size_t i = 0; i < nb[d]; ++i)
-        for (std::size_t j = 0; j < nb[d]; ++j)
-          mat(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
-
       mdarray2_t matnew(nb[d], nb[d]);
       for (std::size_t i = 0; i < nb[d]; ++i)
-      {
         for (std::size_t j = 0; j < nb[d]; ++j)
-        {
-          matnew(i, j) = xt::sum(wts * xt::row(bern, j) * xt::row(phi, i))();
-        }
-      }
-      xt::xtensor<double, 2> id = xt::eye<double>(nb[d]);
-      xt::xtensor<double, 2> minv = math::solve(mat, id);
+          for (std::size_t k = 0; k < wts.shape(0); ++k)
+            matnew(i, j) += wts[k] * bern(j, k) * phi(i, k);
 
       mdarray2_t minvnew(matnew.extents());
       {
@@ -1337,21 +1310,13 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
         std::copy(minv_data.begin(), minv_data.end(), minvnew.data());
       }
 
-      M[d] = std::vector<xt::xtensor<double, 4>>(
-          cell::num_sub_entities(celltype, d),
-          xt::xtensor<double, 4>({nb_interior[d], 1, npts, 1}));
       Mnew[d] = std::vector<mdarray4_t>(cell::num_sub_entities(celltype, d),
                                         mdarray4_t(nb_interior[d], 1, npts, 1));
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
-        const xt::xtensor<double, 2> entity_x
-            = cell::sub_entity_geometry(celltype, d, e);
-        auto x0s = xt::reshape_view(
-            xt::row(entity_x, 0),
-            {static_cast<std::size_t>(1), entity_x.shape(1)});
-
         auto [_entity_x, _shape]
             = cell::sub_entity_geometry_new(celltype, d, e);
+        mdspan2_t entity_x_new(_entity_x.data(), _shape);
         xtl::span<const double> x0new(_entity_x.data(), _shape[1]);
         {
           auto& _x = xnew[d].emplace_back(pts.shape(0), _shape[1]);
@@ -1363,38 +1328,22 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
         for (std::size_t j = 0; j < pts.shape(0); ++j)
         {
           for (std::size_t k0 = 0; k0 < pts.shape(1); ++k0)
-            for (std::size_t k1 = 0; k1 < _shape[1]; ++k1)
-              xnew[d][e](j, k1)
-                  += (entity_x(k0 + 1, k1) - x0new[k1]) * pts(j, k0);
-          // xt::row(x[d][e], j) += (xt::row(entity_x, k0 + 1) - x0) * pts(j,
-          // k0);
-        }
-        for (std::size_t i = 0; i < bernstein_bubbles[d].size(); ++i)
-        {
-          for (std::size_t p = 0; p < npts; ++p)
           {
-            Mnew[d][e](i, 0, p, 0)
-                = wts[p]
-                  * xt::sum(xt::col(phi, p)
-                            * xt::row(minv, bernstein_bubbles[d][i]))();
+            for (std::size_t k1 = 0; k1 < _shape[1]; ++k1)
+            {
+              xnew[d][e](j, k1)
+                  += (entity_x_new(k0 + 1, k1) - x0new[k1]) * pts(j, k0);
+            }
           }
         }
-
-        x[d][e] = xt::tile(x0s, pts.shape(0));
-        auto x0 = xt::row(entity_x, 0);
-        for (std::size_t j = 0; j < pts.shape(0); ++j)
-        {
-          for (std::size_t k = 0; k < pts.shape(1); ++k)
-            xt::row(x[d][e], j) += (xt::row(entity_x, k + 1) - x0) * pts(j, k);
-        }
         for (std::size_t i = 0; i < bernstein_bubbles[d].size(); ++i)
         {
           for (std::size_t p = 0; p < npts; ++p)
           {
-            M[d][e](i, 0, p, 0)
-                = wts(p)
-                  * xt::sum(xt::col(phi, p)
-                            * xt::row(minv, bernstein_bubbles[d][i]))();
+            double tmp = 0.0;
+            for (std::size_t k = 0; k < phi.shape(0); ++k)
+              tmp += phi(k, p) * minvnew(bernstein_bubbles[d][i], k);
+            Mnew[d][e](i, 0, p, 0) = wts[p] * tmp;
           }
         }
       }
@@ -1402,8 +1351,9 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   }
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       xt::eye<double>(ndofs), x, M, 0, maps::type::identity,
-                       discontinuous, degree, degree,
+                       mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
+                       to_mdspan(xnew), to_mdspan(Mnew), 0,
+                       maps::type::identity, discontinuous, degree, degree,
                        element::lagrange_variant::bernstein);
 }
 //-----------------------------------------------------------------------------

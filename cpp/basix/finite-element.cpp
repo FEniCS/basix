@@ -47,9 +47,8 @@ template <typename U>
 xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
 {
   auto e = x.extents();
-  std::array<std::size_t, 4> shape
-      = {e.extent(0), e.extent(1), e.extent(2), e.extent(3)};
-  xt::xtensor<double, 4> y(shape);
+  xt::xtensor<double, 4> y(
+      {e.extent(0), e.extent(1), e.extent(2), e.extent(3)});
   for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
     for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
       for (std::size_t k2 = 0; k2 < e.extent(2); ++k2)
@@ -174,9 +173,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
       xt::xtensor<double, 3> P;
 
       if (x_e.shape(0) != 0)
-      {
         P = polyset::tabulate(cell_type, degree, nderivs, x_e);
-      }
 
       // Me: [dof, vs, point, deriv]
       const xt::xtensor<double, 4>& Me = M[d][e];
@@ -718,16 +715,21 @@ FiniteElement::FiniteElement(
   if (discontinuous)
   {
     for (std::size_t i = 0; i < _cell_tdim; ++i)
+    {
       for (std::size_t j = 0; j < x[i].size(); ++j)
+      {
         if (x[i][j].shape(0) > 0)
+        {
           throw std::runtime_error(
               "Discontinuous element can only have interior DOFs.");
+        }
+      }
+    }
   }
 
   xt::xtensor<double, 2> wcoeffs_ortho({wcoeffs.shape(0), wcoeffs.shape(1)});
   wcoeffs_ortho.assign(wcoeffs);
   orthogonalise(wcoeffs_ortho);
-
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, M, x,
                                      highest_degree, interpolation_nderivs);
 
@@ -878,6 +880,7 @@ FiniteElement::FiniteElement(
     if (!_dof_transformations_are_permutations)
       break;
   }
+
   if (!_dof_transformations_are_identity)
   {
     // If transformations are permutations, then create the permutations

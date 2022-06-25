@@ -284,10 +284,7 @@ vtk_data_interval(std::size_t degree)
   x[0].emplace_back(std::vector<double>{0.0}, 1, 1);
   x[0].emplace_back(std::vector<double>{1.0}, 1, 1);
   for (int i = 0; i < 2; ++i)
-  {
-    auto& _M = M[0].emplace_back(1, 1, 1, 1);
-    _M(0, 0, 0, 0) = 1.0;
-  }
+    M[0].emplace_back(std::vector<double>{1.0}, 1, 1, 1, 1);
 
   // Points on interval
   auto& _x = x[1].emplace_back(degree - 1, 1);
@@ -361,7 +358,7 @@ vtk_data_triangle(std::size_t degree)
     M[2].emplace_back(0, 1, 0, 1);
   }
 
-  return {x, M};
+  return {std::move(x), std::move(M)};
 }
 //----------------------------------------------------------------------------
 std::pair<std::array<std::vector<mdarray2_t>, 4>,
@@ -433,7 +430,7 @@ vtk_data_quadrilateral(std::size_t degree)
       _M(k, 0, k, 0) = 1.0;
   }
 
-  return {x, M};
+  return {std::move(x), std::move(M)};
 }
 //----------------------------------------------------------------------------
 std::pair<std::array<std::vector<mdarray2_t>, 4>,
@@ -561,7 +558,7 @@ vtk_data_tetrahedron(std::size_t degree)
     M[3].emplace_back(0, 1, 0, 1);
   }
 
-  return {x, M};
+  return {std::move(x), std::move(M)};
 }
 //----------------------------------------------------------------------------
 std::pair<std::array<std::vector<mdarray2_t>, 4>,
@@ -728,7 +725,7 @@ vtk_data_hexahedron(std::size_t degree)
       _M(k, 0, k, 0) = 1.0;
   }
 
-  return {x, M};
+  return {std::move(x), std::move(M)};
 }
 //----------------------------------------------------------------------------
 std::tuple<lattice::type, lattice::simplex_method, bool>
@@ -950,9 +947,7 @@ create_tensor_product_factors(cell::type celltype, int degree,
           perm[p++] = 8 + 12 * n + i + n * j;
           perm[p++] = 8 + 12 * n + 5 * n * n + i + n * j;
           for (int k = 0; k < n; ++k)
-          {
             perm[p++] = 8 + 12 * n + 6 * n * n + i + n * j + n * n * k;
-          }
         }
       }
     }
@@ -1149,8 +1144,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   {
     const auto [entity, shape] = cell::sub_entity_geometry_new(celltype, 0, v);
     x[0].emplace_back(entity, shape[0], shape[1]);
-    auto& _M = M[0].emplace_back(1, 1, 1, 1);
-    _M(0, 0, 0, 0) = 1.0;
+    M[0].emplace_back(std::vector<double>{1.0}, 1, 1, 1, 1);
   }
 
   for (std::size_t d = 1; d <= tdim; ++d)
@@ -1254,8 +1248,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     std::array<std::vector<mdarray2_t>, 4> x;
     std::array<std::vector<mdarray4_t>, 4> M;
     x[0].emplace_back(1, 0);
-    auto& _M = M[0].emplace_back(1, 1, 1, 1);
-    _M(0, 0, 0, 0) = 1.0;
+    M[0].emplace_back(std::vector<double>{1.0}, 1, 1, 1, 1);
     return FiniteElement(family::P, cell::type::point, 0, {},
                          mdspan2_t(math::eye(1).data(), 1, 1), to_mdspan(x),
                          to_mdspan(M), 0, maps::type::identity, discontinuous,

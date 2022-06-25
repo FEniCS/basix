@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
+// Copyright (c) 2020-2022 Chris Richardson, Matthew Scroggs and Garth N. Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -6,6 +6,7 @@
 #include "lattice.h"
 #include "maps.h"
 #include "math.h"
+#include "mdspan.hpp"
 #include "moments.h"
 #include "polynomials.h"
 #include "polyset.h"
@@ -18,15 +19,17 @@ namespace
 {
 using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
 using mdspan4_t = stdex::mdspan<double, stdex::dextents<std::size_t, 4>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
 using mdarray4_t = stdex::mdarray<double, stdex::dextents<std::size_t, 4>>;
 
 //----------------------------------------------------------------------------
-std::array<std::vector<mdspan2_t>, 4>
+std::array<std::vector<cmdspan2_t>, 4>
 to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
 {
-  std::array<std::vector<mdspan2_t>, 4> x1;
+  std::array<std::vector<cmdspan2_t>, 4> x1;
   for (std::size_t i = 0; i < x.size(); ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
       x1[i].emplace_back(x[i][j].data(), x[i][j].extents());
@@ -34,10 +37,10 @@ to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
   return x1;
 }
 //----------------------------------------------------------------------------
-std::array<std::vector<mdspan4_t>, 4>
+std::array<std::vector<cmdspan4_t>, 4>
 to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
 {
-  std::array<std::vector<mdspan4_t>, 4> M1;
+  std::array<std::vector<cmdspan4_t>, 4> M1;
   for (std::size_t i = 0; i < M.size(); ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
       M1[i].emplace_back(M[i][j].data(), M[i][j].extents());
@@ -45,32 +48,36 @@ to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
   return M1;
 }
 //----------------------------------------------------------------------------
-std::array<std::vector<stdex::mdspan<double, stdex::dextents<std::size_t, 2>>>,
-           4>
-to_mdspan(std::array<std::vector<std::vector<double>>, 4>& x,
-          std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
+std::array<
+    std::vector<stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>>,
+    4>
+to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& x,
+          const std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
 {
   std::array<
-      std::vector<stdex::mdspan<double, stdex::dextents<std::size_t, 2>>>, 4>
+      std::vector<stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>>,
+      4>
       x1;
   for (std::size_t i = 0; i < x.size(); ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
-      x1[i].push_back(mdspan2_t(x[i][j].data(), shape[i][j]));
+      x1[i].push_back(cmdspan2_t(x[i][j].data(), shape[i][j]));
 
   return x1;
 }
 //----------------------------------------------------------------------------
-std::array<std::vector<stdex::mdspan<double, stdex::dextents<std::size_t, 4>>>,
-           4>
-to_mdspan(std::array<std::vector<std::vector<double>>, 4>& M,
-          std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
+std::array<
+    std::vector<stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>>,
+    4>
+to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
+          const std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
 {
   std::array<
-      std::vector<stdex::mdspan<double, stdex::dextents<std::size_t, 4>>>, 4>
+      std::vector<stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>>,
+      4>
       M1;
   for (std::size_t i = 0; i < M.size(); ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
-      M1[i].push_back(mdspan4_t(M[i][j].data(), shape[i][j]));
+      M1[i].push_back(cmdspan4_t(M[i][j].data(), shape[i][j]));
 
   return M1;
 }
@@ -847,7 +854,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
     _M(i, 0, i, 0) = 1.0;
 
   return FiniteElement(element::family::P, celltype, degree, {},
-                       mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
+                       cmdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        to_mdspan(x), to_mdspan(M), 0, maps::type::identity,
                        true, degree, degree, variant);
 }
@@ -1000,7 +1007,7 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
     auto [_x, _xshape, _M, _Mshape]
         = element::make_discontinuous(to_mdspan(x), to_mdspan(M), tdim, 1);
     return FiniteElement(element::family::P, celltype, degree, {},
-                         mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
+                         cmdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                          to_mdspan(_x, _xshape), to_mdspan(_M, _Mshape), 0,
                          maps::type::identity, discontinuous, degree, degree,
                          element::lagrange_variant::vtk);
@@ -1008,7 +1015,7 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
   else
   {
     return FiniteElement(element::family::P, celltype, degree, {},
-                         mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
+                         cmdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                          to_mdspan(x), to_mdspan(M), 0, maps::type::identity,
                          discontinuous, degree, degree,
                          element::lagrange_variant::vtk);
@@ -1236,7 +1243,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 
 //----------------------------------------------------------------------------
 FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
-                                              element::lagrange_variant variant,
+                                              lagrange_variant variant,
                                               bool discontinuous)
 {
   if (celltype == cell::type::point)
@@ -1249,33 +1256,35 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     x[0].emplace_back(1, 0);
     auto& _M = M[0].emplace_back(1, 1, 1, 1);
     _M(0, 0, 0, 0) = 1.0;
-    return FiniteElement(element::family::P, cell::type::point, 0, {},
+    return FiniteElement(family::P, cell::type::point, 0, {},
                          mdspan2_t(math::eye(1).data(), 1, 1), to_mdspan(x),
                          to_mdspan(M), 0, maps::type::identity, discontinuous,
                          degree, degree);
   }
 
-  if (variant == element::lagrange_variant::vtk)
+  if (variant == lagrange_variant::vtk)
     return create_vtk_element(celltype, degree, discontinuous);
 
-  if (variant == element::lagrange_variant::legendre)
+  if (variant == lagrange_variant::legendre)
     return create_legendre(celltype, degree, discontinuous);
 
   if (variant == element::lagrange_variant::bernstein)
   {
     if (degree == 0)
-      variant = element::lagrange_variant::unset;
+      variant = lagrange_variant::unset;
     else
       return create_bernstein(celltype, degree, discontinuous);
   }
 
-  if (variant == element::lagrange_variant::unset)
+  if (variant == lagrange_variant::unset)
   {
     if (degree < 3)
-      variant = element::lagrange_variant::equispaced;
+      variant = lagrange_variant::equispaced;
     else
+    {
       throw std::runtime_error(
           "Lagrange elements of degree > 2 need to be given a variant.");
+    }
   }
 
   auto [lattice_type, simplex_method, exterior]
@@ -1392,14 +1401,14 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
     std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
     std::tie(xbuffer, xshape, Mbuffer, Mshape)
-        = element::make_discontinuous(xview, Mview, tdim, 1);
+        = make_discontinuous(xview, Mview, tdim, 1);
     xview = to_mdspan(xbuffer, xshape);
     Mview = to_mdspan(Mbuffer, Mshape);
   }
 
   auto tensor_factors
       = create_tensor_product_factors(celltype, degree, variant);
-  return FiniteElement(element::family::P, celltype, degree, {},
+  return FiniteElement(family::P, celltype, degree, {},
                        mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs), xview,
                        Mview, 0, maps::type::identity, discontinuous, degree,
                        degree, variant, tensor_factors);

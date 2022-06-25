@@ -36,6 +36,16 @@ enum class type
 std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_quadrature(const quadrature::type rule, cell::type celltype, int m);
 
+/// Make a quadrature rule on a reference cell
+/// @param[in] rule Type of quadrature rule (or use quadrature::Default)
+/// @param[in] celltype The cell type
+/// @param[in] m Maximum degree of polynomial that this quadrature rule
+/// will integrate exactly
+/// @return List of points and list of weights. The number of points
+/// arrays has shape (num points, gdim)
+std::pair<std::vector<double>, std::vector<double>>
+make_quadrature_new(const quadrature::type rule, cell::type celltype, int m);
+
 /// Make a default quadrature rule on reference cell
 /// @param[in] celltype The cell type
 /// @param[in] m Maximum degree of polynomial that this quadrature rule

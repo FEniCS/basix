@@ -94,13 +94,10 @@ to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
 
 namespace element
 {
-
-namespace stdex = std::experimental;
-
 /// Typedef for mdspan
-using mdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using mdspan2_t = impl::cmdspan2_t;
 /// Typedef for mdspan
-using mdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
+using mdspan4_t = impl::cmdspan4_t;
 
 /// Creates a version of the interpolation points, interpolation
 /// matrices and entity transformation that represent a discontinuous

@@ -1288,11 +1288,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
           const auto [pt, shape] = lattice::create_new(ct, degree, lattice_type,
                                                        false, simplex_method);
-          stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> lattice(
-              pt.data(), shape);
+          impl::cmdspan2_t lattice(pt.data(), shape);
           xtl::span<const double> x0(entity_x.data(), entity_x_shape[1]);
-          stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>
-              entity_x_view(entity_x.data(), entity_x_shape);
+          impl::cmdspan2_t entity_x_view(entity_x.data(), entity_x_shape);
 
           auto& _x = x[dim].emplace_back(shape[0], entity_x_shape[1]);
           for (std::size_t i = 0; i < shape[0]; ++i)

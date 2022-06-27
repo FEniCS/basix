@@ -256,11 +256,13 @@ basix::element::create_nedelec2(cell::type celltype, int degree,
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  x[0] = std::vector<xt::xtensor<double, 2>>(
-      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
-  M[0] = std::vector<xt::xtensor<double, 4>>(
-      cell::num_sub_entities(celltype, 0),
-      xt::xtensor<double, 4>({0, tdim, 0, 1}));
+  {
+    const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
+    x[0] = std::vector<xt::xtensor<double, 2>>(
+        num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[0] = std::vector<xt::xtensor<double, 4>>(
+        num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+  }
 
   // Integral representation for the edge dofs
   FiniteElement edge_space
@@ -278,11 +280,11 @@ basix::element::create_nedelec2(cell::type celltype, int degree,
   }
   else
   {
+    const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
     x[2] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, 2), xt::xtensor<double, 2>({0, tdim}));
+        num_ent, xt::xtensor<double, 2>({0, tdim}));
     M[2] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, 2),
-        xt::xtensor<double, 4>({0, tdim, 0, 1}));
+        num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
   if (tdim == 3)
   {
@@ -296,12 +298,11 @@ basix::element::create_nedelec2(cell::type celltype, int degree,
     }
     else
     {
+      const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
       x[3] = std::vector<xt::xtensor<double, 2>>(
-          cell::num_sub_entities(celltype, 3),
-          xt::xtensor<double, 2>({0, tdim}));
+          num_ent, xt::xtensor<double, 2>({0, tdim}));
       M[3] = std::vector<xt::xtensor<double, 4>>(
-          cell::num_sub_entities(celltype, 3),
-          xt::xtensor<double, 4>({0, tdim, 0, 1}));
+          num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
     }
   }
 

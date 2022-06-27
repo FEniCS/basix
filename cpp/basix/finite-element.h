@@ -22,6 +22,76 @@
 namespace basix
 {
 
+namespace impl
+{
+using mdspan2_t
+    = std::experimental::mdspan<double,
+                                std::experimental::dextents<std::size_t, 2>>;
+using mdspan4_t
+    = std::experimental::mdspan<double,
+                                std::experimental::dextents<std::size_t, 4>>;
+using cmdspan2_t
+    = std::experimental::mdspan<const double,
+                                std::experimental::dextents<std::size_t, 2>>;
+using cmdspan4_t
+    = std::experimental::mdspan<const double,
+                                std::experimental::dextents<std::size_t, 4>>;
+
+using mdarray2_t
+    = std::experimental::mdarray<double,
+                                 std::experimental::dextents<std::size_t, 2>>;
+using mdarray4_t
+    = std::experimental::mdarray<double,
+                                 std::experimental::dextents<std::size_t, 4>>;
+
+inline std::array<std::vector<cmdspan2_t>, 4>
+to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
+{
+  std::array<std::vector<cmdspan2_t>, 4> x1;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      x1[i].emplace_back(x[i][j].data(), x[i][j].extents());
+
+  return x1;
+}
+
+inline std::array<std::vector<cmdspan4_t>, 4>
+to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
+{
+  std::array<std::vector<cmdspan4_t>, 4> M1;
+  for (std::size_t i = 0; i < M.size(); ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      M1[i].emplace_back(M[i][j].data(), M[i][j].extents());
+
+  return M1;
+}
+
+inline std::array<std::vector<cmdspan2_t>, 4>
+to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& x,
+          const std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
+{
+  std::array<std::vector<cmdspan2_t>, 4> x1;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      x1[i].push_back(cmdspan2_t(x[i][j].data(), shape[i][j]));
+
+  return x1;
+}
+
+inline std::array<std::vector<cmdspan4_t>, 4>
+to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
+          const std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
+{
+  std::array<std::vector<cmdspan4_t>, 4> M1;
+  for (std::size_t i = 0; i < M.size(); ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      M1[i].push_back(cmdspan4_t(M[i][j].data(), shape[i][j]));
+
+  return M1;
+}
+
+} // namespace impl
+
 namespace element
 {
 

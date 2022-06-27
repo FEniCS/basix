@@ -233,9 +233,7 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
   }
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
-  }
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim}, wcoeffs,
                        x, M, 0, maps::type::covariantPiola, discontinuous,
@@ -311,9 +309,7 @@ basix::element::create_nedelec2(cell::type celltype, int degree,
   xt::xtensor<double, 2> wcoeffs = xt::eye<double>(tdim * psize);
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
-  }
 
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, wcoeffs,
                        x, M, 0, maps::type::covariantPiola, discontinuous,

@@ -105,6 +105,19 @@ xt::xtensor<double, 2> polynomials::tabulate(polynomials::type polytype,
   }
 }
 //-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+polynomials::tabulate(
+    polynomials::type polytype, cell::type celltype, int d,
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>
+        x)
+{
+  xt::xtensor<double, 2> _x({x.extent(0), x.extent(1)});
+  std::copy_n(x.data(), x.size(), _x.data());
+  xt::xtensor<double, 2> p = tabulate(polytype, celltype, d, _x);
+  return {std::vector(p.data(), p.data() + p.size()), {p.shape(0), p.shape(1)}};
+}
+//-----------------------------------------------------------------------------
 int polynomials::dim(polynomials::type, cell::type cell, int d)
 {
   return polyset::dim(cell, d);

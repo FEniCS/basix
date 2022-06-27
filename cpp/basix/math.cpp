@@ -5,7 +5,11 @@
 // SPDX-License-Identifier:    LGPL-3.0-or-later
 
 #include "math.h"
+#include "mdspan.hpp"
 #include <vector>
+#include <xtensor/xadapt.hpp>
+
+namespace stdex = std::experimental;
 
 extern "C"
 {
@@ -88,6 +92,21 @@ xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
   return out;
 }
 //------------------------------------------------------------------
+std::vector<double>
+basix::math::solve(const std::experimental::mdspan<
+                       double, std::experimental::dextents<std::size_t, 2>>& A,
+                   const std::experimental::mdspan<
+                       double, std::experimental::dextents<std::size_t, 2>>& B)
+{
+  auto _A = xt::adapt(A.data(), A.size(), xt::no_ownership(),
+                      std::array<std::size_t, 2>{A.extent(0), A.extent(1)});
+  auto _B = xt::adapt(B.data(), B.size(), xt::no_ownership(),
+                      std::array<std::size_t, 2>{B.extent(0), B.extent(1)});
+
+  xt::xtensor<double, 2> C = solve(_A, _B);
+  return std::vector<double>(C.data(), C.data() + C.size());
+}
+//------------------------------------------------------------------
 bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
 {
   // Copy to column major matrix
@@ -155,5 +174,15 @@ xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
   xt::xtensor<double, 2> C = xt::zeros<double>({A.shape(0), B.shape(1)});
   dot(A, B, C);
   return C;
+}
+//------------------------------------------------------------------
+std::vector<double> basix::math::eye(std::size_t n)
+{
+  std::vector<double> I(n * n, 0);
+  std::experimental::mdspan<double, std::experimental::dextents<std::size_t, 2>>
+      Iview(I.data(), n, n);
+  for (std::size_t i = 0; i < n; ++i)
+    Iview(i, i) = 1.0;
+  return I;
 }
 //------------------------------------------------------------------

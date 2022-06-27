@@ -74,25 +74,26 @@ def get_bernstein_polynomials_entity_order(celltype, degree):
 
 
 @pytest.mark.parametrize("celltype", [
-    basix.CellType.interval, basix.CellType.triangle, basix.CellType.tetrahedron
+    basix.CellType.interval,
+    basix.CellType.triangle,
+    basix.CellType.tetrahedron
 ])
 @pytest.mark.parametrize("degree", range(1, 4))
 def test_poly(celltype, degree):
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
-
     wtab = basix.tabulate_polynomials(basix.PolynomialType.bernstein, celltype, degree, pts)
-
     bern = get_bernstein_polynomials(celltype, degree)
     wsym = numpy.array([[float(b.subs(list(zip([x, y, z], p)))) for p in pts] for b in bern])
-
     assert numpy.allclose(wtab, wsym)
 
 
-@pytest.mark.parametrize("celltype", [basix.CellType.interval, basix.CellType.triangle])
+@pytest.mark.parametrize("celltype", [
+    basix.CellType.interval,
+    basix.CellType.triangle
+])
 @pytest.mark.parametrize("degree", range(1, 4))
 def test_element(celltype, degree):
     bern = get_bernstein_polynomials_entity_order(celltype, degree)
-
     lagrange = basix.create_element(basix.ElementFamily.P, celltype, degree,
                                     basix.LagrangeVariant.bernstein)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
@@ -117,18 +118,16 @@ def test_element(celltype, degree):
 
 
 @pytest.mark.parametrize("celltype", [
-    basix.CellType.interval, basix.CellType.triangle,
+    basix.CellType.interval,
+    basix.CellType.triangle,
     basix.CellType.tetrahedron
 ])
 @pytest.mark.parametrize("degree", range(1, 6))
 def test_basis_is_polynomials(celltype, degree):
-    lagrange = basix.create_element(basix.ElementFamily.P, celltype, degree,
-                                    basix.LagrangeVariant.bernstein)
+    lagrange = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.bernstein)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     wtab = lagrange.tabulate(0, pts)[0, :, :, 0]
-
     bern = basix.tabulate_polynomials(basix.PolynomialType.bernstein, celltype, degree, pts)
-
     remaining = [i for i, _ in enumerate(bern)]
     for row in wtab.T:
         for i in remaining:

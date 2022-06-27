@@ -148,13 +148,11 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
     }
   }
 
-  // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face
-  // and d(d-1)(d+1) on the interior in 3D
+  // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face and
+  // d(d-1)(d+1) on the interior in 3D
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim * tdim);
-  }
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
                        wcoeffs, x, M, 0, maps::type::doubleCovariantPiola,

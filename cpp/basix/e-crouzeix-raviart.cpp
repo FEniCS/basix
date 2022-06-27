@@ -66,9 +66,7 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
   M[tdim - 1].resize(facet_topology.size(), xt::ones<double>({1, 1, 1, 1}));
 
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
-  }
 
   return FiniteElement(element::family::CR, celltype, 1, {},
                        xt::eye<double>(ndofs), x, M, 0, maps::type::identity,

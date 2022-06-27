@@ -83,9 +83,8 @@ to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
 } // namespace
 
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
-                                         element::lagrange_variant lvariant,
-                                         bool discontinuous)
+FiniteElement element::create_bdm(cell::type celltype, int degree,
+                                  lagrange_variant lvariant, bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
@@ -100,10 +99,10 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
     M[i] = std::vector<mdarray4_t>(num_ent, mdarray4_t(0, tdim, 0, 1));
   }
 
-  // Add integral moments on facets
+  // Integral moments on facets
   const cell::type facettype = sub_entity_type(celltype, tdim - 1, 0);
   const FiniteElement facet_moment_space
-      = element::create_lagrange(facettype, degree, lvariant, true);
+      = create_lagrange(facettype, degree, lvariant, true);
   {
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments_new(
         facet_moment_space, celltype, tdim, degree * 2);
@@ -116,12 +115,13 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
     }
   }
 
-  // Add integral moments on interior
+  // Integral moments on interior
   if (degree > 1)
   {
     // Interior integral moment
     auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments_new(
-        facet_moment_space, celltype, tdim, degree * 2);
+        create_nedelec(celltype, degree - 1, lvariant, true), celltype, tdim,
+        2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -157,7 +157,7 @@ FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
   // The number of order (degree) scalar polynomials
   const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
 
-  return FiniteElement(element::family::BDM, celltype, degree, {tdim},
+  return FiniteElement(family::BDM, celltype, degree, {tdim},
                        mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs), xview,
                        Mview, 0, maps::type::contravariantPiola, discontinuous,
                        degree, degree, lvariant);

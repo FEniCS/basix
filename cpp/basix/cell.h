@@ -34,6 +34,11 @@ enum class type
 /// @return Set of vertex points of the cell. Shape is (npoints, gdim)
 xt::xtensor<double, 2> geometry(cell::type celltype);
 
+/// Cell geometry
+/// @param celltype Cell Type
+/// @return (0) Vertex point data of the cell and (1) the shape of the
+/// data array. The points are stored in row-major format and the shape
+/// is is (npoints, gdim)
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 geometry_new(cell::type celltype);
 

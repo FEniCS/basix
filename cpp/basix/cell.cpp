@@ -4,6 +4,7 @@
 
 #include "cell.h"
 #include "math.h"
+#include "mdspan.hpp"
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xview.hpp>
 
@@ -482,16 +483,16 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
   return orientations;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 1> cell::facet_reference_volumes(cell::type cell_type)
+std::vector<double> cell::facet_reference_volumes(cell::type cell_type)
 {
   const int tdim = cell::topological_dimension(cell_type);
-  std::vector<cell::type> facet_types
+  const std::vector<cell::type> facet_types
       = cell::subentity_types(cell_type)[tdim - 1];
 
-  std::array<std::size_t, 1> shape = {facet_types.size()};
-  xt::xtensor<double, 1> out(shape);
-  for (std::size_t i = 0; i < facet_types.size(); ++i)
-    out(i) = cell::volume(facet_types[i]);
+  std::vector<double> out;
+  for (auto& facet_type : facet_types)
+    out.push_back(cell::volume(facet_type));
+
   return out;
 }
 //-----------------------------------------------------------------------------
@@ -557,7 +558,8 @@ std::vector<std::vector<cell::type>> cell::subentity_types(cell::type cell_type)
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> cell::facet_jacobians(cell::type cell_type)
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+cell::facet_jacobians(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
   if (tdim != 2 and tdim != 3)
@@ -569,16 +571,25 @@ xt::xtensor<double, 3> cell::facet_jacobians(cell::type cell_type)
   const xt::xtensor<double, 2> x = cell::geometry(cell_type);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
-  xt::xtensor<double, 3> jacobians({facets.size(), tdim, tdim - 1});
+
+  std::array<std::size_t, 3> shape = {facets.size(), tdim, tdim - 1};
+  std::vector<double> jacobians(shape[0] * shape[1] * shape[2]);
+  using mdspan3_t
+      = std::experimental::mdspan<double,
+                                  std::experimental::dextents<std::size_t, 3>>;
+  mdspan3_t J(jacobians.data(), shape);
 
   for (std::size_t f = 0; f < facets.size(); ++f)
   {
     const std::vector<int>& facet = facets[f];
     auto x0 = xt::row(x, facet[0]);
+    // for (std::size_t j = 0; j < tdim - 1; ++j)
+    //   xt::view(jacobians, f, xt::all(), j) = xt::row(x, facet[1 + j]) - x0;
     for (std::size_t j = 0; j < tdim - 1; ++j)
-      xt::view(jacobians, f, xt::all(), j) = xt::row(x, facet[1 + j]) - x0;
+      for (std::size_t k = 0; k < J.extent(1); ++k)
+        J(f, k, j) = x(facet[1 + j], k) - x0[k];
   }
 
-  return jacobians;
+  return {std::move(jacobians), std::move(shape)};
 }
 //-----------------------------------------------------------------------------

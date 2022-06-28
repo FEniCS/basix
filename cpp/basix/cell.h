@@ -111,7 +111,7 @@ std::vector<bool> facet_orientations(cell::type cell_type);
 /// @param cell_type Type of cell
 /// @return The volumes of the references associated with each facet
 // FIXME: This could be a std::vector<double>
-xt::xtensor<double, 1> facet_reference_volumes(cell::type cell_type);
+std::vector<double> facet_reference_volumes(cell::type cell_type);
 
 /// Get the types of the subentities of a reference cell
 /// @param cell_type Type of cell
@@ -121,6 +121,7 @@ std::vector<std::vector<cell::type>> subentity_types(cell::type cell_type);
 /// Get the jacobians of the facets of a reference cell
 /// @param cell_type Type of cell
 /// @return The jacobians of the facets. Shape is (nfacets, gdim, gdim - 1)
-xt::xtensor<double, 3> facet_jacobians(cell::type cell_type);
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+facet_jacobians(cell::type cell_type);
 
 } // namespace basix::cell

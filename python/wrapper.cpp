@@ -188,9 +188,9 @@ Interface to the Basix C++ library.
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 1> volumes
-            = cell::facet_reference_volumes(cell_type);
-        return py::array_t<double>(volumes.shape(), volumes.data());
+        std::vector<double> v = cell::facet_reference_volumes(cell_type);
+        std::array<std::size_t, 1> shape = {v.size()};
+        return py::array_t<double>(shape, v.data());
       },
       basix::docstring::cell_facet_reference_volumes.c_str());
   m.def(
@@ -207,8 +207,8 @@ Interface to the Basix C++ library.
       "cell_facet_jacobians",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 3> jacobians = cell::facet_jacobians(cell_type);
-        return py::array_t<double>(jacobians.shape(), jacobians.data());
+        auto [J, shape] = cell::facet_jacobians(cell_type);
+        return py::array_t<double>(shape, J.data());
       },
       basix::docstring::cell_facet_jacobians.c_str());
 

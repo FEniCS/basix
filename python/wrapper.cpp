@@ -180,8 +180,8 @@ Interface to the Basix C++ library.
       "cell_facet_normals",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
-        return py::array_t<double>(normals.shape(), normals.data());
+        auto [n, shape] = cell::facet_normals(cell_type);
+        return py::array_t<double>(shape, n.data());
       },
       basix::docstring::cell_facet_normals.c_str());
   m.def(
@@ -197,8 +197,8 @@ Interface to the Basix C++ library.
       "cell_facet_outward_normals",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 2> normals = cell::facet_outward_normals(cell_type);
-        return py::array_t<double>(normals.shape(), normals.data());
+        auto [n, shape] = cell::facet_outward_normals(cell_type);
+        return py::array_t<double>(shape, n);
       },
       basix::docstring::cell_facet_outward_normals.c_str());
   m.def("cell_facet_orientations", &cell::facet_orientations,

@@ -54,6 +54,42 @@ xt::xtensor<double, 2> cell::geometry(cell::type celltype)
   }
 }
 //-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+cell::geometry_new(cell::type celltype)
+{
+  switch (celltype)
+  {
+  case cell::type::point:
+    return {{}, {0, 1}};
+  case cell::type::interval:
+    return {{0.0, 1.0}, {2, 1}};
+  case cell::type::triangle:
+    return {{0.0, 0.0, 1.0, 0.0, 0.0, 1.0}, {3, 2}};
+    // return xt::xtensor<double, 2>({{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}});
+  case cell::type::quadrilateral:
+    return {{0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0}, {4, 2}};
+    // return xt::xtensor<double, 2>(
+    //     {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}});
+  case cell::type::tetrahedron:
+    return {{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
+            {4, 3}};
+  case cell::type::prism:
+    return {{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
+             0.0, 1.0, 0.0, 1.0, 1.0},
+            {6, 3}};
+  case cell::type::pyramid:
+    return {{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
+             0.0, 1.0},
+            {5, 3}};
+  case cell::type::hexahedron:
+    return {{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0,
+             0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0},
+            {8, 3}};
+  default:
+    throw std::runtime_error("Unsupported cell type");
+  }
+}
+//-----------------------------------------------------------------------------
 std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
 {
   switch (celltype)
@@ -342,9 +378,32 @@ xt::xtensor<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 cell::sub_entity_geometry_new(cell::type celltype, int dim, int index)
 {
-  xt::xtensor<double, 2> x = sub_entity_geometry(celltype, dim, index);
-  return {std::vector<double>(x.data(), x.data() + x.size()),
-          {x.shape(0), x.shape(1)}};
+  const std::vector<std::vector<std::vector<int>>> cell_topology
+      = cell::topology(celltype);
+  if (dim < 0 or dim >= (int)cell_topology.size())
+    throw std::runtime_error("Invalid dimension for sub-entity");
+
+  const auto [cell_geometry, shape] = cell::geometry_new(celltype);
+  const std::vector<std::vector<int>>& t = cell_topology[dim];
+  if (index < 0 or index >= (int)t.size())
+    throw std::runtime_error("Invalid entity index");
+
+  using cmdspan2_t
+      = std::experimental::mdspan<const double,
+                                  std::experimental::dextents<std::size_t, 2>>;
+  cmdspan2_t geometry(cell_geometry.data(), shape);
+
+  std::array<std::size_t, 2> subshape = {t[index].size(), geometry.extent(1)};
+  std::vector<double> sub_geometry(subshape[0] * subshape[1]);
+  using mdspan2_t
+      = std::experimental::mdspan<double,
+                                  std::experimental::dextents<std::size_t, 2>>;
+  mdspan2_t sub_entity(sub_geometry.data(), subshape);
+  for (std::size_t i = 0; i < sub_entity.extent(0); ++i)
+    for (std::size_t j = 0; j < sub_entity.extent(1); ++j)
+      sub_entity(i, j) = geometry(t[index][i], j);
+
+  return {sub_geometry, subshape};
 }
 //----------------------------------------------------------------------------
 int cell::num_sub_entities(cell::type celltype, int dim)
@@ -403,59 +462,76 @@ double cell::volume(cell::type cell_type)
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> cell::facet_outward_normals(cell::type cell_type)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+cell::facet_outward_normals(cell::type cell_type)
 {
-  xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
+  auto [normals, shape] = cell::facet_normals(cell_type);
+  using mdspan2_t
+      = std::experimental::mdspan<double,
+                                  std::experimental::dextents<std::size_t, 2>>;
+  mdspan2_t n(normals.data(), shape);
   const std::vector<bool> facet_orientations
       = cell::facet_orientations(cell_type);
-  for (std::size_t f = 0; f < normals.shape(0); ++f)
+  for (std::size_t f = 0; f < n.extent(0); ++f)
   {
     if (facet_orientations[f])
-      xt::row(normals, f) *= -1.0;
+    {
+      for (std::size_t k = 0; k < n.extent(1); ++k)
+        n(f, k) *= -1.0;
+    }
   }
 
-  return normals;
+  return {normals, shape};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> cell::facet_normals(cell::type cell_type)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+cell::facet_normals(cell::type cell_type)
 {
-  const int tdim = cell::topological_dimension(cell_type);
+  const std::size_t tdim = cell::topological_dimension(cell_type);
   const xt::xtensor<double, 2> x = cell::geometry(cell_type);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
-  xt::xtensor<double, 2> normals(
-      {facets.size(), static_cast<std::size_t>(tdim)});
+
+  using mdspan2_t
+      = std::experimental::mdspan<double,
+                                  std::experimental::dextents<std::size_t, 2>>;
+  std::array<std::size_t, 2> shape = {facets.size(), tdim};
+  std::vector<double> normal(shape[0] * shape[1]);
+  mdspan2_t n(normal.data(), shape);
 
   switch (tdim)
   {
   case 1:
-    return xt::ones<double>({facets.size(), static_cast<std::size_t>(1)});
+    std::fill(normal.begin(), normal.end(), 1.0);
+    return {normal, shape};
   case 2:
   {
     for (std::size_t f = 0; f < facets.size(); ++f)
     {
       const std::vector<int>& facet = facets[f];
-      auto normal = xt::row(normals, f);
       assert(facet.size() == 2);
-      normal(0) = x(facet[1], 1) - x(facet[0], 1);
-      normal(1) = x(facet[0], 0) - x(facet[1], 0);
-      normal /= xt::sqrt(xt::sum(normal * normal));
+      n(f, 0) = x(facet[1], 1) - x(facet[0], 1);
+      n(f, 1) = x(facet[0], 0) - x(facet[1], 0);
+      double L = std::sqrt(n(f, 0) * n(f, 0) + n(f, 1) * n(f, 1));
+      n(f, 0) /= L;
+      n(f, 1) /= L;
     }
-    return normals;
+    return {normal, shape};
   }
   case 3:
   {
     for (std::size_t f = 0; f < facets.size(); ++f)
     {
       const std::vector<int>& facet = facets[f];
-      auto normal = xt::row(normals, f);
       assert(facets[f].size() == 3 or facets[f].size() == 4);
       auto e0 = xt::row(x, facet[1]) - xt::row(x, facet[0]);
       auto e1 = xt::row(x, facet[2]) - xt::row(x, facet[0]);
-      normal = basix::math::cross(e0, e1);
-      normal /= xt::sqrt(xt::sum(normal * normal));
+      auto n_f = basix::math::cross(e0, e1);
+      n_f /= xt::sqrt(xt::sum(n_f * n_f));
+      for (std::size_t i = 0; i < 3; ++i)
+        n(f, i) = n_f[i];
     }
-    return normals;
+    return {normal, shape};
   }
   default:
     throw std::runtime_error("Wrong topological dimension");
@@ -469,14 +545,19 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
 
-  const xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
+  const auto [normals, shape] = cell::facet_normals(cell_type);
+  using mdspan2_t
+      = std::experimental::mdspan<const double,
+                                  std::experimental::dextents<std::size_t, 2>>;
+  mdspan2_t n(normals.data(), shape);
+
   const xt::xtensor<double, 1> midpoint = xt::mean(x, 0);
-  std::vector<bool> orientations(normals.shape(0));
-  for (std::size_t f = 0; f < normals.shape(0); ++f)
+  std::vector<bool> orientations(n.extent(0));
+  for (std::size_t f = 0; f < n.extent(0); ++f)
   {
-    auto normal = xt::row(normals, f);
-    auto x0 = xt::row(x, facets[f][0]) - midpoint;
-    const double dot = xt::sum(x0 * normal)();
+    double dot = 0.0;
+    for (std::size_t i = 0; i < n.extent(1); ++i)
+      dot += n(facets[f][0], i) * (x(facets[f][0], i) - midpoint[i]);
     orientations[f] = dot < 0;
   }
 
@@ -583,8 +664,6 @@ cell::facet_jacobians(cell::type cell_type)
   {
     const std::vector<int>& facet = facets[f];
     auto x0 = xt::row(x, facet[0]);
-    // for (std::size_t j = 0; j < tdim - 1; ++j)
-    //   xt::view(jacobians, f, xt::all(), j) = xt::row(x, facet[1 + j]) - x0;
     for (std::size_t j = 0; j < tdim - 1; ++j)
       for (std::size_t k = 0; k < J.extent(1); ++k)
         J(f, k, j) = x(facet[1 + j], k) - x0[k];

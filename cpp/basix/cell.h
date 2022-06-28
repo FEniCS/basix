@@ -34,6 +34,9 @@ enum class type
 /// @return Set of vertex points of the cell. Shape is (npoints, gdim)
 xt::xtensor<double, 2> geometry(cell::type celltype);
 
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+geometry_new(cell::type celltype);
+
 /// Cell topology
 /// @param celltype Cell Type
 /// @return List of topology (vertex indices) for each dimension (0..tdim)
@@ -93,13 +96,15 @@ double volume(cell::type cell_type);
 /// Get the (outward) normals to the facets of a reference cell
 /// @param cell_type Type of cell
 /// @return The outward normals. Shape is (nfacets, gdim)
-xt::xtensor<double, 2> facet_outward_normals(cell::type cell_type);
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+facet_outward_normals(cell::type cell_type);
 
 /// Get the normals to the facets of a reference cell oriented using the
 /// low-to-high ordering of the facet
 /// @param cell_type Type of cell
 /// @return The normals. Shape is (nfacets, gdim)
-xt::xtensor<double, 2> facet_normals(cell::type cell_type);
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+facet_normals(cell::type cell_type);
 
 /// Get an array of bools indicating whether or not the facet normals are
 /// outward pointing

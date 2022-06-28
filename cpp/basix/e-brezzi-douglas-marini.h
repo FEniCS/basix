@@ -19,7 +19,6 @@ namespace basix::element
 /// discontinuous
 /// @return A finite element
 FiniteElement create_bdm(cell::type celltype, int degree,
-                         element::lagrange_variant lvariant,
-                         bool discontinuous);
+                         lagrange_variant lvariant, bool discontinuous);
 
 } // namespace basix::element

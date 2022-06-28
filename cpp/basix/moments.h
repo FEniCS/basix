@@ -5,6 +5,8 @@
 #pragma once
 
 #include "cell.h"
+#include <array>
+#include <tuple>
 #include <utility>
 #include <vector>
 #include <xtensor/xtensor.hpp>
@@ -66,6 +68,34 @@ std::pair<std::vector<xt::xtensor<double, 2>>,
 make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
                           std::size_t value_size, int q_deg);
 
+/// Make interpolation points and weights for dot product integral
+/// moments
+///
+/// These will represent the integral of each function in the moment
+/// space over each sub entity of the moment space's cell type in a cell
+/// with the given type. For example, if the input cell type is a
+/// triangle and the moment space is a P1 space on an edge, this will
+/// perform two integrals for each of the 3 edges of the triangle.
+///
+/// @todo Clarify what happens value size of the moment space is less
+/// than `value_size`.
+///
+/// @param V The space to compute the integral moments against
+/// @param celltype The cell type of the cell on which the space is being
+/// defined
+/// @param value_size The value size of the space being defined
+/// @param q_deg The quadrature degree used for the integrals
+/// @return (interpolation points, interpolation shape,  interpolation
+/// matrix, interpolation shape). The indices of the interpolation
+/// points are (number of entities, npoints, gdim). The indices on the
+/// interpolation matrix are (number of entities, ndofs, value_size,
+/// npoints, derivative)
+std::tuple<
+    std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 2>>,
+    std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 4>>>
+make_dot_integral_moments_new(const FiniteElement& V, cell::type celltype,
+                              std::size_t value_size, int q_deg);
+
 /// Make interpolation points and weights for tangent integral moments
 ///
 /// These can only be used when the moment space is defined on edges of
@@ -104,6 +134,27 @@ std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 4>>>
 make_normal_integral_moments(const FiniteElement& V, cell::type celltype,
                              std::size_t value_size, int q_deg);
+
+/// Compute interpolation points and weights for normal integral moments
+///
+/// These can only be used when the moment space is defined on facets of
+/// the cell
+///
+/// @param[in] V The space to compute the integral moments against
+/// @param[in] celltype The cell type of the cell on which the space is
+/// being defined
+/// @param[in] value_size The value size of the space being defined
+/// @param[in] q_deg The quadrature degree used for the integrals
+/// @return (interpolation points, interpolation shape,  interpolation
+/// matrix, interpolation shape). The indices of the
+/// interpolation points are (number of entities, npoints, gdim). The indices on
+/// the interpolation matrix are (number of entities, ndofs, value_size,
+/// npoints, derivative)
+std::tuple<
+    std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 2>>,
+    std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 4>>>
+make_normal_integral_moments_new(const FiniteElement& V, cell::type celltype,
+                                 std::size_t value_size, int q_deg);
 
 } // namespace moments
 } // namespace basix

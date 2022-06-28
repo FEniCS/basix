@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <array>
+#include <utility>
 #include <vector>
 #include <xtensor/xtensor.hpp>
 
@@ -57,6 +59,10 @@ sub_entity_connectivity(cell::type celltype);
 /// @return Set of vertex points of the sub-entity. Shape is (npoints, gdim)
 xt::xtensor<double, 2> sub_entity_geometry(cell::type celltype, int dim,
                                            int index);
+
+/// NEW
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+sub_entity_geometry_new(cell::type celltype, int dim, int index);
 
 /// Number of sub-entities of a cell by topological dimension
 /// @todo Optimise this function

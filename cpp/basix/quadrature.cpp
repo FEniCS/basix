@@ -5328,6 +5328,14 @@ quadrature::make_quadrature(quadrature::type rule, cell::type celltype, int m)
   }
 }
 //-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::vector<double>>
+quadrature::make_quadrature_new(quadrature::type rule, cell::type celltype,
+                                int m)
+{
+  auto [x, w] = make_quadrature(rule, celltype, m);
+  return {std::vector<double>(x.data(), x.data() + x.size()), std::move(w)};
+}
+//-----------------------------------------------------------------------------
 std::pair<xt::xtensor<double, 2>, std::vector<double>>
 quadrature::make_quadrature(cell::type celltype, int m)
 {

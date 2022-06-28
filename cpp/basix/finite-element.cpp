@@ -25,10 +25,61 @@
 #define str(X) str_macro(X)
 
 using namespace basix;
+namespace stdex = std::experimental;
+using mdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using mdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 namespace
 {
+//----------------------------------------------------------------------------
+template <typename U>
+xt::xtensor<typename U::value_type, 2> mdspan_to_xtensor2(const U& x)
+{
+  auto e = x.extents();
+  xt::xtensor<typename U::value_type, 2> y({e.extent(0), e.extent(1)});
+  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
+    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
+      y(k0, k1) = x(k0, k1);
+  return y;
+}
+//----------------------------------------------------------------------------
+template <typename U>
+xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
+{
+  auto e = x.extents();
+  xt::xtensor<double, 4> y(
+      {e.extent(0), e.extent(1), e.extent(2), e.extent(3)});
+  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
+    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
+      for (std::size_t k2 = 0; k2 < e.extent(2); ++k2)
+        for (std::size_t k3 = 0; k3 < e.extent(3); ++k3)
+          y(k0, k1, k2, k3) = x(k0, k1, k2, k3);
+
+  return y;
+}
 //-----------------------------------------------------------------------------
+std::array<std::vector<xt::xtensor<double, 2>>, 4>
+to_xtensor(const std::array<std::vector<mdspan2_t>, 4>& x)
+{
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      _x[i].push_back(mdspan_to_xtensor2(x[i][j]));
+
+  return _x;
+}
+//----------------------------------------------------------------------------
+std::array<std::vector<xt::xtensor<double, 4>>, 4>
+to_xtensor(const std::array<std::vector<mdspan4_t>, 4>& M)
+{
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+  for (std::size_t i = 0; i < M.size(); ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      _M[i].push_back(mdspan_to_xtensor4(M[i][j]));
+
+  return _M;
+}
+//----------------------------------------------------------------------------
 /// This function orthogonalises and normalises the rows of a matrix in place
 void orthogonalise(xt::xtensor<double, 2>& wcoeffs)
 {
@@ -122,9 +173,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
       xt::xtensor<double, 3> P;
 
       if (x_e.shape(0) != 0)
-      {
         P = polyset::tabulate(cell_type, degree, nderivs, x_e);
-      }
 
       // Me: [dof, vs, point, deriv]
       const xt::xtensor<double, 4>& Me = M[d][e];
@@ -405,6 +454,61 @@ basix::element::make_discontinuous(
   return {x_out, M_out};
 }
 //-----------------------------------------------------------------------------
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+basix::element::make_discontinuous(
+    const std::array<std::vector<mdspan2_t>, 4>& x,
+    const std::array<std::vector<mdspan4_t>, 4>& M, int tdim, int value_size)
+{
+
+  auto to_xtensor = [](auto& x, auto& M)
+      -> std::pair<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
+                   std::array<std::vector<xt::xtensor<double, 4>>, 4>>
+  {
+    std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+    std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+    for (std::size_t i = 0; i < x.size(); ++i)
+      for (std::size_t j = 0; j < x[i].size(); ++j)
+        _x[i].push_back(mdspan_to_xtensor2(x[i][j]));
+    for (std::size_t i = 0; i < M.size(); ++i)
+      for (std::size_t j = 0; j < M[i].size(); ++j)
+        _M[i].push_back(mdspan_to_xtensor4(M[i][j]));
+
+    return {std::move(_x), std::move(_M)};
+  };
+
+  auto [_x, _M] = to_xtensor(x, M);
+  std::tie(_x, _M) = make_discontinuous(_x, _M, tdim, value_size);
+
+  std::array<std::vector<std::vector<double>>, 4> x_new;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+  for (std::size_t i = 0; i < _x.size(); ++i)
+  {
+    for (std::size_t j = 0; j < _x[i].size(); ++j)
+    {
+      xshape[i].push_back({_x[i][j].shape(0), _x[i][j].shape(1)});
+      x_new[i].emplace_back(_x[i][j].data(), _x[i][j].data() + _x[i][j].size());
+    }
+  }
+
+  std::array<std::vector<std::vector<double>>, 4> M_new;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+  for (std::size_t i = 0; i < _M.size(); ++i)
+  {
+    for (std::size_t j = 0; j < _M[i].size(); ++j)
+    {
+      Mshape[i].push_back({_M[i][j].shape(0), _M[i][j].shape(1),
+                           _M[i][j].shape(2), _M[i][j].shape(3)});
+      M_new[i].emplace_back(_M[i][j].data(), _M[i][j].data() + _M[i][j].size());
+    }
+  }
+
+  return {std::move(x_new), std::move(xshape), std::move(M_new),
+          std::move(Mshape)};
+}
+//-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
     cell::type cell_type, const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
@@ -505,6 +609,22 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
+    const std::array<std::vector<mdspan2_t>, 4>& x,
+    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::lagrange_variant lvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    interpolation_nderivs, map_type, discontinuous,
+                    highest_complete_degree, highest_degree, lvariant,
+                    element::dpc_variant::unset, tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
@@ -523,12 +643,45 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
+    const std::array<std::vector<mdspan2_t>, 4>& x,
+    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::dpc_variant dvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    interpolation_nderivs, map_type, discontinuous,
+                    highest_complete_degree, highest_degree,
+                    element::lagrange_variant::unset, dvariant, tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape,
     const xt::xtensor<double, 2>& wcoeffs,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
     int interpolation_nderivs, maps::type map_type, bool discontinuous,
     int highest_complete_degree, int highest_degree,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    interpolation_nderivs, map_type, discontinuous,
+                    highest_complete_degree, highest_degree,
+                    element::lagrange_variant::unset,
+                    element::dpc_variant::unset, tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
+    const std::array<std::vector<mdspan2_t>, 4>& x,
+    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors)
     : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
@@ -562,16 +715,21 @@ FiniteElement::FiniteElement(
   if (discontinuous)
   {
     for (std::size_t i = 0; i < _cell_tdim; ++i)
+    {
       for (std::size_t j = 0; j < x[i].size(); ++j)
+      {
         if (x[i][j].shape(0) > 0)
+        {
           throw std::runtime_error(
               "Discontinuous element can only have interior DOFs.");
+        }
+      }
+    }
   }
 
   xt::xtensor<double, 2> wcoeffs_ortho({wcoeffs.shape(0), wcoeffs.shape(1)});
   wcoeffs_ortho.assign(wcoeffs);
   orthogonalise(wcoeffs_ortho);
-
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, M, x,
                                      highest_degree, interpolation_nderivs);
 
@@ -722,6 +880,7 @@ FiniteElement::FiniteElement(
     if (!_dof_transformations_are_permutations)
       break;
   }
+
   if (!_dof_transformations_are_identity)
   {
     // If transformations are permutations, then create the permutations
@@ -818,6 +977,24 @@ FiniteElement::FiniteElement(
       }
     }
   }
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
+    const std::array<std::vector<mdspan2_t>, 4>& x,
+    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    maps::type map_type, bool discontinuous, int highest_complete_degree,
+    int highest_degree, element::lagrange_variant lvariant,
+    element::dpc_variant dvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape,
+                    mdspan_to_xtensor2(wcoeffs), to_xtensor(x), to_xtensor(M),
+                    interpolation_nderivs, map_type, discontinuous,
+                    highest_complete_degree, highest_degree, lvariant, dvariant,
+                    tensor_factors)
+{
 }
 //-----------------------------------------------------------------------------
 bool FiniteElement::operator==(const FiniteElement& e) const

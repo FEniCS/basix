@@ -10,7 +10,7 @@
 #include <cstddef>  // size_t
 #include <limits>   // numeric_limits
 #include <array>
-// #include <span>
+#include <span>
 #include <utility> // integer_sequence
 #include <cstddef>
 #include <cstddef> // size_t

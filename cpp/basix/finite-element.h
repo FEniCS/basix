@@ -22,15 +22,82 @@
 namespace basix
 {
 
+namespace impl
+{
+using mdspan2_t
+    = std::experimental::mdspan<double,
+                                std::experimental::dextents<std::size_t, 2>>;
+using mdspan4_t
+    = std::experimental::mdspan<double,
+                                std::experimental::dextents<std::size_t, 4>>;
+using cmdspan2_t
+    = std::experimental::mdspan<const double,
+                                std::experimental::dextents<std::size_t, 2>>;
+using cmdspan4_t
+    = std::experimental::mdspan<const double,
+                                std::experimental::dextents<std::size_t, 4>>;
+
+using mdarray2_t
+    = std::experimental::mdarray<double,
+                                 std::experimental::dextents<std::size_t, 2>>;
+using mdarray4_t
+    = std::experimental::mdarray<double,
+                                 std::experimental::dextents<std::size_t, 4>>;
+
+inline std::array<std::vector<cmdspan2_t>, 4>
+to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
+{
+  std::array<std::vector<cmdspan2_t>, 4> x1;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      x1[i].emplace_back(x[i][j].data(), x[i][j].extents());
+
+  return x1;
+}
+
+inline std::array<std::vector<cmdspan4_t>, 4>
+to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
+{
+  std::array<std::vector<cmdspan4_t>, 4> M1;
+  for (std::size_t i = 0; i < M.size(); ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      M1[i].emplace_back(M[i][j].data(), M[i][j].extents());
+
+  return M1;
+}
+
+inline std::array<std::vector<cmdspan2_t>, 4>
+to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& x,
+          const std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
+{
+  std::array<std::vector<cmdspan2_t>, 4> x1;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      x1[i].push_back(cmdspan2_t(x[i][j].data(), shape[i][j]));
+
+  return x1;
+}
+
+inline std::array<std::vector<cmdspan4_t>, 4>
+to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
+          const std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
+{
+  std::array<std::vector<cmdspan4_t>, 4> M1;
+  for (std::size_t i = 0; i < M.size(); ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      M1[i].push_back(cmdspan4_t(M[i][j].data(), shape[i][j]));
+
+  return M1;
+}
+
+} // namespace impl
+
 namespace element
 {
-
-namespace stdex = std::experimental;
-
 /// Typedef for mdspan
-using mdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using mdspan2_t = impl::cmdspan2_t;
 /// Typedef for mdspan
-using mdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
+using mdspan4_t = impl::cmdspan4_t;
 
 /// Creates a version of the interpolation points, interpolation
 /// matrices and entity transformation that represent a discontinuous
@@ -52,7 +119,21 @@ make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
                    int tdim, int value_size);
 
-/// TODO
+/// Creates a version of the interpolation points, interpolation
+/// matrices and entity transformation that represent a discontinuous
+/// version of the element. This discontinuous version will have the
+/// same DOFs but they will all be associated with the interior of the
+/// reference cell.
+/// @param[in] x Interpolation points. Indices are (tdim, entity index,
+/// point index, dim)
+/// @param[in] M The interpolation matrices. Indices are (tdim, entity
+/// index, dof, vs, point_index, derivative)
+/// @param[in] tdim The topological dimension of the cell the element is
+/// defined on
+/// @param[in] value_size The value size of the element
+/// @return (xdata, xshape, Mdata, Mshape), where the x and M data are
+/// for  a discontinuous version of the element (with the same shapes as
+/// x and M)
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
            std::array<std::vector<std::vector<double>>, 4>,

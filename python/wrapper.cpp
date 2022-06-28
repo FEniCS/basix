@@ -198,7 +198,7 @@ Interface to the Basix C++ library.
       [](cell::type cell_type)
       {
         auto [n, shape] = cell::facet_outward_normals(cell_type);
-        return py::array_t<double>(shape, n);
+        return py::array_t<double>(shape, n.data());
       },
       basix::docstring::cell_facet_outward_normals.c_str());
   m.def("cell_facet_orientations", &cell::facet_orientations,

@@ -21,7 +21,6 @@ using namespace basix;
 FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
                                             bool discontinuous)
 {
-  std::cout << "Start" << std::endl;
   if (discontinuous)
     throw std::runtime_error("Cannot create a discontinuous bubble element.");
 
@@ -85,6 +84,16 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
       std::vector<double>(points.data(), points.data() + points.size()),
       points.shape(0), points.shape(1));
 
+  auto create_phi1 = [](auto& phi, auto& buffer)
+  {
+    buffer.resize(phi.shape(1) * phi.shape(2));
+    impl::mdspan2_t phi1(buffer.data(), phi.shape(1), phi.shape(2));
+    for (std::size_t i = 0; i < phi1.extent(0); ++i)
+      for (std::size_t j = 0; j < phi1.extent(1); ++j)
+        phi1(i, j) = phi(0, i, j);
+    return phi1;
+  };
+
   // Create coefficients for order (degree-1) vector polynomials
   std::vector<double> phi1_buffer;
   impl::mdspan2_t phi1;
@@ -94,12 +103,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::interval:
   {
     auto _phi1 = polyset::tabulate(celltype, degree - 2, 0, pts);
-    phi1_buffer.resize(_phi1.shape(1), _phi1.shape(2));
-    phi1 = impl::mdspan2_t(phi1_buffer.data(), _phi1.shape(1), _phi1.shape(2));
-    for (std::size_t i = 0; i < phi1.extent(0); ++i)
-      for (std::size_t j = 0; j < phi1.extent(1); ++j)
-        phi1(i, j) = _phi1(0, i, j);
-
+    phi1 = create_phi1(_phi1, phi1_buffer);
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       double x0 = pts(i, 0);
@@ -110,12 +114,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::triangle:
   {
     auto _phi1 = polyset::tabulate(celltype, degree - 3, 0, pts);
-    phi1_buffer.resize(_phi1.shape(1), _phi1.shape(2));
-    phi1 = impl::mdspan2_t(phi1_buffer.data(), _phi1.shape(1), _phi1.shape(2));
-    for (std::size_t i = 0; i < phi1.extent(0); ++i)
-      for (std::size_t j = 0; j < phi1.extent(1); ++j)
-        phi1(i, j) = _phi1(0, i, j);
-
+    phi1 = create_phi1(_phi1, phi1_buffer);
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       double x0 = pts(i, 0);
@@ -127,11 +126,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::tetrahedron:
   {
     auto _phi1 = polyset::tabulate(celltype, degree - 4, 0, pts);
-    phi1_buffer.resize(_phi1.shape(1), _phi1.shape(2));
-    phi1 = impl::mdspan2_t(phi1_buffer.data(), _phi1.shape(1), _phi1.shape(2));
-    for (std::size_t i = 0; i < phi1.extent(0); ++i)
-      for (std::size_t j = 0; j < phi1.extent(1); ++j)
-        phi1(i, j) = _phi1(0, i, j);
+    phi1 = create_phi1(_phi1, phi1_buffer);
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       double x0 = pts(i, 0);
@@ -144,12 +139,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::quadrilateral:
   {
     auto _phi1 = polyset::tabulate(celltype, degree - 2, 0, pts);
-    phi1_buffer.resize(_phi1.shape(1), _phi1.shape(2));
-    phi1 = impl::mdspan2_t(phi1_buffer.data(), _phi1.shape(1), _phi1.shape(2));
-    for (std::size_t i = 0; i < phi1.extent(0); ++i)
-      for (std::size_t j = 0; j < phi1.extent(1); ++j)
-        phi1(i, j) = _phi1(0, i, j);
-
+    phi1 = create_phi1(_phi1, phi1_buffer);
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       double x0 = pts(i, 0);
@@ -161,12 +151,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::hexahedron:
   {
     auto _phi1 = polyset::tabulate(celltype, degree - 2, 0, pts);
-    phi1_buffer.resize(_phi1.shape(1), _phi1.shape(2));
-    phi1 = impl::mdspan2_t(phi1_buffer.data(), _phi1.shape(1), _phi1.shape(2));
-    for (std::size_t i = 0; i < phi1.extent(0); ++i)
-      for (std::size_t j = 0; j < phi1.extent(1); ++j)
-        phi1(i, j) = _phi1(0, i, j);
-
+    phi1 = create_phi1(_phi1, phi1_buffer);
     for (std::size_t i = 0; i < pts.shape(0); ++i)
     {
       double x0 = pts(i, 0);
@@ -182,22 +167,17 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
 
   impl::mdarray2_t wcoeffs(ndofs, psize);
   for (std::size_t i = 0; i < phi1.extent(0); ++i)
-  {
     for (std::size_t j = 0; j < psize; ++j)
       for (std::size_t k = 0; k < wts.size(); ++k)
         wcoeffs(i, j) += wts[k] * phi1(i, k) * bubble[k] * phi(j, k);
-  }
 
   auto& _M = M[tdim].emplace_back(ndofs, 1, ndofs, 1);
   for (std::size_t i = 0; i < _M.extent(0); ++i)
     _M(i, 0, i, 0) = 1.0;
 
-  auto xview = impl::to_mdspan(x);
-  auto Mview = impl::to_mdspan(M);
   impl::mdspan2_t wview(wcoeffs.data(), wcoeffs.extents());
-  std::cout << "Create" << std::endl;
   return FiniteElement(element::family::bubble, celltype, degree, {}, wview,
-                       xview, Mview, 0, maps::type::identity, discontinuous, -1,
-                       degree);
+                       impl::to_mdspan(x), impl::to_mdspan(M), 0,
+                       maps::type::identity, discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

@@ -10,8 +10,6 @@
 #include "quadrature.h"
 #include <array>
 #include <vector>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xmath.hpp>
 #include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 
@@ -77,12 +75,13 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   const std::size_t psize = phi.shape(0);
 
   // Create points at nodes on interior
-  const xt::xtensor<double, 2> points
-      = lattice::create(celltype, degree, lattice::type::equispaced, false);
-  const std::size_t ndofs = points.shape(0);
-  x[tdim].emplace_back(
-      std::vector<double>(points.data(), points.data() + points.size()),
-      points.shape(0), points.shape(1));
+  std::size_t ndofs = 0;
+  {
+    const auto [points, pshape] = lattice::create_new(
+        celltype, degree, lattice::type::equispaced, false);
+    ndofs = pshape[0];
+    x[tdim].emplace_back(points, pshape[0], pshape[1]);
+  }
 
   auto create_phi1 = [](auto& phi, auto& buffer)
   {

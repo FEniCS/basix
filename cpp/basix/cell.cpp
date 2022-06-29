@@ -11,6 +11,16 @@
 
 using namespace basix;
 
+using cmdspan2_t
+    = std::experimental::mdspan<const double,
+                                std::experimental::dextents<std::size_t, 2>>;
+using mdspan2_t
+    = std::experimental::mdspan<double,
+                                std::experimental::dextents<std::size_t, 2>>;
+using mdspan3_t
+    = std::experimental::mdspan<double,
+                                std::experimental::dextents<std::size_t, 3>>;
+
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> cell::geometry(cell::type celltype)
 {
@@ -66,11 +76,8 @@ cell::geometry_new(cell::type celltype)
     return {{0.0, 1.0}, {2, 1}};
   case cell::type::triangle:
     return {{0.0, 0.0, 1.0, 0.0, 0.0, 1.0}, {3, 2}};
-    // return xt::xtensor<double, 2>({{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}});
   case cell::type::quadrilateral:
     return {{0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0}, {4, 2}};
-    // return xt::xtensor<double, 2>(
-    //     {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}});
   case cell::type::tetrahedron:
     return {{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
             {4, 3}};
@@ -379,9 +386,6 @@ xt::xtensor<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 cell::sub_entity_geometry_new(cell::type celltype, int dim, int index)
 {
-  using cmdspan2_t
-      = std::experimental::mdspan<const double,
-                                  std::experimental::dextents<std::size_t, 2>>;
 
   const std::vector<std::vector<std::vector<int>>> cell_topology
       = cell::topology(celltype);
@@ -397,9 +401,6 @@ cell::sub_entity_geometry_new(cell::type celltype, int dim, int index)
 
   std::array<std::size_t, 2> subshape = {t[index].size(), geometry.extent(1)};
   std::vector<double> sub_geometry(subshape[0] * subshape[1]);
-  using mdspan2_t
-      = std::experimental::mdspan<double,
-                                  std::experimental::dextents<std::size_t, 2>>;
   mdspan2_t sub_entity(sub_geometry.data(), subshape);
   for (std::size_t i = 0; i < sub_entity.extent(0); ++i)
     for (std::size_t j = 0; j < sub_entity.extent(1); ++j)
@@ -468,9 +469,6 @@ std::pair<std::vector<double>, std::array<std::size_t, 2>>
 cell::facet_outward_normals(cell::type cell_type)
 {
   auto [normals, shape] = cell::facet_normals(cell_type);
-  using mdspan2_t
-      = std::experimental::mdspan<double,
-                                  std::experimental::dextents<std::size_t, 2>>;
   mdspan2_t n(normals.data(), shape);
   const std::vector<bool> facet_orientations
       = cell::facet_orientations(cell_type);
@@ -494,18 +492,10 @@ cell::facet_normals(cell::type cell_type)
       = cell::topology(cell_type)[tdim - 1];
   const auto [xdata, xshape] = cell::geometry_new(cell_type);
 
-  using cmdspan2_t
-      = std::experimental::mdspan<const double,
-                                  std::experimental::dextents<std::size_t, 2>>;
   cmdspan2_t x(xdata.data(), xshape);
-
-  using mdspan2_t
-      = std::experimental::mdspan<double,
-                                  std::experimental::dextents<std::size_t, 2>>;
   std::array<std::size_t, 2> shape = {facets.size(), tdim};
   std::vector<double> normal(shape[0] * shape[1]);
   mdspan2_t n(normal.data(), shape);
-
   switch (tdim)
   {
   case 1:
@@ -554,18 +544,14 @@ cell::facet_normals(cell::type cell_type)
 //-----------------------------------------------------------------------------
 std::vector<bool> cell::facet_orientations(cell::type cell_type)
 {
-  using mdspan2_t
-      = std::experimental::mdspan<const double,
-                                  std::experimental::dextents<std::size_t, 2>>;
-
   const std::size_t tdim = cell::topological_dimension(cell_type);
   const auto [_x, xshape] = cell::geometry_new(cell_type);
-  mdspan2_t x(_x.data(), xshape);
+  cmdspan2_t x(_x.data(), xshape);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
 
   const auto [normals, shape] = cell::facet_normals(cell_type);
-  mdspan2_t n(normals.data(), shape);
+  cmdspan2_t n(normals.data(), shape);
 
   std::vector<double> midpoint(x.extent(1), 0.0);
   for (std::size_t i = 0; i < x.extent(1); ++i)
@@ -672,21 +658,14 @@ cell::facet_jacobians(cell::type cell_type)
         "Facet jacobians not supported for this cell type.");
   }
 
-  using mdspan2_t
-      = std::experimental::mdspan<const double,
-                                  std::experimental::dextents<std::size_t, 2>>;
   const auto [_x, xshape] = cell::geometry_new(cell_type);
-  mdspan2_t x(_x.data(), xshape);
+  cmdspan2_t x(_x.data(), xshape);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
 
   std::array<std::size_t, 3> shape = {facets.size(), tdim, tdim - 1};
   std::vector<double> jacobians(shape[0] * shape[1] * shape[2]);
-  using mdspan3_t
-      = std::experimental::mdspan<double,
-                                  std::experimental::dextents<std::size_t, 3>>;
   mdspan3_t J(jacobians.data(), shape);
-
   for (std::size_t f = 0; f < facets.size(); ++f)
   {
     const std::vector<int>& facet = facets[f];

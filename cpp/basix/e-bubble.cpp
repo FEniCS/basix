@@ -11,7 +11,6 @@
 #include <array>
 #include <vector>
 #include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -68,11 +67,11 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   // Evaluate the expansion polynomials at the quadrature points
   auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                 celltype, 2 * degree);
-  const xt::xtensor<double, 2> phi = xt::view(
-      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
+  const xt::xtensor<double, 3> phi
+      = polyset::tabulate(celltype, degree, 0, pts);
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(0);
+  const std::size_t psize = phi.shape(1);
 
   // Create points at nodes on interior
   std::size_t ndofs = 0;
@@ -168,7 +167,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   for (std::size_t i = 0; i < phi1.extent(0); ++i)
     for (std::size_t j = 0; j < psize; ++j)
       for (std::size_t k = 0; k < wts.size(); ++k)
-        wcoeffs(i, j) += wts[k] * phi1(i, k) * bubble[k] * phi(j, k);
+        wcoeffs(i, j) += wts[k] * phi1(i, k) * bubble[k] * phi(0, j, k);
 
   auto& _M = M[tdim].emplace_back(ndofs, 1, ndofs, 1);
   for (std::size_t i = 0; i < _M.extent(0); ++i)

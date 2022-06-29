@@ -32,6 +32,22 @@ xt::xtensor<typename U::value_type, 2> outer(const U& u, const V& v)
   return results;
 }
 
+/// Compute the outer product of vectors u and v
+/// @param u The first vector. It must has size 3.
+/// @param v The second vector. It must has size 3.
+/// @return The outer product. The type will be the same as `u`.
+template <typename U, typename V>
+std::pair<std::vector<typename U::value_type>, std::array<std::size_t, 2>>
+outer_new(const U& u, const V& v)
+{
+  std::vector<typename U::value_type> result(u.size() * v.size());
+  for (std::size_t i = 0; i < u.size(); i++)
+    for (std::size_t j = 0; j < u.size(); j++)
+      result[i * v.size() + j] = u[i] * v[j];
+
+  return {std::move(result), {u.size(), v.size()}};
+}
+
 /// Compute the cross product u x v
 /// @param u The first vector. It must has size 3.
 /// @param v The second vector. It must has size 3.
@@ -39,6 +55,19 @@ xt::xtensor<typename U::value_type, 2> outer(const U& u, const V& v)
 template <typename U, typename V>
 xt::xtensor_fixed<typename U::value_type, xt::xshape<3>> cross(const U& u,
                                                                const V& v)
+{
+  assert(u.size() == 3);
+  assert(v.size() == 3);
+  return {u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2],
+          u[0] * v[1] - u[1] * v[0]};
+}
+
+/// Compute the cross product u x v
+/// @param u The first vector. It must has size 3.
+/// @param v The second vector. It must has size 3.
+/// @return The cross product `u x v`. The type will be the same as `u`.
+template <typename U, typename V>
+std::array<typename U::value_type, 3> cross_new(const U& u, const V& v)
 {
   assert(u.size() == 3);
   assert(v.size() == 3);

@@ -29,7 +29,6 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
   const std::size_t psize = basis_size * tdim * tdim;
 
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-  int s = basis_size;
   for (std::size_t i = 0; i < tdim; ++i)
   {
     for (std::size_t j = 0; j < tdim; ++j)
@@ -39,9 +38,12 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
       if (tdim == 3 and i > 0 and j > 0)
         ++yoff;
 
-      xt::view(wcoeffs, xt::range(yoff * s, yoff * s + s),
-               xt::range(xoff * s, xoff * s + s))
-          = xt::eye<double>(s);
+      // for (std::size_t k0 = yoff * s; k0 < yoff * s + s; ++k0)
+      //   for (std::size_t k1 = xoff * s; k1 < xoff * s + s; ++k1)
+      //     wcoeffs(k0, k1) = 0.0;
+      const std::size_t s = basis_size;
+      for (std::size_t k = 0; k < s; ++k)
+        wcoeffs(yoff * s + k, xoff * s + k) = 1.0;
     }
   }
 
@@ -123,8 +125,10 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
             edge_t[1] = geometry(vert_ids[r], 0) - geometry(vert_ids[s], 0);
 
             // outer product v.v^T
-            auto result = basix::math::outer(edge_t, edge_t);
-            xt::view(vvt, c, xt::all(), xt::all()).assign(result);
+            const auto [result, shape] = basix::math::outer_new(edge_t, edge_t);
+            for (std::size_t k0 = 0; k0 < shape[0]; ++k0)
+              for (std::size_t k1 = 0; k1 < shape[1]; ++k1)
+                vvt(c, k0, k1) = result[k0 * shape[1] + k1];
             ++c;
           }
         }
@@ -136,13 +140,17 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         {
           for (std::size_t j = 0; j < ntangents; ++j)
           {
-            auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
+            std::vector<double> vvt_flat;
+            for (std::size_t k0 = 0; k0 < vvt.shape(1); ++k0)
+              for (std::size_t k1 = 0; k1 < vvt.shape(2); ++k1)
+                vvt_flat.push_back(vvt(j, k0, k1));
+            // auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
             for (std::size_t q = 0; q < pts.shape(0); ++q)
             {
               for (std::size_t i = 0; i < tdim * tdim; ++i)
               {
                 M[d][e](n * ntangents + j, i, q, 0)
-                    = vvt_flat(i) * wts[q] * moment_values(0, q, n, 0);
+                    = vvt_flat[i] * wts[q] * moment_values(0, q, n, 0);
               }
             }
           }

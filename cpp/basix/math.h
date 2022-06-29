@@ -33,8 +33,8 @@ xt::xtensor<typename U::value_type, 2> outer(const U& u, const V& v)
 }
 
 /// Compute the outer product of vectors u and v
-/// @param u The first vector. It must has size 3.
-/// @param v The second vector. It must has size 3.
+/// @param u The first vector
+/// @param v The second vector
 /// @return The outer product. The type will be the same as `u`.
 template <typename U, typename V>
 std::pair<std::vector<typename U::value_type>, std::array<std::size_t, 2>>

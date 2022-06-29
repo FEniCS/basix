@@ -5342,6 +5342,13 @@ quadrature::make_quadrature(cell::type celltype, int m)
   return make_quadrature(quadrature::type::Default, celltype, m);
 }
 //-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::vector<double>>
+quadrature::make_quadrature_new(cell::type celltype, int m)
+{
+  auto [x, w] = make_quadrature(quadrature::type::Default, celltype, m);
+  return {std::vector<double>(x.data(), x.data() + x.size()), std::move(w)};
+}
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 2> quadrature::get_gl_points(int m)
 {
   std::vector<double> _pts = compute_gauss_jacobi_points(0, m);

@@ -55,6 +55,15 @@ make_quadrature_new(const quadrature::type rule, cell::type celltype, int m);
 std::pair<xt::xtensor<double, 2>, std::vector<double>>
 make_quadrature(cell::type celltype, int m);
 
+/// Make a default quadrature rule on reference cell
+/// @param[in] celltype The cell type
+/// @param[in] m Maximum degree of polynomial that this quadrature rule
+/// will integrate exactly
+/// @return List of points and list of weights. The number of points
+/// arrays has shape (num points, gdim)
+std::pair<std::vector<double>, std::vector<double>>
+make_quadrature_new(cell::type celltype, int m);
+
 /// Get the default quadrature type for the given cell and order
 /// @param[in] celltype The cell type
 /// @param[in] m Maximum degree of polynomial that this quadrature rule

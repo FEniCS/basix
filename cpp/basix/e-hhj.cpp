@@ -101,9 +101,17 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         // Copy points
         for (std::size_t p = 0; p < pts.shape(0); ++p)
         {
-          xt::row(x[d][e], p) = x0;
-          for (std::size_t k = 0; k < entity_x.shape(0) - 1; ++k)
-            xt::row(x[d][e], p) += (xt::row(entity_x, k + 1) - x0) * pts(p, k);
+          for (std::size_t k = 0; k < x[d][e].shape(1); ++k)
+            x[d][e](p, k) = x0[k];
+
+          for (std::size_t k0 = 0; k0 < entity_x.shape(0) - 1; ++k0)
+            for (std::size_t k1 = 0; k1 < x[d][e].shape(1); ++k1)
+              x[d][e](p, k1) += (entity_x(k0 + 1, k1) - x0[k1]) * pts(p, k0);
+
+          // xt::row(x[d][e], p) = x0;
+          // for (std::size_t k = 0; k < entity_x.shape(0) - 1; ++k)
+          //   xt::row(x[d][e], p) += (xt::row(entity_x, k + 1) - x0) * pts(p,
+          //   k);
         }
 
         // Store up outer(t, t) for all tangents
@@ -144,7 +152,8 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
             for (std::size_t k0 = 0; k0 < vvt.shape(1); ++k0)
               for (std::size_t k1 = 0; k1 < vvt.shape(2); ++k1)
                 vvt_flat.push_back(vvt(j, k0, k1));
-            // auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
+            // auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(),
+            // xt::all()));
             for (std::size_t q = 0; q < pts.shape(0); ++q)
             {
               for (std::size_t i = 0; i < tdim * tdim; ++i)

@@ -83,10 +83,8 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector<xt::xtensor<double, 2>>(
-        num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 4>>(
-        num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[i] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   // Add integral moments on facets
@@ -106,10 +104,8 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector<xt::xtensor<double, 2>>(
-        num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[tdim] = std::vector<xt::xtensor<double, 4>>(
-        num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[tdim] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[tdim] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

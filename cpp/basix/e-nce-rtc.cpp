@@ -113,11 +113,9 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
 
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
-    x[i] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, i),
-        xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    const std::size_t num_ent = cell::num_sub_entities(celltype, i);
+    x[i] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   FiniteElement moment_space
@@ -134,12 +132,9 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   }
   else
   {
-    x[tdim] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, tdim),
-        xt::xtensor<double, 2>({0, tdim}));
-    M[tdim] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, tdim),
-        xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    const std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
+    x[tdim] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[tdim] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

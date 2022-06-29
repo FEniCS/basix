@@ -101,9 +101,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         {
           xt::row(x[d][e], p) = x0;
           for (std::size_t k = 0; k < entity_x.shape(0) - 1; ++k)
-          {
             xt::row(x[d][e], p) += (xt::row(entity_x, k + 1) - x0) * pts(p, k);
-          }
         }
 
         // Store up outer(t, t) for all tangents
@@ -142,8 +140,10 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
             for (std::size_t q = 0; q < pts.shape(0); ++q)
             {
               for (std::size_t i = 0; i < tdim * tdim; ++i)
+              {
                 M[d][e](n * ntangents + j, i, q, 0)
                     = vvt_flat(i) * wts[q] * moment_values(0, q, n, 0);
+              }
             }
           }
         }

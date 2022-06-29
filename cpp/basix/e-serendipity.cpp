@@ -1140,11 +1140,10 @@ FiniteElement basix::element::create_serendipity_curl(
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  x[0] = std::vector<xt::xtensor<double, 2>>(
-      cell::num_sub_entities(celltype, 0), xt::xtensor<double, 2>({0, tdim}));
-  M[0] = std::vector<xt::xtensor<double, 4>>(
-      cell::num_sub_entities(celltype, 0),
-      xt::xtensor<double, 4>({0, tdim, 0, 1}));
+  x[0] = std::vector(cell::num_sub_entities(celltype, 0),
+                     xt::xtensor<double, 2>({0, tdim}));
+  M[0] = std::vector(cell::num_sub_entities(celltype, 0),
+                     xt::xtensor<double, 4>({0, tdim, 0, 1}));
 
   FiniteElement edge_moment_space
       = element::create_lagrange(cell::type::interval, degree, lvariant, true);
@@ -1162,11 +1161,10 @@ FiniteElement basix::element::create_serendipity_curl(
   }
   else
   {
-    x[2] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, 2), xt::xtensor<double, 2>({0, tdim}));
-    M[2] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, 2),
-        xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[2] = std::vector(cell::num_sub_entities(celltype, 2),
+                       xt::xtensor<double, 2>({0, tdim}));
+    M[2] = std::vector(cell::num_sub_entities(celltype, 2),
+                       xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   if (tdim == 3)
@@ -1181,12 +1179,10 @@ FiniteElement basix::element::create_serendipity_curl(
     }
     else
     {
-      x[3] = std::vector<xt::xtensor<double, 2>>(
-          cell::num_sub_entities(celltype, 3),
-          xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector<xt::xtensor<double, 4>>(
-          cell::num_sub_entities(celltype, 3),
-          xt::xtensor<double, 4>({0, tdim, 0, 1}));
+      x[3] = std::vector(cell::num_sub_entities(celltype, 3),
+                         xt::xtensor<double, 2>({0, tdim}));
+      M[3] = std::vector(cell::num_sub_entities(celltype, 3),
+                         xt::xtensor<double, 4>({0, tdim, 0, 1}));
     }
   }
 

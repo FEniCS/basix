@@ -29,9 +29,8 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector<impl::mdarray2_t>(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector<impl::mdarray4_t>(num_ent,
-                                         impl::mdarray4_t(0, tdim, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
   // Integral moments on facets
@@ -68,9 +67,8 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   else
   {
     std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector<impl::mdarray2_t>(num_ent, impl::mdarray2_t(0, tdim));
-    M[tdim] = std::vector<impl::mdarray4_t>(num_ent,
-                                            impl::mdarray4_t(0, tdim, 0, 1));
+    x[tdim] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
   const std::vector<std::vector<std::vector<int>>> topology

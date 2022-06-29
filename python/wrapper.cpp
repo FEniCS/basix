@@ -80,7 +80,7 @@ Interface to the Basix C++ library.
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
       {
-        autp[x, shape] = cell::sub_entity_geometry_new(celltype, dim, index);
+        auto [x, shape] = cell::sub_entity_geometry_new(celltype, dim, index);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::sub_entity_geometry.c_str());

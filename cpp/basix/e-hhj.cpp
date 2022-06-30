@@ -91,7 +91,8 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
 
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
-        auto _pts = xt::adapt(ptsbuffer, {pts.extent(0), pts.extent(1)});
+        auto _pts = xt::adapt(
+            ptsbuffer, std::vector<std::size_t>{pts.extent(0), pts.extent(1)});
         const auto moment_values = moment_space.tabulate(0, _pts);
         auto& _x = x[d].emplace_back(pts.extent(0), tdim);
 

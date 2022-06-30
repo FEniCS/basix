@@ -7,6 +7,7 @@
 #include "element-families.h"
 #include "lattice.h"
 #include "maps.h"
+#include "math.h"
 #include "mdspan.hpp"
 #include "moments.h"
 #include "polynomials.h"
@@ -1022,37 +1023,43 @@ FiniteElement basix::element::create_serendipity(
           "serendipity elements of degree > 4 need to be given a DPC variant.");
   }
 
-  // const std::vector<std::vector<std::vector<int>>> topology
-  //     = cell::topology(celltype);
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
 
   // dim 0 (vertices)
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
-  const std::size_t num_vertices = geometry.shape(0);
-  M[0] = std::vector<xt::xtensor<double, 4>>(num_vertices,
-                                             xt::ones<double>({1, 1, 1, 1}));
-  x[0].resize(geometry.shape(0));
-  for (std::size_t i = 0; i < x[0].size(); ++i)
+  // const std::size_t num_vertices = geometry.shape(0);
+  for (std::size_t i = 0; i < geometry.shape(0); ++i)
   {
-    x[0][i] = xt::reshape_view(
-        xt::row(geometry, i), {static_cast<std::size_t>(1), geometry.shape(1)});
+    auto& _x = x[0].emplace_back(1, geometry.shape(1));
+    for (std::size_t j = 0; j < geometry.shape(1); ++j)
+      _x(0, j) = geometry(i, j);
+
+    auto& _M = M[0].emplace_back(1, 1, 1, 1);
+    _M(0, 0, 0, 0) = 1.0;
   }
 
   if (degree >= 2)
   {
     FiniteElement moment_space = element::create_lagrange(
         cell::type::interval, degree - 2, lvariant, true);
-    std::tie(x[1], M[1]) = moments::make_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
         moment_space, celltype, 1, 2 * degree - 2);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[1].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[1].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                        Mshape[i][3]);
+    }
   }
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 1);
-    x[1] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[1] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
+    x[1] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[1] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
   }
 
   if (tdim >= 2)
@@ -1061,14 +1068,23 @@ FiniteElement basix::element::create_serendipity(
     {
       FiniteElement moment_space = element::create_dpc(
           cell::type::quadrilateral, degree - 4, dvariant, true);
-      std::tie(x[2], M[2]) = moments::make_integral_moments(
+      // std::tie(x[2], M[2]) = moments::make_integral_moments(
+      //     moment_space, celltype, 1, 2 * degree - 4);
+      auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
           moment_space, celltype, 1, 2 * degree - 4);
+      assert(_x.size() == _M.size());
+      for (std::size_t i = 0; i < _x.size(); ++i)
+      {
+        x[2].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+        M[2].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                          Mshape[i][3]);
+      }
     }
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-      x[2] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-      M[2] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
+      x[2] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+      M[2] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
     }
   }
 
@@ -1076,40 +1092,68 @@ FiniteElement basix::element::create_serendipity(
   {
     if (degree >= 6)
     {
-      std::tie(x[3], M[3]) = moments::make_integral_moments(
+      // std::tie(x[3], M[3]) = moments::make_integral_moments(
+      //     element::create_dpc(cell::type::hexahedron, degree - 6, dvariant,
+      //                         true),
+      //     celltype, 1, 2 * degree - 6);
+      auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
           element::create_dpc(cell::type::hexahedron, degree - 6, dvariant,
                               true),
           celltype, 1, 2 * degree - 6);
+      assert(_x.size() == _M.size());
+      for (std::size_t i = 0; i < _x.size(); ++i)
+      {
+        x[3].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+        M[3].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                          Mshape[i][3]);
+      }
     }
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
-      x[3] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
+      x[3] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+      M[3] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
     }
   }
 
-  xt::xtensor<double, 2> wcoeffs;
+  std::vector<double> wbuffer;
+  std::array<std::size_t, 2> wshape;
   if (tdim == 1)
-    wcoeffs = xt::eye<double>(degree + 1);
+  {
+    wbuffer = math::eye(degree + 1);
+    wshape = {static_cast<std::size_t>(degree + 1),
+              static_cast<std::size_t>(degree + 1)};
+  }
   else if (tdim == 2)
   {
     auto w = make_serendipity_space_2d(degree);
-    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
-    std::copy_n(w.data(), w.size(), wcoeffs.data());
+    wbuffer.assign(w.data(), w.data() + w.size());
+    wshape = {w.extent(0), w.extent(1)};
   }
   else if (tdim == 3)
   {
     auto w = make_serendipity_space_3d(degree);
-    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
-    std::copy_n(w.data(), w.size(), wcoeffs.data());
+    wbuffer.assign(w.data(), w.data() + w.size());
+    wshape = {w.extent(0), w.extent(1)};
   }
 
+  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<double>>, 4> xbuffer;
+  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
-    std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
+  {
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = element::make_discontinuous(xview, Mview, tdim, 1);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
+  }
 
   return FiniteElement(element::family::serendipity, celltype, degree, {},
-                       wcoeffs, x, M, 0, maps::type::identity, discontinuous,
+                       impl::cmdspan2_t(wbuffer.data(), wshape), xview, Mview,
+                       0, maps::type::identity, discontinuous,
                        degree < static_cast<int>(tdim) ? 1 : degree / tdim,
                        degree, lvariant, dvariant);
 }

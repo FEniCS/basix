@@ -27,7 +27,6 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   const std::size_t psize = basis_size * tdim * tdim;
 
   impl::mdarray2_t wcoeffs(ndofs, psize);
-  int s = basis_size;
   for (std::size_t i = 0; i < tdim; ++i)
   {
     for (std::size_t j = 0; j < tdim; ++j)
@@ -37,6 +36,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
       if (tdim == 3 and i > 0 and j > 0)
         ++yoff;
 
+      std::size_t s = basis_size;
       for (std::size_t k = 0; k < s; ++k)
         wcoeffs(yoff * s + k, xoff * s + k) = 1.0;
     }

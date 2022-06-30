@@ -13,10 +13,7 @@
 #include "polynomials.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xbuilder.hpp>
 #include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -28,9 +25,8 @@ impl::mdarray2_t make_serendipity_space_2d(int degree)
   const std::size_t ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, _wts] = quadrature::make_quadrature(
+  auto [pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree);
-  auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 3> Pq
       = polyset::tabulate(cell::type::quadrilateral, degree, 0, pts);
@@ -158,7 +154,7 @@ impl::mdarray2_t make_serendipity_space_3d(int degree)
 
         for (int d = 0; d < 3; ++d)
         {
-          auto q_d = xt::col(pts, d);
+          // auto q_d = xt::col(pts, d);
           for (int j = 0; j < i[d]; ++j)
             for (std::size_t l = 0; l < integrand.size(); ++l)
               integrand[l] *= pts(l, d);
@@ -180,9 +176,8 @@ impl::mdarray2_t make_serendipity_div_space_2d(int degree)
   const std::size_t ndofs = degree * (degree + 3) + 4;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, _wts] = quadrature::make_quadrature(
+  auto [pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
-  auto wts = xt::adapt(_wts);
 
   xt::xtensor<double, 3> Pq
       = polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts);
@@ -1368,52 +1363,70 @@ FiniteElement basix::element::create_serendipity_curl(
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [Qpts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                  celltype, 2 * degree + 1);
-  auto wts = xt::adapt(_wts);
+  auto [Qpts, wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 celltype, 2 * degree + 1);
 
-  xt::xtensor<double, 2> wcoeffs;
+  std::vector<double> wbuffer;
+  std::array<std::size_t, 2> wshape;
   if (tdim == 2)
   {
     auto w = make_serendipity_curl_space_2d(degree);
-    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
-    std::copy_n(w.data(), w.size(), wcoeffs.data());
+    wbuffer.assign(w.data(), w.data() + w.size());
+    wshape = {w.extent(0), w.extent(1)};
   }
   else if (tdim == 3)
   {
     auto w = make_serendipity_curl_space_3d(degree);
-    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
-    std::copy_n(w.data(), w.size(), wcoeffs.data());
+    wbuffer.assign(w.data(), w.data() + w.size());
+    wshape = {w.extent(0), w.extent(1)};
   }
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
-    x[0] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[0] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[0] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[0] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
-  FiniteElement edge_moment_space
-      = element::create_lagrange(cell::type::interval, degree, lvariant, true);
-
-  std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      edge_moment_space, celltype, tdim, 2 * degree + 1);
+  {
+    FiniteElement edge_moment_space = element::create_lagrange(
+        cell::type::interval, degree, lvariant, true);
+    // std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
+    //     edge_moment_space, celltype, tdim, 2 * degree + 1);
+    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments_new(
+        edge_moment_space, celltype, tdim, 2 * degree + 1);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[1].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[1].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                        Mshape[i][3]);
+    }
+  }
 
   if (degree >= 2)
   {
     // Face integral moment
     FiniteElement moment_space = element::create_dpc(
         cell::type::quadrilateral, degree - 2, dvariant, true);
-    std::tie(x[2], M[2]) = moments::make_integral_moments(
+    // std::tie(x[2], M[2]) = moments::make_integral_moments(
+    //     moment_space, celltype, tdim, 2 * degree - 1);
+    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
         moment_space, celltype, tdim, 2 * degree - 1);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[2].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[2].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                        Mshape[i][3]);
+    }
   }
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-    x[2] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[2] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[2] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[2] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
   if (tdim == 3)
@@ -1421,24 +1434,47 @@ FiniteElement basix::element::create_serendipity_curl(
     if (degree >= 4)
     {
       // Interior integral moment
-      std::tie(x[3], M[3]) = moments::make_integral_moments(
+      // std::tie(x[3], M[3]) = moments::make_integral_moments(
+      //     element::create_dpc(cell::type::hexahedron, degree - 4, dvariant,
+      //                         true),
+      //     celltype, tdim, 2 * degree - 3);
+      auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
           element::create_dpc(cell::type::hexahedron, degree - 4, dvariant,
                               true),
           celltype, tdim, 2 * degree - 3);
+      assert(_x.size() == _M.size());
+      for (std::size_t i = 0; i < _x.size(); ++i)
+      {
+        x[3].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+        M[3].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                          Mshape[i][3]);
+      }
     }
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
-      x[3] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+      x[3] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+      M[3] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
     }
   }
 
+  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<double>>, 4> xbuffer;
+  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
-    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
+  {
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = element::make_discontinuous(xview, Mview, tdim, tdim);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
+  }
 
-  return FiniteElement(element::family::N2E, celltype, degree, {tdim}, wcoeffs,
-                       x, M, 0, maps::type::covariantPiola, discontinuous,
+  return FiniteElement(element::family::N2E, celltype, degree, {tdim},
+                       impl::cmdspan2_t(wbuffer.data(), wshape), xview, Mview,
+                       0, maps::type::covariantPiola, discontinuous,
                        (degree == 2 && tdim == 3) ? 1 : degree / tdim,
                        degree + 1, lvariant, dvariant);
 }

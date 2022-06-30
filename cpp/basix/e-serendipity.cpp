@@ -1263,56 +1263,92 @@ FiniteElement basix::element::create_serendipity_div(
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
 
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
-  FiniteElement facet_moment_space
-      = facettype == cell::type::interval
-            ? element::create_lagrange(facettype, degree, lvariant, true)
-            : element::create_dpc(facettype, degree, dvariant, true);
-  std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
-      facet_moment_space, celltype, tdim, 2 * degree + 1);
+  {
+    FiniteElement facet_moment_space
+        = facettype == cell::type::interval
+              ? element::create_lagrange(facettype, degree, lvariant, true)
+              : element::create_dpc(facettype, degree, dvariant, true);
+    // std::tie(x[tdim - 1], M[tdim - 1]) =
+    // moments::make_normal_integral_moments(
+    //     facet_moment_space, celltype, tdim, 2 * degree + 1);
+    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments_new(
+        facet_moment_space, celltype, tdim, 2 * degree + 1);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[tdim - 1].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[tdim - 1].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                               Mshape[i][3]);
+    }
+  }
 
   if (degree >= 2)
   {
     FiniteElement cell_moment_space
         = element::create_dpc(celltype, degree - 2, dvariant, true);
-    std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
+    // std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
+    //     cell_moment_space, celltype, tdim, 2 * degree - 1);
+    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
         cell_moment_space, celltype, tdim, 2 * degree - 1);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[tdim].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[tdim].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                           Mshape[i][3]);
+    }
   }
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[tdim] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[tdim] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
-  xt::xtensor<double, 2> wcoeffs;
+  std::vector<double> wbuffer;
+  std::array<std::size_t, 2> wshape;
   if (tdim == 2)
   {
     auto w = make_serendipity_div_space_2d(degree);
-    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
-    std::copy_n(w.data(), w.size(), wcoeffs.data());
+    wbuffer.assign(w.data(), w.data() + w.size());
+    wshape = {w.extent(0), w.extent(1)};
   }
   else if (tdim == 3)
   {
     auto w = make_serendipity_div_space_3d(degree);
-    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
-    std::copy_n(w.data(), w.size(), wcoeffs.data());
+    wbuffer.assign(w.data(), w.data() + w.size());
+    wshape = {w.extent(0), w.extent(1)};
   }
 
+  // if (discontinuous)
+  //   std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
+  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<double>>, 4> xbuffer;
+  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
-    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
+  {
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = element::make_discontinuous(xview, Mview, tdim, tdim);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
+  }
 
-  return FiniteElement(element::family::BDM, celltype, degree, {tdim}, wcoeffs,
-                       x, M, 0, maps::type::contravariantPiola, discontinuous,
+  return FiniteElement(element::family::BDM, celltype, degree, {tdim},
+                       impl::cmdspan2_t(wbuffer.data(), wshape), xview, Mview,
+                       0, maps::type::contravariantPiola, discontinuous,
                        degree / tdim, degree + 1, lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------

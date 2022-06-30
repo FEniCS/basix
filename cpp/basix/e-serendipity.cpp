@@ -1196,7 +1196,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
 
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+  impl::mdarray2_t wcoeffs(ndofs, psize);
   if (celltype == cell::type::quadrilateral)
   {
     int row_n = 0;
@@ -1221,28 +1221,29 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   for (std::size_t i = 0; i < tdim; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
+    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
   }
 
-  M[tdim].push_back(xt::xtensor<double, 4>({ndofs, 1, ndofs, 1}));
-  xt::view(M[tdim][0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
+  auto& _M = M[tdim].emplace_back(ndofs, 1, ndofs, 1);
+  for (std::size_t i = 0; i < _M.extent(0); ++i)
+    _M(i, 0, i, 0) = 1.0;
 
   const impl::mdarray2_t pt = make_dpc_points(celltype, degree, variant);
-  auto _pt = xt::adapt(pt.data(), pt.size(), xt::no_ownership(),
-                       std::vector<std::size_t>{pt.extent(0), pt.extent(1)});
-  x[tdim].push_back(_pt);
+  x[tdim].push_back(pt);
 
-  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
-                       M, 0, maps::type::identity, discontinuous, degree,
-                       degree, variant);
+  return FiniteElement(element::family::DPC, celltype, degree, {},
+                       impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
+                       impl::to_mdspan(x), impl::to_mdspan(M), 0,
+                       maps::type::identity, discontinuous, degree, degree,
+                       variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_div(

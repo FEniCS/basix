@@ -7,14 +7,14 @@
 #include "e-raviart-thomas.h"
 #include "element-families.h"
 #include "maps.h"
+#include "math.h"
+#include "mdspan.hpp"
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
 #include <array>
 #include <vector>
-#include <xtensor/xbuilder.hpp>
 #include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -166,8 +166,8 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
 
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
-    x[0] = std::vector(num_ent impl::mdarray2_t(0, tdim));
-    M[0] = std::vector(num_ent impl::mdarray4_t(0, tdim, 0, 1));
+    x[0] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[0] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
   std::vector<double> wcoeffs;
@@ -287,63 +287,97 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
   if (degree < 1)
     throw std::runtime_error("Degree must be at least 1");
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
-    x[0] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[0] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[0] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[0] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
   // Integral representation for the edge dofs
-  FiniteElement edge_space
-      = element::create_lagrange(cell::type::interval, degree, lvariant, true);
-  std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      edge_space, celltype, tdim, 2 * degree);
+
+  {
+    FiniteElement edge_space = element::create_lagrange(cell::type::interval,
+                                                        degree, lvariant, true);
+    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments_new(
+        edge_space, celltype, tdim, 2 * degree);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[1].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[1].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                        Mshape[i][3]);
+    }
+  }
 
   if (degree > 1)
   {
     // Integral moments on faces
     FiniteElement face_space
         = element::create_rt(cell::type::triangle, degree - 1, lvariant, true);
-    std::tie(x[2], M[2]) = moments::make_dot_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments_new(
         face_space, celltype, tdim, 2 * degree - 1);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[2].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[2].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                        Mshape[i][3]);
+    }
   }
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-    x[2] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[2] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[2] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[2] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
+
   if (tdim == 3)
   {
     if (degree > 2)
     {
-      // Interior integral moment
-      std::tie(x[3], M[3]) = moments::make_dot_integral_moments(
+      auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments_new(
           element::create_rt(cell::type::tetrahedron, degree - 2, lvariant,
                              true),
           celltype, tdim, 2 * degree - 2);
+      assert(_x.size() == _M.size());
+      for (std::size_t i = 0; i < _x.size(); ++i)
+      {
+        x[3].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+        M[3].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                          Mshape[i][3]);
+      }
     }
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-      x[3] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+      x[3] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+      M[3] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
     }
   }
 
-  const std::size_t psize = polyset::dim(celltype, degree);
-  xt::xtensor<double, 2> wcoeffs = xt::eye<double>(tdim * psize);
-
+  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<double>>, 4> xbuffer;
+  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
-    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
+  {
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = element::make_discontinuous(xview, Mview, tdim, tdim);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
+  }
 
-  return FiniteElement(element::family::N2E, celltype, degree, {tdim}, wcoeffs,
-                       x, M, 0, maps::type::covariantPiola, discontinuous,
-                       degree, degree, lvariant);
+  const std::size_t psize = polyset::dim(celltype, degree);
+  return FiniteElement(element::family::N2E, celltype, degree, {tdim},
+                       impl::mdspan2_t(math::eye(tdim * psize).data(),
+                                       tdim * psize, tdim * psize),
+                       xview, Mview, 0, maps::type::covariantPiola,
+                       discontinuous, degree, degree, lvariant);
 }
 //-----------------------------------------------------------------------------

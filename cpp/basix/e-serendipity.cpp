@@ -717,6 +717,13 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
+  auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                celltype, degree * 2);
+
+  // Evaluate moment space at quadrature points
+  const xt::xtensor<double, 2> phi = polynomials::tabulate(
+      polynomials::type::legendre, celltype, degree, pts);
+
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
@@ -727,32 +734,10 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     M[i] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
   }
 
-  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                 celltype, degree * 2);
-  auto wts = xt::adapt(_wts);
-
-  // Evaluate moment space at quadrature points
-  const xt::xtensor<double, 2> phi = polynomials::tabulate(
-      polynomials::type::legendre, celltype, degree, pts);
-
-  for (std::size_t dim = 0; dim <= tdim; ++dim)
-  {
-    M[dim].resize(topology[dim].size());
-    x[dim].resize(topology[dim].size());
-    if (dim < tdim)
-    {
-      for (std::size_t e = 0; e < topology[dim].size(); ++e)
-      {
-        x[dim][e] = xt::xtensor<double, 2>({0, tdim});
-        M[dim][e] = xt::xtensor<double, 4>({0, 1, 0, 1});
-      }
-    }
-  }
-  x[tdim][0] = pts;
-  M[tdim][0] = xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1});
+  x[tdim].push_back(pts);
+  M[tdim].push_back(xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1}));
 
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-
   if (celltype == cell::type::quadrilateral)
   {
     int row_n = 0;

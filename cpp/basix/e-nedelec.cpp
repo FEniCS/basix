@@ -161,30 +161,33 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
 
-  x[0] = std::vector(cell::num_sub_entities(celltype, 0),
-                     xt::xtensor<double, 2>({0, tdim}));
-  M[0] = std::vector(cell::num_sub_entities(celltype, 0),
-                     xt::xtensor<double, 4>({0, tdim, 0, 1}));
+  {
+    const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
+    x[0] = std::vector(num_ent impl::mdarray2_t(0, tdim));
+    M[0] = std::vector(num_ent impl::mdarray4_t(0, tdim, 0, 1));
+  }
 
-  xt::xtensor<double, 2> wcoeffs;
+  std::vector<double> wcoeffs;
+  std::array<std::size_t, 2> wshape;
   switch (celltype)
   {
   case cell::type::triangle:
   {
-    impl::mdarray2_t _wcoeffs = create_nedelec_2d_space(degree);
-    wcoeffs = xt::xtensor<double, 2>({_wcoeffs.extent(0), _wcoeffs.extent(1)});
-    std::copy_n(_wcoeffs.data(), _wcoeffs.size(), wcoeffs.data());
+    impl::mdarray2_t w = create_nedelec_2d_space(degree);
+    wshape = {w.extent(0), w.extent(1)};
+    wcoeffs.resize(wshape[0] * wshape[1]);
+    std::copy_n(w.data(), w.size(), wcoeffs.data());
     break;
   }
   case cell::type::tetrahedron:
   {
-    // wcoeffs = create_nedelec_3d_space(degree);
-    impl::mdarray2_t _wcoeffs = create_nedelec_3d_space(degree);
-    wcoeffs = xt::xtensor<double, 2>({_wcoeffs.extent(0), _wcoeffs.extent(1)});
-    std::copy_n(_wcoeffs.data(), _wcoeffs.size(), wcoeffs.data());
+    impl::mdarray2_t w = create_nedelec_3d_space(degree);
+    wshape = {w.extent(0), w.extent(1)};
+    wcoeffs.resize(wshape[0] * wshape[1]);
+    std::copy_n(w.data(), w.size(), wcoeffs.data());
     break;
   }
   default:
@@ -192,24 +195,40 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   }
 
   // Integral representation for the boundary (edge) dofs
-  FiniteElement edge_space = element::create_lagrange(
-      cell::type::interval, degree - 1, lvariant, true);
-  std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-      edge_space, celltype, tdim, 2 * degree - 1);
+  {
+    FiniteElement edge_space = element::create_lagrange(
+        cell::type::interval, degree - 1, lvariant, true);
+    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments_new(
+        edge_space, celltype, tdim, 2 * degree - 1);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[1].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[1].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                        Mshape[i][3]);
+    }
+  }
 
   // Face dofs
   if (degree > 1)
   {
     FiniteElement face_space = element::create_lagrange(
         cell::type::triangle, degree - 2, lvariant, true);
-    std::tie(x[2], M[2]) = moments::make_integral_moments(face_space, celltype,
-                                                          tdim, 2 * degree - 2);
+    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
+        face_space, celltype, tdim, 2 * degree - 2);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[2].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[2].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                        Mshape[i][3]);
+    }
   }
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-    x[2] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[2] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[2] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[2] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
   // Volume dofs
@@ -217,25 +236,45 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   {
     if (degree > 2 and tdim == 3)
     {
-      std::tie(x[3], M[3]) = moments::make_integral_moments(
+      auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
           element::create_lagrange(cell::type::tetrahedron, degree - 3,
                                    lvariant, true),
           cell::type::tetrahedron, 3, 2 * degree - 3);
+      assert(_x.size() == _M.size());
+      for (std::size_t i = 0; i < _x.size(); ++i)
+      {
+        x[3].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+        M[3].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                          Mshape[i][3]);
+      }
     }
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
-      x[3] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+      x[3] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+      M[3] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
     }
   }
 
+  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<double>>, 4> xbuffer;
+  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
-    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
+  {
+    // std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = element::make_discontinuous(xview, Mview, tdim, tdim);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
+  }
 
-  return FiniteElement(element::family::N1E, celltype, degree, {tdim}, wcoeffs,
-                       x, M, 0, maps::type::covariantPiola, discontinuous,
-                       degree - 1, degree, lvariant);
+  return FiniteElement(element::family::N1E, celltype, degree, {tdim},
+                       impl::mdspan2_t(wcoeffs.data(), wshape), xview, Mview, 0,
+                       maps::type::covariantPiola, discontinuous, degree - 1,
+                       degree, lvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement element::create_nedelec2(cell::type celltype, int degree,

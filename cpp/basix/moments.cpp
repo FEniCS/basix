@@ -160,6 +160,32 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
   return {points, D};
 }
 //----------------------------------------------------------------------------
+std::tuple<
+    std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 2>>,
+    std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 4>>>
+moments::make_integral_moments_new(const FiniteElement& V, cell::type celltype,
+                                   std::size_t value_size, int q_deg)
+{
+  auto [xold, Mold] = make_integral_moments(V, celltype, value_size, q_deg);
+  std::vector<std::vector<double>> x;
+  std::vector<std::array<std::size_t, 2>> xshape;
+  std::vector<std::vector<double>> M;
+  std::vector<std::array<std::size_t, 4>> Mshape;
+  for (auto& _x : xold)
+  {
+    x.emplace_back(_x.data(), _x.data() + _x.size());
+    xshape.push_back({_x.shape(0), _x.shape(1)});
+  }
+
+  for (auto& _M : Mold)
+  {
+    M.emplace_back(_M.data(), _M.data() + _M.size());
+    Mshape.push_back({_M.shape(0), _M.shape(1), _M.shape(2), _M.shape(3)});
+  }
+
+  return {x, xshape, M, Mshape};
+}
+//----------------------------------------------------------------------------
 std::pair<std::vector<xt::xtensor<double, 2>>,
           std::vector<xt::xtensor<double, 4>>>
 moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
@@ -315,7 +341,8 @@ moments::make_tangent_integral_moments_new(const FiniteElement& V,
                                            cell::type celltype,
                                            std::size_t value_size, int q_deg)
 {
-  auto [xold, Mold] = make_tangent_integral_moments(V, celltype, value_size, q_deg);
+  auto [xold, Mold]
+      = make_tangent_integral_moments(V, celltype, value_size, q_deg);
   std::vector<std::vector<double>> x;
   std::vector<std::array<std::size_t, 2>> xshape;
   std::vector<std::vector<double>> M;

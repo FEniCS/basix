@@ -47,8 +47,12 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
   auto q1 = xt::col(pts, 1);
   if (degree == 1)
   {
-    for (std::size_t k = 0; k < psize; ++k)
-      wcoeffs(row_n, k) = xt::sum(wts * q0 * q1 * xt::row(Pq, k))();
+    for (std::size_t i = 0; i < psize; ++i)
+    {
+      wcoeffs(row_n, i) = 0.0;
+      for (std::size_t j = 0; j < wts.size(); ++j)
+        wcoeffs(row_n, i) += wts[j] * q0[j] * q1[j] * Pq(i, j);
+    }
     return wcoeffs;
   }
 
@@ -61,8 +65,12 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
       auto q_a = xt::col(pts, a);
       integrand = wts * q0 * q1 * pk;
       for (int i = 1; i < degree; ++i)
-        integrand *= q_a;
-      wcoeffs(row_n + a, k) = xt::sum(integrand)();
+        for (int j = 0; j < integrand.size(); ++j)
+          integrand[j] *= q_a[j];
+
+      wcoeffs(row_n + a, k) = 0;
+      for (std::size_t i = 0; i < integrand.size(); ++i)
+        wcoeffs(row_n + a, k) += integrand[i];
     }
   }
 

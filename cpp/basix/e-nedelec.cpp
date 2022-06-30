@@ -21,7 +21,7 @@ using namespace basix;
 namespace
 {
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
+impl::mdarray2_t create_nedelec_2d_space(int degree)
 {
   // Number of order (degree) vector polynomials
   const std::size_t nv = degree * (degree + 1) / 2;
@@ -33,38 +33,41 @@ xt::xtensor<double, 2> create_nedelec_2d_space(int degree)
   const std::size_t ns = degree;
 
   // Tabulate polynomial set at quadrature points
-  const auto [pts, _wts] = quadrature::make_quadrature(
+  const auto [pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::triangle, 2 * degree);
-  const auto wts = xt::adapt(_wts);
-  const xt::xtensor<double, 2> phi
-      = xt::view(polyset::tabulate(cell::type::triangle, degree, 0, pts), 0,
-                 xt::all(), xt::all());
+  const xt::xtensor<double, 3> phi
+      = polyset::tabulate(cell::type::triangle, degree, 0, pts);
 
-  const std::size_t psize = phi.shape(0);
+  const std::size_t psize = phi.shape(1);
 
   // Create coefficients for order (degree-1) vector polynomials
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({nv * 2 + ns, psize * 2});
-  xt::view(wcoeffs, xt::range(0, nv), xt::range(0, nv)) = xt::eye<double>(nv);
-  xt::view(wcoeffs, xt::range(nv, 2 * nv), xt::range(psize, psize + nv))
-      = xt::eye<double>(nv);
+  impl::mdarray2_t wcoeffs(nv * 2 + ns, psize * 2);
+  for (std::size_t i = 0; i < nv; ++i)
+  {
+    wcoeffs(i, i) = 1.0;
+    wcoeffs(nv + i, psize + i) = 1.0;
+  }
 
   // Create coefficients for the additional Nedelec polynomials
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::row(phi, ns0 + i);
-    for (std::size_t k = 0; k < psize; ++k)
+    for (std::size_t j = 0; j < psize; ++j)
     {
-      auto pk = xt::row(phi, k);
-      wcoeffs(2 * nv + i, k) = xt::sum(wts * p * xt::col(pts, 1) * pk)();
-      wcoeffs(2 * nv + i, k + psize)
-          = xt::sum(-wts * p * xt::col(pts, 0) * pk)();
+      wcoeffs(2 * nv + i, j) = 0.0;
+      wcoeffs(2 * nv + i, j + psize) = 0.0;
+      for (std::size_t k = 0; k < wts.size(); ++k)
+      {
+        double p = phi(0, ns0 + i, k);
+        wcoeffs(2 * nv + i, j) += wts[k] * p * pts(k, 1) * phi(0, j, k);
+        wcoeffs(2 * nv + i, j + psize) -= wts[k] * p * pts(k, 0) * phi(0, j, k);
+      }
     }
   }
 
   return wcoeffs;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
+impl::mdarray2_t create_nedelec_3d_space(int degree)
 {
   // Reference tetrahedron
   const std::size_t tdim = 3;
@@ -87,63 +90,59 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
                             + (degree - 2) * (degree - 1) * degree / 2;
 
   // Tabulate polynomial basis at quadrature points
-  const auto [pts, _wts] = quadrature::make_quadrature(
+  const auto [pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
-  const auto wts = xt::adapt(_wts);
-  xt::xtensor<double, 2> phi
-      = xt::view(polyset::tabulate(cell::type::tetrahedron, degree, 0, pts), 0,
-                 xt::all(), xt::all());
-  const std::size_t psize = phi.shape(0);
+  xt::xtensor<double, 3> phi
+      = polyset::tabulate(cell::type::tetrahedron, degree, 0, pts);
+  const std::size_t psize = phi.shape(1);
 
   // Create coefficients for order (degree-1) polynomials
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * tdim});
+  impl::mdarray2_t wcoeffs(ndofs, psize * tdim);
   for (std::size_t i = 0; i < tdim; ++i)
-  {
-    auto range0 = xt::range(nv * i, nv * i + nv);
-    auto range1 = xt::range(psize * i, psize * i + nv);
-    xt::view(wcoeffs, range0, range1) = xt::eye<double>(nv);
-  }
+    for (std::size_t j = 0; j < nv; ++j)
+      wcoeffs(i * nv + j, i * psize + j) = 1.0;
 
   // Create coefficients for additional Nedelec polynomials
-  auto p0 = xt::col(pts, 0);
-  auto p1 = xt::col(pts, 1);
-  auto p2 = xt::col(pts, 2);
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::row(phi, ns0 + i);
-    for (std::size_t k = 0; k < psize; ++k)
+    for (std::size_t j = 0; j < psize; ++j)
     {
-      const double w = xt::sum(wts * p * p2 * xt::row(phi, k))();
+      double w = 0.0;
+      for (std::size_t k = 0; k < wts.size(); ++k)
+        w += wts[k] * phi(0, ns0 + i, k) * pts(k, 2) * phi(0, j, k);
 
       // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
-        wcoeffs(tdim * nv + i - ns_remove, psize + k) = -w;
-      wcoeffs(tdim * nv + i + ns - ns_remove, k) = w;
+        wcoeffs(tdim * nv + i - ns_remove, psize + j) = -w;
+      wcoeffs(tdim * nv + i + ns - ns_remove, j) = w;
     }
   }
 
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::row(phi, ns0 + i);
-    for (std::size_t k = 0; k < psize; ++k)
+    for (std::size_t j = 0; j < psize; ++j)
     {
-      const double w = xt::sum(wts * p * p1 * xt::row(phi, k))();
-      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, k) = -w;
+      double w = 0.0;
+      for (std::size_t k = 0; k < wts.size(); ++k)
+        w += wts[k] * phi(0, ns0 + i, k) * pts(k, 1) * phi(0, j, k);
+      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, j) = -w;
 
       // Don't include polynomials (*, *, 0) that are dependant
       if (i >= ns_remove)
-        wcoeffs(tdim * nv + i - ns_remove, psize * 2 + k) = w;
+        wcoeffs(tdim * nv + i - ns_remove, psize * 2 + j) = w;
     }
   }
 
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::row(phi, ns0 + i);
-    for (std::size_t k = 0; k < psize; ++k)
+    for (std::size_t j = 0; j < psize; ++j)
     {
-      const double w = xt::sum(wts * p * p0 * xt::row(phi, k))();
-      wcoeffs(tdim * nv + i + ns - ns_remove, psize * 2 + k) = -w;
-      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + k) = w;
+      double w = 0.0;
+      for (std::size_t k = 0; k < wts.size(); ++k)
+        w += wts[k] * phi(0, ns0 + i, k) * pts(k, 0) * phi(0, j, k);
+
+      wcoeffs(tdim * nv + i + ns - ns_remove, psize * 2 + j) = -w;
+      wcoeffs(tdim * nv + i + ns * 2 - ns_remove, psize + j) = w;
     }
   }
 
@@ -153,34 +152,39 @@ xt::xtensor<double, 2> create_nedelec_3d_space(int degree)
 } // namespace
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
-                                             element::lagrange_variant lvariant,
-                                             bool discontinuous)
+FiniteElement element::create_nedelec(cell::type celltype, int degree,
+                                      lagrange_variant lvariant,
+                                      bool discontinuous)
 {
   if (degree < 1)
     throw std::runtime_error("Degree must be at least 1");
 
+  const std::size_t tdim = cell::topological_dimension(celltype);
+
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-  xt::xtensor<double, 2> wcoeffs;
-
-  const std::size_t tdim = cell::topological_dimension(celltype);
 
   x[0] = std::vector(cell::num_sub_entities(celltype, 0),
                      xt::xtensor<double, 2>({0, tdim}));
   M[0] = std::vector(cell::num_sub_entities(celltype, 0),
                      xt::xtensor<double, 4>({0, tdim, 0, 1}));
 
+  xt::xtensor<double, 2> wcoeffs;
   switch (celltype)
   {
   case cell::type::triangle:
   {
-    wcoeffs = create_nedelec_2d_space(degree);
+    impl::mdarray2_t _wcoeffs = create_nedelec_2d_space(degree);
+    wcoeffs = xt::xtensor<double, 2>({_wcoeffs.extent(0), _wcoeffs.extent(1)});
+    std::copy_n(_wcoeffs.data(), _wcoeffs.size(), wcoeffs.data());
     break;
   }
   case cell::type::tetrahedron:
   {
-    wcoeffs = create_nedelec_3d_space(degree);
+    // wcoeffs = create_nedelec_3d_space(degree);
+    impl::mdarray2_t _wcoeffs = create_nedelec_3d_space(degree);
+    wcoeffs = xt::xtensor<double, 2>({_wcoeffs.extent(0), _wcoeffs.extent(1)});
+    std::copy_n(_wcoeffs.data(), _wcoeffs.size(), wcoeffs.data());
     break;
   }
   default:
@@ -203,10 +207,9 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
   }
   else
   {
-    x[2] = std::vector(cell::num_sub_entities(celltype, 2),
-                       xt::xtensor<double, 2>({0, tdim}));
-    M[2] = std::vector(cell::num_sub_entities(celltype, 2),
-                       xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
+    x[2] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[2] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   // Volume dofs
@@ -221,10 +224,9 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
     }
     else
     {
-      x[3] = std::vector(cell::num_sub_entities(celltype, 3),
-                         xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector(cell::num_sub_entities(celltype, 3),
-                         xt::xtensor<double, 4>({0, tdim, 0, 1}));
+      const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
+      x[3] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+      M[3] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
     }
   }
 
@@ -236,10 +238,9 @@ FiniteElement basix::element::create_nedelec(cell::type celltype, int degree,
                        degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------
-FiniteElement
-basix::element::create_nedelec2(cell::type celltype, int degree,
-                                element::lagrange_variant lvariant,
-                                bool discontinuous)
+FiniteElement element::create_nedelec2(cell::type celltype, int degree,
+                                       lagrange_variant lvariant,
+                                       bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Invalid celltype in Nedelec");

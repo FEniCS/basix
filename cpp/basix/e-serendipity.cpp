@@ -722,11 +722,9 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
 
   for (std::size_t i = 0; i < tdim; ++i)
   {
-    x[i] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, i),
-        xt::xtensor<double, 4>({0, 1, 0, 1}));
+    const std::size_t num_ent = cell::num_sub_entities(celltype, i);
+    x[i] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
   }
 
   auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
@@ -762,8 +760,8 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     {
       for (int j = 0; j <= degree - i; ++j)
       {
-        xt::view(M[tdim][0], row_n, 0, xt::all(), 0)
-            = xt::row(phi, i * (degree + 1) + j) * wts;
+        for (std::size_t k = 0; k < wts.size(); ++k)
+          M[tdim][0](row_n, 0, k, 0) = phi(i * (degree + 1) + j, k) * wts[k];
         wcoeffs(row_n, i * (degree + 1) + j) = 1;
         ++row_n;
       }
@@ -778,10 +776,12 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
       {
         for (int k = 0; k <= degree - i - j; ++k)
         {
-          xt::view(M[tdim][0], row_n, 0, xt::all(), 0)
-              = xt::row(phi,
-                        i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
-                * wts;
+          for (std::size_t l = 0; l < wts.size(); ++l)
+          {
+            M[tdim][0](row_n, 0, l, 0)
+                = phi(i * (degree + 1) * (degree + 1) + j * (degree + 1) + k, l)
+                  * wts[l];
+          }
           wcoeffs(row_n, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
               = 1;
           ++row_n;

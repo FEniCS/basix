@@ -7,6 +7,7 @@
 #include "element-families.h"
 #include "lattice.h"
 #include "maps.h"
+#include "mdspan.hpp"
 #include "moments.h"
 #include "polynomials.h"
 #include "polyset.h"
@@ -21,7 +22,7 @@ using namespace basix;
 namespace
 {
 //----------------------------------------------------------------------------
-xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
+impl::mdarray2_t make_serendipity_space_2d(int degree)
 {
   const std::size_t ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
@@ -30,43 +31,40 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree);
   auto wts = xt::adapt(_wts);
 
-  xt::xtensor<double, 2> Pq
-      = xt::view(polyset::tabulate(cell::type::quadrilateral, degree, 0, pts),
-                 0, xt::all(), xt::all());
+  xt::xtensor<double, 3> Pq
+      = polyset::tabulate(cell::type::quadrilateral, degree, 0, pts);
 
-  const std::size_t psize = Pq.shape(0);
+  const std::size_t psize = Pq.shape(1);
 
   // Create coefficients for order (degree) polynomials
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+  impl::mdarray2_t wcoeffs(ndofs, psize);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
     for (int j = 0; j <= degree - i; ++j)
       wcoeffs(row_n++, i * (degree + 1) + j) = 1;
 
-  auto q0 = xt::col(pts, 0);
-  auto q1 = xt::col(pts, 1);
   if (degree == 1)
   {
     for (std::size_t i = 0; i < psize; ++i)
     {
       wcoeffs(row_n, i) = 0.0;
       for (std::size_t j = 0; j < wts.size(); ++j)
-        wcoeffs(row_n, i) += wts[j] * q0[j] * q1[j] * Pq(i, j);
+        wcoeffs(row_n, i) += wts[j] * pts(j, 0) * pts(j, 1) * Pq(0, i, j);
     }
     return wcoeffs;
   }
 
-  xt::xtensor<double, 1> integrand;
+  std::vector<double> integrand(wts.size());
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::row(Pq, k);
     for (std::size_t a = 0; a < 2; ++a)
     {
-      auto q_a = xt::col(pts, a);
-      integrand = wts * q0 * q1 * pk;
+      for (std::size_t i = 0; i < integrand.size(); ++i)
+        integrand[i] = wts[i] * pts(i, 0) * pts(i, 1) * Pq(0, k, i);
+
       for (int i = 1; i < degree; ++i)
         for (std::size_t j = 0; j < integrand.size(); ++j)
-          integrand[j] *= q_a[j];
+          integrand[j] *= pts(j, a);
 
       wcoeffs(row_n + a, k) = 0;
       for (std::size_t i = 0; i < integrand.size(); ++i)
@@ -116,7 +114,7 @@ serendipity_3d_indices(int total, int linear, std::vector<int> done = {})
   return out;
 }
 //----------------------------------------------------------------------------
-xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
+impl::mdarray2_t make_serendipity_space_3d(int degree)
 {
   const std::size_t ndofs
       = degree == 0
@@ -129,17 +127,15 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
   // Number of order (degree) polynomials
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, _wts] = quadrature::make_quadrature(
+  auto [pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree);
-  auto wts = xt::adapt(_wts);
-  xt::xtensor<double, 2> Ph
-      = xt::view(polyset::tabulate(cell::type::hexahedron, degree, 0, pts), 0,
-                 xt::all(), xt::all());
+  xt::xtensor<double, 3> Ph
+      = polyset::tabulate(cell::type::hexahedron, degree, 0, pts);
 
-  const std::size_t psize = Ph.shape(0);
+  const std::size_t psize = Ph.shape(1);
 
   // Create coefficients for order (degree) polynomials
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+  impl::mdarray2_t wcoeffs(ndofs, psize);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
     for (int j = 0; j <= degree - i; ++j)
@@ -147,7 +143,7 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
         wcoeffs(row_n++, i * (degree + 1) * (degree + 1) + j * (degree + 1) + k)
             = 1;
 
-  xt::xtensor<double, 1> integrand;
+  std::vector<double> integrand(wts.size());
   std::vector<std::array<int, 3>> indices;
   for (std::size_t s = 1; s <= 3; ++s)
   {
@@ -156,15 +152,20 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
     {
       for (std::size_t k = 0; k < psize; ++k)
       {
-        integrand = wts * xt::row(Ph, k);
+        for (std::size_t i = 0; i < integrand.size(); ++i)
+          integrand[i] = wts[i] * Ph(0, k, i);
+
         for (int d = 0; d < 3; ++d)
         {
           auto q_d = xt::col(pts, d);
           for (int j = 0; j < i[d]; ++j)
-            integrand *= q_d;
+            for (std::size_t l = 0; l < integrand.size(); ++l)
+              integrand[l] *= pts(l, d);
         }
 
-        wcoeffs(row_n, k) = xt::sum(integrand)();
+        wcoeffs(row_n, k) = 0;
+        for (std::size_t j = 0; j < integrand.size(); ++j)
+          wcoeffs(row_n, k) += integrand[j];
       }
       ++row_n;
     }
@@ -173,7 +174,7 @@ xt::xtensor<double, 2> make_serendipity_space_3d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
-xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
+impl::mdarray2_t make_serendipity_div_space_2d(int degree)
 {
   const std::size_t ndofs = degree * (degree + 3) + 4;
 
@@ -182,51 +183,68 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
   auto wts = xt::adapt(_wts);
 
-  xt::xtensor<double, 2> Pq = xt::view(
-      polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts), 0,
-      xt::all(), xt::all());
+  xt::xtensor<double, 3> Pq
+      = polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts);
 
-  const std::size_t psize = Pq.shape(0);
+  const std::size_t psize = Pq.shape(1);
   const std::size_t nv = polyset::dim(cell::type::triangle, degree);
 
   // Create coefficients for order (degree) vector polynomials
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * 2});
+  impl::mdarray2_t wcoeffs(ndofs, psize * 2);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
-  {
     for (int j = 0; j <= degree - i; ++j)
-    {
       for (int d = 0; d < 2; ++d)
-      {
         wcoeffs(row_n++, d * psize + i * (degree + 2) + j) = 1;
-      }
-    }
-  }
 
-  auto q0 = xt::col(pts, 0);
-  auto q1 = xt::col(pts, 1);
-  xt::xtensor<double, 1> integrand;
+  // auto q0 = xt::col(pts, 0);
+  // auto q1 = xt::col(pts, 1);
+  std::vector<double> integrand(wts.size());
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::row(Pq, k);
+    auto pk = xt::view(Pq, 0, k, xt::all());
     for (std::size_t d = 0; d < 2; ++d)
     {
       for (std::size_t a = 0; a < 2; ++a)
       {
-        auto q_a = xt::col(pts, a);
-        integrand = wts * pk;
+        // auto q_a = xt::col(pts, a);
+        // integrand = wts * pk;
+        for (std::size_t i = 0; i < integrand.size(); ++i)
+          integrand[i] = wts[i] * Pq(0, k, i);
+
         if (a == 0 and d == 0)
-          integrand *= q0;
+        {
+          for (std::size_t i = 0; i < integrand.size(); ++i)
+            integrand[i] *= pts(i, 0);
+          // integrand *= q0;
+        }
         else if (a == 0 and d == 1)
-          integrand *= (degree + 1) * q1;
+        {
+          for (std::size_t i = 0; i < integrand.size(); ++i)
+            integrand[i] *= (degree + 1) * pts(i, 1);
+          // integrand *= (degree + 1) * q1;
+        }
         else if (a == 1 and d == 0)
-          integrand *= (degree + 1) * q0;
+        {
+          for (std::size_t i = 0; i < integrand.size(); ++i)
+            integrand[i] *= (degree + 1) * pts(i, 0);
+          // integrand *= (degree + 1) * q0;
+        }
         else if (a == 1 and d == 1)
-          integrand *= q1;
+        {
+          for (std::size_t i = 0; i < integrand.size(); ++i)
+            integrand[i] *= pts(i, 1);
+          // integrand *= q1;
+        }
 
         for (int i = 0; i < degree; ++i)
-          integrand *= q_a;
-        wcoeffs(2 * nv + a, psize * d + k) = xt::sum(integrand)();
+          for (std::size_t j = 0; j < integrand.size(); ++j)
+            integrand[j] *= pts(j, a);
+        // integrand *= q_a;
+
+        wcoeffs(2 * nv + a, psize * d + k)
+            = std::reduce(integrand.begin(), integrand.end(), 0.0);
+        // wcoeffs(2 * nv + a, psize * d + k) = xt::sum(integrand)();
       }
     }
   }
@@ -234,24 +252,23 @@ xt::xtensor<double, 2> make_serendipity_div_space_2d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
-xt::xtensor<double, 2> make_serendipity_div_space_3d(int degree)
+impl::mdarray2_t make_serendipity_div_space_3d(int degree)
 {
+
   const std::size_t ndofs = (degree + 1) * (degree * (degree + 5) + 12) / 2;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, _wts] = quadrature::make_quadrature(
+  auto [pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
-  auto wts = xt::adapt(_wts);
 
-  xt::xtensor<double, 2> polyset_at_Qpts
-      = xt::view(polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts),
-                 0, xt::all(), xt::all());
+  xt::xtensor<double, 3> polyset_at_Qpts
+      = polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts);
 
-  const std::size_t psize = polyset_at_Qpts.shape(0);
+  const std::size_t psize = polyset_at_Qpts.shape(1);
   const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
 
   // Create coefficients for order (degree) vector polynomials
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize * 3});
+  impl::mdarray2_t wcoeffs(ndofs, psize * 3);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
   {
@@ -269,65 +286,108 @@ xt::xtensor<double, 2> make_serendipity_div_space_3d(int degree)
     }
   }
 
-  auto q0 = xt::col(pts, 0);
-  auto q1 = xt::col(pts, 1);
-  auto q2 = xt::col(pts, 2);
-  xt::xtensor<double, 1> integrand;
+  std::vector<double> integrand(wts.size());
   for (std::size_t k = 0; k < psize; ++k)
   {
-    auto pk = xt::row(polyset_at_Qpts, k);
     for (std::size_t d = 0; d < 3; ++d)
     {
       for (std::size_t a = 0; a < 3; ++a)
       {
         for (int index = 0; index <= degree; ++index)
         {
-          auto q_a = xt::col(pts, a);
-          integrand = wts * pk;
+          for (std::size_t i = 0; i < integrand.size(); ++i)
+            integrand[i] = wts[i] * polyset_at_Qpts(0, k, i);
+
           if (a == 0)
           {
             if (d == 0)
-              integrand *= -(degree + 2) * q0;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= -(degree + 2) * pts(i, 0);
+            }
             else if (d == 1)
-              integrand *= q1;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 1);
+            }
             else if (d == 2)
-              integrand *= q2;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 2);
+            }
 
             for (int i = 0; i < index; ++i)
-              integrand *= q1;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 1);
+            }
             for (int i = 0; i < degree - index; ++i)
-              integrand *= q2;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 2);
+            }
           }
           else if (a == 1)
           {
             if (d == 0)
-              integrand *= -q0;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= -pts(i, 0);
+            }
             else if (d == 1)
-              integrand *= (degree + 2) * q1;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= (degree + 2) * pts(i, 1);
+            }
             else if (d == 2)
-              integrand *= -q2;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= -pts(i, 2);
+            }
 
             for (int i = 0; i < index; ++i)
-              integrand *= q0;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 0);
+            }
             for (int i = 0; i < degree - index; ++i)
-              integrand *= q2;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 2);
+            }
           }
           else if (a == 2)
           {
             if (d == 0)
-              integrand *= q0;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 0);
+            }
             else if (d == 1)
-              integrand *= q1;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 1);
+            }
             else if (d == 2)
-              integrand *= -(degree + 2) * q2;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= -(degree + 2) * pts(i, 2);
+            }
 
             for (int i = 0; i < index; ++i)
-              integrand *= q0;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 0);
+            }
             for (int i = 0; i < degree - index; ++i)
-              integrand *= q1;
+            {
+              for (std::size_t i = 0; i < integrand.size(); ++i)
+                integrand[i] *= pts(i, 1);
+            }
           }
 
-          wcoeffs(3 * nv + 3 * index + a, psize * d + k) = xt::sum(integrand)();
+          wcoeffs(3 * nv + 3 * index + a, psize * d + k)
+              = std::reduce(integrand.begin(), integrand.end(), 0.0);
         }
       }
     }
@@ -941,9 +1001,17 @@ FiniteElement basix::element::create_serendipity(
   if (tdim == 1)
     wcoeffs = xt::eye<double>(degree + 1);
   else if (tdim == 2)
-    wcoeffs = make_serendipity_space_2d(degree);
+  {
+    auto w = make_serendipity_space_2d(degree);
+    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
+    std::copy_n(w.data(), w.size(), wcoeffs.data());
+  }
   else if (tdim == 3)
-    wcoeffs = make_serendipity_space_3d(degree);
+  {
+    auto w = make_serendipity_space_3d(degree);
+    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
+    std::copy_n(w.data(), w.size(), wcoeffs.data());
+  }
 
   if (discontinuous)
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, 1);
@@ -961,17 +1029,17 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   // Only tabulate for scalar. Vector spaces can easily be built from
   // the scalar space.
   if (!discontinuous)
-  {
     throw std::runtime_error("Cannot create a continuous DPC element.");
-  }
 
   if (variant == element::dpc_variant::unset)
   {
     if (degree == 0)
       variant = element::dpc_variant::simplex_equispaced;
     else
+    {
       throw std::runtime_error(
           "DPC elements of degree > 0 need to be given a variant.");
+    }
   }
 
   cell::type simplex_type;
@@ -999,12 +1067,8 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   {
     int row_n = 0;
     for (int i = 0; i <= degree; ++i)
-    {
       for (int j = 0; j <= degree - i; ++j)
-      {
         wcoeffs(row_n++, i * (degree + 1) + j) = 1;
-      }
-    }
   }
   else
   {
@@ -1063,8 +1127,6 @@ FiniteElement basix::element::create_serendipity_div(
     throw std::runtime_error("Invalid celltype");
   }
 
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
   const std::size_t tdim = cell::topological_dimension(celltype);
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
@@ -1074,11 +1136,9 @@ FiniteElement basix::element::create_serendipity_div(
 
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
-    x[i] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, i),
-        xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    const std::size_t num_ent = cell::num_sub_entities(celltype, i);
+    x[i] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   FiniteElement facet_moment_space
@@ -1097,19 +1157,24 @@ FiniteElement basix::element::create_serendipity_div(
   }
   else
   {
-    x[tdim] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, tdim),
-        xt::xtensor<double, 2>({0, tdim}));
-    M[tdim] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, tdim),
-        xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    const std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
+    x[tdim] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[tdim] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   xt::xtensor<double, 2> wcoeffs;
   if (tdim == 2)
-    wcoeffs = make_serendipity_div_space_2d(degree);
+  {
+    auto w = make_serendipity_div_space_2d(degree);
+    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
+    std::copy_n(w.data(), w.size(), wcoeffs.data());
+  }
   else if (tdim == 3)
-    wcoeffs = make_serendipity_div_space_3d(degree);
+  {
+    auto w = make_serendipity_div_space_3d(degree);
+    wcoeffs = xt::xtensor<double, 2>({w.extent(0), w.extent(1)});
+    std::copy_n(w.data(), w.size(), wcoeffs.data());
+  }
 
   if (discontinuous)
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);

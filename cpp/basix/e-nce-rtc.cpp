@@ -12,7 +12,6 @@
 #include <vector>
 #include <xtensor/xbuilder.hpp>
 #include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -36,14 +35,12 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
+  auto [pts, qwts] = quadrature::make_quadrature(quadrature::type::Default,
                                                  celltype, 2 * degree);
-  auto Qwts = xt::adapt(_wts);
-  xt::xtensor<double, 2> phi = xt::view(
-      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
+  xt::xtensor<double, 3> phi = polyset::tabulate(celltype, degree, 0, pts);
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(0);
+  const std::size_t psize = phi.shape(1);
 
   const int facet_count = tdim == 2 ? 4 : 6;
   const int facet_dofs = polyset::dim(facettype, degree - 1);
@@ -89,19 +86,25 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
     for (std::size_t d = 0; d < tdim; ++d)
     {
       int n = 0;
-      xt::xtensor<double, 1> integrand = xt::pow(xt::col(pts, d), degree);
+      std::vector<double> integrand(pts.shape(0));
+      for (std::size_t j = 0; j < integrand.size(); ++j)
+        integrand[j] = std::pow(pts(j, d), degree);
       for (std::size_t c = 0; c < tdim; ++c)
       {
         if (c != d)
         {
-          integrand *= xt::pow(xt::col(pts, c), indices[n]);
+          for (std::size_t j = 0; j < integrand.size(); ++j)
+            integrand[j] *= std::pow(pts(j, c), indices[n]);
           ++n;
         }
       }
 
       for (std::size_t k = 0; k < psize; ++k)
       {
-        const double w_sum = xt::sum(Qwts * integrand * xt::row(phi, k))();
+        double w_sum = 0.0;
+        for (std::size_t j = 0; j < qwts.size(); ++j)
+          w_sum += qwts[j] * integrand[j] * phi(0, k, j);
+
         wcoeffs(dof, k + psize * d) = w_sum;
       }
       ++dof;
@@ -162,14 +165,13 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                 celltype, 2 * degree);
-  auto wts = xt::adapt(_wts);
-  xt::xtensor<double, 2> phi = xt::view(
-      polyset::tabulate(celltype, degree, 0, pts), 0, xt::all(), xt::all());
+  auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                celltype, 2 * degree);
+  // auto wts = xt::adapt(_wts);
+  xt::xtensor<double, 3> phi = polyset::tabulate(celltype, degree, 0, pts);
 
   // The number of order (degree) polynomials
-  const int psize = phi.shape(0);
+  const int psize = phi.shape(1);
 
   const int edge_count = tdim == 2 ? 4 : 12;
   const int edge_dofs = polyset::dim(cell::type::interval, degree - 1);
@@ -177,7 +179,6 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   const int face_dofs = 2 * degree * (degree - 1);
   const int volume_count = tdim == 2 ? 0 : 1;
   const int volume_dofs = 3 * degree * (degree - 1) * (degree - 1);
-
   const std::size_t ndofs = edge_count * edge_dofs + face_count * face_dofs
                             + volume_count * volume_dofs;
 
@@ -206,7 +207,8 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   }
 
   // Create coefficients for additional polynomials in the curl space
-  xt::xtensor<double, 1> integrand;
+  // xt::xtensor<double, 1> integrand;
+  std::vector<double> integrand(pts.shape(0));
   switch (tdim)
   {
   case 2:
@@ -215,14 +217,22 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     {
       for (std::size_t d = 0; d < tdim; ++d)
       {
-        integrand = xt::col(pts, 1 - d);
+        for (std::size_t k = 0; k < integrand.size(); ++k)
+          integrand[k] = pts(k, 1 - d);
+
         for (int j = 1; j < degree; ++j)
-          integrand *= xt::col(pts, 1 - d);
+          for (std::size_t k = 0; k < integrand.size(); ++k)
+            integrand[k] *= pts(k, 1 - d);
+
         for (int j = 0; j < i; ++j)
-          integrand *= xt::col(pts, d);
+          for (std::size_t k = 0; k < integrand.size(); ++k)
+            integrand[k] *= pts(k, d);
+
         for (int k = 0; k < psize; ++k)
         {
-          const double w_sum = xt::sum(wts * integrand * xt::row(phi, k))();
+          double w_sum = 0.0;
+          for (std::size_t k1 = 0; k1 < wts.size(); ++k1)
+            w_sum += wts[k1] * integrand[k1] * phi(0, k, k1);
           wcoeffs(dof, k + psize * d) = w_sum;
         }
         ++dof;
@@ -245,18 +255,26 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
               if (c < e and j == degree)
                 continue;
 
-              integrand = xt::col(pts, e);
+              for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
+                integrand[k1] = pts(k1, e);
+
               for (int k = 1; k < degree; ++k)
-                integrand *= xt::col(pts, e);
+                for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
+                  integrand[k1] *= pts(k1, e);
+
               for (int k = 0; k < i; ++k)
-                integrand *= xt::col(pts, d);
+                for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
+                  integrand[k1] *= pts(k1, d);
+
               for (int k = 0; k < j; ++k)
-                integrand *= xt::col(pts, c);
+                for (std::size_t k1 = 0; k1 < integrand.size(); ++k1)
+                  integrand[k1] *= pts(k1, c);
 
               for (int k = 0; k < psize; ++k)
               {
-                const double w_sum
-                    = xt::sum(wts * integrand * xt::row(phi, k))();
+                double w_sum = 0.0;
+                for (std::size_t k1 = 0; k1 < wts.size(); ++k1)
+                  w_sum += wts[k1] * integrand[k1] * phi(0, k, k1);
                 wcoeffs(dof, k + psize * d) = w_sum;
               }
               ++dof;

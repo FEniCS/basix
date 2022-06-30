@@ -154,7 +154,6 @@ impl::mdarray2_t make_serendipity_space_3d(int degree)
 
         for (int d = 0; d < 3; ++d)
         {
-          // auto q_d = xt::col(pts, d);
           for (int j = 0; j < i[d]; ++j)
             for (std::size_t l = 0; l < integrand.size(); ++l)
               integrand[l] *= pts(l, d);
@@ -193,8 +192,6 @@ impl::mdarray2_t make_serendipity_div_space_2d(int degree)
       for (int d = 0; d < 2; ++d)
         wcoeffs(row_n++, d * psize + i * (degree + 2) + j) = 1;
 
-  // auto q0 = xt::col(pts, 0);
-  // auto q1 = xt::col(pts, 1);
   std::vector<double> integrand(wts.size());
   for (std::size_t k = 0; k < psize; ++k)
   {
@@ -203,8 +200,6 @@ impl::mdarray2_t make_serendipity_div_space_2d(int degree)
     {
       for (std::size_t a = 0; a < 2; ++a)
       {
-        // auto q_a = xt::col(pts, a);
-        // integrand = wts * pk;
         for (std::size_t i = 0; i < integrand.size(); ++i)
           integrand[i] = wts[i] * Pq(0, k, i);
 
@@ -212,35 +207,29 @@ impl::mdarray2_t make_serendipity_div_space_2d(int degree)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
             integrand[i] *= pts(i, 0);
-          // integrand *= q0;
         }
         else if (a == 0 and d == 1)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
             integrand[i] *= (degree + 1) * pts(i, 1);
-          // integrand *= (degree + 1) * q1;
         }
         else if (a == 1 and d == 0)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
             integrand[i] *= (degree + 1) * pts(i, 0);
-          // integrand *= (degree + 1) * q0;
         }
         else if (a == 1 and d == 1)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
             integrand[i] *= pts(i, 1);
-          // integrand *= q1;
         }
 
         for (int i = 0; i < degree; ++i)
           for (std::size_t j = 0; j < integrand.size(); ++j)
             integrand[j] *= pts(j, a);
-        // integrand *= q_a;
 
         wcoeffs(2 * nv + a, psize * d + k)
             = std::reduce(integrand.begin(), integrand.end(), 0.0);
-        // wcoeffs(2 * nv + a, psize * d + k) = xt::sum(integrand)();
       }
     }
   }
@@ -257,10 +246,10 @@ impl::mdarray2_t make_serendipity_div_space_3d(int degree)
   auto [pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
 
-  xt::xtensor<double, 3> polyset_at_Qpts
+  xt::xtensor<double, 3> Pq
       = polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts);
 
-  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t psize = Pq.shape(1);
   const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
 
   // Create coefficients for order (degree) vector polynomials
@@ -292,7 +281,7 @@ impl::mdarray2_t make_serendipity_div_space_3d(int degree)
         for (int index = 0; index <= degree; ++index)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] = wts[i] * polyset_at_Qpts(0, k, i);
+            integrand[i] = wts[i] * Pq(0, k, i);
 
           if (a == 0)
           {
@@ -400,10 +389,10 @@ impl::mdarray2_t make_serendipity_curl_space_2d(int degree)
   auto [pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
 
-  const xt::xtensor<double, 3> polyset_at_Qpts
+  const xt::xtensor<double, 3> Pq
       = polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts);
 
-  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t psize = Pq.shape(1);
   const std::size_t nv = polyset::dim(cell::type::triangle, degree);
 
   // Create coefficients for order (degree) vector polynomials
@@ -414,57 +403,45 @@ impl::mdarray2_t make_serendipity_curl_space_2d(int degree)
       for (int d = 0; d < 2; ++d)
         wcoeffs(row_n++, d * psize + i * (degree + 2) + j) = 1;
 
-  // auto q0 = xt::col(pts, 0);
-  // auto q1 = xt::col(pts, 1);
-  // xt::xtensor<double, 1> integrand;
   std::vector<double> integrand(wts.size());
   for (std::size_t k = 0; k < psize; ++k)
   {
-    // auto pk = xt::row(polyset_at_Qpts, k);
     for (std::size_t d = 0; d < 2; ++d)
     {
       for (std::size_t a = 0; a < 2; ++a)
       {
-        // auto q_a = xt::col(pts, a);
-        // integrand = wts * pk;
         for (std::size_t i = 0; i < integrand.size(); ++i)
-          integrand[i] = wts[i] * polyset_at_Qpts(0, k, i);
+          integrand[i] = wts[i] * Pq(0, k, i);
 
         if (a == 0 and d == 0)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
             integrand[i] *= (degree + 1) * pts(i, 1);
-          // integrand *= (degree + 1) * q1;
         }
         else if (a == 0 and d == 1)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
             integrand[i] *= -pts(i, 0);
-          // integrand *= -q0;
         }
         else if (a == 1 and d == 0)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
             integrand[i] *= pts(i, 1);
-          // integrand *= q1;
         }
         else if (a == 1 and d == 1)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
             integrand[i] *= -(degree + 1) * pts(i, 0);
-          // integrand *= -(degree + 1) * q0;
         }
 
         for (int i = 0; i < degree; ++i)
         {
           for (std::size_t i = 0; i < integrand.size(); ++i)
             integrand[i] *= pts(i, a);
-          // integrand *= q_a;
         }
 
         wcoeffs(2 * nv + a, psize * d + k)
             = std::reduce(integrand.begin(), integrand.end(), 0.0);
-        // wcoeffs(2 * nv + a, psize * d + k) = xt::sum(integrand)();
       }
     }
   }
@@ -482,10 +459,10 @@ impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
   // Evaluate the expansion polynomials at the quadrature points
   auto [pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
-  xt::xtensor<double, 3> polyset_at_Qpts
+  xt::xtensor<double, 3> Pq
       = polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts);
 
-  const std::size_t psize = polyset_at_Qpts.shape(1);
+  const std::size_t psize = Pq.shape(1);
   const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
 
   // Create coefficients for order (degree) vector polynomials
@@ -507,24 +484,17 @@ impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
     }
   }
 
-  // auto q0 = xt::col(pts, 0);
-  // auto q1 = xt::col(pts, 1);
-  // auto q2 = xt::col(pts, 2);
-  // xt::xtensor<double, 1> integrand;
   std::vector<double> integrand(wts.size());
   for (std::size_t k = 0; k < psize; ++k)
   {
-    // auto pk = xt::row(polyset_at_Qpts, k);
     for (std::size_t d = 0; d < 3; ++d)
     {
       for (std::size_t a = 0; a < (degree > 1 ? 3 : 2); ++a)
       {
         for (int index = 0; index <= degree; ++index)
         {
-          // auto q_a = xt::col(pts, a);
-          // integrand = wts * pk;
           for (std::size_t i = 0; i < integrand.size(); ++i)
-            integrand[i] = wts[i] * polyset_at_Qpts(0, k, i);
+            integrand[i] = wts[i] * Pq(0, k, i);
 
           if (a == 0)
           {
@@ -532,31 +502,26 @@ impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 1) * pts(i, 2);
-              // integrand *= q1 * q2;
             }
             else if (d == 1)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= 0;
-              // integrand *= 0;
             }
             else if (d == 2)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= -pts(i, 0) * pts(i, 1);
-              // integrand *= -q0 * q1;
             }
             for (int i = 0; i < index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 0);
-              // integrand *= q0;
             }
             for (int i = 0; i < degree - 1 - index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 2);
-              // integrand *= q2;
             }
           }
           else if (a == 1)
@@ -565,32 +530,27 @@ impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= 0;
-              // integrand *= 0;
             }
             else if (d == 1)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 0) * pts(i, 2);
-              // integrand *= q0 * q2;
             }
             else if (d == 2)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= -pts(i, 0) * pts(i, 1);
-              // integrand *= -q0 * q1;
             }
 
             for (int i = 0; i < index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 1);
-              // integrand *= q1;
             }
             for (int i = 0; i < degree - 1 - index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 2);
-              // integrand *= q2;
             }
           }
           else if (a == 2)
@@ -599,38 +559,31 @@ impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 1) * pts(i, 2);
-              // integrand *= q1 * q2;
             }
             else if (d == 1)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= -pts(i, 0) * pts(i, 2);
-              // integrand *= -q0 * q2;
             }
             else if (d == 2)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= 0;
-              // integrand *= 0;
             }
             for (int i = 0; i < index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 0);
-              // integrand *= q0;
             }
             for (int i = 0; i < degree - 1 - index; ++i)
             {
               for (std::size_t i = 0; i < integrand.size(); ++i)
                 integrand[i] *= pts(i, 1);
-              // integrand *= q1;
             }
           }
 
           wcoeffs(3 * nv + 3 * index + a, psize * d + k)
               = std::reduce(integrand.begin(), integrand.end(), 0.0);
-          // wcoeffs(3 * nv + 3 * index + a, psize * d + k) =
-          // xt::sum(integrand)();
         }
       }
     }
@@ -648,21 +601,17 @@ impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
         for (int d = 0; d < 3; ++d)
         {
           for (std::size_t j = 0; j < integrand.size(); ++j)
-            integrand[j] = wts[j] * polyset_at_Qpts(0, k, j);
-          //  integrand = wts * xt::row(polyset_at_Qpts, k);
+            integrand[j] = wts[j] * Pq(0, k, j);
           for (int d2 = 0; d2 < 3; ++d2)
           {
-            // auto q_d2 = xt::col(pts, d2);
             if (d == d2)
             {
               for (std::size_t j = 0; j < integrand.size(); ++j)
                 integrand[j] *= i[d2];
-              // integrand *= i[d2];
               for (int j = 0; j < i[d2] - 1; ++j)
               {
                 for (std::size_t j = 0; j < integrand.size(); ++j)
                   integrand[j] *= pts(j, d2);
-                // integrand *= pts(j, d2);
               }
             }
             else
@@ -671,14 +620,12 @@ impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
               {
                 for (std::size_t j = 0; j < integrand.size(); ++j)
                   integrand[j] *= pts(j, d2);
-                // integrand *= q_d2;
               }
             }
           }
 
           wcoeffs(c, psize * d + k)
               = std::reduce(integrand.begin(), integrand.end(), 0.0);
-          // wcoeffs(c, psize * d + k) = xt::sum(integrand)();
         }
       }
       ++c;
@@ -1025,7 +972,6 @@ FiniteElement basix::element::create_serendipity(
 
   // dim 0 (vertices)
   const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
-  // const std::size_t num_vertices = geometry.shape(0);
   for (std::size_t i = 0; i < geometry.shape(0); ++i)
   {
     auto& _x = x[0].emplace_back(1, geometry.shape(1));
@@ -1063,8 +1009,6 @@ FiniteElement basix::element::create_serendipity(
     {
       FiniteElement moment_space = element::create_dpc(
           cell::type::quadrilateral, degree - 4, dvariant, true);
-      // std::tie(x[2], M[2]) = moments::make_integral_moments(
-      //     moment_space, celltype, 1, 2 * degree - 4);
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
           moment_space, celltype, 1, 2 * degree - 4);
       assert(_x.size() == _M.size());
@@ -1087,10 +1031,6 @@ FiniteElement basix::element::create_serendipity(
   {
     if (degree >= 6)
     {
-      // std::tie(x[3], M[3]) = moments::make_integral_moments(
-      //     element::create_dpc(cell::type::hexahedron, degree - 6, dvariant,
-      //                         true),
-      //     celltype, 1, 2 * degree - 6);
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
           element::create_dpc(cell::type::hexahedron, degree - 6, dvariant,
                               true),
@@ -1273,9 +1213,6 @@ FiniteElement basix::element::create_serendipity_div(
         = facettype == cell::type::interval
               ? element::create_lagrange(facettype, degree, lvariant, true)
               : element::create_dpc(facettype, degree, dvariant, true);
-    // std::tie(x[tdim - 1], M[tdim - 1]) =
-    // moments::make_normal_integral_moments(
-    //     facet_moment_space, celltype, tdim, 2 * degree + 1);
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments_new(
         facet_moment_space, celltype, tdim, 2 * degree + 1);
     assert(_x.size() == _M.size());
@@ -1291,8 +1228,6 @@ FiniteElement basix::element::create_serendipity_div(
   {
     FiniteElement cell_moment_space
         = element::create_dpc(celltype, degree - 2, dvariant, true);
-    // std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
-    //     cell_moment_space, celltype, tdim, 2 * degree - 1);
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
         cell_moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
@@ -1325,8 +1260,6 @@ FiniteElement basix::element::create_serendipity_div(
     wshape = {w.extent(0), w.extent(1)};
   }
 
-  // if (discontinuous)
-  //   std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
   std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
   std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
@@ -1392,8 +1325,6 @@ FiniteElement basix::element::create_serendipity_curl(
   {
     FiniteElement edge_moment_space = element::create_lagrange(
         cell::type::interval, degree, lvariant, true);
-    // std::tie(x[1], M[1]) = moments::make_tangent_integral_moments(
-    //     edge_moment_space, celltype, tdim, 2 * degree + 1);
     auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments_new(
         edge_moment_space, celltype, tdim, 2 * degree + 1);
     assert(_x.size() == _M.size());
@@ -1410,8 +1341,6 @@ FiniteElement basix::element::create_serendipity_curl(
     // Face integral moment
     FiniteElement moment_space = element::create_dpc(
         cell::type::quadrilateral, degree - 2, dvariant, true);
-    // std::tie(x[2], M[2]) = moments::make_integral_moments(
-    //     moment_space, celltype, tdim, 2 * degree - 1);
     auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
         moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
@@ -1434,10 +1363,6 @@ FiniteElement basix::element::create_serendipity_curl(
     if (degree >= 4)
     {
       // Interior integral moment
-      // std::tie(x[3], M[3]) = moments::make_integral_moments(
-      //     element::create_dpc(cell::type::hexahedron, degree - 4, dvariant,
-      //                         true),
-      //     celltype, tdim, 2 * degree - 3);
       auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
           element::create_dpc(cell::type::hexahedron, degree - 4, dvariant,
                               true),

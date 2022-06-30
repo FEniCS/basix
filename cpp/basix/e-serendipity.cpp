@@ -65,7 +65,7 @@ xt::xtensor<double, 2> make_serendipity_space_2d(int degree)
       auto q_a = xt::col(pts, a);
       integrand = wts * q0 * q1 * pk;
       for (int i = 1; i < degree; ++i)
-        for (int j = 0; j < integrand.size(); ++j)
+        for (std::size_t j = 0; j < integrand.size(); ++j)
           integrand[j] *= q_a[j];
 
       wcoeffs(row_n + a, k) = 0;

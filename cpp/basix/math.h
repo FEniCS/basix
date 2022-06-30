@@ -41,8 +41,8 @@ std::pair<std::vector<typename U::value_type>, std::array<std::size_t, 2>>
 outer_new(const U& u, const V& v)
 {
   std::vector<typename U::value_type> result(u.size() * v.size());
-  for (std::size_t i = 0; i < u.size(); i++)
-    for (std::size_t j = 0; j < u.size(); j++)
+  for (std::size_t i = 0; i < u.size(); ++i)
+    for (std::size_t j = 0; j < v.size(); ++j)
       result[i * v.size() + j] = u[i] * v[j];
 
   return {std::move(result), {u.size(), v.size()}};

@@ -714,8 +714,6 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   const std::size_t tdim = cell::topological_dimension(celltype);
   const std::size_t psize = polyset::dim(celltype, degree);
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
 
   auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
                                                 celltype, degree * 2);
@@ -724,20 +722,21 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   const xt::xtensor<double, 2> phi = polynomials::tabulate(
       polynomials::type::legendre, celltype, degree, pts);
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
 
   for (std::size_t i = 0; i < tdim; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
+    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
   }
 
-  x[tdim].push_back(pts);
-  M[tdim].push_back(xt::xtensor<double, 4>({ndofs, 1, pts.shape(0), 1}));
+  x[tdim].emplace_back(std::vector(pts.data(), pts.data() + pts.size()),
+                       pts.shape(0), pts.shape(1));
+  auto& _M = M[tdim].emplace_back(ndofs, 1, pts.shape(0), 1);
 
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+  impl::mdarray2_t wcoeffs(ndofs, psize);
   if (celltype == cell::type::quadrilateral)
   {
     int row_n = 0;
@@ -746,7 +745,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
       for (int j = 0; j <= degree - i; ++j)
       {
         for (std::size_t k = 0; k < wts.size(); ++k)
-          M[tdim][0](row_n, 0, k, 0) = phi(i * (degree + 1) + j, k) * wts[k];
+          _M(row_n, 0, k, 0) = phi(i * (degree + 1) + j, k) * wts[k];
         wcoeffs(row_n, i * (degree + 1) + j) = 1;
         ++row_n;
       }
@@ -763,7 +762,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
         {
           for (std::size_t l = 0; l < wts.size(); ++l)
           {
-            M[tdim][0](row_n, 0, l, 0)
+            _M(row_n, 0, l, 0)
                 = phi(i * (degree + 1) * (degree + 1) + j * (degree + 1) + k, l)
                   * wts[l];
           }
@@ -775,16 +774,27 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     }
   }
 
-  return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
-                       M, 0, maps::type::identity, discontinuous, degree,
-                       degree, element::dpc_variant::legendre);
+  return FiniteElement(element::family::DPC, celltype, degree, {},
+                       impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
+                       impl::to_mdspan(x), impl::to_mdspan(M), 0,
+                       maps::type::identity, discontinuous, degree, degree,
+                       element::dpc_variant::legendre);
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
-                                       element::dpc_variant variant)
+impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
+                                 element::dpc_variant variant)
 {
+  auto to_mdspan
+      = [](auto& x, auto shape) { return impl::cmdspan2_t(x.data(), shape); };
+  auto to_mdarray = [](auto& x, auto shape)
+  { return impl::mdarray2_t(x, shape[0], shape[1]); };
+
   if (degree == 0)
-    return lattice::create(celltype, 0, lattice::type::equispaced, true);
+  {
+    const auto [data, shape]
+        = lattice::create_new(celltype, 0, lattice::type::equispaced, true);
+    return to_mdarray(data, shape);
+  }
 
   if (variant == element::dpc_variant::simplex_equispaced
       or variant == element::dpc_variant::simplex_gll)
@@ -799,11 +809,17 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
     switch (celltype)
     {
     case cell::type::quadrilateral:
-      return lattice::create(cell::type::triangle, degree, latticetype, true,
-                             latticesm);
+    {
+      const auto [data, shape] = lattice::create_new(
+          cell::type::triangle, degree, latticetype, true, latticesm);
+      return to_mdarray(data, shape);
+    }
     case cell::type::hexahedron:
-      return lattice::create(cell::type::tetrahedron, degree, latticetype, true,
-                             latticesm);
+    {
+      const auto [data, shape] = lattice::create_new(
+          cell::type::tetrahedron, degree, latticetype, true, latticesm);
+      return to_mdarray(data, shape);
+    }
     default:
       throw std::runtime_error("Invalid cell type");
     }
@@ -821,13 +837,13 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
     {
     case cell::type::quadrilateral:
     {
-      xt::xtensor<double, 2> pts(
-          {static_cast<std::size_t>((degree + 2) * (degree + 1) / 2), 2});
+      impl::mdarray2_t pts((degree + 2) * (degree + 1) / 2, 2);
       std::size_t n = 0;
       for (int j = 0; j <= degree; ++j)
       {
-        const xt::xtensor<double, 2> interval_pts = lattice::create(
+        const auto [data, shape] = lattice::create_new(
             cell::type::interval, degree - j, latticetype, true);
+        auto interval_pts = to_mdspan(data, shape);
         for (int i = 0; i <= degree - j; ++i)
         {
           pts(n, 0) = interval_pts(i, 0);
@@ -841,17 +857,15 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
     }
     case cell::type::hexahedron:
     {
-      xt::xtensor<double, 2> pts(
-          {static_cast<std::size_t>((degree + 3) * (degree + 2) * (degree + 1)
-                                    / 6),
-           3});
+      impl::mdarray2_t pts((degree + 3) * (degree + 2) * (degree + 1) / 6, 3);
       std::size_t n = 0;
       for (int k = 0; k <= degree; ++k)
       {
         for (int j = 0; j <= degree - k; ++j)
         {
-          const xt::xtensor<double, 2> interval_pts = lattice::create(
+          const auto [data, shape] = lattice::create_new(
               cell::type::interval, degree - j - k, latticetype, true);
+          auto interval_pts = to_mdspan(data, shape);
           for (int i = 0; i <= degree - j - k; ++i)
           {
             pts(n, 0) = interval_pts(i, 0);
@@ -889,17 +903,16 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
     {
     case cell::type::quadrilateral:
     {
-      xt::xtensor<double, 2> pts(
-          {static_cast<std::size_t>((degree + 2) * (degree + 1) / 2), 2});
-
+      impl::mdarray2_t pts((degree + 2) * (degree + 1) / 2, 2);
       const double gap = static_cast<double>(2 * (degree + 1))
                          / (degree * degree + degree + 1);
 
       std::size_t n = 0;
       for (int j = 0; j <= degree; ++j)
       {
-        const xt::xtensor<double, 2> interval_pts
-            = lattice::create(cell::type::interval, j, latticetype, true);
+        const auto [data, shape]
+            = lattice::create_new(cell::type::interval, j, latticetype, true);
+        auto interval_pts = to_mdspan(data, shape);
         const double y = gap * (j % 2 == 0 ? j / 2 : degree - (j - 1) / 2);
         const double coord0 = y < 1 ? y : y - 1;
         const double coord1 = y < 1 ? 0 : 1;
@@ -915,10 +928,7 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
     }
     case cell::type::hexahedron:
     {
-      xt::xtensor<double, 2> pts(
-          {static_cast<std::size_t>((degree + 3) * (degree + 2) * (degree + 1)
-                                    / 6),
-           3});
+      impl::mdarray2_t pts((degree + 3) * (degree + 2) * (degree + 1) / 6, 3);
 
       const double gap
           = static_cast<double>(3 * degree) / (degree * degree + 1);
@@ -927,10 +937,12 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
       for (int k = 0; k <= degree; ++k)
       {
         const double z = gap * (k % 2 == 0 ? k / 2 : degree - (k - 1) / 2);
-        const xt::xtensor<double, 2> triangle_pts = lattice::create(
+        const auto [data, shape] = lattice::create_new(
             cell::type::triangle, k, latticetype, true, latticesm);
+        auto triangle_pts = to_mdspan(data, shape);
         if (z < 1)
-          for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
+        {
+          for (std::size_t p = 0; p < triangle_pts.extent(0); ++p)
           {
             const double coord0 = triangle_pts(p, 0);
             const double coord1 = triangle_pts(p, 1);
@@ -939,8 +951,10 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
             pts(n, 2) = (1 - coord0 - coord1) * z;
             ++n;
           }
+        }
         else if (z > 2)
-          for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
+        {
+          for (std::size_t p = 0; p < triangle_pts.extent(0); ++p)
           {
             const double coord0 = triangle_pts(p, 0);
             const double coord1 = triangle_pts(p, 1);
@@ -949,9 +963,10 @@ xt::xtensor<double, 2> make_dpc_points(cell::type celltype, int degree,
             pts(n, 2) = 1 - (3 - z) * (1 - coord0 - coord1);
             ++n;
           }
+        }
         else
         {
-          for (std::size_t p = 0; p < triangle_pts.shape(0); ++p)
+          for (std::size_t p = 0; p < triangle_pts.extent(0); ++p)
           {
             const double coord0 = triangle_pts(p, 0);
             const double coord1 = triangle_pts(p, 1);
@@ -1007,8 +1022,8 @@ FiniteElement basix::element::create_serendipity(
           "serendipity elements of degree > 4 need to be given a DPC variant.");
   }
 
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
+  // const std::vector<std::vector<std::vector<int>>> topology
+  //     = cell::topology(celltype);
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
@@ -1035,10 +1050,9 @@ FiniteElement basix::element::create_serendipity(
   }
   else
   {
-    x[1] = std::vector<xt::xtensor<double, 2>>(
-        topology[1].size(), xt::xtensor<double, 2>({0, tdim}));
-    M[1] = std::vector<xt::xtensor<double, 4>>(topology[1].size(),
-                                               xt::ones<double>({0, 1, 0, 1}));
+    const std::size_t num_ent = cell::num_sub_entities(celltype, 1);
+    x[1] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[1] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
   }
 
   if (tdim >= 2)
@@ -1052,10 +1066,9 @@ FiniteElement basix::element::create_serendipity(
     }
     else
     {
-      x[2] = std::vector<xt::xtensor<double, 2>>(
-          topology[2].size(), xt::xtensor<double, 2>({0, tdim}));
-      M[2] = std::vector<xt::xtensor<double, 4>>(
-          topology[2].size(), xt::ones<double>({0, 1, 0, 1}));
+      const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
+      x[2] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+      M[2] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
     }
   }
 
@@ -1070,10 +1083,9 @@ FiniteElement basix::element::create_serendipity(
     }
     else
     {
-      x[3] = std::vector<xt::xtensor<double, 2>>(
-          topology[3].size(), xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector<xt::xtensor<double, 4>>(
-          topology[3].size(), xt::ones<double>({0, 1, 0, 1}));
+      const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
+      x[3] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+      M[3] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
     }
   }
 
@@ -1140,9 +1152,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
 
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
-
   xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-
   if (celltype == cell::type::quadrilateral)
   {
     int row_n = 0;
@@ -1167,27 +1177,24 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
     }
   }
 
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-  const std::size_t tdim = topology.size() - 1;
-
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
+  const std::size_t tdim = cell::topological_dimension(celltype);
   for (std::size_t i = 0; i < tdim; ++i)
   {
-    x[i] = std::vector<xt::xtensor<double, 2>>(
-        cell::num_sub_entities(celltype, i), xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 4>>(
-        cell::num_sub_entities(celltype, i),
-        xt::xtensor<double, 4>({0, 1, 0, 1}));
+    const std::size_t num_ent = cell::num_sub_entities(celltype, i);
+    x[i] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[i] = std::vector(num_ent, xt::xtensor<double, 4>({0, 1, 0, 1}));
   }
 
   M[tdim].push_back(xt::xtensor<double, 4>({ndofs, 1, ndofs, 1}));
   xt::view(M[tdim][0], xt::all(), 0, xt::all(), 0) = xt::eye<double>(ndofs);
 
-  const xt::xtensor<double, 2> pt = make_dpc_points(celltype, degree, variant);
-  x[tdim].push_back(pt);
+  const impl::mdarray2_t pt = make_dpc_points(celltype, degree, variant);
+  auto _pt = xt::adapt(pt.data(), pt.size(), xt::no_ownership(),
+                       std::vector<std::size_t>{pt.extent(0), pt.extent(1)});
+  x[tdim].push_back(_pt);
 
   return FiniteElement(element::family::DPC, celltype, degree, {}, wcoeffs, x,
                        M, 0, maps::type::identity, discontinuous, degree,
@@ -1301,10 +1308,11 @@ FiniteElement basix::element::create_serendipity_curl(
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
 
-  x[0] = std::vector(cell::num_sub_entities(celltype, 0),
-                     xt::xtensor<double, 2>({0, tdim}));
-  M[0] = std::vector(cell::num_sub_entities(celltype, 0),
-                     xt::xtensor<double, 4>({0, tdim, 0, 1}));
+  {
+    const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
+    x[0] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[0] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+  }
 
   FiniteElement edge_moment_space
       = element::create_lagrange(cell::type::interval, degree, lvariant, true);
@@ -1322,10 +1330,9 @@ FiniteElement basix::element::create_serendipity_curl(
   }
   else
   {
-    x[2] = std::vector(cell::num_sub_entities(celltype, 2),
-                       xt::xtensor<double, 2>({0, tdim}));
-    M[2] = std::vector(cell::num_sub_entities(celltype, 2),
-                       xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
+    x[2] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+    M[2] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
   }
 
   if (tdim == 3)
@@ -1340,20 +1347,14 @@ FiniteElement basix::element::create_serendipity_curl(
     }
     else
     {
-      x[3] = std::vector(cell::num_sub_entities(celltype, 3),
-                         xt::xtensor<double, 2>({0, tdim}));
-      M[3] = std::vector(cell::num_sub_entities(celltype, 3),
-                         xt::xtensor<double, 4>({0, tdim, 0, 1}));
+      const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
+      x[3] = std::vector(num_ent, xt::xtensor<double, 2>({0, tdim}));
+      M[3] = std::vector(num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
     }
   }
 
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-
   if (discontinuous)
-  {
     std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
-  }
 
   return FiniteElement(element::family::N2E, celltype, degree, {tdim}, wcoeffs,
                        x, M, 0, maps::type::covariantPiola, discontinuous,

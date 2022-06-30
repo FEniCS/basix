@@ -9,14 +9,12 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-FiniteElement basix::element::create_regge(cell::type celltype, int degree,
-                                           bool discontinuous)
+FiniteElement element::create_regge(cell::type celltype, int degree,
+                                    bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported celltype");
@@ -28,7 +26,7 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
   const std::size_t ndofs = basis_size * nc;
   const std::size_t psize = basis_size * tdim * tdim;
 
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
+  impl::mdarray2_t wcoeffs(ndofs, psize);
   int s = basis_size;
   for (std::size_t i = 0; i < tdim; ++i)
   {
@@ -46,28 +44,27 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
+  const auto [gbuffer, gshape] = cell::geometry_new(celltype);
+  impl::cmdspan2_t geometry(gbuffer.data(), gshape);
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
 
-  x[0] = std::vector(cell::num_sub_entities(celltype, 0),
-                     xt::xtensor<double, 2>({0, tdim}));
-  M[0] = std::vector(cell::num_sub_entities(celltype, 0),
-                     xt::xtensor<double, 4>({0, tdim * tdim, 0, 1}));
+  {
+    const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
+    x[0] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[0] = std::vector(num_ent, impl::mdarray4_t(0, tdim * tdim, 0, 1));
+  }
 
   // Loop over edge and higher dimension entities
   for (std::size_t d = 1; d < topology.size(); ++d)
   {
-    x[d].resize(topology[d].size());
-    M[d].resize(topology[d].size());
-
     if (static_cast<std::size_t>(degree) + 1 < d)
     {
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
-        x[d][e] = xt::xtensor<double, 2>({0, tdim});
-        M[d][e] = xt::xtensor<double, 4>({0, tdim * tdim, 0, 1});
+        x[d].emplace_back(0, tdim);
+        M[d].emplace_back(0, tdim * tdim, 0, 1);
       }
     }
     else
@@ -77,8 +74,9 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
         // Entity coordinates
-        const xt::xtensor<double, 2> entity_x
-            = cell::sub_entity_geometry(celltype, d, e);
+        const auto [ebuffer, eshape]
+            = cell::sub_entity_geometry_new(celltype, d, e);
+        impl::cmdspan2_t entity_x(ebuffer.data(), eshape);
 
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
@@ -90,18 +88,17 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
         const auto moment_values = moment_space.tabulate(0, pts);
-        x[d][e] = xt::xtensor<double, 2>({pts.shape(0), tdim});
+        auto& _x = x[d].emplace_back(pts.shape(0), tdim);
 
         // Copy points
         for (std::size_t p = 0; p < pts.shape(0); ++p)
         {
-          for (std::size_t j = 0; j < entity_x.shape(1); ++j)
-            x[d][e](p, j) = entity_x(0, j);
+          for (std::size_t j = 0; j < entity_x.extent(1); ++j)
+            _x(p, j) = entity_x(0, j);
 
-          for (std::size_t i = 0; i < entity_x.shape(0) - 1; ++i)
-            for (std::size_t j = 0; j < entity_x.shape(1); ++j)
-              x[d][e](p, j)
-                  += (entity_x(i + 1, j) - entity_x(0, j)) * pts(p, i);
+          for (std::size_t i = 0; i < entity_x.extent(0) - 1; ++i)
+            for (std::size_t j = 0; j < entity_x.extent(1); ++j)
+              _x(p, j) += (entity_x(i + 1, j) - entity_x(0, j)) * pts(p, i);
         }
 
         // Store up outer(t, t) for all tangents
@@ -109,15 +106,15 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
         const std::size_t ntangents = d * (d + 1) / 2;
         std::experimental::mdarray<double,
                                    std::experimental::dextents<std::size_t, 3>>
-            vvt(ntangents, geometry.shape(1), geometry.shape(1));
-        std::vector<double> edge(geometry.shape(1));
+            vvt(ntangents, geometry.extent(1), geometry.extent(1));
+        std::vector<double> edge(geometry.extent(1));
 
         int c = 0;
         for (std::size_t s = 0; s < d; ++s)
         {
           for (std::size_t r = s + 1; r < d + 1; ++r)
           {
-            for (std::size_t p = 0; p < geometry.shape(1); ++p)
+            for (std::size_t p = 0; p < geometry.extent(1); ++p)
               edge[p] = geometry(vert_ids[r], p) - geometry(vert_ids[s], p);
 
             // outer product v.v^T
@@ -131,9 +128,8 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
           }
         }
 
-        M[d][e]
-            = xt::zeros<double>({ndofs * ntangents, tdim * tdim, pts.shape(0),
-                                 static_cast<std::size_t>(1)});
+        auto& _M = M[d].emplace_back(ndofs * ntangents, tdim * tdim,
+                                     pts.shape(0), 1);
         for (int n = 0; n < moment_space.dim(); ++n)
         {
           for (std::size_t j = 0; j < ntangents; ++j)
@@ -146,7 +142,7 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
             {
               for (std::size_t i = 0; i < tdim * tdim; ++i)
               {
-                M[d][e](n * ntangents + j, i, q, 0)
+                _M(n * ntangents + j, i, q, 0)
                     = vvt_flat[i] * wts[q] * moment_values(0, q, n, 0);
               }
             }
@@ -159,11 +155,26 @@ FiniteElement basix::element::create_regge(cell::type celltype, int degree,
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face and
   // d(d-1)(d+1) on the interior in 3D
 
+  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<double>>, 4> xbuffer;
+  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
-    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim * tdim);
+  {
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = element::make_discontinuous(xview, Mview, tdim, tdim * tdim);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
+  }
+
+  // if (discontinuous)
+  //   std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim * tdim);
 
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
-                       wcoeffs, x, M, 0, maps::type::doubleCovariantPiola,
+                       impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
+                       xview, Mview, 0, maps::type::doubleCovariantPiola,
                        discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

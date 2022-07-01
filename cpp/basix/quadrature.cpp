@@ -182,22 +182,25 @@ xt::xtensor<double, 2> compute_jacobi_deriv(double a, std::size_t n,
         xt::row(Jd, 1) = 0.0;
     }
 
-    for (std::size_t k = 2; k < n + 1; ++k)
+    for (std::size_t j = 2; j < n + 1; ++j)
     {
-      const double a1 = 2 * k * (k + a) * (2 * k + a - 2);
-      const double a2 = (2 * k + a - 1) * (a * a) / a1;
-      const double a3 = (2 * k + a - 1) * (2 * k + a) / (2 * k * (k + a));
-      const double a4 = 2 * (k + a - 1) * (k - 1) * (2 * k + a) / a1;
-      xt::row(Jd, k)
-          = xt::row(Jd, k - 1) * (_x * a3 + a2) - xt::row(Jd, k - 2) * a4;
+      const double a1 = 2 * j * (j + a) * (2 * j + a - 2);
+      const double a2 = (2 * j + a - 1) * (a * a) / a1;
+      const double a3 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
+      const double a4 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / a1;
+
+      for (std::size_t k = 0; k < Jd.shape(1); ++k)
+        Jd(j, k) = Jd(j - 1, k) * (x[k] * a3 + a2) - Jd(j - 2, k) * a4;
       if (i > 0)
-        xt::row(Jd, k) += i * a3 * xt::view(J, i - 1, k - 1, xt::all());
+      {
+        for (std::size_t k = 0; k < Jd.shape(1); ++k)
+          Jd(j, k) += i * a3 * J(i - 1, j - 1, k);
+      }
     }
-    // Note: using assign, instead of copy assignment,  to get around an xtensor
-    // bug with Intel Compilers
-    // https://github.com/xtensor-stack/xtensor/issues/2351
-    auto J_view = xt::view(J, i, xt::all(), xt::all());
-    J_view.assign(Jd);
+
+    for (std::size_t j = 0; j < Jd.shape(0); ++j)
+      for (std::size_t k = 0; k < Jd.shape(1); ++k)
+        J(i, j, k) = Jd(j, k);
   }
 
   xt::xtensor<double, 2> result({nderiv + 1, x.size()});

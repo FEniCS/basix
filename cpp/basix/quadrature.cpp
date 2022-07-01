@@ -4,6 +4,7 @@
 
 #include "quadrature.h"
 #include "math.h"
+#include "mdspan.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -13,9 +14,10 @@
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
-using namespace xt::placeholders; // required for `_` to work
-
 using namespace basix;
+using mdspan2_t
+    = std::experimental::mdspan<double,
+                                std::experimental::dextents<std::size_t, 2>>;
 
 namespace
 {
@@ -42,57 +44,63 @@ std::array<std::vector<double>, 2> rec_jacobi(int N, double a, double b)
   // Adapted from the MATLAB code by Dirk Laurie and Walter Gautschi
   // http://www.cs.purdue.edu/archives/2002/wxg/codes/r_jacobi.m
 
-  double nu = (b - a) / (a + b + 2.0);
-  double mu = std::pow(2.0, (a + b + 1)) * std::tgamma(a + 1.0)
-              * std::tgamma(b + 1.0) / std::tgamma(a + b + 2.0);
+  const double nu = (b - a) / (a + b + 2.0);
+  const double mu = std::pow(2.0, (a + b + 1)) * std::tgamma(a + 1.0)
+                    * std::tgamma(b + 1.0) / std::tgamma(a + b + 2.0);
 
-  std::vector<double> alpha(N), beta(N);
-  alpha[0] = nu;
-  beta[0] = mu;
+  std::vector<double> n(N - 1);
+  std::iota(n.begin(), n.end(), 1.0);
+  std::vector<double> nab(n.size());
+  std::transform(n.begin(), n.end(), nab.begin(),
+                 [a, b](auto x) { return 2.0 * x + a + b; });
 
-  auto n = xt::linspace<double>(1.0, N - 1, N - 1);
-  auto nab = 2.0 * n + a + b;
+  std::vector<double> alpha(N);
+  alpha.front() = nu;
+  std::transform(nab.begin(), nab.end(), std::next(alpha.begin()),
+                 [a, b](auto nab)
+                 { return (b * b - a * a) / (nab * (nab + 2.0)); });
 
-  auto _alpha = xt::adapt(alpha);
-  auto _beta = xt::adapt(beta);
-  xt::view(_alpha, xt::range(1, _)) = (b * b - a * a) / (nab * (nab + 2.0));
-  xt::view(_beta, xt::range(1, _)) = 4 * (n + a) * (n + b) * n * (n + a + b)
-                                     / (nab * nab * (nab + 1.0) * (nab - 1.0));
+  std::vector<double> beta(N);
+  beta.front() = mu;
+  std::transform(n.begin(), n.end(), nab.begin(), std::next(beta.begin()),
+                 [a, b](auto n, auto nab)
+                 {
+                   return 4 * (n + a) * (n + b) * n * (n + a + b)
+                          / (nab * nab * (nab + 1.0) * (nab - 1.0));
+                 });
 
   return {std::move(alpha), std::move(beta)};
 }
 //----------------------------------------------------------------------------
+
+/// @todo Add detail on alpha and beta
+/// Compute Gauss points and weights on the domain [-1, 1] using the
+/// Golub-Welsch algorithm
+/// (https://en.wikipedia.org/wiki/Gaussian_quadrature#The_Golub-Welsch_algorithm).
+/// @param[in] alpha
+/// @param[in] beta
+/// @return (0) coordinates and (1) weights
 std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
                                          const std::vector<double>& beta)
 {
-  // Compute the Gauss nodes and weights from the recursion
-  // coefficients associated with a set of orthogonal polynomials
-  //
-  //  Inputs:
-  //  alpha - recursion coefficients
-  //  beta - recursion coefficients
-  //
-  // Outputs:
-  // x - quadrature nodes
-  // w - quadrature weights
-  //
-  // Adapted from the MATLAB code by Walter Gautschi
-  // http://www.cs.purdue.edu/archives/2002/wxg/codes/gauss.m
+  std::vector<double> Abuffer(alpha.size() * alpha.size(), 0);
+  mdspan2_t A(Abuffer.data(), alpha.size(), alpha.size());
+  for (std::size_t i = 0; i < alpha.size(); ++i)
+    A(i, i) = alpha[i];
+  for (std::size_t i = 0; i < alpha.size() - 1; ++i)
+  {
+    A(i + 1, i) = std::sqrt(beta[i + 1]);
+    A(i, i + 1) = std::sqrt(beta[i + 1]);
+  }
 
-  auto _alpha = xt::adapt(alpha);
-  auto _beta = xt::adapt(beta);
+  auto [evals, evecs] = math::eigh(Abuffer, alpha.size());
 
-  auto tmp = xt::sqrt(xt::view(_beta, xt::range(1, _)));
+  // Determine weights from the first component of each eigenvector
+  std::vector<double> w(alpha.size());
+  for (std::size_t i = 0; i < alpha.size(); ++i)
+    w[i] = beta[0] * evecs[i * alpha.size()] * evecs[i * alpha.size()];
 
-  xt::xtensor<double, 2> A
-      = xt::diag(_alpha) + xt::diag(tmp, 1) + xt::diag(tmp, -1);
-
-  auto [evals, evecs] = math::eigh(A);
-
-  std::vector<double> x(evals.shape(0)), w(evals.shape(0));
-  xt::adapt(x) = evals;
-  xt::adapt(w) = beta[0] * xt::square(xt::row(evecs, 0));
-  return {std::move(x), std::move(w)};
+  return {std::move(evals), std::move(w)};
 }
 //----------------------------------------------------------------------------
 std::array<std::vector<double>, 2> lobatto(const std::vector<double>& alpha,
@@ -100,7 +108,7 @@ std::array<std::vector<double>, 2> lobatto(const std::vector<double>& alpha,
                                            double xl1, double xl2)
 {
   // Compute the Lobatto nodes and weights with the preassigned
-  // nodes xl1,xl2
+  // nodes xl1, xl2
   //
   // Inputs:
   //   alpha - recursion coefficients
@@ -201,18 +209,17 @@ xt::xtensor<double, 2> compute_jacobi_deriv(double a, std::size_t n,
 //-----------------------------------------------------------------------------
 std::vector<double> compute_gauss_jacobi_points(double a, int m)
 {
-  /// Computes the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's method.
-  ///    The initial guesses are the Chebyshev points.  Algorithm
-  ///    implemented from the pseudocode given by Karniadakis and
-  ///    Sherwin
+  /// Computes the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's
+  /// method. The initial guesses are the Chebyshev points.  Algorithm
+  /// implemented from the pseudocode given by Karniadakis and Sherwin.
 
-  const double eps = 1.e-8;
-  const int max_iter = 100;
+  constexpr double eps = 1.e-8;
+  constexpr int max_iter = 100;
   std::vector<double> x(m);
   for (int k = 0; k < m; ++k)
   {
     // Initial guess
-    x[k] = -cos((2.0 * k + 1.0) * M_PI / (2.0 * m));
+    x[k] = -std::cos((2.0 * k + 1.0) * M_PI / (2.0 * m));
     if (k > 0)
       x[k] = 0.5 * (x[k] + x[k - 1]);
 
@@ -236,10 +243,11 @@ std::vector<double> compute_gauss_jacobi_points(double a, int m)
   return x;
 }
 //-----------------------------------------------------------------------------
+
+/// @note Computes on [-1, 1]
 std::pair<xt::xtensor<double, 2>, std::vector<double>>
 compute_gauss_jacobi_rule(double a, int m)
 {
-  /// @note Computes on [-1, 1]
   std::vector<double> pts = compute_gauss_jacobi_points(a, m);
   const xt::xtensor<double, 1> Jd
       = xt::row(compute_jacobi_deriv(a, m, 1, pts), 1);
@@ -397,9 +405,11 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
 }
 
 //-----------------------------------------------------------------------------
-// The Gauss-Lobatto-Legendre quadrature rules on the interval using Greg von
-// Winckel's implementation. This facilitates implementing spectral elements.
-// The quadrature rule uses m points for a degree of precision of 2m-3.
+
+/// The Gauss-Lobatto-Legendre quadrature rules on the interval using
+/// Greg von Winckel's implementation. This facilitates implementing
+/// spectral elements. The quadrature rule uses m points for a degree of
+/// precision of 2m-3.
 std::pair<xt::xtensor<double, 2>, std::vector<double>> compute_gll_rule(int m)
 {
 
@@ -415,7 +425,7 @@ std::pair<xt::xtensor<double, 2>, std::vector<double>> compute_gll_rule(int m)
   // Compute Lobatto nodes and weights
   auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
 
-  // Reorder to match 1d dof  ordering
+  // Reorder to match 1d dof ordering
   std::rotate(xs_ref.rbegin(), xs_ref.rbegin() + 1, xs_ref.rend() - 1);
   std::rotate(ws_ref.rbegin(), ws_ref.rbegin() + 1, ws_ref.rend() - 1);
   xt::xtensor<double, 2> points

@@ -82,6 +82,15 @@ std::pair<xt::xtensor<double, 1>,
           xt::xtensor<double, 2, xt::layout_type::column_major>>
 eigh(const xt::xtensor<double, 2>& A);
 
+/// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
+/// @param[in] A Input matrix, row-major storage
+/// @param[in] n Number of rows
+/// @return Eigenvalues (0) and eigenvectors (1). The eigenvector array
+/// uses column-major storage, which each column being an eigenvector.
+/// @pre The matrix `A` must be symmetric
+std::pair<std::vector<double>, std::vector<double>>
+eigh(const xtl::span<const double>& A, std::size_t n);
+
 /// Solve A X = B
 /// @param[in] A The matrix
 /// @param[in] B Right-hand side matrix/vector

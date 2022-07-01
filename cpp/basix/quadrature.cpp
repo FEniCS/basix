@@ -412,7 +412,6 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
 /// precision of 2m-3.
 std::pair<xt::xtensor<double, 2>, std::vector<double>> compute_gll_rule(int m)
 {
-
   if (m < 2)
   {
     throw std::runtime_error(
@@ -491,9 +490,7 @@ make_gll_quadrature(cell::type celltype, std::size_t m)
     return {Qpts, Qwts};
   }
   case cell::type::prism:
-  {
     throw std::runtime_error("Prism not yet supported");
-  }
   case cell::type::pyramid:
     throw std::runtime_error("Pyramid not yet supported");
   case cell::type::triangle:
@@ -622,8 +619,6 @@ make_zienkiewicz_taylor_quadrature(cell::type celltype, std::size_t m)
       constexpr double a = 0.585410196624969, b = 0.138196601125011;
       xt::xtensor_fixed<double, xt::xshape<4, 3>> x
           = {{a, b, b}, {b, a, b}, {b, b, a}, {b, b, b}};
-      // xt::xtensor<double, 2> x = {{a, b, b}, {b, a, b}, {b, b, a}, {b, b,
-      // b}};
       return {x, {1.0 / 24.0, 1.0 / 24.0, 1.0 / 24.0, 1.0 / 24.0}};
     }
     else if (m == 3)

@@ -18,6 +18,12 @@ using namespace basix;
 using mdspan2_t
     = std::experimental::mdspan<double,
                                 std::experimental::dextents<std::size_t, 2>>;
+using mdarray3_t
+    = std::experimental::mdarray<double,
+                                 std::experimental::dextents<std::size_t, 3>>;
+using mdarray2_t
+    = std::experimental::mdarray<double,
+                                 std::experimental::dextents<std::size_t, 2>>;
 
 namespace
 {
@@ -159,27 +165,40 @@ xt::xtensor<double, 2> compute_jacobi_deriv(double a, std::size_t n,
                                             std::size_t nderiv,
                                             const xtl::span<const double>& x)
 {
-
   std::vector<std::size_t> shape = {x.size()};
-  const auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
-  xt::xtensor<double, 3> J({nderiv + 1, n + 1, x.size()});
-  xt::xtensor<double, 2> Jd({n + 1, x.size()});
+  mdarray3_t J(nderiv + 1, n + 1, x.size());
+  mdarray2_t Jd(n + 1, x.size());
 
   for (std::size_t i = 0; i < nderiv + 1; ++i)
   {
     if (i == 0)
-      xt::row(Jd, 0) = 1.0;
+    {
+      for (std::size_t j = 0; j < Jd.extent(1); ++j)
+        Jd(0, j) = 1.0;
+    }
     else
-      xt::row(Jd, 0) = 0.0;
+    {
+      for (std::size_t j = 0; j < Jd.extent(1); ++j)
+        Jd(0, j) = 0.0;
+    }
 
     if (n > 0)
     {
       if (i == 0)
-        xt::row(Jd, 1) = (_x * (a + 2.0) + a) * 0.5;
+      {
+        for (std::size_t j = 0; j < Jd.extent(1); ++j)
+          Jd(1, j) = (x[j] * (a + 2.0) + a) * 0.5;
+      }
       else if (i == 1)
-        xt::row(Jd, 1) = a * 0.5 + 1;
+      {
+        for (std::size_t j = 0; j < Jd.extent(1); ++j)
+          Jd(1, j) = a * 0.5 + 1;
+      }
       else
-        xt::row(Jd, 1) = 0.0;
+      {
+        for (std::size_t j = 0; j < Jd.extent(1); ++j)
+          Jd(1, j) = 0.0;
+      }
     }
 
     for (std::size_t j = 2; j < n + 1; ++j)
@@ -189,23 +208,24 @@ xt::xtensor<double, 2> compute_jacobi_deriv(double a, std::size_t n,
       const double a3 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
       const double a4 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / a1;
 
-      for (std::size_t k = 0; k < Jd.shape(1); ++k)
+      for (std::size_t k = 0; k < Jd.extent(1); ++k)
         Jd(j, k) = Jd(j - 1, k) * (x[k] * a3 + a2) - Jd(j - 2, k) * a4;
       if (i > 0)
       {
-        for (std::size_t k = 0; k < Jd.shape(1); ++k)
+        for (std::size_t k = 0; k < Jd.extent(1); ++k)
           Jd(j, k) += i * a3 * J(i - 1, j - 1, k);
       }
     }
 
-    for (std::size_t j = 0; j < Jd.shape(0); ++j)
-      for (std::size_t k = 0; k < Jd.shape(1); ++k)
+    for (std::size_t j = 0; j < Jd.extent(0); ++j)
+      for (std::size_t k = 0; k < Jd.extent(1); ++k)
         J(i, j, k) = Jd(j, k);
   }
 
   xt::xtensor<double, 2> result({nderiv + 1, x.size()});
   for (std::size_t i = 0; i < nderiv + 1; ++i)
-    xt::row(result, i) = xt::view(J, i, n, xt::all());
+    for (std::size_t j = 0; j < result.shape(1); ++j)
+      result(i, j) = J(i, n, j);
 
   return result;
 }

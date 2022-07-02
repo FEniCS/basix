@@ -5,7 +5,7 @@
 #pragma once
 
 #include "cell.h"
-#include <utility>
+#include <array>
 #include <vector>
 #include <xtensor/xtensor.hpp>
 
@@ -43,7 +43,7 @@ make_quadrature(const quadrature::type rule, cell::type celltype, int m);
 /// will integrate exactly
 /// @return List of points and list of weights. The number of points
 /// arrays has shape (num points, gdim)
-std::pair<std::vector<double>, std::vector<double>>
+std::array<std::vector<double>, 2>
 make_quadrature_new(const quadrature::type rule, cell::type celltype, int m);
 
 /// Make a default quadrature rule on reference cell
@@ -61,8 +61,8 @@ make_quadrature(cell::type celltype, int m);
 /// will integrate exactly
 /// @return List of points and list of weights. The number of points
 /// arrays has shape (num points, gdim)
-std::pair<std::vector<double>, std::vector<double>>
-make_quadrature_new(cell::type celltype, int m);
+std::array<std::vector<double>, 2> make_quadrature_new(cell::type celltype,
+                                                       int m);
 
 /// Get the default quadrature type for the given cell and order
 /// @param[in] celltype The cell type

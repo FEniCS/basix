@@ -5,6 +5,7 @@
 #pragma once
 
 #include "cell.h"
+#include "mdspan.hpp"
 #include <xtensor/xtensor.hpp>
 
 /// Polynomial expansion sets
@@ -201,8 +202,14 @@ xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
 /// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// (number of points, geometric dimension).
-void tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d, int n,
-              const xt::xtensor<double, 2>& x);
+void tabulate(
+    std::experimental::mdspan<double,
+                              std::experimental::dextents<std::size_t, 3>>
+        P,
+    cell::type celltype, int d, int n,
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>
+        x);
 
 /// Dimension of a polynomial space
 /// @param[in] cell The cell type

@@ -1375,39 +1375,40 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
 }
 } // namespace
 //-----------------------------------------------------------------------------
-void polyset::tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d,
-                       int n, const xt::xtensor<double, 2>& x)
+void polyset::tabulate(
+    std::experimental::mdspan<double,
+                              std::experimental::dextents<std::size_t, 3>>
+        P,
+    cell::type celltype, int d, int n,
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>
+        x)
 {
-  // Shadow xtensor with mdspan
-  stdex::mdspan<double, extents3d> Pmd(P.data(), P.shape(0), P.shape(1),
-                                       P.shape(2));
-  stdex::mdspan<const double, extents2d> xmd(x.data(), x.shape(0), x.shape(1));
-
   switch (celltype)
   {
   case cell::type::point:
-    tabulate_polyset_point_derivs(Pmd, d, n, xmd);
+    tabulate_polyset_point_derivs(P, d, n, x);
     return;
   case cell::type::interval:
-    tabulate_polyset_line_derivs(Pmd, d, n, xmd);
+    tabulate_polyset_line_derivs(P, d, n, x);
     return;
   case cell::type::triangle:
-    tabulate_polyset_triangle_derivs(Pmd, d, n, xmd);
+    tabulate_polyset_triangle_derivs(P, d, n, x);
     return;
   case cell::type::tetrahedron:
-    tabulate_polyset_tetrahedron_derivs(Pmd, d, n, xmd);
+    tabulate_polyset_tetrahedron_derivs(P, d, n, x);
     return;
   case cell::type::quadrilateral:
-    tabulate_polyset_quad_derivs(Pmd, d, n, xmd);
+    tabulate_polyset_quad_derivs(P, d, n, x);
     return;
   case cell::type::prism:
-    tabulate_polyset_prism_derivs(Pmd, d, n, xmd);
+    tabulate_polyset_prism_derivs(P, d, n, x);
     return;
   case cell::type::pyramid:
-    tabulate_polyset_pyramid_derivs(Pmd, d, n, xmd);
+    tabulate_polyset_pyramid_derivs(P, d, n, x);
     return;
   case cell::type::hexahedron:
-    tabulate_polyset_hex_derivs(Pmd, d, n, xmd);
+    tabulate_polyset_hex_derivs(P, d, n, x);
     return;
   default:
     throw std::runtime_error("Polynomial set: unsupported cell type");
@@ -1420,7 +1421,13 @@ xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
   xt::xtensor<double, 3> out(
       {static_cast<std::size_t>(polyset::nderivs(celltype, n)),
        static_cast<std::size_t>(polyset::dim(celltype, d)), x.shape(0)});
-  polyset::tabulate(out, celltype, d, n, x);
+
+  std::experimental::mdspan<double, std::experimental::dextents<std::size_t, 3>>
+      P(out.data(), out.shape(0), out.shape(1), out.shape(2));
+  std::experimental::mdspan<const double,
+                            std::experimental::dextents<std::size_t, 2>>
+      _x(x.data(), x.shape(0), x.shape(1));
+  polyset::tabulate(P, celltype, d, n, _x);
   return out;
 }
 //-----------------------------------------------------------------------------

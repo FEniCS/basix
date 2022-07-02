@@ -1431,6 +1431,22 @@ xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
   return out;
 }
 //-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 3>> polyset::tabulate(
+    cell::type celltype, int d, int n,
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>
+        x)
+{
+  std::array<std::size_t, 3> shape
+      = {(std::size_t)polyset::nderivs(celltype, n),
+         (std::size_t)polyset::dim(celltype, d), x.extent(0)};
+  std::vector<double> P(shape[0] * shape[1] * shape[2]);
+  std::experimental::mdspan<double, std::experimental::dextents<std::size_t, 3>>
+      _P(P.data(), shape);
+  polyset::tabulate(_P, celltype, d, n, x);
+  return {std::move(P), std::move(shape)};
+}
+//-----------------------------------------------------------------------------
 int polyset::dim(cell::type celltype, int d)
 {
   switch (celltype)

@@ -33,12 +33,14 @@ impl::mdarray2_t create_nedelec_2d_space(int degree)
   const std::size_t ns = degree;
 
   // Tabulate polynomial set at quadrature points
-  const auto [pts, wts] = quadrature::make_quadrature(
+  const auto [_pts, wts] = quadrature::make_quadrature_new(
       quadrature::type::Default, cell::type::triangle, 2 * degree);
-  const xt::xtensor<double, 3> phi
+  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  const auto [_phi, shape]
       = polyset::tabulate(cell::type::triangle, degree, 0, pts);
+  impl::cmdspan3_t phi(_phi.data(), shape);
 
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.extent(1);
 
   // Create coefficients for order (degree-1) vector polynomials
   impl::mdarray2_t wcoeffs(nv * 2 + ns, psize * 2);
@@ -90,11 +92,13 @@ impl::mdarray2_t create_nedelec_3d_space(int degree)
                             + (degree - 2) * (degree - 1) * degree / 2;
 
   // Tabulate polynomial basis at quadrature points
-  const auto [pts, wts] = quadrature::make_quadrature(
+  const auto [_pts, wts] = quadrature::make_quadrature_new(
       quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
-  xt::xtensor<double, 3> phi
+  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  const auto [_phi, shape]
       = polyset::tabulate(cell::type::tetrahedron, degree, 0, pts);
-  const std::size_t psize = phi.shape(1);
+  impl::cmdspan3_t phi(_phi.data(), shape);
+  const std::size_t psize = phi.extent(1);
 
   // Create coefficients for order (degree-1) polynomials
   impl::mdarray2_t wcoeffs(ndofs, psize * tdim);

@@ -65,13 +65,14 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   }
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                celltype, 2 * degree);
-  const xt::xtensor<double, 3> phi
-      = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_pts, wts] = quadrature::make_quadrature_new(
+      quadrature::type::Default, celltype, 2 * degree);
+  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  impl::cmdspan3_t phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.extent(1);
 
   // Create points at nodes on interior
   std::size_t ndofs = 0;
@@ -84,8 +85,8 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
 
   auto create_phi1 = [](auto& phi, auto& buffer)
   {
-    buffer.resize(phi.shape(1) * phi.shape(2));
-    impl::mdspan2_t phi1(buffer.data(), phi.shape(1), phi.shape(2));
+    buffer.resize(phi.extent(1) * phi.extent(2));
+    impl::mdspan2_t phi1(buffer.data(), phi.extent(1), phi.extent(2));
     for (std::size_t i = 0; i < phi1.extent(0); ++i)
       for (std::size_t j = 0; j < phi1.extent(1); ++j)
         phi1(i, j) = phi(0, i, j);
@@ -100,9 +101,10 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   {
   case cell::type::interval:
   {
-    auto _phi1 = polyset::tabulate(celltype, degree - 2, 0, pts);
-    phi1 = create_phi1(_phi1, phi1_buffer);
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 2, 0, pts);
+    impl::cmdspan3_t p1(_phi1.data(), shape);
+    phi1 = create_phi1(p1, phi1_buffer);
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       double x0 = pts(i, 0);
       bubble.push_back(x0 * (1.0 - x0));
@@ -111,9 +113,10 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   }
   case cell::type::triangle:
   {
-    auto _phi1 = polyset::tabulate(celltype, degree - 3, 0, pts);
-    phi1 = create_phi1(_phi1, phi1_buffer);
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 3, 0, pts);
+    impl::cmdspan3_t p1(_phi1.data(), shape);
+    phi1 = create_phi1(p1, phi1_buffer);
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       double x0 = pts(i, 0);
       double x1 = pts(i, 1);
@@ -123,9 +126,10 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   }
   case cell::type::tetrahedron:
   {
-    auto _phi1 = polyset::tabulate(celltype, degree - 4, 0, pts);
-    phi1 = create_phi1(_phi1, phi1_buffer);
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 4, 0, pts);
+    impl::cmdspan3_t p1(_phi1.data(), shape);
+    phi1 = create_phi1(p1, phi1_buffer);
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       double x0 = pts(i, 0);
       double x1 = pts(i, 1);
@@ -136,9 +140,10 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   }
   case cell::type::quadrilateral:
   {
-    auto _phi1 = polyset::tabulate(celltype, degree - 2, 0, pts);
-    phi1 = create_phi1(_phi1, phi1_buffer);
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 2, 0, pts);
+    impl::cmdspan3_t p1(_phi1.data(), shape);
+    phi1 = create_phi1(p1, phi1_buffer);
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       double x0 = pts(i, 0);
       double x1 = pts(i, 1);
@@ -148,9 +153,10 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   }
   case cell::type::hexahedron:
   {
-    auto _phi1 = polyset::tabulate(celltype, degree - 2, 0, pts);
-    phi1 = create_phi1(_phi1, phi1_buffer);
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
+    const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 2, 0, pts);
+    impl::cmdspan3_t p1(_phi1.data(), shape);
+    phi1 = create_phi1(p1, phi1_buffer);
+    for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
       double x0 = pts(i, 0);
       double x1 = pts(i, 1);

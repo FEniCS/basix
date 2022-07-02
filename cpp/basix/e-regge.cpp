@@ -82,16 +82,17 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
         cell::type ct = cell::sub_entity_type(celltype, d, e);
 
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
-        const auto [pts, wts]
-            = quadrature::make_quadrature(ct, degree + (degree + 1 - d));
+        const auto [_pts, wts]
+            = quadrature::make_quadrature_new(ct, degree + (degree + 1 - d));
+        impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
         const auto moment_values = moment_space.tabulate(0, pts);
-        auto& _x = x[d].emplace_back(pts.shape(0), tdim);
+        auto& _x = x[d].emplace_back(pts.extent(0), tdim);
 
         // Copy points
-        for (std::size_t p = 0; p < pts.shape(0); ++p)
+        for (std::size_t p = 0; p < pts.extent(0); ++p)
         {
           for (std::size_t j = 0; j < entity_x.extent(1); ++j)
             _x(p, j) = entity_x(0, j);
@@ -129,7 +130,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
         }
 
         auto& _M = M[d].emplace_back(ndofs * ntangents, tdim * tdim,
-                                     pts.shape(0), 1);
+                                     pts.extent(0), 1);
         for (int n = 0; n < moment_space.dim(); ++n)
         {
           for (std::size_t j = 0; j < ntangents; ++j)
@@ -138,7 +139,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
             for (std::size_t i = 0; i < vvt.extent(1); ++i)
               for (std::size_t k = 0; k < vvt.extent(2); ++k)
                 vvt_flat.push_back(vvt(j, i, k));
-            for (std::size_t q = 0; q < pts.shape(0); ++q)
+            for (std::size_t q = 0; q < pts.extent(0); ++q)
             {
               for (std::size_t i = 0; i < tdim * tdim; ++i)
               {

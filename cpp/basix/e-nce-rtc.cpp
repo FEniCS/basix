@@ -35,12 +35,14 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, qwts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                 celltype, 2 * degree);
-  xt::xtensor<double, 3> phi = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_pts, qwts] = quadrature::make_quadrature_new(
+      quadrature::type::Default, celltype, 2 * degree);
+  impl::cmdspan2_t pts(_pts.data(), qwts.size(), _pts.size() / qwts.size());
+  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  impl::cmdspan3_t phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.extent(1);
 
   const int facet_count = tdim == 2 ? 4 : 6;
   const int facet_dofs = polyset::dim(facettype, degree - 1);
@@ -86,7 +88,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
     for (std::size_t d = 0; d < tdim; ++d)
     {
       int n = 0;
-      std::vector<double> integrand(pts.shape(0));
+      std::vector<double> integrand(pts.extent(0));
       for (std::size_t j = 0; j < integrand.size(); ++j)
         integrand[j] = std::pow(pts(j, d), degree);
       for (std::size_t c = 0; c < tdim; ++c)
@@ -192,12 +194,14 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                celltype, 2 * degree);
-  xt::xtensor<double, 3> phi = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_pts, wts] = quadrature::make_quadrature_new(
+      quadrature::type::Default, celltype, 2 * degree);
+  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  impl::cmdspan3_t phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
-  const int psize = phi.shape(1);
+  const int psize = phi.extent(1);
 
   const int edge_count = tdim == 2 ? 4 : 12;
   const int edge_dofs = polyset::dim(cell::type::interval, degree - 1);
@@ -233,7 +237,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   }
 
   // Create coefficients for additional polynomials in the curl space
-  std::vector<double> integrand(pts.shape(0));
+  std::vector<double> integrand(pts.extent(0));
   switch (tdim)
   {
   case 2:

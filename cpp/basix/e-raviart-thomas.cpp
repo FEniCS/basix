@@ -39,12 +39,14 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   const std::size_t ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                      celltype, 2 * degree);
-  const auto phi = polyset::tabulate(celltype, degree, 0, pts);
+  const auto [_pts, wts] = quadrature::make_quadrature_new(
+      quadrature::type::Default, celltype, 2 * degree);
+  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  impl::cmdspan3_t phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(1);
+  const std::size_t psize = phi.extent(1);
 
   // Create coefficients for order (degree-1) vector polynomials
   impl::mdarray2_t B(nv * tdim + ns, psize * tdim);
@@ -72,7 +74,6 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;
   std::array<std::vector<impl::mdarray4_t>, 4> M;
-
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);

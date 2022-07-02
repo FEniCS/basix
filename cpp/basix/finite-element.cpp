@@ -1033,12 +1033,16 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
 xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x) const
 {
-
   auto shape = tabulate_shape(nd, x.shape(0));
   xt::xtensor<double, 4> data(shape);
   tabulate(nd, x, data);
-
   return data;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 4> FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
+{
+  std::vector<std::size_t> shape = {x.extent(0), x.extent(1)};
+  return tabulate(nd, xt::adapt(x.data(), x.size(), xt::no_ownership(), shape));
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,

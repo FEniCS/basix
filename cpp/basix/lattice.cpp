@@ -31,18 +31,18 @@ xt::xtensor<double, 2> create_interval_gll(int n, bool exterior)
   if (n == 0)
     return {{0.5}};
 
-  const xt::xtensor<double, 2> _pts = quadrature::get_gll_points(n + 1);
+  const std::vector<double> _pts = quadrature::get_gll_points(n + 1);
 
   const std::size_t b = exterior ? 0 : 1;
   std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1 - 2 * b), 1};
   xt::xtensor<double, 2> x(s);
   if (exterior)
   {
-    x(0, 0) = _pts(0, 0);
-    x(n, 0) = _pts(1, 0);
+    x(0, 0) = _pts[0];
+    x(n, 0) = _pts[1];
   }
   for (std::size_t j = 2; j < static_cast<std::size_t>(n + 1); ++j)
-    x(j - 1 - b, 0) = _pts(j, 0);
+    x(j - 1 - b, 0) = _pts[j];
   return x;
 }
 //-----------------------------------------------------------------------------
@@ -56,9 +56,8 @@ xt::xtensor<double, 2> create_interval_chebyshev(int n, bool exterior)
 
   std::array<std::size_t, 2> s = {static_cast<std::size_t>(n - 1), 1};
   xt::xtensor<double, 2> x(s);
-
   for (int i = 1; i < n; ++i)
-    x(i - 1, 0) = 0.5 - cos((2 * i - 1) * M_PI / (2 * n - 2)) / 2.0;
+    x(i - 1, 0) = 0.5 - std::cos((2 * i - 1) * M_PI / (2 * n - 2)) / 2.0;
 
   return x;
 }
@@ -73,14 +72,17 @@ xt::xtensor<double, 2> create_interval_gl(int n, bool exterior)
 
   if (n == 0)
     return {{0.5}};
-  const xt::xtensor<double, 2> pts = quadrature::get_gl_points(n - 1);
-  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n - 1), 1};
-  xt::xtensor<double, 2> x(s);
+  else
+  {
+    const std::vector<double> pts = quadrature::get_gl_points(n - 1);
+    std::array<std::size_t, 2> s = {static_cast<std::size_t>(n - 1), 1};
+    xt::xtensor<double, 2> x(s);
 
-  for (int i = 0; i < n - 1; ++i)
-    x(i, 0) = pts(i, 0);
+    for (int i = 0; i < n - 1; ++i)
+      x(i, 0) = pts[i];
 
-  return x;
+    return x;
+  }
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_interval_gl_plus_endpoints(int n, bool exterior)
@@ -631,10 +633,11 @@ xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
   const double h = 1.0 / static_cast<double>(n);
 
   // Interpolate warp factor along interval
-  xt::xtensor<double, 2> pts = quadrature::get_gll_points(n + 1);
-  pts *= 0.5;
+  std::vector<double> pts = quadrature::get_gll_points(n + 1);
+  std::transform(pts.begin(), pts.end(), pts.begin(),
+                 [](auto x) { return 0.5 * x; });
   for (int i = 0; i < n + 1; ++i)
-    pts(i, 0) += (0.5 - static_cast<double>(i) / static_cast<double>(n));
+    pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
 
   // Get interpolated value at r in range [-1, 1]
   auto w = [&](double r) -> double
@@ -643,8 +646,8 @@ xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
     xt::xtensor<double, 1> v
         = xt::view(tabulate_dlagrange(n, rr), xt::all(), 0);
     double d = 0.0;
-    for (std::size_t i = 0; i < pts.shape(0); ++i)
-      d += v[i] * pts(i, 0);
+    for (std::size_t i = 0; i < pts.size(); ++i)
+      d += v[i] * pts[i];
     return d;
   };
 

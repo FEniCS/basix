@@ -80,12 +80,8 @@ Interface to the Basix C++ library.
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
       {
-        xt::xtensor<double, 2> g
-            = cell::sub_entity_geometry(celltype, dim, index);
-        auto strides = g.strides();
-        for (auto& s : strides)
-          s *= sizeof(double);
-        return py::array_t<double>(g.shape(), strides, g.data());
+        auto [x, shape] = cell::sub_entity_geometry_new(celltype, dim, index);
+        return py::array_t<double>(shape, x.data());
       },
       basix::docstring::sub_entity_geometry.c_str());
 
@@ -180,25 +176,25 @@ Interface to the Basix C++ library.
       "cell_facet_normals",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 2> normals = cell::facet_normals(cell_type);
-        return py::array_t<double>(normals.shape(), normals.data());
+        auto [n, shape] = cell::facet_normals(cell_type);
+        return py::array_t<double>(shape, n.data());
       },
       basix::docstring::cell_facet_normals.c_str());
   m.def(
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 1> volumes
-            = cell::facet_reference_volumes(cell_type);
-        return py::array_t<double>(volumes.shape(), volumes.data());
+        std::vector<double> v = cell::facet_reference_volumes(cell_type);
+        std::array<std::size_t, 1> shape = {v.size()};
+        return py::array_t<double>(shape, v.data());
       },
       basix::docstring::cell_facet_reference_volumes.c_str());
   m.def(
       "cell_facet_outward_normals",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 2> normals = cell::facet_outward_normals(cell_type);
-        return py::array_t<double>(normals.shape(), normals.data());
+        auto [n, shape] = cell::facet_outward_normals(cell_type);
+        return py::array_t<double>(shape, n.data());
       },
       basix::docstring::cell_facet_outward_normals.c_str());
   m.def("cell_facet_orientations", &cell::facet_orientations,
@@ -207,8 +203,8 @@ Interface to the Basix C++ library.
       "cell_facet_jacobians",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 3> jacobians = cell::facet_jacobians(cell_type);
-        return py::array_t<double>(jacobians.shape(), jacobians.data());
+        auto [J, shape] = cell::facet_jacobians(cell_type);
+        return py::array_t<double>(shape, J.data());
       },
       basix::docstring::cell_facet_jacobians.c_str());
 
@@ -637,7 +633,8 @@ Interface to the Basix C++ library.
       [](quadrature::type rule, cell::type celltype, int m)
       {
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
-        return std::pair(py::array_t<double>(pts.shape(), pts.data()),
+        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
+        return std::pair(py::array_t<double>(shape, pts.data()),
                          py::array_t<double>(w.size(), w.data()));
       },
       basix::docstring::make_quadrature__rule_celltype_m.c_str());
@@ -647,7 +644,8 @@ Interface to the Basix C++ library.
       [](cell::type celltype, int m)
       {
         auto [pts, w] = quadrature::make_quadrature(celltype, m);
-        return std::pair(py::array_t<double>(pts.shape(), pts.data()),
+        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
+        return std::pair(py::array_t<double>(shape, pts.data()),
                          py::array_t<double>(w.size(), w.data()));
       },
       basix::docstring::make_quadrature__celltype_m.c_str());

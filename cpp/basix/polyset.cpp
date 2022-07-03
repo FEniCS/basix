@@ -1376,9 +1376,13 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
 } // namespace
 //-----------------------------------------------------------------------------
 void polyset::tabulate(
-    stdex::mdspan<double, stdex::dextents<std::size_t, 3>> P,
+    std::experimental::mdspan<double,
+                              std::experimental::dextents<std::size_t, 3>>
+        P,
     cell::type celltype, int d, int n,
-    stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> x)
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>
+        x)
 {
   switch (celltype)
   {
@@ -1428,7 +1432,9 @@ xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 3>> polyset::tabulate(
     cell::type celltype, int d, int n,
-    stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> x)
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>
+        x)
 {
   std::array<std::size_t, 3> shape
       = {(std::size_t)polyset::nderivs(celltype, n),

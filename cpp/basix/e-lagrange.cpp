@@ -13,6 +13,7 @@
 #include "quadrature.h"
 
 using namespace basix;
+namespace stdex = std::experimental;
 
 namespace
 {
@@ -68,24 +69,19 @@ impl::mdarray2_t vtk_triangle_points(std::size_t degree)
   return out;
 }
 //-----------------------------------------------------------------------------
-std::experimental::mdarray<
-    double, std::experimental::extents<std::size_t,
-                                       std::experimental::dynamic_extent, 3>>
+stdex::mdarray<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
 vtk_tetrahedron_points(std::size_t degree)
 {
   const double d = 1 / static_cast<double>(degree + 4);
   if (degree == 0)
   {
-    return std::experimental::mdarray<
-        double, std::experimental::extents<
-                    std::size_t, std::experimental::dynamic_extent, 3>>(
+    return stdex::mdarray<
+        double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>(
         {d, d, d}, 1, 2);
   }
 
   const std::size_t npoints = polyset::dim(cell::type::tetrahedron, degree);
-  std::experimental::mdarray<
-      double, std::experimental::extents<std::size_t,
-                                         std::experimental::dynamic_extent, 3>>
+  stdex::mdarray<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
       out(npoints, 3);
 
   out(0, 0) = d;
@@ -184,8 +180,8 @@ vtk_tetrahedron_points(std::size_t degree)
   {
     const auto pts = vtk_tetrahedron_points(degree - 4);
     auto _out = impl::mdspan2_t(out.data(), out.extents());
-    auto out_view = std::experimental::submdspan(
-        _out, std::pair<int, int>{n, npoints}, std::experimental::full_extent);
+    auto out_view = stdex::submdspan(_out, std::pair<int, int>{n, npoints},
+                                     stdex::full_extent);
     for (std::size_t i = 0; i < out_view.extent(0); ++i)
       for (std::size_t j = 0; j < out_view.extent(1); ++j)
         out_view(i, j) = pts(i, j);
@@ -965,7 +961,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   std::array<std::vector<impl::mdarray4_t>, 4> M;
 
   // Evaluate moment space at quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, celltype, degree * 2);
   assert(!wts.empty());
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
@@ -1090,7 +1086,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
     }
     else
     {
-      const auto [_pts, wts] = quadrature::make_quadrature_new(
+      const auto [_pts, wts] = quadrature::make_quadrature(
           quadrature::type::Default, ct[d], degree * 2);
       assert(!wts.empty());
       impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());

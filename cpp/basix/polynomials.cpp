@@ -7,6 +7,7 @@
 #include <xtensor/xview.hpp>
 
 using namespace basix;
+namespace stdex = std::experimental;
 
 namespace
 {

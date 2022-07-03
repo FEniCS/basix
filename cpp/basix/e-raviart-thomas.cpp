@@ -10,10 +10,6 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include <vector>
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xmath.hpp>
-#include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -43,83 +39,102 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   const std::size_t ns = polyset::dim(facettype, degree - 1);
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [pts, _wts] = quadrature::make_quadrature(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, celltype, 2 * degree);
-  auto wts = xt::adapt(_wts);
-  const auto phi = xt::view(polyset::tabulate(celltype, degree, 0, pts), 0,
-                            xt::all(), xt::all());
+  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
+  impl::cmdspan3_t phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
-  const std::size_t psize = phi.shape(0);
+  const std::size_t psize = phi.extent(1);
 
   // Create coefficients for order (degree-1) vector polynomials
-  xt::xtensor<double, 2> B = xt::zeros<double>({nv * tdim + ns, psize * tdim});
-  for (std::size_t j = 0; j < tdim; ++j)
-  {
-    xt::view(B, xt::range(nv * j, nv * j + nv),
-             xt::range(psize * j, psize * j + nv))
-        = xt::eye<double>(nv);
-  }
+  impl::mdarray2_t B(nv * tdim + ns, psize * tdim);
+  for (std::size_t i = 0; i < tdim; ++i)
+    for (std::size_t j = 0; j < nv; ++j)
+      B(nv * i + j, psize * i + j) = 1.0;
 
   // Create coefficients for additional polynomials in Raviart-Thomas
   // polynomial basis
   for (std::size_t i = 0; i < ns; ++i)
   {
-    auto p = xt::row(phi, ns0 + i);
     for (std::size_t k = 0; k < psize; ++k)
     {
-      auto pk = xt::row(phi, k);
       for (std::size_t j = 0; j < tdim; ++j)
       {
-        B(nv * tdim + i, k + psize * j)
-            = xt::sum(wts * p * xt::col(pts, j) * pk)();
+        B(nv * tdim + i, k + psize * j) = 0.0;
+        for (std::size_t k1 = 0; k1 < wts.size(); ++k1)
+        {
+          B(nv * tdim + i, k + psize * j)
+              += wts[k1] * phi(0, ns0 + i, k1) * pts(k1, j) * phi(0, k, k1);
+        }
       }
     }
   }
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector<xt::xtensor<double, 2>>(
-        num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[i] = std::vector<xt::xtensor<double, 4>>(
-        num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
   // Add integral moments on facets
-  const FiniteElement facet_moment_space
-      = element::create_lagrange(facettype, degree - 1, lvariant, true);
-  std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
-      facet_moment_space, celltype, tdim, 2 * degree - 1);
+  {
+    const FiniteElement facet_moment_space
+        = element::create_lagrange(facettype, degree - 1, lvariant, true);
+    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments_new(
+        facet_moment_space, celltype, tdim, 2 * degree - 1);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[tdim - 1].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[tdim - 1].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                               Mshape[i][3]);
+    }
+  }
 
   // Add integral moments on interior
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(x[tdim], M[tdim]) = moments::make_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
         element::create_lagrange(celltype, degree - 2, lvariant, true),
         celltype, tdim, 2 * degree - 2);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[tdim].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
+      M[tdim].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
+                           Mshape[i][3]);
+    }
   }
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector<xt::xtensor<double, 2>>(
-        num_ent, xt::xtensor<double, 2>({0, tdim}));
-    M[tdim] = std::vector<xt::xtensor<double, 4>>(
-        num_ent, xt::xtensor<double, 4>({0, tdim, 0, 1}));
+    x[tdim] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
-
+  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<double>>, 4> xbuffer;
+  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
-    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim);
+  {
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = element::make_discontinuous(xview, Mview, tdim, tdim);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
+  }
 
-  return FiniteElement(element::family::RT, celltype, degree, {tdim}, B, x, M,
-                       0, maps::type::contravariantPiola, discontinuous,
+  return FiniteElement(element::family::RT, celltype, degree, {tdim},
+                       impl::mdspan2_t(B.data(), B.extents()), xview, Mview, 0,
+                       maps::type::contravariantPiola, discontinuous,
                        degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------

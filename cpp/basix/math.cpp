@@ -63,6 +63,45 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
   return {std::move(w), std::move(M)};
 }
 //------------------------------------------------------------------
+std::pair<std::vector<double>, std::vector<double>>
+basix::math::eigh(const xtl::span<const double>& A, std::size_t n)
+{
+  // Copy to column major matrix
+  // xt::xtensor<double, 2, xt::layout_type::column_major> M(A.shape());
+  // M.assign(A);
+  // int N = A.shape(0);
+  std::vector<double> w(n, 0);
+  std::vector<double> M(A.begin(), A.end());
+
+  int N = n;
+  char jobz = 'V'; // Compute eigenvalues and eigenvectors
+  char uplo = 'L'; // Lower
+  int ldA = n;
+  int lwork = -1;
+  int liwork = -1;
+  int info;
+  std::vector<double> work(1);
+  std::vector<int> iwork(1);
+
+  // Query optimal workspace size
+  dsyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
+          iwork.data(), &liwork, &info);
+  if (info != 0)
+    throw std::runtime_error("Could not find workspace size for syevd.");
+
+  // Solve eigen problem
+  work.resize(work[0]);
+  iwork.resize(iwork[0]);
+  lwork = work.size();
+  liwork = iwork.size();
+  dsyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
+          iwork.data(), &liwork, &info);
+  if (info != 0)
+    throw std::runtime_error("Eigenvalue computation did not converge.");
+
+  return {std::move(w), std::move(M)};
+}
+//------------------------------------------------------------------
 xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
                                           const xt::xtensor<double, 2>& B)
 {
@@ -179,8 +218,7 @@ xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
 std::vector<double> basix::math::eye(std::size_t n)
 {
   std::vector<double> I(n * n, 0);
-  std::experimental::mdspan<double, std::experimental::dextents<std::size_t, 2>>
-      Iview(I.data(), n, n);
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> Iview(I.data(), n, n);
   for (std::size_t i = 0; i < n; ++i)
     Iview(i, i) = 1.0;
   return I;

@@ -1033,12 +1033,16 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
 xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x) const
 {
-
   auto shape = tabulate_shape(nd, x.shape(0));
   xt::xtensor<double, 4> data(shape);
   tabulate(nd, x, data);
-
   return data;
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 4> FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
+{
+  std::vector<std::size_t> shape = {x.extent(0), x.extent(1)};
+  return tabulate(nd, xt::adapt(x.data(), x.size(), xt::no_ownership(), shape));
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
@@ -1051,7 +1055,12 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
   xt::xtensor<double, 3> basis(
       {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)),
        static_cast<std::size_t>(psize), x.shape(0)});
-  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
+
+  stdex::mdspan<double, stdex::dextents<std::size_t, 3>> _basis(
+      basis.data(), basis.shape(0), basis.shape(1), basis.shape(2));
+  stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
+      x.data(), x.shape(0), x.shape(1));
+  polyset::tabulate(_basis, _cell_type, _highest_degree, nd, _x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());
   xt::xtensor<double, 2> B, C;

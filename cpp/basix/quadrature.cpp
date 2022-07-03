@@ -4730,56 +4730,35 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
     return type::gauss_jacobi;
 }
 //-----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, std::vector<double>>
-quadrature::make_quadrature(quadrature::type rule, cell::type celltype, int m)
+std::array<std::vector<double>, 2>
+quadrature::make_quadrature_new(quadrature::type rule, cell::type celltype,
+                                int m)
 {
-  auto to_xtensor
-      = [](auto&& x) -> std::pair<xt::xtensor<double, 2>, std::vector<double>>
-  {
-    std::vector<std::size_t> shape = {x[1].size(), x[0].size() / x[1].size()};
-    return {xt::adapt(x[0], shape), x[1]};
-  };
-
   switch (rule)
   {
   case quadrature::type::Default:
-    return make_quadrature(get_default_rule(celltype, m), celltype, m);
+    return make_quadrature_new(get_default_rule(celltype, m), celltype, m);
   case quadrature::type::gauss_jacobi:
-    return to_xtensor(make_gauss_jacobi_quadrature(celltype, m));
+    return make_gauss_jacobi_quadrature(celltype, m);
   case quadrature::type::gll:
-    return to_xtensor(make_gll_quadrature(celltype, m));
+    return make_gll_quadrature(celltype, m);
   case quadrature::type::xiao_gimbutas:
-    return to_xtensor(make_xiao_gimbutas_quadrature(celltype, m));
+    return make_xiao_gimbutas_quadrature(celltype, m);
   case quadrature::type::zienkiewicz_taylor:
-    return to_xtensor(make_zienkiewicz_taylor_quadrature(celltype, m));
+    return make_zienkiewicz_taylor_quadrature(celltype, m);
   case quadrature::type::keast:
-    return to_xtensor(make_keast_quadrature(celltype, m));
+    return make_keast_quadrature(celltype, m);
   case quadrature::type::strang_fix:
-    return to_xtensor(make_strang_fix_quadrature(celltype, m));
+    return make_strang_fix_quadrature(celltype, m);
   default:
     throw std::runtime_error("Unknown quadrature rule");
   }
 }
 //-----------------------------------------------------------------------------
 std::array<std::vector<double>, 2>
-quadrature::make_quadrature_new(quadrature::type rule, cell::type celltype,
-                                int m)
-{
-  auto [x, w] = make_quadrature(rule, celltype, m);
-  return {std::vector<double>(x.data(), x.data() + x.size()), std::move(w)};
-}
-//-----------------------------------------------------------------------------
-std::pair<xt::xtensor<double, 2>, std::vector<double>>
-quadrature::make_quadrature(cell::type celltype, int m)
-{
-  return make_quadrature(quadrature::type::Default, celltype, m);
-}
-//-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2>
 quadrature::make_quadrature_new(cell::type celltype, int m)
 {
-  auto [x, w] = make_quadrature(quadrature::type::Default, celltype, m);
-  return {std::vector<double>(x.data(), x.data() + x.size()), std::move(w)};
+  return make_quadrature_new(quadrature::type::Default, celltype, m);
 }
 //-----------------------------------------------------------------------------
 std::vector<double> quadrature::get_gl_points(int m)

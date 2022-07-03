@@ -127,6 +127,25 @@ void dot(const xt::xtensor<double, 2>& A, const xt::xtensor<double, 2>& B,
 xt::xtensor<double, 2> dot(const xt::xtensor<double, 2>& A,
                            const xt::xtensor<double, 2>& B);
 
+/// Compute C = A * B
+/// @param[in] A Input matrix
+/// @param[in] B Input matrix
+/// @return A * B
+template <typename U, typename V>
+std::pair<std::vector<double>, std::array<std::size_t, 2>> dot_new(const U& A,
+                                                                   const V& B)
+{
+  std::vector<double> C(A.extent(0) * B.extent(1));
+  std::array<std::size_t, 2> shape = {A.extent(0), B.extent(1)};
+  std::experimental::mdspan<double, std::experimental::dextents<std::size_t, 2>>
+      _C(C.data(), shape);
+  for (std::size_t i = 0; i < shape[0]; ++i)
+    for (std::size_t j = 0; j < shape[1]; ++j)
+      for (std::size_t k = 0; k < A.extent(1); ++k)
+        _C(i, j) += A(i, k) * B(k, j);
+  return {std::move(C), std::move(shape)};
+}
+
 /// Build an identity matrix
 /// @param[in] n The number of rows/columns
 /// @return Identity matrix using row-major storage

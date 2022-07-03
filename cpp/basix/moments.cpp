@@ -51,7 +51,6 @@ std::pair<std::vector<xt::xtensor<double, 2>>, xt::xtensor<double, 3>>
 map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
 {
   assert(x.dimension() == 2);
-
   const std::size_t tdim = cell::topological_dimension(celltype0);
   std::size_t entity_dim = cell::topological_dimension(celltype1);
   std::size_t num_entities = cell::num_sub_entities(celltype0, entity_dim);
@@ -66,16 +65,18 @@ map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
     // Get entity geometry
     xt::xtensor<double, 2> entity_x
         = cell::sub_entity_geometry(celltype0, entity_dim, e);
-    auto x0 = xt::row(entity_x, 0);
 
     // Axes on the cell entity
     for (std::size_t i = 0; i < entity_dim; ++i)
-      xt::view(axes, e, i, xt::all()) = xt::row(entity_x, axis_pts[i]) - x0;
+      for (std::size_t j = 0; j < axes.shape(2); ++j)
+        axes(e, i, j) = entity_x(axis_pts[i], j) - entity_x(0, j);
 
     // Compute x = x0 + \Delta x
-    p[e] = xt::tile(xt::view(entity_x, xt::newaxis(), 0), x.shape(0));
     axes_e = xt::view(axes, e, xt::all(), xt::all());
-    p[e] += basix::math::dot(x, axes_e);
+    xt::xtensor<double, 2> dx = math::dot(x, axes_e);
+    for (std::size_t i = 0; i < p[e].shape(0); ++i)
+      for (std::size_t j = 0; j < p[e].shape(1); ++j)
+        p[e](i, j) = entity_x(0, j) + dx(i, j);
   }
 
   return {p, axes};
@@ -96,9 +97,9 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
   const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
 
   // Get the quadrature points and weights
-  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                 sub_celltype, q_deg);
-  auto wts = xt::adapt(_wts);
+  auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                sub_celltype, q_deg);
+
   // Evaluate moment space at quadrature points
   assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(), 1,
                          std::multiplies<int>())
@@ -125,21 +126,21 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
   {
     for (std::size_t e = 0; e < num_entities; ++e)
     {
+      xt::xtensor<double, 4>& _D = D[e];
       for (std::size_t i = 0; i < phi.shape(1); ++i)
-      {
-        auto phi_i = xt::col(phi, i);
-        xt::view(D[e], i, 0, xt::all(), 0).assign(phi_i * wts);
-      }
+        for (std::size_t j = 0; j < wts.size(); ++j)
+          _D(i, 0, j, 0) = phi(j, i) * wts[j];
     }
   }
   else
   {
     for (std::size_t e = 0; e < num_entities; ++e)
     {
+      xt::xtensor<double, 4>& _D = D[e];
+
       // Loop over each 'dof' on an entity (moment basis function index)
       for (std::size_t i = 0; i < phi.shape(1); ++i)
       {
-        auto phi_i = xt::col(phi, i);
         // TODO: Pad-out phi and call a updated
         // make_dot_integral_moments
 
@@ -149,9 +150,9 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
         {
           // TODO: check that dof index is correct
           const std::size_t dof = i * entity_dim + d;
-          for (std::size_t k = 0; k < value_size; ++k)
-            xt::view(D[e], dof, k, xt::all(), 0)
-                .assign(phi_i * wts * axes(e, d, k));
+          for (std::size_t j = 0; j < value_size; ++j)
+            for (std::size_t k = 0; k < wts.size(); ++k)
+              _D(dof, j, k, 0) = phi(k, i) * wts[k] * axes(e, d, j);
         }
       }
     }
@@ -195,9 +196,8 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
   const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
 
-  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                 sub_celltype, q_deg);
-  auto wts = xt::adapt(_wts);
+  auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                sub_celltype, q_deg);
 
   // If this is always true, value_size input can be removed
   assert(std::size_t(cell::topological_dimension(celltype)) == value_size);
@@ -237,8 +237,10 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
         for (std::size_t d = 0; d < phi.shape(2); ++d)
         {
           // Add quadrature point on cell entity contributions
-          xt::view(D[e], dof, j, xt::all(), 0)
-              += wts * xt::view(phi, xt::all(), dof, d) * axes(e, d, j);
+          for (std::size_t k = 0; k < wts.size(); ++k)
+            D[e](dof, j, k, 0) += wts[k] * phi(k, dof, d) * axes(e, d, j);
+          // xt::view(D[e], dof, j, xt::all(), 0)
+          //     += wts * xt::view(phi, xt::all(), dof, d) * axes(e, d, j);
         }
       }
     }
@@ -320,14 +322,15 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
 
     // Map quadrature points onto triangle edge
     for (std::size_t i = 0; i < pts.shape(0); ++i)
-      xt::view(points[e], i, xt::all()) = X0 + pts(i, 0) * tangent;
+      for (std::size_t j = 0; j < points[e].shape(1); ++j)
+        points[e](i, j) = X0[j] + pts(i, 0) * tangent[j];
 
     // Compute edge tangent integral moments
     for (std::size_t i = 0; i < phi.shape(1); ++i)
     {
-      auto phi_i = xt::col(phi, i);
       for (std::size_t j = 0; j < value_size; ++j)
-        xt::view(D[e], i, j, xt::all(), 0).assign(phi_i * wts * tangent[j]);
+        for (std::size_t k = 0; k < wts.size(); ++k)
+          D[e](i, j, k, 0) = phi(k, i) * wts[k] * tangent[j];
     }
   }
 
@@ -415,7 +418,8 @@ moments::make_normal_integral_moments(const FiniteElement& V,
       auto tangent = xt::row(facet_x, 1) - x0;
       normal = {-tangent(1), tangent(0)};
       for (std::size_t p = 0; p < pts.shape(0); ++p)
-        xt::view(points[e], p, xt::all()) = x0 + pts(p, 0) * tangent;
+        for (std::size_t i = 0; i < points[e].shape(1); ++i)
+          points[e](p, i) = x0[i] + pts(p, 0) * tangent[i];
     }
     else if (tdim == 3)
     {
@@ -425,10 +429,8 @@ moments::make_normal_integral_moments(const FiniteElement& V,
       auto t1 = xt::row(facet_x, 2) - x0;
       normal = basix::math::cross(t0, t1);
       for (std::size_t p = 0; p < pts.shape(0); ++p)
-      {
-        xt::view(points[e], p, xt::all())
-            = x0 + pts(p, 0) * t0 + pts(p, 1) * t1;
-      }
+        for (std::size_t i = 0; i < points[e].shape(1); ++i)
+          points[e](p, i) = x0[i] + pts(p, 0) * t0[i] + pts(p, 1) * t1[i];
     }
     else
       throw std::runtime_error("Normal on this cell cannot be computed.");
@@ -436,9 +438,9 @@ moments::make_normal_integral_moments(const FiniteElement& V,
     // Compute facet normal integral moments
     for (std::size_t i = 0; i < phi.shape(1); ++i)
     {
-      auto phi_i = xt::col(phi, i);
       for (std::size_t j = 0; j < value_size; ++j)
-        xt::view(D[e], i, j, xt::all(), 0).assign(phi_i * wts * normal[j]);
+        for (std::size_t k = 0; k < D[e].shape(2); ++k)
+          D[e](i, j, k, 0) = phi(k, i) * wts[k] * normal[j];
     }
   }
   return {points, D};

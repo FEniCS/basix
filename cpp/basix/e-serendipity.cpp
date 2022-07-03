@@ -25,7 +25,7 @@ impl::mdarray2_t make_serendipity_space_2d(int degree)
   const std::size_t ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_Pq, shape]
@@ -125,7 +125,7 @@ impl::mdarray2_t make_serendipity_space_3d(int degree)
   // Number of order (degree) polynomials
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
@@ -178,7 +178,7 @@ impl::mdarray2_t make_serendipity_div_space_2d(int degree)
   const std::size_t ndofs = degree * (degree + 3) + 4;
 
   // Evaluate the expansion polynomials at the quadrature points
-  auto [_pts, wts] = quadrature::make_quadrature_new(
+  auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_Pq, shape]
@@ -245,7 +245,7 @@ impl::mdarray2_t make_serendipity_div_space_3d(int degree)
   const std::size_t ndofs = (degree + 1) * (degree * (degree + 5) + 12) / 2;
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
@@ -390,7 +390,7 @@ impl::mdarray2_t make_serendipity_curl_space_2d(int degree)
   const std::size_t ndofs = degree * (degree + 3) + 4;
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_Pq, shape]
@@ -462,7 +462,7 @@ impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
                                       + 3 * (degree * (degree + 4) + 3);
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_Pq, shape]
@@ -665,7 +665,7 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   const std::size_t psize = polyset::dim(celltype, degree);
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
 
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, celltype, degree * 2);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
@@ -1304,7 +1304,7 @@ FiniteElement basix::element::create_serendipity_curl(
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_Qpts, wts] = quadrature::make_quadrature_new(
+  const auto [_Qpts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, celltype, 2 * degree + 1);
   impl::cmdspan2_t Qpts(_Qpts.data(), wts.size(), _Qpts.size() / wts.size());
 

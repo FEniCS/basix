@@ -7,6 +7,7 @@
 #include <xtensor/xview.hpp>
 
 using namespace basix;
+namespace stdex = std::experimental;
 
 namespace
 {
@@ -108,9 +109,7 @@ xt::xtensor<double, 2> polynomials::tabulate(polynomials::type polytype,
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 polynomials::tabulate(
     polynomials::type polytype, cell::type celltype, int d,
-    std::experimental::mdspan<const double,
-                              std::experimental::dextents<std::size_t, 2>>
-        x)
+    stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> x)
 {
   xt::xtensor<double, 2> _x({x.extent(0), x.extent(1)});
   std::copy_n(x.data(), x.size(), _x.data());

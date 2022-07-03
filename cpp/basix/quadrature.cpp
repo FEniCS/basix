@@ -12,18 +12,12 @@
 #include <xtensor/xadapt.hpp>
 
 using namespace basix;
-using mdspan2_t
-    = std::experimental::mdspan<double,
-                                std::experimental::dextents<std::size_t, 2>>;
-using cmdspan2_t
-    = std::experimental::mdspan<const double,
-                                std::experimental::dextents<std::size_t, 2>>;
-using mdarray3_t
-    = std::experimental::mdarray<double,
-                                 std::experimental::dextents<std::size_t, 3>>;
-using mdarray2_t
-    = std::experimental::mdarray<double,
-                                 std::experimental::dextents<std::size_t, 2>>;
+
+namespace stdex = std::experimental;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using mdarray3_t = stdex::mdarray<double, stdex::dextents<std::size_t, 3>>;
+using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
 
 namespace
 {
@@ -4731,13 +4725,12 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
 }
 //-----------------------------------------------------------------------------
 std::array<std::vector<double>, 2>
-quadrature::make_quadrature_new(quadrature::type rule, cell::type celltype,
-                                int m)
+quadrature::make_quadrature(quadrature::type rule, cell::type celltype, int m)
 {
   switch (rule)
   {
   case quadrature::type::Default:
-    return make_quadrature_new(get_default_rule(celltype, m), celltype, m);
+    return make_quadrature(get_default_rule(celltype, m), celltype, m);
   case quadrature::type::gauss_jacobi:
     return make_gauss_jacobi_quadrature(celltype, m);
   case quadrature::type::gll:
@@ -4756,9 +4749,9 @@ quadrature::make_quadrature_new(quadrature::type rule, cell::type celltype,
 }
 //-----------------------------------------------------------------------------
 std::array<std::vector<double>, 2>
-quadrature::make_quadrature_new(cell::type celltype, int m)
+quadrature::make_quadrature(cell::type celltype, int m)
 {
-  return make_quadrature_new(quadrature::type::Default, celltype, m);
+  return make_quadrature(quadrature::type::Default, celltype, m);
 }
 //-----------------------------------------------------------------------------
 std::vector<double> quadrature::get_gl_points(int m)

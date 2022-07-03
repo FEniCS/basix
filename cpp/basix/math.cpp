@@ -131,11 +131,9 @@ xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
   return out;
 }
 //------------------------------------------------------------------
-std::vector<double>
-basix::math::solve(const std::experimental::mdspan<
-                       double, std::experimental::dextents<std::size_t, 2>>& A,
-                   const std::experimental::mdspan<
-                       double, std::experimental::dextents<std::size_t, 2>>& B)
+std::vector<double> basix::math::solve(
+    const stdex::mdspan<double, stdex::dextents<std::size_t, 2>>& A,
+    const stdex::mdspan<double, stdex::dextents<std::size_t, 2>>& B)
 {
   auto _A = xt::adapt(A.data(), A.size(), xt::no_ownership(),
                       std::array<std::size_t, 2>{A.extent(0), A.extent(1)});
@@ -218,8 +216,7 @@ xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
 std::vector<double> basix::math::eye(std::size_t n)
 {
   std::vector<double> I(n * n, 0);
-  std::experimental::mdspan<double, std::experimental::dextents<std::size_t, 2>>
-      Iview(I.data(), n, n);
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> Iview(I.data(), n, n);
   for (std::size_t i = 0; i < n; ++i)
     Iview(i, i) = 1.0;
   return I;

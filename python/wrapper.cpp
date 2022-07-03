@@ -632,7 +632,7 @@ Interface to the Basix C++ library.
       "make_quadrature",
       [](quadrature::type rule, cell::type celltype, int m)
       {
-        auto [pts, w] = quadrature::make_quadrature_new(rule, celltype, m);
+        auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
         std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
         return std::pair(py::array_t<double>(shape, pts.data()),
                          py::array_t<double>(w.size(), w.data()));
@@ -643,7 +643,7 @@ Interface to the Basix C++ library.
       "make_quadrature",
       [](cell::type celltype, int m)
       {
-        auto [pts, w] = quadrature::make_quadrature_new(celltype, m);
+        auto [pts, w] = quadrature::make_quadrature(celltype, m);
         std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
         return std::pair(py::array_t<double>(shape, pts.data()),
                          py::array_t<double>(w.size(), w.data()));

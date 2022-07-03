@@ -11,15 +11,10 @@
 
 using namespace basix;
 
-using cmdspan2_t
-    = std::experimental::mdspan<const double,
-                                std::experimental::dextents<std::size_t, 2>>;
-using mdspan2_t
-    = std::experimental::mdspan<double,
-                                std::experimental::dextents<std::size_t, 2>>;
-using mdspan3_t
-    = std::experimental::mdspan<double,
-                                std::experimental::dextents<std::size_t, 3>>;
+namespace stdex = std::experimental;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using mdspan3_t = stdex::mdspan<double, stdex::dextents<std::size_t, 3>>;
 
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> cell::geometry(cell::type celltype)

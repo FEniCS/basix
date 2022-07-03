@@ -12,6 +12,7 @@
 #include <xtensor/xadapt.hpp>
 
 using namespace basix;
+namespace stdex = std::experimental;
 
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
@@ -85,7 +86,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
 
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
         const auto [ptsbuffer, wts]
-            = quadrature::make_quadrature_new(ct, degree + (degree + 1 - d));
+            = quadrature::make_quadrature(ct, degree + (degree + 1 - d));
         impl::cmdspan2_t pts(ptsbuffer.data(), wts.size(),
                              ptsbuffer.size() / wts.size());
 
@@ -110,9 +111,8 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         // Store up outer(t, t) for all tangents
         const std::vector<int>& vert_ids = topology[d][e];
         const std::size_t ntangents = d * (d + 1) / 2;
-        std::experimental::mdarray<double,
-                                   std::experimental::dextents<std::size_t, 3>>
-            vvt(ntangents, geometry.extent(1), geometry.extent(1));
+        stdex::mdarray<double, stdex::dextents<std::size_t, 3>> vvt(
+            ntangents, geometry.extent(1), geometry.extent(1));
         std::vector<double> edge_t(geometry.extent(1));
         int c = 0;
         for (std::size_t s = 0; s < d; ++s)

@@ -156,7 +156,7 @@ moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
   const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
 
   // Get the quadrature points and weights
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, sub_celltype, q_deg);
   cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
@@ -264,8 +264,8 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
   const std::size_t num_entities = cell::num_sub_entities(celltype, entity_dim);
 
-  auto [_pts, wts] = quadrature::make_quadrature_new(quadrature::type::Default,
-                                                     sub_celltype, q_deg);
+  auto [_pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 sub_celltype, q_deg);
   cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // If this is always true, value_size input can be removed
@@ -368,8 +368,8 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
   if (entity_dim != 1)
     throw std::runtime_error("Tangent is only well-defined on an edge.");
 
-  auto [_pts, wts] = quadrature::make_quadrature_new(
-      quadrature::type::Default, cell::type::interval, q_deg);
+  auto [_pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 cell::type::interval, q_deg);
   cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
@@ -456,8 +456,8 @@ moments::make_normal_integral_moments(const FiniteElement& V,
     throw std::runtime_error("Normal is only well-defined on a facet.");
 
   // Compute quadrature points for evaluating integral
-  auto [_pts, wts] = quadrature::make_quadrature_new(quadrature::type::Default,
-                                                     sub_celltype, q_deg);
+  auto [_pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                 sub_celltype, q_deg);
   cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points

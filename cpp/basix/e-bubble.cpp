@@ -65,7 +65,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   }
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, celltype, 2 * degree);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);

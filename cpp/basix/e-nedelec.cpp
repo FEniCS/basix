@@ -33,7 +33,7 @@ impl::mdarray2_t create_nedelec_2d_space(int degree)
   const std::size_t ns = degree;
 
   // Tabulate polynomial set at quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::triangle, 2 * degree);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape]
@@ -92,7 +92,7 @@ impl::mdarray2_t create_nedelec_3d_space(int degree)
                             + (degree - 2) * (degree - 1) * degree / 2;
 
   // Tabulate polynomial basis at quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature_new(
+  const auto [_pts, wts] = quadrature::make_quadrature(
       quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape]

@@ -32,8 +32,8 @@ enum class type
 /// will integrate exactly
 /// @return List of points and list of weights. The number of points
 /// arrays has shape (num points, gdim)
-std::array<std::vector<double>, 2>
-make_quadrature_new(const quadrature::type rule, cell::type celltype, int m);
+std::array<std::vector<double>, 2> make_quadrature(const quadrature::type rule,
+                                                   cell::type celltype, int m);
 
 /// Make a default quadrature rule on reference cell
 /// @param[in] celltype The cell type
@@ -41,8 +41,7 @@ make_quadrature_new(const quadrature::type rule, cell::type celltype, int m);
 /// will integrate exactly
 /// @return List of points and list of weights. The number of points
 /// arrays has shape (num points, gdim)
-std::array<std::vector<double>, 2> make_quadrature_new(cell::type celltype,
-                                                       int m);
+std::array<std::vector<double>, 2> make_quadrature(cell::type celltype, int m);
 
 /// Get the default quadrature type for the given cell and order
 /// @param[in] celltype The cell type

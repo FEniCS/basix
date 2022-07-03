@@ -381,9 +381,8 @@ moments::make_normal_integral_moments(const FiniteElement& V,
     throw std::runtime_error("Normal is only well-defined on a facet.");
 
   // Compute quadrature points for evaluating integral
-  auto [pts, _wts] = quadrature::make_quadrature(quadrature::type::Default,
-                                                 sub_celltype, q_deg);
-  auto wts = xt::adapt(_wts);
+  auto [pts, wts] = quadrature::make_quadrature(quadrature::type::Default,
+                                                sub_celltype, q_deg);
 
   // Evaluate moment space at quadrature points
   assert(std::accumulate(V.value_shape().begin(), V.value_shape().end(), 1,
@@ -404,9 +403,11 @@ moments::make_normal_integral_moments(const FiniteElement& V,
   // Evaluate moment space at quadrature points
 
   // Iterate over cell entities
-  xt::xtensor<double, 1> normal;
+  std::array<double, 3> normal;
   for (std::size_t e = 0; e < num_entities; ++e)
   {
+    xt::xtensor<double, 2>& _points = points[e];
+
     // Map quadrature points onto facet (cell entity e)
     xt::xtensor<double, 2> facet_x
         = cell::sub_entity_geometry(celltype, tdim - 1, e);
@@ -416,10 +417,11 @@ moments::make_normal_integral_moments(const FiniteElement& V,
       // No need to normalise the normal, as the size of this is equal
       // to the integral jacobian
       auto tangent = xt::row(facet_x, 1) - x0;
-      normal = {-tangent(1), tangent(0)};
-      for (std::size_t p = 0; p < pts.shape(0); ++p)
-        for (std::size_t i = 0; i < points[e].shape(1); ++i)
-          points[e](p, i) = x0[i] + pts(p, 0) * tangent[i];
+      for (std::size_t p = 0; p < _points.shape(0); ++p)
+        for (std::size_t i = 0; i < _points.shape(1); ++i)
+          _points(p, i) = x0[i] + pts(p, 0) * tangent[i];
+
+      normal = {-tangent(1), tangent(0), 0.0};
     }
     else if (tdim == 3)
     {
@@ -427,22 +429,23 @@ moments::make_normal_integral_moments(const FiniteElement& V,
       // to the integral Jacobian
       auto t0 = xt::row(facet_x, 1) - x0;
       auto t1 = xt::row(facet_x, 2) - x0;
-      normal = basix::math::cross(t0, t1);
-      for (std::size_t p = 0; p < pts.shape(0); ++p)
-        for (std::size_t i = 0; i < points[e].shape(1); ++i)
-          points[e](p, i) = x0[i] + pts(p, 0) * t0[i] + pts(p, 1) * t1[i];
+      for (std::size_t p = 0; p < _points.shape(0); ++p)
+        for (std::size_t i = 0; i < _points.shape(1); ++i)
+          _points(p, i) = x0[i] + pts(p, 0) * t0[i] + pts(p, 1) * t1[i];
+
+      normal = basix::math::cross_new(t0, t1);
     }
     else
       throw std::runtime_error("Normal on this cell cannot be computed.");
 
     // Compute facet normal integral moments
+    xt::xtensor<double, 4>& _D = D[e];
     for (std::size_t i = 0; i < phi.shape(1); ++i)
-    {
       for (std::size_t j = 0; j < value_size; ++j)
         for (std::size_t k = 0; k < D[e].shape(2); ++k)
-          D[e](i, j, k, 0) = phi(k, i) * wts[k] * normal[j];
-    }
+          _D(i, j, k, 0) = phi(k, i) * wts[k] * normal[j];
   }
+
   return {points, D};
 }
 //----------------------------------------------------------------------------

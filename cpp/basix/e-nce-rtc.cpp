@@ -19,7 +19,6 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
                                          element::lagrange_variant lvariant,
                                          bool discontinuous)
 {
-  std::cout << "Start" << std::endl;
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
   {

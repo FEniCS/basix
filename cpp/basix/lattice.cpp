@@ -99,22 +99,6 @@ std::vector<double> create_interval_gll_new(std::size_t n, bool exterior)
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_interval_chebyshev(int n, bool exterior)
-{
-  if (exterior)
-  {
-    throw std::runtime_error(
-        "Chebyshev points including endpoints are not supported.");
-  }
-
-  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n - 1), 1};
-  xt::xtensor<double, 2> x(s);
-  for (int i = 1; i < n; ++i)
-    x(i - 1, 0) = 0.5 - std::cos((2 * i - 1) * M_PI / (2 * n - 2)) / 2.0;
-
-  return x;
-}
-//-----------------------------------------------------------------------------
 std::vector<double> create_interval_chebyshev_new(std::size_t n, bool exterior)
 {
   if (exterior)
@@ -128,28 +112,6 @@ std::vector<double> create_interval_chebyshev_new(std::size_t n, bool exterior)
     x[i - 1] = 0.5 - std::cos((2 * i - 1) * M_PI / (2 * n - 2)) / 2.0;
 
   return x;
-}
-//-----------------------------------------------------------------------------
-[[maybe_unused]] xt::xtensor<double, 2> create_interval_gl(int n, bool exterior)
-{
-  if (exterior)
-  {
-    throw std::runtime_error(
-        "GL points including endpoints are not supported.");
-  }
-
-  if (n == 0)
-    return {{0.5}};
-  else
-  {
-    const std::vector<double> pts = quadrature::get_gl_points(n - 1);
-    std::array<std::size_t, 2> s = {static_cast<std::size_t>(n - 1), 1};
-    xt::xtensor<double, 2> x(s);
-    for (int i = 0; i < n - 1; ++i)
-      x(i, 0) = pts[i];
-
-    return x;
-  }
 }
 //-----------------------------------------------------------------------------
 std::vector<double> create_interval_gl_new(std::size_t n, bool exterior)
@@ -166,30 +128,6 @@ std::vector<double> create_interval_gl_new(std::size_t n, bool exterior)
     return quadrature::get_gl_points(n - 1);
 }
 //-----------------------------------------------------------------------------
-[[maybe_unused]] xt::xtensor<double, 2>
-create_interval_gl_plus_endpoints(int n, bool exterior)
-{
-  // xt::xtensor<double, 2> x_gl = create_interval_gl(n, false);
-  std::vector<double> x_gl = create_interval_gl_new(n, false);
-
-  if (!exterior)
-  {
-    return xt::adapt(x_gl, std::vector<std::size_t>{x_gl.size(), 1});
-    // return x_gl;
-  }
-
-  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1), 1};
-  xt::xtensor<double, 2> x(s);
-
-  x(0, 0) = 0.;
-  x(n, 0) = 1.;
-  for (int i = 0; i < n - 1; ++i)
-    x(i + 1, 0) = x_gl[i];
-  // x(i + 1, 0) = x_gl(i, 0);
-
-  return x;
-}
-//-----------------------------------------------------------------------------
 std::vector<double> create_interval_gl_plus_endpoints_new(std::size_t n,
                                                           bool exterior)
 {
@@ -203,26 +141,6 @@ std::vector<double> create_interval_gl_plus_endpoints_new(std::size_t n,
     x[n] = 1.0;
     for (std::size_t i = 0; i < n - 1; ++i)
       x[i + 1] = x_gl[i];
-
-    return x;
-  }
-}
-//-----------------------------------------------------------------------------
-[[maybe_unused]] xt::xtensor<double, 2>
-create_interval_chebyshev_plus_endpoints(int n, bool exterior)
-{
-  xt::xtensor<double, 2> x_cheb = create_interval_chebyshev(n, false);
-
-  if (!exterior)
-    return x_cheb;
-  else
-  {
-    std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1), 1};
-    xt::xtensor<double, 2> x(s);
-    x(0, 0) = 0.;
-    x(n, 0) = 1.;
-    for (int i = 0; i < n - 1; ++i)
-      x(i + 1, 0) = x_cheb(i, 0);
 
     return x;
   }
@@ -258,37 +176,31 @@ xt::xtensor<double, 2> create_interval(int n, lattice::type lattice_type,
     {
       auto x = create_interval_equispaced_new(n, exterior);
       return xt::adapt(x, std::vector<std::size_t>{x.size(), 1});
-      // return create_interval_equispaced(n, exterior);
     }
     case lattice::type::gll:
     {
       auto x = create_interval_gll_new(n, exterior);
       return xt::adapt(x, std::vector<std::size_t>{x.size(), 1});
-      // return create_interval_gll(n, exterior);
     }
     case lattice::type::chebyshev:
     {
       auto x = create_interval_chebyshev_new(n, exterior);
       return xt::adapt(x, std::vector<std::size_t>{x.size(), 1});
-      // return create_interval_chebyshev(n, exterior);
     }
     case lattice::type::gl:
     {
       auto x = create_interval_gl_new(n, exterior);
       return xt::adapt(x, std::vector<std::size_t>{x.size(), 1});
-      // return create_interval_gl(n, exterior);
     }
     case lattice::type::chebyshev_plus_endpoints:
     {
       auto x = create_interval_chebyshev_plus_endpoints_new(n, exterior);
       return xt::adapt(x, std::vector<std::size_t>{x.size(), 1});
-      // return create_interval_chebyshev_plus_endpoints(n, exterior);
     }
     case lattice::type::gl_plus_endpoints:
     {
       auto x = create_interval_gl_plus_endpoints_new(n, exterior);
       return xt::adapt(x, std::vector<std::size_t>{x.size(), 1});
-      // return create_interval_gl_plus_endpoints(n, exterior);
     }
     default:
       throw std::runtime_error("Unrecognised lattice type.");

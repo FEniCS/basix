@@ -156,8 +156,7 @@ create_interval_new(std::size_t n, lattice::type lattice_type, bool exterior)
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> tabulate_dlagrange(int n,
-                                          const xt::xtensor<double, 2>& x)
+xt::xtensor<double, 2> tabulate_dlagrange(int n, xtl::span<const double> x)
 {
   std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1), 1};
   xt::xtensor<double, 2> equi_pts(s);
@@ -171,10 +170,16 @@ xt::xtensor<double, 2> tabulate_dlagrange(int n,
     for (std::size_t j = 0; j < dualmat.shape(1); ++j)
       dualmat(i, j) = dual_values(0, i, j);
 
-  xt::xtensor<double, 3> tabulated_values
-      = polyset::tabulate(cell::type::interval, n, 0, x);
+  using cmdspan2_t
+      = stdex::mdspan<const double,
+                      stdex::extents<std::size_t, stdex::dynamic_extent, 1>>;
+  const auto [tabulated_values_b, tshape] = polyset::tabulate(
+      cell::type::interval, n, 0, cmdspan2_t(x.data(), x.size(), 1));
+
+  stdex::mdspan<const double, stdex::dextents<std::size_t, 3>> tabulated_values(
+      tabulated_values_b.data(), tshape);
   xt::xtensor<double, 2> tabulated(
-      {tabulated_values.shape(1), tabulated_values.shape(2)});
+      {tabulated_values.extent(1), tabulated_values.extent(2)});
   for (std::size_t i = 0; i < tabulated.shape(0); ++i)
     for (std::size_t j = 0; j < tabulated.shape(1); ++j)
       tabulated(i, j) = tabulated_values(0, i, j);
@@ -183,14 +188,13 @@ xt::xtensor<double, 2> tabulate_dlagrange(int n,
 }
 //-----------------------------------------------------------------------------
 std::vector<double> warp_function(lattice::type lattice_type, int n,
-                                  const xt::xtensor<double, 2>& x)
+                                  xtl::span<const double> x)
 {
-  const xt::xtensor<double, 2> v = tabulate_dlagrange(n, x);
-
   std::vector<double> pts = create_interval_new(n, lattice_type, true);
   for (int i = 0; i < n + 1; ++i)
     pts[i] -= static_cast<double>(i) / static_cast<double>(n);
 
+  const xt::xtensor<double, 2> v = tabulate_dlagrange(n, x);
   std::vector<double> w(v.shape(1), 0);
   for (std::size_t i = 0; i < v.shape(0); ++i)
     for (std::size_t j = 0; j < v.shape(1); ++j)
@@ -291,10 +295,9 @@ create_tri_warped_new(std::size_t n, lattice::type lattice_type, bool exterior)
       p(_p.data(), shape);
 
   // Displacement from GLL points in 1D, scaled by 1 /(r * (1 - r))
-  std::vector<double> r = linspace(0.0, 1.0, 2 * n + 1);
+  const std::vector<double> r = linspace(0.0, 1.0, 2 * n + 1);
 
-  std::vector<double> wbar = warp_function(
-      lattice_type, n, xt::adapt(r, std::vector<std::size_t>{2 * n + 1, 1}));
+  std::vector<double> wbar = warp_function(lattice_type, n, r);
   for (std::size_t i = 1; i < 2 * n - 1; ++i)
     wbar[i] /= r[i] * (1.0 - r[i]);
 
@@ -509,9 +512,8 @@ create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
   const std::size_t b = exterior ? 0 : 1;
   xt::xtensor<double, 2> p(
       {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
-  std::vector<double> r = linspace(0.0, 1.0, 2 * n + 1);
-  std::vector<double> wbar = warp_function(
-      lattice_type, n, xt::adapt(r, std::vector<std::size_t>{2 * n + 1, 1}));
+  const std::vector<double> r = linspace(0.0, 1.0, 2 * n + 1);
+  std::vector<double> wbar = warp_function(lattice_type, n, r);
   for (std::size_t i = 1; i < 2 * n - 1; ++i)
     wbar[i] /= r[i] * (1.0 - r[i]);
 

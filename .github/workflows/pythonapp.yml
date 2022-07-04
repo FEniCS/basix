@@ -32,7 +32,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-            sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
+            sudo apt-get install -y doxygen libgraphviz libopenblas-dev liblapack-dev ninja-build
             pip install scikit-build
 
       - name: Install Basix

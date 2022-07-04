@@ -156,16 +156,22 @@ create_interval_new(std::size_t n, lattice::type lattice_type, bool exterior)
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> tabulate_dlagrange(int n, xtl::span<const double> x)
+xt::xtensor<double, 2> tabulate_dlagrange(std::size_t n,
+                                          xtl::span<const double> x)
 {
-  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1), 1};
-  xt::xtensor<double, 2> equi_pts(s);
-  for (int i = 0; i <= n; ++i)
-    equi_pts(i, 0) = static_cast<double>(i) / static_cast<double>(n);
-  xt::xtensor<double, 3> dual_values
-      = polyset::tabulate(cell::type::interval, n, 0, equi_pts);
+  std::vector<double> equi_pts(n + 1);
+  for (std::size_t i = 0; i < equi_pts.size(); ++i)
+    equi_pts[i] = static_cast<double>(i) / static_cast<double>(n);
+  stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> equi_pts_v(
+      equi_pts.data(), n + 1, 1);
 
-  xt::xtensor<double, 2> dualmat({dual_values.shape(1), dual_values.shape(2)});
+  const auto [dual_values_b, dshape]
+      = polyset::tabulate(cell::type::interval, n, 0, equi_pts_v);
+  stdex::mdspan<const double, stdex::dextents<std::size_t, 3>> dual_values(
+      dual_values_b.data(), dshape);
+
+  xt::xtensor<double, 2> dualmat(
+      {dual_values.extent(1), dual_values.extent(2)});
   for (std::size_t i = 0; i < dualmat.shape(0); ++i)
     for (std::size_t j = 0; j < dualmat.shape(1); ++j)
       dualmat(i, j) = dual_values(0, i, j);

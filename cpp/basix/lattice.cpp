@@ -244,13 +244,19 @@ xt::xtensor<double, 2> tabulate_dlagrange(int n,
     equi_pts(i, 0) = static_cast<double>(i) / static_cast<double>(n);
   xt::xtensor<double, 3> dual_values
       = polyset::tabulate(cell::type::interval, n, 0, equi_pts);
-  xt::xtensor<double, 2> dualmat
-      = xt::view(dual_values, 0, xt::all(), xt::all());
+
+  xt::xtensor<double, 2> dualmat({dual_values.shape(1), dual_values.shape(2)});
+  for (std::size_t i = 0; i < dualmat.shape(0); ++i)
+    for (std::size_t j = 0; j < dualmat.shape(1); ++j)
+      dualmat(i, j) = dual_values(0, i, j);
 
   xt::xtensor<double, 3> tabulated_values
       = polyset::tabulate(cell::type::interval, n, 0, x);
-  xt::xtensor<double, 2> tabulated
-      = xt::view(tabulated_values, 0, xt::all(), xt::all());
+  xt::xtensor<double, 2> tabulated(
+      {tabulated_values.shape(1), tabulated_values.shape(2)});
+  for (std::size_t i = 0; i < tabulated.shape(0); ++i)
+    for (std::size_t j = 0; j < tabulated.shape(1); ++j)
+      tabulated(i, j) = tabulated_values(0, i, j);
 
   return math::solve(dualmat, tabulated);
 }
@@ -392,31 +398,31 @@ create_tri_warped_new(std::size_t n, lattice::type lattice_type, bool exterior)
   return {_p, shape};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 1> isaac_point(lattice::type lattice_type,
-                                   xt::xtensor<std::size_t, 1> a)
+std::vector<double> isaac_point(lattice::type lattice_type,
+                                xtl::span<const std::size_t> a)
 {
-  if (a.shape(0) == 1)
+  if (a.size() == 1)
     return {1};
   else
   {
-    xt::xtensor<double, 1> res = xt::zeros<double>(a.shape());
+    std::vector<double> res(a.size(), 0);
     double denominator = 0;
-    xt::xtensor<std::size_t, 1> sub_a
-        = xt::view(a, xt::range(1, xt::placeholders::_));
-    const std::size_t size = xt::sum(a)();
-    xt::xtensor<double, 2> x = create_interval(size, lattice_type, true);
-    for (std::size_t i = 0; i < a.shape(0); ++i)
+    std::vector<std::size_t> sub_a(std::next(a.begin()), a.end());
+    // const std::size_t size = xt::sum(a)();
+    const std::size_t size = std::reduce(a.begin(), a.end());
+    std::vector<double> x = create_interval_new(size, lattice_type, true);
+    for (std::size_t i = 0; i < a.size(); ++i)
     {
       if (i > 0)
-        sub_a(i - 1) = a(i - 1);
-      const std::size_t sub_size = size - a(i);
-      const xt::xtensor<double, 1> sub_res = isaac_point(lattice_type, sub_a);
-      for (std::size_t j = 0; j < sub_res.shape(0); ++j)
-        res[j < i ? j : j + 1] += x(sub_size, 0) * sub_res[j];
-      denominator += x(sub_size, 0);
+        sub_a[i - 1] = a[i - 1];
+      const std::size_t sub_size = size - a[i];
+      const std::vector<double> sub_res = isaac_point(lattice_type, sub_a);
+      for (std::size_t j = 0; j < sub_res.size(); ++j)
+        res[j < i ? j : j + 1] += x[sub_size] * sub_res[j];
+      denominator += x[sub_size];
     }
 
-    for (std::size_t i = 0; i < res.shape(0); ++i)
+    for (std::size_t i = 0; i < res.size(); ++i)
       res[i] /= denominator;
 
     return res;
@@ -441,8 +447,8 @@ create_tri_isaac_new(std::size_t n, lattice::type lattice_type, bool exterior)
   {
     for (std::size_t i = b; i < (n - b + 1 - j); ++i)
     {
-      xt::xtensor<double, 1> isaac_p
-          = isaac_point(lattice_type, {i, j, n - i - j});
+      const std::vector<double> isaac_p = isaac_point(
+          lattice_type, std::vector<std::size_t>{i, j, n - i - j});
       for (std::size_t k = 0; k < 2; ++k)
         p(c, k) = isaac_p[k];
       ++c;
@@ -566,9 +572,13 @@ xt::xtensor<double, 2> create_tet_isaac(int n, lattice::type lattice_type,
     {
       for (std::size_t i = b; i < (n - b + 1 - j - k); ++i)
       {
-        xt::view(p, c, xt::all())
-            = xt::view(isaac_point(lattice_type, {i, j, k, n - i - j - k}),
-                       xt::range(0, 3));
+        std::vector<double> ip = isaac_point(
+            lattice_type, std::vector<std::size_t>{i, j, k, n - i - j - k});
+        for (std::size_t l = 0; l < 3; ++l)
+          p(c, l) = ip[l];
+        // xt::view(p, c, xt::all())
+        //     = xt::view(isaac_point(lattice_type, {i, j, k, n - i - j - k}),
+        //                xt::range(0, 3));
         ++c;
       }
     }

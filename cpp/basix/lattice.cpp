@@ -37,11 +37,42 @@ std::vector<double> linspace(double x0, double x1, std::size_t n)
   return p;
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_interval_equispaced(int n, bool exterior)
+{
+  const double h = exterior ? 0 : 1.0 / static_cast<double>(n);
+  const std::size_t num_pts = exterior ? n + 1 : n - 1;
+  std::vector<double> pts = linspace(h, 1.0 - h, num_pts);
+  return xt::adapt(pts, std::vector<std::size_t>{pts.size(), 1});
+}
+//-----------------------------------------------------------------------------
 std::vector<double> create_interval_equispaced_new(std::size_t n, bool exterior)
 {
   const double h = exterior ? 0 : 1.0 / static_cast<double>(n);
   const std::size_t num_pts = exterior ? n + 1 : n - 1;
   return linspace(h, 1.0 - h, num_pts);
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_interval_gll(int n, bool exterior)
+{
+  if (n == 0)
+    return {{0.5}};
+  else
+  {
+    const std::vector<double> _pts = quadrature::get_gll_points(n + 1);
+    const std::size_t b = exterior ? 0 : 1;
+    std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1 - 2 * b), 1};
+    xt::xtensor<double, 2> x(s);
+    if (exterior)
+    {
+      x(0, 0) = _pts[0];
+      x(n, 0) = _pts[1];
+    }
+
+    for (std::size_t j = 2; j < static_cast<std::size_t>(n + 1); ++j)
+      x(j - 1 - b, 0) = _pts[j];
+
+    return x;
+  }
 }
 //-----------------------------------------------------------------------------
 std::vector<double> create_interval_gll_new(std::size_t n, bool exterior)
@@ -50,20 +81,36 @@ std::vector<double> create_interval_gll_new(std::size_t n, bool exterior)
     return {0.5};
   else
   {
-    const std::vector<double> pts = quadrature::get_gll_points(n + 1);
+    const std::vector<double> _pts = quadrature::get_gll_points(n + 1);
     const std::size_t b = exterior ? 0 : 1;
     std::vector<double> x(n + 1 - 2 * b);
     if (exterior)
     {
-      x[0] = pts[0];
-      x[n] = pts[1];
+      x[0] = _pts[0];
+      x[n] = _pts[1];
     }
 
     for (std::size_t j = 2; j < n + 1; ++j)
-      x[j - 1 - b] = pts[j];
+      x[j - 1 - b] = _pts[j];
 
     return x;
   }
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_interval_chebyshev(int n, bool exterior)
+{
+  if (exterior)
+  {
+    throw std::runtime_error(
+        "Chebyshev points including endpoints are not supported.");
+  }
+
+  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n - 1), 1};
+  xt::xtensor<double, 2> x(s);
+  for (int i = 1; i < n; ++i)
+    x(i - 1, 0) = 0.5 - std::cos((2 * i - 1) * M_PI / (2 * n - 2)) / 2.0;
+
+  return x;
 }
 //-----------------------------------------------------------------------------
 std::vector<double> create_interval_chebyshev_new(std::size_t n, bool exterior)
@@ -81,6 +128,28 @@ std::vector<double> create_interval_chebyshev_new(std::size_t n, bool exterior)
   return x;
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_interval_gl(int n, bool exterior)
+{
+  if (exterior)
+  {
+    throw std::runtime_error(
+        "GL points including endpoints are not supported.");
+  }
+
+  if (n == 0)
+    return {{0.5}};
+  else
+  {
+    const std::vector<double> pts = quadrature::get_gl_points(n - 1);
+    std::array<std::size_t, 2> s = {static_cast<std::size_t>(n - 1), 1};
+    xt::xtensor<double, 2> x(s);
+    for (int i = 0; i < n - 1; ++i)
+      x(i, 0) = pts[i];
+
+    return x;
+  }
+}
+//-----------------------------------------------------------------------------
 std::vector<double> create_interval_gl_new(std::size_t n, bool exterior)
 {
   if (exterior)
@@ -93,6 +162,24 @@ std::vector<double> create_interval_gl_new(std::size_t n, bool exterior)
     return {0.5};
   else
     return quadrature::get_gl_points(n - 1);
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_interval_gl_plus_endpoints(int n, bool exterior)
+{
+  xt::xtensor<double, 2> x_gl = create_interval_gl(n, false);
+
+  if (!exterior)
+    return x_gl;
+
+  std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1), 1};
+  xt::xtensor<double, 2> x(s);
+
+  x(0, 0) = 0.;
+  x(n, 0) = 1.;
+  for (int i = 0; i < n - 1; ++i)
+    x(i + 1, 0) = x_gl(i, 0);
+
+  return x;
 }
 //-----------------------------------------------------------------------------
 std::vector<double> create_interval_gl_plus_endpoints_new(std::size_t n,
@@ -108,6 +195,26 @@ std::vector<double> create_interval_gl_plus_endpoints_new(std::size_t n,
     x.back() = 1.0;
     for (std::size_t i = 0; i < n - 1; ++i)
       x[i] = x_gl[i];
+
+    return x;
+  }
+}
+//-----------------------------------------------------------------------------
+xt::xtensor<double, 2> create_interval_chebyshev_plus_endpoints(int n,
+                                                                bool exterior)
+{
+  xt::xtensor<double, 2> x_cheb = create_interval_chebyshev(n, false);
+
+  if (!exterior)
+    return x_cheb;
+  else
+  {
+    std::array<std::size_t, 2> s = {static_cast<std::size_t>(n + 1), 1};
+    xt::xtensor<double, 2> x(s);
+    x(0, 0) = 0.;
+    x(n, 0) = 1.;
+    for (int i = 0; i < n - 1; ++i)
+      x(i + 1, 0) = x_cheb(i, 0);
 
     return x;
   }
@@ -130,32 +237,32 @@ std::vector<double> create_interval_chebyshev_plus_endpoints_new(std::size_t n,
   }
 }
 //-----------------------------------------------------------------------------
-// xt::xtensor<double, 2> create_interval(int n, lattice::type lattice_type,
-//                                        bool exterior)
-// {
-//   if (n == 0)
-//     return {{0.5}};
-//   else
-//   {
-//     switch (lattice_type)
-//     {
-//     case lattice::type::equispaced:
-//       return create_interval_equispaced(n, exterior);
-//     case lattice::type::gll:
-//       return create_interval_gll(n, exterior);
-//     case lattice::type::chebyshev:
-//       return create_interval_chebyshev(n, exterior);
-//     case lattice::type::gl:
-//       return create_interval_gl(n, exterior);
-//     case lattice::type::chebyshev_plus_endpoints:
-//       return create_interval_chebyshev_plus_endpoints(n, exterior);
-//     case lattice::type::gl_plus_endpoints:
-//       return create_interval_gl_plus_endpoints(n, exterior);
-//     default:
-//       throw std::runtime_error("Unrecognised lattice type.");
-//     }
-//   }
-// }
+xt::xtensor<double, 2> create_interval(int n, lattice::type lattice_type,
+                                       bool exterior)
+{
+  if (n == 0)
+    return {{0.5}};
+  else
+  {
+    switch (lattice_type)
+    {
+    case lattice::type::equispaced:
+      return create_interval_equispaced(n, exterior);
+    case lattice::type::gll:
+      return create_interval_gll(n, exterior);
+    case lattice::type::chebyshev:
+      return create_interval_chebyshev(n, exterior);
+    case lattice::type::gl:
+      return create_interval_gl(n, exterior);
+    case lattice::type::chebyshev_plus_endpoints:
+      return create_interval_chebyshev_plus_endpoints(n, exterior);
+    case lattice::type::gl_plus_endpoints:
+      return create_interval_gl_plus_endpoints(n, exterior);
+    default:
+      throw std::runtime_error("Unrecognised lattice type.");
+    }
+  }
+}
 //-----------------------------------------------------------------------------
 std::vector<double>
 create_interval_new(std::size_t n, lattice::type lattice_type, bool exterior)
@@ -209,14 +316,14 @@ xt::xtensor<double, 1> warp_function(lattice::type lattice_type, int n,
 {
   const xt::xtensor<double, 2> v = tabulate_dlagrange(n, x);
 
-  std::vector<double> pts = create_interval_new(n, lattice_type, true);
+  xt::xtensor<double, 2> pts = create_interval(n, lattice_type, true);
   for (int i = 0; i < n + 1; ++i)
-    pts[i] -= static_cast<double>(i) / static_cast<double>(n);
+    pts(i, 0) -= static_cast<double>(i) / static_cast<double>(n);
 
   xt::xtensor<double, 1> w = xt::zeros<double>({v.shape(1)});
   for (std::size_t i = 0; i < v.shape(0); ++i)
     for (std::size_t j = 0; j < v.shape(1); ++j)
-      w[j] += v(i, j) * pts[i];
+      w[j] += v(i, j) * pts(i, 0);
 
   return w;
 }
@@ -227,16 +334,17 @@ xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
   if (n == 0)
     return {{0.5, 0.5}};
 
-  const std::vector<double> r = create_interval_new(n, lattice_type, exterior);
-  const std::size_t m = r.size();
+  xt::xtensor<double, 2> r = create_interval(n, lattice_type, exterior);
+
+  const std::size_t m = r.shape(0);
   xt::xtensor<double, 2> x({m * m, 2});
   std::size_t c = 0;
   for (std::size_t j = 0; j < m; ++j)
   {
     for (std::size_t i = 0; i < m; ++i)
     {
-      x(c, 0) = r[i];
-      x(c, 1) = r[j];
+      x(c, 0) = r(i, 0);
+      x(c, 1) = r(j, 0);
       c++;
     }
   }
@@ -250,7 +358,8 @@ xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
   if (n == 0)
     return {{0.5, 0.5, 0.5}};
 
-  const std::vector<double> r = create_interval_new(n, lattice_type, exterior);
+  xt::xtensor<double, 2> r = create_interval(n, lattice_type, exterior);
+
   const std::size_t m = r.size();
   xt::xtensor<double, 2> x({m * m * m, 3});
   int c = 0;
@@ -260,9 +369,9 @@ xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
     {
       for (std::size_t i = 0; i < m; ++i)
       {
-        x(c, 0) = r[i];
-        x(c, 1) = r[j];
-        x(c, 2) = r[k];
+        x(c, 0) = r(i, 0);
+        x(c, 1) = r(j, 0);
+        x(c, 2) = r(k, 0);
         c++;
       }
     }
@@ -351,7 +460,7 @@ xt::xtensor<double, 1> isaac_point(lattice::type lattice_type,
     xt::xtensor<std::size_t, 1> sub_a
         = xt::view(a, xt::range(1, xt::placeholders::_));
     const std::size_t size = xt::sum(a)();
-    const std::vector<double> x = create_interval_new(size, lattice_type, true);
+    xt::xtensor<double, 2> x = create_interval(size, lattice_type, true);
     for (std::size_t i = 0; i < a.shape(0); ++i)
     {
       if (i > 0)
@@ -359,8 +468,8 @@ xt::xtensor<double, 1> isaac_point(lattice::type lattice_type,
       const std::size_t sub_size = size - a(i);
       const xt::xtensor<double, 1> sub_res = isaac_point(lattice_type, sub_a);
       for (std::size_t j = 0; j < sub_res.shape(0); ++j)
-        res[j < i ? j : j + 1] += x[sub_size] * sub_res[j];
-      denominator += x[sub_size];
+        res[j < i ? j : j + 1] += x(sub_size, 0) * sub_res[j];
+      denominator += x(sub_size, 0);
     }
 
     for (std::size_t i = 0; i < res.shape(0); ++i)
@@ -584,20 +693,20 @@ xt::xtensor<double, 2> create_tet_centroid(int n, lattice::type lattice_type,
   // Points
   xt::xtensor<double, 2> p(
       {static_cast<std::size_t>((n - 3) * (n - 2) * (n - 1) / 6), 3});
-  const std::vector<double> x = create_interval_new(n, lattice_type, false);
+  xt::xtensor<double, 2> x = create_interval(n, lattice_type, false);
 
   int c = 0;
 
-  for (std::size_t i = 0; i + 2 < x.size(); ++i)
+  for (std::size_t i = 0; i + 2 < x.shape(0); ++i)
   {
-    const double xi = x[i];
-    for (std::size_t j = 0; j + i + 2 < x.size(); ++j)
+    const double xi = x(i, 0);
+    for (std::size_t j = 0; j + i + 2 < x.shape(0); ++j)
     {
-      const double xj = x[j];
-      for (std::size_t k = 0; k + j + i + 2 < x.size(); ++k)
+      const double xj = x(j, 0);
+      for (std::size_t k = 0; k + j + i + 2 < x.shape(0); ++k)
       {
-        const double xk = x[k];
-        const double xl = x[i + j + k + 2];
+        const double xk = x(k, 0);
+        const double xl = x(i + j + k + 2, 0);
         p(c, 0) = (3 * xk + xl - xi - xj) / 4;
         p(c, 1) = (3 * xj + xl - xi - xk) / 4;
         p(c, 2) = (3 * xi + xl - xj - xk) / 4;
@@ -605,7 +714,6 @@ xt::xtensor<double, 2> create_tet_centroid(int n, lattice::type lattice_type,
       }
     }
   }
-
   return p;
 }
 //-----------------------------------------------------------------------------
@@ -652,21 +760,21 @@ xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
         = create_tri_new(n, lattice_type, exterior, simplex_method);
     auto tri_pts = xt::adapt(xx, std::vector<std::size_t>{shape[0], shape[1]});
 
-    const std::vector<double> line_pts
-        = create_interval_new(n, lattice_type, exterior);
+    const xt::xtensor<double, 2> line_pts
+        = create_interval(n, lattice_type, exterior);
 
-    xt::xtensor<double, 2> x({tri_pts.shape(0) * line_pts.size(), 3});
-    for (std::size_t i = 0; i < line_pts.size(); ++i)
+    xt::xtensor<double, 2> x({tri_pts.shape(0) * line_pts.shape(0), 3});
+    for (std::size_t i = 0; i < line_pts.shape(0); ++i)
       for (std::size_t j = 0; j < tri_pts.shape(0); ++j)
         for (std::size_t k = 0; k < 2; ++k)
           x(i * tri_pts.shape(0) + j, k) = tri_pts(j, k);
 
-    for (std::size_t i = 0; i < line_pts.size(); ++i)
+    for (std::size_t i = 0; i < line_pts.shape(0); ++i)
     {
       for (std::size_t j = i * tri_pts.shape(0); j < (i + 1) * tri_pts.shape(0);
            ++j)
       {
-        x(j, 2) = line_pts[i];
+        x(j, 2) = line_pts(i, 0);
       }
     }
 

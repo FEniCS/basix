@@ -19,6 +19,17 @@ using namespace basix;
 namespace
 {
 //-----------------------------------------------------------------------------
+// std::vector<double> linspace(double x0, double x1, std::size_t n)
+// {
+//   assert(n > 1);
+//   std::vector<double> p(n, x0);
+//   p.back() = x1;
+//   constexpr double delta = (x1 - x0) / (n - 1);
+//   for (std::size_t i = 1; i < p.size() - 1; ++i)
+//     p[i] = i * delta;
+//   return p;
+// }
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_interval_equispaced(int n, bool exterior)
 {
   const double h = exterior ? 0 : 1.0 / static_cast<double>(n);
@@ -143,7 +154,6 @@ xt::xtensor<double, 2> create_interval(int n, lattice::type lattice_type,
       return create_interval_chebyshev(n, exterior);
     case lattice::type::gl:
       return create_interval_gl(n, exterior);
-
     case lattice::type::chebyshev_plus_endpoints:
       return create_interval_chebyshev_plus_endpoints(n, exterior);
     case lattice::type::gl_plus_endpoints:
@@ -262,6 +272,7 @@ xt::xtensor<double, 2> create_tri_equispaced(int n, bool exterior)
       ++c;
     }
   }
+
   return p;
 }
 //-----------------------------------------------------------------------------
@@ -281,8 +292,11 @@ xt::xtensor<double, 2> create_tri_warped(int n, lattice::type lattice_type,
       _r, {static_cast<std::size_t>(2 * n + 1), (std::size_t)1});
 
   xt::xtensor<double, 1> wbar = warp_function(lattice_type, n, r);
-  auto s = xt::view(_r, xt::range(1, 2 * n - 1));
-  xt::view(wbar, xt::range(1, 2 * n - 1)) /= (s * (1 - s));
+  // auto s = xt::view(_r, xt::range(1, 2 * n - 1));
+  // xt::view(wbar, xt::range(1, 2 * n - 1)) /= (s * (1 - s));
+  for (std::size_t i = 1; i < 2 * n - 1; ++i)
+    wbar[i] /= _r[i] * (1.0 - _r[i]);
+
   int c = 0;
   for (std::size_t j = b; j < (n - b + 1); ++j)
   {
@@ -307,47 +321,54 @@ xt::xtensor<double, 1> isaac_point(lattice::type lattice_type,
 {
   if (a.shape(0) == 1)
     return {1};
-  xt::xtensor<double, 1> res = xt::zeros<double>(a.shape());
-  double denominator = 0;
-  xt::xtensor<std::size_t, 1> sub_a
-      = xt::view(a, xt::range(1, xt::placeholders::_));
-  const std::size_t size = xt::sum(a)();
-  xt::xtensor<double, 2> x = create_interval(size, lattice_type, true);
-  for (std::size_t i = 0; i < a.shape(0); ++i)
+  else
   {
-    if (i > 0)
-      sub_a(i - 1) = a(i - 1);
-    const std::size_t sub_size = size - a(i);
-    const xt::xtensor<double, 1> sub_res = isaac_point(lattice_type, sub_a);
-    for (std::size_t j = 0; j < sub_res.shape(0); ++j)
-      res[j < i ? j : j + 1] += x(sub_size, 0) * sub_res[j];
-    denominator += x(sub_size, 0);
+    xt::xtensor<double, 1> res = xt::zeros<double>(a.shape());
+    double denominator = 0;
+    xt::xtensor<std::size_t, 1> sub_a
+        = xt::view(a, xt::range(1, xt::placeholders::_));
+    const std::size_t size = xt::sum(a)();
+    xt::xtensor<double, 2> x = create_interval(size, lattice_type, true);
+    for (std::size_t i = 0; i < a.shape(0); ++i)
+    {
+      if (i > 0)
+        sub_a(i - 1) = a(i - 1);
+      const std::size_t sub_size = size - a(i);
+      const xt::xtensor<double, 1> sub_res = isaac_point(lattice_type, sub_a);
+      for (std::size_t j = 0; j < sub_res.shape(0); ++j)
+        res[j < i ? j : j + 1] += x(sub_size, 0) * sub_res[j];
+      denominator += x(sub_size, 0);
+    }
+
+    for (std::size_t i = 0; i < res.shape(0); ++i)
+      res[i] /= denominator;
+
+    return res;
   }
-  for (std::size_t i = 0; i < res.shape(0); ++i)
-    res[i] /= denominator;
-  return res;
 }
 //-----------------------------------------------------------------------------
-// Warp points, See: Isaac, Recursive, Parameter-Free, Explicitly Defined
-// Interpolation Nodes for Simplices, http://dx.doi.org/10.1137/20M1321802
+
+/// Warp points, See: Isaac, Recursive, Parameter-Free, Explicitly
+/// Defined Interpolation Nodes for Simplices,
+/// http://dx.doi.org/10.1137/20M1321802.
 xt::xtensor<double, 2> create_tri_isaac(int n, lattice::type lattice_type,
                                         bool exterior)
 {
   const std::size_t b = exterior ? 0 : 1;
-
-  // Points
   xt::xtensor<double, 2> p({(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2});
-
   int c = 0;
   for (std::size_t j = b; j < (n - b + 1); ++j)
   {
     for (std::size_t i = b; i < (n - b + 1 - j); ++i)
     {
-      xt::view(p, c, xt::all()) = xt::view(
-          isaac_point(lattice_type, {i, j, n - i - j}), xt::range(0, 2));
+      xt::xtensor<double, 1> isaac_p
+          = isaac_point(lattice_type, {i, j, n - i - j});
+      for (std::size_t k = 0; k < 2; ++k)
+        p(c, k) = isaac_p[k];
       ++c;
     }
   }
+
   return p;
 }
 //-----------------------------------------------------------------------------

@@ -156,8 +156,8 @@ create_interval_new(std::size_t n, lattice::type lattice_type, bool exterior)
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> tabulate_dlagrange(std::size_t n,
-                                          xtl::span<const double> x)
+stdex::mdarray<double, stdex::dextents<std::size_t, 2>>
+tabulate_dlagrange(std::size_t n, xtl::span<const double> x)
 {
   std::vector<double> equi_pts(n + 1);
   for (std::size_t i = 0; i < equi_pts.size(); ++i)
@@ -170,10 +170,11 @@ xt::xtensor<double, 2> tabulate_dlagrange(std::size_t n,
   stdex::mdspan<const double, stdex::dextents<std::size_t, 3>> dual_values(
       dual_values_b.data(), dshape);
 
-  xt::xtensor<double, 2> dualmat(
-      {dual_values.extent(1), dual_values.extent(2)});
-  for (std::size_t i = 0; i < dualmat.shape(0); ++i)
-    for (std::size_t j = 0; j < dualmat.shape(1); ++j)
+  std::vector<double> dualmat_b(dual_values.extent(1) * dual_values.extent(2));
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> dualmat(
+      dualmat_b.data(), dual_values.extent(1), dual_values.extent(2));
+  for (std::size_t i = 0; i < dualmat.extent(0); ++i)
+    for (std::size_t j = 0; j < dualmat.extent(1); ++j)
       dualmat(i, j) = dual_values(0, i, j);
 
   using cmdspan2_t
@@ -181,16 +182,22 @@ xt::xtensor<double, 2> tabulate_dlagrange(std::size_t n,
                       stdex::extents<std::size_t, stdex::dynamic_extent, 1>>;
   const auto [tabulated_values_b, tshape] = polyset::tabulate(
       cell::type::interval, n, 0, cmdspan2_t(x.data(), x.size(), 1));
-
   stdex::mdspan<const double, stdex::dextents<std::size_t, 3>> tabulated_values(
       tabulated_values_b.data(), tshape);
-  xt::xtensor<double, 2> tabulated(
-      {tabulated_values.extent(1), tabulated_values.extent(2)});
-  for (std::size_t i = 0; i < tabulated.shape(0); ++i)
-    for (std::size_t j = 0; j < tabulated.shape(1); ++j)
+
+  std::vector<double> tabulated_b(tabulated_values.extent(1)
+                                  * tabulated_values.extent(2));
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> tabulated(
+      tabulated_b.data(), tabulated_values.extent(1),
+      tabulated_values.extent(2));
+
+  for (std::size_t i = 0; i < tabulated.extent(0); ++i)
+    for (std::size_t j = 0; j < tabulated.extent(1); ++j)
       tabulated(i, j) = tabulated_values(0, i, j);
 
-  return math::solve(dualmat, tabulated);
+  std::vector<double> c = math::solve(dualmat, tabulated);
+  return stdex::mdarray<double, stdex::dextents<std::size_t, 2>>(
+      c, tabulated.extents());
 }
 //-----------------------------------------------------------------------------
 std::vector<double> warp_function(lattice::type lattice_type, int n,
@@ -200,25 +207,28 @@ std::vector<double> warp_function(lattice::type lattice_type, int n,
   for (int i = 0; i < n + 1; ++i)
     pts[i] -= static_cast<double>(i) / static_cast<double>(n);
 
-  const xt::xtensor<double, 2> v = tabulate_dlagrange(n, x);
-  std::vector<double> w(v.shape(1), 0);
-  for (std::size_t i = 0; i < v.shape(0); ++i)
-    for (std::size_t j = 0; j < v.shape(1); ++j)
+  const stdex::mdarray<double, stdex::dextents<std::size_t, 2>> v
+      = tabulate_dlagrange(n, x);
+  std::vector<double> w(v.extent(1), 0);
+  for (std::size_t i = 0; i < v.extent(0); ++i)
+    for (std::size_t j = 0; j < v.extent(1); ++j)
       w[j] += v(i, j) * pts[i];
 
   return w;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
-                                   bool exterior)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_quad(std::size_t n, lattice::type lattice_type, bool exterior)
 {
   if (n == 0)
-    return {{0.5, 0.5}};
+    return {{0.5, 0.5}, {1, 2}};
 
   const std::vector<double> r = create_interval_new(n, lattice_type, exterior);
-
   const std::size_t m = r.size();
-  xt::xtensor<double, 2> x({m * m, 2});
+  std::array<std::size_t, 2> shape = {m * m, 2};
+  std::vector<double> xb(shape[0] * shape[1]);
+  stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
+      x(xb.data(), shape);
   std::size_t c = 0;
   for (std::size_t j = 0; j < m; ++j)
   {
@@ -230,7 +240,7 @@ xt::xtensor<double, 2> create_quad(int n, lattice::type lattice_type,
     }
   }
 
-  return x;
+  return {xb, shape};
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
@@ -862,7 +872,11 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
   case cell::type::tetrahedron:
     return create_tet(n, type, exterior, simplex_method);
   case cell::type::quadrilateral:
-    return create_quad(n, type, exterior);
+  {
+    auto [x, shape] = create_quad(n, type, exterior);
+    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
+    // return create_quad(n, type, exterior);
+  }
   case cell::type::hexahedron:
     return create_hex(n, type, exterior);
   case cell::type::prism:

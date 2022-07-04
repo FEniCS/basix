@@ -331,7 +331,6 @@ std::vector<double> isaac_point(lattice::type lattice_type,
     std::vector<double> res(a.size(), 0);
     double denominator = 0;
     std::vector<std::size_t> sub_a(std::next(a.begin()), a.end());
-    // const std::size_t size = xt::sum(a)();
     const std::size_t size = std::reduce(a.begin(), a.end());
     std::vector<double> x = create_interval_new(size, lattice_type, true);
     for (std::size_t i = 0; i < a.size(); ++i)
@@ -457,7 +456,7 @@ xt::xtensor<double, 2> create_tet_equispaced(int n, bool exterior)
   const std::size_t b = exterior ? 0 : 1;
   xt::xtensor<double, 2> p(
       {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
-  auto r = xt::linspace<double>(0.0, 1.0, 2 * n + 1);
+  const std::vector<double> r = linspace(0.0, 1.0, 2 * n + 1);
 
   std::size_t c = 0;
   for (std::size_t k = b; k < (n - b + 1); ++k)
@@ -630,21 +629,23 @@ xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
   {
     const auto [xx, shape]
         = create_tri_new(n, lattice_type, exterior, simplex_method);
-    auto tri_pts = xt::adapt(xx, std::vector<std::size_t>{shape[0], shape[1]});
+    stdex::mdspan<const double,
+                  stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
+        tri_pts(xx.data(), shape);
 
     const std::vector<double> line_pts
         = create_interval_new(n, lattice_type, exterior);
 
-    xt::xtensor<double, 2> x({tri_pts.shape(0) * line_pts.size(), 3});
+    xt::xtensor<double, 2> x({tri_pts.extent(0) * line_pts.size(), 3});
     for (std::size_t i = 0; i < line_pts.size(); ++i)
-      for (std::size_t j = 0; j < tri_pts.shape(0); ++j)
+      for (std::size_t j = 0; j < tri_pts.extent(0); ++j)
         for (std::size_t k = 0; k < 2; ++k)
-          x(i * tri_pts.shape(0) + j, k) = tri_pts(j, k);
+          x(i * tri_pts.extent(0) + j, k) = tri_pts(j, k);
 
     for (std::size_t i = 0; i < line_pts.size(); ++i)
     {
-      for (std::size_t j = i * tri_pts.shape(0); j < (i + 1) * tri_pts.shape(0);
-           ++j)
+      for (std::size_t j = i * tri_pts.extent(0);
+           j < (i + 1) * tri_pts.extent(0); ++j)
       {
         x(j, 2) = line_pts[i];
       }

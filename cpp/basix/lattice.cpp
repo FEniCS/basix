@@ -647,24 +647,28 @@ xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
-                                    bool exterior,
-                                    lattice::simplex_method simplex_method)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_prism(std::size_t n, lattice::type lattice_type, bool exterior,
+             lattice::simplex_method simplex_method)
 {
   if (n == 0)
-    return {{1.0 / 3.0, 1.0 / 3.0, 0.5}};
+    return {{1.0 / 3.0, 1.0 / 3.0, 0.5}, {1, 3}};
   else
   {
-    const auto [xx, shape]
+    const auto [xx, trishape]
         = create_tri_new(n, lattice_type, exterior, simplex_method);
     stdex::mdspan<const double,
                   stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
-        tri_pts(xx.data(), shape);
+        tri_pts(xx.data(), trishape);
 
     const std::vector<double> line_pts
         = create_interval_new(n, lattice_type, exterior);
 
-    xt::xtensor<double, 2> x({tri_pts.extent(0) * line_pts.size(), 3});
+    std::array<std::size_t, 2> shape = {tri_pts.extent(0) * line_pts.size(), 3};
+    std::vector<double> xb(shape[0] * shape[1]);
+    stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+        x(xb.data(), shape);
+
     for (std::size_t i = 0; i < line_pts.size(); ++i)
       for (std::size_t j = 0; j < tri_pts.extent(0); ++j)
         for (std::size_t k = 0; k < 2; ++k)
@@ -679,7 +683,7 @@ xt::xtensor<double, 2> create_prism(int n, lattice::type lattice_type,
       }
     }
 
-    return x;
+    return {xb, shape};
   }
 }
 //-----------------------------------------------------------------------------
@@ -890,11 +894,15 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
   }
   case cell::type::hexahedron:
   {
-    auto [x, shape] = create_hex_new(n, type, exterior);
+    auto [x, shape] = create_hex(n, type, exterior);
     return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
   }
   case cell::type::prism:
-    return create_prism(n, type, exterior, simplex_method);
+  {
+    auto [x, shape] = create_prism(n, type, exterior, simplex_method);
+    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
+  }
+    // return create_prism(n, type, exterior, simplex_method);
   case cell::type::pyramid:
     return create_pyramid(n, type, exterior, simplex_method);
   default:

@@ -11,12 +11,9 @@
 #include <math.h>
 #include <vector>
 #include <xtensor/xadapt.hpp>
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xpad.hpp>
 
 using namespace basix;
 namespace stdex = std::experimental;
-// using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
 
 namespace
 {
@@ -36,14 +33,14 @@ std::vector<double> linspace(double x0, double x1, std::size_t n)
   return p;
 }
 //-----------------------------------------------------------------------------
-std::vector<double> create_interval_equispaced_new(std::size_t n, bool exterior)
+std::vector<double> create_interval_equispaced(std::size_t n, bool exterior)
 {
   const double h = exterior ? 0 : 1.0 / static_cast<double>(n);
   const std::size_t num_pts = exterior ? n + 1 : n - 1;
   return linspace(h, 1.0 - h, num_pts);
 }
 //-----------------------------------------------------------------------------
-std::vector<double> create_interval_gll_new(std::size_t n, bool exterior)
+std::vector<double> create_interval_gll(std::size_t n, bool exterior)
 {
   if (n == 0)
     return {0.5};
@@ -65,7 +62,7 @@ std::vector<double> create_interval_gll_new(std::size_t n, bool exterior)
   }
 }
 //-----------------------------------------------------------------------------
-std::vector<double> create_interval_chebyshev_new(std::size_t n, bool exterior)
+std::vector<double> create_interval_chebyshev(std::size_t n, bool exterior)
 {
   if (exterior)
   {
@@ -80,7 +77,7 @@ std::vector<double> create_interval_chebyshev_new(std::size_t n, bool exterior)
   return x;
 }
 //-----------------------------------------------------------------------------
-std::vector<double> create_interval_gl_new(std::size_t n, bool exterior)
+std::vector<double> create_interval_gl(std::size_t n, bool exterior)
 {
   if (exterior)
   {
@@ -94,10 +91,10 @@ std::vector<double> create_interval_gl_new(std::size_t n, bool exterior)
     return quadrature::get_gl_points(n - 1);
 }
 //-----------------------------------------------------------------------------
-std::vector<double> create_interval_gl_plus_endpoints_new(std::size_t n,
-                                                          bool exterior)
+std::vector<double> create_interval_gl_plus_endpoints(std::size_t n,
+                                                      bool exterior)
 {
-  std::vector<double> x_gl = create_interval_gl_new(n, false);
+  std::vector<double> x_gl = create_interval_gl(n, false);
   if (!exterior)
     return x_gl;
   else
@@ -112,10 +109,10 @@ std::vector<double> create_interval_gl_plus_endpoints_new(std::size_t n,
   }
 }
 //-----------------------------------------------------------------------------
-std::vector<double> create_interval_chebyshev_plus_endpoints_new(std::size_t n,
-                                                                 bool exterior)
+std::vector<double> create_interval_chebyshev_plus_endpoints(std::size_t n,
+                                                             bool exterior)
 {
-  std::vector<double> x_cheb = create_interval_chebyshev_new(n, false);
+  std::vector<double> x_cheb = create_interval_chebyshev(n, false);
   if (!exterior)
     return x_cheb;
   else
@@ -129,8 +126,8 @@ std::vector<double> create_interval_chebyshev_plus_endpoints_new(std::size_t n,
   }
 }
 //-----------------------------------------------------------------------------
-std::vector<double>
-create_interval_new(std::size_t n, lattice::type lattice_type, bool exterior)
+std::vector<double> create_interval(std::size_t n, lattice::type lattice_type,
+                                    bool exterior)
 {
   if (n == 0)
     return {0.5};
@@ -139,17 +136,17 @@ create_interval_new(std::size_t n, lattice::type lattice_type, bool exterior)
     switch (lattice_type)
     {
     case lattice::type::equispaced:
-      return create_interval_equispaced_new(n, exterior);
+      return create_interval_equispaced(n, exterior);
     case lattice::type::gll:
-      return create_interval_gll_new(n, exterior);
+      return create_interval_gll(n, exterior);
     case lattice::type::chebyshev:
-      return create_interval_chebyshev_new(n, exterior);
+      return create_interval_chebyshev(n, exterior);
     case lattice::type::gl:
-      return create_interval_gl_new(n, exterior);
+      return create_interval_gl(n, exterior);
     case lattice::type::chebyshev_plus_endpoints:
-      return create_interval_chebyshev_plus_endpoints_new(n, exterior);
+      return create_interval_chebyshev_plus_endpoints(n, exterior);
     case lattice::type::gl_plus_endpoints:
-      return create_interval_gl_plus_endpoints_new(n, exterior);
+      return create_interval_gl_plus_endpoints(n, exterior);
     default:
       throw std::runtime_error("Unrecognised lattice type.");
     }
@@ -203,7 +200,7 @@ tabulate_dlagrange(std::size_t n, xtl::span<const double> x)
 std::vector<double> warp_function(lattice::type lattice_type, int n,
                                   xtl::span<const double> x)
 {
-  std::vector<double> pts = create_interval_new(n, lattice_type, true);
+  std::vector<double> pts = create_interval(n, lattice_type, true);
   for (int i = 0; i < n + 1; ++i)
     pts[i] -= static_cast<double>(i) / static_cast<double>(n);
 
@@ -224,8 +221,7 @@ create_quad(std::size_t n, lattice::type lattice_type, bool exterior)
     return {{0.5, 0.5}, {1, 2}};
   else
   {
-    const std::vector<double> r
-        = create_interval_new(n, lattice_type, exterior);
+    const std::vector<double> r = create_interval(n, lattice_type, exterior);
     const std::size_t m = r.size();
     std::array<std::size_t, 2> shape = {m * m, 2};
     std::vector<double> xb(shape[0] * shape[1]);
@@ -253,8 +249,7 @@ create_hex(int n, lattice::type lattice_type, bool exterior)
     return {{0.5, 0.5, 0.5}, {1, 3}};
   else
   {
-    const std::vector<double> r
-        = create_interval_new(n, lattice_type, exterior);
+    const std::vector<double> r = create_interval(n, lattice_type, exterior);
     const std::size_t m = r.size();
 
     std::array<std::size_t, 2> shape = {m * m * m, 3};
@@ -283,7 +278,7 @@ create_hex(int n, lattice::type lattice_type, bool exterior)
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-create_tri_equispaced_new(std::size_t n, bool exterior)
+create_tri_equispaced(std::size_t n, bool exterior)
 {
   const std::size_t b = exterior ? 0 : 1;
 
@@ -310,9 +305,10 @@ create_tri_equispaced_new(std::size_t n, bool exterior)
 //-----------------------------------------------------------------------------
 
 /// Warp points: see Hesthaven and Warburton, Nodal Discontinuous
-/// Galerkin Methods, pp. 175-180, https://doi.org/10.1007/978-0-387-72067-8_6
+/// Galerkin Methods, pp. 175-180,
+/// https://doi.org/10.1007/978-0-387-72067-8_6
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-create_tri_warped_new(std::size_t n, lattice::type lattice_type, bool exterior)
+create_tri_warped(std::size_t n, lattice::type lattice_type, bool exterior)
 {
   const std::size_t b = exterior ? 0 : 1;
 
@@ -360,7 +356,7 @@ std::vector<double> isaac_point(lattice::type lattice_type,
     double denominator = 0;
     std::vector<std::size_t> sub_a(std::next(a.begin()), a.end());
     const std::size_t size = std::reduce(a.begin(), a.end());
-    std::vector<double> x = create_interval_new(size, lattice_type, true);
+    std::vector<double> x = create_interval(size, lattice_type, true);
     for (std::size_t i = 0; i < a.size(); ++i)
     {
       if (i > 0)
@@ -384,7 +380,7 @@ std::vector<double> isaac_point(lattice::type lattice_type,
 /// Defined Interpolation Nodes for Simplices,
 /// http://dx.doi.org/10.1137/20M1321802.
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-create_tri_isaac_new(std::size_t n, lattice::type lattice_type, bool exterior)
+create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
 {
   const std::size_t b = exterior ? 0 : 1;
   std::array<std::size_t, 2> shape = {(n - 3 * b + 1) * (n - 3 * b + 2) / 2, 2};
@@ -412,8 +408,7 @@ create_tri_isaac_new(std::size_t n, lattice::type lattice_type, bool exterior)
 /// See: Blyth, and Pozrikidis, A Lobatto interpolation grid over the
 /// triangle, https://dx.doi.org/10.1093/imamat/hxh077
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-create_tri_centroid_new(std::size_t n, lattice::type lattice_type,
-                        bool exterior)
+create_tri_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
 {
   if (exterior)
   {
@@ -426,7 +421,7 @@ create_tri_centroid_new(std::size_t n, lattice::type lattice_type,
   stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
       p(_p.data(), shape);
 
-  std::vector<double> x = create_interval_new(n, lattice_type, false);
+  const std::vector<double> x = create_interval(n, lattice_type, false);
   int c = 0;
   for (std::size_t i = 0; i + 1 < x.size(); ++i)
   {
@@ -445,28 +440,28 @@ create_tri_centroid_new(std::size_t n, lattice::type lattice_type,
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-create_tri_new(std::size_t n, lattice::type lattice_type, bool exterior,
-               lattice::simplex_method simplex_method)
+create_tri(std::size_t n, lattice::type lattice_type, bool exterior,
+           lattice::simplex_method simplex_method)
 {
   if (n == 0)
     return {{1.0 / 3.0, 1.0 / 3.0}, {1, 2}};
   else if (lattice_type == lattice::type::equispaced)
-    return create_tri_equispaced_new(n, exterior);
+    return create_tri_equispaced(n, exterior);
   else
   {
     switch (simplex_method)
     {
     case lattice::simplex_method::warp:
-      return create_tri_warped_new(n, lattice_type, exterior);
+      return create_tri_warped(n, lattice_type, exterior);
     case lattice::simplex_method::isaac:
-      return create_tri_isaac_new(n, lattice_type, exterior);
+      return create_tri_isaac(n, lattice_type, exterior);
     case lattice::simplex_method::centroid:
-      return create_tri_centroid_new(n, lattice_type, exterior);
+      return create_tri_centroid(n, lattice_type, exterior);
     case lattice::simplex_method::none:
     {
       // Methods will all agree when n <= 3
       if (n <= 3)
-        return create_tri_warped_new(n, lattice_type, exterior);
+        return create_tri_warped(n, lattice_type, exterior);
       else
       {
         throw std::runtime_error(
@@ -517,8 +512,6 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
 {
   const std::size_t b = exterior ? 0 : 1;
 
-  // xt::xtensor<double, 2> x(
-  //     {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
   std::array<std::size_t, 2> shape
       = {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3};
   std::vector<double> xb(shape[0] * shape[1]);
@@ -607,7 +600,7 @@ create_tet_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
         "Centroid method not implemented to include boundaries");
   }
 
-  const std::vector<double> x = create_interval_new(n, lattice_type, false);
+  const std::vector<double> x = create_interval(n, lattice_type, false);
 
   std::array<std::size_t, 2> shape = {(n - 3) * (n - 2) * (n - 1) / 6, 3};
   std::vector<double> xb(shape[0] * shape[1]);
@@ -679,14 +672,14 @@ create_prism(std::size_t n, lattice::type lattice_type, bool exterior,
     return {{1.0 / 3.0, 1.0 / 3.0, 0.5}, {1, 3}};
   else
   {
-    const auto [xx, trishape]
-        = create_tri_new(n, lattice_type, exterior, simplex_method);
+    const auto [tri_pts_b, trishape]
+        = create_tri(n, lattice_type, exterior, simplex_method);
     stdex::mdspan<const double,
                   stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
-        tri_pts(xx.data(), trishape);
+        tri_pts(tri_pts_b.data(), trishape);
 
     const std::vector<double> line_pts
-        = create_interval_new(n, lattice_type, exterior);
+        = create_interval(n, lattice_type, exterior);
 
     std::array<std::size_t, 2> shape = {tri_pts.extent(0) * line_pts.size(), 3};
     std::vector<double> xb(shape[0] * shape[1]);
@@ -901,51 +894,8 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
                                        lattice::type type, bool exterior,
                                        lattice::simplex_method simplex_method)
 {
-  // auto [x, shape] = create_new(celltype, n, type, exterior, simplex_method);
-  // return xt::adapt(x, std::vector<std::size_t>{x.size(), 1});
-
-  switch (celltype)
-  {
-  case cell::type::point:
-    return {{0.0}};
-  case cell::type::interval:
-  {
-    auto x = create_interval_new(n, type, exterior);
-    return xt::adapt(x, std::vector<std::size_t>{x.size(), 1});
-  }
-  case cell::type::triangle:
-  {
-    auto [x, shape] = create_tri_new(n, type, exterior, simplex_method);
-    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
-  }
-  case cell::type::tetrahedron:
-  {
-    auto [x, shape] = create_tet(n, type, exterior, simplex_method);
-    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
-  }
-  case cell::type::quadrilateral:
-  {
-    auto [x, shape] = create_quad(n, type, exterior);
-    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
-  }
-  case cell::type::hexahedron:
-  {
-    auto [x, shape] = create_hex(n, type, exterior);
-    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
-  }
-  case cell::type::prism:
-  {
-    auto [x, shape] = create_prism(n, type, exterior, simplex_method);
-    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
-  }
-  case cell::type::pyramid:
-  {
-    auto [x, shape] = create_pyramid(n, type, exterior, simplex_method);
-    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
-  }
-  default:
-    throw std::runtime_error("Unsupported cell for lattice");
-  }
+  auto [x, shape] = create_new(celltype, n, type, exterior, simplex_method);
+  return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
@@ -958,11 +908,11 @@ lattice::create_new(cell::type celltype, int n, lattice::type type,
     return {{0.0}, {1, 1}};
   case cell::type::interval:
   {
-    auto x = create_interval_new(n, type, exterior);
+    auto x = create_interval(n, type, exterior);
     return {x, {x.size(), 1}};
   }
   case cell::type::triangle:
-    return create_tri_new(n, type, exterior, simplex_method);
+    return create_tri(n, type, exterior, simplex_method);
   case cell::type::tetrahedron:
     return create_tet(n, type, exterior, simplex_method);
   case cell::type::quadrilateral:
@@ -975,14 +925,6 @@ lattice::create_new(cell::type celltype, int n, lattice::type type,
     return create_pyramid(n, type, exterior, simplex_method);
   default:
     throw std::runtime_error("Unsupported cell for lattice");
-
-    // xt::xtensor<double, 2> x
-    //     = create(celltype, n, type, exterior, simplex_method);
-    // return {std::vector<double>(x.data(), x.data() + x.size()),
-    //         {
-    //             x.shape(0),
-    //             x.shape(1),
-    //         }};
   }
 }
 //-----------------------------------------------------------------------------

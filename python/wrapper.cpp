@@ -121,12 +121,9 @@ Interface to the Basix C++ library.
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior)
       {
-        auto l = lattice::create(celltype, n, type, exterior,
-                                 lattice::simplex_method::none);
-        auto strides = l.strides();
-        for (auto& s : strides)
-          s *= sizeof(double);
-        return py::array_t<double>(l.shape(), strides, l.data());
+        auto [data, shape] = lattice::create_new(celltype, n, type, exterior,
+                                                 lattice::simplex_method::none);
+        return py::array_t<double>(shape, data);
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
 
@@ -135,11 +132,9 @@ Interface to the Basix C++ library.
       [](cell::type celltype, int n, lattice::type type, bool exterior,
          lattice::simplex_method method)
       {
-        auto l = lattice::create(celltype, n, type, exterior, method);
-        auto strides = l.strides();
-        for (auto& s : strides)
-          s *= sizeof(double);
-        return py::array_t<double>(l.shape(), strides, l.data());
+        auto [data, shape]
+            = lattice::create_new(celltype, n, type, exterior, method);
+        return py::array_t<double>(data, data);
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method
           .c_str());

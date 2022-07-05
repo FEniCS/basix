@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
   // Degree 5 Lagrange element
   // =========================
   {
-    std::cout << "Degree 5 Lagrange element \n";
+    std::cout << "Degree 5 Lagrange element" << std::endl;
 
     // Create a degree 5 Lagrange element on a triangle
     auto family = basix::element::family::P;
@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
     // The value of `dof_transformations_are_identity` is `false`: this tells
     // us that permutations or transformations are needed for this element.
     std::cout << "Dof transformations are identity: "
-              << lagrange.dof_transformations_are_identity() << "\n";
+              << lagrange.dof_transformations_are_identity() << std::endl;
 
     // The value of `dof_transformations_are_permutations` is `true`: this
     // tells us that for this element, all the corrections we need to apply
@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     // orientation corrections by applying permutations when creating the
     // DOF map.
     std::cout << "Dof transformations are permutations: "
-              << lagrange.dof_transformations_are_permutations() << "\n";
+              << lagrange.dof_transformations_are_permutations() << std::endl;
 
     // We can apply permutations by using the matrices returned by the
     // method `base_transformations`. This method will return one matrix
@@ -76,8 +76,8 @@ int main(int argc, char* argv[])
 
     // For this element, we know that the base transformations will be
     // permutation matrices.
-    std::cout << "\nBase transformations: \n";
-    std::cout << lagrange.base_transformations() << "\n";
+    std::cout << std::endl << "Base transformations:" << std::endl;
+    std::cout << lagrange.base_transformations() << std::endl;
 
     // The matrices returned by `base_transformations` are quite large, and
     // are equal to the identity matrix except for a small block of the
@@ -91,9 +91,9 @@ int main(int argc, char* argv[])
     std::map<basix::cell::type, xt::xtensor<double, 3>> entity__transformation
         = lagrange.entity_transformations();
 
-    std::cout << "\nEntity transformations: \n";
+    std::cout << std::endl << "Entity transformations:" << std::endl;
     for (auto const& [cell, transformation] : entity__transformation)
-      std::cout << " -" << type_to_name.at(cell) << ":\n"
+      std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
                 << transformation << std::endl;
 
     // For this element, we see that this method returns one matrix for
@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
     int dim = 1;
     int edge_num = 2;
     std::vector<int> entity_dofs = lagrange.entity_dofs()[dim][edge_num];
-    std::cout << "\n Entity dofs of Edge number 2: ";
+    std::cout << std::endl << "Entity dofs of Edge number 2: ";
     for (const auto dof : entity_dofs)
       std::cout << dof << " ";
   }
@@ -116,7 +116,9 @@ int main(int argc, char* argv[])
   {
     // For a degree 2 Lagrange element, no permutations or transformations
     // are needed.
-    std::cout << "\n\nDegree 2 Lagrange element \n";
+    std::cout << std::endl
+              << std::endl
+              << "Degree 2 Lagrange element" << std::endl;
     auto family = basix::element::family::P;
     auto cell_type = basix::cell::type::triangle;
     int degree = 2;
@@ -129,16 +131,18 @@ int main(int argc, char* argv[])
     // `True`. To confirm that the transformations are identity matrices, we
     // also print the base transformations.
     std::cout << "Dof transformations are identity: "
-              << lagrange.dof_transformations_are_identity() << "\n";
+              << lagrange.dof_transformations_are_identity() << std::endl;
 
     std::cout << "Dof transformations are permutations: "
-              << lagrange.dof_transformations_are_permutations() << "\n";
+              << lagrange.dof_transformations_are_permutations() << std::endl;
   }
 
   // Degree 2 Nédélec element
   // ========================
   {
-    std::cout << "\n\nDegree 2 Nedelec element \n";
+    std::cout << std::endl
+              << std::endl
+              << "Degree 2 Nedelec element" << std::endl;
     // For a degree 2 Nédélec (first kind) element on a tetrahedron, the
     // corrections are not all permutations, so both
     // `dof_transformations_are_identity` and
@@ -150,9 +154,9 @@ int main(int argc, char* argv[])
     auto nedelec = basix::create_element(family, cell_type, degree);
 
     std::cout << "Dof transformations are identity: "
-              << nedelec.dof_transformations_are_identity() << "\n";
+              << nedelec.dof_transformations_are_identity() << std::endl;
     std::cout << "Dof transformations are permutations: "
-              << nedelec.dof_transformations_are_permutations() << "\n";
+              << nedelec.dof_transformations_are_permutations() << std::endl;
 
     // For this element, `entity_transformations` returns a map
     // with two entries: a matrix for an interval that describes
@@ -172,17 +176,20 @@ int main(int argc, char* argv[])
     std::map<basix::cell::type, xt::xtensor<double, 3>> entity__transformation
         = nedelec.entity_transformations();
 
-    std::cout << "\nEntity transformations: \n";
+    std::cout << std::endl << "Entity transformations:" << std::endl;
     for (auto const& [cell, transformation] : entity__transformation)
-      std::cout << " -" << type_to_name.at(cell) << ":\n"
+      std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
                 << transformation << std::endl;
 
     // To demonstrate how these transformations can be used, we create a
     // lattice of points where we will tabulate the element.
 
-    xt::xtensor<double, 2> points = basix::lattice::create(
+    const auto [pdata, shape] = basix::lattice::create_new(
         cell_type, 5, basix::lattice::type::equispaced, true);
-    int num_points = points.shape(0);
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>
+        points(pdata.data(), shape);
+    int num_points = points.extent(0);
 
     // If (for example) the direction of edge 2 in the physical cell does
     // not match its direction on the reference, then we need to adjust the
@@ -204,7 +211,8 @@ int main(int argc, char* argv[])
     int cell_info = 0b000010;
     nedelec.apply_dof_transformation(data, num_points, cell_info);
 
-    std::cout << "\n Tabulated data is equal: "
+    std::cout << std::endl
+              << "Tabulated data is equal: "
               << xt::allclose(original_data, mod_data) << std::endl;
   }
 

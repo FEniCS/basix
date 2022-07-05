@@ -92,7 +92,6 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
-  xt::xtensor<double, 2> wcoeffs = xt::eye<double>({ndofs, ndofs});
   return FiniteElement(element::family::Hermite, celltype, degree, {},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        xview, Mview, 1, maps::type::identity, discontinuous, -1,

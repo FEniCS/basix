@@ -10,7 +10,6 @@
 #include "polyset.h"
 #include "quadrature.h"
 #include <vector>
-#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 

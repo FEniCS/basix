@@ -9,7 +9,6 @@
 #include <array>
 #include <cmath>
 #include <vector>
-#include <xtensor/xadapt.hpp>
 
 using namespace basix;
 

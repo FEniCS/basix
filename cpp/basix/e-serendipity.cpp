@@ -13,7 +13,6 @@
 #include "polynomials.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 

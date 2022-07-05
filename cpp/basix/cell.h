@@ -7,7 +7,6 @@
 #include <array>
 #include <utility>
 #include <vector>
-#include <xtensor/xtensor.hpp>
 
 /// Information about reference cells
 
@@ -28,11 +27,6 @@ enum class type
   prism = 6,
   pyramid = 7
 };
-
-/// Cell geometry
-/// @param celltype Cell Type
-/// @return Set of vertex points of the cell. Shape is (npoints, gdim)
-xt::xtensor<double, 2> geometry(cell::type celltype);
 
 /// Cell geometry
 /// @param celltype Cell Type
@@ -65,10 +59,6 @@ sub_entity_connectivity(cell::type celltype);
 /// @param dim Dimension of sub-entity
 /// @param index Local index of sub-entity
 /// @return Set of vertex points of the sub-entity. Shape is (npoints, gdim)
-xt::xtensor<double, 2> sub_entity_geometry(cell::type celltype, int dim,
-                                           int index);
-
-/// NEW
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 sub_entity_geometry_new(cell::type celltype, int dim, int index);
 

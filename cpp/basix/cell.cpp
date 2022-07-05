@@ -5,9 +5,6 @@
 #include "cell.h"
 #include "math.h"
 #include "mdspan.hpp"
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
 
@@ -16,49 +13,6 @@ using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
 using mdspan3_t = stdex::mdspan<double, stdex::dextents<std::size_t, 3>>;
 
-//-----------------------------------------------------------------------------
-xt::xtensor<double, 2> cell::geometry(cell::type celltype)
-{
-  switch (celltype)
-  {
-  case cell::type::point:
-    return xt::xtensor<double, 2>({{}});
-  case cell::type::interval:
-    return xt::xtensor<double, 2>({{0.0}, {1.0}});
-  case cell::type::triangle:
-    return xt::xtensor<double, 2>({{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}});
-  case cell::type::quadrilateral:
-    return xt::xtensor<double, 2>(
-        {{0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {1.0, 1.0}});
-  case cell::type::tetrahedron:
-    return xt::xtensor<double, 2>(
-        {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}});
-  case cell::type::prism:
-    return xt::xtensor<double, 2>({{0.0, 0.0, 0.0},
-                                   {1.0, 0.0, 0.0},
-                                   {0.0, 1.0, 0.0},
-                                   {0.0, 0.0, 1.0},
-                                   {1.0, 0.0, 1.0},
-                                   {0.0, 1.0, 1.0}});
-  case cell::type::pyramid:
-    return xt::xtensor<double, 2>({{0.0, 0.0, 0.0},
-                                   {1.0, 0.0, 0.0},
-                                   {0.0, 1.0, 0.0},
-                                   {1.0, 1.0, 0.0},
-                                   {0.0, 0.0, 1.0}});
-  case cell::type::hexahedron:
-    return xt::xtensor<double, 2>({{0.0, 0.0, 0.0},
-                                   {1.0, 0.0, 0.0},
-                                   {0.0, 1.0, 0.0},
-                                   {1.0, 1.0, 0.0},
-                                   {0.0, 0.0, 1.0},
-                                   {1.0, 0.0, 1.0},
-                                   {0.0, 1.0, 1.0},
-                                   {1.0, 1.0, 1.0}});
-  default:
-    throw std::runtime_error("Unsupported cell type");
-  }
-}
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 cell::geometry_new(cell::type celltype)
@@ -360,24 +314,6 @@ int cell::topological_dimension(cell::type cell_type)
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> cell::sub_entity_geometry(cell::type celltype, int dim,
-                                                 int index)
-{
-  const std::vector<std::vector<std::vector<int>>> cell_topology
-      = cell::topology(celltype);
-  if (dim < 0 or dim >= (int)cell_topology.size())
-    throw std::runtime_error("Invalid dimension for sub-entity");
-  const xt::xtensor<double, 2> cell_geometry = cell::geometry(celltype);
-  const std::vector<std::vector<int>>& t = cell_topology[dim];
-  if (index < 0 or index >= (int)t.size())
-    throw std::runtime_error("Invalid entity index");
-
-  xt::xtensor<double, 2> sub_entity({t[index].size(), cell_geometry.shape(1)});
-  for (std::size_t i = 0; i < sub_entity.shape(0); ++i)
-    xt::row(sub_entity, i) = xt::row(cell_geometry, t[index][i]);
-  return sub_entity;
-}
-//----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 cell::sub_entity_geometry_new(cell::type celltype, int dim, int index)
 {

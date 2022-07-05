@@ -67,11 +67,8 @@ Interface to the Basix C++ library.
       "geometry",
       [](cell::type celltype)
       {
-        xt::xtensor<double, 2> g = cell::geometry(celltype);
-        auto strides = g.strides();
-        for (auto& s : strides)
-          s *= sizeof(double);
-        return py::array_t<double>(g.shape(), strides, g.data());
+        auto [x, shape] = cell::geometry_new(celltype);
+        return py::array_t<double>(shape, x.data());
       },
       basix::docstring::geometry.c_str());
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
@@ -122,7 +119,7 @@ Interface to the Basix C++ library.
       [](cell::type celltype, int n, lattice::type type, bool exterior)
       {
         auto [x, shape] = lattice::create(celltype, n, type, exterior,
-                                              lattice::simplex_method::none);
+                                          lattice::simplex_method::none);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
@@ -132,8 +129,7 @@ Interface to the Basix C++ library.
       [](cell::type celltype, int n, lattice::type type, bool exterior,
          lattice::simplex_method method)
       {
-        auto [x, shape]
-            = lattice::create(celltype, n, type, exterior, method);
+        auto [x, shape] = lattice::create(celltype, n, type, exterior, method);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method

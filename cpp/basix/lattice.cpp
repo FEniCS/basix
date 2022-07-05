@@ -222,52 +222,64 @@ create_quad(std::size_t n, lattice::type lattice_type, bool exterior)
 {
   if (n == 0)
     return {{0.5, 0.5}, {1, 2}};
-
-  const std::vector<double> r = create_interval_new(n, lattice_type, exterior);
-  const std::size_t m = r.size();
-  std::array<std::size_t, 2> shape = {m * m, 2};
-  std::vector<double> xb(shape[0] * shape[1]);
-  stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
-      x(xb.data(), shape);
-  std::size_t c = 0;
-  for (std::size_t j = 0; j < m; ++j)
+  else
   {
-    for (std::size_t i = 0; i < m; ++i)
-    {
-      x(c, 0) = r[i];
-      x(c, 1) = r[j];
-      c++;
-    }
-  }
-
-  return {xb, shape};
-}
-//-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_hex(int n, lattice::type lattice_type,
-                                  bool exterior)
-{
-  if (n == 0)
-    return {{0.5, 0.5, 0.5}};
-
-  const std::vector<double> r = create_interval_new(n, lattice_type, exterior);
-  const std::size_t m = r.size();
-  xt::xtensor<double, 2> x({m * m * m, 3});
-  int c = 0;
-  for (std::size_t k = 0; k < m; ++k)
-  {
+    const std::vector<double> r
+        = create_interval_new(n, lattice_type, exterior);
+    const std::size_t m = r.size();
+    std::array<std::size_t, 2> shape = {m * m, 2};
+    std::vector<double> xb(shape[0] * shape[1]);
+    stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
+        x(xb.data(), shape);
+    std::size_t c = 0;
     for (std::size_t j = 0; j < m; ++j)
     {
       for (std::size_t i = 0; i < m; ++i)
       {
         x(c, 0) = r[i];
         x(c, 1) = r[j];
-        x(c, 2) = r[k];
         c++;
       }
     }
-  }
 
-  return x;
+    return {xb, shape};
+  }
+}
+//-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_hex(int n, lattice::type lattice_type, bool exterior)
+{
+  if (n == 0)
+    return {{0.5, 0.5, 0.5}, {1, 3}};
+  else
+  {
+    const std::vector<double> r
+        = create_interval_new(n, lattice_type, exterior);
+    const std::size_t m = r.size();
+
+    std::array<std::size_t, 2> shape = {m * m * m, 3};
+
+    std::vector<double> xb(shape[0] * shape[1]);
+    stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+        x(xb.data(), shape);
+
+    int c = 0;
+    for (std::size_t k = 0; k < m; ++k)
+    {
+      for (std::size_t j = 0; j < m; ++j)
+      {
+        for (std::size_t i = 0; i < m; ++i)
+        {
+          x(c, 0) = r[i];
+          x(c, 1) = r[j];
+          x(c, 2) = r[k];
+          c++;
+        }
+      }
+    }
+
+    return {xb, shape};
+  }
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
@@ -875,10 +887,12 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
   {
     auto [x, shape] = create_quad(n, type, exterior);
     return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
-    // return create_quad(n, type, exterior);
   }
   case cell::type::hexahedron:
-    return create_hex(n, type, exterior);
+  {
+    auto [x, shape] = create_hex_new(n, type, exterior);
+    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
+  }
   case cell::type::prism:
     return create_prism(n, type, exterior, simplex_method);
   case cell::type::pyramid:

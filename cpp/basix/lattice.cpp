@@ -10,7 +10,6 @@
 #include <cmath>
 #include <math.h>
 #include <vector>
-#include <xtensor/xadapt.hpp>
 
 using namespace basix;
 namespace stdex = std::experimental;
@@ -24,13 +23,16 @@ std::vector<double> linspace(double x0, double x1, std::size_t n)
     return {};
   else if (n == 1)
     return {x0};
+  else
+  {
 
-  std::vector<double> p(n, x0);
-  p.back() = x1;
-  const double delta = (x1 - x0) / (n - 1);
-  for (std::size_t i = 1; i < p.size() - 1; ++i)
-    p[i] += i * delta;
-  return p;
+    std::vector<double> p(n, x0);
+    p.back() = x1;
+    const double delta = (x1 - x0) / (n - 1);
+    for (std::size_t i = 1; i < p.size() - 1; ++i)
+      p[i] += i * delta;
+    return p;
+  }
 }
 //-----------------------------------------------------------------------------
 std::vector<double> create_interval_equispaced(std::size_t n, bool exterior)
@@ -255,20 +257,20 @@ create_hex(int n, lattice::type lattice_type, bool exterior)
     std::array<std::size_t, 2> shape = {m * m * m, 3};
 
     std::vector<double> xb(shape[0] * shape[1]);
-    stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
-        x(xb.data(), shape);
+    stdex::mdspan<
+        double, stdex::extents<std::size_t, stdex::dynamic_extent,
+                               stdex::dynamic_extent, stdex::dynamic_extent, 3>>
+        x(xb.data(), m, m, m, 3);
 
-    int c = 0;
     for (std::size_t k = 0; k < m; ++k)
     {
       for (std::size_t j = 0; j < m; ++j)
       {
         for (std::size_t i = 0; i < m; ++i)
         {
-          x(c, 0) = r[i];
-          x(c, 1) = r[j];
-          x(c, 2) = r[k];
-          c++;
+          x(k, j, i, 0) = r[i];
+          x(k, j, i, 1) = r[j];
+          x(k, j, i, 2) = r[k];
         }
       }
     }
@@ -362,14 +364,14 @@ std::vector<double> isaac_point(lattice::type lattice_type,
       if (i > 0)
         sub_a[i - 1] = a[i - 1];
       const std::size_t sub_size = size - a[i];
-      const std::vector<double> sub_res = isaac_point(lattice_type, sub_a);
+      const std::vector sub_res = isaac_point(lattice_type, sub_a);
       for (std::size_t j = 0; j < sub_res.size(); ++j)
         res[j < i ? j : j + 1] += x[sub_size] * sub_res[j];
       denominator += x[sub_size];
     }
 
-    for (std::size_t i = 0; i < res.size(); ++i)
-      res[i] /= denominator;
+    std::transform(res.begin(), res.end(), res.begin(),
+                   [denominator](auto x) { return x / denominator; });
 
     return res;
   }
@@ -393,8 +395,8 @@ create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
   {
     for (std::size_t i = b; i < (n - b + 1 - j); ++i)
     {
-      const std::vector<double> isaac_p = isaac_point(
-          lattice_type, std::vector<std::size_t>{i, j, n - i - j});
+      const std::vector isaac_p
+          = isaac_point(lattice_type, std::array{i, j, n - i - j});
       for (std::size_t k = 0; k < 2; ++k)
         p(c, k) = isaac_p[k];
       ++c;
@@ -525,8 +527,8 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
     {
       for (std::size_t i = b; i < (n - b + 1 - j - k); ++i)
       {
-        std::vector<double> ip = isaac_point(
-            lattice_type, std::vector<std::size_t>{i, j, k, n - i - j - k});
+        const std::vector ip
+            = isaac_point(lattice_type, std::array{i, j, k, n - i - j - k});
         for (std::size_t l = 0; l < 3; ++l)
           x(c, l) = ip[l];
         ++c;
@@ -543,8 +545,10 @@ create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
   const std::size_t b = exterior ? 0 : 1;
   const std::vector<double> r = linspace(0.0, 1.0, 2 * n + 1);
   std::vector<double> wbar = warp_function(lattice_type, n, r);
-  for (std::size_t i = 1; i < 2 * n - 1; ++i)
-    wbar[i] /= r[i] * (1.0 - r[i]);
+
+  std::transform(std::next(r.begin()), std::prev(r.end()),
+                 std::next(wbar.begin()), std::next(wbar.begin()),
+                 [](auto r, auto w) { return w / (r * (1.0 - r)); });
 
   std::array<std::size_t, 2> shape
       = {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3};
@@ -668,23 +672,25 @@ std::pair<std::vector<double>, std::array<std::size_t, 2>>
 create_prism(std::size_t n, lattice::type lattice_type, bool exterior,
              lattice::simplex_method simplex_method)
 {
+  using cmdspan22_t
+      = stdex::mdspan<const double,
+                      stdex::extents<std::size_t, stdex::dynamic_extent, 2>>;
+  using mdspan23_t
+      = stdex::mdspan<double,
+                      stdex::extents<std::size_t, stdex::dynamic_extent, 3>>;
+
   if (n == 0)
     return {{1.0 / 3.0, 1.0 / 3.0, 0.5}, {1, 3}};
   else
   {
     const auto [tri_pts_b, trishape]
         = create_tri(n, lattice_type, exterior, simplex_method);
-    stdex::mdspan<const double,
-                  stdex::extents<std::size_t, stdex::dynamic_extent, 2>>
-        tri_pts(tri_pts_b.data(), trishape);
+    cmdspan22_t tri_pts(tri_pts_b.data(), trishape);
 
-    const std::vector<double> line_pts
-        = create_interval(n, lattice_type, exterior);
-
+    const std::vector line_pts = create_interval(n, lattice_type, exterior);
     std::array<std::size_t, 2> shape = {tri_pts.extent(0) * line_pts.size(), 3};
     std::vector<double> xb(shape[0] * shape[1]);
-    stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
-        x(xb.data(), shape);
+    mdspan23_t x(xb.data(), shape);
 
     for (std::size_t i = 0; i < line_pts.size(); ++i)
       for (std::size_t j = 0; j < tri_pts.extent(0); ++j)
@@ -710,7 +716,7 @@ create_pyramid_equispaced(int n, bool exterior)
   const double h = 1.0 / static_cast<double>(n);
   const std::size_t b = (exterior == false) ? 1 : 0;
   n -= b * 3;
-  std::size_t m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
+  const std::size_t m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
 
   std::array<std::size_t, 2> shape = {m, 3};
   std::vector<double> xb(shape[0] * shape[1]);

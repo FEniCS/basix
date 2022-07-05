@@ -586,8 +586,10 @@ xt::xtensor<double, 2> create_tet_centroid(int n, lattice::type lattice_type,
                                            bool exterior)
 {
   if (exterior)
+  {
     throw std::runtime_error(
         "Centroid method not implemented to include boundaries");
+  }
 
   // Points
   xt::xtensor<double, 2> p(
@@ -613,6 +615,7 @@ xt::xtensor<double, 2> create_tet_centroid(int n, lattice::type lattice_type,
       }
     }
   }
+
   return p;
 }
 //-----------------------------------------------------------------------------
@@ -622,28 +625,32 @@ xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
 {
   if (n == 0)
     return {{0.25, 0.25, 0.25}};
-
-  if (lattice_type == lattice::type::equispaced)
+  else if (lattice_type == lattice::type::equispaced)
     return create_tet_equispaced(n, exterior);
-
-  switch (simplex_method)
+  else
   {
-  case lattice::simplex_method::warp:
-    return create_tet_warped(n, lattice_type, exterior);
-  case lattice::simplex_method::isaac:
-    return create_tet_isaac(n, lattice_type, exterior);
-  case lattice::simplex_method::centroid:
-    return create_tet_centroid(n, lattice_type, exterior);
-  case lattice::simplex_method::none:
-  {
-    // Methods will all agree when n <= 3
-    if (n <= 3)
+    switch (simplex_method)
+    {
+    case lattice::simplex_method::warp:
       return create_tet_warped(n, lattice_type, exterior);
-    throw std::runtime_error(
-        "A simplex type must be given to create points on a triangle.");
-  }
-  default:
-    throw std::runtime_error("Unrecognised simplex type.");
+    case lattice::simplex_method::isaac:
+      return create_tet_isaac(n, lattice_type, exterior);
+    case lattice::simplex_method::centroid:
+      return create_tet_centroid(n, lattice_type, exterior);
+    case lattice::simplex_method::none:
+    {
+      // Methods will all agree when n <= 3
+      if (n <= 3)
+        return create_tet_warped(n, lattice_type, exterior);
+      else
+      {
+        throw std::runtime_error(
+            "A simplex type must be given to create points on a triangle.");
+      }
+    }
+    default:
+      throw std::runtime_error("Unrecognised simplex type.");
+    }
   }
 }
 //-----------------------------------------------------------------------------
@@ -687,13 +694,18 @@ create_prism(std::size_t n, lattice::type lattice_type, bool exterior,
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_pyramid_equispaced(int n, bool exterior)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_pyramid_equispaced(int n, bool exterior)
 {
   const double h = 1.0 / static_cast<double>(n);
   const std::size_t b = (exterior == false) ? 1 : 0;
   n -= b * 3;
   std::size_t m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
-  xt::xtensor<double, 2> points({m, 3});
+
+  std::array<std::size_t, 2> shape = {m, 3};
+  std::vector<double> xb(shape[0] * shape[1]);
+  stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+      x(xb.data(), shape);
   int c = 0;
   for (int k = 0; k < n + 1; ++k)
   {
@@ -701,23 +713,23 @@ xt::xtensor<double, 2> create_pyramid_equispaced(int n, bool exterior)
     {
       for (int i = 0; i < n + 1 - k; ++i)
       {
-        points(c, 0) = h * (i + b);
-        points(c, 1) = h * (j + b);
-        points(c, 2) = h * (k + b);
+        x(c, 0) = h * (i + b);
+        x(c, 1) = h * (j + b);
+        x(c, 2) = h * (k + b);
         c++;
       }
     }
   }
 
-  return points;
+  return {xb, shape};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_pyramid_gll_warped(int /*n*/, bool /*exterior*/)
+/*
+xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
 {
   // FIXME
   throw std::runtime_error("GLL on Pyramid is not currently working.");
 
-  /*
   const double h = 1.0 / static_cast<double>(n);
 
   // Interpolate warp factor along interval
@@ -845,25 +857,26 @@ xt::xtensor<double, 2> create_pyramid_gll_warped(int /*n*/, bool /*exterior*/)
   }
 
   return points;
-  */
 }
+*/
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_pyramid(int n, lattice::type lattice_type,
-                                      bool exterior,
-                                      lattice::simplex_method simplex_method)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_pyramid(int n, lattice::type lattice_type, bool exterior,
+               lattice::simplex_method /*simplex_method*/)
 {
   if (n == 0)
-    return {{0.4, 0.4, 0.2}};
-
-  if (lattice_type == lattice::type::equispaced)
+    return {{0.4, 0.4, 0.2}, {1, 3}};
+  else if (lattice_type == lattice::type::equispaced)
     return create_pyramid_equispaced(n, exterior);
+  else
+  {
+    throw std::runtime_error(
+        "Non-equispaced points on pyramids not supported yet.");
+  }
 
-  throw std::runtime_error(
-      "Non-equispaced points on pyramids not supported yet.");
-
-  if (lattice_type == lattice::type::gll
-      and simplex_method == lattice::simplex_method::warp)
-    return create_pyramid_gll_warped(n, exterior);
+  // if (lattice_type == lattice::type::gll
+  //     and simplex_method == lattice::simplex_method::warp)
+  //   return create_pyramid_gll_warped(n, exterior);
 }
 } // namespace
 //-----------------------------------------------------------------------------
@@ -902,9 +915,11 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
     auto [x, shape] = create_prism(n, type, exterior, simplex_method);
     return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
   }
-    // return create_prism(n, type, exterior, simplex_method);
   case cell::type::pyramid:
-    return create_pyramid(n, type, exterior, simplex_method);
+  {
+    auto [x, shape] = create_pyramid(n, type, exterior, simplex_method);
+    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
+  }
   default:
     throw std::runtime_error("Unsupported cell for lattice");
   }

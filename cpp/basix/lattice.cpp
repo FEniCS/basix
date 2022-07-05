@@ -479,12 +479,17 @@ create_tri_new(std::size_t n, lattice::type lattice_type, bool exterior,
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_tet_equispaced(int n, bool exterior)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_tet_equispaced(std::size_t n, bool exterior)
 {
   const std::size_t b = exterior ? 0 : 1;
-  xt::xtensor<double, 2> p(
-      {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
   const std::vector<double> r = linspace(0.0, 1.0, 2 * n + 1);
+
+  std::array<std::size_t, 2> shape
+      = {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3};
+  std::vector<double> xb(shape[0] * shape[1]);
+  stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+      x(xb.data(), shape);
 
   std::size_t c = 0;
   for (std::size_t k = b; k < (n - b + 1); ++k)
@@ -493,27 +498,32 @@ xt::xtensor<double, 2> create_tet_equispaced(int n, bool exterior)
     {
       for (std::size_t i = b; i < (n - b + 1 - j - k); ++i)
       {
-        p(c, 0) = r[2 * i];
-        p(c, 1) = r[2 * j];
-        p(c, 2) = r[2 * k];
+        x(c, 0) = r[2 * i];
+        x(c, 1) = r[2 * j];
+        x(c, 2) = r[2 * k];
         ++c;
       }
     }
   }
 
-  return p;
+  return {xb, shape};
 }
 //-----------------------------------------------------------------------------
-// See: Isaac, Recursive, Parameter-Free, Explicitly Defined Interpolation
-// Nodes for Simplices http://dx.doi.org/10.1137/20M1321802
-xt::xtensor<double, 2> create_tet_isaac(int n, lattice::type lattice_type,
-                                        bool exterior)
+
+/// See: Isaac, Recursive, Parameter-Free, Explicitly Defined Interpolation
+/// Nodes for Simplices http://dx.doi.org/10.1137/20M1321802
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
 {
   const std::size_t b = exterior ? 0 : 1;
 
-  // Points
-  xt::xtensor<double, 2> p(
-      {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
+  // xt::xtensor<double, 2> x(
+  //     {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
+  std::array<std::size_t, 2> shape
+      = {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3};
+  std::vector<double> xb(shape[0] * shape[1]);
+  stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+      x(xb.data(), shape);
 
   int c = 0;
   for (std::size_t k = b; k < (n - b + 1); ++k)
@@ -525,24 +535,29 @@ xt::xtensor<double, 2> create_tet_isaac(int n, lattice::type lattice_type,
         std::vector<double> ip = isaac_point(
             lattice_type, std::vector<std::size_t>{i, j, k, n - i - j - k});
         for (std::size_t l = 0; l < 3; ++l)
-          p(c, l) = ip[l];
+          x(c, l) = ip[l];
         ++c;
       }
     }
   }
-  return p;
+
+  return {xb, shape};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2>
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
 create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
 {
   const std::size_t b = exterior ? 0 : 1;
-  xt::xtensor<double, 2> p(
-      {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3});
   const std::vector<double> r = linspace(0.0, 1.0, 2 * n + 1);
   std::vector<double> wbar = warp_function(lattice_type, n, r);
   for (std::size_t i = 1; i < 2 * n - 1; ++i)
     wbar[i] /= r[i] * (1.0 - r[i]);
+
+  std::array<std::size_t, 2> shape
+      = {(n - 4 * b + 1) * (n - 4 * b + 2) * (n - 4 * b + 3) / 6, 3};
+  std::vector<double> xb(shape[0] * shape[1]);
+  stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+      p(xb.data(), shape);
 
   std::size_t c = 0;
   for (std::size_t k = b; k < (n - b + 1); ++k)
@@ -577,13 +592,14 @@ create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return p;
+  return {xb, shape};
 }
 //-----------------------------------------------------------------------------
-// See: Blyth, and Pozrikidis, A Lobatto interpolation grid over the triangle,
-// https://dx.doi.org/10.1093/imamat/hxh077
-xt::xtensor<double, 2> create_tet_centroid(int n, lattice::type lattice_type,
-                                           bool exterior)
+
+/// See: Blyth, and Pozrikidis, A Lobatto interpolation grid over the
+/// triangle, https://dx.doi.org/10.1093/imamat/hxh077
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_tet_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
 {
   if (exterior)
   {
@@ -591,13 +607,14 @@ xt::xtensor<double, 2> create_tet_centroid(int n, lattice::type lattice_type,
         "Centroid method not implemented to include boundaries");
   }
 
-  // Points
-  xt::xtensor<double, 2> p(
-      {static_cast<std::size_t>((n - 3) * (n - 2) * (n - 1) / 6), 3});
   const std::vector<double> x = create_interval_new(n, lattice_type, false);
 
-  int c = 0;
+  std::array<std::size_t, 2> shape = {(n - 3) * (n - 2) * (n - 1) / 6, 3};
+  std::vector<double> xb(shape[0] * shape[1]);
+  stdex::mdspan<double, stdex::extents<std::size_t, stdex::dynamic_extent, 3>>
+      p(xb.data(), shape);
 
+  int c = 0;
   for (std::size_t i = 0; i + 2 < x.size(); ++i)
   {
     const double xi = x[i];
@@ -616,15 +633,15 @@ xt::xtensor<double, 2> create_tet_centroid(int n, lattice::type lattice_type,
     }
   }
 
-  return p;
+  return {xb, shape};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> create_tet(int n, lattice::type lattice_type,
-                                  bool exterior,
-                                  lattice::simplex_method simplex_method)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+create_tet(std::size_t n, lattice::type lattice_type, bool exterior,
+           lattice::simplex_method simplex_method)
 {
   if (n == 0)
-    return {{0.25, 0.25, 0.25}};
+    return {{0.25, 0.25, 0.25}, {1, 3}};
   else if (lattice_type == lattice::type::equispaced)
     return create_tet_equispaced(n, exterior);
   else
@@ -884,6 +901,9 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
                                        lattice::type type, bool exterior,
                                        lattice::simplex_method simplex_method)
 {
+  // auto [x, shape] = create_new(celltype, n, type, exterior, simplex_method);
+  // return xt::adapt(x, std::vector<std::size_t>{x.size(), 1});
+
   switch (celltype)
   {
   case cell::type::point:
@@ -899,7 +919,10 @@ xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
     return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
   }
   case cell::type::tetrahedron:
-    return create_tet(n, type, exterior, simplex_method);
+  {
+    auto [x, shape] = create_tet(n, type, exterior, simplex_method);
+    return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
+  }
   case cell::type::quadrilateral:
   {
     auto [x, shape] = create_quad(n, type, exterior);
@@ -940,24 +963,26 @@ lattice::create_new(cell::type celltype, int n, lattice::type type,
   }
   case cell::type::triangle:
     return create_tri_new(n, type, exterior, simplex_method);
-  // case cell::type::tetrahedron:
-  //   return create_tet(n, type, exterior, simplex_method);
-  // case cell::type::quadrilateral:
-  //   return create_quad(n, type, exterior);
-  // case cell::type::hexahedron:
-  //   return create_hex(n, type, exterior);
-  // case cell::type::prism:
-  //   return create_prism(n, type, exterior, simplex_method);
-  // case cell::type::pyramid:
-  //   return create_pyramid(n, type, exterior, simplex_method);
+  case cell::type::tetrahedron:
+    return create_tet(n, type, exterior, simplex_method);
+  case cell::type::quadrilateral:
+    return create_quad(n, type, exterior);
+  case cell::type::hexahedron:
+    return create_hex(n, type, exterior);
+  case cell::type::prism:
+    return create_prism(n, type, exterior, simplex_method);
+  case cell::type::pyramid:
+    return create_pyramid(n, type, exterior, simplex_method);
   default:
-    xt::xtensor<double, 2> x
-        = create(celltype, n, type, exterior, simplex_method);
-    return {std::vector<double>(x.data(), x.data() + x.size()),
-            {
-                x.shape(0),
-                x.shape(1),
-            }};
+    throw std::runtime_error("Unsupported cell for lattice");
+
+    // xt::xtensor<double, 2> x
+    //     = create(celltype, n, type, exterior, simplex_method);
+    // return {std::vector<double>(x.data(), x.data() + x.size()),
+    //         {
+    //             x.shape(0),
+    //             x.shape(1),
+    //         }};
   }
 }
 //-----------------------------------------------------------------------------

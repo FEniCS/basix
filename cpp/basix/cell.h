@@ -7,7 +7,6 @@
 #include <array>
 #include <utility>
 #include <vector>
-#include <xtensor/xtensor.hpp>
 
 /// Information about reference cells
 
@@ -31,16 +30,11 @@ enum class type
 
 /// Cell geometry
 /// @param celltype Cell Type
-/// @return Set of vertex points of the cell. Shape is (npoints, gdim)
-xt::xtensor<double, 2> geometry(cell::type celltype);
-
-/// Cell geometry
-/// @param celltype Cell Type
 /// @return (0) Vertex point data of the cell and (1) the shape of the
 /// data array. The points are stored in row-major format and the shape
 /// is is (npoints, gdim)
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-geometry_new(cell::type celltype);
+geometry(cell::type celltype);
 
 /// Cell topology
 /// @param celltype Cell Type
@@ -65,12 +59,8 @@ sub_entity_connectivity(cell::type celltype);
 /// @param dim Dimension of sub-entity
 /// @param index Local index of sub-entity
 /// @return Set of vertex points of the sub-entity. Shape is (npoints, gdim)
-xt::xtensor<double, 2> sub_entity_geometry(cell::type celltype, int dim,
-                                           int index);
-
-/// NEW
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-sub_entity_geometry_new(cell::type celltype, int dim, int index);
+sub_entity_geometry(cell::type celltype, int dim, int index);
 
 /// Number of sub-entities of a cell by topological dimension
 /// @todo Optimise this function

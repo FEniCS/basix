@@ -46,7 +46,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const auto [gbuffer, gshape] = cell::geometry_new(celltype);
+  const auto [gbuffer, gshape] = cell::geometry(celltype);
   impl::cmdspan2_t geometry(gbuffer.data(), gshape);
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;
@@ -77,7 +77,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
       {
         // Entity coordinates
         const auto [entity_x_buffer, eshape]
-            = cell::sub_entity_geometry_new(celltype, d, e);
+            = cell::sub_entity_geometry(celltype, d, e);
         xtl::span<const double> x0(entity_x_buffer.data(), eshape[1]);
         impl::cmdspan2_t entity_x(entity_x_buffer.data(), eshape);
 

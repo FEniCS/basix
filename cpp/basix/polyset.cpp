@@ -9,7 +9,7 @@
 #include <array>
 #include <cmath>
 #include <stdexcept>
-#include <xtensor/xview.hpp>
+#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 using namespace basix::indexing;

@@ -38,7 +38,7 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
   const std::vector<std::vector<int>>& facet_topology = topology[tdim - 1];
   const std::size_t ndofs = facet_topology.size();
 
-  const auto [gdata, shape] = cell::geometry_new(celltype);
+  const auto [gdata, shape] = cell::geometry(celltype);
   impl::cmdspan2_t geometry(gdata.data(), shape);
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;

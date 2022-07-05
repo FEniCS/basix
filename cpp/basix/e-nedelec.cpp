@@ -14,7 +14,6 @@
 #include "quadrature.h"
 #include <array>
 #include <vector>
-#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 

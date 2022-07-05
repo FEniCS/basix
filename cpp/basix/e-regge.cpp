@@ -45,7 +45,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const auto [gbuffer, gshape] = cell::geometry_new(celltype);
+  const auto [gbuffer, gshape] = cell::geometry(celltype);
   impl::cmdspan2_t geometry(gbuffer.data(), gshape);
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;
@@ -76,7 +76,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
       {
         // Entity coordinates
         const auto [ebuffer, eshape]
-            = cell::sub_entity_geometry_new(celltype, d, e);
+            = cell::sub_entity_geometry(celltype, d, e);
         impl::cmdspan2_t entity_x(ebuffer.data(), eshape);
 
         // Tabulate points in lattice

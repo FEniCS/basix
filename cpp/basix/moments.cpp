@@ -70,8 +70,9 @@ map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
   for (std::size_t e = 0; e < num_entities; ++e)
   {
     // Get entity geometry
-    xt::xtensor<double, 2> entity_x
+    const auto [ebuffer, eshape]
         = cell::sub_entity_geometry(celltype0, entity_dim, e);
+    impl::cmdspan2_t entity_x(ebuffer.data(), eshape);
 
     // Axes on the cell entity
     for (std::size_t i = 0; i < entity_dim; ++i)
@@ -117,7 +118,7 @@ map_points_new(const cell::type celltype0, const cell::type celltype1,
   {
     // Get entity geometry
     const auto [entity_buffer, eshape]
-        = cell::sub_entity_geometry_new(celltype0, entity_dim, e);
+        = cell::sub_entity_geometry(celltype0, entity_dim, e);
     cmdspan2_t entity_x(entity_buffer.data(), eshape);
 
     // Axes on the cell entity
@@ -388,9 +389,12 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
   // Iterate over cell entities
   for (std::size_t e = 0; e < num_entities; ++e)
   {
-    xt::xtensor<double, 2> edge_x = cell::sub_entity_geometry(celltype, 1, e);
-    auto X0 = xt::row(edge_x, 0);
-    auto tangent = xt::row(edge_x, 1) - X0;
+    const auto [ebuffer, eshape] = cell::sub_entity_geometry(celltype, 1, e);
+    impl::cmdspan2_t edge_x(ebuffer.data(), eshape);
+
+    std::vector<double> tangent(edge_x.extent(1));
+    for (std::size_t i = 0; i < edge_x.extent(1); ++i)
+      tangent[i] = edge_x(1, i) - edge_x(0, i);
 
     // No need to normalise the tangent, as the size of this is equal to
     // the integral Jacobian
@@ -398,7 +402,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
     // Map quadrature points onto triangle edge
     for (std::size_t i = 0; i < pts.extent(0); ++i)
       for (std::size_t j = 0; j < points[e].shape(1); ++j)
-        points[e](i, j) = X0[j] + pts(i, 0) * tangent[j];
+        points[e](i, j) = edge_x(0, j) + pts(i, 0) * tangent[j];
 
     // Compute edge tangent integral moments
     for (std::size_t i = 0; i < phi.shape(1); ++i)
@@ -485,29 +489,35 @@ moments::make_normal_integral_moments(const FiniteElement& V,
     xt::xtensor<double, 2>& _points = points[e];
 
     // Map quadrature points onto facet (cell entity e)
-    xt::xtensor<double, 2> facet_x
+    const auto [ebuffer, eshape]
         = cell::sub_entity_geometry(celltype, tdim - 1, e);
-    auto x0 = xt::row(facet_x, 0);
+    impl::cmdspan2_t facet_x(ebuffer.data(), eshape);
+
     if (tdim == 2)
     {
       // No need to normalise the normal, as the size of this is equal
       // to the integral jacobian
-      auto tangent = xt::row(facet_x, 1) - x0;
+      std::array<double, 2> tangent
+          = {facet_x(1, 0) - facet_x(0, 0), facet_x(1, 1) - facet_x(0, 1)};
       for (std::size_t p = 0; p < _points.shape(0); ++p)
         for (std::size_t i = 0; i < _points.shape(1); ++i)
-          _points(p, i) = x0[i] + pts(p, 0) * tangent[i];
+          _points(p, i) = facet_x(0, i) + pts(p, 0) * tangent[i];
 
-      normal = {-tangent(1), tangent(0), 0.0};
+      normal = {-tangent[1], tangent[0], 0.0};
     }
     else if (tdim == 3)
     {
       // No need to normalise the normal, as the size of this is equal
       // to the integral Jacobian
-      auto t0 = xt::row(facet_x, 1) - x0;
-      auto t1 = xt::row(facet_x, 2) - x0;
+      std::array<double, 3> t0
+          = {facet_x(1, 0) - facet_x(0, 0), facet_x(1, 1) - facet_x(0, 1),
+             facet_x(1, 2) - facet_x(0, 2)};
+      std::array<double, 3> t1
+          = {facet_x(2, 0) - facet_x(0, 0), facet_x(2, 1) - facet_x(0, 1),
+             facet_x(2, 2) - facet_x(0, 2)};
       for (std::size_t p = 0; p < _points.shape(0); ++p)
         for (std::size_t i = 0; i < _points.shape(1); ++i)
-          _points(p, i) = x0[i] + pts(p, 0) * t0[i] + pts(p, 1) * t1[i];
+          _points(p, i) = facet_x(0, i) + pts(p, 0) * t0[i] + pts(p, 1) * t1[i];
 
       normal = basix::math::cross_new(t0, t1);
     }

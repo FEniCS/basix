@@ -31,7 +31,7 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  const auto [gdata, gshape] = cell::geometry_new(celltype);
+  const auto [gdata, gshape] = cell::geometry(celltype);
   impl::cmdspan2_t geometry(gdata.data(), gshape);
   const std::size_t deriv_count = polyset::nderivs(celltype, 1);
 
@@ -42,7 +42,7 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
   for (std::size_t e = 0; e < topology[0].size(); ++e)
   {
     const auto [entity_x, entity_shape]
-        = cell::sub_entity_geometry_new(celltype, 0, e);
+        = cell::sub_entity_geometry(celltype, 0, e);
     x[0].emplace_back(entity_x, entity_shape[0], entity_shape[1]);
     auto& _M = M[0].emplace_back(1 + tdim, 1, 1, deriv_count);
     _M(0, 0, 0, 0) = 1;
@@ -92,7 +92,6 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
-  xt::xtensor<double, 2> wcoeffs = xt::eye<double>({ndofs, ndofs});
   return FiniteElement(element::family::Hermite, celltype, degree, {},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        xview, Mview, 1, maps::type::identity, discontinuous, -1,

@@ -769,8 +769,8 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
             : (celltype == cell::type::tetrahedron ? degree + 4 : degree + 2);
 
   // Create points in interior
-  const auto [pt, shape] = lattice::create_new(
-      celltype, lattice_degree, lattice_type, false, simplex_method);
+  const auto [pt, shape] = lattice::create(celltype, lattice_degree,
+                                           lattice_type, false, simplex_method);
   x[tdim].emplace_back(pt, shape);
 
   const std::size_t num_dofs = shape[0];
@@ -1243,7 +1243,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     }
 
     const auto [pt, shape]
-        = lattice::create_new(celltype, 0, lattice_type, true, simplex_method);
+        = lattice::create(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].emplace_back(pt, shape[0], shape[1]);
     auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
     std::fill(_M.data(), _M.data() + _M.size(), 0);
@@ -1271,7 +1271,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         }
         else if (dim == tdim)
         {
-          const auto [pt, shape] = lattice::create_new(
+          const auto [pt, shape] = lattice::create(
               celltype, degree, lattice_type, false, simplex_method);
           x[dim].emplace_back(pt, shape[0], shape[1]);
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
@@ -1282,8 +1282,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const auto [pt, shape] = lattice::create_new(ct, degree, lattice_type,
-                                                       false, simplex_method);
+          const auto [pt, shape] = lattice::create(ct, degree, lattice_type,
+                                                   false, simplex_method);
           impl::cmdspan2_t lattice(pt.data(), shape);
           xtl::span<const double> x0(entity_x.data(), entity_x_shape[1]);
           impl::cmdspan2_t entity_x_view(entity_x.data(), entity_x_shape);

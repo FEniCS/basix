@@ -890,17 +890,9 @@ create_pyramid(int n, lattice::type lattice_type, bool exterior,
 }
 } // namespace
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> lattice::create(cell::type celltype, int n,
-                                       lattice::type type, bool exterior,
-                                       lattice::simplex_method simplex_method)
-{
-  auto [x, shape] = create_new(celltype, n, type, exterior, simplex_method);
-  return xt::adapt(x, std::vector<std::size_t>{shape[0], shape[1]});
-}
-//-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-lattice::create_new(cell::type celltype, int n, lattice::type type,
-                    bool exterior, lattice::simplex_method simplex_method)
+lattice::create(cell::type celltype, int n, lattice::type type, bool exterior,
+                lattice::simplex_method simplex_method)
 {
   switch (celltype)
   {

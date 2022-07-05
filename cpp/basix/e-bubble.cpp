@@ -77,8 +77,8 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   // Create points at nodes on interior
   std::size_t ndofs = 0;
   {
-    const auto [points, pshape] = lattice::create_new(
-        celltype, degree, lattice::type::equispaced, false);
+    const auto [points, pshape]
+        = lattice::create(celltype, degree, lattice::type::equispaced, false);
     ndofs = pshape[0];
     x[tdim].emplace_back(points, pshape[0], pshape[1]);
   }

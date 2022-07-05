@@ -979,7 +979,7 @@ FiniteElement basix::element::create_serendipity(
   std::array<std::vector<impl::mdarray4_t>, 4> M;
 
   // dim 0 (vertices)
-  const auto [gdata, gshape] = cell::geometry_new(celltype);
+  const auto [gdata, gshape] = cell::geometry(celltype);
   impl::cmdspan2_t geometry(gdata.data(), gshape);
   for (std::size_t i = 0; i < geometry.extent(0); ++i)
   {

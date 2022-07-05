@@ -15,7 +15,7 @@ using mdspan3_t = stdex::mdspan<double, stdex::dextents<std::size_t, 3>>;
 
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-cell::geometry_new(cell::type celltype)
+cell::geometry(cell::type celltype)
 {
   switch (celltype)
   {
@@ -315,7 +315,7 @@ int cell::topological_dimension(cell::type cell_type)
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-cell::sub_entity_geometry_new(cell::type celltype, int dim, int index)
+cell::sub_entity_geometry(cell::type celltype, int dim, int index)
 {
 
   const std::vector<std::vector<std::vector<int>>> cell_topology
@@ -327,7 +327,7 @@ cell::sub_entity_geometry_new(cell::type celltype, int dim, int index)
   if (index < 0 or index >= (int)t.size())
     throw std::runtime_error("Invalid entity index");
 
-  const auto [cell_geometry, shape] = cell::geometry_new(celltype);
+  const auto [cell_geometry, shape] = cell::geometry(celltype);
   cmdspan2_t geometry(cell_geometry.data(), shape);
 
   std::array<std::size_t, 2> subshape = {t[index].size(), geometry.extent(1)};
@@ -421,7 +421,7 @@ cell::facet_normals(cell::type cell_type)
   const std::size_t tdim = cell::topological_dimension(cell_type);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
-  const auto [xdata, xshape] = cell::geometry_new(cell_type);
+  const auto [xdata, xshape] = cell::geometry(cell_type);
 
   cmdspan2_t x(xdata.data(), xshape);
   std::array<std::size_t, 2> shape = {facets.size(), tdim};
@@ -476,7 +476,7 @@ cell::facet_normals(cell::type cell_type)
 std::vector<bool> cell::facet_orientations(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
-  const auto [_x, xshape] = cell::geometry_new(cell_type);
+  const auto [_x, xshape] = cell::geometry(cell_type);
   cmdspan2_t x(_x.data(), xshape);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];
@@ -589,7 +589,7 @@ cell::facet_jacobians(cell::type cell_type)
         "Facet jacobians not supported for this cell type.");
   }
 
-  const auto [_x, xshape] = cell::geometry_new(cell_type);
+  const auto [_x, xshape] = cell::geometry(cell_type);
   cmdspan2_t x(_x.data(), xshape);
   const std::vector<std::vector<int>> facets
       = cell::topology(cell_type)[tdim - 1];

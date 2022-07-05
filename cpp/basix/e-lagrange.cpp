@@ -1069,7 +1069,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 
   for (std::size_t v = 0; v < topology[0].size(); ++v)
   {
-    const auto [entity, shape] = cell::sub_entity_geometry_new(celltype, 0, v);
+    const auto [entity, shape] = cell::sub_entity_geometry(celltype, 0, v);
     x[0].emplace_back(entity, shape[0], shape[1]);
     M[0].emplace_back(std::vector<double>{1.0}, 1, 1, 1, 1);
   }
@@ -1121,7 +1121,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
           impl::mdarray4_t(nb_interior[d], 1, npts, 1));
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
-        auto [_entity_x, shape] = cell::sub_entity_geometry_new(celltype, d, e);
+        auto [_entity_x, shape] = cell::sub_entity_geometry(celltype, d, e);
         impl::mdspan2_t entity_x(_entity_x.data(), shape);
         xtl::span<const double> x0(entity_x.data(), shape[1]);
         {
@@ -1259,7 +1259,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
         const auto [entity_x, entity_x_shape]
-            = cell::sub_entity_geometry_new(celltype, dim, e);
+            = cell::sub_entity_geometry(celltype, dim, e);
         if (dim == 0)
         {
           x[dim].emplace_back(entity_x, entity_x_shape[0], entity_x_shape[1]);

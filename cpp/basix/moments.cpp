@@ -71,7 +71,7 @@ map_points(const cell::type celltype0, const cell::type celltype1, const P& x)
   {
     // Get entity geometry
     const auto [ebuffer, eshape]
-        = cell::sub_entity_geometry_new(celltype0, entity_dim, e);
+        = cell::sub_entity_geometry(celltype0, entity_dim, e);
     impl::cmdspan2_t entity_x(ebuffer.data(), eshape);
 
     // Axes on the cell entity
@@ -118,7 +118,7 @@ map_points_new(const cell::type celltype0, const cell::type celltype1,
   {
     // Get entity geometry
     const auto [entity_buffer, eshape]
-        = cell::sub_entity_geometry_new(celltype0, entity_dim, e);
+        = cell::sub_entity_geometry(celltype0, entity_dim, e);
     cmdspan2_t entity_x(entity_buffer.data(), eshape);
 
     // Axes on the cell entity
@@ -389,8 +389,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
   // Iterate over cell entities
   for (std::size_t e = 0; e < num_entities; ++e)
   {
-    const auto [ebuffer, eshape]
-        = cell::sub_entity_geometry_new(celltype, 1, e);
+    const auto [ebuffer, eshape] = cell::sub_entity_geometry(celltype, 1, e);
     impl::cmdspan2_t edge_x(ebuffer.data(), eshape);
 
     std::vector<double> tangent(edge_x.extent(1));
@@ -491,7 +490,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
 
     // Map quadrature points onto facet (cell entity e)
     const auto [ebuffer, eshape]
-        = cell::sub_entity_geometry_new(celltype, tdim - 1, e);
+        = cell::sub_entity_geometry(celltype, tdim - 1, e);
     impl::cmdspan2_t facet_x(ebuffer.data(), eshape);
 
     if (tdim == 2)

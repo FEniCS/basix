@@ -34,7 +34,7 @@ enum class type
 /// data array. The points are stored in row-major format and the shape
 /// is is (npoints, gdim)
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-geometry_new(cell::type celltype);
+geometry(cell::type celltype);
 
 /// Cell topology
 /// @param celltype Cell Type
@@ -60,7 +60,7 @@ sub_entity_connectivity(cell::type celltype);
 /// @param index Local index of sub-entity
 /// @return Set of vertex points of the sub-entity. Shape is (npoints, gdim)
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-sub_entity_geometry_new(cell::type celltype, int dim, int index);
+sub_entity_geometry(cell::type celltype, int dim, int index);
 
 /// Number of sub-entities of a cell by topological dimension
 /// @todo Optimise this function

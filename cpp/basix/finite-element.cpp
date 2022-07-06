@@ -943,7 +943,6 @@ FiniteElement::FiniteElement(
                                std::vector<std::size_t>{mat_data.second[0],
                                                         mat_data.second[1]});
             _etrans[et.first][i] = {p, D, m};
-            // _etrans[et.first][i] = precompute::prepare_matrix(mat);
           }
 
           {
@@ -953,9 +952,6 @@ FiniteElement::FiniteElement(
                                std::vector<std::size_t>{mat_data.second[0],
                                                         mat_data.second[1]});
             _etransT[et.first][i] = {p, D, m};
-
-            // _etransT[et.first][i] =
-            // precompute::prepare_matrix(mat_transpose);
           }
 
           xt::xtensor<double, 2> mat_inv;
@@ -979,7 +975,6 @@ FiniteElement::FiniteElement(
                                std::vector<std::size_t>{mat_data.second[0],
                                                         mat_data.second[1]});
             _etrans_inv[et.first][i] = {p, D, m};
-            // _etrans_inv[et.first][i] = precompute::prepare_matrix(mat_inv);
           }
 
           {
@@ -989,7 +984,6 @@ FiniteElement::FiniteElement(
                                std::vector<std::size_t>{mat_data.second[0],
                                                         mat_data.second[1]});
             _etrans_invT[et.first][i] = {p, D, m};
-            // _etrans_invT[et.first][i] = precompute::prepare_matrix(mat_invT);
           }
         }
       }

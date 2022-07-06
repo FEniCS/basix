@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "mdspan.hpp"
 #include <tuple>
 #include <vector>
 #include <xtensor/xtensor.hpp>
@@ -250,6 +251,13 @@ void apply_permutation_to_transpose(const xtl::span<const std::size_t>& perm,
 /// @return The precomputed representation of the matrix
 std::tuple<std::vector<std::size_t>, std::vector<double>,
            std::pair<std::vector<double>, std::array<std::size_t, 2>>>
+prepare_matrix(
+    const std::experimental::mdspan<
+        const double, std::experimental::dextents<std::size_t, 2>>& matrix);
+
+/// TODO
+std::tuple<std::vector<std::size_t>, std::vector<double>,
+           std::pair<std::vector<double>, std::array<std::size_t, 2>>>
 prepare_matrix(const xt::xtensor<double, 2>& matrix);
 
 /// Apply a (precomputed) matrix
@@ -274,8 +282,8 @@ prepare_matrix(const xt::xtensor<double, 2>& matrix);
 ///
 /// Example
 /// -------
-/// As an example, consider the matrix @f$A = @f$ `[[-1, 0, 1], [1, 1, 0], [2,
-/// 0, 2]]`. In the documentation of `prepare_matrix()`, we saw that the
+/// As an example, consider the matrix @f$A = @f$ `[[-1, 0, 1], [1, 1, 0],
+/// [2, 0, 2]]`. In the documentation of `prepare_matrix()`, we saw that the
 /// precomputed representation of this matrix is the identity permutation,
 ///  @f{align*}{ D &= \begin{bmatrix}-1\\1\\4\end{bmatrix},\\
 ///  \quad M &= \begin{bmatrix}
@@ -289,31 +297,34 @@ prepare_matrix(const xt::xtensor<double, 2>& matrix);
 /// No permutation is necessary, so first, we multiply @f$v_0@f$ by
 /// @f$D_0=-1@f$. After this, @f$v@f$ is `[-3, -1, 2]`.
 ///
-/// Next, we add @f$M_{0,i}v_i@f$ to @f$v_0@f$ for all @f$i@f$: in this case, we
-/// add @f$0\times-3 + 0\times-1 + 1\times2 = 2@f$. After this, @f$v@f$ is `[-1,
+/// Next, we add @f$M_{0,i}v_i@f$ to @f$v_0@f$ for all @f$i@f$: in this
+/// case, we add @f$0\times-3 + 0\times-1 + 1\times2 = 2@f$. After this,
+/// @f$v@f$ is `[-1, -1, 2]`.
+///
+/// Next, we multiply @f$v_1@f$ by @f$D_1=1@f$. After this, @f$v@f$ is `[-1,
 /// -1, 2]`.
 ///
-/// Next, we multiply @f$v_1@f$ by @f$D_1=1@f$. After this, @f$v@f$ is `[-1, -1,
-/// 2]`.
-///
-/// Next, we add @f$M_{1,i}v_i@f$ to @f$v_1@f$ for all @f$i@f$: in this case, we
-/// add @f$-1\times-1 + 0\times-1 + 1\times2 = 3@f$. After this, @f$v@f$ is
+/// Next, we add @f$M_{1,i}v_i@f$ to @f$v_1@f$ for all @f$i@f$: in this
+/// case, we add @f$-1\times-1 + 0\times-1 + 1\times2 = 3@f$. After this,
+/// @f$v@f$ is
 /// `[-1, 2, 2]`.
 ///
-/// Next, we multiply @f$v_2@f$ by @f$D_2=4@f$. After this, @f$v@f$ is `[-1, 2,
-/// 8]`.
+/// Next, we multiply @f$v_2@f$ by @f$D_2=4@f$. After this, @f$v@f$ is `[-1,
+/// 2, 8]`.
 ///
-/// Next, we add @f$M_{2,i}v_i@f$ to @f$v_2@f$ for all @f$i@f$: in this case, we
-/// add @f$-2\times-1 + 0\times2 + 0\times8 = 2@f$. After this, @f$v@f$ is `[-1,
-/// 2, 10]`. This final value of @f$v@f$ is what the result of @f$Av@f$
+/// Next, we add @f$M_{2,i}v_i@f$ to @f$v_2@f$ for all @f$i@f$: in this
+/// case, we add @f$-2\times-1 + 0\times2 + 0\times8 = 2@f$. After this,
+/// @f$v@f$ is `[-1, 2, 10]`. This final value of @f$v@f$ is what the result
+/// of @f$Av@f$
 ///
-/// @note This function is designed to be called at runtime, so its performance
-/// is critical.
+/// @note This function is designed to be called at runtime, so its
+/// performance is critical.
 ///
 /// @param[in] matrix A matrix in precomputed form (as returned by
 /// `prepare_matrix()`)
 /// @param[in,out] data The data to apply the permutation to
-/// @param[in] offset The position in the data to start applying the permutation
+/// @param[in] offset The position in the data to start applying the
+/// permutation
 /// @param[in] block_size The block size of the data
 template <typename T, typename E>
 void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,

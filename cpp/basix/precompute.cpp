@@ -31,10 +31,10 @@ precompute::prepare_permutation(const xtl::span<const std::size_t>& perm)
 //-----------------------------------------------------------------------------
 std::tuple<std::vector<std::size_t>, std::vector<double>,
            std::pair<std::vector<double>, std::array<std::size_t, 2>>>
-precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
+precompute::prepare_matrix(const cmdspan2_t& matrix)
 {
   using T = double;
-  const std::size_t dim = matrix.shape(0);
+  const std::size_t dim = matrix.extent(0);
   std::vector<std::size_t> perm(dim);
   mdarray2_t permuted_matrix(dim, dim);
   std::vector<T> diag(dim);
@@ -50,7 +50,7 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
                         != std::next(perm.begin(), i);
       if (!used)
       {
-        for (std::size_t k = 0; k < matrix.shape(0); ++k)
+        for (std::size_t k = 0; k < matrix.extent(0); ++k)
           permuted_matrix(k, i) = matrix(k, j);
 
         mdarray2_t mat(i + 1, i + 1);
@@ -78,7 +78,7 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
     if (std::abs(max_eval) < 1.0e-9)
       throw std::runtime_error("Singular matrix");
 
-    for (std::size_t k = 0; k < matrix.shape(0); ++k)
+    for (std::size_t k = 0; k < matrix.extent(0); ++k)
       permuted_matrix(k, i) = matrix(k, col);
 
     perm[i] = col;
@@ -134,5 +134,15 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
           std::move(diag),
           {std::move(prepared_matrix_b),
            {prepared_matrix.extent(0), prepared_matrix.extent(1)}}};
+}
+//-----------------------------------------------------------------------------
+std::tuple<std::vector<std::size_t>, std::vector<double>,
+           std::pair<std::vector<double>, std::array<std::size_t, 2>>>
+precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
+{
+  std::experimental::mdspan<const double,
+                            std::experimental::dextents<std::size_t, 2>>
+      m(matrix.data(), matrix.shape(0), matrix.shape(1));
+  return prepare_matrix(m);
 }
 //-----------------------------------------------------------------------------

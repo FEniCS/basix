@@ -62,7 +62,7 @@ namespace basix::precompute
 /// @param[in] perm A permutation
 /// @return The precomputed representation of the permutation
 std::vector<std::size_t>
-prepare_permutation(const std::vector<std::size_t>& perm);
+prepare_permutation(const xtl::span<const std::size_t>& perm);
 
 /// Apply a (precomputed) permutation
 ///
@@ -116,7 +116,7 @@ prepare_permutation(const std::vector<std::size_t>& perm);
 /// @param[in] offset The position in the data to start applying the permutation
 /// @param[in] block_size The block size of the data
 template <typename E>
-void apply_permutation(const std::vector<std::size_t>& perm,
+void apply_permutation(const xtl::span<const std::size_t>& perm,
                        const xtl::span<E>& data, std::size_t offset = 0,
                        std::size_t block_size = 1)
 {
@@ -137,7 +137,7 @@ void apply_permutation(const std::vector<std::size_t>& perm,
 ///
 /// see `apply_permutation()`.
 template <typename E>
-void apply_permutation_to_transpose(const std::vector<std::size_t>& perm,
+void apply_permutation_to_transpose(const xtl::span<const std::size_t>& perm,
                                     const xtl::span<E>& data,
                                     std::size_t offset = 0,
                                     std::size_t block_size = 1)

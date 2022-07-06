@@ -936,9 +936,27 @@ FiniteElement::FiniteElement(
         {
           const xt::xtensor<double, 2>& mat
               = xt::view(et.second, i, xt::all(), xt::all());
-          _etrans[et.first][i] = precompute::prepare_matrix(mat);
-          auto mat_transpose = xt::transpose(mat);
-          _etransT[et.first][i] = precompute::prepare_matrix(mat_transpose);
+
+          {
+            auto [p, D, mat_data] = precompute::prepare_matrix(mat);
+            auto m = xt::adapt(mat_data.first,
+                               std::vector<std::size_t>{mat_data.second[0],
+                                                        mat_data.second[1]});
+            _etrans[et.first][i] = {p, D, m};
+            // _etrans[et.first][i] = precompute::prepare_matrix(mat);
+          }
+
+          {
+            auto mat_transpose = xt::transpose(mat);
+            auto [p, D, mat_data] = precompute::prepare_matrix(mat_transpose);
+            auto m = xt::adapt(mat_data.first,
+                               std::vector<std::size_t>{mat_data.second[0],
+                                                        mat_data.second[1]});
+            _etransT[et.first][i] = {p, D, m};
+
+            // _etransT[et.first][i] =
+            // precompute::prepare_matrix(mat_transpose);
+          }
 
           xt::xtensor<double, 2> mat_inv;
           // Rotation of a face: this is in the only base transformation such
@@ -955,9 +973,24 @@ FiniteElement::FiniteElement(
           else
             mat_inv = mat;
 
-          _etrans_inv[et.first][i] = precompute::prepare_matrix(mat_inv);
-          auto mat_invT = xt::transpose(mat_inv);
-          _etrans_invT[et.first][i] = precompute::prepare_matrix(mat_invT);
+          {
+            auto [p, D, mat_data] = precompute::prepare_matrix(mat_inv);
+            auto m = xt::adapt(mat_data.first,
+                               std::vector<std::size_t>{mat_data.second[0],
+                                                        mat_data.second[1]});
+            _etrans_inv[et.first][i] = {p, D, m};
+            // _etrans_inv[et.first][i] = precompute::prepare_matrix(mat_inv);
+          }
+
+          {
+            auto mat_invT = xt::transpose(mat_inv);
+            auto [p, D, mat_data] = precompute::prepare_matrix(mat_invT);
+            auto m = xt::adapt(mat_data.first,
+                               std::vector<std::size_t>{mat_data.second[0],
+                                                        mat_data.second[1]});
+            _etrans_invT[et.first][i] = {p, D, m};
+            // _etrans_invT[et.first][i] = precompute::prepare_matrix(mat_invT);
+          }
         }
       }
     }

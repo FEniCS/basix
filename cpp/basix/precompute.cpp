@@ -26,7 +26,9 @@ precompute::prepare_permutation(const xtl::span<const std::size_t>& perm)
 }
 //-----------------------------------------------------------------------------
 std::tuple<std::vector<std::size_t>, std::vector<double>,
-           xt::xtensor<double, 2>>
+           std::pair<std::vector<double>, std::array<std::size_t, 2>>>
+// std::tuple<std::vector<std::size_t>, std::vector<double>,
+//            xt::xtensor<double, 2>>
 precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
 {
   using T = double;
@@ -124,7 +126,13 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
     }
   }
 
-  return {prepare_permutation(perm), std::move(diag),
-          std::move(prepared_matrix)};
+  // return {prepare_permutation(perm), std::move(diag),
+  //         std::move(prepared_matrix)};
+
+  std::array<std::size_t, 2> shape
+      = {prepared_matrix.shape(0), prepared_matrix.shape(1)};
+  std::vector<double> _matrix(prepared_matrix.data(),
+                              prepared_matrix.data() + prepared_matrix.size());
+  return {prepare_permutation(perm), std::move(diag), {_matrix, shape}};
 }
 //-----------------------------------------------------------------------------

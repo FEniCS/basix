@@ -45,11 +45,26 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
                         != std::next(perm.begin(), i);
       if (!used)
       {
-        xt::col(permuted_matrix, i) = xt::col(matrix, j);
-        xt::xtensor<double, 2> mat = xt::view(
-            permuted_matrix, xt::range(0, i + 1), xt::range(0, i + 1));
-        xt::xtensor<double, 2> mat_t = xt::transpose(mat);
+        for (std::size_t k = 0; k < matrix.shape(0); ++k)
+          permuted_matrix(k, i) = matrix(k, j);
+
+        xt::xtensor<double, 2> mat({i + 1, i + 1});
+        for (std::size_t k0 = 0; k0 < mat.shape(0); ++k0)
+          for (std::size_t k1 = 0; k1 < mat.shape(1); ++k1)
+            mat(k0, k1) = permuted_matrix(k0, k1);
+
+        // permuted_matrix, xt::range(0, i + 1), xt::range(0, i + 1));
+        // xt::xtensor<double, 2> mat = xt::view(
+        //     permuted_matrix, xt::range(0, i + 1), xt::range(0, i + 1));
+
+        xt::xtensor<double, 2> mat_t({mat.shape(1), mat.shape(0)});
+        for (std::size_t k0 = 0; k0 < mat.shape(0); ++k0)
+          for (std::size_t k1 = 0; k1 < mat.shape(1); ++k1)
+            mat_t(k1, k0) = mat(k0, k1);
+
+        // xt::xtensor<double, 2> mat_t = xt::transpose(mat);
         xt::xtensor<double, 2> mat2 = math::dot(mat, mat_t);
+
         auto [evals, evecs] = math::eigh(mat2);
         if (double lambda = std::abs(evals.front()); lambda > max_eval)
         {
@@ -61,25 +76,29 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
     if (xt::allclose(max_eval, 0))
       throw std::runtime_error("Singular matrix");
 
-    xt::col(permuted_matrix, i) = xt::col(matrix, col);
+    for (std::size_t k = 0; k < matrix.shape(0); ++k)
+      permuted_matrix(k, i) = matrix(k, col);
+
     perm[i] = col;
   }
 
   // Create the precomputed representation of the matrix
   xt::xtensor<T, 2> prepared_matrix({dim, dim});
-  xt::xtensor<T, 2> A, B;
   for (std::size_t i = 0; i < dim; ++i)
   {
     diag[i] = permuted_matrix(i, i);
     prepared_matrix(i, i) = 0;
     if (i < dim - 1)
     {
-      xt::view(prepared_matrix, i, xt::range(i + 1, dim))
-          = xt::view(permuted_matrix, i, xt::range(i + 1, dim));
+      for (std::size_t k = i + 1; k < dim; ++k)
+        prepared_matrix(i, k) = permuted_matrix(i, k);
+      // xt::view(prepared_matrix, i, xt::range(i + 1, dim))
+      //     = xt::view(permuted_matrix, i, xt::range(i + 1, dim));
     }
 
     if (i > 0)
     {
+      xt::xtensor<T, 2> A, B;
 
       A.assign(xt::view(permuted_matrix, xt::range(0, i), xt::range(0, i)));
       B.assign(xt::view(permuted_matrix, xt::range(i, i + 1), xt::range(0, i)));

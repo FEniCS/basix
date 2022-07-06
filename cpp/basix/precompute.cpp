@@ -5,7 +5,6 @@
 #include "precompute.h"
 #include "math.h"
 #include <numeric>
-#include <xtensor/xadapt.hpp>
 
 using namespace basix;
 
@@ -31,7 +30,9 @@ precompute::prepare_permutation(const xtl::span<const std::size_t>& perm)
 //-----------------------------------------------------------------------------
 std::tuple<std::vector<std::size_t>, std::vector<double>,
            std::pair<std::vector<double>, std::array<std::size_t, 2>>>
-precompute::prepare_matrix(const cmdspan2_t& matrix)
+precompute::prepare_matrix(
+    const std::experimental::mdspan<
+        const double, std::experimental::dextents<std::size_t, 2>>& matrix)
 {
   using T = double;
   const std::size_t dim = matrix.extent(0);

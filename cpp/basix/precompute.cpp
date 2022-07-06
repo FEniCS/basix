@@ -75,7 +75,7 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
       }
     }
 
-    if (xt::allclose(max_eval, 0))
+    if (std::abs(max_eval) < 1.0e-9)
       throw std::runtime_error("Singular matrix");
 
     for (std::size_t k = 0; k < matrix.shape(0); ++k)
@@ -99,18 +99,18 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
 
     if (i > 0)
     {
-      xt::xtensor<T, 2> A({i, i});
-      for (std::size_t k0 = 0; k0 < A.shape(0); ++k0)
-        for (std::size_t k1 = 0; k1 < A.shape(1); ++k1)
-          A(k0, k1) = permuted_matrix(k0, k1);
+      std::vector<double> Ab(i * i);
+      mdspan2_t A(Ab.data(), i, i);
+      for (std::size_t k0 = 0; k0 < A.extent(1); ++k0)
+        for (std::size_t k1 = 0; k1 < A.extent(0); ++k1)
+          A(k1, k0) = permuted_matrix(k0, k1);
 
-      xt::xtensor<T, 2> B({1, i});
-      for (std::size_t k1 = 0; k1 < B.shape(1); ++k1)
-        B(0, k1) = permuted_matrix(i, k1);
+      std::vector<double> Bb(i);
+      mdspan2_t B(Bb.data(), i, 1);
+      for (std::size_t k1 = 0; k1 < B.extent(0); ++k1)
+        B(k1, 0) = permuted_matrix(i, k1);
 
-      std::vector<double> v(i);
-      auto _v = xt::adapt(v, std::vector<std::size_t>{1, i});
-      _v = math::solve(xt::transpose(A), xt::transpose(B));
+      const std::vector<double> v = math::solve(A, B);
 
       for (std::size_t k1 = 0; k1 < i; ++k1)
         prepared_matrix(i, k1) = v[k1];

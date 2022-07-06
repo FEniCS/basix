@@ -6,9 +6,13 @@
 #include "math.h"
 #include <numeric>
 #include <xtensor/xadapt.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
+
+namespace stdex = std::experimental;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
 
 //-----------------------------------------------------------------------------
 std::vector<std::size_t>
@@ -27,14 +31,12 @@ precompute::prepare_permutation(const xtl::span<const std::size_t>& perm)
 //-----------------------------------------------------------------------------
 std::tuple<std::vector<std::size_t>, std::vector<double>,
            std::pair<std::vector<double>, std::array<std::size_t, 2>>>
-// std::tuple<std::vector<std::size_t>, std::vector<double>,
-//            xt::xtensor<double, 2>>
 precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
 {
   using T = double;
   const std::size_t dim = matrix.shape(0);
   std::vector<std::size_t> perm(dim);
-  xt::xtensor<T, 2> permuted_matrix({dim, dim});
+  mdarray2_t permuted_matrix(dim, dim);
   std::vector<T> diag(dim);
 
   // Permute the matrix so that all the top left blocks are invertible
@@ -51,19 +53,20 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
         for (std::size_t k = 0; k < matrix.shape(0); ++k)
           permuted_matrix(k, i) = matrix(k, j);
 
-        xt::xtensor<double, 2> mat({i + 1, i + 1});
-        for (std::size_t k0 = 0; k0 < mat.shape(0); ++k0)
-          for (std::size_t k1 = 0; k1 < mat.shape(1); ++k1)
+        mdarray2_t mat(i + 1, i + 1);
+        for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
+          for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
             mat(k0, k1) = permuted_matrix(k0, k1);
 
-        xt::xtensor<double, 2> mat_t({mat.shape(1), mat.shape(0)});
-        for (std::size_t k0 = 0; k0 < mat.shape(0); ++k0)
-          for (std::size_t k1 = 0; k1 < mat.shape(1); ++k1)
+        mdarray2_t mat_t(mat.extent(1), mat.extent(0));
+        for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
+          for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
             mat_t(k1, k0) = mat(k0, k1);
 
-        xt::xtensor<double, 2> mat2 = math::dot(mat, mat_t);
+        auto [mat2_data, shape] = math::dot_new(mat, mat_t);
+        cmdspan2_t mat2(mat2_data.data(), shape);
 
-        auto [evals, evecs] = math::eigh(mat2);
+        auto [evals, _] = math::eigh(mat2, mat2.extent(0));
         if (double lambda = std::abs(evals.front()); lambda > max_eval)
         {
           max_eval = lambda;
@@ -82,7 +85,8 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
   }
 
   // Create the precomputed representation of the matrix
-  xt::xtensor<T, 2> prepared_matrix({dim, dim});
+  std::vector<double> prepared_matrix_b(dim * dim);
+  mdspan2_t prepared_matrix(prepared_matrix_b.data(), dim, dim);
   for (std::size_t i = 0; i < dim; ++i)
   {
     diag[i] = permuted_matrix(i, i);
@@ -126,13 +130,9 @@ precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
     }
   }
 
-  // return {prepare_permutation(perm), std::move(diag),
-  //         std::move(prepared_matrix)};
-
-  std::array<std::size_t, 2> shape
-      = {prepared_matrix.shape(0), prepared_matrix.shape(1)};
-  std::vector<double> _matrix(prepared_matrix.data(),
-                              prepared_matrix.data() + prepared_matrix.size());
-  return {prepare_permutation(perm), std::move(diag), {_matrix, shape}};
+  return {prepare_permutation(perm),
+          std::move(diag),
+          {std::move(prepared_matrix_b),
+           {prepared_matrix.extent(0), prepared_matrix.extent(1)}}};
 }
 //-----------------------------------------------------------------------------

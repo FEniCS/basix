@@ -248,8 +248,6 @@ void apply_permutation_to_transpose(const xtl::span<const std::size_t>& perm,
 ///
 /// @param[in] matrix A matrix
 /// @return The precomputed representation of the matrix
-// std::tuple<std::vector<std::size_t>, std::vector<double>,
-//            xt::xtensor<double, 2>>
 std::tuple<std::vector<std::size_t>, std::vector<double>,
            std::pair<std::vector<double>, std::array<std::size_t, 2>>>
 prepare_matrix(const xt::xtensor<double, 2>& matrix);

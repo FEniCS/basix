@@ -114,26 +114,6 @@ using mdspan4_t = impl::cmdspan4_t;
 /// @param[in] tdim The topological dimension of the cell the element is
 /// defined on
 /// @param[in] value_size The value size of the element
-/// @return Versions of x and M that define a discontinuous version of the
-/// element (with the same shapes as x and M)
-std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
-make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-                   const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-                   int tdim, int value_size);
-
-/// Creates a version of the interpolation points, interpolation
-/// matrices and entity transformation that represent a discontinuous
-/// version of the element. This discontinuous version will have the
-/// same DOFs but they will all be associated with the interior of the
-/// reference cell.
-/// @param[in] x Interpolation points. Indices are (tdim, entity index,
-/// point index, dim)
-/// @param[in] M The interpolation matrices. Indices are (tdim, entity
-/// index, dof, vs, point_index, derivative)
-/// @param[in] tdim The topological dimension of the cell the element is
-/// defined on
-/// @param[in] value_size The value size of the element
 /// @return (xdata, xshape, Mdata, Mshape), where the x and M data are
 /// for  a discontinuous version of the element (with the same shapes as
 /// x and M)

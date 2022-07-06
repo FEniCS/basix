@@ -136,13 +136,3 @@ precompute::prepare_matrix(const cmdspan2_t& matrix)
            {prepared_matrix.extent(0), prepared_matrix.extent(1)}}};
 }
 //-----------------------------------------------------------------------------
-std::tuple<std::vector<std::size_t>, std::vector<double>,
-           std::pair<std::vector<double>, std::array<std::size_t, 2>>>
-precompute::prepare_matrix(const xt::xtensor<double, 2>& matrix)
-{
-  std::experimental::mdspan<const double,
-                            std::experimental::dextents<std::size_t, 2>>
-      m(matrix.data(), matrix.shape(0), matrix.shape(1));
-  return prepare_matrix(m);
-}
-//-----------------------------------------------------------------------------

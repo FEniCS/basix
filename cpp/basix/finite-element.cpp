@@ -394,9 +394,11 @@ basix::FiniteElement basix::create_element(element::family family,
   return create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
+namespace
+{
 std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 4>>, 4>>
-basix::element::make_discontinuous(
+make_discontinuous_old(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M, int tdim,
     int value_size)
@@ -453,6 +455,7 @@ basix::element::make_discontinuous(
 
   return {x_out, M_out};
 }
+} // namespace
 //-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
@@ -480,7 +483,7 @@ basix::element::make_discontinuous(
   };
 
   auto [_x, _M] = to_xtensor(x, M);
-  std::tie(_x, _M) = make_discontinuous(_x, _M, tdim, value_size);
+  std::tie(_x, _M) = make_discontinuous_old(_x, _M, tdim, value_size);
 
   std::array<std::vector<std::vector<double>>, 4> x_new;
   std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
@@ -908,6 +911,7 @@ FiniteElement::FiniteElement(
               }
             }
           }
+
           // Factorise the permutations
           _eperm[et.first][i] = precompute::prepare_permutation(perm);
           _eperm_rev[et.first][i] = precompute::prepare_permutation(rev_perm);
@@ -934,8 +938,12 @@ FiniteElement::FiniteElement(
       {
         if (et.second.shape(1) > 0)
         {
-          const xt::xtensor<double, 2>& mat
-              = xt::view(et.second, i, xt::all(), xt::all());
+          std::vector<double> mat_b(et.second.shape(1) * et.second.shape(2));
+          stdex::mdspan<double, stdex::dextents<std::size_t, 2>> mat(
+              mat_b.data(), et.second.shape(1), et.second.shape(2));
+          for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
+            for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
+              mat(k0, k1) = et.second(i, k0, k1);
 
           {
             auto [p, D, mat_data] = precompute::prepare_matrix(mat);
@@ -946,31 +954,53 @@ FiniteElement::FiniteElement(
           }
 
           {
-            auto mat_transpose = xt::transpose(mat);
-            auto [p, D, mat_data] = precompute::prepare_matrix(mat_transpose);
+            std::vector<double> matT_b(et.second.shape(1) * et.second.shape(2));
+            stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matT(
+                matT_b.data(), et.second.shape(2), et.second.shape(1));
+            for (std::size_t k0 = 0; k0 < matT.extent(0); ++k0)
+              for (std::size_t k1 = 0; k1 < matT.extent(1); ++k1)
+                matT(k0, k1) = et.second(i, k1, k0);
+
+            auto [p, D, mat_data] = precompute::prepare_matrix(matT);
             auto m = xt::adapt(mat_data.first,
                                std::vector<std::size_t>{mat_data.second[0],
                                                         mat_data.second[1]});
             _etransT[et.first][i] = {p, D, m};
           }
 
-          xt::xtensor<double, 2> mat_inv;
-          // Rotation of a face: this is in the only base transformation such
-          // that M^{-1} != M.
+          std::vector<double> matinv_b;
+          stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matinv_new;
+
+          // Rotation of a face: this is in the only base transformation
+          // such that M^{-1} != M.
           // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
           // For a triangular face, M^3 = Id, so M^{-1} = M^2.
           if (et.first == cell::type::quadrilateral and i == 0)
           {
-            auto mat_int = math::dot(mat, mat);
-            mat_inv = math::dot(mat_int, mat);
+            auto [matint, mshape] = math::dot_new(mat, mat);
+            stdex::mdspan<double, stdex::dextents<std::size_t, 2>> mat_int(
+                matint.data(), mshape);
+            std::array<std::size_t, 2> shape;
+            std::tie(matinv_b, shape) = math::dot_new(mat_int, mat);
+            matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>(
+                matinv_b.data(), shape);
           }
           else if (et.first == cell::type::triangle and i == 0)
-            mat_inv = math::dot(mat, mat);
+          {
+            std::array<std::size_t, 2> shape;
+            std::tie(matinv_b, shape) = math::dot_new(mat, mat);
+            matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>(
+                matinv_b.data(), shape);
+          }
           else
-            mat_inv = mat;
+          {
+            matinv_b.assign(mat_b.begin(), mat_b.end());
+            matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>(
+                matinv_b.data(), mat.extents());
+          }
 
           {
-            auto [p, D, mat_data] = precompute::prepare_matrix(mat_inv);
+            auto [p, D, mat_data] = precompute::prepare_matrix(matinv_new);
             auto m = xt::adapt(mat_data.first,
                                std::vector<std::size_t>{mat_data.second[0],
                                                         mat_data.second[1]});
@@ -978,8 +1008,16 @@ FiniteElement::FiniteElement(
           }
 
           {
-            auto mat_invT = xt::transpose(mat_inv);
-            auto [p, D, mat_data] = precompute::prepare_matrix(mat_invT);
+            std::vector<double> matinvT_b(matinv_new.extent(0)
+                                          * matinv_new.extent(1));
+            stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matinvT_new(
+                matinvT_b.data(), matinv_new.extent(1), matinv_new.extent(0));
+
+            for (std::size_t k0 = 0; k0 < matinvT_new.extent(0); ++k0)
+              for (std::size_t k1 = 0; k1 < matinvT_new.extent(1); ++k1)
+                matinvT_new(k0, k1) = matinv_new(k1, k0);
+
+            auto [p, D, mat_data] = precompute::prepare_matrix(matinvT_new);
             auto m = xt::adapt(mat_data.first,
                                std::vector<std::size_t>{mat_data.second[0],
                                                         mat_data.second[1]});

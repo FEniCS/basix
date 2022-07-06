@@ -255,11 +255,6 @@ prepare_matrix(
     const std::experimental::mdspan<
         const double, std::experimental::dextents<std::size_t, 2>>& matrix);
 
-/// TODO
-std::tuple<std::vector<std::size_t>, std::vector<double>,
-           std::pair<std::vector<double>, std::array<std::size_t, 2>>>
-prepare_matrix(const xt::xtensor<double, 2>& matrix);
-
 /// Apply a (precomputed) matrix
 ///
 /// This uses the representation returned by `prepare_matrix()` to apply a

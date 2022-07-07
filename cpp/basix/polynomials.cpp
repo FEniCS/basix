@@ -79,12 +79,12 @@ xt::xtensor<double, 2> tabulate_bernstein(cell::type celltype, int d,
 
     powers[0] -= 1;
     powers[1] += 1;
-    for (std::size_t i = 1; powers[0] < 0 and i + 1 < lambdas.shape(0); ++i)
+    for (std::size_t i = 1; powers[0] < 0 and i + 1 < powers.size(); ++i)
     {
       powers[i] = 0;
       powers[i + 1] += 1;
       powers[0] = d;
-      for (std::size_t j = 1; j < lambdas.shape(0); ++j)
+      for (std::size_t j = 1; j < powers.size(); ++j)
         powers[0] -= powers[j];
     }
 

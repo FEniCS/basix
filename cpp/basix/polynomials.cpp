@@ -22,7 +22,7 @@ int single_choose(int n, int k)
   return out;
 }
 //-----------------------------------------------------------------------------
-int choose(int n, std::vector<int> powers)
+int choose(int n, const std::vector<int>& powers)
 {
   int out = 1;
   for (std::size_t i = 0; i < powers.size(); ++i)
@@ -38,50 +38,57 @@ xt::xtensor<double, 2> tabulate_bernstein(cell::type celltype, int d,
 {
   if (celltype != cell::type::interval and celltype != cell::type::triangle
       and celltype != cell::type::tetrahedron)
+  {
     throw std::runtime_error("not implemented yet");
+  }
 
   // TODO: implement a better Bernstein evaluation algorithm here
 
-  const std::size_t pdim = static_cast<std::size_t>(
-      dim(polynomials::type::bernstein, celltype, d));
-  const std::size_t npts = x.shape(0);
-  const std::size_t nlambs = x.shape(1) + 1;
+  const std::size_t pdim = dim(polynomials::type::bernstein, celltype, d);
 
-  xt::xtensor<double, 2> values({pdim, npts});
+  xt::xtensor<double, 2> values({pdim, x.shape(0)});
 
-  xt::xtensor<double, 2> lambdas({nlambs, x.shape(0)});
-  xt::row(lambdas, 0).fill(1.);
+  xt::xtensor<double, 2> lambdas({x.shape(1) + 1, x.shape(0)});
+  for (std::size_t j = 0; j < lambdas.shape(1); ++j)
+    lambdas(0, j) = 1.0;
   for (std::size_t i = 0; i < x.shape(1); ++i)
   {
-    xt::row(lambdas, 0) -= xt::col(x, i);
-    xt::row(lambdas, i + 1) = xt::col(x, i);
+    for (std::size_t j = 0; j < x.shape(0); ++j)
+    {
+      lambdas(0, j) -= x(j, i);
+      lambdas(i + 1, j) = x(j, i);
+    }
   }
 
-  std::vector<int> powers(nlambs);
+  std::vector<int> powers(lambdas.shape(0), 0);
   powers[0] = d;
-  for (std::size_t j = 1; j < nlambs; ++j)
-    powers[j] = 0;
 
   int n = 0;
   while (powers[0] >= 0)
   {
-    auto poly = xt::row(values, n++);
-    poly.fill(1.);
-    poly *= choose(d, powers);
-    for (std::size_t l = 0; l < nlambs; ++l)
+    {
+      const int p = choose(d, powers);
+      for (std::size_t j = 0; j < values.shape(1); ++j)
+        values(n, j) = p;
+    }
+
+    for (std::size_t l = 0; l < lambdas.shape(0); ++l)
       for (int a = 0; a < powers[l]; ++a)
-        poly *= xt::row(lambdas, l);
+        for (std::size_t j = 0; j < values.shape(1); ++j)
+          values(n, j) *= lambdas(l, j);
 
     powers[0] -= 1;
     powers[1] += 1;
-    for (std::size_t i = 1; powers[0] < 0 and i + 1 < nlambs; ++i)
+    for (std::size_t i = 1; powers[0] < 0 and i + 1 < lambdas.shape(0); ++i)
     {
       powers[i] = 0;
       powers[i + 1] += 1;
       powers[0] = d;
-      for (std::size_t j = 1; j < nlambs; ++j)
+      for (std::size_t j = 1; j < lambdas.shape(0); ++j)
         powers[0] -= powers[j];
     }
+
+    ++n;
   }
 
   return values;

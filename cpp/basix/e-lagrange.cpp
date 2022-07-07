@@ -1196,7 +1196,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   if (variant == lagrange_variant::unset)
   {
     if (degree < 3)
-      variant = lagrange_variant::equispaced;
+      variant = element::lagrange_variant::gll_warped;
     else
     {
       throw std::runtime_error(

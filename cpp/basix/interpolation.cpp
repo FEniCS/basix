@@ -9,6 +9,9 @@
 
 using namespace basix;
 
+namespace stdex = std::experimental;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+
 //----------------------------------------------------------------------------
 xt::xtensor<double, 2>
 basix::compute_interpolation_operator(const FiniteElement& element_from,
@@ -21,7 +24,8 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
   }
 
   const xt::xtensor<double, 2>& points = element_to.points();
-  const xt::xtensor<double, 4> tab = element_from.tabulate(0, points);
+  const xt::xtensor<double, 4> tab = element_from.tabulate(
+      0, cmdspan2_t(points.data(), points.shape(0), points.shape(1)));
   const xt::xtensor<double, 2>& i_m = element_to.interpolation_matrix();
 
   const std::size_t dim_to = element_to.dim();

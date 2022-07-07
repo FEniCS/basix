@@ -252,7 +252,6 @@ void apply_permutation_to_transpose(const xtl::span<const std::size_t>& perm,
 /// - A permutation (precomputed as in `prepare_permutation()`);
 /// - the vector @f$D@f$;
 /// - the matrix @f$M@f$.
-
 std::tuple<std::vector<std::size_t>, std::vector<double>,
            std::pair<std::vector<double>, std::array<std::size_t, 2>>>
 prepare_matrix(
@@ -319,8 +318,10 @@ prepare_matrix(
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// @param[in] matrix A matrix in precomputed form (as returned by
-/// `prepare_matrix()`)
+/// @param[in] v_size_t A permutaion, as computed by
+/// precompute::prepare_matrix
+/// @param[in] v_t The vector created by precompute::prepare_matrix
+/// @param[in] M The vector created by precompute::prepare_matrix
 /// @param[in,out] data The data to apply the permutation to
 /// @param[in] offset The position in the data to start applying the
 /// permutation

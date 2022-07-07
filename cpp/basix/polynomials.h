@@ -11,7 +11,7 @@
 /// Polynomials
 namespace basix::polynomials
 {
-/// An enum defining the variants of a Lagrange space that can be created
+/// Variants of a Lagrange space that can be created
 enum class type
 {
   legendre = 0,
@@ -31,7 +31,6 @@ xt::xtensor<double, 2> tabulate(polynomials::type polytype, cell::type celltype,
                                 int d, const xt::xtensor<double, 2>& x);
 
 /// @brief Tabulate a set of polynomials.
-///
 /// @param[in] polytype Polynomial type
 /// @param[in] celltype Cell type
 /// @param[in] d Polynomial degree
@@ -45,7 +44,7 @@ tabulate(polynomials::type polytype, cell::type celltype, int d,
                                    std::experimental::dextents<std::size_t, 2>>
              x);
 
-/// Dimension of a polynomial space
+/// @brief Dimension of a polynomial space.
 /// @param[in] polytype The polynomial type
 /// @param[in] cell The cell type
 /// @param[in] d The polynomial degree

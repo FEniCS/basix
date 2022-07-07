@@ -247,7 +247,12 @@ void apply_permutation_to_transpose(const xtl::span<const std::size_t>& perm,
 /// `apply_matrix()`.
 ///
 /// @param[in] matrix A matrix
-/// @return The precomputed representation of the matrix
+/// @return The three parts of a precomputed representation of the matrix.
+/// These are (as described above):
+/// - A permutation (precomputed as in `prepare_permutation()`);
+/// - the vector @f$D@f$;
+/// - the matrix @f$M@f$.
+
 std::tuple<std::vector<std::size_t>, std::vector<double>,
            std::pair<std::vector<double>, std::array<std::size_t, 2>>>
 prepare_matrix(

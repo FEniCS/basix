@@ -597,9 +597,9 @@ Interface to the Basix C++ library.
       [](const FiniteElement& element_from, const FiniteElement& element_to)
           -> const py::array_t<double, py::array::c_style>
       {
-        xt::xtensor<double, 2> out
+        auto [out, shape]
             = basix::compute_interpolation_operator(element_from, element_to);
-        return py::array_t<double>(out.shape(), out.data());
+        return py::array_t<double>(shape, out.data());
       },
       basix::docstring::compute_interpolation_operator.c_str());
 

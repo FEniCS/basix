@@ -382,31 +382,31 @@ xt::xtensor<double, 2> compute_transformation(
 
   // Pull back
   xt::xtensor<double, 3> pulled_data(tabulated_data.shape());
-
   xt::xtensor<double, 2> temp_data(
       {pulled_data.shape(1), pulled_data.shape(2)});
   for (std::size_t i = 0; i < npts; ++i)
   {
     pull_back(map_type, temp_data,
               xt::view(tabulated_data, i, xt::all(), xt::all()), J, detJ, K);
-    auto pview = xt::view(pulled_data, i, xt::all(), xt::all());
-    pview.assign(temp_data);
+    for (std::size_t k0 = 0; k0 < temp_data.shape(0); ++k0)
+      for (std::size_t k1 = 0; k1 < temp_data.shape(1); ++k1)
+        pulled_data(i, k0, k1) = temp_data(k0, k1);
   }
 
   // Interpolate to calculate coefficients
-  xt::xtensor<double, 3> dof_data = xt::view(
-      pulled_data, xt::all(), xt::range(dofstart, dofstart + ndofs), xt::all());
   xt::xtensor<double, 2> transform = xt::zeros<double>({ndofs, ndofs});
   for (std::size_t d = 0; d < imat.shape(3); ++d)
   {
     for (std::size_t i = 0; i < vs; ++i)
     {
-      for (std::size_t k0 = 0; k0 < imat.shape(0); ++k0)
-        for (std::size_t k1 = 0; k1 < dof_data.shape(1); ++k1)
+      for (std::size_t k0 = 0; k0 < transform.shape(1); ++k0)
+        for (std::size_t k1 = 0; k1 < transform.shape(0); ++k1)
           for (std::size_t k2 = 0; k2 < imat.shape(2); ++k2)
-            transform(k1, k0) += imat(k0, i, k2, d) * dof_data(k2, k1, i);
+            transform(k1, k0)
+                += imat(k0, i, k2, d) * pulled_data(k2, k1 + dofstart, i);
     }
   }
+
   return transform;
 }
 //-----------------------------------------------------------------------------
@@ -433,11 +433,15 @@ doftransforms::compute_entity_transformations(
     for (std::size_t i = 0; i < item.second.size(); ++i)
     {
       auto [map, J, detJ, K] = item.second[i];
-      auto t = xt::view(transform, i, xt::all(), xt::all());
-      auto t2 = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, map,
-                                       degree, tdim, entity, vs, map_type);
-      t.assign(t2);
+      xt::xtensor<double, 2> t2
+          = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, map,
+                                   degree, tdim, entity, vs, map_type);
+
+      for (std::size_t k0 = 0; k0 < transform.shape(1); ++k0)
+        for (std::size_t k1 = 0; k1 < transform.shape(2); ++k1)
+          transform(i, k0, k1) = t2(k0, k1);
     }
+
     out[item.first] = transform;
   }
 

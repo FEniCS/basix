@@ -1065,7 +1065,11 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
                              xt::xtensor<double, 4>& basis_data) const
 {
   if (x.shape(1) != _cell_tdim)
-    throw std::runtime_error("Point dim does not match element dim.");
+  {
+    throw std::runtime_error("Point dim (" + std::to_string(x.shape(1))
+                             + ") does not match element dim ("
+                             + std::to_string(_cell_tdim) + ").");
+  }
 
   const int psize = polyset::dim(_cell_type, _highest_degree);
   xt::xtensor<double, 3> basis(

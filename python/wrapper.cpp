@@ -221,9 +221,9 @@ Interface to the Basix C++ library.
           {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
-            std::array<std::size_t, 2> shape
-                = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
-            auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
+            std::experimental::mdspan<
+                const double, std::experimental::dextents<std::size_t, 2>>
+                _x(x.data(), x.shape(0), x.shape(1));
             auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
           },

@@ -473,6 +473,31 @@ public:
 
   /// Compute basis values and derivatives at set of points.
   ///
+  /// @note The version of `FiniteElement::tabulate` with the basis data
+  /// as an out argument should be preferred for repeated call where
+  /// performance is critical
+  ///
+  /// @param[in] nd The order of derivatives, up to and including, to
+  /// compute. Use 0 for the basis functions only.
+  /// @param[in] x The points at which to compute the basis functions (row-major storage).
+  /// @param[in] shape The shape `(number of points, geometric
+  /// dimension)` of the `x` array.
+  /// @return The basis functions (and derivatives). The shape is
+  /// (derivative, point, basis fn index, value index).
+  /// - The first index is the derivative, with higher derivatives are
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
+  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+  /// (0,2), (3,0)... The function basix::indexing::idx can be used to find the
+  /// appropriate derivative.
+  /// - The second index is the point index
+  /// - The third index is the basis function index
+  /// - The fourth index is the basis function component. Its has size
+  /// one for scalar basis functions.
+  xt::xtensor<double, 4> tabulate(int nd, const xtl::span<const double>& x,
+                                  std::array<std::size_t, 2> shape) const;
+
+  /// Compute basis values and derivatives at set of points.
+  ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
   ///

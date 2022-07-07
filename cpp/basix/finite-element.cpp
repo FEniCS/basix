@@ -1058,6 +1058,13 @@ xt::xtensor<double, 4> FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
   return data;
 }
 //-----------------------------------------------------------------------------
+xt::xtensor<double, 4>
+FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
+                        std::array<std::size_t, 2> shape) const
+{
+  return tabulate(nd, cmdspan2_t(x.data(), shape));
+}
+//-----------------------------------------------------------------------------
 void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
                              xt::xtensor<double, 4>& basis_data) const
 {

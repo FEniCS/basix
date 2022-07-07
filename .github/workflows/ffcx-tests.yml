@@ -48,7 +48,6 @@ jobs:
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
-          ref: mscroggs/VectorElement
       - name: Get FFCx source (specified branch)
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v3

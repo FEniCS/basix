@@ -1080,8 +1080,8 @@ FiniteElement basix::element::create_serendipity(
     wshape = {w.extent(0), w.extent(1)};
   }
 
-  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -1268,8 +1268,8 @@ FiniteElement basix::element::create_serendipity_div(
     wshape = {w.extent(0), w.extent(1)};
   }
 
-  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -1392,8 +1392,8 @@ FiniteElement basix::element::create_serendipity_curl(
     }
   }
 
-  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)

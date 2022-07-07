@@ -26,9 +26,11 @@
 
 using namespace basix;
 namespace stdex = std::experimental;
-using mdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using mdspan4_t = stdex::mdspan<double, stdex::dextents<std::size_t, 4>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
-using mdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 namespace
 {
@@ -60,7 +62,7 @@ xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
 }
 //-----------------------------------------------------------------------------
 std::array<std::vector<xt::xtensor<double, 2>>, 4>
-to_xtensor(const std::array<std::vector<mdspan2_t>, 4>& x)
+to_xtensor(const std::array<std::vector<cmdspan2_t>, 4>& x)
 {
   std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
   for (std::size_t i = 0; i < x.size(); ++i)
@@ -71,7 +73,7 @@ to_xtensor(const std::array<std::vector<mdspan2_t>, 4>& x)
 }
 //----------------------------------------------------------------------------
 std::array<std::vector<xt::xtensor<double, 4>>, 4>
-to_xtensor(const std::array<std::vector<mdspan4_t>, 4>& M)
+to_xtensor(const std::array<std::vector<cmdspan4_t>, 4>& M)
 {
   std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
   for (std::size_t i = 0; i < M.size(); ++i)
@@ -178,7 +180,7 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
         std::array<std::size_t, 3> shape;
         std::tie(Pb, shape) = polyset::tabulate(
             cell_type, degree, nderivs,
-            mdspan2_t(x_e.data(), x_e.shape(0), x_e.shape(1)));
+            cmdspan2_t(x_e.data(), x_e.shape(0), x_e.shape(1)));
         P = cmdspan3_t(Pb.data(), shape);
       }
 
@@ -223,16 +225,12 @@ basix::FiniteElement basix::create_element(element::family family,
   // P family
   case element::family::P:
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_lagrange(cell, degree, lvariant, discontinuous);
   case element::family::RT:
   {
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -246,9 +244,7 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::N1E:
   {
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -302,9 +298,7 @@ basix::FiniteElement basix::create_element(element::family family,
           "Cannot pass a Lagrange variant to this element.");
     }
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_regge(cell, degree, discontinuous);
   case element::family::HHJ:
     if (lvariant != element::lagrange_variant::unset)
@@ -313,9 +307,7 @@ basix::FiniteElement basix::create_element(element::family family,
           "Cannot pass a Lagrange variant to this element.");
     }
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_hhj(cell, degree, discontinuous);
   // Other elements
   case element::family::CR:
@@ -325,9 +317,7 @@ basix::FiniteElement basix::create_element(element::family family,
           "Cannot pass a Lagrange variant to this element.");
     }
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_cr(cell, degree, discontinuous);
   case element::family::bubble:
     if (lvariant != element::lagrange_variant::unset)
@@ -336,9 +326,7 @@ basix::FiniteElement basix::create_element(element::family family,
           "Cannot pass a Lagrange variant to this element.");
     }
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_bubble(cell, degree, discontinuous);
   case element::family::Hermite:
     return element::create_hermite(cell, degree, discontinuous);
@@ -401,14 +389,13 @@ basix::FiniteElement basix::create_element(element::family family,
   return create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
-namespace
-{
-std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
-make_discontinuous_old(
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    std::size_t tdim, std::size_t value_size)
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+element::make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
+                            const std::array<std::vector<cmdspan4_t>, 4>& M,
+                            std::size_t tdim, std::size_t value_size)
 {
   std::size_t npoints = 0;
   std::size_t Mshape0 = 0;
@@ -416,24 +403,35 @@ make_discontinuous_old(
   {
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
-      npoints += x[i][j].shape(0);
-      Mshape0 += M[i][j].shape(0);
+      npoints += x[i][j].extent(0);
+      Mshape0 += M[i][j].extent(0);
     }
   }
-  const std::size_t nderivs = M[0][0].shape(3);
+  const std::size_t nderivs = M[0][0].extent(3);
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M_out;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
+  std::array<std::vector<std::vector<double>>, 4> x_data;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshapes;
+  std::array<std::vector<std::vector<double>>, 4> M_data;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshapes;
   for (std::size_t i = 0; i < tdim; ++i)
   {
-    x_out[i] = std::vector(x[i].size(), xt::xtensor<double, 2>({0, tdim}));
-    M_out[i] = std::vector(M[i].size(),
-                           xt::xtensor<double, 4>({0, value_size, 0, nderivs}));
+    xshapes[i] = std::vector(x[i].size(), std::array<std::size_t, 2>{0, tdim});
+    x_data[i].resize(x[i].size());
+
+    Mshapes[i] = std::vector(
+        M[i].size(), std::array<std::size_t, 4>{0, value_size, 0, nderivs});
+    M_data[i].resize(M[i].size());
   }
 
-  xt::xtensor<double, 2> new_x = xt::zeros<double>({npoints, tdim});
-  xt::xtensor<double, 4> new_M
-      = xt::zeros<double>({Mshape0, value_size, npoints, nderivs});
+  std::array<std::size_t, 2> xshape = {npoints, tdim};
+  std::vector<double> xb(xshape[0] * xshape[1]);
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> new_x(xb.data(),
+                                                               xshape);
+
+  std::array<std::size_t, 4> Mshape = {Mshape0, value_size, npoints, nderivs};
+  std::vector<double> Mb(Mshape[0] * Mshape[1] * Mshape[2] * Mshape[3]);
+  stdex::mdspan<double, stdex::dextents<std::size_t, 4>> new_M(Mb.data(),
+                                                               Mshape);
 
   int x_n = 0;
   int M_n = 0;
@@ -441,81 +439,28 @@ make_discontinuous_old(
   {
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
-      for (std::size_t k0 = 0; k0 < x[i][j].shape(0); ++k0)
-        for (std::size_t k1 = 0; k1 < x[i][j].shape(1); ++k1)
+      for (std::size_t k0 = 0; k0 < x[i][j].extent(0); ++k0)
+        for (std::size_t k1 = 0; k1 < x[i][j].extent(1); ++k1)
           new_x(k0 + x_n, k1) = x[i][j](k0, k1);
 
-      for (std::size_t k0 = 0; k0 < M[i][j].shape(0); ++k0)
-        for (std::size_t k1 = 0; k1 < M[i][j].shape(1); ++k1)
-          for (std::size_t k2 = 0; k2 < M[i][j].shape(2); ++k2)
-            for (std::size_t k3 = 0; k3 < M[i][j].shape(3); ++k3)
+      for (std::size_t k0 = 0; k0 < M[i][j].extent(0); ++k0)
+        for (std::size_t k1 = 0; k1 < M[i][j].extent(1); ++k1)
+          for (std::size_t k2 = 0; k2 < M[i][j].extent(2); ++k2)
+            for (std::size_t k3 = 0; k3 < M[i][j].extent(3); ++k3)
               new_M(k0 + M_n, k1, k2 + x_n, k3) = M[i][j](k0, k1, k2, k3);
 
-      x_n += x[i][j].shape(0);
-      M_n += M[i][j].shape(0);
+      x_n += x[i][j].extent(0);
+      M_n += M[i][j].extent(0);
     }
   }
 
-  x_out[tdim].push_back(new_x);
-  M_out[tdim].push_back(new_M);
+  x_data[tdim].push_back(xb);
+  xshapes[tdim].push_back(xshape);
+  M_data[tdim].push_back(Mb);
+  Mshapes[tdim].push_back(Mshape);
 
-  return {x_out, M_out};
-}
-} // namespace
-//-----------------------------------------------------------------------------
-std::tuple<std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
-           std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
-basix::element::make_discontinuous(
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int tdim, int value_size)
-{
-
-  auto to_xtensor = [](auto& x, auto& M)
-      -> std::pair<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-                   std::array<std::vector<xt::xtensor<double, 4>>, 4>>
-  {
-    std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-    std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
-    for (std::size_t i = 0; i < x.size(); ++i)
-      for (std::size_t j = 0; j < x[i].size(); ++j)
-        _x[i].push_back(mdspan_to_xtensor2(x[i][j]));
-    for (std::size_t i = 0; i < M.size(); ++i)
-      for (std::size_t j = 0; j < M[i].size(); ++j)
-        _M[i].push_back(mdspan_to_xtensor4(M[i][j]));
-
-    return {std::move(_x), std::move(_M)};
-  };
-
-  auto [_x, _M] = to_xtensor(x, M);
-  std::tie(_x, _M) = make_discontinuous_old(_x, _M, tdim, value_size);
-
-  std::array<std::vector<std::vector<double>>, 4> x_new;
-  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
-  for (std::size_t i = 0; i < _x.size(); ++i)
-  {
-    for (std::size_t j = 0; j < _x[i].size(); ++j)
-    {
-      xshape[i].push_back({_x[i][j].shape(0), _x[i][j].shape(1)});
-      x_new[i].emplace_back(_x[i][j].data(), _x[i][j].data() + _x[i][j].size());
-    }
-  }
-
-  std::array<std::vector<std::vector<double>>, 4> M_new;
-  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
-  for (std::size_t i = 0; i < _M.size(); ++i)
-  {
-    for (std::size_t j = 0; j < _M[i].size(); ++j)
-    {
-      Mshape[i].push_back({_M[i][j].shape(0), _M[i][j].shape(1),
-                           _M[i][j].shape(2), _M[i][j].shape(3)});
-      M_new[i].emplace_back(_M[i][j].data(), _M[i][j].data() + _M[i][j].size());
-    }
-  }
-
-  return {std::move(x_new), std::move(xshape), std::move(M_new),
-          std::move(Mshape)};
+  return {std::move(x_data), std::move(xshapes), std::move(M_data),
+          std::move(Mshapes)};
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
@@ -618,9 +563,9 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree, element::lagrange_variant lvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -652,9 +597,9 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree, element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -686,9 +631,9 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -1052,9 +997,9 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree, element::lagrange_variant lvariant,
     element::dpc_variant dvariant,

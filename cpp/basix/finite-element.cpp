@@ -407,8 +407,8 @@ std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
            std::array<std::vector<xt::xtensor<double, 4>>, 4>>
 make_discontinuous_old(
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M, int tdim,
-    int value_size)
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+    std::size_t tdim, std::size_t value_size)
 {
   std::size_t npoints = 0;
   std::size_t Mshape0 = 0;
@@ -424,22 +424,16 @@ make_discontinuous_old(
 
   std::array<std::vector<xt::xtensor<double, 4>>, 4> M_out;
   std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
-  for (int i = 0; i < tdim; ++i)
+  for (std::size_t i = 0; i < tdim; ++i)
   {
-    x_out[i] = std::vector<xt::xtensor<double, 2>>(
-        x[i].size(),
-        xt::xtensor<double, 2>({0, static_cast<std::size_t>(tdim)}));
-    M_out[i] = std::vector<xt::xtensor<double, 4>>(
-        M[i].size(),
-        xt::xtensor<double, 4>(
-            {0, static_cast<std::size_t>(value_size), 0, nderivs}));
+    x_out[i] = std::vector(x[i].size(), xt::xtensor<double, 2>({0, tdim}));
+    M_out[i] = std::vector(M[i].size(),
+                           xt::xtensor<double, 4>({0, value_size, 0, nderivs}));
   }
 
-  xt::xtensor<double, 2> new_x
-      = xt::zeros<double>({npoints, static_cast<std::size_t>(tdim)});
-
-  xt::xtensor<double, 4> new_M = xt::zeros<double>(
-      {Mshape0, static_cast<std::size_t>(value_size), npoints, nderivs});
+  xt::xtensor<double, 2> new_x = xt::zeros<double>({npoints, tdim});
+  xt::xtensor<double, 4> new_M
+      = xt::zeros<double>({Mshape0, value_size, npoints, nderivs});
 
   int x_n = 0;
   int M_n = 0;
@@ -447,11 +441,16 @@ make_discontinuous_old(
   {
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
-      xt::view(new_x, xt::range(x_n, x_n + x[i][j].shape(0)), xt::all())
-          .assign(x[i][j]);
-      xt::view(new_M, xt::range(M_n, M_n + M[i][j].shape(0)), xt::all(),
-               xt::range(x_n, x_n + x[i][j].shape(0)), xt::all())
-          .assign(M[i][j]);
+      for (std::size_t k0 = 0; k0 < x[i][j].shape(0); ++k0)
+        for (std::size_t k1 = 0; k1 < x[i][j].shape(1); ++k1)
+          new_x(k0 + x_n, k1) = x[i][j](k0, k1);
+
+      for (std::size_t k0 = 0; k0 < M[i][j].shape(0); ++k0)
+        for (std::size_t k1 = 0; k1 < M[i][j].shape(1); ++k1)
+          for (std::size_t k2 = 0; k2 < M[i][j].shape(2); ++k2)
+            for (std::size_t k3 = 0; k3 < M[i][j].shape(3); ++k3)
+              new_M(k0 + M_n, k1, k2 + x_n, k3) = M[i][j](k0, k1, k2, k3);
+
       x_n += x[i][j].shape(0);
       M_n += M[i][j].shape(0);
     }

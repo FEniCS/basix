@@ -7,6 +7,7 @@
 #include "cell.h"
 #include "element-families.h"
 #include "maps.h"
+#include "mdspan.hpp"
 #include "precompute.h"
 #include <array>
 #include <functional>
@@ -21,8 +22,85 @@
 namespace basix
 {
 
+namespace impl
+{
+using mdspan2_t
+    = std::experimental::mdspan<double,
+                                std::experimental::dextents<std::size_t, 2>>;
+using mdspan4_t
+    = std::experimental::mdspan<double,
+                                std::experimental::dextents<std::size_t, 4>>;
+using cmdspan2_t
+    = std::experimental::mdspan<const double,
+                                std::experimental::dextents<std::size_t, 2>>;
+using cmdspan3_t
+    = std::experimental::mdspan<const double,
+                                std::experimental::dextents<std::size_t, 3>>;
+using cmdspan4_t
+    = std::experimental::mdspan<const double,
+                                std::experimental::dextents<std::size_t, 4>>;
+
+using mdarray2_t
+    = std::experimental::mdarray<double,
+                                 std::experimental::dextents<std::size_t, 2>>;
+using mdarray4_t
+    = std::experimental::mdarray<double,
+                                 std::experimental::dextents<std::size_t, 4>>;
+
+inline std::array<std::vector<cmdspan2_t>, 4>
+to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
+{
+  std::array<std::vector<cmdspan2_t>, 4> x1;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      x1[i].emplace_back(x[i][j].data(), x[i][j].extents());
+
+  return x1;
+}
+
+inline std::array<std::vector<cmdspan4_t>, 4>
+to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
+{
+  std::array<std::vector<cmdspan4_t>, 4> M1;
+  for (std::size_t i = 0; i < M.size(); ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      M1[i].emplace_back(M[i][j].data(), M[i][j].extents());
+
+  return M1;
+}
+
+inline std::array<std::vector<cmdspan2_t>, 4>
+to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& x,
+          const std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
+{
+  std::array<std::vector<cmdspan2_t>, 4> x1;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      x1[i].push_back(cmdspan2_t(x[i][j].data(), shape[i][j]));
+
+  return x1;
+}
+
+inline std::array<std::vector<cmdspan4_t>, 4>
+to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
+          const std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
+{
+  std::array<std::vector<cmdspan4_t>, 4> M1;
+  for (std::size_t i = 0; i < M.size(); ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      M1[i].push_back(cmdspan4_t(M[i][j].data(), shape[i][j]));
+
+  return M1;
+}
+
+} // namespace impl
+
 namespace element
 {
+/// Typedef for mdspan
+using mdspan2_t = impl::cmdspan2_t;
+/// Typedef for mdspan
+using mdspan4_t = impl::cmdspan4_t;
 
 /// Creates a version of the interpolation points, interpolation
 /// matrices and entity transformation that represent a discontinuous
@@ -44,6 +122,29 @@ make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
                    int tdim, int value_size);
 
+/// Creates a version of the interpolation points, interpolation
+/// matrices and entity transformation that represent a discontinuous
+/// version of the element. This discontinuous version will have the
+/// same DOFs but they will all be associated with the interior of the
+/// reference cell.
+/// @param[in] x Interpolation points. Indices are (tdim, entity index,
+/// point index, dim)
+/// @param[in] M The interpolation matrices. Indices are (tdim, entity
+/// index, dof, vs, point_index, derivative)
+/// @param[in] tdim The topological dimension of the cell the element is
+/// defined on
+/// @param[in] value_size The value size of the element
+/// @return (xdata, xshape, Mdata, Mshape), where the x and M data are
+/// for  a discontinuous version of the element (with the same shapes as
+/// x and M)
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+make_discontinuous(const std::array<std::vector<mdspan2_t>, 4>& x,
+                   const std::array<std::vector<mdspan4_t>, 4>& M, int tdim,
+                   int value_size);
+
 } // namespace element
 
 /// A finite element
@@ -53,6 +154,13 @@ make_discontinuous(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
 /// type, when tabulating.
 class FiniteElement
 {
+  // namespace stdex = std::experimental;
+  using mdspan2_t
+      = std::experimental::mdspan<const double,
+                                  std::experimental::dextents<std::size_t, 2>>;
+  using mdspan4_t
+      = std::experimental::mdspan<const double,
+                                  std::experimental::dextents<std::size_t, 4>>;
 
 public:
   /// A finite element
@@ -236,6 +344,19 @@ public:
           tensor_factors
       = {});
 
+  /// TODO
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
+      const std::array<std::vector<mdspan2_t>, 4>& x,
+      const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree, element::lagrange_variant lvariant,
+      element::dpc_variant dvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
   /// Overload
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
@@ -246,6 +367,18 @@ public:
       int interpolation_nderivs, maps::type map_type, bool discontinuous,
       int highest_complete_degree, int highest_degree,
       element::lagrange_variant lvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// TODO
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
+      const std::array<std::vector<mdspan2_t>, 4>& x,
+      const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree, element::lagrange_variant lvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {});
@@ -264,6 +397,18 @@ public:
           tensor_factors
       = {});
 
+  /// TODO
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
+      const std::array<std::vector<mdspan2_t>, 4>& x,
+      const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree, element::dpc_variant dvariant,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
   /// Overload
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
@@ -273,6 +418,18 @@ public:
       const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
       int interpolation_nderivs, maps::type map_type, bool discontinuous,
       int highest_complete_degree, int highest_degree,
+      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+          tensor_factors
+      = {});
+
+  /// TODO
+  FiniteElement(
+      element::family family, cell::type cell_type, int degree,
+      const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
+      const std::array<std::vector<mdspan2_t>, 4>& x,
+      const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+      maps::type map_type, bool discontinuous, int highest_complete_degree,
+      int highest_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {});
@@ -333,6 +490,29 @@ public:
   /// one for scalar basis functions.
   xt::xtensor<double, 4> tabulate(int nd,
                                   const xt::xtensor<double, 2>& x) const;
+
+  /// Compute basis values and derivatives at set of points.
+  ///
+  /// @note The version of `FiniteElement::tabulate` with the basis data
+  /// as an out argument should be preferred for repeated call where
+  /// performance is critical
+  ///
+  /// @param[in] nd The order of derivatives, up to and including, to
+  /// compute. Use 0 for the basis functions only.
+  /// @param[in] x The points at which to compute the basis functions.
+  /// The shape of x is (number of points, geometric dimension).
+  /// @return The basis functions (and derivatives). The shape is
+  /// (derivative, point, basis fn index, value index).
+  /// - The first index is the derivative, with higher derivatives are
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
+  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+  /// (0,2), (3,0)... The function basix::indexing::idx can be used to find the
+  /// appropriate derivative.
+  /// - The second index is the point index
+  /// - The third index is the basis function index
+  /// - The fourth index is the basis function component. Its has size
+  /// one for scalar basis functions.
+  xt::xtensor<double, 4> tabulate(int nd, impl::cmdspan2_t x) const;
 
   /// Compute basis values and derivatives at set of points.
   ///
@@ -900,7 +1080,6 @@ public:
   /// the `FiniteElement()` constructor.
   /// @return The coefficient matrix. Shape is (ndofs, ndofs)
   const xt::xtensor<double, 2>& coefficient_matrix() const;
-
 
   /// Indicates whether or not this element has a tensor product
   /// representation.

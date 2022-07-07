@@ -33,7 +33,7 @@ std::map<cell::type, xt::xtensor<double, 3>> compute_entity_transformations(
     cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
+    const xt::xtensor<double, 2>& coeffs, int degree, std::size_t vs,
     maps::type map_type);
 
 } // namespace basix::doftransforms

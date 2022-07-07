@@ -6,7 +6,9 @@
 
 #include "cell.h"
 #include "mdspan.hpp"
-#include <xtensor/xtensor.hpp>
+#include <array>
+#include <utility>
+#include <vector>
 
 /// Polynomials
 namespace basix::polynomials
@@ -17,18 +19,6 @@ enum class type
   legendre = 0,
   bernstein = 1,
 };
-
-/// @brief Tabulate a set of polynomials.
-///
-/// @param[in] polytype Polynomial type
-/// @param[in] celltype Cell type
-/// @param[in] d Polynomial degree
-/// @param[in] x Points at which to evaluate the basis. The shape is
-/// (number of points, geometric dimension).
-/// @return Polynomial sets, for each derivative, tabulated at points.
-/// The shape is `(basis index, number of points)`.
-xt::xtensor<double, 2> tabulate(polynomials::type polytype, cell::type celltype,
-                                int d, const xt::xtensor<double, 2>& x);
 
 /// @brief Tabulate a set of polynomials.
 /// @param[in] polytype Polynomial type

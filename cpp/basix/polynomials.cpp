@@ -7,7 +7,6 @@
 #include "polyset.h"
 #include <utility>
 #include <vector>
-#include <xtensor/xadapt.hpp>
 
 using namespace basix;
 namespace stdex = std::experimental;
@@ -107,15 +106,6 @@ tabulate_bernstein(cell::type celltype, int d, cmdspan2_t x)
 //-----------------------------------------------------------------------------
 } // namespace
 
-//-----------------------------------------------------------------------------
-xt::xtensor<double, 2> polynomials::tabulate(polynomials::type polytype,
-                                             cell::type celltype, int d,
-                                             const xt::xtensor<double, 2>& x)
-{
-  auto [values, shape] = polynomials::tabulate(
-      polytype, celltype, d, cmdspan2_t(x.data(), x.shape(0), x.shape(1)));
-  return xt::adapt(values, std::vector<std::size_t>{shape[0], shape[1]});
-}
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 polynomials::tabulate(

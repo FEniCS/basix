@@ -11,6 +11,13 @@
 #include <xtl/xspan.hpp>
 
 using namespace basix;
+
+namespace stdex = std::experimental;
+using mdarray2_t = stdex::mdarray<double, stdex ::dextents<std::size_t, 2>>;
+// using mdspan2_t = stdex::mdspan<double, stdex ::dextents<std::size_t, 2>>;
+using cmdspan2_t
+    = stdex::mdspan<const double, stdex ::dextents<std::size_t, 2>>;
+
 typedef std::map<
     cell::type,
     std::vector<std::tuple<
@@ -347,25 +354,32 @@ xt::xtensor<double, 2> compute_transformation(
   xt::xtensor<double, 2> mapped_pts(pts.shape());
   for (std::size_t p = 0; p < mapped_pts.shape(0); ++p)
   {
-    // auto mp = map_point(xt::row(pts, p));
     auto mp = map_point(xtl::span(pts.data() + p * pts.shape(1), pts.shape(1)));
     for (std::size_t k = 0; k < mapped_pts.shape(1); ++k)
       mapped_pts(p, k) = mp[k];
   }
 
-  xt::xtensor<double, 2> polyset_vals
-      = xt::view(polyset::tabulate(cell_type, degree, 0, mapped_pts), 0,
-                 xt::all(), xt::all());
+  auto [polyset_vals_b, polyset_shape] = polyset::tabulate(
+      cell_type, degree, 0,
+      cmdspan2_t(mapped_pts.data(), mapped_pts.shape(0), mapped_pts.shape(1)));
+  assert(polyset_shape[0] == 1);
+  cmdspan2_t polyset_vals(polyset_vals_b.data(), polyset_shape[1],
+                          polyset_shape[2]);
+
   xt::xtensor<double, 3> tabulated_data(
       {npts, total_ndofs, static_cast<std::size_t>(vs)});
 
   for (int j = 0; j < vs; ++j)
   {
-    auto data_view = xt::view(tabulated_data, xt::all(), xt::all(), j);
-    xt::xtensor<double, 2> C
-        = xt::view(coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-    auto result = xt::transpose(math::dot(C, polyset_vals));
-    data_view.assign(result);
+    mdarray2_t result(polyset_vals.extent(1), coeffs.shape(0));
+    for (std::size_t k0 = 0; k0 < coeffs.shape(0); ++k0)
+      for (std::size_t k1 = 0; k1 < polyset_vals.extent(1); ++k1)
+        for (std::size_t k2 = 0; k2 < polyset_vals.extent(0); ++k2)
+          result(k1, k0) += coeffs(k0, k2 + psize * j) * polyset_vals(k2, k1);
+
+    for (std::size_t k0 = 0; k0 < result.extent(0); ++k0)
+      for (std::size_t k1 = 0; k1 < result.extent(1); ++k1)
+        tabulated_data(k0, k1, j) = result(k0, k1);
   }
 
   // Pull back

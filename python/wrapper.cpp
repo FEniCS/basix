@@ -610,11 +610,11 @@ Interface to the Basix C++ library.
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        std::array<std::size_t, 2> shape
-            = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
-        auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
-        xt::xtensor<double, 3> P = polyset::tabulate(celltype, d, n, _x);
-        return py::array_t<double>(P.shape(), P.data());
+        std::experimental::mdspan<const double,
+                                  std::experimental::dextents<std::size_t, 2>>
+            _x(x.data(), x.shape(0), x.shape(1));
+        auto [p, shape] = polyset::tabulate(celltype, d, n, _x);
+        return py::array_t<double>(shape, p.data());
       },
       basix::docstring::tabulate_polynomial_set.c_str());
 

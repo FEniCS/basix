@@ -27,6 +27,7 @@
 using namespace basix;
 namespace stdex = std::experimental;
 using mdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
 using mdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 namespace
@@ -170,20 +171,26 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
     {
       // Evaluate polynomial basis at x[d]
       const xt::xtensor<double, 2>& x_e = x[d][e];
-      xt::xtensor<double, 3> P;
-
-      if (x_e.shape(0) != 0)
-        P = polyset::tabulate(cell_type, degree, nderivs, x_e);
+      cmdspan3_t P;
+      std::vector<double> Pb;
+      if (x_e.shape(0) > 0)
+      {
+        std::array<std::size_t, 3> shape;
+        std::tie(Pb, shape) = polyset::tabulate(
+            cell_type, degree, nderivs,
+            mdspan2_t(x_e.data(), x_e.shape(0), x_e.shape(1)));
+        P = cmdspan3_t(Pb.data(), shape);
+      }
 
       // Me: [dof, vs, point, deriv]
       const xt::xtensor<double, 4>& Me = M[d][e];
 
       // Compute dual matrix contribution
-      for (std::size_t i = 0; i < Me.shape(0); ++i)        // Dof index
-        for (std::size_t j = 0; j < Me.shape(1); ++j)      // Value index
-          for (std::size_t k = 0; k < Me.shape(2); ++k)    // Point
-            for (std::size_t l = 0; l < Me.shape(3); ++l)  // Derivative
-              for (std::size_t m = 0; m < P.shape(1); ++m) // Polynomial term
+      for (std::size_t i = 0; i < Me.shape(0); ++i)         // Dof index
+        for (std::size_t j = 0; j < Me.shape(1); ++j)       // Value index
+          for (std::size_t k = 0; k < Me.shape(2); ++k)     // Point
+            for (std::size_t l = 0; l < Me.shape(3); ++l)   // Derivative
+              for (std::size_t m = 0; m < P.extent(1); ++m) // Polynomial term
                 D(j * pdim + m, dof_index + i) += Me(i, j, k, l) * P(l, m, k);
 
       dof_index += M[d][e].shape(0);

@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 #include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
 /// Basix: FEniCS runtime basis evaluation library
@@ -1400,9 +1399,6 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
             xtl::span(v_size_t), xtl::span(v_t),
             impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
             data, dofstart, block_size);
-
-        // precompute::apply_matrix(_etrans.at(cell::type::interval)[0], data,
-        //                          dofstart, block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1423,9 +1419,6 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix(_etrans.at(_cell_subentity_types[2][f])[1],
-          //                          data, dofstart, block_size);
         }
 
         // Rotate a face
@@ -1439,9 +1432,6 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix(_etrans.at(_cell_subentity_types[2][f])[0],
-          //                          data, dofstart, block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1478,9 +1468,6 @@ void FiniteElement::apply_transpose_dof_transformation(
             xtl::span(v_size_t), xtl::span(v_t),
             impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
             data, dofstart, block_size);
-
-        // precompute::apply_matrix(_etransT.at(cell::type::interval)[0], data,
-        //                          dofstart, block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1501,9 +1488,6 @@ void FiniteElement::apply_transpose_dof_transformation(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix(_etransT.at(_cell_subentity_types[2][f])[0],
-          //                          data, dofstart, block_size);
         }
 
         // Reflect a face
@@ -1517,8 +1501,6 @@ void FiniteElement::apply_transpose_dof_transformation(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-          // precompute::apply_matrix(_etransT.at(_cell_subentity_types[2][f])[1],
-          //                          data, dofstart, block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1555,9 +1537,6 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
             xtl::span(v_size_t), xtl::span(v_t),
             impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
             data, dofstart, block_size);
-        // precompute::apply_matrix(_etrans_invT.at(cell::type::interval)[0],
-        // data,
-        //                          dofstart, block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1578,10 +1557,6 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix(
-          //     _etrans_invT.at(_cell_subentity_types[2][f])[1], data,
-          //     dofstart, block_size);
         }
 
         // Rotate a face
@@ -1595,10 +1570,6 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix(
-          //     _etrans_invT.at(_cell_subentity_types[2][f])[0], data,
-          //     dofstart, block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1635,9 +1606,6 @@ void FiniteElement::apply_inverse_dof_transformation(
             xtl::span(v_size_t), xtl::span(v_t),
             impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
             data, dofstart, block_size);
-        // precompute::apply_matrix(_etrans_inv.at(cell::type::interval)[0],
-        // data,
-        //                          dofstart, block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1658,10 +1626,6 @@ void FiniteElement::apply_inverse_dof_transformation(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix(
-          //     _etrans_inv.at(_cell_subentity_types[2][f])[0], data, dofstart,
-          //     block_size);
         }
 
         // Reflect a face
@@ -1675,10 +1639,6 @@ void FiniteElement::apply_inverse_dof_transformation(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix(
-          //     _etrans_inv.at(_cell_subentity_types[2][f])[1], data, dofstart,
-          //     block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1748,10 +1708,6 @@ void FiniteElement::apply_dof_transformation_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix_to_transpose(
-          //     _etrans.at(_cell_subentity_types[2][f])[0], data, dofstart,
-          //     block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1788,9 +1744,6 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
             xtl::span(v_size_t), xtl::span(v_t),
             impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
             data, dofstart, block_size);
-        // precompute::apply_matrix_to_transpose(
-        //     _etrans_invT.at(cell::type::interval)[0], data, dofstart,
-        //     block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1811,9 +1764,6 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-          // precompute::apply_matrix_to_transpose(
-          //     _etrans_invT.at(_cell_subentity_types[2][f])[1], data, dofstart,
-          //     block_size);
         }
 
         // Rotate a face
@@ -1827,9 +1777,6 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-          // precompute::apply_matrix_to_transpose(
-          //     _etrans_invT.at(_cell_subentity_types[2][f])[0], data,
-          //     dofstart, block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1866,10 +1813,6 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
             xtl::span(v_size_t), xtl::span(v_t),
             impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
             data, dofstart, block_size);
-
-        // precompute::apply_matrix_to_transpose(
-        //     _etransT.at(cell::type::interval)[0], data, dofstart,
-        //     block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1890,10 +1833,6 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix_to_transpose(
-          //     _etransT.at(_cell_subentity_types[2][f])[0], data, dofstart,
-          //     block_size);
         }
 
         // Reflect a face
@@ -1907,9 +1846,6 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-          // precompute::apply_matrix_to_transpose(
-          //     _etransT.at(_cell_subentity_types[2][f])[1], data, dofstart,
-          //     block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1946,9 +1882,6 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
             xtl::span(v_size_t), xtl::span(v_t),
             impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
             data, dofstart, block_size);
-        // precompute::apply_matrix_to_transpose(
-        //     _etrans_inv.at(cell::type::interval)[0], data, dofstart,
-        //     block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1969,10 +1902,6 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-
-          // precompute::apply_matrix_to_transpose(
-          //     _etrans_inv.at(_cell_subentity_types[2][f])[0], data, dofstart,
-          //     block_size);
         }
 
         // Reflect a face
@@ -1986,9 +1915,6 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               impl::cmdspan2_t(matrix.data(), matrix.shape(0), matrix.shape(1)),
               data, dofstart, block_size);
-          // precompute::apply_matrix_to_transpose(
-          //     _etrans_inv.at(_cell_subentity_types[2][f])[1], data, dofstart,
-          //     block_size);
         }
         dofstart += _num_edofs[2][f];
       }

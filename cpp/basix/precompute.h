@@ -349,8 +349,44 @@ void apply_matrix(const std::tuple<std::vector<std::size_t>, std::vector<T>,
 
 /// Apply a (precomputed) matrix to some transposed data.
 ///
-/// @note This function is designed to be called at runtime, so its performance
-/// is critical.
+/// @note This function is designed to be called at runtime, so its
+/// performance is critical.
+///
+/// See `apply_matrix()`.
+template <typename T, typename E>
+void apply_matrix_to_transpose(
+    const xtl::span<const std::size_t>& v_size_t, const xtl::span<const T>& v_t,
+    const std::experimental::mdspan<const double,
+                                    std::experimental::dextents<T, 2>>& M,
+    const xtl::span<E>& data, std::size_t offset = 0,
+    std::size_t block_size = 1)
+{
+  // const std::vector<std::size_t>& v_size_t = std::get<0>(matrix);
+  // const std::vector<T>& v_t = std::get<1>(matrix);
+  // const xt::xtensor<T, 2>& M = std::get<2>(matrix);
+
+  const std::size_t dim = v_size_t.size();
+  const std::size_t data_size
+      = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
+  apply_permutation_to_transpose(v_size_t, data, offset, block_size);
+  for (std::size_t b = 0; b < block_size; ++b)
+  {
+    for (std::size_t i = 0; i < dim; ++i)
+    {
+      data[data_size * b + offset + i] *= v_t[i];
+      for (std::size_t j = 0; j < dim; ++j)
+      {
+        data[data_size * b + offset + i]
+            += M(i, j) * data[data_size * b + offset + j];
+      }
+    }
+  }
+}
+
+/// Apply a (precomputed) matrix to some transposed data.
+///
+/// @note This function is designed to be called at runtime, so its
+/// performance is critical.
 ///
 /// See `apply_matrix()`.
 template <typename T, typename E>

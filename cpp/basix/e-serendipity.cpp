@@ -1079,6 +1079,10 @@ FiniteElement basix::element::create_serendipity(
     wbuffer.assign(w.data(), w.data() + w.size());
     wshape = {w.extent(0), w.extent(1)};
   }
+  else
+  {
+    throw std::runtime_error("Unsupported tdim");
+  }
 
   std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
   std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
@@ -1267,6 +1271,10 @@ FiniteElement basix::element::create_serendipity_div(
     wbuffer.assign(w.data(), w.data() + w.size());
     wshape = {w.extent(0), w.extent(1)};
   }
+  else
+  {
+    throw std::runtime_error("Unsupported tdim");
+  }
 
   std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
   std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
@@ -1321,6 +1329,10 @@ FiniteElement basix::element::create_serendipity_curl(
     auto w = make_serendipity_curl_space_3d(degree);
     wbuffer.assign(w.data(), w.data() + w.size());
     wshape = {w.extent(0), w.extent(1)};
+  }
+  else
+  {
+    throw std::runtime_error("Unsupported tdim");
   }
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;

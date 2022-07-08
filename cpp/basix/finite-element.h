@@ -672,34 +672,8 @@ public:
   /// Return a function that performs the appropriate
   /// push-forward/pull-back for the element type
   ///
-  /// @tparam O The type that hold the (computed) mapped data (ndim==2)
-  /// @tparam P The type that hold the data to be mapped (ndim==2)
-  /// @tparam Q The type that holds the Jacobian (or inverse) matrix (ndim==2)
-  /// @tparam R The type that holds the inverse of the `Q` data
-  /// (ndim==2)
-  ///
-  /// @return A function that for a push-forward takes arguments
-  /// - `u` [out] The data on the physical cell after the
-  /// push-forward flattened with row-major layout, shape=(num_points,
-  /// value_size)
-  /// - `U` [in] The data on the reference cell physical field to push
-  /// forward, flattened with row-major layout, shape=(num_points,
-  /// ref_value_size)
-  /// - `J` [in] The Jacobian matrix of the map ,shape=(gdim, tdim)
-  /// - `detJ` [in] det(J)
-  /// - `K` [in] The inverse of the Jacobian matrix, shape=(tdim, gdim)
-  ///
-  /// For a pull-back the arguments should be:
-  /// - `U` [out] The data on the reference cell after the pull-back,
-  /// flattened with row-major layout, shape=(num_points, ref
-  /// value_size)
-  /// - `u` [in] The data on the physical cell that should be pulled
-  /// back , flattened with row-major layout, shape=(num_points,
-  /// value_size)
-  /// - `K` [in] The inverse of the Jacobian matrix of the map
-  /// ,shape=(tdim, gdim)
-  /// - `detJ_inv` [in] 1/det(J)
-  /// - `J` [in] The Jacobian matrix, shape=(gdim, tdim)
+  /// @note This function is to support the transition to the new
+  /// version in DOLFINx.
   template <typename O, typename P, typename Q, typename R>
   std::function<void(O&, const P&, const Q&, double, const R&)>
   map_fn_old() const

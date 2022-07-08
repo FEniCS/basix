@@ -43,7 +43,6 @@ void pull_back(maps::type map_type, xt::xtensor<double, 2>& u,
                const xt::xtensor<double, 2>& U, const xt::xtensor<double, 2>& J,
                const double detJ, const xt::xtensor<double, 2>& K)
 {
-  namespace stdex = std::experimental;
   using u_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
   using U_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
   using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;

@@ -1232,7 +1232,6 @@ xt::xtensor<double, 3> FiniteElement::push_forward(
       = compute_value_size(_map_type, J.shape(1));
   xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
 
-  namespace stdex = std::experimental;
   using u_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
   using U_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
   using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
@@ -1259,8 +1258,6 @@ xt::xtensor<double, 3> FiniteElement::pull_back(
       _value_shape.begin(), _value_shape.end(), 1, std::multiplies<int>());
 
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
-
-  namespace stdex = std::experimental;
   using u_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
   using U_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
   using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;

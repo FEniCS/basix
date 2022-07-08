@@ -120,12 +120,12 @@ polynomials::tabulate(
   {
     auto [values, shape] = polyset::tabulate(celltype, d, 0, x);
     assert(shape[0] == 1);
-    return {values, {shape[1], shape[2]}};
+    return {std::move(values), {shape[1], shape[2]}};
   }
   case polynomials::type::bernstein:
   {
     auto [values, shape] = tabulate_bernstein(celltype, d, x);
-    return {values, shape};
+    return {std::move(values), std::move(shape)};
   }
   default:
     throw std::runtime_error("not implemented yet");

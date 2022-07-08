@@ -817,7 +817,7 @@ create_tensor_product_factors(cell::type celltype, int degree,
           perm[p++] = 4 + i + (4 + j) * n;
       }
     }
-    return {{{sub_element, sub_element}, perm}};
+    return {{{sub_element, sub_element}, std::move(perm)}};
   }
   case cell::type::hexahedron:
   {
@@ -879,7 +879,7 @@ create_tensor_product_factors(cell::type celltype, int degree,
         }
       }
     }
-    return {{{sub_element, sub_element, sub_element}, perm}};
+    return {{{sub_element, sub_element, sub_element}, std::move(perm)}};
   }
   default:
     return {};

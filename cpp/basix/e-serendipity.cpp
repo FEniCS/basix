@@ -84,7 +84,8 @@ serendipity_3d_indices(int total, int linear, std::vector<int> done = {})
 
     if (count >= linear)
       return {{done[0], done[1], done[2]}};
-    return {};
+    else
+      return {};
   }
   else if (done.size() == 2)
   {

@@ -10,6 +10,7 @@
 #include <basix/interpolation.h>
 #include <basix/lattice.h>
 #include <basix/maps.h>
+#include <basix/mdspan.hpp>
 #include <basix/polynomials.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
@@ -23,6 +24,7 @@
 
 namespace py = pybind11;
 using namespace basix;
+namespace stdex = std::experimental;
 
 namespace
 {
@@ -105,9 +107,8 @@ Interface to the Basix C++ library.
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        std::experimental::mdspan<const double,
-                                  std::experimental::dextents<std::size_t, 2>>
-            _x(x.data(), x.shape(0), x.shape(1));
+        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
+            x.data(), x.shape(0), x.shape(1));
         auto [p, shape] = polynomials::tabulate(polytype, celltype, d, _x);
         return py::array_t<double>(shape, p.data());
       },
@@ -221,9 +222,8 @@ Interface to the Basix C++ library.
           {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
-            std::experimental::mdspan<
-                const double, std::experimental::dextents<std::size_t, 2>>
-                _x(x.data(), x.shape(0), x.shape(1));
+            stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
+                x.data(), x.shape(0), x.shape(1));
             auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
           },
@@ -610,9 +610,8 @@ Interface to the Basix C++ library.
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        std::experimental::mdspan<const double,
-                                  std::experimental::dextents<std::size_t, 2>>
-            _x(x.data(), x.shape(0), x.shape(1));
+        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
+            x.data(), x.shape(0), x.shape(1));
         auto [p, shape] = polyset::tabulate(celltype, d, n, _x);
         return py::array_t<double>(shape, p.data());
       },

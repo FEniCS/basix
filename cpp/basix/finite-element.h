@@ -669,6 +669,62 @@ public:
     }
   }
 
+  /// Return a function that performs the appropriate
+  /// push-forward/pull-back for the element type
+  ///
+  /// @tparam O The type that hold the (computed) mapped data (ndim==2)
+  /// @tparam P The type that hold the data to be mapped (ndim==2)
+  /// @tparam Q The type that holds the Jacobian (or inverse) matrix (ndim==2)
+  /// @tparam R The type that holds the inverse of the `Q` data
+  /// (ndim==2)
+  ///
+  /// @return A function that for a push-forward takes arguments
+  /// - `u` [out] The data on the physical cell after the
+  /// push-forward flattened with row-major layout, shape=(num_points,
+  /// value_size)
+  /// - `U` [in] The data on the reference cell physical field to push
+  /// forward, flattened with row-major layout, shape=(num_points,
+  /// ref_value_size)
+  /// - `J` [in] The Jacobian matrix of the map ,shape=(gdim, tdim)
+  /// - `detJ` [in] det(J)
+  /// - `K` [in] The inverse of the Jacobian matrix, shape=(tdim, gdim)
+  ///
+  /// For a pull-back the arguments should be:
+  /// - `U` [out] The data on the reference cell after the pull-back,
+  /// flattened with row-major layout, shape=(num_points, ref
+  /// value_size)
+  /// - `u` [in] The data on the physical cell that should be pulled
+  /// back , flattened with row-major layout, shape=(num_points,
+  /// value_size)
+  /// - `K` [in] The inverse of the Jacobian matrix of the map
+  /// ,shape=(tdim, gdim)
+  /// - `detJ_inv` [in] 1/det(J)
+  /// - `J` [in] The Jacobian matrix, shape=(gdim, tdim)
+  template <typename O, typename P, typename Q, typename R>
+  std::function<void(O&, const P&, const Q&, double, const R&)>
+  map_fn_old() const
+  {
+    switch (_map_type)
+    {
+    case maps::type::identity:
+      return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
+    case maps::type::covariantPiola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::covariant_piola_old(u, U, J, detJ, K); };
+    case maps::type::contravariantPiola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::contravariant_piola_old(u, U, J, detJ, K); };
+    case maps::type::doubleCovariantPiola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::double_covariant_piola_old(u, U, J, detJ, K); };
+    case maps::type::doubleContravariantPiola:
+      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
+      { maps::double_contravariant_piola_old(u, U, J, detJ, K); };
+    default:
+      throw std::runtime_error("Map not implemented");
+    }
+  }
+
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
   /// on a triangle has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]

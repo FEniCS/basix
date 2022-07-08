@@ -12,6 +12,8 @@
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
+#include <xtensor/xio.hpp>
+
 /// Information about finite element maps
 namespace basix::maps
 {
@@ -87,12 +89,23 @@ void covariant_piola_old(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
                          const R& K)
 {
   auto Kt = xt::transpose(K);
+
+  // std::cout << "Kt" << std::endl;
+  // std::cout << Kt << std::endl;
+  // std::cout << "r" << std::endl;
+  // std::cout << r << std::endl;
+  // std::cout << "U" << std::endl;
+  // std::cout << U << std::endl;
+
   for (std::size_t p = 0; p < U.shape(0); ++p)
   {
     auto r_p = xt::row(r, p);
     auto U_p = xt::row(U, p);
     impl::dot21(r_p, Kt, U_p);
   }
+
+  // std::cout << "r-post" << std::endl;
+  // std::cout << r << std::endl;
 }
 
 /// Covariant Piola map (new)
@@ -100,6 +113,33 @@ template <typename O, typename P, typename Q, typename R>
 void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
                      const R& K)
 {
+  // std::cout << "Kt" << std::endl;
+  // for (std::size_t k0 = 0; k0 < K.extent(1); ++k0)
+  // {
+  //   std::cout << "   ";
+  //   for (std::size_t k1 = 0; k1 < K.extent(0); ++k1)
+  //     std::cout << K(k1, k0) << "   ";
+  //   std::cout << std::endl;
+  // }
+
+  // std::cout << "r" << std::endl;
+  // for (std::size_t k0 = 0; k0 < r.extent(0); ++k0)
+  // {
+  //   std::cout << "   ";
+  //   for (std::size_t k1 = 0; k1 < r.extent(1); ++k1)
+  //     std::cout << r(k0, k1) << "   ";
+  //   std::cout << std::endl;
+  // }
+
+  // std::cout << "U" << std::endl;
+  // for (std::size_t k0 = 0; k0 < U.extent(0); ++k0)
+  // {
+  //   std::cout << "   ";
+  //   for (std::size_t k1 = 0; k1 < U.extent(1); ++k1)
+  //     std::cout << U(k0, k1) << "   ";
+  //   std::cout << std::endl;
+  // }
+
   using T = typename std::decay_t<O>::value_type;
   for (std::size_t p = 0; p < U.extent(0); ++p)
   {
@@ -112,6 +152,15 @@ void covariant_piola(O&& r, const P& U, const Q& /*J*/, double /*detJ*/,
       r(p, i) = acc;
     }
   }
+
+  // std::cout << "r-post" << std::endl;
+  // for (std::size_t k0 = 0; k0 < r.extent(0); ++k0)
+  // {
+  //   std::cout << "   ";
+  //   for (std::size_t k1 = 0; k1 < r.extent(1); ++k1)
+  //     std::cout << r(k0, k1) << "   ";
+  //   std::cout << std::endl;
+  // }
 }
 
 /// Contravariant Piola map

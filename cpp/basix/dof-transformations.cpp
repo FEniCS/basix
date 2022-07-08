@@ -58,7 +58,13 @@ void pull_back(maps::type map_type, xt::xtensor<double, 2>& u,
   {
   case maps::type::identity:
   {
-    std::copy(U.data(), U.data() + U.size(), u.data());
+    assert(_U.extent(0) == _u.extent(0));
+    assert(_U.extent(1) == _u.extent(1));
+    for (std::size_t i = 0; i < _U.extent(0); ++i)
+      for (std::size_t j = 0; j < _U.extent(1); ++j)
+        _u(i, j) = _U(i, j);
+
+    // std::copy(U.data(), U.data() + U.size(), u.data());
     return;
   }
   case maps::type::covariantPiola:

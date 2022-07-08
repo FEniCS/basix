@@ -67,7 +67,7 @@ jobs:
         with:
           path: ./dolfinx
           repository: FEniCS/dolfinx
-          ref: garth/basix-updates
+          ref: garth/basix-updates-2
       - name: Get DOLFINx
         if: github.event_name == 'workflow_dispatch'
         uses: actions/checkout@v3

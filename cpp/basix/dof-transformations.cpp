@@ -43,22 +43,35 @@ void pull_back(maps::type map_type, xt::xtensor<double, 2>& u,
                const xt::xtensor<double, 2>& U, const xt::xtensor<double, 2>& J,
                const double detJ, const xt::xtensor<double, 2>& K)
 {
+  namespace stdex = std::experimental;
+  using u_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+  using U_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+
+  auto _u = u_t(u.data(), u.shape(0), u.shape(1));
+  auto _U = U_t(U.data(), U.shape(0), U.shape(1));
+  auto _J = J_t(J.data(), J.shape(0), J.shape(1));
+  auto _K = K_t(K.data(), K.shape(0), K.shape(1));
+
   switch (map_type)
   {
   case maps::type::identity:
-    u.assign(U);
+  {
+    std::copy(U.data(), U.data() + U.size(), u.data());
     return;
+  }
   case maps::type::covariantPiola:
-    maps::covariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::covariant_piola(_u, _U, _K, 1.0 / detJ, _J);
     return;
   case maps::type::contravariantPiola:
-    maps::contravariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::contravariant_piola(_u, _U, _K, 1.0 / detJ, _J);
     return;
   case maps::type::doubleCovariantPiola:
-    maps::double_covariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::double_covariant_piola(_u, _U, _K, 1.0 / detJ, _J);
     return;
   case maps::type::doubleContravariantPiola:
-    maps::double_contravariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::double_contravariant_piola(_u, _U, _K, 1.0 / detJ, _J);
     return;
   default:
     throw std::runtime_error("Map not implemented");

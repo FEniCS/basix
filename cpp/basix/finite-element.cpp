@@ -19,7 +19,9 @@
 #include "polyset.h"
 #include <basix/version.h>
 #include <numeric>
+#include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xview.hpp>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -1229,21 +1231,20 @@ xt::xtensor<double, 3> FiniteElement::push_forward(
   const std::size_t physical_value_size
       = compute_value_size(_map_type, J.shape(1));
   xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
-  using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using U_t = xt::xview<decltype(U)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using J_t = xt::xview<decltype(J)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
+
+  namespace stdex = std::experimental;
+  using u_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+  using U_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+
   auto map = this->map_fn<u_t, U_t, J_t, K_t>();
   for (std::size_t i = 0; i < u.shape(0); ++i)
   {
-    auto _K = xt::view(K, i, xt::all(), xt::all());
-    auto _J = xt::view(J, i, xt::all(), xt::all());
-    auto _u = xt::view(u, i, xt::all(), xt::all());
-    auto _U = xt::view(U, i, xt::all(), xt::all());
+    u_t _u(u.data() + i * u.shape(1) * u.shape(2), u.shape(1), u.shape(2));
+    U_t _U(U.data() + i * U.shape(1) * U.shape(2), U.shape(1), U.shape(2));
+    J_t _J(J.data() + i * J.shape(1) * J.shape(2), J.shape(1), J.shape(2));
+    K_t _K(K.data() + i * K.shape(1) * K.shape(2), K.shape(1), K.shape(2));
     map(_u, _U, _J, detJ[i], _K);
   }
 
@@ -1258,21 +1259,20 @@ xt::xtensor<double, 3> FiniteElement::pull_back(
       _value_shape.begin(), _value_shape.end(), 1, std::multiplies<int>());
 
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
-  using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using U_t = xt::xview<decltype(U)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using J_t = xt::xview<decltype(J)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
+
+  namespace stdex = std::experimental;
+  using u_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using U_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+  using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+
   auto map = this->map_fn<U_t, u_t, K_t, J_t>();
   for (std::size_t i = 0; i < u.shape(0); ++i)
   {
-    auto _K = xt::view(K, i, xt::all(), xt::all());
-    auto _J = xt::view(J, i, xt::all(), xt::all());
-    auto _u = xt::view(u, i, xt::all(), xt::all());
-    auto _U = xt::view(U, i, xt::all(), xt::all());
+    u_t _u(u.data() + i * u.shape(1) * u.shape(2), u.shape(1), u.shape(2));
+    U_t _U(U.data() + i * U.shape(1) * U.shape(2), U.shape(1), U.shape(2));
+    J_t _J(J.data() + i * J.shape(1) * J.shape(2), J.shape(1), J.shape(2));
+    K_t _K(K.data() + i * K.shape(1) * K.shape(2), K.shape(1), K.shape(2));
     map(_U, _u, _K, 1.0 / detJ[i], _J);
   }
 

@@ -479,7 +479,8 @@ public:
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
-  /// @param[in] x The points at which to compute the basis functions (row-major storage).
+  /// @param[in] x The points at which to compute the basis functions (row-major
+  /// storage).
   /// @param[in] shape The shape `(number of points, geometric
   /// dimension)` of the `x` array.
   /// @return The basis functions (and derivatives). The shape is
@@ -649,10 +650,8 @@ public:
     switch (_map_type)
     {
     case maps::type::identity:
-      return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
-    case maps::type::L2Piola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::l2_piola(u, U, J, detJ, K); };
+      return [](O& u, const P& U, const Q&, double, const R&)
+      { std::copy(U.data(), U.data() + U.size(), u.data()); };
     case maps::type::covariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
       { maps::covariant_piola(u, U, J, detJ, K); };

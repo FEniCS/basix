@@ -74,8 +74,11 @@ void l2_piola_old(O&& r, const P& U, const Q& /*J*/, double detJ,
 template <typename O, typename P, typename Q, typename R>
 void l2_piola(O&& r, const P& U, const Q& /*J*/, double detJ, const R& /*K*/)
 {
-  std::transform(U.data(), U.data() + U.size(), r.data(),
-                 [detJ](auto ri) { return ri / detJ; });
+  assert(U.extent(0) == r.extent(0));
+  assert(U.extent(1) == r.extent(1));
+  for (std::size_t i = 0; i < U.extent(0); ++i)
+    for (std::size_t j = 0; j < U.extent(1); ++j)
+      r(i, j) = U(i, j) / detJ;
 }
 
 /// Covariant Piola map

@@ -872,7 +872,7 @@ class TensorElement(BlockedElement):
             assert shape[0] == shape[1]
             bs = shape[0] * (shape[0] + 1) // 2
         else:
-            bs = size * size
+            bs = shape[0] * shape[1]
         assert len(shape) == 2
         super().__init__(f"TensorElement({sub_element._repr}, {shape})", sub_element, bs, shape, symmetric=symmetric)
 

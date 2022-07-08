@@ -49,8 +49,20 @@ class _BasixElementBase(_FiniteElementBase):
             vs *= i
         return vs
 
+    @property
+    def reference_value_size(self) -> int:
+        """Reference value size of the element."""
+        vs = 1
+        for i in self.reference_value_shape():
+            vs *= i
+        return vs
+
     def value_shape(self) -> _typing.Tuple[int, ...]:
         """Value shape of the element basis function."""
+        return self._value_shape
+
+    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
+        """Reference value shape of the element basis function."""
         return self._value_shape
 
     @property
@@ -386,10 +398,12 @@ class ComponentElement(_BasixElementBase):
             elif len(self.element._value_shape) == 1:
                 output.append(tbl[:, self.component, :])
             elif len(self.element._value_shape) == 2:
-                # TODO: Something different may need doing here if
-                # tensor is symmetric
-                vs0 = self.element._value_shape[0]
-                output.append(tbl[:, self.component // vs0, self.component % vs0, :])
+                if isinstance(self.element, BlockedElement) and self.element.symmetric:
+                    # FIXME: check that this behaves as expected
+                    output.append(tbl[:, self.component, :])
+                else:
+                    vs0 = self.element._value_shape[0]
+                    output.append(tbl[:, self.component // vs0, self.component % vs0, :])
             else:
                 raise NotImplementedError()
         return _numpy.asarray(output, dtype=_numpy.float64)
@@ -673,7 +687,7 @@ class BlockedElement(_BasixElementBase):
     _block_size: int
 
     def __init__(self, repr: str, sub_element: _BasixElementBase, block_size: int,
-                 block_shape: _typing.Tuple[int, ...] = None):
+                 block_shape: _typing.Tuple[int, ...] = None, symmetric: bool = False):
         """Initialise the element."""
         assert block_size > 0
         if sub_element.value_size != 1:
@@ -686,6 +700,7 @@ class BlockedElement(_BasixElementBase):
         if block_shape is None:
             block_shape = (block_size, )
         self.block_shape = block_shape
+        self.symmetric = symmetric
 
         super().__init__(
             repr, "blocked element", sub_element.cell_type.name, block_shape,
@@ -705,6 +720,13 @@ class BlockedElement(_BasixElementBase):
     def block_size(self) -> int:
         """The block size of the element."""
         return self._block_size
+
+    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
+        """Reference value shape of the element basis function."""
+        if self.symmetric:
+            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
+            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
+        return self._value_shape
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -840,13 +862,18 @@ class VectorElement(BlockedElement):
 class TensorElement(BlockedElement):
     """A tensor element."""
 
-    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, int] = None):
+    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, int] = None, symmetric: bool = False):
         """Initialise the element."""
         if shape is None:
             size = len(_basix.topology(sub_element.cell_type)) - 1
             shape = (size, size)
+        if symmetric:
+            assert shape[0] == shape[1]
+            bs = shape[0] * (shape[0] + 1) // 2
+        else:
+            bs = shape[0] * shape[1]
         assert len(shape) == 2
-        super().__init__(f"TensorElement({sub_element._repr}, {shape})", sub_element, shape[0] * shape[1], shape)
+        super().__init__(f"TensorElement({sub_element._repr}, {shape})", sub_element, bs, shape, symmetric=symmetric)
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:

@@ -651,7 +651,14 @@ public:
     {
     case maps::type::identity:
       return [](O& u, const P& U, const Q&, double, const R&)
-      { std::copy(U.data(), U.data() + U.size(), u.data()); };
+      {
+        assert(U.extent(0) == u.extent(0));
+        assert(U.extent(1) == u.extent(1));
+        for (std::size_t i = 0; i < U.extent(0); ++i)
+          for (std::size_t j = 0; j < U.extent(1); ++j)
+            u(i, j) = U(i, j);
+        // std::copy(U.data(), U.data() + U.size(), u.data());
+      };
     case maps::type::covariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
       { maps::covariant_piola(u, U, J, detJ, K); };

@@ -398,8 +398,7 @@ class ComponentElement(_BasixElementBase):
             elif len(self.element._value_shape) == 1:
                 output.append(tbl[:, self.component, :])
             elif len(self.element._value_shape) == 2:
-                assert isinstance(self.element, BlockedElement)
-                if self.element.symmetric:
+                if isinstance(self.element, BlockedElement) and self.element.symmetric:
                     # FIXME: check that this behaves as expected
                     output.append(tbl[:, self.component, :])
                 else:

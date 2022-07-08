@@ -689,36 +689,6 @@ public:
     }
   }
 
-  /// Return a function that performs the appropriate
-  /// push-forward/pull-back for the element type
-  ///
-  /// @note This function is to support the transition to the new
-  /// version in DOLFINx.
-  template <typename O, typename P, typename Q, typename R>
-  std::function<void(O&, const P&, const Q&, double, const R&)>
-  map_fn_old() const
-  {
-    switch (_map_type)
-    {
-    case maps::type::identity:
-      return [](O& u, const P& U, const Q&, double, const R&) { u.assign(U); };
-    case maps::type::covariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::covariant_piola_old(u, U, J, detJ, K); };
-    case maps::type::contravariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::contravariant_piola_old(u, U, J, detJ, K); };
-    case maps::type::doubleCovariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::double_covariant_piola_old(u, U, J, detJ, K); };
-    case maps::type::doubleContravariantPiola:
-      return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      { maps::double_contravariant_piola_old(u, U, J, detJ, K); };
-    default:
-      throw std::runtime_error("Map not implemented");
-    }
-  }
-
   /// Get the number of dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
   /// on a triangle has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]

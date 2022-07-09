@@ -1,8 +1,7 @@
 #ifndef _MDSPAN_SINGLE_HEADER_INCLUDE_GUARD_
 #define _MDSPAN_SINGLE_HEADER_INCLUDE_GUARD_
-#  include <version>
-#  include <type_traits>
-#  include <utility>
+#include <type_traits>
+#include <utility>
 #include <type_traits> // std::is_void
 #include <cstddef> // size_t
 #include <type_traits>
@@ -10,7 +9,6 @@
 #include <cstddef>  // size_t
 #include <limits>   // numeric_limits
 #include <array>
-// #include <span>
 #include <utility> // integer_sequence
 #include <cstddef>
 #include <cstddef> // size_t
@@ -274,6 +272,12 @@
 #define MDSPAN_HAS_CXX_14 (_MDSPAN_CPLUSPLUS >= MDSPAN_CXX_STD_14)
 #define MDSPAN_HAS_CXX_17 (_MDSPAN_CPLUSPLUS >= MDSPAN_CXX_STD_17)
 #define MDSPAN_HAS_CXX_20 (_MDSPAN_CPLUSPLUS >= MDSPAN_CXX_STD_20)
+
+#if MDSPAN_HAS_CXX_20
+  #include <version>
+  #include <span>
+#endif
+
 
 static_assert(_MDSPAN_CPLUSPLUS >= MDSPAN_CXX_STD_14, "mdspan requires C++14 or later.");
 

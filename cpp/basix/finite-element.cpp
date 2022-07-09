@@ -224,7 +224,9 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
     }
   }
 
-  return math::dot(B, D);
+  xt::xtensor<double, 2> C = xt::zeros<double>({B.shape(0), D.shape(1)});
+  math::dot(B, D, C);
+  return C;
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -1144,8 +1146,11 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
       auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
       B = xt::view(basis, p, xt::all(), xt::all());
       C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-      auto result = xt::transpose(math::dot(C, B));
-      basis_view.assign(result);
+
+      xt::xtensor<double, 2> result
+          = xt::zeros<double>({C.shape(0), B.shape(1)});
+      math::dot(C, B, result);
+      basis_view.assign(xt::transpose(result));
     }
   }
 }

@@ -169,14 +169,6 @@ void basix::math::dot(const xt::xtensor<double, 2>& A,
   }
 }
 //------------------------------------------------------------------
-xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
-                                        const xt::xtensor<double, 2>& B)
-{
-  xt::xtensor<double, 2> C = xt::zeros<double>({A.shape(0), B.shape(1)});
-  dot(A, B, C);
-  return C;
-}
-//------------------------------------------------------------------
 std::vector<double> basix::math::eye(std::size_t n)
 {
   std::vector<double> I(n * n, 0);

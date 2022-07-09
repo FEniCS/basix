@@ -78,18 +78,14 @@ solve(const std::experimental::mdspan<
 bool is_singular(const xt::xtensor<double, 2>& A);
 
 /// Compute C = A * B
+///
+/// @note The array `C` should be zeroed before calling this function.
+///
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
 /// @param[in, out] C The output matrix
 void dot(const xt::xtensor<double, 2>& A, const xt::xtensor<double, 2>& B,
          xt::xtensor<double, 2>& C);
-
-/// Compute C = A * B
-/// @param[in] A Input matrix
-/// @param[in] B Input matrix
-/// @return A * B
-xt::xtensor<double, 2> dot(const xt::xtensor<double, 2>& A,
-                           const xt::xtensor<double, 2>& B);
 
 /// Compute C = A * B
 /// @param[in] A Input matrix

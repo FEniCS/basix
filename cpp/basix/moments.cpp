@@ -149,8 +149,8 @@ map_points_new(const cell::type celltype0, const cell::type celltype1,
 std::tuple<
     std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 2>>,
     std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 4>>>
-moments::make_integral_moments_new(const FiniteElement& V, cell::type celltype,
-                                   std::size_t value_size, int q_deg)
+moments::make_integral_moments(const FiniteElement& V, cell::type celltype,
+                               std::size_t value_size, int q_deg)
 {
   std::cout << "Start" << std::endl;
 
@@ -241,9 +241,8 @@ moments::make_integral_moments_new(const FiniteElement& V, cell::type celltype,
 std::tuple<
     std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 2>>,
     std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 4>>>
-moments::make_dot_integral_moments_new(const FiniteElement& V,
-                                       cell::type celltype,
-                                       std::size_t value_size, int q_deg)
+moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
+                                   std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
@@ -318,9 +317,9 @@ moments::make_dot_integral_moments_new(const FiniteElement& V,
 std::tuple<
     std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 2>>,
     std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 4>>>
-moments::make_tangent_integral_moments_new(const FiniteElement& V,
-                                           cell::type celltype,
-                                           std::size_t value_size, int q_deg)
+moments::make_tangent_integral_moments(const FiniteElement& V,
+                                       cell::type celltype,
+                                       std::size_t value_size, int q_deg)
 {
   const cell::type sub_celltype = V.cell_type();
   const std::size_t entity_dim = cell::topological_dimension(sub_celltype);
@@ -392,9 +391,9 @@ moments::make_tangent_integral_moments_new(const FiniteElement& V,
 std::tuple<
     std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 2>>,
     std::vector<std::vector<double>>, std::vector<std::array<std::size_t, 4>>>
-moments::make_normal_integral_moments_new(const FiniteElement& V,
-                                          cell::type celltype,
-                                          std::size_t value_size, int q_deg)
+moments::make_normal_integral_moments(const FiniteElement& V,
+                                      cell::type celltype,
+                                      std::size_t value_size, int q_deg)
 {
   const std::size_t tdim = cell::topological_dimension(celltype);
   assert(tdim == value_size);

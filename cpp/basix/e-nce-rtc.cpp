@@ -124,7 +124,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   {
     FiniteElement moment_space
         = element::create_lagrange(facettype, degree - 1, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments_new(
+    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments(
         moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -138,7 +138,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   // Add integral moments on interior
   if (degree > 1)
   {
-    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments_new(
+    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments(
         element::create_nce(celltype, degree - 1, lvariant, true), celltype,
         tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
@@ -323,7 +323,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   {
     FiniteElement edge_moment_space = element::create_lagrange(
         cell::type::interval, degree - 1, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments_new(
+    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments(
         edge_moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -340,7 +340,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     // Face integral moment
     FiniteElement moment_space = element::create_rtc(
         cell::type::quadrilateral, degree - 1, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments_new(
+    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments(
         moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -362,7 +362,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     {
       FiniteElement moment_space = element::create_rtc(
           cell::type::hexahedron, degree - 1, lvariant, true);
-      auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments_new(
+      auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments(
           moment_space, celltype, tdim, 2 * degree - 1);
       assert(_x.size() == _M.size());
       for (std::size_t i = 0; i < _x.size(); ++i)

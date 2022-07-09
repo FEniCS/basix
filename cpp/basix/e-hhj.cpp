@@ -14,6 +14,7 @@
 using namespace basix;
 namespace stdex = std::experimental;
 using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
@@ -93,7 +94,9 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
 
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
-        const auto moment_values = moment_space.tabulate(0, pts);
+        const auto [phib, phishape] = moment_space.tabulate_new(0, pts);
+        cmdspan4_t moment_values(phib.data(), phishape);
+
         auto& _x = x[d].emplace_back(pts.extent(0), tdim);
 
         // Copy points

@@ -197,8 +197,10 @@ int main(int argc, char* argv[])
     // not match its direction on the reference, then we need to adjust the
     // tabulated data.
 
-    xt::xtensor<double, 4> original_data = nedelec.tabulate(0, points);
-    xt::xtensor<double, 4> mod_data = nedelec.tabulate(0, points);
+    // xt::xtensor<double, 4> original_data = nedelec.tabulate(0, points);
+    // xt::xtensor<double, 4> mod_data = nedelec.tabulate(0, points);
+    const auto [original_data, orig_shape] = nedelec.tabulate_new(0, points);
+    auto [mod_data, mod_shape] = nedelec.tabulate_new(0, points);
     xtl::span<double> data(mod_data.data(), mod_data.size());
 
     // If the direction of edge 2 in the physical cell is reflected, it has
@@ -215,7 +217,8 @@ int main(int argc, char* argv[])
 
     std::cout << std::endl
               << "Tabulated data is equal: "
-              << xt::allclose(original_data, mod_data) << std::endl;
+              << xt::allclose(xt::adapt(original_data), xt::adapt(mod_data))
+              << std::endl;
   }
 
   return 0;

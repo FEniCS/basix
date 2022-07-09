@@ -1108,18 +1108,6 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
   return {ndsize, num_points, ndofs, vs};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 4> FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
-{
-
-  std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
-  xt::xtensor<double, 4> data(shape);
-  tabulate(nd,
-           xt::adapt(x.data(), x.size(), xt::no_ownership(),
-                     std::vector<std::size_t>{x.extent(0), x.extent(1)}),
-           data);
-  return data;
-}
-//-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 4>>
 FiniteElement::tabulate_new(int nd, impl::cmdspan2_t x) const
 {
@@ -1136,7 +1124,14 @@ xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
                         std::array<std::size_t, 2> shape) const
 {
-  return tabulate(nd, cmdspan2_t(x.data(), shape));
+  std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
+  xt::xtensor<double, 4> data(phishape);
+  tabulate(nd,
+           xt::adapt(x.data(), x.size(), xt::no_ownership(),
+                     std::vector<std::size_t>{shape[0], shape[1]}),
+           data);
+  return data;
+  // return tabulate(nd, cmdspan2_t(x.data(), shape));
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,

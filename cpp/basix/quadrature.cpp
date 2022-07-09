@@ -1159,7 +1159,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.021613681829707104,  0.007541838788255721,  0.01089179251930378,
           0.021613681829707104,  0.007541838788255721,  0.01089179251930378,
           0.021613681829707104,  0.007541838788255721,  0.01089179251930378};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 13)
     {
@@ -1204,7 +1204,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.007696536341891089,  0.00906274932310044,  0.018605980228630768,
              0.007696536341891089,  0.00906274932310044,  0.018605980228630768,
              0.007696536341891089};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 14)
     {
@@ -1253,7 +1253,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.002505114419250336, 0.007218154056766921, 0.019285755393530342,
              0.012332876606281839, 0.002505114419250336, 0.007218154056766921,
              0.019285755393530342, 0.012332876606281839, 0.002505114419250336};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 15)
     {
@@ -1310,7 +1310,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.008218381046413948,  0.0012376330072789582, 0.012115004391562803,
           0.00561425214943903,   0.015537610235255475,  0.008218381046413948,
           0.0012376330072789582};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 16)
     {
@@ -1373,7 +1373,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.0023073453198645673, 0.004091105276611069, 0.006991803562326784,
              0.0028759349852485795, 0.015823030840991622, 0.008826540523551642,
              0.0023073453198645673};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 17)
     {
@@ -1440,7 +1440,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.01027894916022726,  0.003989150102964797, 0.002292174200867934,
              0.005199219977919768, 0.004346107250500596, 0.013085812967668494,
              0.011243886273345534, 0.01027894916022726,  0.003989150102964797};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 18)
     {
@@ -1515,7 +1515,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.0021087583873722216, 0.008182954206993283,  0.0038649176400031137,
           0.00845582695874004,   0.01379644324428974,   0.004793062237180752,
           0.0038208524863598183};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 19)
     {
@@ -1596,7 +1596,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.0016636944202969523, 0.004847759540812101,  0.013173132353722682,
           0.009054037295215252,  0.008051104730469714,  0.00422796241954674,
           0.0016410687574198689};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 20)
     {
@@ -1683,7 +1683,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.002202897418558498,  0.011691745731827735,  0.00598639857895469,
           0.004145711527613858,  0.003695681500255298,  0.008667225567219335,
           0.0035782002384576856};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 21)
     {
@@ -1777,7 +1777,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.002103060144074865,  0.009223742423966418,  0.005234952092662423,
           0.002240406560950738,  0.007250152959485511,  0.007952018352713986,
           0.004905985911275205,  0.0034199424289671526, 0.0016327142920220426};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 22)
     {
@@ -1880,7 +1880,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.00885954674475511,   0.0024521301987784822, 0.01085320977775448,
           0.005831111433671501,  0.007855081311285159,  0.002053343535787778,
           0.005281792483873449,  0.0025270384487923007, 0.0003202142655857129};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 23)
     {
@@ -1991,7 +1991,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.0009762956639453631, 0.007490556696599583,  0.008060620818508576,
           0.0052351282465650335, 0.010422197929484405,  0.0035488894172609124,
           0.005087787328353519};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 24)
     {
@@ -2111,7 +2111,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.007176175789078727,  0.0021210746334018845, 0.0020406375385582255,
           0.0012946061911989924, 0.005921781071271555,  0.0018536133821231541,
           0.0008984737927232883};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 25)
     {
@@ -2238,7 +2238,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.0012726358126745072, 0.00895691044613803,   0.0016318698410246215,
           0.0027273191839872145, 0.00263628096071471,   0.006870041296011276,
           0.0036571704539664234, 0.0008464918170636662, 0.0007558510392294402};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 26)
     {
@@ -2376,7 +2376,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.000928573735499042,  0.008799583590347606,  0.0014833808313282528,
           0.005053562216044342,  0.0031346689230402846, 0.0022957791936993187,
           0.0005697744579341068};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 27)
     {
@@ -2524,7 +2524,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.005346850294808132,  0.0016212337988196705, 0.005465305546456643,
           0.0010075615636448512, 0.0005983868042365814, 0.0021635790176803564,
           0.002311193555890555,  0.0016971268694035136, 0.00042330306788192527};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 28)
     {
@@ -2705,7 +2705,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
                                0.0029589418861769453, 0.003130267321484276,
                                0.0015700888217440182, 0.0063935692114779,
                                0.0016024580953965175, 0.0003625672974930415};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 29)
     {
@@ -2871,7 +2871,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.0015256194116725953,  0.001912683335865006,  0.0008708476156508746,
           0.002834576740832729,   0.003290998881926103,  0.004589462082463799,
           0.006259183249417213,   0.0018206702056403684, 0.0003443363125208805};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 30)
     {
@@ -3077,7 +3077,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
                                0.0009152534380744139,  0.0019109402735475102,
                                0.0009599402787344589,  0.0013212839615816257,
                                0.00016781085573320113};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else
     {
@@ -3091,7 +3091,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
       // Xiao Gimbutas, 4 points, degree 1
       std::vector<double> x = {0.25, 0.25, 0.25};
       std::vector<double> w = {0.16666666666666666};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 2)
     {
@@ -3103,7 +3103,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.0003755150287292757, 0.2160764291848478, 0.4307017070778361};
       std::vector<double> w = {0.016934591412496782, 0.04646292944776137,
                                0.050086823222829334, 0.05318232258357918};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 3)
     {
@@ -3118,7 +3118,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
       std::vector<double> w
           = {0.020387000459557516, 0.021344402118457815, 0.022094671190740867,
              0.0234374016100672,   0.0374025278195929,   0.042000663468250383};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 4)
     {
@@ -3140,7 +3140,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.009988864191093254, 0.011578327656272562, 0.012693785874259726,
              0.013237780011337552, 0.01774467235924835,  0.018372372071416284,
              0.02582935266937435,  0.03223513534160575};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 5)
     {
@@ -3166,7 +3166,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.012248840519393652,  0.012248840519393652, 0.012248840519393655,
              0.012248840519393659,  0.018781320953002632, 0.018781320953002632,
              0.018781320953002632,  0.01878132095300265};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 6)
     {
@@ -3204,7 +3204,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.00883888731802823,   0.008989168438051998,  0.009970224610238195,
           0.010435745880218545,  0.010511060314253423,  0.010722336995514588,
           0.011189302702092839,  0.018766567415678};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 7)
     {
@@ -3253,7 +3253,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.007165193660663451,  0.008796944275592277,  0.010050252598534952,
           0.010698139822576646,  0.011118534527621958,  0.011123248236813444,
           0.01372302813009497};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 8)
     {
@@ -3319,7 +3319,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.006091681784605513,  0.006510451658158449,  0.006683134190221676,
           0.006927915069245575,  0.008629937323168083,  0.008810488117670844,
           0.008892300407975902,  0.009298747966287926};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 9)
     {
@@ -3402,7 +3402,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.005439951471336866,  0.0055201790703796666, 0.005870060438901905,
           0.005879894123846905,  0.005952755449705822,  0.006370180985658904,
           0.006979224618881529,  0.007535230513202575,  0.008183687426958101};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 10)
     {
@@ -3519,7 +3519,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
                                0.004553883199163369,   0.004651927948037353,
                                0.004682093742486137,   0.004682093742490215,
                                0.004682093742491071,   0.0077630869974032015};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 11)
     {
@@ -3668,7 +3668,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
                                0.00450476478426666,    0.004597380383431189,
                                0.0045973803834320915,  0.00459738038343333,
                                0.004960765552103523};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 12)
     {
@@ -3857,7 +3857,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
                                0.0032514268051329347,  0.003658706854740727,
                                0.0036587068547407633,  0.003658706854740793,
                                0.004252858800216373,   0.0049174945629996405};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 13)
     {
@@ -4082,7 +4082,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
                                0.003116760995113398,   0.0031167609951139037,
                                0.003303366568208123,   0.00330336656820916,
                                0.0033033665682094884,  0.004303940769897278};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 14)
     {
@@ -4354,7 +4354,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
                                0.002703211730841763,   0.002983445658017808,
                                0.00298344565801923,    0.0029834456580193486,
                                0.0031781597181588447};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else if (m == 15)
     {
@@ -4681,7 +4681,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
                                0.0019096117089973984,  0.0019096117089977185,
                                0.002049458570185687,   0.00204945857018569,
                                0.002049458570187277,   0.0024074895531075533};
-       return {std::move(x), std::move(w)};
+      return {std::move(x), std::move(w)};
     }
     else
       throw std::runtime_error("Xiao-Gimbutas not implemented for this order.");

@@ -735,6 +735,16 @@ FiniteElement::FiniteElement(
 
   _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
+  // _entity_transformations_new
+  //     = doftransforms::compute_entity_transformations_new(
+  //         cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
+  // for (auto& data : _entity_transformations_new)
+  // {
+  //   xt::xtensor<double, 3> tens(data.second.second);
+  //   std::copy(data.second.first.data(),
+  //             data.second.first.data() + data.second.first.size(), tens.data());
+  //   _entity_transformations.insert({data.first, std::move(tens)});
+  // }
 
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);
@@ -1060,6 +1070,18 @@ xt::xtensor<double, 4> FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
   return data;
 }
 //-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 4>>
+FiniteElement::tabulate_new(int nd, impl::cmdspan2_t x) const
+{
+  std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
+  xt::xtensor<double, 4> data(shape);
+  tabulate(nd,
+           xt::adapt(x.data(), x.size(), xt::no_ownership(),
+                     std::vector<std::size_t>{x.extent(0), x.extent(1)}),
+           data);
+  return {std::vector<double>(data.data(), data.data() + data.size()), shape};
+}
+//-----------------------------------------------------------------------------
 xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
                         std::array<std::size_t, 2> shape) const
@@ -1140,6 +1162,13 @@ bool FiniteElement::dof_transformations_are_identity() const
 const xt::xtensor<double, 2>& FiniteElement::interpolation_matrix() const
 {
   return _matM;
+}
+//-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+FiniteElement::interpolation_matrix_new() const
+{
+  return {std::vector<double>(_matM.data(), _matM.data() + _matM.size()),
+          {_matM.shape(0), _matM.shape(1)}};
 }
 //-----------------------------------------------------------------------------
 const std::vector<std::vector<int>>& FiniteElement::num_entity_dofs() const
@@ -1223,6 +1252,13 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
 }
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
+//-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+FiniteElement::points_new() const
+{
+  return {std::vector<double>(_points.data(), _points.data() + _points.size()),
+          {_points.shape(0), _points.shape(1)}};
+}
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::push_forward(
     const xt::xtensor<double, 3>& U, const xt::xtensor<double, 3>& J,

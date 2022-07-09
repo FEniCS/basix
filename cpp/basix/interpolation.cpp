@@ -5,13 +5,13 @@
 #include "interpolation.h"
 #include "finite-element.h"
 #include <exception>
-#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 
 namespace stdex = std::experimental;
 using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
 using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 //----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
@@ -24,21 +24,23 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
         "Cannot interpolate between elements defined on different cell types.");
   }
 
-  const xt::xtensor<double, 2>& points = element_to.points();
-  const xt::xtensor<double, 4> tab = element_from.tabulate(
-      0, cmdspan2_t(points.data(), points.shape(0), points.shape(1)));
-  const xt::xtensor<double, 2>& i_m = element_to.interpolation_matrix();
+  const auto [points, shape] = element_to.points_new();
+  const auto [tab_b, tab_shape]
+      = element_from.tabulate_new(0, cmdspan2_t(points.data(), shape));
+  cmdspan4_t tab(tab_b.data(), tab_shape);
+  const auto [imb, imshape] = element_to.interpolation_matrix_new();
+  cmdspan2_t i_m(imb.data(), imshape);
 
   const std::size_t dim_to = element_to.dim();
   const std::size_t dim_from = element_from.dim();
-  const std::size_t npts = tab.shape(1);
+  const std::size_t npts = tab.extent(1);
 
   const std::size_t vs_from = std::accumulate(
       element_from.value_shape().begin(), element_from.value_shape().end(), 1,
       std::multiplies<int>());
-  const std::size_t vs_to = std::accumulate(element_to.value_shape().begin(),
-                                            element_to.value_shape().end(), 1,
-                                            std::multiplies<int>());
+  const std::size_t vs_to
+      = std::reduce(element_to.value_shape().begin(),
+                    element_to.value_shape().end(), 1, std::multiplies<int>());
 
   if (vs_from != vs_to)
   {

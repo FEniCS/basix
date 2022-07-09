@@ -463,3 +463,29 @@ doftransforms::compute_entity_transformations(
   return out;
 }
 //-----------------------------------------------------------------------------
+std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>
+doftransforms::compute_entity_transformations_new(
+    cell::type cell_type,
+    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+    const xt::xtensor<double, 2>& coeffs, int degree, std::size_t vs,
+    maps::type map_type)
+{
+  auto out = compute_entity_transformations(cell_type, x, M, coeffs, degree, vs,
+                                            map_type);
+
+  std::map<cell::type,
+           std::pair<std::vector<double>, std::array<std::size_t, 3>>>
+      trans;
+  for (auto& data : out)
+  {
+    xt::xtensor<double, 3>& array = data.second;
+    std::array<std::size_t, 3> s
+        = {array.shape(0), array.shape(1), array.shape(2)};
+    std::vector<double> a(array.data(), array.data() + array.size());
+    trans.insert({data.first, {a, s}});
+  }
+
+  return trans;
+}
+//-----------------------------------------------------------------------------

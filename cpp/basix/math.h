@@ -7,15 +7,28 @@
 #pragma once
 
 #include "mdspan.hpp"
-#include <xtensor/xfixed.hpp>
-#include <xtensor/xtensor.hpp>
+#include <array>
+#include <vector>
+#include <xtl/xspan.hpp>
 
 /// Mathematical functions
-
-/// @note The functions in this namespace are designed to be called multiple
-/// times at runtime, so their performance is critical.
+///
+/// @note The functions in this namespace are designed to be called
+/// multiple times at runtime, so their performance is critical.
 namespace basix::math
 {
+
+namespace impl
+{
+/// Compute C = A * B using BLAS
+/// @param[in] A Input matrix
+/// @param[in] B Input matrix
+/// @return A * B
+void dot_blas(const xtl::span<const double>& A,
+              std::array<std::size_t, 2> Ashape,
+              const xtl::span<const double>& B,
+              std::array<std::size_t, 2> Bshape, const xtl::span<double>& C);
+} // namespace impl
 
 /// @brief Compute the outer product of vectors u and v.
 /// @param u The first vector
@@ -59,51 +72,45 @@ eigh(const xtl::span<const double>& A, std::size_t n);
 /// @param[in] A The matrix
 /// @param[in] B Right-hand side matrix/vector
 /// @return A^{-1} B
-xt::xtensor<double, 2> solve(const xt::xtensor<double, 2>& A,
-                             const xt::xtensor<double, 2>& B);
-
-/// Solve A X = B
-/// @param[in] A The matrix
-/// @param[in] B Right-hand side matrix/vector
-/// @return A^{-1} B
 std::vector<double>
 solve(const std::experimental::mdspan<
-          double, std::experimental::dextents<std::size_t, 2>>& A,
+          const double, std::experimental::dextents<std::size_t, 2>>& A,
       const std::experimental::mdspan<
-          double, std::experimental::dextents<std::size_t, 2>>& B);
+          const double, std::experimental::dextents<std::size_t, 2>>& B);
 
 /// Check if A is a singular matrix
 /// @param[in] A The matrix
 /// @return A bool indicating if the matrix is singular
-bool is_singular(const xt::xtensor<double, 2>& A);
-
-/// Compute C = A * B
-///
-/// @note The array `C` should be zeroed before calling this function.
-///
-/// @param[in] A Input matrix
-/// @param[in] B Input matrix
-/// @param[in, out] C The output matrix
-void dot(const xt::xtensor<double, 2>& A, const xt::xtensor<double, 2>& B,
-         xt::xtensor<double, 2>& C);
+bool is_singular(const std::experimental::mdspan<
+                 const double, std::experimental::dextents<std::size_t, 2>>& A);
 
 /// Compute C = A * B
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
 /// @return A * B
-template <typename U, typename V>
-std::pair<std::vector<double>, std::array<std::size_t, 2>> dot_new(const U& A,
-                                                                   const V& B)
+template <typename U, typename V, typename W>
+void dot_new(const U& A, const V& B, W&& C)
 {
-  std::vector<double> C(A.extent(0) * B.extent(1));
-  std::array<std::size_t, 2> shape = {A.extent(0), B.extent(1)};
-  std::experimental::mdspan<double, std::experimental::dextents<std::size_t, 2>>
-      _C(C.data(), shape);
-  for (std::size_t i = 0; i < shape[0]; ++i)
-    for (std::size_t j = 0; j < shape[1]; ++j)
-      for (std::size_t k = 0; k < A.extent(1); ++k)
-        _C(i, j) += A(i, k) * B(k, j);
-  return {std::move(C), std::move(shape)};
+  assert(A.extent(1) == B.extent(0));
+  assert(C.extent(0) == C.extent(0));
+  assert(C.extent(1) == B.extent(1));
+
+  int M = A.extent(0);
+  int N = B.extent(1);
+  int K = A.extent(1);
+
+  if (M * N * K < 4096)
+  {
+    for (std::size_t i = 0; i < A.extent(0); ++i)
+      for (std::size_t j = 0; j < B.extent(1); ++j)
+        for (std::size_t k = 0; k < A.extent(1); ++k)
+          C(i, j) += A(i, k) * B(k, j);
+  }
+  else
+  {
+    impl::dot_blas(A, {A.extent(0), A.extent(1)}, B, {B.extent(0), B.extent(1)},
+                   C);
+  }
 }
 
 /// Build an identity matrix

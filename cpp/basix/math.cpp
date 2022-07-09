@@ -6,8 +6,8 @@
 
 #include "math.h"
 #include "mdspan.hpp"
+#include <string>
 #include <vector>
-#include <xtensor/xadapt.hpp>
 
 namespace stdex = std::experimental;
 
@@ -25,13 +25,33 @@ extern "C"
 }
 
 //------------------------------------------------------------------
+void basix::math::impl::dot_blas(const xtl::span<const double>& A,
+                                 std::array<std::size_t, 2> Ashape,
+                                 const xtl::span<const double>& B,
+                                 std::array<std::size_t, 2> Bshape,
+                                 const xtl::span<double>& C)
+{
+  assert(Ashape[1] == Bshape[0]);
+  assert(C.size() == Ashape[0] * Bshape[1]);
+
+  int M = Ashape[0];
+  int N = Bshape[1];
+  int K = Ashape[1];
+
+  double alpha = 1;
+  double beta = 0;
+  int lda = K;
+  int ldb = N;
+  int ldc = N;
+  char trans = 'N';
+  dgemm_(&trans, &trans, &N, &M, &K, &alpha, const_cast<double*>(B.data()),
+         &ldb, const_cast<double*>(A.data()), &lda, &beta, C.data(), &ldc);
+}
+//------------------------------------------------------------------
 std::pair<std::vector<double>, std::vector<double>>
 basix::math::eigh(const xtl::span<const double>& A, std::size_t n)
 {
   // Copy to column major matrix
-  // xt::xtensor<double, 2, xt::layout_type::column_major> M(A.shape());
-  // M.assign(A);
-  // int N = A.shape(0);
   std::vector<double> w(n, 0);
   std::vector<double> M(A.begin(), A.end());
 
@@ -64,19 +84,27 @@ basix::math::eigh(const xtl::span<const double>& A, std::size_t n)
   return {std::move(w), std::move(M)};
 }
 //------------------------------------------------------------------
-xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
-                                          const xt::xtensor<double, 2>& B)
+std::vector<double> basix::math::solve(
+    const std::experimental::mdspan<
+        const double, std::experimental::dextents<std::size_t, 2>>& A,
+    const std::experimental::mdspan<
+        const double, std::experimental::dextents<std::size_t, 2>>& B)
 {
-  // Copy to column major matrix
-  xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
-  _A.assign(A);
-  xt::xtensor<double, 2, xt::layout_type::column_major> _B(B.shape());
-  _B.assign(B);
+  stdex::mdarray<double, stdex::dextents<std::size_t, 2>, stdex::layout_left>
+      _A(A.extents());
+  stdex::mdarray<double, stdex::dextents<std::size_t, 2>, stdex::layout_left>
+      _B(B.extents());
+  for (std::size_t i = 0; i < A.extent(0); ++i)
+    for (std::size_t j = 0; j < A.extent(1); ++j)
+      _A(i, j) = A(i, j);
+  for (std::size_t i = 0; i < B.extent(0); ++i)
+    for (std::size_t j = 0; j < B.extent(1); ++j)
+      _B(i, j) = B(i, j);
 
-  int N = _A.shape(0);
-  int nrhs = _B.shape(1);
-  int lda = _A.shape(0);
-  int ldb = B.shape(0);
+  int N = _A.extent(0);
+  int nrhs = _B.extent(1);
+  int lda = _A.extent(0);
+  int ldb = _B.extent(0);
   // Pivot indices that define the permutation matrix for the LU solver
   std::vector<int> piv(N);
   int info;
@@ -84,43 +112,33 @@ xt::xtensor<double, 2> basix::math::solve(const xt::xtensor<double, 2>& A,
   if (info != 0)
     throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
 
-  // Note: using assign, instead of returning the object, to get around an
-  // xtensor bug with Intel Compilers
-  // https://github.com/xtensor-stack/xtensor/issues/2351
-  xt::xtensor<double, 2> out(_B.shape());
-  out.assign(_B);
+  std::vector<double> rb(_B.extent(0) * _B.extent(1));
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> r(rb.data(),
+                                                           _B.extents());
+  for (std::size_t i = 0; i < _B.extent(0); ++i)
+    for (std::size_t j = 0; j < _B.extent(1); ++j)
+      r(i, j) = _B(i, j);
 
-  return out;
+  return rb;
 }
 //------------------------------------------------------------------
-std::vector<double>
-basix::math::solve(const std::experimental::mdspan<
-                       double, std::experimental::dextents<std::size_t, 2>>& A,
-                   const std::experimental::mdspan<
-                       double, std::experimental::dextents<std::size_t, 2>>& B)
-{
-  auto _A = xt::adapt(A.data(), A.size(), xt::no_ownership(),
-                      std::array<std::size_t, 2>{A.extent(0), A.extent(1)});
-  auto _B = xt::adapt(B.data(), B.size(), xt::no_ownership(),
-                      std::array<std::size_t, 2>{B.extent(0), B.extent(1)});
-
-  xt::xtensor<double, 2> C = solve(_A, _B);
-  return std::vector<double>(C.data(), C.data() + C.size());
-}
-//------------------------------------------------------------------
-bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
+bool basix::math::is_singular(
+    const std::experimental::mdspan<
+        const double, std::experimental::dextents<std::size_t, 2>>& A)
 {
   // Copy to column major matrix
-  xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
-  _A.assign(A);
-  const std::array<std::size_t, 1> sh = {A.shape(1)};
-  xt::xtensor<double, 1> B(sh);
-  B.fill(1.0);
+  stdex::mdarray<double, stdex::dextents<std::size_t, 2>, stdex::layout_left>
+      _A(A.extents());
+  for (std::size_t i = 0; i < A.extent(0); ++i)
+    for (std::size_t j = 0; j < A.extent(1); ++j)
+      _A(i, j) = A(i, j);
 
-  int N = _A.shape(0);
+  std::vector<double> B(A.extent(1), 1);
+  int N = _A.extent(0);
   int nrhs = 1;
-  int lda = _A.shape(0);
-  int ldb = B.shape(0);
+  int lda = _A.extent(0);
+  int ldb = B.size();
+
   // Pivot indices that define the permutation matrix for the LU solver
   std::vector<int> piv(N);
   int info;
@@ -134,39 +152,6 @@ bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
     return true;
   else
     return false;
-}
-//------------------------------------------------------------------
-void basix::math::dot(const xt::xtensor<double, 2>& A,
-                      const xt::xtensor<double, 2>& B,
-                      xt::xtensor<double, 2>& C)
-{
-  assert(A.shape(1) == B.shape(0));
-  assert(C.shape(0) == C.shape(0));
-  assert(C.shape(1) == B.shape(1));
-
-  int M = A.shape(0);
-  int N = B.shape(1);
-  int K = A.shape(1);
-
-  if (M * N * K < 4096)
-  {
-    for (int i = 0; i < M; ++i)
-      for (int j = 0; j < N; ++j)
-        for (int k = 0; k < K; ++k)
-          C(i, j) += A(i, k) * B(k, j);
-  }
-  else
-  {
-    double alpha = 1;
-    double beta = 0;
-    int lda = K;
-    int ldb = N;
-    int ldc = N;
-    char trans = 'N';
-    dgemm_(&trans, &trans, &N, &M, &K, &alpha, const_cast<double*>(B.data()),
-           &ldb, const_cast<double*>(A.data()), &lda, &beta,
-           const_cast<double*>(C.data()), &ldc);
-  }
 }
 //------------------------------------------------------------------
 std::vector<double> basix::math::eye(std::size_t n)

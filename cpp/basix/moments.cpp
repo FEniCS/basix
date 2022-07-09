@@ -82,8 +82,10 @@ map_points(const cell::type celltype0, const cell::type celltype1, cmdspan2_t x)
       for (std::size_t j = 0; j < axes_e.extent(1); ++j)
         axes_e(i, j) = axes(e, i, j);
 
-    const auto [dxbuffer, dxshape] = math::dot_new(x, axes_e);
-    cmdspan2_t dx(dxbuffer.data(), dxshape);
+    std::vector<double> dxbuffer(x.extent(0) * axes_e.extent(1));
+    mdspan2_t dx(dxbuffer.data(), x.extent(0), axes_e.extent(1));
+    math::dot_new(x, axes_e, dx);
+
     for (std::size_t i = 0; i < p[e].extent(0); ++i)
       for (std::size_t j = 0; j < p[e].extent(1); ++j)
         p[e](i, j) = entity_x(0, j) + dx(i, j);

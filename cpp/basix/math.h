@@ -17,22 +17,7 @@
 namespace basix::math
 {
 
-/// Compute the outer product of vectors u and v
-/// @param u The first vector. It must has size 3.
-/// @param v The second vector. It must has size 3.
-/// @return The outer product. The type will be the same as `u`.
-template <typename U, typename V>
-xt::xtensor<typename U::value_type, 2> outer(const U& u, const V& v)
-{
-  xt::xtensor<typename U::value_type, 2> results({u.size(), v.size()});
-  for (std::size_t i = 0; i < u.size(); i++)
-    for (std::size_t j = 0; j < u.size(); j++)
-      results(i, j) = u(i) * v(j);
-
-  return results;
-}
-
-/// Compute the outer product of vectors u and v
+/// @brief Compute the outer product of vectors u and v.
 /// @param u The first vector
 /// @param v The second vector
 /// @return The outer product. The type will be the same as `u`.
@@ -53,20 +38,6 @@ outer_new(const U& u, const V& v)
 /// @param v The second vector. It must has size 3.
 /// @return The cross product `u x v`. The type will be the same as `u`.
 template <typename U, typename V>
-xt::xtensor_fixed<typename U::value_type, xt::xshape<3>> cross(const U& u,
-                                                               const V& v)
-{
-  assert(u.size() == 3);
-  assert(v.size() == 3);
-  return {u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2],
-          u[0] * v[1] - u[1] * v[0]};
-}
-
-/// Compute the cross product u x v
-/// @param u The first vector. It must has size 3.
-/// @param v The second vector. It must has size 3.
-/// @return The cross product `u x v`. The type will be the same as `u`.
-template <typename U, typename V>
 std::array<typename U::value_type, 3> cross_new(const U& u, const V& v)
 {
   assert(u.size() == 3);
@@ -74,13 +45,6 @@ std::array<typename U::value_type, 3> cross_new(const U& u, const V& v)
   return {u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2],
           u[0] * v[1] - u[1] * v[0]};
 }
-
-/// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
-/// @param[in] A Input matrix
-/// @return Eigenvalues and eigenvectors
-std::pair<xt::xtensor<double, 1>,
-          xt::xtensor<double, 2, xt::layout_type::column_major>>
-eigh(const xt::xtensor<double, 2>& A);
 
 /// Compute the eigenvalues and eigenvectors of a square Hermitian matrix A
 /// @param[in] A Input matrix, row-major storage

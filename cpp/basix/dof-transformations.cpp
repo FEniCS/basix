@@ -33,54 +33,6 @@ typedef std::map<
 namespace
 {
 //-----------------------------------------------------------------------------
-template <typename U>
-xt::xtensor<typename U::value_type, 2> mdspan_to_xtensor2(const U& x)
-{
-  auto e = x.extents();
-  xt::xtensor<typename U::value_type, 2> y({e.extent(0), e.extent(1)});
-  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
-    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
-      y(k0, k1) = x(k0, k1);
-  return y;
-}
-//----------------------------------------------------------------------------
-template <typename U>
-xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
-{
-  auto e = x.extents();
-  xt::xtensor<double, 4> y(
-      {e.extent(0), e.extent(1), e.extent(2), e.extent(3)});
-  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
-    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
-      for (std::size_t k2 = 0; k2 < e.extent(2); ++k2)
-        for (std::size_t k3 = 0; k3 < e.extent(3); ++k3)
-          y(k0, k1, k2, k3) = x(k0, k1, k2, k3);
-
-  return y;
-}
-//-----------------------------------------------------------------------------
-std::array<std::vector<xt::xtensor<double, 2>>, 4>
-to_xtensor(const std::array<std::vector<cmdspan2_t>, 4>& x)
-{
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-  for (std::size_t i = 0; i < x.size(); ++i)
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-      _x[i].push_back(mdspan_to_xtensor2(x[i][j]));
-
-  return _x;
-}
-//----------------------------------------------------------------------------
-std::array<std::vector<xt::xtensor<double, 4>>, 4>
-to_xtensor(const std::array<std::vector<cmdspan4_t>, 4>& M)
-{
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
-  for (std::size_t i = 0; i < M.size(); ++i)
-    for (std::size_t j = 0; j < M[i].size(); ++j)
-      _M[i].push_back(mdspan_to_xtensor4(M[i][j]));
-
-  return _M;
-}
-//-----------------------------------------------------------------------------
 int find_first_subentity(cell::type cell_type, cell::type entity_type)
 {
   const int edim = cell::topological_dimension(entity_type);
@@ -377,43 +329,42 @@ mapinfo_t get_mapinfo(cell::type cell_type)
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 compute_transformation(
-    cell::type cell_type,
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    const xt::xtensor<double, 2>& coeffs, const xt::xtensor<double, 2> J,
-    const double detJ, const xt::xtensor<double, 2> K,
+    cell::type cell_type, const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, cmdspan2_t coeffs,
+    cmdspan2_t J, double detJ, cmdspan2_t K,
     const std::function<std::array<double, 3>(xtl::span<const double>)>
         map_point,
     int degree, int tdim, const int entity, std::size_t vs,
     const maps::type map_type)
 {
-  if (x[tdim].size() == 0 or x[tdim][entity].shape(0) == 0)
+  if (x[tdim].size() == 0 or x[tdim][entity].extent(0) == 0)
     return {{}, {0, 0}};
 
-  const xt::xtensor<double, 2>& pts = x[tdim][entity];
-  const xt::xtensor<double, 4>& imat = M[tdim][entity];
+  cmdspan2_t pts = x[tdim][entity];
+  cmdspan4_t imat = M[tdim][entity];
 
-  const std::size_t ndofs = imat.shape(0);
-  const std::size_t npts = pts.shape(0);
+  const std::size_t ndofs = imat.extent(0);
+  const std::size_t npts = pts.extent(0);
   const int psize = polyset::dim(cell_type, degree);
 
   std::size_t dofstart = 0;
   for (int d = 0; d < tdim; ++d)
     for (std::size_t i = 0; i < M[d].size(); ++i)
-      dofstart += M[d][i].shape(0);
+      dofstart += M[d][i].extent(0);
   for (int i = 0; i < entity; ++i)
-    dofstart += M[tdim][i].shape(0);
+    dofstart += M[tdim][i].extent(0);
 
   std::size_t total_ndofs = 0;
   for (int d = 0; d <= 3; ++d)
     for (std::size_t i = 0; i < M[d].size(); ++i)
-      total_ndofs += M[d][i].shape(0);
+      total_ndofs += M[d][i].extent(0);
 
   // Map the points to reverse the edge, then tabulate at those points
-  mdarray2_t mapped_pts(pts.shape(0), pts.shape(1));
+  mdarray2_t mapped_pts(pts.extents());
   for (std::size_t p = 0; p < mapped_pts.extent(0); ++p)
   {
-    auto mp = map_point(xtl::span(pts.data() + p * pts.shape(1), pts.shape(1)));
+    auto mp
+        = map_point(xtl::span(pts.data() + p * pts.extent(1), pts.extent(1)));
     for (std::size_t k = 0; k < mapped_pts.extent(1); ++k)
       mapped_pts(p, k) = mp[k];
   }
@@ -428,8 +379,8 @@ compute_transformation(
   mdarray3_t tabulated_data(npts, total_ndofs, vs);
   for (std::size_t j = 0; j < vs; ++j)
   {
-    mdarray2_t result(polyset_vals.extent(1), coeffs.shape(0));
-    for (std::size_t k0 = 0; k0 < coeffs.shape(0); ++k0)
+    mdarray2_t result(polyset_vals.extent(1), coeffs.extent(0));
+    for (std::size_t k0 = 0; k0 < coeffs.extent(0); ++k0)
       for (std::size_t k1 = 0; k1 < polyset_vals.extent(1); ++k1)
         for (std::size_t k2 = 0; k2 < polyset_vals.extent(0); ++k2)
           result(k1, k0) += coeffs(k0, k2 + psize * j) * polyset_vals(k2, k1);
@@ -453,9 +404,7 @@ compute_transformation(
                                * tabulated_data.extent(2),
                      tabulated_data.extent(1), tabulated_data.extent(2));
 
-      pull_back(map_type, temp_data, tab,
-                cmdspan2_t(J.data(), J.shape(0), J.shape(1)), detJ,
-                cmdspan2_t(K.data(), K.shape(0), K.shape(1)));
+      pull_back(map_type, temp_data, tab, J, detJ, K);
 
       for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < temp_data.extent(1); ++k1)
@@ -466,13 +415,13 @@ compute_transformation(
   // Interpolate to calculate coefficients
   std::vector<double> transformb(ndofs * ndofs);
   mdspan2_t transform(transformb.data(), ndofs, ndofs);
-  for (std::size_t d = 0; d < imat.shape(3); ++d)
+  for (std::size_t d = 0; d < imat.extent(3); ++d)
   {
     for (std::size_t i = 0; i < vs; ++i)
     {
       for (std::size_t k0 = 0; k0 < transform.extent(1); ++k0)
         for (std::size_t k1 = 0; k1 < transform.extent(0); ++k1)
-          for (std::size_t k2 = 0; k2 < imat.shape(2); ++k2)
+          for (std::size_t k2 = 0; k2 < imat.extent(2); ++k2)
             transform(k1, k0)
                 += imat(k0, i, k2, d) * pulled_data(k2, k1 + dofstart, i);
     }
@@ -483,11 +432,9 @@ compute_transformation(
 //-----------------------------------------------------------------------------
 std::map<cell::type, xt::xtensor<double, 3>>
 compute_entity_transformations_impl(
-    cell::type cell_type,
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    const xt::xtensor<double, 2>& coeffs, int degree, std::size_t vs,
-    maps::type map_type)
+    cell::type cell_type, const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, cmdspan2_t coeffs,
+    int degree, std::size_t vs, maps::type map_type)
 {
   std::map<cell::type, xt::xtensor<double, 3>> out;
 
@@ -497,21 +444,22 @@ compute_entity_transformations_impl(
     const int tdim = cell::topological_dimension(item.first);
     const int entity = find_first_subentity(cell_type, item.first);
     const std::size_t ndofs
-        = M[tdim].size() == 0 ? 0 : M[tdim][entity].shape(0);
+        = M[tdim].size() == 0 ? 0 : M[tdim][entity].extent(0);
     xt::xtensor<double, 3> transform({item.second.size(), ndofs, ndofs});
     for (std::size_t i = 0; i < item.second.size(); ++i)
     {
       auto [map, J, detJ, K] = item.second[i];
-      const auto [t2b, tshape]
-          = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, map,
-                                   degree, tdim, entity, vs, map_type);
+      const auto [t2b, tshape] = compute_transformation(
+          cell_type, x, M, coeffs, cmdspan2_t(J.data(), J.shape(0), J.shape(1)),
+          detJ, cmdspan2_t(K.data(), K.shape(0), K.shape(1)), map, degree, tdim,
+          entity, vs, map_type);
       cmdspan2_t t2(t2b.data(), tshape);
       for (std::size_t k0 = 0; k0 < transform.shape(1); ++k0)
         for (std::size_t k1 = 0; k1 < transform.shape(2); ++k1)
           transform(i, k0, k1) = t2(k0, k1);
     }
 
-    out[item.first] = transform;
+    out.insert({item.first, transform});
   }
 
   return out;
@@ -533,11 +481,9 @@ doftransforms::compute_entity_transformations(
         const double, std::experimental::dextents<std::size_t, 2>>& coeffs,
     int degree, std::size_t vs, maps::type map_type)
 {
-  auto out = compute_entity_transformations_impl(
-      cell_type, to_xtensor(x), to_xtensor(M),
-      xt::adapt(coeffs.data(), coeffs.size(), xt::no_ownership(),
-                std::vector<std::size_t>{coeffs.extent(0), coeffs.extent(1)}),
-      degree, vs, map_type);
+  std::map<cell::type, xt::xtensor<double, 3>> out
+      = compute_entity_transformations_impl(cell_type, x, M, coeffs, degree, vs,
+                                            map_type);
 
   std::map<cell::type,
            std::pair<std::vector<double>, std::array<std::size_t, 3>>>

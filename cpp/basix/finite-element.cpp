@@ -85,6 +85,29 @@ to_xtensor(const std::array<std::vector<cmdspan4_t>, 4>& M)
   return _M;
 }
 //----------------------------------------------------------------------------
+std::array<std::vector<cmdspan2_t>, 4>
+to_mdspan(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x)
+{
+  std::array<std::vector<cmdspan2_t>, 4> _x;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0), x[i][j].shape(1));
+
+  return _x;
+}
+//----------------------------------------------------------------------------
+std::array<std::vector<cmdspan4_t>, 4>
+to_mdspan(const std::array<std::vector<xt::xtensor<double, 4>>, 4>& x)
+{
+  std::array<std::vector<cmdspan4_t>, 4> _x;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0), x[i][j].shape(1),
+                         x[i][j].shape(2), x[i][j].shape(3));
+
+  return _x;
+}
+//----------------------------------------------------------------------------
 /// This function orthogonalises and normalises the rows of a matrix in place
 void orthogonalise(xt::xtensor<double, 2>& wcoeffs)
 {
@@ -733,18 +756,20 @@ FiniteElement::FiniteElement(
     }
   }
 
-  _entity_transformations = doftransforms::compute_entity_transformations(
-      cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
-  // _entity_transformations_new
-  //     = doftransforms::compute_entity_transformations_new(
-  //         cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
-  // for (auto& data : _entity_transformations_new)
-  // {
-  //   xt::xtensor<double, 3> tens(data.second.second);
-  //   std::copy(data.second.first.data(),
-  //             data.second.first.data() + data.second.first.size(), tens.data());
-  //   _entity_transformations.insert({data.first, std::move(tens)});
-  // }
+  // _entity_transformations = doftransforms::compute_entity_transformations(
+  //     cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
+
+  _entity_transformations_new = doftransforms::compute_entity_transformations(
+      cell_type, to_mdspan(x), to_mdspan(M),
+      cmdspan2_t(_coeffs.data(), _coeffs.shape(0), _coeffs.shape(1)),
+      highest_degree, value_size, map_type);
+  for (auto& data : _entity_transformations_new)
+  {
+    xt::xtensor<double, 3> tens(data.second.second);
+    std::copy(data.second.first.data(),
+              data.second.first.data() + data.second.first.size(), tens.data());
+    _entity_transformations.insert({data.first, std::move(tens)});
+  }
 
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);

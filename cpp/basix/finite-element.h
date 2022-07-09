@@ -1257,9 +1257,9 @@ private:
 
   // Entity transformations
   std::map<cell::type, xt::xtensor<double, 3>> _entity_transformations;
-  // std::map<cell::type,
-  //          std::pair<std::vector<double>, std::array<std::size_t, 3>>>
-  //     _entity_transformations_new;
+  std::map<cell::type,
+           std::pair<std::vector<double>, std::array<std::size_t, 3>>>
+      _entity_transformations_new;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of

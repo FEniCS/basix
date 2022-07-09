@@ -10,12 +10,10 @@
 
 using namespace basix;
 namespace stdex = std::experimental;
-using mdarray2_t = stdex::mdarray<double, stdex ::dextents<std::size_t, 2>>;
-using mdspan2_t = stdex::mdspan<double, stdex ::dextents<std::size_t, 2>>;
-using cmdspan2_t
-    = stdex::mdspan<const double, stdex ::dextents<std::size_t, 2>>;
-using cmdspan3_t
-    = stdex::mdspan<const double, stdex ::dextents<std::size_t, 3>>;
+using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
 
 namespace
 {

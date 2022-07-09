@@ -64,8 +64,9 @@ precompute::prepare_matrix(
           for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
             mat_t(k1, k0) = mat(k0, k1);
 
-        auto [mat2_data, shape] = math::dot_new(mat, mat_t);
-        cmdspan2_t mat2(mat2_data.data(), shape);
+        std::vector<double> mat2_data(mat.extent(0) * mat_t.extent(1));
+        mdspan2_t mat2(mat2_data.data(), mat.extent(0), mat_t.extent(1));
+        math::dot_new(mat, mat_t, mat2);
 
         auto [evals, _] = math::eigh(mat2, mat2.extent(0));
         if (double lambda = std::abs(evals.front()); lambda > max_eval)

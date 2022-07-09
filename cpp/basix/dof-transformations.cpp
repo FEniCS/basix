@@ -15,11 +15,11 @@
 using namespace basix;
 
 namespace stdex = std::experimental;
-using mdarray2_t = stdex::mdarray<double, stdex ::dextents<std::size_t, 2>>;
+using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
 using cmdspan2_t
-    = stdex::mdspan<const double, stdex ::dextents<std::size_t, 2>>;
+    = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 using cmdspan4_t
-    = stdex::mdspan<const double, stdex ::dextents<std::size_t, 4>>;
+    = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 typedef std::map<
     cell::type,

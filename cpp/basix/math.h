@@ -87,7 +87,8 @@ bool is_singular(const std::experimental::mdspan<
 /// Compute C = A * B
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
-/// @return A * B
+/// @param[out] C Output matrix. Must be sized correctly before calling
+/// this function.
 template <typename U, typename V, typename W>
 void dot_new(const U& A, const V& B, W&& C)
 {

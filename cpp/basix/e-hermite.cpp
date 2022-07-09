@@ -78,8 +78,8 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
         topology[2].size(), impl::mdarray4_t(0, 1, 0, deriv_count));
   }
 
-  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)

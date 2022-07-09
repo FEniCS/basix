@@ -23,7 +23,9 @@
 #include <basix/finite-element.h>
 #include <basix/lattice.h>
 #include <iomanip>
+#include <xtensor/xadapt.hpp>
 #include <xtensor/xio.hpp>
+#include <xtensor/xview.hpp>
 
 static const std::map<basix::cell::type, std::string> type_to_name
     = {{basix::cell::type::point, "point"},

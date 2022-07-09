@@ -6,10 +6,12 @@
 
 #include "cell.h"
 #include "maps.h"
+#include <map>
 #include <vector>
+#include <xtensor/xtensor.hpp>
 
 /// Functions to transform DOFs in high degree Lagrange spaces
-
+///
 /// The functions in this namespace calculate the permutations that can be used
 /// to rotate and reflect DOF points in Lagrange spaces.
 namespace basix::doftransforms
@@ -33,7 +35,7 @@ std::map<cell::type, xt::xtensor<double, 3>> compute_entity_transformations(
     cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
+    const xt::xtensor<double, 2>& coeffs, int degree, std::size_t vs,
     maps::type map_type);
 
 } // namespace basix::doftransforms

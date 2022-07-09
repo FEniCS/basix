@@ -19,15 +19,20 @@
 #include "polyset.h"
 #include <basix/version.h>
 #include <numeric>
+#include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
+#include <xtensor/xview.hpp>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
 using namespace basix;
 namespace stdex = std::experimental;
-using mdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
-using mdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using mdspan4_t = stdex::mdspan<double, stdex::dextents<std::size_t, 4>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 namespace
 {
@@ -59,7 +64,7 @@ xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
 }
 //-----------------------------------------------------------------------------
 std::array<std::vector<xt::xtensor<double, 2>>, 4>
-to_xtensor(const std::array<std::vector<mdspan2_t>, 4>& x)
+to_xtensor(const std::array<std::vector<cmdspan2_t>, 4>& x)
 {
   std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
   for (std::size_t i = 0; i < x.size(); ++i)
@@ -70,7 +75,7 @@ to_xtensor(const std::array<std::vector<mdspan2_t>, 4>& x)
 }
 //----------------------------------------------------------------------------
 std::array<std::vector<xt::xtensor<double, 4>>, 4>
-to_xtensor(const std::array<std::vector<mdspan4_t>, 4>& M)
+to_xtensor(const std::array<std::vector<cmdspan4_t>, 4>& M)
 {
   std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
   for (std::size_t i = 0; i < M.size(); ++i)
@@ -170,20 +175,26 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
     {
       // Evaluate polynomial basis at x[d]
       const xt::xtensor<double, 2>& x_e = x[d][e];
-      xt::xtensor<double, 3> P;
-
-      if (x_e.shape(0) != 0)
-        P = polyset::tabulate(cell_type, degree, nderivs, x_e);
+      cmdspan3_t P;
+      std::vector<double> Pb;
+      if (x_e.shape(0) > 0)
+      {
+        std::array<std::size_t, 3> shape;
+        std::tie(Pb, shape) = polyset::tabulate(
+            cell_type, degree, nderivs,
+            cmdspan2_t(x_e.data(), x_e.shape(0), x_e.shape(1)));
+        P = cmdspan3_t(Pb.data(), shape);
+      }
 
       // Me: [dof, vs, point, deriv]
       const xt::xtensor<double, 4>& Me = M[d][e];
 
       // Compute dual matrix contribution
-      for (std::size_t i = 0; i < Me.shape(0); ++i)        // Dof index
-        for (std::size_t j = 0; j < Me.shape(1); ++j)      // Value index
-          for (std::size_t k = 0; k < Me.shape(2); ++k)    // Point
-            for (std::size_t l = 0; l < Me.shape(3); ++l)  // Derivative
-              for (std::size_t m = 0; m < P.shape(1); ++m) // Polynomial term
+      for (std::size_t i = 0; i < Me.shape(0); ++i)         // Dof index
+        for (std::size_t j = 0; j < Me.shape(1); ++j)       // Value index
+          for (std::size_t k = 0; k < Me.shape(2); ++k)     // Point
+            for (std::size_t l = 0; l < Me.shape(3); ++l)   // Derivative
+              for (std::size_t m = 0; m < P.extent(1); ++m) // Polynomial term
                 D(j * pdim + m, dof_index + i) += Me(i, j, k, l) * P(l, m, k);
 
       dof_index += M[d][e].shape(0);
@@ -216,16 +227,12 @@ basix::FiniteElement basix::create_element(element::family family,
   // P family
   case element::family::P:
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_lagrange(cell, degree, lvariant, discontinuous);
   case element::family::RT:
   {
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -239,9 +246,7 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::N1E:
   {
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -295,9 +300,7 @@ basix::FiniteElement basix::create_element(element::family family,
           "Cannot pass a Lagrange variant to this element.");
     }
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_regge(cell, degree, discontinuous);
   case element::family::HHJ:
     if (lvariant != element::lagrange_variant::unset)
@@ -306,9 +309,7 @@ basix::FiniteElement basix::create_element(element::family family,
           "Cannot pass a Lagrange variant to this element.");
     }
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_hhj(cell, degree, discontinuous);
   // Other elements
   case element::family::CR:
@@ -318,9 +319,7 @@ basix::FiniteElement basix::create_element(element::family family,
           "Cannot pass a Lagrange variant to this element.");
     }
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_cr(cell, degree, discontinuous);
   case element::family::bubble:
     if (lvariant != element::lagrange_variant::unset)
@@ -329,9 +328,7 @@ basix::FiniteElement basix::create_element(element::family family,
           "Cannot pass a Lagrange variant to this element.");
     }
     if (dvariant != element::dpc_variant::unset)
-    {
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    }
     return element::create_bubble(cell, degree, discontinuous);
   case element::family::Hermite:
     return element::create_hermite(cell, degree, discontinuous);
@@ -394,12 +391,13 @@ basix::FiniteElement basix::create_element(element::family family,
   return create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
-std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 4>>, 4>>
-basix::element::make_discontinuous(
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M, int tdim,
-    int value_size)
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+element::make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
+                            const std::array<std::vector<cmdspan4_t>, 4>& M,
+                            std::size_t tdim, std::size_t value_size)
 {
   std::size_t npoints = 0;
   std::size_t Mshape0 = 0;
@@ -407,30 +405,35 @@ basix::element::make_discontinuous(
   {
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
-      npoints += x[i][j].shape(0);
-      Mshape0 += M[i][j].shape(0);
+      npoints += x[i][j].extent(0);
+      Mshape0 += M[i][j].extent(0);
     }
   }
-  const std::size_t nderivs = M[0][0].shape(3);
+  const std::size_t nderivs = M[0][0].extent(3);
 
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> M_out;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
-  for (int i = 0; i < tdim; ++i)
+  std::array<std::vector<std::vector<double>>, 4> x_data;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshapes;
+  std::array<std::vector<std::vector<double>>, 4> M_data;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshapes;
+  for (std::size_t i = 0; i < tdim; ++i)
   {
-    x_out[i] = std::vector<xt::xtensor<double, 2>>(
-        x[i].size(),
-        xt::xtensor<double, 2>({0, static_cast<std::size_t>(tdim)}));
-    M_out[i] = std::vector<xt::xtensor<double, 4>>(
-        M[i].size(),
-        xt::xtensor<double, 4>(
-            {0, static_cast<std::size_t>(value_size), 0, nderivs}));
+    xshapes[i] = std::vector(x[i].size(), std::array<std::size_t, 2>{0, tdim});
+    x_data[i].resize(x[i].size());
+
+    Mshapes[i] = std::vector(
+        M[i].size(), std::array<std::size_t, 4>{0, value_size, 0, nderivs});
+    M_data[i].resize(M[i].size());
   }
 
-  xt::xtensor<double, 2> new_x
-      = xt::zeros<double>({npoints, static_cast<std::size_t>(tdim)});
+  std::array<std::size_t, 2> xshape = {npoints, tdim};
+  std::vector<double> xb(xshape[0] * xshape[1]);
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> new_x(xb.data(),
+                                                               xshape);
 
-  xt::xtensor<double, 4> new_M = xt::zeros<double>(
-      {Mshape0, static_cast<std::size_t>(value_size), npoints, nderivs});
+  std::array<std::size_t, 4> Mshape = {Mshape0, value_size, npoints, nderivs};
+  std::vector<double> Mb(Mshape[0] * Mshape[1] * Mshape[2] * Mshape[3]);
+  stdex::mdspan<double, stdex::dextents<std::size_t, 4>> new_M(Mb.data(),
+                                                               Mshape);
 
   int x_n = 0;
   int M_n = 0;
@@ -438,75 +441,28 @@ basix::element::make_discontinuous(
   {
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
-      xt::view(new_x, xt::range(x_n, x_n + x[i][j].shape(0)), xt::all())
-          .assign(x[i][j]);
-      xt::view(new_M, xt::range(M_n, M_n + M[i][j].shape(0)), xt::all(),
-               xt::range(x_n, x_n + x[i][j].shape(0)), xt::all())
-          .assign(M[i][j]);
-      x_n += x[i][j].shape(0);
-      M_n += M[i][j].shape(0);
+      for (std::size_t k0 = 0; k0 < x[i][j].extent(0); ++k0)
+        for (std::size_t k1 = 0; k1 < x[i][j].extent(1); ++k1)
+          new_x(k0 + x_n, k1) = x[i][j](k0, k1);
+
+      for (std::size_t k0 = 0; k0 < M[i][j].extent(0); ++k0)
+        for (std::size_t k1 = 0; k1 < M[i][j].extent(1); ++k1)
+          for (std::size_t k2 = 0; k2 < M[i][j].extent(2); ++k2)
+            for (std::size_t k3 = 0; k3 < M[i][j].extent(3); ++k3)
+              new_M(k0 + M_n, k1, k2 + x_n, k3) = M[i][j](k0, k1, k2, k3);
+
+      x_n += x[i][j].extent(0);
+      M_n += M[i][j].extent(0);
     }
   }
 
-  x_out[tdim].push_back(new_x);
-  M_out[tdim].push_back(new_M);
+  x_data[tdim].push_back(xb);
+  xshapes[tdim].push_back(xshape);
+  M_data[tdim].push_back(Mb);
+  Mshapes[tdim].push_back(Mshape);
 
-  return {x_out, M_out};
-}
-//-----------------------------------------------------------------------------
-std::tuple<std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
-           std::array<std::vector<std::vector<double>>, 4>,
-           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
-basix::element::make_discontinuous(
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int tdim, int value_size)
-{
-
-  auto to_xtensor = [](auto& x, auto& M)
-      -> std::pair<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-                   std::array<std::vector<xt::xtensor<double, 4>>, 4>>
-  {
-    std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
-    std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
-    for (std::size_t i = 0; i < x.size(); ++i)
-      for (std::size_t j = 0; j < x[i].size(); ++j)
-        _x[i].push_back(mdspan_to_xtensor2(x[i][j]));
-    for (std::size_t i = 0; i < M.size(); ++i)
-      for (std::size_t j = 0; j < M[i].size(); ++j)
-        _M[i].push_back(mdspan_to_xtensor4(M[i][j]));
-
-    return {std::move(_x), std::move(_M)};
-  };
-
-  auto [_x, _M] = to_xtensor(x, M);
-  std::tie(_x, _M) = make_discontinuous(_x, _M, tdim, value_size);
-
-  std::array<std::vector<std::vector<double>>, 4> x_new;
-  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
-  for (std::size_t i = 0; i < _x.size(); ++i)
-  {
-    for (std::size_t j = 0; j < _x[i].size(); ++j)
-    {
-      xshape[i].push_back({_x[i][j].shape(0), _x[i][j].shape(1)});
-      x_new[i].emplace_back(_x[i][j].data(), _x[i][j].data() + _x[i][j].size());
-    }
-  }
-
-  std::array<std::vector<std::vector<double>>, 4> M_new;
-  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
-  for (std::size_t i = 0; i < _M.size(); ++i)
-  {
-    for (std::size_t j = 0; j < _M[i].size(); ++j)
-    {
-      Mshape[i].push_back({_M[i][j].shape(0), _M[i][j].shape(1),
-                           _M[i][j].shape(2), _M[i][j].shape(3)});
-      M_new[i].emplace_back(_M[i][j].data(), _M[i][j].data() + _M[i][j].size());
-    }
-  }
-
-  return {std::move(x_new), std::move(xshape), std::move(M_new),
-          std::move(Mshape)};
+  return {std::move(x_data), std::move(xshapes), std::move(M_data),
+          std::move(Mshapes)};
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
@@ -609,9 +565,9 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree, element::lagrange_variant lvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -643,9 +599,9 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree, element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -677,9 +633,9 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -908,6 +864,7 @@ FiniteElement::FiniteElement(
               }
             }
           }
+
           // Factorise the permutations
           _eperm[et.first][i] = precompute::prepare_permutation(perm);
           _eperm_rev[et.first][i] = precompute::prepare_permutation(rev_perm);
@@ -934,30 +891,91 @@ FiniteElement::FiniteElement(
       {
         if (et.second.shape(1) > 0)
         {
-          const xt::xtensor<double, 2>& mat
-              = xt::view(et.second, i, xt::all(), xt::all());
-          _etrans[et.first][i] = precompute::prepare_matrix(mat);
-          auto mat_transpose = xt::transpose(mat);
-          _etransT[et.first][i] = precompute::prepare_matrix(mat_transpose);
+          std::vector<double> mat_b(et.second.shape(1) * et.second.shape(2));
+          stdex::mdspan<double, stdex::dextents<std::size_t, 2>> mat(
+              mat_b.data(), et.second.shape(1), et.second.shape(2));
+          for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
+            for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
+              mat(k0, k1) = et.second(i, k0, k1);
 
-          xt::xtensor<double, 2> mat_inv;
-          // Rotation of a face: this is in the only base transformation such
-          // that M^{-1} != M.
+          {
+            auto [p, D, mat_data] = precompute::prepare_matrix(mat);
+            auto m = xt::adapt(mat_data.first,
+                               std::vector<std::size_t>{mat_data.second[0],
+                                                        mat_data.second[1]});
+            _etrans[et.first][i] = {p, D, m};
+          }
+
+          {
+            std::vector<double> matT_b(et.second.shape(1) * et.second.shape(2));
+            stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matT(
+                matT_b.data(), et.second.shape(2), et.second.shape(1));
+            for (std::size_t k0 = 0; k0 < matT.extent(0); ++k0)
+              for (std::size_t k1 = 0; k1 < matT.extent(1); ++k1)
+                matT(k0, k1) = et.second(i, k1, k0);
+
+            auto [p, D, mat_data] = precompute::prepare_matrix(matT);
+            auto m = xt::adapt(mat_data.first,
+                               std::vector<std::size_t>{mat_data.second[0],
+                                                        mat_data.second[1]});
+            _etransT[et.first][i] = {p, D, m};
+          }
+
+          std::vector<double> matinv_b;
+          stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matinv_new;
+
+          // Rotation of a face: this is in the only base transformation
+          // such that M^{-1} != M.
           // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
           // For a triangular face, M^3 = Id, so M^{-1} = M^2.
           if (et.first == cell::type::quadrilateral and i == 0)
           {
-            auto mat_int = math::dot(mat, mat);
-            mat_inv = math::dot(mat_int, mat);
+            auto [matint, mshape] = math::dot_new(mat, mat);
+            stdex::mdspan<double, stdex::dextents<std::size_t, 2>> mat_int(
+                matint.data(), mshape);
+            std::array<std::size_t, 2> shape;
+            std::tie(matinv_b, shape) = math::dot_new(mat_int, mat);
+            matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>(
+                matinv_b.data(), shape);
           }
           else if (et.first == cell::type::triangle and i == 0)
-            mat_inv = math::dot(mat, mat);
+          {
+            std::array<std::size_t, 2> shape;
+            std::tie(matinv_b, shape) = math::dot_new(mat, mat);
+            matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>(
+                matinv_b.data(), shape);
+          }
           else
-            mat_inv = mat;
+          {
+            matinv_b.assign(mat_b.begin(), mat_b.end());
+            matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>(
+                matinv_b.data(), mat.extents());
+          }
 
-          _etrans_inv[et.first][i] = precompute::prepare_matrix(mat_inv);
-          auto mat_invT = xt::transpose(mat_inv);
-          _etrans_invT[et.first][i] = precompute::prepare_matrix(mat_invT);
+          {
+            auto [p, D, mat_data] = precompute::prepare_matrix(matinv_new);
+            auto m = xt::adapt(mat_data.first,
+                               std::vector<std::size_t>{mat_data.second[0],
+                                                        mat_data.second[1]});
+            _etrans_inv[et.first][i] = {p, D, m};
+          }
+
+          {
+            std::vector<double> matinvT_b(matinv_new.extent(0)
+                                          * matinv_new.extent(1));
+            stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matinvT_new(
+                matinvT_b.data(), matinv_new.extent(1), matinv_new.extent(0));
+
+            for (std::size_t k0 = 0; k0 < matinvT_new.extent(0); ++k0)
+              for (std::size_t k1 = 0; k1 < matinvT_new.extent(1); ++k1)
+                matinvT_new(k0, k1) = matinv_new(k1, k0);
+
+            auto [p, D, mat_data] = precompute::prepare_matrix(matinvT_new);
+            auto m = xt::adapt(mat_data.first,
+                               std::vector<std::size_t>{mat_data.second[0],
+                                                        mat_data.second[1]});
+            _etrans_invT[et.first][i] = {p, D, m};
+          }
         }
       }
     }
@@ -981,9 +999,9 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const mdspan2_t& wcoeffs,
-    const std::array<std::vector<mdspan2_t>, 4>& x,
-    const std::array<std::vector<mdspan4_t>, 4>& M, int interpolation_nderivs,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, bool discontinuous, int highest_complete_degree,
     int highest_degree, element::lagrange_variant lvariant,
     element::dpc_variant dvariant,
@@ -1030,26 +1048,34 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
   return {ndsize, num_points, ndofs, vs};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 4>
-FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x) const
+xt::xtensor<double, 4> FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
 {
-  auto shape = tabulate_shape(nd, x.shape(0));
+
+  std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
   xt::xtensor<double, 4> data(shape);
-  tabulate(nd, x, data);
+  tabulate(nd,
+           xt::adapt(x.data(), x.size(), xt::no_ownership(),
+                     std::vector<std::size_t>{x.extent(0), x.extent(1)}),
+           data);
   return data;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 4> FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
+xt::xtensor<double, 4>
+FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
+                        std::array<std::size_t, 2> shape) const
 {
-  std::vector<std::size_t> shape = {x.extent(0), x.extent(1)};
-  return tabulate(nd, xt::adapt(x.data(), x.size(), xt::no_ownership(), shape));
+  return tabulate(nd, cmdspan2_t(x.data(), shape));
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
                              xt::xtensor<double, 4>& basis_data) const
 {
   if (x.shape(1) != _cell_tdim)
-    throw std::runtime_error("Point dim does not match element dim.");
+  {
+    throw std::runtime_error("Point dim (" + std::to_string(x.shape(1))
+                             + ") does not match element dim ("
+                             + std::to_string(_cell_tdim) + ").");
+  }
 
   const int psize = polyset::dim(_cell_type, _highest_degree);
   xt::xtensor<double, 3> basis(
@@ -1205,21 +1231,19 @@ xt::xtensor<double, 3> FiniteElement::push_forward(
   const std::size_t physical_value_size
       = compute_value_size(_map_type, J.shape(1));
   xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
-  using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using U_t = xt::xview<decltype(U)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using J_t = xt::xview<decltype(J)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
+
+  using u_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+  using U_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+
   auto map = this->map_fn<u_t, U_t, J_t, K_t>();
   for (std::size_t i = 0; i < u.shape(0); ++i)
   {
-    auto _K = xt::view(K, i, xt::all(), xt::all());
-    auto _J = xt::view(J, i, xt::all(), xt::all());
-    auto _u = xt::view(u, i, xt::all(), xt::all());
-    auto _U = xt::view(U, i, xt::all(), xt::all());
+    u_t _u(u.data() + i * u.shape(1) * u.shape(2), u.shape(1), u.shape(2));
+    U_t _U(U.data() + i * U.shape(1) * U.shape(2), U.shape(1), U.shape(2));
+    J_t _J(J.data() + i * J.shape(1) * J.shape(2), J.shape(1), J.shape(2));
+    K_t _K(K.data() + i * K.shape(1) * K.shape(2), K.shape(1), K.shape(2));
     map(_u, _U, _J, detJ[i], _K);
   }
 
@@ -1234,21 +1258,18 @@ xt::xtensor<double, 3> FiniteElement::pull_back(
       _value_shape.begin(), _value_shape.end(), 1, std::multiplies<int>());
 
   xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
-  using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using U_t = xt::xview<decltype(U)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using J_t = xt::xview<decltype(J)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
+  using u_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using U_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+  using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+
   auto map = this->map_fn<U_t, u_t, K_t, J_t>();
   for (std::size_t i = 0; i < u.shape(0); ++i)
   {
-    auto _K = xt::view(K, i, xt::all(), xt::all());
-    auto _J = xt::view(J, i, xt::all(), xt::all());
-    auto _u = xt::view(u, i, xt::all(), xt::all());
-    auto _U = xt::view(U, i, xt::all(), xt::all());
+    u_t _u(u.data() + i * u.shape(1) * u.shape(2), u.shape(1), u.shape(2));
+    U_t _U(U.data() + i * U.shape(1) * U.shape(2), U.shape(1), U.shape(2));
+    J_t _J(J.data() + i * J.shape(1) * J.shape(2), J.shape(1), J.shape(2));
+    K_t _K(K.data() + i * K.shape(1) * K.shape(2), K.shape(1), K.shape(2));
     map(_U, _u, _K, 1.0 / detJ[i], _J);
   }
 

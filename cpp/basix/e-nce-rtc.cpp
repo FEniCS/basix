@@ -156,8 +156,8 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
     M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
-  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -380,8 +380,8 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)

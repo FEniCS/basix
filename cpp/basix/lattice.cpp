@@ -240,7 +240,7 @@ create_quad(std::size_t n, lattice::type lattice_type, bool exterior)
       }
     }
 
-    return {xb, shape};
+    return {std::move(xb), std::move(shape)};
   }
 }
 //-----------------------------------------------------------------------------
@@ -275,7 +275,7 @@ create_hex(int n, lattice::type lattice_type, bool exterior)
       }
     }
 
-    return {xb, shape};
+    return {std::move(xb), std::move(shape)};
   }
 }
 //-----------------------------------------------------------------------------
@@ -302,7 +302,7 @@ create_tri_equispaced(std::size_t n, bool exterior)
     }
   }
 
-  return {_p, shape};
+  return {std::move(_p), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 
@@ -344,7 +344,7 @@ create_tri_warped(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {_p, shape};
+  return {std::move(_p), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 std::vector<double> isaac_point(lattice::type lattice_type,
@@ -403,7 +403,7 @@ create_tri_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {_p, shape};
+  return {std::move(_p), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 
@@ -438,7 +438,7 @@ create_tri_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {_p, shape};
+  return {std::move(_p), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
@@ -503,7 +503,7 @@ create_tet_equispaced(std::size_t n, bool exterior)
     }
   }
 
-  return {xb, shape};
+  return {std::move(xb), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 
@@ -536,7 +536,7 @@ create_tet_isaac(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {xb, shape};
+  return {std::move(xb), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
@@ -589,7 +589,7 @@ create_tet_warped(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {xb, shape};
+  return {std::move(xb), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 
@@ -630,7 +630,7 @@ create_tet_centroid(std::size_t n, lattice::type lattice_type, bool exterior)
     }
   }
 
-  return {xb, shape};
+  return {std::move(xb), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
@@ -706,7 +706,7 @@ create_prism(std::size_t n, lattice::type lattice_type, bool exterior,
       }
     }
 
-    return {xb, shape};
+    return {std::move(xb), std::move(shape)};
   }
 }
 //-----------------------------------------------------------------------------
@@ -737,7 +737,7 @@ create_pyramid_equispaced(int n, bool exterior)
     }
   }
 
-  return {xb, shape};
+  return {std::move(xb), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
 /*

@@ -19,7 +19,6 @@ enum class type
   gauss_jacobi = 1,
   gll = 2,
   xiao_gimbutas = 3,
-
   zienkiewicz_taylor = 20,
   keast = 21,
   strang_fix = 22,

@@ -470,7 +470,7 @@ public:
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
   std::pair<std::vector<double>, std::array<std::size_t, 4>>
-  tabulate_new(int nd, impl::cmdspan2_t x) const;
+  tabulate(int nd, impl::cmdspan2_t x) const;
 
   /// Compute basis values and derivatives at set of points.
   ///

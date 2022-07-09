@@ -90,7 +90,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
 
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
-        const auto [phib, phishape] = moment_space.tabulate_new(0, pts);
+        const auto [phib, phishape] = moment_space.tabulate(0, pts);
         cmdspan4_t moment_values(phib.data(), phishape);
 
         auto& _x = x[d].emplace_back(pts.extent(0), tdim);

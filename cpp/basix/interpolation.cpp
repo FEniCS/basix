@@ -26,7 +26,7 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
 
   const auto [points, shape] = element_to.points_new();
   const auto [tab_b, tab_shape]
-      = element_from.tabulate_new(0, cmdspan2_t(points.data(), shape));
+      = element_from.tabulate(0, cmdspan2_t(points.data(), shape));
   cmdspan4_t tab(tab_b.data(), tab_shape);
   const auto [imb, imshape] = element_to.interpolation_matrix_new();
   cmdspan2_t i_m(imb.data(), imshape);

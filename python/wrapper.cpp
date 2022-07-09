@@ -224,7 +224,7 @@ Interface to the Basix C++ library.
               throw std::runtime_error("x has the wrong size");
             stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
                 x.data(), x.shape(0), x.shape(1));
-            auto [t, shape] = self.tabulate_new(n, _x);
+            auto [t, shape] = self.tabulate(n, _x);
             return py::array_t<double>(shape, t.data());
           },
           basix::docstring::FiniteElement__tabulate.c_str())

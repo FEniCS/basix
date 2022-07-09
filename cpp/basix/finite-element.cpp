@@ -1109,7 +1109,7 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 4>>
-FiniteElement::tabulate_new(int nd, impl::cmdspan2_t x) const
+FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
 {
   std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
   xt::xtensor<double, 4> data(shape);

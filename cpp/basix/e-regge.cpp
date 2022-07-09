@@ -156,8 +156,8 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face and
   // d(d-1)(d+1) on the interior in 3D
 
-  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)

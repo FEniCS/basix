@@ -11,6 +11,12 @@
 #include <xtl/xspan.hpp>
 
 using namespace basix;
+
+namespace stdex = std::experimental;
+using mdarray2_t = stdex::mdarray<double, stdex ::dextents<std::size_t, 2>>;
+using cmdspan2_t
+    = stdex::mdspan<const double, stdex ::dextents<std::size_t, 2>>;
+
 typedef std::map<
     cell::type,
     std::vector<std::tuple<
@@ -37,22 +43,38 @@ void pull_back(maps::type map_type, xt::xtensor<double, 2>& u,
                const xt::xtensor<double, 2>& U, const xt::xtensor<double, 2>& J,
                const double detJ, const xt::xtensor<double, 2>& K)
 {
+  using u_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+  using U_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+
+  auto _u = u_t(u.data(), u.shape(0), u.shape(1));
+  auto _U = U_t(U.data(), U.shape(0), U.shape(1));
+  auto _J = J_t(J.data(), J.shape(0), J.shape(1));
+  auto _K = K_t(K.data(), K.shape(0), K.shape(1));
+
   switch (map_type)
   {
   case maps::type::identity:
-    u.assign(U);
+  {
+    assert(_U.extent(0) == _u.extent(0));
+    assert(_U.extent(1) == _u.extent(1));
+    for (std::size_t i = 0; i < _U.extent(0); ++i)
+      for (std::size_t j = 0; j < _U.extent(1); ++j)
+        _u(i, j) = _U(i, j);
     return;
+  }
   case maps::type::covariantPiola:
-    maps::covariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::covariant_piola(_u, _U, _K, 1.0 / detJ, _J);
     return;
   case maps::type::contravariantPiola:
-    maps::contravariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::contravariant_piola(_u, _U, _K, 1.0 / detJ, _J);
     return;
   case maps::type::doubleCovariantPiola:
-    maps::double_covariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::double_covariant_piola(_u, _U, _K, 1.0 / detJ, _J);
     return;
   case maps::type::doubleContravariantPiola:
-    maps::double_contravariant_piola(u, U, K, 1.0 / detJ, J);
+    maps::double_contravariant_piola(_u, _U, _K, 1.0 / detJ, _J);
     return;
   default:
     throw std::runtime_error("Map not implemented");
@@ -318,7 +340,7 @@ xt::xtensor<double, 2> compute_transformation(
     const double detJ, const xt::xtensor<double, 2> K,
     const std::function<std::array<double, 3>(xtl::span<const double>)>
         map_point,
-    const int degree, const int tdim, const int entity, const int vs,
+    int degree, int tdim, const int entity, std::size_t vs,
     const maps::type map_type)
 {
   if (x[tdim].size() == 0 or x[tdim][entity].shape(0) == 0)
@@ -347,55 +369,59 @@ xt::xtensor<double, 2> compute_transformation(
   xt::xtensor<double, 2> mapped_pts(pts.shape());
   for (std::size_t p = 0; p < mapped_pts.shape(0); ++p)
   {
-    // auto mp = map_point(xt::row(pts, p));
     auto mp = map_point(xtl::span(pts.data() + p * pts.shape(1), pts.shape(1)));
     for (std::size_t k = 0; k < mapped_pts.shape(1); ++k)
       mapped_pts(p, k) = mp[k];
   }
 
-  xt::xtensor<double, 2> polyset_vals
-      = xt::view(polyset::tabulate(cell_type, degree, 0, mapped_pts), 0,
-                 xt::all(), xt::all());
-  xt::xtensor<double, 3> tabulated_data(
-      {npts, total_ndofs, static_cast<std::size_t>(vs)});
+  auto [polyset_vals_b, polyset_shape] = polyset::tabulate(
+      cell_type, degree, 0,
+      cmdspan2_t(mapped_pts.data(), mapped_pts.shape(0), mapped_pts.shape(1)));
+  assert(polyset_shape[0] == 1);
+  cmdspan2_t polyset_vals(polyset_vals_b.data(), polyset_shape[1],
+                          polyset_shape[2]);
 
-  for (int j = 0; j < vs; ++j)
+  xt::xtensor<double, 3> tabulated_data({npts, total_ndofs, vs});
+  for (std::size_t j = 0; j < vs; ++j)
   {
-    auto data_view = xt::view(tabulated_data, xt::all(), xt::all(), j);
-    xt::xtensor<double, 2> C
-        = xt::view(coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-    auto result = xt::transpose(math::dot(C, polyset_vals));
-    data_view.assign(result);
+    mdarray2_t result(polyset_vals.extent(1), coeffs.shape(0));
+    for (std::size_t k0 = 0; k0 < coeffs.shape(0); ++k0)
+      for (std::size_t k1 = 0; k1 < polyset_vals.extent(1); ++k1)
+        for (std::size_t k2 = 0; k2 < polyset_vals.extent(0); ++k2)
+          result(k1, k0) += coeffs(k0, k2 + psize * j) * polyset_vals(k2, k1);
+
+    for (std::size_t k0 = 0; k0 < result.extent(0); ++k0)
+      for (std::size_t k1 = 0; k1 < result.extent(1); ++k1)
+        tabulated_data(k0, k1, j) = result(k0, k1);
   }
 
   // Pull back
   xt::xtensor<double, 3> pulled_data(tabulated_data.shape());
-
   xt::xtensor<double, 2> temp_data(
       {pulled_data.shape(1), pulled_data.shape(2)});
   for (std::size_t i = 0; i < npts; ++i)
   {
     pull_back(map_type, temp_data,
               xt::view(tabulated_data, i, xt::all(), xt::all()), J, detJ, K);
-    auto pview = xt::view(pulled_data, i, xt::all(), xt::all());
-    pview.assign(temp_data);
+    for (std::size_t k0 = 0; k0 < temp_data.shape(0); ++k0)
+      for (std::size_t k1 = 0; k1 < temp_data.shape(1); ++k1)
+        pulled_data(i, k0, k1) = temp_data(k0, k1);
   }
 
   // Interpolate to calculate coefficients
-  xt::xtensor<double, 3> dof_data = xt::view(
-      pulled_data, xt::all(), xt::range(dofstart, dofstart + ndofs), xt::all());
   xt::xtensor<double, 2> transform = xt::zeros<double>({ndofs, ndofs});
   for (std::size_t d = 0; d < imat.shape(3); ++d)
   {
-    for (int i = 0; i < vs; ++i)
+    for (std::size_t i = 0; i < vs; ++i)
     {
-      xt::xtensor<double, 2> mat = xt::view(imat, xt::all(), i, xt::all(), d);
-      xt::xtensor<double, 2> values
-          = xt::view(dof_data, xt::all(), xt::all(), i);
-
-      transform += xt::transpose(math::dot(mat, values));
+      for (std::size_t k0 = 0; k0 < transform.shape(1); ++k0)
+        for (std::size_t k1 = 0; k1 < transform.shape(0); ++k1)
+          for (std::size_t k2 = 0; k2 < imat.shape(2); ++k2)
+            transform(k1, k0)
+                += imat(k0, i, k2, d) * pulled_data(k2, k1 + dofstart, i);
     }
   }
+
   return transform;
 }
 //-----------------------------------------------------------------------------
@@ -406,7 +432,7 @@ doftransforms::compute_entity_transformations(
     cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    const xt::xtensor<double, 2>& coeffs, const int degree, const int vs,
+    const xt::xtensor<double, 2>& coeffs, int degree, std::size_t vs,
     maps::type map_type)
 {
   std::map<cell::type, xt::xtensor<double, 3>> out;
@@ -422,11 +448,15 @@ doftransforms::compute_entity_transformations(
     for (std::size_t i = 0; i < item.second.size(); ++i)
     {
       auto [map, J, detJ, K] = item.second[i];
-      auto t = xt::view(transform, i, xt::all(), xt::all());
-      auto t2 = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, map,
-                                       degree, tdim, entity, vs, map_type);
-      t.assign(t2);
+      xt::xtensor<double, 2> t2
+          = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, map,
+                                   degree, tdim, entity, vs, map_type);
+
+      for (std::size_t k0 = 0; k0 < transform.shape(1); ++k0)
+        for (std::size_t k1 = 0; k1 < transform.shape(2); ++k1)
+          transform(i, k0, k1) = t2(k0, k1);
     }
+
     out[item.first] = transform;
   }
 

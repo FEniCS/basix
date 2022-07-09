@@ -10,6 +10,7 @@
 #include <basix/interpolation.h>
 #include <basix/lattice.h>
 #include <basix/maps.h>
+#include <basix/mdspan.hpp>
 #include <basix/polynomials.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
@@ -23,6 +24,7 @@
 
 namespace py = pybind11;
 using namespace basix;
+namespace stdex = std::experimental;
 
 namespace
 {
@@ -105,12 +107,10 @@ Interface to the Basix C++ library.
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        std::array<std::size_t, 2> shape
-            = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
-        auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
-        xt::xtensor<double, 2> t
-            = polynomials::tabulate(polytype, celltype, d, _x);
-        return py::array_t<double>(t.shape(), t.data());
+        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
+            x.data(), x.shape(0), x.shape(1));
+        auto [p, shape] = polynomials::tabulate(polytype, celltype, d, _x);
+        return py::array_t<double>(shape, p.data());
       },
       basix::docstring::tabulate_polynomials.c_str());
 
@@ -222,9 +222,8 @@ Interface to the Basix C++ library.
           {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
-            std::array<std::size_t, 2> shape
-                = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
-            auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
+            stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
+                x.data(), x.shape(0), x.shape(1));
             auto t = self.tabulate(n, _x);
             return py::array_t<double>(t.shape(), t.data());
           },
@@ -598,9 +597,9 @@ Interface to the Basix C++ library.
       [](const FiniteElement& element_from, const FiniteElement& element_to)
           -> const py::array_t<double, py::array::c_style>
       {
-        xt::xtensor<double, 2> out
+        auto [out, shape]
             = basix::compute_interpolation_operator(element_from, element_to);
-        return py::array_t<double>(out.shape(), out.data());
+        return py::array_t<double>(shape, out.data());
       },
       basix::docstring::compute_interpolation_operator.c_str());
 
@@ -611,11 +610,10 @@ Interface to the Basix C++ library.
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        std::array<std::size_t, 2> shape
-            = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
-        auto _x = xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
-        xt::xtensor<double, 3> P = polyset::tabulate(celltype, d, n, _x);
-        return py::array_t<double>(P.shape(), P.data());
+        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
+            x.data(), x.shape(0), x.shape(1));
+        auto [p, shape] = polyset::tabulate(celltype, d, n, _x);
+        return py::array_t<double>(shape, p.data());
       },
       basix::docstring::tabulate_polynomial_set.c_str());
 

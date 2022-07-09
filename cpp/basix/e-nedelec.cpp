@@ -259,8 +259,8 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -362,8 +362,8 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<mdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)

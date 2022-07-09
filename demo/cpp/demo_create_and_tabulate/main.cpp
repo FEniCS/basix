@@ -7,7 +7,9 @@
 // points.
 
 #include <basix/finite-element.h>
+#include <xtensor/xadapt.hpp>
 #include <xtensor/xio.hpp>
+#include <xtensor/xview.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -33,10 +35,11 @@ int main(int argc, char* argv[])
 
   // Create a set of points, and tabulate the basis functions
   // of the Lagrange element at these points.
-  xt::xtensor<double, 2> points
-      = {{0.0, 0.0}, {0.1, 0.1}, {0.2, 0.3}, {0.3, 0.6}, {0.4, 1.0}};
+  std::vector<double> points
+      = {0.0, 0.0, 0.1, 0.1, 0.2, 0.3, 0.3, 0.6, 0.4, 1.0};
 
-  xt::xtensor<double, 4> tab = lagrange.tabulate(0, points);
+  xt::xtensor<double, 4> tab
+      = lagrange.tabulate(0, points, {points.size() / 2, 2});
 
   std::cout << "\nTabulate data: \n"
             << xt::view(tab, 0, xt::all(), xt::all(), 0);

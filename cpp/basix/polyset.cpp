@@ -9,7 +9,6 @@
 #include <array>
 #include <cmath>
 #include <stdexcept>
-#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 using namespace basix::indexing;
@@ -1413,21 +1412,6 @@ void polyset::tabulate(
   default:
     throw std::runtime_error("Polynomial set: unsupported cell type");
   }
-}
-//-----------------------------------------------------------------------------
-xt::xtensor<double, 3> polyset::tabulate(cell::type celltype, int d, int n,
-                                         const xt::xtensor<double, 2>& x)
-{
-  xt::xtensor<double, 3> out(
-      {static_cast<std::size_t>(polyset::nderivs(celltype, n)),
-       static_cast<std::size_t>(polyset::dim(celltype, d)), x.shape(0)});
-
-  stdex::mdspan<double, stdex::dextents<std::size_t, 3>> P(
-      out.data(), out.shape(0), out.shape(1), out.shape(2));
-  stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-      x.data(), x.shape(0), x.shape(1));
-  polyset::tabulate(P, celltype, d, n, _x);
-  return out;
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 3>> polyset::tabulate(

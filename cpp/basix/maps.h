@@ -117,7 +117,7 @@ void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
     stdex::mdspan<T, stdex::dextents<std::size_t, 2>> _r(
         r.data() + p * r.extent(1), J.extent(0), J.extent(0));
 
-    // _r - J U J^T
+    // _r = J U J^T
     for (std::size_t i = 0; i < _r.extent(0); ++i)
     {
       for (std::size_t j = 0; j < _r.extent(1); ++j)

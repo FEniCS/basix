@@ -62,8 +62,6 @@ void pull_back(maps::type map_type, xt::xtensor<double, 2>& u,
     for (std::size_t i = 0; i < _U.extent(0); ++i)
       for (std::size_t j = 0; j < _U.extent(1); ++j)
         _u(i, j) = _U(i, j);
-
-    // std::copy(U.data(), U.data() + U.size(), u.data());
     return;
   }
   case maps::type::covariantPiola:
@@ -384,7 +382,6 @@ xt::xtensor<double, 2> compute_transformation(
                           polyset_shape[2]);
 
   xt::xtensor<double, 3> tabulated_data({npts, total_ndofs, vs});
-
   for (std::size_t j = 0; j < vs; ++j)
   {
     mdarray2_t result(polyset_vals.extent(1), coeffs.shape(0));

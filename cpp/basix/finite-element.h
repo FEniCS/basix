@@ -658,7 +658,6 @@ public:
         for (std::size_t i = 0; i < U.extent(0); ++i)
           for (std::size_t j = 0; j < U.extent(1); ++j)
             u(i, j) = U(i, j);
-        // std::copy(U.data(), U.data() + U.size(), u.data());
       };
     case maps::type::covariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)

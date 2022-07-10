@@ -298,8 +298,8 @@ Interface to the Basix C++ library.
           "base_transformations",
           [](const FiniteElement& self)
           {
-            xt::xtensor<double, 3> t = self.base_transformations();
-            return py::array_t<double>(t.shape(), t.data());
+            auto [t, shape] = self.base_transformations();
+            return py::array_t<double>(shape, t.data());
           },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(

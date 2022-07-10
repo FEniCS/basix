@@ -312,20 +312,6 @@ public:
   /// of this element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape,
-      const xt::xtensor<double, 2>& wcoeffs,
-      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-      int interpolation_nderivs, maps::type map_type, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
-      element::lagrange_variant lvariant, element::dpc_variant dvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// TODO
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
       const std::array<std::vector<cmdspan2_t>, 4>& x,
       const std::array<std::vector<cmdspan4_t>, 4>& M,
@@ -765,11 +751,13 @@ public:
   /// ~~~~~~~~~~~~~~~~
   /// @return The base transformations for this element. The shape is
   /// (ntranformations, ndofs, ndofs)
-  xt::xtensor<double, 3> base_transformations() const;
+  std::pair<std::vector<double>, std::array<std::size_t, 3>>
+  base_transformations() const;
 
   /// Return the entity dof transformation matrices
-  /// @return The entity transformations for the subentities of this element.
-  /// The shape for each cell is (ntransformations, ndofs, ndofs)
+  /// @return The entity transformations for the sub-entities of this
+  /// element. The shape for each cell is (ntransformations, ndofs,
+  /// ndofs)
   std::map<cell::type, xt::xtensor<double, 3>> entity_transformations() const;
 
   /// Permute the dof numbering on a cell
@@ -1271,13 +1259,6 @@ FiniteElement create_custom_element(
     const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
     int interpolation_nderivs, maps::type map_type, bool discontinuous,
     int highest_complete_degree, int highest_degree);
-// FiniteElement create_custom_element(
-//     cell::type cell_type, const std::vector<std::size_t>& value_shape,
-//     const xt::xtensor<double, 2>& wcoeffs,
-//     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-//     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-//     int interpolation_nderivs, maps::type map_type, bool discontinuous,
-//     int highest_complete_degree, int highest_degree);
 
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family

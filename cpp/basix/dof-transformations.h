@@ -7,6 +7,7 @@
 #include "cell.h"
 #include "maps.h"
 #include "mdspan.hpp"
+#include <array>
 #include <map>
 #include <utility>
 #include <vector>

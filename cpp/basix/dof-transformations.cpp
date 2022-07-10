@@ -8,6 +8,8 @@
 #include "polyset.h"
 #include <algorithm>
 #include <array>
+#include <functional>
+#include <tuple>
 #include <xtl/xspan.hpp>
 
 using namespace basix;
@@ -42,8 +44,9 @@ int find_first_subentity(cell::type cell_type, cell::type entity_type)
     throw std::runtime_error("Entity not found");
 }
 //-----------------------------------------------------------------------------
-void pull_back(maps::type map_type, mdspan2_t u, cmdspan2_t U, cmdspan2_t J,
-               double detJ, cmdspan2_t K)
+template <typename Q, typename P, typename R, typename S>
+void pull_back(maps::type map_type, Q&& u, const P& U, const R& J, double detJ,
+               const S& K)
 {
   switch (map_type)
   {
@@ -85,7 +88,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   {
     mapinfo_t mapinfo;
     auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-    auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+    auto map = [](auto pt) -> std::array<double, 3> {
       return {pt[1], pt[0], 0.0};
     };
     mdarray2_t J({0., 1., 1., 0.}, 2, 2);
@@ -98,7 +101,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   {
     mapinfo_t mapinfo;
     auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-    auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+    auto map = [](auto pt) -> std::array<double, 3> {
       return {1 - pt[0], pt[1], 0};
     };
     mdarray2_t J({-1., 0., 0., 1.}, 2, 2);
@@ -112,7 +115,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     mapinfo_t mapinfo;
     {
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+      auto map = [](auto pt) -> std::array<double, 3> {
         return {pt[0], pt[2], pt[1]};
       };
       mdarray2_t J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
@@ -124,7 +127,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     {
       auto& data = mapinfo.try_emplace(cell::type::triangle).first->second;
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {pt[2], pt[0], pt[1]};
         };
         mdarray2_t J({0., 0., 1., 1., 0., 0., 0., 1., 0.}, 3, 3);
@@ -133,7 +136,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {pt[0], pt[2], pt[1]};
         };
         mdarray2_t J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
@@ -150,7 +153,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     mapinfo_t mapinfo;
     {
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+      auto map = [](auto pt) -> std::array<double, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
       mdarray2_t J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
@@ -158,10 +161,11 @@ mapinfo_t get_mapinfo(cell::type cell_type)
       mdarray2_t K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       data.push_back(std::tuple(map, J, detJ, K));
     }
+
     {
       auto& data = mapinfo.try_emplace(cell::type::quadrilateral).first->second;
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {1 - pt[1], pt[0], pt[2]};
         };
         mdarray2_t J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
@@ -170,7 +174,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {pt[1], pt[0], pt[2]};
         };
         mdarray2_t J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
@@ -186,7 +190,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     mapinfo_t mapinfo;
     {
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+      auto map = [](auto pt) -> std::array<double, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
       mdarray2_t J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
@@ -197,7 +201,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     {
       auto& data = mapinfo.try_emplace(cell::type::triangle).first->second;
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {1 - pt[1] - pt[0], pt[0], pt[2]};
         };
         mdarray2_t J({-1., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
@@ -206,7 +210,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {pt[1], pt[0], pt[2]};
         };
         mdarray2_t J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
@@ -218,7 +222,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     {
       auto& data = mapinfo.try_emplace(cell::type::quadrilateral).first->second;
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {1 - pt[2], pt[1], pt[0]};
         };
         mdarray2_t J({0., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
@@ -227,7 +231,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         data.push_back(std::tuple(map, J, detJ, K));
       }
       { // scope
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {pt[2], pt[1], pt[0]};
         };
         mdarray2_t J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
@@ -244,7 +248,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     mapinfo_t mapinfo;
     {
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+      auto map = [](auto pt) -> std::array<double, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
       mdarray2_t J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
@@ -256,7 +260,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     {
       auto& data = mapinfo.try_emplace(cell::type::quadrilateral).first->second;
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {1 - pt[1], pt[0], pt[2]};
         };
         mdarray2_t J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
@@ -265,7 +269,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {pt[1], pt[0], pt[2]};
         };
         mdarray2_t J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
@@ -278,7 +282,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     {
       auto& data = mapinfo.try_emplace(cell::type::triangle).first->second;
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {1 - pt[2] - pt[0], pt[1], pt[0]};
         };
         mdarray2_t J({-1., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
@@ -287,7 +291,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
-        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+        auto map = [](auto pt) -> std::array<double, 3> {
           return {pt[2], pt[1], pt[0]};
         };
         mdarray2_t J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
@@ -370,10 +374,7 @@ compute_transformation(
   // Pull back
   mdarray3_t pulled_data(tabulated_data.extents());
   {
-    std::vector<double> temp_data_b(pulled_data.extent(1)
-                                    * pulled_data.extent(2));
-    mdspan2_t temp_data(temp_data_b.data(), pulled_data.extent(1),
-                        pulled_data.extent(2));
+    mdarray2_t temp_data(pulled_data.extent(1), pulled_data.extent(2));
     for (std::size_t i = 0; i < npts; ++i)
     {
       cmdspan2_t tab(tabulated_data.data()
@@ -381,8 +382,7 @@ compute_transformation(
                                * tabulated_data.extent(2),
                      tabulated_data.extent(1), tabulated_data.extent(2));
 
-      pull_back(map_type, temp_data, tab, cmdspan2_t(J.data(), J.extents()),
-                detJ, cmdspan2_t(K.data(), K.extents()));
+      pull_back(map_type, temp_data, tab, J, detJ, K);
 
       for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < temp_data.extent(1); ++k1)
@@ -438,13 +438,15 @@ doftransforms::compute_entity_transformations(
     transform.reserve(emap_data.size() * ndofs * ndofs);
     for (auto& [mapfn, J, detJ, K] : emap_data)
     {
-      auto [t2b, tshape]
+      auto [t2b, _]
           = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, mapfn,
                                    degree, tdim, entity, vs, map_type);
       transform.insert(transform.end(), t2b.begin(), t2b.end());
     }
 
-    out.insert({entity_type, {transform, {emap_data.size(), ndofs, ndofs}}});
+    out.try_emplace(entity_type,
+                    std::pair(std::move(transform),
+                              std::array{emap_data.size(), ndofs, ndofs}));
   }
 
   return out;

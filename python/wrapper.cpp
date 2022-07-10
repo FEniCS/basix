@@ -375,13 +375,13 @@ Interface to the Basix C++ library.
                                return py::array_t<double>(shape, D.data(),
                                                           py::cast(self));
                              })
-      .def_property_readonly(
-          "coefficient_matrix",
-          [](const FiniteElement& self)
-          {
-            const xt::xtensor<double, 2>& P = self.coefficient_matrix();
-            return py::array_t<double>(P.shape(), P.data(), py::cast(self));
-          })
+      .def_property_readonly("coefficient_matrix",
+                             [](const FiniteElement& self)
+                             {
+                               auto& [P, shape] = self.coefficient_matrix();
+                               return py::array_t<double>(shape, P.data(),
+                                                          py::cast(self));
+                             })
       .def_property_readonly("wcoeffs",
                              [](const FiniteElement& self)
                              {

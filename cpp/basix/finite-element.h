@@ -1086,7 +1086,8 @@ public:
   /// This is the matrix @f$C@f$, as described in the documentation of
   /// the `FiniteElement()` constructor.
   /// @return The coefficient matrix. Shape is (ndofs, ndofs)
-  const xt::xtensor<double, 2>& coefficient_matrix() const;
+  const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+  coefficient_matrix() const;
 
   /// Indicates whether or not this element has a tensor product
   /// representation.
@@ -1155,7 +1156,7 @@ private:
   // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. ie
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
-  xt::xtensor<double, 2> _coeffs;
+  std::pair<std::vector<double>, std::array<std::size_t, 2>> _coeffs;
 
   // Number of dofs associated with each cell (sub-)entity
   //
@@ -1193,7 +1194,6 @@ private:
   std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
 
   /// The interpolation weights and points
-  // xt::xtensor<double, 2> _matM;
   std::pair<std::vector<double>, std::array<std::size_t, 2>> _matM;
 
   // Indicates whether or not the DOF transformations are all

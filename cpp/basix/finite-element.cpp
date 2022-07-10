@@ -34,6 +34,8 @@ using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
 using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
+using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
+
 namespace
 {
 //----------------------------------------------------------------------------
@@ -109,17 +111,25 @@ to_mdspan(const std::array<std::vector<xt::xtensor<double, 4>>, 4>& x)
 }
 //----------------------------------------------------------------------------
 /// This function orthogonalises and normalises the rows of a matrix in place
-void orthogonalise(xt::xtensor<double, 2>& wcoeffs)
+void orthogonalise(mdspan2_t& wcoeffs)
 {
-  for (std::size_t i = 0; i < wcoeffs.shape(0); ++i)
+  for (std::size_t i = 0; i < wcoeffs.extent(0); ++i)
   {
     for (std::size_t j = 0; j < i; ++j)
     {
-      const double a = xt::sum(xt::row(wcoeffs, i) * xt::row(wcoeffs, j))();
-      xt::row(wcoeffs, i) -= a * xt::row(wcoeffs, j);
+      double a = 0;
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        a += wcoeffs(i, k) * wcoeffs(j, k);
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        wcoeffs(i, k) -= a * wcoeffs(j, k);
     }
-    xt::row(wcoeffs, i)
-        /= std::sqrt(xt::sum(xt::row(wcoeffs, i) * xt::row(wcoeffs, i))());
+
+    double norm = 0.0;
+    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+      norm += wcoeffs(i, k) * wcoeffs(i, k);
+
+    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+      wcoeffs(i, k) /= std::sqrt(norm);
   }
 }
 //-----------------------------------------------------------------------------
@@ -168,7 +178,7 @@ constexpr int num_transformations(cell::type cell_type)
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
-compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
+compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
                     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
                     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
                     int degree, int nderivs)
@@ -187,7 +197,8 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
   }
 
   std::size_t pdim = polyset::dim(cell_type, degree);
-  xt::xtensor<double, 2> D = xt::zeros<double>({vs * pdim, num_dofs});
+  mdarray2_t D(vs * pdim, num_dofs);
+  std::fill(D.data(), D.data() + D.size(), 0);
 
   // Loop over different dimensions
   std::size_t dof_index = 0;
@@ -224,11 +235,9 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
     }
   }
 
-  std::array shape = {B.shape(0), D.shape(1)};
-  std::vector<double> C(B.shape(0) * D.shape(1));
-  math::dot(cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
-            cmdspan2_t(D.data(), D.shape(0), D.shape(1)),
-            mdspan2_t(C.data(), shape));
+  std::array shape = {B.extent(0), D.extent(1)};
+  std::vector<double> C(shape[0] * shape[1]);
+  math::dot(B, D, mdspan2_t(C.data(), shape));
   return {std::move(C), shape};
 }
 //-----------------------------------------------------------------------------
@@ -561,7 +570,8 @@ basix::FiniteElement basix::create_custom_element(
   }
 
   auto [dualmatrix, dualshape] = compute_dual_matrix(
-      cell_type, wcoeffs, M, x, highest_degree, interpolation_nderivs);
+      cell_type, cmdspan2_t(wcoeffs.data(), wcoeffs.shape(0), wcoeffs.shape(1)),
+      M, x, highest_degree, interpolation_nderivs);
   if (math::is_singular(cmdspan2_t(dualmatrix.data(), dualshape)))
   {
     throw std::runtime_error(
@@ -697,6 +707,8 @@ FiniteElement::FiniteElement(
       _highest_complete_degree(highest_complete_degree), _map_type(map_type),
       _x(x), _discontinuous(discontinuous), _tensor_factors(tensor_factors)
 {
+  std::cout << "Create eleemnt" << std::endl;
+
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
   {
@@ -713,8 +725,11 @@ FiniteElement::FiniteElement(
     }
   }
 
-  xt::xtensor<double, 2> wcoeffs_ortho({wcoeffs.shape(0), wcoeffs.shape(1)});
-  wcoeffs_ortho.assign(wcoeffs);
+  std::vector<double> wcoeffs_ortho_b(wcoeffs.shape(0) * wcoeffs.shape(1));
+  mdspan2_t wcoeffs_ortho(wcoeffs_ortho_b.data(), wcoeffs.shape(0),
+                          wcoeffs.shape(1));
+  std::copy(wcoeffs.data(), wcoeffs.data() + wcoeffs.size(),
+            wcoeffs_ortho.data());
   orthogonalise(wcoeffs_ortho);
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, M, x,
                                      highest_degree, interpolation_nderivs);
@@ -724,23 +739,15 @@ FiniteElement::FiniteElement(
     _wcoeffs
         = {std::vector<double>(wcoeffs_ortho.data(),
                                wcoeffs_ortho.data() + wcoeffs_ortho.size()),
-           {wcoeffs_ortho.shape(0), wcoeffs_ortho.shape(1)}};
+           {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
     _M = M;
   }
 
   // Compute C = (BD^T)^{-1} B
-  {
-    std::vector<double> result = math::solve(
-        cmdspan2_t(_dual_matrix.first.data(), _dual_matrix.second),
-        cmdspan2_t(wcoeffs_ortho.data(), wcoeffs_ortho.shape(0),
-                   wcoeffs_ortho.shape(1)));
-    _coeffs = xt::xtensor<double, 2>(
-        {_dual_matrix.second[1], wcoeffs_ortho.shape(1)});
-    std::copy(result.begin(), result.end(), _coeffs.begin());
-  }
-
-  // _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
-  // _coeffs.assign(result);
+  _coeffs.first
+      = math::solve(cmdspan2_t(_dual_matrix.first.data(), _dual_matrix.second),
+                    wcoeffs_ortho);
+  _coeffs.second = {_dual_matrix.second[1], wcoeffs_ortho.extent(1)};
 
   _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
 
@@ -789,8 +796,8 @@ FiniteElement::FiniteElement(
 
   _entity_transformations_new = doftransforms::compute_entity_transformations(
       cell_type, to_mdspan(x), to_mdspan(M),
-      cmdspan2_t(_coeffs.data(), _coeffs.shape(0), _coeffs.shape(1)),
-      highest_degree, value_size, map_type);
+      cmdspan2_t(_coeffs.first.data(), _coeffs.second), highest_degree,
+      value_size, map_type);
   for (auto& data : _entity_transformations_new)
   {
     xt::xtensor<double, 3> tens(data.second.second);
@@ -879,7 +886,7 @@ FiniteElement::FiniteElement(
   }
 
   // Check that nunber of dofs os equal to number of coefficients
-  if (num_dofs != _coeffs.shape(0))
+  if (num_dofs != _coeffs.second[0])
   {
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
@@ -1077,6 +1084,8 @@ FiniteElement::FiniteElement(
       }
     }
   }
+
+  std::cout << "End create eleemnt" << std::endl;
 }
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
@@ -1099,21 +1108,37 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 bool FiniteElement::operator==(const FiniteElement& e) const
 {
-  if (family() == basix::element::family::custom
-      or e.family() == basix::element::family::custom)
+  std::cout << "oooops" << std::endl;
+  if (this == &e)
+    return true;
+  else if (family() == basix::element::family::custom
+           or e.family() == basix::element::family::custom)
   {
+    bool coeff_equal = false;
+    if (_coeffs.first.size() == e.coefficient_matrix().first.size()
+        and _coeffs.second == e.coefficient_matrix().second
+        and std::equal(_coeffs.first.begin(), _coeffs.first.end(),
+                       e.coefficient_matrix().first.begin(),
+                       [](auto x, auto y)
+                       { return std::abs(x - y) < 1.0e-10; }))
+    {
+      coeff_equal = true;
+    }
+
     return cell_type() == e.cell_type() and discontinuous() == e.discontinuous()
            and map_type() == e.map_type() and value_shape() == e.value_shape()
            and highest_degree() == e.highest_degree()
            and highest_complete_degree() == e.highest_complete_degree()
-           and xt::allclose(coefficient_matrix(), e.coefficient_matrix())
-           and num_entity_dofs() == e.num_entity_dofs();
+           //  and xt::allclose(coefficient_matrix(), e.coefficient_matrix())
+           and coeff_equal and num_entity_dofs() == e.num_entity_dofs();
   }
-
-  return cell_type() == e.cell_type() and family() == e.family()
-         and degree() == e.degree() and discontinuous() == e.discontinuous()
-         and lagrange_variant() == e.lagrange_variant()
-         and dpc_variant() == e.dpc_variant() and map_type() == e.map_type();
+  else
+  {
+    return cell_type() == e.cell_type() and family() == e.family()
+           and degree() == e.degree() and discontinuous() == e.discontinuous()
+           and lagrange_variant() == e.lagrange_variant()
+           and dpc_variant() == e.dpc_variant() and map_type() == e.map_type();
+  }
 }
 //-----------------------------------------------------------------------------
 std::array<std::size_t, 4>
@@ -1126,7 +1151,7 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
     ndsize /= i;
   std::size_t vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                    std::multiplies<int>());
-  std::size_t ndofs = _coeffs.shape(0);
+  std::size_t ndofs = _coeffs.second[0];
   return {ndsize, num_points, ndofs, vs};
 }
 //-----------------------------------------------------------------------------
@@ -1166,7 +1191,7 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
                              + std::to_string(_cell_tdim) + ").");
   }
 
-  const int psize = polyset::dim(_cell_type, _highest_degree);
+  const std::size_t psize = polyset::dim(_cell_type, _highest_degree);
   xt::xtensor<double, 3> basis(
       {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)),
        static_cast<std::size_t>(psize), x.shape(0)});
@@ -1178,19 +1203,22 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
   polyset::tabulate(_basis, _cell_type, _highest_degree, nd, _x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());
-  xt::xtensor<double, 2> B, C;
+  xt::xtensor<double, 2> B;
+  mdarray2_t C(_coeffs.second[0], psize);
+  cmdspan2_t coeffs_view(_coeffs.first.data(), _coeffs.second);
   for (std::size_t p = 0; p < basis.shape(0); ++p)
   {
     for (int j = 0; j < vs; ++j)
     {
       auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
       B = xt::view(basis, p, xt::all(), xt::all());
-      C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
+      for (std::size_t k0 = 0; k0 < coeffs_view.extent(0); ++k0)
+        for (std::size_t k1 = 0; k1 < psize; ++k1)
+          C(k0, k1) = coeffs_view(k0, k1 + psize * j);
 
       xt::xtensor<double, 2> result
-          = xt::zeros<double>({C.shape(0), B.shape(1)});
-      math::dot(cmdspan2_t(C.data(), C.shape(0), C.shape(1)),
-                cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
+          = xt::zeros<double>({C.extent(0), B.shape(1)});
+      math::dot(C, cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
                 mdspan2_t(result.data(), result.shape(0), result.shape(1)));
 
       basis_view.assign(xt::transpose(result));
@@ -1214,7 +1242,7 @@ const std::vector<int>& FiniteElement::value_shape() const
   return _value_shape;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::dim() const { return _coeffs.shape(0); }
+int FiniteElement::dim() const { return _coeffs.second[0]; }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
@@ -1521,7 +1549,8 @@ FiniteElement::M() const
   return _M;
 }
 //-----------------------------------------------------------------------------
-const xt::xtensor<double, 2>& FiniteElement::coefficient_matrix() const
+const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+FiniteElement::coefficient_matrix() const
 {
   return _coeffs;
 }

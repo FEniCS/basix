@@ -657,8 +657,21 @@ FiniteElement::FiniteElement(
       _interpolation_nderivs(interpolation_nderivs),
       _highest_degree(highest_degree),
       _highest_complete_degree(highest_complete_degree), _map_type(map_type),
-      _x(x), _discontinuous(discontinuous), _tensor_factors(tensor_factors)
+      // _x(x),
+      _discontinuous(discontinuous), _tensor_factors(tensor_factors)
 {
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+    {
+      auto& vec = x[i][j];
+      _x[i].push_back({std::vector<double>(vec.data(), vec.data() + vec.size()),
+                       {vec.shape(0), vec.shape(1)}});
+      // _x[i].oemplace_back(x[i][j].data(), x[i][j].shape(0),
+      // x[i][j].shape(1));
+    }
+  }
+
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
   {
@@ -691,7 +704,17 @@ FiniteElement::FiniteElement(
         = {std::vector<double>(wcoeffs_ortho.data(),
                                wcoeffs_ortho.data() + wcoeffs_ortho.size()),
            {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
-    _M = M;
+    // _M = M;
+    for (std::size_t i = 0; i < M.size(); ++i)
+    {
+      for (std::size_t j = 0; j < M[i].size(); ++j)
+      {
+        auto& mat = M[i][j];
+        _M[i].push_back(
+            {std::vector<double>(mat.data(), mat.data() + mat.size()),
+             {mat.shape(0), mat.shape(1), mat.shape(2), mat.shape(3)}});
+      }
+    }
   }
 
   // Compute C = (BD^T)^{-1} B
@@ -1125,7 +1148,8 @@ FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
   return {std::move(datab), phishape};
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, cmdspan2_t x, mdspan4_t basis_data) const
+void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
+                             impl::mdspan4_t basis_data) const
 {
   if (x.extent(1) != _cell_tdim)
   {
@@ -1481,13 +1505,15 @@ FiniteElement::wcoeffs() const
   return _wcoeffs;
 }
 //-----------------------------------------------------------------------------
-const std::array<std::vector<xt::xtensor<double, 2>>, 4>&
+const std::array<
+    std::vector<std::pair<std::vector<double>, std::array<std::size_t, 2>>>, 4>&
 FiniteElement::x() const
 {
   return _x;
 }
 //-----------------------------------------------------------------------------
-const std::array<std::vector<xt::xtensor<double, 4>>, 4>&
+const std::array<
+    std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>, 4>&
 FiniteElement::M() const
 {
   if (family() != element::family::custom)

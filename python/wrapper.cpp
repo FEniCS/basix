@@ -396,7 +396,9 @@ Interface to the Basix C++ library.
           "M",
           [](const FiniteElement& self)
           {
-            const std::array<std::vector<xt::xtensor<double, 4>>, 4>& _M
+            const std::array<std::vector<std::pair<std::vector<double>,
+                                                   std::array<std::size_t, 4>>>,
+                             4>& _M
                 = self.M();
             std::vector<std::vector<py::array_t<double, py::array::c_style>>> M(
                 4);
@@ -404,8 +406,9 @@ Interface to the Basix C++ library.
             {
               for (std::size_t j = 0; j < _M[i].size(); ++j)
               {
-                M[i].push_back(py::array_t<double>(
-                    _M[i][j].shape(), _M[i][j].data(), py::cast(self)));
+                auto& mat = _M[i][j];
+                M[i].push_back(py::array_t<double>(mat.second, mat.first.data(),
+                                                   py::cast(self)));
               }
             }
             return M;
@@ -414,7 +417,9 @@ Interface to the Basix C++ library.
           "x",
           [](const FiniteElement& self)
           {
-            const std::array<std::vector<xt::xtensor<double, 2>>, 4>& _x
+            const std::array<std::vector<std::pair<std::vector<double>,
+                                                   std::array<std::size_t, 2>>>,
+                             4>& _x
                 = self.x();
             std::vector<std::vector<py::array_t<double, py::array::c_style>>> x(
                 4);
@@ -422,8 +427,9 @@ Interface to the Basix C++ library.
             {
               for (std::size_t j = 0; j < _x[i].size(); ++j)
               {
-                x[i].push_back(py::array_t<double>(
-                    _x[i][j].shape(), _x[i][j].data(), py::cast(self)));
+                auto& vec = _x[i][j];
+                x[i].push_back(py::array_t<double>(vec.second, vec.first.data(),
+                                                   py::cast(self)));
               }
             }
             return x;

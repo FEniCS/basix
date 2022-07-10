@@ -999,8 +999,12 @@ public:
 
   /// Get the interpolation points for each subentity.
   ///
-  /// The indices of this data are (tdim, entity index, point index, dim).
-  const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x() const;
+  /// The indices of this data are (tdim, entity index, point index,
+  /// dim).
+  const std::array<
+      std::vector<std::pair<std::vector<double>, std::array<std::size_t, 2>>>,
+      4>&
+  x() const;
 
   /// Get the interpolation matrices for each subentity.
   ///
@@ -1038,7 +1042,10 @@ public:
   /// throw an exception if called on a non-custom element
   /// @return The interpolation matrices. The indices of this data are (tdim,
   /// entity index, dof, vs, point_index, derivative)
-  const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M() const;
+  const std::array<
+      std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>,
+      4>&
+  M() const;
 
   /// Get the matrix of coefficients.
   ///
@@ -1150,7 +1157,11 @@ private:
 
   // Interpolation points on the cell. The shape is (entity_dim, num
   // entities of given dimension, num_points, tdim)
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+  // std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+  std::array<
+      std::vector<std::pair<std::vector<double>, std::array<std::size_t, 2>>>,
+      4>
+      _x;
 
   /// The interpolation weights and points
   std::pair<std::vector<double>, std::array<std::size_t, 2>> _matM;
@@ -1224,7 +1235,10 @@ private:
   std::pair<std::vector<double>, std::array<std::size_t, 2>> _wcoeffs;
 
   // Interpolation matrices for each entity
-  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+  std::array<
+      std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>,
+      4>
+      _M;
 };
 
 /// Create a custom finite element

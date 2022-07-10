@@ -1102,6 +1102,16 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
   }
 }
 //-----------------------------------------------------------------------------
+void FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
+                             std::array<std::size_t, 2> xshape,
+                             const xtl::span<double>& basis) const
+{
+  std::array<std::size_t, 4> shape = tabulate_shape(nd, xshape[0]);
+  assert(x.size() == xshape[0] * xshape[1]);
+  assert(basis.size() == shape[0] * shape[1] * shape[2] * shape[3]);
+  tabulate(nd, cmdspan2_t(x.data(), xshape), mdspan4_t(basis.data(), shape));
+}
+//-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }

@@ -471,6 +471,35 @@ public:
   /// space as required
   void tabulate(int nd, impl::cmdspan2_t x, impl::mdspan4_t basis) const;
 
+  /// Compute basis values and derivatives at set of points.
+  ///
+  /// @note This function is designed to be called at runtime, so its
+  /// performance is critical.
+  ///
+  /// @param[in] nd The order of derivatives, up to and including, to
+  /// compute. Use 0 for the basis functions only.
+  /// @param[in] x The points at which to compute the basis functions.
+  /// The shape of x is (number of points, geometric dimension).
+  /// @param [out] basis Memory location to fill. It must be allocated
+  /// with shape (num_derivatives, num_points, num basis functions,
+  /// value_size). The function `FiniteElement::tabulate_shape` can be
+  /// used to get the required shape.
+  /// - The first index is the derivative, with higher derivatives are
+  /// stored in triangular (2D) or tetrahedral (3D) ordering, ie for
+  /// the (x,y) derivatives in 2D: (0,0), (1,0), (0,1), (2,0), (1,1),
+  /// (0,2), (3,0)... The function basix::indexing::idx can be used to
+  /// find the appropriate derivative.
+  /// - The second index is the point index
+  /// - The third index is the basis function index
+  /// - The fourth index is the basis function component. Its has size
+  /// one for scalar basis functions.
+  ///
+  /// @todo Remove all internal dynamic memory allocation, pass scratch
+  /// space as required
+  void tabulate(int nd, const xtl::span<const double>& x,
+                std::array<std::size_t, 2> xshape,
+                const xtl::span<double>& basis) const;
+
   /// Get the element cell type
   /// @return The cell type
   cell::type cell_type() const;

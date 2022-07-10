@@ -9,7 +9,6 @@
 #include <basix/finite-element.h>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xio.hpp>
-#include <xtensor/xview.hpp>
 
 int main(int argc, char* argv[])
 {

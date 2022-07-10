@@ -91,13 +91,15 @@ int main(int argc, char* argv[])
     // of entity (`"interval"`, `"triangle"`, `"quadrilateral"`) to a
     // matrix describing the effect of permuting that entity on the DOFs
     // on that entity.
-    std::map<basix::cell::type, xt::xtensor<double, 3>> entity__transformation
-        = lagrange.entity_transformations();
+    auto entity_transformation = lagrange.entity_transformations();
 
     std::cout << std::endl << "Entity transformations:" << std::endl;
-    for (auto const& [cell, transformation] : entity__transformation)
+    for (auto const& [cell, transformation] : entity_transformation)
+    {
       std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
-                << transformation << std::endl;
+                << xt::adapt(transformation.first, transformation.second)
+                << std::endl;
+    }
 
     // For this element, we see that this method returns one matrix for
     // an interval: this matrix reverses the order of the four DOFs
@@ -176,13 +178,15 @@ int main(int argc, char* argv[])
 
     // This is not a permutation, so this must be applied when assembling
     // a form and cannot be applied to the DOF numbering in the DOF map.
-    std::map<basix::cell::type, xt::xtensor<double, 3>> entity__transformation
-        = nedelec.entity_transformations();
+    const auto entity__transformation = nedelec.entity_transformations();
 
     std::cout << std::endl << "Entity transformations:" << std::endl;
-    for (auto const& [cell, transformation] : entity__transformation)
+    for (auto& [cell, transformation] : entity__transformation)
+    {
       std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
-                << transformation << std::endl;
+                << xt::adapt(transformation.first, transformation.second)
+                << std::endl;
+    }
 
     // To demonstrate how these transformations can be used, we create a
     // lattice of points where we will tabulate the element.
@@ -198,8 +202,6 @@ int main(int argc, char* argv[])
     // not match its direction on the reference, then we need to adjust the
     // tabulated data.
 
-    // xt::xtensor<double, 4> original_data = nedelec.tabulate(0, points);
-    // xt::xtensor<double, 4> mod_data = nedelec.tabulate(0, points);
     const auto [original_data, orig_shape] = nedelec.tabulate(0, points);
     auto [mod_data, mod_shape] = nedelec.tabulate(0, points);
     xtl::span<double> data(mod_data.data(), mod_data.size());

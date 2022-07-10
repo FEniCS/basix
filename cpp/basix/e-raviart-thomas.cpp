@@ -85,14 +85,14 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   {
     const FiniteElement facet_moment_space
         = element::create_lagrange(facettype, degree - 1, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments_new(
+    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments(
         facet_moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[tdim - 1].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
-      M[tdim - 1].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
-                               Mshape[i][3]);
+      x[tdim - 1].emplace_back(_x[i], xshape[0], xshape[1]);
+      M[tdim - 1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2],
+                               Mshape[3]);
     }
   }
 
@@ -100,15 +100,14 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   if (degree > 1)
   {
     // Interior integral moment
-    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments_new(
+    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments(
         element::create_lagrange(celltype, degree - 2, lvariant, true),
         celltype, tdim, 2 * degree - 2);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
-      x[tdim].emplace_back(_x[i], xshape[i][0], xshape[i][1]);
-      M[tdim].emplace_back(_M[i], Mshape[i][0], Mshape[i][1], Mshape[i][2],
-                           Mshape[i][3]);
+      x[tdim].emplace_back(_x[i], xshape[0], xshape[1]);
+      M[tdim].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
     }
   }
   else

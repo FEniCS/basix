@@ -85,6 +85,29 @@ to_xtensor(const std::array<std::vector<cmdspan4_t>, 4>& M)
   return _M;
 }
 //----------------------------------------------------------------------------
+std::array<std::vector<cmdspan2_t>, 4>
+to_mdspan(const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x)
+{
+  std::array<std::vector<cmdspan2_t>, 4> _x;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0), x[i][j].shape(1));
+
+  return _x;
+}
+//----------------------------------------------------------------------------
+std::array<std::vector<cmdspan4_t>, 4>
+to_mdspan(const std::array<std::vector<xt::xtensor<double, 4>>, 4>& x)
+{
+  std::array<std::vector<cmdspan4_t>, 4> _x;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0), x[i][j].shape(1),
+                         x[i][j].shape(2), x[i][j].shape(3));
+
+  return _x;
+}
+//----------------------------------------------------------------------------
 /// This function orthogonalises and normalises the rows of a matrix in place
 void orthogonalise(xt::xtensor<double, 2>& wcoeffs)
 {
@@ -201,7 +224,11 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
     }
   }
 
-  return math::dot(B, D);
+  xt::xtensor<double, 2> C = xt::zeros<double>({B.shape(0), D.shape(1)});
+  math::dot_new(cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
+                cmdspan2_t(D.data(), D.shape(0), D.shape(1)),
+                mdspan2_t(C.data(), C.shape(0), C.shape(1)));
+  return C;
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -534,9 +561,12 @@ basix::FiniteElement basix::create_custom_element(
 
   xt::xtensor<double, 2> dual_matrix = compute_dual_matrix(
       cell_type, wcoeffs, M, x, highest_degree, interpolation_nderivs);
-  if (math::is_singular(dual_matrix))
+  if (math::is_singular(cmdspan2_t(dual_matrix.data(), dual_matrix.shape(0),
+                                   dual_matrix.shape(1))))
+  {
     throw std::runtime_error(
         "Dual matrix is singular, there is an error in your inputs");
+  }
 
   return basix::FiniteElement(element::family::custom, cell_type,
                               highest_degree, value_shape, wcoeffs, x, M,
@@ -698,10 +728,19 @@ FiniteElement::FiniteElement(
   }
 
   // Compute C = (BD^T)^{-1} B
-  xt::xtensor<double, 2> result = math::solve(_dual_matrix, wcoeffs_ortho);
+  {
+    std::vector<double> result
+        = math::solve(cmdspan2_t(_dual_matrix.data(), _dual_matrix.shape(0),
+                                 _dual_matrix.shape(1)),
+                      cmdspan2_t(wcoeffs_ortho.data(), wcoeffs_ortho.shape(0),
+                                 wcoeffs_ortho.shape(1)));
+    _coeffs = xt::xtensor<double, 2>(
+        {_dual_matrix.shape(1), wcoeffs_ortho.shape(1)});
+    std::copy(result.begin(), result.end(), _coeffs.begin());
+  }
 
-  _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
-  _coeffs.assign(result);
+  // _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
+  // _coeffs.assign(result);
 
   _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
 
@@ -733,8 +772,20 @@ FiniteElement::FiniteElement(
     }
   }
 
-  _entity_transformations = doftransforms::compute_entity_transformations(
-      cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
+  // _entity_transformations = doftransforms::compute_entity_transformations(
+  //     cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
+
+  _entity_transformations_new = doftransforms::compute_entity_transformations(
+      cell_type, to_mdspan(x), to_mdspan(M),
+      cmdspan2_t(_coeffs.data(), _coeffs.shape(0), _coeffs.shape(1)),
+      highest_degree, value_size, map_type);
+  for (auto& data : _entity_transformations_new)
+  {
+    xt::xtensor<double, 3> tens(data.second.second);
+    std::copy(data.second.first.data(),
+              data.second.first.data() + data.second.first.size(), tens.data());
+    _entity_transformations.insert({data.first, std::move(tens)});
+  }
 
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);
@@ -930,20 +981,29 @@ FiniteElement::FiniteElement(
           // For a triangular face, M^3 = Id, so M^{-1} = M^2.
           if (et.first == cell::type::quadrilateral and i == 0)
           {
-            auto [matint, mshape] = math::dot_new(mat, mat);
-            stdex::mdspan<double, stdex::dextents<std::size_t, 2>> mat_int(
-                matint.data(), mshape);
-            std::array<std::size_t, 2> shape;
-            std::tie(matinv_b, shape) = math::dot_new(mat_int, mat);
-            matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>(
-                matinv_b.data(), shape);
+            std::vector<double> matint(mat.extent(0) * mat.extent(1));
+            mdspan2_t mat_int(matint.data(), mat.extent(0), mat.extent(1));
+            math::dot_new(mat, mat, mat_int);
+
+            matinv_b.resize(mat_int.extent(0) * mat.extent(1));
+            std::fill(matinv_b.begin(), matinv_b.end(), 0);
+            matinv_new
+                = mdspan2_t(matinv_b.data(), mat_int.extent(0), mat.extent(1));
+            math::dot_new(mat_int, mat, matinv_new);
           }
           else if (et.first == cell::type::triangle and i == 0)
           {
-            std::array<std::size_t, 2> shape;
-            std::tie(matinv_b, shape) = math::dot_new(mat, mat);
-            matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>(
-                matinv_b.data(), shape);
+            // std::array<std::size_t, 2> shape;
+            // std::tie(matinv_b, shape) = math::dot_new(mat, mat);
+            // matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t,
+            // 2>>(
+            //     matinv_b.data(), shape);
+
+            matinv_b.resize(mat.extent(0) * mat.extent(1));
+            std::fill(matinv_b.begin(), matinv_b.end(), 0);
+            matinv_new
+                = mdspan2_t(matinv_b.data(), mat.extent(0), mat.extent(1));
+            math::dot_new(mat, mat, matinv_new);
           }
           else
           {
@@ -1048,23 +1108,30 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
   return {ndsize, num_points, ndofs, vs};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 4> FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
+std::pair<std::vector<double>, std::array<std::size_t, 4>>
+FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
 {
-
   std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
   xt::xtensor<double, 4> data(shape);
   tabulate(nd,
            xt::adapt(x.data(), x.size(), xt::no_ownership(),
                      std::vector<std::size_t>{x.extent(0), x.extent(1)}),
            data);
-  return data;
+  return {std::vector<double>(data.data(), data.data() + data.size()), shape};
 }
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 4>
 FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
                         std::array<std::size_t, 2> shape) const
 {
-  return tabulate(nd, cmdspan2_t(x.data(), shape));
+  std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
+  xt::xtensor<double, 4> data(phishape);
+  tabulate(nd,
+           xt::adapt(x.data(), x.size(), xt::no_ownership(),
+                     std::vector<std::size_t>{shape[0], shape[1]}),
+           data);
+  return data;
+  // return tabulate(nd, cmdspan2_t(x.data(), shape));
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
@@ -1097,8 +1164,14 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
       auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
       B = xt::view(basis, p, xt::all(), xt::all());
       C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-      auto result = xt::transpose(math::dot(C, B));
-      basis_view.assign(result);
+
+      xt::xtensor<double, 2> result
+          = xt::zeros<double>({C.shape(0), B.shape(1)});
+      math::dot_new(cmdspan2_t(C.data(), C.shape(0), C.shape(1)),
+                    cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
+                    mdspan2_t(result.data(), result.shape(0), result.shape(1)));
+
+      basis_view.assign(xt::transpose(result));
     }
   }
 }
@@ -1140,6 +1213,13 @@ bool FiniteElement::dof_transformations_are_identity() const
 const xt::xtensor<double, 2>& FiniteElement::interpolation_matrix() const
 {
   return _matM;
+}
+//-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+FiniteElement::interpolation_matrix_new() const
+{
+  return {std::vector<double>(_matM.data(), _matM.data() + _matM.size()),
+          {_matM.shape(0), _matM.shape(1)}};
 }
 //-----------------------------------------------------------------------------
 const std::vector<std::vector<int>>& FiniteElement::num_entity_dofs() const
@@ -1223,6 +1303,13 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
 }
 //-----------------------------------------------------------------------------
 const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
+//-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+FiniteElement::points_new() const
+{
+  return {std::vector<double>(_points.data(), _points.data() + _points.size()),
+          {_points.shape(0), _points.shape(1)}};
+}
 //-----------------------------------------------------------------------------
 xt::xtensor<double, 3> FiniteElement::push_forward(
     const xt::xtensor<double, 3>& U, const xt::xtensor<double, 3>& J,

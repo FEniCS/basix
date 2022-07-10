@@ -448,7 +448,7 @@ public:
   std::array<std::size_t, 4> tabulate_shape(std::size_t nd,
                                             std::size_t num_points) const;
 
-  /// Compute basis values and derivatives at set of points.
+  /// @brief Compute basis values and derivatives at set of points.
   ///
   /// @note The version of `FiniteElement::tabulate` with the basis data
   /// as an out argument should be preferred for repeated call where
@@ -469,7 +469,8 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  xt::xtensor<double, 4> tabulate(int nd, impl::cmdspan2_t x) const;
+  std::pair<std::vector<double>, std::array<std::size_t, 4>>
+  tabulate(int nd, impl::cmdspan2_t x) const;
 
   /// Compute basis values and derivatives at set of points.
   ///
@@ -931,26 +932,34 @@ public:
   void apply_inverse_dof_transformation_to_transpose(
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
+  /// Return the interpolation points, i.e. the coordinates on the
+  /// reference element where a function need to be evaluated in order
+  /// to interpolate it in the finite element space. @return Array of
+  /// coordinate with shape `(num_points, tdim)`
+  const xt::xtensor<double, 2>& points() const;
+
   /// Return the interpolation points, ie the coordinates on the
   /// reference element where a function need to be evaluated in order
   /// to interpolate it in the finite element space.
   /// @return Array of coordinate with shape `(num_points, tdim)`
-  const xt::xtensor<double, 2>& points() const;
+  std::pair<std::vector<double>, std::array<std::size_t, 2>> points_new() const;
 
-  /// Return a matrix of weights interpolation
+  /// @brief Return a matrix of weights interpolation,
+  ///
   /// To interpolate a function in this finite element, the functions
   /// should be evaluated at each point given by
   /// FiniteElement::points(). These function values should then be
   /// multiplied by the weight matrix to give the coefficients of the
   /// interpolated function.
   ///
-  /// The shape of the returned matrix will be `(dim, num_points * value_size)`,
-  /// where `dim` is the number of DOFs in the finite element, `num_points` is
-  /// the number of points returned by `points()`, and `value_size` is the value
-  /// size of the finite element.
+  /// The shape of the returned matrix will be `(dim, num_points *
+  /// value_size)`, where `dim` is the number of DOFs in the finite
+  /// element, `num_points` is the number of points returned by
+  /// `points()`, and `value_size` is the value size of the finite
+  /// element.
   ///
-  /// For example, to interpolate into a Lagrange space, the following should be
-  /// done:
+  /// For example, to interpolate into a Lagrange space, the following
+  /// should be done:
   /// \code{.pseudo}
   /// i_m = element.interpolation_matrix()
   /// pts = element.points()
@@ -988,6 +997,61 @@ public:
   /// @return The interpolation matrix. Shape is (ndofs, number of interpolation
   /// points)
   const xt::xtensor<double, 2>& interpolation_matrix() const;
+
+  /// @brief Return a matrix of weights interpolation,
+  ///
+  /// To interpolate a function in this finite element, the functions
+  /// should be evaluated at each point given by
+  /// FiniteElement::points(). These function values should then be
+  /// multiplied by the weight matrix to give the coefficients of the
+  /// interpolated function.
+  ///
+  /// The shape of the returned matrix will be `(dim, num_points *
+  /// value_size)`, where `dim` is the number of DOFs in the finite
+  /// element, `num_points` is the number of points returned by
+  /// `points()`, and `value_size` is the value size of the finite
+  /// element.
+  ///
+  /// For example, to interpolate into a Lagrange space, the following
+  /// should be done:
+  /// \code{.pseudo}
+  /// i_m = element.interpolation_matrix()
+  /// pts = element.points()
+  /// values = vector(pts.shape(0))
+  /// FOR i, p IN ENUMERATE(pts):
+  ///     values[i] = f.evaluate_at(p)
+  /// coefficients = i_m * values
+  /// \endcode
+  ///
+  /// To interpolate into a Raviart-Thomas space, the following should
+  /// be done:
+  /// \code{.pseudo}
+  /// i_m = element.interpolation_matrix()
+  /// pts = element.points()
+  /// vs = prod(element.value_shape())
+  /// values = VECTOR(pts.shape(0) * vs)
+  /// FOR i, p IN ENUMERATE(pts):
+  ///     values[i::pts.shape(0)] = f.evaluate_at(p)
+  /// coefficients = i_m * values
+  /// \endcode
+  ///
+  /// To interpolate into a Lagrange space with a block size, the
+  /// following should be done:
+  /// \code{.pseudo}
+  /// i_m = element.interpolation_matrix()
+  /// pts = element.points()
+  /// coefficients = VECTOR(element.dim() * block_size)
+  /// FOR b IN RANGE(block_size):
+  ///     values = vector(pts.shape(0))
+  ///     FOR i, p IN ENUMERATE(pts):
+  ///         values[i] = f.evaluate_at(p)[b]
+  ///     coefficients[::block_size] = i_m * values
+  /// \endcode
+  ///
+  /// @return The interpolation matrix. Shape is (ndofs, number of interpolation
+  /// points)
+  std::pair<std::vector<double>, std::array<std::size_t, 2>>
+  interpolation_matrix_new() const;
 
   /// Get the dual matrix.
   ///
@@ -1170,6 +1234,9 @@ private:
 
   // Entity transformations
   std::map<cell::type, xt::xtensor<double, 3>> _entity_transformations;
+  std::map<cell::type,
+           std::pair<std::vector<double>, std::array<std::size_t, 3>>>
+      _entity_transformations_new;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of

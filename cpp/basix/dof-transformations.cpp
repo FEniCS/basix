@@ -7,15 +7,17 @@
 #include "polyset.h"
 #include <algorithm>
 #include <array>
+#include <xtensor/xadapt.hpp>
+#include <xtensor/xtensor.hpp>
 #include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
 using namespace basix;
 
 namespace stdex = std::experimental;
-using mdarray2_t = stdex::mdarray<double, stdex ::dextents<std::size_t, 2>>;
-using cmdspan2_t
-    = stdex::mdspan<const double, stdex ::dextents<std::size_t, 2>>;
+using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 typedef std::map<
     cell::type,
@@ -26,6 +28,54 @@ typedef std::map<
 
 namespace
 {
+//-----------------------------------------------------------------------------
+template <typename U>
+xt::xtensor<typename U::value_type, 2> mdspan_to_xtensor2(const U& x)
+{
+  auto e = x.extents();
+  xt::xtensor<typename U::value_type, 2> y({e.extent(0), e.extent(1)});
+  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
+    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
+      y(k0, k1) = x(k0, k1);
+  return y;
+}
+//----------------------------------------------------------------------------
+template <typename U>
+xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
+{
+  auto e = x.extents();
+  xt::xtensor<double, 4> y(
+      {e.extent(0), e.extent(1), e.extent(2), e.extent(3)});
+  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
+    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
+      for (std::size_t k2 = 0; k2 < e.extent(2); ++k2)
+        for (std::size_t k3 = 0; k3 < e.extent(3); ++k3)
+          y(k0, k1, k2, k3) = x(k0, k1, k2, k3);
+
+  return y;
+}
+//-----------------------------------------------------------------------------
+std::array<std::vector<xt::xtensor<double, 2>>, 4>
+to_xtensor(const std::array<std::vector<cmdspan2_t>, 4>& x)
+{
+  std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+  for (std::size_t i = 0; i < x.size(); ++i)
+    for (std::size_t j = 0; j < x[i].size(); ++j)
+      _x[i].push_back(mdspan_to_xtensor2(x[i][j]));
+
+  return _x;
+}
+//----------------------------------------------------------------------------
+std::array<std::vector<xt::xtensor<double, 4>>, 4>
+to_xtensor(const std::array<std::vector<cmdspan4_t>, 4>& M)
+{
+  std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+  for (std::size_t i = 0; i < M.size(); ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      _M[i].push_back(mdspan_to_xtensor4(M[i][j]));
+
+  return _M;
+}
 //-----------------------------------------------------------------------------
 int find_first_subentity(cell::type cell_type, cell::type entity_type)
 {
@@ -425,10 +475,8 @@ xt::xtensor<double, 2> compute_transformation(
   return transform;
 }
 //-----------------------------------------------------------------------------
-} // namespace
-//-----------------------------------------------------------------------------
 std::map<cell::type, xt::xtensor<double, 3>>
-doftransforms::compute_entity_transformations(
+compute_entity_transformations_impl(
     cell::type cell_type,
     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
@@ -461,5 +509,42 @@ doftransforms::compute_entity_transformations(
   }
 
   return out;
+}
+} // namespace
+//-----------------------------------------------------------------------------
+std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>
+doftransforms::compute_entity_transformations(
+    cell::type cell_type,
+    const std::array<
+        std::vector<std::experimental::mdspan<
+            const double, std::experimental::dextents<std::size_t, 2>>>,
+        4>& x,
+    const std::array<
+        std::vector<std::experimental::mdspan<
+            const double, std::experimental::dextents<std::size_t, 4>>>,
+        4>& M,
+    const std::experimental::mdspan<
+        const double, std::experimental::dextents<std::size_t, 2>>& coeffs,
+    int degree, std::size_t vs, maps::type map_type)
+{
+  auto out = compute_entity_transformations_impl(
+      cell_type, to_xtensor(x), to_xtensor(M),
+      xt::adapt(coeffs.data(), coeffs.size(), xt::no_ownership(),
+                std::vector<std::size_t>{coeffs.extent(0), coeffs.extent(1)}),
+      degree, vs, map_type);
+
+  std::map<cell::type,
+           std::pair<std::vector<double>, std::array<std::size_t, 3>>>
+      trans;
+  for (auto& data : out)
+  {
+    xt::xtensor<double, 3>& array = data.second;
+    std::array<std::size_t, 3> s
+        = {array.shape(0), array.shape(1), array.shape(2)};
+    std::vector<double> a(array.data(), array.data() + array.size());
+    trans.insert({data.first, {a, s}});
+  }
+
+  return trans;
 }
 //-----------------------------------------------------------------------------

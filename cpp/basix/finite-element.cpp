@@ -721,9 +721,10 @@ FiniteElement::FiniteElement(
 
   if (family == element::family::custom)
   {
-    _wcoeffs = xt::xtensor<double, 2>(
-        {wcoeffs_ortho.shape(0), wcoeffs_ortho.shape(1)});
-    _wcoeffs.assign(wcoeffs_ortho);
+    _wcoeffs
+        = {std::vector<double>(wcoeffs_ortho.data(),
+                               wcoeffs_ortho.data() + wcoeffs_ortho.size()),
+           {wcoeffs_ortho.shape(0), wcoeffs_ortho.shape(1)}};
     _M = M;
   }
 
@@ -1479,7 +1480,8 @@ const xt::xtensor<double, 2>& FiniteElement::dual_matrix() const
   return _dual_matrix;
 }
 //-----------------------------------------------------------------------------
-const xt::xtensor<double, 2>& FiniteElement::wcoeffs() const
+const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+FiniteElement::wcoeffs() const
 {
   if (family() != element::family::custom)
     throw std::runtime_error("wcoeffs is only stored for custom elements");

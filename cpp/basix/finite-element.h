@@ -1093,7 +1093,8 @@ public:
   /// throw an exception if called on a non-custom element
   /// @return Coefficient matrix. Shape is (dim(Lagrange polynomials),
   /// dim(finite element polyset))
-  const xt::xtensor<double, 2>& wcoeffs() const;
+  const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+  wcoeffs() const;
 
   /// Get the interpolation points for each subentity.
   ///
@@ -1316,9 +1317,9 @@ private:
   // Is the interpolation matrix an identity?
   bool _interpolation_is_identity;
 
-  // The coefficients that define the polynomial set in terms of the orthonormal
-  // polynomials
-  xt::xtensor<double, 2> _wcoeffs;
+  // The coefficients that define the polynomial set in terms of the
+  // orthonormal polynomials
+  std::pair<std::vector<double>, std::array<std::size_t, 2>> _wcoeffs;
 
   // Interpolation matrices for each entity
   std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;

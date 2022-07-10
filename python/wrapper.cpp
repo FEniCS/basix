@@ -385,8 +385,8 @@ Interface to the Basix C++ library.
       .def_property_readonly("wcoeffs",
                              [](const FiniteElement& self)
                              {
-                               const xt::xtensor<double, 2>& P = self.wcoeffs();
-                               return py::array_t<double>(P.shape(), P.data(),
+                               auto& [P, shape] = self.wcoeffs();
+                               return py::array_t<double>(shape, P.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly(

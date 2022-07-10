@@ -19,7 +19,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <string>
-#include <xtensor/xadapt.hpp>
 #include <xtl/xspan.hpp>
 
 namespace py = pybind11;
@@ -304,13 +303,14 @@ Interface to the Basix C++ library.
           "entity_transformations",
           [](const FiniteElement& self)
           {
-            std::map<cell::type, xt::xtensor<double, 3>> t
-                = self.entity_transformations();
+            // std::map<cell::type, xt::xtensor<double, 3>> t
+            //     = self.entity_transformations();
+            auto t = self.entity_transformations();
             py::dict t2;
-            for (auto tpart : t)
+            for (auto& [key, data] : t)
             {
-              t2[cell_type_to_str(tpart.first).c_str()] = py::array_t<double>(
-                  tpart.second.shape(), tpart.second.data());
+              t2[cell_type_to_str(key).c_str()]
+                  = py::array_t<double>(data.second, data.first.data());
             }
             return t2;
           },

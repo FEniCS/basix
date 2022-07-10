@@ -19,8 +19,6 @@
 #include "polyset.h"
 #include <basix/version.h>
 #include <numeric>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xbuilder.hpp>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -39,32 +37,6 @@ using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
 namespace
 {
 //----------------------------------------------------------------------------
-template <typename U>
-xt::xtensor<typename U::value_type, 2> mdspan_to_xtensor2(const U& x)
-{
-  auto e = x.extents();
-  xt::xtensor<typename U::value_type, 2> y({e.extent(0), e.extent(1)});
-  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
-    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
-      y(k0, k1) = x(k0, k1);
-  return y;
-}
-//----------------------------------------------------------------------------
-template <typename U>
-xt::xtensor<double, 4> mdspan_to_xtensor4(const U& x)
-{
-  auto e = x.extents();
-  xt::xtensor<double, 4> y(
-      {e.extent(0), e.extent(1), e.extent(2), e.extent(3)});
-  for (std::size_t k0 = 0; k0 < e.extent(0); ++k0)
-    for (std::size_t k1 = 0; k1 < e.extent(1); ++k1)
-      for (std::size_t k2 = 0; k2 < e.extent(2); ++k2)
-        for (std::size_t k3 = 0; k3 < e.extent(3); ++k3)
-          y(k0, k1, k2, k3) = x(k0, k1, k2, k3);
-
-  return y;
-}
-//-----------------------------------------------------------------------------
 /// This function orthogonalises and normalises the rows of a matrix in place
 void orthogonalise(mdspan2_t& wcoeffs)
 {
@@ -714,19 +686,21 @@ FiniteElement::FiniteElement(
     }
   }
 
-  // _entity_transformations = doftransforms::compute_entity_transformations(
-  //     cell_type, x, M, _coeffs, highest_degree, value_size, map_type);
-
-  _entity_transformations_new = doftransforms::compute_entity_transformations(
+  _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M, cmdspan2_t(_coeffs.first.data(), _coeffs.second),
       highest_degree, value_size, map_type);
-  for (auto& data : _entity_transformations_new)
-  {
-    xt::xtensor<double, 3> tens(data.second.second);
-    std::copy(data.second.first.data(),
-              data.second.first.data() + data.second.first.size(), tens.data());
-    _entity_transformations.insert({data.first, std::move(tens)});
-  }
+
+  // _entity_transformations_new =
+  // doftransforms::compute_entity_transformations(
+  //     cell_type, x, M, cmdspan2_t(_coeffs.first.data(), _coeffs.second),
+  //     highest_degree, value_size, map_type);
+  // for (auto& [key, data] : _entity_transformations)
+  // {
+  //   xt::xtensor<double, 3> tens(data.second.second);
+  //   std::copy(data.first.data(), data.first.data() + data.first.size(),
+  //             tens.data());
+  //   _entity_transformations.insert({key, std::move(tens)});
+  // }
 
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);
@@ -809,15 +783,15 @@ FiniteElement::FiniteElement(
   _dof_transformations_are_identity = true;
   for (const auto& et : _entity_transformations)
   {
-    auto& trans = et.second;
+    cmdspan3_t trans(et.second.first.data(), et.second.second);
 
     for (std::size_t i = 0;
-         _dof_transformations_are_permutations and i < trans.shape(0); ++i)
+         _dof_transformations_are_permutations and i < trans.extent(0); ++i)
     {
-      for (std::size_t row = 0; row < et.second.shape(1); ++row)
+      for (std::size_t row = 0; row < trans.extent(1); ++row)
       {
         double rmin(0), rmax(0), rtot(0);
-        for (std::size_t k = 0; k < trans.shape(2); ++k)
+        for (std::size_t k = 0; k < trans.extent(2); ++k)
         {
           double r = trans(i, row, k);
           rmin = std::min(r, rmin);
@@ -825,7 +799,7 @@ FiniteElement::FiniteElement(
           rtot += r;
         }
 
-        if ((trans.shape(2) != 1 and std::abs(rmin) > 1.0e-8)
+        if ((trans.extent(2) != 1 and std::abs(rmin) > 1.0e-8)
             or std::abs(rmax - 1.0) > 1.0e-8 or std::abs(rtot - 1.0) > 1.0e-8)
         // if ((trans.shape(2) != 1 and !xt::allclose(rmin, 0))
         //     or !xt::allclose(rmax, 1) or !xt::allclose(rtot, 1))
@@ -851,19 +825,21 @@ FiniteElement::FiniteElement(
     {
       for (const auto& et : _entity_transformations)
       {
+        cmdspan3_t trans(et.second.first.data(), et.second.second);
+
         _eperm[et.first]
-            = std::vector<std::vector<std::size_t>>(et.second.shape(0));
+            = std::vector<std::vector<std::size_t>>(trans.extent(0));
         _eperm_rev[et.first]
-            = std::vector<std::vector<std::size_t>>(et.second.shape(0));
-        for (std::size_t i = 0; i < et.second.shape(0); ++i)
+            = std::vector<std::vector<std::size_t>>(trans.extent(0));
+        for (std::size_t i = 0; i < trans.extent(0); ++i)
         {
-          std::vector<std::size_t> perm(et.second.shape(1));
-          std::vector<std::size_t> rev_perm(et.second.shape(1));
-          for (std::size_t row = 0; row < et.second.shape(1); ++row)
+          std::vector<std::size_t> perm(trans.extent(1));
+          std::vector<std::size_t> rev_perm(trans.extent(1));
+          for (std::size_t row = 0; row < trans.extent(1); ++row)
           {
-            for (std::size_t col = 0; col < et.second.shape(1); ++col)
+            for (std::size_t col = 0; col < trans.extent(1); ++col)
             {
-              if (et.second(i, row, col) > 0.5)
+              if (trans(i, row, col) > 0.5)
               {
                 perm[row] = col;
                 rev_perm[col] = row;
@@ -882,50 +858,52 @@ FiniteElement::FiniteElement(
     // Precompute the DOF transformations
     for (const auto& et : _entity_transformations)
     {
+      cmdspan3_t trans(et.second.first.data(), et.second.second);
+
       _etrans[et.first] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.shape(0));
+          std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
+          trans.extent(0));
       _etransT[et.first] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.shape(0));
+          std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
+          trans.extent(0));
       _etrans_invT[et.first] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.shape(0));
+          std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
+          trans.extent(0));
       _etrans_inv[et.first] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.shape(0));
-      for (std::size_t i = 0; i < et.second.shape(0); ++i)
+          std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
+          trans.extent(0));
+      for (std::size_t i = 0; i < trans.extent(0); ++i)
       {
-        if (et.second.shape(1) > 0)
+        if (trans.extent(1) > 0)
         {
-          std::vector<double> mat_b(et.second.shape(1) * et.second.shape(2));
+          std::vector<double> mat_b(trans.extent(1) * trans.extent(2));
           stdex::mdspan<double, stdex::dextents<std::size_t, 2>> mat(
-              mat_b.data(), et.second.shape(1), et.second.shape(2));
+              mat_b.data(), trans.extent(1), trans.extent(2));
           for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
             for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
-              mat(k0, k1) = et.second(i, k0, k1);
+              mat(k0, k1) = trans(i, k0, k1);
 
           {
             auto [p, D, mat_data] = precompute::prepare_matrix(mat);
-            auto m = xt::adapt(mat_data.first,
-                               std::vector<std::size_t>{mat_data.second[0],
-                                                        mat_data.second[1]});
-            _etrans[et.first][i] = {p, D, m};
+            // auto m = xt::adapt(mat_data.first,
+            //                    std::vector<std::size_t>{mat_data.second[0],
+            //                                             mat_data.second[1]});
+            _etrans[et.first][i] = {p, D, mat_data};
           }
 
           {
-            std::vector<double> matT_b(et.second.shape(1) * et.second.shape(2));
+            std::vector<double> matT_b(trans.extent(1) * trans.extent(2));
             stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matT(
-                matT_b.data(), et.second.shape(2), et.second.shape(1));
+                matT_b.data(), trans.extent(2), trans.extent(1));
             for (std::size_t k0 = 0; k0 < matT.extent(0); ++k0)
               for (std::size_t k1 = 0; k1 < matT.extent(1); ++k1)
-                matT(k0, k1) = et.second(i, k1, k0);
+                matT(k0, k1) = trans(i, k1, k0);
 
             auto [p, D, mat_data] = precompute::prepare_matrix(matT);
-            auto m = xt::adapt(mat_data.first,
-                               std::vector<std::size_t>{mat_data.second[0],
-                                                        mat_data.second[1]});
-            _etransT[et.first][i] = {p, D, m};
+            // auto m = xt::adapt(mat_data.first,
+            //                    std::vector<std::size_t>{mat_data.second[0],
+            //                                             mat_data.second[1]});
+            _etransT[et.first][i] = {p, D, mat_data};
           }
 
           std::vector<double> matinv_b;
@@ -964,10 +942,10 @@ FiniteElement::FiniteElement(
 
           {
             auto [p, D, mat_data] = precompute::prepare_matrix(matinv_new);
-            auto m = xt::adapt(mat_data.first,
-                               std::vector<std::size_t>{mat_data.second[0],
-                                                        mat_data.second[1]});
-            _etrans_inv[et.first][i] = {p, D, m};
+            // auto m = xt::adapt(mat_data.first,
+            //                    std::vector<std::size_t>{mat_data.second[0],
+            //                                             mat_data.second[1]});
+            _etrans_inv[et.first][i] = {p, D, mat_data};
           }
 
           {
@@ -981,10 +959,10 @@ FiniteElement::FiniteElement(
                 matinvT_new(k0, k1) = matinv_new(k1, k0);
 
             auto [p, D, mat_data] = precompute::prepare_matrix(matinvT_new);
-            auto m = xt::adapt(mat_data.first,
-                               std::vector<std::size_t>{mat_data.second[0],
-                                                        mat_data.second[1]});
-            _etrans_invT[et.first][i] = {p, D, m};
+            // auto m = xt::adapt(mat_data.first,
+            //                    std::vector<std::size_t>{mat_data.second[0],
+            //                                             mat_data.second[1]});
+            _etrans_invT[et.first][i] = {p, D, mat_data};
           }
         }
       }
@@ -1195,7 +1173,6 @@ FiniteElement::base_transformations() const
   std::array<std::size_t, 3> shape = {nt, ndofs, ndofs};
   std::vector<double> bt_b(shape[0] * shape[1] * shape[2], 0);
   mdspan3_t bt(bt_b.data(), shape);
-  // xt::xtensor<double, 3> bt = xt::zeros<double>({nt, ndofs, ndofs});
 
   for (std::size_t i = 0; i < nt; ++i)
     for (std::size_t j = 0; j < ndofs; ++j)
@@ -1215,7 +1192,8 @@ FiniteElement::base_transformations() const
 
     for (std::size_t ndofs : _num_edofs[1])
     {
-      auto& tmp = _entity_transformations.at(cell::type::interval);
+      auto& tmp_data = _entity_transformations.at(cell::type::interval);
+      cmdspan3_t tmp(tmp_data.first.data(), tmp_data.second);
 
       for (std::size_t i = 0; i < ndofs; ++i)
         for (std::size_t j = 0; j < ndofs; ++j)
@@ -1232,7 +1210,10 @@ FiniteElement::base_transformations() const
         const std::size_t ndofs = _num_edofs[2][f];
         if (ndofs > 0)
         {
-          auto& tmp = _entity_transformations.at(_cell_subentity_types[2][f]);
+          auto& tmp_data
+              = _entity_transformations.at(_cell_subentity_types[2][f]);
+          cmdspan3_t tmp(tmp_data.first.data(), tmp_data.second);
+
           for (std::size_t i = 0; i < ndofs; ++i)
             for (std::size_t j = 0; j < ndofs; ++j)
               bt(transform_n, i + dof_start, j + dof_start) = tmp(0, i, j);
@@ -1264,8 +1245,7 @@ FiniteElement::push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
                             impl::cmdspan3_t K) const
 {
   const std::size_t physical_value_size
-      = compute_value_size(_map_type, J.extent
-      (1));
+      = compute_value_size(_map_type, J.extent(1));
 
   std::array<std::size_t, 3> shape
       = {U.extent(0), U.extent(1), physical_value_size};
@@ -1430,7 +1410,7 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
   }
 }
 //-----------------------------------------------------------------------------
-std::map<cell::type, xt::xtensor<double, 3>>
+std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>
 FiniteElement::entity_transformations() const
 {
   return _entity_transformations;

@@ -36,7 +36,7 @@ void dot_blas(const xtl::span<const double>& A,
 /// @return The outer product. The type will be the same as `u`.
 template <typename U, typename V>
 std::pair<std::vector<typename U::value_type>, std::array<std::size_t, 2>>
-outer_new(const U& u, const V& v)
+outer(const U& u, const V& v)
 {
   std::vector<typename U::value_type> result(u.size() * v.size());
   for (std::size_t i = 0; i < u.size(); ++i)
@@ -51,7 +51,7 @@ outer_new(const U& u, const V& v)
 /// @param v The second vector. It must has size 3.
 /// @return The cross product `u x v`. The type will be the same as `u`.
 template <typename U, typename V>
-std::array<typename U::value_type, 3> cross_new(const U& u, const V& v)
+std::array<typename U::value_type, 3> cross(const U& u, const V& v)
 {
   assert(u.size() == 3);
   assert(v.size() == 3);
@@ -90,7 +90,7 @@ bool is_singular(const std::experimental::mdspan<
 /// @param[out] C Output matrix. Must be sized correctly before calling
 /// this function.
 template <typename U, typename V, typename W>
-void dot_new(const U& A, const V& B, W&& C)
+void dot(const U& A, const V& B, W&& C)
 {
   assert(A.extent(1) == B.extent(0));
   assert(C.extent(0) == C.extent(0));

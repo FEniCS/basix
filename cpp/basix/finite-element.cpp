@@ -225,9 +225,9 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
   }
 
   xt::xtensor<double, 2> C = xt::zeros<double>({B.shape(0), D.shape(1)});
-  math::dot_new(cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
-                cmdspan2_t(D.data(), D.shape(0), D.shape(1)),
-                mdspan2_t(C.data(), C.shape(0), C.shape(1)));
+  math::dot(cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
+            cmdspan2_t(D.data(), D.shape(0), D.shape(1)),
+            mdspan2_t(C.data(), C.shape(0), C.shape(1)));
   return C;
 }
 //-----------------------------------------------------------------------------
@@ -983,27 +983,21 @@ FiniteElement::FiniteElement(
           {
             std::vector<double> matint(mat.extent(0) * mat.extent(1));
             mdspan2_t mat_int(matint.data(), mat.extent(0), mat.extent(1));
-            math::dot_new(mat, mat, mat_int);
+            math::dot(mat, mat, mat_int);
 
             matinv_b.resize(mat_int.extent(0) * mat.extent(1));
             std::fill(matinv_b.begin(), matinv_b.end(), 0);
             matinv_new
                 = mdspan2_t(matinv_b.data(), mat_int.extent(0), mat.extent(1));
-            math::dot_new(mat_int, mat, matinv_new);
+            math::dot(mat_int, mat, matinv_new);
           }
           else if (et.first == cell::type::triangle and i == 0)
           {
-            // std::array<std::size_t, 2> shape;
-            // std::tie(matinv_b, shape) = math::dot_new(mat, mat);
-            // matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t,
-            // 2>>(
-            //     matinv_b.data(), shape);
-
             matinv_b.resize(mat.extent(0) * mat.extent(1));
             std::fill(matinv_b.begin(), matinv_b.end(), 0);
             matinv_new
                 = mdspan2_t(matinv_b.data(), mat.extent(0), mat.extent(1));
-            math::dot_new(mat, mat, matinv_new);
+            math::dot(mat, mat, matinv_new);
           }
           else
           {
@@ -1167,9 +1161,9 @@ void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
 
       xt::xtensor<double, 2> result
           = xt::zeros<double>({C.shape(0), B.shape(1)});
-      math::dot_new(cmdspan2_t(C.data(), C.shape(0), C.shape(1)),
-                    cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
-                    mdspan2_t(result.data(), result.shape(0), result.shape(1)));
+      math::dot(cmdspan2_t(C.data(), C.shape(0), C.shape(1)),
+                cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
+                mdspan2_t(result.data(), result.shape(0), result.shape(1)));
 
       basis_view.assign(xt::transpose(result));
     }

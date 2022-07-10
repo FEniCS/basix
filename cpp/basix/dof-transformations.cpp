@@ -85,39 +85,41 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::triangle:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = {};
+    auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
+
     auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
       return {pt[1], pt[0], 0.0};
     };
     const xt::xtensor<double, 2> J = {{0., 1.}, {1., 0.}};
     const double detJ = -1.;
     const xt::xtensor<double, 2> K = {{0., 1.}, {1., 0.}};
-    mapinfo[cell::type::interval].push_back(std::tuple(map, J, detJ, K));
-
-    // mapinfo.emplace(cell::type::interval,
-    //                 std::vector<map_data_t>(1, std::tuple(map, J, detJ, K)));
+    data.push_back(std::tuple(map, J, detJ, K));
 
     return mapinfo;
   }
   case cell::type::quadrilateral:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = {};
+    auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
+
     auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
       return {1 - pt[0], pt[1], 0};
     };
     const xt::xtensor<double, 2> J = {{-1., 0.}, {0., 1.}};
     const double detJ = -1.;
     const xt::xtensor<double, 2> K = {{-1., 0.}, {0., 1.}};
-    mapinfo[cell::type::interval].push_back(std::tuple(map, J, detJ, K));
+    data.push_back(std::tuple(map, J, detJ, K));
+
     return mapinfo;
   }
   case cell::type::tetrahedron:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = {};
+    // mapinfo[cell::type::interval] = {};
     mapinfo[cell::type::triangle] = {};
     {
+      auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
+
       auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
         return {pt[0], pt[2], pt[1]};
       };
@@ -126,201 +128,193 @@ mapinfo_t get_mapinfo(cell::type cell_type)
       const double detJ = -1.;
       const xt::xtensor<double, 2> K
           = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
-      mapinfo[cell::type::interval].push_back(std::tuple(map, J, detJ, K));
+      data.push_back(std::tuple(map, J, detJ, K));
     }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {pt[2], pt[0], pt[1]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{0., 0., 1.}, {1., 0., 0.}, {0., 1., 0.}};
-      const double detJ = 1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 1., 0.}, {0., 0., 1.}, {1., 0., 0.}};
-      mapinfo[cell::type::triangle].push_back(std::tuple(map, J, detJ, K));
+
+    {
+      auto& data = mapinfo.try_emplace(cell::type::triangle).first->second;
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {pt[2], pt[0], pt[1]};
+        };
+        xt::xtensor<double, 2> J = {{0., 0., 1.}, {1., 0., 0.}, {0., 1., 0.}};
+        double detJ = 1.0;
+        xt::xtensor<double, 2> K = {{0., 1., 0.}, {0., 0., 1.}, {1., 0., 0.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {pt[0], pt[2], pt[1]};
+        };
+        xt::xtensor<double, 2> J = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
+        double detJ = -1.0;
+        xt::xtensor<double, 2> K = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
     }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {pt[0], pt[2], pt[1]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
-      mapinfo[cell::type::triangle].push_back(std::tuple(map, J, detJ, K));
-    }
+
     return mapinfo;
   }
   case cell::type::hexahedron:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = {};
-    mapinfo[cell::type::quadrilateral] = {};
-    { // scope
+    {
+      auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
       auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
-      const xt::xtensor<double, 2> J
-          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
-      mapinfo[cell::type::interval].push_back(std::tuple(map, J, detJ, K));
+      xt::xtensor<double, 2> J = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      double detJ = -1.9;
+      xt::xtensor<double, 2> K = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      data.push_back(std::tuple(map, J, detJ, K));
     }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {1 - pt[1], pt[0], pt[2]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{0., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
-      const double detJ = 1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 1., 0.}, {-1., 0., 0.}, {0., 0., 1.}};
-      mapinfo[cell::type::quadrilateral].push_back(std::tuple(map, J, detJ, K));
-    }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {pt[1], pt[0], pt[2]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
-      mapinfo[cell::type::quadrilateral].push_back(std::tuple(map, J, detJ, K));
+    {
+      auto& data = mapinfo.try_emplace(cell::type::quadrilateral).first->second;
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {1 - pt[1], pt[0], pt[2]};
+        };
+        xt::xtensor<double, 2> J = {{0., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        double detJ = 1.0;
+        xt::xtensor<double, 2> K = {{0., 1., 0.}, {-1., 0., 0.}, {0., 0., 1.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {pt[1], pt[0], pt[2]};
+        };
+        xt::xtensor<double, 2> J = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        double detJ = -1.0;
+        xt::xtensor<double, 2> K = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
     }
     return mapinfo;
   }
   case cell::type::prism:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = {};
-    mapinfo[cell::type::triangle] = {};
     mapinfo[cell::type::quadrilateral] = {};
-    { // scope
+    {
+      auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
       auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
-      const xt::xtensor<double, 2> J
-          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
-      mapinfo[cell::type::interval].push_back(std::tuple(map, J, detJ, K));
+      xt::xtensor<double, 2> J = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      double detJ = -1.0;
+      xt::xtensor<double, 2> K = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      data.push_back(std::tuple(map, J, detJ, K));
     }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {1 - pt[1] - pt[0], pt[0], pt[2]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{-1., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
-      const double detJ = 1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 1., 0.}, {-1., -1., 0.}, {0., 0., 1.}};
-      mapinfo[cell::type::triangle].push_back(std::tuple(map, J, detJ, K));
+    {
+      auto& data = mapinfo.try_emplace(cell::type::triangle).first->second;
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {1 - pt[1] - pt[0], pt[0], pt[2]};
+        };
+        xt::xtensor<double, 2> J = {{-1., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        double detJ = 1.0;
+        xt::xtensor<double, 2> K = {{0., 1., 0.}, {-1., -1., 0.}, {0., 0., 1.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {pt[1], pt[0], pt[2]};
+        };
+        xt::xtensor<double, 2> J = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        double detJ = -1.;
+        xt::xtensor<double, 2> K = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
     }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {pt[1], pt[0], pt[2]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
-      mapinfo[cell::type::triangle].push_back(std::tuple(map, J, detJ, K));
+    {
+      auto& data = mapinfo.try_emplace(cell::type::quadrilateral).first->second;
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {1 - pt[2], pt[1], pt[0]};
+        };
+        xt::xtensor<double, 2> J = {{0., 0., -1.}, {0., 1., 0.}, {1., 0., 0.}};
+        double detJ = 1.0;
+        xt::xtensor<double, 2> K = {{0., 0., 1.}, {0., 1., 0.}, {-1., 0., 0.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
+      { // scope
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {pt[2], pt[1], pt[0]};
+        };
+        xt::xtensor<double, 2> J = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+        double detJ = -1.;
+        xt::xtensor<double, 2> K = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
     }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {1 - pt[2], pt[1], pt[0]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{0., 0., -1.}, {0., 1., 0.}, {1., 0., 0.}};
-      const double detJ = 1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 0., 1.}, {0., 1., 0.}, {-1., 0., 0.}};
-      mapinfo[cell::type::quadrilateral].push_back(std::tuple(map, J, detJ, K));
-    }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {pt[2], pt[1], pt[0]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
-      mapinfo[cell::type::quadrilateral].push_back(std::tuple(map, J, detJ, K));
-    }
+
     return mapinfo;
   }
   case cell::type::pyramid:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::interval] = {};
     mapinfo[cell::type::triangle] = {};
     mapinfo[cell::type::quadrilateral] = {};
-    { // scope
+    {
+      auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
       auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
-      const xt::xtensor<double, 2> J
-          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
-      mapinfo[cell::type::interval].push_back(std::tuple(map, J, detJ, K));
+      xt::xtensor<double, 2> J = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      double detJ = -1.;
+      xt::xtensor<double, 2> K = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      data.push_back(std::tuple(map, J, detJ, K));
     }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {1 - pt[1], pt[0], pt[2]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{0., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
-      const double detJ = 1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 1., 0.}, {-1., 0., 0.}, {0., 0., 1.}};
-      mapinfo[cell::type::quadrilateral].push_back(std::tuple(map, J, detJ, K));
+
+    {
+      auto& data = mapinfo.try_emplace(cell::type::quadrilateral).first->second;
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {1 - pt[1], pt[0], pt[2]};
+        };
+        xt::xtensor<double, 2> J = {{0., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        double detJ = 1.;
+        xt::xtensor<double, 2> K = {{0., 1., 0.}, {-1., 0., 0.}, {0., 0., 1.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {pt[1], pt[0], pt[2]};
+        };
+        xt::xtensor<double, 2> J = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        double detJ = -1.;
+        xt::xtensor<double, 2> K = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
     }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {pt[1], pt[0], pt[2]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
-      mapinfo[cell::type::quadrilateral].push_back(std::tuple(map, J, detJ, K));
+
+    {
+      auto& data = mapinfo.try_emplace(cell::type::triangle).first->second;
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {1 - pt[2] - pt[0], pt[1], pt[0]};
+        };
+        xt::xtensor<double, 2> J = {{-1., 0., -1.}, {0., 1., 0.}, {1., 0., 0.}};
+        double detJ = 1.;
+        xt::xtensor<double, 2> K = {{0., 0., 1.}, {0., 1., 0.}, {-1., 0., -1.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
+      {
+        auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
+          return {pt[2], pt[1], pt[0]};
+        };
+        xt::xtensor<double, 2> J = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+        double detJ = -1.;
+        xt::xtensor<double, 2> K = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+        data.push_back(std::tuple(map, J, detJ, K));
+      }
     }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {1 - pt[2] - pt[0], pt[1], pt[0]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{-1., 0., -1.}, {0., 1., 0.}, {1., 0., 0.}};
-      const double detJ = 1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 0., 1.}, {0., 1., 0.}, {-1., 0., -1.}};
-      mapinfo[cell::type::triangle].push_back(std::tuple(map, J, detJ, K));
-    }
-    { // scope
-      auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
-        return {pt[2], pt[1], pt[0]};
-      };
-      const xt::xtensor<double, 2> J
-          = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
-      mapinfo[cell::type::triangle].push_back(std::tuple(map, J, detJ, K));
-    }
+
     return mapinfo;
   }
   default:
     throw std::runtime_error("Unsupported cell type");
-  }
+  } // namespace
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>

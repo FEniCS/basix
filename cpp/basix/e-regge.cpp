@@ -122,7 +122,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
               edge[p] = geometry(vert_ids[r], p) - geometry(vert_ids[s], p);
 
             // outer product v.v^T
-            auto [buffer, shape] = math::outer_new(edge, edge);
+            auto [buffer, shape] = math::outer(edge, edge);
             impl::cmdspan2_t result(buffer.data(), shape);
             for (std::size_t i = 0; i < vvt.extent(1); ++i)
               for (std::size_t j = 0; j < vvt.extent(2); ++j)

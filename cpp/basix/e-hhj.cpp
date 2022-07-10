@@ -126,7 +126,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
             edge_t[1] = geometry(vert_ids[r], 0) - geometry(vert_ids[s], 0);
 
             // outer product v.v^T
-            const auto [result, shape] = basix::math::outer_new(edge_t, edge_t);
+            const auto [result, shape] = basix::math::outer(edge_t, edge_t);
             for (std::size_t k0 = 0; k0 < shape[0]; ++k0)
               for (std::size_t k1 = 0; k1 < shape[1]; ++k1)
                 vvt(c, k0, k1) = result[k0 * shape[1] + k1];

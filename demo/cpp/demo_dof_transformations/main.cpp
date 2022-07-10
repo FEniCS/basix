@@ -78,8 +78,9 @@ int main(int argc, char* argv[])
 
     // For this element, we know that the base transformations will be
     // permutation matrices.
+    auto [trans, tshape] = lagrange.base_transformations();
     std::cout << std::endl << "Base transformations:" << std::endl;
-    std::cout << lagrange.base_transformations() << std::endl;
+    std::cout << xt::adapt(trans, tshape) << std::endl;
 
     // The matrices returned by `base_transformations` are quite large, and
     // are equal to the identity matrix except for a small block of the

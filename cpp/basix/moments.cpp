@@ -7,7 +7,6 @@
 #include "finite-element.h"
 #include "math.h"
 #include "quadrature.h"
-#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 
@@ -85,7 +84,7 @@ map_points(const cell::type celltype0, const cell::type celltype1, cmdspan2_t x)
 
     std::vector<double> dxbuffer(x.extent(0) * axes_e.extent(1));
     mdspan2_t dx(dxbuffer.data(), x.extent(0), axes_e.extent(1));
-    math::dot_new(x, axes_e, dx);
+    math::dot(x, axes_e, dx);
 
     for (std::size_t i = 0; i < p[e].extent(0); ++i)
       for (std::size_t j = 0; j < p[e].extent(1); ++j)
@@ -406,7 +405,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
         for (std::size_t i = 0; i < _p.extent(1); ++i)
           _p(p, i) = facet_x(0, i) + pts(p, 0) * t0[i] + pts(p, 1) * t1[i];
 
-      normal = basix::math::cross_new(t0, t1);
+      normal = basix::math::cross(t0, t1);
     }
     else
       throw std::runtime_error("Normal on this cell cannot be computed.");

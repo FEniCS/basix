@@ -303,8 +303,6 @@ Interface to the Basix C++ library.
           "entity_transformations",
           [](const FiniteElement& self)
           {
-            // std::map<cell::type, xt::xtensor<double, 3>> t
-            //     = self.entity_transformations();
             auto t = self.entity_transformations();
             py::dict t2;
             for (auto& [key, data] : t)

@@ -18,6 +18,7 @@
 #include "math.h"
 #include "polyset.h"
 #include <basix/version.h>
+#include <cmath>
 #include <numeric>
 
 #define str_macro(X) #X

@@ -419,41 +419,6 @@ compute_transformation(
 
   return {std::move(transformb), {transform.extent(0), transform.extent(1)}};
 }
-//-----------------------------------------------------------------------------
-std::map<cell::type, xt::xtensor<double, 3>>
-compute_entity_transformations_impl(
-    cell::type cell_type, const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, cmdspan2_t coeffs,
-    int degree, std::size_t vs, maps::type map_type)
-{
-  std::map<cell::type, xt::xtensor<double, 3>> out;
-
-  mapinfo_t mapinfo = get_mapinfo(cell_type);
-  for (auto item : mapinfo)
-  {
-    const int tdim = cell::topological_dimension(item.first);
-    const int entity = find_first_subentity(cell_type, item.first);
-    const std::size_t ndofs
-        = M[tdim].size() == 0 ? 0 : M[tdim][entity].extent(0);
-    xt::xtensor<double, 3> transform({item.second.size(), ndofs, ndofs});
-    for (std::size_t i = 0; i < item.second.size(); ++i)
-    {
-      auto [map, J, detJ, K] = item.second[i];
-      const auto [t2b, tshape] = compute_transformation(
-          cell_type, x, M, coeffs, cmdspan2_t(J.data(), J.shape(0), J.shape(1)),
-          detJ, cmdspan2_t(K.data(), K.shape(0), K.shape(1)), map, degree, tdim,
-          entity, vs, map_type);
-      cmdspan2_t t2(t2b.data(), tshape);
-      for (std::size_t k0 = 0; k0 < transform.shape(1); ++k0)
-        for (std::size_t k1 = 0; k1 < transform.shape(2); ++k1)
-          transform(i, k0, k1) = t2(k0, k1);
-    }
-
-    out.insert({item.first, transform});
-  }
-
-  return out;
-}
 } // namespace
 //-----------------------------------------------------------------------------
 std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>
@@ -471,22 +436,30 @@ doftransforms::compute_entity_transformations(
         const double, std::experimental::dextents<std::size_t, 2>>& coeffs,
     int degree, std::size_t vs, maps::type map_type)
 {
-  std::map<cell::type, xt::xtensor<double, 3>> out
-      = compute_entity_transformations_impl(cell_type, x, M, coeffs, degree, vs,
-                                            map_type);
-
   std::map<cell::type,
            std::pair<std::vector<double>, std::array<std::size_t, 3>>>
-      trans;
-  for (auto& data : out)
+      out;
+  const mapinfo_t mapinfo = get_mapinfo(cell_type);
+  for (auto& [entity_type, emap_data] : mapinfo)
   {
-    xt::xtensor<double, 3>& array = data.second;
-    std::array<std::size_t, 3> s
-        = {array.shape(0), array.shape(1), array.shape(2)};
-    std::vector<double> a(array.data(), array.data() + array.size());
-    trans.insert({data.first, {a, s}});
+    const int tdim = cell::topological_dimension(entity_type);
+    const int entity = find_first_subentity(cell_type, entity_type);
+    std::size_t ndofs = M[tdim].size() == 0 ? 0 : M[tdim][entity].extent(0);
+
+    std::vector<double> transform;
+    transform.reserve(emap_data.size() * ndofs * ndofs);
+    for (auto& [mapfn, J, detJ, K] : emap_data)
+    {
+      auto [t2b, tshape] = compute_transformation(
+          cell_type, x, M, coeffs, cmdspan2_t(J.data(), J.shape(0), J.shape(1)),
+          detJ, cmdspan2_t(K.data(), K.shape(0), K.shape(1)), mapfn, degree,
+          tdim, entity, vs, map_type);
+      transform.insert(transform.end(), t2b.begin(), t2b.end());
+    }
+
+    out.insert({entity_type, {transform, {emap_data.size(), ndofs, ndofs}}});
   }
 
-  return trans;
+  return out;
 }
 //-----------------------------------------------------------------------------

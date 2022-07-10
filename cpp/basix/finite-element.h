@@ -45,7 +45,6 @@ using mdarray2_t
 using mdarray4_t
     = std::experimental::mdarray<double,
                                  std::experimental::dextents<std::size_t, 4>>;
-
 inline std::array<std::vector<cmdspan2_t>, 4>
 to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
 {
@@ -542,10 +541,9 @@ public:
   /// indices are [Jacobian index, K_i, K_j].
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
-  xt::xtensor<double, 3> push_forward(const xt::xtensor<double, 3>& U,
-                                      const xt::xtensor<double, 3>& J,
-                                      const xtl::span<const double>& detJ,
-                                      const xt::xtensor<double, 3>& K) const;
+  std::pair<std::vector<double>, std::array<std::size_t, 3>>
+  push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
+               xtl::span<const double> detJ, impl::cmdspan3_t K) const;
 
   /// Map function values from a physical cell to the reference
   /// @param[in] u The function values on the cell
@@ -554,10 +552,9 @@ public:
   /// @param[in] K The inverse of the Jacobian of the mapping
   /// @return The function values on the reference. The indices are [Jacobian
   /// index, point index, components].
-  xt::xtensor<double, 3> pull_back(const xt::xtensor<double, 3>& u,
-                                   const xt::xtensor<double, 3>& J,
-                                   const xtl::span<const double>& detJ,
-                                   const xt::xtensor<double, 3>& K) const;
+  std::pair<std::vector<double>, std::array<std::size_t, 3>>
+  pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
+            xtl::span<const double> detJ, impl::cmdspan3_t K) const;
 
   /// Return a function that performs the appropriate
   /// push-forward/pull-back for the element type

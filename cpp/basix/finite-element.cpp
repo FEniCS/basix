@@ -1258,13 +1258,19 @@ FiniteElement::points() const
   return _points;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> FiniteElement::push_forward(
-    const xt::xtensor<double, 3>& U, const xt::xtensor<double, 3>& J,
-    const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+FiniteElement::push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
+                            xtl::span<const double> detJ,
+                            impl::cmdspan3_t K) const
 {
   const std::size_t physical_value_size
-      = compute_value_size(_map_type, J.shape(1));
-  xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
+      = compute_value_size(_map_type, J.extent
+      (1));
+
+  std::array<std::size_t, 3> shape
+      = {U.extent(0), U.extent(1), physical_value_size};
+  std::vector<double> ub(shape[0] * shape[1] * shape[2]);
+  mdspan3_t u(ub.data(), shape);
 
   using u_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
   using U_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
@@ -1272,42 +1278,45 @@ xt::xtensor<double, 3> FiniteElement::push_forward(
   using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 
   auto map = this->map_fn<u_t, U_t, J_t, K_t>();
-  for (std::size_t i = 0; i < u.shape(0); ++i)
+  for (std::size_t i = 0; i < u.extent(0); ++i)
   {
-    u_t _u(u.data() + i * u.shape(1) * u.shape(2), u.shape(1), u.shape(2));
-    U_t _U(U.data() + i * U.shape(1) * U.shape(2), U.shape(1), U.shape(2));
-    J_t _J(J.data() + i * J.shape(1) * J.shape(2), J.shape(1), J.shape(2));
-    K_t _K(K.data() + i * K.shape(1) * K.shape(2), K.shape(1), K.shape(2));
+    u_t _u(u.data() + i * u.extent(1) * u.extent(2), u.extent(1), u.extent(2));
+    U_t _U(U.data() + i * U.extent(1) * U.extent(2), U.extent(1), U.extent(2));
+    J_t _J(J.data() + i * J.extent(1) * J.extent(2), J.extent(1), J.extent(2));
+    K_t _K(K.data() + i * K.extent(1) * K.extent(2), K.extent(1), K.extent(2));
     map(_u, _U, _J, detJ[i], _K);
   }
 
-  return u;
+  return {std::move(ub), shape};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> FiniteElement::pull_back(
-    const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
-    const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+FiniteElement::pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
+                         xtl::span<const double> detJ, impl::cmdspan3_t K) const
 {
   const std::size_t reference_value_size = std::accumulate(
       _value_shape.begin(), _value_shape.end(), 1, std::multiplies<int>());
 
-  xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
+  std::array<std::size_t, 3> shape
+      = {u.extent(0), u.extent(1), reference_value_size};
+  std::vector<double> Ub(shape[0] * shape[1] * shape[2]);
+  mdspan3_t U(Ub.data(), shape);
+
   using u_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
   using U_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
   using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
   using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
-
   auto map = this->map_fn<U_t, u_t, K_t, J_t>();
-  for (std::size_t i = 0; i < u.shape(0); ++i)
+  for (std::size_t i = 0; i < u.extent(0); ++i)
   {
-    u_t _u(u.data() + i * u.shape(1) * u.shape(2), u.shape(1), u.shape(2));
-    U_t _U(U.data() + i * U.shape(1) * U.shape(2), U.shape(1), U.shape(2));
-    J_t _J(J.data() + i * J.shape(1) * J.shape(2), J.shape(1), J.shape(2));
-    K_t _K(K.data() + i * K.shape(1) * K.shape(2), K.shape(1), K.shape(2));
+    u_t _u(u.data() + i * u.extent(1) * u.extent(2), u.extent(1), u.extent(2));
+    U_t _U(U.data() + i * U.extent(1) * U.extent(2), U.extent(1), U.extent(2));
+    J_t _J(J.data() + i * J.extent(1) * J.extent(2), J.extent(1), J.extent(2));
+    K_t _K(K.data() + i * K.extent(1) * K.extent(2), K.extent(1), K.extent(2));
     map(_U, _u, _K, 1.0 / detJ[i], _J);
   }
 
-  return U;
+  return {std::move(Ub), shape};
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,

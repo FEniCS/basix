@@ -27,6 +27,7 @@ using namespace basix;
 
 namespace stdex = std::experimental;
 using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
 using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 namespace
@@ -50,13 +51,6 @@ const std::string& cell_type_to_str(cell::type type)
   return it->second;
 }
 
-auto adapt_x(const py::array_t<double, py::array::c_style>& x)
-{
-  std::vector<std::size_t> shape;
-  for (pybind11::ssize_t i = 0; i < x.ndim(); ++i)
-    shape.push_back(x.shape(i));
-  return xt::adapt(x.data(), x.size(), xt::no_ownership(), shape);
-}
 } // namespace
 
 PYBIND11_MODULE(_basixcpp, m)
@@ -240,10 +234,12 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& detJ,
              const py::array_t<double, py::array::c_style>& K)
           {
-            auto u = self.push_forward(
-                adapt_x(U), adapt_x(J),
-                xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
-            return py::array_t<double>(u.shape(), u.data());
+            auto [u, shape] = self.push_forward(
+                cmdspan3_t(U.data(), U.shape(0), U.shape(1), U.shape(2)),
+                cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
+                xtl::span<const double>(detJ.data(), detJ.size()),
+                cmdspan3_t(K.data(), K.shape(0), K.shape(1), K.shape(2)));
+            return py::array_t<double>(shape, u.data());
           },
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
@@ -254,10 +250,12 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& detJ,
              const py::array_t<double, py::array::c_style>& K)
           {
-            auto U = self.pull_back(
-                adapt_x(u), adapt_x(J),
-                xtl::span<const double>(detJ.data(), detJ.size()), adapt_x(K));
-            return py::array_t<double>(U.shape(), U.data());
+            auto [U, shape] = self.pull_back(
+                cmdspan3_t(u.data(), u.shape(0), u.shape(1), u.shape(2)),
+                cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
+                xtl::span<const double>(detJ.data(), detJ.size()),
+                cmdspan3_t(K.data(), K.shape(0), K.shape(1), K.shape(2)));
+            return py::array_t<double>(shape, U.data());
           },
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(

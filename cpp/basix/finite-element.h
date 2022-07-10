@@ -336,13 +336,12 @@ public:
           tensor_factors
       = {});
 
-  /// Overload
+  /// TODO
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape,
-      const xt::xtensor<double, 2>& wcoeffs,
-      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+      const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+      const std::array<std::vector<cmdspan2_t>, 4>& x,
+      const std::array<std::vector<cmdspan4_t>, 4>& M,
       int interpolation_nderivs, maps::type map_type, bool discontinuous,
       int highest_complete_degree, int highest_degree,
       element::lagrange_variant lvariant,
@@ -358,47 +357,7 @@ public:
       const std::array<std::vector<cmdspan4_t>, 4>& M,
       int interpolation_nderivs, maps::type map_type, bool discontinuous,
       int highest_complete_degree, int highest_degree,
-      element::lagrange_variant lvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// Overload
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape,
-      const xt::xtensor<double, 2>& wcoeffs,
-      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-      int interpolation_nderivs, maps::type map_type, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
       element::dpc_variant dvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// TODO
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-      const std::array<std::vector<cmdspan2_t>, 4>& x,
-      const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
-      element::dpc_variant dvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// Overload
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape,
-      const xt::xtensor<double, 2>& wcoeffs,
-      const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-      const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-      int interpolation_nderivs, maps::type map_type, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
       = {});
@@ -1293,11 +1252,18 @@ private:
 /// @return A custom finite element
 FiniteElement create_custom_element(
     cell::type cell_type, const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+    const impl::cmdspan2_t& wcoeffs,
+    const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
+    const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
     int interpolation_nderivs, maps::type map_type, bool discontinuous,
     int highest_complete_degree, int highest_degree);
+// FiniteElement create_custom_element(
+//     cell::type cell_type, const std::vector<std::size_t>& value_shape,
+//     const xt::xtensor<double, 2>& wcoeffs,
+//     const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+//     const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+//     int interpolation_nderivs, maps::type map_type, bool discontinuous,
+//     int highest_complete_degree, int highest_degree);
 
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family

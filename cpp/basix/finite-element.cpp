@@ -179,8 +179,8 @@ constexpr int num_transformations(cell::type cell_type)
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
-                    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-                    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
+                    const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
+                    const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
                     int degree, int nderivs)
 {
   std::size_t num_dofs(0), vs(0);
@@ -188,10 +188,10 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
   {
     for (auto& Me : Md)
     {
-      num_dofs += Me.shape(0);
+      num_dofs += Me.extent(0);
       if (vs == 0)
-        vs = Me.shape(1);
-      else if (vs != Me.shape(1))
+        vs = Me.extent(1);
+      else if (vs != Me.extent(1))
         throw std::runtime_error("Inconsistent value size");
     }
   }
@@ -208,30 +208,29 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
     for (std::size_t e = 0; e < x[d].size(); ++e)
     {
       // Evaluate polynomial basis at x[d]
-      const xt::xtensor<double, 2>& x_e = x[d][e];
+      cmdspan2_t x_e = x[d][e];
       cmdspan3_t P;
       std::vector<double> Pb;
-      if (x_e.shape(0) > 0)
+      if (x_e.extent(0) > 0)
       {
         std::array<std::size_t, 3> shape;
-        std::tie(Pb, shape) = polyset::tabulate(
-            cell_type, degree, nderivs,
-            cmdspan2_t(x_e.data(), x_e.shape(0), x_e.shape(1)));
+        std::tie(Pb, shape)
+            = polyset::tabulate(cell_type, degree, nderivs, x_e);
         P = cmdspan3_t(Pb.data(), shape);
       }
 
       // Me: [dof, vs, point, deriv]
-      const xt::xtensor<double, 4>& Me = M[d][e];
+      cmdspan4_t Me = M[d][e];
 
       // Compute dual matrix contribution
-      for (std::size_t i = 0; i < Me.shape(0); ++i)         // Dof index
-        for (std::size_t j = 0; j < Me.shape(1); ++j)       // Value index
-          for (std::size_t k = 0; k < Me.shape(2); ++k)     // Point
-            for (std::size_t l = 0; l < Me.shape(3); ++l)   // Derivative
+      for (std::size_t i = 0; i < Me.extent(0); ++i)        // Dof index
+        for (std::size_t j = 0; j < Me.extent(1); ++j)      // Value index
+          for (std::size_t k = 0; k < Me.extent(2); ++k)    // Point
+            for (std::size_t l = 0; l < Me.extent(3); ++l)  // Derivative
               for (std::size_t m = 0; m < P.extent(1); ++m) // Polynomial term
                 D(j * pdim + m, dof_index + i) += Me(i, j, k, l) * P(l, m, k);
 
-      dof_index += M[d][e].shape(0);
+      dof_index += M[d][e].extent(0);
     }
   }
 
@@ -504,9 +503,9 @@ element::make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
     cell::type cell_type, const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
+    const impl::cmdspan2_t& wcoeffs,
+    const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
+    const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
     int interpolation_nderivs, maps::type map_type, bool discontinuous,
     int highest_complete_degree, int highest_degree)
 {
@@ -524,12 +523,12 @@ basix::FiniteElement basix::create_custom_element(
   std::size_t ndofs = 0;
   for (std::size_t i = 0; i <= 3; ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
-      ndofs += M[i][j].shape(0);
+      ndofs += M[i][j].extent(0);
 
   // Check that wcoeffs have the correct shape
-  if (wcoeffs.shape(1) != psize * value_size)
+  if (wcoeffs.extent(1) != psize * value_size)
     throw std::runtime_error("wcoeffs has the wrong number of columns");
-  if (wcoeffs.shape(0) != ndofs)
+  if (wcoeffs.extent(0) != ndofs)
     throw std::runtime_error("wcoeffs has the wrong number of rows");
 
   // Check that x has the right shape
@@ -539,10 +538,12 @@ basix::FiniteElement basix::create_custom_element(
         != (i > tdim ? 0
                      : static_cast<std::size_t>(
                          cell::num_sub_entities(cell_type, i))))
+    {
       throw std::runtime_error("x has the wrong number of entities");
+    }
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
-      if (x[i][j].shape(1) != tdim)
+      if (x[i][j].extent(1) != tdim)
         throw std::runtime_error("x has a point with the wrong tdim");
     }
   }
@@ -557,21 +558,26 @@ basix::FiniteElement basix::create_custom_element(
       throw std::runtime_error("M has the wrong number of entities");
     for (std::size_t j = 0; j < M[i].size(); ++j)
     {
-      if (M[i][j].shape(2) != x[i][j].shape(0))
+      if (M[i][j].extent(2) != x[i][j].extent(0))
+      {
         throw std::runtime_error(
             "M has the wrong shape (dimension 2 is wrong)");
-      if (M[i][j].shape(1) != value_size)
+      }
+      if (M[i][j].extent(1) != value_size)
+      {
         throw std::runtime_error(
             "M has the wrong shape (dimension 1 is wrong)");
-      if (M[i][j].shape(3) != deriv_count)
+      }
+      if (M[i][j].extent(3) != deriv_count)
+      {
         throw std::runtime_error(
             "M has the wrong shape (dimension 3 is wrong)");
+      }
     }
   }
 
   auto [dualmatrix, dualshape] = compute_dual_matrix(
-      cell_type, cmdspan2_t(wcoeffs.data(), wcoeffs.shape(0), wcoeffs.shape(1)),
-      M, x, highest_degree, interpolation_nderivs);
+      cell_type, wcoeffs, x, M, highest_degree, interpolation_nderivs);
   if (math::is_singular(cmdspan2_t(dualmatrix.data(), dualshape)))
   {
     throw std::runtime_error(
@@ -584,24 +590,6 @@ basix::FiniteElement basix::create_custom_element(
                               highest_complete_degree, highest_degree);
 }
 
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    int interpolation_nderivs, maps::type map_type, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    element::lagrange_variant lvariant,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, discontinuous,
-                    highest_complete_degree, highest_degree, lvariant,
-                    element::dpc_variant::unset, tensor_factors)
-{
-}
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
@@ -621,24 +609,6 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    int interpolation_nderivs, maps::type map_type, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    element::dpc_variant dvariant,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, discontinuous,
-                    highest_complete_degree, highest_degree,
-                    element::lagrange_variant::unset, dvariant, tensor_factors)
-{
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
     const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
     const std::array<std::vector<cmdspan2_t>, 4>& x,
     const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
@@ -650,24 +620,6 @@ FiniteElement::FiniteElement(
                     interpolation_nderivs, map_type, discontinuous,
                     highest_complete_degree, highest_degree,
                     element::lagrange_variant::unset, dvariant, tensor_factors)
-{
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 4>>, 4>& M,
-    int interpolation_nderivs, maps::type map_type, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, discontinuous,
-                    highest_complete_degree, highest_degree,
-                    element::lagrange_variant::unset,
-                    element::dpc_variant::unset, tensor_factors)
 {
 }
 //-----------------------------------------------------------------------------
@@ -707,8 +659,6 @@ FiniteElement::FiniteElement(
       _highest_complete_degree(highest_complete_degree), _map_type(map_type),
       _x(x), _discontinuous(discontinuous), _tensor_factors(tensor_factors)
 {
-  std::cout << "Create eleemnt" << std::endl;
-
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
   {
@@ -731,8 +681,9 @@ FiniteElement::FiniteElement(
   std::copy(wcoeffs.data(), wcoeffs.data() + wcoeffs.size(),
             wcoeffs_ortho.data());
   orthogonalise(wcoeffs_ortho);
-  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, M, x,
-                                     highest_degree, interpolation_nderivs);
+  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, to_mdspan(x),
+                                     to_mdspan(M), highest_degree,
+                                     interpolation_nderivs);
 
   if (family == element::family::custom)
   {
@@ -1084,8 +1035,6 @@ FiniteElement::FiniteElement(
       }
     }
   }
-
-  std::cout << "End create eleemnt" << std::endl;
 }
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(

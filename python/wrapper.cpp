@@ -24,7 +24,10 @@
 
 namespace py = pybind11;
 using namespace basix;
+
 namespace stdex = std::experimental;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 namespace
 {
@@ -475,27 +478,29 @@ Interface to the Basix C++ library.
         if (M.size() != 4)
           throw std::runtime_error("M has the wrong size");
 
-        xt::xtensor<double, 2> _wco = adapt_x(wcoeffs);
-
-        std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+        std::array<std::vector<cmdspan2_t>, 4> _x;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
           {
             if (x[i][j].ndim() != 2)
               throw std::runtime_error("x has the wrong number of dimensions");
-            _x[i].push_back(adapt_x(x[i][j]));
+            _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0),
+                               x[i][j].shape(1));
           }
         }
 
-        std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+        std::array<std::vector<cmdspan4_t>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
           {
             if (M[i][j].ndim() != 4)
               throw std::runtime_error("M has the wrong number of dimensions");
-            _M[i].push_back(adapt_x(M[i][j]));
+            // _M[i].push_back(adapt_x(M[i][j]));
+            _M[i].emplace_back(M[i][j].data(), M[i][j].shape(0),
+                               M[i][j].shape(1), M[i][j].shape(2),
+                               M[i][j].shape(3));
           }
         }
 
@@ -504,8 +509,10 @@ Interface to the Basix C++ library.
           _vs[i] = static_cast<std::size_t>(value_shape[i]);
 
         return basix::create_custom_element(
-            cell_type, _vs, _wco, _x, _M, interpolation_nderivs, map_type,
-            discontinuous, highest_complete_degree, highest_degree);
+            cell_type, _vs,
+            cmdspan2_t(wcoeffs.data(), wcoeffs.shape(0), wcoeffs.shape(1)), _x,
+            _M, interpolation_nderivs, map_type, discontinuous,
+            highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());
 

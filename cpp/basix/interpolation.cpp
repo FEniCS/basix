@@ -24,11 +24,11 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
         "Cannot interpolate between elements defined on different cell types.");
   }
 
-  const auto [points, shape] = element_to.points_new();
+  const auto [points, shape] = element_to.points();
   const auto [tab_b, tab_shape]
       = element_from.tabulate(0, cmdspan2_t(points.data(), shape));
   cmdspan4_t tab(tab_b.data(), tab_shape);
-  const auto [imb, imshape] = element_to.interpolation_matrix_new();
+  const auto [imb, imshape] = element_to.interpolation_matrix();
   cmdspan2_t i_m(imb.data(), imshape);
 
   const std::size_t dim_to = element_to.dim();

@@ -357,24 +357,24 @@ Interface to the Basix C++ library.
       .def_property_readonly("points",
                              [](const FiniteElement& self)
                              {
-                               const xt::xtensor<double, 2>& x = self.points();
-                               return py::array_t<double>(x.shape(), x.data(),
+                               auto& [x, shape] = self.points();
+                               return py::array_t<double>(shape, x.data(),
                                                           py::cast(self));
                              })
-      .def_property_readonly(
-          "interpolation_matrix",
-          [](const FiniteElement& self)
-          {
-            const xt::xtensor<double, 2>& P = self.interpolation_matrix();
-            return py::array_t<double>(P.shape(), P.data(), py::cast(self));
-          })
-      .def_property_readonly(
-          "dual_matrix",
-          [](const FiniteElement& self)
-          {
-            const xt::xtensor<double, 2>& P = self.dual_matrix();
-            return py::array_t<double>(P.shape(), P.data(), py::cast(self));
-          })
+      .def_property_readonly("interpolation_matrix",
+                             [](const FiniteElement& self)
+                             {
+                               auto& [P, shape] = self.interpolation_matrix();
+                               return py::array_t<double>(shape, P.data(),
+                                                          py::cast(self));
+                             })
+      .def_property_readonly("dual_matrix",
+                             [](const FiniteElement& self)
+                             {
+                               auto& [D, shape] = self.dual_matrix();
+                               return py::array_t<double>(shape, D.data(),
+                                                          py::cast(self));
+                             })
       .def_property_readonly(
           "coefficient_matrix",
           [](const FiniteElement& self)

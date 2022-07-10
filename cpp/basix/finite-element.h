@@ -936,13 +936,8 @@ public:
   /// reference element where a function need to be evaluated in order
   /// to interpolate it in the finite element space. @return Array of
   /// coordinate with shape `(num_points, tdim)`
-  const xt::xtensor<double, 2>& points() const;
-
-  /// Return the interpolation points, ie the coordinates on the
-  /// reference element where a function need to be evaluated in order
-  /// to interpolate it in the finite element space.
-  /// @return Array of coordinate with shape `(num_points, tdim)`
-  std::pair<std::vector<double>, std::array<std::size_t, 2>> points_new() const;
+  const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+  points() const;
 
   /// @brief Return a matrix of weights interpolation,
   ///
@@ -996,69 +991,16 @@ public:
   ///
   /// @return The interpolation matrix. Shape is (ndofs, number of interpolation
   /// points)
-  const xt::xtensor<double, 2>& interpolation_matrix() const;
-
-  /// @brief Return a matrix of weights interpolation,
-  ///
-  /// To interpolate a function in this finite element, the functions
-  /// should be evaluated at each point given by
-  /// FiniteElement::points(). These function values should then be
-  /// multiplied by the weight matrix to give the coefficients of the
-  /// interpolated function.
-  ///
-  /// The shape of the returned matrix will be `(dim, num_points *
-  /// value_size)`, where `dim` is the number of DOFs in the finite
-  /// element, `num_points` is the number of points returned by
-  /// `points()`, and `value_size` is the value size of the finite
-  /// element.
-  ///
-  /// For example, to interpolate into a Lagrange space, the following
-  /// should be done:
-  /// \code{.pseudo}
-  /// i_m = element.interpolation_matrix()
-  /// pts = element.points()
-  /// values = vector(pts.shape(0))
-  /// FOR i, p IN ENUMERATE(pts):
-  ///     values[i] = f.evaluate_at(p)
-  /// coefficients = i_m * values
-  /// \endcode
-  ///
-  /// To interpolate into a Raviart-Thomas space, the following should
-  /// be done:
-  /// \code{.pseudo}
-  /// i_m = element.interpolation_matrix()
-  /// pts = element.points()
-  /// vs = prod(element.value_shape())
-  /// values = VECTOR(pts.shape(0) * vs)
-  /// FOR i, p IN ENUMERATE(pts):
-  ///     values[i::pts.shape(0)] = f.evaluate_at(p)
-  /// coefficients = i_m * values
-  /// \endcode
-  ///
-  /// To interpolate into a Lagrange space with a block size, the
-  /// following should be done:
-  /// \code{.pseudo}
-  /// i_m = element.interpolation_matrix()
-  /// pts = element.points()
-  /// coefficients = VECTOR(element.dim() * block_size)
-  /// FOR b IN RANGE(block_size):
-  ///     values = vector(pts.shape(0))
-  ///     FOR i, p IN ENUMERATE(pts):
-  ///         values[i] = f.evaluate_at(p)[b]
-  ///     coefficients[::block_size] = i_m * values
-  /// \endcode
-  ///
-  /// @return The interpolation matrix. Shape is (ndofs, number of interpolation
-  /// points)
-  std::pair<std::vector<double>, std::array<std::size_t, 2>>
-  interpolation_matrix_new() const;
+  const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+  interpolation_matrix() const;
 
   /// Get the dual matrix.
   ///
   /// This is the matrix @f$BD^{T}@f$, as described in the documentation
   /// of the `FiniteElement()` constructor.
   /// @return The dual matrix. Shape is (ndofs, ndofs)
-  const xt::xtensor<double, 2>& dual_matrix() const;
+  const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+  dual_matrix() const;
 
   /// Get the coefficients that define the polynomial set in terms of the
   /// orthonormal polynomials.
@@ -1244,14 +1186,15 @@ private:
   // "tabulate_dof_coordinates" Most useful for Lagrange. This may change or go
   // away. For non-Lagrange elements, these points will be used in combination
   // with _interpolation_matrix to perform interpolation
-  xt::xtensor<double, 2> _points;
+  std::pair<std::vector<double>, std::array<std::size_t, 2>> _points;
 
   // Interpolation points on the cell. The shape is (entity_dim, num
   // entities of given dimension, num_points, tdim)
   std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
 
   /// The interpolation weights and points
-  xt::xtensor<double, 2> _matM;
+  // xt::xtensor<double, 2> _matM;
+  std::pair<std::vector<double>, std::array<std::size_t, 2>> _matM;
 
   // Indicates whether or not the DOF transformations are all
   // permutations
@@ -1304,7 +1247,7 @@ private:
   bool _discontinuous;
 
   // The dual matrix
-  xt::xtensor<double, 2> _dual_matrix;
+  std::pair<std::vector<double>, std::array<std::size_t, 2>> _dual_matrix;
 
   // Tensor product representation
   // Entries of tuple are (list of elements on an interval, permutation

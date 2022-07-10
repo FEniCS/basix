@@ -29,6 +29,7 @@
 using namespace basix;
 namespace stdex = std::experimental;
 using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using mdspan3_t = stdex::mdspan<double, stdex::dextents<std::size_t, 3>>;
 using mdspan4_t = stdex::mdspan<double, stdex::dextents<std::size_t, 4>>;
 using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
@@ -708,7 +709,6 @@ FiniteElement::FiniteElement(
       num_points += x_e.shape(0);
 
   std::size_t counter = 0;
-  // _points.resize({num_points, _cell_tdim});
   _points.first.resize(num_points * _cell_tdim);
   _points.second = {num_points, _cell_tdim};
   mdspan2_t pview(_points.first.data(), _points.second);
@@ -720,7 +720,6 @@ FiniteElement::FiniteElement(
       {
         for (std::size_t k = 0; k < x_e.shape(1); ++k)
           pview(counter, k) = x_e(p, k);
-        // xt::row(_points, counter++) = xt::row(x_e, p);
         ++counter;
       }
     }
@@ -760,15 +759,10 @@ FiniteElement::FiniteElement(
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);
 
-  // _matM = xt::zeros<double>({num_dofs, value_size * num_points1 *
-  // nderivs});
   _matM = {std::vector<double>(num_dofs * value_size * num_points1 * nderivs),
            {num_dofs, value_size * num_points1 * nderivs}};
   mdspan4_t Mview(_matM.first.data(), num_dofs, value_size, num_points1,
                   nderivs);
-  // auto Mview
-  //     = xt::reshape_view(_matM, {num_dofs, value_size, num_points1,
-  //     nderivs});
 
   // Loop over each topological dimensions
   std::size_t dof_offset(0), point_offset(0);
@@ -777,17 +771,12 @@ FiniteElement::FiniteElement(
     // Loop of entities of dimension d
     for (std::size_t e = 0; e < M[d].size(); ++e)
     {
-      // auto dof_range = xt::range(dof_offset, dof_offset +
-      // M[d][e].shape(0)); auto point_range
-      //     = xt::range(point_offset, point_offset + M[d][e].shape(2));
       for (std::size_t k0 = 0; k0 < M[d][e].shape(0); ++k0)
         for (std::size_t k1 = 0; k1 < Mview.extent(1); ++k1)
           for (std::size_t k2 = 0; k2 < M[d][e].shape(2); ++k2)
             for (std::size_t k3 = 0; k3 < Mview.extent(3); ++k3)
               Mview(k0 + dof_offset, k1, k2 + point_offset, k3)
                   = M[d][e](k0, k1, k2, k3);
-      // xt::view(Mview, dof_range, xt::all(), point_range, xt::all())
-      //     .assign(M[d][e]);
 
       dof_offset += M[d][e].shape(0);
       point_offset += M[d][e].shape(2);
@@ -1108,69 +1097,64 @@ std::pair<std::vector<double>, std::array<std::size_t, 4>>
 FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
 {
   std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
-  xt::xtensor<double, 4> data(shape);
-  tabulate(nd,
-           xt::adapt(x.data(), x.size(), xt::no_ownership(),
-                     std::vector<std::size_t>{x.extent(0), x.extent(1)}),
-           data);
-  return {std::vector<double>(data.data(), data.data() + data.size()), shape};
+  std::vector<double> data(shape[0] * shape[1] * shape[2] * shape[3]);
+  tabulate(nd, x, mdspan4_t(data.data(), shape));
+  return {std::move(data), shape};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 4>
-FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
-                        std::array<std::size_t, 2> shape) const
-{
-  std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
-  xt::xtensor<double, 4> data(phishape);
-  tabulate(nd,
-           xt::adapt(x.data(), x.size(), xt::no_ownership(),
-                     std::vector<std::size_t>{shape[0], shape[1]}),
-           data);
-  return data;
-  // return tabulate(nd, cmdspan2_t(x.data(), shape));
-}
+// xt::xtensor<double, 4>
+// FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
+//                         std::array<std::size_t, 2> shape) const
+// {
+//   std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
+//   xt::xtensor<double, 4> data(phishape);
+//   tabulate(nd,
+//            xt::adapt(x.data(), x.size(), xt::no_ownership(),
+//                      std::vector<std::size_t>{shape[0], shape[1]}),
+//            data);
+//   return data;
+//   // return tabulate(nd, cmdspan2_t(x.data(), shape));
+// }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, const xt::xtensor<double, 2>& x,
-                             xt::xtensor<double, 4>& basis_data) const
+void FiniteElement::tabulate(int nd, cmdspan2_t x, mdspan4_t basis_data) const
 {
-  if (x.shape(1) != _cell_tdim)
+  if (x.extent(1) != _cell_tdim)
   {
-    throw std::runtime_error("Point dim (" + std::to_string(x.shape(1))
+    throw std::runtime_error("Point dim (" + std::to_string(x.extent(1))
                              + ") does not match element dim ("
                              + std::to_string(_cell_tdim) + ").");
   }
 
   const std::size_t psize = polyset::dim(_cell_type, _highest_degree);
-  xt::xtensor<double, 3> basis(
-      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)),
-       static_cast<std::size_t>(psize), x.shape(0)});
-
-  stdex::mdspan<double, stdex::dextents<std::size_t, 3>> _basis(
-      basis.data(), basis.shape(0), basis.shape(1), basis.shape(2));
-  stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-      x.data(), x.shape(0), x.shape(1));
-  polyset::tabulate(_basis, _cell_type, _highest_degree, nd, _x);
+  const std::array<std::size_t, 3> bsize
+      = {(std::size_t)polyset::nderivs(_cell_type, nd), psize, x.extent(0)};
+  std::vector<double> basis_b(bsize[0] * bsize[1] * bsize[2]);
+  mdspan3_t basis(basis_b.data(), bsize);
+  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies<int>());
-  xt::xtensor<double, 2> B;
+
   mdarray2_t C(_coeffs.second[0], psize);
   cmdspan2_t coeffs_view(_coeffs.first.data(), _coeffs.second);
-  for (std::size_t p = 0; p < basis.shape(0); ++p)
+  for (std::size_t p = 0; p < basis.extent(0); ++p)
   {
     for (int j = 0; j < vs; ++j)
     {
-      auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
-      B = xt::view(basis, p, xt::all(), xt::all());
+      cmdspan2_t B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1],
+                   bsize[2]);
+
       for (std::size_t k0 = 0; k0 < coeffs_view.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < psize; ++k1)
           C(k0, k1) = coeffs_view(k0, k1 + psize * j);
 
-      xt::xtensor<double, 2> result
-          = xt::zeros<double>({C.extent(0), B.shape(1)});
-      math::dot(C, cmdspan2_t(B.data(), B.shape(0), B.shape(1)),
-                mdspan2_t(result.data(), result.shape(0), result.shape(1)));
+      mdarray2_t result(C.extent(0), B.extent(1));
+      std::fill(result.data(), result.data() + result.size(), 0);
+      math::dot(C, cmdspan2_t(B.data(), B.extent(0), B.extent(1)),
+                mdspan2_t(result.data(), result.extents()));
 
-      basis_view.assign(xt::transpose(result));
+      for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+        for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+          basis_data(p, k0, k1, j) = result(k1, k0);
     }
   }
 }

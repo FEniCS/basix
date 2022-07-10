@@ -454,8 +454,8 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  xt::xtensor<double, 4> tabulate(int nd, const xtl::span<const double>& x,
-                                  std::array<std::size_t, 2> shape) const;
+  // xt::xtensor<double, 4> tabulate(int nd, const xtl::span<const double>& x,
+  //                                 std::array<std::size_t, 2> shape) const;
 
   /// Compute basis values and derivatives at set of points.
   ///
@@ -482,8 +482,7 @@ public:
   ///
   /// @todo Remove all internal dynamic memory allocation, pass scratch
   /// space as required
-  void tabulate(int nd, const xt::xtensor<double, 2>& x,
-                xt::xtensor<double, 4>& basis) const;
+  void tabulate(int nd, impl::cmdspan2_t x, impl::mdspan4_t basis) const;
 
   /// Get the element cell type
   /// @return The cell type

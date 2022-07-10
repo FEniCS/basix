@@ -4,12 +4,10 @@
 
 #include "dof-transformations.h"
 #include "math.h"
+#include "mdspan.hpp"
 #include "polyset.h"
 #include <algorithm>
 #include <array>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xtensor.hpp>
-#include <xtensor/xview.hpp>
 #include <xtl/xspan.hpp>
 
 using namespace basix;
@@ -25,7 +23,7 @@ using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
 
 using map_data_t
     = std::tuple<std::function<std::array<double, 3>(xtl::span<const double>)>,
-                 xt::xtensor<double, 2>, double, xt::xtensor<double, 2>>;
+                 mdarray2_t, double, mdarray2_t>;
 typedef std::map<cell::type, std::vector<map_data_t>> mapinfo_t;
 
 namespace
@@ -35,12 +33,13 @@ int find_first_subentity(cell::type cell_type, cell::type entity_type)
 {
   const int edim = cell::topological_dimension(entity_type);
   std::vector<cell::type> entities = cell::subentity_types(cell_type)[edim];
-  for (std::size_t i = 0; i < entities.size(); ++i)
+  if (auto it = std::find(entities.begin(), entities.end(), entity_type);
+      it != entities.end())
   {
-    if (entities[i] == entity_type)
-      return i;
+    return std::distance(entities.begin(), it);
   }
-  throw std::runtime_error("Entity not found");
+  else
+    throw std::runtime_error("Entity not found");
 }
 //-----------------------------------------------------------------------------
 void pull_back(maps::type map_type, mdspan2_t u, cmdspan2_t U, cmdspan2_t J,
@@ -86,48 +85,39 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   {
     mapinfo_t mapinfo;
     auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-
     auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
       return {pt[1], pt[0], 0.0};
     };
-    const xt::xtensor<double, 2> J = {{0., 1.}, {1., 0.}};
+    mdarray2_t J({0., 1., 1., 0.}, 2, 2);
     const double detJ = -1.;
-    const xt::xtensor<double, 2> K = {{0., 1.}, {1., 0.}};
+    mdarray2_t K({0., 1., 1., 0.}, 2, 2);
     data.push_back(std::tuple(map, J, detJ, K));
-
     return mapinfo;
   }
   case cell::type::quadrilateral:
   {
     mapinfo_t mapinfo;
     auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-
     auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
       return {1 - pt[0], pt[1], 0};
     };
-    const xt::xtensor<double, 2> J = {{-1., 0.}, {0., 1.}};
-    const double detJ = -1.;
-    const xt::xtensor<double, 2> K = {{-1., 0.}, {0., 1.}};
+    mdarray2_t J({-1., 0., 0., 1.}, 2, 2);
+    double detJ = -1.;
+    mdarray2_t K({-1., 0., 0., 1.}, 2, 2);
     data.push_back(std::tuple(map, J, detJ, K));
-
     return mapinfo;
   }
   case cell::type::tetrahedron:
   {
     mapinfo_t mapinfo;
-    // mapinfo[cell::type::interval] = {};
-    mapinfo[cell::type::triangle] = {};
     {
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
-
       auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
         return {pt[0], pt[2], pt[1]};
       };
-      const xt::xtensor<double, 2> J
-          = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
-      const double detJ = -1.;
-      const xt::xtensor<double, 2> K
-          = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
+      mdarray2_t J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
+      double detJ = -1.;
+      mdarray2_t K({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
       data.push_back(std::tuple(map, J, detJ, K));
     }
 
@@ -137,18 +127,18 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {pt[2], pt[0], pt[1]};
         };
-        xt::xtensor<double, 2> J = {{0., 0., 1.}, {1., 0., 0.}, {0., 1., 0.}};
+        mdarray2_t J({0., 0., 1., 1., 0., 0., 0., 1., 0.}, 3, 3);
         double detJ = 1.0;
-        xt::xtensor<double, 2> K = {{0., 1., 0.}, {0., 0., 1.}, {1., 0., 0.}};
+        mdarray2_t K({0., 1., 0., 0., 0., 1., 1., 0., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {pt[0], pt[2], pt[1]};
         };
-        xt::xtensor<double, 2> J = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
+        mdarray2_t J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
         double detJ = -1.0;
-        xt::xtensor<double, 2> K = {{1., 0., 0.}, {0., 0., 1.}, {0., 1., 0.}};
+        mdarray2_t K({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -163,9 +153,9 @@ mapinfo_t get_mapinfo(cell::type cell_type)
       auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
-      xt::xtensor<double, 2> J = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      mdarray2_t J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       double detJ = -1.9;
-      xt::xtensor<double, 2> K = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      mdarray2_t K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       data.push_back(std::tuple(map, J, detJ, K));
     }
     {
@@ -174,18 +164,18 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {1 - pt[1], pt[0], pt[2]};
         };
-        xt::xtensor<double, 2> J = {{0., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = 1.0;
-        xt::xtensor<double, 2> K = {{0., 1., 0.}, {-1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t K({0., 1., 0., -1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {pt[1], pt[0], pt[2]};
         };
-        xt::xtensor<double, 2> J = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = -1.0;
-        xt::xtensor<double, 2> K = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -194,15 +184,14 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::prism:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::quadrilateral] = {};
     {
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
       auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
-      xt::xtensor<double, 2> J = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      mdarray2_t J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       double detJ = -1.0;
-      xt::xtensor<double, 2> K = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      mdarray2_t K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       data.push_back(std::tuple(map, J, detJ, K));
     }
     {
@@ -211,18 +200,18 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {1 - pt[1] - pt[0], pt[0], pt[2]};
         };
-        xt::xtensor<double, 2> J = {{-1., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t J({-1., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = 1.0;
-        xt::xtensor<double, 2> K = {{0., 1., 0.}, {-1., -1., 0.}, {0., 0., 1.}};
+        mdarray2_t K({0., 1., 0., -1., -1., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {pt[1], pt[0], pt[2]};
         };
-        xt::xtensor<double, 2> J = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = -1.;
-        xt::xtensor<double, 2> K = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -232,18 +221,18 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {1 - pt[2], pt[1], pt[0]};
         };
-        xt::xtensor<double, 2> J = {{0., 0., -1.}, {0., 1., 0.}, {1., 0., 0.}};
+        mdarray2_t J({0., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         double detJ = 1.0;
-        xt::xtensor<double, 2> K = {{0., 0., 1.}, {0., 1., 0.}, {-1., 0., 0.}};
+        mdarray2_t K({0., 0., 1., 0., 1., 0., -1., 0., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       { // scope
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {pt[2], pt[1], pt[0]};
         };
-        xt::xtensor<double, 2> J = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+        mdarray2_t J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         double detJ = -1.;
-        xt::xtensor<double, 2> K = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+        mdarray2_t K({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -253,16 +242,14 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   case cell::type::pyramid:
   {
     mapinfo_t mapinfo;
-    mapinfo[cell::type::triangle] = {};
-    mapinfo[cell::type::quadrilateral] = {};
     {
       auto& data = mapinfo.try_emplace(cell::type::interval).first->second;
       auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
-      xt::xtensor<double, 2> J = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      mdarray2_t J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       double detJ = -1.;
-      xt::xtensor<double, 2> K = {{-1., 0., 0.}, {0., 1., 0.}, {0., 0., 1.}};
+      mdarray2_t K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       data.push_back(std::tuple(map, J, detJ, K));
     }
 
@@ -272,18 +259,18 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {1 - pt[1], pt[0], pt[2]};
         };
-        xt::xtensor<double, 2> J = {{0., -1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = 1.;
-        xt::xtensor<double, 2> K = {{0., 1., 0.}, {-1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t K({0., 1., 0., -1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {pt[1], pt[0], pt[2]};
         };
-        xt::xtensor<double, 2> J = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = -1.;
-        xt::xtensor<double, 2> K = {{0., 1., 0.}, {1., 0., 0.}, {0., 0., 1.}};
+        mdarray2_t K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -294,18 +281,18 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {1 - pt[2] - pt[0], pt[1], pt[0]};
         };
-        xt::xtensor<double, 2> J = {{-1., 0., -1.}, {0., 1., 0.}, {1., 0., 0.}};
+        mdarray2_t J({-1., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         double detJ = 1.;
-        xt::xtensor<double, 2> K = {{0., 0., 1.}, {0., 1., 0.}, {-1., 0., -1.}};
+        mdarray2_t K({0., 0., 1., 0., 1., 0., -1., 0., -1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](xtl::span<const double> pt) -> std::array<double, 3> {
           return {pt[2], pt[1], pt[0]};
         };
-        xt::xtensor<double, 2> J = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+        mdarray2_t J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         double detJ = -1.;
-        xt::xtensor<double, 2> K = {{0., 0., 1.}, {0., 1., 0.}, {1., 0., 0.}};
+        mdarray2_t K({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -314,14 +301,14 @@ mapinfo_t get_mapinfo(cell::type cell_type)
   }
   default:
     throw std::runtime_error("Unsupported cell type");
-  } // namespace
+  }
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 compute_transformation(
     cell::type cell_type, const std::array<std::vector<cmdspan2_t>, 4>& x,
     const std::array<std::vector<cmdspan4_t>, 4>& M, cmdspan2_t coeffs,
-    cmdspan2_t J, double detJ, cmdspan2_t K,
+    const mdarray2_t& J, double detJ, const mdarray2_t& K,
     const std::function<std::array<double, 3>(xtl::span<const double>)>
         map_point,
     int degree, int tdim, const int entity, std::size_t vs,
@@ -394,7 +381,8 @@ compute_transformation(
                                * tabulated_data.extent(2),
                      tabulated_data.extent(1), tabulated_data.extent(2));
 
-      pull_back(map_type, temp_data, tab, J, detJ, K);
+      pull_back(map_type, temp_data, tab, cmdspan2_t(J.data(), J.extents()),
+                detJ, cmdspan2_t(K.data(), K.extents()));
 
       for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < temp_data.extent(1); ++k1)
@@ -450,10 +438,9 @@ doftransforms::compute_entity_transformations(
     transform.reserve(emap_data.size() * ndofs * ndofs);
     for (auto& [mapfn, J, detJ, K] : emap_data)
     {
-      auto [t2b, tshape] = compute_transformation(
-          cell_type, x, M, coeffs, cmdspan2_t(J.data(), J.shape(0), J.shape(1)),
-          detJ, cmdspan2_t(K.data(), K.shape(0), K.shape(1)), mapfn, degree,
-          tdim, entity, vs, map_type);
+      auto [t2b, tshape]
+          = compute_transformation(cell_type, x, M, coeffs, J, detJ, K, mapfn,
+                                   degree, tdim, entity, vs, map_type);
       transform.insert(transform.end(), t2b.begin(), t2b.end());
     }
 

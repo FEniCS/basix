@@ -9,7 +9,6 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor/xadapt.hpp>
 
 using namespace basix;
 namespace stdex = std::experimental;

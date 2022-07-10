@@ -7,7 +7,6 @@
 #include "finite-element.h"
 #include "math.h"
 #include "quadrature.h"
-#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 

@@ -21,7 +21,6 @@
 #include <numeric>
 #include <xtensor/xadapt.hpp>
 #include <xtensor/xbuilder.hpp>
-#include <xtensor/xview.hpp>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
@@ -837,22 +836,34 @@ FiniteElement::FiniteElement(
   _dof_transformations_are_identity = true;
   for (const auto& et : _entity_transformations)
   {
+    auto& trans = et.second;
+
     for (std::size_t i = 0;
-         _dof_transformations_are_permutations and i < et.second.shape(0); ++i)
+         _dof_transformations_are_permutations and i < trans.shape(0); ++i)
     {
       for (std::size_t row = 0; row < et.second.shape(1); ++row)
       {
-        double rmin = xt::amin(xt::view(et.second, i, row, xt::all()))(0);
-        double rmax = xt::amax(xt::view(et.second, i, row, xt::all()))(0);
-        double rtot = xt::sum(xt::view(et.second, i, row, xt::all()))(0);
-        if ((et.second.shape(2) != 1 and !xt::allclose(rmin, 0))
-            or !xt::allclose(rmax, 1) or !xt::allclose(rtot, 1))
+        double rmin(0), rmax(0), rtot(0);
+        for (std::size_t k = 0; k < trans.shape(2); ++k)
+        {
+          double r = trans(i, row, k);
+          rmin = std::min(r, rmin);
+          rmax = std::max(r, rmax);
+          rtot += r;
+        }
+
+        if ((trans.shape(2) != 1 and std::abs(rmin) > 1.0e-8)
+            or std::abs(rmax - 1.0) > 1.0e-8 or std::abs(rtot - 1.0) > 1.0e-8)
+        // if ((trans.shape(2) != 1 and !xt::allclose(rmin, 0))
+        //     or !xt::allclose(rmax, 1) or !xt::allclose(rtot, 1))
         {
           _dof_transformations_are_permutations = false;
           _dof_transformations_are_identity = false;
           break;
         }
-        if (!xt::allclose(et.second(i, row, row), 1))
+
+        if (std::abs(trans(i, row, row) - 1) > 1.0e-8)
+          // if (!xt::allclose(trans(i, row, row), 1))
           _dof_transformations_are_identity = false;
       }
     }
@@ -1102,19 +1113,17 @@ FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
   return {std::move(data), shape};
 }
 //-----------------------------------------------------------------------------
-// xt::xtensor<double, 4>
-// FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
-//                         std::array<std::size_t, 2> shape) const
-// {
-//   std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
-//   xt::xtensor<double, 4> data(phishape);
-//   tabulate(nd,
-//            xt::adapt(x.data(), x.size(), xt::no_ownership(),
-//                      std::vector<std::size_t>{shape[0], shape[1]}),
-//            data);
-//   return data;
-//   // return tabulate(nd, cmdspan2_t(x.data(), shape));
-// }
+std::pair<std::vector<double>, std::array<std::size_t, 4>>
+FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
+                        std::array<std::size_t, 2> shape) const
+{
+  std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
+  std::vector<double> datab(phishape[0] * phishape[1] * phishape[2]
+                            * phishape[3]);
+  tabulate(nd, cmdspan2_t(x.data(), shape[0], shape[1]),
+           mdspan4_t(datab.data(), phishape));
+  return {std::move(datab), phishape};
+}
 //-----------------------------------------------------------------------------
 void FiniteElement::tabulate(int nd, cmdspan2_t x, mdspan4_t basis_data) const
 {
@@ -1227,28 +1236,32 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
   const std::size_t nt = num_transformations(cell_type());
   const std::size_t ndofs = this->dim();
 
-  xt::xtensor<double, 3> bt({nt, ndofs, ndofs});
+  xt::xtensor<double, 3> bt = xt::zeros<double>({nt, ndofs, ndofs});
   for (std::size_t i = 0; i < nt; ++i)
-    xt::view(bt, i, xt::all(), xt::all()) = xt::eye<double>(ndofs);
+    for (std::size_t j = 0; j < ndofs; ++j)
+      bt(i, j, j) = 1.0;
 
   std::size_t dof_start = 0;
-  int transform_n = 0;
   if (_cell_tdim > 0)
   {
     dof_start
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
   }
 
+  int transform_n = 0;
   if (_cell_tdim > 1)
   {
     // Base transformations for edges
 
-    for (int ndofs : _num_edofs[1])
+    for (std::size_t ndofs : _num_edofs[1])
     {
-      xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
-               xt::range(dof_start, dof_start + ndofs))
-          = xt::view(_entity_transformations.at(cell::type::interval), 0,
-                     xt::all(), xt::all());
+      auto& tmp = _entity_transformations.at(cell::type::interval);
+
+      for (std::size_t i = 0; i < ndofs; ++i)
+        for (std::size_t j = 0; j < ndofs; ++j)
+          bt(transform_n, i + dof_start, j + dof_start) = tmp(0, i, j);
+
+      ++transform_n;
       dof_start += ndofs;
     }
 
@@ -1256,19 +1269,19 @@ xt::xtensor<double, 3> FiniteElement::base_transformations() const
     {
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
-        const int ndofs = _num_edofs[2][f];
+        const std::size_t ndofs = _num_edofs[2][f];
         if (ndofs > 0)
         {
-          xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
-                   xt::range(dof_start, dof_start + ndofs))
-              = xt::view(
-                  _entity_transformations.at(_cell_subentity_types[2][f]), 0,
-                  xt::all(), xt::all());
-          xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
-                   xt::range(dof_start, dof_start + ndofs))
-              = xt::view(
-                  _entity_transformations.at(_cell_subentity_types[2][f]), 1,
-                  xt::all(), xt::all());
+          auto& tmp = _entity_transformations.at(_cell_subentity_types[2][f]);
+          for (std::size_t i = 0; i < ndofs; ++i)
+            for (std::size_t j = 0; j < ndofs; ++j)
+              bt(transform_n, i + dof_start, j + dof_start) = tmp(0, i, j);
+          ++transform_n;
+
+          for (std::size_t i = 0; i < ndofs; ++i)
+            for (std::size_t j = 0; j < ndofs; ++j)
+              bt(transform_n, i + dof_start, j + dof_start) = tmp(1, i, j);
+          ++transform_n;
 
           dof_start += ndofs;
         }

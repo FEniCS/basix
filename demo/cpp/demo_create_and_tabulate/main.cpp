@@ -38,12 +38,10 @@ int main(int argc, char* argv[])
   std::vector<double> points
       = {0.0, 0.0, 0.1, 0.1, 0.2, 0.3, 0.3, 0.6, 0.4, 1.0};
 
-  xt::xtensor<double, 4> tab
-      = lagrange.tabulate(0, points, {points.size() / 2, 2});
+  auto [tab_data, shape] = lagrange.tabulate(0, points, {points.size() / 2, 2});
 
-  std::cout << "\nTabulate data: \n"
-            << xt::view(tab, 0, xt::all(), xt::all(), 0);
-  std::cout << "\nTabulate data shape: " << xt::adapt(tab.shape());
+  std::cout << "\nTabulate data: \n" << xt::adapt(tab_data, shape);
+  std::cout << "\nTabulate data shape: " << xt::adapt(shape);
 
   return 0;
 }

@@ -454,8 +454,9 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  // xt::xtensor<double, 4> tabulate(int nd, const xtl::span<const double>& x,
-  //                                 std::array<std::size_t, 2> shape) const;
+  std::pair<std::vector<double>, std::array<std::size_t, 4>>
+  tabulate(int nd, const xtl::span<const double>& x,
+           std::array<std::size_t, 2> shape) const;
 
   /// Compute basis values and derivatives at set of points.
   ///

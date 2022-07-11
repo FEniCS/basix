@@ -664,20 +664,6 @@ public:
     }
   }
 
-  /// Get the number of dofs on each topological entity: (vertices,
-  /// edges, faces, cell) in that order. For example, Lagrange degree 2
-  /// on a triangle has vertices: [1, 1, 1], edges: [1, 1, 1], cell: [0]
-  /// The sum of the entity dofs must match the total number of dofs
-  /// reported by FiniteElement::dim,
-  /// @code{.cpp}
-  /// const std::vector<std::vector<int>>& dofs = e.entity_dofs();
-  /// int num_dofs0 = dofs[1][3]; // Number of dofs associated with edge 3
-  /// int num_dofs1 = dofs[2][0]; // Number of dofs associated with face 0
-  /// @endcode
-  /// @return Number of dofs associated with an entity of a given
-  /// topological dimension. The shape is (tdim + 1, num_entities).
-  const std::vector<std::vector<int>>& num_entity_dofs() const;
-
   /// Get the dofs on each topological entity: (vertices,
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
   /// on a triangle has vertices: [[0], [1], [2]], edges: [[3], [4], [5]],

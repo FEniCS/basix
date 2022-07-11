@@ -325,7 +325,18 @@ Interface to the Basix C++ library.
                              &FiniteElement::highest_complete_degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
-      .def_property_readonly("num_entity_dofs", &FiniteElement::num_entity_dofs)
+      .def_property_readonly("num_entity_dofs",
+                             [](const FiniteElement& self)
+                             {
+                               // TODO: remove this function. Information can
+                               // retrieved from entity_dofs.
+                               std::vector<int> num_dofs;
+                               auto& edofs = self.entity_dofs();
+                               for (auto& edofs_dim : edofs)
+                                 for (auto& edofs_ent : edofs_dim)
+                                   num_dofs.push_back(edofs_ent.size());
+                               return num_dofs;
+                             })
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("num_entity_closure_dofs",
                              [](const FiniteElement& self)

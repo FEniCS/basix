@@ -954,7 +954,7 @@ bool FiniteElement::operator==(const FiniteElement& e) const
            and map_type() == e.map_type() and value_shape() == e.value_shape()
            and highest_degree() == e.highest_degree()
            and highest_complete_degree() == e.highest_complete_degree()
-           and coeff_equal and num_entity_dofs() == e.num_entity_dofs();
+           and coeff_equal and entity_dofs() == e.entity_dofs();
   }
   else
   {
@@ -1092,11 +1092,6 @@ const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
 FiniteElement::interpolation_matrix() const
 {
   return _matM;
-}
-//-----------------------------------------------------------------------------
-const std::vector<std::vector<int>>& FiniteElement::num_entity_dofs() const
-{
-  return _num_edofs;
 }
 //-----------------------------------------------------------------------------
 const std::vector<std::vector<std::vector<int>>>&

@@ -678,10 +678,10 @@ FiniteElement::FiniteElement(
   std::size_t num_dofs(0), num_points1(0);
   for (std::size_t d = 0; d < M.size(); ++d)
   {
-    for (std::size_t e = 0; e < M[d].size(); ++e)
+    for (auto Me : M[d])
     {
-      num_dofs += M[d][e].extent(0);
-      num_points1 += M[d][e].extent(2);
+      num_dofs += Me.extent(0);
+      num_points1 += Me.extent(2);
     }
   }
 
@@ -702,17 +702,17 @@ FiniteElement::FiniteElement(
   for (std::size_t d = 0; d < M.size(); ++d)
   {
     // Loop of entities of dimension d
-    for (std::size_t e = 0; e < M[d].size(); ++e)
+    for (auto& Me : M[d])
     {
-      for (std::size_t k0 = 0; k0 < M[d][e].extent(0); ++k0)
+      for (std::size_t k0 = 0; k0 < Me.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < Mview.extent(1); ++k1)
-          for (std::size_t k2 = 0; k2 < M[d][e].extent(2); ++k2)
+          for (std::size_t k2 = 0; k2 < Me.extent(2); ++k2)
             for (std::size_t k3 = 0; k3 < Mview.extent(3); ++k3)
               Mview(k0 + dof_offset, k1, k2 + point_offset, k3)
-                  = M[d][e](k0, k1, k2, k3);
+                  = Me(k0, k1, k2, k3);
 
-      dof_offset += M[d][e].extent(0);
-      point_offset += M[d][e].extent(2);
+      dof_offset += Me.extent(0);
+      point_offset += Me.extent(2);
     }
   }
 
@@ -769,9 +769,9 @@ FiniteElement::FiniteElement(
   // Check if base transformations are all permutations
   _dof_transformations_are_permutations = true;
   _dof_transformations_are_identity = true;
-  for (const auto& et : _entity_transformations)
+  for (const auto& [ctype, trans_data] : _entity_transformations)
   {
-    cmdspan3_t trans(et.second.first.data(), et.second.second);
+    cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
     for (std::size_t i = 0;
          _dof_transformations_are_permutations and i < trans.extent(0); ++i)
@@ -808,13 +808,12 @@ FiniteElement::FiniteElement(
     // If transformations are permutations, then create the permutations
     if (_dof_transformations_are_permutations)
     {
-      for (const auto& et : _entity_transformations)
+      for (const auto& [ctype, trans_data] : _entity_transformations)
       {
-        cmdspan3_t trans(et.second.first.data(), et.second.second);
+        cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
-        _eperm[et.first]
-            = std::vector<std::vector<std::size_t>>(trans.extent(0));
-        _eperm_rev[et.first]
+        _eperm[ctype] = std::vector<std::vector<std::size_t>>(trans.extent(0));
+        _eperm_rev[ctype]
             = std::vector<std::vector<std::size_t>>(trans.extent(0));
         for (std::size_t i = 0; i < trans.extent(0); ++i)
         {
@@ -834,27 +833,27 @@ FiniteElement::FiniteElement(
           }
 
           // Factorise the permutations
-          _eperm[et.first][i] = precompute::prepare_permutation(perm);
-          _eperm_rev[et.first][i] = precompute::prepare_permutation(rev_perm);
+          _eperm[ctype][i] = precompute::prepare_permutation(perm);
+          _eperm_rev[ctype][i] = precompute::prepare_permutation(rev_perm);
         }
       }
     }
 
     // Precompute the DOF transformations
-    for (const auto& et : _entity_transformations)
+    for (const auto& [ctype, trans_data] : _entity_transformations)
     {
-      cmdspan3_t trans(et.second.first.data(), et.second.second);
+      cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
-      _etrans[et.first] = std::vector<
+      _etrans[ctype] = std::vector<
           std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
           trans.extent(0));
-      _etransT[et.first] = std::vector<
+      _etransT[ctype] = std::vector<
           std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
           trans.extent(0));
-      _etrans_invT[et.first] = std::vector<
+      _etrans_invT[ctype] = std::vector<
           std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
           trans.extent(0));
-      _etrans_inv[et.first] = std::vector<
+      _etrans_inv[ctype] = std::vector<
           std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
           trans.extent(0));
       for (std::size_t i = 0; i < trans.extent(0); ++i)
@@ -870,7 +869,7 @@ FiniteElement::FiniteElement(
 
           {
             auto [p, D, mat_data] = precompute::prepare_matrix(mat);
-            _etrans[et.first][i] = {p, D, mat_data};
+            _etrans[ctype][i] = {p, D, mat_data};
           }
 
           {
@@ -882,7 +881,7 @@ FiniteElement::FiniteElement(
                 matT(k0, k1) = trans(i, k1, k0);
 
             auto [p, D, mat_data] = precompute::prepare_matrix(matT);
-            _etransT[et.first][i] = {p, D, mat_data};
+            _etransT[ctype][i] = {p, D, mat_data};
           }
 
           std::vector<double> matinv_b;
@@ -892,7 +891,7 @@ FiniteElement::FiniteElement(
           // such that M^{-1} != M.
           // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
           // For a triangular face, M^3 = Id, so M^{-1} = M^2.
-          if (et.first == cell::type::quadrilateral and i == 0)
+          if (ctype == cell::type::quadrilateral and i == 0)
           {
             std::vector<double> matint(mat.extent(0) * mat.extent(1));
             mdspan2_t mat_int(matint.data(), mat.extent(0), mat.extent(1));
@@ -904,7 +903,7 @@ FiniteElement::FiniteElement(
                 = mdspan2_t(matinv_b.data(), mat_int.extent(0), mat.extent(1));
             math::dot(mat_int, mat, matinv_new);
           }
-          else if (et.first == cell::type::triangle and i == 0)
+          else if (ctype == cell::type::triangle and i == 0)
           {
             matinv_b.resize(mat.extent(0) * mat.extent(1));
             std::fill(matinv_b.begin(), matinv_b.end(), 0);
@@ -921,7 +920,7 @@ FiniteElement::FiniteElement(
 
           {
             auto [p, D, mat_data] = precompute::prepare_matrix(matinv_new);
-            _etrans_inv[et.first][i] = {p, D, mat_data};
+            _etrans_inv[ctype][i] = {p, D, mat_data};
           }
 
           {
@@ -935,7 +934,7 @@ FiniteElement::FiniteElement(
                 matinvT_new(k0, k1) = matinv_new(k1, k0);
 
             auto [p, D, mat_data] = precompute::prepare_matrix(matinvT_new);
-            _etrans_invT[et.first][i] = {p, D, mat_data};
+            _etrans_invT[ctype][i] = {p, D, mat_data};
           }
         }
       }

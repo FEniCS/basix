@@ -23,6 +23,7 @@
 #include <basix/finite-element.h>
 #include <basix/lattice.h>
 #include <iomanip>
+#include <iostream>
 
 static const std::map<basix::cell::type, std::string> type_to_name
     = {{basix::cell::type::point, "point"},

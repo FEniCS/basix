@@ -584,32 +584,31 @@ FiniteElement::FiniteElement(
       _interpolation_nderivs(interpolation_nderivs),
       _highest_degree(highest_degree),
       _highest_complete_degree(highest_complete_degree), _map_type(map_type),
-      // _x(x),
       _discontinuous(discontinuous), _tensor_factors(tensor_factors)
 {
-  for (std::size_t i = 0; i < x.size(); ++i)
-  {
-    for (std::size_t j = 0; j < x[i].size(); ++j)
-    {
-      auto& vec = x[i][j];
-      _x[i].push_back({std::vector<double>(vec.data(), vec.data() + vec.size()),
-                       {vec.extent(0), vec.extent(1)}});
-    }
-  }
-
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
   {
     for (std::size_t i = 0; i < _cell_tdim; ++i)
     {
-      for (std::size_t j = 0; j < x[i].size(); ++j)
+      for (auto& xi : x[i])
       {
-        if (x[i][j].extent(0) > 0)
+        if (xi.extent(0) > 0)
         {
           throw std::runtime_error(
               "Discontinuous element can only have interior DOFs.");
         }
       }
+    }
+  }
+
+  // Copy x
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    for (auto& xi : x[i])
+    {
+      _x[i].emplace_back(std::vector(xi.data(), xi.data() + xi.size()),
+                         std::array{xi.extent(0), xi.extent(1)});
     }
   }
 
@@ -627,15 +626,15 @@ FiniteElement::FiniteElement(
     _wcoeffs = {std::vector(wcoeffs_ortho.data(),
                             wcoeffs_ortho.data() + wcoeffs_ortho.size()),
                 {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
-    // _M = M;
+
+    // Copy  M
     for (std::size_t i = 0; i < M.size(); ++i)
     {
-      for (std::size_t j = 0; j < M[i].size(); ++j)
+      for (auto Mi : M[i])
       {
-        auto& mat = M[i][j];
-        _M[i].emplace_back(std::vector(mat.data(), mat.data() + mat.size()),
-                           std::array{mat.extent(0), mat.extent(1),
-                                      mat.extent(2), mat.extent(3)});
+        _M[i].emplace_back(
+            std::vector(Mi.data(), Mi.data() + Mi.size()),
+            std::array{Mi.extent(0), Mi.extent(1), Mi.extent(2), Mi.extent(3)});
       }
     }
   }

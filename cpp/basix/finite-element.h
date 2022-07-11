@@ -46,6 +46,9 @@ using mdarray2_t
 using mdarray4_t
     = std::experimental::mdarray<double,
                                  std::experimental::dextents<std::size_t, 4>>;
+
+/// Create a container of cmdspan2_t objects from a container of
+/// mdarray2_t objects
 inline std::array<std::vector<cmdspan2_t>, 4>
 to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
 {
@@ -57,6 +60,8 @@ to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
   return x1;
 }
 
+/// Create a container of cmdspan4_t objects from a container of
+/// mdarray4_t objects
 inline std::array<std::vector<cmdspan4_t>, 4>
 to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
 {
@@ -68,6 +73,8 @@ to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
   return M1;
 }
 
+/// Create a container of cmdspan2_t objects from containers holding
+/// data buffers and shapes
 inline std::array<std::vector<cmdspan2_t>, 4>
 to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& x,
           const std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
@@ -80,6 +87,8 @@ to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& x,
   return x1;
 }
 
+/// Create a container of cmdspan4_t objects from containers holding
+/// data buffers and shapes
 inline std::array<std::vector<cmdspan4_t>, 4>
 to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
           const std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
@@ -133,7 +142,6 @@ make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
 /// type, when tabulating.
 class FiniteElement
 {
-  // namespace stdex = std::experimental;
   using cmdspan2_t
       = std::experimental::mdspan<const double,
                                   std::experimental::dextents<std::size_t, 2>>;
@@ -322,7 +330,7 @@ public:
           tensor_factors
       = {});
 
-  /// TODO
+  /// Overloaded constructor
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
@@ -335,7 +343,7 @@ public:
           tensor_factors
       = {});
 
-  /// TODO
+  /// Overloaded constructor
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
@@ -348,7 +356,7 @@ public:
           tensor_factors
       = {});
 
-  /// TODO
+  /// Overloaded constructor
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
@@ -628,7 +636,6 @@ public:
     case maps::type::identity:
       return [](O& u, const P& U, const Q&, double, const R&)
       {
-        // std::cout << "ident" << std::endl;
         assert(U.extent(0) == u.extent(0));
         assert(U.extent(1) == u.extent(1));
         for (std::size_t i = 0; i < U.extent(0); ++i)
@@ -637,28 +644,16 @@ public:
       };
     case maps::type::covariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      {
-        // std::cout << "map 1" << std::endl;
-        maps::covariant_piola(u, U, J, detJ, K);
-      };
+      { maps::covariant_piola(u, U, J, detJ, K); };
     case maps::type::contravariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      {
-        // std::cout << "map 2" << std::endl;
-        maps::contravariant_piola(u, U, J, detJ, K);
-      };
+      { maps::contravariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleCovariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      {
-        // std::cout << "map 3" << std::endl;
-        maps::double_covariant_piola(u, U, J, detJ, K);
-      };
+      { maps::double_covariant_piola(u, U, J, detJ, K); };
     case maps::type::doubleContravariantPiola:
       return [](O& u, const P& U, const Q& J, double detJ, const R& K)
-      {
-        // std::cout << "map 4" << std::endl;
-        maps::double_contravariant_piola(u, U, J, detJ, K);
-      };
+      { maps::double_contravariant_piola(u, U, J, detJ, K); };
     default:
       throw std::runtime_error("Map not implemented");
     }
@@ -1126,7 +1121,7 @@ private:
   // Dofs associated with each cell (sub-)entity
   std::vector<std::vector<std::vector<int>>> _edofs;
 
-  // Dofs associated with each cell (sub-)entity
+  // Dofs associated with the closdure of each cell (sub-)entity
   std::vector<std::vector<std::vector<int>>> _e_closure_dofs;
 
   using array2_t = std::pair<std::vector<double>, std::array<std::size_t, 2>>;
@@ -1169,25 +1164,20 @@ private:
   // _dof_transformations_are_identity is False
   std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm_rev;
 
+  using trans_data_t = std::vector<
+      std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>;
+
   // The entity transformations in precomputed form
-  std::map<cell::type, std::vector<std::tuple<std::vector<std::size_t>,
-                                              std::vector<double>, array2_t>>>
-      _etrans;
+  std::map<cell::type, trans_data_t> _etrans;
 
   // The transposed entity transformations in precomputed form
-  std::map<cell::type, std::vector<std::tuple<std::vector<std::size_t>,
-                                              std::vector<double>, array2_t>>>
-      _etransT;
+  std::map<cell::type, trans_data_t> _etransT;
 
   // The inverse entity transformations in precomputed form
-  std::map<cell::type, std::vector<std::tuple<std::vector<std::size_t>,
-                                              std::vector<double>, array2_t>>>
-      _etrans_inv;
+  std::map<cell::type, trans_data_t> _etrans_inv;
 
   // The inverse transpose entity transformations in precomputed form
-  std::map<cell::type, std::vector<std::tuple<std::vector<std::size_t>,
-                                              std::vector<double>, array2_t>>>
-      _etrans_invT;
+  std::map<cell::type, trans_data_t> _etrans_invT;
 
   // Indicates whether or not this is the discontinuous version of the
   // element

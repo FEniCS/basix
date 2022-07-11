@@ -21,6 +21,8 @@
 #include <cmath>
 #include <numeric>
 
+#include <iostream>
+
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -460,7 +462,7 @@ basix::FiniteElement basix::create_custom_element(
     throw std::runtime_error("wcoeffs has the wrong number of rows");
 
   // Check that x has the right shape
-  for (std::size_t i = 0; i <= 3; ++i)
+  for (std::size_t i = 0; i < x.size(); ++i)
   {
     if (x[i].size()
         != (i > tdim ? 0
@@ -469,15 +471,16 @@ basix::FiniteElement basix::create_custom_element(
     {
       throw std::runtime_error("x has the wrong number of entities");
     }
-    for (std::size_t j = 0; j < x[i].size(); ++j)
+
+    for (const auto& xj : x[i])
     {
-      if (x[i][j].extent(1) != tdim)
+      if (xj.extent(1) != tdim)
         throw std::runtime_error("x has a point with the wrong tdim");
     }
   }
 
   // Check that M has the right shape
-  for (std::size_t i = 0; i <= 3; ++i)
+  for (std::size_t i = 0; i < M.size(); ++i)
   {
     if (M[i].size()
         != (i > tdim ? 0
@@ -651,22 +654,14 @@ FiniteElement::FiniteElement(
     for (auto& x_e : x_dim)
       num_points += x_e.extent(0);
 
-  std::size_t counter = 0;
-  _points.first.resize(num_points * _cell_tdim);
+  _points.first.reserve(num_points * _cell_tdim);
   _points.second = {num_points, _cell_tdim};
   mdspan2_t pview(_points.first.data(), _points.second);
   for (auto& x_dim : x)
-  {
     for (auto& x_e : x_dim)
-    {
       for (std::size_t p = 0; p < x_e.extent(0); ++p)
-      {
         for (std::size_t k = 0; k < x_e.extent(1); ++k)
-          pview(counter, k) = x_e(p, k);
-        ++counter;
-      }
-    }
-  }
+          _points.first.push_back(x_e(p, k));
 
   // Copy into _matM
   const std::size_t value_size = std::accumulate(
@@ -743,13 +738,15 @@ FiniteElement::FiniteElement(
     _e_closure_dofs[d].resize(cell::num_sub_entities(_cell_type, d));
     for (std::size_t e = 0; e < _e_closure_dofs[d].size(); ++e)
     {
+      auto& num_closure_dofs = _num_e_closure_dofs[d][e];
+      auto& closure_dofs = _e_closure_dofs[d][e];
       for (std::size_t dim = 0; dim <= d; ++dim)
       {
         for (int c : connectivity[d][e][dim])
         {
-          _num_e_closure_dofs[d][e] += _edofs[dim][c].size();
-          for (int dof : _edofs[dim][c])
-            _e_closure_dofs[d][e].push_back(dof);
+          num_closure_dofs += _edofs[dim][c].size();
+          closure_dofs.insert(closure_dofs.end(), _edofs[dim][c].begin(),
+                              _edofs[dim][c].end());
         }
       }
 
@@ -810,9 +807,8 @@ FiniteElement::FiniteElement(
       {
         cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
-        _eperm[ctype] = std::vector<std::vector<std::size_t>>(trans.extent(0));
-        _eperm_rev[ctype]
-            = std::vector<std::vector<std::size_t>>(trans.extent(0));
+        auto& eperm = _eperm.try_emplace(ctype).first->second;
+        auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
         for (std::size_t i = 0; i < trans.extent(0); ++i)
         {
           std::vector<std::size_t> perm(trans.extent(1));
@@ -831,8 +827,8 @@ FiniteElement::FiniteElement(
           }
 
           // Factorise the permutations
-          _eperm[ctype][i] = precompute::prepare_permutation(perm);
-          _eperm_rev[ctype][i] = precompute::prepare_permutation(rev_perm);
+          eperm.push_back(precompute::prepare_permutation(perm));
+          eperm_rev.push_back(precompute::prepare_permutation(rev_perm));
         }
       }
     }
@@ -842,48 +838,39 @@ FiniteElement::FiniteElement(
     {
       cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
-      _etrans[ctype] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
-          trans.extent(0));
-      _etransT[ctype] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
-          trans.extent(0));
-      _etrans_invT[ctype] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
-          trans.extent(0));
-      _etrans_inv[ctype] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>(
-          trans.extent(0));
+      auto& etrans = _etrans.try_emplace(ctype).first->second;
+      auto& etransT = _etransT.try_emplace(ctype).first->second;
+      auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
+      auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
       for (std::size_t i = 0; i < trans.extent(0); ++i)
       {
-        if (trans.extent(1) > 0)
+        if (trans.extent(1) == 0)
+        {
+          etrans.push_back({});
+          etransT.push_back({});
+          etrans_invT.push_back({});
+          etrans_inv.push_back({});
+        }
+        else
         {
           std::vector<double> mat_b(trans.extent(1) * trans.extent(2));
-          stdex::mdspan<double, stdex::dextents<std::size_t, 2>> mat(
-              mat_b.data(), trans.extent(1), trans.extent(2));
+          mdspan2_t mat(mat_b.data(), trans.extent(1), trans.extent(2));
           for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
             for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
               mat(k0, k1) = trans(i, k0, k1);
-
-          {
-            auto [p, D, mat_data] = precompute::prepare_matrix(mat);
-            _etrans[ctype][i] = {p, D, mat_data};
-          }
+          etrans.push_back(precompute::prepare_matrix(mat));
 
           {
             std::vector<double> matT_b(trans.extent(1) * trans.extent(2));
-            stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matT(
-                matT_b.data(), trans.extent(2), trans.extent(1));
+            mdspan2_t matT(matT_b.data(), trans.extent(2), trans.extent(1));
             for (std::size_t k0 = 0; k0 < matT.extent(0); ++k0)
               for (std::size_t k1 = 0; k1 < matT.extent(1); ++k1)
                 matT(k0, k1) = trans(i, k1, k0);
-
-            auto [p, D, mat_data] = precompute::prepare_matrix(matT);
-            _etransT[ctype][i] = {p, D, mat_data};
+            etransT.push_back(precompute::prepare_matrix(matT));
           }
 
           std::vector<double> matinv_b;
-          stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matinv_new;
+          mdspan2_t matinv_new;
 
           // Rotation of a face: this is in the only base transformation
           // such that M^{-1} != M.
@@ -912,27 +899,19 @@ FiniteElement::FiniteElement(
           else
           {
             matinv_b.assign(mat_b.begin(), mat_b.end());
-            matinv_new = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>(
-                matinv_b.data(), mat.extents());
+            matinv_new = mdspan2_t(matinv_b.data(), mat.extents());
           }
-
-          {
-            auto [p, D, mat_data] = precompute::prepare_matrix(matinv_new);
-            _etrans_inv[ctype][i] = {p, D, mat_data};
-          }
+          etrans_inv.push_back(precompute::prepare_matrix(matinv_new));
 
           {
             std::vector<double> matinvT_b(matinv_new.extent(0)
                                           * matinv_new.extent(1));
-            stdex::mdspan<double, stdex::dextents<std::size_t, 2>> matinvT_new(
-                matinvT_b.data(), matinv_new.extent(1), matinv_new.extent(0));
-
+            mdspan2_t matinvT_new(matinvT_b.data(), matinv_new.extent(1),
+                                  matinv_new.extent(0));
             for (std::size_t k0 = 0; k0 < matinvT_new.extent(0); ++k0)
               for (std::size_t k1 = 0; k1 < matinvT_new.extent(1); ++k1)
                 matinvT_new(k0, k1) = matinv_new(k1, k0);
-
-            auto [p, D, mat_data] = precompute::prepare_matrix(matinvT_new);
-            _etrans_invT[ctype][i] = {p, D, mat_data};
+            etrans_invT.push_back(precompute::prepare_matrix(matinvT_new));
           }
         }
       }

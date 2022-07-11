@@ -624,19 +624,18 @@ FiniteElement::FiniteElement(
 
   if (family == element::family::custom)
   {
-    _wcoeffs
-        = {std::vector<double>(wcoeffs_ortho.data(),
-                               wcoeffs_ortho.data() + wcoeffs_ortho.size()),
-           {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
+    _wcoeffs = {std::vector(wcoeffs_ortho.data(),
+                            wcoeffs_ortho.data() + wcoeffs_ortho.size()),
+                {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
     // _M = M;
     for (std::size_t i = 0; i < M.size(); ++i)
     {
       for (std::size_t j = 0; j < M[i].size(); ++j)
       {
         auto& mat = M[i][j];
-        _M[i].push_back(
-            {std::vector<double>(mat.data(), mat.data() + mat.size()),
-             {mat.extent(0), mat.extent(1), mat.extent(2), mat.extent(3)}});
+        _M[i].emplace_back(std::vector(mat.data(), mat.data() + mat.size()),
+                           std::array{mat.extent(0), mat.extent(1),
+                                      mat.extent(2), mat.extent(3)});
       }
     }
   }
@@ -690,18 +689,6 @@ FiniteElement::FiniteElement(
   _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M, cmdspan2_t(_coeffs.first.data(), _coeffs.second),
       highest_degree, value_size, map_type);
-
-  // _entity_transformations_new =
-  // doftransforms::compute_entity_transformations(
-  //     cell_type, x, M, cmdspan2_t(_coeffs.first.data(), _coeffs.second),
-  //     highest_degree, value_size, map_type);
-  // for (auto& [key, data] : _entity_transformations)
-  // {
-  //   xt::xtensor<double, 3> tens(data.second.second);
-  //   std::copy(data.first.data(), data.first.data() + data.first.size(),
-  //             tens.data());
-  //   _entity_transformations.insert({key, std::move(tens)});
-  // }
 
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);
@@ -768,6 +755,7 @@ FiniteElement::FiniteElement(
             _e_closure_dofs[d][e].push_back(dof);
         }
       }
+
       std::sort(_e_closure_dofs[d][e].begin(), _e_closure_dofs[d][e].end());
     }
   }
@@ -802,8 +790,6 @@ FiniteElement::FiniteElement(
 
         if ((trans.extent(2) != 1 and std::abs(rmin) > 1.0e-8)
             or std::abs(rmax - 1.0) > 1.0e-8 or std::abs(rtot - 1.0) > 1.0e-8)
-        // if ((trans.shape(2) != 1 and !xt::allclose(rmin, 0))
-        //     or !xt::allclose(rmax, 1) or !xt::allclose(rtot, 1))
         {
           _dof_transformations_are_permutations = false;
           _dof_transformations_are_identity = false;
@@ -811,7 +797,6 @@ FiniteElement::FiniteElement(
         }
 
         if (std::abs(trans(i, row, row) - 1) > 1.0e-8)
-          // if (!xt::allclose(trans(i, row, row), 1))
           _dof_transformations_are_identity = false;
       }
     }
@@ -886,9 +871,6 @@ FiniteElement::FiniteElement(
 
           {
             auto [p, D, mat_data] = precompute::prepare_matrix(mat);
-            // auto m = xt::adapt(mat_data.first,
-            //                    std::vector<std::size_t>{mat_data.second[0],
-            //                                             mat_data.second[1]});
             _etrans[et.first][i] = {p, D, mat_data};
           }
 
@@ -901,9 +883,6 @@ FiniteElement::FiniteElement(
                 matT(k0, k1) = trans(i, k1, k0);
 
             auto [p, D, mat_data] = precompute::prepare_matrix(matT);
-            // auto m = xt::adapt(mat_data.first,
-            //                    std::vector<std::size_t>{mat_data.second[0],
-            //                                             mat_data.second[1]});
             _etransT[et.first][i] = {p, D, mat_data};
           }
 
@@ -943,9 +922,6 @@ FiniteElement::FiniteElement(
 
           {
             auto [p, D, mat_data] = precompute::prepare_matrix(matinv_new);
-            // auto m = xt::adapt(mat_data.first,
-            //                    std::vector<std::size_t>{mat_data.second[0],
-            //                                             mat_data.second[1]});
             _etrans_inv[et.first][i] = {p, D, mat_data};
           }
 
@@ -960,9 +936,6 @@ FiniteElement::FiniteElement(
                 matinvT_new(k0, k1) = matinv_new(k1, k0);
 
             auto [p, D, mat_data] = precompute::prepare_matrix(matinvT_new);
-            // auto m = xt::adapt(mat_data.first,
-            //                    std::vector<std::size_t>{mat_data.second[0],
-            //                                             mat_data.second[1]});
             _etrans_invT[et.first][i] = {p, D, mat_data};
           }
         }
@@ -980,7 +953,6 @@ FiniteElement::FiniteElement(
     {
       double v = col == row ? 1.0 : 0.0;
       if (std::abs(matM(row, col) - v) > 1.0e-12)
-      // if (!xt::allclose(_matM(row, col), col == row ? 1.0 : 0.0))
       {
         _interpolation_is_identity = false;
         break;
@@ -993,8 +965,8 @@ bool FiniteElement::operator==(const FiniteElement& e) const
 {
   if (this == &e)
     return true;
-  else if (family() == basix::element::family::custom
-           or e.family() == basix::element::family::custom)
+  else if (family() == element::family::custom
+           or e.family() == element::family::custom)
   {
     bool coeff_equal = false;
     if (_coeffs.first.size() == e.coefficient_matrix().first.size()
@@ -1011,7 +983,6 @@ bool FiniteElement::operator==(const FiniteElement& e) const
            and map_type() == e.map_type() and value_shape() == e.value_shape()
            and highest_degree() == e.highest_degree()
            and highest_complete_degree() == e.highest_complete_degree()
-           //  and xt::allclose(coefficient_matrix(), e.coefficient_matrix())
            and coeff_equal and num_entity_dofs() == e.num_entity_dofs();
   }
   else
@@ -1191,10 +1162,7 @@ FiniteElement::base_transformations() const
 
   std::size_t dof_start = 0;
   if (_cell_tdim > 0)
-  {
-    dof_start
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
-  }
+    dof_start = std::accumulate(_num_edofs[0].begin(), _num_edofs[0].end(), 0);
 
   int transform_n = 0;
   if (_cell_tdim > 1)
@@ -1383,7 +1351,7 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
     // cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
     int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+        = std::accumulate(_num_edofs[0].begin(), _num_edofs[0].end(), 0);
 
     // Permute DOFs on edges
     for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)

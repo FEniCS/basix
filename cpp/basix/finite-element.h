@@ -1408,10 +1408,9 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
         const auto& v_size_t = std::get<0>(m);
         const auto& v_t = std::get<1>(m);
         const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix(
-            xtl::span(v_size_t), xtl::span(v_t),
-            impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-            dofstart, block_size);
+        precompute::apply_matrix(xtl::span(v_size_t), xtl::span(v_t),
+                                 cmdspan2_t(matrix.first.data(), matrix.second),
+                                 data, dofstart, block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1430,8 +1429,8 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
 
         // Rotate a face
@@ -1443,8 +1442,8 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1477,10 +1476,9 @@ void FiniteElement::apply_transpose_dof_transformation(
         const auto& v_size_t = std::get<0>(m);
         const auto& v_t = std::get<1>(m);
         const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix(
-            xtl::span(v_size_t), xtl::span(v_t),
-            impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-            dofstart, block_size);
+        precompute::apply_matrix(xtl::span(v_size_t), xtl::span(v_t),
+                                 cmdspan2_t(matrix.first.data(), matrix.second),
+                                 data, dofstart, block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1499,8 +1497,8 @@ void FiniteElement::apply_transpose_dof_transformation(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
 
         // Reflect a face
@@ -1512,8 +1510,8 @@ void FiniteElement::apply_transpose_dof_transformation(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1546,10 +1544,9 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
         const auto& v_size_t = std::get<0>(m);
         const auto& v_t = std::get<1>(m);
         const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix(
-            xtl::span(v_size_t), xtl::span(v_t),
-            impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-            dofstart, block_size);
+        precompute::apply_matrix(xtl::span(v_size_t), xtl::span(v_t),
+                                 cmdspan2_t(matrix.first.data(), matrix.second),
+                                 data, dofstart, block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1568,8 +1565,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
 
         // Rotate a face
@@ -1581,8 +1578,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1615,10 +1612,9 @@ void FiniteElement::apply_inverse_dof_transformation(
         const auto& v_size_t = std::get<0>(m);
         const auto& v_t = std::get<1>(m);
         const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix(
-            xtl::span(v_size_t), xtl::span(v_t),
-            impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-            dofstart, block_size);
+        precompute::apply_matrix(xtl::span(v_size_t), xtl::span(v_t),
+                                 cmdspan2_t(matrix.first.data(), matrix.second),
+                                 data, dofstart, block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1637,8 +1633,8 @@ void FiniteElement::apply_inverse_dof_transformation(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
 
         // Reflect a face
@@ -1650,8 +1646,8 @@ void FiniteElement::apply_inverse_dof_transformation(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1686,8 +1682,8 @@ void FiniteElement::apply_dof_transformation_to_transpose(
         const auto& matrix = std::get<2>(m);
         precompute::apply_matrix_to_transpose(
             xtl::span(v_size_t), xtl::span(v_t),
-            impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-            dofstart, block_size);
+            cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+            block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1706,8 +1702,8 @@ void FiniteElement::apply_dof_transformation_to_transpose(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
 
         // Rotate a face
@@ -1719,8 +1715,8 @@ void FiniteElement::apply_dof_transformation_to_transpose(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1755,8 +1751,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
         const auto& matrix = std::get<2>(m);
         precompute::apply_matrix_to_transpose(
             xtl::span(v_size_t), xtl::span(v_t),
-            impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-            dofstart, block_size);
+            cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+            block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1775,8 +1771,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
 
         // Rotate a face
@@ -1788,8 +1784,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1824,8 +1820,8 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
         const auto& matrix = std::get<2>(m);
         precompute::apply_matrix_to_transpose(
             xtl::span(v_size_t), xtl::span(v_t),
-            impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-            dofstart, block_size);
+            cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+            block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1844,8 +1840,8 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
 
         // Reflect a face
@@ -1857,8 +1853,8 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
         dofstart += _num_edofs[2][f];
       }
@@ -1879,7 +1875,7 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
     int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+        = std::accumulate(_num_edofs[0].begin(), _num_edofs[0].end(), 0);
 
     // Transform DOFs on edges
     for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
@@ -1893,8 +1889,8 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
         const auto& matrix = std::get<2>(m);
         precompute::apply_matrix_to_transpose(
             xtl::span(v_size_t), xtl::span(v_t),
-            impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-            dofstart, block_size);
+            cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+            block_size);
       }
       dofstart += _num_edofs[1][e];
     }
@@ -1913,8 +1909,8 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
 
         // Reflect a face
@@ -1926,8 +1922,8 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
-              impl::cmdspan2_t(matrix.first.data(), matrix.second), data,
-              dofstart, block_size);
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
         }
         dofstart += _num_edofs[2][f];
       }

@@ -620,16 +620,15 @@ FiniteElement::FiniteElement(
   mdspan2_t wcoeffs_ortho(wcoeffs_ortho_b.data(), wcoeffs.extent(0),
                           wcoeffs.extent(1));
   std::copy(wcoeffs.data(), wcoeffs.data() + wcoeffs.size(),
-            wcoeffs_ortho.data());
+            wcoeffs_ortho_b.begin());
   orthogonalise(wcoeffs_ortho);
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, x, M,
                                      highest_degree, interpolation_nderivs);
 
   if (family == element::family::custom)
   {
-    _wcoeffs = {std::vector(wcoeffs_ortho.data(),
-                            wcoeffs_ortho.data() + wcoeffs_ortho.size()),
-                {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
+    _wcoeffs
+        = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
 
     // Copy  M
     for (std::size_t i = 0; i < M.size(); ++i)
@@ -678,6 +677,13 @@ FiniteElement::FiniteElement(
     }
   }
 
+  // Check that nunber of dofs is equal to number of coefficients
+  if (num_dofs != _coeffs.second[0])
+  {
+    throw std::runtime_error(
+        "Number of entity dofs does not match total number of dofs");
+  }
+
   _entity_transformations = doftransforms::compute_entity_transformations(
       cell_type, x, M, cmdspan2_t(_coeffs.first.data(), _coeffs.second),
       highest_degree, value_size, map_type);
@@ -711,29 +717,24 @@ FiniteElement::FiniteElement(
 
   // Compute number of dofs for each cell entity (computed from
   // interpolation data)
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(cell_type);
-  const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
-      = cell::sub_entity_connectivity(cell_type);
-  _edofs.resize(_cell_tdim + 1);
   int dof = 0;
   for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
   {
-    _edofs[d].resize(cell::num_sub_entities(_cell_type, d));
+    auto& edofs_d = _edofs.emplace_back(cell::num_sub_entities(_cell_type, d));
     for (std::size_t e = 0; e < M[d].size(); ++e)
-    {
       for (std::size_t i = 0; i < M[d][e].extent(0); ++i)
-        _edofs[d][e].push_back(dof++);
-    }
+        edofs_d[e].push_back(dof++);
   }
 
-  _e_closure_dofs.resize(_cell_tdim + 1);
+  const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
+      = cell::sub_entity_connectivity(cell_type);
   for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
   {
-    _e_closure_dofs[d].resize(cell::num_sub_entities(_cell_type, d));
+    auto& edofs_d
+        = _e_closure_dofs.emplace_back(cell::num_sub_entities(_cell_type, d));
     for (std::size_t e = 0; e < _e_closure_dofs[d].size(); ++e)
     {
-      auto& closure_dofs = _e_closure_dofs[d][e];
+      auto& closure_dofs = edofs_d[e];
       for (std::size_t dim = 0; dim <= d; ++dim)
       {
         for (int c : connectivity[d][e][dim])
@@ -745,13 +746,6 @@ FiniteElement::FiniteElement(
 
       std::sort(_e_closure_dofs[d][e].begin(), _e_closure_dofs[d][e].end());
     }
-  }
-
-  // Check that nunber of dofs os equal to number of coefficients
-  if (num_dofs != _coeffs.second[0])
-  {
-    throw std::runtime_error(
-        "Number of entity dofs does not match total number of dofs");
   }
 
   // Check if base transformations are all permutations

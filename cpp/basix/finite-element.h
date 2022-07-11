@@ -135,8 +135,8 @@ make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
 
 } // namespace element
 
-/// A finite element
-
+/// @brief A finite element.
+///
 /// The basis of a finite element is stored as a set of coefficients,
 /// which are applied to the underlying expansion set for that cell
 /// type, when tabulating.
@@ -150,10 +150,10 @@ class FiniteElement
                                   std::experimental::dextents<std::size_t, 4>>;
 
 public:
-  /// A finite element
+  /// @brief Construct a finite element.
   ///
-  /// Initialising a finite element calculates the basis functions of the finite
-  /// element, in terms of the polynomial basis.
+  /// Initialising a finite element calculates the basis functions of
+  /// the finite element, in terms of the polynomial basis.
   ///
   /// The below explanation uses Einstein notation.
   ///
@@ -294,30 +294,31 @@ public:
   /// @param[in] family The element family
   /// @param[in] cell_type The cell type
   /// @param[in] degree The degree of the element
-  /// @param[in] interpolation_nderivs The number of derivatives that need to be
-  /// used during interpolation
+  /// @param[in] interpolation_nderivs The number of derivatives that
+  /// need to be used during interpolation
   /// @param[in] value_shape The value shape of the element
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
-  /// polynomial space for this element. Shape is (dim(Legendre polynomials),
-  /// dim(finite element polyset))
-  /// @param[in] x Interpolation points. Indices are (tdim, entity index,
-  /// point index, dim)
+  /// polynomial space for this element. Shape is (dim(Legendre
+  /// polynomials), dim(finite element polyset))
+  /// @param[in] x Interpolation points. Indices are (tdim, entity
+  /// index, point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
   /// index, dof, vs, point_index, derivative)
   /// @param[in] map_type The type of map to be used to map values from
   /// the reference to a cell
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
-  /// @param[in] highest_complete_degree The highest degree n such that a
-  /// Lagrange (or vector Lagrange) element of degree n is a subspace of this
-  /// element
-  /// @param[in] highest_degree The highest degree n such that at least one
-  /// polynomial of degree n is included in this element's polymonial set
+  /// @param[in] highest_complete_degree The highest degree n such that
+  /// a Lagrange (or vector Lagrange) element of degree n is a subspace
+  /// of this element
+  /// @param[in] highest_degree The highest degree n such that at least
+  /// one polynomial of degree n is included in this element's
+  /// polymonial set
   /// @param[in] lvariant The Lagrange variant of the element
   /// @param[in] dvariant The DPC variant of the element
-  /// @param[in] tensor_factors The factors in the tensor product representation
-  /// of this element
+  /// @param[in] tensor_factors The factors in the tensor product
+  /// representation of this element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
@@ -384,7 +385,7 @@ public:
   FiniteElement& operator=(FiniteElement&& element) = default;
 
   /// Check if two elements are the same
-  /// @note This operator compares the element properties, eg family,
+  /// @note This operator compares the element properties, e.g. family,
   /// degree, etc, and not computed numerical data
   /// @return True if elements are the same
   bool operator==(const FiniteElement& e) const;
@@ -433,8 +434,8 @@ public:
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
-  /// @param[in] x The points at which to compute the basis functions (row-major
-  /// storage).
+  /// @param[in] x The points at which to compute the basis functions
+  /// (row-major storage).
   /// @param[in] shape The shape `(number of points, geometric
   /// dimension)` of the `x` array.
   /// @return The basis functions (and derivatives). The shape is
@@ -504,9 +505,6 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  ///
-  /// @todo Remove all internal dynamic memory allocation, pass scratch
-  /// space as required
   void tabulate(int nd, const xtl::span<const double>& x,
                 std::array<std::size_t, 2> xshape,
                 const xtl::span<double>& basis) const;
@@ -519,18 +517,18 @@ public:
   /// @return Polynomial degree
   int degree() const;
 
-  /// Get the lowest degree n such that the highest degree
-  /// polynomial in this element is contained in a Lagrange (or vector
-  /// Lagrange) element of degree n
+  /// Lowest degree `n` such that the highest degree polynomial in this
+  /// element is contained in a Lagrange (or vector Lagrange) element of
+  /// degree `n`.
   /// @return Polynomial degree
   int highest_degree() const;
 
-  /// Get the highest degree n such that a Lagrange (or vector Lagrange) element
-  /// of degree n is a subspace of this element
+  /// Highest degree `n` such that a Lagrange (or vector Lagrange)
+  /// element of degree n is a subspace of this element.
   /// @return Polynomial degree
   int highest_complete_degree() const;
 
-  /// The element value tensor shape, eg returning {} for scalars, {3}
+  /// The element value tensor shape, e.g. returning {} for scalars, {3}
   /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
   /// @return Value shape
   const std::vector<std::size_t>& value_shape() const;
@@ -591,8 +589,8 @@ public:
   /// @param[in] J The Jacobian of the mapping
   /// @param[in] detJ The determinant of the Jacobian of the mapping
   /// @param[in] K The inverse of the Jacobian of the mapping
-  /// @return The function values on the reference. The indices are [Jacobian
-  /// index, point index, components].
+  /// @return The function values on the reference. The indices are
+  /// [Jacobian index, point index, components].
   std::pair<std::vector<double>, std::array<std::size_t, 3>>
   pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
             xtl::span<const double> detJ, impl::cmdspan3_t K) const;
@@ -663,8 +661,8 @@ public:
   /// edges, faces, cell) in that order. For example, Lagrange degree 2
   /// on a triangle has vertices: [[0], [1], [2]], edges: [[3], [4], [5]],
   /// cell: [[]]
-  /// @return Dofs associated with an entity of a given
-  /// topological dimension. The shape is (tdim + 1, num_entities, num_dofs).
+  /// @return Dofs associated with an entity of a given topological
+  /// dimension. The shape is (tdim + 1, num_entities, num_dofs).
   const std::vector<std::vector<std::vector<int>>>& entity_dofs() const;
 
   /// Get the dofs on the closure of each topological entity: (vertices,
@@ -672,10 +670,12 @@ public:
   /// on a triangle has vertices: [[0], [1], [2]], edges: [[1, 2, 3], [0, 2, 4],
   /// [0, 1, 5]], cell: [[0, 1, 2, 3, 4, 5]]
   /// @return Dofs associated with the closure of an entity of a given
-  /// topological dimension. The shape is (tdim + 1, num_entities, num_dofs).
+  /// topological dimension. The shape is (tdim + 1, num_entities,
+  /// num_dofs).
   const std::vector<std::vector<std::vector<int>>>& entity_closure_dofs() const;
 
-  /// Get the base transformations
+  /// @brief Get the base transformations.
+  ///
   /// The base transformations represent the effect of rotating or reflecting
   /// a subentity of the cell on the numbering and orientation of the DOFs.
   /// This returns a list of matrices with one matrix for each subentity
@@ -861,7 +861,8 @@ public:
   void apply_transpose_dof_transformation_to_transpose(
       const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
-  /// Apply inverse transpose DOF transformations to some transposed data
+  /// @brief Apply inverse transpose DOF transformations to some
+  /// transposed data.
   ///
   /// @note This function is designed to be called at runtime, so its
   /// performance is critical.
@@ -887,8 +888,8 @@ public:
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
-  /// to interpolate it in the finite element space. @return Array of
-  /// coordinate with shape `(num_points, tdim)`
+  /// to interpolate it in the finite element space.
+  /// @return Array of coordinate with shape `(num_points, tdim)`
   const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
   points() const;
 
@@ -942,8 +943,8 @@ public:
   ///     coefficients[::block_size] = i_m * values
   /// \endcode
   ///
-  /// @return The interpolation matrix. Shape is (ndofs, number of interpolation
-  /// points)
+  /// @return The interpolation matrix. Shape is (ndofs, number of
+  /// interpolation points)
   const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
   interpolation_matrix() const;
 
@@ -958,13 +959,13 @@ public:
   /// Get the coefficients that define the polynomial set in terms of the
   /// orthonormal polynomials.
   ///
-  /// The polynomials spanned by each finite element in Basix are represented as
-  /// a linear combination of the orthonormal polynomials of a given degree on
-  /// the cell. Each row of this matrix defines a polynomial in the set spanned
-  /// by the finite element.
+  /// The polynomials spanned by each finite element in Basix are
+  /// represented as a linear combination of the orthonormal polynomials
+  /// of a given degree on the cell. Each row of this matrix defines a
+  /// polynomial in the set spanned by the finite element.
   ///
-  /// For example, the orthonormal polynomials of degree <= 1 on a triangle are
-  /// (where a, b, c, d are some constants):
+  /// For example, the orthonormal polynomials of degree <= 1 on a
+  /// triangle are (where a, b, c, d are some constants):
   ///
   ///  - (sqrt(2), 0)
   ///  - (a*x - b, 0)
@@ -973,19 +974,20 @@ public:
   ///  - (0, a*x - b)
   ///  - (0, c*y - d)
   ///
-  /// For a degree 1 Raviart-Thomas element, the first two rows of wcoeffs would
-  /// be the following, as (1, 0) and (0, 1) are spanned by the element
+  /// For a degree 1 Raviart-Thomas element, the first two rows of
+  /// wcoeffs would be the following, as (1, 0) and (0, 1) are spanned
+  /// by the element
   ///
   ///  - [1, 0, 0, 0, 0, 0]
   ///  - [0, 0, 0, 1, 0, 0]
   ///
-  /// The third row of wcoeffs in this example would give coefficients that
-  /// represent (x, y) in terms of the orthonormal polynomials:
+  /// The third row of wcoeffs in this example would give coefficients
+  /// that represent (x, y) in terms of the orthonormal polynomials:
   ///
   ///  - [-b/(a*sqrt(2)), 1/a, 0, -d/(c*sqrt(2)), 0, 1/c]
   ///
-  /// These coefficients are only stored for custom elements. This function will
-  /// throw an exception if called on a non-custom element
+  /// These coefficients are only stored for custom elements. This
+  /// function will throw an exception if called on a non-custom element
   /// @return Coefficient matrix. Shape is (dim(Lagrange polynomials),
   /// dim(finite element polyset))
   const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
@@ -1005,10 +1007,10 @@ public:
   /// The shape of this data is (tdim, entity index, dof, value size,
   /// point_index, derivative).
   ///
-  /// These matrices define how to evaluate the DOF functionals accociated with
-  /// each sub-entity of the cell. Given a function f, the functionals
-  /// associated with the `e`-th entity of dimension `d` can be computed as
-  /// follows:
+  /// These matrices define how to evaluate the DOF functionals
+  /// accociated with each sub-entity of the cell. Given a function f,
+  /// the functionals associated with the `e`-th entity of dimension `d`
+  /// can be computed as follows:
   ///
   /// \code{.pseudo}
   /// matrix = element.M()[d][e]
@@ -1067,8 +1069,8 @@ public:
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
   get_tensor_product_representation() const;
 
-  /// Indicates whether or not the interpolation matrix for this element is an
-  /// identity matrix
+  /// Indicates whether or not the interpolation matrix for this element
+  /// is an identity matrix
   bool interpolation_is_identity() const;
 
   /// The number of derivatives needed when interpolating

@@ -32,7 +32,7 @@ set(XTL_MIN_VERSION 0.7.0)
 include(FetchContent)
 
 if(NOT DOWNLOAD_XTENSOR_LIBS)
-  # xtl, xtensor (required)
+  # xtl (required)
   if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
     find_package(xtl ${XTL_MIN_VERSION}...<0.8 REQUIRED)
   else()

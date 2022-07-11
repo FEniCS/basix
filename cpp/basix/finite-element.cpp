@@ -1149,13 +1149,12 @@ FiniteElement::entity_closure_dofs() const
 std::pair<std::vector<double>, std::array<std::size_t, 3>>
 FiniteElement::base_transformations() const
 {
-  const std::size_t nt = num_transformations(cell_type());
+  const std::size_t nt = num_transformations(this->cell_type());
   const std::size_t ndofs = this->dim();
 
   std::array<std::size_t, 3> shape = {nt, ndofs, ndofs};
   std::vector<double> bt_b(shape[0] * shape[1] * shape[2], 0);
   mdspan3_t bt(bt_b.data(), shape);
-
   for (std::size_t i = 0; i < nt; ++i)
     for (std::size_t j = 0; j < ndofs; ++j)
       bt(i, j, j) = 1.0;
@@ -1168,26 +1167,25 @@ FiniteElement::base_transformations() const
   if (_cell_tdim > 1)
   {
     // Base transformations for edges
-
-    for (std::size_t ndofs : _num_edofs[1])
     {
       auto& tmp_data = _entity_transformations.at(cell::type::interval);
       cmdspan3_t tmp(tmp_data.first.data(), tmp_data.second);
+      for (std::size_t ndofs : _num_edofs[1])
+      {
+        for (std::size_t i = 0; i < ndofs; ++i)
+          for (std::size_t j = 0; j < ndofs; ++j)
+            bt(transform_n, i + dof_start, j + dof_start) = tmp(0, i, j);
 
-      for (std::size_t i = 0; i < ndofs; ++i)
-        for (std::size_t j = 0; j < ndofs; ++j)
-          bt(transform_n, i + dof_start, j + dof_start) = tmp(0, i, j);
-
-      ++transform_n;
-      dof_start += ndofs;
+        ++transform_n;
+        dof_start += ndofs;
+      }
     }
 
     if (_cell_tdim > 2)
     {
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
-        const std::size_t ndofs = _num_edofs[2][f];
-        if (ndofs > 0)
+        if (const std::size_t ndofs = _num_edofs[2][f]; ndofs > 0)
         {
           auto& tmp_data
               = _entity_transformations.at(_cell_subentity_types[2][f]);
@@ -1299,15 +1297,15 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
 
     // Permute DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& trans = _eperm.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
       {
-        precompute::apply_permutation(_eperm.at(cell::type::interval)[0], dofs,
-                                      dofstart);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+          precompute::apply_permutation(trans, dofs, dofstart);
+        dofstart += _num_edofs[1][e];
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
@@ -1315,19 +1313,16 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _eperm.at(_cell_subentity_types[2][f]);
+
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          precompute::apply_permutation(
-              _eperm.at(_cell_subentity_types[2][f])[1], dofs, dofstart);
-        }
+          precompute::apply_permutation(trans[1], dofs, dofstart);
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          precompute::apply_permutation(
-              _eperm.at(_cell_subentity_types[2][f])[0], dofs, dofstart);
-        }
+          precompute::apply_permutation(trans[0], dofs, dofstart);
+
         dofstart += _num_edofs[2][f];
       }
     }
@@ -1354,15 +1349,15 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
         = std::accumulate(_num_edofs[0].begin(), _num_edofs[0].end(), 0);
 
     // Permute DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& trans = _eperm_rev.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
       {
-        precompute::apply_permutation(_eperm_rev.at(cell::type::interval)[0],
-                                      dofs, dofstart);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+          precompute::apply_permutation(trans, dofs, dofstart);
+        dofstart += _num_edofs[1][e];
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
@@ -1370,19 +1365,16 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _eperm_rev.at(_cell_subentity_types[2][f]);
+
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          precompute::apply_permutation(
-              _eperm_rev.at(_cell_subentity_types[2][f])[0], dofs, dofstart);
-        }
+          precompute::apply_permutation(trans[0], dofs, dofstart);
 
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          precompute::apply_permutation(
-              _eperm_rev.at(_cell_subentity_types[2][f])[1], dofs, dofstart);
-        }
+          precompute::apply_permutation(trans[1], dofs, dofstart);
+
         dofstart += _num_edofs[2][f];
       }
     }

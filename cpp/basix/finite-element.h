@@ -1399,20 +1399,20 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
 
     // Transform DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& [v_size_t, v_t, matrix] = _etrans.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
       {
-        const auto& m = _etrans.at(cell::type::interval)[0];
-        const auto& v_size_t = std::get<0>(m);
-        const auto& v_t = std::get<1>(m);
-        const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix(xtl::span(v_size_t), xtl::span(v_t),
-                                 cmdspan2_t(matrix.first.data(), matrix.second),
-                                 data, dofstart, block_size);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          precompute::apply_matrix(
+              xtl::span(v_size_t), xtl::span(v_t),
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
+        }
+        dofstart += _num_edofs[1][e];
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
@@ -1420,10 +1420,12 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _etrans.at(_cell_subentity_types[2][f]);
+
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
         {
-          const auto& m = _etrans.at(_cell_subentity_types[2][f])[1];
+          const auto& m = trans[1];
           const auto& v_size_t = std::get<0>(m);
           const auto& v_t = std::get<1>(m);
           const auto& matrix = std::get<2>(m);
@@ -1436,7 +1438,7 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          const auto& m = _etrans.at(_cell_subentity_types[2][f])[0];
+          const auto& m = trans[0];
           const auto& v_size_t = std::get<0>(m);
           const auto& v_t = std::get<1>(m);
           const auto& matrix = std::get<2>(m);
@@ -1445,6 +1447,7 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
+
         dofstart += _num_edofs[2][f];
       }
     }
@@ -1467,20 +1470,20 @@ void FiniteElement::apply_transpose_dof_transformation(
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
 
     // Transform DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& [v_size_t, v_t, matrix] = _etransT.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
       {
-        const auto& m = _etransT.at(cell::type::interval)[0];
-        const auto& v_size_t = std::get<0>(m);
-        const auto& v_t = std::get<1>(m);
-        const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix(xtl::span(v_size_t), xtl::span(v_t),
-                                 cmdspan2_t(matrix.first.data(), matrix.second),
-                                 data, dofstart, block_size);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          precompute::apply_matrix(
+              xtl::span(v_size_t), xtl::span(v_t),
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
+        }
+        dofstart += _num_edofs[1][e];
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
@@ -1488,13 +1491,15 @@ void FiniteElement::apply_transpose_dof_transformation(
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _etransT.at(_cell_subentity_types[2][f]);
+
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          const auto& m = _etransT.at(_cell_subentity_types[2][f])[0];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[0];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1504,10 +1509,10 @@ void FiniteElement::apply_transpose_dof_transformation(
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
         {
-          const auto& m = _etransT.at(_cell_subentity_types[2][f])[1];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[1];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1540,10 +1545,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
       {
-        const auto& m = _etrans_invT.at(cell::type::interval)[0];
-        const auto& v_size_t = std::get<0>(m);
-        const auto& v_t = std::get<1>(m);
-        const auto& matrix = std::get<2>(m);
+        auto& [v_size_t, v_t, matrix]
+            = _etrans_invT.at(cell::type::interval)[0];
         precompute::apply_matrix(xtl::span(v_size_t), xtl::span(v_t),
                                  cmdspan2_t(matrix.first.data(), matrix.second),
                                  data, dofstart, block_size);
@@ -1556,13 +1559,15 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _etrans_invT.at(_cell_subentity_types[2][f]);
+
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
         {
-          const auto& m = _etrans_invT.at(_cell_subentity_types[2][f])[1];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[1];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1572,7 +1577,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          const auto& m = _etrans_invT.at(_cell_subentity_types[2][f])[0];
+          const auto& m = trans[0];
           const auto& v_size_t = std::get<0>(m);
           const auto& v_t = std::get<1>(m);
           const auto& matrix = std::get<2>(m);
@@ -1581,6 +1586,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
+
         dofstart += _num_edofs[2][f];
       }
     }
@@ -1603,20 +1609,20 @@ void FiniteElement::apply_inverse_dof_transformation(
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
 
     // Transform DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& [v_size_t, v_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
       {
-        const auto& m = _etrans_inv.at(cell::type::interval)[0];
-        const auto& v_size_t = std::get<0>(m);
-        const auto& v_t = std::get<1>(m);
-        const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix(xtl::span(v_size_t), xtl::span(v_t),
-                                 cmdspan2_t(matrix.first.data(), matrix.second),
-                                 data, dofstart, block_size);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          precompute::apply_matrix(
+              xtl::span(v_size_t), xtl::span(v_t),
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
+        }
+        dofstart += _num_edofs[1][e];
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
@@ -1624,13 +1630,15 @@ void FiniteElement::apply_inverse_dof_transformation(
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _etrans_inv.at(_cell_subentity_types[2][f]);
+
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          const auto& m = _etrans_inv.at(_cell_subentity_types[2][f])[0];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[0];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1640,15 +1648,16 @@ void FiniteElement::apply_inverse_dof_transformation(
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
         {
-          const auto& m = _etrans_inv.at(_cell_subentity_types[2][f])[1];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[1];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
+
         dofstart += _num_edofs[2][f];
       }
     }
@@ -1671,21 +1680,21 @@ void FiniteElement::apply_dof_transformation_to_transpose(
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
 
     // Transform DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& [v_size_t, v_t, matrix] = _etrans.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
       {
-        const auto& m = _etrans.at(cell::type::interval)[0];
-        const auto& v_size_t = std::get<0>(m);
-        const auto& v_t = std::get<1>(m);
-        const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix_to_transpose(
-            xtl::span(v_size_t), xtl::span(v_t),
-            cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-            block_size);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          precompute::apply_matrix_to_transpose(
+              xtl::span(v_size_t), xtl::span(v_t),
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
+        }
+
+        dofstart += _num_edofs[1][e];
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
@@ -1693,13 +1702,15 @@ void FiniteElement::apply_dof_transformation_to_transpose(
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _etrans.at(_cell_subentity_types[2][f]);
+
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
         {
-          const auto& m = _etrans.at(_cell_subentity_types[2][f])[1];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[1];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1709,10 +1720,10 @@ void FiniteElement::apply_dof_transformation_to_transpose(
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          const auto& m = _etrans.at(_cell_subentity_types[2][f])[0];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[0];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1740,21 +1751,20 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
 
     // Transform DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& [v_size_t, v_t, matrix] = _etrans_invT.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
       {
-        const auto& m = _etrans_invT.at(cell::type::interval)[0];
-        const auto& v_size_t = std::get<0>(m);
-        const auto& v_t = std::get<1>(m);
-        const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix_to_transpose(
-            xtl::span(v_size_t), xtl::span(v_t),
-            cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-            block_size);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          precompute::apply_matrix_to_transpose(
+              xtl::span(v_size_t), xtl::span(v_t),
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
+        }
+        dofstart += _num_edofs[1][e];
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
@@ -1762,13 +1772,15 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _etrans_invT.at(_cell_subentity_types[2][f]);
+
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
         {
-          const auto& m = _etrans_invT.at(_cell_subentity_types[2][f])[1];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[1];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1778,10 +1790,10 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          const auto& m = _etrans_invT.at(_cell_subentity_types[2][f])[0];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[0];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1809,21 +1821,20 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
         = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
 
     // Transform DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& [v_size_t, v_t, matrix] = _etransT.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
       {
-        const auto& m = _etransT.at(cell::type::interval)[0];
-        const auto& v_size_t = std::get<0>(m);
-        const auto& v_t = std::get<1>(m);
-        const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix_to_transpose(
-            xtl::span(v_size_t), xtl::span(v_t),
-            cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-            block_size);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          precompute::apply_matrix_to_transpose(
+              xtl::span(v_size_t), xtl::span(v_t),
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
+        }
+        dofstart += _num_edofs[1][e];
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
@@ -1831,13 +1842,15 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _etransT.at(_cell_subentity_types[2][f]);
+
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          const auto& m = _etransT.at(_cell_subentity_types[2][f])[0];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[0];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1847,10 +1860,10 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
         {
-          const auto& m = _etransT.at(_cell_subentity_types[2][f])[1];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[1];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1878,21 +1891,20 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
         = std::accumulate(_num_edofs[0].begin(), _num_edofs[0].end(), 0);
 
     // Transform DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& [v_size_t, v_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
       {
-        const auto& m = _etrans_inv.at(cell::type::interval)[0];
-        const auto& v_size_t = std::get<0>(m);
-        const auto& v_t = std::get<1>(m);
-        const auto& matrix = std::get<2>(m);
-        precompute::apply_matrix_to_transpose(
-            xtl::span(v_size_t), xtl::span(v_t),
-            cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-            block_size);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          precompute::apply_matrix_to_transpose(
+              xtl::span(v_size_t), xtl::span(v_t),
+              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+              block_size);
+        }
+        dofstart += _num_edofs[1][e];
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
@@ -1900,13 +1912,15 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
       // Permute DOFs on faces
       for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
       {
+        auto& trans = _etrans_inv.at(_cell_subentity_types[2][f]);
+
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
         {
-          const auto& m = _etrans_inv.at(_cell_subentity_types[2][f])[0];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[0];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
@@ -1916,15 +1930,16 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
         {
-          const auto& m = _etrans_inv.at(_cell_subentity_types[2][f])[1];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          auto& m = trans[1];
+          auto& v_size_t = std::get<0>(m);
+          auto& v_t = std::get<1>(m);
+          auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
               xtl::span(v_size_t), xtl::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
+
         dofstart += _num_edofs[2][f];
       }
     }

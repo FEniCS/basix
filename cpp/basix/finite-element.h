@@ -1123,14 +1123,6 @@ private:
   // (@f$\psi_{i}@f$).
   std::pair<std::vector<double>, std::array<std::size_t, 2>> _coeffs;
 
-  // Number of dofs associated with each cell (sub-)entity
-  //
-  // The dofs of an element are associated with entities of different
-  // topological dimension (vertices, edges, faces, cells). The dofs are
-  // listed in this order, with vertex dofs first. Each entry is the dof
-  // count on the associated entity, as listed by cell::topology.
-  std::vector<std::vector<int>> _num_edofs;
-
   // Dofs associated with each cell (sub-)entity
   std::vector<std::vector<std::vector<int>>> _edofs;
 
@@ -1369,14 +1361,15 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
   {
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Transform DOFs on edges
     {
       auto& [v_size_t, v_t, matrix] = _etrans.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
@@ -1386,14 +1379,14 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[1][e];
+        dofstart += _edofs[1][e].size();
       }
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _etrans.at(_cell_subentity_types[2][f]);
 
@@ -1423,7 +1416,7 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
               block_size);
         }
 
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }
@@ -1440,14 +1433,15 @@ void FiniteElement::apply_transpose_dof_transformation(
   {
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Transform DOFs on edges
     {
       auto& [v_size_t, v_t, matrix] = _etransT.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
@@ -1457,14 +1451,14 @@ void FiniteElement::apply_transpose_dof_transformation(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[1][e];
+        dofstart += _edofs[1][e].size();
       }
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _etransT.at(_cell_subentity_types[2][f]);
 
@@ -1493,7 +1487,7 @@ void FiniteElement::apply_transpose_dof_transformation(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }
@@ -1510,12 +1504,13 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
   {
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Transform DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+    for (std::size_t e = 0; e < _edofs[1].size(); ++e)
     {
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
@@ -1526,13 +1521,13 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
                                  cmdspan2_t(matrix.first.data(), matrix.second),
                                  data, dofstart, block_size);
       }
-      dofstart += _num_edofs[1][e];
+      dofstart += _edofs[1][e].size();
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _etrans_invT.at(_cell_subentity_types[2][f]);
 
@@ -1562,7 +1557,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
               block_size);
         }
 
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }
@@ -1579,14 +1574,15 @@ void FiniteElement::apply_inverse_dof_transformation(
   {
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Transform DOFs on edges
     {
       auto& [v_size_t, v_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
@@ -1596,14 +1592,14 @@ void FiniteElement::apply_inverse_dof_transformation(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[1][e];
+        dofstart += _edofs[1][e].size();
       }
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _etrans_inv.at(_cell_subentity_types[2][f]);
 
@@ -1633,7 +1629,7 @@ void FiniteElement::apply_inverse_dof_transformation(
               block_size);
         }
 
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }
@@ -1650,14 +1646,15 @@ void FiniteElement::apply_dof_transformation_to_transpose(
   {
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Transform DOFs on edges
     {
       auto& [v_size_t, v_t, matrix] = _etrans.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
@@ -1668,14 +1665,14 @@ void FiniteElement::apply_dof_transformation_to_transpose(
               block_size);
         }
 
-        dofstart += _num_edofs[1][e];
+        dofstart += _edofs[1][e].size();
       }
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _etrans.at(_cell_subentity_types[2][f]);
 
@@ -1704,7 +1701,7 @@ void FiniteElement::apply_dof_transformation_to_transpose(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }
@@ -1721,14 +1718,15 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
   {
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Transform DOFs on edges
     {
       auto& [v_size_t, v_t, matrix] = _etrans_invT.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
@@ -1738,14 +1736,14 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[1][e];
+        dofstart += _edofs[1][e].size();
       }
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _etrans_invT.at(_cell_subentity_types[2][f]);
 
@@ -1774,7 +1772,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }
@@ -1791,14 +1789,15 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
   {
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Transform DOFs on edges
     {
       auto& [v_size_t, v_t, matrix] = _etransT.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
@@ -1808,14 +1807,14 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[1][e];
+        dofstart += _edofs[1][e].size();
       }
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _etransT.at(_cell_subentity_types[2][f]);
 
@@ -1844,7 +1843,7 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }
@@ -1861,14 +1860,15 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
   {
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].begin(), _num_edofs[0].end(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Transform DOFs on edges
     {
       auto& [v_size_t, v_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
@@ -1878,14 +1878,14 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
-        dofstart += _num_edofs[1][e];
+        dofstart += _edofs[1][e].size();
       }
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _etrans_inv.at(_cell_subentity_types[2][f]);
 
@@ -1915,7 +1915,7 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
               block_size);
         }
 
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }

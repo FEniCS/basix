@@ -715,23 +715,20 @@ FiniteElement::FiniteElement(
       = cell::topology(cell_type);
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
       = cell::sub_entity_connectivity(cell_type);
-  _num_edofs.resize(_cell_tdim + 1);
   _edofs.resize(_cell_tdim + 1);
   int dof = 0;
-  for (std::size_t d = 0; d < _num_edofs.size(); ++d)
+  for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
   {
-    _num_edofs[d].resize(cell::num_sub_entities(_cell_type, d), 0);
     _edofs[d].resize(cell::num_sub_entities(_cell_type, d));
     for (std::size_t e = 0; e < M[d].size(); ++e)
     {
-      _num_edofs[d][e] = M[d][e].extent(0);
-      for (int i = 0; i < _num_edofs[d][e]; ++i)
+      for (std::size_t i = 0; i < M[d][e].extent(0); ++i)
         _edofs[d][e].push_back(dof++);
     }
   }
 
   _e_closure_dofs.resize(_cell_tdim + 1);
-  for (std::size_t d = 0; d < _num_edofs.size(); ++d)
+  for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
   {
     _e_closure_dofs[d].resize(cell::num_sub_entities(_cell_type, d));
     for (std::size_t e = 0; e < _e_closure_dofs[d].size(); ++e)
@@ -1121,7 +1118,10 @@ FiniteElement::base_transformations() const
 
   std::size_t dof_start = 0;
   if (_cell_tdim > 0)
-    dof_start = std::accumulate(_num_edofs[0].begin(), _num_edofs[0].end(), 0);
+  {
+    for (auto& edofs0 : _edofs[0])
+      dof_start += edofs0.size();
+  }
 
   int transform_n = 0;
   if (_cell_tdim > 1)
@@ -1130,8 +1130,9 @@ FiniteElement::base_transformations() const
     {
       auto& tmp_data = _entity_transformations.at(cell::type::interval);
       cmdspan3_t tmp(tmp_data.first.data(), tmp_data.second);
-      for (std::size_t ndofs : _num_edofs[1])
+      for (auto& e : _edofs[1])
       {
+        std::size_t ndofs = e.size();
         for (std::size_t i = 0; i < ndofs; ++i)
           for (std::size_t j = 0; j < ndofs; ++j)
             bt(transform_n, i + dof_start, j + dof_start) = tmp(0, i, j);
@@ -1143,9 +1144,9 @@ FiniteElement::base_transformations() const
 
     if (_cell_tdim > 2)
     {
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
-        if (const std::size_t ndofs = _num_edofs[2][f]; ndofs > 0)
+        if (std::size_t ndofs = _edofs[2][f].size(); ndofs > 0)
         {
           auto& tmp_data
               = _entity_transformations.at(_cell_subentity_types[2][f]);
@@ -1252,26 +1253,28 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
   {
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Permute DOFs on edges
     {
       auto& trans = _eperm.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
           precompute::apply_permutation(trans, dofs, dofstart);
-        dofstart += _num_edofs[1][e];
+        dofstart += _edofs[1][e].size();
       }
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _eperm.at(_cell_subentity_types[2][f]);
 
@@ -1283,7 +1286,7 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
           precompute::apply_permutation(trans[0], dofs, dofstart);
 
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }
@@ -1302,28 +1305,29 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
 
   if (_cell_tdim >= 2)
   {
-    // This assumes 3 bits are used per face. This will need updating if 3D
-    // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].begin(), _num_edofs[0].end(), 0);
+    // This assumes 3 bits are used per face. This will need updating if
+    // 3D cells with faces with more than 4 sides are implemented
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Permute DOFs on edges
     {
       auto& trans = _eperm_rev.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
           precompute::apply_permutation(trans, dofs, dofstart);
-        dofstart += _num_edofs[1][e];
+        dofstart += _edofs[1][e].size();
       }
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
         auto& trans = _eperm_rev.at(_cell_subentity_types[2][f]);
 
@@ -1335,7 +1339,7 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
         if (cell_info >> (3 * f) & 1)
           precompute::apply_permutation(trans[1], dofs, dofstart);
 
-        dofstart += _num_edofs[2][f];
+        dofstart += _edofs[2][f].size();
       }
     }
   }

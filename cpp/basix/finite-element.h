@@ -478,8 +478,11 @@ public:
   ///
   /// @param[in] nd The order of derivatives, up to and including, to
   /// compute. Use 0 for the basis functions only.
-  /// @param[in] x The points at which to compute the basis functions.
-  /// The shape of x is (number of points, geometric dimension).
+  /// @param[in] x The points at which to compute the basis functions
+  /// (row-major storage). The shape of x is (number of points,
+  /// geometric dimension).
+  /// @param[in] xshape The shape `(number of points, geometric
+  /// dimension)` of `x`.
   /// @param [out] basis Memory location to fill. It must be allocated
   /// with shape (num_derivatives, num_points, num basis functions,
   /// value_size). The function `FiniteElement::tabulate_shape` can be

@@ -583,7 +583,8 @@ FiniteElement::FiniteElement(
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
       _interpolation_nderivs(interpolation_nderivs),
       _highest_degree(highest_degree),
-      _highest_complete_degree(highest_complete_degree), _map_type(map_type),
+      _highest_complete_degree(highest_complete_degree),
+      _value_shape(value_shape), _map_type(map_type),
       _discontinuous(discontinuous), _tensor_factors(tensor_factors)
 {
   // Check that discontinuous elements only have DOFs on interior
@@ -645,8 +646,6 @@ FiniteElement::FiniteElement(
                     wcoeffs_ortho);
   _coeffs.second = {_dual_matrix.second[1], wcoeffs_ortho.extent(1)};
 
-  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
-
   std::size_t num_points = 0;
   for (auto& x_dim : x)
     for (auto& x_e : x_dim)
@@ -670,9 +669,8 @@ FiniteElement::FiniteElement(
   }
 
   // Copy into _matM
-  const std::size_t value_size
-      = std::accumulate(value_shape.begin(), value_shape.end(), 1,
-                        std::multiplies<std::size_t>());
+  const std::size_t value_size = std::accumulate(
+      value_shape.begin(), value_shape.end(), 1, std::multiplies{});
 
   // Count number of dofs and point
   std::size_t num_dofs(0), num_points1(0);
@@ -1001,7 +999,7 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
   for (std::size_t i = 1; i <= nd; ++i)
     ndsize /= i;
   std::size_t vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
-                                   std::multiplies<int>());
+                                   std::multiplies{});
   std::size_t ndofs = _coeffs.second[0];
   return {ndsize, num_points, ndofs, vs};
 }
@@ -1044,7 +1042,7 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
   mdspan3_t basis(basis_b.data(), bsize);
   polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
-                                 std::multiplies<int>());
+                                 std::multiplies{});
 
   mdarray2_t C(_coeffs.second[0], psize);
   cmdspan2_t coeffs_view(_coeffs.first.data(), _coeffs.second);
@@ -1092,7 +1090,7 @@ int FiniteElement::highest_complete_degree() const
   return _highest_complete_degree;
 }
 //-----------------------------------------------------------------------------
-const std::vector<int>& FiniteElement::value_shape() const
+const std::vector<std::size_t>& FiniteElement::value_shape() const
 {
   return _value_shape;
 }
@@ -1250,7 +1248,7 @@ FiniteElement::pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
                          xtl::span<const double> detJ, impl::cmdspan3_t K) const
 {
   const std::size_t reference_value_size = std::accumulate(
-      _value_shape.begin(), _value_shape.end(), 1, std::multiplies<int>());
+      _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
 
   std::array<std::size_t, 3> shape
       = {u.extent(0), u.extent(1), reference_value_size};

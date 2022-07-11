@@ -337,7 +337,7 @@ Interface to the Basix C++ library.
                                return std::accumulate(
                                    self.value_shape().begin(),
                                    self.value_shape().end(), 1,
-                                   std::multiplies<int>());
+                                   std::multiplies{});
                              })
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("discontinuous", &FiniteElement::discontinuous)

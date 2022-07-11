@@ -525,7 +525,7 @@ public:
   /// The element value tensor shape, eg returning {} for scalars, {3}
   /// for vectors in 3D, {2, 2} for a rank-2 tensor in 2D.
   /// @return Value shape
-  const std::vector<int>& value_shape() const;
+  const std::vector<std::size_t>& value_shape() const;
 
   /// Dimension of the finite element space (number of
   /// degrees-of-freedom for the element)
@@ -1132,7 +1132,7 @@ private:
   int _highest_complete_degree;
 
   // Value shape
-  std::vector<int> _value_shape;
+  std::vector<std::size_t> _value_shape;
 
   /// The mapping used to map this element from the reference to a cell
   maps::type _map_type;

@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Basix REQUIRED)
+find_package(xtensor REQUIRED)
 
 add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} Basix::basix)
+target_link_libraries(${PROJECT_NAME} Basix::basix xtensor)

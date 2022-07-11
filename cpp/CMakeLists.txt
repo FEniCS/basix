@@ -26,12 +26,7 @@ add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared li
 option(DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git." OFF)
 add_feature_info(DOWNLOAD_XTENSOR_LIBS DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git.")
 
-# Enable xtensor with target-specific optimization, ie -march=native
-option(XTENSOR_OPTIMIZE "Enable xtensor target-specific optimization" OFF)
-add_feature_info(XTENSOR_OPTIMIZE XTENSOR_OPTIMIZE "Enable architecture-specific optimizations as defined by xtensor.")
-
 # Find dependecies
-set(XTENSOR_MIN_VERSION 0.23.10)
 set(XTL_MIN_VERSION 0.7.0)
 
 include(FetchContent)
@@ -40,10 +35,8 @@ if(NOT DOWNLOAD_XTENSOR_LIBS)
   # xtl, xtensor (required)
   if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
     find_package(xtl ${XTL_MIN_VERSION}...<0.8 REQUIRED)
-    find_package(xtensor ${XTENSOR_MIN_VERSION}...<0.25 REQUIRED)
   else()
     find_package(xtl ${XTL_MIN_VERSION} REQUIRED)
-    find_package(xtensor ${XTENSOR_MIN_VERSION} REQUIRED)
   endif()
 else()
   message("Downloading xtl source...")
@@ -53,14 +46,6 @@ else()
     GIT_TAG        0.7.4
   )
   FetchContent_MakeAvailable(xtl)
-
-  message("Downloading xtensor source...")
-  FetchContent_Declare(
-    xtensor
-    GIT_REPOSITORY https://github.com/xtensor-stack/xtensor.git
-    GIT_TAG        0.24.2
-  )
-  FetchContent_MakeAvailable(xtensor)
 endif()
 
 find_package(BLAS REQUIRED)
@@ -156,16 +141,9 @@ target_link_libraries(basix PUBLIC xtl)
 
 # Note: we use get_target_property/set_target_properties to ensure that
 # that -isystem flag is applied to allow us to use strict compiler flags
-get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
-set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
-target_link_libraries(basix PUBLIC xtensor)
-
-# Handle -march=native
-if (XTENSOR_OPTIMIZE AND TARGET xtensor::optimize)
-  target_link_libraries(basix PUBLIC xtensor::optimize)
-elseif(XTENSOR_OPTIMIZE)
-  target_compile_options(basix PUBLIC -march=native)
-endif()
+# get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
+# set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
+# target_link_libraries(basix PUBLIC xtensor)
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

@@ -17,15 +17,8 @@ if (BASIX_PY_DIR)
   message(STATUS "Adding ${BASIX_PY_DIR} to Basix search hints")
   # Lines below are when using pip-installed Basix
   set(xtl_ROOT "${BASIX_PY_DIR};${xtl_ROOT}")
-  set(xsimd "${BASIX_PY_DIR};${xsimd_ROOT}")
-  set(xtensor_ROOT "${BASIX_PY_DIR};${xtensor_ROOT}")
 endif()
 find_package(Basix REQUIRED CONFIG HINTS ${BASIX_PY_DIR})
-
-get_target_property(BASIX_DEFN Basix::basix INTERFACE_COMPILE_DEFINITIONS)
-if("XTENSOR_USE_XSIMD" IN_LIST BASIX_DEFN)
-  find_package(xsimd REQUIRED)
-endif()
 
 add_executable(a.out main.cpp)
 if (BASIX_PY_DIR AND IS_DIRECTORY ${BASIX_PY_DIR}/../fenics_basix.libs)

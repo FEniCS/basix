@@ -139,12 +139,6 @@ target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 # xtensor and related packages
 target_link_libraries(basix PUBLIC xtl)
 
-# Note: we use get_target_property/set_target_properties to ensure that
-# that -isystem flag is applied to allow us to use strict compiler flags
-# get_target_property(XTENSOR_INC_SYS xtensor INTERFACE_INCLUDE_DIRECTORIES)
-# set_target_properties(xtensor PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES "${XTENSOR_INC_SYS}")
-# target_link_libraries(basix PUBLIC xtensor)
-
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)
 list(APPEND basix_compiler_flags -Wall;-Werror;-Wextra;-Wno-comment;-pedantic;)

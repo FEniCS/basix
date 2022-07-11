@@ -8,6 +8,8 @@
 
 #include <basix/finite-element.h>
 #include <iostream>
+#include <xtensor/xadapt.hpp>
+#include <xtensor/xio.hpp>
 
 int main(int argc, char* argv[])
 {
@@ -38,8 +40,9 @@ int main(int argc, char* argv[])
 
   auto [tab_data, shape] = lagrange.tabulate(0, points, {points.size() / 2, 2});
 
-  // std::cout << "\nTabulate data: \n" << xt::adapt(tab_data, shape);
-  // std::cout << "\nTabulate data shape: " << xt::adapt(shape);
+  std::cout << "Tabulate data:" << std::endl
+            << xt::adapt(tab_data, shape) << std::endl;
+  std::cout << "Tabulate data shape: " << xt::adapt(shape);
 
   return 0;
 }

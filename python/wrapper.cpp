@@ -526,7 +526,6 @@ Interface to the Basix C++ library.
           {
             if (M[i][j].ndim() != 4)
               throw std::runtime_error("M has the wrong number of dimensions");
-            // _M[i].push_back(adapt_x(M[i][j]));
             _M[i].emplace_back(M[i][j].data(), M[i][j].shape(0),
                                M[i][j].shape(1), M[i][j].shape(2),
                                M[i][j].shape(3));

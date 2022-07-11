@@ -217,7 +217,7 @@ moments::make_dot_integral_moments(const FiniteElement& V, cell::type celltype,
   const std::array<std::size_t, 4> Dshape
       = {phi.extent(2), value_size, pts.extent(0), 1};
   const std::size_t size
-      = std::reduce(Dshape.begin(), Dshape.end(), 1, std::multiplies < {});
+      = std::reduce(Dshape.begin(), Dshape.end(), 1, std::multiplies{});
   std::vector<std::vector<double>> Db(num_entities, std::vector<double>(size));
   std::vector<mdspan4_t> D;
 

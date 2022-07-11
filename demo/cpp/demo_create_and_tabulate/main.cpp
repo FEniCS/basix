@@ -7,9 +7,11 @@
 // points.
 
 #include <basix/finite-element.h>
+#include <basix/mdspan.hpp>
 #include <iostream>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xio.hpp>
+
+namespace stdex = std::experimental;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 int main(int argc, char* argv[])
 {
@@ -40,9 +42,16 @@ int main(int argc, char* argv[])
 
   auto [tab_data, shape] = lagrange.tabulate(0, points, {points.size() / 2, 2});
 
-  std::cout << "Tabulate data:" << std::endl
-            << xt::adapt(tab_data, shape) << std::endl;
-  std::cout << "Tabulate data shape: " << xt::adapt(shape);
+  std::cout << "Tabulate data shape: [ ";
+  for (auto s : shape)
+    std::cout << s << " ";
+  std::cout << "]" << std::endl;
+
+  cmdspan4_t tab(tab_data.data(), shape);
+  std::cout << "Tabulate data (0, 0, :, 0): [ ";
+  for (std::size_t i = 0; i < tab.extent(2); ++i)
+    std::cout << tab(0, 0, i, 0) << " ";
+  std::cout << "]" << std::endl;
 
   return 0;
 }

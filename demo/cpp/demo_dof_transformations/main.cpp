@@ -23,9 +23,7 @@
 #include <basix/finite-element.h>
 #include <basix/lattice.h>
 #include <iomanip>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xio.hpp>
-#include <xtensor/xview.hpp>
+#include <iostream>
 
 static const std::map<basix::cell::type, std::string> type_to_name
     = {{basix::cell::type::point, "point"},
@@ -78,8 +76,9 @@ int main(int argc, char* argv[])
 
     // For this element, we know that the base transformations will be
     // permutation matrices.
-    std::cout << std::endl << "Base transformations:" << std::endl;
-    std::cout << lagrange.base_transformations() << std::endl;
+    auto [trans, tshape] = lagrange.base_transformations();
+    // std::cout << std::endl << "Base transformations:" << std::endl;
+    // std::cout << xt::adapt(trans, tshape) << std::endl;
 
     // The matrices returned by `base_transformations` are quite large, and
     // are equal to the identity matrix except for a small block of the
@@ -90,13 +89,15 @@ int main(int argc, char* argv[])
     // of entity (`"interval"`, `"triangle"`, `"quadrilateral"`) to a
     // matrix describing the effect of permuting that entity on the DOFs
     // on that entity.
-    std::map<basix::cell::type, xt::xtensor<double, 3>> entity__transformation
-        = lagrange.entity_transformations();
+    auto entity_transformation = lagrange.entity_transformations();
 
-    std::cout << std::endl << "Entity transformations:" << std::endl;
-    for (auto const& [cell, transformation] : entity__transformation)
-      std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
-                << transformation << std::endl;
+    // std::cout << std::endl << "Entity transformations:" << std::endl;
+    // for (auto const& [cell, transformation] : entity_transformation)
+    // {
+    //   std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
+    //             << xt::adapt(transformation.first, transformation.second)
+    //             << std::endl;
+    // }
 
     // For this element, we see that this method returns one matrix for
     // an interval: this matrix reverses the order of the four DOFs
@@ -175,13 +176,15 @@ int main(int argc, char* argv[])
 
     // This is not a permutation, so this must be applied when assembling
     // a form and cannot be applied to the DOF numbering in the DOF map.
-    std::map<basix::cell::type, xt::xtensor<double, 3>> entity__transformation
-        = nedelec.entity_transformations();
+    const auto entity__transformation = nedelec.entity_transformations();
 
-    std::cout << std::endl << "Entity transformations:" << std::endl;
-    for (auto const& [cell, transformation] : entity__transformation)
-      std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
-                << transformation << std::endl;
+    // std::cout << std::endl << "Entity transformations:" << std::endl;
+    // for (auto& [cell, transformation] : entity__transformation)
+    // {
+    //   std::cout << " -" << type_to_name.at(cell) << ":" << std::endl
+    //             << xt::adapt(transformation.first, transformation.second)
+    //             << std::endl;
+    // }
 
     // To demonstrate how these transformations can be used, we create a
     // lattice of points where we will tabulate the element.
@@ -197,8 +200,6 @@ int main(int argc, char* argv[])
     // not match its direction on the reference, then we need to adjust the
     // tabulated data.
 
-    // xt::xtensor<double, 4> original_data = nedelec.tabulate(0, points);
-    // xt::xtensor<double, 4> mod_data = nedelec.tabulate(0, points);
     const auto [original_data, orig_shape] = nedelec.tabulate(0, points);
     auto [mod_data, mod_shape] = nedelec.tabulate(0, points);
     xtl::span<double> data(mod_data.data(), mod_data.size());
@@ -215,10 +216,10 @@ int main(int argc, char* argv[])
     int cell_info = 0b000010;
     nedelec.apply_dof_transformation(data, num_points, cell_info);
 
-    std::cout << std::endl
-              << "Tabulated data is equal: "
-              << xt::allclose(xt::adapt(original_data), xt::adapt(mod_data))
-              << std::endl;
+    // std::cout << std::endl
+    //           << "Tabulated data is equal: "
+    //           << xt::allclose(xt::adapt(original_data), xt::adapt(mod_data))
+    //           << std::endl;
   }
 
   return 0;

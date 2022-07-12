@@ -968,12 +968,12 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   const auto [_phi, pshape] = polynomials::tabulate(polynomials::type::legendre,
                                                     celltype, degree, pts);
   impl::cmdspan2_t phi(_phi.data(), pshape);
-  for (std::size_t dim = 0; dim < tdim; ++dim)
+  for (std::size_t d = 0; d < tdim; ++d)
   {
-    for (std::size_t e = 0; e < topology[dim].size(); ++e)
+    for (std::size_t e = 0; e < topology[d].size(); ++e)
     {
-      x[dim].emplace_back(0, tdim);
-      M[dim].emplace_back(0, 1, 0, 1);
+      x[d].emplace_back(0, tdim);
+      M[d].emplace_back(0, 1, 0, 1);
     }
   }
 

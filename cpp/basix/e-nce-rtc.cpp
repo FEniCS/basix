@@ -9,6 +9,7 @@
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include <cmath>
 #include <vector>
 
 using namespace basix;

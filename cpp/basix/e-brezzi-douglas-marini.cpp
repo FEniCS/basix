@@ -14,7 +14,6 @@
 #include <vector>
 
 using namespace basix;
-namespace stdex = std::experimental;
 
 //----------------------------------------------------------------------------
 FiniteElement element::create_bdm(cell::type celltype, int degree,

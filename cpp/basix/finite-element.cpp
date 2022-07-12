@@ -1112,9 +1112,9 @@ FiniteElement::base_transformations() const
   std::size_t dof_start = 0;
   if (_cell_tdim > 0)
   {
-    dof_start
-        = std::reduce(_edofs[0].begin(), _edofs[0].end(), std::size_t(0),
-                      [](std::size_t a, auto& b) { return a + b.size(); });
+    dof_start = std::reduce(_edofs[0].begin(), _edofs[0].end(), std::size_t(0),
+                            [](std::size_t a, const std::vector<int>& b)
+                            { return a + b.size(); });
   }
 
   int transform_n = 0;

@@ -28,7 +28,7 @@ constexpr int single_choose(int n, int k)
   return out;
 }
 //-----------------------------------------------------------------------------
-constexpr int choose(int n, const std::vector<int>& powers)
+int choose(int n, const std::vector<int>& powers)
 {
   int out = 1;
   for (std::size_t i = 0; i < powers.size(); ++i)

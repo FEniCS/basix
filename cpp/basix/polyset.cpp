@@ -847,9 +847,12 @@ void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
     auto result0 = stdex::submdspan(P, idx(0, ky - 1), stdex::full_extent,
                                     stdex::full_extent);
     for (std::size_t i = 0; i < result.extent(1); ++i)
+    {
       result(quad_idx(0, 1), i)
           = (x1[i] * 2.0 - 1.0) * result(quad_idx(0, 0), i)
             + 2 * ky * result0(quad_idx(0, 0), i);
+    }
+
     for (std::size_t py = 2; py <= n; ++py)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(py);
@@ -907,11 +910,14 @@ void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
       for (std::size_t py = 0; py <= n; ++py)
       {
         for (std::size_t i = 0; i < result.extent(1); ++i)
+        {
           result(quad_idx(1, py), i)
               = (x0[i] * 2.0 - 1.0) * result(quad_idx(0, py), i)
                 + 2 * kx * result0(quad_idx(0, py), i);
+        }
       }
     }
+
     for (std::size_t px = 2; px <= n; ++px)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(px);
@@ -987,17 +993,21 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
                                    stdex::full_extent);
     // for pz = 1
     for (std::size_t i = 0; i < result.extent(1); ++i)
+    {
       result(hex_idx(0, 0, 1), i)
           = (x2[i] * 2.0 - 1.0) * result(hex_idx(0, 0, 0), i);
+    }
 
     // for larger values of pz
     for (std::size_t pz = 2; pz <= n; ++pz)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(pz);
       for (std::size_t i = 0; i < result.extent(1); ++i)
+      {
         result(hex_idx(0, 0, pz), i)
             = (x2[i] * 2.0 - 1.0) * result(hex_idx(0, 0, pz - 1), i) * (a + 1.0)
               - result(hex_idx(0, 0, pz - 2), i) * a;
+      }
     }
   }
 
@@ -1011,9 +1021,12 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
                                     stdex::full_extent);
     // for pz = 1
     for (std::size_t i = 0; i < result.extent(1); ++i)
+    {
       result(hex_idx(0, 0, 1), i)
           = (x2[i] * 2.0 - 1.0) * result(hex_idx(0, 0, 0), i)
             + 2 * kz * result0(hex_idx(0, 0, 0), i);
+    }
+
     // for larger values of pz
     for (std::size_t pz = 2; pz <= n; ++pz)
     {
@@ -1038,10 +1051,13 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
     for (std::size_t pz = 0; pz <= n; ++pz)
     {
       for (std::size_t i = 0; i < result.extent(1); ++i)
+      {
         result(hex_idx(0, 1, pz), i)
             = (x1[i] * 2.0 - 1.0) * result(hex_idx(0, 0, pz), i);
+      }
     }
   }
+
   for (std::size_t py = 2; py <= n; ++py)
   {
     const double a = 1.0 - 1.0 / static_cast<double>(py);
@@ -1052,13 +1068,16 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
       for (std::size_t pz = 0; pz <= n; ++pz)
       {
         for (std::size_t i = 0; i < result.extent(1); ++i)
+        {
           result(hex_idx(0, py, pz), i)
               = (x1[i] * 2.0 - 1.0) * result(hex_idx(0, py - 1, pz), i)
                     * (a + 1.0)
                 - result(hex_idx(0, py - 2, pz), i) * a;
+        }
       }
     }
   }
+
   // for larger values of ky
   for (std::size_t ky = 1; ky <= nderiv; ++ky)
   {
@@ -1072,11 +1091,14 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
       for (std::size_t pz = 0; pz <= n; ++pz)
       {
         for (std::size_t i = 0; i < result.extent(1); ++i)
+        {
           result(hex_idx(0, 1, pz), i)
               = (x1[i] * 2.0 - 1.0) * result(hex_idx(0, 0, pz), i)
                 + 2 * ky * result0(hex_idx(0, 0, pz), i);
+        }
       }
     }
+
     for (std::size_t py = 2; py <= n; ++py)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(py);
@@ -1089,11 +1111,13 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
         for (std::size_t pz = 0; pz <= n; ++pz)
         {
           for (std::size_t i = 0; i < result.extent(1); ++i)
+          {
             result(hex_idx(0, py, pz), i)
                 = (x1[i] * 2.0 - 1.0) * result(hex_idx(0, py - 1, pz), i)
                       * (a + 1.0)
                   + 2 * ky * result0(hex_idx(0, py - 1, pz), i) * (a + 1.0)
                   - result(hex_idx(0, py - 2, pz), i) * a;
+          }
         }
       }
     }
@@ -1113,8 +1137,10 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
         for (std::size_t pz = 0; pz <= n; ++pz)
         {
           for (std::size_t i = 0; i < result.extent(1); ++i)
+          {
             result(hex_idx(1, py, pz), i)
                 = (x0[i] * 2.0 - 1.0) * result(hex_idx(0, py, pz), i);
+          }
         }
       }
     }
@@ -1134,10 +1160,12 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
           for (std::size_t pz = 0; pz <= n; ++pz)
           {
             for (std::size_t i = 0; i < result.extent(1); ++i)
+            {
               result(hex_idx(px, py, pz), i)
                   = (x0[i] * 2.0 - 1.0) * result(hex_idx(px - 1, py, pz), i)
                         * (a + 1.0)
                     - result(hex_idx(px - 2, py, pz), i) * a;
+            }
           }
         }
       }
@@ -1161,9 +1189,11 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
             for (std::size_t pz = 0; pz <= n; ++pz)
             {
               for (std::size_t i = 0; i < result.extent(1); ++i)
+              {
                 result(hex_idx(1, py, pz), i)
                     = (x0[i] * 2.0 - 1.0) * result(hex_idx(0, py, pz), i)
                       + 2 * kx * result0(hex_idx(0, py, pz), i);
+              }
             }
           }
         }
@@ -1186,11 +1216,13 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
             for (std::size_t pz = 0; pz <= n; ++pz)
             {
               for (std::size_t i = 0; i < result.extent(1); ++i)
+              {
                 result(hex_idx(px, py, pz), i)
                     = (x0[i] * 2.0 - 1.0) * result(hex_idx(px - 1, py, pz), i)
                           * (a + 1.0)
                       + 2 * kx * result0(hex_idx(px - 1, py, pz), i) * (a + 1.0)
                       - result(hex_idx(px - 2, py, pz), i) * a;
+              }
             }
           }
         }
@@ -1200,7 +1232,9 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
 
   // Normalise
   for (std::size_t px = 0; px <= n; ++px)
+  {
     for (std::size_t py = 0; py <= n; ++py)
+    {
       for (std::size_t pz = 0; pz <= n; ++pz)
       {
         auto pxyz = stdex::submdspan(P, stdex::full_extent, hex_idx(px, py, pz),
@@ -1209,6 +1243,8 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
           for (std::size_t j = 0; j < pxyz.extent(1); ++j)
             pxyz(i, j) *= std::sqrt((2 * px + 1) * (2 * py + 1) * (2 * pz + 1));
       }
+    }
+  }
 }
 //-----------------------------------------------------------------------------
 void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
@@ -1256,10 +1292,12 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
                                    stdex::full_extent);
         const double a
             = static_cast<double>(2 * p - 1) / static_cast<double>(p);
-
         for (std::size_t i = 0; i < p0.size(); ++i)
+        {
           p0[i] = ((x0[i] * 2.0 - 1.0) + 0.5 * (x1[i] * 2.0 - 1.0) + 0.5)
                   * p1[i] * a;
+        }
+
         if (kx > 0)
         {
           auto result0
@@ -1285,7 +1323,7 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
                                      stdex::full_extent);
           for (std::size_t i = 0; i < p0.size(); ++i)
           {
-            const double f2 = (1.0 - x1[i]);
+            double f2 = (1.0 - x1[i]);
             p0[i] -= f2 * f2 * p2[i] * (a - 1.0);
           }
           if (ky > 0)
@@ -1294,8 +1332,10 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
                 = stdex::submdspan(P, idx(kx, ky - 1, 0),
                                    prism_idx(p - 2, 0, 0), stdex::full_extent);
             for (std::size_t i = 0; i < p0.size(); ++i)
+            {
               p0[i]
                   -= ky * ((x1[i] * 2.0 - 1.0) - 1.0) * result0[i] * (a - 1.0);
+            }
           }
 
           if (ky > 1)
@@ -1367,19 +1407,28 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
             for (std::size_t q = 0; q <= n - p; ++q)
             {
               for (std::size_t i = 0; i < result.extent(1); ++i)
+              {
                 result(prism_idx(p, q, r), i)
                     = (x2[i] * 2.0 - 1.0) * result(prism_idx(p, q, r - 1), i)
                       * (a + 1.0);
+              }
               if (kz > 0)
+              {
                 for (std::size_t i = 0; i < result.extent(1); ++i)
-
+                {
                   result(prism_idx(p, q, r), i)
                       += 2 * kz * result0(prism_idx(p, q, r - 1), i)
                          * (a + 1.0);
+                }
+              }
               if (r > 1)
+              {
                 for (std::size_t i = 0; i < result.extent(1); ++i)
+                {
                   result(prism_idx(p, q, r), i)
                       -= result(prism_idx(p, q, r - 2), i) * a;
+                }
+              }
             }
           }
         }
@@ -1389,7 +1438,9 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
 
   // Normalise
   for (std::size_t p = 0; p <= n; ++p)
+  {
     for (std::size_t q = 0; q <= n - p; ++q)
+    {
       for (std::size_t r = 0; r <= n; ++r)
       {
         auto pqr = stdex::submdspan(P, stdex::full_extent, prism_idx(p, q, r),
@@ -1398,6 +1449,8 @@ void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
           for (std::size_t j = 0; j < pqr.extent(1); ++j)
             pqr(i, j) *= std::sqrt((p + 0.5) * (p + q + 1) * (2 * r + 1)) * 2;
       }
+    }
+  }
 }
 } // namespace
 //-----------------------------------------------------------------------------

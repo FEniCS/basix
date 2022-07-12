@@ -95,12 +95,7 @@ void dot(const U& A, const V& B, W&& C)
   assert(A.extent(1) == B.extent(0));
   assert(C.extent(0) == C.extent(0));
   assert(C.extent(1) == B.extent(1));
-
-  int M = A.extent(0);
-  int N = B.extent(1);
-  int K = A.extent(1);
-
-  if (M * N * K < 4096)
+  if (A.extent(0) * B.extent(1) * A.extent(1) < 4096)
   {
     for (std::size_t i = 0; i < A.extent(0); ++i)
       for (std::size_t j = 0; j < B.extent(1); ++j)

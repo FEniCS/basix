@@ -58,8 +58,8 @@ pytest test/
 
 ### C++
 
-Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor), BLAS
-and LAPACK. CMake will download xtensor if it cannot be found. 
+Basix depends on [`xtl`](https://github.com/xtensor-stack/xtl), BLAS and
+LAPACK. CMake can download xtl if it cannot be found.
 
 ### Python
 

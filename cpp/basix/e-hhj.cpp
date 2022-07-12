@@ -12,6 +12,7 @@
 
 using namespace basix;
 namespace stdex = std::experimental;
+using mdarray3_t = stdex::mdarray<double, stdex::dextents<std::size_t, 3>>;
 using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
@@ -112,8 +113,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         // Store up outer(t, t) for all tangents
         const std::vector<int>& vert_ids = topology[d][e];
         const std::size_t ntangents = d * (d + 1) / 2;
-        stdex::mdarray<double, stdex::dextents<std::size_t, 3>> vvt(
-            ntangents, geometry.extent(1), geometry.extent(1));
+        mdarray3_t vvt(ntangents, geometry.extent(1), geometry.extent(1));
         std::vector<double> edge_t(geometry.extent(1));
         int c = 0;
         for (std::size_t s = 0; s < d; ++s)

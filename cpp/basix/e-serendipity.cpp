@@ -94,17 +94,13 @@ serendipity_3d_indices(int total, int linear, std::vector<int> done = {})
   }
 
   std::vector<int> new_done(done.size() + 1);
-  int sum_done = 0;
-  for (std::size_t i = 0; i < done.size(); ++i)
-  {
-    new_done[i] = done[i];
-    sum_done += done[i];
-  }
+  std::copy(done.begin(), done.end(), new_done.begin());
+  const int sum_done = std::reduce(done.begin(), done.end());
 
   std::vector<std::array<int, 3>> out;
   for (int i = 0; i <= total - sum_done; ++i)
   {
-    new_done[done.size()] = i;
+    new_done.back() = i;
     for (std::array<int, 3> j : serendipity_3d_indices(total, linear, new_done))
       out.push_back(j);
   }

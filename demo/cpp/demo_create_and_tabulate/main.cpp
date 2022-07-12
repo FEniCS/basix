@@ -19,9 +19,8 @@ int main(int argc, char* argv[])
   // Create a degree 4 Lagrange element on a quadrilateral
   // For Lagrange elements, we use `basix::element::family::P`.
   auto family = basix::element::family::P;
-  // auto cell_type = basix::cell::type::quadrilateral;
-  auto cell_type = basix::cell::type::hexahedron;
-  int k = 10;
+  auto cell_type = basix::cell::type::quadrilateral;
+  int k = 3;
 
   // For Lagrange elements, we must provide and extra argument: the Lagrange
   // variant. In this example, we use the equispaced variant: this will place
@@ -32,27 +31,27 @@ int main(int argc, char* argv[])
   basix::FiniteElement lagrange
       = basix::create_element(family, cell_type, k, variant);
 
-  // // Get the number of degrees of freedom for the element
-  // int dofs = lagrange.dim();
-  // assert(dofs == (k + 1) * (k + 1));
+  // Get the number of degrees of freedom for the element
+  int dofs = lagrange.dim();
+  assert(dofs == (k + 1) * (k + 1));
 
-  // // Create a set of points, and tabulate the basis functions
-  // // of the Lagrange element at these points.
+  // Create a set of points, and tabulate the basis functions
+  // of the Lagrange element at these points.
   std::vector<double> points
       = {0.0, 0.0, 0.1, 0.1, 0.2, 0.3, 0.3, 0.6, 0.4, 1.0};
 
-  auto [tab_data, shape] = lagrange.tabulate(0, points, {points.size() / 3, 3});
+  auto [tab_data, shape] = lagrange.tabulate(0, points, {points.size() / 2, 2});
 
-  // std::cout << "Tabulate data shape: [ ";
-  // for (auto s : shape)
-  //   std::cout << s << " ";
-  // std::cout << "]" << std::endl;
+  std::cout << "Tabulate data shape: [ ";
+  for (auto s : shape)
+    std::cout << s << " ";
+  std::cout << "]" << std::endl;
 
-  // cmdspan4_t tab(tab_data.data(), shape);
-  // std::cout << "Tabulate data (0, 0, :, 0): [ ";
-  // for (std::size_t i = 0; i < tab.extent(2); ++i)
-  //   std::cout << tab(0, 0, i, 0) << " ";
-  // std::cout << "]" << std::endl;
+  cmdspan4_t tab(tab_data.data(), shape);
+  std::cout << "Tabulate data (0, 0, :, 0): [ ";
+  for (std::size_t i = 0; i < tab.extent(2); ++i)
+    std::cout << tab(0, 0, i, 0) << " ";
+  std::cout << "]" << std::endl;
 
   return 0;
 }

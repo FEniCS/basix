@@ -34,6 +34,7 @@ using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
 using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
+using mdarray3_t = stdex::mdarray<double, stdex::dextents<std::size_t, 3>>;
 
 namespace
 {
@@ -125,8 +126,9 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
   }
 
   std::size_t pdim = polyset::dim(cell_type, degree);
-  mdarray2_t D(vs * pdim, num_dofs);
+  mdarray3_t D(vs, pdim, num_dofs);
   std::fill(D.data(), D.data() + D.size(), 0);
+  std::vector<double> Pb;
 
   // Loop over different dimensions
   std::size_t dof_index = 0;
@@ -138,7 +140,6 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
       // Evaluate polynomial basis at x[d]
       cmdspan2_t x_e = x[d][e];
       cmdspan3_t P;
-      std::vector<double> Pb;
       if (x_e.extent(0) > 0)
       {
         std::array<std::size_t, 3> shape;
@@ -151,20 +152,49 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
       cmdspan4_t Me = M[d][e];
 
       // Compute dual matrix contribution
-      for (std::size_t i = 0; i < Me.extent(0); ++i)        // Dof index
-        for (std::size_t j = 0; j < Me.extent(1); ++j)      // Value index
-          for (std::size_t k = 0; k < Me.extent(2); ++k)    // Point
-            for (std::size_t l = 0; l < Me.extent(3); ++l)  // Derivative
-              for (std::size_t m = 0; m < P.extent(1); ++m) // Polynomial term
-                D(j * pdim + m, dof_index + i) += Me(i, j, k, l) * P(l, m, k);
+      if (Me.extent(3) > 1)
+      {
+        for (std::size_t l = 0; l < Me.extent(3); ++l)       // Derivative
+          for (std::size_t m = 0; m < P.extent(1); ++m)      // Polynomial term
+            for (std::size_t i = 0; i < Me.extent(0); ++i)   // Dof index
+              for (std::size_t j = 0; j < Me.extent(1); ++j) // Value index
+                for (std::size_t k = 0; k < Me.extent(2); ++k) // Point
+                  D(j, m, dof_index + i) += Me(i, j, k, l) * P(l, m, k);
+      }
+      else
+      {
+        // Flatten and use matrix-matrix multiplication, possibly using
+        // BLAS for larger cases. We can do this straightforwardly when
+        // Me.extent(3) == 1 since we are contracting over one index
+        // only.
+
+        mdarray2_t Pt(P.extent(2), P.extent(1));
+        for (std::size_t i = 0; i < Pt.extent(0); ++i)
+          for (std::size_t j = 0; j < Pt.extent(1); ++j)
+            Pt(i, j) = P(0, j, i);
+
+        mdarray2_t De(Me.extent(0) * Me.extent(1), Pt.extent(1));
+        math::dot(
+            cmdspan2_t(Me.data(), Me.extent(0) * Me.extent(1), Me.extent(2)),
+            Pt, De);
+
+        // Expand and copy
+        for (std::size_t i = 0; i < Me.extent(0); ++i)
+          for (std::size_t j = 0; j < Me.extent(1); ++j)
+            for (std::size_t k = 0; k < P.extent(1); ++k)
+              D(j, k, dof_index + i) += De(i * Me.extent(1) + j, k);
+      }
 
       dof_index += M[d][e].extent(0);
     }
   }
 
-  std::array shape = {B.extent(0), D.extent(1)};
+  // Flatten D
+  cmdspan2_t Df(D.data(), D.extent(0) * D.extent(1), D.extent(2));
+
+  std::array shape = {B.extent(0), Df.extent(1)};
   std::vector<double> C(shape[0] * shape[1]);
-  math::dot(B, D, mdspan2_t(C.data(), shape));
+  math::dot(B, Df, mdspan2_t(C.data(), shape));
   return {std::move(C), shape};
 }
 //-----------------------------------------------------------------------------

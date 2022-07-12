@@ -21,8 +21,6 @@
 #include <cmath>
 #include <numeric>
 
-#include <iostream>
-
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
@@ -158,7 +156,7 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
           for (std::size_t k = 0; k < Me.extent(2); ++k)    // Point
             for (std::size_t l = 0; l < Me.extent(3); ++l)  // Derivative
               for (std::size_t m = 0; m < P.extent(1); ++m) // Polynomial term
-                D(j * pdim + m, dof_index + i) += Me(i, j, k, l) * P(l, m, k);
+                D(j * pdim + m, ii) += Me(i, j, k, l) * P(l, m, k);
 
       dof_index += M[d][e].extent(0);
     }

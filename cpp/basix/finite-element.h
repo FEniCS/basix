@@ -1204,10 +1204,12 @@ private:
   std::pair<std::vector<double>, std::array<std::size_t, 2>> _wcoeffs;
 
   // Interpolation matrices for each entity
-  std::array<
-      std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>,
-      4>
-      _M;
+  using array4_t
+      = std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>;
+  std::array<array4_t, 4> _M;
+  // std::array<
+  //     std::vector<std::pair<std::vector<double>, std::array<std::size_t,
+  //     4>>>, 4> _M;
 };
 
 /// Create a custom finite element
@@ -1354,9 +1356,8 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Transform DOFs on edges
     {
@@ -1426,9 +1427,8 @@ void FiniteElement::apply_transpose_dof_transformation(
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Transform DOFs on edges
     {
@@ -1497,9 +1497,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Transform DOFs on edges
     for (std::size_t e = 0; e < _edofs[1].size(); ++e)
@@ -1567,9 +1566,8 @@ void FiniteElement::apply_inverse_dof_transformation(
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Transform DOFs on edges
     {
@@ -1639,9 +1637,8 @@ void FiniteElement::apply_dof_transformation_to_transpose(
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Transform DOFs on edges
     {
@@ -1711,9 +1708,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Transform DOFs on edges
     {
@@ -1782,9 +1778,8 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Transform DOFs on edges
     {
@@ -1853,9 +1848,8 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Transform DOFs on edges
     {

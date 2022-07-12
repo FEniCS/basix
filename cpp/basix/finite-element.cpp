@@ -441,9 +441,8 @@ basix::FiniteElement basix::create_custom_element(
 {
   // Check that inputs are valid
   const std::size_t psize = polyset::dim(cell_type, highest_degree);
-  std::size_t value_size = 1;
-  for (std::size_t i = 0; i < value_shape.size(); ++i)
-    value_size *= value_shape[i];
+  const std::size_t value_size = std::reduce(
+      value_shape.begin(), value_shape.end(), 1, std::multiplies{});
 
   const std::size_t deriv_count
       = polyset::nderivs(cell_type, interpolation_nderivs);
@@ -1113,8 +1112,8 @@ FiniteElement::base_transformations() const
   std::size_t dof_start = 0;
   if (_cell_tdim > 0)
   {
-    for (auto& edofs0 : _edofs[0])
-      dof_start += edofs0.size();
+    dof_start = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                            [](auto a, auto& b) { return a + b.size(); });
   }
 
   int transform_n = 0;
@@ -1249,9 +1248,8 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
     // cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
 
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Permute DOFs on edges
     {
@@ -1302,9 +1300,8 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
+    int dofstart = std::reduce(_edofs[0].begin(), _edofs[0].end(), 0,
+                               [](auto a, auto& b) { return a + b.size(); });
 
     // Permute DOFs on edges
     {

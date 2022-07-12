@@ -646,29 +646,36 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
             auto r_pq = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
                                          stdex::full_extent);
             for (std::size_t i = 0; i < r_pq.size(); ++i)
+            {
               r_pq[i]
                   = (0.5 + (x1[i] * 2.0 - 1.0) + (x2[i] * 2.0 - 1.0) * 0.5)
                     * stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q - 1, 0),
                                        stdex::full_extent)[i]
                     * (a + 1.0);
+            }
+
             if (ky > 0)
             {
               for (std::size_t i = 0; i < r_pq.size(); ++i)
+              {
                 r_pq[i] += 2.0 * ky
                            * stdex::submdspan(P, idx(kx, ky - 1, kz),
                                               pyr_idx(p, q - 1, 0),
                                               stdex::full_extent)[i]
                            * (a + 1.0);
+              }
             }
 
             if (kz > 0)
             {
               for (std::size_t i = 0; i < r_pq.size(); ++i)
+              {
                 r_pq[i] += kz
                            * stdex::submdspan(P, idx(kx, ky, kz - 1),
                                               pyr_idx(p, q - 1, 0),
                                               stdex::full_extent)[i]
                            * (a + 1.0);
+              }
             }
 
             if (q > 1)
@@ -696,11 +703,13 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
               if (kz > 1)
               {
                 for (std::size_t i = 0; i < r_pq.size(); ++i)
+                {
                   r_pq[i] -= kz * (kz - 1)
                              * stdex::submdspan(P, idx(kx, ky, kz - 2),
                                                 pyr_idx(p, q - 2, 0),
                                                 stdex::full_extent)[i]
                              * a;
+                }
               }
             }
           }
@@ -714,18 +723,23 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
             auto r_pq1 = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 1),
                                           stdex::full_extent);
             for (std::size_t i = 0; i < r_pq1.size(); ++i)
+            {
               r_pq1[i]
                   = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
                                      stdex::full_extent)[i]
                     * ((1.0 + p + q) + (x2[i] * 2.0 - 1.0) * (2.0 + p + q));
+            }
+
             if (kz > 0)
             {
               for (std::size_t i = 0; i < r_pq1.size(); ++i)
+              {
                 r_pq1[i] += 2 * kz
                             * stdex::submdspan(P, idx(kx, ky, kz - 1),
                                                pyr_idx(p, q, 0),
                                                stdex::full_extent)[i]
                             * (2.0 + p + q);
+              }
             }
           }
         }
@@ -740,6 +754,7 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
               auto r_pqr = stdex::submdspan(
                   P, idx(kx, ky, kz), pyr_idx(p, q, r + 1), stdex::full_extent);
               for (std::size_t i = 0; i < r_pqr.size(); ++i)
+              {
                 r_pqr[i]
                     = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, r),
                                        stdex::full_extent)[i]
@@ -748,13 +763,17 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
                                          pyr_idx(p, q, r - 1),
                                          stdex::full_extent)[i]
                             * cr;
+              }
+
               if (kz > 0)
               {
                 for (std::size_t i = 0; i < r_pqr.size(); ++i)
+                {
                   r_pqr[i] += ar * 2 * kz
                               * stdex::submdspan(P, idx(kx, ky, kz - 1),
                                                  pyr_idx(p, q, r),
                                                  stdex::full_extent)[i];
+                }
               }
             }
           }
@@ -812,16 +831,20 @@ void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
     auto result = stdex::submdspan(P, idx(0, 0), stdex::full_extent,
                                    stdex::full_extent);
     for (std::size_t i = 0; i < result.extent(1); ++i)
+    {
       result(quad_idx(0, 1), i)
           = (x1[i] * 2.0 - 1.0) * result(quad_idx(0, 0), i);
+    }
 
     for (std::size_t py = 2; py <= n; ++py)
     {
       const double a = 1.0 - 1.0 / static_cast<double>(py);
       for (std::size_t i = 0; i < result.extent(1); ++i)
+      {
         result(quad_idx(0, py), i)
             = (x1[i] * 2.0 - 1.0) * result(quad_idx(0, py - 1), i) * (a + 1.0)
               - result(quad_idx(0, py - 2), i) * a;
+      }
     }
   }
   for (std::size_t ky = 1; ky <= nderiv; ++ky)
@@ -839,10 +862,12 @@ void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
     {
       const double a = 1.0 - 1.0 / static_cast<double>(py);
       for (std::size_t i = 0; i < result.extent(1); ++i)
+      {
         result(quad_idx(0, py), i)
             = (x1[i] * 2.0 - 1.0) * result(quad_idx(0, py - 1), i) * (a + 1.0)
               + 2 * ky * result0(quad_idx(0, py - 1), i) * (a + 1.0)
               - result(quad_idx(0, py - 2), i) * a;
+      }
     }
   }
 
@@ -854,8 +879,10 @@ void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
     for (std::size_t py = 0; py <= n; ++py)
     {
       for (std::size_t i = 0; i < result.extent(1); ++i)
+      {
         result(quad_idx(1, py), i)
             = (x0[i] * 2.0 - 1.0) * result(quad_idx(0, py), i);
+      }
     }
   }
   for (std::size_t px = 2; px <= n; ++px)
@@ -868,10 +895,12 @@ void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
       for (std::size_t py = 0; py <= n; ++py)
       {
         for (std::size_t i = 0; i < result.extent(1); ++i)
+        {
           result(quad_idx(px, py), i) = (x0[i] * 2.0 - 1.0)
                                             * result(quad_idx(px - 1, py), i)
                                             * (a + 1.0)
                                         - result(quad_idx(px - 2, py), i) * a;
+        }
       }
     }
   }
@@ -903,11 +932,13 @@ void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
         for (std::size_t py = 0; py <= n; ++py)
         {
           for (std::size_t i = 0; i < result.extent(1); ++i)
+          {
             result(quad_idx(px, py), i)
                 = (x0[i] * 2.0 - 1.0) * result(quad_idx(px - 1, py), i)
                       * (a + 1.0)
                   + 2 * kx * result0(quad_idx(px - 1, py), i) * (a + 1.0)
                   - result(quad_idx(px - 2, py), i) * a;
+          }
         }
       }
     }
@@ -966,6 +997,7 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
     for (std::size_t i = 0; i < result.extent(1); ++i)
       result(hex_idx(0, 0, 1), i)
           = (x2[i] * 2.0 - 1.0) * result(hex_idx(0, 0, 0), i);
+
     // for larger values of pz
     for (std::size_t pz = 2; pz <= n; ++pz)
     {
@@ -976,6 +1008,7 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
               - result(hex_idx(0, 0, pz - 2), i) * a;
     }
   }
+
   // for larger values of kz
   for (std::size_t kz = 1; kz <= nderiv; ++kz)
   {
@@ -994,10 +1027,12 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
     {
       const double a = 1.0 - 1.0 / static_cast<double>(pz);
       for (std::size_t i = 0; i < result.extent(1); ++i)
+      {
         result(hex_idx(0, 0, pz), i)
             = (x2[i] * 2.0 - 1.0) * result(hex_idx(0, 0, pz - 1), i) * (a + 1.0)
               + 2 * kz * result0(hex_idx(0, 0, pz - 1), i) * (a + 1.0)
               - result(hex_idx(0, 0, pz - 2), i) * a;
+      }
     }
   }
 

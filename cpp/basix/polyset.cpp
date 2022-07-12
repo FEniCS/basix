@@ -12,11 +12,10 @@
 
 using namespace basix;
 using namespace basix::indexing;
+
 namespace stdex = std::experimental;
-using extents2d
-    = stdex::extents<std::size_t, stdex::dynamic_extent, stdex::dynamic_extent>;
-using extents3d = stdex::extents<std::size_t, stdex::dynamic_extent,
-                                 stdex::dynamic_extent, stdex::dynamic_extent>;
+using mdspan3_t = stdex::mdspan<double, stdex::dextents<std::size_t, 3>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 
 namespace
 {
@@ -32,11 +31,10 @@ constexpr std::array<double, 3> jrc(int a, int n)
   return {an, bn, cn};
 }
 //-----------------------------------------------------------------------------
-// At a point, only the constant polynomial can be used. This has value 1 and
-// derivative 0.
-void tabulate_polyset_point_derivs(stdex::mdspan<double, extents3d> P,
-                                   std::size_t, std::size_t nderiv,
-                                   stdex::mdspan<const double, extents2d> x)
+// At a point, only the constant polynomial can be used. This has value
+// 1 and derivative 0.
+void tabulate_polyset_point_derivs(mdspan3_t P, std::size_t, std::size_t nderiv,
+                                   cmdspan2_t x)
 {
   assert(x.extent(0) > 0);
   assert(P.extent(0) == nderiv + 1);
@@ -53,9 +51,8 @@ void tabulate_polyset_point_derivs(stdex::mdspan<double, extents3d> P,
 // Legendre Polynomials, with the recurrence relation given by
 // n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1, 1]. The
 // range is rescaled here to [0, 1].
-void tabulate_polyset_line_derivs(stdex::mdspan<double, extents3d> P,
-                                  std::size_t n, std::size_t nderiv,
-                                  stdex::mdspan<const double, extents2d> x)
+void tabulate_polyset_line_derivs(mdspan3_t P, std::size_t n,
+                                  std::size_t nderiv, cmdspan2_t x)
 {
   assert(x.extent(0) > 0);
   assert(P.extent(0) == nderiv + 1);
@@ -114,9 +111,8 @@ void tabulate_polyset_line_derivs(stdex::mdspan<double, extents3d> P,
 // above, but with a change of variables. The polynomials are then
 // extended in the q direction, using the relation given in Sherwin and
 // Karniadakis 1995 (https://doi.org/10.1016/0045-7825(94)00745-9).
-void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
-                                      std::size_t n, std::size_t nderiv,
-                                      stdex::mdspan<const double, extents2d> x)
+void tabulate_polyset_triangle_derivs(mdspan3_t P, std::size_t n,
+                                      std::size_t nderiv, cmdspan2_t x)
 {
   assert(x.extent(1) == 2);
 
@@ -262,9 +258,8 @@ void tabulate_polyset_triangle_derivs(stdex::mdspan<double, extents3d> P,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_tetrahedron_derivs(
-    stdex::mdspan<double, extents3d> P, std::size_t n, std::size_t nderiv,
-    stdex::mdspan<const double, extents2d> x)
+void tabulate_polyset_tetrahedron_derivs(mdspan3_t P, std::size_t n,
+                                         std::size_t nderiv, cmdspan2_t x)
 {
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
@@ -539,9 +534,8 @@ void tabulate_polyset_tetrahedron_derivs(
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
-                                     std::size_t n, std::size_t nderiv,
-                                     stdex::mdspan<const double, extents2d> x)
+void tabulate_polyset_pyramid_derivs(mdspan3_t P, std::size_t n,
+                                     std::size_t nderiv, cmdspan2_t x)
 {
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
@@ -551,9 +545,8 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
   // Indexing for pyramidal basis functions
   auto pyr_idx = [n](std::size_t p, std::size_t q, std::size_t r) -> std::size_t
   {
-    const std::size_t rv = n - r + 1;
-    const std::size_t r0
-        = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
+    std::size_t rv = n - r + 1;
+    std::size_t r0 = r * (n + 1) * (n - r + 2) + (2 * r - 1) * (r - 1) * r / 6;
     return r0 + p * rv + q;
   };
 
@@ -791,9 +784,8 @@ void tabulate_polyset_pyramid_derivs(stdex::mdspan<double, extents3d> P,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
-                                  std::size_t n, std::size_t nderiv,
-                                  stdex::mdspan<const double, extents2d> x)
+void tabulate_polyset_quad_derivs(mdspan3_t P, std::size_t n,
+                                  std::size_t nderiv, cmdspan2_t x)
 {
   assert(x.extent(1) == 2);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
@@ -956,9 +948,8 @@ void tabulate_polyset_quad_derivs(stdex::mdspan<double, extents3d> P,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
-                                 std::size_t n, std::size_t nderiv,
-                                 stdex::mdspan<const double, extents2d> x)
+void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
+                                 cmdspan2_t x)
 {
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
@@ -1247,9 +1238,8 @@ void tabulate_polyset_hex_derivs(stdex::mdspan<double, extents3d> P,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_prism_derivs(stdex::mdspan<double, extents3d> P,
-                                   std::size_t n, std::size_t nderiv,
-                                   stdex::mdspan<const double, extents2d> x)
+void tabulate_polyset_prism_derivs(mdspan3_t P, std::size_t n,
+                                   std::size_t nderiv, cmdspan2_t x)
 {
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);

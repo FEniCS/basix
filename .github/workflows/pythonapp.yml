@@ -23,7 +23,6 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.8", "3.9", "3.10"]
-
     env:
       CC: gcc-10
       CXX: g++-10
@@ -148,6 +147,9 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.10"]
+    env:
+      CC: gcc-10
+      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
@@ -182,6 +184,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
+    env:
+      CC: gcc-10
+      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3

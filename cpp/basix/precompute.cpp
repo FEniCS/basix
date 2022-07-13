@@ -15,7 +15,7 @@ using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
 
 //-----------------------------------------------------------------------------
 std::vector<std::size_t>
-precompute::prepare_permutation(const xtl::span<const std::size_t>& perm)
+precompute::prepare_permutation(const std::span<const std::size_t>& perm)
 {
   std::vector<std::size_t> f_perm(perm.size());
   for (std::size_t row = 0; row < perm.size(); ++row)
@@ -69,7 +69,7 @@ precompute::prepare_matrix(
         math::dot(mat, mat_t, mat2);
 
         auto [evals, _] = math::eigh(
-            xtl::span<const double>(mat2.data_handle(), mat2.size()),
+            std::span<const double>(mat2.data_handle(), mat2.size()),
             mat2.extent(0));
         if (double lambda = std::abs(evals.front()); lambda > max_eval)
         {
@@ -118,7 +118,7 @@ precompute::prepare_matrix(
       for (std::size_t k1 = 0; k1 < i; ++k1)
         prepared_matrix(i, k1) = v[k1];
 
-      xtl::span t(tb.data(), i);
+      std::span t(tb.data(), i);
       for (std::size_t k = 0; k < i; ++k)
         t[k] = permuted_matrix(k, i);
       diag[i] -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.0);

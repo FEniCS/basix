@@ -1123,7 +1123,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
       {
         auto [_entity_x, shape] = cell::sub_entity_geometry(celltype, d, e);
         impl::mdspan2_t entity_x(_entity_x.data(), shape);
-        xtl::span<const double> x0(entity_x.data_handle(), shape[1]);
+        std::span<const double> x0(entity_x.data_handle(), shape[1]);
         {
           auto& _x = x[d].emplace_back(pts.extent(0), shape[1]);
           for (std::size_t i = 0; i < _x.extent(0); ++i)
@@ -1285,7 +1285,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           const auto [pt, shape] = lattice::create(ct, degree, lattice_type,
                                                    false, simplex_method);
           impl::cmdspan2_t lattice(pt.data(), shape);
-          xtl::span<const double> x0(entity_x.data(), entity_x_shape[1]);
+          std::span<const double> x0(entity_x.data(), entity_x_shape[1]);
           impl::cmdspan2_t entity_x_view(entity_x.data(), entity_x_shape);
 
           auto& _x = x[dim].emplace_back(shape[0], entity_x_shape[1]);

@@ -9,8 +9,8 @@
 #include <algorithm>
 #include <array>
 #include <functional>
+#include <span>
 #include <tuple>
-#include <xtl/xspan.hpp>
 
 using namespace basix;
 
@@ -24,7 +24,7 @@ using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
 
 using map_data_t
-    = std::tuple<std::function<std::array<double, 3>(xtl::span<const double>)>,
+    = std::tuple<std::function<std::array<double, 3>(std::span<const double>)>,
                  mdarray2_t, double, mdarray2_t>;
 typedef std::map<cell::type, std::vector<map_data_t>> mapinfo_t;
 
@@ -313,7 +313,7 @@ compute_transformation(
     cell::type cell_type, const std::array<std::vector<cmdspan2_t>, 4>& x,
     const std::array<std::vector<cmdspan4_t>, 4>& M, cmdspan2_t coeffs,
     const mdarray2_t& J, double detJ, const mdarray2_t& K,
-    const std::function<std::array<double, 3>(xtl::span<const double>)>
+    const std::function<std::array<double, 3>(std::span<const double>)>
         map_point,
     int degree, int tdim, const int entity, std::size_t vs,
     const maps::type map_type)
@@ -345,7 +345,7 @@ compute_transformation(
   for (std::size_t p = 0; p < mapped_pts.extent(0); ++p)
   {
     auto mp = map_point(
-        xtl::span(pts.data_handle() + p * pts.extent(1), pts.extent(1)));
+        std::span(pts.data_handle() + p * pts.extent(1), pts.extent(1)));
     for (std::size_t k = 0; k < mapped_pts.extent(1); ++k)
       mapped_pts(p, k) = mp[k];
   }

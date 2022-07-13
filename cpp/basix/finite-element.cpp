@@ -1008,7 +1008,7 @@ FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 4>>
-FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
+FiniteElement::tabulate(int nd, const std::span<const double>& x,
                         std::array<std::size_t, 2> shape) const
 {
   std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
@@ -1063,9 +1063,9 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
+void FiniteElement::tabulate(int nd, const std::span<const double>& x,
                              std::array<std::size_t, 2> xshape,
-                             const xtl::span<double>& basis) const
+                             const std::span<double>& basis) const
 {
   std::array<std::size_t, 4> shape = tabulate_shape(nd, xshape[0]);
   assert(x.size() == xshape[0] * xshape[1]);
@@ -1201,7 +1201,7 @@ FiniteElement::points() const
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 3>>
 FiniteElement::push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
-                            xtl::span<const double> detJ,
+                            std::span<const double> detJ,
                             impl::cmdspan3_t K) const
 {
   const std::size_t physical_value_size
@@ -1236,7 +1236,7 @@ FiniteElement::push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 3>>
 FiniteElement::pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
-                         xtl::span<const double> detJ, impl::cmdspan3_t K) const
+                         std::span<const double> detJ, impl::cmdspan3_t K) const
 {
   const std::size_t reference_value_size = std::accumulate(
       _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
@@ -1267,7 +1267,7 @@ FiniteElement::pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
   return {std::move(Ub), shape};
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
+void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
                                  std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
@@ -1321,7 +1321,7 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
+void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
                                    std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)

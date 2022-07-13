@@ -8,8 +8,8 @@
 
 #include "mdspan.hpp"
 #include <array>
+#include <span>
 #include <vector>
-#include <xtl/xspan.hpp>
 
 /// Mathematical functions
 ///
@@ -24,10 +24,10 @@ namespace impl
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
 /// @return A * B
-void dot_blas(const xtl::span<const double>& A,
+void dot_blas(const std::span<const double>& A,
               std::array<std::size_t, 2> Ashape,
-              const xtl::span<const double>& B,
-              std::array<std::size_t, 2> Bshape, const xtl::span<double>& C);
+              const std::span<const double>& B,
+              std::array<std::size_t, 2> Bshape, const std::span<double>& C);
 } // namespace impl
 
 /// @brief Compute the outer product of vectors u and v.
@@ -66,7 +66,7 @@ std::array<typename U::value_type, 3> cross(const U& u, const V& v)
 /// uses column-major storage, which each column being an eigenvector.
 /// @pre The matrix `A` must be symmetric
 std::pair<std::vector<double>, std::vector<double>>
-eigh(const xtl::span<const double>& A, std::size_t n);
+eigh(const std::span<const double>& A, std::size_t n);
 
 /// Solve A X = B
 /// @param[in] A The matrix
@@ -106,9 +106,9 @@ void dot(const U& A, const V& B, W&& C)
   else
   {
     impl::dot_blas(
-        xtl::span(A.data_handle(), A.size()), {A.extent(0), A.extent(1)},
-        xtl::span(B.data_handle(), B.size()), {B.extent(0), B.extent(1)},
-        xtl::span(C.data_handle(), C.size()));
+        std::span(A.data_handle(), A.size()), {A.extent(0), A.extent(1)},
+        std::span(B.data_handle(), B.size()), {B.extent(0), B.extent(1)},
+        std::span(C.data_handle(), C.size()));
   }
 }
 

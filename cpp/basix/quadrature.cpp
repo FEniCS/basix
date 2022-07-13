@@ -155,7 +155,7 @@ std::array<std::vector<double>, 2> lobatto(const std::vector<double>& alpha,
 /// @return Array of polynomial derivative values (rows) at points
 /// (columns)
 mdarray2_t compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
-                                const xtl::span<const double>& x)
+                                const std::span<const double>& x)
 {
   std::vector<std::size_t> shape = {x.size()};
   mdarray3_t J(nderiv + 1, n + 1, x.size());
@@ -244,7 +244,7 @@ std::vector<double> compute_gauss_jacobi_points(double a, int m)
       double s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      xtl::span<const double> _x(&x[k], 1);
+      std::span<const double> _x(&x[k], 1);
       const mdarray2_t f = compute_jacobi_deriv(a, m, 1, _x);
       const double delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
       x[k] -= delta;

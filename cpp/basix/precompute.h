@@ -5,9 +5,9 @@
 #pragma once
 
 #include "mdspan.hpp"
+#include <span>
 #include <tuple>
 #include <vector>
-#include <xtl/xspan.hpp>
 
 /// Matrix and permutation precomputation
 namespace basix::precompute
@@ -62,7 +62,7 @@ namespace basix::precompute
 /// @param[in] perm A permutation
 /// @return The precomputed representation of the permutation
 std::vector<std::size_t>
-prepare_permutation(const xtl::span<const std::size_t>& perm);
+prepare_permutation(const std::span<const std::size_t>& perm);
 
 /// Apply a (precomputed) permutation
 ///
@@ -116,8 +116,8 @@ prepare_permutation(const xtl::span<const std::size_t>& perm);
 /// @param[in] offset The position in the data to start applying the permutation
 /// @param[in] block_size The block size of the data
 template <typename E>
-void apply_permutation(const xtl::span<const std::size_t>& perm,
-                       const xtl::span<E>& data, std::size_t offset = 0,
+void apply_permutation(const std::span<const std::size_t>& perm,
+                       const std::span<E>& data, std::size_t offset = 0,
                        std::size_t block_size = 1)
 {
   for (std::size_t b = 0; b < block_size; ++b)
@@ -137,8 +137,8 @@ void apply_permutation(const xtl::span<const std::size_t>& perm,
 ///
 /// see `apply_permutation()`.
 template <typename E>
-void apply_permutation_to_transpose(const xtl::span<const std::size_t>& perm,
-                                    const xtl::span<E>& data,
+void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
+                                    const std::span<E>& data,
                                     std::size_t offset = 0,
                                     std::size_t block_size = 1)
 {
@@ -327,11 +327,11 @@ prepare_matrix(
 /// permutation
 /// @param[in] block_size The block size of the data
 template <typename T, typename E>
-void apply_matrix(const xtl::span<const std::size_t>& v_size_t,
-                  const xtl::span<const T>& v_t,
+void apply_matrix(const std::span<const std::size_t>& v_size_t,
+                  const std::span<const T>& v_t,
                   const std::experimental::mdspan<
                       const T, std::experimental::dextents<std::size_t, 2>>& M,
-                  const xtl::span<E>& data, std::size_t offset = 0,
+                  const std::span<E>& data, std::size_t offset = 0,
                   std::size_t block_size = 1)
 {
   const std::size_t dim = v_size_t.size();
@@ -358,10 +358,10 @@ void apply_matrix(const xtl::span<const std::size_t>& v_size_t,
 /// See `apply_matrix()`.
 template <typename T, typename E>
 void apply_matrix_to_transpose(
-    const xtl::span<const std::size_t>& v_size_t, const xtl::span<const T>& v_t,
+    const std::span<const std::size_t>& v_size_t, const std::span<const T>& v_t,
     const std::experimental::mdspan<
         const T, std::experimental::dextents<std::size_t, 2>>& M,
-    const xtl::span<E>& data, std::size_t offset = 0,
+    const std::span<E>& data, std::size_t offset = 0,
     std::size_t block_size = 1)
 {
   const std::size_t dim = v_size_t.size();

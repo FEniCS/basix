@@ -18,8 +18,8 @@
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <span>
 #include <string>
-#include <xtl/xspan.hpp>
 
 namespace py = pybind11;
 using namespace basix;
@@ -236,7 +236,7 @@ Interface to the Basix C++ library.
             auto [u, shape] = self.push_forward(
                 cmdspan3_t(U.data(), U.shape(0), U.shape(1), U.shape(2)),
                 cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
-                xtl::span<const double>(detJ.data(), detJ.size()),
+                std::span<const double>(detJ.data(), detJ.size()),
                 cmdspan3_t(K.data(), K.shape(0), K.shape(1), K.shape(2)));
             return py::array_t<double>(shape, u.data());
           },
@@ -252,7 +252,7 @@ Interface to the Basix C++ library.
             auto [U, shape] = self.pull_back(
                 cmdspan3_t(u.data(), u.shape(0), u.shape(1), u.shape(2)),
                 cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
-                xtl::span<const double>(detJ.data(), detJ.size()),
+                std::span<const double>(detJ.data(), detJ.size()),
                 cmdspan3_t(K.data(), K.shape(0), K.shape(1), K.shape(2)));
             return py::array_t<double>(shape, U.data());
           },
@@ -262,7 +262,7 @@ Interface to the Basix C++ library.
           [](const FiniteElement& self, py::array_t<double>& data,
              int block_size, std::uint32_t cell_info)
           {
-            xtl::span<double> data_span(data.mutable_data(), data.size());
+            std::span<double> data_span(data.mutable_data(), data.size());
             self.apply_dof_transformation(data_span, block_size, cell_info);
             return py::array_t<double>(data_span.size(), data_span.data());
           },
@@ -272,7 +272,7 @@ Interface to the Basix C++ library.
           [](const FiniteElement& self, py::array_t<double>& data,
              int block_size, std::uint32_t cell_info)
           {
-            xtl::span<double> data_span(data.mutable_data(), data.size());
+            std::span<double> data_span(data.mutable_data(), data.size());
             self.apply_dof_transformation_to_transpose(data_span, block_size,
                                                        cell_info);
             return py::array_t<double>(data_span.size(), data_span.data());
@@ -284,7 +284,7 @@ Interface to the Basix C++ library.
           [](const FiniteElement& self, py::array_t<double>& data,
              int block_size, std::uint32_t cell_info)
           {
-            xtl::span<double> data_span(data.mutable_data(), data.size());
+            std::span<double> data_span(data.mutable_data(), data.size());
             self.apply_inverse_transpose_dof_transformation(
                 data_span, block_size, cell_info);
             return py::array_t<double>(data_span.size(), data_span.data());

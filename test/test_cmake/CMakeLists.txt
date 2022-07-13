@@ -15,8 +15,6 @@ execute_process(
   ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
 if (BASIX_PY_DIR)
   message(STATUS "Adding ${BASIX_PY_DIR} to Basix search hints")
-  # Lines below are when using pip-installed Basix
-  set(xtl_ROOT "${BASIX_PY_DIR};${xtl_ROOT}")
 endif()
 find_package(Basix REQUIRED CONFIG HINTS ${BASIX_PY_DIR})
 

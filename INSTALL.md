@@ -58,13 +58,13 @@ pytest test/
 
 ### C++
 
-Basix depends on [`xtl`](https://github.com/xtensor-stack/xtl), BLAS and
-LAPACK. CMake can download xtl if it cannot be found.
+Basix requires a C++20 compiler and depends on BLAS and LAPACK.
 
 ### Python
 
-When using the standard install approach all build and runtime dependencies
-for the C++ and Python parts of Basix will be fetched automatically.
+When using the standard install approach all build and runtime
+dependencies for the C++ and Python parts of Basix will be fetched
+automatically.
 
 Building the Python interface requires
 [`pybind11`](https://github.com/pybind/pybind11).

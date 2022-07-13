@@ -41,6 +41,7 @@ precompute::prepare_matrix(
   std::vector<T> diag(dim);
 
   // Permute the matrix so that all the top left blocks are invertible
+  std::vector<double> mat_b(dim * dim), matT_b(dim * dim), mat2_b(dim * dim);
   for (std::size_t i = 0; i < dim; ++i)
   {
     double max_eval = 0;
@@ -54,18 +55,17 @@ precompute::prepare_matrix(
         for (std::size_t k = 0; k < matrix.extent(0); ++k)
           permuted_matrix(k, i) = matrix(k, j);
 
-        mdarray2_t mat(i + 1, i + 1);
+        mdspan2_t mat(mat_b.data(), i + 1, i + 1);
         for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
           for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
             mat(k0, k1) = permuted_matrix(k0, k1);
 
-        mdarray2_t mat_t(mat.extent(1), mat.extent(0));
+        mdspan2_t mat_t(matT_b.data(), mat.extent(1), mat.extent(0));
         for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
           for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
             mat_t(k1, k0) = mat(k0, k1);
 
-        std::vector<double> mat2_data(mat.extent(0) * mat_t.extent(1));
-        mdspan2_t mat2(mat2_data.data(), mat.extent(0), mat_t.extent(1));
+        mdspan2_t mat2(mat2_b.data(), mat.extent(0), mat_t.extent(1));
         math::dot(mat, mat_t, mat2);
 
         auto [evals, _] = math::eigh(mat2, mat2.extent(0));
@@ -89,6 +89,7 @@ precompute::prepare_matrix(
   // Create the precomputed representation of the matrix
   std::vector<double> prepared_matrix_b(dim * dim);
   mdspan2_t prepared_matrix(prepared_matrix_b.data(), dim, dim);
+  std::vector<double> Ab(dim * dim), Bb(dim * dim), tb(dim);
   for (std::size_t i = 0; i < dim; ++i)
   {
     diag[i] = permuted_matrix(i, i);
@@ -101,13 +102,11 @@ precompute::prepare_matrix(
 
     if (i > 0)
     {
-      std::vector<double> Ab(i * i);
       mdspan2_t A(Ab.data(), i, i);
       for (std::size_t k0 = 0; k0 < A.extent(1); ++k0)
         for (std::size_t k1 = 0; k1 < A.extent(0); ++k1)
           A(k1, k0) = permuted_matrix(k0, k1);
 
-      std::vector<double> Bb(i);
       mdspan2_t B(Bb.data(), i, 1);
       for (std::size_t k1 = 0; k1 < B.extent(0); ++k1)
         B(k1, 0) = permuted_matrix(i, k1);
@@ -117,7 +116,7 @@ precompute::prepare_matrix(
       for (std::size_t k1 = 0; k1 < i; ++k1)
         prepared_matrix(i, k1) = v[k1];
 
-      std::vector<double> t(i);
+      xtl::span t(tb.data(), i);
       for (std::size_t k = 0; k < i; ++k)
         t[k] = permuted_matrix(k, i);
       diag[i] -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.0);

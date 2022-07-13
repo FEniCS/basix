@@ -97,6 +97,7 @@ void dot(const U& A, const V& B, W&& C)
   assert(C.extent(1) == B.extent(1));
   if (A.extent(0) * B.extent(1) * A.extent(1) < 4096)
   {
+    std::fill_n(C.data(), C.extent(0) * C.extent(1), 0);
     for (std::size_t i = 0; i < A.extent(0); ++i)
       for (std::size_t j = 0; j < B.extent(1); ++j)
         for (std::size_t k = 0; k < A.extent(1); ++k)

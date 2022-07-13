@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.16)
 project(Basix VERSION "0.4.3.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
-if (SKBUILD)
+if(SKBUILD)
   # Always use lib/ in the Python root. Otherwise, environment used for
   # wheels might place in lib64/, which CMake on some systems will not
   # find.
@@ -43,7 +43,7 @@ else()
   FetchContent_Declare(
     xtl
     GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
-    GIT_TAG        0.7.4
+    GIT_TAG 0.7.4
   )
   FetchContent_MakeAvailable(xtl)
 endif()
@@ -54,16 +54,17 @@ find_package(LAPACK REQUIRED)
 feature_summary(WHAT ALL)
 
 # Source files
-
 add_library(basix)
 
 find_package(Python3 COMPONENTS Interpreter)
+
 if(Python3_FOUND)
   execute_process(
     COMMAND "${Python3_EXECUTABLE}" ${CMAKE_CURRENT_SOURCE_DIR}/generate_docs.py
     OUTPUT_VARIABLE WRAPPER_DOCS
   )
 endif()
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h.in ${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
@@ -127,8 +128,8 @@ target_sources(basix PRIVATE
 set_target_properties(basix PROPERTIES PUBLIC_HEADER basix/finite-element.h)
 set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
-                           $<INSTALL_INTERFACE:include>
-                           "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
+  $<INSTALL_INTERFACE:include>
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR};${CMAKE_CURRENT_SOURCE_DIR}>")
 
 # The commented lines need CMake >= 3.18
 # target_link_libraries(basix PRIVATE BLAS::BLAS)
@@ -136,7 +137,7 @@ target_include_directories(basix PUBLIC
 target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})
 target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
 
-# xtensor and related packages
+# xtl package
 target_link_libraries(basix PUBLIC xtl)
 
 # Set compiler flags
@@ -163,6 +164,6 @@ configure_package_config_file(BasixConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/B
 
 # Install CMake files
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/BasixConfig.cmake ${CMAKE_CURRENT_BINARY_DIR}/BasixConfigVersion.cmake
-  DESTINATION  ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix COMPONENT Development)
 install(EXPORT BasixTargets FILE BasixTargets.cmake NAMESPACE Basix::
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/basix)

@@ -18,7 +18,7 @@ using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
 namespace
 {
 //-----------------------------------------------------------------------------
-int single_choose(int n, int k)
+constexpr int single_choose(int n, int k)
 {
   int out = 1;
   for (int i = k + 1; i <= n; ++i)

@@ -97,7 +97,7 @@ void dot(const U& A, const V& B, W&& C)
   assert(C.extent(1) == B.extent(1));
   if (A.extent(0) * B.extent(1) * A.extent(1) < 4096)
   {
-    std::fill_n(C.data(), C.extent(0) * C.extent(1), 0);
+    std::fill_n(C.data_handle(), C.extent(0) * C.extent(1), 0);
     for (std::size_t i = 0; i < A.extent(0); ++i)
       for (std::size_t j = 0; j < B.extent(1); ++j)
         for (std::size_t k = 0; k < A.extent(1); ++k)
@@ -105,8 +105,10 @@ void dot(const U& A, const V& B, W&& C)
   }
   else
   {
-    impl::dot_blas(A, {A.extent(0), A.extent(1)}, B, {B.extent(0), B.extent(1)},
-                   C);
+    impl::dot_blas(
+        xtl::span(A.data_handle(), A.size()), {A.extent(0), A.extent(1)},
+        xtl::span(B.data_handle(), B.size()), {B.extent(0), B.extent(1)},
+        xtl::span(C.data_handle(), C.size()));
   }
 }
 

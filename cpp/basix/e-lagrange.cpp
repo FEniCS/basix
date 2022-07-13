@@ -978,7 +978,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   }
 
   auto& _x = x[tdim].emplace_back(pts.extents());
-  std::copy_n(pts.data(), pts.size(), _x.data());
+  std::copy_n(pts.data_handle(), pts.size(), _x.data());
   auto& _M = M[tdim].emplace_back(ndofs, 1, pts.extent(0), 1);
   for (std::size_t i = 0; i < ndofs; ++i)
     for (std::size_t j = 0; j < pts.extent(0); ++j)
@@ -1123,7 +1123,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
       {
         auto [_entity_x, shape] = cell::sub_entity_geometry(celltype, d, e);
         impl::mdspan2_t entity_x(_entity_x.data(), shape);
-        xtl::span<const double> x0(entity_x.data(), shape[1]);
+        xtl::span<const double> x0(entity_x.data_handle(), shape[1]);
         {
           auto& _x = x[d].emplace_back(pts.extent(0), shape[1]);
           for (std::size_t i = 0; i < _x.extent(0); ++i)

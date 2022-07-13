@@ -68,7 +68,9 @@ precompute::prepare_matrix(
         mdspan2_t mat2(mat2_b.data(), mat.extent(0), mat_t.extent(1));
         math::dot(mat, mat_t, mat2);
 
-        auto [evals, _] = math::eigh(mat2, mat2.extent(0));
+        auto [evals, _] = math::eigh(
+            xtl::span<const double>(mat2.data_handle(), mat2.size()),
+            mat2.extent(0));
         if (double lambda = std::abs(evals.front()); lambda > max_eval)
         {
           max_eval = lambda;

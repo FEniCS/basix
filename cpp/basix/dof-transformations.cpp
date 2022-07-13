@@ -344,8 +344,8 @@ compute_transformation(
   mdarray2_t mapped_pts(pts.extents());
   for (std::size_t p = 0; p < mapped_pts.extent(0); ++p)
   {
-    auto mp
-        = map_point(xtl::span(pts.data() + p * pts.extent(1), pts.extent(1)));
+    auto mp = map_point(
+        xtl::span(pts.data_handle() + p * pts.extent(1), pts.extent(1)));
     for (std::size_t k = 0; k < mapped_pts.extent(1); ++k)
       mapped_pts(p, k) = mp[k];
   }
@@ -382,7 +382,8 @@ compute_transformation(
                                * tabulated_data.extent(2),
                      tabulated_data.extent(1), tabulated_data.extent(2));
 
-      pull_back(map_type, temp_data, tab, J, detJ, K);
+      pull_back(map_type, mdspan2_t(temp_data.data(), temp_data.extents()), tab,
+                J, detJ, K);
 
       for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < temp_data.extent(1); ++k1)

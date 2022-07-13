@@ -814,7 +814,6 @@ FiniteElement::FiniteElement(
 
   if (!_dof_transformations_are_identity)
   {
-
     // If transformations are permutations, then create the permutations
     if (_dof_transformations_are_permutations)
     {
@@ -887,12 +886,11 @@ FiniteElement::FiniteElement(
             etransT.push_back(precompute::prepare_matrix(matT));
           }
 
-          mdspan2_t matinv_new;
-
           // Rotation of a face: this is in the only base transformation
           // such that M^{-1} != M.
           // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
           // For a triangular face, M^3 = Id, so M^{-1} = M^2.
+          mdspan2_t matinv_new;
           if (ctype == cell::type::quadrilateral and i == 0)
           {
             matint.resize(mat.extent(0) * mat.extent(1));

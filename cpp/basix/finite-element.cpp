@@ -814,6 +814,7 @@ FiniteElement::FiniteElement(
 
   if (!_dof_transformations_are_identity)
   {
+
     // If transformations are permutations, then create the permutations
     if (_dof_transformations_are_permutations)
     {
@@ -852,6 +853,9 @@ FiniteElement::FiniteElement(
     {
       cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
+      // Buffers for matrices
+      std::vector<double> mat_b, matT_b, matint, matinv_b, matinvT_b;
+
       auto& etrans = _etrans.try_emplace(ctype).first->second;
       auto& etransT = _etransT.try_emplace(ctype).first->second;
       auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
@@ -867,7 +871,7 @@ FiniteElement::FiniteElement(
         }
         else
         {
-          std::vector<double> mat_b(trans.extent(1) * trans.extent(2));
+          mat_b.resize(trans.extent(1) * trans.extent(2));
           mdspan2_t mat(mat_b.data(), trans.extent(1), trans.extent(2));
           for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
             for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
@@ -875,7 +879,7 @@ FiniteElement::FiniteElement(
           etrans.push_back(precompute::prepare_matrix(mat));
 
           {
-            std::vector<double> matT_b(trans.extent(1) * trans.extent(2));
+            matT_b.resize(trans.extent(1) * trans.extent(2));
             mdspan2_t matT(matT_b.data(), trans.extent(2), trans.extent(1));
             for (std::size_t k0 = 0; k0 < matT.extent(0); ++k0)
               for (std::size_t k1 = 0; k1 < matT.extent(1); ++k1)
@@ -883,7 +887,6 @@ FiniteElement::FiniteElement(
             etransT.push_back(precompute::prepare_matrix(matT));
           }
 
-          std::vector<double> matinv_b;
           mdspan2_t matinv_new;
 
           // Rotation of a face: this is in the only base transformation
@@ -892,7 +895,8 @@ FiniteElement::FiniteElement(
           // For a triangular face, M^3 = Id, so M^{-1} = M^2.
           if (ctype == cell::type::quadrilateral and i == 0)
           {
-            std::vector<double> matint(mat.extent(0) * mat.extent(1));
+            matint.resize(mat.extent(0) * mat.extent(1));
+            std::fill(matint.begin(), matint.end(), 0);
             mdspan2_t mat_int(matint.data(), mat.extent(0), mat.extent(1));
             math::dot(mat, mat, mat_int);
 
@@ -918,8 +922,7 @@ FiniteElement::FiniteElement(
           etrans_inv.push_back(precompute::prepare_matrix(matinv_new));
 
           {
-            std::vector<double> matinvT_b(matinv_new.extent(0)
-                                          * matinv_new.extent(1));
+            matinvT_b.resize(matinv_new.extent(0) * matinv_new.extent(1));
             mdspan2_t matinvT_new(matinvT_b.data(), matinv_new.extent(1),
                                   matinv_new.extent(0));
             for (std::size_t k0 = 0; k0 < matinvT_new.extent(0); ++k0)

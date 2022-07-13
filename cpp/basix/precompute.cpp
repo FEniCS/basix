@@ -66,8 +66,6 @@ precompute::prepare_matrix(
             mat_t(k1, k0) = mat(k0, k1);
 
         mdspan2_t mat2(mat2_b.data(), mat.extent(0), mat_t.extent(1));
-        std::fill(mat2_b.data(),
-                  mat2_b.data() + mat.extent(0) * mat_t.extent(1), 0);
         math::dot(mat, mat_t, mat2);
 
         auto [evals, _] = math::eigh(mat2, mat2.extent(0));

@@ -894,12 +894,10 @@ FiniteElement::FiniteElement(
           if (ctype == cell::type::quadrilateral and i == 0)
           {
             matint.resize(mat.extent(0) * mat.extent(1));
-            std::fill(matint.begin(), matint.end(), 0);
             mdspan2_t mat_int(matint.data(), mat.extent(0), mat.extent(1));
             math::dot(mat, mat, mat_int);
 
             matinv_b.resize(mat_int.extent(0) * mat.extent(1));
-            std::fill(matinv_b.begin(), matinv_b.end(), 0);
             matinv_new
                 = mdspan2_t(matinv_b.data(), mat_int.extent(0), mat.extent(1));
             math::dot(mat_int, mat, matinv_new);
@@ -907,7 +905,6 @@ FiniteElement::FiniteElement(
           else if (ctype == cell::type::triangle and i == 0)
           {
             matinv_b.resize(mat.extent(0) * mat.extent(1));
-            std::fill(matinv_b.begin(), matinv_b.end(), 0);
             matinv_new
                 = mdspan2_t(matinv_b.data(), mat.extent(0), mat.extent(1));
             math::dot(mat, mat, matinv_new);
@@ -1050,7 +1047,6 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
         for (std::size_t k1 = 0; k1 < psize; ++k1)
           C(k0, k1) = coeffs_view(k0, k1 + psize * j);
 
-      std::fill(result.data(), result.data() + result.size(), 0);
       math::dot(C, cmdspan2_t(B.data(), B.extent(0), B.extent(1)), result);
 
       for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)

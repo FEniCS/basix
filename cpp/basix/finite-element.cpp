@@ -1042,21 +1042,18 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
 
   mdarray2_t C(_coeffs.second[0], psize);
   cmdspan2_t coeffs_view(_coeffs.first.data(), _coeffs.second);
+  mdarray2_t result(C.extent(0), bsize[2]);
   for (std::size_t p = 0; p < basis.extent(0); ++p)
   {
+    cmdspan2_t B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1], bsize[2]);
     for (int j = 0; j < vs; ++j)
     {
-      cmdspan2_t B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1],
-                   bsize[2]);
-
       for (std::size_t k0 = 0; k0 < coeffs_view.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < psize; ++k1)
           C(k0, k1) = coeffs_view(k0, k1 + psize * j);
 
-      mdarray2_t result(C.extent(0), B.extent(1));
       std::fill(result.data(), result.data() + result.size(), 0);
-      math::dot(C, cmdspan2_t(B.data(), B.extent(0), B.extent(1)),
-                mdspan2_t(result.data(), result.extents()));
+      math::dot(C, cmdspan2_t(B.data(), B.extent(0), B.extent(1)), result);
 
       for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
         for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)

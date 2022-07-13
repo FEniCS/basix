@@ -852,6 +852,9 @@ FiniteElement::FiniteElement(
     {
       cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
+      // Buffers for matrices
+      std::vector<double> mat_b, matT_b, matint, matinv_b, matinvT_b;
+
       auto& etrans = _etrans.try_emplace(ctype).first->second;
       auto& etransT = _etransT.try_emplace(ctype).first->second;
       auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
@@ -867,7 +870,7 @@ FiniteElement::FiniteElement(
         }
         else
         {
-          std::vector<double> mat_b(trans.extent(1) * trans.extent(2));
+          mat_b.resize(trans.extent(1) * trans.extent(2));
           mdspan2_t mat(mat_b.data(), trans.extent(1), trans.extent(2));
           for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
             for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
@@ -875,7 +878,7 @@ FiniteElement::FiniteElement(
           etrans.push_back(precompute::prepare_matrix(mat));
 
           {
-            std::vector<double> matT_b(trans.extent(1) * trans.extent(2));
+            matT_b.resize(trans.extent(1) * trans.extent(2));
             mdspan2_t matT(matT_b.data(), trans.extent(2), trans.extent(1));
             for (std::size_t k0 = 0; k0 < matT.extent(0); ++k0)
               for (std::size_t k1 = 0; k1 < matT.extent(1); ++k1)
@@ -883,21 +886,18 @@ FiniteElement::FiniteElement(
             etransT.push_back(precompute::prepare_matrix(matT));
           }
 
-          std::vector<double> matinv_b;
-          mdspan2_t matinv_new;
-
           // Rotation of a face: this is in the only base transformation
           // such that M^{-1} != M.
           // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
           // For a triangular face, M^3 = Id, so M^{-1} = M^2.
+          mdspan2_t matinv_new;
           if (ctype == cell::type::quadrilateral and i == 0)
           {
-            std::vector<double> matint(mat.extent(0) * mat.extent(1));
+            matint.resize(mat.extent(0) * mat.extent(1));
             mdspan2_t mat_int(matint.data(), mat.extent(0), mat.extent(1));
             math::dot(mat, mat, mat_int);
 
             matinv_b.resize(mat_int.extent(0) * mat.extent(1));
-            std::fill(matinv_b.begin(), matinv_b.end(), 0);
             matinv_new
                 = mdspan2_t(matinv_b.data(), mat_int.extent(0), mat.extent(1));
             math::dot(mat_int, mat, matinv_new);
@@ -905,7 +905,6 @@ FiniteElement::FiniteElement(
           else if (ctype == cell::type::triangle and i == 0)
           {
             matinv_b.resize(mat.extent(0) * mat.extent(1));
-            std::fill(matinv_b.begin(), matinv_b.end(), 0);
             matinv_new
                 = mdspan2_t(matinv_b.data(), mat.extent(0), mat.extent(1));
             math::dot(mat, mat, matinv_new);
@@ -918,8 +917,7 @@ FiniteElement::FiniteElement(
           etrans_inv.push_back(precompute::prepare_matrix(matinv_new));
 
           {
-            std::vector<double> matinvT_b(matinv_new.extent(0)
-                                          * matinv_new.extent(1));
+            matinvT_b.resize(matinv_new.extent(0) * matinv_new.extent(1));
             mdspan2_t matinvT_new(matinvT_b.data(), matinv_new.extent(1),
                                   matinv_new.extent(0));
             for (std::size_t k0 = 0; k0 < matinvT_new.extent(0); ++k0)
@@ -1039,21 +1037,17 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
 
   mdarray2_t C(_coeffs.second[0], psize);
   cmdspan2_t coeffs_view(_coeffs.first.data(), _coeffs.second);
+  mdarray2_t result(C.extent(0), bsize[2]);
   for (std::size_t p = 0; p < basis.extent(0); ++p)
   {
+    cmdspan2_t B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1], bsize[2]);
     for (int j = 0; j < vs; ++j)
     {
-      cmdspan2_t B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1],
-                   bsize[2]);
-
       for (std::size_t k0 = 0; k0 < coeffs_view.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < psize; ++k1)
           C(k0, k1) = coeffs_view(k0, k1 + psize * j);
 
-      mdarray2_t result(C.extent(0), B.extent(1));
-      std::fill(result.data(), result.data() + result.size(), 0);
-      math::dot(C, cmdspan2_t(B.data(), B.extent(0), B.extent(1)),
-                mdspan2_t(result.data(), result.extents()));
+      math::dot(C, cmdspan2_t(B.data(), B.extent(0), B.extent(1)), result);
 
       for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
         for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)

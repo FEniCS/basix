@@ -51,9 +51,11 @@ void basix::math::impl::dot_blas(const xtl::span<const double>& A,
 std::pair<std::vector<double>, std::vector<double>>
 basix::math::eigh(const xtl::span<const double>& A, std::size_t n)
 {
-  // Copy to column major matrix
-  std::vector<double> w(n, 0);
+  // Copy A
   std::vector<double> M(A.begin(), A.end());
+
+  // Allocate storage for eigenvalues
+  std::vector<double> w(n, 0);
 
   int N = n;
   char jobz = 'V'; // Compute eigenvalues and eigenvectors
@@ -90,10 +92,9 @@ std::vector<double> basix::math::solve(
     const std::experimental::mdspan<
         const double, std::experimental::dextents<std::size_t, 2>>& B)
 {
+  // Copy A and B to column-major storage
   stdex::mdarray<double, stdex::dextents<std::size_t, 2>, stdex::layout_left>
-      _A(A.extents());
-  stdex::mdarray<double, stdex::dextents<std::size_t, 2>, stdex::layout_left>
-      _B(B.extents());
+      _A(A.extents()), _B(B.extents());
   for (std::size_t i = 0; i < A.extent(0); ++i)
     for (std::size_t j = 0; j < A.extent(1); ++j)
       _A(i, j) = A(i, j);
@@ -112,6 +113,7 @@ std::vector<double> basix::math::solve(
   if (info != 0)
     throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
 
+  // Copy result to row-major storage
   std::vector<double> rb(_B.extent(0) * _B.extent(1));
   stdex::mdspan<double, stdex::dextents<std::size_t, 2>> r(rb.data(),
                                                            _B.extents());

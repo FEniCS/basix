@@ -156,7 +156,7 @@ std::vector<double> create_interval(std::size_t n, lattice::type lattice_type,
 }
 //-----------------------------------------------------------------------------
 stdex::mdarray<double, stdex::dextents<std::size_t, 2>>
-tabulate_dlagrange(std::size_t n, xtl::span<const double> x)
+tabulate_dlagrange(std::size_t n, std::span<const double> x)
 {
   std::vector<double> equi_pts(n + 1);
   for (std::size_t i = 0; i < equi_pts.size(); ++i)
@@ -200,7 +200,7 @@ tabulate_dlagrange(std::size_t n, xtl::span<const double> x)
 }
 //-----------------------------------------------------------------------------
 std::vector<double> warp_function(lattice::type lattice_type, int n,
-                                  xtl::span<const double> x)
+                                  std::span<const double> x)
 {
   std::vector<double> pts = create_interval(n, lattice_type, true);
   for (int i = 0; i < n + 1; ++i)
@@ -348,7 +348,7 @@ create_tri_warped(std::size_t n, lattice::type lattice_type, bool exterior)
 }
 //-----------------------------------------------------------------------------
 std::vector<double> isaac_point(lattice::type lattice_type,
-                                xtl::span<const std::size_t> a)
+                                std::span<const std::size_t> a)
 {
   if (a.size() == 1)
     return {1};

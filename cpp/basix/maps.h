@@ -70,7 +70,7 @@ void contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
     }
   }
 
-  std::transform(r.data(), r.data() + r.size(), r.data(),
+  std::transform(r.data_handle(), r.data_handle() + r.size(), r.data_handle(),
                  [detJ](auto ri) { return ri / detJ; });
 }
 
@@ -84,9 +84,9 @@ void double_covariant_piola(O&& r, const P& U, const Q& J, double /*detJ*/,
   for (std::size_t p = 0; p < U.extent(0); ++p)
   {
     stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> _U(
-        U.data() + p * U.extent(1), J.extent(1), J.extent(1));
+        U.data_handle() + p * U.extent(1), J.extent(1), J.extent(1));
     stdex::mdspan<T, stdex::dextents<std::size_t, 2>> _r(
-        r.data() + p * r.extent(1), K.extent(1), K.extent(1));
+        r.data_handle() + p * r.extent(1), K.extent(1), K.extent(1));
     // _r = K^T _U K
     for (std::size_t i = 0; i < _r.extent(0); ++i)
     {
@@ -113,9 +113,9 @@ void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
   for (std::size_t p = 0; p < U.extent(0); ++p)
   {
     stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> _U(
-        U.data() + p * U.extent(1), J.extent(1), J.extent(1));
+        U.data_handle() + p * U.extent(1), J.extent(1), J.extent(1));
     stdex::mdspan<T, stdex::dextents<std::size_t, 2>> _r(
-        r.data() + p * r.extent(1), J.extent(0), J.extent(0));
+        r.data_handle() + p * r.extent(1), J.extent(0), J.extent(0));
 
     // _r = J U J^T
     for (std::size_t i = 0; i < _r.extent(0); ++i)
@@ -131,7 +131,7 @@ void double_contravariant_piola(O&& r, const P& U, const Q& J, double detJ,
     }
   }
 
-  std::transform(r.data(), r.data() + r.size(), r.data(),
+  std::transform(r.data_handle(), r.data_handle() + r.size(), r.data_handle(),
                  [detJ](auto ri) { return ri / (detJ * detJ); });
 }
 

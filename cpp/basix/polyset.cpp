@@ -41,7 +41,7 @@ void tabulate_polyset_point_derivs(mdspan3_t P, std::size_t, std::size_t nderiv,
   assert(P.extent(1) == 1);
   assert(P.extent(2) == x.extent(0));
 
-  std::fill(P.data(), P.data() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
   for (std::size_t i = 0; i < P.extent(2); ++i)
     P(0, 0, i) = 1.0;
 }
@@ -59,7 +59,7 @@ void tabulate_polyset_line_derivs(mdspan3_t P, std::size_t n,
   assert(P.extent(1) == n + 1);
   assert(P.extent(2) == x.extent(0));
 
-  std::fill(P.data(), P.data() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
   for (std::size_t j = 0; j < P.extent(2); ++j)
     P(0, 0, j) = 1.0;
 
@@ -123,7 +123,7 @@ void tabulate_polyset_triangle_derivs(mdspan3_t P, std::size_t n,
   assert(P.extent(1) == (n + 1) * (n + 2) / 2);
   assert(P.extent(2) == x.extent(0));
 
-  std::fill(P.data(), P.data() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
   if (n == 0)
   {
     for (std::size_t j = 0; j < P.extent(2); ++j)
@@ -271,7 +271,7 @@ void tabulate_polyset_tetrahedron_derivs(mdspan3_t P, std::size_t n,
   auto x2 = stdex::submdspan(x, stdex::full_extent, 2);
 
   // Traverse derivatives in increasing order
-  std::fill(P.data(), P.data() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
   for (std::size_t i = 0; i < P.extent(2); ++i)
     P(idx(0, 0, 0), 0, i) = 1.0;
 
@@ -555,7 +555,7 @@ void tabulate_polyset_pyramid_derivs(mdspan3_t P, std::size_t n,
   const auto x2 = stdex::submdspan(x, stdex::full_extent, 2);
 
   // Traverse derivatives in increasing order
-  std::fill(P.data(), P.data() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
 
   for (std::size_t j = 0; j < P.extent(2); ++j)
     P(idx(0, 0, 0), pyr_idx(0, 0, 0), j) = 1.0;
@@ -804,7 +804,7 @@ void tabulate_polyset_quad_derivs(mdspan3_t P, std::size_t n,
   assert(x1.extent(0) > 0);
 
   // Compute tabulation of interval for px = 0
-  std::fill(P.data(), P.data() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
   for (std::size_t j = 0; j < P.extent(2); ++j)
     P(idx(0, 0), quad_idx(0, 0), j) = 1.0;
 
@@ -970,7 +970,7 @@ void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
   assert(x1.extent(0) > 0);
   assert(x2.extent(0) > 0);
 
-  std::fill(P.data(), P.data() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
   for (std::size_t i = 0; i < P.extent(2); ++i)
     P(idx(0, 0, 0), hex_idx(0, 0, 0), i) = 1.0;
 
@@ -1260,7 +1260,7 @@ void tabulate_polyset_prism_derivs(mdspan3_t P, std::size_t n,
   { return (n + 1) * idx(py, px) + pz; };
 
   // Tabulate triangle for px=0
-  std::fill(P.data(), P.data() + P.size(), 0.0);
+  std::fill(P.data_handle(), P.data_handle() + P.size(), 0.0);
   if (n == 0)
   {
     for (std::size_t i = 0; i < P.extent(2); ++i)

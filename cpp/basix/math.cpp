@@ -25,11 +25,11 @@ extern "C"
 }
 
 //------------------------------------------------------------------
-void basix::math::impl::dot_blas(const xtl::span<const double>& A,
+void basix::math::impl::dot_blas(const std::span<const double>& A,
                                  std::array<std::size_t, 2> Ashape,
-                                 const xtl::span<const double>& B,
+                                 const std::span<const double>& B,
                                  std::array<std::size_t, 2> Bshape,
-                                 const xtl::span<double>& C)
+                                 const std::span<double>& C)
 {
   assert(Ashape[1] == Bshape[0]);
   assert(C.size() == Ashape[0] * Bshape[1]);
@@ -49,7 +49,7 @@ void basix::math::impl::dot_blas(const xtl::span<const double>& A,
 }
 //------------------------------------------------------------------
 std::pair<std::vector<double>, std::vector<double>>
-basix::math::eigh(const xtl::span<const double>& A, std::size_t n)
+basix::math::eigh(const std::span<const double>& A, std::size_t n)
 {
   // Copy A
   std::vector<double> M(A.begin(), A.end());

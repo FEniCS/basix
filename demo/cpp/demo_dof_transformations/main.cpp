@@ -202,7 +202,7 @@ int main(int argc, char* argv[])
 
     const auto [original_data, orig_shape] = nedelec.tabulate(0, points);
     auto [mod_data, mod_shape] = nedelec.tabulate(0, points);
-    xtl::span<double> data(mod_data.data(), mod_data.size());
+    std::span<double> data(mod_data.data(), mod_data.size());
 
     // If the direction of edge 2 in the physical cell is reflected, it has
     // cell permutation info `....000010` so (from right to left):

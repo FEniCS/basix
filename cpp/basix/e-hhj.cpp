@@ -80,7 +80,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         // Entity coordinates
         const auto [entity_x_buffer, eshape]
             = cell::sub_entity_geometry(celltype, d, e);
-        xtl::span<const double> x0(entity_x_buffer.data(), eshape[1]);
+        std::span<const double> x0(entity_x_buffer.data(), eshape[1]);
         impl::cmdspan2_t entity_x(entity_x_buffer.data(), eshape);
 
         // Tabulate points in lattice

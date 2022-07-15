@@ -168,15 +168,17 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
         // Me.extent(3) == 1 since we are contracting over one index
         // only.
 
-        mdarray2_t Pt(P.extent(2), P.extent(1));
+        std::vector<double> Pt_b(P.extent(2) * P.extent(1));
+        mdspan2_t Pt(Pt_b.data(), P.extent(2), P.extent(1));
         for (std::size_t i = 0; i < Pt.extent(0); ++i)
           for (std::size_t j = 0; j < Pt.extent(1); ++j)
             Pt(i, j) = P(0, j, i);
 
-        mdarray2_t De(Me.extent(0) * Me.extent(1), Pt.extent(1));
-        math::dot(
-            cmdspan2_t(Me.data(), Me.extent(0) * Me.extent(1), Me.extent(2)),
-            Pt, De);
+        std::vector<double> De_b(Me.extent(0) * Me.extent(1) * Pt.extent(1));
+        mdspan2_t De(De_b.data(), Me.extent(0) * Me.extent(1), Pt.extent(1));
+        math::dot(cmdspan2_t(Me.data_handle(), Me.extent(0) * Me.extent(1),
+                             Me.extent(2)),
+                  Pt, De);
 
         // Expand and copy
         for (std::size_t i = 0; i < Me.extent(0); ++i)
@@ -638,15 +640,16 @@ FiniteElement::FiniteElement(
   {
     for (auto& xi : x[i])
     {
-      _x[i].emplace_back(std::vector(xi.data(), xi.data() + xi.size()),
-                         std::array{xi.extent(0), xi.extent(1)});
+      _x[i].emplace_back(
+          std::vector(xi.data_handle(), xi.data_handle() + xi.size()),
+          std::array{xi.extent(0), xi.extent(1)});
     }
   }
 
   std::vector<double> wcoeffs_ortho_b(wcoeffs.extent(0) * wcoeffs.extent(1));
   mdspan2_t wcoeffs_ortho(wcoeffs_ortho_b.data(), wcoeffs.extent(0),
                           wcoeffs.extent(1));
-  std::copy(wcoeffs.data(), wcoeffs.data() + wcoeffs.size(),
+  std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),
             wcoeffs_ortho_b.begin());
   orthogonalise(wcoeffs_ortho);
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, x, M,
@@ -663,7 +666,7 @@ FiniteElement::FiniteElement(
       for (auto Mi : M[i])
       {
         _M[i].emplace_back(
-            std::vector(Mi.data(), Mi.data() + Mi.size()),
+            std::vector(Mi.data_handle(), Mi.data_handle() + Mi.size()),
             std::array{Mi.extent(0), Mi.extent(1), Mi.extent(2), Mi.extent(3)});
       }
     }
@@ -1005,7 +1008,7 @@ FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 4>>
-FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
+FiniteElement::tabulate(int nd, const std::span<const double>& x,
                         std::array<std::size_t, 2> shape) const
 {
   std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
@@ -1035,9 +1038,12 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies{});
 
-  mdarray2_t C(_coeffs.second[0], psize);
+  std::vector<double> C_b(_coeffs.second[0] * psize);
+  mdspan2_t C(C_b.data(), _coeffs.second[0], psize);
+
   cmdspan2_t coeffs_view(_coeffs.first.data(), _coeffs.second);
-  mdarray2_t result(C.extent(0), bsize[2]);
+  std::vector<double> result_b(C.extent(0) * bsize[2]);
+  mdspan2_t result(result_b.data(), C.extent(0), bsize[2]);
   for (std::size_t p = 0; p < basis.extent(0); ++p)
   {
     cmdspan2_t B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1], bsize[2]);
@@ -1047,7 +1053,8 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
         for (std::size_t k1 = 0; k1 < psize; ++k1)
           C(k0, k1) = coeffs_view(k0, k1 + psize * j);
 
-      math::dot(C, cmdspan2_t(B.data(), B.extent(0), B.extent(1)), result);
+      math::dot(C, cmdspan2_t(B.data_handle(), B.extent(0), B.extent(1)),
+                result);
 
       for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
         for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
@@ -1056,9 +1063,9 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, const xtl::span<const double>& x,
+void FiniteElement::tabulate(int nd, const std::span<const double>& x,
                              std::array<std::size_t, 2> xshape,
-                             const xtl::span<double>& basis) const
+                             const std::span<double>& basis) const
 {
   std::array<std::size_t, 4> shape = tabulate_shape(nd, xshape[0]);
   assert(x.size() == xshape[0] * xshape[1]);
@@ -1194,7 +1201,7 @@ FiniteElement::points() const
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 3>>
 FiniteElement::push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
-                            xtl::span<const double> detJ,
+                            std::span<const double> detJ,
                             impl::cmdspan3_t K) const
 {
   const std::size_t physical_value_size
@@ -1213,10 +1220,14 @@ FiniteElement::push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
   auto map = this->map_fn<u_t, U_t, J_t, K_t>();
   for (std::size_t i = 0; i < u.extent(0); ++i)
   {
-    u_t _u(u.data() + i * u.extent(1) * u.extent(2), u.extent(1), u.extent(2));
-    U_t _U(U.data() + i * U.extent(1) * U.extent(2), U.extent(1), U.extent(2));
-    J_t _J(J.data() + i * J.extent(1) * J.extent(2), J.extent(1), J.extent(2));
-    K_t _K(K.data() + i * K.extent(1) * K.extent(2), K.extent(1), K.extent(2));
+    u_t _u(u.data_handle() + i * u.extent(1) * u.extent(2), u.extent(1),
+           u.extent(2));
+    U_t _U(U.data_handle() + i * U.extent(1) * U.extent(2), U.extent(1),
+           U.extent(2));
+    J_t _J(J.data_handle() + i * J.extent(1) * J.extent(2), J.extent(1),
+           J.extent(2));
+    K_t _K(K.data_handle() + i * K.extent(1) * K.extent(2), K.extent(1),
+           K.extent(2));
     map(_u, _U, _J, detJ[i], _K);
   }
 
@@ -1225,7 +1236,7 @@ FiniteElement::push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 3>>
 FiniteElement::pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
-                         xtl::span<const double> detJ, impl::cmdspan3_t K) const
+                         std::span<const double> detJ, impl::cmdspan3_t K) const
 {
   const std::size_t reference_value_size = std::accumulate(
       _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
@@ -1242,17 +1253,21 @@ FiniteElement::pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
   auto map = this->map_fn<U_t, u_t, K_t, J_t>();
   for (std::size_t i = 0; i < u.extent(0); ++i)
   {
-    u_t _u(u.data() + i * u.extent(1) * u.extent(2), u.extent(1), u.extent(2));
-    U_t _U(U.data() + i * U.extent(1) * U.extent(2), U.extent(1), U.extent(2));
-    J_t _J(J.data() + i * J.extent(1) * J.extent(2), J.extent(1), J.extent(2));
-    K_t _K(K.data() + i * K.extent(1) * K.extent(2), K.extent(1), K.extent(2));
+    u_t _u(u.data_handle() + i * u.extent(1) * u.extent(2), u.extent(1),
+           u.extent(2));
+    U_t _U(U.data_handle() + i * U.extent(1) * U.extent(2), U.extent(1),
+           U.extent(2));
+    J_t _J(J.data_handle() + i * J.extent(1) * J.extent(2), J.extent(1),
+           J.extent(2));
+    K_t _K(K.data_handle() + i * K.extent(1) * K.extent(2), K.extent(1),
+           K.extent(2));
     map(_U, _u, _K, 1.0 / detJ[i], _J);
   }
 
   return {std::move(Ub), shape};
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
+void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
                                  std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
@@ -1306,7 +1321,7 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
+void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
                                    std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)

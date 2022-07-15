@@ -77,7 +77,8 @@ map_points(const cell::type celltype0, const cell::type celltype1, cmdspan2_t x)
         axes(e, i, j) = entity_x(axis_pts[i], j) - entity_x(0, j);
 
     // Compute x = x0 + \Delta x
-    mdarray2_t axes_e(axes.extent(1), axes.extent(2));
+    std::vector<double> axes_b(axes.extent(1) * axes.extent(2));
+    mdspan2_t axes_e(axes_b.data(), axes.extent(1), axes.extent(2));
     for (std::size_t i = 0; i < axes_e.extent(0); ++i)
       for (std::size_t j = 0; j < axes_e.extent(1); ++j)
         axes_e(i, j) = axes(e, i, j);

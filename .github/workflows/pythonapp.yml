@@ -22,8 +22,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10']
-
+        python-version: ["3.8", "3.9", "3.10"]
     env:
       CC: gcc-10
       CXX: g++-10
@@ -36,8 +35,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-            sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
-            pip install scikit-build
+          sudo apt-get update
+          sudo apt-get -y upgrade
+          sudo apt-get install -y doxygen libgraphviz-dev libopenblas-dev liblapack-dev ninja-build
+          pip install scikit-build
 
       - name: Install Basix
         run: pip -v install .[ci]
@@ -145,7 +146,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.10']
+        python-version: ["3.10"]
+    env:
+      CC: gcc-10
+      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
@@ -180,6 +184,9 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
+    env:
+      CC: gcc-10
+      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3

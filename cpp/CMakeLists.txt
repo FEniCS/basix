@@ -14,39 +14,13 @@ endif()
 include(FeatureSummary)
 
 # Set the C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Options
 option(BUILD_SHARED_LIBS "Build Basix with shared libraries." ON)
 add_feature_info(BUILD_SHARED_LIBS BUILD_SHARED_LIBS "Build Basix with shared libraries.")
-
-# Download xtl and xtensor
-option(DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git." OFF)
-add_feature_info(DOWNLOAD_XTENSOR_LIBS DOWNLOAD_XTENSOR_LIBS "Download xtl and xtensor. Requires git.")
-
-# Find dependecies
-set(XTL_MIN_VERSION 0.7.0)
-
-include(FetchContent)
-
-if(NOT DOWNLOAD_XTENSOR_LIBS)
-  # xtl (required)
-  if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.19)
-    find_package(xtl ${XTL_MIN_VERSION}...<0.8 REQUIRED)
-  else()
-    find_package(xtl ${XTL_MIN_VERSION} REQUIRED)
-  endif()
-else()
-  message("Downloading xtl source...")
-  FetchContent_Declare(
-    xtl
-    GIT_REPOSITORY https://github.com/xtensor-stack/xtl.git
-    GIT_TAG 0.7.4
-  )
-  FetchContent_MakeAvailable(xtl)
-endif()
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
@@ -136,9 +110,6 @@ target_include_directories(basix PUBLIC
 # target_link_libraries(basix PRIVATE LAPACK::LAPACK)
 target_link_libraries(basix PRIVATE ${BLAS_LIBRARIES})
 target_link_libraries(basix PRIVATE ${LAPACK_LIBRARIES})
-
-# xtl package
-target_link_libraries(basix PUBLIC xtl)
 
 # Set compiler flags
 list(APPEND BASIX_DEVELOPER_FLAGS -O2;-g;-pipe)

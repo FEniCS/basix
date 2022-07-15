@@ -13,10 +13,10 @@
 #include <functional>
 #include <map>
 #include <numeric>
+#include <span>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <xtl/xspan.hpp>
 
 /// Basix: FEniCS runtime basis evaluation library
 namespace basix
@@ -450,7 +450,7 @@ public:
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
   std::pair<std::vector<double>, std::array<std::size_t, 4>>
-  tabulate(int nd, const xtl::span<const double>& x,
+  tabulate(int nd, const std::span<const double>& x,
            std::array<std::size_t, 2> shape) const;
 
   /// Compute basis values and derivatives at set of points.
@@ -505,9 +505,9 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  void tabulate(int nd, const xtl::span<const double>& x,
+  void tabulate(int nd, const std::span<const double>& x,
                 std::array<std::size_t, 2> xshape,
-                const xtl::span<double>& basis) const;
+                const std::span<double>& basis) const;
 
   /// Get the element cell type
   /// @return The cell type
@@ -582,7 +582,7 @@ public:
   /// index, point index, components].
   std::pair<std::vector<double>, std::array<std::size_t, 3>>
   push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
-               xtl::span<const double> detJ, impl::cmdspan3_t K) const;
+               std::span<const double> detJ, impl::cmdspan3_t K) const;
 
   /// Map function values from a physical cell to the reference
   /// @param[in] u The function values on the cell
@@ -593,7 +593,7 @@ public:
   /// [Jacobian index, point index, components].
   std::pair<std::vector<double>, std::array<std::size_t, 3>>
   pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
-            xtl::span<const double> detJ, impl::cmdspan3_t K) const;
+            std::span<const double> detJ, impl::cmdspan3_t K) const;
 
   /// Return a function that performs the appropriate
   /// push-forward/pull-back for the element type
@@ -773,7 +773,7 @@ public:
   ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void permute_dofs(const xtl::span<std::int32_t>& dofs,
+  void permute_dofs(const std::span<std::int32_t>& dofs,
                     std::uint32_t cell_info) const;
 
   /// Unpermute the dof numbering on a cell
@@ -783,7 +783,7 @@ public:
   ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void unpermute_dofs(const xtl::span<std::int32_t>& dofs,
+  void unpermute_dofs(const std::span<std::int32_t>& dofs,
                       std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some data
@@ -795,7 +795,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_dof_transformation(const xtl::span<T>& data, int block_size,
+  void apply_dof_transformation(const std::span<T>& data, int block_size,
                                 std::uint32_t cell_info) const;
 
   /// Apply transpose DOF transformations to some data
@@ -807,7 +807,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_transpose_dof_transformation(const xtl::span<T>& data,
+  void apply_transpose_dof_transformation(const std::span<T>& data,
                                           int block_size,
                                           std::uint32_t cell_info) const;
 
@@ -821,7 +821,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void apply_inverse_transpose_dof_transformation(
-      const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
+      const std::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some data
   ///
@@ -832,7 +832,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_inverse_dof_transformation(const xtl::span<T>& data,
+  void apply_inverse_dof_transformation(const std::span<T>& data,
                                         int block_size,
                                         std::uint32_t cell_info) const;
 
@@ -845,7 +845,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_dof_transformation_to_transpose(const xtl::span<T>& data,
+  void apply_dof_transformation_to_transpose(const std::span<T>& data,
                                              int block_size,
                                              std::uint32_t cell_info) const;
 
@@ -859,7 +859,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void apply_transpose_dof_transformation_to_transpose(
-      const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
+      const std::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// @brief Apply inverse transpose DOF transformations to some
   /// transposed data.
@@ -872,7 +872,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void apply_inverse_transpose_dof_transformation_to_transpose(
-      const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
+      const std::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some transposed data
   ///
@@ -884,7 +884,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void apply_inverse_dof_transformation_to_transpose(
-      const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const;
+      const std::span<T>& data, int block_size, std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
@@ -1344,7 +1344,7 @@ std::string version();
 
 //-----------------------------------------------------------------------------
 template <typename T>
-void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
+void FiniteElement::apply_dof_transformation(const std::span<T>& data,
                                              int block_size,
                                              std::uint32_t cell_info) const
 {
@@ -1369,7 +1369,7 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1392,7 +1392,7 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
           const auto& v_t = std::get<1>(m);
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1405,7 +1405,7 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
           const auto& v_t = std::get<1>(m);
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1418,7 +1418,7 @@ void FiniteElement::apply_dof_transformation(const xtl::span<T>& data,
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_transpose_dof_transformation(
-    const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
+    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1441,7 +1441,7 @@ void FiniteElement::apply_transpose_dof_transformation(
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1464,7 +1464,7 @@ void FiniteElement::apply_transpose_dof_transformation(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1477,7 +1477,7 @@ void FiniteElement::apply_transpose_dof_transformation(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1489,7 +1489,7 @@ void FiniteElement::apply_transpose_dof_transformation(
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_transpose_dof_transformation(
-    const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
+    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1511,7 +1511,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
       {
         auto& [v_size_t, v_t, matrix]
             = _etrans_invT.at(cell::type::interval)[0];
-        precompute::apply_matrix(xtl::span(v_size_t), xtl::span(v_t),
+        precompute::apply_matrix(std::span(v_size_t), std::span(v_t),
                                  cmdspan2_t(matrix.first.data(), matrix.second),
                                  data, dofstart, block_size);
       }
@@ -1533,7 +1533,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1546,7 +1546,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
           const auto& v_t = std::get<1>(m);
           const auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1559,7 +1559,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_dof_transformation(
-    const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
+    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1582,7 +1582,7 @@ void FiniteElement::apply_inverse_dof_transformation(
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1605,7 +1605,7 @@ void FiniteElement::apply_inverse_dof_transformation(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1618,7 +1618,7 @@ void FiniteElement::apply_inverse_dof_transformation(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1631,7 +1631,7 @@ void FiniteElement::apply_inverse_dof_transformation(
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_dof_transformation_to_transpose(
-    const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
+    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1654,7 +1654,7 @@ void FiniteElement::apply_dof_transformation_to_transpose(
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1678,7 +1678,7 @@ void FiniteElement::apply_dof_transformation_to_transpose(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1691,7 +1691,7 @@ void FiniteElement::apply_dof_transformation_to_transpose(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1703,7 +1703,7 @@ void FiniteElement::apply_dof_transformation_to_transpose(
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
-    const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
+    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1726,7 +1726,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1749,7 +1749,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1762,7 +1762,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1774,7 +1774,7 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_transpose_dof_transformation_to_transpose(
-    const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
+    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1797,7 +1797,7 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1820,7 +1820,7 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1833,7 +1833,7 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1845,7 +1845,7 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_dof_transformation_to_transpose(
-    const xtl::span<T>& data, int block_size, std::uint32_t cell_info) const
+    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
@@ -1868,7 +1868,7 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1891,7 +1891,7 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1904,7 +1904,7 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
           auto& v_t = std::get<1>(m);
           auto& matrix = std::get<2>(m);
           precompute::apply_matrix_to_transpose(
-              xtl::span(v_size_t), xtl::span(v_t),
+              std::span(v_size_t), std::span(v_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }

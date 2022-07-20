@@ -68,6 +68,12 @@ std::array<typename U::value_type, 3> cross(const U& u, const V& v)
 std::pair<std::vector<double>, std::vector<double>>
 eigh(const std::span<const double>& A, std::size_t n);
 
+/// Compute reciprocal of the condition number of a square matrix A
+/// @param[in] A Input matrix, row-major storage
+/// @param[in] n Number of rows
+/// @return The reciprocal of the condition number of A
+double rcond(const std::span<const double>& A, std::size_t n);
+
 /// Solve A X = B
 /// @param[in] A The matrix
 /// @param[in] B Right-hand side matrix/vector

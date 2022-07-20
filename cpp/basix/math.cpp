@@ -22,6 +22,13 @@ extern "C"
   void dgemm_(char* transa, char* transb, int* m, int* n, int* k, double* alpha,
               double* a, int* lda, double* b, int* ldb, double* beta, double* c,
               int* ldc);
+
+  void dgecon_(char* NORM, int* N, double* A, int* LDA, double* ANORM,
+               double* RCOND, double* work, int* iwork, int* info);
+
+  double dlange_(char* NORM, int* M, int* N, double* A, int* ldA, double* work);
+
+  int dgetrf_(const int *m, const int *n, double *a, const int *lda, int *lpiv, int *info);
 }
 
 //------------------------------------------------------------------
@@ -86,6 +93,50 @@ basix::math::eigh(const std::span<const double>& A, std::size_t n)
   return {std::move(w), std::move(M)};
 }
 //------------------------------------------------------------------
+double
+basix::math::rcond(const std::span<const double>& A, std::size_t n)
+{
+  // Copy A
+  std::vector<double> M(A.begin(), A.end());
+
+  int N = n;
+  char norm = '1'; // Compute the 1-norm
+  int ldA = n;
+  int info;
+  std::vector<double> work(4 * n);
+  std::vector<int> iwork(n < 2 ? 2 : n);
+  double rcond = 0;
+
+  /*
+  std::cout << "matrix is {\n";
+  for (std::size_t i = 0; i < n; ++i)
+  {
+    std::cout << "  ";
+    for (std::size_t ii = 0; ii < n; ++ii)
+      std::cout << A[i * n + ii] << " ";
+    std::cout << "\n";
+  }
+  std::cout << "}\n";
+  */
+
+  // Compute the norm of M
+  double anorm = dlange_(&norm, &N, &N, M.data(), &ldA, work.data());
+  // Comput LU decomposition of M
+  dgetrf_(&N, &N, M.data(), &ldA, iwork.data(), &info);
+
+  // Compute reciprocal of condition number
+  dgecon_(&norm, &N, M.data(), &ldA, &anorm, &rcond, work.data(),
+          iwork.data(), &info);
+
+  //std::cout << "anorm = " << anorm << "\n";
+  //std::cout << "rcond = " << rcond << "\n";
+
+  if (info != 0)
+    return 0;
+
+  return anorm * rcond;
+}
+//------------------------------------------------------------------
 std::vector<double> basix::math::solve(
     const std::experimental::mdspan<
         const double, std::experimental::dextents<std::size_t, 2>>& A,
@@ -110,7 +161,9 @@ std::vector<double> basix::math::solve(
   std::vector<int> piv(N);
   int info;
   dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), _B.data(), &ldb, &info);
-  if (info != 0)
+  if (info > 0)
+    throw std::runtime_error("Call to dgesv failed: matrix is singular (" + std::to_string(info)+ ")");
+  else if (info < 0)
     throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
 
   // Copy result to row-major storage

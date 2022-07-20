@@ -33,6 +33,10 @@ class _BasixElementBase(_FiniteElementBase):
         """Return a list of sub elements."""
         return []
 
+    def num_sub_elements(self) -> int:
+        """Return a list of sub elements."""
+        return len(self.sub_elements())
+
     def mapping(self) -> _typing.Union[str, None]:
         """Return the map type."""
         return self._map
@@ -711,7 +715,7 @@ class BlockedElement(_BasixElementBase):
         self.symmetric = symmetric
 
         super().__init__(
-            repr, "blocked element", sub_element.cell_type.name, block_shape,
+            repr, sub_element.family(), sub_element.cell_type.name, block_shape,
             sub_element._degree, sub_element._map)
 
     def sub_elements(self) -> _typing.List[_BasixElementBase]:

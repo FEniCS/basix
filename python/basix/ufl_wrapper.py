@@ -513,13 +513,11 @@ class MixedElement(_BasixElementBase):
     def __init__(self, sub_elements: _typing.List[_BasixElementBase]):
         """Initialise the element."""
         assert len(sub_elements) > 0
-        vs: _typing.Tuple[int, ...] = tuple()
-        for i in sub_elements:
-            vs += i._value_shape
         self._sub_elements = sub_elements
         super().__init__(
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
-            "mixed element", sub_elements[0].cell_type.name, vs)
+            "mixed element", sub_elements[0].cell_type.name,
+            (sum(i.value_size for i in sub_elements), ))
 
     def sub_elements(self) -> _typing.List[_BasixElementBase]:
         """Return a list of sub elements."""

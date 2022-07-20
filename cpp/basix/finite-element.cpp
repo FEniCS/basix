@@ -651,7 +651,8 @@ FiniteElement::FiniteElement(
                           wcoeffs.extent(1));
   std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),
             wcoeffs_ortho_b.begin());
-  orthogonalise(wcoeffs_ortho);
+  if (family != element::family::P)
+    orthogonalise(wcoeffs_ortho);
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, x, M,
                                      highest_degree, interpolation_nderivs);
 

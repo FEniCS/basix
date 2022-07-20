@@ -53,5 +53,5 @@ def test_custom_element_equality():
     assert p1_custom == p1_custom_again
     assert p1_custom != cr_custom
     assert p1_custom != cr
-    assert p1_custom == p1
-    assert cr_custom == cr
+    assert p1_custom != p1
+    assert cr_custom != cr

@@ -29,6 +29,10 @@ class _BasixElementBase(_FiniteElementBase):
         self._degree = degree
         self._value_shape = value_shape
 
+    def sub_elements(self) -> _typing.List:
+        """Return a list of sub elements."""
+        return []
+
     def mapping(self) -> _typing.Union[str, None]:
         """Return the map type."""
         return self._map
@@ -500,7 +504,7 @@ class ComponentElement(_BasixElementBase):
 class MixedElement(_BasixElementBase):
     """A mixed element that combines two or more elements."""
 
-    sub_elements: _typing.List[_BasixElementBase]
+    _sub_elements: _typing.List[_BasixElementBase]
 
     def __init__(self, sub_elements: _typing.List[_BasixElementBase]):
         """Initialise the element."""
@@ -508,15 +512,19 @@ class MixedElement(_BasixElementBase):
         vs: _typing.Tuple[int, ...] = tuple()
         for i in sub_elements:
             vs += i._value_shape
-        self.sub_elements = sub_elements
+        self._sub_elements = sub_elements
         super().__init__(
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
             "mixed element", sub_elements[0].cell_type.name, vs)
 
+    def sub_elements(self) -> _typing.List[_BasixElementBase]:
+        """Return a list of sub elements."""
+        return self._sub_elements
+
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, MixedElement) and len(self.sub_elements) == len(other.sub_elements):
-            for i, j in zip(self.sub_elements, other.sub_elements):
+        if isinstance(other, MixedElement) and len(self._sub_elements) == len(other._sub_elements):
+            for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False
             return True
@@ -539,11 +547,11 @@ class MixedElement(_BasixElementBase):
             Tabulated basis functions
         """
         tables = []
-        results = [e.tabulate(nderivs, points) for e in self.sub_elements]
+        results = [e.tabulate(nderivs, points) for e in self._sub_elements]
         for deriv_tables in zip(*results):
             new_table = _numpy.zeros((len(points), self.value_size * self.dim))
             start = 0
-            for e, t in zip(self.sub_elements, deriv_tables):
+            for e, t in zip(self._sub_elements, deriv_tables):
                 for i in range(0, e.dim, e.value_size):
                     new_table[:, start: start + e.value_size] = t[:, i: i + e.value_size]
                     start += self.value_size
@@ -559,8 +567,8 @@ class MixedElement(_BasixElementBase):
         Returns:
             component element, offset of the component, stride of the component
         """
-        sub_dims = [0] + [e.dim for e in self.sub_elements]
-        sub_cmps = [0] + [e.value_size for e in self.sub_elements]
+        sub_dims = [0] + [e.dim for e in self._sub_elements]
+        sub_cmps = [0] + [e.value_size for e in self._sub_elements]
 
         irange = _numpy.cumsum(sub_dims)
         crange = _numpy.cumsum(sub_cmps)
@@ -570,7 +578,7 @@ class MixedElement(_BasixElementBase):
         component_element_index = _numpy.where(
             crange <= flat_component)[0].shape[0] - 1
 
-        sub_e = self.sub_elements[component_element_index]
+        sub_e = self._sub_elements[component_element_index]
 
         e, offset, stride = sub_e.get_component_element(flat_component - crange[component_element_index])
         # TODO: is this offset correct?
@@ -584,12 +592,12 @@ class MixedElement(_BasixElementBase):
     @property
     def dim(self) -> int:
         """Number of DOFs the element has."""
-        return sum(e.dim for e in self.sub_elements)
+        return sum(e.dim for e in self._sub_elements)
 
     @property
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
-        data = [e.num_entity_dofs for e in self.sub_elements]
+        data = [e.num_entity_dofs for e in self._sub_elements]
         return [[sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
                 for tdim, entities in enumerate(data[0])]
 
@@ -598,9 +606,9 @@ class MixedElement(_BasixElementBase):
         """DOF numbers associated with each entity."""
         dofs: _typing.List[_typing.List[_typing.List[int]]] = [
             [[] for i in entities]
-            for entities in self.sub_elements[0].entity_dofs]
+            for entities in self._sub_elements[0].entity_dofs]
         start_dof = 0
-        for e in self.sub_elements:
+        for e in self._sub_elements:
             for tdim, entities in enumerate(e.entity_dofs):
                 for entity_n, entity_dofs in enumerate(entities):
                     dofs[tdim][entity_n] += [start_dof + i for i in entity_dofs]
@@ -610,7 +618,7 @@ class MixedElement(_BasixElementBase):
     @property
     def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with the closure of each entity."""
-        data = [e.num_entity_closure_dofs for e in self.sub_elements]
+        data = [e.num_entity_closure_dofs for e in self._sub_elements]
         return [[sum(d[tdim][entity_n] for d in data) for entity_n, _ in enumerate(entities)]
                 for tdim, entities in enumerate(data[0])]
 
@@ -619,9 +627,9 @@ class MixedElement(_BasixElementBase):
         """DOF numbers associated with the closure of each entity."""
         dofs: _typing.List[_typing.List[_typing.List[int]]] = [
             [[] for i in entities]
-            for entities in self.sub_elements[0].entity_closure_dofs]
+            for entities in self._sub_elements[0].entity_closure_dofs]
         start_dof = 0
-        for e in self.sub_elements:
+        for e in self._sub_elements:
             for tdim, entities in enumerate(e.entity_closure_dofs):
                 for entity_n, entity_dofs in enumerate(entities):
                     dofs[tdim][entity_n] += [start_dof + i for i in entity_dofs]
@@ -631,7 +639,7 @@ class MixedElement(_BasixElementBase):
     @property
     def num_global_support_dofs(self) -> int:
         """Get the number of global support DOFs."""
-        return sum(e.num_global_support_dofs for e in self.sub_elements)
+        return sum(e.num_global_support_dofs for e in self._sub_elements)
 
     @property
     def family_name(self) -> str:
@@ -641,12 +649,12 @@ class MixedElement(_BasixElementBase):
     @property
     def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """Topology of the reference element."""
-        return self.sub_elements[0].reference_topology
+        return self._sub_elements[0].reference_topology
 
     @property
     def reference_geometry(self) -> _nda_f64:
         """Geometry of the reference element."""
-        return self.sub_elements[0].reference_geometry
+        return self._sub_elements[0].reference_geometry
 
     @property
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
@@ -666,7 +674,7 @@ class MixedElement(_BasixElementBase):
     @property
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        return self.sub_elements[0].cell_type
+        return self._sub_elements[0].cell_type
 
     @property
     def discontinuous(self) -> bool:
@@ -676,7 +684,7 @@ class MixedElement(_BasixElementBase):
     @property
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
-        return max([e.interpolation_nderivs for e in self.sub_elements])
+        return max([e.interpolation_nderivs for e in self._sub_elements])
 
 
 class BlockedElement(_BasixElementBase):
@@ -705,6 +713,10 @@ class BlockedElement(_BasixElementBase):
         super().__init__(
             repr, "blocked element", sub_element.cell_type.name, block_shape,
             sub_element._degree, sub_element._map)
+
+    def sub_elements(self) -> _typing.List[_BasixElementBase]:
+        """Return a list of sub elements."""
+        return [self.sub_element for _ in range(self._block_size)]
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""

@@ -825,8 +825,6 @@ FiniteElement::FiniteElement(
       {
         cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
-        auto& eperm = _eperm.try_emplace(ctype).first->second;
-        auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
         for (std::size_t i = 0; i < trans.extent(0); ++i)
         {
           std::vector<std::size_t> perm(trans.extent(1));
@@ -845,95 +843,122 @@ FiniteElement::FiniteElement(
           }
 
           // Factorise the permutations
-          eperm.push_back(precompute::prepare_permutation(perm));
-          eperm_rev.push_back(precompute::prepare_permutation(rev_perm));
+          std::vector<std::size_t> prepared_perm
+              = precompute::prepare_permutation(perm);
+          std::vector<std::size_t> prepared_rev_perm
+              = precompute::prepare_permutation(rev_perm);
+
+          // Store the permutations
+          auto& eperm = _eperm.try_emplace(ctype).first->second;
+          auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
+          eperm.push_back(prepared_perm);
+          eperm_rev.push_back(prepared_rev_perm);
+
+          // Generate the entity transformations from the permutations
+          std::vector<double> D(perm.size());
+          std::fill(D.begin(), D.end(), 1.);
+          std::pair<std::vector<double>, std::array<std::size_t, 2>> M
+              = {std::vector<double>(perm.size() * perm.size()),
+                 {perm.size(), perm.size()}};
+          std::fill(M.first.begin(), M.first.end(), 0.);
+
+          auto& etrans = _etrans.try_emplace(ctype).first->second;
+          auto& etransT = _etransT.try_emplace(ctype).first->second;
+          auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
+          auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
+          etrans.push_back({prepared_perm, D, M});
+          etrans_invT.push_back({prepared_perm, D, M});
+          etransT.push_back({prepared_rev_perm, D, M});
+          etrans_inv.push_back({prepared_rev_perm, D, M});
         }
       }
     }
-
-    // Precompute the DOF transformations
-    for (const auto& [ctype, trans_data] : _entity_transformations)
+    else
     {
-      cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
-      // Buffers for matrices
-      std::vector<double> mat_b, matT_b, matint, matinv_b, matinvT_b;
-
-      auto& etrans = _etrans.try_emplace(ctype).first->second;
-      auto& etransT = _etransT.try_emplace(ctype).first->second;
-      auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
-      auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
-      for (std::size_t i = 0; i < trans.extent(0); ++i)
+      // Precompute the DOF transformations
+      for (const auto& [ctype, trans_data] : _entity_transformations)
       {
-        if (trans.extent(1) == 0)
+        cmdspan3_t trans(trans_data.first.data(), trans_data.second);
+
+        // Buffers for matrices
+        std::vector<double> mat_b, matT_b, matint, matinv_b, matinvT_b;
+
+        auto& etrans = _etrans.try_emplace(ctype).first->second;
+        auto& etransT = _etransT.try_emplace(ctype).first->second;
+        auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
+        auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
+        for (std::size_t i = 0; i < trans.extent(0); ++i)
         {
-          etrans.push_back({});
-          etransT.push_back({});
-          etrans_invT.push_back({});
-          etrans_inv.push_back({});
-        }
-        else
-        {
-          mat_b.resize(trans.extent(1) * trans.extent(2));
-          mdspan2_t mat(mat_b.data(), trans.extent(1), trans.extent(2));
-          for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
-            for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
-              mat(k0, k1) = trans(i, k0, k1);
-          etrans.push_back(precompute::prepare_matrix(mat));
-
+          if (trans.extent(1) == 0)
           {
-            matT_b.resize(trans.extent(1) * trans.extent(2));
-            mdspan2_t matT(matT_b.data(), trans.extent(2), trans.extent(1));
-            for (std::size_t k0 = 0; k0 < matT.extent(0); ++k0)
-              for (std::size_t k1 = 0; k1 < matT.extent(1); ++k1)
-                matT(k0, k1) = trans(i, k1, k0);
-            etransT.push_back(precompute::prepare_matrix(matT));
-          }
-
-          // Rotation of a face: this is in the only base transformation
-          // such that M^{-1} != M.
-          // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
-          // For a triangular face, M^3 = Id, so M^{-1} = M^2.
-          mdspan2_t matinv_new;
-          if (ctype == cell::type::quadrilateral and i == 0)
-          {
-            matint.resize(mat.extent(0) * mat.extent(1));
-            mdspan2_t mat_int(matint.data(), mat.extent(0), mat.extent(1));
-            math::dot(mat, mat, mat_int);
-
-            matinv_b.resize(mat_int.extent(0) * mat.extent(1));
-            matinv_new
-                = mdspan2_t(matinv_b.data(), mat_int.extent(0), mat.extent(1));
-            math::dot(mat_int, mat, matinv_new);
-          }
-          else if (ctype == cell::type::triangle and i == 0)
-          {
-            matinv_b.resize(mat.extent(0) * mat.extent(1));
-            matinv_new
-                = mdspan2_t(matinv_b.data(), mat.extent(0), mat.extent(1));
-            math::dot(mat, mat, matinv_new);
+            etrans.push_back({});
+            etransT.push_back({});
+            etrans_invT.push_back({});
+            etrans_inv.push_back({});
           }
           else
           {
-            matinv_b.assign(mat_b.begin(), mat_b.end());
-            matinv_new = mdspan2_t(matinv_b.data(), mat.extents());
-          }
-          etrans_inv.push_back(precompute::prepare_matrix(matinv_new));
+            mat_b.resize(trans.extent(1) * trans.extent(2));
+            mdspan2_t mat(mat_b.data(), trans.extent(1), trans.extent(2));
+            for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
+              for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
+                mat(k0, k1) = trans(i, k0, k1);
+            etrans.push_back(precompute::prepare_matrix(mat));
 
-          {
-            matinvT_b.resize(matinv_new.extent(0) * matinv_new.extent(1));
-            mdspan2_t matinvT_new(matinvT_b.data(), matinv_new.extent(1),
-                                  matinv_new.extent(0));
-            for (std::size_t k0 = 0; k0 < matinvT_new.extent(0); ++k0)
-              for (std::size_t k1 = 0; k1 < matinvT_new.extent(1); ++k1)
-                matinvT_new(k0, k1) = matinv_new(k1, k0);
-            etrans_invT.push_back(precompute::prepare_matrix(matinvT_new));
+            {
+              matT_b.resize(trans.extent(1) * trans.extent(2));
+              mdspan2_t matT(matT_b.data(), trans.extent(2), trans.extent(1));
+              for (std::size_t k0 = 0; k0 < matT.extent(0); ++k0)
+                for (std::size_t k1 = 0; k1 < matT.extent(1); ++k1)
+                  matT(k0, k1) = trans(i, k1, k0);
+              etransT.push_back(precompute::prepare_matrix(matT));
+            }
+
+            // Rotation of a face: this is in the only base transformation
+            // such that M^{-1} != M.
+            // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
+            // For a triangular face, M^3 = Id, so M^{-1} = M^2.
+            mdspan2_t matinv_new;
+            if (ctype == cell::type::quadrilateral and i == 0)
+            {
+              matint.resize(mat.extent(0) * mat.extent(1));
+              mdspan2_t mat_int(matint.data(), mat.extent(0), mat.extent(1));
+              math::dot(mat, mat, mat_int);
+
+              matinv_b.resize(mat_int.extent(0) * mat.extent(1));
+              matinv_new = mdspan2_t(matinv_b.data(), mat_int.extent(0),
+                                     mat.extent(1));
+              math::dot(mat_int, mat, matinv_new);
+            }
+            else if (ctype == cell::type::triangle and i == 0)
+            {
+              matinv_b.resize(mat.extent(0) * mat.extent(1));
+              matinv_new
+                  = mdspan2_t(matinv_b.data(), mat.extent(0), mat.extent(1));
+              math::dot(mat, mat, matinv_new);
+            }
+            else
+            {
+              matinv_b.assign(mat_b.begin(), mat_b.end());
+              matinv_new = mdspan2_t(matinv_b.data(), mat.extents());
+            }
+            etrans_inv.push_back(precompute::prepare_matrix(matinv_new));
+
+            {
+              matinvT_b.resize(matinv_new.extent(0) * matinv_new.extent(1));
+              mdspan2_t matinvT_new(matinvT_b.data(), matinv_new.extent(1),
+                                    matinv_new.extent(0));
+              for (std::size_t k0 = 0; k0 < matinvT_new.extent(0); ++k0)
+                for (std::size_t k1 = 0; k1 < matinvT_new.extent(1); ++k1)
+                  matinvT_new(k0, k1) = matinv_new(k1, k0);
+              etrans_invT.push_back(precompute::prepare_matrix(matinvT_new));
+            }
           }
         }
       }
     }
   }
-
   // Check if interpolation matrix is the identity
   cmdspan2_t matM(_matM.first.data(), _matM.second);
   _interpolation_is_identity = matM.extent(0) == matM.extent(1);

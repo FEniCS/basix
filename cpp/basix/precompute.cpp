@@ -40,6 +40,10 @@ precompute::prepare_matrix(
   mdarray2_t permuted_matrix(dim, dim);
   std::vector<T> diag(dim);
 
+  const double rcond_matrix = math::rcond(
+      std::span<const double>(matrix.data_handle(), matrix.size()),
+      matrix.extent(0));
+
   // Permute the matrix so that all the top left blocks are invertible
   std::vector<double> mat_b(dim * dim), matT_b(dim * dim), mat2_b(dim * dim);
   for (std::size_t i = 0; i < dim; ++i)
@@ -68,13 +72,15 @@ precompute::prepare_matrix(
         mdspan2_t mat2(mat2_b.data(), mat.extent(0), mat_t.extent(1));
         math::dot(mat, mat_t, mat2);
 
-        auto [evals, _] = math::eigh(
-            std::span<const double>(mat2.data_handle(), mat2.size()),
-            mat2.extent(0));
-        if (double lambda = std::abs(evals.front()); lambda > max_eval)
+        if (double rcond = math::rcond(
+                std::span<const double>(mat2.data_handle(), mat2.size()),
+                mat2.extent(0));
+            rcond > max_eval)
         {
-          max_eval = lambda;
+          max_eval = rcond;
           col = j;
+          if (max_eval > rcond_matrix)
+            break;
         }
       }
     }
@@ -84,6 +90,28 @@ precompute::prepare_matrix(
 
     for (std::size_t k = 0; k < matrix.extent(0); ++k)
       permuted_matrix(k, i) = matrix(k, col);
+
+    /*
+    std::cout << "matrix = np.array([\n";
+    for (std::size_t k = 0; k < matrix.extent(0); ++k)
+    {
+      std::cout << "  [";
+      for (std::size_t k2 = 0; k2 < matrix.extent(1); ++k2)
+        std::cout << matrix(k, k2) << ", ";
+      std::cout << "],\n";
+    }
+    std::cout << "])\n";
+
+    std::cout << "permuted_matrix = {\n";
+    for (std::size_t k = 0; k < permuted_matrix.extent(0); ++k)
+    {
+      std::cout << "  ";
+      for (std::size_t k2 = 0; k2 < permuted_matrix.extent(1); ++k2)
+        std::cout << permuted_matrix(k, k2) << " ";
+      std::cout << "\n";
+    }
+    std::cout << "}\n";
+    */
 
     perm[i] = col;
   }

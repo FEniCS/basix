@@ -957,7 +957,7 @@ bool FiniteElement::operator==(const FiniteElement& e) const
   if (this == &e)
     return true;
   else if (family() == element::family::custom
-           or e.family() == element::family::custom)
+           and e.family() == element::family::custom)
   {
     bool coeff_equal = false;
     if (_coeffs.first.size() == e.coefficient_matrix().first.size()

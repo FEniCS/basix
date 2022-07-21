@@ -825,8 +825,6 @@ FiniteElement::FiniteElement(
       {
         cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
-        auto& eperm = _eperm.try_emplace(ctype).first->second;
-        auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
         for (std::size_t i = 0; i < trans.extent(0); ++i)
         {
           std::vector<std::size_t> perm(trans.extent(1));
@@ -845,8 +843,29 @@ FiniteElement::FiniteElement(
           }
 
           // Factorise the permutations
-          eperm.push_back(precompute::prepare_permutation(perm));
-          eperm_rev.push_back(precompute::prepare_permutation(rev_perm));
+          std::vector<std::size_t> prepared_perm = precompute::prepare_permutation(perm);
+          std::vector<std::size_t> prepared_rev_perm = precompute::prepare_permutation(rev_perm);
+
+          // Store the permutations
+          auto& eperm = _eperm.try_emplace(ctype).first->second;
+          auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
+          eperm.push_back(prepared_perm);
+          eperm_rev.push_back(prepared_rev_perm);
+
+          // Generate the entity transformations from the permutations
+          std::vector<double> D(perm.size());
+          std::fill(D.begin(), D.end(), 1.);
+          std::pair<std::vector<double>, std::array<std::size_t, 2>> M = {std::vector<double>(perm.size() * perm.size()), {perm.size(), perm.size()}};
+          std::fill(M.first.begin(), M.first.end(), 0.);
+
+          auto& etrans = _etrans.try_emplace(ctype).first->second;
+          auto& etransT = _etransT.try_emplace(ctype).first->second;
+          auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
+          auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
+          etrans.push_back({prepared_perm, D, M});
+          etrans_invT.push_back({prepared_perm, D, M});
+          etransT.push_back({prepared_rev_perm, D, M});
+          etrans_inv.push_back({prepared_rev_perm, D, M});
         }
       }
     }

@@ -91,28 +91,6 @@ precompute::prepare_matrix(
     for (std::size_t k = 0; k < matrix.extent(0); ++k)
       permuted_matrix(k, i) = matrix(k, col);
 
-    /*
-    std::cout << "matrix = np.array([\n";
-    for (std::size_t k = 0; k < matrix.extent(0); ++k)
-    {
-      std::cout << "  [";
-      for (std::size_t k2 = 0; k2 < matrix.extent(1); ++k2)
-        std::cout << matrix(k, k2) << ", ";
-      std::cout << "],\n";
-    }
-    std::cout << "])\n";
-
-    std::cout << "permuted_matrix = {\n";
-    for (std::size_t k = 0; k < permuted_matrix.extent(0); ++k)
-    {
-      std::cout << "  ";
-      for (std::size_t k2 = 0; k2 < permuted_matrix.extent(1); ++k2)
-        std::cout << permuted_matrix(k, k2) << " ";
-      std::cout << "\n";
-    }
-    std::cout << "}\n";
-    */
-
     perm[i] = col;
   }
 

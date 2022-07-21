@@ -107,18 +107,6 @@ double basix::math::rcond(const std::span<const double>& A, std::size_t n)
   std::vector<int> iwork(n < 2 ? 2 : n);
   double rcond = 0;
 
-  /*
-  std::cout << "matrix is {\n";
-  for (std::size_t i = 0; i < n; ++i)
-  {
-    std::cout << "  ";
-    for (std::size_t ii = 0; ii < n; ++ii)
-      std::cout << A[i * n + ii] << " ";
-    std::cout << "\n";
-  }
-  std::cout << "}\n";
-  */
-
   // Compute the norm of M
   double anorm = dlange_(&norm, &N, &N, M.data(), &ldA, work.data());
   // Comput LU decomposition of M
@@ -127,9 +115,6 @@ double basix::math::rcond(const std::span<const double>& A, std::size_t n)
   // Compute reciprocal of condition number
   dgecon_(&norm, &N, M.data(), &ldA, &anorm, &rcond, work.data(), iwork.data(),
           &info);
-
-  // std::cout << "anorm = " << anorm << "\n";
-  // std::cout << "rcond = " << rcond << "\n";
 
   if (info != 0)
     return 0;

@@ -68,7 +68,9 @@ std::array<typename U::value_type, 3> cross(const U& u, const V& v)
 std::pair<std::vector<double>, std::vector<double>>
 eigh(const std::span<const double>& A, std::size_t n);
 
-/// Compute reciprocal of the condition number of a square matrix A
+/// For a square matrix A, compute the norm of A multiplied by the reciprocal of
+/// the condition number of A. This values gives an indication of how far away
+/// from a singular matrix A is.
 /// @param[in] A Input matrix, row-major storage
 /// @param[in] n Number of rows
 /// @return The reciprocal of the condition number of A

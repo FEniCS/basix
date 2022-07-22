@@ -205,7 +205,11 @@ class _BasixElementBase(_FiniteElementBase):
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
-        """True if the element has a tensor product factorisation."""
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
         return False
 
     def get_tensor_product_representation(self):
@@ -370,7 +374,11 @@ class BasixElement(_BasixElementBase):
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
-        """True if the element has a tensor product factorisation."""
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
         return self.element.has_tensor_product_factorisation
 
     def get_tensor_product_representation(self):
@@ -884,7 +892,11 @@ class BlockedElement(_BasixElementBase):
 
     @property
     def has_tensor_product_factorisation(self) -> bool:
-        """True if the element has a tensor product factorisation."""
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
         return self.sub_element.has_tensor_product_factorisation
 
     def get_tensor_product_representation(self):

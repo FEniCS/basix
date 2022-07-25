@@ -22,7 +22,7 @@ precompute::prepare_permutation(const std::span<const std::size_t>& perm)
   {
     std::size_t row2 = perm[row];
     while (row2 < row)
-      row2 = perm[row2];
+      row2 = f_perm[row2];
     f_perm[row] = row2;
   }
   return f_perm;

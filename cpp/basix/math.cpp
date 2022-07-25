@@ -182,9 +182,7 @@ std::vector<std::size_t> basix::math::lu_permutation(
 
   std::vector<std::size_t> perm(dim);
   for (std::size_t i = 0; i < dim; ++i)
-    perm[i] = static_cast<std::size_t>(i);
-  for (std::size_t i = 0; i < dim; ++i)
-    std::swap(perm[i], perm[lu_perm[i] - 1]);
+    perm[i] = static_cast<std::size_t>(lu_perm[i] - 1);
 
   return perm;
 }

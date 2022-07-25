@@ -87,6 +87,8 @@ bool is_singular(const std::experimental::mdspan<
 /// Get the permutation matrix P in the LU demcomposition of the transpose of a
 /// square matrix A
 /// @param[in] A The matrix
+/// @return The permutation, in prepared format (see
+/// `basix::precompute::prepare_permutation`)
 std::vector<std::size_t>
 lu_permutation(const std::experimental::mdspan<
                const double, std::experimental::dextents<std::size_t, 2>>& A);

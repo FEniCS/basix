@@ -45,7 +45,11 @@ precompute::prepare_matrix(
 
   for (std::size_t i = 0; i < dim; ++i)
     for (std::size_t j = 0; j < dim; ++j)
-      permuted_matrix(j, i) = matrix(j, perm[i]);
+      permuted_matrix(i, j) = matrix(i, j);
+
+  for (std::size_t i = 0; i < dim; ++i)
+    for (std::size_t j = 0; j < dim; ++j)
+      std::swap(permuted_matrix(i, j), permuted_matrix(i, perm[j]));
 
   // Create the precomputed representation of the matrix
   std::vector<double> prepared_matrix_b(dim * dim);
@@ -92,7 +96,7 @@ precompute::prepare_matrix(
     }
   }
 
-  return {prepare_permutation(perm),
+  return {std::move(perm),
           std::move(diag),
           {std::move(prepared_matrix_b),
            {prepared_matrix.extent(0), prepared_matrix.extent(1)}}};

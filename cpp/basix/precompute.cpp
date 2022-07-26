@@ -36,57 +36,20 @@ precompute::prepare_matrix(
 {
   using T = double;
   const std::size_t dim = matrix.extent(0);
-  std::vector<std::size_t> perm(dim);
+  assert(dim == matrix.extent(1));
   mdarray2_t permuted_matrix(dim, dim);
   std::vector<T> diag(dim);
 
   // Permute the matrix so that all the top left blocks are invertible
-  std::vector<double> mat_b(dim * dim), matT_b(dim * dim), mat2_b(dim * dim);
+  std::vector<std::size_t> perm = math::lu_permutation(matrix);
+
   for (std::size_t i = 0; i < dim; ++i)
-  {
-    double max_eval = 0;
-    std::size_t col = 0;
     for (std::size_t j = 0; j < dim; ++j)
-    {
-      const bool used = std::find(perm.begin(), std::next(perm.begin(), i), j)
-                        != std::next(perm.begin(), i);
-      if (!used)
-      {
-        for (std::size_t k = 0; k < matrix.extent(0); ++k)
-          permuted_matrix(k, i) = matrix(k, j);
+      permuted_matrix(i, j) = matrix(i, j);
 
-        mdspan2_t mat(mat_b.data(), i + 1, i + 1);
-        for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
-          for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
-            mat(k0, k1) = permuted_matrix(k0, k1);
-
-        mdspan2_t mat_t(matT_b.data(), mat.extent(1), mat.extent(0));
-        for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
-          for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
-            mat_t(k1, k0) = mat(k0, k1);
-
-        mdspan2_t mat2(mat2_b.data(), mat.extent(0), mat_t.extent(1));
-        math::dot(mat, mat_t, mat2);
-
-        auto [evals, _] = math::eigh(
-            std::span<const double>(mat2.data_handle(), mat2.size()),
-            mat2.extent(0));
-        if (double lambda = std::abs(evals.front()); lambda > max_eval)
-        {
-          max_eval = lambda;
-          col = j;
-        }
-      }
-    }
-
-    if (std::abs(max_eval) < 1.0e-9)
-      throw std::runtime_error("Singular matrix");
-
-    for (std::size_t k = 0; k < matrix.extent(0); ++k)
-      permuted_matrix(k, i) = matrix(k, col);
-
-    perm[i] = col;
-  }
+  for (std::size_t i = 0; i < dim; ++i)
+    for (std::size_t j = 0; j < dim; ++j)
+      std::swap(permuted_matrix(i, j), permuted_matrix(i, perm[j]));
 
   // Create the precomputed representation of the matrix
   std::vector<double> prepared_matrix_b(dim * dim);
@@ -133,7 +96,7 @@ precompute::prepare_matrix(
     }
   }
 
-  return {prepare_permutation(perm),
+  return {std::move(perm),
           std::move(diag),
           {std::move(prepared_matrix_b),
            {prepared_matrix.extent(0), prepared_matrix.extent(1)}}};

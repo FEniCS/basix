@@ -16,7 +16,7 @@ setup(name="fenics-basix",
       package_data={"basix": ["py.typed"]},
       install_requires=["numpy>=1.21"],
       extras_require={
-          "docs": ["markdown", "pylit3", "pyyaml", "sphinx", "sphinx_rtd_theme"],
+          "docs": ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"],
           "lint": ["flake8", "pydocstyle"],
           "optional": ["numba"],
           "test": ["pytest", "sympy", "numba", "scipy", "matplotlib", "fenics-ufl"],

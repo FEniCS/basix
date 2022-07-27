@@ -71,8 +71,10 @@ def test_converted_elements(celltype, family, degree, variants):
 @pytest.mark.parametrize("elements", [
     [ufl.FiniteElement("Lagrange", "triangle", 1), ufl.FiniteElement("Bubble", "triangle", 3)],
     [ufl.FiniteElement("Lagrange", "quadrilateral", 1), basix.ufl_wrapper.create_element("Bubble", "quadrilateral", 2)],
-    [ufl.VectorElement("Lagrange", "quadrilateral", 1), basix.ufl_wrapper.create_vector_element("Bubble", "quadrilateral", 2)],
-    [ufl.TensorElement("Lagrange", "quadrilateral", 1), basix.ufl_wrapper.create_tensor_element("Bubble", "quadrilateral", 2)],
+    [ufl.VectorElement("Lagrange", "quadrilateral", 1),
+     basix.ufl_wrapper.create_vector_element("Bubble", "quadrilateral", 2)],
+    [ufl.TensorElement("Lagrange", "quadrilateral", 1),
+     basix.ufl_wrapper.create_tensor_element("Bubble", "quadrilateral", 2)],
 ])
 def test_enriched_element(elements):
     e = basix.ufl_wrapper._create_enriched_element([

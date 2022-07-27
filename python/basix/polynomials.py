@@ -5,6 +5,7 @@ from ._basixcpp import PolynomialType as _PT
 from ._basixcpp import index as _index
 import numpy as _numpy
 import numpy.typing as _numpy_typing
+import typing as _typing
 
 from ._basixcpp import polynomials_dim as dim  # noqa: F401
 
@@ -37,6 +38,8 @@ def reshape_coefficients(
 
     pdim = dim(poly_type, cell_type, output_degree)
     out = _numpy.zeros((coefficients.shape[0], pdim * value_size))
+
+    indices: _typing.List[_typing.Tuple[int, ...]] = []
 
     if cell_type == _CT.interval:
         indices = [(i, ) for i in range(input_degree + 1)]

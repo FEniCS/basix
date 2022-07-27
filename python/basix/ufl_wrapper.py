@@ -232,7 +232,6 @@ class _BasixElementBase(_FiniteElementBase):
         raise NotImplementedError()
 
 
-
 class BasixElement(_BasixElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL."""
 

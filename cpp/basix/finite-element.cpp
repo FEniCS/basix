@@ -656,20 +656,17 @@ FiniteElement::FiniteElement(
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, x, M,
                                      highest_degree, interpolation_nderivs);
 
-  if (family == element::family::custom)
-  {
-    _wcoeffs
-        = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
+  _wcoeffs
+      = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
 
-    // Copy  M
-    for (std::size_t i = 0; i < M.size(); ++i)
+  // Copy  M
+  for (std::size_t i = 0; i < M.size(); ++i)
+  {
+    for (auto Mi : M[i])
     {
-      for (auto Mi : M[i])
-      {
-        _M[i].emplace_back(
-            std::vector(Mi.data_handle(), Mi.data_handle() + Mi.size()),
-            std::array{Mi.extent(0), Mi.extent(1), Mi.extent(2), Mi.extent(3)});
-      }
+      _M[i].emplace_back(
+          std::vector(Mi.data_handle(), Mi.data_handle() + Mi.size()),
+          std::array{Mi.extent(0), Mi.extent(1), Mi.extent(2), Mi.extent(3)});
     }
   }
 

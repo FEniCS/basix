@@ -203,6 +203,10 @@ class _BasixElementBase(_FiniteElementBase):
         """True if the element is a custom Basix element."""
         return False
 
+    def is_fully_continuous(self) -> bool:
+        """True if the element is fully continuous."""
+        raise NotImplementedError()
+
 
 class BasixElement(_BasixElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL."""
@@ -359,6 +363,11 @@ class BasixElement(_BasixElementBase):
         """True if the element is a custom Basix element."""
         return self._is_custom
 
+    def is_fully_continuous(self) -> bool:
+        """True if the element is fully continuous."""
+        EF = _basix.ElementFamily
+        return self.element.family in [EF.P, EF.serendipity, EF.bubble]
+
 
 class ComponentElement(_BasixElementBase):
     """An element representing one component of a BasixElement."""
@@ -503,6 +512,10 @@ class ComponentElement(_BasixElementBase):
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
         return self.element.interpolation_nderivs
+
+    def is_fully_continuous(self) -> bool:
+        """True if the element is fully continuous."""
+        return self.element.is_fully_continuous()
 
 
 class MixedElement(_BasixElementBase):
@@ -688,6 +701,13 @@ class MixedElement(_BasixElementBase):
         """The number of derivatives needed when interpolating."""
         return max([e.interpolation_nderivs for e in self._sub_elements])
 
+    def is_fully_continuous(self) -> bool:
+        """True if the element is fully continuous."""
+        for i in self._sub_elements:
+            if not self.element.is_fully_continuous():
+                return False
+        return True
+
 
 class BlockedElement(_BasixElementBase):
     """An element with a block size that contains multiple copies of a sub element."""
@@ -862,6 +882,10 @@ class BlockedElement(_BasixElementBase):
         """The number of derivatives needed when interpolating."""
         return self.sub_element.interpolation_nderivs
 
+    def is_fully_continuous(self) -> bool:
+        """True if the element is fully continuous."""
+        return self.element.is_fully_continuous()
+
 
 class VectorElement(BlockedElement):
     """A vector element."""
@@ -975,6 +999,22 @@ def create_element(
             discontinuous = True
 
         family = _basix.finite_element.string_to_family(family, cell.name)
+
+    # Default variant choices
+    EF = _basix.ElementFamily
+    if lagrange_variant == _basix.LagrangeVariant.unset:
+        if family == EF.P:
+            lagrange_variant = _basix.LagrangeVariant.gll_warped
+        elif family in [EF.RT, EF.N1E]:
+            lagrange_variant = _basix.LagrangeVariant.legendre
+        elif family in [EF.serendipity, EF.BDM, EF.N2E]:
+            lagrange_variant = _basix.LagrangeVariant.legendre
+    if dpc_variant == _basix.DPCVariant.unset:
+        EF = _basix.ElementFamily
+        if family in [EF.serendipity, EF.BDM, EF.N2E]:
+            dpc_variant = _basix.DPCVariant.legendre
+        elif family == EF.DPC:
+            dpc_variant = _basix.DPCVariant.diagonal_gll
 
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return BasixElement(e)

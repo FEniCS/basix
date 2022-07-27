@@ -299,8 +299,8 @@ public:
   /// @param[in] value_shape The value shape of the element
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
-  /// polynomial space for this element. Shape is (dim(Legendre
-  /// polynomials), dim(finite element polyset))
+  /// polynomial space for this element. Shape is (dim(finite element polyset),
+  /// dim(Legendre polynomials))
   /// @param[in] x Interpolation points. Indices are (tdim, entity
   /// index, point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
@@ -988,8 +988,8 @@ public:
   ///
   /// These coefficients are only stored for custom elements. This
   /// function will throw an exception if called on a non-custom element
-  /// @return Coefficient matrix. Shape is (dim(Lagrange polynomials),
-  /// dim(finite element polyset))
+  /// @return Coefficient matrix. Shape is (dim(finite element polyset),
+  /// dim(Lagrange polynomials))
   const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
   wcoeffs() const;
 
@@ -1217,8 +1217,8 @@ private:
 /// @param[in] value_shape The value shape of the element
 /// @param[in] wcoeffs Matrices for the kth value index containing the
 /// expansion coefficients defining a polynomial basis spanning the
-/// polynomial space for this element. Shape is (dim(Legendre polynomials),
-/// dim(finite element polyset))
+/// polynomial space for this element. Shape is (dim(finite element polyset),
+/// dim(Legendre polynomials))
 /// @param[in] x Interpolation points. Indices are (tdim, entity index,
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity

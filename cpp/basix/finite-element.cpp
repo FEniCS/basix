@@ -1412,8 +1412,6 @@ FiniteElement::dual_matrix() const
 const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
 FiniteElement::wcoeffs() const
 {
-  if (family() != element::family::custom)
-    throw std::runtime_error("wcoeffs is only stored for custom elements");
   return _wcoeffs;
 }
 //-----------------------------------------------------------------------------
@@ -1428,8 +1426,6 @@ const std::array<
     std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>, 4>&
 FiniteElement::M() const
 {
-  if (family() != element::family::custom)
-    throw std::runtime_error("M is only stored for custom elements");
   return _M;
 }
 //-----------------------------------------------------------------------------

@@ -999,6 +999,7 @@ def create_vector_element(
         lagrange_variant: The variant of Lagrange to be used.
         dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
+        dim: The length of the vector.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return VectorElement(e, dim)
@@ -1008,7 +1009,8 @@ def create_vector_element(
 def create_tensor_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+    shape: _typing.Tuple[int, int] = None, symmetry: bool = None
 ) -> TensorElement:
     """Create a UFL tensor element using Basix.
 
@@ -1022,9 +1024,11 @@ def create_tensor_element(
         lagrange_variant: The variant of Lagrange to be used.
         dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
+        shape: The shape of the tensor.
+        symmetry: Is the tensor symmetric?
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    return TensorElement(e)
+    return TensorElement(e, shape, symmetry)
 
 
 def convert_ufl_element(

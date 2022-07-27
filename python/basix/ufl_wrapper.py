@@ -947,9 +947,11 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
 
 @_functools.lru_cache()
-def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False) -> BasixElement:
+def create_element(
+    family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+    degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False
+) -> BasixElement:
     """Create a UFL element using Basix.
 
     Args:
@@ -982,7 +984,8 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
 def create_vector_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+    dim: int = None
 ) -> VectorElement:
     """Create a UFL vector element using Basix.
 
@@ -998,14 +1001,14 @@ def create_vector_element(
         discontinuous: If set to True, the discontinuous version of this element will be created.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    return VectorElement(e)
+    return VectorElement(e, dim)
 
 
 @_functools.lru_cache()
 def create_tensor_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False
 ) -> TensorElement:
     """Create a UFL tensor element using Basix.
 

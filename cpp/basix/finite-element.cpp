@@ -843,16 +843,14 @@ FiniteElement::FiniteElement(
           }
 
           // Factorise the permutations
-          std::vector<std::size_t> prepared_perm
-              = precompute::prepare_permutation(perm);
-          std::vector<std::size_t> prepared_rev_perm
-              = precompute::prepare_permutation(rev_perm);
+          precompute::prepare_permutation(perm);
+          precompute::prepare_permutation(rev_perm);
 
           // Store the permutations
           auto& eperm = _eperm.try_emplace(ctype).first->second;
           auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
-          eperm.push_back(prepared_perm);
-          eperm_rev.push_back(prepared_rev_perm);
+          eperm.push_back(perm);
+          eperm_rev.push_back(rev_perm);
 
           // Generate the entity transformations from the permutations
           std::pair<std::vector<double>, std::array<std::size_t, 2>> identity
@@ -866,10 +864,10 @@ FiniteElement::FiniteElement(
           auto& etransT = _etransT.try_emplace(ctype).first->second;
           auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
           auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
-          etrans.push_back({prepared_perm, identity});
-          etrans_invT.push_back({prepared_perm, identity});
-          etransT.push_back({prepared_rev_perm, identity});
-          etrans_inv.push_back({prepared_rev_perm, identity});
+          etrans.push_back({perm, identity});
+          etrans_invT.push_back({perm, identity});
+          etransT.push_back({rev_perm, identity});
+          etrans_inv.push_back({rev_perm, identity});
         }
       }
     }

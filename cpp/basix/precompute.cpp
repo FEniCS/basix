@@ -14,18 +14,13 @@ using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
 
 //-----------------------------------------------------------------------------
-std::vector<std::size_t>
-precompute::prepare_permutation(const std::span<const std::size_t>& perm)
+void precompute::prepare_permutation(const std::span<std::size_t>& perm)
 {
-  std::vector<std::size_t> f_perm(perm.size());
   for (std::size_t row = 0; row < perm.size(); ++row)
   {
-    std::size_t row2 = perm[row];
-    while (row2 < row)
-      row2 = f_perm[row2];
-    f_perm[row] = row2;
+    while (perm[row] < row)
+      perm[row] = perm[perm[row]];
   }
-  return f_perm;
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<std::size_t>,

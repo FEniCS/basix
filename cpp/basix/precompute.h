@@ -59,10 +59,8 @@ namespace basix::precompute
 /// For an example of how the permutation in this form is applied, see
 /// `apply_permutation()`.
 ///
-/// @param[in] perm A permutation
-/// @return The precomputed representation of the permutation
-std::vector<std::size_t>
-prepare_permutation(const std::span<const std::size_t>& perm);
+/// @param[in,out] perm A permutation
+void prepare_permutation(const std::span<std::size_t>& perm);
 
 /// Apply a (precomputed) permutation
 ///

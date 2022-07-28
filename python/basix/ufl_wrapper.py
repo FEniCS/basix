@@ -8,6 +8,9 @@ import basix as _basix
 import typing as _typing
 import functools as _functools
 
+# TODO: remove IrreducibleInt once UFL handles element degrees better
+from ufl.algorithms.estimate_degrees import IrreducibleInt as _IrreducibleInt
+
 if _typing.TYPE_CHECKING:
     _nda_f64 = _numpy.typing.NDArray[_numpy.float64]
 else:
@@ -21,7 +24,7 @@ class _BasixElementBase(_FiniteElementBase):
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: int = -1, mapname: str = None):
+                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: str = None):
         """Initialise the element."""
         super().__init__(name, cellname, degree, None, value_shape, value_shape)
         self._repr = repr
@@ -223,9 +226,15 @@ class BasixElement(_BasixElementBase):
             repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
                     f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
 
-        super().__init__(
-            repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
-            _map_type_to_string(element.map_type))
+        if element.cell_type.name in ["interval", "triangle", "tetrahedron"]:
+            super().__init__(
+                repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
+                _map_type_to_string(element.map_type))
+        else:
+            # TODO: remove IrreducibleInt once UFL handles element degrees better
+            super().__init__(
+                repr, element.family.name, element.cell_type.name, tuple(element.value_shape),
+                _IrreducibleInt(element.degree), _map_type_to_string(element.map_type))
 
         self.element = element
 
@@ -1010,7 +1019,6 @@ def create_element(
         elif family in [EF.serendipity, EF.BDM, EF.N2E]:
             lagrange_variant = _basix.LagrangeVariant.legendre
     if dpc_variant == _basix.DPCVariant.unset:
-        EF = _basix.ElementFamily
         if family in [EF.serendipity, EF.BDM, EF.N2E]:
             dpc_variant = _basix.DPCVariant.legendre
         elif family == EF.DPC:

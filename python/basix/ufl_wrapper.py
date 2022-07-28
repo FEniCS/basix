@@ -884,7 +884,7 @@ class BlockedElement(_BasixElementBase):
 
     def is_fully_continuous(self) -> bool:
         """True if the element is fully continuous."""
-        return self.element.is_fully_continuous()
+        return self.sub_element.is_fully_continuous()
 
 
 class VectorElement(BlockedElement):

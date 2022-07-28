@@ -999,6 +999,7 @@ def create_element(
         lagrange_variant: The variant of Lagrange to be used.
         dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
+        gdim: The geometric dimension of the cell.
     """
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
@@ -1053,6 +1054,7 @@ def create_vector_element(
         dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
         dim: The length of the vector.
+        gdim: The geometric dimension of the cell.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return VectorElement(e, dim, gdim=gdim)
@@ -1079,6 +1081,7 @@ def create_tensor_element(
         discontinuous: If set to True, the discontinuous version of this element will be created.
         shape: The shape of the tensor.
         symmetry: Is the tensor symmetric?
+        gdim: The geometric dimension of the cell.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return TensorElement(e, shape, symmetry, gdim=gdim)
@@ -1158,7 +1161,8 @@ def convert_ufl_element(
             elif family_type == EF.DPC:
                 variant_info["dpc_variant"] = _basix.DPCVariant.diagonal_gll
 
-        return create_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous)
+        return create_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous,
+                              gdim=element.cell().geometric_dimension())
 
     else:
         raise ValueError(f"Unrecognised element type: {element.__class__.__name__}")

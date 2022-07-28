@@ -163,7 +163,6 @@ void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
 /// `apply_matrix()`.
 ///
 /// @param[in,out] A The matrix's data
-/// @param[in] dim The number of rows/columns of the matrix
 /// @return The three parts of a precomputed representation of the matrix.
 /// These are (as described above):
 /// - A permutation (precomputed as in `prepare_permutation()`);

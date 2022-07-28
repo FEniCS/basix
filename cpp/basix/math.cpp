@@ -159,34 +159,6 @@ bool basix::math::is_singular(
     return false;
 }
 //------------------------------------------------------------------
-std::vector<std::size_t> basix::math::lu_permutation(
-    const std::experimental::mdspan<
-        const double, std::experimental::dextents<std::size_t, 2>>& A)
-{
-  assert(A.extent(0) == A.extent(1));
-
-  const std::size_t dim = A.extent(0);
-
-  // Copy A
-  std::vector<double> M(dim * dim);
-  for (std::size_t i = 0; i < dim; ++i)
-    for (std::size_t j = 0; j < dim; ++j)
-      M[i * A.extent(1) + j] = A(i, j);
-
-  int N = dim;
-  int info;
-  std::vector<int> lu_perm(dim);
-
-  // Comput LU decomposition of M
-  dgetrf_(&N, &N, M.data(), &N, lu_perm.data(), &info);
-
-  std::vector<std::size_t> perm(dim);
-  for (std::size_t i = 0; i < dim; ++i)
-    perm[i] = static_cast<std::size_t>(lu_perm[i] - 1);
-
-  return perm;
-}
-//------------------------------------------------------------------
 std::vector<std::size_t> basix::math::transpose_lu(
     std::pair<std::vector<double>, std::array<std::size_t, 2>>& A)
 {

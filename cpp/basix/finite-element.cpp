@@ -843,33 +843,31 @@ FiniteElement::FiniteElement(
           }
 
           // Factorise the permutations
-          std::vector<std::size_t> prepared_perm
-              = precompute::prepare_permutation(perm);
-          std::vector<std::size_t> prepared_rev_perm
-              = precompute::prepare_permutation(rev_perm);
+          precompute::prepare_permutation(perm);
+          precompute::prepare_permutation(rev_perm);
 
           // Store the permutations
           auto& eperm = _eperm.try_emplace(ctype).first->second;
           auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
-          eperm.push_back(prepared_perm);
-          eperm_rev.push_back(prepared_rev_perm);
+          eperm.push_back(perm);
+          eperm_rev.push_back(rev_perm);
 
           // Generate the entity transformations from the permutations
-          std::vector<double> D(perm.size());
-          std::fill(D.begin(), D.end(), 1.);
-          std::pair<std::vector<double>, std::array<std::size_t, 2>> M
+          std::pair<std::vector<double>, std::array<std::size_t, 2>> identity
               = {std::vector<double>(perm.size() * perm.size()),
                  {perm.size(), perm.size()}};
-          std::fill(M.first.begin(), M.first.end(), 0.);
+          std::fill(identity.first.begin(), identity.first.end(), 0.);
+          for (std::size_t i = 0; i < perm.size(); ++i)
+            identity.first[i * perm.size() + i] = 1;
 
           auto& etrans = _etrans.try_emplace(ctype).first->second;
           auto& etransT = _etransT.try_emplace(ctype).first->second;
           auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
           auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
-          etrans.push_back({prepared_perm, D, M});
-          etrans_invT.push_back({prepared_perm, D, M});
-          etransT.push_back({prepared_rev_perm, D, M});
-          etrans_inv.push_back({prepared_rev_perm, D, M});
+          etrans.push_back({perm, identity});
+          etrans_invT.push_back({perm, identity});
+          etransT.push_back({rev_perm, identity});
+          etrans_inv.push_back({rev_perm, identity});
         }
       }
     }
@@ -882,7 +880,7 @@ FiniteElement::FiniteElement(
         cmdspan3_t trans(trans_data.first.data(), trans_data.second);
 
         // Buffers for matrices
-        std::vector<double> mat_b, matT_b, matint, matinv_b, matinvT_b;
+        std::vector<double> M_b, Minv_b, matint;
 
         auto& etrans = _etrans.try_emplace(ctype).first->second;
         auto& etransT = _etransT.try_emplace(ctype).first->second;
@@ -899,60 +897,79 @@ FiniteElement::FiniteElement(
           }
           else
           {
-            mat_b.resize(trans.extent(1) * trans.extent(2));
-            mdspan2_t mat(mat_b.data(), trans.extent(1), trans.extent(2));
-            for (std::size_t k0 = 0; k0 < mat.extent(0); ++k0)
-              for (std::size_t k1 = 0; k1 < mat.extent(1); ++k1)
-                mat(k0, k1) = trans(i, k0, k1);
-            etrans.push_back(precompute::prepare_matrix(mat));
+            const std::size_t dim = trans.extent(1);
+            assert(dim == trans.extent(2));
 
             {
-              matT_b.resize(trans.extent(1) * trans.extent(2));
-              mdspan2_t matT(matT_b.data(), trans.extent(2), trans.extent(1));
-              for (std::size_t k0 = 0; k0 < matT.extent(0); ++k0)
-                for (std::size_t k1 = 0; k1 < matT.extent(1); ++k1)
-                  matT(k0, k1) = trans(i, k1, k0);
-              etransT.push_back(precompute::prepare_matrix(matT));
+              std::pair<std::vector<double>, std::array<std::size_t, 2>> mat
+                  = {std::vector<double>(dim * dim), {dim, dim}};
+              for (std::size_t k0 = 0; k0 < dim; ++k0)
+                for (std::size_t k1 = 0; k1 < dim; ++k1)
+                  mat.first[k0 * dim + k1] = trans(i, k0, k1);
+              std::vector<std::size_t> mat_p = precompute::prepare_matrix(mat);
+              etrans.push_back({mat_p, mat});
             }
+
+            {
+              std::pair<std::vector<double>, std::array<std::size_t, 2>> matT
+                  = {std::vector<double>(dim * dim), {dim, dim}};
+              for (std::size_t k0 = 0; k0 < dim; ++k0)
+                for (std::size_t k1 = 0; k1 < dim; ++k1)
+                  matT.first[k0 * dim + k1] = trans(i, k1, k0);
+              std::vector<std::size_t> matT_p
+                  = precompute::prepare_matrix(matT);
+              etransT.push_back({matT_p, matT});
+            }
+
+            M_b.resize(dim * dim);
+            mdspan2_t M(M_b.data(), dim, dim);
+            for (std::size_t k0 = 0; k0 < dim; ++k0)
+              for (std::size_t k1 = 0; k1 < dim; ++k1)
+                M(k0, k1) = trans(i, k0, k1);
 
             // Rotation of a face: this is in the only base transformation
             // such that M^{-1} != M.
             // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
             // For a triangular face, M^3 = Id, so M^{-1} = M^2.
-            mdspan2_t matinv_new;
+            Minv_b.resize(dim * dim);
+            mdspan2_t Minv(Minv_b.data(), dim, dim);
             if (ctype == cell::type::quadrilateral and i == 0)
             {
-              matint.resize(mat.extent(0) * mat.extent(1));
-              mdspan2_t mat_int(matint.data(), mat.extent(0), mat.extent(1));
-              math::dot(mat, mat, mat_int);
+              matint.resize(dim * dim);
+              mdspan2_t mat_int(matint.data(), dim, dim);
+              math::dot(M, M, mat_int);
 
-              matinv_b.resize(mat_int.extent(0) * mat.extent(1));
-              matinv_new = mdspan2_t(matinv_b.data(), mat_int.extent(0),
-                                     mat.extent(1));
-              math::dot(mat_int, mat, matinv_new);
+              math::dot(mat_int, M, Minv);
             }
             else if (ctype == cell::type::triangle and i == 0)
             {
-              matinv_b.resize(mat.extent(0) * mat.extent(1));
-              matinv_new
-                  = mdspan2_t(matinv_b.data(), mat.extent(0), mat.extent(1));
-              math::dot(mat, mat, matinv_new);
+              math::dot(M, M, Minv);
             }
             else
             {
-              matinv_b.assign(mat_b.begin(), mat_b.end());
-              matinv_new = mdspan2_t(matinv_b.data(), mat.extents());
+              Minv_b.assign(M_b.begin(), M_b.end());
             }
-            etrans_inv.push_back(precompute::prepare_matrix(matinv_new));
 
             {
-              matinvT_b.resize(matinv_new.extent(0) * matinv_new.extent(1));
-              mdspan2_t matinvT_new(matinvT_b.data(), matinv_new.extent(1),
-                                    matinv_new.extent(0));
-              for (std::size_t k0 = 0; k0 < matinvT_new.extent(0); ++k0)
-                for (std::size_t k1 = 0; k1 < matinvT_new.extent(1); ++k1)
-                  matinvT_new(k0, k1) = matinv_new(k1, k0);
-              etrans_invT.push_back(precompute::prepare_matrix(matinvT_new));
+              std::pair<std::vector<double>, std::array<std::size_t, 2>> mat_inv
+                  = {std::vector<double>(dim * dim), {dim, dim}};
+              for (std::size_t k0 = 0; k0 < dim; ++k0)
+                for (std::size_t k1 = 0; k1 < dim; ++k1)
+                  mat_inv.first[k0 * dim + k1] = Minv(k0, k1);
+              std::vector<std::size_t> mat_inv_p
+                  = precompute::prepare_matrix(mat_inv);
+              etrans_inv.push_back({mat_inv_p, mat_inv});
+            }
+
+            {
+              std::pair<std::vector<double>, std::array<std::size_t, 2>>
+                  mat_invT = {std::vector<double>(dim * dim), {dim, dim}};
+              for (std::size_t k0 = 0; k0 < dim; ++k0)
+                for (std::size_t k1 = 0; k1 < dim; ++k1)
+                  mat_invT.first[k0 * dim + k1] = Minv(k1, k0);
+              std::vector<std::size_t> mat_invT_p
+                  = precompute::prepare_matrix(mat_invT);
+              etrans_invT.push_back({mat_invT_p, mat_invT});
             }
           }
         }

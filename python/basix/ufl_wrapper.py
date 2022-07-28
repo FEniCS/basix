@@ -27,20 +27,7 @@ class _BasixElementBase(_FiniteElementBase):
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
                  degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: str = None, gdim: int = None):
         """Initialise the element."""
-        if gdim is not None:
-            if cellname == "interval":
-                tdim = 1
-            elif cellname in ["triangle", "quadrilateral"]:
-                tdim = 2
-            elif cellname in ["tetrahedron", "hexahedron", "pyramid", "prism"]:
-                tdim = 3
-            else:
-                raiseValueError(f"Unsupported cell: {cellname}")
-
-            if tdim != gdim:
-                cellname += f"{gdim}D"
-
-        super().__init__(name, cellname, degree, None, value_shape, value_shape)
+        super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
         self._repr = repr
         self._map = mapname
         self._degree = degree

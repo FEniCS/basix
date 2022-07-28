@@ -28,17 +28,15 @@ precompute::prepare_permutation(const std::span<const std::size_t>& perm)
   return f_perm;
 }
 //-----------------------------------------------------------------------------
-std::tuple<std::vector<std::size_t>, std::vector<double>,
-           std::pair<std::vector<double>, std::array<std::size_t, 2>>>
+std::pair<std::vector<std::size_t>,
+          std::pair<std::vector<double>, std::array<std::size_t, 2>>>
 precompute::prepare_matrix(
     const std::experimental::mdspan<
         const double, std::experimental::dextents<std::size_t, 2>>& matrix)
 {
-  using T = double;
   const std::size_t dim = matrix.extent(0);
   assert(dim == matrix.extent(1));
   mdarray2_t permuted_matrix(dim, dim);
-  std::vector<T> diag(dim);
 
   // Permute the matrix so that all the top left blocks are invertible
   std::vector<std::size_t> perm = math::lu_permutation(matrix);
@@ -57,8 +55,7 @@ precompute::prepare_matrix(
   std::vector<double> Ab(dim * dim), Bb(dim * dim), tb(dim);
   for (std::size_t i = 0; i < dim; ++i)
   {
-    diag[i] = permuted_matrix(i, i);
-    prepared_matrix(i, i) = 0;
+    prepared_matrix(i, i) = permuted_matrix(i, i);
     if (i < dim - 1)
     {
       for (std::size_t k = i + 1; k < dim; ++k)
@@ -84,7 +81,8 @@ precompute::prepare_matrix(
       std::span t(tb.data(), i);
       for (std::size_t k = 0; k < i; ++k)
         t[k] = permuted_matrix(k, i);
-      diag[i] -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.0);
+      prepared_matrix(i, i)
+          -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.0);
 
       for (std::size_t j = i + 1; j < dim; ++j)
       {
@@ -97,7 +95,6 @@ precompute::prepare_matrix(
   }
 
   return {std::move(perm),
-          std::move(diag),
           {std::move(prepared_matrix_b),
            {prepared_matrix.extent(0), prepared_matrix.extent(1)}}};
 }

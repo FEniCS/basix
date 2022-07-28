@@ -855,21 +855,21 @@ FiniteElement::FiniteElement(
           eperm_rev.push_back(prepared_rev_perm);
 
           // Generate the entity transformations from the permutations
-          std::vector<double> D(perm.size());
-          std::fill(D.begin(), D.end(), 1.);
-          std::pair<std::vector<double>, std::array<std::size_t, 2>> M
+          std::pair<std::vector<double>, std::array<std::size_t, 2>> identity
               = {std::vector<double>(perm.size() * perm.size()),
                  {perm.size(), perm.size()}};
-          std::fill(M.first.begin(), M.first.end(), 0.);
+          std::fill(identity.first.begin(), identity.first.end(), 0.);
+          for (std::size_t i = 0; i < perm.size(); ++i)
+            identity.first[i * perm.size() + i] = 1;
 
           auto& etrans = _etrans.try_emplace(ctype).first->second;
           auto& etransT = _etransT.try_emplace(ctype).first->second;
           auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
           auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
-          etrans.push_back({prepared_perm, D, M});
-          etrans_invT.push_back({prepared_perm, D, M});
-          etransT.push_back({prepared_rev_perm, D, M});
-          etrans_inv.push_back({prepared_rev_perm, D, M});
+          etrans.push_back({prepared_perm, identity});
+          etrans_invT.push_back({prepared_perm, identity});
+          etransT.push_back({prepared_rev_perm, identity});
+          etrans_inv.push_back({prepared_rev_perm, identity});
         }
       }
     }

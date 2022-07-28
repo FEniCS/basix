@@ -84,14 +84,12 @@ solve(const std::experimental::mdspan<
 bool is_singular(const std::experimental::mdspan<
                  const double, std::experimental::dextents<std::size_t, 2>>& A);
 
-/// Get the permutation matrix P in the LU demcomposition of the transpose of a
-/// square matrix A
-/// @param[in] A The matrix
-/// @return The permutation, in prepared format (see
+/// Compute the LU decomposition of the transpose of a square matrix A
+/// @param[in,out] A The matrix
+/// @return The LU permutation, in prepared format (see
 /// `basix::precompute::prepare_permutation`)
 std::vector<std::size_t>
-lu_permutation(const std::experimental::mdspan<
-               const double, std::experimental::dextents<std::size_t, 2>>& A);
+transpose_lu(std::pair<std::vector<double>, std::array<std::size_t, 2>>& A);
 
 /// Compute C = A * B
 /// @param[in] A Input matrix

@@ -155,28 +155,9 @@ void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
 
 /// Prepare a square matrix
 ///
-/// This computes a representation of the matrix that allows the matrix to be
-/// applied without any temporary memory assignment.
+/// This computes the LU decomposition of the transpose of the matrix
 ///
-/// This function will first permute the matrix's columns so that the top left
-/// @f$n\times n@f$ blocks are invertible (for all @f$n@f$). Let @f$A@f$ be the
-/// input matrix after the permutation is applied. The output vector @f$D@f$ and
-/// matrix @f$M@f$ are then given by:
-///  @f{align*}{
-///  M_{i,j} &= \begin{cases}
-///         A_{i,:i}A_{:i,:i}^{-1}e_j & j < i\\
-///         A_{i, i} - A_{i,:i}A_{:i,:i}^{-1}A_{:i,i} & j = i\\
-///         A_{i, i} - A_{i,:i}A_{:i,:i}^{-1}A_{:i,j} & j > i = 0
-///        \end{cases},
-/// @f}
-/// where @f$e_j@f$ is the @f$j@f$th coordinate vector, we index all the
-/// matrices and vector starting at 0, and we use numpy-slicing-stying notation
-/// in the subscripts: for example, @f$A_{:i,j}@f$ represents the first @f$i@f$
-/// entries in the @f$j@f$th column of @f$A@f$
-///
-/// This function returns the permutation (precomputed as in
-/// `prepare_permutation()`), the vector @f$D@f$, and the matrix @f$M@f$ as a
-/// tuple.
+/// This function returns the permutation @f$P@f$P in the representation @f$PA^t=LU@f$ (precomputed as in `prepare_permutation()`). The LU decomposition of @f$A^t@f$ is computed in-place
 ///
 /// For an example of how the permutation in this form is applied, see
 /// `apply_matrix()`.
@@ -198,13 +179,15 @@ prepare_matrix(std::pair<std::vector<double>, std::array<std::size_t, 2>>& A);
 /// In pseudo code, this function does the following:
 ///
 /// \code{.pseudo}
-/// perm, diag, mat = matrix
+/// INPUT perm, mat, data
 /// apply_permutation(perm, data)
-/// FOR index IN RANGE(dim):
-///     data[index] *= mat[index, index]
-///     FOR j IN RANGE(dim):
-///         IF j != index:
-///             data[index] *= mat[index, j] * data[j]
+/// FOR i IN RANGE(dim):
+///     FOR j IN RANGE(i+1, dim):
+///         data[i] += mat[i, j] * data[j]
+/// FOR i IN RANGE(dim - 1, -1, -1):
+///     data[i] *= M[i, i]
+///     FOR j in RANGE(i):
+///         data[i] += mat[i, j] * data[j]
 /// \endcode
 ///
 /// If `block_size` is set, this will apply the permutation to every block.

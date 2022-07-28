@@ -153,7 +153,7 @@ void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
   }
 }
 
-/// Prepare a matrix
+/// Prepare a square matrix
 ///
 /// This computes a representation of the matrix that allows the matrix to be
 /// applied without any temporary memory assignment.
@@ -181,17 +181,14 @@ void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
 /// For an example of how the permutation in this form is applied, see
 /// `apply_matrix()`.
 ///
-/// @param[in] matrix A matrix
+/// @param[in,out] A The matrix's data
+/// @param[in] dim The number of rows/columns of the matrix
 /// @return The three parts of a precomputed representation of the matrix.
 /// These are (as described above):
 /// - A permutation (precomputed as in `prepare_permutation()`);
 /// - the vector @f$D@f$;
-/// - the matrix @f$M@f$.
-std::pair<std::vector<std::size_t>,
-          std::pair<std::vector<double>, std::array<std::size_t, 2>>>
-prepare_matrix(
-    const std::experimental::mdspan<
-        const double, std::experimental::dextents<std::size_t, 2>>& matrix);
+std::vector<std::size_t>
+prepare_matrix(std::pair<std::vector<double>, std::array<std::size_t, 2>>& A);
 
 /// @brief Apply a (precomputed) matrix.
 ///
@@ -237,16 +234,19 @@ void apply_matrix(const std::span<const std::size_t>& v_size_t,
   {
     for (std::size_t i = 0; i < dim; ++i)
     {
-      data[block_size * (offset + i) + b] *= M(i, i);
-      for (std::size_t j = 0; j < i; ++j)
-      {
-        data[block_size * (offset + i) + b]
-            += M(i, j) * data[block_size * (offset + j) + b];
-      }
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[block_size * (offset + i) + b]
             += M(i, j) * data[block_size * (offset + j) + b];
+      }
+    }
+    for (std::size_t i = 1; i <= dim; ++i)
+    {
+      data[block_size * (offset + dim - i) + b] *= M(dim - i, dim - i);
+      for (std::size_t j = 0; j < dim - i; ++j)
+      {
+        data[block_size * (offset + dim - i) + b]
+            += M(dim - i, j) * data[block_size * (offset + j) + b];
       }
     }
   }
@@ -274,16 +274,19 @@ void apply_matrix_to_transpose(
   {
     for (std::size_t i = 0; i < dim; ++i)
     {
-      data[data_size * b + offset + i] *= M(i, i);
-      for (std::size_t j = 0; j < i; ++j)
-      {
-        data[data_size * b + offset + i]
-            += M(i, j) * data[data_size * b + offset + j];
-      }
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[data_size * b + offset + i]
             += M(i, j) * data[data_size * b + offset + j];
+      }
+    }
+    for (std::size_t i = 1; i <= dim; ++i)
+    {
+      data[data_size * b + offset + dim - i] *= M(dim - i, dim - i);
+      for (std::size_t j = 0; j < dim - i; ++j)
+      {
+        data[data_size * b + offset + dim - i]
+            += M(dim - i, j) * data[data_size * b + offset + j];
       }
     }
   }

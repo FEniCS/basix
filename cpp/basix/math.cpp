@@ -187,6 +187,30 @@ std::vector<std::size_t> basix::math::lu_permutation(
   return perm;
 }
 //------------------------------------------------------------------
+std::vector<std::size_t> basix::math::transpose_lu(
+    std::pair<std::vector<double>, std::array<std::size_t, 2>>& A)
+{
+  const std::size_t dim = A.second[0];
+  assert(dim == A.second[1]);
+
+  int N = dim;
+  int info;
+  std::vector<int> lu_perm(dim);
+
+  // Comput LU decomposition of M
+  dgetrf_(&N, &N, A.first.data(), &N, lu_perm.data(), &info);
+
+  if (info != 0)
+    throw std::runtime_error("LU decomposition failed: "
+                             + std::to_string(info));
+
+  std::vector<std::size_t> perm(dim);
+  for (std::size_t i = 0; i < dim; ++i)
+    perm[i] = static_cast<std::size_t>(lu_perm[i] - 1);
+
+  return perm;
+}
+//------------------------------------------------------------------
 std::vector<double> basix::math::eye(std::size_t n)
 {
   std::vector<double> I(n * n, 0);

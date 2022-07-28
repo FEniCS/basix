@@ -23,74 +23,9 @@ void precompute::prepare_permutation(const std::span<std::size_t>& perm)
   }
 }
 //-----------------------------------------------------------------------------
-std::pair<std::vector<std::size_t>,
-          std::pair<std::vector<double>, std::array<std::size_t, 2>>>
-precompute::prepare_matrix(
-    const std::experimental::mdspan<
-        const double, std::experimental::dextents<std::size_t, 2>>& matrix)
+std::vector<std::size_t> precompute::prepare_matrix(
+    std::pair<std::vector<double>, std::array<std::size_t, 2>>& A)
 {
-  const std::size_t dim = matrix.extent(0);
-  assert(dim == matrix.extent(1));
-  mdarray2_t permuted_matrix(dim, dim);
-
-  // Permute the matrix so that all the top left blocks are invertible
-  std::vector<std::size_t> perm = math::lu_permutation(matrix);
-
-  for (std::size_t i = 0; i < dim; ++i)
-    for (std::size_t j = 0; j < dim; ++j)
-      permuted_matrix(i, j) = matrix(i, j);
-
-  for (std::size_t i = 0; i < dim; ++i)
-    for (std::size_t j = 0; j < dim; ++j)
-      std::swap(permuted_matrix(i, j), permuted_matrix(i, perm[j]));
-
-  // Create the precomputed representation of the matrix
-  std::vector<double> prepared_matrix_b(dim * dim);
-  mdspan2_t prepared_matrix(prepared_matrix_b.data(), dim, dim);
-  std::vector<double> Ab(dim * dim), Bb(dim * dim), tb(dim);
-  for (std::size_t i = 0; i < dim; ++i)
-  {
-    prepared_matrix(i, i) = permuted_matrix(i, i);
-    if (i < dim - 1)
-    {
-      for (std::size_t k = i + 1; k < dim; ++k)
-        prepared_matrix(i, k) = permuted_matrix(i, k);
-    }
-
-    if (i > 0)
-    {
-      mdspan2_t A(Ab.data(), i, i);
-      for (std::size_t k0 = 0; k0 < A.extent(1); ++k0)
-        for (std::size_t k1 = 0; k1 < A.extent(0); ++k1)
-          A(k1, k0) = permuted_matrix(k0, k1);
-
-      mdspan2_t B(Bb.data(), i, 1);
-      for (std::size_t k1 = 0; k1 < B.extent(0); ++k1)
-        B(k1, 0) = permuted_matrix(i, k1);
-
-      const std::vector<double> v = math::solve(A, B);
-
-      for (std::size_t k1 = 0; k1 < i; ++k1)
-        prepared_matrix(i, k1) = v[k1];
-
-      std::span t(tb.data(), i);
-      for (std::size_t k = 0; k < i; ++k)
-        t[k] = permuted_matrix(k, i);
-      prepared_matrix(i, i)
-          -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.0);
-
-      for (std::size_t j = i + 1; j < dim; ++j)
-      {
-        for (std::size_t k = 0; k < i; ++k)
-          t[k] = permuted_matrix(k, j);
-        prepared_matrix(i, j)
-            -= std::transform_reduce(v.begin(), v.end(), t.begin(), 0.0);
-      }
-    }
-  }
-
-  return {std::move(perm),
-          {std::move(prepared_matrix_b),
-           {prepared_matrix.extent(0), prepared_matrix.extent(1)}}};
+  return math::transpose_lu(A);
 }
 //-----------------------------------------------------------------------------

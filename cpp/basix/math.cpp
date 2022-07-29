@@ -5,7 +5,11 @@
 // SPDX-License-Identifier:    LGPL-3.0-or-later
 
 #include "math.h"
+#include "mdspan.hpp"
+#include <string>
 #include <vector>
+
+namespace stdex = std::experimental;
 
 extern "C"
 {
@@ -18,22 +22,48 @@ extern "C"
   void dgemm_(char* transa, char* transb, int* m, int* n, int* k, double* alpha,
               double* a, int* lda, double* b, int* ldb, double* beta, double* c,
               int* ldc);
+
+  int dgetrf_(const int* m, const int* n, double* a, const int* lda, int* lpiv,
+              int* info);
 }
 
 //------------------------------------------------------------------
-std::pair<xt::xtensor<double, 1>,
-          xt::xtensor<double, 2, xt::layout_type::column_major>>
-basix::math::eigh(const xt::xtensor<double, 2>& A)
+void basix::math::impl::dot_blas(const std::span<const double>& A,
+                                 std::array<std::size_t, 2> Ashape,
+                                 const std::span<const double>& B,
+                                 std::array<std::size_t, 2> Bshape,
+                                 const std::span<double>& C)
 {
-  // Copy to column major matrix
-  xt::xtensor<double, 2, xt::layout_type::column_major> M(A.shape());
-  M.assign(A);
-  int N = A.shape(0);
-  xt::xtensor<double, 1> w = xt::zeros<double>({N});
+  assert(Ashape[1] == Bshape[0]);
+  assert(C.size() == Ashape[0] * Bshape[1]);
 
+  int M = Ashape[0];
+  int N = Bshape[1];
+  int K = Ashape[1];
+
+  double alpha = 1;
+  double beta = 0;
+  int lda = K;
+  int ldb = N;
+  int ldc = N;
+  char trans = 'N';
+  dgemm_(&trans, &trans, &N, &M, &K, &alpha, const_cast<double*>(B.data()),
+         &ldb, const_cast<double*>(A.data()), &lda, &beta, C.data(), &ldc);
+}
+//------------------------------------------------------------------
+std::pair<std::vector<double>, std::vector<double>>
+basix::math::eigh(const std::span<const double>& A, std::size_t n)
+{
+  // Copy A
+  std::vector<double> M(A.begin(), A.end());
+
+  // Allocate storage for eigenvalues
+  std::vector<double> w(n, 0);
+
+  int N = n;
   char jobz = 'V'; // Compute eigenvalues and eigenvectors
   char uplo = 'L'; // Lower
-  int ldA = A.shape(1);
+  int ldA = n;
   int lwork = -1;
   int liwork = -1;
   int info;
@@ -59,49 +89,65 @@ basix::math::eigh(const xt::xtensor<double, 2>& A)
   return {std::move(w), std::move(M)};
 }
 //------------------------------------------------------------------
-xt::xarray<double, xt::layout_type::column_major>
-basix::math::solve(const xt::xtensor<double, 2>& A, const xt::xarray<double>& B)
+std::vector<double> basix::math::solve(
+    const std::experimental::mdspan<
+        const double, std::experimental::dextents<std::size_t, 2>>& A,
+    const std::experimental::mdspan<
+        const double, std::experimental::dextents<std::size_t, 2>>& B)
 {
-  assert(A.dimension() == 2);
-  assert(B.dimension() == 1 or B.dimension() == 2);
+  // Copy A and B to column-major storage
+  stdex::mdarray<double, stdex::dextents<std::size_t, 2>, stdex::layout_left>
+      _A(A.extents()), _B(B.extents());
+  for (std::size_t i = 0; i < A.extent(0); ++i)
+    for (std::size_t j = 0; j < A.extent(1); ++j)
+      _A(i, j) = A(i, j);
+  for (std::size_t i = 0; i < B.extent(0); ++i)
+    for (std::size_t j = 0; j < B.extent(1); ++j)
+      _B(i, j) = B(i, j);
 
-  // Copy to column major matrix
-  xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
-  _A.assign(A);
-  xt::xarray<double, xt::layout_type::column_major> _B(B.shape());
-  _B.assign(B);
-
-  int N = _A.shape(0);
-  int nrhs = _B.dimension() == 1 ? 1 : _B.shape(1);
-  int LDA = _A.shape(0);
-  int LDB = B.shape(0);
-  std::vector<int> IPIV(N);
+  int N = _A.extent(0);
+  int nrhs = _B.extent(1);
+  int lda = _A.extent(0);
+  int ldb = _B.extent(0);
+  // Pivot indices that define the permutation matrix for the LU solver
+  std::vector<int> piv(N);
   int info;
-  dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), _B.data(), &LDB, &info);
+  dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), _B.data(), &ldb, &info);
   if (info != 0)
     throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
 
-  return _B;
+  // Copy result to row-major storage
+  std::vector<double> rb(_B.extent(0) * _B.extent(1));
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> r(rb.data(),
+                                                           _B.extents());
+  for (std::size_t i = 0; i < _B.extent(0); ++i)
+    for (std::size_t j = 0; j < _B.extent(1); ++j)
+      r(i, j) = _B(i, j);
+
+  return rb;
 }
 //------------------------------------------------------------------
-bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
+bool basix::math::is_singular(
+    const std::experimental::mdspan<
+        const double, std::experimental::dextents<std::size_t, 2>>& A)
 {
-  assert(A.dimension() == 2);
-
   // Copy to column major matrix
-  xt::xtensor<double, 2, xt::layout_type::column_major> _A(A.shape());
-  _A.assign(A);
-  const std::array<std::size_t, 1> sh = {A.shape(1)};
-  xt::xtensor<double, 1> B(sh);
-  B.fill(1.0);
+  stdex::mdarray<double, stdex::dextents<std::size_t, 2>, stdex::layout_left>
+      _A(A.extents());
+  for (std::size_t i = 0; i < A.extent(0); ++i)
+    for (std::size_t j = 0; j < A.extent(1); ++j)
+      _A(i, j) = A(i, j);
 
-  int N = _A.shape(0);
+  std::vector<double> B(A.extent(1), 1);
+  int N = _A.extent(0);
   int nrhs = 1;
-  int LDA = _A.shape(0);
-  int LDB = B.shape(0);
-  std::vector<int> IPIV(N);
+  int lda = _A.extent(0);
+  int ldb = B.size();
+
+  // Pivot indices that define the permutation matrix for the LU solver
+  std::vector<int> piv(N);
   int info;
-  dgesv_(&N, &nrhs, _A.data(), &LDA, IPIV.data(), B.data(), &LDB, &info);
+  dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), B.data(), &ldb, &info);
   if (info < 0)
   {
     throw std::runtime_error("dgesv failed due to invalid value: "
@@ -113,44 +159,36 @@ bool basix::math::is_singular(const xt::xtensor<double, 2>& A)
     return false;
 }
 //------------------------------------------------------------------
-void basix::math::dot(const xt::xtensor<double, 2>& A,
-                      const xt::xtensor<double, 2>& B,
-                      xt::xtensor<double, 2>& C)
+std::vector<std::size_t> basix::math::transpose_lu(
+    std::pair<std::vector<double>, std::array<std::size_t, 2>>& A)
 {
-  assert(A.shape(1) == B.shape(0));
-  assert(C.shape(0) == C.shape(0));
-  assert(C.shape(1) == B.shape(1));
+  const std::size_t dim = A.second[0];
+  assert(dim == A.second[1]);
 
-  int M = A.shape(0);
-  int N = B.shape(1);
-  int K = A.shape(1);
+  int N = dim;
+  int info;
+  std::vector<int> lu_perm(dim);
 
-  if (M * N * K < 4096)
-  {
-    for (int i = 0; i < M; ++i)
-      for (int j = 0; j < N; ++j)
-        for (int k = 0; k < K; ++k)
-          C(i, j) += A(i, k) * B(k, j);
-  }
-  else
-  {
-    double alpha = 1;
-    double beta = 0;
-    int lda = K;
-    int ldb = N;
-    int ldc = N;
-    char trans = 'N';
-    dgemm_(&trans, &trans, &N, &M, &K, &alpha, const_cast<double*>(B.data()),
-           &ldb, const_cast<double*>(A.data()), &lda, &beta,
-           const_cast<double*>(C.data()), &ldc);
-  }
+  // Comput LU decomposition of M
+  dgetrf_(&N, &N, A.first.data(), &N, lu_perm.data(), &info);
+
+  if (info != 0)
+    throw std::runtime_error("LU decomposition failed: "
+                             + std::to_string(info));
+
+  std::vector<std::size_t> perm(dim);
+  for (std::size_t i = 0; i < dim; ++i)
+    perm[i] = static_cast<std::size_t>(lu_perm[i] - 1);
+
+  return perm;
 }
 //------------------------------------------------------------------
-xt::xtensor<double, 2> basix::math::dot(const xt::xtensor<double, 2>& A,
-                                        const xt::xtensor<double, 2>& B)
+std::vector<double> basix::math::eye(std::size_t n)
 {
-  xt::xtensor<double, 2> C = xt::zeros<double>({A.shape(0), B.shape(1)});
-  dot(A, B, C);
-  return C;
+  std::vector<double> I(n * n, 0);
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> Iview(I.data(), n, n);
+  for (std::size_t i = 0; i < n; ++i)
+    Iview(i, i) = 1.0;
+  return I;
 }
 //------------------------------------------------------------------

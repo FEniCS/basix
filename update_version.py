@@ -24,9 +24,6 @@ import re
 def replace_version(content, version):
     content = re.sub(r"((?:VERSION)|(?:version))([\s=]+)([\"']).+?\3",
                      lambda matches: f"{matches[1]}{matches[2]}{matches[3]}{version}{matches[3]}", content)
-    content = re.sub(r"(\s+)(\"?)fenics-((?:basix)|(?:ffcx)|(?:dolfinx))\>\=.+(\2|\n)",
-                     lambda matches: f"{matches[1]}{matches[2]}fenics-{matches[3]}>={version},<{next_version}{matches[4]}",
-                     content)
     return content
 
 

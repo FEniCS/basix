@@ -23,10 +23,11 @@ jobs:
       DEBIAN_FRONTEND: noninteractive
 
     steps:
-      - uses: actions/checkout@v2
       - name: Install required packages to install Intel compilers and to build
-        run: |
-          apt-get update && apt-get install -y cmake git gnupg ninja-build python3-pip wget
+        run: apt-get update && apt-get install -y cmake git gnupg ninja-build python3-pip wget
+
+      - uses: actions/checkout@v3
+
       - name: Install Intel compilers
         run: |
           wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
@@ -38,6 +39,7 @@ jobs:
         run: |
           . /opt/intel/oneapi/setvars.sh
           export CMAKE_ARGS="-DDOWNLOAD_XTENSOR_LIBS:BOOL=true"
+          pip install scikit-build
           pip -v install .[test]
       - name: Run units tests
         # LD_PRELOAD is required to 'fix' library resolution problems
@@ -46,4 +48,18 @@ jobs:
           . /opt/intel/oneapi/setvars.sh
           pip install pytest-xdist
           export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
-          pytest -vs -n auto --durations 20 test/
+          pytest -n auto --durations 20 test/
+
+      - name: Run Python demos
+        run: |
+          . /opt/intel/oneapi/setvars.sh
+          export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
+          pytest demo/python/test.py
+
+      - name: Run C++ demos
+        run: |
+          . /opt/intel/oneapi/setvars.sh
+          export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
+          export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
+          export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$INSTALL_DIR/python/basix/lib/cmake:$INSTALL_DIR/python/basix/share/cmake
+          pytest demo/cpp/test.py

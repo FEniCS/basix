@@ -72,7 +72,7 @@ class CMakeBuild(build_ext):
 
 
 setup(name='fenics-basix',
-      version='0.4.2.post1',
+      version='0.4.3.dev0',
       description='Basix Python interface',
       url="https://github.com/FEniCS/basix",
       author='FEniCS Project',
@@ -82,6 +82,8 @@ setup(name='fenics-basix',
       classifiers=[_f for _f in CLASSIFIERS.split('\n') if _f],
       platforms=["Linux", "Mac OS-X", "Unix"],
       packages=["basix"],
+      install_requires=["numpy>=1.21"],
+      package_data={"basix": ["py.typed"]},
       setup_requires=["pybind11"],
       ext_modules=[CMakeExtension('basix._basixcpp')],
       cmdclass=dict(build_ext=CMakeBuild),

@@ -29,7 +29,6 @@ def test_normals(cell):
     normals = basix.cell.facet_normals(cell_type)
     facets = basix.topology(cell_type)[-2]
     geometry = basix.geometry(cell_type)
-
     for normal, facet in zip(normals, facets):
         assert np.isclose(np.linalg.norm(normal), 1)
         for v in facet[1:]:
@@ -44,7 +43,6 @@ def test_outward_normals(cell):
     facets = basix.topology(cell_type)[-2]
     geometry = basix.geometry(cell_type)
     midpoint = sum(geometry) / len(geometry)
-
     for normal, facet in zip(normals, facets):
         assert np.dot(geometry[facet[0]] - midpoint, normal) > 0
 
@@ -55,7 +53,6 @@ def test_facet_orientations(cell):
     normals = basix.cell.facet_normals(cell_type)
     outward_normals = basix.cell.facet_outward_normals(cell_type)
     orientations = basix.cell.facet_orientations(cell_type)
-
     for n1, n2, orient in zip(normals, outward_normals, orientations):
         if orient:
             assert np.allclose(n1, -n2)
@@ -68,9 +65,7 @@ def test_sub_entity_connectivity(cell):
     cell_type = getattr(basix.CellType, cell)
     connectivity = basix.cell.sub_entity_connectivity(cell_type)
     topology = basix.topology(cell_type)
-
     assert len(connectivity) == len(topology)
-
     for dim, entities in enumerate(connectivity):
         assert len(entities) == len(topology[dim])
         for n, entity in enumerate(entities):

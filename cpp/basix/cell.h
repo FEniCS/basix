@@ -4,8 +4,9 @@
 
 #pragma once
 
+#include <array>
+#include <utility>
 #include <vector>
-#include <xtensor/xtensor.hpp>
 
 /// Information about reference cells
 
@@ -29,8 +30,11 @@ enum class type
 
 /// Cell geometry
 /// @param celltype Cell Type
-/// @return Set of vertex points of the cell
-xt::xtensor<double, 2> geometry(cell::type celltype);
+/// @return (0) Vertex point data of the cell and (1) the shape of the
+/// data array. The points are stored in row-major format and the shape
+/// is is (npoints, gdim)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+geometry(cell::type celltype);
 
 /// Cell topology
 /// @param celltype Cell Type
@@ -54,9 +58,9 @@ sub_entity_connectivity(cell::type celltype);
 /// @param celltype The cell::type
 /// @param dim Dimension of sub-entity
 /// @param index Local index of sub-entity
-/// @return Set of vertex points of the sub-entity
-xt::xtensor<double, 2> sub_entity_geometry(cell::type celltype, int dim,
-                                           int index);
+/// @return Set of vertex points of the sub-entity. Shape is (npoints, gdim)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+sub_entity_geometry(cell::type celltype, int dim, int index);
 
 /// Number of sub-entities of a cell by topological dimension
 /// @todo Optimise this function
@@ -86,14 +90,16 @@ double volume(cell::type cell_type);
 
 /// Get the (outward) normals to the facets of a reference cell
 /// @param cell_type Type of cell
-/// @return The outward normals
-xt::xtensor<double, 2> facet_outward_normals(cell::type cell_type);
+/// @return The outward normals. Shape is (nfacets, gdim)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+facet_outward_normals(cell::type cell_type);
 
 /// Get the normals to the facets of a reference cell oriented using the
 /// low-to-high ordering of the facet
 /// @param cell_type Type of cell
-/// @return The normals
-xt::xtensor<double, 2> facet_normals(cell::type cell_type);
+/// @return The normals. Shape is (nfacets, gdim)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+facet_normals(cell::type cell_type);
 
 /// Get an array of bools indicating whether or not the facet normals are
 /// outward pointing
@@ -104,16 +110,18 @@ std::vector<bool> facet_orientations(cell::type cell_type);
 /// Get the reference volumes of the facets of a reference cell
 /// @param cell_type Type of cell
 /// @return The volumes of the references associated with each facet
-xt::xtensor<double, 1> facet_reference_volumes(cell::type cell_type);
+// FIXME: This could be a std::vector<double>
+std::vector<double> facet_reference_volumes(cell::type cell_type);
 
 /// Get the types of the subentities of a reference cell
 /// @param cell_type Type of cell
-/// @return The subentity types
+/// @return The subentity types. Indices are (tdim, entity)
 std::vector<std::vector<cell::type>> subentity_types(cell::type cell_type);
 
 /// Get the jacobians of the facets of a reference cell
 /// @param cell_type Type of cell
-/// @return The jacobians of the facets
-xt::xtensor<double, 3> facet_jacobians(cell::type cell_type);
+/// @return The jacobians of the facets. Shape is (nfacets, gdim, gdim - 1)
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+facet_jacobians(cell::type cell_type);
 
 } // namespace basix::cell

@@ -4,7 +4,9 @@
 
 #pragma once
 
-#include <xtensor/xtensor.hpp>
+#include <array>
+#include <utility>
+#include <vector>
 
 namespace basix
 {
@@ -38,8 +40,9 @@ class FiniteElement;
 /// @param[in] element_from The element to interpolate from
 /// @param[in] element_to The element to interpolate to
 /// @return Matrix operator that maps the 'from' degrees-of-freedom to
-/// the 'to' degrees-of-freedom
-xt::xtensor<double, 2>
+/// the 'to' degrees-of-freedom. Shape is (ndofs(element_to),
+/// ndofs(element_from))
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
 compute_interpolation_operator(const FiniteElement& element_from,
                                const FiniteElement& element_to);
 

@@ -1,6 +1,6 @@
 name: FFCx integration
 
-# This workflow will install Basix and FFCx and run the FFCx unit tests.
+# Install Basix and FFCx and run the FFCx unit tests.
 
 on:
   pull_request:
@@ -21,11 +21,14 @@ jobs:
   build:
     name: Run FFCx tests
     runs-on: ubuntu-latest
+    env:
+      CC: gcc-10
+      CXX: g++-10
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v3
         with:
           python-version: 3.9
 
@@ -44,17 +47,22 @@ jobs:
 
       - name: Get FFCx source (default branch)
         if: github.event_name != 'workflow_dispatch'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
       - name: Get FFCx source (specified branch)
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ./ffcx
           repository: FEniCS/ffcx
           ref: ${{ github.event.inputs.ffcx_branch }}
+
+      - name: Run mypy checks
+        run: |
+          python -m pip install mypy types-setuptools
+          python -m mypy ffcx/ffcx
 
       - name: Install FFCx
         run: pip install ./ffcx[ci]

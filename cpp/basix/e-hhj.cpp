@@ -9,10 +9,12 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xview.hpp>
 
 using namespace basix;
+namespace stdex = std::experimental;
+using mdarray3_t = stdex::mdarray<double, stdex::dextents<std::size_t, 3>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
@@ -28,8 +30,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
   const std::size_t ndofs = basis_size * nc;
   const std::size_t psize = basis_size * tdim * tdim;
 
-  xt::xtensor<double, 2> wcoeffs = xt::zeros<double>({ndofs, psize});
-  int s = basis_size;
+  impl::mdarray2_t wcoeffs(ndofs, psize);
   for (std::size_t i = 0; i < tdim; ++i)
   {
     for (std::size_t j = 0; j < tdim; ++j)
@@ -39,38 +40,35 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
       if (tdim == 3 and i > 0 and j > 0)
         ++yoff;
 
-      xt::view(wcoeffs, xt::range(yoff * s, yoff * s + s),
-               xt::range(xoff * s, xoff * s + s))
-          = xt::eye<double>(s);
+      const std::size_t s = basis_size;
+      for (std::size_t k = 0; k < s; ++k)
+        wcoeffs(yoff * s + k, xoff * s + k) = 1.0;
     }
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const xt::xtensor<double, 2> geometry = cell::geometry(celltype);
+  const auto [gbuffer, gshape] = cell::geometry(celltype);
+  impl::cmdspan2_t geometry(gbuffer.data(), gshape);
 
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
 
-  x[0].resize(topology[0].size());
-  M[0].resize(topology[0].size());
   for (std::size_t e = 0; e < topology[0].size(); ++e)
   {
-    x[0][e] = xt::xtensor<double, 2>({0, tdim});
-    M[0][e] = xt::xtensor<double, 3>({0, tdim * tdim, 0});
+    x[0].emplace_back(0, tdim);
+    M[0].emplace_back(0, tdim * tdim, 0, 1);
   }
+
   // Loop over edge and higher dimension entities
   for (std::size_t d = 1; d < topology.size(); ++d)
   {
-    x[d].resize(topology[d].size());
-    M[d].resize(topology[d].size());
-
     if (static_cast<std::size_t>(degree) + 1 < d)
     {
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
-        x[d][e] = xt::xtensor<double, 2>({0, tdim});
-        M[d][e] = xt::xtensor<double, 3>({0, tdim * tdim, 0});
+        x[d].emplace_back(0, tdim);
+        M[d].emplace_back(0, tdim * tdim, 0, 1);
       }
     }
     else
@@ -80,69 +78,79 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
         // Entity coordinates
-        const xt::xtensor<double, 2> entity_x
+        const auto [entity_x_buffer, eshape]
             = cell::sub_entity_geometry(celltype, d, e);
+        std::span<const double> x0(entity_x_buffer.data(), eshape[1]);
+        impl::cmdspan2_t entity_x(entity_x_buffer.data(), eshape);
 
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
 
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
-        const auto [pts, wts]
+        const auto [ptsbuffer, wts]
             = quadrature::make_quadrature(ct, degree + (degree + 1 - d));
+        impl::cmdspan2_t pts(ptsbuffer.data(), wts.size(),
+                             ptsbuffer.size() / wts.size());
 
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
-        const auto moment_values = moment_space.tabulate(0, pts);
-        const auto x0 = xt::row(entity_x, 0);
-        x[d][e] = xt::xtensor<double, 2>({pts.shape(0), tdim});
+        const auto [phib, phishape] = moment_space.tabulate(0, pts);
+        cmdspan4_t moment_values(phib.data(), phishape);
+
+        auto& _x = x[d].emplace_back(pts.extent(0), tdim);
 
         // Copy points
-        for (std::size_t p = 0; p < pts.shape(0); ++p)
+        for (std::size_t p = 0; p < pts.extent(0); ++p)
         {
-          xt::row(x[d][e], p) = x0;
-          for (std::size_t k = 0; k < entity_x.shape(0) - 1; ++k)
-          {
-            xt::row(x[d][e], p) += (xt::row(entity_x, k + 1) - x0) * pts(p, k);
-          }
+          for (std::size_t k = 0; k < _x.extent(1); ++k)
+            _x(p, k) = x0[k];
+
+          for (std::size_t k0 = 0; k0 < entity_x.extent(0) - 1; ++k0)
+            for (std::size_t k1 = 0; k1 < _x.extent(1); ++k1)
+              _x(p, k1) += (entity_x(k0 + 1, k1) - x0[k1]) * pts(p, k0);
         }
 
         // Store up outer(t, t) for all tangents
         const std::vector<int>& vert_ids = topology[d][e];
         const std::size_t ntangents = d * (d + 1) / 2;
-        xt::xtensor<double, 3> vvt(
-            {ntangents, geometry.shape(1), geometry.shape(1)});
-        std::vector<double> _edge(geometry.shape(1));
-        auto edge_t = xt::adapt(_edge);
-
+        mdarray3_t vvt(ntangents, geometry.extent(1), geometry.extent(1));
+        std::vector<double> edge_t(geometry.extent(1));
         int c = 0;
         for (std::size_t s = 0; s < d; ++s)
         {
           for (std::size_t r = s + 1; r < d + 1; ++r)
           {
-            if (geometry.shape(1) != 2)
+            if (geometry.extent(1) != 2)
               throw std::runtime_error("Not implemented");
             edge_t[0] = geometry(vert_ids[s], 1) - geometry(vert_ids[r], 1);
             edge_t[1] = geometry(vert_ids[r], 0) - geometry(vert_ids[s], 0);
 
             // outer product v.v^T
-            auto result = basix::math::outer(edge_t, edge_t);
-            xt::view(vvt, c, xt::all(), xt::all()).assign(result);
+            const auto [result, shape] = basix::math::outer(edge_t, edge_t);
+            for (std::size_t k0 = 0; k0 < shape[0]; ++k0)
+              for (std::size_t k1 = 0; k1 < shape[1]; ++k1)
+                vvt(c, k0, k1) = result[k0 * shape[1] + k1];
             ++c;
           }
         }
 
-        M[d][e]
-            = xt::zeros<double>({ndofs * ntangents, tdim * tdim, pts.shape(0)});
+        auto& _M = M[d].emplace_back(ndofs * ntangents, tdim * tdim,
+                                     pts.extent(0), 1);
         for (int n = 0; n < moment_space.dim(); ++n)
         {
           for (std::size_t j = 0; j < ntangents; ++j)
           {
-            auto vvt_flat = xt::ravel(xt::view(vvt, j, xt::all(), xt::all()));
-            for (std::size_t q = 0; q < pts.shape(0); ++q)
+            std::vector<double> vvt_flat;
+            for (std::size_t k0 = 0; k0 < vvt.extent(1); ++k0)
+              for (std::size_t k1 = 0; k1 < vvt.extent(2); ++k1)
+                vvt_flat.push_back(vvt(j, k0, k1));
+            for (std::size_t q = 0; q < pts.extent(0); ++q)
             {
               for (std::size_t i = 0; i < tdim * tdim; ++i)
-                M[d][e](n * ntangents + j, i, q)
-                    = vvt_flat(i) * wts[q] * moment_values(0, q, n, 0);
+              {
+                _M(n * ntangents + j, i, q, 0)
+                    = vvt_flat[i] * wts[q] * moment_values(0, q, n, 0);
+              }
             }
           }
         }
@@ -150,13 +158,24 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
     }
   }
 
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+
+  std::array<std::vector<std::vector<double>>, 4> xbuffer;
+  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
   {
-    std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim * tdim);
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = element::make_discontinuous(xview, Mview, tdim, tdim * tdim);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
   return FiniteElement(element::family::HHJ, celltype, degree, {tdim, tdim},
-                       wcoeffs, x, M, maps::type::doubleContravariantPiola,
+                       impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
+                       xview, Mview, 0, maps::type::doubleContravariantPiola,
                        discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

@@ -17,7 +17,7 @@ import sympy
 @pytest.mark.parametrize("order", range(9))
 def test_cell_quadrature(celltype, order):
     Qpts, Qwts = basix.make_quadrature(celltype[0], order)
-    assert(np.isclose(sum(Qwts), celltype[1]))
+    assert np.isclose(sum(Qwts), celltype[1])
 
 
 @pytest.mark.parametrize("m", range(7))
@@ -30,7 +30,7 @@ def test_qorder_line(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0])])
-    assert(np.isclose(float(q), float(s)))
+    assert np.isclose(float(q), float(s))
 
 
 @pytest.mark.parametrize("m", range(6))
@@ -44,7 +44,7 @@ def test_qorder_tri(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1])])
-    assert(np.isclose(float(q), float(s)))
+    assert np.isclose(float(q), float(s))
 
 
 @pytest.mark.parametrize("m", range(1, 20))
@@ -58,7 +58,7 @@ def test_xiao_gimbutas_tri(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1])])
-    assert(np.isclose(float(q), float(s)))
+    assert np.isclose(float(q), float(s))
 
 
 @pytest.mark.parametrize("m", range(1, 16))
@@ -73,7 +73,7 @@ def test_xiao_gimbutas_tet(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
-    assert(np.isclose(float(q), float(s)))
+    assert np.isclose(float(q), float(s))
 
 
 @pytest.mark.parametrize("m", range(9))
@@ -88,7 +88,7 @@ def test_qorder_tet(m, scheme):
     s = 0.0
     for (pt, wt) in zip(Qpts, Qwts):
         s += wt * f.subs([(x, pt[0]), (y, pt[1]), (z, pt[2])])
-    assert(np.isclose(float(q), float(s)))
+    assert np.isclose(float(q), float(s))
 
 
 def test_quadrature_function():

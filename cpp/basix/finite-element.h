@@ -1171,8 +1171,8 @@ private:
   // _dof_transformations_are_identity is False
   std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm_rev;
 
-  using trans_data_t = std::vector<
-      std::tuple<std::vector<std::size_t>, std::vector<double>, array2_t>>;
+  using trans_data_t
+      = std::vector<std::pair<std::vector<std::size_t>, array2_t>>;
 
   // The entity transformations in precomputed form
   std::map<cell::type, trans_data_t> _etrans;
@@ -1367,14 +1367,14 @@ void FiniteElement::apply_dof_transformation(const std::span<T>& data,
 
     // Transform DOFs on edges
     {
-      auto& [v_size_t, v_t, matrix] = _etrans.at(cell::type::interval)[0];
+      auto& [v_size_t, matrix] = _etrans.at(cell::type::interval)[0];
       for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1394,10 +1394,9 @@ void FiniteElement::apply_dof_transformation(const std::span<T>& data,
         {
           const auto& m = trans[1];
           const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          const auto& matrix = std::get<1>(m);
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1407,10 +1406,9 @@ void FiniteElement::apply_dof_transformation(const std::span<T>& data,
         {
           const auto& m = trans[0];
           const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          const auto& matrix = std::get<1>(m);
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1439,14 +1437,14 @@ void FiniteElement::apply_transpose_dof_transformation(
 
     // Transform DOFs on edges
     {
-      auto& [v_size_t, v_t, matrix] = _etransT.at(cell::type::interval)[0];
+      auto& [v_size_t, matrix] = _etransT.at(cell::type::interval)[0];
       for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1466,10 +1464,9 @@ void FiniteElement::apply_transpose_dof_transformation(
         {
           auto& m = trans[0];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1479,10 +1476,9 @@ void FiniteElement::apply_transpose_dof_transformation(
         {
           auto& m = trans[1];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1514,9 +1510,8 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
       // Reverse an edge
       if (cell_info >> (face_start + e) & 1)
       {
-        auto& [v_size_t, v_t, matrix]
-            = _etrans_invT.at(cell::type::interval)[0];
-        precompute::apply_matrix(std::span(v_size_t), std::span(v_t),
+        auto& [v_size_t, matrix] = _etrans_invT.at(cell::type::interval)[0];
+        precompute::apply_matrix(std::span(v_size_t),
                                  cmdspan2_t(matrix.first.data(), matrix.second),
                                  data, dofstart, block_size);
       }
@@ -1535,10 +1530,9 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
         {
           auto& m = trans[1];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1548,10 +1542,9 @@ void FiniteElement::apply_inverse_transpose_dof_transformation(
         {
           const auto& m = trans[0];
           const auto& v_size_t = std::get<0>(m);
-          const auto& v_t = std::get<1>(m);
-          const auto& matrix = std::get<2>(m);
+          const auto& matrix = std::get<1>(m);
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1580,14 +1573,14 @@ void FiniteElement::apply_inverse_dof_transformation(
 
     // Transform DOFs on edges
     {
-      auto& [v_size_t, v_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
+      auto& [v_size_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
       for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1607,10 +1600,9 @@ void FiniteElement::apply_inverse_dof_transformation(
         {
           auto& m = trans[0];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1620,10 +1612,9 @@ void FiniteElement::apply_inverse_dof_transformation(
         {
           auto& m = trans[1];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1652,14 +1643,14 @@ void FiniteElement::apply_dof_transformation_to_transpose(
 
     // Transform DOFs on edges
     {
-      auto& [v_size_t, v_t, matrix] = _etrans.at(cell::type::interval)[0];
+      auto& [v_size_t, matrix] = _etrans.at(cell::type::interval)[0];
       for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1680,10 +1671,9 @@ void FiniteElement::apply_dof_transformation_to_transpose(
         {
           auto& m = trans[1];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1693,10 +1683,9 @@ void FiniteElement::apply_dof_transformation_to_transpose(
         {
           auto& m = trans[0];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1724,14 +1713,14 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
 
     // Transform DOFs on edges
     {
-      auto& [v_size_t, v_t, matrix] = _etrans_invT.at(cell::type::interval)[0];
+      auto& [v_size_t, matrix] = _etrans_invT.at(cell::type::interval)[0];
       for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1751,10 +1740,9 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
         {
           auto& m = trans[1];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1764,10 +1752,9 @@ void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
         {
           auto& m = trans[0];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1795,14 +1782,14 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
 
     // Transform DOFs on edges
     {
-      auto& [v_size_t, v_t, matrix] = _etransT.at(cell::type::interval)[0];
+      auto& [v_size_t, matrix] = _etransT.at(cell::type::interval)[0];
       for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1822,10 +1809,9 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
         {
           auto& m = trans[0];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1835,10 +1821,9 @@ void FiniteElement::apply_transpose_dof_transformation_to_transpose(
         {
           auto& m = trans[1];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1866,14 +1851,14 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
 
     // Transform DOFs on edges
     {
-      auto& [v_size_t, v_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
+      auto& [v_size_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
       for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
         {
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1893,10 +1878,9 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
         {
           auto& m = trans[0];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }
@@ -1906,10 +1890,9 @@ void FiniteElement::apply_inverse_dof_transformation_to_transpose(
         {
           auto& m = trans[1];
           auto& v_size_t = std::get<0>(m);
-          auto& v_t = std::get<1>(m);
-          auto& matrix = std::get<2>(m);
+          auto& matrix = std::get<1>(m);
           precompute::apply_matrix_to_transpose(
-              std::span(v_size_t), std::span(v_t),
+              std::span(v_size_t),
               cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
               block_size);
         }

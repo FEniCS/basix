@@ -5,7 +5,7 @@ functionality can be used via this Python interface.
 """
 
 from ._basixcpp import __version__
-from . import cell, finite_element, lattice, quadrature, variants
+from . import cell, finite_element, lattice, polynomials, quadrature, variants
 from ._basixcpp import (CellType, LatticeType, LatticeSimplexMethod, ElementFamily, LagrangeVariant,
                         DPCVariant, QuadratureType, PolynomialType, MapType)
 from ._basixcpp import (create_lattice, create_element, compute_interpolation_operator, topology,

@@ -998,7 +998,7 @@ class BlockedElement(_BasixElementBase):
         If this value is true, this element's basis functions can be computed
         as a tensor product of the basis elements of the elements in the factoriaation.
         """
-        return self.sub_element.has_tensor_product_factorisation
+        return self.sub_element.has_tensor_product_factorisation()
 
     def get_tensor_product_representation(self):
         """Get the element's tensor product factorisation."""

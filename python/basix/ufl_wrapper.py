@@ -231,6 +231,18 @@ class _BasixElementBase(_FiniteElementBase):
         """The matrices used to define interpolation."""
         raise NotImplementedError()
 
+    def has_tensor_product_factorisation(self) -> bool:
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
+        return False
+
+    def get_tensor_product_representation(self):
+        """Get the element's tensor product factorisation."""
+        return None
+
 
 class BasixElement(_BasixElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL."""
@@ -416,6 +428,20 @@ class BasixElement(_BasixElementBase):
     def _M(self) -> _typing.List[_typing.List[_nda_f64]]:
         """The matrices used to define interpolation."""
         return self.element.M
+
+    def has_tensor_product_factorisation(self) -> bool:
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
+        return self.element.has_tensor_product_factorisation
+
+    def get_tensor_product_representation(self):
+        """Get the element's tensor product factorisation."""
+        if not self.has_tensor_product_factorisation:
+            return None
+        return self.element.get_tensor_product_representation()
 
 
 class ComponentElement(_BasixElementBase):
@@ -965,6 +991,20 @@ class BlockedElement(_BasixElementBase):
                 M_row.append(new_mat)
             M.append(M_row)
         return M
+
+    def has_tensor_product_factorisation(self) -> bool:
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
+        return self.sub_element.has_tensor_product_factorisation
+
+    def get_tensor_product_representation(self):
+        """Get the element's tensor product factorisation."""
+        if not self.has_tensor_product_factorisation:
+            return None
+        return self.sub_element.get_tensor_product_representation()
 
 
 class VectorElement(BlockedElement):

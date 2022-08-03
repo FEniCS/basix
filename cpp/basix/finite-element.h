@@ -1051,15 +1051,20 @@ public:
   const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
   coefficient_matrix() const;
 
-  /// Indicates whether or not this element has a tensor product
-  /// representation.
+  /// Indicates whether or not this element can be represented as a product of
+  /// elements defined on lower-dimensional reference cells. If the product
+  /// exists, this element's basis functions can be computed as a tensor product
+  /// of the basis elements of the elements in the product.
+  ///
+  /// If such a factorisation exists, `get_tensor_product_representation()` can
+  /// be used to get these elements.
   bool has_tensor_product_factorisation() const;
 
   /// Get the tensor product representation of this element, or throw an
   /// error if no such factorisation exists.
   ///
   /// The tensor product representation will be a vector of tuples. Each
-  /// tuple contains a vector of finite elements, and a vector on
+  /// tuple contains a vector of finite elements, and a vector of
   /// integers. The vector of finite elements gives the elements on an
   /// interval that appear in the tensor product representation. The
   /// vector of integers gives the permutation between the numbering of

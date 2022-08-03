@@ -4,14 +4,12 @@ import ufl as _ufl
 from ufl.finiteelement.finiteelementbase import FiniteElementBase as _FiniteElementBase
 import hashlib as _hashlib
 import numpy as _numpy
+import numpy.typing as _numpy_typing
 import basix as _basix
 import typing as _typing
 import functools as _functools
 
-if _typing.TYPE_CHECKING:
-    _nda_f64 = _numpy.typing.NDArray[_numpy.float64]
-else:
-    _nda_f64 = None
+_nda_f64 = _numpy_typing.NDArray[_numpy.float64]
 
 
 class _BasixElementBase(_FiniteElementBase):
@@ -204,6 +202,35 @@ class _BasixElementBase(_FiniteElementBase):
         return False
 
     @property
+    def map_type(self) -> _basix.MapType:
+        """The Basix map type."""
+        raise NotImplementedError()
+
+    @property
+    def highest_complete_degree(self) -> int:
+        """The highest complete degree of the element."""
+        raise NotImplementedError()
+
+    @property
+    def highest_degree(self) -> int:
+        """The highest degree of the element."""
+        raise NotImplementedError()
+
+    @property
+    def _wcoeffs(self) -> _nda_f64:
+        """The coefficients used to define the polynomial set."""
+        raise NotImplementedError()
+
+    @property
+    def _x(self) -> _typing.List[_typing.List[_nda_f64]]:
+        """The points used to define interpolation."""
+        raise NotImplementedError()
+
+    @property
+    def _M(self) -> _typing.List[_typing.List[_nda_f64]]:
+        """The matrices used to define interpolation."""
+        raise NotImplementedError()
+
     def has_tensor_product_factorisation(self) -> bool:
         """Indicates whether or not this element has a tensor product factorisation.
 
@@ -373,6 +400,35 @@ class BasixElement(_BasixElementBase):
         return self._is_custom
 
     @property
+    def map_type(self) -> _basix.MapType:
+        """The Basix map type."""
+        return self.element.map_type
+
+    @property
+    def highest_complete_degree(self) -> int:
+        """The highest complete degree of the element."""
+        return self.element.highest_complete_degree
+
+    @property
+    def highest_degree(self) -> int:
+        """The highest degree of the element."""
+        return self.element.highest_degree
+
+    @property
+    def _wcoeffs(self) -> _nda_f64:
+        """The coefficients used to define the polynomial set."""
+        return self.element.wcoeffs
+
+    @property
+    def _x(self) -> _typing.List[_typing.List[_nda_f64]]:
+        """The points used to define interpolation."""
+        return self.element.x
+
+    @property
+    def _M(self) -> _typing.List[_typing.List[_nda_f64]]:
+        """The matrices used to define interpolation."""
+        return self.element.M
+
     def has_tensor_product_factorisation(self) -> bool:
         """Indicates whether or not this element has a tensor product factorisation.
 
@@ -891,13 +947,58 @@ class BlockedElement(_BasixElementBase):
         return self.sub_element.interpolation_nderivs
 
     @property
+    def map_type(self) -> _basix.MapType:
+        """The Basix map type."""
+        return self.sub_element.map_type
+
+    @property
+    def highest_complete_degree(self) -> int:
+        """The highest complete degree of the element."""
+        return self.sub_element.highest_complete_degree
+
+    @property
+    def highest_degree(self) -> int:
+        """The highest degree of the element."""
+        return self.sub_element.highest_degree
+
+    @property
+    def _wcoeffs(self) -> _nda_f64:
+        """The coefficients used to define the polynomial set."""
+        sub_wc = self.sub_element._wcoeffs
+        wcoeffs = _numpy.zeros((sub_wc.shape[0] * self._block_size, sub_wc.shape[1] * self.block_size))
+        for i in range(self._block_size):
+            wcoeffs[sub_wc.shape[0] * i: sub_wc.shape[0] * (i + 1),
+                    sub_wc.shape[1] * i: sub_wc.shape[1] * (i + 1)] = sub_wc
+        return wcoeffs
+
+    @property
+    def _x(self) -> _typing.List[_typing.List[_nda_f64]]:
+        """The points used to define interpolation."""
+        return self.sub_element._x
+
+    @property
+    def _M(self) -> _typing.List[_typing.List[_nda_f64]]:
+        """The matrices used to define interpolation."""
+        M = []
+        for M_list in self.sub_element._M:
+            M_row = []
+            for mat in M_list:
+                new_mat = _numpy.zeros((mat.shape[0] * self._block_size, mat.shape[1] * self._block_size,
+                                        mat.shape[2], mat.shape[3]))
+                for i in range(self._block_size):
+                    new_mat[i * mat.shape[0]: (i + 1) * mat.shape[0],
+                            i * mat.shape[1]: (i + 1) * mat.shape[1], :, :] = mat
+                M_row.append(new_mat)
+            M.append(M_row)
+        return M
+
     def has_tensor_product_factorisation(self) -> bool:
         """Indicates whether or not this element has a tensor product factorisation.
 
         If this value is true, this element's basis functions can be computed
         as a tensor product of the basis elements of the elements in the factoriaation.
         """
-        return self.sub_element.has_tensor_product_factorisation
+        return self.sub_element.has_tensor_product_factorisation()
 
     def get_tensor_product_representation(self):
         """Get the element's tensor product factorisation."""
@@ -1067,6 +1168,58 @@ def create_tensor_element(
     return TensorElement(e)
 
 
+def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _FiniteElementBase:
+    """Create an enriched element from a list of elements."""
+    ct = elements[0].cell_type
+    vshape = elements[0].value_shape()
+    vsize = elements[0].value_size
+    mt = elements[0].map_type
+    hcd = min(e.highest_complete_degree for e in elements)
+    hd = max(e.highest_degree for e in elements)
+    discontinuous = True
+    for e in elements:
+        if not e.discontinuous:
+            discontinuous = False
+        if e.cell_type != ct:
+            raise ValueError("Enriched elements on different cell types not supported.")
+        if e.value_shape() != vshape or e.value_size != vsize:
+            raise ValueError("Enriched elements on different value shapes not supported.")
+        if e.map_type != mt:
+            raise ValueError("Enriched elements on different map types not supported.")
+    nderivs = max(e.interpolation_nderivs for e in elements)
+
+    x = []
+    for pts_lists in zip(*[e._x for e in elements]):
+        x.append([_numpy.concatenate(pts) for pts in zip(*pts_lists)])
+    M = []
+    for M_lists in zip(*[e._M for e in elements]):
+        M_row = []
+        for M_parts in zip(*M_lists):
+            ndofs = sum(mat.shape[0] for mat in M_parts)
+            npts = sum(mat.shape[2] for mat in M_parts)
+            deriv_dim = max(mat.shape[3] for mat in M_parts)
+            new_M = _numpy.zeros((ndofs, vsize, npts, deriv_dim))
+            pt = 0
+            dof = 0
+            for i, mat in enumerate(M_parts):
+                new_M[dof: dof + mat.shape[0], :, pt: pt + mat.shape[2], :mat.shape[3]] = mat
+                dof += mat.shape[0]
+                pt += mat.shape[2]
+            M_row.append(new_M)
+        M.append(M_row)
+
+    dim = sum(e.dim for e in elements)
+    wcoeffs = _numpy.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
+    row = 0
+    for e in elements:
+        wcoeffs[row: row + e.dim, :] = _basix.polynomials.reshape_coefficients(
+            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.highest_degree, hd)
+        row += e.dim
+
+    return BasixElement(
+        _basix.create_custom_element(ct, vshape, wcoeffs, x, M, nderivs, mt, discontinuous, hcd, hd))
+
+
 def convert_ufl_element(
     element: _FiniteElementBase
 ) -> _BasixElementBase:
@@ -1078,13 +1231,10 @@ def convert_ufl_element(
         return VectorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
     elif isinstance(element, _ufl.TensorElement):
         return TensorElement(convert_ufl_element(element.sub_elements()[0]), element._value_shape)
-
     elif isinstance(element, _ufl.MixedElement):
         return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])
-
-    # Elements not yet supported
     elif isinstance(element, _ufl.EnrichedElement):
-        raise NotImplementedError()
+        return _create_enriched_element([convert_ufl_element(e) for e in element._elements])
 
     # Elements that will not be supported
     elif isinstance(element, _ufl.NodalEnrichedElement):

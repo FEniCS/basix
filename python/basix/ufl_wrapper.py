@@ -211,6 +211,19 @@ class _BasixElementBase(_FiniteElementBase):
         """True if the element is fully continuous."""
         raise NotImplementedError()
 
+    @property
+    def has_tensor_product_factorisation(self) -> bool:
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
+        return False
+
+    def get_tensor_product_representation(self):
+        """Get the element's tensor product factorisation."""
+        return None
+
 
 class BasixElement(_BasixElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL."""
@@ -377,6 +390,21 @@ class BasixElement(_BasixElementBase):
         """True if the element is fully continuous."""
         EF = _basix.ElementFamily
         return self.element.family in [EF.P, EF.serendipity, EF.bubble]
+
+    @property
+    def has_tensor_product_factorisation(self) -> bool:
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
+        return self.element.has_tensor_product_factorisation
+
+    def get_tensor_product_representation(self):
+        """Get the element's tensor product factorisation."""
+        if not self.has_tensor_product_factorisation:
+            return None
+        return self.element.get_tensor_product_representation()
 
 
 class ComponentElement(_BasixElementBase):
@@ -896,6 +924,21 @@ class BlockedElement(_BasixElementBase):
     def is_fully_continuous(self) -> bool:
         """True if the element is fully continuous."""
         return self.sub_element.is_fully_continuous()
+
+    @property
+    def has_tensor_product_factorisation(self) -> bool:
+        """Indicates whether or not this element has a tensor product factorisation.
+
+        If this value is true, this element's basis functions can be computed
+        as a tensor product of the basis elements of the elements in the factoriaation.
+        """
+        return self.sub_element.has_tensor_product_factorisation
+
+    def get_tensor_product_representation(self):
+        """Get the element's tensor product factorisation."""
+        if not self.has_tensor_product_factorisation:
+            return None
+        return self.sub_element.get_tensor_product_representation()
 
 
 class VectorElement(BlockedElement):

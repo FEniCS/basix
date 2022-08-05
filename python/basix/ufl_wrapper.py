@@ -249,15 +249,17 @@ class BasixElement(_BasixElementBase):
 
     element: _basix.finite_element.FiniteElement
 
-    def __init__(self, element: _basix.finite_element.FiniteElement):
+    def __init__(self, element: _basix.finite_element.FiniteElement, repr: str = None):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
-            repr = f"custom Basix element ({_compute_signature(element)})"
+            if repr is None:
+                repr = f"custom Basix element ({_compute_signature(element)})"
         else:
             self._is_custom = False
-            repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
-                    f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
+            if repr is None:
+                repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
+                        f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
 
         super().__init__(
             repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
@@ -1168,8 +1170,20 @@ def create_tensor_element(
     return TensorElement(e)
 
 
-def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _FiniteElementBase:
+def create_enriched_element(
+    elements: _typing.List[_FiniteElementBase], preserve_functions: bool = None, preserve_dofs: bool = None
+) -> _FiniteElementBase:
     """Create an enriched element from a list of elements."""
+    if preserve_dofs is None and preserve_functions is None:
+        preserve_functions = True
+    if preserve_dofs is None:
+        preserve_dofs = False
+    if preserve_functions is None:
+        preserve_functions = False
+
+    if len([i for i in [preserve_functions, preserve_dofs] if i]) != 1:
+        raise ValueError("Exactly one thing can be preserved by an enriched element.")
+
     ct = elements[0].cell_type
     vshape = elements[0].value_shape()
     vsize = elements[0].value_size
@@ -1189,24 +1203,146 @@ def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _Fin
     nderivs = max(e.interpolation_nderivs for e in elements)
 
     x = []
-    for pts_lists in zip(*[e._x for e in elements]):
-        x.append([_numpy.concatenate(pts) for pts in zip(*pts_lists)])
     M = []
-    for M_lists in zip(*[e._M for e in elements]):
-        M_row = []
-        for M_parts in zip(*M_lists):
-            ndofs = sum(mat.shape[0] for mat in M_parts)
-            npts = sum(mat.shape[2] for mat in M_parts)
-            deriv_dim = max(mat.shape[3] for mat in M_parts)
-            new_M = _numpy.zeros((ndofs, vsize, npts, deriv_dim))
-            pt = 0
-            dof = 0
-            for i, mat in enumerate(M_parts):
-                new_M[dof: dof + mat.shape[0], :, pt: pt + mat.shape[2], :mat.shape[3]] = mat
-                dof += mat.shape[0]
-                pt += mat.shape[2]
-            M_row.append(new_M)
-        M.append(M_row)
+    if preserve_dofs:
+        for pts_lists in zip(*[e._x for e in elements]):
+            x.append([_numpy.concatenate(pts) for pts in zip(*pts_lists)])
+        for M_lists in zip(*[e._M for e in elements]):
+            M_row = []
+            for M_parts in zip(*M_lists):
+                ndofs = sum(mat.shape[0] for mat in M_parts)
+                npts = sum(mat.shape[2] for mat in M_parts)
+                deriv_dim = max(mat.shape[3] for mat in M_parts)
+                new_M = _numpy.zeros((ndofs, vsize, npts, deriv_dim))
+                pt = 0
+                dof = 0
+                for i, mat in enumerate(M_parts):
+                    new_M[dof: dof + mat.shape[0], :, pt: pt + mat.shape[2], :mat.shape[3]] = mat
+                    dof += mat.shape[0]
+                    pt += mat.shape[2]
+                M_row.append(new_M)
+            M.append(M_row)
+    elif preserve_functions:
+        geometry = _basix.geometry(ct)
+        topology = _basix.topology(ct)
+        connectivity = _basix.cell.sub_entity_connectivity(_basix.CellType.triangle)
+        tdim = len(topology) - 1
+        for d, t in enumerate(topology):
+            if d == 0:
+                x.append([_numpy.concatenate(pts) for pts in zip(*[e._x[0] for e in elements])])
+                M_row = []
+                for M_parts in zip(*[e._M[0] for e in elements]):
+                    ndofs = sum(mat.shape[0] for mat in M_parts)
+                    npts = sum(mat.shape[2] for mat in M_parts)
+                    deriv_dim = max(mat.shape[3] for mat in M_parts)
+                    new_M = _numpy.zeros((ndofs, vsize, npts, deriv_dim))
+                    pt = 0
+                    dof = 0
+                    for i, mat in enumerate(M_parts):
+                        new_M[dof: dof + mat.shape[0], :, pt: pt + mat.shape[2], :mat.shape[3]] = mat
+                        dof += mat.shape[0]
+                        pt += mat.shape[2]
+                    M_row.append(new_M)
+                M.append(M_row)
+            else:
+                x_entry = []
+                M_entry = []
+                for i, t2 in enumerate(t):
+                    ndofs = sum(len(e.entity_dofs[d][i]) for e in elements)
+                    deriv_dim = max(e._M[d][i].shape[3] for e in elements)
+
+                    if ndofs == 0:
+                        x_entry.append(_numpy.zeros((0, tdim)))
+                        M_entry.append(_numpy.zeros((0, vsize, 0, deriv_dim)))
+                        continue
+
+                    if d == 1:
+                        assert len(t2) == 2
+                        ct = _basix.CellType.interval
+                    elif d == 2:
+                        if len(t2) == 3:
+                            ct = _basix.CellType.triangle
+                        elif len(t2) == 4:
+                            ct = _basix.CellType.triangle
+                        else:
+                            raise ValueError
+                    elif d == 3:
+                        if len(t2) == 4:
+                            ct = _basix.CellType.tetrahedron
+                        if len(t2) == 5:
+                            ct = _basix.CellType.pyramid
+                        if len(t2) == 5:
+                            ct = _basix.CellType.prism
+                        elif len(t2) == 8:
+                            ct = _basix.CellType.hexahedron
+                        else:
+                            raise ValueError
+                    else:
+                        raise ValueError
+
+                    pts, wts = _basix.make_quadrature(ct, 2 * hd)
+                    npts = len(pts)
+
+                    mapped_pts = _numpy.array([geometry[t2[0]] for p in pts])
+                    for pi, c in enumerate(t2[1:]):
+                        for j, p in enumerate(pts[:, pi]):
+                            mapped_pts[j] += p * (geometry[c] - geometry[t2[0]])
+                    x_entry.append(mapped_pts)
+
+                    tabulations = [e.tabulate(0, mapped_pts)[0] for e in elements]
+                    ortho_tab = _basix.tabulate_polynomials(_basix.PolynomialType.legendre, ct, hd, pts)
+                    orthogonal = []
+                    for table in tabulations:
+                        for tab in table.T:
+                            coeffs = _numpy.array([sum(tab * o) for o in ortho_tab])
+                            for o in orthogonal:
+                                coeffs -= _numpy.dot(o, coeffs) * o
+                            if not _numpy.isclose(sum(abs(i) for i in coeffs), 0):
+                                coeffs /= _numpy.dot(coeffs, coeffs) ** 0.5
+                                orthogonal.append(coeffs)
+                    orthogonal = _numpy.array(orthogonal)
+
+                    entity_ortho_tab = orthogonal @ ortho_tab
+
+                    rows = []
+                    for e, tab in zip(elements, tabulations):
+                        for dof in e.entity_dofs[d][i]:
+                            rows.append(tab[:, dof])
+
+                    for d2 in range(d):
+                        for entity in connectivity[d][i][d2]:
+                            for e, tab in zip(elements, tabulations):
+                                for dof in e.entity_dofs[d2][entity]:
+                                    rows.append(tab[:, dof])
+                    rows = _numpy.array(rows)
+
+                    assert rows.shape == entity_ortho_tab.shape
+                    npoly = rows.shape[0]
+
+                    matrix = _numpy.array([[sum(f * g) for g in entity_ortho_tab] for f in rows])
+
+                    M_mat = _numpy.zeros((ndofs, vsize, npts, deriv_dim))
+
+                    assert vsize == 1 and deriv_dim == 1  # TODO: remove this assert
+
+                    for dof in range(ndofs):
+                        v = _numpy.array([1.0 if i == dof else 0.0 for i in range(npoly)])
+                        coeffs = _numpy.linalg.solve(matrix, v)
+                        print(coeffs)
+                        M_mat[dof, 0, :, 0] = coeffs @ entity_ortho_tab
+
+                    M_entry.append(M_mat)
+                    # from IPython import embed; embed()
+
+
+                x.append(x_entry)
+                M.append(M_entry)
+
+        for i in range(tdim + 1, 4):
+            x.append([])
+            M.append([])
+        print(x)
+        print(M)
 
     dim = sum(e.dim for e in elements)
     wcoeffs = _numpy.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
@@ -1217,7 +1353,8 @@ def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _Fin
         row += e.dim
 
     return BasixElement(
-        _basix.create_custom_element(ct, vshape, wcoeffs, x, M, nderivs, mt, discontinuous, hcd, hd))
+        _basix.create_custom_element(ct, vshape, wcoeffs, x, M, nderivs, mt, discontinuous, hcd, hd),
+        repr="EnrichedElement(" + ", ".join(repr(e) for e in elements) + ")")
 
 
 def convert_ufl_element(
@@ -1234,7 +1371,7 @@ def convert_ufl_element(
     elif isinstance(element, _ufl.MixedElement):
         return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])
     elif isinstance(element, _ufl.EnrichedElement):
-        return _create_enriched_element([convert_ufl_element(e) for e in element._elements])
+        return create_enriched_element([convert_ufl_element(e) for e in element._elements])
 
     # Elements that will not be supported
     elif isinstance(element, _ufl.NodalEnrichedElement):

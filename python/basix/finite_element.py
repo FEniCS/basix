@@ -46,6 +46,11 @@ def string_to_family(family: str, cell: str) -> _EF:
         families.update({
             "DPC": _EF.P,
         })
+    # Family names that are valid for simplex cells
+    if cell in ["interval", "triangle", "tetrahedron"]:
+        families.update({
+            "Hermite": _EF.Hermite,
+        })
     # Family names that are valid for tensor product cells
     if cell in ["interval", "quadrilateral", "hexahedron"]:
         families.update({

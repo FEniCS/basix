@@ -68,6 +68,7 @@ def test_converted_elements(celltype, family, degree, variants):
     assert e1 == basix.ufl_wrapper.convert_ufl_element(e1)
     assert e1 == basix.ufl_wrapper.convert_ufl_element(e2)
 
+
 # Custom element: P2 bubbles on each facet of a triangle
 wcoeffs = np.zeros((3, 6))
 pts, wts = basix.make_quadrature(basix.CellType.triangle, 4)
@@ -120,6 +121,7 @@ M[1].append(np.array([[[[1.]]]]))
 p4_bubble = basix.ufl_wrapper.BasixElement(basix.create_custom_element(
     basix.CellType.interval, [], wcoeffs, x, M, 0, basix.MapType.identity, False, -1, 4))
 
+
 @pytest.mark.parametrize("elements", [
     [ufl.FiniteElement("Lagrange", "triangle", 1), ufl.FiniteElement("Bubble", "triangle", 3)],
     [ufl.FiniteElement("Lagrange", "triangle", 1), facet_bubbles],
@@ -128,8 +130,9 @@ p4_bubble = basix.ufl_wrapper.BasixElement(basix.create_custom_element(
      basix.ufl_wrapper.create_vector_element("Bubble", "quadrilateral", 2)],
     [ufl.TensorElement("Lagrange", "quadrilateral", 1),
      basix.ufl_wrapper.create_tensor_element("Bubble", "quadrilateral", 2)],
-    [basix.ufl_wrapper.create_element("Hermite", "interval", 3), p4_bubble],
+    # [basix.ufl_wrapper.create_element("Hermite", "interval", 3), p4_bubble],
     [ufl.FiniteElement("Lagrange", "triangle", 1), facet_bubbles, ufl.FiniteElement("Bubble", "triangle", 3)],
+    # TODO: Add RT with bubble
 ])
 def test_enriched_element(elements):
     converted_elements = [basix.ufl_wrapper.convert_ufl_element(e) for e in elements]
@@ -143,8 +146,16 @@ def test_enriched_element(elements):
 
     points = basix.create_lattice(e2.cell_type, 5, basix.LatticeType.equispaced, True)
     tab = e2.tabulate(0, points)[0]
-    tab2 = [np.concatenate([e.tabulate(0, points)[0] for e in converted_elements], axis=1)]
+
+    tab2 = np.zeros_like(tab)
+    ndofs = e2.dim
+    dof = 0
+    for e in converted_elements:
+        t = e.tabulate(0, points)[0]
+        for b in range(e.block_size):
+            tab2[:, b * ndofs + dof: b * ndofs + dof + e.dim] = t[:, b::e.block_size]
+        dof += e.dim
+    assert dof == ndofs
+
+    # tab2 = [np.concatenate([e.tabulate(0, points)[0] for e in converted_elements], axis=1)]
     assert np.allclose(tab, tab2)
-
-
-

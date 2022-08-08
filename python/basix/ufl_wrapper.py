@@ -840,14 +840,14 @@ class BlockedElement(_BasixElementBase):
         Returns:
             Tabulated basis functions
         """
-        assert len(self.block_shape) == 1  # TODO: block shape
         assert self.value_size == self._block_size  # TODO: remove this assumption
         output = []
+        bs2 = self._block_size**2
         for table in self.sub_element.tabulate(nderivs, points):
-            new_table = _numpy.zeros((table.shape[0], table.shape[1] * self._block_size**2))
+            new_table = _numpy.zeros((table.shape[0], table.shape[1] * bs2))
             for block in range(self._block_size):
                 col = block * (self._block_size + 1)
-                new_table[:, col: col + table.shape[1] * self._block_size**2: self._block_size**2] = table
+                new_table[:, col: col + table.shape[1] * bs2: bs2] = table
             output.append(new_table)
         return _numpy.asarray(output, dtype=_numpy.float64)
 
@@ -1225,7 +1225,7 @@ def create_enriched_element(
     elif preserve_functions:
         geometry = _basix.geometry(ct)
         topology = _basix.topology(ct)
-        connectivity = _basix.cell.sub_entity_connectivity(_basix.CellType.triangle)
+        connectivity = _basix.cell.sub_entity_connectivity(ct)
         tdim = len(topology) - 1
         for d, t in enumerate(topology):
             if d == 0:
@@ -1256,84 +1256,102 @@ def create_enriched_element(
                         M_entry.append(_numpy.zeros((0, vsize, 0, deriv_dim)))
                         continue
 
+                    origin = t2[0]
                     if d == 1:
                         assert len(t2) == 2
-                        ct = _basix.CellType.interval
+                        e_ct = _basix.CellType.interval
+                        axes = [t2[1]]
                     elif d == 2:
                         if len(t2) == 3:
-                            ct = _basix.CellType.triangle
+                            e_ct = _basix.CellType.triangle
+                            axes = t2[1:]
                         elif len(t2) == 4:
-                            ct = _basix.CellType.triangle
+                            e_ct = _basix.CellType.quadrilateral
+                            axes = t2[1:3]
                         else:
                             raise ValueError
                     elif d == 3:
                         if len(t2) == 4:
-                            ct = _basix.CellType.tetrahedron
+                            e_ct = _basix.CellType.tetrahedron
+                            axes = t2[1:]
                         if len(t2) == 5:
-                            ct = _basix.CellType.pyramid
+                            e_ct = _basix.CellType.pyramid
+                            axes = [t2[1], t2[2], t2[4]]
                         if len(t2) == 5:
-                            ct = _basix.CellType.prism
+                            e_ct = _basix.CellType.prism
+                            axes = [t2[1], t2[2], t2[3]]
                         elif len(t2) == 8:
-                            ct = _basix.CellType.hexahedron
+                            e_ct = _basix.CellType.hexahedron
+                            axes = [t2[1], t2[2], t2[4]]
                         else:
                             raise ValueError
                     else:
                         raise ValueError
 
-                    pts, wts = _basix.make_quadrature(ct, 2 * hd)
+                    pts, wts = _basix.make_quadrature(e_ct, 2 * hd)
                     npts = len(pts)
 
-                    mapped_pts = _numpy.array([geometry[t2[0]] for p in pts])
-                    for pi, c in enumerate(t2[1:]):
+                    mapped_pts = _numpy.array([geometry[origin] for p in pts])
+                    for pi, c in enumerate(axes):
                         for j, p in enumerate(pts[:, pi]):
                             mapped_pts[j] += p * (geometry[c] - geometry[t2[0]])
                     x_entry.append(mapped_pts)
 
                     tabulations = [e.tabulate(0, mapped_pts)[0] for e in elements]
-                    ortho_tab = _basix.tabulate_polynomials(_basix.PolynomialType.legendre, ct, hd, pts)
+                    ortho_tab = _basix.tabulate_polynomials(_basix.PolynomialType.legendre, e_ct, hd, pts)
+                    blocked_ortho_tab = _numpy.zeros((ortho_tab.shape[0] * vsize, ortho_tab.shape[1] * vsize))
+                    for v in range(vsize):
+                        blocked_ortho_tab[ortho_tab.shape[0] * v: ortho_tab.shape[0] * (v + 1),
+                                          ortho_tab.shape[1] * v: ortho_tab.shape[1] * (v + 1)] = ortho_tab
                     orthogonal = []
-                    for table in tabulations:
-                        for tab in table.T:
-                            coeffs = _numpy.array([sum(tab * o) for o in ortho_tab])
-                            for o in orthogonal:
-                                coeffs -= _numpy.dot(o, coeffs) * o
-                            if not _numpy.isclose(sum(abs(i) for i in coeffs), 0):
-                                coeffs /= _numpy.dot(coeffs, coeffs) ** 0.5
-                                orthogonal.append(coeffs)
+                    for table, e in zip(tabulations, elements):
+                        npoly = table.shape[1] // e.block_size
+                        for p in range(npoly):
+                            for b in range(e.block_size):
+                                coeffs = _numpy.zeros(ortho_tab.shape[0] * vsize)
+                                coeffs[b * ortho_tab.shape[0]: (b + 1) * ortho_tab.shape[0]] = [
+                                    sum(table[:, p * e.block_size + b] * o) for o in ortho_tab]
+                                for o in orthogonal:
+                                    coeffs -= _numpy.dot(o, coeffs) * o
+                                if not _numpy.isclose(sum(abs(i) for i in coeffs), 0):
+                                    coeffs /= _numpy.dot(coeffs, coeffs) ** 0.5
+                                    orthogonal.append(coeffs)
                     orthogonal = _numpy.array(orthogonal)
 
-                    entity_ortho_tab = orthogonal @ ortho_tab
+                    entity_ortho_tab = orthogonal @ blocked_ortho_tab
 
-                    rows = []
+                    rows = _numpy.zeros(entity_ortho_tab.shape)
+                    row_n = 0
                     for e, tab in zip(elements, tabulations):
                         for dof in e.entity_dofs[d][i]:
-                            rows.append(tab[:, dof])
-
+                            for b in range(e.block_size):
+                                rows[row_n, b::e.block_size] = tab[:, e.block_size * dof + b]
+                            row_n += 1
                     for d2 in range(d):
                         for entity in connectivity[d][i][d2]:
                             for e, tab in zip(elements, tabulations):
                                 for dof in e.entity_dofs[d2][entity]:
-                                    rows.append(tab[:, dof])
-                    rows = _numpy.array(rows)
+                                    for b in range(e.block_size):
+                                        rows[row_n, b::e.block_size] = tab[:, e.block_size * dof + b]
+                                    row_n += 1
+                    assert row_n == rows.shape[0]
 
-                    assert rows.shape == entity_ortho_tab.shape
                     npoly = rows.shape[0]
 
                     matrix = _numpy.array([[sum(f * g) for g in entity_ortho_tab] for f in rows])
 
                     M_mat = _numpy.zeros((ndofs, vsize, npts, deriv_dim))
 
-                    assert vsize == 1 and deriv_dim == 1  # TODO: remove this assert
+                    assert deriv_dim == 1  # TODO: remove this assert
 
                     for dof in range(ndofs):
                         v = _numpy.array([1.0 if i == dof else 0.0 for i in range(npoly)])
                         coeffs = _numpy.linalg.solve(matrix, v)
-                        print(coeffs)
-                        M_mat[dof, 0, :, 0] = coeffs @ entity_ortho_tab
+
+                        for v in range(vsize):
+                            M_mat[dof, v, :, 0] = coeffs @ entity_ortho_tab[:, v::vsize]
 
                     M_entry.append(M_mat)
-                    # from IPython import embed; embed()
-
 
                 x.append(x_entry)
                 M.append(M_entry)
@@ -1341,8 +1359,6 @@ def create_enriched_element(
         for i in range(tdim + 1, 4):
             x.append([])
             M.append([])
-        print(x)
-        print(M)
 
     dim = sum(e.dim for e in elements)
     wcoeffs = _numpy.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))

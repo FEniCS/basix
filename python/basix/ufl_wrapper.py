@@ -1303,7 +1303,7 @@ def create_enriched_element(
                     for v in range(vsize):
                         blocked_ortho_tab[ortho_tab.shape[0] * v: ortho_tab.shape[0] * (v + 1),
                                           ortho_tab.shape[1] * v: ortho_tab.shape[1] * (v + 1)] = ortho_tab
-                    orthogonal = []
+                    orthogonal_data: typing.List[_nda_f64] = []
                     for table, e in zip(tabulations, elements):
                         npoly = table.shape[1] // e.block_size
                         for p in range(npoly):
@@ -1316,7 +1316,7 @@ def create_enriched_element(
                                 if not _numpy.isclose(sum(abs(i) for i in coeffs), 0):
                                     coeffs /= _numpy.dot(coeffs, coeffs) ** 0.5
                                     orthogonal.append(coeffs)
-                    orthogonal = _numpy.array(orthogonal)
+                    orthogonal = _numpy.array(orthogonal_data)
 
                     entity_ortho_tab = orthogonal @ blocked_ortho_tab
 
@@ -1345,8 +1345,8 @@ def create_enriched_element(
                     assert deriv_dim == 1  # TODO: remove this assert
 
                     for dof in range(ndofs):
-                        v = _numpy.array([1.0 if i == dof else 0.0 for i in range(npoly)])
-                        coeffs = _numpy.linalg.solve(matrix, v)
+                        rhs = _numpy.array([1.0 if i == dof else 0.0 for i in range(npoly)])
+                        coeffs = _numpy.linalg.solve(matrix, rhs)
 
                         for v in range(vsize):
                             M_mat[dof, v, :, 0] = coeffs @ entity_ortho_tab[:, v::vsize]

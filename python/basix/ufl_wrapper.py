@@ -1173,7 +1173,15 @@ def create_tensor_element(
 def create_enriched_element(
     elements: _typing.List[_FiniteElementBase], preserve_functions: bool = None, preserve_dofs: bool = None
 ) -> _FiniteElementBase:
-    """Create an enriched element from a list of elements."""
+    """Create an enriched element from a list of elements.
+
+    Args:
+        elements: The elements to be combined
+        preserve_functions: If this is set to True, the enriched element's basis functions will be the
+            same as the basis functions of the input elements
+        preserve_dofs: If this is set to True, the enriched elements's DOF functionals will be the same
+            as the DOF functionals of the input elements
+    """
     if preserve_dofs is None and preserve_functions is None:
         preserve_functions = True
     if preserve_dofs is None:
@@ -1202,6 +1210,7 @@ def create_enriched_element(
             raise ValueError("Enriched elements on different map types not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
+    # Create a coefficients matrix for polynomials that span the union off all the input elements' polynomial sets
     dim = sum(e.dim for e in elements)
     wcoeffs = _numpy.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
     row = 0
@@ -1213,6 +1222,8 @@ def create_enriched_element(
     x = []
     M = []
     if preserve_dofs:
+        # Create x and M from the inputs elements' x and M so that the DOFs are defined in the same
+        # way as the input elements
         for pts_lists in zip(*[e._x for e in elements]):
             x.append([_numpy.concatenate(pts) for pts in zip(*pts_lists)])
         for M_lists in zip(*[e._M for e in elements]):
@@ -1231,6 +1242,8 @@ def create_enriched_element(
                 M_row.append(new_M)
             M.append(M_row)
     elif preserve_functions:
+        # Create DOFs that define an element whose basis functions are the basis functions
+        # of the input elements
         geometry = _basix.geometry(ct)
         topology = _basix.topology(ct)
         connectivity = _basix.cell.sub_entity_connectivity(ct)
@@ -1238,6 +1251,7 @@ def create_enriched_element(
         first = True
         for d, t in enumerate(topology):
             if first:
+                # If no DOFs have been defined yet, copy the definition from the input element
                 x.append([_numpy.concatenate(pts) for pts in zip(*[e._x[d] for e in elements])])
                 M_row = []
                 for M_parts in zip(*[e._M[d] for e in elements]):
@@ -1256,6 +1270,7 @@ def create_enriched_element(
                     M_row.append(new_M)
                 M.append(M_row)
             else:
+                # Create DOFs for sub-entities of dimension d
                 x_entry = []
                 M_entry = []
                 for i, t2 in enumerate(t):
@@ -1267,6 +1282,7 @@ def create_enriched_element(
                         M_entry.append(_numpy.zeros((0, vsize, 0, deriv_dim)))
                         continue
 
+                    # Get information about the sub-entity
                     origin = t2[0]
                     if d == 1:
                         assert len(t2) == 2
@@ -1297,8 +1313,9 @@ def create_enriched_element(
                         else:
                             raise ValueError(f"Unknown number of points for {d}D cell: {len(t2)}")
                     else:
-                        raise ValueError(f"Unknown number of points for {d}D cell: {len(t2)}")
+                        raise ValueError(f"Unsupported dimension: {d}")
 
+                    # Make quadrature rule and map points to the sub-entity
                     pts, wts = _basix.make_quadrature(e_ct, 2 * hd)
                     npts = len(pts)
                     npoly = wcoeffs.shape[0]
@@ -1307,8 +1324,11 @@ def create_enriched_element(
                     for pi, c in enumerate(axes):
                         for j, p in enumerate(pts[:, pi]):
                             mapped_pts[j] += p * (geometry[c] - geometry[t2[0]])
+
+                    # Add quadrature points to points defining the DOFs for this sub-entity
                     x_entry.append(mapped_pts)
 
+                    # Tabulate all the input elements at the quadrature points
                     tabulations = []
                     for e in elements:
                         if e.block_size > 1:
@@ -1328,6 +1348,9 @@ def create_enriched_element(
                         else:
                             tabulations.append(e.tabulate(0, mapped_pts)[0].reshape((npts, -1, e.value_size)))
 
+                    # Compute orthogonal polynomials on the sub-entity that are included in the polynomial set
+                    # entity_ortho_tab will be the evaluations of these orthogonal polynomials at the quadrature
+                    # points
                     otab = _basix.tabulate_polynomials(_basix.PolynomialType.legendre, ct, hd, mapped_pts)
                     ortho_tab = _numpy.zeros((otab.shape[0] * vsize, npts * vsize))
                     for v in range(vsize):
@@ -1349,6 +1372,7 @@ def create_enriched_element(
 
                     entity_ortho_tab = (orthogonal @ ortho_tab.reshape(npoly, -1)).reshape((-1, npts, vsize))
 
+                    # Evaluate the basis functions of each input element at the quadrature points
                     rows = _numpy.zeros(entity_ortho_tab.shape)
                     row_n = 0
 
@@ -1360,10 +1384,12 @@ def create_enriched_element(
                                 row_n += 1
                     assert row_n == rows.shape[0]
 
+                    # Create matrix whose entries are the coefficients (in terms of the entity orthogonal polynomials)
+                    # of tha basis functions of the input elements
                     matrix = _numpy.array([[sum(sum(i) for i in f * g) for g in entity_ortho_tab] for f in rows])
 
+                    # Use this matrix to compute functions that can be used as integral moments
                     M_mat = _numpy.zeros((ndofs, vsize, npts, deriv_dim))
-
                     for dof in range(ndofs):
                         rhs = _numpy.array([1.0 if i == dof else 0.0 for i in range(matrix.shape[1])])
                         coeffs = _numpy.linalg.solve(matrix, rhs)
@@ -1375,6 +1401,7 @@ def create_enriched_element(
                 x.append(x_entry)
                 M.append(M_entry)
 
+        # Include empty points and operators for dimensions larger than the tdim of the cell
         for i in range(tdim + 1, 4):
             x.append([])
             M.append([])

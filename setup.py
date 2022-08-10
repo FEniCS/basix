@@ -1,8 +1,5 @@
 from skbuild import setup
 
-import sys
-import sysconfig
-
 setup(name="fenics-basix",
       python_requires='>=3.7.0',
       version="0.4.3.dev0",

@@ -1178,7 +1178,7 @@ def create_enriched_element(
     Args:
         elements: The elements to be combined
         preserve_functions: If this is set to True, the enriched element's basis functions will be the
-            same as the basis functions of the input elements
+            same as the basis functions of the input elements. This is the default behaviour
         preserve_dofs: If this is set to True, the enriched elements's DOF functionals will be the same
             as the DOF functionals of the input elements
     """

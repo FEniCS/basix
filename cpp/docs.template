@@ -390,6 +390,18 @@ Returns:
     {{polynomials.h > tabulate > return}}
 )";
 
+{{DOCTYPE}} polynomials_dim = R"(
+{{polynomials.h > dim > doc}}
+
+Args:
+    {{polynomials.h > dim > param > polytype}}
+    {{polynomials.h > dim > param > cell}}
+    {{polynomials.h > dim > param > d}}
+
+Returns:
+    {{polynomials.h > dim > return}}
+)";
+
 {{DOCTYPE}} make_quadrature__rule_celltype_m = R"(
 {{quadrature.h > make_quadrature(rule, celltype, m) > doc}}
 

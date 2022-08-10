@@ -291,7 +291,7 @@ def test_lagrange(celltype, degree):
                                     basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
-    assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())
+    assert numpy.isclose(numpy.sum(w, axis=1), 1.0).all()
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
@@ -389,7 +389,7 @@ def test_celltypes(degree, celltype):
     pts = basix.create_lattice(celltype, 5,
                                basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
-    assert(numpy.allclose(numpy.sum(w, axis=1), 1.0))
+    assert numpy.allclose(numpy.sum(w, axis=1), 1.0)
 
 
 def leq(a, b):

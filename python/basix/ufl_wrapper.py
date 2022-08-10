@@ -1269,24 +1269,24 @@ def create_enriched_element(
                             e_ct = _basix.CellType.quadrilateral
                             axes = t2[1:3]
                         else:
-                            raise ValueError
+                            raise ValueError(f"Unknown number of points for {d}D cell: {len(t2)}")
                     elif d == 3:
                         if len(t2) == 4:
                             e_ct = _basix.CellType.tetrahedron
                             axes = t2[1:]
-                        if len(t2) == 5:
+                        elif len(t2) == 5:
                             e_ct = _basix.CellType.pyramid
                             axes = [t2[1], t2[2], t2[4]]
-                        if len(t2) == 5:
+                        elif len(t2) == 6:
                             e_ct = _basix.CellType.prism
                             axes = [t2[1], t2[2], t2[3]]
                         elif len(t2) == 8:
                             e_ct = _basix.CellType.hexahedron
                             axes = [t2[1], t2[2], t2[4]]
                         else:
-                            raise ValueError
+                            raise ValueError(f"Unknown number of points for {d}D cell: {len(t2)}")
                     else:
-                        raise ValueError
+                        raise ValueError(f"Unknown number of points for {d}D cell: {len(t2)}")
 
                     pts, wts = _basix.make_quadrature(e_ct, 2 * hd)
                     npts = len(pts)

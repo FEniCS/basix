@@ -29,11 +29,6 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - name: Install dependencies
-        run: |
-          sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/Rocky-PowerTools.repo
-          dnf install -y gcc-toolset-11-toolchain git blas-devel lapack-devel python39 python39-devel python39-pip
-
       - name: Install Basix
         run: |
           source /opt/rh/gcc-toolset-11/enable

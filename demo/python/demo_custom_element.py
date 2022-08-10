@@ -179,7 +179,7 @@ wcoeffs = np.zeros((3, 6))
 # The highest degree terms in each polynomial will be:
 #
 # .. math::
-#   (1, 0),\; (x, 0),\; (y, 0),\; (0, 1),\; (0, x),\; (0, y)
+#   (1, 0),\; (y, 0),\; (x, 0),\; (0, 1),\; (0, y),\; (0, x)
 #
 # We include :math:`(1,0)` and :math:`(0,1)` as the first two rows of the matrix, and use
 # integrals to represent :math:`(x,y)` as in the previous example.

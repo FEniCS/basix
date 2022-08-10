@@ -169,7 +169,9 @@ hcurl_bubble = basix.ufl_wrapper.BasixElement(basix.create_custom_element(
      basix.ufl_wrapper.create_tensor_element("Bubble", "quadrilateral", 2)],
     [ufl.FiniteElement("Lagrange", "triangle", 1), facet_bubbles, ufl.FiniteElement("Bubble", "triangle", 3)],
     [ufl.FiniteElement("RT", "triangle", 1), hdiv_bubble],
+    [ufl.FiniteElement("RT", "triangle", 2), hdiv_bubble],
     [ufl.FiniteElement("N1curl", "triangle", 1), hcurl_bubble],
+    [ufl.FiniteElement("N1curl", "triangle", 2), hcurl_bubble],
     # [basix.ufl_wrapper.create_element("Hermite", "interval", 3), p4_bubble],
 ])
 def test_enriched_element(elements):

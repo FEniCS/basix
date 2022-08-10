@@ -1328,18 +1328,18 @@ def create_enriched_element(
                         else:
                             tabulations.append(e.tabulate(0, mapped_pts)[0].reshape((npts, -1, e.value_size)))
 
-                    ortho_tab = _basix.tabulate_polynomials(_basix.PolynomialType.legendre, ct, hd, mapped_pts)
-                    blocked_ortho_tab = _numpy.zeros((ortho_tab.shape[0] * vsize, npts * vsize))
+                    otab = _basix.tabulate_polynomials(_basix.PolynomialType.legendre, ct, hd, mapped_pts)
+                    ortho_tab = _numpy.zeros((otab.shape[0] * vsize, npts * vsize))
                     for v in range(vsize):
-                        blocked_ortho_tab[ortho_tab.shape[0] * v: ortho_tab.shape[0] * (v + 1),
-                                          v * npts: (v + 1) * npts] = ortho_tab
-                    blocked_ortho_tab = (wcoeffs @ blocked_ortho_tab).reshape((npoly, npts, vsize))
+                        ortho_tab[otab.shape[0] * v: otab.shape[0] * (v + 1), v * npts: (v + 1) * npts] = otab
+                    ortho_tab = (wcoeffs @ ortho_tab).reshape((npoly, npts, vsize))
 
                     orthogonal_data: _typing.List[_nda_f64] = []
                     for table, e in zip(tabulations, elements):
                         for p in range(e.dim):
-                            coeffs = [sum(table[i, p, v] * blocked_ortho_tab[q, i, v]
-                                      for i in range(npts) for v in range(vsize)) for q in range(npoly)]
+                            coeffs = _numpy.array([
+                                sum(table[i, p, v] * ortho_tab[q, i, v] for i in range(npts) for v in range(vsize))
+                                for q in range(npoly)])
                             for o in orthogonal_data:
                                 coeffs -= _numpy.dot(o, coeffs) * o
                             if not _numpy.isclose(sum(abs(i) for i in coeffs), 0):
@@ -1347,7 +1347,7 @@ def create_enriched_element(
                                 orthogonal_data.append(coeffs)
                     orthogonal = _numpy.array(orthogonal_data)
 
-                    entity_ortho_tab = (orthogonal @ blocked_ortho_tab.reshape(npoly, -1)).reshape((-1, npts, vsize))
+                    entity_ortho_tab = (orthogonal @ ortho_tab.reshape(npoly, -1)).reshape((-1, npts, vsize))
 
                     rows = _numpy.zeros(entity_ortho_tab.shape)
                     row_n = 0

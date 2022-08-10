@@ -1202,6 +1202,14 @@ def create_enriched_element(
             raise ValueError("Enriched elements on different map types not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
+    dim = sum(e.dim for e in elements)
+    wcoeffs = _numpy.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
+    row = 0
+    for e in elements:
+        wcoeffs[row: row + e.dim, :] = _basix.polynomials.reshape_coefficients(
+            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.highest_degree, hd)
+        row += e.dim
+
     x = []
     M = []
     if preserve_dofs:
@@ -1227,11 +1235,12 @@ def create_enriched_element(
         topology = _basix.topology(ct)
         connectivity = _basix.cell.sub_entity_connectivity(ct)
         tdim = len(topology) - 1
+        first = True
         for d, t in enumerate(topology):
-            if d == 0:
-                x.append([_numpy.concatenate(pts) for pts in zip(*[e._x[0] for e in elements])])
+            if first:
+                x.append([_numpy.concatenate(pts) for pts in zip(*[e._x[d] for e in elements])])
                 M_row = []
-                for M_parts in zip(*[e._M[0] for e in elements]):
+                for M_parts in zip(*[e._M[d] for e in elements]):
                     ndofs = sum(mat.shape[0] for mat in M_parts)
                     npts = sum(mat.shape[2] for mat in M_parts)
                     deriv_dim = max(mat.shape[3] for mat in M_parts)
@@ -1242,6 +1251,8 @@ def create_enriched_element(
                         new_M[dof: dof + mat.shape[0], :, pt: pt + mat.shape[2], :mat.shape[3]] = mat
                         dof += mat.shape[0]
                         pt += mat.shape[2]
+                    if dof > 0:
+                        first = False
                     M_row.append(new_M)
                 M.append(M_row)
             else:
@@ -1290,6 +1301,7 @@ def create_enriched_element(
 
                     pts, wts = _basix.make_quadrature(e_ct, 2 * hd)
                     npts = len(pts)
+                    npoly = wcoeffs.shape[0]
 
                     mapped_pts = _numpy.array([geometry[origin] for p in pts])
                     for pi, c in enumerate(axes):
@@ -1297,59 +1309,68 @@ def create_enriched_element(
                             mapped_pts[j] += p * (geometry[c] - geometry[t2[0]])
                     x_entry.append(mapped_pts)
 
-                    tabulations = [e.tabulate(0, mapped_pts)[0] for e in elements]
-                    ortho_tab = _basix.tabulate_polynomials(_basix.PolynomialType.legendre, e_ct, hd, pts)
-                    blocked_ortho_tab = _numpy.zeros((ortho_tab.shape[0] * vsize, ortho_tab.shape[1] * vsize))
+                    tabulations = []
+                    for e in elements:
+                        if e.block_size > 1:
+                            assert e.block_size == e.value_size
+                            table = e.tabulate(0, mapped_pts)[0]
+                            new_table = _numpy.zeros((npts, table.shape[1] // e.block_size, e.block_size))
+                            for b in range(e.block_size):
+                                new_table[:, :, b] = table[:, b::e.block_size]
+                            tabulations.append(new_table)
+                        elif e.value_size > 1:
+                            table = e.tabulate(0, mapped_pts)[0]
+                            tdofs = table.shape[1] // e.value_size
+                            new_table = _numpy.zeros((npts, tdofs, e.value_size))
+                            for b in range(e.value_size):
+                                new_table[:, :, b] = table[:, b * tdofs: (b + 1) * tdofs]
+                            tabulations.append(new_table)
+                        else:
+                            tabulations.append(e.tabulate(0, mapped_pts)[0].reshape((npts, -1, e.value_size)))
+
+                    ortho_tab = _basix.tabulate_polynomials(_basix.PolynomialType.legendre, ct, hd, mapped_pts)
+                    blocked_ortho_tab = _numpy.zeros((ortho_tab.shape[0] * vsize, npts * vsize))
                     for v in range(vsize):
                         blocked_ortho_tab[ortho_tab.shape[0] * v: ortho_tab.shape[0] * (v + 1),
-                                          ortho_tab.shape[1] * v: ortho_tab.shape[1] * (v + 1)] = ortho_tab
+                                          v * npts: (v + 1) * npts] = ortho_tab
+                    blocked_ortho_tab = (wcoeffs @ blocked_ortho_tab).reshape((npoly, npts, vsize))
+
                     orthogonal_data: _typing.List[_nda_f64] = []
                     for table, e in zip(tabulations, elements):
-                        npoly = table.shape[1] // e.block_size
-                        for p in range(npoly):
-                            for b in range(e.block_size):
-                                coeffs = _numpy.zeros(ortho_tab.shape[0] * vsize)
-                                coeffs[b * ortho_tab.shape[0]: (b + 1) * ortho_tab.shape[0]] = [
-                                    sum(table[:, p * e.block_size + b] * o) for o in ortho_tab]
-                                for o in orthogonal_data:
-                                    coeffs -= _numpy.dot(o, coeffs) * o
-                                if not _numpy.isclose(sum(abs(i) for i in coeffs), 0):
-                                    coeffs /= _numpy.dot(coeffs, coeffs) ** 0.5
-                                    orthogonal_data.append(coeffs)
+                        for p in range(e.dim):
+                            coeffs = [sum(table[i, p, v] * blocked_ortho_tab[q, i, v]
+                                      for i in range(npts) for v in range(vsize)) for q in range(npoly)]
+                            for o in orthogonal_data:
+                                coeffs -= _numpy.dot(o, coeffs) * o
+                            if not _numpy.isclose(sum(abs(i) for i in coeffs), 0):
+                                coeffs /= _numpy.dot(coeffs, coeffs) ** 0.5
+                                orthogonal_data.append(coeffs)
                     orthogonal = _numpy.array(orthogonal_data)
 
-                    entity_ortho_tab = orthogonal @ blocked_ortho_tab
+                    entity_ortho_tab = (orthogonal @ blocked_ortho_tab.reshape(npoly, -1)).reshape((-1, npts, vsize))
 
                     rows = _numpy.zeros(entity_ortho_tab.shape)
                     row_n = 0
-                    for e, tab in zip(elements, tabulations):
-                        for dof in e.entity_dofs[d][i]:
-                            for b in range(e.block_size):
-                                rows[row_n, b::e.block_size] = tab[:, e.block_size * dof + b]
-                            row_n += 1
-                    for d2 in range(d):
-                        for entity in connectivity[d][i][d2]:
-                            for e, tab in zip(elements, tabulations):
-                                for dof in e.entity_dofs[d2][entity]:
-                                    for b in range(e.block_size):
-                                        rows[row_n, b::e.block_size] = tab[:, e.block_size * dof + b]
-                                    row_n += 1
+
+                    entities = [(d, i)] + [(d2, entity) for d2 in range(d) for entity in connectivity[d][i][d2]]
+                    for d2, entity in entities:
+                        for e, tab in zip(elements, tabulations):
+                            for dof in e.entity_dofs[d2][entity]:
+                                rows[row_n, :, :] = tab[:, dof, :]
+                                row_n += 1
                     assert row_n == rows.shape[0]
 
-                    npoly = rows.shape[0]
-
-                    matrix = _numpy.array([[sum(f * g) for g in entity_ortho_tab] for f in rows])
+                    matrix = _numpy.array([[sum(sum(i) for i in f * g) for g in entity_ortho_tab] for f in rows])
 
                     M_mat = _numpy.zeros((ndofs, vsize, npts, deriv_dim))
 
                     assert deriv_dim == 1  # TODO: remove this assert
 
                     for dof in range(ndofs):
-                        rhs = _numpy.array([1.0 if i == dof else 0.0 for i in range(npoly)])
+                        rhs = _numpy.array([1.0 if i == dof else 0.0 for i in range(matrix.shape[1])])
                         coeffs = _numpy.linalg.solve(matrix, rhs)
-
                         for v in range(vsize):
-                            M_mat[dof, v, :, 0] = coeffs @ entity_ortho_tab[:, v::vsize]
+                            M_mat[dof, v, :, 0] = coeffs @ entity_ortho_tab[:, :, v]
 
                     M_entry.append(M_mat)
 
@@ -1359,14 +1380,6 @@ def create_enriched_element(
         for i in range(tdim + 1, 4):
             x.append([])
             M.append([])
-
-    dim = sum(e.dim for e in elements)
-    wcoeffs = _numpy.zeros((dim, _basix.polynomials.dim(_basix.PolynomialType.legendre, ct, hd) * vsize))
-    row = 0
-    for e in elements:
-        wcoeffs[row: row + e.dim, :] = _basix.polynomials.reshape_coefficients(
-            _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.highest_degree, hd)
-        row += e.dim
 
     return BasixElement(
         _basix.create_custom_element(ct, vshape, wcoeffs, x, M, nderivs, mt, discontinuous, hcd, hd),

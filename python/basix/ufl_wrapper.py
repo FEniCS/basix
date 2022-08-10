@@ -1364,8 +1364,6 @@ def create_enriched_element(
 
                     M_mat = _numpy.zeros((ndofs, vsize, npts, deriv_dim))
 
-                    assert deriv_dim == 1  # TODO: remove this assert
-
                     for dof in range(ndofs):
                         rhs = _numpy.array([1.0 if i == dof else 0.0 for i in range(matrix.shape[1])])
                         coeffs = _numpy.linalg.solve(matrix, rhs)

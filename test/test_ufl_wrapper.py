@@ -172,7 +172,7 @@ hcurl_bubble = basix.ufl_wrapper.BasixElement(basix.create_custom_element(
     [ufl.FiniteElement("RT", "triangle", 2), hdiv_bubble],
     [ufl.FiniteElement("N1curl", "triangle", 1), hcurl_bubble],
     [ufl.FiniteElement("N1curl", "triangle", 2), hcurl_bubble],
-    # [basix.ufl_wrapper.create_element("Hermite", "interval", 3), p4_bubble],
+    [basix.ufl_wrapper.create_element("Hermite", "interval", 3), p4_bubble],
 ])
 def test_enriched_element(elements):
     converted_elements = [basix.ufl_wrapper.convert_ufl_element(e) for e in elements]
@@ -188,7 +188,7 @@ def test_enriched_element(elements):
     tab = e2.tabulate(0, points)[0]
 
     tab2 = np.zeros_like(tab)
-    ndofs = tab2.shape[1] // elements[0].value_size()
+    ndofs = tab2.shape[1] // converted_elements[0].value_size
     row = 0
     for e in converted_elements:
         t = e.tabulate(0, points)[0]

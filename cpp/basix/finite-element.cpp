@@ -656,20 +656,17 @@ FiniteElement::FiniteElement(
   _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, x, M,
                                      highest_degree, interpolation_nderivs);
 
-  if (family == element::family::custom)
-  {
-    _wcoeffs
-        = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
+  _wcoeffs
+      = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
 
-    // Copy  M
-    for (std::size_t i = 0; i < M.size(); ++i)
+  // Copy  M
+  for (std::size_t i = 0; i < M.size(); ++i)
+  {
+    for (auto Mi : M[i])
     {
-      for (auto Mi : M[i])
-      {
-        _M[i].emplace_back(
-            std::vector(Mi.data_handle(), Mi.data_handle() + Mi.size()),
-            std::array{Mi.extent(0), Mi.extent(1), Mi.extent(2), Mi.extent(3)});
-      }
+      _M[i].emplace_back(
+          std::vector(Mi.data_handle(), Mi.data_handle() + Mi.size()),
+          std::array{Mi.extent(0), Mi.extent(1), Mi.extent(2), Mi.extent(3)});
     }
   }
 
@@ -1432,8 +1429,6 @@ FiniteElement::dual_matrix() const
 const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
 FiniteElement::wcoeffs() const
 {
-  if (family() != element::family::custom)
-    throw std::runtime_error("wcoeffs is only stored for custom elements");
   return _wcoeffs;
 }
 //-----------------------------------------------------------------------------
@@ -1448,8 +1443,6 @@ const std::array<
     std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>, 4>&
 FiniteElement::M() const
 {
-  if (family() != element::family::custom)
-    throw std::runtime_error("M is only stored for custom elements");
   return _M;
 }
 //-----------------------------------------------------------------------------

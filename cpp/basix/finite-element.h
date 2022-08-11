@@ -299,8 +299,8 @@ public:
   /// @param[in] value_shape The value shape of the element
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
-  /// polynomial space for this element. Shape is (dim(Legendre
-  /// polynomials), dim(finite element polyset))
+  /// polynomial space for this element. Shape is (dim(finite element polyset),
+  /// dim(Legendre polynomials))
   /// @param[in] x Interpolation points. Indices are (tdim, entity
   /// index, point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
@@ -988,8 +988,8 @@ public:
   ///
   /// These coefficients are only stored for custom elements. This
   /// function will throw an exception if called on a non-custom element
-  /// @return Coefficient matrix. Shape is (dim(Lagrange polynomials),
-  /// dim(finite element polyset))
+  /// @return Coefficient matrix. Shape is (dim(finite element polyset),
+  /// dim(Lagrange polynomials))
   const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
   wcoeffs() const;
 
@@ -1051,15 +1051,20 @@ public:
   const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
   coefficient_matrix() const;
 
-  /// Indicates whether or not this element has a tensor product
-  /// representation.
+  /// Indicates whether or not this element can be represented as a product of
+  /// elements defined on lower-dimensional reference cells. If the product
+  /// exists, this element's basis functions can be computed as a tensor product
+  /// of the basis elements of the elements in the product.
+  ///
+  /// If such a factorisation exists, `get_tensor_product_representation()` can
+  /// be used to get these elements.
   bool has_tensor_product_factorisation() const;
 
   /// Get the tensor product representation of this element, or throw an
   /// error if no such factorisation exists.
   ///
   /// The tensor product representation will be a vector of tuples. Each
-  /// tuple contains a vector of finite elements, and a vector on
+  /// tuple contains a vector of finite elements, and a vector of
   /// integers. The vector of finite elements gives the elements on an
   /// interval that appear in the tensor product representation. The
   /// vector of integers gives the permutation between the numbering of
@@ -1217,8 +1222,8 @@ private:
 /// @param[in] value_shape The value shape of the element
 /// @param[in] wcoeffs Matrices for the kth value index containing the
 /// expansion coefficients defining a polynomial basis spanning the
-/// polynomial space for this element. Shape is (dim(Legendre polynomials),
-/// dim(finite element polyset))
+/// polynomial space for this element. Shape is (dim(finite element polyset),
+/// dim(Legendre polynomials))
 /// @param[in] x Interpolation points. Indices are (tdim, entity index,
 /// point index, dim)
 /// @param[in] M The interpolation matrices. Indices are (tdim, entity

@@ -109,6 +109,8 @@ Interface to the Basix C++ library.
         return py::array_t<double>(shape, p.data());
       },
       basix::docstring::tabulate_polynomials.c_str());
+  m.def("polynomials_dim", &polynomials::dim,
+        basix::docstring::polynomials_dim.c_str());
 
   m.def(
       "create_lattice",

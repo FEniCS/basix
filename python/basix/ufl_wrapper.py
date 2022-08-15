@@ -636,7 +636,7 @@ class MixedElement(_BasixElementBase):
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
-        return min(e.sobolev_space() for e in self._sub_elements)
+        return max(e.sobolev_space() for e in self._sub_elements)
 
     def sub_elements(self) -> _typing.List[_BasixElementBase]:
         """Return a list of sub elements."""

@@ -42,7 +42,7 @@ pip install .
 
 ## Running the unit tests
 
-To install Basix and the extra depedencies required to run the Python unit tests:
+To install Basix and the extra dependencies required to run the Python unit tests:
 
 ```console
 pip install .[test]

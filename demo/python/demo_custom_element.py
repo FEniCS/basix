@@ -130,7 +130,7 @@ for _ in range(4):
 # - The coefficients that define the polynomial set. In this example, this is `wcoeffs`.
 # - The points used to define interpolation into the element. In this example, this is `x`.
 # - The matrix used to define interpolation into the element. In this example, this is `M`.
-# - The number of derivates used in the evalutation of the functionals. In this example, this
+# - The number of derivates used in the evaluation of the functionals. In this example, this
 #   is 0.
 # - The map type. In this example, this is the identity map.
 # - A bool indicating whether the element is discontinuous. In this example, this is `False`.

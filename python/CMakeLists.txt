@@ -55,7 +55,7 @@ endif()
 
 # scikit-build specific steps
 if (SKBUILD)
-  # Add relative rpath so _basixcpp can find the Basix::basix libray
+  # Add relative rpath so _basixcpp can find the Basix::basix library
   # when the build is relocated
   if (APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")

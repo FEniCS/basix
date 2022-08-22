@@ -4,13 +4,13 @@ requires = ["setuptools>=42", "wheel", "pybind11>=2.6.4", "cmake>=3.16", "scikit
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-build = ["cp{37,38,39}-manylinux_x86_64", "cp{37,38,39}-macosx_x86_64"]
+build = ["cp{38,39}-manylinux_x86_64", "cp{38,39}-macosx_x86_64"]
 
 test-command = "cmake -DPython3_EXECUTABLE=$(which python) -G Ninja -B build -S {project}/test/test_cmake && cmake --build build/ && build/a.out && python -m pytest -v -n auto --durations 20 {project}/test/"
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 
-manylinux-x86_64-image = "manylinux2014"
+manylinux-x86_64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.linux]
 before-build = "yum -y update && yum install -y openblas-devel ninja-build"

@@ -295,7 +295,7 @@ class BasixElement(_BasixElementBase):
         EF = _basix.ElementFamily
         if self.element.discontinuous:
             return L2
-        if self.element.family in [EF.P, EF.Bubble, EF.serendipity]:
+        if self.element.family in [EF.P, EF.bubble, EF.serendipity]:
             return H1
         if self.element.family in [EF.Hermite]:
             return H2

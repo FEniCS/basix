@@ -2,6 +2,8 @@
 
 import ufl as _ufl
 from ufl.finiteelement.finiteelementbase import FiniteElementBase as _FiniteElementBase
+from ufl.sobolevspace import L2, H1, H2, HDiv, HCurl, HDivDiv, HEin
+
 import hashlib as _hashlib
 import numpy as _numpy
 import numpy.typing as _numpy_typing
@@ -30,6 +32,10 @@ class _BasixElementBase(_FiniteElementBase):
         self._map = mapname
         self._degree = degree
         self._value_shape = value_shape
+
+    def __repr__(self):
+        """Get the representation of the element."""
+        return self._repr
 
     def sub_elements(self) -> _typing.List:
         """Return a list of sub elements."""
@@ -287,6 +293,27 @@ class BasixElement(_BasixElementBase):
         """Return a hash."""
         return super().__hash__()
 
+    def sobolev_space(self):
+        """Return the underlying Sobolev space."""
+        # TODO: get elements to report their Sobolev space
+        EF = _basix.ElementFamily
+        if self.element.discontinuous:
+            return L2
+        if self.element.family in [EF.P, EF.Bubble, EF.serendipity]:
+            return H1
+        if self.element.family in [EF.Hermite]:
+            return H2
+        if self.element.family in [EF.BDM, EF.RT]:
+            return HDiv
+        if self.element.family in [EF.N2E, EF.N1E]:
+            return HCurl
+        if self.element.family in [EF.Regge]:
+            return HEin
+        if self.element.family in [EF.HHJ]:
+            return HDivDiv
+
+        return L2
+
     def tabulate(
         self, nderivs: int, points: _nda_f64
     ) -> _nda_f64:
@@ -477,6 +504,10 @@ class ComponentElement(_BasixElementBase):
             f"ComponentElement({element._repr}, {component})", f"Component of {element.family_name}",
             element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
+    def sobolev_space(self):
+        """Return the underlying Sobolev space."""
+        return self.element.sobolev_space()
+
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
@@ -625,6 +656,10 @@ class MixedElement(_BasixElementBase):
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
             "mixed element", sub_elements[0].cell_type.name,
             (sum(i.value_size for i in sub_elements), ), gdim=gdim)
+
+    def sobolev_space(self):
+        """Return the underlying Sobolev space."""
+        return max(e.sobolev_space() for e in self._sub_elements)
 
     def sub_elements(self) -> _typing.List[_BasixElementBase]:
         """Return a list of sub elements."""
@@ -830,6 +865,10 @@ class BlockedElement(_BasixElementBase):
         super().__init__(
             repr, sub_element.family(), sub_element.cell_type.name, block_shape,
             sub_element._degree, sub_element._map, gdim=gdim)
+
+    def sobolev_space(self):
+        """Return the underlying Sobolev space."""
+        return self.sub_element.sobolev_space()
 
     def sub_elements(self) -> _typing.List[_BasixElementBase]:
         """Return a list of sub elements."""

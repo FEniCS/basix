@@ -64,7 +64,14 @@ jobs:
         run: |
           pytest -n auto --durations 20 test/
 
-      - name: Run python demos
+      - name: Run simple CMake integration test
+        run: |
+          cd test/test_cmake
+          cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python -G Ninja -B build-dir -S .
+          cmake --build build-dir/
+          build-dir/a.out
+
+      - name: Run Python demos
         run: |
           pytest demo/python/test.py
 

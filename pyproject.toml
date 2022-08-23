@@ -4,9 +4,9 @@ requires = ["setuptools>=42", "wheel", "pybind11>=2.6.4", "cmake>=3.16", "scikit
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-build = ["cp{38,39,310,311}-manylinux_x86_64", "cp{38,39,310,311}-macosx_x86_64"]
+build = ["cp{38,39,310}-manylinux_x86_64", "cp{38,39,310}-macosx_x86_64"]
 
-test-command = "cmake -DPython3_EXECUTABLE=$(which python) -G Ninja -B build -S {project}/test/test_cmake && cmake --build build/ && build/a.out && python -m pytest -v -n auto --durations 20 {project}/test/"
+test-command = "cmake -DPython3_EXECUTABLE=$(which python) -G Ninja -B build-dir -S {project}/test/test_cmake && cmake --build build-dir/ && build-dir/a.out && python -m pytest -v -n auto --durations 20 {project}/test/"
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 

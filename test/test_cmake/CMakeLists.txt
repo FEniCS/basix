@@ -1,8 +1,13 @@
 # Example of CMakeLists.txt for downstream C++ project (eg DOLFINx)
-# Used to check correctly installed package during wheel creation.:
+# Used to check correctly installed package during tests and wheel creation.
 cmake_minimum_required(VERSION 3.16)
 
 project(basix_test)
+
+# Set the C++ standard
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Use Python for detecting Basix
 find_package(Python3 COMPONENTS Interpreter REQUIRED)

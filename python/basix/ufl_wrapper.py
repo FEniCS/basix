@@ -211,10 +211,6 @@ class _BasixElementBase(_FiniteElementBase):
         """True if the element is a custom Basix element."""
         return False
 
-    def is_fully_continuous(self) -> bool:
-        """True if the element is fully continuous."""
-        raise NotImplementedError()
-
     @property
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
@@ -440,11 +436,6 @@ class BasixElement(_BasixElementBase):
         """True if the element is a custom Basix element."""
         return self._is_custom
 
-    def is_fully_continuous(self) -> bool:
-        """True if the element is fully continuous."""
-        EF = _basix.ElementFamily
-        return self.element.family in [EF.P, EF.serendipity, EF.bubble]
-
     @property
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
@@ -503,10 +494,6 @@ class ComponentElement(_BasixElementBase):
         super().__init__(
             f"ComponentElement({element._repr}, {component})", f"Component of {element.family_name}",
             element.cell_type.name, (1, ), element._degree, gdim=gdim)
-
-    def sobolev_space(self):
-        """Return the underlying Sobolev space."""
-        return self.element.sobolev_space()
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -642,10 +629,6 @@ class ComponentElement(_BasixElementBase):
         """The number of derivatives needed when interpolating."""
         return self.element.interpolation_nderivs
 
-    def is_fully_continuous(self) -> bool:
-        """True if the element is fully continuous."""
-        return self.element.is_fully_continuous()
-
 
 class MixedElement(_BasixElementBase):
     """A mixed element that combines two or more elements."""
@@ -660,10 +643,6 @@ class MixedElement(_BasixElementBase):
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
             "mixed element", sub_elements[0].cell_type.name,
             (sum(i.value_size for i in sub_elements), ), gdim=gdim)
-
-    def sobolev_space(self):
-        """Return the underlying Sobolev space."""
-        return max(e.sobolev_space() for e in self._sub_elements)
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -838,13 +817,6 @@ class MixedElement(_BasixElementBase):
         """The number of derivatives needed when interpolating."""
         return max([e.interpolation_nderivs for e in self._sub_elements])
 
-    def is_fully_continuous(self) -> bool:
-        """True if the element is fully continuous."""
-        for i in self._sub_elements:
-            if not self.element.is_fully_continuous():
-                return False
-        return True
-
 
 class BlockedElement(_BasixElementBase):
     """An element with a block size that contains multiple copies of a sub element."""
@@ -873,10 +845,6 @@ class BlockedElement(_BasixElementBase):
         super().__init__(
             repr, sub_element.family(), sub_element.cell_type.name, block_shape,
             sub_element._degree, sub_element._map, gdim=gdim)
-
-    def sobolev_space(self):
-        """Return the underlying Sobolev space."""
-        return self.sub_element.sobolev_space()
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -1027,10 +995,6 @@ class BlockedElement(_BasixElementBase):
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
         return self.sub_element.interpolation_nderivs
-
-    def is_fully_continuous(self) -> bool:
-        """True if the element is fully continuous."""
-        return self.sub_element.is_fully_continuous()
 
     @property
     def map_type(self) -> _basix.MapType:

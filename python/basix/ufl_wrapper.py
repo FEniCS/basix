@@ -11,6 +11,10 @@ import basix as _basix
 import typing as _typing
 import functools as _functools
 
+# TODO: remove gdim arguments once UFL handles cells better
+# TODO: remove IrreducibleInt once UFL handles element degrees better
+from ufl.algorithms.estimate_degrees import IrreducibleInt as _IrreducibleInt
+
 _nda_f64 = _numpy_typing.NDArray[_numpy.float64]
 
 
@@ -21,9 +25,9 @@ class _BasixElementBase(_FiniteElementBase):
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: int = -1, mapname: str = None):
+                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: str = None, gdim: int = None):
         """Initialise the element."""
-        super().__init__(name, cellname, degree, None, value_shape, value_shape)
+        super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
         self._repr = repr
         self._map = mapname
         self._degree = degree
@@ -255,7 +259,7 @@ class BasixElement(_BasixElementBase):
 
     element: _basix.finite_element.FiniteElement
 
-    def __init__(self, element: _basix.finite_element.FiniteElement, repr: str = None):
+    def __init__(self, element: _basix.finite_element.FiniteElement, repr: str = None, gdim: int = None):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
@@ -267,9 +271,15 @@ class BasixElement(_BasixElementBase):
                 repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
                         f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
 
-        super().__init__(
-            repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
-            _map_type_to_string(element.map_type))
+        if element.cell_type.name in ["interval", "triangle", "tetrahedron"]:
+            super().__init__(
+                repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
+                _map_type_to_string(element.map_type), gdim=gdim)
+        else:
+            # TODO: remove IrreducibleInt once UFL handles element degrees better
+            super().__init__(
+                repr, element.family.name, element.cell_type.name, tuple(element.value_shape),
+                _IrreducibleInt(element.degree), _map_type_to_string(element.map_type), gdim=gdim)
 
         self.element = element
 
@@ -287,7 +297,7 @@ class BasixElement(_BasixElementBase):
         EF = _basix.ElementFamily
         if self.element.discontinuous:
             return L2
-        if self.element.family in [EF.P, EF.Bubble, EF.serendipity]:
+        if self.element.family in [EF.P, EF.bubble, EF.serendipity]:
             return H1
         if self.element.family in [EF.Hermite]:
             return H2
@@ -479,13 +489,13 @@ class ComponentElement(_BasixElementBase):
     element: _BasixElementBase
     component: int
 
-    def __init__(self, element: _BasixElementBase, component: int):
+    def __init__(self, element: _BasixElementBase, component: int, gdim: int = None):
         """Initialise the element."""
         self.element = element
         self.component = component
         super().__init__(
             f"ComponentElement({element._repr}, {component})", f"Component of {element.family_name}",
-            element.cell_type.name, (1, ), element._degree)
+            element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -627,14 +637,14 @@ class MixedElement(_BasixElementBase):
 
     _sub_elements: _typing.List[_BasixElementBase]
 
-    def __init__(self, sub_elements: _typing.List[_BasixElementBase]):
+    def __init__(self, sub_elements: _typing.List[_BasixElementBase], gdim: int = None):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
         super().__init__(
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
             "mixed element", sub_elements[0].cell_type.name,
-            (sum(i.value_size for i in sub_elements), ))
+            (sum(i.value_size for i in sub_elements), ), gdim=gdim)
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -818,7 +828,8 @@ class BlockedElement(_BasixElementBase):
     _block_size: int
 
     def __init__(self, repr: str, sub_element: _BasixElementBase, block_size: int,
-                 block_shape: _typing.Tuple[int, ...] = None, symmetric: bool = False):
+                 block_shape: _typing.Tuple[int, ...] = None, symmetric: bool = False,
+                 gdim: int = None):
         """Initialise the element."""
         assert block_size > 0
         if sub_element.value_size != 1:
@@ -835,7 +846,7 @@ class BlockedElement(_BasixElementBase):
 
         super().__init__(
             repr, sub_element.family(), sub_element.cell_type.name, block_shape,
-            sub_element._degree, sub_element._map)
+            sub_element._degree, sub_element._map, gdim=gdim)
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
@@ -1051,17 +1062,18 @@ class BlockedElement(_BasixElementBase):
 class VectorElement(BlockedElement):
     """A vector element."""
 
-    def __init__(self, sub_element: _BasixElementBase, size: int = None):
+    def __init__(self, sub_element: _BasixElementBase, size: int = None, gdim: int = None):
         """Initialise the element."""
         if size is None:
             size = len(_basix.topology(sub_element.cell_type)) - 1
-        super().__init__(f"VectorElement({sub_element._repr}, {size})", sub_element, size, (size, ))
+        super().__init__(f"VectorElement({sub_element._repr}, {size})", sub_element, size, (size, ), gdim=gdim)
 
 
 class TensorElement(BlockedElement):
     """A tensor element."""
 
-    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, int] = None, symmetric: bool = False):
+    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, int] = None, symmetric: bool = False,
+                 gdim: int = None):
         """Initialise the element."""
         if shape is None:
             size = len(_basix.topology(sub_element.cell_type)) - 1
@@ -1072,7 +1084,8 @@ class TensorElement(BlockedElement):
         else:
             bs = shape[0] * shape[1]
         assert len(shape) == 2
-        super().__init__(f"TensorElement({sub_element._repr}, {shape})", sub_element, bs, shape, symmetric=symmetric)
+        super().__init__(f"TensorElement({sub_element._repr}, {shape})", sub_element, bs, shape,
+                         symmetric=symmetric, gdim=gdim)
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:
@@ -1132,9 +1145,12 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
 
 @_functools.lru_cache()
-def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False) -> BasixElement:
+def create_element(
+    family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+    degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+    gdim: int = None
+) -> BasixElement:
     """Create a UFL element using Basix.
 
     Args:
@@ -1144,6 +1160,7 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         lagrange_variant: The variant of Lagrange to be used.
         dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
+        gdim: The geometric dimension of the cell.
     """
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
@@ -1159,15 +1176,31 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
 
         family = _basix.finite_element.string_to_family(family, cell.name)
 
+    # Default variant choices
+    EF = _basix.ElementFamily
+    if lagrange_variant == _basix.LagrangeVariant.unset:
+        if family == EF.P:
+            lagrange_variant = _basix.LagrangeVariant.gll_warped
+        elif family in [EF.RT, EF.N1E]:
+            lagrange_variant = _basix.LagrangeVariant.legendre
+        elif family in [EF.serendipity, EF.BDM, EF.N2E]:
+            lagrange_variant = _basix.LagrangeVariant.legendre
+    if dpc_variant == _basix.DPCVariant.unset:
+        if family in [EF.serendipity, EF.BDM, EF.N2E]:
+            dpc_variant = _basix.DPCVariant.legendre
+        elif family == EF.DPC:
+            dpc_variant = _basix.DPCVariant.diagonal_gll
+
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    return BasixElement(e)
+    return BasixElement(e, gdim=gdim)
 
 
 @_functools.lru_cache()
 def create_vector_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+    dim: int = None, gdim: int = None
 ) -> VectorElement:
     """Create a UFL vector element using Basix.
 
@@ -1181,16 +1214,19 @@ def create_vector_element(
         lagrange_variant: The variant of Lagrange to be used.
         dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
+        dim: The length of the vector.
+        gdim: The geometric dimension of the cell.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    return VectorElement(e)
+    return VectorElement(e, dim, gdim=gdim)
 
 
 @_functools.lru_cache()
 def create_tensor_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous=False
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+    shape: _typing.Tuple[int, int] = None, symmetry: bool = False, gdim: int = None
 ) -> TensorElement:
     """Create a UFL tensor element using Basix.
 
@@ -1204,9 +1240,12 @@ def create_tensor_element(
         lagrange_variant: The variant of Lagrange to be used.
         dpc_variant: The variant of DPC to be used.
         discontinuous: If set to True, the discontinuous version of this element will be created.
+        shape: The shape of the tensor.
+        symmetry: Is the tensor symmetric?
+        gdim: The geometric dimension of the cell.
     """
     e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    return TensorElement(e)
+    return TensorElement(e, shape, symmetry, gdim=gdim)
 
 
 def create_enriched_element(
@@ -1521,7 +1560,8 @@ def convert_ufl_element(
             elif family_type == EF.DPC:
                 variant_info["dpc_variant"] = _basix.DPCVariant.diagonal_gll
 
-        return create_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous)
+        return create_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous,
+                              gdim=element.cell().geometric_dimension())
 
     else:
         raise ValueError(f"Unrecognised element type: {element.__class__.__name__}")

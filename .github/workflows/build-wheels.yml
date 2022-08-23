@@ -40,7 +40,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-10.15, macos-11]
+        os: [ubuntu-20.04, macos-11, macos-12]
 
     steps:
       - uses: actions/checkout@v3
@@ -48,7 +48,7 @@ jobs:
           ref: ${{ github.event.inputs.basix_ref }}
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.5.0
+        uses: pypa/cibuildwheel@v2.9.0
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -83,14 +83,14 @@ jobs:
           name: artifact
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v1.5.0
+      - uses: pypa/gh-action-pypi-publish@v1.5.1
         if: ${{ github.event.inputs.pypi_publish == 'true' }}
         with:
           user: __token__
           password: ${{ secrets.PYPI_TOKEN }}
           repository_url: https://upload.pypi.org/legacy/
 
-      - uses: pypa/gh-action-pypi-publish@v1.5.0
+      - uses: pypa/gh-action-pypi-publish@v1.5.1
         if: ${{ github.event.inputs.test_pypi_publish == 'true' }}
         with:
           user: __token__

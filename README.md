@@ -25,10 +25,17 @@ Basix is one of the components of FEniCSx, alongside
 
 ## Installing Basix
 
-To install Basix:
+To install the latest stable version of Basix from [pypi.org](https://pypi.org/project/fenics-basix/):
 ```console
-pip install .
+pip install fenics-basix
 ```
+We currently build binary wheels for Linux and macOS x86-64 architectures.
+
+To install the `main` (development) branch of Basix:
+```console
+pip install git+https://github.com/FEniCS/basix.git
+```
+
 For advanced installation instructions see the detailed [install
 instructions](INSTALL.md)
 

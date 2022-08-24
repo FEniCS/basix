@@ -9,7 +9,7 @@
 
 import basix
 import numpy as np
-from basix import CellType, MapType, PolynomialType, LatticeType
+from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace
 
 # Lagrange element with bubble
 # ============================

@@ -196,7 +196,7 @@ prepare_matrix(std::pair<std::vector<double>, std::array<std::size_t, 2>>& A);
 /// @note This function is designed to be called at runtime, so its
 /// performance is critical.
 ///
-/// @param[in] v_size_t A permutaion, as computed by
+/// @param[in] v_size_t A permutation, as computed by
 /// precompute::prepare_matrix
 /// @param[in] M The vector created by precompute::prepare_matrix
 /// @param[in,out] data The data to apply the permutation to

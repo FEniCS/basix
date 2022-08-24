@@ -89,7 +89,7 @@
 /// ### Prism
 /// The polynomial set for a prism can be computed by using using the recurrence
 /// relation for the triangle to get the polynomials that are constant with
-/// repect to \f$z\f$, then applying the recurrence relation for the interval to
+/// respect to \f$z\f$, then applying the recurrence relation for the interval to
 /// compute further polynomials with \f$z\f$s.
 ///
 /// ### Pyramid

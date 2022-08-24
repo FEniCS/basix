@@ -114,7 +114,7 @@ impl::mdarray2_t create_nedelec_3d_space(int degree)
       for (std::size_t k = 0; k < wts.size(); ++k)
         w += wts[k] * phi(0, ns0 + i, k) * pts(k, 2) * phi(0, j, k);
 
-      // Don't include polynomials (*, *, 0) that are dependant
+      // Don't include polynomials (*, *, 0) that are dependent
       if (i >= ns_remove)
         wcoeffs(tdim * nv + i - ns_remove, psize + j) = -w;
       wcoeffs(tdim * nv + i + ns - ns_remove, j) = w;
@@ -130,7 +130,7 @@ impl::mdarray2_t create_nedelec_3d_space(int degree)
         w += wts[k] * phi(0, ns0 + i, k) * pts(k, 1) * phi(0, j, k);
       wcoeffs(tdim * nv + i + ns * 2 - ns_remove, j) = -w;
 
-      // Don't include polynomials (*, *, 0) that are dependant
+      // Don't include polynomials (*, *, 0) that are dependent
       if (i >= ns_remove)
         wcoeffs(tdim * nv + i - ns_remove, psize * 2 + j) = w;
     }

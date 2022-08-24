@@ -9,6 +9,7 @@
 #include "maps.h"
 #include "mdspan.hpp"
 #include "precompute.h"
+#include "sobolev-spaces.h"
 #include <array>
 #include <functional>
 #include <map>
@@ -307,6 +308,7 @@ public:
   /// index, dof, vs, point_index, derivative)
   /// @param[in] map_type The type of map to be used to map values from
   /// the reference to a cell
+  /// @param[in] sobolev_space The underlying Sobolev space for the element
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
   /// @param[in] highest_complete_degree The highest degree n such that
@@ -324,7 +326,8 @@ public:
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
       const std::array<std::vector<cmdspan2_t>, 4>& x,
       const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int interpolation_nderivs, maps::type map_type,
+      sobolev::space sobolev_space, bool discontinuous,
       int highest_complete_degree, int highest_degree,
       element::lagrange_variant lvariant, element::dpc_variant dvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -337,7 +340,8 @@ public:
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
       const std::array<std::vector<cmdspan2_t>, 4>& x,
       const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int interpolation_nderivs, maps::type map_type,
+      sobolev::space sobolev_space, bool discontinuous,
       int highest_complete_degree, int highest_degree,
       element::lagrange_variant lvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -350,7 +354,8 @@ public:
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
       const std::array<std::vector<cmdspan2_t>, 4>& x,
       const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type, bool discontinuous,
+      int interpolation_nderivs, maps::type map_type,
+      sobolev::space sobolev_space, bool discontinuous,
       int highest_complete_degree, int highest_degree,
       element::dpc_variant dvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -363,7 +368,8 @@ public:
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
       const std::array<std::vector<cmdspan2_t>, 4>& x,
       const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type, bool disccontinuous,
+      int interpolation_nderivs, maps::type map_type,
+      sobolev::space sobolev_space, bool discontinuous,
       int highest_complete_degree, int highest_degree,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
@@ -553,6 +559,10 @@ public:
   /// Get the map type for this element
   /// @return The map type
   maps::type map_type() const;
+
+  /// Get the underlying Sobolev space for this element
+  /// @return The Sobolev space
+  sobolev::space sobolev_space() const;
 
   /// Indicates whether this element is the discontinuous variant
   /// @return True if this element is a discontinuous version of the
@@ -1118,6 +1128,9 @@ private:
   /// The mapping used to map this element from the reference to a cell
   maps::type _map_type;
 
+  /// The Sobolev space this element is contained in
+  sobolev::space _sobolev_space;
+
   // Shape function coefficient of expansion sets on cell. If shape
   // function is given by @f$\psi_i = \sum_{k} \phi_{k}
   // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. ie
@@ -1232,6 +1245,7 @@ private:
 /// used during interpolation
 /// @param[in] map_type The type of map to be used to map values from
 /// the reference to a cell
+/// @param[in] sobolev_space The underlying Sobolev space for the element
 /// @param[in] discontinuous Indicates whether or not this is the
 /// discontinuous version of the element
 /// @param[in] highest_complete_degree The highest degree n such that a
@@ -1240,13 +1254,15 @@ private:
 /// @param[in] highest_degree The degree of a polynomial in this element's
 /// polyset
 /// @return A custom finite element
-FiniteElement create_custom_element(
-    cell::type cell_type, const std::vector<std::size_t>& value_shape,
-    const impl::cmdspan2_t& wcoeffs,
-    const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
-    const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
-    int interpolation_nderivs, maps::type map_type, bool discontinuous,
-    int highest_complete_degree, int highest_degree);
+FiniteElement
+create_custom_element(cell::type cell_type,
+                      const std::vector<std::size_t>& value_shape,
+                      const impl::cmdspan2_t& wcoeffs,
+                      const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
+                      const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
+                      int interpolation_nderivs, maps::type map_type,
+                      sobolev::space sobolev_space, bool discontinuous,
+                      int highest_complete_degree, int highest_degree);
 
 /// Create an element using a given Lagrange variant
 /// @param[in] family The element family

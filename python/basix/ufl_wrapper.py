@@ -2,7 +2,6 @@
 
 import ufl as _ufl
 from ufl.finiteelement.finiteelementbase import FiniteElementBase as _FiniteElementBase
-from ufl.sobolevspace import L2, H1, H2, HDiv, HCurl, HDivDiv, HEin
 
 import hashlib as _hashlib
 import numpy as _numpy
@@ -292,23 +291,7 @@ class BasixElement(_BasixElementBase):
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
         # TODO: get elements to report their Sobolev space
-        EF = _basix.ElementFamily
-        if self.element.discontinuous:
-            return L2
-        if self.element.family in [EF.P, EF.bubble, EF.serendipity]:
-            return H1
-        if self.element.family in [EF.Hermite]:
-            return H2
-        if self.element.family in [EF.BDM, EF.RT]:
-            return HDiv
-        if self.element.family in [EF.N2E, EF.N1E]:
-            return HCurl
-        if self.element.family in [EF.Regge]:
-            return HEin
-        if self.element.family in [EF.HHJ]:
-            return HDivDiv
-
-        return L2
+        return getattr(_ufl.sobolevspace, self.element.sobolev_space.name)
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -1246,14 +1229,21 @@ def create_tensor_element(
     return TensorElement(e, shape, symmetry, gdim=gdim)
 
 
-def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _FiniteElementBase:
+def _create_enriched_element(
+    elements: _typing.List[_FiniteElementBase], map_type: _basix.MapType = None
+) -> _FiniteElementBase:
     """Create an enriched element from a list of elements."""
     ct = elements[0].cell_type
     vshape = elements[0].value_shape()
     vsize = elements[0].value_size
-    mt = elements[0].map_type
+    if map_type is None:
+        map_type = elements[0].map_type
+        for e in elements:
+            if e.map_type != map_type:
+                raise ValueError("Enriched elements on different map types not supported.")
     hcd = min(e.highest_complete_degree for e in elements)
     hd = max(e.highest_degree for e in elements)
+    ss = _basix.sobolev_spaces.intersection([e.sobolev_space for e in elements])
     discontinuous = True
     for e in elements:
         if not e.discontinuous:
@@ -1262,8 +1252,6 @@ def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _Fin
             raise ValueError("Enriched elements on different cell types not supported.")
         if e.value_shape() != vshape or e.value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
-        if e.map_type != mt:
-            raise ValueError("Enriched elements on different map types not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
     x = []
@@ -1295,7 +1283,7 @@ def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _Fin
         row += e.dim
 
     return BasixElement(
-        _basix.create_custom_element(ct, vshape, wcoeffs, x, M, nderivs, mt, discontinuous, hcd, hd))
+        _basix.create_custom_element(ct, vshape, wcoeffs, x, M, nderivs, map_type, ss, discontinuous, hcd, hd))
 
 
 def convert_ufl_element(

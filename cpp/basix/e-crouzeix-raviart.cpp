@@ -8,6 +8,7 @@
 #include "maps.h"
 #include "math.h"
 #include "mdspan.hpp"
+#include "sobolev-spaces.h"
 #include <array>
 #include <vector>
 
@@ -86,7 +87,7 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
 
   return FiniteElement(element::family::CR, celltype, 1, {},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                       xview, Mview, 0, maps::type::identity, discontinuous,
-                       degree, degree);
+                       xview, Mview, 0, maps::type::identity,
+                       sobolev::space::L2, discontinuous, degree, degree);
 }
 //-----------------------------------------------------------------------------

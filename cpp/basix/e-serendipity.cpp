@@ -13,6 +13,7 @@
 #include "polynomials.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include "sobolev-spaces.h"
 
 using namespace basix;
 
@@ -724,8 +725,8 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
   return FiniteElement(element::family::DPC, celltype, degree, {},
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                       maps::type::identity, discontinuous, degree, degree,
-                       element::dpc_variant::legendre);
+                       maps::type::identity, sobolev::space::L2, discontinuous,
+                       degree, degree, element::dpc_variant::legendre);
 }
 //-----------------------------------------------------------------------------
 impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
@@ -1094,7 +1095,8 @@ FiniteElement basix::element::create_serendipity(
 
   return FiniteElement(element::family::serendipity, celltype, degree, {},
                        impl::cmdspan2_t(wbuffer.data(), wshape), xview, Mview,
-                       0, maps::type::identity, discontinuous,
+                       0, maps::type::identity, sobolev::space::H1,
+                       discontinuous,
                        degree < static_cast<int>(tdim) ? 1 : degree / tdim,
                        degree, lvariant, dvariant);
 }
@@ -1183,8 +1185,8 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   return FiniteElement(element::family::DPC, celltype, degree, {},
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                       maps::type::identity, discontinuous, degree, degree,
-                       variant);
+                       maps::type::identity, sobolev::space::L2, discontinuous,
+                       degree, degree, variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_div(
@@ -1285,8 +1287,9 @@ FiniteElement basix::element::create_serendipity_div(
 
   return FiniteElement(element::family::BDM, celltype, degree, {tdim},
                        impl::cmdspan2_t(wbuffer.data(), wshape), xview, Mview,
-                       0, maps::type::contravariantPiola, discontinuous,
-                       degree / tdim, degree + 1, lvariant, dvariant);
+                       0, maps::type::contravariantPiola, sobolev::space::HDiv,
+                       discontinuous, degree / tdim, degree + 1, lvariant,
+                       dvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_curl(
@@ -1410,7 +1413,8 @@ FiniteElement basix::element::create_serendipity_curl(
 
   return FiniteElement(element::family::N2E, celltype, degree, {tdim},
                        impl::cmdspan2_t(wbuffer.data(), wshape), xview, Mview,
-                       0, maps::type::covariantPiola, discontinuous,
+                       0, maps::type::covariantPiola, sobolev::space::HCurl,
+                       discontinuous,
                        (degree == 2 && tdim == 3) ? 1 : degree / tdim,
                        degree + 1, lvariant, dvariant);
 }

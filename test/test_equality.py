@@ -35,10 +35,10 @@ def test_custom_element_equality():
 
     p1_custom = basix.create_custom_element(
         basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, False, 1, 1)
+        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 1, 1)
     p1_custom_again = basix.create_custom_element(
         basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, False, 1, 1)
+        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 1, 1)
 
     wcoeffs = np.eye(3)
     z = np.zeros((0, 2))
@@ -48,7 +48,7 @@ def test_custom_element_equality():
 
     cr_custom = basix.create_custom_element(
         basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, False, 1, 1)
+        x, M, 0, basix.MapType.identity, basix.SobolevSpace.L2, False, 1, 1)
 
     assert p1_custom == p1_custom_again
     assert p1_custom != cr_custom

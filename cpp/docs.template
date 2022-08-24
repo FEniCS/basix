@@ -223,22 +223,23 @@ Returns:
 )";
 
 {{DOCTYPE}} create_custom_element = R"(
-{{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > doc}}
+{{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > doc}}
 
 Args:
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > cell_type}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > value_shape}}
-   {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > wcoeffs}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > x}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > M}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > interpolation_nderivs}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > map_type}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > discontinuous}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > highest_complete_degree}}
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > param > highest_degree}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > cell_type}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > value_shape}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > wcoeffs}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > x}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > M}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > interpolation_nderivs}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > map_type}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > sobolev_space}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > discontinuous}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > highest_complete_degree}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > param > highest_degree}}
 
 Returns:
-    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, discontinuous, highest_complete_degree, highest_degree) > return}}
+    {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > return}}
 )";
 
 {{DOCTYPE}} create_element__family_cell_degree_discontinuous = R"(
@@ -456,4 +457,15 @@ Args:
 
 Returns:
     {{indexing.h > idx(p, q, r) > return}}
+)";
+
+{{DOCTYPE}} space_intersection = R"(
+{{sobolev-spaces.h > space_intersection(space1, space2) > doc}}
+
+Args:
+    {{sobolev-spaces.h > space_intersection(space1, space2) > param > space1}}
+    {{sobolev-spaces.h > space_intersection(space1, space2) > param > space2}}
+
+Returns:
+    {{sobolev-spaces.h > space_intersection(space1, space2) > return}}
 )";

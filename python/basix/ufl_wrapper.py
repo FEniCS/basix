@@ -653,7 +653,7 @@ class ComponentElement(_BasixElementBase):
     @property
     def ufcx_element_type(self) -> str:
         """Element type."""
-        raise NotImplmentedError()
+        raise NotImplementedError()
 
     @property
     def map_type(self) -> _basix.MapType:

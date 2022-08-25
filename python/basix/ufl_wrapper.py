@@ -1340,7 +1340,7 @@ def _create_enriched_element(
 ) -> _BasixElementBase:
     """Create an enriched element from a list of elements."""
     ct = elements[0].cell_type
-    vshape = list(elements[0].value_shape())
+    vshape = elements[0].value_shape()
     vsize = elements[0].value_size
     if map_type is None:
         map_type = elements[0].map_type
@@ -1388,8 +1388,8 @@ def _create_enriched_element(
             _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.highest_degree, hd)
         row += e.dim
 
-    return BasixElement(
-        _basix.create_custom_element(ct, vshape, wcoeffs, x, M, nderivs, map_type, ss, discontinuous, hcd, hd))
+    return BasixElement(_basix.create_custom_element(
+        ct, list(vshape), wcoeffs, x, M, nderivs, map_type, ss, discontinuous, hcd, hd))
 
 
 def convert_ufl_element(

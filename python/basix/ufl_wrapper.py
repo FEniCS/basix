@@ -221,10 +221,9 @@ class _BasixElementBase(_FiniteElementBase):
         pass
 
     @property
-    @_abstractmethod
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
-        pass
+        raise NotImplementedError()
 
     @property
     def is_custom_element(self) -> bool:

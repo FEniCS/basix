@@ -650,6 +650,41 @@ class ComponentElement(_BasixElementBase):
         """The number of derivatives needed when interpolating."""
         return self.element.interpolation_nderivs
 
+    @property
+    def ufcx_element_type(self) -> str:
+        """Element type."""
+        raise NotImplmentedError()
+
+    @property
+    def map_type(self) -> _basix.MapType:
+        """The Basix map type."""
+        raise NotImplementedError()
+
+    @property
+    def highest_complete_degree(self) -> int:
+        """The highest complete degree of the element."""
+        raise NotImplementedError()
+
+    @property
+    def highest_degree(self) -> int:
+        """The highest degree of the element."""
+        raise NotImplementedError()
+
+    @property
+    def _wcoeffs(self) -> _nda_f64:
+        """The coefficients used to define the polynomial set."""
+        raise NotImplementedError()
+
+    @property
+    def _x(self) -> _typing.List[_typing.List[_nda_f64]]:
+        """The points used to define interpolation."""
+        raise NotImplementedError()
+
+    @property
+    def _M(self) -> _typing.List[_typing.List[_nda_f64]]:
+        """The matrices used to define interpolation."""
+        raise NotImplementedError()
+
 
 class MixedElement(_BasixElementBase):
     """A mixed element that combines two or more elements."""

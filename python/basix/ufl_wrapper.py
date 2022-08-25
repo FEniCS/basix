@@ -1305,7 +1305,7 @@ def _create_enriched_element(
 ) -> _BasixElementBase:
     """Create an enriched element from a list of elements."""
     ct = elements[0].cell_type
-    vshape = elements[0].value_shape()
+    vshape = list(elements[0].value_shape())
     vsize = elements[0].value_size
     if map_type is None:
         map_type = elements[0].map_type

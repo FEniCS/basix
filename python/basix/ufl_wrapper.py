@@ -238,34 +238,29 @@ class _BasixElementBase(_FiniteElementBase):
         pass
 
     @property
-    @_abstractmethod
     def highest_complete_degree(self) -> int:
         """The highest complete degree of the element."""
-        pass
+        raise NotImplementedError()
 
     @property
-    @_abstractmethod
     def highest_degree(self) -> int:
         """The highest degree of the element."""
-        pass
+        raise NotImplementedError()
 
     @property
-    @_abstractmethod
     def _wcoeffs(self) -> _nda_f64:
         """The coefficients used to define the polynomial set."""
-        pass
+        raise NotImplementedError()
 
     @property
-    @_abstractmethod
     def _x(self) -> _typing.List[_typing.List[_nda_f64]]:
         """The points used to define interpolation."""
-        pass
+        raise NotImplementedError()
 
     @property
-    @_abstractmethod
     def _M(self) -> _typing.List[_typing.List[_nda_f64]]:
         """The matrices used to define interpolation."""
-        pass
+        raise NotImplementedError()
 
     def has_tensor_product_factorisation(self) -> bool:
         """Indicates whether or not this element has a tensor product factorisation.
@@ -660,31 +655,6 @@ class ComponentElement(_BasixElementBase):
         """The Basix map type."""
         raise NotImplementedError()
 
-    @property
-    def highest_complete_degree(self) -> int:
-        """The highest complete degree of the element."""
-        raise NotImplementedError()
-
-    @property
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
-        raise NotImplementedError()
-
-    @property
-    def _wcoeffs(self) -> _nda_f64:
-        """The coefficients used to define the polynomial set."""
-        raise NotImplementedError()
-
-    @property
-    def _x(self) -> _typing.List[_typing.List[_nda_f64]]:
-        """The points used to define interpolation."""
-        raise NotImplementedError()
-
-    @property
-    def _M(self) -> _typing.List[_typing.List[_nda_f64]]:
-        """The matrices used to define interpolation."""
-        raise NotImplementedError()
-
 
 class MixedElement(_BasixElementBase):
     """A mixed element that combines two or more elements."""
@@ -703,31 +673,6 @@ class MixedElement(_BasixElementBase):
     @property
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
-        raise NotImplementedError()
-
-    @property
-    def highest_complete_degree(self) -> int:
-        """The highest complete degree of the element."""
-        raise NotImplementedError()
-
-    @property
-    def highest_degree(self) -> int:
-        """The highest degree of the element."""
-        raise NotImplementedError()
-
-    @property
-    def _wcoeffs(self) -> _nda_f64:
-        """The coefficients used to define the polynomial set."""
-        raise NotImplementedError()
-
-    @property
-    def _x(self) -> _typing.List[_typing.List[_nda_f64]]:
-        """The points used to define interpolation."""
-        raise NotImplementedError()
-
-    @property
-    def _M(self) -> _typing.List[_typing.List[_nda_f64]]:
-        """The matrices used to define interpolation."""
         raise NotImplementedError()
 
     @property

@@ -1,6 +1,6 @@
 """Functions to directly wrap Basix elements in UFL."""
 
-from abc import abstractmethod
+from abc import abstractmethod as _abstractmethod
 
 import ufl as _ufl
 from ufl.finiteelement.finiteelementbase import FiniteElementBase as _FiniteElementBase
@@ -50,7 +50,7 @@ class _BasixElementBase(_FiniteElementBase):
         """Return the map type."""
         return self._map
 
-    @abstractmethod
+    @_abstractmethod
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         pass
@@ -92,7 +92,7 @@ class _BasixElementBase(_FiniteElementBase):
         """The degree of the element."""
         return self._degree
 
-    @abstractmethod
+    @_abstractmethod
     def tabulate(
         self, nderivs: int, points: _nda_f64
     ) -> _nda_f64:
@@ -108,7 +108,7 @@ class _BasixElementBase(_FiniteElementBase):
         pass
 
     # def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
-    @abstractmethod
+    @_abstractmethod
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_typing.Any, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
@@ -131,97 +131,97 @@ class _BasixElementBase(_FiniteElementBase):
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def ufcx_element_type(self) -> str:
         """Element type."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def dim(self) -> int:
         """Number of DOFs the element has."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with each entity."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with the closure of each entity."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with the closure of each entity."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def num_global_support_dofs(self) -> int:
         """Get the number of global support DOFs."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """Topology of the reference element."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def reference_geometry(self) -> _nda_f64:
         """Geometry of the reference element."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def family_name(self) -> str:
         """Family name of the element."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def interpolation_nderivs(self) -> int:
         """The number of derivatives needed when interpolating."""
         pass
@@ -232,37 +232,37 @@ class _BasixElementBase(_FiniteElementBase):
         return False
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def highest_complete_degree(self) -> int:
         """The highest complete degree of the element."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def highest_degree(self) -> int:
         """The highest degree of the element."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def _wcoeffs(self) -> _nda_f64:
         """The coefficients used to define the polynomial set."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def _x(self) -> _typing.List[_typing.List[_nda_f64]]:
         """The points used to define interpolation."""
         pass
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def _M(self) -> _typing.List[_typing.List[_nda_f64]]:
         """The matrices used to define interpolation."""
         pass
@@ -284,7 +284,7 @@ class _BasixElementBase(_FiniteElementBase):
         return getattr(_ufl.sobolevspace, self.basix_sobolev_space)
 
     @property
-    @abstractmethod
+    @_abstractmethod
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
         pass

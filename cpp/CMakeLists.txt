@@ -30,8 +30,6 @@ feature_summary(WHAT ALL)
 # Source files
 add_library(basix)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h.in ${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h)
-
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 

@@ -1,4 +1,9 @@
-"""Generate docs for the pybind layer from the C++ header files."""
+"""
+Generate docs for the pybind layer from the C++ header files.
+
+To update the docs, run:
+    python generate_docs.py > basix/docs.h
+"""
 
 import os
 import re
@@ -148,4 +153,4 @@ def generate_docs():
 
 
 if __name__ == "__main__":
-    print(generate_docs())
+    print(generate_docs().strip())

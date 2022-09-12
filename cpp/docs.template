@@ -1,3 +1,8 @@
+#include <string>
+
+namespace basix::docstring
+{
+
 {{DOCTYPE}} topology = R"(
 {{cell.h > topology > doc}}
 
@@ -457,3 +462,5 @@ Args:
 Returns:
     {{indexing.h > idx(p, q, r) > return}}
 )";
+
+} // namespace basix::docstring

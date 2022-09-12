@@ -105,7 +105,7 @@ def test_different_element_interpolation(family1, args1, family2, args2, cell_ty
                                        basix.CellType.quadrilateral, basix.CellType.hexahedron])
 @pytest.mark.parametrize("order", [1, 4])
 def test_blocked_interpolation(cell_type, order):
-    """Test interpolation of Nedelec's componenets into a Lagrange space."""
+    """Test interpolation of Nedelec's components into a Lagrange space."""
     nedelec = basix.create_element(
         basix.ElementFamily.N2E, cell_type, order, basix.LagrangeVariant.legendre, basix.DPCVariant.legendre)
     lagrange = basix.create_element(basix.ElementFamily.P, cell_type, order, basix.LagrangeVariant.gll_isaac)

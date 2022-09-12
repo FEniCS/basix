@@ -1008,7 +1008,7 @@ public:
   /// point_index, derivative).
   ///
   /// These matrices define how to evaluate the DOF functionals
-  /// accociated with each sub-entity of the cell. Given a function f,
+  /// associated with each sub-entity of the cell. Given a function f,
   /// the functionals associated with the `e`-th entity of dimension `d`
   /// can be computed as follows:
   ///

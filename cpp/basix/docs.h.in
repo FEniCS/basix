@@ -1,8 +1,0 @@
-#include <string>
-
-namespace basix::docstring
-{
-
-@WRAPPER_DOCS@
-
-} // namespace basix::docstring

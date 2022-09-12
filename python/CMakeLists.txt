@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-PROJECT(basix_pybind11 VERSION "0.5.0"  LANGUAGES CXX)
+PROJECT(basix_pybind11 VERSION "0.5.1"  LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -55,7 +55,7 @@ endif()
 
 # scikit-build specific steps
 if (SKBUILD)
-  # Add relative rpath so _basixcpp can find the Basix::basix libray
+  # Add relative rpath so _basixcpp can find the Basix::basix library
   # when the build is relocated
   if (APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")

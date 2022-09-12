@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Set the version
-project(Basix VERSION "0.5.0" LANGUAGES CXX)
+project(Basix VERSION "0.5.1" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if(SKBUILD)
@@ -29,17 +29,6 @@ feature_summary(WHAT ALL)
 
 # Source files
 add_library(basix)
-
-find_package(Python3 COMPONENTS Interpreter)
-
-if(Python3_FOUND)
-  execute_process(
-    COMMAND "${Python3_EXECUTABLE}" ${CMAKE_CURRENT_SOURCE_DIR}/generate_docs.py
-    OUTPUT_VARIABLE WRAPPER_DOCS
-  )
-endif()
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h.in ${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/basix/version.h.in basix/version.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})

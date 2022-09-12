@@ -705,7 +705,7 @@ FiniteElement::FiniteElement(
     }
   }
 
-  // Check that nunber of dofs is equal to number of coefficients
+  // Check that number of dofs is equal to number of coefficients
   if (num_dofs != _coeffs.second[0])
   {
     throw std::runtime_error(

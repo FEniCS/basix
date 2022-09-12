@@ -58,7 +58,7 @@ mapped_points = np.array([
 # entry as the value size is 1).
 #
 # We then multiply the three derivatives of the basis function by
-# the three componenets of the normal.
+# the three components of the normal.
 
 normal = basix.cell.facet_outward_normals(CellType.tetrahedron)[0]
 tab = lagrange.tabulate(1, mapped_points)[1:, :, 5, 0]

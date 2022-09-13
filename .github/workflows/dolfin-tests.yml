@@ -76,7 +76,7 @@ jobs:
           ref: ${{ github.event.inputs.dolfinx_branch }}
       - name: Install DOLFINx
         run: |
-          apt-get install libxtensor-dev
+          apt-get -y update && apt-get -y install libxtensor-dev
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/
           cmake --build build
           cmake --install build

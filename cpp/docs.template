@@ -1,3 +1,8 @@
+#include <string>
+
+namespace basix::docstring
+{
+
 {{DOCTYPE}} topology = R"(
 {{cell.h > topology > doc}}
 
@@ -469,3 +474,5 @@ Args:
 Returns:
     {{sobolev-spaces.h > space_intersection(space1, space2) > return}}
 )";
+
+} // namespace basix::docstring

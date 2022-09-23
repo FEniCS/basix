@@ -53,13 +53,13 @@ jobs:
 
       - name: Run mypy checks
         run: |
-          pip install mypy
-          python -m mypy python/basix
+          # pip install mypy
+          # python -m mypy python/basix
 
       - name: pydocstyle checks
         run: |
-          pip install pydocstyle
-          python -m pydocstyle python/basix
+          # pip install pydocstyle
+          # python -m pydocstyle python/basix
 
       - name: Run units tests
         run: |

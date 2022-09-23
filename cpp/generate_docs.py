@@ -1,10 +1,15 @@
-"""Generate docs for the pybind layer from the C++ header files."""
+"""
+Generate docs for the pybind layer from the C++ header files.
+
+To update the docs, run:
+    python generate_docs.py > basix/docs.h
+"""
 
 import os
 import re
 
 path = os.path.dirname(os.path.realpath(__file__))
-cpp_path = os.path.join(path, "../cpp/basix")
+cpp_path = os.path.join(path, "basix")
 
 replacements = [(";", "@semicolon@"), ("{", "@openbrace@"), ("}", "@closebrace@"),
                 ("<", "@opentri@"), (">", "@closetri@"), ("(", "@openb@"), (")", "@closeb@"),
@@ -113,7 +118,6 @@ def get_docstring(matches):
         return "\n".join(doclines)
 
     if info_type == "param":
-        assert typename is not None
         params = {}
         for i in doc.split("@param")[1:]:
             i = i.split("@return")[0]
@@ -127,20 +131,19 @@ def get_docstring(matches):
                 p = i
                 pdoc = "TODO: document this"
             params[p] = "\n        ".join(pdoc.split("\n"))
-        return f"{info} ({typename}): {params[info]}"
+        return f"{info}: {params[info]}"
 
     if info_type == "return":
-        assert typename is not None
         returns = [i.split("@param")[0].strip() for i in doc.split("@return")[1:]]
         if len(returns) == 0:
             returns.append("TODO: document this")
         assert len(returns) == 1
         returns = "\n    ".join(returns[0].split("\n"))
-        return f"{typename}: {returns}"
+        return f"{returns}"
 
 
 def generate_docs():
-    with open(os.path.join(path, "docs.h.template")) as f:
+    with open(os.path.join(path, "docs.template")) as f:
         docs = f.read()
 
     docs = docs.replace("{{DOCTYPE}}", "const std::string")
@@ -150,5 +153,4 @@ def generate_docs():
 
 
 if __name__ == "__main__":
-    with open(os.path.join(path, "docs.h"), "w") as f:
-        f.write(generate_docs())
+    print(generate_docs().strip())

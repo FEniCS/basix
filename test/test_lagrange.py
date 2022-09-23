@@ -290,7 +290,7 @@ def test_lagrange(celltype, degree):
                                     basix.LagrangeVariant.equispaced)
     pts = basix.create_lattice(celltype[0], 6, basix.LatticeType.equispaced, True)
     w = lagrange.tabulate(0, pts)[0]
-    assert(numpy.isclose(numpy.sum(w, axis=1), 1.0).all())
+    assert numpy.isclose(numpy.sum(w, axis=1), 1.0).all()
 
 
 @pytest.mark.parametrize("degree", [1, 2, 3, 4])
@@ -388,7 +388,7 @@ def test_celltypes(degree, celltype):
     pts = basix.create_lattice(celltype, 5,
                                basix.LatticeType.equispaced, True)
     w = tp.tabulate(0, pts)[0]
-    assert(numpy.allclose(numpy.sum(w, axis=1), 1.0))
+    assert numpy.allclose(numpy.sum(w, axis=1), 1.0)
 
 
 def leq(a, b):
@@ -412,20 +412,26 @@ def in_cell(celltype, p):
 
 @pytest.mark.parametrize("variant", [
     basix.LagrangeVariant.equispaced,
-    basix.LagrangeVariant.gll_warped, basix.LagrangeVariant.gll_isaac, basix.LagrangeVariant.gll_centroid,
-    basix.LagrangeVariant.chebyshev_warped, basix.LagrangeVariant.chebyshev_isaac,
+    basix.LagrangeVariant.gll_warped,
+    basix.LagrangeVariant.gll_isaac,
+    basix.LagrangeVariant.gll_centroid,
+    basix.LagrangeVariant.chebyshev_warped,
+    basix.LagrangeVariant.chebyshev_isaac,
     basix.LagrangeVariant.chebyshev_centroid,
-    basix.LagrangeVariant.gl_warped, basix.LagrangeVariant.gl_isaac, basix.LagrangeVariant.gl_centroid,
+    basix.LagrangeVariant.gl_warped,
+    basix.LagrangeVariant.gl_isaac,
+    basix.LagrangeVariant.gl_centroid,
     basix.LagrangeVariant.vtk
 ])
 @pytest.mark.parametrize("celltype", [
-    basix.CellType.triangle, basix.CellType.tetrahedron,
-    basix.CellType.quadrilateral, basix.CellType.hexahedron,
+    basix.CellType.triangle,
+    basix.CellType.tetrahedron,
+    basix.CellType.quadrilateral,
+    basix.CellType.hexahedron,
 ])
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_variant_points(celltype, degree, variant):
     e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
-
     for p in e.points:
         assert in_cell(celltype, p)
 
@@ -440,8 +446,8 @@ def test_variant_points(celltype, degree, variant):
     basix.CellType.quadrilateral, basix.CellType.hexahedron,
 ])
 def test_continuous_lagrange(celltype, variant):
-    # The variants used in this test can only be used for discontinuous Lagrange,
-    # so trying to create them should throw a runtime error
+    # The variants used in this test can only be used for discontinuous
+    # Lagrange, so trying to create them should throw a runtime error
     with pytest.raises(RuntimeError):
         basix.create_element(basix.ElementFamily.P, celltype, 4, variant, False)
 

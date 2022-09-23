@@ -5,7 +5,10 @@
 #pragma once
 
 #include "cell.h"
-#include <xtensor/xtensor.hpp>
+#include "mdspan.hpp"
+#include <array>
+#include <utility>
+#include <vector>
 
 /// Polynomial expansion sets
 
@@ -86,7 +89,7 @@
 /// ### Prism
 /// The polynomial set for a prism can be computed by using using the recurrence
 /// relation for the triangle to get the polynomials that are constant with
-/// repect to \f$z\f$, then applying the recurrence relation for the interval to
+/// respect to \f$z\f$, then applying the recurrence relation for the interval to
 /// compute further polynomials with \f$z\f$s.
 ///
 /// ### Pyramid
@@ -121,8 +124,8 @@
 /// terms, and cross-terms in two and three dimensions.
 namespace basix::polyset
 {
-/// Tabulate the orthonormal polynomial basis, and derivatives, at
-/// points on the reference cell.
+/// @brief Tabulate the orthonormal polynomial basis, and derivatives,
+/// at points on the reference cell.
 ///
 /// All derivatives up to the given order are computed. If derivatives
 /// are not required, use `n = 0`. For example, order `n = 2` for a 2D
@@ -158,8 +161,11 @@ namespace basix::polyset
 ///
 /// - The third index is the basis function index.
 /// @todo Does the order for the third index need to be documented?
-xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
-                                const xt::xtensor<double, 2>& x);
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+tabulate(cell::type celltype, int d, int n,
+         std::experimental::mdspan<const double,
+                                   std::experimental::dextents<std::size_t, 2>>
+             x);
 
 /// Tabulate the orthonormal polynomial basis, and derivatives, at
 /// points on the reference cell.
@@ -201,8 +207,14 @@ xt::xtensor<double, 3> tabulate(cell::type celltype, int d, int n,
 /// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// (number of points, geometric dimension).
-void tabulate(xt::xtensor<double, 3>& P, cell::type celltype, int d, int n,
-              const xt::xtensor<double, 2>& x);
+void tabulate(
+    std::experimental::mdspan<double,
+                              std::experimental::dextents<std::size_t, 3>>
+        P,
+    cell::type celltype, int d, int n,
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>
+        x);
 
 /// Dimension of a polynomial space
 /// @param[in] cell The cell type

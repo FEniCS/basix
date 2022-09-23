@@ -2,16 +2,15 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include <iostream>
-
-#include "docs.h"
 #include <basix/cell.h>
+#include <basix/docs.h>
 #include <basix/element-families.h>
 #include <basix/finite-element.h>
 #include <basix/indexing.h>
 #include <basix/interpolation.h>
 #include <basix/lattice.h>
 #include <basix/maps.h>
+#include <basix/mdspan.hpp>
 #include <basix/polynomials.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
@@ -28,6 +27,11 @@
 
 namespace nb = nanobind;
 using namespace basix;
+
+namespace stdex = std::experimental;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 namespace
 {
@@ -50,59 +54,58 @@ const std::string& cell_type_to_str(cell::type type)
   return it->second;
 }
 
-template <typename T>
-auto adapt_x(const T& x)
-{
-  std::size_t xsize = 1;
-  std::vector<std::size_t> shape;
-  for (std::size_t i = 0; i < x.ndim(); ++i)
-  {
-    shape.push_back(x.shape(i));
-    xsize *= x.shape(i);
-  }
-  return xt::adapt(static_cast<const double*>(x.data()), xsize,
-                   xt::no_ownership(), shape);
-}
+// template <typename T>
+// auto adapt_x(const T& x)
+// {
+//   std::size_t xsize = 1;
+//   std::vector<std::size_t> shape;
+//   for (std::size_t i = 0; i < x.ndim(); ++i)
+//   {
+//     shape.push_back(x.shape(i));
+//     xsize *= x.shape(i);
+//   }
+//   return xt::adapt(static_cast<const double*>(x.data()), xsize,
+//                    xt::no_ownership(), shape);
+// }
 
-auto adapt_x(const nb::tensor<nb::numpy, double>& x)
-{
-  std::vector<std::size_t> shape;
-  std::size_t size = 1;
-  for (std::size_t i = 0; i < x.ndim(); ++i)
-  {
-    shape.push_back(x.shape(i));
-    size *= x.shape(i);
-  }
-  return xt::adapt(static_cast<const double*>(x.data()), size,
-                   xt::no_ownership(), shape);
-}
+// auto adapt_x(const nb::tensor<nb::numpy, double>& x)
+// {
+//   std::vector<std::size_t> shape;
+//   std::size_t size = 1;
+//   for (std::size_t i = 0; i < x.ndim(); ++i)
+//   {
+//     shape.push_back(x.shape(i));
+//     size *= x.shape(i);
+//   }
+//   return xt::adapt(static_cast<const double*>(x.data()), size,
+//                    xt::no_ownership(), shape);
+// }
 
-/// Create a nb::tensor that shares data with an
-/// xtensor array. The C++ object owns the data, and the
-/// nb::tensor object keeps the C++ object alive.
-// Similar to https://github.com/pybind/pybind11/issues/1042
-template <typename shape_t, typename U>
-auto xt_as_nbtensor(U&& x)
-{
-  std::vector<std::size_t> shape;
-  std::size_t dim = 1;
-  if constexpr (std::is_same<std::vector<typename U::value_type>, U>())
-    shape = {x.size()};
-  else
-  {
-    dim = x.dimension();
-    shape.resize(dim);
-    std::copy(x.shape().data(), x.shape().data() + dim, shape.begin());
-  }
-  auto data = x.data();
-  auto size = x.size();
-  std::unique_ptr<U> x_ptr = std::make_unique<U>(std::move(x));
-  auto capsule = nb::capsule(x_ptr.get(), [](void* p) noexcept
-                             { std::unique_ptr<U>(reinterpret_cast<U*>(p)); });
-  x_ptr.release();
-  return nb::tensor<nb::numpy, typename U::value_type, shape_t>(
-      data, dim, shape.data(), capsule);
-}
+// /// Create a nb::tensor that shares data with an
+// /// xtensor array. The C++ object owns the data, and the
+// /// nb::tensor object keeps the C++ object alive.
+// // Similar to https://github.com/pybind/pybind11/issues/1042
+// template <typename T>
+// auto as_nbtensor(std::vector<std::size_t>& shape, T* data)
+// {
+//   std::size_t dim = shape.size();
+//   if constexpr (std::is_same<std::vector<typename U::value_type>, U>())
+//     shape = {x.size()};
+//   else
+//   {
+//     dim = x.dimension();
+//     shape.resize(dim);
+//     std::copy(x.shape().data(), x.shape().data() + dim, shape.begin());
+//   }
+//   auto data = x.data();
+//   auto size = x.size();
+//   std::unique_ptr<U> x_ptr = std::make_unique<U>(std::move(x));
+//   auto capsule = nb::capsule(x_ptr.get(), [](void* p) noexcept
+//                              { std::unique_ptr<U>(reinterpret_cast<U*>(p)); });
+//   x_ptr.release();
+//   return nb::tensor<nb::numpy, typename U::value_type, shape_t>(
+//       data, dim, shape.data(), capsule);
+// }
 
 } // namespace
 
@@ -119,8 +122,8 @@ NB_MODULE(_basixcpp, m)
       "geometry",
       [](cell::type celltype)
       {
-        xt::xtensor<double, 2> g = cell::geometry(celltype);
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(g));
+        auto [x, shape] = cell::geometry(celltype);
+        return nb::tensor<nb::numpy, double>(x.data(), shape.size(), shape.data());
       },
       basix::docstring::geometry.c_str());
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
@@ -129,9 +132,8 @@ NB_MODULE(_basixcpp, m)
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
       {
-        xt::xtensor<double, 2> g
-            = cell::sub_entity_geometry(celltype, dim, index);
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(g));
+        auto [x, shape] = cell::sub_entity_geometry(celltype, dim, index);
+        return nb::tensor<nb::numpy, double>(x.data(), shape.size(), shape.data());
       },
       basix::docstring::sub_entity_geometry.c_str());
 
@@ -145,8 +147,10 @@ NB_MODULE(_basixcpp, m)
       .value("warp", lattice::simplex_method::warp)
       .value("isaac", lattice::simplex_method::isaac)
       .value("centroid", lattice::simplex_method::centroid);
+
   nb::enum_<polynomials::type>(m, "PolynomialType")
-      .value("legendre", polynomials::type::legendre);
+      .value("legendre", polynomials::type::legendre)
+      .value("bernstein", polynomials::type::bernstein);
 
   m.def(
       "tabulate_polynomials",
@@ -155,25 +159,22 @@ NB_MODULE(_basixcpp, m)
       {
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
-        std::array<std::size_t, 2> shape
-            = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
-        auto _x = xt::adapt(static_cast<const double*>(x.data()),
-                            (std::size_t)(shape[0] * shape[1]),
-                            xt::no_ownership(), shape);
-        xt::xtensor<double, 2> t
-            = polynomials::tabulate(polytype, celltype, d, _x);
-
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(t));
+        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
+            (double *)x.data(), x.shape(0), x.shape(1));
+        auto [p, shape] = polynomials::tabulate(polytype, celltype, d, _x);
+        return nb::tensor<double>(p.data(), shape.size(), shape.data());
       },
       basix::docstring::tabulate_polynomials.c_str());
+  m.def("polynomials_dim", &polynomials::dim,
+        basix::docstring::polynomials_dim.c_str());
 
   m.def(
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior)
       {
-        xt::xtensor<double, 2> l = lattice::create(
-            celltype, n, type, exterior, lattice::simplex_method::none);
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(l));
+        auto [x, shape] = lattice::create(celltype, n, type, exterior,
+                                          lattice::simplex_method::none);
+        return nb::tensor<nb::numpy, double>(x.data(), shape.size(), shape.data());
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
 
@@ -182,9 +183,8 @@ NB_MODULE(_basixcpp, m)
       [](cell::type celltype, int n, lattice::type type, bool exterior,
          lattice::simplex_method method)
       {
-        xt::xtensor<double, 2> l
-            = lattice::create(celltype, n, type, exterior, method);
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(l));
+        auto [x, shape] = lattice::create(celltype, n, type, exterior, method);
+        return nb::tensor<nb::numpy, double>(x.data(), shape.size(), shape.data());
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method
           .c_str());
@@ -221,24 +221,25 @@ NB_MODULE(_basixcpp, m)
       "cell_facet_normals",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 2> n = cell::facet_normals(cell_type);
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(n));
+        auto [n, shape] = cell::facet_normals(cell_type);
+        return nb::tensor<double>(n.data(), shape.size(), shape.data());
       },
       basix::docstring::cell_facet_normals.c_str());
   m.def(
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 1> v = cell::facet_reference_volumes(cell_type);
-        return xt_as_nbtensor<nb::shape<nb::any>>(std::move(v));
+        std::vector<double> v = cell::facet_reference_volumes(cell_type);
+        std::array<std::size_t, 1> shape = {v.size()};
+        return nb::tensor<double>(v.data(), 1, shape.data());
       },
       basix::docstring::cell_facet_reference_volumes.c_str());
   m.def(
       "cell_facet_outward_normals",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 2> n = cell::facet_outward_normals(cell_type);
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(n));
+        auto [n, shape] = cell::facet_outward_normals(cell_type);
+        return nb::tensor<double>(n.data(), shape.size(), shape.data());
       },
       basix::docstring::cell_facet_outward_normals.c_str());
   m.def(
@@ -254,9 +255,8 @@ NB_MODULE(_basixcpp, m)
       "cell_facet_jacobians",
       [](cell::type cell_type)
       {
-        xt::xtensor<double, 3> J = cell::facet_jacobians(cell_type);
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
-            std::move(J));
+        auto [J, shape] = cell::facet_jacobians(cell_type);
+        return nb::tensor<double>(J.data(), shape.size(), shape.data());
       },
       basix::docstring::cell_facet_jacobians.c_str());
 
@@ -282,14 +282,12 @@ NB_MODULE(_basixcpp, m)
              const nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>&
                  x)
           {
-            std::vector<std::size_t> shape
-                = {(std::size_t)x.shape(0), (std::size_t)x.shape(1)};
-            auto _x = xt::adapt((double*)x.data(), shape[0] * shape[1],
-                                xt::no_ownership(), shape);
-
-            xt::xtensor<double, 4> t = self.tabulate(n, _x);
-            return xt_as_nbtensor<
-                nb::shape<nb::any, nb::any, nb::any, nb::any>>(std::move(t));
+            if (x.ndim() != 2)
+              throw std::runtime_error("x has the wrong size");
+            stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
+                (const double *)x.data(), x.shape(0), x.shape(1));
+            auto [t, shape] = self.tabulate(n, _x);
+            return nb::tensor<double>(t.data(), shape.size(), shape.data());
           },
           basix::docstring::FiniteElement__tabulate.c_str())
       .def("__eq__", &FiniteElement::operator==)
@@ -307,13 +305,12 @@ NB_MODULE(_basixcpp, m)
                         nb::c_contig>
                  K)
           {
-            xt::xtensor<double, 3> u = self.push_forward(
-                adapt_x(U), adapt_x(J),
-                xtl::span<const double>(static_cast<double*>(detJ.data()),
-                                        detJ.shape(0)),
-                adapt_x(K));
-            return xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
-                std::move(u));
+            auto [u, shape] = self.push_forward(
+                cmdspan3_t((double *)U.data(), U.shape(0), U.shape(1), U.shape(2)),
+                cmdspan3_t((double *)J.data(), J.shape(0), J.shape(1), J.shape(2)),
+                std::span<const double>((const double *)detJ.data(), detJ.shape(0)),
+                cmdspan3_t((double *)K.data(), K.shape(0), K.shape(1), K.shape(2)));
+            return nb::tensor<double>(u.data(), shape.size(), shape.data());
           },
           basix::docstring::FiniteElement__push_forward.c_str())
       .def(
@@ -330,13 +327,12 @@ NB_MODULE(_basixcpp, m)
                         nb::c_contig>
                  K)
           {
-            xt::xtensor<double, 3> U = self.pull_back(
-                adapt_x(u), adapt_x(J),
-                xtl::span<const double>(static_cast<double*>(detJ.data()),
-                                        detJ.shape(0)),
-                adapt_x(K));
-            return xt_as_nbtensor<
-                nb::shape<nb::any, nb::any, nb::any, nb::any>>(std::move(U));
+            auto [U, shape] = self.pull_back(
+                cmdspan3_t((double *)u.data(), u.shape(0), u.shape(1), u.shape(2)),
+                cmdspan3_t((double *)J.data(), J.shape(0), J.shape(1), J.shape(2)),
+                std::span<const double>((const double *)detJ.data(), detJ.shape(0)),
+                cmdspan3_t((double *)K.data(), K.shape(0), K.shape(1), K.shape(2)));
+            return nb::tensor<double>(U.data(), shape.size(), shape.data());
           },
           basix::docstring::FiniteElement__pull_back.c_str())
       .def(
@@ -345,8 +341,7 @@ NB_MODULE(_basixcpp, m)
              nb::tensor<double, nb::shape<nb::any>, nb::c_contig> data,
              int block_size, std::uint32_t cell_info)
           {
-            xtl::span<double> data_span(static_cast<double*>(data.data()),
-                                        data.shape(0));
+            std::span<double> data_span((double *)data.data(), data.shape(0));
             self.apply_dof_transformation(data_span, block_size, cell_info);
           },
           basix::docstring::FiniteElement__apply_dof_transformation.c_str())
@@ -356,8 +351,7 @@ NB_MODULE(_basixcpp, m)
              nb::tensor<double, nb::shape<nb::any>, nb::c_contig> data,
              int block_size, std::uint32_t cell_info)
           {
-            xtl::span<double> data_span(static_cast<double*>(data.data()),
-                                        data.shape(0));
+            std::span<double> data_span((double *)data.data(), data.shape(0));
             self.apply_dof_transformation_to_transpose(data_span, block_size,
                                                        cell_info);
           },
@@ -369,8 +363,7 @@ NB_MODULE(_basixcpp, m)
              nb::tensor<double, nb::shape<nb::any>, nb::c_contig> data,
              int block_size, std::uint32_t cell_info)
           {
-            xtl::span<double> data_span(static_cast<double*>(data.data()),
-                                        data.shape(0));
+            std::span<double> data_span((double *)data.data(), data.shape(0));
             self.apply_inverse_transpose_dof_transformation(
                 data_span, block_size, cell_info);
             std::size_t size = data.shape(0);
@@ -383,26 +376,20 @@ NB_MODULE(_basixcpp, m)
           "base_transformations",
           [](const FiniteElement& self)
           {
-            xt::xtensor<double, 3> t = self.base_transformations();
-            return xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
-                std::move(t));
+            auto [t, shape] = self.base_transformations();
+            return nb::tensor<double>((double *)t.data(), shape.size(), shape.data());
           },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
           [](const FiniteElement& self)
           {
-            std::map<cell::type, xt::xtensor<double, 3>> t
-                = self.entity_transformations();
+            auto t = self.entity_transformations();
             nb::dict t2;
-            for (auto tpart : t)
+            for (auto& [key, data] : t)
             {
-              std::array<std::size_t, 3> shape
-                  = {tpart.second.shape(0), tpart.second.shape(1),
-                     tpart.second.shape(2)};
-              t2[cell_type_to_str(tpart.first).c_str()]
-                  = xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
-                      std::move(tpart.second));
+              t2[cell_type_to_str(key).c_str()]
+                  = nb::tensor<double>(data.first.data(), data.second.size(), data.second.data());
             }
             return t2;
           },
@@ -430,10 +417,37 @@ NB_MODULE(_basixcpp, m)
                              &FiniteElement::highest_complete_degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
-      .def_property_readonly("num_entity_dofs", &FiniteElement::num_entity_dofs)
+      .def_property_readonly("num_entity_dofs",
+                             [](const FiniteElement& self)
+                             {
+                               // TODO: remove this function. Information can
+                               // retrieved from entity_dofs.
+                               auto& edofs = self.entity_dofs();
+                               std::vector<std::vector<int>> num_edofs;
+                               for (auto& edofs_d : edofs)
+                               {
+                                 auto& ndofs = num_edofs.emplace_back();
+                                 for (auto& edofs : edofs_d)
+                                   ndofs.push_back(edofs.size());
+                               }
+                               return num_edofs;
+                             })
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("num_entity_closure_dofs",
-                             &FiniteElement::num_entity_closure_dofs)
+                             [](const FiniteElement& self)
+                             {
+                               // TODO: remove this function. Information can
+                               // retrieved from entity_closure_dofs.
+                               auto& edofs = self.entity_closure_dofs();
+                               std::vector<std::vector<int>> num_edofs;
+                               for (auto& edofs_d : edofs)
+                               {
+                                 auto& ndofs = num_edofs.emplace_back();
+                                 for (auto& edofs : edofs_d)
+                                   ndofs.push_back(edofs.size());
+                               }
+                               return num_edofs;
+                             })
       .def_property_readonly("entity_closure_dofs",
                              &FiniteElement::entity_closure_dofs)
       .def_property_readonly("value_size",
@@ -442,7 +456,7 @@ NB_MODULE(_basixcpp, m)
                                return std::accumulate(
                                    self.value_shape().begin(),
                                    self.value_shape().end(), 1,
-                                   std::multiplies<int>());
+                                   std::multiplies{});
                              })
       .def_property_readonly("value_shape", &FiniteElement::value_shape)
       .def_property_readonly("discontinuous", &FiniteElement::discontinuous)
@@ -458,68 +472,58 @@ NB_MODULE(_basixcpp, m)
       .def_property_readonly("interpolation_is_identity",
                              &FiniteElement::interpolation_is_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
-      .def_property_readonly(
-          "points",
-          [](const FiniteElement& self)
-          {
-            const xt::xtensor<double, 2>& x = self.points();
-            std::array<std::size_t, 2> shape = {x.shape(0), x.shape(1)};
-            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                const_cast<double*>(x.data()), shape.size(), shape.data(),
-                nb::cast(self));
-          })
-      .def_property_readonly(
-          "interpolation_matrix",
-          [](const FiniteElement& self)
-          {
-            xt::xtensor<double, 2> P = self.interpolation_matrix();
-            return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(P));
-          })
-      .def_property_readonly(
-          "dual_matrix",
-          [](const FiniteElement& self)
-          {
-            xt::xtensor<double, 2> P = self.dual_matrix();
-            return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(P));
-          })
-      .def_property_readonly(
-          "coefficient_matrix",
-          [](const FiniteElement& self)
-          {
-            xt::xtensor<double, 2> P = self.coefficient_matrix();
-            std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
-            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                P.data(), shape.size(), shape.data());
-          })
-      .def_property_readonly(
-          "wcoeffs",
-          [](const FiniteElement& self)
-          {
-            xt::xtensor<double, 2> P = self.wcoeffs();
-            std::array<std::size_t, 2> shape = {P.shape(0), P.shape(1)};
-            return nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                P.data(), shape.size(), shape.data());
-          })
+      .def_property_readonly("points",
+                             [](const FiniteElement& self)
+                             {
+                               auto& [x, shape] = self.points();
+                               return nb::tensor<double>((double *)x.data(), shape.size(), shape.data(),
+                                                          nb::cast(self));
+                             })
+      .def_property_readonly("interpolation_matrix",
+                             [](const FiniteElement& self)
+                             {
+                               auto& [P, shape] = self.interpolation_matrix();
+                               return nb::tensor<double>((double *)P.data(), shape.size(), shape.data(),
+                                                          nb::cast(self));
+                             })
+      .def_property_readonly("dual_matrix",
+                             [](const FiniteElement& self)
+                             {
+                               auto& [D, shape] = self.dual_matrix();
+                               return nb::tensor<double>((double *)D.data(), shape.size(), shape.data(),
+                                                          nb::cast(self));
+                             })
+      .def_property_readonly("coefficient_matrix",
+                             [](const FiniteElement& self)
+                             {
+                               auto& [P, shape] = self.coefficient_matrix();
+                               return nb::tensor<double>((double *)P.data(), shape.size(), shape.data(),
+                                                          nb::cast(self));
+                             })
+      .def_property_readonly("wcoeffs",
+                             [](const FiniteElement& self)
+                             {
+                               auto& [P, shape] = self.wcoeffs();
+                               return nb::tensor<double>((double *)P.data(), shape.size(), shape.data(),
+                                                          nb::cast(self));
+                             })
       .def_property_readonly(
           "M",
           [](const FiniteElement& self)
           {
-            std::array<std::vector<xt::xtensor<double, 4>>, 4> _M = self.M();
-            std::vector<std::vector<
-                nb::tensor<nb::numpy, double,
-                           nb::shape<nb::any, nb::any, nb::any, nb::any>>>>
-                M(4);
+            const std::array<std::vector<std::pair<std::vector<double>,
+                                                   std::array<std::size_t, 4>>>,
+                             4>& _M
+                = self.M();
+            std::vector<std::vector<nb::tensor<nb::numpy, double>>> M(
+                4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _M[i].size(); ++j)
               {
-                std::array<std::size_t, 4> shape
-                    = {_M[i][j].shape(0), _M[i][j].shape(1), _M[i][j].shape(2),
-                       _M[i][j].shape(3)};
-                M[i].push_back(
-                    nb::tensor<nb::numpy, double,
-                               nb::shape<nb::any, nb::any, nb::any, nb::any>>(
-                        _M[i][j].data(), shape.size(), shape.data()));
+                auto& mat = _M[i][j];
+                M[i].push_back(nb::tensor<nb::numpy, double>((double *)mat.first.data(), mat.second.size(), mat.second.data(),
+                                                   nb::cast(self)));
               }
             }
             return M;
@@ -528,19 +532,19 @@ NB_MODULE(_basixcpp, m)
           "x",
           [](const FiniteElement& self)
           {
-            std::array<std::vector<xt::xtensor<double, 2>>, 4> _x = self.x();
-            std::vector<std::vector<
-                nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>>>
-                x(4);
+            const std::array<std::vector<std::pair<std::vector<double>,
+                                                   std::array<std::size_t, 2>>>,
+                             4>& _x
+                = self.x();
+            std::vector<std::vector<nb::tensor<nb::numpy, double>>> x(
+                4);
             for (int i = 0; i < 4; ++i)
             {
               for (std::size_t j = 0; j < _x[i].size(); ++j)
               {
-                std::array<std::size_t, 2> shape
-                    = {_x[i][j].shape(0), _x[i][j].shape(1)};
-                x[i].push_back(
-                    nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>(
-                        _x[i][j].data(), shape.size(), shape.data()));
+                auto& vec = _x[i][j];
+                x[i].push_back(nb::tensor<nb::numpy, double>((double *)vec.first.data(), vec.second.size(), vec.second.data(),
+                                                   nb::cast(self)));
               }
             }
             return x;
@@ -564,6 +568,7 @@ NB_MODULE(_basixcpp, m)
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
       .value("legendre", element::lagrange_variant::legendre)
+      .value("bernstein", element::lagrange_variant::bernstein)
       .value("vtk", element::lagrange_variant::vtk);
 
   nb::enum_<element::dpc_variant>(m, "DPCVariant")
@@ -591,27 +596,29 @@ NB_MODULE(_basixcpp, m)
           throw std::runtime_error("x has the wrong size");
         if (M.size() != 4)
           throw std::runtime_error("M has the wrong size");
-        xt::xtensor<double, 2> _wco = adapt_x(wcoeffs);
 
-        std::array<std::vector<xt::xtensor<double, 2>>, 4> _x;
+        std::array<std::vector<cmdspan2_t>, 4> _x;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
           {
             if (x[i][j].ndim() != 2)
-              throw std::runtime_error("Incorrect dim in x");
-            _x[i].push_back(adapt_x(x[i][j]));
+              throw std::runtime_error("x has the wrong number of dimensions");
+            _x[i].emplace_back((double *)x[i][j].data(), x[i][j].shape(0),
+                               x[i][j].shape(1));
           }
         }
 
-        std::array<std::vector<xt::xtensor<double, 4>>, 4> _M;
+        std::array<std::vector<cmdspan4_t>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
           {
             if (M[i][j].ndim() != 4)
               throw std::runtime_error("M has the wrong number of dimensions");
-            _M[i].push_back(adapt_x(M[i][j]));
+            _M[i].emplace_back((double *)M[i][j].data(), M[i][j].shape(0),
+                               M[i][j].shape(1), M[i][j].shape(2),
+                               M[i][j].shape(3));
           }
         }
 
@@ -620,8 +627,10 @@ NB_MODULE(_basixcpp, m)
           _vs[i] = static_cast<std::size_t>(value_shape[i]);
 
         return basix::create_custom_element(
-            cell_type, _vs, _wco, _x, _M, interpolation_nderivs, map_type,
-            discontinuous, highest_complete_degree, highest_degree);
+            cell_type, _vs,
+            cmdspan2_t((double *)wcoeffs.data(), wcoeffs.shape(0), wcoeffs.shape(1)), _x,
+            _M, interpolation_nderivs, map_type, discontinuous,
+            highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());
 
@@ -712,10 +721,9 @@ NB_MODULE(_basixcpp, m)
       "compute_interpolation_operator",
       [](const FiniteElement& element_from, const FiniteElement& element_to)
       {
-        xt::xtensor<double, 2> out
+        auto [out, shape]
             = basix::compute_interpolation_operator(element_from, element_to);
-        std::array<std::size_t, 2> shape = {out.shape(0), out.shape(1)};
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(out));
+        return nb::tensor<nb::numpy, double>(out.data(), shape.size(), shape.data());
       },
       basix::docstring::compute_interpolation_operator.c_str());
 
@@ -724,18 +732,12 @@ NB_MODULE(_basixcpp, m)
       [](cell::type celltype, int d, int n,
          const nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>& x)
       {
-        std::vector<std::size_t> shape;
-        std::size_t xsize = 1;
-        for (std::size_t i = 0; i < x.ndim(); ++i)
-        {
-          shape.push_back(x.shape(i));
-          xsize *= x.shape(i);
-        }
-        auto _x = xt::adapt(static_cast<const double*>(x.data()), xsize,
-                            xt::no_ownership(), shape);
-        xt::xtensor<double, 3> P = polyset::tabulate(celltype, d, n, _x);
-        return xt_as_nbtensor<nb::shape<nb::any, nb::any, nb::any>>(
-            std::move(P));
+        if (x.ndim() != 2)
+          throw std::runtime_error("x has the wrong number of dimensions");
+        stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x((double *)
+            x.data(), x.shape(0), x.shape(1));
+        auto [p, shape] = polyset::tabulate(celltype, d, n, _x);
+        return nb::tensor<nb::numpy, double>(p.data(), shape.size(), shape.data());
       },
       basix::docstring::tabulate_polynomial_set.c_str());
 
@@ -744,16 +746,9 @@ NB_MODULE(_basixcpp, m)
       [](quadrature::type rule, cell::type celltype, int m)
       {
         auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
-        // FIXME: it would be more elegant to handle 1D case as a 1D
-        // array, but FFCx would need updating
-
-        auto pt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(pts));
-        auto wt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(w));
-
-        nb::list l;
-        l.append(pt);
-        l.append(wt);
-        return l;
+        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
+        return std::pair(nb::tensor<nb::numpy, double>(pts.data(), 2, shape.data()),
+                         nb::tensor<nb::numpy, double>(w.data(), 1, &shape[0]));
       },
       basix::docstring::make_quadrature__rule_celltype_m.c_str());
 
@@ -762,16 +757,9 @@ NB_MODULE(_basixcpp, m)
       [](cell::type celltype, int m)
       {
         auto [pts, w] = quadrature::make_quadrature(celltype, m);
-        // FIXME: it would be more elegant to handle 1D case as a 1D
-        // array, but FFCx would need updating
-
-        auto pt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(pts));
-        auto wt = xt_as_nbtensor<nb::shape<nb::any, nb::any>>(std::move(w));
-
-        nb::list l;
-        l.append(pt);
-        l.append(wt);
-        return l;
+        std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
+        return std::pair(nb::tensor<nb::numpy, double>(pts.data(), 2, shape.data()),
+                         nb::tensor<nb::numpy, double>(w.data(), 1, &shape[0]));
       },
       basix::docstring::make_quadrature__celltype_m.c_str());
 

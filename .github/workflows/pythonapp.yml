@@ -22,7 +22,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: ["3.8", "3.9", "3.10"]
+    env:
+      CC: gcc-10
+      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
@@ -31,7 +34,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
+        run: |
+          sudo apt-get update
+          sudo apt-get -y upgrade
+          sudo apt-get install -y doxygen libgraphviz-dev libopenblas-dev liblapack-dev ninja-build
+          pip install scikit-build
 
       - name: Install Basix
         run: pip -v install .[ci]
@@ -57,9 +64,22 @@ jobs:
         run: |
           pytest -n auto --durations 20 test/
 
-      - name: Run python demos
+      - name: Run simple CMake integration test
+        run: |
+          cd test/test_cmake
+          cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python -G Ninja -B build-dir -S .
+          cmake --build build-dir/
+          build-dir/a.out
+
+      - name: Run Python demos
         run: |
           pytest demo/python/test.py
+
+      - name: Run C++ demos
+        run: |
+          export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
+          export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$INSTALL_DIR/python/basix/lib/cmake:$INSTALL_DIR/python/basix/share/cmake
+          pytest demo/cpp/test.py
 
       - name: Build documentation
         run: |
@@ -133,7 +153,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.10']
+        python-version: ["3.10"]
+    env:
+      CC: gcc-10
+      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
@@ -142,7 +165,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
 
       - name: Install CI dependencies
         run: pip install pytest sympy numba scipy matplotlib fenics-ufl pytest-xdist pybind11
@@ -161,3 +184,33 @@ jobs:
       - name: Run python demos
         run: |
           pytest demo/python/test.py
+
+  build-cpp-only:
+    name: Build C++ only and run demos
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    env:
+      CC: gcc-10
+      CXX: g++-10
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+
+      - name: Install Basix
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_XTENSOR_LIBS=ON -B build-dir -S cpp
+          cmake --build build-dir
+          sudo cmake --install build-dir
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Run C++ demos
+        run: |
+          pip install pytest
+          pytest demo/cpp/test.py

@@ -7,7 +7,11 @@
 // points.
 
 #include <basix/finite-element.h>
-#include <xtensor/xio.hpp>
+#include <basix/mdspan.hpp>
+#include <iostream>
+
+namespace stdex = std::experimental;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
 int main(int argc, char* argv[])
 {
@@ -33,14 +37,21 @@ int main(int argc, char* argv[])
 
   // Create a set of points, and tabulate the basis functions
   // of the Lagrange element at these points.
-  xt::xtensor<double, 2> points
-      = {{0.0, 0.0}, {0.1, 0.1}, {0.2, 0.3}, {0.3, 0.6}, {0.4, 1.0}};
+  std::vector<double> points
+      = {0.0, 0.0, 0.1, 0.1, 0.2, 0.3, 0.3, 0.6, 0.4, 1.0};
 
-  xt::xtensor<double, 4> tab = lagrange.tabulate(0, points);
+  auto [tab_data, shape] = lagrange.tabulate(0, points, {points.size() / 2, 2});
 
-  std::cout << "\nTabulate data: \n"
-            << xt::view(tab, 0, xt::all(), xt::all(), 0);
-  std::cout << "\nTabulate data shape: " << xt::adapt(tab.shape());
+  std::cout << "Tabulate data shape: [ ";
+  for (auto s : shape)
+    std::cout << s << " ";
+  std::cout << "]" << std::endl;
+
+  cmdspan4_t tab(tab_data.data(), shape);
+  std::cout << "Tabulate data (0, 0, :, 0): [ ";
+  for (std::size_t i = 0; i < tab.extent(2); ++i)
+    std::cout << tab(0, 0, i, 0) << " ";
+  std::cout << "]" << std::endl;
 
   return 0;
 }

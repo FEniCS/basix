@@ -22,6 +22,7 @@ enum class lagrange_variant
   gl_isaac = 8,
   gl_centroid = 9,
   legendre = 10,
+  bernstein = 11,
   vtk = 20,
 };
 

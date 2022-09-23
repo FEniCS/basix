@@ -26,7 +26,7 @@ jobs:
   build:
     name: Run DOLFINx tests
     runs-on: ubuntu-latest
-    container: fenicsproject/test-env:latest-openmpi
+    container: fenicsproject/test-env:nightly-openmpi
 
     env:
       CC: clang
@@ -61,10 +61,6 @@ jobs:
           python3 -m pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
           python3 -m pip install git+https://github.com/FEniCS/ffcx.git@${{ github.event.inputs.ffcx_branch }}
 
-      - name: Run cpp demos
-        run: |
-          python3 -m pytest demo/cpp/test.py
-
       - name: Get DOLFINx
         if: github.event_name != 'workflow_dispatch'
         uses: actions/checkout@v3
@@ -78,13 +74,15 @@ jobs:
           path: ./dolfinx
           repository: FEniCS/dolfinx
           ref: ${{ github.event.inputs.dolfinx_branch }}
-
       - name: Install DOLFINx
         run: |
           cmake -G Ninja -DCMAKE_BUILD_TYPE=Developer -B build -S dolfinx/cpp/
           cmake --build build
           cmake --install build
           python3 -m pip -v install --global-option build --global-option --debug dolfinx/python/
+
+      - name: Run mypy checks
+        run: python3 -m mypy dolfinx/python/dolfinx
 
       - name: Build DOLFINx C++ unit tests
         run: |
@@ -97,3 +95,6 @@ jobs:
 
       - name: Run DOLFINx Python unit tests
         run: python3 -m pytest -n auto dolfinx/python/test/unit
+
+      - name: Run DOLFINx Python demos
+        run: python3 -m pytest -n auto dolfinx/python/demo/test.py

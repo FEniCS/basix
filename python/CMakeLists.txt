@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 
-PROJECT(basix_nanobind VERSION "0.4.3.0"  LANGUAGES CXX)
+PROJECT(basix_nanobind VERSION "0.5.2.0"  LANGUAGES CXX)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -53,6 +53,10 @@ include(CheckCXXCompilerFlag)
 # if (HAVE_PEDANTIC)
 #   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment;-pedantic)
 # endif()
+CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_PEDANTIC)
+if (HAVE_PEDANTIC)
+  target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment)
+endif()
 
 # In Debug mode override pybind11 symbols visibility. Symbols must be
 # visible to backtrace_symbols() to produce nice logs
@@ -62,7 +66,7 @@ endif()
 
 # scikit-build specific steps
 if (SKBUILD)
-  # Add relative rpath so _basixcpp can find the Basix::basix libray
+  # Add relative rpath so _basixcpp can find the Basix::basix library
   # when the build is relocated
   if (APPLE)
     set_target_properties(_basixcpp PROPERTIES INSTALL_RPATH "@loader_path/lib")

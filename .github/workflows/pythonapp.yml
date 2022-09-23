@@ -38,6 +38,7 @@ jobs:
           sudo apt-get update
           sudo apt-get -y upgrade
           sudo apt-get install -y doxygen libgraphviz-dev libopenblas-dev liblapack-dev ninja-build
+          pip install git+https://github.com/wjakob/nanobind
           pip install scikit-build
 
       - name: Install Basix

@@ -9,6 +9,7 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include "sobolev-spaces.h"
 
 using namespace basix;
 namespace stdex = std::experimental;
@@ -179,6 +180,6 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        xview, Mview, 0, maps::type::doubleCovariantPiola,
-                       discontinuous, -1, degree);
+                       sobolev::space::HEin, discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

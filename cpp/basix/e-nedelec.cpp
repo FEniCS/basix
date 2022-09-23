@@ -12,6 +12,7 @@
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include "sobolev-spaces.h"
 #include <array>
 #include <vector>
 
@@ -273,8 +274,8 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
 
   return FiniteElement(element::family::N1E, celltype, degree, {tdim},
                        impl::mdspan2_t(wcoeffs.data(), wshape), xview, Mview, 0,
-                       maps::type::covariantPiola, discontinuous, degree - 1,
-                       degree, lvariant);
+                       maps::type::covariantPiola, sobolev::space::HCurl,
+                       discontinuous, degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement element::create_nedelec2(cell::type celltype, int degree,
@@ -375,6 +376,7 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
                        impl::mdspan2_t(math::eye(tdim * psize).data(),
                                        tdim * psize, tdim * psize),
                        xview, Mview, 0, maps::type::covariantPiola,
-                       discontinuous, degree, degree, lvariant);
+                       sobolev::space::HCurl, discontinuous, degree, degree,
+                       lvariant);
 }
 //-----------------------------------------------------------------------------

@@ -9,6 +9,7 @@
 #include "math.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include "sobolev-spaces.h"
 
 using namespace basix;
 namespace stdex = std::experimental;
@@ -176,6 +177,6 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
   return FiniteElement(element::family::HHJ, celltype, degree, {tdim, tdim},
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        xview, Mview, 0, maps::type::doubleContravariantPiola,
-                       discontinuous, -1, degree);
+                       sobolev::space::HDivDiv, discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

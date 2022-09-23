@@ -9,7 +9,7 @@
 
 import basix
 import numpy as np
-from basix import CellType, MapType, PolynomialType, LatticeType
+from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace
 
 # Lagrange element with bubble
 # ============================
@@ -133,6 +133,7 @@ for _ in range(4):
 # - The number of derivates used in the evaluation of the functionals. In this example, this
 #   is 0.
 # - The map type. In this example, this is the identity map.
+# - The underlying Sobolev space. In this example, this is H1.
 # - A bool indicating whether the element is discontinuous. In this example, this is `False`.
 # - The highest degree :math:`n` such that all degree :math:`n` polynomials are contained in
 #   this set. In this example, this is 1.
@@ -141,7 +142,7 @@ for _ in range(4):
 #   polynomials to use when creating and tabulating the element.
 
 element = basix.create_custom_element(
-    CellType.quadrilateral, [], wcoeffs, x, M, 0, MapType.identity, False, 1, 2)
+    CellType.quadrilateral, [], wcoeffs, x, M, 0, MapType.identity, SobolevSpace.H1, False, 1, 2)
 
 # We can now use this element in the same way we can use a built-in element. For example, we
 # can tabulate the element at a set of points. If the points we use are the same as the points
@@ -233,7 +234,8 @@ M[2].append(np.zeros((0, 2, 0, 1)))
 # --------------------
 
 element = basix.create_custom_element(
-    CellType.triangle, [2], wcoeffs, x, M, 0, MapType.contravariantPiola, False, 0, 1)
+    CellType.triangle, [2], wcoeffs, x, M, 0, MapType.contravariantPiola, SobolevSpace.HDiv,
+    False, 0, 1)
 
 # To confirm that we have defined this element correctly, we compare it to the built-in
 # Raviart--Thomas element.

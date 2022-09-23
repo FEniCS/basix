@@ -81,31 +81,36 @@ const std::string& cell_type_to_str(cell::type type)
 //                    xt::no_ownership(), shape);
 // }
 
-// /// Create a nb::tensor that shares data with an
-// /// xtensor array. The C++ object owns the data, and the
-// /// nb::tensor object keeps the C++ object alive.
-// // Similar to https://github.com/pybind/pybind11/issues/1042
-// template <typename T>
-// auto as_nbtensor(std::vector<std::size_t>& shape, T* data)
-// {
-//   std::size_t dim = shape.size();
-//   if constexpr (std::is_same<std::vector<typename U::value_type>, U>())
-//     shape = {x.size()};
-//   else
-//   {
-//     dim = x.dimension();
-//     shape.resize(dim);
-//     std::copy(x.shape().data(), x.shape().data() + dim, shape.begin());
-//   }
-//   auto data = x.data();
-//   auto size = x.size();
-//   std::unique_ptr<U> x_ptr = std::make_unique<U>(std::move(x));
-//   auto capsule = nb::capsule(x_ptr.get(), [](void* p) noexcept
-//                              { std::unique_ptr<U>(reinterpret_cast<U*>(p)); });
-//   x_ptr.release();
-//   return nb::tensor<nb::numpy, typename U::value_type, shape_t>(
-//       data, dim, shape.data(), capsule);
-// }
+/// Create a nb::tensor that shares data with an
+/// xtensor array. The C++ object owns the data, and the
+/// nb::tensor object keeps the C++ object alive.
+/// Similar to https://github.com/pybind/pybind11/issues/1042
+template <typename V, typename U>
+auto as_nbtensor(std::pair<V, U> a)
+{
+  auto [array, shape] = a;
+  std::size_t dim = shape.size();
+  auto data = array.data();
+  std::unique_ptr<V> x_ptr = std::make_unique<V>(std::move(array));
+  auto capsule = nb::capsule(x_ptr.get(), [](void* p) noexcept
+                             { std::unique_ptr<V>(reinterpret_cast<V*>(p)); });
+  x_ptr.release();
+  return nb::tensor<nb::numpy, typename V::value_type>(
+      data, dim, shape.data(), capsule);
+}
+
+template <typename V, typename U>
+auto as_nbtensor(V& array, U& shape)
+{
+  std::size_t dim = shape.size();
+  auto data = array.data();
+  std::unique_ptr<V> x_ptr = std::make_unique<V>(std::move(array));
+  auto capsule = nb::capsule(x_ptr.get(), [](void* p) noexcept
+                             { std::unique_ptr<V>(reinterpret_cast<V*>(p)); });
+  x_ptr.release();
+  return nb::tensor<nb::numpy, typename V::value_type>(
+      data, dim, shape.data(), capsule);
+}
 
 } // namespace
 
@@ -122,8 +127,7 @@ NB_MODULE(_basixcpp, m)
       "geometry",
       [](cell::type celltype)
       {
-        auto [x, shape] = cell::geometry(celltype);
-        return nb::tensor<nb::numpy, double>(x.data(), shape.size(), shape.data());
+        return as_nbtensor(cell::geometry(celltype));
       },
       basix::docstring::geometry.c_str());
   m.def("sub_entity_connectivity", &cell::sub_entity_connectivity,
@@ -136,6 +140,9 @@ NB_MODULE(_basixcpp, m)
         return nb::tensor<nb::numpy, double>(x.data(), shape.size(), shape.data());
       },
       basix::docstring::sub_entity_geometry.c_str());
+
+  m.def("sobolev_space_intersection", &sobolev::space_intersection,
+        basix::docstring::space_intersection.c_str());
 
   nb::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
@@ -197,6 +204,17 @@ NB_MODULE(_basixcpp, m)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
       .value("doubleContravariantPiola", maps::type::doubleContravariantPiola);
 
+  nb::enum_<sobolev::space>(m, "SobolevSpace")
+      .value("L2", sobolev::space::L2)
+      .value("H1", sobolev::space::H1)
+      .value("H2", sobolev::space::H2)
+      .value("H3", sobolev::space::H3)
+      .value("HInf", sobolev::space::HInf)
+      .value("HDiv", sobolev::space::HDiv)
+      .value("HCurl", sobolev::space::HCurl)
+      .value("HEin", sobolev::space::HEin)
+      .value("HDivDiv", sobolev::space::HDivDiv);
+
   nb::enum_<quadrature::type>(m, "QuadratureType")
       .value("Default", quadrature::type::Default)
       .value("gauss_jacobi", quadrature::type::gauss_jacobi)
@@ -221,8 +239,21 @@ NB_MODULE(_basixcpp, m)
       "cell_facet_normals",
       [](cell::type cell_type)
       {
+        //   auto [n, shape] = cell::facet_normals(cell_type);
+        //   auto data = n.data();
+        //   std::unique_ptr<std::vector<double>> x_ptr =
+        //   std::make_unique<std::vector<double>>(std::move(n)); auto capsule =
+        //   nb::capsule(x_ptr.get(), [](void* p) noexcept
+        //                         {
+        //                         std::unique_ptr<std::vector<double>>(reinterpret_cast<std::vector<double>*>(p));
+        //                         });
+        //     x_ptr.release();
+
+        //   return nb::tensor<nb::numpy, double, nb::shape<nb::any,
+        //   nb::any>>(data, shape.size(), shape.data(), capsule);
+        //
         auto [n, shape] = cell::facet_normals(cell_type);
-        return nb::tensor<double>(n.data(), shape.size(), shape.data());
+        return as_nbtensor(n, shape);
       },
       basix::docstring::cell_facet_normals.c_str());
   m.def(
@@ -238,9 +269,8 @@ NB_MODULE(_basixcpp, m)
       "cell_facet_outward_normals",
       [](cell::type cell_type)
       {
-        auto [n, shape] = cell::facet_outward_normals(cell_type);
-        return nb::tensor<double>(n.data(), shape.size(), shape.data());
-      },
+        return as_nbtensor(cell::facet_outward_normals(cell_type));
+     },
       basix::docstring::cell_facet_outward_normals.c_str());
   m.def(
       "cell_facet_orientations",
@@ -374,16 +404,14 @@ NB_MODULE(_basixcpp, m)
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
       .def(
           "base_transformations",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             auto [t, shape] = self.base_transformations();
             return nb::tensor<double>((double *)t.data(), shape.size(), shape.data());
           },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             auto t = self.entity_transformations();
             nb::dict t2;
             for (auto& [key, data] : t)
@@ -418,8 +446,7 @@ NB_MODULE(_basixcpp, m)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
       .def_property_readonly("num_entity_dofs",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                // TODO: remove this function. Information can
                                // retrieved from entity_dofs.
                                auto& edofs = self.entity_dofs();
@@ -434,8 +461,7 @@ NB_MODULE(_basixcpp, m)
                              })
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("num_entity_closure_dofs",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                // TODO: remove this function. Information can
                                // retrieved from entity_closure_dofs.
                                auto& edofs = self.entity_closure_dofs();
@@ -451,8 +477,7 @@ NB_MODULE(_basixcpp, m)
       .def_property_readonly("entity_closure_dofs",
                              &FiniteElement::entity_closure_dofs)
       .def_property_readonly("value_size",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                return std::accumulate(
                                    self.value_shape().begin(),
                                    self.value_shape().end(), 1,
@@ -472,45 +497,40 @@ NB_MODULE(_basixcpp, m)
       .def_property_readonly("interpolation_is_identity",
                              &FiniteElement::interpolation_is_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
+      .def_property_readonly("sobolev_space", &FiniteElement::sobolev_space)
       .def_property_readonly("points",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [x, shape] = self.points();
                                return nb::tensor<double>((double *)x.data(), shape.size(), shape.data(),
                                                           nb::cast(self));
                              })
       .def_property_readonly("interpolation_matrix",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [P, shape] = self.interpolation_matrix();
                                return nb::tensor<double>((double *)P.data(), shape.size(), shape.data(),
                                                           nb::cast(self));
                              })
       .def_property_readonly("dual_matrix",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [D, shape] = self.dual_matrix();
                                return nb::tensor<double>((double *)D.data(), shape.size(), shape.data(),
                                                           nb::cast(self));
                              })
       .def_property_readonly("coefficient_matrix",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [P, shape] = self.coefficient_matrix();
                                return nb::tensor<double>((double *)P.data(), shape.size(), shape.data(),
                                                           nb::cast(self));
                              })
       .def_property_readonly("wcoeffs",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [P, shape] = self.wcoeffs();
                                return nb::tensor<double>((double *)P.data(), shape.size(), shape.data(),
                                                           nb::cast(self));
                              })
       .def_property_readonly(
           "M",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             const std::array<std::vector<std::pair<std::vector<double>,
                                                    std::array<std::size_t, 4>>>,
                              4>& _M
@@ -530,8 +550,7 @@ NB_MODULE(_basixcpp, m)
           })
       .def_property_readonly(
           "x",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             const std::array<std::vector<std::pair<std::vector<double>,
                                                    std::array<std::size_t, 2>>>,
                              4>& _x
@@ -589,7 +608,8 @@ NB_MODULE(_basixcpp, m)
          const nb::tensor<nb::numpy, double>& wcoeffs,
          const std::vector<std::vector<nb::tensor<nb::numpy, double>>>& x,
          const std::vector<std::vector<nb::tensor<nb::numpy, double>>>& M,
-         int interpolation_nderivs, maps::type map_type, bool discontinuous,
+         int interpolation_nderivs, maps::type map_type, sobolev::space sobolev_space, 
+         bool discontinuous,
          int highest_complete_degree, int highest_degree) -> FiniteElement
       {
         if (x.size() != 4)
@@ -629,7 +649,7 @@ NB_MODULE(_basixcpp, m)
         return basix::create_custom_element(
             cell_type, _vs,
             cmdspan2_t((double *)wcoeffs.data(), wcoeffs.shape(0), wcoeffs.shape(1)), _x,
-            _M, interpolation_nderivs, map_type, discontinuous,
+            _M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
             highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());

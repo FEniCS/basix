@@ -9,6 +9,7 @@
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include "sobolev-spaces.h"
 #include <cmath>
 #include <vector>
 
@@ -173,7 +174,8 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   return FiniteElement(element::family::RT, celltype, degree, {tdim},
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        xview, Mview, 0, maps::type::contravariantPiola,
-                       discontinuous, degree - 1, degree, lvariant);
+                       sobolev::space::HDiv, discontinuous, degree - 1, degree,
+                       lvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_nce(cell::type celltype, int degree,
@@ -394,6 +396,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   return FiniteElement(element::family::N1E, celltype, degree, {tdim},
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        xview, Mview, 0, maps::type::covariantPiola,
-                       discontinuous, degree - 1, degree, lvariant);
+                       sobolev::space::HCurl, discontinuous, degree - 1, degree,
+                       lvariant);
 }
 //-----------------------------------------------------------------------------

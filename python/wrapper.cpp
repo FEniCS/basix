@@ -21,9 +21,7 @@
 
 #include <string>
 #include <vector>
-#include <xtensor/xadapt.hpp>
-#include <xtensor/xtensor.hpp>
-#include <xtl/xspan.hpp>
+#include <span>
 
 namespace nb = nanobind;
 using namespace basix;

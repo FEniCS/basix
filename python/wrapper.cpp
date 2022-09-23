@@ -21,6 +21,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <span>
 
 namespace nb = nanobind;

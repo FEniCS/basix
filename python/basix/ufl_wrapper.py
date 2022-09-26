@@ -275,7 +275,8 @@ class _BasixElementBase(_FiniteElementBase):
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
-        return getattr(_ufl.sobolevspace, self.basix_sobolev_space)
+        return 
+getattr(_ufl.sobolevspace, self.basix_sobolev_space.name)
 
     @property
     @_abstractmethod

@@ -168,7 +168,9 @@ jobs:
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
 
       - name: Install CI dependencies
-        run: pip install pytest sympy numba scipy matplotlib fenics-ufl pytest-xdist pybind11
+        run: |
+          pip install pytest sympy numba scipy matplotlib pytest-xdist pybind11
+          pip install git+https://github.com/FEniCS/ufl.git
 
       - name: Install Basix
         run: |

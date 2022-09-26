@@ -52,7 +52,7 @@ class _BasixElementBase(_FiniteElementBase):
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: str = None, gdim: int = None):
+                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: str = "undefined", gdim: int = None):
         """Initialise the element."""
         super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
         self._repr = repr

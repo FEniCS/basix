@@ -52,7 +52,7 @@ class _BasixElementBase(_FiniteElementBase):
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: str = "undefined", gdim: int = None):
+                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: str = None, gdim: int = None):
         """Initialise the element."""
         super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
         self._repr = repr
@@ -690,10 +690,16 @@ class MixedElement(_BasixElementBase):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
+
+        if all(e.mapping() == "identity" for e in sub_elements):
+            mapname = "identity"
+        else:
+            mapname = "undefined"
+
         super().__init__(
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
             "mixed element", sub_elements[0].cell_type.name,
-            (sum(i.value_size for i in sub_elements), ), gdim=gdim)
+            (sum(i.value_size for i in sub_elements), ), mapname=mapname, gdim=gdim)
 
     @property
     def map_type(self) -> _basix.MapType:
@@ -1228,6 +1234,9 @@ def create_element(
         if family in ["DP", "DG", "DQ"]:
             family = "P"
             discontinuous = True
+        if family == "CG":
+            family = "P"
+            discontinuous = False
         if family == "DPC":
             discontinuous = True
 

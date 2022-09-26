@@ -31,7 +31,7 @@ _spacemap = {
 }
 
 
-def ufl_sobolev_space_from_enum(s: basix.SobolevSpace):
+def ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     """Convert a Basix Sobolev space enum to a UFL Sobolev space.
 
     Args:

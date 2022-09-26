@@ -1,8 +1,9 @@
 """Functions to directly wrap Basix elements in UFL."""
 
+from abc import abstractmethod as _abstractmethod
+
 import ufl as _ufl
 from ufl.finiteelement.finiteelementbase import FiniteElementBase as _FiniteElementBase
-from ufl.sobolevspace import L2, H1, H2, HDiv, HCurl, HDivDiv, HEin
 
 import hashlib as _hashlib
 import numpy as _numpy
@@ -16,6 +17,32 @@ import functools as _functools
 from ufl.algorithms.estimate_degrees import IrreducibleInt as _IrreducibleInt
 
 _nda_f64 = _numpy_typing.NDArray[_numpy.float64]
+
+
+_spacemap = {
+    _basix.SobolevSpace.L2: _ufl.sobolevspace.L2,
+    _basix.SobolevSpace.H1: _ufl.sobolevspace.H1,
+    _basix.SobolevSpace.H2: _ufl.sobolevspace.H2,
+    _basix.SobolevSpace.HInf: _ufl.sobolevspace.HInf,
+    _basix.SobolevSpace.HDiv: _ufl.sobolevspace.HDiv,
+    _basix.SobolevSpace.HCurl: _ufl.sobolevspace.HCurl,
+    _basix.SobolevSpace.HEin: _ufl.sobolevspace.HEin,
+    _basix.SobolevSpace.HDivDiv: _ufl.sobolevspace.HDivDiv,
+}
+
+
+def ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
+    """Convert a Basix Sobolev space enum to a UFL Sobolev space.
+
+    Args:
+        s: The Basix Sobolev space
+
+    Returns:
+        UFL Sobolev space
+    """
+    if s not in _spacemap:
+        raise ValueError(f"Could not convert to UFL Sobolev space: {s.name}")
+    return _spacemap[s]
 
 
 class _BasixElementBase(_FiniteElementBase):
@@ -49,9 +76,10 @@ class _BasixElementBase(_FiniteElementBase):
         """Return the map type."""
         return self._map
 
+    @_abstractmethod
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        raise NotImplementedError()
+        pass
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -90,6 +118,7 @@ class _BasixElementBase(_FiniteElementBase):
         """The degree of the element."""
         return self._degree
 
+    @_abstractmethod
     def tabulate(
         self, nderivs: int, points: _nda_f64
     ) -> _nda_f64:
@@ -102,9 +131,10 @@ class _BasixElementBase(_FiniteElementBase):
         Returns:
             Tabulated basis functions
         """
-        raise NotImplementedError()
+        pass
 
     # def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
+    @_abstractmethod
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_typing.Any, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
@@ -124,82 +154,97 @@ class _BasixElementBase(_FiniteElementBase):
         Returns:
             component element, offset of the component, stride of the component
         """
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def ufcx_element_type(self) -> str:
         """Element type."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def dim(self) -> int:
         """Number of DOFs the element has."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def num_entity_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with each entity."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def entity_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with each entity."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def num_entity_closure_dofs(self) -> _typing.List[_typing.List[int]]:
         """Number of DOFs associated with the closure of each entity."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def entity_closure_dofs(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """DOF numbers associated with the closure of each entity."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def num_global_support_dofs(self) -> int:
         """Get the number of global support DOFs."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def reference_topology(self) -> _typing.List[_typing.List[_typing.List[int]]]:
         """Topology of the reference element."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def reference_geometry(self) -> _nda_f64:
         """Geometry of the reference element."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def family_name(self) -> str:
         """Family name of the element."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
         """Basix element family used to initialise the element."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def lagrange_variant(self) -> _typing.Union[_basix.LagrangeVariant, None]:
         """Basix Lagrange variant used to initialise the element."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def dpc_variant(self) -> _typing.Union[_basix.DPCVariant, None]:
         """Basix DPC variant used to initialise the element."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def cell_type(self) -> _basix.CellType:
         """Basix cell type used to initialise the element."""
-        raise NotImplementedError()
+        pass
 
     @property
+    @_abstractmethod
     def discontinuous(self) -> bool:
         """True if the discontinuous version of the element is used."""
-        raise NotImplementedError()
+        pass
 
     @property
     def interpolation_nderivs(self) -> int:
@@ -212,9 +257,10 @@ class _BasixElementBase(_FiniteElementBase):
         return False
 
     @property
+    @_abstractmethod
     def map_type(self) -> _basix.MapType:
         """The Basix map type."""
-        raise NotImplementedError()
+        pass
 
     @property
     def highest_complete_degree(self) -> int:
@@ -253,6 +299,16 @@ class _BasixElementBase(_FiniteElementBase):
         """Get the element's tensor product factorisation."""
         return None
 
+    def sobolev_space(self):
+        """Return the underlying Sobolev space."""
+        return ufl_sobolev_space_from_enum(self.basix_sobolev_space)
+
+    @property
+    @_abstractmethod
+    def basix_sobolev_space(self):
+        """Return a Basix enum representing the underlying Sobolev space."""
+        pass
+
 
 class BasixElement(_BasixElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL."""
@@ -281,6 +337,11 @@ class BasixElement(_BasixElementBase):
 
         self.element = element
 
+    @property
+    def basix_sobolev_space(self):
+        """Return a Basix enum representing the underlying Sobolev space."""
+        return self.element.sobolev_space
+
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return isinstance(other, BasixElement) and self.element == other.element
@@ -288,27 +349,6 @@ class BasixElement(_BasixElementBase):
     def __hash__(self) -> int:
         """Return a hash."""
         return super().__hash__()
-
-    def sobolev_space(self):
-        """Return the underlying Sobolev space."""
-        # TODO: get elements to report their Sobolev space
-        EF = _basix.ElementFamily
-        if self.element.discontinuous:
-            return L2
-        if self.element.family in [EF.P, EF.bubble, EF.serendipity]:
-            return H1
-        if self.element.family in [EF.Hermite]:
-            return H2
-        if self.element.family in [EF.BDM, EF.RT]:
-            return HDiv
-        if self.element.family in [EF.N2E, EF.N1E]:
-            return HCurl
-        if self.element.family in [EF.Regge]:
-            return HEin
-        if self.element.family in [EF.HHJ]:
-            return HDivDiv
-
-        return L2
 
     def tabulate(
         self, nderivs: int, points: _nda_f64
@@ -495,9 +535,10 @@ class ComponentElement(_BasixElementBase):
             f"ComponentElement({element._repr}, {component})", f"Component of {element.family_name}",
             element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
-    def sobolev_space(self):
-        """Return the underlying Sobolev space."""
-        return self.element.sobolev_space()
+    @property
+    def basix_sobolev_space(self):
+        """Return a Basix enum representing the underlying Sobolev space."""
+        return self.element.basix_sobolev_space
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
@@ -629,6 +670,16 @@ class ComponentElement(_BasixElementBase):
         """The number of derivatives needed when interpolating."""
         return self.element.interpolation_nderivs
 
+    @property
+    def ufcx_element_type(self) -> str:
+        """Element type."""
+        raise NotImplementedError()
+
+    @property
+    def map_type(self) -> _basix.MapType:
+        """The Basix map type."""
+        raise NotImplementedError()
+
 
 class MixedElement(_BasixElementBase):
     """A mixed element that combines two or more elements."""
@@ -639,14 +690,27 @@ class MixedElement(_BasixElementBase):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
+
+        if all(e.mapping() == "identity" for e in sub_elements):
+            mapname = "identity"
+        else:
+            mapname = "undefined"
+
         super().__init__(
             "MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
             "mixed element", sub_elements[0].cell_type.name,
-            (sum(i.value_size for i in sub_elements), ), gdim=gdim)
+            (sum(i.value_size for i in sub_elements), ), mapname=mapname, gdim=gdim)
 
-    def sobolev_space(self):
-        """Return the underlying Sobolev space."""
-        return max(e.sobolev_space() for e in self._sub_elements)
+    @property
+    def map_type(self) -> _basix.MapType:
+        """The Basix map type."""
+        raise NotImplementedError()
+
+    @property
+    def basix_sobolev_space(self):
+        """Return a Basix enum representing the underlying Sobolev space."""
+        return _basix.sobolev_space.intersection(
+            [e.basix_sobolev_space for e in self._sub_elements])
 
     def sub_elements(self) -> _typing.List[_BasixElementBase]:
         """Return a list of sub elements."""
@@ -846,9 +910,10 @@ class BlockedElement(_BasixElementBase):
             repr, sub_element.family(), sub_element.cell_type.name, block_shape,
             sub_element._degree, sub_element._map, gdim=gdim)
 
-    def sobolev_space(self):
-        """Return the underlying Sobolev space."""
-        return self.sub_element.sobolev_space()
+    @property
+    def basix_sobolev_space(self):
+        """Return a Basix enum representing the underlying Sobolev space."""
+        return self.sub_element.basix_sobolev_space
 
     def sub_elements(self) -> _typing.List[_BasixElementBase]:
         """Return a list of sub elements."""
@@ -1169,6 +1234,9 @@ def create_element(
         if family in ["DP", "DG", "DQ"]:
             family = "P"
             discontinuous = True
+        if family == "CG":
+            family = "P"
+            discontinuous = False
         if family == "DPC":
             discontinuous = True
 
@@ -1246,14 +1314,21 @@ def create_tensor_element(
     return TensorElement(e, shape, symmetry, gdim=gdim)
 
 
-def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _FiniteElementBase:
+def _create_enriched_element(
+    elements: _typing.List[_BasixElementBase], map_type: _basix.MapType = None
+) -> _BasixElementBase:
     """Create an enriched element from a list of elements."""
     ct = elements[0].cell_type
     vshape = elements[0].value_shape()
     vsize = elements[0].value_size
-    mt = elements[0].map_type
+    if map_type is None:
+        map_type = elements[0].map_type
+        for e in elements:
+            if e.map_type != map_type:
+                raise ValueError("Enriched elements on different map types not supported.")
     hcd = min(e.highest_complete_degree for e in elements)
     hd = max(e.highest_degree for e in elements)
+    ss = _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in elements])
     discontinuous = True
     for e in elements:
         if not e.discontinuous:
@@ -1262,8 +1337,6 @@ def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _Fin
             raise ValueError("Enriched elements on different cell types not supported.")
         if e.value_shape() != vshape or e.value_size != vsize:
             raise ValueError("Enriched elements on different value shapes not supported.")
-        if e.map_type != mt:
-            raise ValueError("Enriched elements on different map types not supported.")
     nderivs = max(e.interpolation_nderivs for e in elements)
 
     x = []
@@ -1294,8 +1367,8 @@ def _create_enriched_element(elements: _typing.List[_FiniteElementBase]) -> _Fin
             _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.highest_degree, hd)
         row += e.dim
 
-    return BasixElement(
-        _basix.create_custom_element(ct, vshape, wcoeffs, x, M, nderivs, mt, discontinuous, hcd, hd))
+    return BasixElement(_basix.create_custom_element(
+        ct, list(vshape), wcoeffs, x, M, nderivs, map_type, ss, discontinuous, hcd, hd))
 
 
 def convert_ufl_element(

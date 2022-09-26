@@ -32,6 +32,7 @@ jobs:
       - name: Install Basix
         run: |
           source /opt/rh/gcc-toolset-11/enable
+          python3 -m pip install git+https://github.com/FEniCS/ufl.git
           python3 -m pip install .[test]
 
       - name: Run units tests

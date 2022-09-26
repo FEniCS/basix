@@ -29,6 +29,7 @@ jobs:
       - name: Install Basix
         run: |
           pip install scikit-build
+          pip install git+https://github.com/FEniCS/ufl.git
           pip -v install .[ci]
 
       - name: Run units tests

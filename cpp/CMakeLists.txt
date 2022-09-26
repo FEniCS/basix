@@ -48,6 +48,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/sobolev-spaces.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-lagrange.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nce-rtc.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-brezzi-douglas-marini.h
@@ -75,6 +76,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/sobolev-spaces.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-lagrange.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nce-rtc.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-brezzi-douglas-marini.cpp

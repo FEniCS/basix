@@ -10,6 +10,7 @@
 #include "mdspan.hpp"
 #include "polyset.h"
 #include "quadrature.h"
+#include "sobolev-spaces.h"
 #include <array>
 #include <vector>
 
@@ -94,7 +95,7 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
 
   return FiniteElement(element::family::Hermite, celltype, degree, {},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                       xview, Mview, 1, maps::type::identity, discontinuous, -1,
-                       degree);
+                       xview, Mview, 1, maps::type::identity,
+                       sobolev::space::H2, discontinuous, -1, degree);
 }
 //-----------------------------------------------------------------------------

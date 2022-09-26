@@ -8,6 +8,7 @@
 #include "maps.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include "sobolev-spaces.h"
 #include <array>
 #include <vector>
 
@@ -181,6 +182,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   impl::mdspan2_t wview(wcoeffs.data(), wcoeffs.extents());
   return FiniteElement(element::family::bubble, celltype, degree, {}, wview,
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                       maps::type::identity, discontinuous, -1, degree);
+                       maps::type::identity, sobolev::space::H1, discontinuous,
+                       -1, degree);
 }
 //-----------------------------------------------------------------------------

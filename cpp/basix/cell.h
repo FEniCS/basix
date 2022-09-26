@@ -113,6 +113,12 @@ std::vector<bool> facet_orientations(cell::type cell_type);
 // FIXME: This could be a std::vector<double>
 std::vector<double> facet_reference_volumes(cell::type cell_type);
 
+/// Get the reference volumes of the edges of a reference cell
+/// @param cell_type Type of cell
+/// @return The volumes of the references associated with each edge
+// FIXME: This could be a std::vector<double>
+std::vector<double> edge_reference_volumes(cell::type cell_type);
+
 /// Get the types of the subentities of a reference cell
 /// @param cell_type Type of cell
 /// @return The subentity types. Indices are (tdim, entity)
@@ -123,5 +129,11 @@ std::vector<std::vector<cell::type>> subentity_types(cell::type cell_type);
 /// @return The jacobians of the facets. Shape is (nfacets, gdim, gdim - 1)
 std::pair<std::vector<double>, std::array<std::size_t, 3>>
 facet_jacobians(cell::type cell_type);
+
+/// Get the jacobians of the edges of a reference cell
+/// @param cell_type Type of cell
+/// @return The jacobians of the edges. Shape is (nedges, gdim, gdim - 2)
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+edge_jacobians(cell::type cell_type);
 
 } // namespace basix::cell

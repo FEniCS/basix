@@ -127,6 +127,16 @@ Returns:
     {{cell.h > facet_jacobians > return}}
 )";
 
+{{DOCTYPE}} cell_edge_jacobians = R"(
+{{cell.h > edge_jacobians > doc}}
+
+Args:
+    {{cell.h > edge_jacobians > param > cell_type}}
+
+Returns:
+    {{cell.h > edge_jacobians > return}}
+)";
+
 {{DOCTYPE}} FiniteElement__tabulate = R"(
 {{finite-element.h > FiniteElement::tabulate > doc}}
 

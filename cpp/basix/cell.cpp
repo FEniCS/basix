@@ -505,6 +505,19 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
   return orientations;
 }
 //-----------------------------------------------------------------------------
+std::vector<double> cell::edge_reference_volumes(cell::type cell_type)
+{
+  const int tdim = cell::topological_dimension(cell_type);
+  const std::vector<cell::type> edge_types
+      = cell::subentity_types(cell_type)[tdim - 2];
+
+  std::vector<double> out;
+  for (auto& edge_type : edge_types)
+    out.push_back(cell::volume(edge_type));
+
+  return out;
+}
+//-----------------------------------------------------------------------------
 std::vector<double> cell::facet_reference_volumes(cell::type cell_type)
 {
   const int tdim = cell::topological_dimension(cell_type);
@@ -601,9 +614,38 @@ cell::facet_jacobians(cell::type cell_type)
   for (std::size_t f = 0; f < facets.size(); ++f)
   {
     const std::vector<int>& facet = facets[f];
-    for (std::size_t j = 0; j < tdim - 1; ++j)
+    for (std::size_t j = 0; j < J.extent(2); ++j)
       for (std::size_t k = 0; k < J.extent(1); ++k)
         J(f, k, j) = x(facet[1 + j], k) - x(facet[0], k);
+  }
+
+  return {std::move(jacobians), std::move(shape)};
+}
+//-----------------------------------------------------------------------------
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+cell::edge_jacobians(cell::type cell_type)
+{
+  const std::size_t tdim = cell::topological_dimension(cell_type);
+  if (tdim != 3)
+  {
+    throw std::runtime_error(
+        "Edge jacobians not supported for this cell type.");
+  }
+
+  const auto [_x, xshape] = cell::geometry(cell_type);
+  cmdspan2_t x(_x.data(), xshape);
+  const std::vector<std::vector<int>> edges
+      = cell::topology(cell_type)[tdim - 2];
+
+  std::array<std::size_t, 3> shape = {edges.size(), tdim, tdim - 2};
+  std::vector<double> jacobians(shape[0] * shape[1] * shape[2]);
+  mdspan3_t J(jacobians.data(), shape);
+  for (std::size_t e = 0; e < edges.size(); ++e)
+  {
+    const std::vector<int>& edge = edges[e];
+    for (std::size_t j = 0; j < J.extent(2); ++j)
+      for (std::size_t k = 0; k < J.extent(1); ++k)
+	J(e, k, j) = x(edge[1 + j], k) - x(edge[0], k);
   }
 
   return {std::move(jacobians), std::move(shape)};

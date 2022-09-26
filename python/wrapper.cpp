@@ -196,6 +196,14 @@ Interface to the Basix C++ library.
         return py::array_t<double>(shape, J.data());
       },
       basix::docstring::cell_facet_jacobians.c_str());
+  m.def(
+      "cell_edge_jacobians",
+      [](cell::type cell_type)
+      {
+        auto [J, shape] = cell::edge_jacobians(cell_type);
+        return py::array_t<double>(shape, J.data());
+      },
+      basix::docstring::cell_edge_jacobians.c_str());
 
   py::enum_<element::family>(m, "ElementFamily")
       .value("custom", element::family::custom)

@@ -1,6 +1,7 @@
 """Functions to directly wrap Basix elements in UFL."""
 
 from abc import abstractmethod as _abstractmethod
+from warnings import warn
 
 import ufl as _ufl
 from ufl.finiteelement.finiteelementbase import FiniteElementBase as _FiniteElementBase
@@ -1235,6 +1236,8 @@ def create_element(
             family = "P"
             discontinuous = True
         if family == "CG":
+            warn("\"CG\" element name is deprecated. Consider using \"Lagrange\" or \"P\" instead",
+                 DeprecationWarning, stacklevel=2)
             family = "P"
             discontinuous = False
         if family == "DPC":

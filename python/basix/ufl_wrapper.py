@@ -19,6 +19,32 @@ from ufl.algorithms.estimate_degrees import IrreducibleInt as _IrreducibleInt
 _nda_f64 = _numpy_typing.NDArray[_numpy.float64]
 
 
+_spacemap = {
+    _basix.SobolevSpace.L2: _ufl.sobolevspace.L2,
+    _basix.SobolevSpace.H1: _ufl.sobolevspace.H1,
+    _basix.SobolevSpace.H2: _ufl.sobolevspace.H2,
+    _basix.SobolevSpace.HInf: _ufl.sobolevspace.HInf,
+    _basix.SobolevSpace.HDiv: _ufl.sobolevspace.HDiv,
+    _basix.SobolevSpace.HCurl: _ufl.sobolevspace.HCurl,
+    _basix.SobolevSpace.HEin: _ufl.sobolevspace.HEin,
+    _basix.SobolevSpace.HDivDiv: _ufl.sobolevspace.HDivDiv,
+}
+
+
+def ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
+    """Convert a Basix Sobolev space enum to a UFL Sobolev space.
+
+    Args:
+        s: The Basix Sobolev space
+
+    Returns:
+        UFL Sobolev space
+    """
+    if s not in _spacemap:
+        raise ValueError(f"Could not convert to UFL Sobolev space: {s.name}")
+    return _spacemap[s]
+
+
 class _BasixElementBase(_FiniteElementBase):
     """A base wrapper to allow Basix elements to be used with UFL.
 
@@ -275,7 +301,7 @@ class _BasixElementBase(_FiniteElementBase):
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
-        return getattr(_ufl.sobolevspace, self.basix_sobolev_space)
+        return ufl_sobolev_space_from_enum(self.basix_sobolev_space)
 
     @property
     @_abstractmethod

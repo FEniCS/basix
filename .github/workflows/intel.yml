@@ -40,6 +40,7 @@ jobs:
           . /opt/intel/oneapi/setvars.sh
           export CMAKE_ARGS="-DDOWNLOAD_XTENSOR_LIBS:BOOL=true"
           pip install scikit-build
+          pip install git+https://github.com/FEniCS/ufl.git
           pip -v install .[test]
       - name: Run units tests
         # LD_PRELOAD is required to 'fix' library resolution problems

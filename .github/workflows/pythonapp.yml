@@ -38,6 +38,7 @@ jobs:
           sudo apt-get update
           sudo apt-get -y upgrade
           sudo apt-get install -y doxygen libgraphviz-dev libopenblas-dev liblapack-dev ninja-build
+          pip install git+https://github.com/FEniCS/ufl.git
           pip install scikit-build
 
       - name: Install Basix
@@ -168,7 +169,9 @@ jobs:
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
 
       - name: Install CI dependencies
-        run: pip install pytest sympy numba scipy matplotlib fenics-ufl pytest-xdist pybind11
+        run: |
+          pip install pytest sympy numba scipy matplotlib pytest-xdist pybind11
+          pip install git+https://github.com/FEniCS/ufl.git
 
       - name: Install Basix
         run: |

@@ -20,14 +20,14 @@ _nda_f64 = _numpy_typing.NDArray[_numpy.float64]
 
 
 _spacemap = {
-    basix.SobolevSpace.L2: ufl.sobolevspace.L2,
-    basix.SobolevSpace.H1: ufl.sobolevspace.H1,
-    basix.SobolevSpace.H2: ufl.sobolevspace.H2,
-    basix.SobolevSpace.HInf: ufl.sobolevspace.HInf,
-    basix.SobolevSpace.HDiv: ufl.sobolevspace.HDiv,
-    basix.SobolevSpace.HCurl: ufl.sobolevspace.HCurl,
-    basix.SobolevSpace.HEin: ufl.sobolevspace.HEin,
-    basix.SobolevSpace.HDivDiv: ufl.sobolevspace.HDivDiv,
+    _basix.SobolevSpace.L2: _ufl.sobolevspace.L2,
+    _basix.SobolevSpace.H1: _ufl.sobolevspace.H1,
+    _basix.SobolevSpace.H2: _ufl.sobolevspace.H2,
+    _basix.SobolevSpace.HInf: _ufl.sobolevspace.HInf,
+    _basix.SobolevSpace.HDiv: _ufl.sobolevspace.HDiv,
+    _basix.SobolevSpace.HCurl: _ufl.sobolevspace.HCurl,
+    _basix.SobolevSpace.HEin: _ufl.sobolevspace.HEin,
+    _basix.SobolevSpace.HDivDiv: _ufl.sobolevspace.HDivDiv,
 }
 
 

@@ -97,6 +97,16 @@ Returns:
     {{cell.h > facet_reference_volumes > return}}
 )";
 
+{{DOCTYPE}} cell_edge_reference_volumes = R"(
+{{cell.h > edge_reference_volumes > doc}}
+
+Args:
+    {{cell.h > edge_reference_volumes > param > cell_type}}
+
+Returns:
+    {{cell.h > edge_reference_volumes > return}}
+)";
+
 {{DOCTYPE}} cell_facet_outward_normals = R"(
 {{cell.h > facet_outward_normals > doc}}
 

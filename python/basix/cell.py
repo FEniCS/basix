@@ -2,6 +2,7 @@
 
 from ._basixcpp import cell_volume as volume  # noqa: F401
 from ._basixcpp import cell_facet_reference_volumes as facet_reference_volumes  # noqa: F401
+from ._basixcpp import cell_edge_reference_volumes as edge_reference_volumes  # noqa: F401
 from ._basixcpp import cell_facet_normals as facet_normals  # noqa: F401
 from ._basixcpp import cell_facet_outward_normals as facet_outward_normals  # noqa: F401
 from ._basixcpp import cell_facet_orientations as facet_orientations  # noqa: F401

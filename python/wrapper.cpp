@@ -179,6 +179,15 @@ Interface to the Basix C++ library.
       },
       basix::docstring::cell_facet_reference_volumes.c_str());
   m.def(
+      "cell_edge_reference_volumes",
+      [](cell::type cell_type)
+      {
+        std::vector<double> v = cell::edge_reference_volumes(cell_type);
+        std::array<std::size_t, 1> shape = {v.size()};
+        return py::array_t<double>(shape, v.data());
+      },
+      basix::docstring::cell_edge_reference_volumes.c_str());
+  m.def(
       "cell_facet_outward_normals",
       [](cell::type cell_type)
       {

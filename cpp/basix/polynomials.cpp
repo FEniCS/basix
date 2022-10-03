@@ -83,51 +83,67 @@ tabulate_bernstein(cell::type celltype, int d, cmdspan2_t x)
   for (std::size_t i = 0; i < shape[1]; ++i)
     B(0, i) = 1.0;
 
-  // 2D version
-  auto idx = [&d](int i, int j) { return i + ((2 * d + 3) * j - j * j) / 2; };
-
-  // Work up through n
-  for (std::size_t n = 1; n < d + 1; ++n)
+  if (celltype == cell::type::interval)
   {
-    // Start with i+j=n and work back down to i=j=0
-    for (std::size_t w = 0; w < n + 1; ++w)
-    {
-      for (std::size_t i = 0; i < n - w + 1; ++i)
-      {
-        const std::size_t j = n - w - i;
-        const int index = idx(i, j);
-        // B(i, j, n) = lambdas[0] * B(i, j, n-1) + lambdas[1] * B(i-1, j, n-1)
-        // + lambdas[2] * B(i, j-1, n-1)
 
-        if (i + j < n)
+    // Work up through n
+    for (std::size_t n = 1; n < d + 1; ++n)
+    {
+      // Start with i=n and work back down to i=0
+      for (std::size_t w = 0; w < n + 1; ++w)
+      {
+        const std::size_t i = n - w;
+        // B(i, n) = lambdas[0] * B(i, n-1)
+        //         + lambdas[1] * B(i-1, n-1)
+
+        if (i < n)
+        {
           for (std::size_t p = 0; p < shape[1]; ++p)
-            B(index, p) *= lambdas(0, p);
+            B(i, p) *= lambdas(0, p);
+        }
         if (i > 0)
         {
-          const int idxi1 = idx(i - 1, j);
           for (std::size_t p = 0; p < shape[1]; ++p)
-            B(index, p) += lambdas(1, p) * B(idxi1, p);
+            B(i, p) += lambdas(1, p) * B(i - 1, p);
         }
-        if (j > 0)
-        {
-          const int idxj1 = idx(i, j - 1);
-          for (std::size_t p = 0; p < shape[1]; ++p)
-            B(index, p) += lambdas(2, p) * B(idxj1, p);
-        }
+      }
+    }
+  }
+  else if (celltype == cell::type::triangle)
+  {
+    // 2D version
+    auto idx = [&d](int i, int j) { return i + ((2 * d + 3) * j - j * j) / 2; };
 
-        //   for (std::size_t p = 0; p < shape[1]; ++p)
-        //   {
-        //     double Bij = (i + j < n) ? B(index, p) : 0.0;
-        //     double Bim1 = (i > 0) ? B(idx(i - 1, j), p) : 0.0;
-        //     double Bjm1 = (j > 0) ? B(idx(i, j - 1), p) : 0.0;
-        //     B(index, p) = lambdas(0, p) * Bij + lambdas(1, p) * Bim1
-        //                   + lambdas(2, p) * Bjm1;
-        //     std::cout << "n = " << n << "  (" << i << "," << j << ") =
-        //     Index["
-        //               << index << "] = l0*" << Bij << " + l1*" << Bim1 << "+
-        //               l2*"
-        //               << Bjm1 << "\n";
-        //   }
+    // Work up through n
+    for (std::size_t n = 1; n < d + 1; ++n)
+    {
+      // Start with i+j=n and work back down to i=j=0
+      for (std::size_t w = 0; w < n + 1; ++w)
+      {
+        for (std::size_t i = 0; i < n - w + 1; ++i)
+        {
+          const std::size_t j = n - w - i;
+          const int index = idx(i, j);
+          // B(i, j, n) = lambdas[0] * B(i, j, n-1)
+          //            + lambdas[1] * B(i-1, j, n-1)
+          //            + lambdas[2] * B(i, j-1, n-1)
+
+          if (i + j < n)
+            for (std::size_t p = 0; p < shape[1]; ++p)
+              B(index, p) *= lambdas(0, p);
+          if (i > 0)
+          {
+            const int idxi1 = idx(i - 1, j);
+            for (std::size_t p = 0; p < shape[1]; ++p)
+              B(index, p) += lambdas(1, p) * B(idxi1, p);
+          }
+          if (j > 0)
+          {
+            const int idxj1 = idx(i, j - 1);
+            for (std::size_t p = 0; p < shape[1]; ++p)
+              B(index, p) += lambdas(2, p) * B(idxj1, p);
+          }
+        }
       }
     }
   }

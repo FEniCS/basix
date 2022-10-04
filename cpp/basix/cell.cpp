@@ -20,26 +20,27 @@ cell::geometry(cell::type celltype)
 {
   switch (celltype)
   {
-  case cell::type::point:
+  using enum cell::type;
+  case point:
     return {{}, {0, 1}};
-  case cell::type::interval:
+  case interval:
     return {{0.0, 1.0}, {2, 1}};
-  case cell::type::triangle:
+  case triangle:
     return {{0.0, 0.0, 1.0, 0.0, 0.0, 1.0}, {3, 2}};
-  case cell::type::quadrilateral:
+  case quadrilateral:
     return {{0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0}, {4, 2}};
-  case cell::type::tetrahedron:
+  case tetrahedron:
     return {{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0},
             {4, 3}};
-  case cell::type::prism:
+  case prism:
     return {{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0,
              0.0, 1.0, 0.0, 1.0, 1.0},
             {6, 3}};
-  case cell::type::pyramid:
+  case pyramid:
     return {{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0,
              0.0, 1.0},
             {5, 3}};
-  case cell::type::hexahedron:
+  case hexahedron:
     return {{0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0,
              0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0},
             {8, 3}};
@@ -52,11 +53,12 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
 {
   switch (celltype)
   {
-  case cell::type::point:
+	using enum cell::type;
+  case point:
     return {{{0}}};
-  case cell::type::interval:
+  case interval:
     return {{{0}, {1}}, {{0, 1}}};
-  case cell::type::triangle:
+  case triangle:
   {
     std::vector<std::vector<std::vector<int>>> t(3);
     // Vertices
@@ -67,7 +69,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     t[2] = {{0, 1, 2}};
     return t;
   }
-  case cell::type::quadrilateral:
+  case quadrilateral:
   {
     std::vector<std::vector<std::vector<int>>> t(3);
     // Vertices
@@ -78,7 +80,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     t[2] = {{0, 1, 2, 3}};
     return t;
   }
-  case cell::type::tetrahedron:
+  case tetrahedron:
   {
     std::vector<std::vector<std::vector<int>>> t(4);
     // Vertices
@@ -91,7 +93,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     t[3] = {{0, 1, 2, 3}};
     return t;
   }
-  case cell::type::prism:
+  case prism:
   {
     std::vector<std::vector<std::vector<int>>> t(4);
     // Vertices
@@ -105,7 +107,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     t[3] = {{0, 1, 2, 3, 4, 5}};
     return t;
   }
-  case cell::type::pyramid:
+  case pyramid:
   {
     std::vector<std::vector<std::vector<int>>> t(4);
     // Vertices
@@ -118,7 +120,7 @@ std::vector<std::vector<std::vector<int>>> cell::topology(cell::type celltype)
     t[3] = {{0, 1, 2, 3, 4}};
     return t;
   }
-  case cell::type::hexahedron:
+  case hexahedron:
   {
     std::vector<std::vector<std::vector<int>>> t(4);
     // Vertices
@@ -143,9 +145,10 @@ cell::sub_entity_connectivity(cell::type celltype)
 {
   switch (celltype)
   {
-  case cell::type::point:
+	using enum cell::type;
+  case point:
     return {{{{0}}}};
-  case cell::type::interval:
+  case interval:
   {
     std::vector<std::vector<std::vector<std::vector<int>>>> t(2);
     // Vertices
@@ -154,7 +157,7 @@ cell::sub_entity_connectivity(cell::type celltype)
     t[1] = {{{0, 1}, {0}}};
     return t;
   }
-  case cell::type::triangle:
+  case triangle:
   {
     std::vector<std::vector<std::vector<std::vector<int>>>> t(3);
     // Vertices
@@ -165,7 +168,7 @@ cell::sub_entity_connectivity(cell::type celltype)
     t[2] = {{{0, 1, 2}, {0, 1, 2}, {0}}};
     return t;
   }
-  case cell::type::quadrilateral:
+  case quadrilateral:
   {
     std::vector<std::vector<std::vector<std::vector<int>>>> t(3);
     // Vertices
@@ -182,7 +185,7 @@ cell::sub_entity_connectivity(cell::type celltype)
     t[2] = {{{0, 1, 2, 3}, {0, 1, 2, 3}, {0}}};
     return t;
   }
-  case cell::type::tetrahedron:
+  case tetrahedron:
   {
     std::vector<std::vector<std::vector<std::vector<int>>>> t(4);
     // Vertices
@@ -205,7 +208,7 @@ cell::sub_entity_connectivity(cell::type celltype)
     t[3] = {{{0, 1, 2, 3}, {0, 1, 2, 3, 4, 5}, {0, 1, 2, 3}, {0}}};
     return t;
   }
-  case cell::type::hexahedron:
+  case hexahedron:
   {
     std::vector<std::vector<std::vector<std::vector<int>>>> t(4);
     // Vertices
@@ -235,7 +238,7 @@ cell::sub_entity_connectivity(cell::type celltype)
              {0}}};
     return t;
   }
-  case cell::type::prism:
+  case prism:
   {
     std::vector<std::vector<std::vector<std::vector<int>>>> t(4);
     // Vertices
@@ -261,7 +264,7 @@ cell::sub_entity_connectivity(cell::type celltype)
              {0}}};
     return t;
   }
-  case cell::type::pyramid:
+  case pyramid:
   {
     std::vector<std::vector<std::vector<std::vector<int>>>> t(4);
     // Vertices
@@ -294,21 +297,22 @@ int cell::topological_dimension(cell::type cell_type)
 {
   switch (cell_type)
   {
-  case cell::type::point:
+	using enum cell::type;
+  case point:
     return 0;
-  case cell::type::interval:
+  case interval:
     return 1;
-  case cell::type::triangle:
+  case triangle:
     return 2;
-  case cell::type::quadrilateral:
+  case quadrilateral:
     return 2;
-  case cell::type::tetrahedron:
+  case tetrahedron:
     return 3;
-  case cell::type::hexahedron:
+  case hexahedron:
     return 3;
-  case cell::type::prism:
+  case prism:
     return 3;
-  case cell::type::pyramid:
+  case pyramid:
     return 3;
   default:
     throw std::runtime_error("Unsupported cell type");
@@ -345,7 +349,7 @@ int cell::num_sub_entities(cell::type celltype, int dim)
 {
   const std::vector<std::vector<std::vector<int>>> cell_topology
       = cell::topology(celltype);
-  return cell_topology.at(dim).size();
+  return static_cast<int>(cell_topology.at(dim).size());
 }
 //----------------------------------------------------------------------------
 cell::type cell::sub_entity_type(cell::type celltype, int dim, int index)
@@ -490,7 +494,7 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
   {
     for (std::size_t j = 0; j < x.extent(0); ++j)
       midpoint[i] += x(j, i);
-    midpoint[i] /= x.extent(0);
+    midpoint[i] /= static_cast<double>(x.extent(0));
   }
 
   std::vector<bool> orientations(n.extent(0));

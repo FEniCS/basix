@@ -26,7 +26,7 @@ using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
 using map_data_t
     = std::tuple<std::function<std::array<double, 3>(std::span<const double>)>,
                  mdarray2_t, double, mdarray2_t>;
-typedef std::map<cell::type, std::vector<map_data_t>> mapinfo_t;
+using mapinfo_t = std::map<cell::type, std::vector<map_data_t>>;
 
 namespace
 {
@@ -38,7 +38,7 @@ int find_first_subentity(cell::type cell_type, cell::type entity_type)
   if (auto it = std::find(entities.begin(), entities.end(), entity_type);
       it != entities.end())
   {
-    return std::distance(entities.begin(), it);
+    return static_cast<int>(std::distance(entities.begin(), it));
   }
   else
     throw std::runtime_error("Entity not found");
@@ -50,7 +50,8 @@ void pull_back(maps::type map_type, Q&& u, const P& U, const R& J, double detJ,
 {
   switch (map_type)
   {
-  case maps::type::identity:
+  using enum maps::type;
+  case identity:
   {
     assert(U.extent(0) == u.extent(0));
     assert(U.extent(1) == u.extent(1));
@@ -59,16 +60,16 @@ void pull_back(maps::type map_type, Q&& u, const P& U, const R& J, double detJ,
         u(i, j) = U(i, j);
     return;
   }
-  case maps::type::covariantPiola:
+  case covariantPiola:
     maps::covariant_piola(u, U, K, 1.0 / detJ, J);
     return;
-  case maps::type::contravariantPiola:
+  case contravariantPiola:
     maps::contravariant_piola(u, U, K, 1.0 / detJ, J);
     return;
-  case maps::type::doubleCovariantPiola:
+  case doubleCovariantPiola:
     maps::double_covariant_piola(u, U, K, 1.0 / detJ, J);
     return;
-  case maps::type::doubleContravariantPiola:
+  case doubleContravariantPiola:
     maps::double_contravariant_piola(u, U, K, 1.0 / detJ, J);
     return;
   default:
@@ -94,7 +95,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     mdarray2_t J({0., 1., 1., 0.}, 2, 2);
     const double detJ = -1.;
     mdarray2_t K({0., 1., 1., 0.}, 2, 2);
-    data.push_back(std::tuple(map, J, detJ, K));
+    data.emplace_back(std::tuple(map, J, detJ, K));
     return mapinfo;
   }
   case cell::type::quadrilateral:
@@ -107,7 +108,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
     mdarray2_t J({-1., 0., 0., 1.}, 2, 2);
     double detJ = -1.;
     mdarray2_t K({-1., 0., 0., 1.}, 2, 2);
-    data.push_back(std::tuple(map, J, detJ, K));
+    data.emplace_back(std::tuple(map, J, detJ, K));
     return mapinfo;
   }
   case cell::type::tetrahedron:
@@ -121,7 +122,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
       mdarray2_t J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
       double detJ = -1.;
       mdarray2_t K({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
-      data.push_back(std::tuple(map, J, detJ, K));
+      data.emplace_back(std::tuple(map, J, detJ, K));
     }
 
     {
@@ -133,7 +134,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({0., 0., 1., 1., 0., 0., 0., 1., 0.}, 3, 3);
         double detJ = 1.0;
         mdarray2_t K({0., 1., 0., 0., 0., 1., 1., 0., 0.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<double, 3> {
@@ -142,7 +143,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
         double detJ = -1.0;
         mdarray2_t K({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
     }
 
@@ -159,7 +160,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
       mdarray2_t J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       double detJ = -1.9;
       mdarray2_t K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
-      data.push_back(std::tuple(map, J, detJ, K));
+      data.emplace_back(std::tuple(map, J, detJ, K));
     }
 
     {
@@ -171,7 +172,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = 1.0;
         mdarray2_t K({0., 1., 0., -1., 0., 0., 0., 0., 1.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<double, 3> {
@@ -180,7 +181,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = -1.0;
         mdarray2_t K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
     }
     return mapinfo;
@@ -196,7 +197,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
       mdarray2_t J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       double detJ = -1.0;
       mdarray2_t K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
-      data.push_back(std::tuple(map, J, detJ, K));
+      data.emplace_back(std::tuple(map, J, detJ, K));
     }
     {
       auto& data = mapinfo.try_emplace(cell::type::triangle).first->second;
@@ -207,7 +208,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({-1., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = 1.0;
         mdarray2_t K({0., 1., 0., -1., -1., 0., 0., 0., 1.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<double, 3> {
@@ -216,7 +217,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = -1.;
         mdarray2_t K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
     }
     {
@@ -228,7 +229,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({0., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         double detJ = 1.0;
         mdarray2_t K({0., 0., 1., 0., 1., 0., -1., 0., 0.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
       { // scope
         auto map = [](auto pt) -> std::array<double, 3> {
@@ -237,7 +238,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         double detJ = -1.;
         mdarray2_t K({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
     }
 
@@ -254,7 +255,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
       mdarray2_t J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       double detJ = -1.;
       mdarray2_t K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
-      data.push_back(std::tuple(map, J, detJ, K));
+      data.emplace_back(std::tuple(map, J, detJ, K));
     }
 
     {
@@ -266,7 +267,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = 1.;
         mdarray2_t K({0., 1., 0., -1., 0., 0., 0., 0., 1.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<double, 3> {
@@ -275,7 +276,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         double detJ = -1.;
         mdarray2_t K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
     }
 
@@ -288,7 +289,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({-1., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         double detJ = 1.;
         mdarray2_t K({0., 0., 1., 0., 1., 0., -1., 0., -1.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<double, 3> {
@@ -297,7 +298,7 @@ mapinfo_t get_mapinfo(cell::type cell_type)
         mdarray2_t J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         double detJ = -1.;
         mdarray2_t K({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
-        data.push_back(std::tuple(map, J, detJ, K));
+        data.emplace_back(std::tuple(map, J, detJ, K));
       }
     }
 
@@ -428,8 +429,8 @@ doftransforms::compute_entity_transformations(
   std::map<cell::type,
            std::pair<std::vector<double>, std::array<std::size_t, 3>>>
       out;
-  const mapinfo_t mapinfo = get_mapinfo(cell_type);
-  for (auto& [entity_type, emap_data] : mapinfo)
+  
+  for (const mapinfo_t mapinfo = get_mapinfo(cell_type); auto& [entity_type, emap_data] : mapinfo)
   {
     const int tdim = cell::topological_dimension(entity_type);
     const int entity = find_first_subentity(cell_type, entity_type);
@@ -447,7 +448,7 @@ doftransforms::compute_entity_transformations(
 
     out.try_emplace(entity_type,
                     std::pair(std::move(transform),
-                              std::array{emap_data.size(), ndofs, ndofs}));
+                              std::move(std::array{emap_data.size(), ndofs, ndofs})));
   }
 
   return out;

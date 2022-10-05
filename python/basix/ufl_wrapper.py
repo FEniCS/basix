@@ -1252,7 +1252,10 @@ def create_element(
     EF = _basix.ElementFamily
     if lagrange_variant == _basix.LagrangeVariant.unset:
         if family == EF.P:
-            lagrange_variant = _basix.LagrangeVariant.gll_warped
+            if degree <= 2:
+                lagrange_variant = _basix.LagrangeVariant.equispaced
+            else:
+                lagrange_variant = _basix.LagrangeVariant.gll_warped
         elif family in [EF.RT, EF.N1E]:
             lagrange_variant = _basix.LagrangeVariant.legendre
         elif family in [EF.serendipity, EF.BDM, EF.N2E]:

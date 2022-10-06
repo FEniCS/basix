@@ -1,6 +1,7 @@
 """Functions to directly wrap Basix elements in UFL."""
 
 from abc import abstractmethod as _abstractmethod
+from warnings import warn
 
 import ufl as _ufl
 from ufl.finiteelement.finiteelementbase import FiniteElementBase as _FiniteElementBase
@@ -1127,8 +1128,10 @@ class VectorElement(BlockedElement):
 
     def __init__(self, sub_element: _BasixElementBase, size: int = None, gdim: int = None):
         """Initialise the element."""
+        if gdim is None:
+            gdim = len(_basix.topology(sub_element.cell_type)) - 1
         if size is None:
-            size = len(_basix.topology(sub_element.cell_type)) - 1
+            size = gdim
         super().__init__(f"VectorElement({sub_element._repr}, {size})", sub_element, size, (size, ), gdim=gdim)
 
 
@@ -1138,9 +1141,10 @@ class TensorElement(BlockedElement):
     def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, int] = None, symmetric: bool = False,
                  gdim: int = None):
         """Initialise the element."""
+        if gdim is None:
+            gdim = len(_basix.topology(sub_element.cell_type)) - 1
         if shape is None:
-            size = len(_basix.topology(sub_element.cell_type)) - 1
-            shape = (size, size)
+            shape = (gdim, gdim)
         if symmetric:
             assert shape[0] == shape[1]
             bs = shape[0] * (shape[0] + 1) // 2
@@ -1235,6 +1239,8 @@ def create_element(
             family = "P"
             discontinuous = True
         if family == "CG":
+            warn("\"CG\" element name is deprecated. Consider using \"Lagrange\" or \"P\" instead",
+                 DeprecationWarning, stacklevel=2)
             family = "P"
             discontinuous = False
         if family == "DPC":

@@ -16,9 +16,10 @@
 extern "C" {
 #endif
 
-//@todo Could this be replaced by ufcx_finite_element? 
-// The following int values indicate the position of the values in the corresponding 
-// enum classes in basix
+/// @todo Could this be replaced by ufcx_finite_element? 
+/// C struct to collect all information on element necessary to call tabulate function
+/// The following int values indicate the position of the values in the corresponding 
+/// enum classes in basix
 typedef struct basix_element
 {    
   /// Basix identifier of the family 
@@ -33,7 +34,7 @@ typedef struct basix_element
   int dpc_variant;
   /// Indicates whether or not this is the discontinuous version of the element
   bool discontinuous;
-  //The geometric dimension
+  /// The geometric dimension
   int gdim;
 } basix_element;
 

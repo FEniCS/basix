@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Set the version
-project(Basix VERSION "0.5.2.0" LANGUAGES CXX)
+project(Basix VERSION "0.5.2.0" LANGUAGES CXX C)
 include(GNUInstallDirs)
 
 if(SKBUILD)
@@ -62,7 +62,8 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/mdspan.hpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/docs.h
-  ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h)
+  ${CMAKE_CURRENT_BINARY_DIR}/basix/version.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/cwrapper.h)
 
 target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/cell.cpp
@@ -87,10 +88,12 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-crouzeix-raviart.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-bubble.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-hermite.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp)
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-serendipity.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/cwrapper.cpp)
 
 # Configure the library
 set_target_properties(basix PROPERTIES PUBLIC_HEADER basix/finite-element.h)
+set_target_properties(basix PROPERTIES PUBLIC_HEADER basix/cwrapper.h)
 set_target_properties(basix PROPERTIES PRIVATE_HEADER "${HEADERS_basix}")
 target_include_directories(basix PUBLIC
   $<INSTALL_INTERFACE:include>

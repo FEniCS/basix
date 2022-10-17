@@ -38,7 +38,7 @@ jobs:
       - name: Install Basix
         run: |
           . /opt/intel/oneapi/setvars.sh
-          python3 -m pip -v install .[optional,test]
+          python3 -m pip -v install .[test]
       - name: Run units tests
         # LD_PRELOAD is required to 'fix' library resolution problems
         # when Numpy is not built against MKL

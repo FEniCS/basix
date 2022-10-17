@@ -32,7 +32,7 @@ jobs:
       - name: Install Basix
         run: |
           source /opt/rh/gcc-toolset-11/enable
-          python3 -m pip install .[optional,test]
+          python3 -m pip install .[test]
 
       - name: Run units tests
         run: |

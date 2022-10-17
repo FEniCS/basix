@@ -38,33 +38,28 @@ jobs:
           sudo apt-get update
           sudo apt-get -y upgrade
           sudo apt-get install -y doxygen libgraphviz-dev libopenblas-dev liblapack-dev ninja-build
-          pip install git+https://github.com/FEniCS/ufl.git
-          pip install scikit-build
 
       - name: Install Basix
-        run: pip -v install .[ci]
+        run: python3 -m pip -v install .[ci]
 
       - name: Lint with flake8
         run: |
-          pip install flake8
           flake8 --statistics test/
           flake8 --statistics python/
           flake8 --statistics demo/python
 
       - name: Run mypy checks
-        run: |
-          pip install mypy
-          python -m mypy python/basix
         if: matrix.python-version != '3.10'
+        run: |
+          python3 -m mypy python/basix
 
       - name: pydocstyle checks
         run: |
-          pip install pydocstyle
-          python -m pydocstyle python/basix
+          python3 -m pydocstyle python/basix
 
       - name: Run units tests
         run: |
-          pytest -n auto --durations 20 test/
+          python3 -m pytest -n auto --durations 20 test/
 
       - name: Run simple CMake integration test
         run: |
@@ -75,17 +70,17 @@ jobs:
 
       - name: Run Python demos
         run: |
-          pytest demo/python/test.py
+          python3 -m pytest demo/python/test.py
 
       - name: Run C++ demos
         run: |
+          python3 -m pip install skbuild
           export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
           export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$INSTALL_DIR/python/basix/lib/cmake:$INSTALL_DIR/python/basix/share/cmake
-          pytest demo/cpp/test.py
+          python3 -m pytest demo/cpp/test.py
 
       - name: Build documentation
         run: |
-          pip install git+https://github.com/FEniCS/ufl.git
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/cpp
           doxygen
@@ -169,17 +164,12 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
 
-      - name: Install CI dependencies
-        run: |
-          pip install pytest sympy numba scipy matplotlib pytest-xdist pybind11
-          pip install git+https://github.com/FEniCS/ufl.git
-
       - name: Install Basix
         run: |
           cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_XTENSOR_LIBS=ON -B build-dir -S .
           cmake --build build-dir
           sudo cmake --install build-dir
-          cd python && pip install .
+          cd python && pip install .[test]
 
       - name: Run units tests
         run: |

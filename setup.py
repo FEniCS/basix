@@ -1,8 +1,5 @@
 from skbuild import setup
 
-import sys
-import sysconfig
-
 from pathlib import Path
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
@@ -24,11 +21,10 @@ setup(name="fenics-basix",
       extras_require={
           "docs": ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"],
           "lint": ["flake8", "pydocstyle"],
-          "optional": ["numba"],
-          "test": ["pytest", "sympy", "numba", "scipy", "matplotlib", "fenics-ufl"],
-          "ci": ["pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]",
+          "optional": ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"],
+          "test": ["pytest", "sympy", "numba", "scipy", "matplotlib"],
+          "ci": ["mypy", "pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]",
                  "fenics-basix[test]"]
       },
-      cmake_args=['-DDOWNLOAD_XTENSOR_LIBS=ON'],
       package_dir={"": "python"},
       cmake_install_dir="python/basix/")

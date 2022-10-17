@@ -18,8 +18,8 @@ jobs:
     container: rockylinux/rockylinux:8
 
     env:
-      CC: gcc
-      CXX: g++
+      CC: gcc-11
+      CXX: g++-11
 
     steps:
       - name: Install dependencies
@@ -32,12 +32,10 @@ jobs:
       - name: Install Basix
         run: |
           source /opt/rh/gcc-toolset-11/enable
-          python3 -m pip install git+https://github.com/FEniCS/ufl.git
-          python3 -m pip install .[test]
+          python3 -m pip install .[optional,test]
 
       - name: Run units tests
         run: |
-          python3 -m pip install pytest-xdist
           python3 -m pytest -n auto --durations 20 test/
 
       - name: Run Python demos

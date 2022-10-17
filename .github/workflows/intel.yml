@@ -38,24 +38,20 @@ jobs:
       - name: Install Basix
         run: |
           . /opt/intel/oneapi/setvars.sh
-          export CMAKE_ARGS="-DDOWNLOAD_XTENSOR_LIBS:BOOL=true"
-          pip install scikit-build
-          pip install git+https://github.com/FEniCS/ufl.git
-          pip -v install .[test]
+          python3 -m pip -v install .[optional,test]
       - name: Run units tests
         # LD_PRELOAD is required to 'fix' library resolution problems
         # when Numpy is not built against MKL
         run: |
           . /opt/intel/oneapi/setvars.sh
-          pip install pytest-xdist
           export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
-          pytest -n auto --durations 20 test/
+          python3 -m pytest -n auto --durations 20 test/
 
       - name: Run Python demos
         run: |
           . /opt/intel/oneapi/setvars.sh
           export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
-          pytest demo/python/test.py
+          python3 -m pytest demo/python/test.py
 
       - name: Run C++ demos
         run: |
@@ -63,4 +59,4 @@ jobs:
           export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
           export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
           export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$INSTALL_DIR/python/basix/lib/cmake:$INSTALL_DIR/python/basix/share/cmake
-          pytest demo/cpp/test.py
+          python3 -m pytest demo/cpp/test.py

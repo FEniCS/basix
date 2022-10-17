@@ -9,8 +9,7 @@ on:
     branches:
       - "**"
     tags:
-      - "*.*.*.*"
-      - "*.*.*"
+      - "v*"
   pull_request:
     branches:
       - main
@@ -74,7 +73,7 @@ jobs:
 
       - name: Run C++ demos
         run: |
-          python3 -m pip install skbuild
+          python3 -m pip install scikit-build # Only installed previously in isolated environment
           export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
           export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$INSTALL_DIR/python/basix/lib/cmake:$INSTALL_DIR/python/basix/share/cmake
           python3 -m pytest demo/cpp/test.py
@@ -145,7 +144,7 @@ jobs:
           git push
 
   build-cmake:
-    name: Build using cmake and test
+    name: Build using C++ and Python parts separately and run tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -166,14 +165,16 @@ jobs:
 
       - name: Install Basix
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_XTENSOR_LIBS=ON -B build-dir -S .
+          cd cpp
+          cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
           cmake --build build-dir
           sudo cmake --install build-dir
-          cd python && pip install .[test]
+          cd python
+          python3 -m pip install .[test]
 
       - name: Run units tests
         run: |
-          pytest -n auto --durations 20 test/
+          python3 -m pytest -n auto --durations 20 test/
 
       - name: Run python demos
         run: |

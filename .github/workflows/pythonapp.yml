@@ -171,6 +171,7 @@ jobs:
           sudo cmake --install build-dir
 
       - name: Install Basix Python wrapper
+        run: |
           cd python
           python3 -m pip install .[test]
 

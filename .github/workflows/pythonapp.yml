@@ -177,6 +177,7 @@ jobs:
 
       - name: Run units tests
         run: |
+          python3 -m pip install pytest-xdist
           python3 -m pytest -n auto --durations 20 test/
 
       - name: Run python demos
@@ -210,5 +211,5 @@ jobs:
           python-version: "3.10"
       - name: Run C++ demos
         run: |
-          pip install pytest
-          pytest demo/cpp/test.py
+          python3 -m pip install pytest
+          python3 -m pytest demo/cpp/test.py

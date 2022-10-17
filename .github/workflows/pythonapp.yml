@@ -163,12 +163,14 @@ jobs:
       - name: Install dependencies
         run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
 
-      - name: Install Basix
+      - name: Install Basix C++ library
         run: |
           cd cpp
           cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
           cmake --build build-dir
           sudo cmake --install build-dir
+
+      - name: Install Basix Python wrapper
           cd python
           python3 -m pip install .[test]
 

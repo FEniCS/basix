@@ -161,12 +161,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev
 
       - name: Install Basix C++ library
         run: |
           cd cpp
-          cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S .
+          cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S . # Use make (not ninja)
           cmake --build build-dir
           sudo cmake --install build-dir
 
@@ -200,7 +200,7 @@ jobs:
 
       - name: Install Basix
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_XTENSOR_LIBS=ON -B build-dir -S cpp
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build-dir -S cpp
           cmake --build build-dir
           sudo cmake --install build-dir
 

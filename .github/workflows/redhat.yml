@@ -18,8 +18,8 @@ jobs:
     container: rockylinux/rockylinux:8
 
     env:
-      CC: gcc-11
-      CXX: g++-11
+      CC: gcc
+      CXX: g++
 
     steps:
       - name: Install dependencies

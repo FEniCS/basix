@@ -63,7 +63,7 @@ jobs:
       - name: Run simple CMake integration test
         run: |
           cd test/test_cmake
-          cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python -G Ninja -B build-dir -S .
+          cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python3 -G Ninja -B build-dir -S .
           cmake --build build-dir/
           build-dir/a.out
 
@@ -73,9 +73,6 @@ jobs:
 
       - name: Run C++ demos
         run: |
-          python3 -m pip install scikit-build # Only installed previously in isolated environment
-          export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
-          export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$INSTALL_DIR/python/basix/lib/cmake:$INSTALL_DIR/python/basix/share/cmake
           python3 -m pytest demo/cpp/test.py
 
       - name: Build documentation
@@ -180,9 +177,13 @@ jobs:
           python3 -m pip install pytest-xdist # in ci extras, but most not needed.
           python3 -m pytest -n auto --durations 20 test/
 
-      - name: Run python demos
+      - name: Run Python demos
         run: |
-          pytest demo/python/test.py
+          python3 -m pytest demo/python/test.py
+      
+      - name: Run C++ demos
+        run: |
+          python3 -m pytest demo/cpp/test.py
 
   build-cpp-only:
     name: Build C++ only and run demos

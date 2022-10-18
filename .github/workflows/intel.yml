@@ -15,7 +15,7 @@ jobs:
   build:
     name: Build and test
     runs-on: ubuntu-latest
-    container: ubuntu:latest  # Run in container to test with minimal pre-installed packages
+    container: ubuntu:22.04  # Run in container to test with minimal pre-installed packages
 
     env:
       CC: icx
@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Install required packages to install Intel compilers and to build
-        run: apt-get update && apt-get install -y cmake git gnupg ninja-build python3-pip wget
+        run: apt -y update && apt install -y cmake git gnupg ninja-build python3-pip wget
 
       - uses: actions/checkout@v3
 

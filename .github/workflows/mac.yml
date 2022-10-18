@@ -28,17 +28,16 @@ jobs:
 
       - name: Install Basix
         run: |
-          python3 -m pip -v install .[test]
+          python -m pip -v install .[test]
 
       - name: Run units tests
         run: | 
-          python3 -m pip install pytest-xdist
-          python3 -m pytest -n auto --durations 20 test/
+          python -m pip install pytest-xdist
+          python -m pytest -n auto --durations 20 test/
 
       - name: Run python demos
-        run: python3 -m pytest demo/python/test.py
+        run: python -m pytest demo/python/test.py
 
       - name: Run C++ demos
         run: |
-          python3 -m pip install scikit-build # Only installed previously in isolated build environment
-          python3 -m pytest demo/cpp/test.py
+          python -m pytest demo/cpp/test.py

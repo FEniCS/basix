@@ -37,13 +37,13 @@ jobs:
 
       - name: Install UFL (default branch)
         if: github.event_name != 'workflow_dispatch'
-        run: pip install git+https://github.com/FEniCS/ufl.git
+        run: python3 -m pip install git+https://github.com/FEniCS/ufl.git
       - name: Install UFL (specified branch)
         if: github.event_name == 'workflow_dispatch'
-        run: pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
+        run: python3 -m pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
 
       - name: Install Basix
-        run: pip -v install .
+        run: python3 -m pip -v install .[ci]
 
       - name: Get FFCx source (default branch)
         if: github.event_name != 'workflow_dispatch'
@@ -59,12 +59,9 @@ jobs:
           repository: FEniCS/ffcx
           ref: ${{ github.event.inputs.ffcx_branch }}
 
-      - name: Run mypy checks
-        run: |
-          python -m pip install mypy types-setuptools
-          python -m mypy ffcx/ffcx
-
       - name: Install FFCx
-        run: pip install ./ffcx[ci]
+        run: python3 -m pip install ./ffcx[ci]
+      - name: Run mypy checks
+        run: python3 -m mypy ffcx/ffcx
       - name: Run FFCx tests
-        run: python -m pytest -n auto ffcx/test
+        run: python3 -m pytest -n auto ffcx/test

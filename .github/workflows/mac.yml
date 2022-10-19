@@ -28,18 +28,16 @@ jobs:
 
       - name: Install Basix
         run: |
-          pip install scikit-build
-          pip install git+https://github.com/FEniCS/ufl.git
-          pip -v install .[ci]
+          python -m pip -v install .[test]
 
       - name: Run units tests
-        run: pytest -n auto --durations 20 test/
+        run: | 
+          python -m pip install pytest-xdist
+          python -m pytest -n auto --durations 20 test/
 
       - name: Run python demos
-        run: pytest demo/python/test.py
+        run: python -m pytest demo/python/test.py
 
       - name: Run C++ demos
         run: |
-          export INSTALL_DIR=$(pwd)/`python3 -c "import skbuild; print(skbuild.cmaker.CMAKE_INSTALL_DIR())"`
-          export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:$INSTALL_DIR/python/basix/lib/cmake:$INSTALL_DIR/python/basix/share/cmake
-          pytest demo/cpp/test.py
+          python -m pytest demo/cpp/test.py

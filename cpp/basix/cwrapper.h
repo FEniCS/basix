@@ -17,8 +17,9 @@ extern "C" {
 #endif
 
 //@todo Could this be replaced by ufcx_finite_element? 
-// The following int values indicate the position of the values in the corresponding 
-// enum classes in basix
+/// Basix element structure to map c basix element to C++ basix finite_element
+/// The following int values indicate the position of the values in the corresponding 
+/// enum classes in basix
 typedef struct basix_element
 {    
   /// Basix identifier of the family 
@@ -33,7 +34,7 @@ typedef struct basix_element
   int dpc_variant;
   /// Indicates whether or not this is the discontinuous version of the element
   bool discontinuous;
-  //The geometric dimension
+  /// The geometric dimension
   int gdim;
 } basix_element;
 

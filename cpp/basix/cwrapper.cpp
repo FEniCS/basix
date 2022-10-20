@@ -42,8 +42,6 @@ void basix_element_tabulate_shape(const basix_element *element, const unsigned i
     basix::element::lagrange_variant lvariant = static_cast<basix::element::lagrange_variant>(element->lagrange_variant);
     basix::element::dpc_variant dvariant = static_cast<basix::element::dpc_variant>(element->dpc_variant);
 
-    std::size_t gdim = element->gdim;
-
     //Create C++ basix element object
     basix::FiniteElement finite_element = basix::create_element(family, cell_type, k, lvariant,dvariant,element->discontinuous);
 
@@ -58,15 +56,17 @@ void basix_element_tabulate(const basix_element *element, const double* points,
                             const unsigned int num_points, const int nd, 
                             double* table_data, long unsigned int table_data_size)
 {
-     //Specify which element is needed
+    //Specify which element is needed
     basix::element::family family = static_cast<basix::element::family>(element->basix_family); 
     basix::cell::type cell_type = static_cast<basix::cell::type>(element->basix_cell_type); 
     int k = element->degree;
-    std::size_t gdim = element->gdim;
     basix::element::lagrange_variant lvariant = static_cast<basix::element::lagrange_variant>(element->lagrange_variant);
+    basix::element::dpc_variant dvariant = static_cast<basix::element::dpc_variant>(element->dpc_variant);
+
+    std::size_t gdim = element->gdim;
 
     //Create C++ basix element object
-    basix::FiniteElement finite_element = basix::create_element(family, cell_type, k, lvariant);
+    basix::FiniteElement finite_element = basix::create_element(family, cell_type, k, lvariant,dvariant,element->discontinuous);
 
     //Create span views on points and table values
     std::span<const double> points_view{points,num_points*gdim};

@@ -1,5 +1,6 @@
 import os
 import pytest
+import sys
 
 # Get all the demos in this folder
 path = os.path.dirname(os.path.realpath(__file__))
@@ -14,4 +15,4 @@ for folder in os.listdir(path):
 @pytest.mark.parametrize("demo", demos)
 def test_demo(demo):
     demo_build = f"{path}/{demo}/_build"
-    assert os.system(f"mkdir -p {demo_build} && cd {demo_build} && cmake .. && make && ./{demo}") == 0
+    assert os.system(f"mkdir -p {demo_build} && cd {demo_build} && cmake -DPython3_EXECUTABLE={sys.executable} .. && make && ./{demo}") == 0

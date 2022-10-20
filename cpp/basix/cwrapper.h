@@ -4,8 +4,8 @@
 
 // Declares a simple C API wrapper around C++.
 
-#ifndef BASIX_CWRAPPER_H_
-#define BASIX_CWRAPPER_H_
+#ifndef CWRAPPER_H_
+#define CWRAPPER_H_
 
 #include <stdbool.h>
 
@@ -16,10 +16,9 @@
 extern "C" {
 #endif
 
-/// @todo Could this be replaced by ufcx_finite_element? 
-/// C struct to collect all information on element necessary to call tabulate function
-/// The following int values indicate the position of the values in the corresponding 
-/// enum classes in basix
+//@todo Could this be replaced by ufcx_finite_element? 
+// The following int values indicate the position of the values in the corresponding 
+// enum classes in basix
 typedef struct basix_element
 {    
   /// Basix identifier of the family 
@@ -34,7 +33,7 @@ typedef struct basix_element
   int dpc_variant;
   /// Indicates whether or not this is the discontinuous version of the element
   bool discontinuous;
-  /// The geometric dimension
+  //The geometric dimension
   int gdim;
 } basix_element;
 
@@ -56,4 +55,4 @@ void basix_element_tabulate_shape(const basix_element *element, const unsigned i
 #endif
 
 
-#endif /* BASIX_CWRAPPER_H_ */
+#endif /*CWRAPPER_H_*/

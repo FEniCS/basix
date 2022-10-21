@@ -18,6 +18,10 @@ manylinux-x86_64-image = "manylinux2014"
 archs = ["x86_64", "aarch64"] # Forces arm65 build on x86_64 runner using emulation.
 before-build = "yum -y update && yum install -y openblas-devel ninja-build"
 
+[[tool.cibuildwheel.overrides]]
+select = "*aarch64"
+before-build = "yum -y update && yum install -y blas-devel ninja-build"
+
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"] # Forces arm64 build on x86_64 runner using cross-compilation.
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"

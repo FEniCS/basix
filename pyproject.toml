@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
 #build = ["cp{37,38,39}-manylinux_x86_64", "cp{37,38,39}-manylinux_aarch64", "cp{37,38,39}-macosx_x86_64", "cp{38,39}-macosx_arm64"]
-build = ["cp{38}-manylinux_aarch64", "cp{38}-macosx_arm64"]
+build = ["cp38-manylinux_aarch64", "cp38-macosx_arm64"]
 
 test-command = "cmake -DPython3_EXECUTABLE=$(which python) -G Ninja -B build-dir -S {project}/test/test_cmake && cmake --build build-dir/ && build-dir/a.out && python -m pytest -v -n auto --durations 20 {project}/test/"
 test-requires = ["pytest-xdist"]
@@ -15,13 +15,13 @@ test-skip = "*-macosx_arm64"
 manylinux-x86_64-image = "manylinux2014"
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "aarch64"] # Forces arm65 build on x86_64 runner using emulation.
+archs = ["x86_64", "aarch64"] # Forces arm64 build on x86_64 runner using emulation.
 before-build = "yum -y update && yum install -y openblas-devel ninja-build"
-
-[tool.cibuildwheel.overrides]
-select = "*aarch64" # Linux aarch64 builds
-before-build = "yum -y update && yum install -y blas-devel ninja-build"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"] # Forces arm64 build on x86_64 runner using cross-compilation.
 before-build = "export HOMEBREW_AUTO_UPDATING=0 && brew update && brew install ninja"
+
+[[tool.cibuildwheel.overrides]]
+select = "*aarch64" # Linux aarch64 builds
+before-build = "yum -y update && yum install -y blas-devel ninja-build"

@@ -3,9 +3,12 @@
 // SPDX-License-Identifier:    MIT
 
 #include "finite-element.h"
+#include "dof-transformations.h"
 #include "e-brezzi-douglas-marini.h"
 #include "e-bubble.h"
 #include "e-crouzeix-raviart.h"
+#include "e-hermite.h"
+#include "e-hhj.h"
 #include "e-lagrange.h"
 #include "e-nce-rtc.h"
 #include "e-nedelec.h"
@@ -14,17 +17,50 @@
 #include "e-serendipity.h"
 #include "math.h"
 #include "polyset.h"
-#include "version.h"
+#include <basix/version.h>
+#include <cmath>
 #include <numeric>
-#include <xtensor/xbuilder.hpp>
 
 #define str_macro(X) #X
 #define str(X) str_macro(X)
 
 using namespace basix;
+namespace stdex = std::experimental;
+using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+using mdspan3_t = stdex::mdspan<double, stdex::dextents<std::size_t, 3>>;
+using mdspan4_t = stdex::mdspan<double, stdex::dextents<std::size_t, 4>>;
+using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
+using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
+
+using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
+using mdarray3_t = stdex::mdarray<double, stdex::dextents<std::size_t, 3>>;
 
 namespace
 {
+//----------------------------------------------------------------------------
+/// This function orthogonalises and normalises the rows of a matrix in place
+void orthogonalise(mdspan2_t& wcoeffs)
+{
+  for (std::size_t i = 0; i < wcoeffs.extent(0); ++i)
+  {
+    for (std::size_t j = 0; j < i; ++j)
+    {
+      double a = 0;
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        a += wcoeffs(i, k) * wcoeffs(j, k);
+      for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+        wcoeffs(i, k) -= a * wcoeffs(j, k);
+    }
+
+    double norm = 0.0;
+    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+      norm += wcoeffs(i, k) * wcoeffs(i, k);
+
+    for (std::size_t k = 0; k < wcoeffs.extent(1); ++k)
+      wcoeffs(i, k) /= std::sqrt(norm);
+  }
+}
 //-----------------------------------------------------------------------------
 constexpr int compute_value_size(maps::type map_type, int dim)
 {
@@ -70,27 +106,29 @@ constexpr int num_transformations(cell::type cell_type)
   }
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2>
-compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
-                    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-                    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-                    int degree)
+std::pair<std::vector<double>, std::array<std::size_t, 2>>
+compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
+                    const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
+                    const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
+                    int degree, int nderivs)
 {
   std::size_t num_dofs(0), vs(0);
   for (auto& Md : M)
   {
     for (auto& Me : Md)
     {
-      num_dofs += Me.shape(0);
+      num_dofs += Me.extent(0);
       if (vs == 0)
-        vs = Me.shape(1);
-      else if (vs != Me.shape(1))
+        vs = Me.extent(1);
+      else if (vs != Me.extent(1))
         throw std::runtime_error("Inconsistent value size");
     }
   }
 
   std::size_t pdim = polyset::dim(cell_type, degree);
-  xt::xtensor<double, 3> D = xt::zeros<double>({num_dofs, vs, pdim});
+  mdarray3_t D(vs, pdim, num_dofs);
+  std::fill(D.data(), D.data() + D.size(), 0);
+  std::vector<double> Pb;
 
   // Loop over different dimensions
   std::size_t dof_index = 0;
@@ -100,109 +138,196 @@ compute_dual_matrix(cell::type cell_type, const xt::xtensor<double, 2>& B,
     for (std::size_t e = 0; e < x[d].size(); ++e)
     {
       // Evaluate polynomial basis at x[d]
-      const xt::xtensor<double, 2>& x_e = x[d][e];
-      xt::xtensor<double, 2> P;
-      if (x_e.shape(1) == 1 and x_e.shape(0) != 0)
+      cmdspan2_t x_e = x[d][e];
+      cmdspan3_t P;
+      if (x_e.extent(0) > 0)
       {
-        auto pts = xt::view(x_e, xt::all(), 0);
-        P = xt::view(polyset::tabulate(cell_type, degree, 0, pts), 0, xt::all(),
-                     xt::all());
-      }
-      else if (x_e.shape(0) != 0)
-      {
-        P = xt::view(polyset::tabulate(cell_type, degree, 0, x_e), 0, xt::all(),
-                     xt::all());
+        std::array<std::size_t, 3> shape;
+        std::tie(Pb, shape)
+            = polyset::tabulate(cell_type, degree, nderivs, x_e);
+        P = cmdspan3_t(Pb.data(), shape);
       }
 
-      // Me: [dof, vs, point]
-      const xt::xtensor<double, 3>& Me = M[d][e];
+      // Me: [dof, vs, point, deriv]
+      cmdspan4_t Me = M[d][e];
 
       // Compute dual matrix contribution
-      for (std::size_t i = 0; i < Me.shape(0); ++i)      // Dof index
-        for (std::size_t j = 0; j < Me.shape(1); ++j)    // Value index
-          for (std::size_t k = 0; k < Me.shape(2); ++k)  // Point
-            for (std::size_t l = 0; l < P.shape(1); ++l) // Polynomial term
-              D(dof_index + i, j, l) += Me(i, j, k) * P(k, l);
+      if (Me.extent(3) > 1)
+      {
+        for (std::size_t l = 0; l < Me.extent(3); ++l)       // Derivative
+          for (std::size_t m = 0; m < P.extent(1); ++m)      // Polynomial term
+            for (std::size_t i = 0; i < Me.extent(0); ++i)   // Dof index
+              for (std::size_t j = 0; j < Me.extent(1); ++j) // Value index
+                for (std::size_t k = 0; k < Me.extent(2); ++k) // Point
+                  D(j, m, dof_index + i) += Me(i, j, k, l) * P(l, m, k);
+      }
+      else
+      {
+        // Flatten and use matrix-matrix multiplication, possibly using
+        // BLAS for larger cases. We can do this straightforwardly when
+        // Me.extent(3) == 1 since we are contracting over one index
+        // only.
 
-      dof_index += M[d][e].shape(0);
+        std::vector<double> Pt_b(P.extent(2) * P.extent(1));
+        mdspan2_t Pt(Pt_b.data(), P.extent(2), P.extent(1));
+        for (std::size_t i = 0; i < Pt.extent(0); ++i)
+          for (std::size_t j = 0; j < Pt.extent(1); ++j)
+            Pt(i, j) = P(0, j, i);
+
+        std::vector<double> De_b(Me.extent(0) * Me.extent(1) * Pt.extent(1));
+        mdspan2_t De(De_b.data(), Me.extent(0) * Me.extent(1), Pt.extent(1));
+        math::dot(cmdspan2_t(Me.data_handle(), Me.extent(0) * Me.extent(1),
+                             Me.extent(2)),
+                  Pt, De);
+
+        // Expand and copy
+        for (std::size_t i = 0; i < Me.extent(0); ++i)
+          for (std::size_t j = 0; j < Me.extent(1); ++j)
+            for (std::size_t k = 0; k < P.extent(1); ++k)
+              D(j, k, dof_index + i) += De(i * Me.extent(1) + j, k);
+      }
+
+      dof_index += M[d][e].extent(0);
     }
   }
 
-  /// Flatten D and take transpose
-  auto Dt_flat = xt::transpose(
-      xt::reshape_view(D, {D.shape(0), D.shape(1) * D.shape(2)}));
+  // Flatten D
+  cmdspan2_t Df(D.data(), D.extent(0) * D.extent(1), D.extent(2));
 
-  return math::dot(B, Dt_flat);
+  std::array shape = {B.extent(0), Df.extent(1)};
+  std::vector<double> C(shape[0] * shape[1]);
+  math::dot(B, Df, mdspan2_t(C.data(), shape));
+  return {std::move(C), shape};
 }
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
+                                           element::lagrange_variant lvariant,
+                                           element::dpc_variant dvariant,
                                            bool discontinuous)
 {
+  if (family == element::family::custom)
+  {
+    throw std::runtime_error("Cannot create a custom element directly. Try "
+                             "using `create_custom_element` instead");
+  }
+  if (degree < 0)
+  {
+    throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
   switch (family)
   {
+  // P family
   case element::family::P:
-    return element::create_lagrange(
-        cell, degree, element::lagrange_variant::unset, discontinuous);
-  case element::family::BDM:
-    switch (cell)
-    {
-    case cell::type::quadrilateral:
-      return element::create_serendipity_div(cell, degree, discontinuous);
-    case cell::type::hexahedron:
-      return element::create_serendipity_div(cell, degree, discontinuous);
-    default:
-      return element::create_bdm(cell, degree, discontinuous);
-    }
+    if (dvariant != element::dpc_variant::unset)
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
+    return element::create_lagrange(cell, degree, lvariant, discontinuous);
   case element::family::RT:
   {
+    if (dvariant != element::dpc_variant::unset)
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_rtc(cell, degree, discontinuous);
+      return element::create_rtc(cell, degree, lvariant, discontinuous);
     case cell::type::hexahedron:
-      return element::create_rtc(cell, degree, discontinuous);
+      return element::create_rtc(cell, degree, lvariant, discontinuous);
     default:
-      return element::create_rt(cell, degree, discontinuous);
+      return element::create_rt(cell, degree, lvariant, discontinuous);
     }
   }
   case element::family::N1E:
   {
+    if (dvariant != element::dpc_variant::unset)
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_nce(cell, degree, discontinuous);
+      return element::create_nce(cell, degree, lvariant, discontinuous);
     case cell::type::hexahedron:
-      return element::create_nce(cell, degree, discontinuous);
+      return element::create_nce(cell, degree, lvariant, discontinuous);
     default:
-      return element::create_nedelec(cell, degree, discontinuous);
+      return element::create_nedelec(cell, degree, lvariant, discontinuous);
     }
   }
+  // S family
+  case element::family::serendipity:
+    return element::create_serendipity(cell, degree, lvariant, dvariant,
+                                       discontinuous);
+  case element::family::BDM:
+    switch (cell)
+    {
+    case cell::type::quadrilateral:
+      return element::create_serendipity_div(cell, degree, lvariant, dvariant,
+                                             discontinuous);
+    case cell::type::hexahedron:
+      return element::create_serendipity_div(cell, degree, lvariant, dvariant,
+                                             discontinuous);
+    default:
+      return element::create_bdm(cell, degree, lvariant, discontinuous);
+    }
   case element::family::N2E:
     switch (cell)
     {
     case cell::type::quadrilateral:
-      return element::create_serendipity_curl(cell, degree, discontinuous);
+      return element::create_serendipity_curl(cell, degree, lvariant, dvariant,
+                                              discontinuous);
     case cell::type::hexahedron:
-      return element::create_serendipity_curl(cell, degree, discontinuous);
+      return element::create_serendipity_curl(cell, degree, lvariant, dvariant,
+                                              discontinuous);
     default:
-      return element::create_nedelec2(cell, degree, discontinuous);
+      return element::create_nedelec2(cell, degree, lvariant, discontinuous);
     }
+  case element::family::DPC:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    return element::create_dpc(cell, degree, dvariant, discontinuous);
+  // Matrix elements
   case element::family::Regge:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (dvariant != element::dpc_variant::unset)
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_regge(cell, degree, discontinuous);
+  case element::family::HHJ:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (dvariant != element::dpc_variant::unset)
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
+    return element::create_hhj(cell, degree, discontinuous);
+  // Other elements
   case element::family::CR:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (dvariant != element::dpc_variant::unset)
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_cr(cell, degree, discontinuous);
   case element::family::bubble:
+    if (lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (dvariant != element::dpc_variant::unset)
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_bubble(cell, degree, discontinuous);
-  case element::family::serendipity:
-    return element::create_serendipity(
-        cell, degree, element::lagrange_variant::unset,
-        element::dpc_variant::unset, discontinuous);
-  case element::family::DPC:
-    return element::create_dpc(cell, degree, element::dpc_variant::unset,
-                               discontinuous);
+  case element::family::Hermite:
+    return element::create_hermite(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found.");
   }
@@ -213,17 +338,8 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::dpc_variant dvariant,
                                            bool discontinuous)
 {
-  switch (family)
-  {
-  case element::family::DPC:
-    return element::create_dpc(cell, degree, dvariant, discontinuous);
-  case element::family::serendipity:
-    return element::create_serendipity(cell, degree,
-                                       element::lagrange_variant::unset,
-                                       dvariant, discontinuous);
-  default:
-    throw std::runtime_error("Cannot pass a DPC variant to this element.");
-  }
+  return create_element(family, cell, degree, element::lagrange_variant::unset,
+                        dvariant, discontinuous);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
@@ -231,33 +347,16 @@ basix::FiniteElement basix::create_element(element::family family,
                                            element::lagrange_variant lvariant,
                                            bool discontinuous)
 {
-  switch (family)
-  {
-  case element::family::P:
-    return element::create_lagrange(cell, degree, lvariant, discontinuous);
-  case element::family::serendipity:
-    return element::create_serendipity(
-        cell, degree, lvariant, element::dpc_variant::unset, discontinuous);
-  default:
-    throw std::runtime_error("Cannot pass a Lagrange variant to this element.");
-  }
+  return create_element(family, cell, degree, lvariant,
+                        element::dpc_variant::unset, discontinuous);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           element::dpc_variant dvariant,
                                            bool discontinuous)
 {
-  switch (family)
-  {
-  case element::family::serendipity:
-    return element::create_serendipity(cell, degree, lvariant, dvariant,
-                                       discontinuous);
-  default:
-    throw std::runtime_error(
-        "Cannot pass a Lagrange variant and a DPC variant to this element.");
-  }
+  return create_element(family, cell, degree, element::lagrange_variant::unset,
+                        element::dpc_variant::unset, discontinuous);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
@@ -288,14 +387,13 @@ basix::FiniteElement basix::create_element(element::family family,
   return create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
-std::tuple<std::array<std::vector<xt::xtensor<double, 2>>, 4>,
-           std::array<std::vector<xt::xtensor<double, 3>>, 4>,
-           std::map<cell::type, xt::xtensor<double, 3>>>
-basix::element::make_discontinuous(
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
-    int tdim, int value_size)
+std::tuple<std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 2>>, 4>,
+           std::array<std::vector<std::vector<double>>, 4>,
+           std::array<std::vector<std::array<std::size_t, 4>>, 4>>
+element::make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
+                            const std::array<std::vector<cmdspan4_t>, 4>& M,
+                            std::size_t tdim, std::size_t value_size)
 {
   std::size_t npoints = 0;
   std::size_t Mshape0 = 0;
@@ -303,20 +401,35 @@ basix::element::make_discontinuous(
   {
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
-      npoints += x[i][j].shape(0);
-      Mshape0 += M[i][j].shape(0);
+      npoints += x[i][j].extent(0);
+      Mshape0 += M[i][j].extent(0);
     }
   }
+  const std::size_t nderivs = M[0][0].extent(3);
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations_out;
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M_out;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x_out;
+  std::array<std::vector<std::vector<double>>, 4> x_data;
+  std::array<std::vector<std::array<std::size_t, 2>>, 4> xshapes;
+  std::array<std::vector<std::vector<double>>, 4> M_data;
+  std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshapes;
+  for (std::size_t i = 0; i < tdim; ++i)
+  {
+    xshapes[i] = std::vector(x[i].size(), std::array<std::size_t, 2>{0, tdim});
+    x_data[i].resize(x[i].size());
 
-  xt::xtensor<double, 2> new_x
-      = xt::zeros<double>({npoints, static_cast<std::size_t>(tdim)});
+    Mshapes[i] = std::vector(
+        M[i].size(), std::array<std::size_t, 4>{0, value_size, 0, nderivs});
+    M_data[i].resize(M[i].size());
+  }
 
-  xt::xtensor<double, 3> new_M = xt::zeros<double>(
-      {Mshape0, static_cast<std::size_t>(value_size), npoints});
+  std::array<std::size_t, 2> xshape = {npoints, tdim};
+  std::vector<double> xb(xshape[0] * xshape[1]);
+  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> new_x(xb.data(),
+                                                               xshape);
+
+  std::array<std::size_t, 4> Mshape = {Mshape0, value_size, npoints, nderivs};
+  std::vector<double> Mb(Mshape[0] * Mshape[1] * Mshape[2] * Mshape[3]);
+  stdex::mdspan<double, stdex::dextents<std::size_t, 4>> new_M(Mb.data(),
+                                                               Mshape);
 
   int x_n = 0;
   int M_n = 0;
@@ -324,206 +437,404 @@ basix::element::make_discontinuous(
   {
     for (std::size_t j = 0; j < x[i].size(); ++j)
     {
-      xt::view(new_x, xt::range(x_n, x_n + x[i][j].shape(0)), xt::all())
-          .assign(x[i][j]);
-      xt::view(new_M, xt::range(M_n, M_n + M[i][j].shape(0)), xt::all(),
-               xt::range(x_n, x_n + x[i][j].shape(0)))
-          .assign(M[i][j]);
-      x_n += x[i][j].shape(0);
-      M_n += M[i][j].shape(0);
+      for (std::size_t k0 = 0; k0 < x[i][j].extent(0); ++k0)
+        for (std::size_t k1 = 0; k1 < x[i][j].extent(1); ++k1)
+          new_x(k0 + x_n, k1) = x[i][j](k0, k1);
+
+      for (std::size_t k0 = 0; k0 < M[i][j].extent(0); ++k0)
+        for (std::size_t k1 = 0; k1 < M[i][j].extent(1); ++k1)
+          for (std::size_t k2 = 0; k2 < M[i][j].extent(2); ++k2)
+            for (std::size_t k3 = 0; k3 < M[i][j].extent(3); ++k3)
+              new_M(k0 + M_n, k1, k2 + x_n, k3) = M[i][j](k0, k1, k2, k3);
+
+      x_n += x[i][j].extent(0);
+      M_n += M[i][j].extent(0);
     }
   }
 
-  x_out[tdim].push_back(new_x);
-  M_out[tdim].push_back(new_M);
+  x_data[tdim].push_back(xb);
+  xshapes[tdim].push_back(xshape);
+  M_data[tdim].push_back(Mb);
+  Mshapes[tdim].push_back(Mshape);
 
-  for (auto it = entity_transformations.begin();
-       it != entity_transformations.end(); ++it)
+  return {std::move(x_data), std::move(xshapes), std::move(M_data),
+          std::move(Mshapes)};
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement basix::create_custom_element(
+    cell::type cell_type, const std::vector<std::size_t>& value_shape,
+    const impl::cmdspan2_t& wcoeffs,
+    const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
+    const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
+    int interpolation_nderivs, maps::type map_type,
+    sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree)
+{
+  // Check that inputs are valid
+  const std::size_t psize = polyset::dim(cell_type, highest_degree);
+  const std::size_t value_size = std::reduce(
+      value_shape.begin(), value_shape.end(), 1, std::multiplies{});
+
+  const std::size_t deriv_count
+      = polyset::nderivs(cell_type, interpolation_nderivs);
+
+  const std::size_t tdim = cell::topological_dimension(cell_type);
+
+  std::size_t ndofs = 0;
+  for (std::size_t i = 0; i <= 3; ++i)
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+      ndofs += M[i][j].extent(0);
+
+  // Check that wcoeffs have the correct shape
+  if (wcoeffs.extent(1) != psize * value_size)
+    throw std::runtime_error("wcoeffs has the wrong number of columns");
+  if (wcoeffs.extent(0) != ndofs)
+    throw std::runtime_error("wcoeffs has the wrong number of rows");
+
+  // Check that x has the right shape
+  for (std::size_t i = 0; i < x.size(); ++i)
   {
-    entity_transformations_out[it->first]
-        = xt::xtensor<double, 3>({it->second.shape(0), 0, 0});
+    if (x[i].size()
+        != (i > tdim ? 0
+                     : static_cast<std::size_t>(
+                         cell::num_sub_entities(cell_type, i))))
+    {
+      throw std::runtime_error("x has the wrong number of entities");
+    }
+
+    for (const auto& xj : x[i])
+    {
+      if (xj.extent(1) != tdim)
+        throw std::runtime_error("x has a point with the wrong tdim");
+    }
   }
 
-  return {x_out, M_out, entity_transformations_out};
+  // Check that M has the right shape
+  for (std::size_t i = 0; i < M.size(); ++i)
+  {
+    if (M[i].size()
+        != (i > tdim ? 0
+                     : static_cast<std::size_t>(
+                         cell::num_sub_entities(cell_type, i))))
+      throw std::runtime_error("M has the wrong number of entities");
+    for (std::size_t j = 0; j < M[i].size(); ++j)
+    {
+      if (M[i][j].extent(2) != x[i][j].extent(0))
+      {
+        throw std::runtime_error(
+            "M has the wrong shape (dimension 2 is wrong)");
+      }
+      if (M[i][j].extent(1) != value_size)
+      {
+        throw std::runtime_error(
+            "M has the wrong shape (dimension 1 is wrong)");
+      }
+      if (M[i][j].extent(3) != deriv_count)
+      {
+        throw std::runtime_error(
+            "M has the wrong shape (dimension 3 is wrong)");
+      }
+    }
+  }
+
+  auto [dualmatrix, dualshape] = compute_dual_matrix(
+      cell_type, wcoeffs, x, M, highest_degree, interpolation_nderivs);
+  if (math::is_singular(cmdspan2_t(dualmatrix.data(), dualshape)))
+  {
+    throw std::runtime_error(
+        "Dual matrix is singular, there is an error in your inputs");
+  }
+
+  return basix::FiniteElement(
+      element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
+      x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
+      highest_complete_degree, highest_degree);
+}
+
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
+    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree,
+    element::lagrange_variant lvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    interpolation_nderivs, map_type, sobolev_space,
+                    discontinuous, highest_complete_degree, highest_degree,
+                    lvariant, element::dpc_variant::unset, tensor_factors)
+{
 }
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape,
-    const xt::xtensor<double, 2>& wcoeffs,
-    const std::map<cell::type, xt::xtensor<double, 3>>& entity_transformations,
-    const std::array<std::vector<xt::xtensor<double, 2>>, 4>& x,
-    const std::array<std::vector<xt::xtensor<double, 3>>, 4>& M,
-    maps::type map_type, bool discontinuous, int highest_degree,
-    int highest_complete_degree,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
+    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree,
+    element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors,
-    element::lagrange_variant lvariant, element::dpc_variant dvariant)
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    interpolation_nderivs, map_type, sobolev_space,
+                    discontinuous, highest_complete_degree, highest_degree,
+                    element::lagrange_variant::unset, dvariant, tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
+    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
+    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
+                    interpolation_nderivs, map_type, sobolev_space,
+                    discontinuous, highest_complete_degree, highest_degree,
+                    element::lagrange_variant::unset,
+                    element::dpc_variant::unset, tensor_factors)
+{
+}
+//-----------------------------------------------------------------------------
+FiniteElement::FiniteElement(
+    element::family family, cell::type cell_type, int degree,
+    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
+    const std::array<std::vector<cmdspan2_t>, 4>& x,
+    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
+    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree,
+    element::lagrange_variant lvariant, element::dpc_variant dvariant,
+    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+        tensor_factors)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
-      _map_type(map_type), _entity_transformations(entity_transformations),
-      _x(x), _discontinuous(discontinuous),
-      _degree_bounds({highest_complete_degree, highest_degree}),
+      _interpolation_nderivs(interpolation_nderivs),
+      _highest_degree(highest_degree),
+      _highest_complete_degree(highest_complete_degree),
+      _value_shape(value_shape), _map_type(map_type),
+      _sobolev_space(sobolev_space), _discontinuous(discontinuous),
       _tensor_factors(tensor_factors)
 {
-  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs, M, x, degree);
-  xt::xtensor<double, 2> B_cmajor({wcoeffs.shape(0), wcoeffs.shape(1)});
-  B_cmajor.assign(wcoeffs);
+  // Check that discontinuous elements only have DOFs on interior
+  if (discontinuous)
+  {
+    for (std::size_t i = 0; i < _cell_tdim; ++i)
+    {
+      for (auto& xi : x[i])
+      {
+        if (xi.extent(0) > 0)
+        {
+          throw std::runtime_error(
+              "Discontinuous element can only have interior DOFs.");
+        }
+      }
+    }
+  }
+
+  // Copy x
+  for (std::size_t i = 0; i < x.size(); ++i)
+  {
+    for (auto& xi : x[i])
+    {
+      _x[i].emplace_back(
+          std::vector(xi.data_handle(), xi.data_handle() + xi.size()),
+          std::array{xi.extent(0), xi.extent(1)});
+    }
+  }
+
+  std::vector<double> wcoeffs_ortho_b(wcoeffs.extent(0) * wcoeffs.extent(1));
+  mdspan2_t wcoeffs_ortho(wcoeffs_ortho_b.data(), wcoeffs.extent(0),
+                          wcoeffs.extent(1));
+  std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),
+            wcoeffs_ortho_b.begin());
+  if (family != element::family::P)
+    orthogonalise(wcoeffs_ortho);
+  _dual_matrix = compute_dual_matrix(cell_type, wcoeffs_ortho, x, M,
+                                     highest_degree, interpolation_nderivs);
+
+  _wcoeffs
+      = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
+
+  // Copy  M
+  for (std::size_t i = 0; i < M.size(); ++i)
+  {
+    for (auto Mi : M[i])
+    {
+      _M[i].emplace_back(
+          std::vector(Mi.data_handle(), Mi.data_handle() + Mi.size()),
+          std::array{Mi.extent(0), Mi.extent(1), Mi.extent(2), Mi.extent(3)});
+    }
+  }
+
   // Compute C = (BD^T)^{-1} B
-  auto result = math::solve(_dual_matrix, B_cmajor);
-
-  _coeffs = xt::xtensor<double, 2>({result.shape(0), result.shape(1)});
-  _coeffs.assign(result);
-
-  _value_shape = std::vector<int>(value_shape.begin(), value_shape.end());
+  _coeffs.first
+      = math::solve(cmdspan2_t(_dual_matrix.first.data(), _dual_matrix.second),
+                    wcoeffs_ortho);
+  _coeffs.second = {_dual_matrix.second[1], wcoeffs_ortho.extent(1)};
 
   std::size_t num_points = 0;
   for (auto& x_dim : x)
     for (auto& x_e : x_dim)
-      num_points += x_e.shape(0);
+      num_points += x_e.extent(0);
 
-  std::size_t counter = 0;
-  _points.resize({num_points, _cell_tdim});
+  _points.first.reserve(num_points * _cell_tdim);
+  _points.second = {num_points, _cell_tdim};
+  mdspan2_t pview(_points.first.data(), _points.second);
   for (auto& x_dim : x)
     for (auto& x_e : x_dim)
-      for (std::size_t p = 0; p < x_e.shape(0); ++p)
-        xt::row(_points, counter++) = xt::row(x_e, p);
+      for (std::size_t p = 0; p < x_e.extent(0); ++p)
+        for (std::size_t k = 0; k < x_e.extent(1); ++k)
+          _points.first.push_back(x_e(p, k));
 
   // Copy into _matM
-
-  const std::size_t value_size
-      = std::accumulate(value_shape.begin(), value_shape.end(), 1,
-                        std::multiplies<std::size_t>());
+  const std::size_t value_size = std::accumulate(
+      value_shape.begin(), value_shape.end(), 1, std::multiplies{});
 
   // Count number of dofs and point
   std::size_t num_dofs(0), num_points1(0);
   for (std::size_t d = 0; d < M.size(); ++d)
   {
-    for (std::size_t e = 0; e < M[d].size(); ++e)
+    for (auto Me : M[d])
     {
-      num_dofs += M[d][e].shape(0);
-      num_points1 += M[d][e].shape(2);
+      num_dofs += Me.extent(0);
+      num_points1 += Me.extent(2);
     }
   }
 
-  // Copy data into old _matM matrix
+  // Check that number of dofs is equal to number of coefficients
+  if (num_dofs != _coeffs.second[0])
+  {
+    throw std::runtime_error(
+        "Number of entity dofs does not match total number of dofs");
+  }
 
-  _matM = xt::zeros<double>({num_dofs, value_size * num_points1});
-  auto Mview = xt::reshape_view(_matM, {num_dofs, value_size, num_points1});
+  _entity_transformations = doftransforms::compute_entity_transformations(
+      cell_type, x, M, cmdspan2_t(_coeffs.first.data(), _coeffs.second),
+      highest_degree, value_size, map_type);
+
+  const std::size_t nderivs
+      = polyset::nderivs(cell_type, interpolation_nderivs);
+
+  _matM = {std::vector<double>(num_dofs * value_size * num_points1 * nderivs),
+           {num_dofs, value_size * num_points1 * nderivs}};
+  mdspan4_t Mview(_matM.first.data(), num_dofs, value_size, num_points1,
+                  nderivs);
 
   // Loop over each topological dimensions
   std::size_t dof_offset(0), point_offset(0);
   for (std::size_t d = 0; d < M.size(); ++d)
   {
     // Loop of entities of dimension d
-    for (std::size_t e = 0; e < M[d].size(); ++e)
+    for (auto& Me : M[d])
     {
-      auto dof_range = xt::range(dof_offset, dof_offset + M[d][e].shape(0));
-      auto point_range
-          = xt::range(point_offset, point_offset + M[d][e].shape(2));
-      xt::view(Mview, dof_range, xt::all(), point_range) = M[d][e];
-      point_offset += M[d][e].shape(2);
-      dof_offset += M[d][e].shape(0);
+      for (std::size_t k0 = 0; k0 < Me.extent(0); ++k0)
+        for (std::size_t k1 = 0; k1 < Mview.extent(1); ++k1)
+          for (std::size_t k2 = 0; k2 < Me.extent(2); ++k2)
+            for (std::size_t k3 = 0; k3 < Mview.extent(3); ++k3)
+              Mview(k0 + dof_offset, k1, k2 + point_offset, k3)
+                  = Me(k0, k1, k2, k3);
+
+      dof_offset += Me.extent(0);
+      point_offset += Me.extent(2);
     }
   }
 
   // Compute number of dofs for each cell entity (computed from
   // interpolation data)
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(cell_type);
-  const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
-      = cell::sub_entity_connectivity(cell_type);
-  _num_edofs.resize(_cell_tdim + 1);
-  _edofs.resize(_cell_tdim + 1);
   int dof = 0;
-  for (std::size_t d = 0; d < _num_edofs.size(); ++d)
+  for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
   {
-    _num_edofs[d].resize(cell::num_sub_entities(_cell_type, d), 0);
-    _edofs[d].resize(cell::num_sub_entities(_cell_type, d));
+    auto& edofs_d = _edofs.emplace_back(cell::num_sub_entities(_cell_type, d));
     for (std::size_t e = 0; e < M[d].size(); ++e)
-    {
-      _num_edofs[d][e] = M[d][e].shape(0);
-      for (int i = 0; i < _num_edofs[d][e]; ++i)
-        _edofs[d][e].push_back(dof++);
-    }
+      for (std::size_t i = 0; i < M[d][e].extent(0); ++i)
+        edofs_d[e].push_back(dof++);
   }
 
-  _num_e_closure_dofs.resize(_cell_tdim + 1);
-  _e_closure_dofs.resize(_cell_tdim + 1);
-  for (std::size_t d = 0; d < _num_edofs.size(); ++d)
+  const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
+      = cell::sub_entity_connectivity(cell_type);
+  for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
   {
-    _num_e_closure_dofs[d].resize(cell::num_sub_entities(_cell_type, d));
-    _e_closure_dofs[d].resize(cell::num_sub_entities(_cell_type, d));
+    auto& edofs_d
+        = _e_closure_dofs.emplace_back(cell::num_sub_entities(_cell_type, d));
     for (std::size_t e = 0; e < _e_closure_dofs[d].size(); ++e)
     {
+      auto& closure_dofs = edofs_d[e];
       for (std::size_t dim = 0; dim <= d; ++dim)
       {
         for (int c : connectivity[d][e][dim])
         {
-          _num_e_closure_dofs[d][e] += _edofs[dim][c].size();
-          for (int dof : _edofs[dim][c])
-            _e_closure_dofs[d][e].push_back(dof);
+          closure_dofs.insert(closure_dofs.end(), _edofs[dim][c].begin(),
+                              _edofs[dim][c].end());
         }
       }
+
       std::sort(_e_closure_dofs[d][e].begin(), _e_closure_dofs[d][e].end());
     }
-  }
-
-  // Check that nunber of dofs os equal to number of coefficients
-  if (num_dofs != _coeffs.shape(0))
-  {
-    throw std::runtime_error(
-        "Number of entity dofs does not match total number of dofs");
   }
 
   // Check if base transformations are all permutations
   _dof_transformations_are_permutations = true;
   _dof_transformations_are_identity = true;
-  for (const auto& et : _entity_transformations)
+  for (const auto& [ctype, trans_data] : _entity_transformations)
   {
+    cmdspan3_t trans(trans_data.first.data(), trans_data.second);
+
     for (std::size_t i = 0;
-         _dof_transformations_are_permutations and i < et.second.shape(0); ++i)
+         _dof_transformations_are_permutations and i < trans.extent(0); ++i)
     {
-      for (std::size_t row = 0; row < et.second.shape(1); ++row)
+      for (std::size_t row = 0; row < trans.extent(1); ++row)
       {
-        double rmin = xt::amin(xt::view(et.second, i, row, xt::all()))(0);
-        double rmax = xt::amax(xt::view(et.second, i, row, xt::all()))(0);
-        double rtot = xt::sum(xt::view(et.second, i, row, xt::all()))(0);
-        if ((et.second.shape(2) != 1 and !xt::allclose(rmin, 0))
-            or !xt::allclose(rmax, 1) or !xt::allclose(rtot, 1))
+        double rmin(0), rmax(0), rtot(0);
+        for (std::size_t k = 0; k < trans.extent(2); ++k)
+        {
+          double r = trans(i, row, k);
+          rmin = std::min(r, rmin);
+          rmax = std::max(r, rmax);
+          rtot += r;
+        }
+
+        if ((trans.extent(2) != 1 and std::abs(rmin) > 1.0e-8)
+            or std::abs(rmax - 1.0) > 1.0e-8 or std::abs(rtot - 1.0) > 1.0e-8)
         {
           _dof_transformations_are_permutations = false;
           _dof_transformations_are_identity = false;
           break;
         }
-        if (!xt::allclose(et.second(i, row, row), 1))
+
+        if (std::abs(trans(i, row, row) - 1) > 1.0e-8)
           _dof_transformations_are_identity = false;
       }
     }
     if (!_dof_transformations_are_permutations)
       break;
   }
+
   if (!_dof_transformations_are_identity)
   {
     // If transformations are permutations, then create the permutations
     if (_dof_transformations_are_permutations)
     {
-      for (const auto& et : _entity_transformations)
+      for (const auto& [ctype, trans_data] : _entity_transformations)
       {
-        _eperm[et.first]
-            = std::vector<std::vector<std::size_t>>(et.second.shape(0));
-        _eperm_rev[et.first]
-            = std::vector<std::vector<std::size_t>>(et.second.shape(0));
-        for (std::size_t i = 0; i < et.second.shape(0); ++i)
+        cmdspan3_t trans(trans_data.first.data(), trans_data.second);
+
+        for (std::size_t i = 0; i < trans.extent(0); ++i)
         {
-          std::vector<std::size_t> perm(et.second.shape(1));
-          std::vector<std::size_t> rev_perm(et.second.shape(1));
-          for (std::size_t row = 0; row < et.second.shape(1); ++row)
+          std::vector<std::size_t> perm(trans.extent(1));
+          std::vector<std::size_t> rev_perm(trans.extent(1));
+          for (std::size_t row = 0; row < trans.extent(1); ++row)
           {
-            for (std::size_t col = 0; col < et.second.shape(1); ++col)
+            for (std::size_t col = 0; col < trans.extent(1); ++col)
             {
-              if (et.second(i, row, col) > 0.5)
+              if (trans(i, row, col) > 0.5)
               {
                 perm[row] = col;
                 rev_perm[col] = row;
@@ -531,57 +842,154 @@ FiniteElement::FiniteElement(
               }
             }
           }
+
           // Factorise the permutations
-          _eperm[et.first][i] = precompute::prepare_permutation(perm);
-          _eperm_rev[et.first][i] = precompute::prepare_permutation(rev_perm);
+          precompute::prepare_permutation(perm);
+          precompute::prepare_permutation(rev_perm);
+
+          // Store the permutations
+          auto& eperm = _eperm.try_emplace(ctype).first->second;
+          auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
+          eperm.push_back(perm);
+          eperm_rev.push_back(rev_perm);
+
+          // Generate the entity transformations from the permutations
+          std::pair<std::vector<double>, std::array<std::size_t, 2>> identity
+              = {std::vector<double>(perm.size() * perm.size()),
+                 {perm.size(), perm.size()}};
+          std::fill(identity.first.begin(), identity.first.end(), 0.);
+          for (std::size_t i = 0; i < perm.size(); ++i)
+            identity.first[i * perm.size() + i] = 1;
+
+          auto& etrans = _etrans.try_emplace(ctype).first->second;
+          auto& etransT = _etransT.try_emplace(ctype).first->second;
+          auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
+          auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
+          etrans.push_back({perm, identity});
+          etrans_invT.push_back({perm, identity});
+          etransT.push_back({rev_perm, identity});
+          etrans_inv.push_back({rev_perm, identity});
         }
       }
     }
-
-    // Precompute the DOF transformations
-    for (const auto& et : _entity_transformations)
+    else
     {
-      _etrans[et.first] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.shape(0));
-      _etransT[et.first] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.shape(0));
-      _etrans_invT[et.first] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.shape(0));
-      _etrans_inv[et.first] = std::vector<
-          std::tuple<std::vector<std::size_t>, std::vector<double>,
-                     xt::xtensor<double, 2>>>(et.second.shape(0));
-      for (std::size_t i = 0; i < et.second.shape(0); ++i)
+
+      // Precompute the DOF transformations
+      for (const auto& [ctype, trans_data] : _entity_transformations)
       {
-        if (et.second.shape(1) > 0)
+        cmdspan3_t trans(trans_data.first.data(), trans_data.second);
+
+        // Buffers for matrices
+        std::vector<double> M_b, Minv_b, matint;
+
+        auto& etrans = _etrans.try_emplace(ctype).first->second;
+        auto& etransT = _etransT.try_emplace(ctype).first->second;
+        auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
+        auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
+        for (std::size_t i = 0; i < trans.extent(0); ++i)
         {
-          const xt::xtensor<double, 2>& M
-              = xt::view(et.second, i, xt::all(), xt::all());
-          _etrans[et.first][i] = precompute::prepare_matrix(M);
-          auto M_t = xt::transpose(M);
-          _etransT[et.first][i] = precompute::prepare_matrix(M_t);
-
-          xt::xtensor<double, 2> Minv;
-          // Rotation of a face: this is in the only base transformation such
-          // that M^{-1} != M.
-          // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
-          // For a triangular face, M^3 = Id, so M^{-1} = M^2.
-          // This assumes that all faces of the cell are the same shape. For
-          // prisms and pyramids, this will need updating to look at the face
-          // type
-          if (et.first == cell::type::quadrilateral and i == 0)
-            Minv = math::dot(math::dot(M, M), M);
-          else if (et.first == cell::type::triangle and i == 0)
-            Minv = math::dot(M, M);
+          if (trans.extent(1) == 0)
+          {
+            etrans.push_back({});
+            etransT.push_back({});
+            etrans_invT.push_back({});
+            etrans_inv.push_back({});
+          }
           else
-            Minv = M;
+          {
+            const std::size_t dim = trans.extent(1);
+            assert(dim == trans.extent(2));
 
-          _etrans_inv[et.first][i] = precompute::prepare_matrix(Minv);
-          auto MinvT = xt::transpose(Minv);
-          _etrans_invT[et.first][i] = precompute::prepare_matrix(MinvT);
+            {
+              std::pair<std::vector<double>, std::array<std::size_t, 2>> mat
+                  = {std::vector<double>(dim * dim), {dim, dim}};
+              for (std::size_t k0 = 0; k0 < dim; ++k0)
+                for (std::size_t k1 = 0; k1 < dim; ++k1)
+                  mat.first[k0 * dim + k1] = trans(i, k0, k1);
+              std::vector<std::size_t> mat_p = precompute::prepare_matrix(mat);
+              etrans.push_back({mat_p, mat});
+            }
+
+            {
+              std::pair<std::vector<double>, std::array<std::size_t, 2>> matT
+                  = {std::vector<double>(dim * dim), {dim, dim}};
+              for (std::size_t k0 = 0; k0 < dim; ++k0)
+                for (std::size_t k1 = 0; k1 < dim; ++k1)
+                  matT.first[k0 * dim + k1] = trans(i, k1, k0);
+              std::vector<std::size_t> matT_p
+                  = precompute::prepare_matrix(matT);
+              etransT.push_back({matT_p, matT});
+            }
+
+            M_b.resize(dim * dim);
+            mdspan2_t M(M_b.data(), dim, dim);
+            for (std::size_t k0 = 0; k0 < dim; ++k0)
+              for (std::size_t k1 = 0; k1 < dim; ++k1)
+                M(k0, k1) = trans(i, k0, k1);
+
+            // Rotation of a face: this is in the only base transformation
+            // such that M^{-1} != M.
+            // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
+            // For a triangular face, M^3 = Id, so M^{-1} = M^2.
+            Minv_b.resize(dim * dim);
+            mdspan2_t Minv(Minv_b.data(), dim, dim);
+            if (ctype == cell::type::quadrilateral and i == 0)
+            {
+              matint.resize(dim * dim);
+              mdspan2_t mat_int(matint.data(), dim, dim);
+              math::dot(M, M, mat_int);
+
+              math::dot(mat_int, M, Minv);
+            }
+            else if (ctype == cell::type::triangle and i == 0)
+            {
+              math::dot(M, M, Minv);
+            }
+            else
+            {
+              Minv_b.assign(M_b.begin(), M_b.end());
+            }
+
+            {
+              std::pair<std::vector<double>, std::array<std::size_t, 2>> mat_inv
+                  = {std::vector<double>(dim * dim), {dim, dim}};
+              for (std::size_t k0 = 0; k0 < dim; ++k0)
+                for (std::size_t k1 = 0; k1 < dim; ++k1)
+                  mat_inv.first[k0 * dim + k1] = Minv(k0, k1);
+              std::vector<std::size_t> mat_inv_p
+                  = precompute::prepare_matrix(mat_inv);
+              etrans_inv.push_back({mat_inv_p, mat_inv});
+            }
+
+            {
+              std::pair<std::vector<double>, std::array<std::size_t, 2>>
+                  mat_invT = {std::vector<double>(dim * dim), {dim, dim}};
+              for (std::size_t k0 = 0; k0 < dim; ++k0)
+                for (std::size_t k1 = 0; k1 < dim; ++k1)
+                  mat_invT.first[k0 * dim + k1] = Minv(k1, k0);
+              std::vector<std::size_t> mat_invT_p
+                  = precompute::prepare_matrix(mat_invT);
+              etrans_invT.push_back({mat_invT_p, mat_invT});
+            }
+          }
         }
+      }
+    }
+  }
+  // Check if interpolation matrix is the identity
+  cmdspan2_t matM(_matM.first.data(), _matM.second);
+  _interpolation_is_identity = matM.extent(0) == matM.extent(1);
+  for (std::size_t row = 0; _interpolation_is_identity && row < matM.extent(0);
+       ++row)
+  {
+    for (std::size_t col = 0; col < matM.extent(1); ++col)
+    {
+      double v = col == row ? 1.0 : 0.0;
+      if (std::abs(matM(row, col) - v) > 1.0e-12)
+      {
+        _interpolation_is_identity = false;
+        break;
       }
     }
   }
@@ -589,10 +997,38 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 bool FiniteElement::operator==(const FiniteElement& e) const
 {
-  return cell_type() == e.cell_type() and family() == e.family()
-         and degree() == e.degree() and discontinuous() == e.discontinuous()
-         and lagrange_variant() == e.lagrange_variant()
-         and dpc_variant() == e.dpc_variant() and map_type() == e.map_type();
+  if (this == &e)
+    return true;
+  else if (family() == element::family::custom
+           and e.family() == element::family::custom)
+  {
+    bool coeff_equal = false;
+    if (_coeffs.first.size() == e.coefficient_matrix().first.size()
+        and _coeffs.second == e.coefficient_matrix().second
+        and std::equal(_coeffs.first.begin(), _coeffs.first.end(),
+                       e.coefficient_matrix().first.begin(),
+                       [](auto x, auto y)
+                       { return std::abs(x - y) < 1.0e-10; }))
+    {
+      coeff_equal = true;
+    }
+
+    return cell_type() == e.cell_type() and discontinuous() == e.discontinuous()
+           and map_type() == e.map_type()
+           and sobolev_space() == e.sobolev_space()
+           and value_shape() == e.value_shape()
+           and highest_degree() == e.highest_degree()
+           and highest_complete_degree() == e.highest_complete_degree()
+           and coeff_equal and entity_dofs() == e.entity_dofs();
+  }
+  else
+  {
+    return cell_type() == e.cell_type() and family() == e.family()
+           and degree() == e.degree() and discontinuous() == e.discontinuous()
+           and lagrange_variant() == e.lagrange_variant()
+           and dpc_variant() == e.dpc_variant() and map_type() == e.map_type()
+           and sobolev_space() == e.sobolev_space();
+  }
 }
 //-----------------------------------------------------------------------------
 std::array<std::size_t, 4>
@@ -604,70 +1040,109 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
   for (std::size_t i = 1; i <= nd; ++i)
     ndsize /= i;
   std::size_t vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
-                                   std::multiplies<int>());
-  std::size_t ndofs = _coeffs.shape(0);
+                                   std::multiplies{});
+  std::size_t ndofs = _coeffs.second[0];
   return {ndsize, num_points, ndofs, vs};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 4>
-FiniteElement::tabulate(int nd, const xt::xarray<double>& x) const
+std::pair<std::vector<double>, std::array<std::size_t, 4>>
+FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
 {
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 1)
-    _x.reshape({_x.shape(0), 1});
-
-  auto shape = tabulate_shape(nd, x.shape(0));
-  xt::xtensor<double, 4> data(shape);
-  tabulate(nd, _x, data);
-
-  return data;
+  std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
+  std::vector<double> data(shape[0] * shape[1] * shape[2] * shape[3]);
+  tabulate(nd, x, mdspan4_t(data.data(), shape));
+  return {std::move(data), shape};
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, const xt::xarray<double>& x,
-                             xt::xtensor<double, 4>& basis_data) const
+std::pair<std::vector<double>, std::array<std::size_t, 4>>
+FiniteElement::tabulate(int nd, const std::span<const double>& x,
+                        std::array<std::size_t, 2> shape) const
 {
-  xt::xarray<double> _x = x;
-  if (_x.dimension() == 2 and x.shape(1) == 1)
-    _x.reshape({x.shape(0)});
-
-  if (_x.shape(1) != _cell_tdim)
-    throw std::runtime_error("Point dim does not match element dim.");
-
-  xt::xtensor<double, 3> basis(
-      {static_cast<std::size_t>(polyset::nderivs(_cell_type, nd)), _x.shape(0),
-       static_cast<std::size_t>(polyset::dim(_cell_type, _degree))});
-  polyset::tabulate(basis, _cell_type, _degree, nd, _x);
-  const int psize = polyset::dim(_cell_type, _degree);
-  const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
-                                 std::multiplies<int>());
-  xt::xtensor<double, 2> B, C;
-  for (std::size_t p = 0; p < basis.shape(0); ++p)
+  std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
+  std::vector<double> datab(phishape[0] * phishape[1] * phishape[2]
+                            * phishape[3]);
+  tabulate(nd, cmdspan2_t(x.data(), shape[0], shape[1]),
+           mdspan4_t(datab.data(), phishape));
+  return {std::move(datab), phishape};
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
+                             impl::mdspan4_t basis_data) const
+{
+  if (x.extent(1) != _cell_tdim)
   {
+    throw std::runtime_error("Point dim (" + std::to_string(x.extent(1))
+                             + ") does not match element dim ("
+                             + std::to_string(_cell_tdim) + ").");
+  }
+
+  const std::size_t psize = polyset::dim(_cell_type, _highest_degree);
+  const std::array<std::size_t, 3> bsize
+      = {(std::size_t)polyset::nderivs(_cell_type, nd), psize, x.extent(0)};
+  std::vector<double> basis_b(bsize[0] * bsize[1] * bsize[2]);
+  mdspan3_t basis(basis_b.data(), bsize);
+  polyset::tabulate(basis, _cell_type, _highest_degree, nd, x);
+  const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
+                                 std::multiplies{});
+
+  std::vector<double> C_b(_coeffs.second[0] * psize);
+  mdspan2_t C(C_b.data(), _coeffs.second[0], psize);
+
+  cmdspan2_t coeffs_view(_coeffs.first.data(), _coeffs.second);
+  std::vector<double> result_b(C.extent(0) * bsize[2]);
+  mdspan2_t result(result_b.data(), C.extent(0), bsize[2]);
+  for (std::size_t p = 0; p < basis.extent(0); ++p)
+  {
+    cmdspan2_t B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1], bsize[2]);
     for (int j = 0; j < vs; ++j)
     {
-      auto basis_view = xt::view(basis_data, p, xt::all(), xt::all(), j);
-      B = xt::view(basis, p, xt::all(), xt::all());
-      C = xt::view(_coeffs, xt::all(), xt::range(psize * j, psize * j + psize));
-      auto result = math::dot(B, xt::transpose(C));
-      basis_view.assign(result);
+      for (std::size_t k0 = 0; k0 < coeffs_view.extent(0); ++k0)
+        for (std::size_t k1 = 0; k1 < psize; ++k1)
+          C(k0, k1) = coeffs_view(k0, k1 + psize * j);
+
+      math::dot(C, cmdspan2_t(B.data_handle(), B.extent(0), B.extent(1)),
+                result);
+
+      for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+        for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+          basis_data(p, k0, k1, j) = result(k1, k0);
     }
   }
+}
+//-----------------------------------------------------------------------------
+void FiniteElement::tabulate(int nd, const std::span<const double>& x,
+                             std::array<std::size_t, 2> xshape,
+                             const std::span<double>& basis) const
+{
+  std::array<std::size_t, 4> shape = tabulate_shape(nd, xshape[0]);
+  assert(x.size() == xshape[0] * xshape[1]);
+  assert(basis.size() == shape[0] * shape[1] * shape[2] * shape[3]);
+  tabulate(nd, cmdspan2_t(x.data(), xshape), mdspan4_t(basis.data(), shape));
 }
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }
 //-----------------------------------------------------------------------------
 int FiniteElement::degree() const { return _degree; }
 //-----------------------------------------------------------------------------
-const std::vector<int>& FiniteElement::value_shape() const
+int FiniteElement::highest_degree() const { return _highest_degree; }
+//-----------------------------------------------------------------------------
+int FiniteElement::highest_complete_degree() const
+{
+  return _highest_complete_degree;
+}
+//-----------------------------------------------------------------------------
+const std::vector<std::size_t>& FiniteElement::value_shape() const
 {
   return _value_shape;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::dim() const { return _coeffs.shape(0); }
+int FiniteElement::dim() const { return _coeffs.second[0]; }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 maps::type FiniteElement::map_type() const { return _map_type; }
+//-----------------------------------------------------------------------------
+sobolev::space FiniteElement::sobolev_space() const { return _sobolev_space; }
 //-----------------------------------------------------------------------------
 bool FiniteElement::discontinuous() const { return _discontinuous; }
 //-----------------------------------------------------------------------------
@@ -681,14 +1156,10 @@ bool FiniteElement::dof_transformations_are_identity() const
   return _dof_transformations_are_identity;
 }
 //-----------------------------------------------------------------------------
-const xt::xtensor<double, 2>& FiniteElement::interpolation_matrix() const
+const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+FiniteElement::interpolation_matrix() const
 {
   return _matM;
-}
-//-----------------------------------------------------------------------------
-const std::vector<std::vector<int>>& FiniteElement::num_entity_dofs() const
-{
-  return _num_edofs;
 }
 //-----------------------------------------------------------------------------
 const std::vector<std::vector<std::vector<int>>>&
@@ -697,139 +1168,155 @@ FiniteElement::entity_dofs() const
   return _edofs;
 }
 //-----------------------------------------------------------------------------
-const std::vector<std::vector<int>>&
-FiniteElement::num_entity_closure_dofs() const
-{
-  return _num_e_closure_dofs;
-}
-//-----------------------------------------------------------------------------
 const std::vector<std::vector<std::vector<int>>>&
 FiniteElement::entity_closure_dofs() const
 {
   return _e_closure_dofs;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> FiniteElement::base_transformations() const
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+FiniteElement::base_transformations() const
 {
-  const std::size_t nt = num_transformations(cell_type());
+  const std::size_t nt = num_transformations(this->cell_type());
   const std::size_t ndofs = this->dim();
 
-  xt::xtensor<double, 3> bt({nt, ndofs, ndofs});
+  std::array<std::size_t, 3> shape = {nt, ndofs, ndofs};
+  std::vector<double> bt_b(shape[0] * shape[1] * shape[2], 0);
+  mdspan3_t bt(bt_b.data(), shape);
   for (std::size_t i = 0; i < nt; ++i)
-    xt::view(bt, i, xt::all(), xt::all()) = xt::eye<double>(ndofs);
+    for (std::size_t j = 0; j < ndofs; ++j)
+      bt(i, j, j) = 1.0;
 
-  std::size_t dof_start = 0;
-  int transform_n = 0;
+  std::size_t dofstart = 0;
   if (_cell_tdim > 0)
   {
-    dof_start
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
   }
 
+  int transform_n = 0;
   if (_cell_tdim > 1)
   {
     // Base transformations for edges
-
-    for (int ndofs : _num_edofs[1])
     {
-      xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
-               xt::range(dof_start, dof_start + ndofs))
-          = xt::view(_entity_transformations.at(cell::type::interval), 0,
-                     xt::all(), xt::all());
-      dof_start += ndofs;
+      auto& tmp_data = _entity_transformations.at(cell::type::interval);
+      cmdspan3_t tmp(tmp_data.first.data(), tmp_data.second);
+      for (auto& e : _edofs[1])
+      {
+        std::size_t ndofs = e.size();
+        for (std::size_t i = 0; i < ndofs; ++i)
+          for (std::size_t j = 0; j < ndofs; ++j)
+            bt(transform_n, i + dofstart, j + dofstart) = tmp(0, i, j);
+
+        ++transform_n;
+        dofstart += ndofs;
+      }
     }
 
     if (_cell_tdim > 2)
     {
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
-        const int ndofs = _num_edofs[2][f];
-        if (ndofs > 0)
+        if (std::size_t ndofs = _edofs[2][f].size(); ndofs > 0)
         {
-          // TODO: This assumes that every face has the same shape
-          //       _entity_transformations should be replaced with a map from
-          //       a subentity type to a matrix to allow for prisms and
-          //       pyramids.
-          xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
-                   xt::range(dof_start, dof_start + ndofs))
-              = xt::view(
-                  _entity_transformations.at(_cell_subentity_types[2][f]), 0,
-                  xt::all(), xt::all());
-          xt::view(bt, transform_n++, xt::range(dof_start, dof_start + ndofs),
-                   xt::range(dof_start, dof_start + ndofs))
-              = xt::view(
-                  _entity_transformations.at(_cell_subentity_types[2][f]), 1,
-                  xt::all(), xt::all());
+          auto& tmp_data
+              = _entity_transformations.at(_cell_subentity_types[2][f]);
+          cmdspan3_t tmp(tmp_data.first.data(), tmp_data.second);
 
-          dof_start += ndofs;
+          for (std::size_t i = 0; i < ndofs; ++i)
+            for (std::size_t j = 0; j < ndofs; ++j)
+              bt(transform_n, i + dofstart, j + dofstart) = tmp(0, i, j);
+          ++transform_n;
+
+          for (std::size_t i = 0; i < ndofs; ++i)
+            for (std::size_t j = 0; j < ndofs; ++j)
+              bt(transform_n, i + dofstart, j + dofstart) = tmp(1, i, j);
+          ++transform_n;
+
+          dofstart += ndofs;
         }
       }
     }
   }
 
-  return bt;
+  return {std::move(bt_b), shape};
 }
 //-----------------------------------------------------------------------------
-const xt::xtensor<double, 2>& FiniteElement::points() const { return _points; }
+const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+FiniteElement::points() const
+{
+  return _points;
+}
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> FiniteElement::push_forward(
-    const xt::xtensor<double, 3>& U, const xt::xtensor<double, 3>& J,
-    const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+FiniteElement::push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
+                            std::span<const double> detJ,
+                            impl::cmdspan3_t K) const
 {
   const std::size_t physical_value_size
-      = compute_value_size(_map_type, J.shape(1));
-  xt::xtensor<double, 3> u({U.shape(0), U.shape(1), physical_value_size});
-  using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using U_t = xt::xview<decltype(U)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using J_t = xt::xview<decltype(J)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
+      = compute_value_size(_map_type, J.extent(1));
+
+  std::array<std::size_t, 3> shape
+      = {U.extent(0), U.extent(1), physical_value_size};
+  std::vector<double> ub(shape[0] * shape[1] * shape[2]);
+  mdspan3_t u(ub.data(), shape);
+
+  using u_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+  using U_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+
   auto map = this->map_fn<u_t, U_t, J_t, K_t>();
-  for (std::size_t i = 0; i < u.shape(0); ++i)
+  for (std::size_t i = 0; i < u.extent(0); ++i)
   {
-    auto _K = xt::view(K, i, xt::all(), xt::all());
-    auto _J = xt::view(J, i, xt::all(), xt::all());
-    auto _u = xt::view(u, i, xt::all(), xt::all());
-    auto _U = xt::view(U, i, xt::all(), xt::all());
+    u_t _u(u.data_handle() + i * u.extent(1) * u.extent(2), u.extent(1),
+           u.extent(2));
+    U_t _U(U.data_handle() + i * U.extent(1) * U.extent(2), U.extent(1),
+           U.extent(2));
+    J_t _J(J.data_handle() + i * J.extent(1) * J.extent(2), J.extent(1),
+           J.extent(2));
+    K_t _K(K.data_handle() + i * K.extent(1) * K.extent(2), K.extent(1),
+           K.extent(2));
     map(_u, _U, _J, detJ[i], _K);
   }
 
-  return u;
+  return {std::move(ub), shape};
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 3> FiniteElement::pull_back(
-    const xt::xtensor<double, 3>& u, const xt::xtensor<double, 3>& J,
-    const xtl::span<const double>& detJ, const xt::xtensor<double, 3>& K) const
+std::pair<std::vector<double>, std::array<std::size_t, 3>>
+FiniteElement::pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
+                         std::span<const double> detJ, impl::cmdspan3_t K) const
 {
   const std::size_t reference_value_size = std::accumulate(
-      _value_shape.begin(), _value_shape.end(), 1, std::multiplies<int>());
+      _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
 
-  xt::xtensor<double, 3> U({u.shape(0), u.shape(1), reference_value_size});
-  using u_t = xt::xview<decltype(u)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using U_t = xt::xview<decltype(U)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using J_t = xt::xview<decltype(J)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
-  using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
-                        xt::xall<std::size_t>>;
+  std::array<std::size_t, 3> shape
+      = {u.extent(0), u.extent(1), reference_value_size};
+  std::vector<double> Ub(shape[0] * shape[1] * shape[2]);
+  mdspan3_t U(Ub.data(), shape);
+
+  using u_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using U_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+  using J_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
+  using K_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
   auto map = this->map_fn<U_t, u_t, K_t, J_t>();
-  for (std::size_t i = 0; i < u.shape(0); ++i)
+  for (std::size_t i = 0; i < u.extent(0); ++i)
   {
-    auto _K = xt::view(K, i, xt::all(), xt::all());
-    auto _J = xt::view(J, i, xt::all(), xt::all());
-    auto _u = xt::view(u, i, xt::all(), xt::all());
-    auto _U = xt::view(U, i, xt::all(), xt::all());
+    u_t _u(u.data_handle() + i * u.extent(1) * u.extent(2), u.extent(1),
+           u.extent(2));
+    U_t _U(U.data_handle() + i * U.extent(1) * U.extent(2), U.extent(1),
+           U.extent(2));
+    J_t _J(J.data_handle() + i * J.extent(1) * J.extent(2), J.extent(1),
+           J.extent(2));
+    K_t _K(K.data_handle() + i * K.extent(1) * K.extent(2), K.extent(1),
+           K.extent(2));
     map(_U, _u, _K, 1.0 / detJ[i], _J);
   }
 
-  return U;
+  return {std::move(Ub), shape};
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
+void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
                                  std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
@@ -845,47 +1332,45 @@ void FiniteElement::permute_dofs(const xtl::span<std::int32_t>& dofs,
   {
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Permute DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& trans = _eperm.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
-        precompute::apply_permutation(_eperm.at(cell::type::interval)[0], dofs,
-                                      dofstart);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+          precompute::apply_permutation(trans, dofs, dofstart);
+        dofstart += _edofs[1][e].size();
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
+        auto& trans = _eperm.at(_cell_subentity_types[2][f]);
+
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          precompute::apply_permutation(
-              _eperm.at(_cell_subentity_types[2][f])[1], dofs, dofstart);
-        }
+          precompute::apply_permutation(trans[1], dofs, dofstart);
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          precompute::apply_permutation(
-              _eperm.at(_cell_subentity_types[2][f])[0], dofs, dofstart);
-        }
-        dofstart += _num_edofs[2][f];
+          precompute::apply_permutation(trans[0], dofs, dofstart);
+
+        dofstart += _edofs[2][f].size();
       }
     }
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
+void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
                                    std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
@@ -898,67 +1383,82 @@ void FiniteElement::unpermute_dofs(const xtl::span<std::int32_t>& dofs,
 
   if (_cell_tdim >= 2)
   {
-    // This assumes 3 bits are used per face. This will need updating if 3D
-    // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _num_edofs[2].size() : 0;
-    int dofstart
-        = std::accumulate(_num_edofs[0].cbegin(), _num_edofs[0].cend(), 0);
+    // This assumes 3 bits are used per face. This will need updating if
+    // 3D cells with faces with more than 4 sides are implemented
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
 
     // Permute DOFs on edges
-    for (std::size_t e = 0; e < _num_edofs[1].size(); ++e)
     {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
+      auto& trans = _eperm_rev.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
       {
-        precompute::apply_permutation(_eperm_rev.at(cell::type::interval)[0],
-                                      dofs, dofstart);
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+          precompute::apply_permutation(trans, dofs, dofstart);
+        dofstart += _edofs[1][e].size();
       }
-      dofstart += _num_edofs[1][e];
     }
 
     if (_cell_tdim == 3)
     {
       // Permute DOFs on faces
-      for (std::size_t f = 0; f < _num_edofs[2].size(); ++f)
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
       {
+        auto& trans = _eperm_rev.at(_cell_subentity_types[2][f]);
+
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          precompute::apply_permutation(
-              _eperm_rev.at(_cell_subentity_types[2][f])[0], dofs, dofstart);
-        }
+          precompute::apply_permutation(trans[0], dofs, dofstart);
 
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-        {
-          precompute::apply_permutation(
-              _eperm_rev.at(_cell_subentity_types[2][f])[1], dofs, dofstart);
-        }
-        dofstart += _num_edofs[2][f];
+          precompute::apply_permutation(trans[1], dofs, dofstart);
+
+        dofstart += _edofs[2][f].size();
       }
     }
   }
 }
 //-----------------------------------------------------------------------------
-std::map<cell::type, xt::xtensor<double, 3>>
+std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>
 FiniteElement::entity_transformations() const
 {
   return _entity_transformations;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> FiniteElement::dual_matrix() const
+const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+FiniteElement::dual_matrix() const
 {
   return _dual_matrix;
 }
 //-----------------------------------------------------------------------------
-xt::xtensor<double, 2> FiniteElement::coefficient_matrix() const
+const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+FiniteElement::wcoeffs() const
 {
-  return _coeffs;
+  return _wcoeffs;
 }
 //-----------------------------------------------------------------------------
-std::array<int, 2> FiniteElement::degree_bounds() const
+const std::array<
+    std::vector<std::pair<std::vector<double>, std::array<std::size_t, 2>>>, 4>&
+FiniteElement::x() const
 {
-  return _degree_bounds;
+  return _x;
+}
+//-----------------------------------------------------------------------------
+const std::array<
+    std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>, 4>&
+FiniteElement::M() const
+{
+  return _M;
+}
+//-----------------------------------------------------------------------------
+const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
+FiniteElement::coefficient_matrix() const
+{
+  return _coeffs;
 }
 //-----------------------------------------------------------------------------
 bool FiniteElement::has_tensor_product_factorisation() const
@@ -972,6 +1472,16 @@ element::lagrange_variant FiniteElement::lagrange_variant() const
 }
 //-----------------------------------------------------------------------------
 element::dpc_variant FiniteElement::dpc_variant() const { return _dpc_variant; }
+//-----------------------------------------------------------------------------
+bool FiniteElement::interpolation_is_identity() const
+{
+  return _interpolation_is_identity;
+}
+//-----------------------------------------------------------------------------
+int FiniteElement::interpolation_nderivs() const
+{
+  return _interpolation_nderivs;
+}
 //-----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
 FiniteElement::get_tensor_product_representation() const

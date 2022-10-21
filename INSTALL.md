@@ -42,7 +42,7 @@ pip install .
 
 ## Running the unit tests
 
-To install Basix and the extra depedencies required to run the Python unit tests:
+To install Basix and the extra dependencies required to run the Python unit tests:
 
 ```console
 pip install .[test]
@@ -58,13 +58,13 @@ pytest test/
 
 ### C++
 
-Basix depends on [`xtensor`](https://github.com/xtensor-stack/xtensor), BLAS
-and LAPACK. CMake will download xtensor if it cannot be found. 
+Basix requires a C++20 compiler and depends on BLAS and LAPACK.
 
 ### Python
 
-When using the standard install approach all build and runtime dependencies
-for the C++ and Python parts of Basix will be fetched automatically.
+When using the standard install approach all build and runtime
+dependencies for the C++ and Python parts of Basix will be fetched
+automatically.
 
 Building the Python interface requires
 [`pybind11`](https://github.com/pybind/pybind11).

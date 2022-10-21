@@ -1,12 +1,14 @@
 # Copyright (c) 2020 Matthew Scroggs
 # FEniCS Project
 # SPDX-License-Identifier: MIT
+"""Test utilities."""
 
 import pytest
 from basix import ElementFamily, CellType, LagrangeVariant, DPCVariant
 
 
 def parametrize_over_elements(degree, reference=None, discontinuous=False):
+    """Parametrize a test over a wide range of elements."""
     elementlist = []
 
     for k in range(1, degree + 1):
@@ -30,10 +32,10 @@ def parametrize_over_elements(degree, reference=None, discontinuous=False):
 
         # Elements on all cells except prism, pyramid and interval
         for c in [CellType.triangle, CellType.tetrahedron, CellType.quadrilateral, CellType.hexahedron]:
-            elementlist.append((c, ElementFamily.N1E, k, []))
-            elementlist.append((c, ElementFamily.N2E, k, []))
-            elementlist.append((c, ElementFamily.RT, k, []))
-            elementlist.append((c, ElementFamily.BDM, k, []))
+            elementlist.append((c, ElementFamily.N1E, k, [LagrangeVariant.legendre]))
+            elementlist.append((c, ElementFamily.N2E, k, [LagrangeVariant.legendre, DPCVariant.legendre]))
+            elementlist.append((c, ElementFamily.RT, k, [LagrangeVariant.legendre]))
+            elementlist.append((c, ElementFamily.BDM, k, [LagrangeVariant.legendre, DPCVariant.legendre]))
 
         # Elements on simplex cells
         for c in [CellType.triangle, CellType.tetrahedron]:

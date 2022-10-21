@@ -1,0 +1,67 @@
+name: FFCx integration
+
+# Install Basix and FFCx and run the FFCx unit tests.
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      ffcx_branch:
+        description: "FFCx branch or tag"
+        default: "main"
+        type: string
+      ufl_branch:
+        description: "UFL branch or tag"
+        default: "main"
+        type: string
+
+jobs:
+  build:
+    name: Run FFCx tests
+    runs-on: ubuntu-latest
+    env:
+      CC: gcc-10
+      CXX: g++-10
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev graphviz libgraphviz-dev ninja-build
+
+      - name: Install UFL (default branch)
+        if: github.event_name != 'workflow_dispatch'
+        run: python3 -m pip install git+https://github.com/FEniCS/ufl.git
+      - name: Install UFL (specified branch)
+        if: github.event_name == 'workflow_dispatch'
+        run: python3 -m pip install git+https://github.com/FEniCS/ufl.git@${{ github.event.inputs.ufl_branch }}
+
+      - name: Install Basix
+        run: python3 -m pip -v install .[ci]
+
+      - name: Get FFCx source (default branch)
+        if: github.event_name != 'workflow_dispatch'
+        uses: actions/checkout@v3
+        with:
+          path: ./ffcx
+          repository: FEniCS/ffcx
+      - name: Get FFCx source (specified branch)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v3
+        with:
+          path: ./ffcx
+          repository: FEniCS/ffcx
+          ref: ${{ github.event.inputs.ffcx_branch }}
+
+      - name: Install FFCx
+        run: python3 -m pip install ./ffcx[ci]
+      - name: Run mypy checks
+        run: python3 -m mypy ffcx/ffcx
+      - name: Run FFCx tests
+        run: python3 -m pytest -n auto ffcx/test

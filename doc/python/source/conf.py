@@ -56,7 +56,7 @@ release = basix.__version__
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -136,5 +136,6 @@ autodoc_default_options = {'members': True, 'show-inheritance': True, 'imported-
 autosummary_generate = True
 autoclass_content = "both"
 
-napoleon_google_docstring = False
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
 napoleon_use_admonition_for_notes = False

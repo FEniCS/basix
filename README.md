@@ -15,6 +15,9 @@ Basix allows users to:
 - interpolate into a finite element space and between finite element
   spaces.
 
+Basix includes a range of built-in elements, and also allows the user to define
+their own custom elements.
+
 Basix is one of the components of FEniCSx, alongside
 [UFL](https://github.com/fenics/ufl),
 [FFCx](https://github.com/fenics/ffcx), and
@@ -22,10 +25,17 @@ Basix is one of the components of FEniCSx, alongside
 
 ## Installing Basix
 
-To install Basix:
+To install the latest stable version of Basix from [pypi.org](https://pypi.org/project/fenics-basix/):
 ```console
-pip install .
+pip install fenics-basix
 ```
+We currently build binary wheels for Linux and macOS x86-64 architectures.
+
+To install the `main` (development) branch of Basix:
+```console
+pip install git+https://github.com/FEniCS/basix.git
+```
+
 For advanced installation instructions see the detailed [install
 instructions](INSTALL.md)
 
@@ -60,6 +70,7 @@ The following elements are supported on an interval:
   - [Lagrange](https://defelement.com/elements/lagrange.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
   - [Serendipity](https://defelement.com/elements/serendipity.html)
+  - [Hermite](https://defelement.com/elements/hermite.html)
 
 
 ### Triangle
@@ -77,8 +88,10 @@ The following elements are supported on a triangle:
   - [Nédélec second kind](https://defelement.com/elements/nedelec2.html)
   - [Brezzi-Douglas-Marini](https://defelement.com/elements/brezzi-douglas-marini.html)
   - [Regge](https://defelement.com/elements/regge.html)
+  - [Hellan-Herrmann-Johnson](https://defelement.com/elements/hellan-hermann-johnson.html)
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
+  - [Hermite](https://defelement.com/elements/hermite.html)
 
 
 ### Quadrilateral
@@ -117,6 +130,7 @@ The following elements are supported on a tetrahedron:
   - [Regge](https://defelement.com/elements/regge.html)
   - [Crouzeix-Raviart](https://defelement.com/elements/crouzeix-raviart.html)
   - [Bubble](https://defelement.com/elements/bubble.html)
+  - [Hermite](https://defelement.com/elements/hermite.html)
 
 
 ### Hexahedron

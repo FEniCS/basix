@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson & Matthew Scroggs
+// Copyright (c) 2020 Chris Richardson and Matthew Scroggs
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -7,75 +7,93 @@
 #include "e-nedelec.h"
 #include "element-families.h"
 #include "maps.h"
+#include "math.h"
+#include "mdspan.hpp"
 #include "moments.h"
 #include "polyset.h"
+#include "sobolev-spaces.h"
 #include <vector>
-#include <xtensor/xbuilder.hpp>
-#include <xtensor/xtensor.hpp>
 
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_bdm(cell::type celltype, int degree,
-                                         bool discontinuous)
+FiniteElement element::create_bdm(cell::type celltype, int degree,
+                                  lagrange_variant lvariant, bool discontinuous)
 {
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
+  std::array<std::vector<impl::mdarray2_t>, 4> x;
+  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  for (std::size_t i = 0; i < tdim - 1; ++i)
+  {
+    std::size_t num_ent = cell::num_sub_entities(celltype, i);
+    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+  }
+
+  // Integral moments on facets
   const cell::type facettype = sub_entity_type(celltype, tdim - 1, 0);
+  const FiniteElement facet_moment_space
+      = create_lagrange(facettype, degree, lvariant, true);
+  {
+    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments(
+        facet_moment_space, celltype, tdim, degree * 2);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[tdim - 1].emplace_back(_x[i], xshape[0], xshape[1]);
+      M[tdim - 1].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2],
+                               Mshape[3]);
+    }
+  }
 
-  // The number of order (degree) scalar polynomials
-  const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
-
-  std::array<std::vector<xt::xtensor<double, 3>>, 4> M;
-  std::array<std::vector<xt::xtensor<double, 2>>, 4> x;
-
-  // Add integral moments on facets
-  const FiniteElement facet_moment_space = element::create_lagrange(
-      facettype, degree, element::lagrange_variant::equispaced, true);
-  std::tie(x[tdim - 1], M[tdim - 1]) = moments::make_normal_integral_moments(
-      facet_moment_space, celltype, tdim, degree * 2);
-
-  const xt::xtensor<double, 3> facet_transforms
-      = moments::create_normal_moment_dof_transformations(facet_moment_space);
-
-  // Add integral moments on interior
+  // Integral moments on interior
   if (degree > 1)
   {
     // Interior integral moment
-    std::tie(x[tdim], M[tdim]) = moments::make_dot_integral_moments(
-        element::create_nedelec(celltype, degree - 1, true), celltype, tdim,
+    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments(
+        create_nedelec(celltype, degree - 1, lvariant, true), celltype, tdim,
         2 * degree - 1);
+    assert(_x.size() == _M.size());
+    for (std::size_t i = 0; i < _x.size(); ++i)
+    {
+      x[tdim].emplace_back(_x[i], xshape[0], xshape[1]);
+      M[tdim].emplace_back(_M[i], Mshape[0], Mshape[1], Mshape[2], Mshape[3]);
+    }
+  }
+  else
+  {
+    std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
+    x[tdim] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::map<cell::type, xt::xtensor<double, 3>> entity_transformations;
-  switch (tdim)
-  {
-  case 2:
-    entity_transformations[cell::type::interval] = facet_transforms;
-    break;
-  case 3:
-    entity_transformations[cell::type::interval]
-        = xt::xtensor<double, 3>({1, 0, 0});
-    entity_transformations[cell::type::triangle] = facet_transforms;
-    break;
-  default:
-    throw std::runtime_error("Invalid topological dimension.");
-  }
-
+  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<double>>, 4> xbuffer;
+  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
   {
-    std::tie(x, M, entity_transformations)
-        = element::make_discontinuous(x, M, entity_transformations, tdim, tdim);
+    std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
+    std::array<std::vector<std::array<std::size_t, 4>>, 4> Mshape;
+    std::tie(xbuffer, xshape, Mbuffer, Mshape)
+        = make_discontinuous(xview, Mview, tdim, tdim);
+    xview = impl::to_mdspan(xbuffer, xshape);
+    Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
-  return FiniteElement(element::family::BDM, celltype, degree, {tdim},
-                       xt::eye<double>(ndofs), entity_transformations, x, M,
-                       maps::type::contravariantPiola, discontinuous, degree,
-                       degree);
+  // The number of order (degree) scalar polynomials
+  const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
+
+  return FiniteElement(family::BDM, celltype, degree, {tdim},
+                       impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
+                       xview, Mview, 0, maps::type::contravariantPiola,
+                       sobolev::space::HDiv, discontinuous, degree, degree,
+                       lvariant);
 }
 //-----------------------------------------------------------------------------

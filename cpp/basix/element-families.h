@@ -22,10 +22,13 @@ enum class lagrange_variant
   gl_isaac = 8,
   gl_centroid = 9,
   legendre = 10,
+  bernstein = 11,
   vtk = 20,
 };
 
-/// Variants of a DPC space that can be created
+/// Variants of a DPC (discontinuous polynomial cubical) space that can be
+/// created. DPC spaces span the same set of polynomials as Lagrange spaces on
+/// simplices but are defined on tensor product cells.
 enum class dpc_variant
 {
   unset = -1,
@@ -35,6 +38,7 @@ enum class dpc_variant
   horizontal_gll = 3,
   diagonal_equispaced = 4,
   diagonal_gll = 5,
+  legendre = 6,
 };
 
 /// Available element families
@@ -50,7 +54,9 @@ enum class family
   Regge = 7,
   DPC = 8,
   bubble = 9,
-  serendipity = 10
+  serendipity = 10,
+  HHJ = 11,
+  Hermite = 12
 };
 
 } // namespace basix::element

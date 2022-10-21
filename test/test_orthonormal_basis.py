@@ -18,12 +18,12 @@ def test_quad(order):
             Qwts.append(u * v)
     basis = basix._basixcpp.tabulate_polynomial_set(basix.CellType.quadrilateral,
                                                     order, 0, Qpts)[0]
-    ndofs = basis.shape[1]
+    ndofs = basis.shape[0]
 
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):
         for j in range(ndofs):
-            mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
+            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
 
     assert np.allclose(mat, np.eye(ndofs))
 
@@ -41,12 +41,12 @@ def test_pyramid(order):
                 Qwts.append(u * v * sc * sc * w)
     basis = basix._basixcpp.tabulate_polynomial_set(basix.CellType.pyramid,
                                                     order, 0, Qpts)[0]
-    ndofs = basis.shape[1]
+    ndofs = basis.shape[0]
 
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):
         for j in range(ndofs):
-            mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
+            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
 
     assert np.allclose(mat, np.eye(ndofs))
 
@@ -63,12 +63,12 @@ def test_hex(order):
                 Qwts.append(u * v * w)
     basis = basix._basixcpp.tabulate_polynomial_set(basix.CellType.hexahedron,
                                                     order, 0, Qpts)[0]
-    ndofs = basis.shape[1]
+    ndofs = basis.shape[0]
 
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):
         for j in range(ndofs):
-            mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
+            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
 
     assert np.allclose(mat, np.eye(ndofs))
 
@@ -85,12 +85,12 @@ def test_prism(order):
             Qwts.append(u * v)
     basis = basix._basixcpp.tabulate_polynomial_set(basix.CellType.prism,
                                                     order, 0, Qpts)[0]
-    ndofs = basis.shape[1]
+    ndofs = basis.shape[0]
 
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):
         for j in range(ndofs):
-            mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
+            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
 
     assert np.allclose(mat, np.eye(ndofs))
 
@@ -108,10 +108,10 @@ def test_cell(cell_type, order):
     Qpts, Qwts = basix.make_quadrature(cell_type, 2*order + 1)
     basis = basix._basixcpp.tabulate_polynomial_set(cell_type, order, 0, Qpts)[0]
 
-    ndofs = basis.shape[1]
+    ndofs = basis.shape[0]
     mat = np.zeros((ndofs, ndofs))
     for i in range(ndofs):
         for j in range(ndofs):
-            mat[i, j] = sum(basis[:, i] * basis[:, j] * Qwts)
+            mat[i, j] = sum(basis[i, :] * basis[j, :] * Qwts)
 
     assert np.allclose(mat, np.eye(ndofs))

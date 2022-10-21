@@ -4,17 +4,12 @@ from ._basixcpp import QuadratureType as _QT
 
 
 def string_to_type(rule: str) -> _QT:
-    """
-    Convert a string to a Basix QuadratureType enum.
+    """Convert a string to a Basix QuadratureType enum.
 
-    Parameters
-    ----------
-    rule : str
-        The quadrature rule as a string.
+    Args:
+        rule: The quadrature rule as a string.
 
-    Returns
-    -------
-    basix.QuadratureRule
+    Returns:
         The quadrature type
     """
     if rule == "default":
@@ -24,8 +19,8 @@ def string_to_type(rule: str) -> _QT:
         return _QT.gll
     if rule in ["Gauss-Legendre", "GL", "Gauss-Jacobi"]:
         return _QT.gauss_jacobi
-    if rule == "Xiao-Gambutas":
-        return _QT.xiao_gambutas
+    if rule == "Xiao-Gimbutas":
+        return _QT.xiao_gimbutas
 
     if not hasattr(_QT, rule):
         raise ValueError(f"Unknown quadrature rule: {rule}")
@@ -33,17 +28,12 @@ def string_to_type(rule: str) -> _QT:
 
 
 def type_to_string(quadraturetype: _QT) -> str:
-    """
-    Convert a Basix QuadratureType enum to a string.
+    """Convert a Basix QuadratureType enum to a string.
 
-    Parameters
-    ----------
-    quadraturetype : basix.QuadratureType
-        The quadrature type
+    Args:
+        quadraturetype: The quadrature type
 
-    Returns
-    -------
-    str
+    Returns:
         The quadrature rule as a string.
     """
     return quadraturetype.name

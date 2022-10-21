@@ -5,19 +5,13 @@ from ._basixcpp import FiniteElement  # noqa: F401
 
 
 def string_to_family(family: str, cell: str) -> _EF:
-    """
-    Get a Basix ElementFamily enum representing the family type on the given cell.
+    """Get a Basix ElementFamily enum representing the family type on the given cell.
 
-    Parameters
-    ----------
-    family : str
-        The element family as a string.
-    cell : str
-        The cell type as a string.
+    Args:
+        family: The element family as a string.
+        cell: The cell type as a string.
 
-    Returns
-    -------
-    basix.ElementFamily
+    Returns:
         The element family.
     """
     # Family names that are valid for all cells
@@ -79,6 +73,12 @@ def string_to_family(family: str, cell: str) -> _EF:
             "Regge": _EF.Regge,
             "CR": _EF.CR,
             "Crouzeix-Raviart": _EF.CR,
+        })
+    # Family names that are valid for triangles
+    if cell in "triangle":
+        families.update({
+            "HHJ": _EF.HHJ,
+            "Hellan-Herrmann-Johnson": _EF.HHJ,
         })
 
     if family in families:

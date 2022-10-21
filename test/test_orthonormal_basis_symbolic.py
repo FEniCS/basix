@@ -33,7 +33,7 @@ def test_symbolic_interval():
         wsym = np.zeros_like(wtab[k])
         for i in range(n + 1):
             for j, p in enumerate(pts0):
-                wsym[j, i] = wd[i].subs(x, p[0])
+                wsym[i, j] = wd[i].subs(x, p[0])
             wd[i] = sympy.diff(wd[i], x)
         assert np.allclose(wtab[k], wsym)
 
@@ -60,5 +60,5 @@ def test_symbolic_quad():
             for i in range(m):
                 wd = sympy.diff(w[i], x, kx, y, ky)
                 for j, p in enumerate(pts0):
-                    wsym[j, i] = wd.subs([(x, p[0]), (y, p[1])])
+                    wsym[i, j] = wd.subs([(x, p[0]), (y, p[1])])
             assert np.allclose(wtab[idx(kx, ky)], wsym)

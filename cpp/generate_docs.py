@@ -1,10 +1,15 @@
-"""Generate docs for the pybind layer from the C++ header files."""
+"""
+Generate docs for the pybind layer from the C++ header files.
+
+To update the docs, run:
+    python generate_docs.py > basix/docs.h
+"""
 
 import os
 import re
 
 path = os.path.dirname(os.path.realpath(__file__))
-cpp_path = os.path.join(path, "../cpp/basix")
+cpp_path = os.path.join(path, "basix")
 
 replacements = [(";", "@semicolon@"), ("{", "@openbrace@"), ("}", "@closebrace@"),
                 ("<", "@opentri@"), (">", "@closetri@"), ("(", "@openb@"), (")", "@closeb@"),
@@ -25,7 +30,7 @@ def unreplace(txt):
 
 def remove_types(matches):
     """Remove the types from a function declaration."""
-    vars = [i.strip().split(" ")[-1] for i in matches[1].split(",")]
+    vars = [i.strip().split(" ")[-1].split("=")[0] for i in matches[1].split(",")]
     return "(" + ", ".join(vars) + ")"
 
 
@@ -40,7 +45,7 @@ def prepare_cpp(content):
             else:
                 out += line + "\n"
 
-    out = re.sub(r"namespace [^{]*\{", "", out)
+    out = re.sub(r"namespace [^{]*\{", ";", out)
     out = re.sub(r"class [^{]*\{", "", out)
 
     while "{" in out:
@@ -73,6 +78,8 @@ def get_docstring(matches):
     if "(" not in function:
         function += "("
 
+    if function not in content:
+        print(function)
     assert function in content
     doc = content.split(function)[0].split(";")[-1]
 
@@ -111,7 +118,6 @@ def get_docstring(matches):
         return "\n".join(doclines)
 
     if info_type == "param":
-        assert typename is not None
         params = {}
         for i in doc.split("@param")[1:]:
             i = i.split("@return")[0]
@@ -124,22 +130,20 @@ def get_docstring(matches):
             else:
                 p = i
                 pdoc = "TODO: document this"
-            params[p] = "\n    ".join(pdoc.split("\n"))
-
-        return f"{info} : {typename}\n    {params[info]}"
+            params[p] = "\n        ".join(pdoc.split("\n"))
+        return f"{info}: {params[info]}"
 
     if info_type == "return":
-        assert typename is not None
         returns = [i.split("@param")[0].strip() for i in doc.split("@return")[1:]]
         if len(returns) == 0:
             returns.append("TODO: document this")
         assert len(returns) == 1
         returns = "\n    ".join(returns[0].split("\n"))
-        return f"{typename}\n    {returns}"
+        return f"{returns}"
 
 
 def generate_docs():
-    with open(os.path.join(path, "docs.h.template")) as f:
+    with open(os.path.join(path, "docs.template")) as f:
         docs = f.read()
 
     docs = docs.replace("{{DOCTYPE}}", "const std::string")
@@ -149,5 +153,4 @@ def generate_docs():
 
 
 if __name__ == "__main__":
-    with open(os.path.join(path, "docs.h"), "w") as f:
-        f.write(generate_docs())
+    print(generate_docs().strip())

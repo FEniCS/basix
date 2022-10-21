@@ -30,7 +30,7 @@ from basix import ElementFamily, CellType, LagrangeVariant, LatticeType
 # =========================
 #
 # We create a degree 5 Lagrange element on a triangle, then print the
-# values of the attreibutes `dof_transformations_are_identity` and
+# values of the attributes `dof_transformations_are_identity` and
 # `dof_transformations_are_permutations`.
 #
 # The value of `dof_transformations_are_identity` is False: this tells

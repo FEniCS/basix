@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 [tool.cibuildwheel]
 build = ["cp{37,38,39}-manylinux_x86_64", "cp{37,38,39}-manylinux_arm64", "cp{37,38,39}-macosx_x86_64", "cp{38,39}-macosx_arm64"]
 
-test-command = "cmake -DPython3_EXECUTABLE=$(which python) -G Ninja -B build -S {project}/test/test_cmake && cmake --build build/ && build/a.out && python -m pytest -v -n auto --durations 20 {project}/test/"
+test-command = "cmake -DPython3_EXECUTABLE=$(which python) -G Ninja -B build-dir -S {project}/test/test_cmake && cmake --build build-dir/ && build-dir/a.out && python -m pytest -v -n auto --durations 20 {project}/test/"
 test-requires = ["pytest-xdist"]
 test-extras = ["test"]
 test-skip = "*-macosx_arm64"

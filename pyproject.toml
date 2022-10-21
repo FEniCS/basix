@@ -4,7 +4,7 @@ requires = ["setuptools>=42", "wheel", "pybind11>=2.9.1", "cmake>=3.16", "scikit
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-build = ["cp{37,38,39}-manylinux_x86_64", "cp{37,38,39}-manylinux_arm64", "cp{37,38,39}-macosx_x86_64", "cp{38,39}-macosx_arm64"]
+build = ["cp{37,38,39}-manylinux_x86_64", "cp{37,38,39}-manylinux_aarch64", "cp{37,38,39}-macosx_x86_64", "cp{38,39}-macosx_arm64"]
 
 test-command = "cmake -DPython3_EXECUTABLE=$(which python) -G Ninja -B build-dir -S {project}/test/test_cmake && cmake --build build-dir/ && build-dir/a.out && python -m pytest -v -n auto --durations 20 {project}/test/"
 test-requires = ["pytest-xdist"]
@@ -14,7 +14,7 @@ test-skip = "*-macosx_arm64"
 manylinux-x86_64-image = "manylinux2014"
 
 [tool.cibuildwheel.linux]
-archs = ["x86_64", "arm64"] # Forces arm65 build on x86_64 runner using emulation.
+archs = ["x86_64", "aarch64"] # Forces arm65 build on x86_64 runner using emulation.
 before-build = "yum -y update && yum install -y openblas-devel ninja-build"
 
 [tool.cibuildwheel.macos]

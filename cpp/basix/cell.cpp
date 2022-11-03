@@ -343,9 +343,36 @@ cell::sub_entity_geometry(cell::type celltype, int dim, int index)
 //----------------------------------------------------------------------------
 int cell::num_sub_entities(cell::type celltype, int dim)
 {
-  const std::vector<std::vector<std::vector<int>>> cell_topology
-      = cell::topology(celltype);
-  return cell_topology.at(dim).size();
+  constexpr std::array<int, 4> point = {1, 0, 0, 0};
+  constexpr std::array<int, 4> interval = {2, 1, 0, 0};
+  constexpr std::array<int, 4> triangle = {3, 3, 1, 0};
+  constexpr std::array<int, 4> tetrahedron = {4, 6, 4, 1};
+  constexpr std::array<int, 4> quadrilateral = {4, 4, 1, 0};
+  constexpr std::array<int, 4> hexahedron = {8, 12, 6, 1};
+  constexpr std::array<int, 4> prism = {6, 9, 5, 1};
+  constexpr std::array<int, 4> pyramid = {5, 8, 5, 1};
+
+  switch (celltype)
+  {
+  case cell::type::point:
+    return point[dim];
+  case cell::type::interval:
+    return interval[dim];
+  case cell::type::triangle:
+    return triangle[dim];
+  case cell::type::tetrahedron:
+    return tetrahedron[dim];
+  case cell::type::quadrilateral:
+    return quadrilateral[dim];
+  case cell::type::hexahedron:
+    return hexahedron[dim];
+  case cell::type::prism:
+    return prism[dim];
+  case cell::type::pyramid:
+    return pyramid[dim];
+  default:
+    throw std::runtime_error("Unsupported cell type");
+  }
 }
 //----------------------------------------------------------------------------
 cell::type cell::sub_entity_type(cell::type celltype, int dim, int index)

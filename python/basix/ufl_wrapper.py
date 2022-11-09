@@ -1289,7 +1289,7 @@ def create_vector_element(
         dim: The length of the vector.
         gdim: The geometric dimension of the cell.
     """
-    e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
+    e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, gdim)
     return VectorElement(e, dim, gdim=gdim)
 
 

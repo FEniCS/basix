@@ -48,7 +48,6 @@ jobs:
           flake8 --statistics demo/python
 
       - name: Run mypy checks
-        if: matrix.python-version != '3.10'
         run: |
           python3 -m mypy python/basix
 

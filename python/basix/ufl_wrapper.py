@@ -1153,7 +1153,7 @@ class TensorElement(BlockedElement):
         else:
             bs = shape[0] * shape[1]
         assert len(shape) == 2
-        super().__init__(f"TensorElement({sub_element._repr}, {shape})", sub_element, bs, shape,
+        super().__init__(f"TensorElement({sub_element._repr}, {shape}, {symmetric})", sub_element, bs, shape,
                          symmetric=symmetric, gdim=gdim)
 
 

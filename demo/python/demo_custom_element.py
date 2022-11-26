@@ -9,7 +9,7 @@
 
 import basix
 import numpy as np
-from basix import CellType, MapType, PolynomialType, LatticeType
+from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace
 
 # Lagrange element with bubble
 # ============================
@@ -18,7 +18,7 @@ from basix import CellType, MapType, PolynomialType, LatticeType
 # on a quadrilateral cell. This element will span the following set of polynomials:
 #
 # .. math::
-#    \left\{1,\; x,\; y,\; xy,\; x(1-x)y(1-y)\right\}.
+#    \left\{1,\; y,\; x,\; xy,\; x(1-x)y(1-y)\right\}.
 #
 # We will define the degrees of freedom (DOFs) of this element by placing a point
 # evaluation at each vertex, plus one at the midpoint of the cell.
@@ -73,7 +73,7 @@ x = pts[:, 0]
 y = pts[:, 1]
 f = x * (1 - x) * y * (1 - y)
 for i in range(9):
-    wcoeffs[4, i] = sum(f * poly[:, i] * wts)
+    wcoeffs[4, i] = sum(f * poly[i, :] * wts)
 
 # Interpolation
 # -------------
@@ -130,9 +130,10 @@ for _ in range(4):
 # - The coefficients that define the polynomial set. In this example, this is `wcoeffs`.
 # - The points used to define interpolation into the element. In this example, this is `x`.
 # - The matrix used to define interpolation into the element. In this example, this is `M`.
-# - The number of derivates used in the evalutation of the functionals. In this example, this
+# - The number of derivates used in the evaluation of the functionals. In this example, this
 #   is 0.
 # - The map type. In this example, this is the identity map.
+# - The underlying Sobolev space. In this example, this is H1.
 # - A bool indicating whether the element is discontinuous. In this example, this is `False`.
 # - The highest degree :math:`n` such that all degree :math:`n` polynomials are contained in
 #   this set. In this example, this is 1.
@@ -141,7 +142,7 @@ for _ in range(4):
 #   polynomials to use when creating and tabulating the element.
 
 element = basix.create_custom_element(
-    CellType.quadrilateral, [], wcoeffs, x, M, 0, MapType.identity, False, 1, 2)
+    CellType.quadrilateral, [], wcoeffs, x, M, 0, MapType.identity, SobolevSpace.H1, False, 1, 2)
 
 # We can now use this element in the same way we can use a built-in element. For example, we
 # can tabulate the element at a set of points. If the points we use are the same as the points
@@ -192,8 +193,8 @@ poly = basix.tabulate_polynomials(PolynomialType.legendre, CellType.triangle, 1,
 x = pts[:, 0]
 y = pts[:, 1]
 for i in range(3):
-    wcoeffs[2, i] = sum(x * poly[:, i] * wts)
-    wcoeffs[2, 3 + i] = sum(y * poly[:, i] * wts)
+    wcoeffs[2, i] = sum(x * poly[i, :] * wts)
+    wcoeffs[2, 3 + i] = sum(y * poly[i, :] * wts)
 
 # Interpolation
 # -------------
@@ -233,7 +234,8 @@ M[2].append(np.zeros((0, 2, 0, 1)))
 # --------------------
 
 element = basix.create_custom_element(
-    CellType.triangle, [2], wcoeffs, x, M, 0, MapType.contravariantPiola, False, 0, 1)
+    CellType.triangle, [2], wcoeffs, x, M, 0, MapType.contravariantPiola, SobolevSpace.HDiv,
+    False, 0, 1)
 
 # To confirm that we have defined this element correctly, we compare it to the built-in
 # Raviart--Thomas element.

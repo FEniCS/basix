@@ -82,6 +82,6 @@ values = lagrange.tabulate(0, points)
 # function in this space. We can obtain the values of this basis function from
 # `values` by using the indices `[0, :, 3, 0]`. The integral can therefore
 # computed as follows. As this basis function will be degree three, the result
-# will again be exact (withing machine precision).
+# will again be exact (within machine precision).
 
 print(np.sum(weights * values[0, :, 3, 0]))

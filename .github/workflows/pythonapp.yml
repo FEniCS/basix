@@ -9,8 +9,7 @@ on:
     branches:
       - "**"
     tags:
-      - "*.*.*.*"
-      - "*.*.*"
+      - "v*"
   pull_request:
     branches:
       - main
@@ -22,7 +21,10 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: ["3.8", "3.9", "3.10"]
+    env:
+      CC: gcc-10
+      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
@@ -31,39 +33,49 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
+        run: |
+          sudo apt-get update
+          sudo apt-get -y upgrade
+          sudo apt-get install -y doxygen libgraphviz-dev libopenblas-dev liblapack-dev ninja-build
 
       - name: Install Basix
-        run: pip -v install .[ci]
+        run: python3 -m pip -v install .[ci]
 
       - name: Lint with flake8
         run: |
-          pip install flake8
           flake8 --statistics test/
           flake8 --statistics python/
           flake8 --statistics demo/python
 
       - name: Run mypy checks
         run: |
-          pip install mypy
-          python -m mypy python/basix
+          python3 -m mypy python/basix
 
       - name: pydocstyle checks
         run: |
-          pip install pydocstyle
-          python -m pydocstyle python/basix
+          python3 -m pydocstyle python/basix
 
       - name: Run units tests
         run: |
-          pytest -n auto --durations 20 test/
+          python3 -m pytest -n auto --durations 20 test/
 
-      - name: Run python demos
+      - name: Run simple CMake integration test
         run: |
-          pytest demo/python/test.py
+          cd test/test_cmake
+          cmake -DCMAKE_BUILD_TYPE=Debug -DPython3_EXECUTABLE=python3 -G Ninja -B build-dir -S .
+          cmake --build build-dir/
+          build-dir/a.out
+
+      - name: Run Python demos
+        run: |
+          python3 -m pytest demo/python/test.py
+
+      - name: Run C++ demos
+        run: |
+          python3 -m pytest demo/cpp/test.py
 
       - name: Build documentation
         run: |
-          pip install git+https://github.com/FEniCS/ufl.git
           export BASIX_VERSION=`python3 -c "import basix; print(basix.__version__)"`
           cd doc/cpp
           doxygen
@@ -128,12 +140,15 @@ jobs:
           git push
 
   build-cmake:
-    name: Build using cmake and test
+    name: Build using C++ and Python parts separately and run tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.10']
+        python-version: ["3.10"]
+    env:
+      CC: gcc-10
+      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
@@ -142,22 +157,59 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: sudo apt-get install -y doxygen libopenblas-dev liblapack-dev ninja-build
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev
 
-      - name: Install CI dependencies
-        run: pip install pytest sympy numba scipy matplotlib fenics-ufl pytest-xdist pybind11
-
-      - name: Install Basix
+      - name: Install Basix C++ library
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Release -DDOWNLOAD_XTENSOR_LIBS=ON -B build-dir -S .
+          cd cpp
+          cmake -DCMAKE_BUILD_TYPE=Release -B build-dir -S . # Use make (not ninja)
           cmake --build build-dir
           sudo cmake --install build-dir
-          cd python && pip install .
+
+      - name: Install Basix Python wrapper
+        run: |
+          cd python
+          python3 -m pip install .[test]
 
       - name: Run units tests
         run: |
-          pytest -n auto --durations 20 test/
+          python3 -m pip install pytest-xdist # in ci extras, but most not needed.
+          python3 -m pytest -n auto --durations 20 test/
 
-      - name: Run python demos
+      - name: Run Python demos
         run: |
-          pytest demo/python/test.py
+          python3 -m pytest demo/python/test.py
+      
+      - name: Run C++ demos
+        run: |
+          python3 -m pytest demo/cpp/test.py
+
+  build-cpp-only:
+    name: Build C++ only and run demos
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    env:
+      CC: gcc-10
+      CXX: g++-10
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install dependencies
+        run: sudo apt-get install -y libopenblas-dev liblapack-dev ninja-build
+
+      - name: Install Basix
+        run: |
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -B build-dir -S cpp
+          cmake --build build-dir
+          sudo cmake --install build-dir
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10"
+      - name: Run C++ demos
+        run: |
+          python3 -m pip install pytest
+          python3 -m pytest demo/cpp/test.py

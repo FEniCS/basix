@@ -15,7 +15,7 @@ jobs:
   build:
     name: Build and test (Red Hat)
     runs-on: ubuntu-latest
-    container: rockylinux/rockylinux:8
+    container: rockylinux/rockylinux:9
 
     env:
       CC: gcc
@@ -24,17 +24,24 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          sed -i 's/enabled=0/enabled=1/' /etc/yum.repos.d/Rocky-PowerTools.repo
-          dnf install -y gcc-toolset-11-toolchain git blas-devel lapack-devel python39 python39-devel python39-pip
+          dnf -y update
+          dnf install -y dnf-plugins-core
+          dnf config-manager --set-enabled crb
+          dnf install -y blas-devel cmake gcc gcc-c++ git lapack-devel python3 python3-devel python3-pip
 
       - uses: actions/checkout@v3
 
       - name: Install Basix
         run: |
-          source /opt/rh/gcc-toolset-11/enable
           python3 -m pip install .[test]
 
       - name: Run units tests
         run: |
           python3 -m pip install pytest-xdist
           python3 -m pytest -n auto --durations 20 test/
+
+      - name: Run Python demos
+        run: python3 -m pytest demo/python/test.py
+      - name: Run C++ demos
+        run: |
+          python3 -m pytest demo/cpp/test.py

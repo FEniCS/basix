@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Chris Richardson
+// Copyright (c) 2020-2022 Chris Richardson, Matthew Scroggs and Garth N. Wells
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
@@ -10,14 +10,12 @@
 
 namespace basix::element
 {
-/// Create a Lagrange element on cell with given degree
-/// @param[in] celltype The cell type
+/// @brief Create a Lagrange(-like) element on cell with given degree
+/// @param[in] celltype The element cell type
 /// @param[in] degree The degree of the element
 /// @param[in] variant The variant of the element to be created
-/// @param[in] discontinuous Controls whether the element is continuous or
-/// discontinuous
+/// @param[in] discontinuous True if the is discontinuous
 /// @return A finite element
 FiniteElement create_lagrange(cell::type celltype, int degree,
-                              element::lagrange_variant variant,
-                              bool discontinuous);
+                              lagrange_variant variant, bool discontinuous);
 } // namespace basix::element

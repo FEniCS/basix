@@ -1,12 +1,14 @@
 # Copyright (c) 2020 Matthew Scroggs
 # FEniCS Project
 # SPDX-License-Identifier: MIT
+"""Test utilities."""
 
 import pytest
 from basix import ElementFamily, CellType, LagrangeVariant, DPCVariant
 
 
 def parametrize_over_elements(degree, reference=None, discontinuous=False):
+    """Parametrize a test over a wide range of elements."""
     elementlist = []
 
     for k in range(1, degree + 1):

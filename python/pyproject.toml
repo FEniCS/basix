@@ -1,0 +1,5 @@
+[build-system]
+# We require that the user installs cmake
+requires = ["setuptools>=42", "wheel", "pybind11>=2.9.1"]
+
+build-backend = "setuptools.build_meta"

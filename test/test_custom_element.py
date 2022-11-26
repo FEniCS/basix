@@ -23,7 +23,7 @@ def test_lagrange_custom_triangle_degree1():
 
     element = basix.create_custom_element(
         basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, False, 1, 1)
+        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 1, 1)
 
     points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
@@ -46,7 +46,7 @@ def test_lagrange_custom_triangle_degree1_l2piola():
 
     element = basix.create_custom_element(
         basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.L2Piola, False, 1, 1)
+        x, M, 0, basix.MapType.L2Piola, basix.SobolevSpace.L2, False, 1, 1)
 
     points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
@@ -70,7 +70,7 @@ def test_lagrange_custom_triangle_degree4():
 
     element = basix.create_custom_element(
         basix.CellType.triangle, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, False, 4, 4)
+        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 4, 4)
 
     points = basix.create_lattice(basix.CellType.triangle, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
@@ -93,7 +93,7 @@ def test_lagrange_custom_quadrilateral_degree1():
 
     element = basix.create_custom_element(
         basix.CellType.quadrilateral, [], wcoeffs,
-        x, M, 0, basix.MapType.identity, False, 1, 1)
+        x, M, 0, basix.MapType.identity, basix.SobolevSpace.H1, False, 1, 1)
 
     points = basix.create_lattice(basix.CellType.quadrilateral, 5, basix.LatticeType.equispaced, True)
     assert np.allclose(lagrange.tabulate(1, points), element.tabulate(1, points))
@@ -110,8 +110,8 @@ def test_raviart_thomas_triangle_degree1():
     pts, wts = basix.make_quadrature(basix.CellType.triangle, 2)
     poly = basix.tabulate_polynomials(basix.PolynomialType.legendre, basix.CellType.triangle, 1, pts)
     for i in range(3):
-        wcoeffs[2, i] = sum(pts[:, 0] * poly[:, i] * wts)
-        wcoeffs[2, 3 + i] = sum(pts[:, 1] * poly[:, i] * wts)
+        wcoeffs[2, i] = sum(pts[:, 0] * poly[i, :] * wts)
+        wcoeffs[2, 3 + i] = sum(pts[:, 1] * poly[i, :] * wts)
 
     pts, wts = basix.make_quadrature(basix.CellType.interval, 2)
 
@@ -134,7 +134,8 @@ def test_raviart_thomas_triangle_degree1():
     M[2].append(np.zeros((0, 2, 0, 1)))
 
     element = basix.create_custom_element(
-        basix.CellType.triangle, [2], wcoeffs, x, M, 0, basix.MapType.contravariantPiola, False, 0, 1)
+        basix.CellType.triangle, [2], wcoeffs, x, M, 0, basix.MapType.contravariantPiola,
+        basix.SobolevSpace.HDiv, False, 0, 1)
 
     rt = basix.create_element(
         basix.ElementFamily.RT, basix.CellType.triangle, 1)
@@ -161,7 +162,7 @@ def create_lagrange1_quad(cell_type=basix.CellType.quadrilateral, degree=1, wcoe
         value_shape = []
     basix.create_custom_element(
         cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, basix.MapType.identity,
-        discontinuous, 1, degree)
+        basix.SobolevSpace.H1, discontinuous, 1, degree)
 
 
 def test_create_lagrange1_quad():

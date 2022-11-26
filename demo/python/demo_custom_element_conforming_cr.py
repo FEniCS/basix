@@ -9,7 +9,7 @@
 
 import basix
 import numpy as np
-from basix import CellType, MapType, PolynomialType, LatticeType
+from basix import CellType, MapType, PolynomialType, LatticeType, SobolevSpace
 
 from mpl_toolkits import mplot3d  # noqa: F401
 import matplotlib.pyplot as plt
@@ -51,7 +51,7 @@ def create_ccr_triangle(degree):
         M[2].append(np.zeros((0, 1, 0, 1)))
 
         return basix.create_custom_element(
-            CellType.triangle, [], wcoeffs, x, M, 0, MapType.identity, False, 1, 1)
+            CellType.triangle, [], wcoeffs, x, M, 0, MapType.identity, SobolevSpace.L2, False, 1, 1)
 
     npoly = (degree + 2) * (degree + 3) // 2
     ndofs = degree * (degree + 5) // 2
@@ -70,7 +70,7 @@ def create_ccr_triangle(degree):
         f = x ** i * y ** (degree - i) * (x + y)
 
         for j in range(npoly):
-            wcoeffs[dof_n, j] = sum(f * poly[:, j] * wts)
+            wcoeffs[dof_n, j] = sum(f * poly[j, :] * wts)
         dof_n += 1
 
     geometry = basix.geometry(CellType.triangle)
@@ -98,7 +98,8 @@ def create_ccr_triangle(degree):
     M[2].append(mat)
 
     return basix.create_custom_element(
-        CellType.triangle, [], wcoeffs, x, M, 0, MapType.identity, False, degree, degree + 1)
+        CellType.triangle, [], wcoeffs, x, M, 0, MapType.identity, SobolevSpace.L2, False,
+        degree, degree + 1)
 
 
 # We can then create a degree 2 conforming CR element.

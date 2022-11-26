@@ -179,7 +179,7 @@ jobs:
       - name: Run Python demos
         run: |
           python3 -m pytest demo/python/test.py
-      
+
       - name: Run C++ demos
         run: |
           python3 -m pytest demo/cpp/test.py

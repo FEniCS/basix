@@ -50,10 +50,10 @@ target_link_libraries(_basixcpp PRIVATE Basix::basix nanobind)
 # Add strict compiler flags
 include(CheckCXXCompilerFlag)
 
-# CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_PEDANTIC)
-# if (HAVE_PEDANTIC)
-#   target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment;-pedantic)
-# endif()
+CHECK_CXX_COMPILER_FLAG("-Wall -Werror -Wextra -Wno-comment -pedantic" HAVE_PEDANTIC)
+if (HAVE_PEDANTIC)
+  target_compile_options(_basixcpp PRIVATE -Wall;-Wextra;-Werror;-Wno-comment)
+endif()
 
 # In Debug mode override pybind11 symbols visibility. Symbols must be
 # visible to backtrace_symbols() to produce nice logs

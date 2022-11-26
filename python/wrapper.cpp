@@ -22,6 +22,7 @@
 #include <nanobind/stl/vector.h>
 #include <nanobind/tensor.h>
 
+#include <memory>
 #include <span>
 #include <string>
 #include <vector>
@@ -124,7 +125,7 @@ NB_MODULE(_basixcpp, m)
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
         stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-            x.data(), x.shape(0), x.shape(1));
+            (double*)x.data(), x.shape(0), x.shape(1));
         auto [p, shape] = polynomials::tabulate(polytype, celltype, d, _x);
         return as_nbtensor(p, shape);
       },
@@ -254,12 +255,13 @@ NB_MODULE(_basixcpp, m)
       .def(
           "tabulate",
           [](const FiniteElement& self, int n,
-             const nb::tensor<nb::numpy, double>& x)
+             const nb::tensor<nb::numpy, double, nb::shape<nb::any, nb::any>>&
+                 x)
           {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
             stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-                x.data(), x.shape(0), x.shape(1));
+                (const double*)x.data(), x.shape(0), x.shape(1));
             auto [t, shape] = self.tabulate(n, _x);
             return as_nbtensor(t, shape);
           },
@@ -321,9 +323,8 @@ NB_MODULE(_basixcpp, m)
             std::span<double> data_span(data.data(), data.shape(0));
             self.apply_inverse_transpose_dof_transformation(
                 data_span, block_size, cell_info);
-            std::size_t size = data.shape(0);
-            return nb::tensor<nb::numpy, double, nb::shape<nb::any>>(
-                data_span.data(), 1, &size);
+            std::array<std::size_t, 1> size = {data.shape(0)};
+            return as_nbtensor(data_span, size);
           },
           basix::docstring::
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
@@ -344,7 +345,6 @@ NB_MODULE(_basixcpp, m)
             for (auto& [key, data] : t)
               t2[cell_type_to_str(key).c_str()]
                   = as_nbtensor(data.first, data.second);
-
             return t2;
           },
           basix::docstring::FiniteElement__entity_transformations.c_str())
@@ -539,7 +539,7 @@ NB_MODULE(_basixcpp, m)
           {
             if (x[i][j].ndim() != 2)
               throw std::runtime_error("x has the wrong number of dimensions");
-            _x[i].emplace_back(x[i][j].data(), x[i][j].shape(0),
+            _x[i].emplace_back((double*)x[i][j].data(), x[i][j].shape(0),
                                x[i][j].shape(1));
           }
         }
@@ -551,7 +551,7 @@ NB_MODULE(_basixcpp, m)
           {
             if (M[i][j].ndim() != 4)
               throw std::runtime_error("M has the wrong number of dimensions");
-            _M[i].emplace_back(M[i][j].data(), M[i][j].shape(0),
+            _M[i].emplace_back((double*)M[i][j].data(), M[i][j].shape(0),
                                M[i][j].shape(1), M[i][j].shape(2),
                                M[i][j].shape(3));
           }
@@ -563,9 +563,10 @@ NB_MODULE(_basixcpp, m)
 
         return basix::create_custom_element(
             cell_type, _vs,
-            cmdspan2_t(wcoeffs.data(), wcoeffs.shape(0), wcoeffs.shape(1)), _x,
-            _M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
-            highest_complete_degree, highest_degree);
+            cmdspan2_t((double*)wcoeffs.data(), wcoeffs.shape(0),
+                       wcoeffs.shape(1)),
+            _x, _M, interpolation_nderivs, map_type, sobolev_space,
+            discontinuous, highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());
 
@@ -670,7 +671,7 @@ NB_MODULE(_basixcpp, m)
         if (x.ndim() != 2)
           throw std::runtime_error("x has the wrong number of dimensions");
         stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
-            x.data(), x.shape(0), x.shape(1));
+            (double*)x.data(), x.shape(0), x.shape(1));
         auto [p, shape] = polyset::tabulate(celltype, d, n, _x);
         return as_nbtensor(p, shape);
       },

@@ -33,6 +33,7 @@ def test_create_vector_element(inputs):
 def test_create_tensor_element(inputs):
     basix.ufl_wrapper.create_tensor_element(*inputs)
 
+
 @pytest.mark.parametrize("inputs", [
     ("Lagrange", "triangle", 2),
     ("Lagrange", basix.CellType.triangle, 2),
@@ -45,6 +46,7 @@ def test_tensor_element_hash(inputs):
     asym = basix.ufl_wrapper.TensorElement(e, symmetric=None)
     assert sym != asym
     assert hash(sym) != hash(asym)
+
 
 @pytest.mark.parametrize("e", [
     ufl.FiniteElement("Q", "quadrilateral", 1),

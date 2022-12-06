@@ -20,11 +20,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         python-version: ["3.8", "3.9", "3.10"]
     env:
-      CC: gcc-10
-      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
@@ -144,11 +142,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         python-version: ["3.10"]
     env:
-      CC: gcc-10
-      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
@@ -179,7 +175,7 @@ jobs:
       - name: Run Python demos
         run: |
           python3 -m pytest demo/python/test.py
-      
+
       - name: Run C++ demos
         run: |
           python3 -m pytest demo/cpp/test.py
@@ -189,10 +185,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
     env:
-      CC: gcc-10
-      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3

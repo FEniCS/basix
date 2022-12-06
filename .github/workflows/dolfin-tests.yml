@@ -96,4 +96,6 @@ jobs:
         run: python3 -m pytest -n auto dolfinx/python/test/unit
 
       - name: Run DOLFINx Python demos
-        run: python3 -m pytest -n auto dolfinx/python/demo/test.py
+        run: |
+          cd dolfinx/
+          python3 -m pytest -n auto -m serial --durations=10 python/demo/test.py

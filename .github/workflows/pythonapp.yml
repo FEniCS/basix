@@ -33,7 +33,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y upgrade
-          sudo apt-get install -y doxygen libgraphviz libopenblas-dev liblapack-dev ninja-build
+          sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
 
       - name: Install Basix
         run: python3 -m pip -v install .[ci]

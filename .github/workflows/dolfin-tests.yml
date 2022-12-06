@@ -93,7 +93,11 @@ jobs:
           ctest -V --output-on-failure -R unittests
 
       - name: Run DOLFINx Python unit tests
-        run: python3 -m pytest -n auto dolfinx/python/test/unit
+        run: |
+          python3 -m pytest -n auto python/test/unit
+          cd dolfinx
 
       - name: Run DOLFINx Python demos
-        run: python3 -m pytest -n auto dolfinx/python/demo/test.py
+        run: |
+          cd dolfinx
+          python3 -m pytest -n auto python/demo/test.py

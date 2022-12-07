@@ -85,7 +85,7 @@ class _BasixElementBase(_FiniteElementBase):
 
     def __hash__(self) -> int:
         """Return a hash."""
-        return hash(self._repr)
+        return hash("basix" + self._repr)
 
     @property
     def value_size(self) -> int:

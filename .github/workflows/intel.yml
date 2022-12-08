@@ -1,11 +1,11 @@
-name: Intel compilers
+name: oneAPI compilers
 
-# This workflow will test Basix built using Intel compilers and MKL
+# Test Basixusing Intel oneAPI compilers and MKL
 
 on:
-  schedule:
-    # '*' is a special character in YAML, so string must be quoted
-    - cron: "0 2 * * TUE"
+  push:
+    tags:
+      - "v*"
   pull_request:
     branches:
       - main
@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Install required packages to install Intel compilers and to build
-        run: apt -y update && apt install -y cmake git gnupg ninja-build python3-pip wget
+        run: apt -y update && apt install -y cmake git gnupg ninja-build wget
 
       - uses: actions/checkout@v3
 
@@ -34,28 +34,25 @@ jobs:
           apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
           apt update
-          apt install -y intel-oneapi-common-vars intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl
+          apt install -y intel-basekit
+
       - name: Install Basix
         run: |
           . /opt/intel/oneapi/setvars.sh
-          python3 -m pip -v install .[test]
+          pip -v install .[test]
+
       - name: Run units tests
-        # LD_PRELOAD is required to 'fix' library resolution problems
-        # when Numpy is not built against MKL
         run: |
           . /opt/intel/oneapi/setvars.sh
-          export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
-          python3 -m pip install pytest-xdist
-          python3 -m pytest -n auto --durations 20 test/
+          pip install pytest-xdist
+          pytest -n auto --durations 20 test/
 
       - name: Run Python demos
         run: |
           . /opt/intel/oneapi/setvars.sh
-          export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
-          python3 -m pytest demo/python/test.py
+          pytest demo/python/test.py
 
       - name: Run C++ demos
         run: |
           . /opt/intel/oneapi/setvars.sh
-          export LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so
-          python3 -m pytest demo/cpp/test.py
+          pytest demo/cpp/test.py

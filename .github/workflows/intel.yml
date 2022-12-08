@@ -42,20 +42,20 @@ jobs:
       - name: Install Basix
         run: |
           . /opt/intel/oneapi/setvars.sh
-          python3 -m pip -v install .[test]
+          pip -v install .[test]
 
       - name: Run units tests
         run: |
           . /opt/intel/oneapi/setvars.sh
-          python3 -m pip install pytest-xdist
-          python3 -m pytest -n auto --durations 20 test/
+          pip install pytest-xdist
+          pytest -n auto --durations 20 test/
 
       - name: Run Python demos
         run: |
           . /opt/intel/oneapi/setvars.sh
-          python3 -m pytest demo/python/test.py
+          pytest demo/python/test.py
 
       - name: Run C++ demos
         run: |
           . /opt/intel/oneapi/setvars.sh
-          python3 -m pytest demo/cpp/test.py
+          pytest demo/cpp/test.py

@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Install required packages to install Intel compilers and to build
-        run: apt -y update && apt install -y cmake gnupg ninja-build wget
+        run: apt -y update && apt install -y cmake git gnupg ninja-build wget
 
       - uses: actions/checkout@v3
 

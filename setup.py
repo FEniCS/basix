@@ -21,7 +21,7 @@ setup(name="fenics-basix",
       extras_require={
           "docs": ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"],
           "lint": ["flake8", "pydocstyle"],
-          "optional": ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"],
+          "optional": ["numba", "fenics-ufl"],
           "test": ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"],
           "ci": ["mypy", "pytest-xdist", "fenics-basix[docs]", "fenics-basix[lint]", "fenics-basix[optional]",
                  "fenics-basix[test]"]

@@ -466,7 +466,8 @@ basix::FiniteElement basix::create_custom_element(
     const impl::cmdspan2_t& wcoeffs,
     const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
     const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
-    int interpolation_nderivs, maps::type map_type, bool discontinuous,
+    int interpolation_nderivs, maps::type map_type,
+    sobolev::space sobolev_space, bool discontinuous,
     int highest_complete_degree, int highest_degree)
 {
   // Check that inputs are valid
@@ -544,10 +545,10 @@ basix::FiniteElement basix::create_custom_element(
         "Dual matrix is singular, there is an error in your inputs");
   }
 
-  return basix::FiniteElement(element::family::custom, cell_type,
-                              highest_degree, value_shape, wcoeffs, x, M,
-                              interpolation_nderivs, map_type, discontinuous,
-                              highest_complete_degree, highest_degree);
+  return basix::FiniteElement(
+      element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
+      x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
+      highest_complete_degree, highest_degree);
 }
 
 //-----------------------------------------------------------------------------
@@ -556,14 +557,15 @@ FiniteElement::FiniteElement(
     const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
     const std::array<std::vector<cmdspan2_t>, 4>& x,
     const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, bool discontinuous, int highest_complete_degree,
-    int highest_degree, element::lagrange_variant lvariant,
+    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree,
+    element::lagrange_variant lvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors)
     : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, discontinuous,
-                    highest_complete_degree, highest_degree, lvariant,
-                    element::dpc_variant::unset, tensor_factors)
+                    interpolation_nderivs, map_type, sobolev_space,
+                    discontinuous, highest_complete_degree, highest_degree,
+                    lvariant, element::dpc_variant::unset, tensor_factors)
 {
 }
 //-----------------------------------------------------------------------------
@@ -572,13 +574,14 @@ FiniteElement::FiniteElement(
     const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
     const std::array<std::vector<cmdspan2_t>, 4>& x,
     const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, bool discontinuous, int highest_complete_degree,
-    int highest_degree, element::dpc_variant dvariant,
+    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree,
+    element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors)
     : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, discontinuous,
-                    highest_complete_degree, highest_degree,
+                    interpolation_nderivs, map_type, sobolev_space,
+                    discontinuous, highest_complete_degree, highest_degree,
                     element::lagrange_variant::unset, dvariant, tensor_factors)
 {
 }
@@ -588,13 +591,13 @@ FiniteElement::FiniteElement(
     const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
     const std::array<std::vector<cmdspan2_t>, 4>& x,
     const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, bool discontinuous, int highest_complete_degree,
-    int highest_degree,
+    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors)
     : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, discontinuous,
-                    highest_complete_degree, highest_degree,
+                    interpolation_nderivs, map_type, sobolev_space,
+                    discontinuous, highest_complete_degree, highest_degree,
                     element::lagrange_variant::unset,
                     element::dpc_variant::unset, tensor_factors)
 {
@@ -605,9 +608,9 @@ FiniteElement::FiniteElement(
     const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
     const std::array<std::vector<cmdspan2_t>, 4>& x,
     const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, bool discontinuous, int highest_complete_degree,
-    int highest_degree, element::lagrange_variant lvariant,
-    element::dpc_variant dvariant,
+    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree,
+    element::lagrange_variant lvariant, element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
         tensor_factors)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
@@ -617,7 +620,8 @@ FiniteElement::FiniteElement(
       _highest_degree(highest_degree),
       _highest_complete_degree(highest_complete_degree),
       _value_shape(value_shape), _map_type(map_type),
-      _discontinuous(discontinuous), _tensor_factors(tensor_factors)
+      _sobolev_space(sobolev_space), _discontinuous(discontinuous),
+      _tensor_factors(tensor_factors)
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
@@ -1010,7 +1014,9 @@ bool FiniteElement::operator==(const FiniteElement& e) const
     }
 
     return cell_type() == e.cell_type() and discontinuous() == e.discontinuous()
-           and map_type() == e.map_type() and value_shape() == e.value_shape()
+           and map_type() == e.map_type()
+           and sobolev_space() == e.sobolev_space()
+           and value_shape() == e.value_shape()
            and highest_degree() == e.highest_degree()
            and highest_complete_degree() == e.highest_complete_degree()
            and coeff_equal and entity_dofs() == e.entity_dofs();
@@ -1020,7 +1026,8 @@ bool FiniteElement::operator==(const FiniteElement& e) const
     return cell_type() == e.cell_type() and family() == e.family()
            and degree() == e.degree() and discontinuous() == e.discontinuous()
            and lagrange_variant() == e.lagrange_variant()
-           and dpc_variant() == e.dpc_variant() and map_type() == e.map_type();
+           and dpc_variant() == e.dpc_variant() and map_type() == e.map_type()
+           and sobolev_space() == e.sobolev_space();
   }
 }
 //-----------------------------------------------------------------------------
@@ -1134,6 +1141,8 @@ int FiniteElement::dim() const { return _coeffs.second[0]; }
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
 maps::type FiniteElement::map_type() const { return _map_type; }
+//-----------------------------------------------------------------------------
+sobolev::space FiniteElement::sobolev_space() const { return _sobolev_space; }
 //-----------------------------------------------------------------------------
 bool FiniteElement::discontinuous() const { return _discontinuous; }
 //-----------------------------------------------------------------------------

@@ -63,9 +63,6 @@ std::pair<std::vector<double>, std::array<std::size_t, 2>>
 sub_entity_geometry(cell::type celltype, int dim, int index);
 
 /// Number of sub-entities of a cell by topological dimension
-/// @todo Optimise this function
-/// @warning This function is expensive to call. Do not use in
-/// performance critical code
 /// @param celltype The cell::type
 /// @param dim Dimension of sub-entity
 /// @return The number of sub-entities of the given dimension

@@ -400,11 +400,12 @@ Create a custom finite element
 Args:
     cell_type: The cell type
     value_shape: The value shape of the element
-   wcoeffs: Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element. Shape is (dim(finite element polyset), dim(Legendre polynomials))
+    wcoeffs: Matrices for the kth value index containing the expansion coefficients defining a polynomial basis spanning the polynomial space for this element. Shape is (dim(finite element polyset), dim(Legendre polynomials))
     x: Interpolation points. Indices are (tdim, entity index, point index, dim)
     M: The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index, derivative)
     interpolation_nderivs: The number of derivatives that need to be used during interpolation
     map_type: The type of map to be used to map values from the reference to a cell
+    sobolev_space: The underlying Sobolev space for the element
     discontinuous: Indicates whether or not this is the discontinuous version of the element
     highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange) element of degree n is a subspace of this element
     highest_degree: The degree of a polynomial in this element's polyset
@@ -690,6 +691,17 @@ Args:
 
 Returns:
     1D Index
+)";
+
+const std::string space_intersection = R"(
+Get the intersection of two Sobolev spaces
+
+Args:
+    space1: The first space
+    space2: The second space
+
+Returns:
+    The intersection
 )";
 
 } // namespace basix::docstring

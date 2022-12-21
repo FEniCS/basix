@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Set the version
-project(Basix VERSION "0.5.1" LANGUAGES CXX)
+project(Basix VERSION "0.6.0.0" LANGUAGES CXX)
 include(GNUInstallDirs)
 
 if(SKBUILD)
@@ -48,6 +48,7 @@ set(HEADERS_basix
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/sobolev-spaces.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-lagrange.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nce-rtc.h
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-brezzi-douglas-marini.h
@@ -75,6 +76,7 @@ target_sources(basix PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/polyset.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/precompute.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/quadrature.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/basix/sobolev-spaces.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-lagrange.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-nce-rtc.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basix/e-brezzi-douglas-marini.cpp

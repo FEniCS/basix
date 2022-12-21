@@ -11,6 +11,7 @@
 #include "mdspan.hpp"
 #include "moments.h"
 #include "polyset.h"
+#include "sobolev-spaces.h"
 #include <vector>
 
 using namespace basix;
@@ -92,6 +93,7 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   return FiniteElement(family::BDM, celltype, degree, {tdim},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        xview, Mview, 0, maps::type::contravariantPiola,
-                       discontinuous, degree, degree, lvariant);
+                       sobolev::space::HDiv, discontinuous, degree, degree,
+                       lvariant);
 }
 //-----------------------------------------------------------------------------

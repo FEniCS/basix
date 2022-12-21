@@ -9,6 +9,7 @@
 #include "moments.h"
 #include "polyset.h"
 #include "quadrature.h"
+#include "sobolev-spaces.h"
 #include <vector>
 
 using namespace basix;
@@ -133,7 +134,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
 
   return FiniteElement(element::family::RT, celltype, degree, {tdim},
                        impl::mdspan2_t(B.data(), B.extents()), xview, Mview, 0,
-                       maps::type::contravariantPiola, discontinuous,
-                       degree - 1, degree, lvariant);
+                       maps::type::contravariantPiola, sobolev::space::HDiv,
+                       discontinuous, degree - 1, degree, lvariant);
 }
 //-----------------------------------------------------------------------------

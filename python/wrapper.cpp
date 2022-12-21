@@ -14,6 +14,7 @@
 #include <basix/polynomials.h>
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
+#include <basix/sobolev-spaces.h>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
@@ -80,6 +81,9 @@ Interface to the Basix C++ library.
       },
       basix::docstring::sub_entity_geometry.c_str());
 
+  m.def("sobolev_space_intersection", &sobolev::space_intersection,
+        basix::docstring::space_intersection.c_str());
+
   py::enum_<lattice::type>(m, "LatticeType")
       .value("equispaced", lattice::type::equispaced)
       .value("gll", lattice::type::gll)
@@ -140,6 +144,17 @@ Interface to the Basix C++ library.
       .value("contravariantPiola", maps::type::contravariantPiola)
       .value("doubleCovariantPiola", maps::type::doubleCovariantPiola)
       .value("doubleContravariantPiola", maps::type::doubleContravariantPiola);
+
+  py::enum_<sobolev::space>(m, "SobolevSpace")
+      .value("L2", sobolev::space::L2)
+      .value("H1", sobolev::space::H1)
+      .value("H2", sobolev::space::H2)
+      .value("H3", sobolev::space::H3)
+      .value("HInf", sobolev::space::HInf)
+      .value("HDiv", sobolev::space::HDiv)
+      .value("HCurl", sobolev::space::HCurl)
+      .value("HEin", sobolev::space::HEin)
+      .value("HDivDiv", sobolev::space::HDivDiv);
 
   py::enum_<quadrature::type>(m, "QuadratureType")
       .value("Default", quadrature::type::Default)
@@ -216,8 +231,7 @@ Interface to the Basix C++ library.
       .def(
           "tabulate",
           [](const FiniteElement& self, int n,
-             const py::array_t<double, py::array::c_style>& x)
-          {
+             const py::array_t<double, py::array::c_style>& x) {
             if (x.ndim() != 2)
               throw std::runtime_error("x has the wrong size");
             stdex::mdspan<const double, stdex::dextents<std::size_t, 2>> _x(
@@ -233,8 +247,7 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& U,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K)
-          {
+             const py::array_t<double, py::array::c_style>& K) {
             auto [u, shape] = self.push_forward(
                 cmdspan3_t(U.data(), U.shape(0), U.shape(1), U.shape(2)),
                 cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
@@ -249,8 +262,7 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& u,
              const py::array_t<double, py::array::c_style>& J,
              const py::array_t<double, py::array::c_style>& detJ,
-             const py::array_t<double, py::array::c_style>& K)
-          {
+             const py::array_t<double, py::array::c_style>& K) {
             auto [U, shape] = self.pull_back(
                 cmdspan3_t(u.data(), u.shape(0), u.shape(1), u.shape(2)),
                 cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
@@ -262,8 +274,7 @@ Interface to the Basix C++ library.
       .def(
           "apply_dof_transformation",
           [](const FiniteElement& self, py::array_t<double>& data,
-             int block_size, std::uint32_t cell_info)
-          {
+             int block_size, std::uint32_t cell_info) {
             std::span<double> data_span(data.mutable_data(), data.size());
             self.apply_dof_transformation(data_span, block_size, cell_info);
             return py::array_t<double>(data_span.size(), data_span.data());
@@ -272,8 +283,7 @@ Interface to the Basix C++ library.
       .def(
           "apply_dof_transformation_to_transpose",
           [](const FiniteElement& self, py::array_t<double>& data,
-             int block_size, std::uint32_t cell_info)
-          {
+             int block_size, std::uint32_t cell_info) {
             std::span<double> data_span(data.mutable_data(), data.size());
             self.apply_dof_transformation_to_transpose(data_span, block_size,
                                                        cell_info);
@@ -284,8 +294,7 @@ Interface to the Basix C++ library.
       .def(
           "apply_inverse_transpose_dof_transformation",
           [](const FiniteElement& self, py::array_t<double>& data,
-             int block_size, std::uint32_t cell_info)
-          {
+             int block_size, std::uint32_t cell_info) {
             std::span<double> data_span(data.mutable_data(), data.size());
             self.apply_inverse_transpose_dof_transformation(
                 data_span, block_size, cell_info);
@@ -295,16 +304,14 @@ Interface to the Basix C++ library.
               FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
       .def(
           "base_transformations",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             auto [t, shape] = self.base_transformations();
             return py::array_t<double>(shape, t.data());
           },
           basix::docstring::FiniteElement__base_transformations.c_str())
       .def(
           "entity_transformations",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             auto t = self.entity_transformations();
             py::dict t2;
             for (auto& [key, data] : t)
@@ -317,8 +324,8 @@ Interface to the Basix C++ library.
           basix::docstring::FiniteElement__entity_transformations.c_str())
       .def(
           "get_tensor_product_representation",
-          [](const FiniteElement& self)
-          { return self.get_tensor_product_representation(); },
+          [](const FiniteElement& self) { return self.get_tensor_product_representation();
+          },
           basix::docstring::FiniteElement__get_tensor_product_representation
               .c_str())
       .def_property_readonly("degree", &FiniteElement::degree)
@@ -328,8 +335,7 @@ Interface to the Basix C++ library.
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("dim", &FiniteElement::dim)
       .def_property_readonly("num_entity_dofs",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                // TODO: remove this function. Information can
                                // retrieved from entity_dofs.
                                auto& edofs = self.entity_dofs();
@@ -344,8 +350,7 @@ Interface to the Basix C++ library.
                              })
       .def_property_readonly("entity_dofs", &FiniteElement::entity_dofs)
       .def_property_readonly("num_entity_closure_dofs",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                // TODO: remove this function. Information can
                                // retrieved from entity_closure_dofs.
                                auto& edofs = self.entity_closure_dofs();
@@ -361,8 +366,7 @@ Interface to the Basix C++ library.
       .def_property_readonly("entity_closure_dofs",
                              &FiniteElement::entity_closure_dofs)
       .def_property_readonly("value_size",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                return std::accumulate(
                                    self.value_shape().begin(),
                                    self.value_shape().end(), 1,
@@ -382,45 +386,40 @@ Interface to the Basix C++ library.
       .def_property_readonly("interpolation_is_identity",
                              &FiniteElement::interpolation_is_identity)
       .def_property_readonly("map_type", &FiniteElement::map_type)
+      .def_property_readonly("sobolev_space", &FiniteElement::sobolev_space)
       .def_property_readonly("points",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [x, shape] = self.points();
                                return py::array_t<double>(shape, x.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly("interpolation_matrix",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [P, shape] = self.interpolation_matrix();
                                return py::array_t<double>(shape, P.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly("dual_matrix",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [D, shape] = self.dual_matrix();
                                return py::array_t<double>(shape, D.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly("coefficient_matrix",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [P, shape] = self.coefficient_matrix();
                                return py::array_t<double>(shape, P.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly("wcoeffs",
-                             [](const FiniteElement& self)
-                             {
+                             [](const FiniteElement& self) {
                                auto& [P, shape] = self.wcoeffs();
                                return py::array_t<double>(shape, P.data(),
                                                           py::cast(self));
                              })
       .def_property_readonly(
           "M",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             const std::array<std::vector<std::pair<std::vector<double>,
                                                    std::array<std::size_t, 4>>>,
                              4>& _M
@@ -440,8 +439,7 @@ Interface to the Basix C++ library.
           })
       .def_property_readonly(
           "x",
-          [](const FiniteElement& self)
-          {
+          [](const FiniteElement& self) {
             const std::array<std::vector<std::pair<std::vector<double>,
                                                    std::array<std::size_t, 2>>>,
                              4>& _x
@@ -501,9 +499,9 @@ Interface to the Basix C++ library.
              std::vector<py::array_t<double, py::array::c_style>>>& x,
          const std::vector<
              std::vector<py::array_t<double, py::array::c_style>>>& M,
-         int interpolation_nderivs, maps::type map_type, bool discontinuous,
-         int highest_complete_degree, int highest_degree) -> FiniteElement
-      {
+         int interpolation_nderivs, maps::type map_type,
+         sobolev::space sobolev_space, bool discontinuous,
+         int highest_complete_degree, int highest_degree) -> FiniteElement {
         if (x.size() != 4)
           throw std::runtime_error("x has the wrong size");
         if (M.size() != 4)
@@ -541,7 +539,7 @@ Interface to the Basix C++ library.
         return basix::create_custom_element(
             cell_type, _vs,
             cmdspan2_t(wcoeffs.data(), wcoeffs.shape(0), wcoeffs.shape(1)), _x,
-            _M, interpolation_nderivs, map_type, discontinuous,
+            _M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
             highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());

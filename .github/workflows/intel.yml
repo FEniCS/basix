@@ -1,6 +1,6 @@
-name: oneAPI compilers
+name: oneAPI
 
-# Test Basixusing Intel oneAPI compilers and MKL
+# Test Basix using Intel oneAPI compilers and MKL
 
 on:
   push:
@@ -28,12 +28,12 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - name: Install Intel compilers
+      - name: Install Intel compilers and Intel Python
         run: |
           wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
           echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
           apt update
-          apt install -y intel-basekit intel-oneapi-python
+          apt install -y intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl intel-oneapi-python libstdc++-11-dev
 
       - name: Install Basix
         run: |

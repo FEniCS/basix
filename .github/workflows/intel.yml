@@ -1,6 +1,6 @@
-name: oneAPI compilers
+name: oneAPI
 
-# Test Basixusing Intel oneAPI compilers and MKL
+# Test Basix using Intel oneAPI compilers and MKL
 
 on:
   push:
@@ -24,17 +24,16 @@ jobs:
 
     steps:
       - name: Install required packages to install Intel compilers and to build
-        run: apt -y update && apt install -y cmake git gnupg ninja-build python3-dev python3-pip python3-setuptools wget
+        run: apt -y update && apt install -y bzip2 cmake git gnupg ninja-build wget
 
       - uses: actions/checkout@v3
 
-      - name: Install Intel compilers
+      - name: Install Intel compilers and Intel Python
         run: |
-          wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-          apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-          echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
+          wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | gpg --dearmor | tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
           apt update
-          apt install -y intel-basekit
+          apt install -y intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl intel-oneapi-python libstdc++-11-dev
 
       - name: Install Basix
         run: |

@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Install required packages to install Intel compilers and to build
-        run: apt -y update && apt install -y cmake git gnupg ninja-build python3-dev python3-pip python3-setuptools wget
+        run: apt -y update && apt install -y cmake git gnupg ninja-build wget
 
       - uses: actions/checkout@v3
 
@@ -34,7 +34,7 @@ jobs:
           apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
           echo "deb https://apt.repos.intel.com/oneapi all main" | tee /etc/apt/sources.list.d/oneAPI.list
           apt update
-          apt install -y intel-basekit
+          apt install -y intel-oneapi-compiler-dpcpp-cpp intel-oneapi-mkl intel-oneapi-python
 
       - name: Install Basix
         run: |

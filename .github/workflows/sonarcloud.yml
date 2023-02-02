@@ -9,7 +9,8 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    if: (github.event.pull_request.head.repo.full_name == github.repository) || github.ref_name == 'main'
     env:
       SONAR_SCANNER_VERSION:
         4.7.0.2747 # Find the latest version at:
@@ -17,8 +18,7 @@ jobs:
       SONAR_SERVER_URL: "https://sonarcloud.io"
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory # Directory where build-wrapper output will be placed
       PETSC_ARCH: linux-gnu-real-32
-      CC: gcc-10
-      CXX: g++-10
+
     steps:
       - uses: actions/checkout@v3
         with:

@@ -53,7 +53,8 @@ class _BasixElementBase(_FiniteElementBase):
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
-                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: str = None, gdim: int = None):
+                 degree: _typing.Union[int, _IrreducibleInt] = -1, mapname: _typing.Optional[str] = None,
+                 gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         super().__init__(name, _ufl.cell.Cell(cellname, gdim), degree, None, value_shape, value_shape)
         self._repr = repr
@@ -84,7 +85,7 @@ class _BasixElementBase(_FiniteElementBase):
 
     def __hash__(self) -> int:
         """Return a hash."""
-        return hash(self._repr)
+        return hash("basix" + self._repr)
 
     @property
     def value_size(self) -> int:
@@ -316,7 +317,7 @@ class BasixElement(_BasixElementBase):
 
     element: _basix.finite_element.FiniteElement
 
-    def __init__(self, element: _basix.finite_element.FiniteElement, gdim: int = None):
+    def __init__(self, element: _basix.finite_element.FiniteElement, gdim: _typing.Optional[int] = None):
         """Create a Basix element."""
         if element.family == _basix.ElementFamily.custom:
             self._is_custom = True
@@ -528,7 +529,7 @@ class ComponentElement(_BasixElementBase):
     element: _BasixElementBase
     component: int
 
-    def __init__(self, element: _BasixElementBase, component: int, gdim: int = None):
+    def __init__(self, element: _BasixElementBase, component: int, gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         self.element = element
         self.component = component
@@ -687,7 +688,7 @@ class MixedElement(_BasixElementBase):
 
     _sub_elements: _typing.List[_BasixElementBase]
 
-    def __init__(self, sub_elements: _typing.List[_BasixElementBase], gdim: int = None):
+    def __init__(self, sub_elements: _typing.List[_BasixElementBase], gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
@@ -891,8 +892,8 @@ class BlockedElement(_BasixElementBase):
     _block_size: int
 
     def __init__(self, repr: str, sub_element: _BasixElementBase, block_size: int,
-                 block_shape: _typing.Tuple[int, ...] = None, symmetric: bool = False,
-                 gdim: int = None):
+                 block_shape: _typing.Optional[_typing.Tuple[int, ...]] = None, symmetric: bool = False,
+                 gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         assert block_size > 0
         if sub_element.value_size != 1:
@@ -1126,7 +1127,8 @@ class BlockedElement(_BasixElementBase):
 class VectorElement(BlockedElement):
     """A vector element."""
 
-    def __init__(self, sub_element: _BasixElementBase, size: int = None, gdim: int = None):
+    def __init__(self, sub_element: _BasixElementBase, size: _typing.Optional[int] = None,
+                 gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         if gdim is None:
             gdim = len(_basix.topology(sub_element.cell_type)) - 1
@@ -1138,8 +1140,8 @@ class VectorElement(BlockedElement):
 class TensorElement(BlockedElement):
     """A tensor element."""
 
-    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, int] = None, symmetric: bool = False,
-                 gdim: int = None):
+    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Optional[_typing.Tuple[int, int]] = None,
+                 symmetric: bool = False, gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         if gdim is None:
             gdim = len(_basix.topology(sub_element.cell_type)) - 1
@@ -1151,7 +1153,7 @@ class TensorElement(BlockedElement):
         else:
             bs = shape[0] * shape[1]
         assert len(shape) == 2
-        super().__init__(f"TensorElement({sub_element._repr}, {shape})", sub_element, bs, shape,
+        super().__init__(f"TensorElement({sub_element._repr}, {shape}, {symmetric})", sub_element, bs, shape,
                          symmetric=symmetric, gdim=gdim)
 
 
@@ -1216,7 +1218,7 @@ def create_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
     dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-    gdim: int = None
+    gdim: _typing.Optional[int] = None
 ) -> BasixElement:
     """Create a UFL element using Basix.
 
@@ -1272,7 +1274,7 @@ def create_vector_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
     dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-    dim: int = None, gdim: int = None
+    dim: _typing.Optional[int] = None, gdim: _typing.Optional[int] = None
 ) -> VectorElement:
     """Create a UFL vector element using Basix.
 
@@ -1289,7 +1291,7 @@ def create_vector_element(
         dim: The length of the vector.
         gdim: The geometric dimension of the cell.
     """
-    e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
+    e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, gdim)
     return VectorElement(e, dim, gdim=gdim)
 
 
@@ -1298,7 +1300,7 @@ def create_tensor_element(
     family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
     degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
     dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-    shape: _typing.Tuple[int, int] = None, symmetry: bool = False, gdim: int = None
+    shape: _typing.Optional[_typing.Tuple[int, int]] = None, symmetry: bool = False, gdim: _typing.Optional[int] = None
 ) -> TensorElement:
     """Create a UFL tensor element using Basix.
 
@@ -1321,7 +1323,7 @@ def create_tensor_element(
 
 
 def _create_enriched_element(
-    elements: _typing.List[_BasixElementBase], map_type: _basix.MapType = None
+    elements: _typing.List[_BasixElementBase], map_type: _typing.Optional[_basix.MapType] = None
 ) -> _BasixElementBase:
     """Create an enriched element from a list of elements."""
     ct = elements[0].cell_type

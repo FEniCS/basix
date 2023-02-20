@@ -72,7 +72,7 @@ class CMakeBuild(build_ext):
 
 
 setup(name='fenics-basix',
-      version='0.6.0.dev0',
+      version='0.7.0.dev0',
       description='Basix Python interface',
       url="https://github.com/FEniCS/basix",
       author='FEniCS Project',
@@ -85,7 +85,7 @@ setup(name='fenics-basix',
       package_data={"basix": ["py.typed"]},
       install_requires=["numpy>=1.21"],
       extras_require={
-          "docs": ["markdown", "pylit3", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"],
+          "docs": ["markdown", "pyyaml", "sphinx==5.0.2", "sphinx_rtd_theme"],
           "lint": ["flake8", "pydocstyle"],
           "optional": ["numba", "fenics-ufl@git+https://github.com/fenics/ufl"],
           "test": ["pytest", "sympy", "scipy", "matplotlib", "fenics-basix[optional]"],

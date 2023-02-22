@@ -333,60 +333,6 @@ basix::FiniteElement basix::create_element(element::family family,
   }
 }
 //-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::dpc_variant dvariant,
-                                           bool discontinuous)
-{
-  return create_element(family, cell, degree, element::lagrange_variant::unset,
-                        dvariant, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           bool discontinuous)
-{
-  return create_element(family, cell, degree, lvariant,
-                        element::dpc_variant::unset, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           bool discontinuous)
-{
-  return create_element(family, cell, degree, element::lagrange_variant::unset,
-                        element::dpc_variant::unset, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant)
-{
-  return create_element(family, cell, degree, lvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::dpc_variant dvariant)
-{
-  return create_element(family, cell, degree, dvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           element::dpc_variant dvariant)
-{
-  return create_element(family, cell, degree, lvariant, dvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree)
-{
-  return create_element(family, cell, degree, false);
-}
-//-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
            std::array<std::vector<std::vector<double>>, 4>,

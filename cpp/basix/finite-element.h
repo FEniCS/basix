@@ -1107,7 +1107,7 @@ private:
   // Lagrange variant
   element::lagrange_variant _lagrange_variant;
 
-  // Lagrange variant
+  // DPC variant
   element::dpc_variant _dpc_variant;
 
   // Degree that was input when creating the element
@@ -1264,19 +1264,6 @@ create_custom_element(cell::type cell_type,
                       sobolev::space sobolev_space, bool discontinuous,
                       int highest_complete_degree, int highest_degree);
 
-/// Create an element using a given Lagrange variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant lvariant,
-                             bool discontinuous);
-
 /// Create an element using a given Lagrange variant and a given DPC variant
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
@@ -1290,74 +1277,6 @@ FiniteElement create_element(element::family family, cell::type cell,
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, element::lagrange_variant lvariant,
                              element::dpc_variant dvariant, bool discontinuous);
-
-/// Create an element using a given DPC variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
-/// @param[in] degree The degree of the element
-/// @param[in] dvariant The variant of DPC to use
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::dpc_variant dvariant,
-                             bool discontinuous);
-
-/// Create an element
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @param[in] discontinuous Indicates whether the element is
-/// discontinuous between cells points of the element. The discontinuous
-/// element will have the same DOFs, but they will all be associated
-/// with the interior of the cell.
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, bool discontinuous);
-
-/// Create a continuous element using a given Lagrange variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant lvariant);
-
-/// Create a continuous element using a given Lagrange variant and a given DPC
-/// variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @param[in] dvariant The variant of DPC to use
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant lvariant,
-                             element::dpc_variant dvariant);
-
-/// Create a continuous element using a given DPC variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @param[in] dvariant The variant of DPC to use
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::dpc_variant dvariant);
-
-/// Create a continuous element
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree);
 
 /// Return the Basix version number
 /// @return version string

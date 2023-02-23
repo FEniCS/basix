@@ -509,7 +509,8 @@ FiniteElement::FiniteElement(
     int highest_complete_degree, int highest_degree,
     element::lagrange_variant lvariant, element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
+        tensor_factors,
+    std::vector<int> dof_ordering)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
@@ -518,7 +519,7 @@ FiniteElement::FiniteElement(
       _highest_complete_degree(highest_complete_degree),
       _value_shape(value_shape), _map_type(map_type),
       _sobolev_space(sobolev_space), _discontinuous(discontinuous),
-      _tensor_factors(tensor_factors)
+      _tensor_factors(tensor_factors), _dof_ordering(dof_ordering)
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)

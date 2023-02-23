@@ -320,6 +320,7 @@ public:
   /// @param[in] lvariant The Lagrange variant of the element
   /// @param[in] dvariant The DPC variant of the element
   /// @param[in] tensor_factors The factors in the tensor product
+  /// @param[in] tensor_factors DOF reordering
   /// representation of this element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
@@ -332,7 +333,8 @@ public:
       element::lagrange_variant lvariant, element::dpc_variant dvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
-      = {});
+      = {},
+      std::vector<int> dof_ordering = {});
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -1099,6 +1101,9 @@ private:
 
   // Dofs associated with each cell (sub-)entity
   std::vector<std::vector<std::vector<int>>> _edofs;
+
+  // Dof reordering for different ElementDofLayout compatibility
+  std::vector<int> _dof_ordering;
 
   // Dofs associated with the closdure of each cell (sub-)entity
   std::vector<std::vector<std::vector<int>>> _e_closure_dofs;

@@ -177,6 +177,8 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
   return FiniteElement(element::family::HHJ, celltype, degree, {tdim, tdim},
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        xview, Mview, 0, maps::type::doubleContravariantPiola,
-                       sobolev::space::HDivDiv, discontinuous, -1, degree);
+                       sobolev::space::HDivDiv, discontinuous, -1, degree,
+                       element::lagrange_variant::unset,
+                       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

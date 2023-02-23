@@ -334,47 +334,6 @@ public:
           tensor_factors
       = {});
 
-  /// Overloaded constructor
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-      const std::array<std::vector<cmdspan2_t>, 4>& x,
-      const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type,
-      sobolev::space sobolev_space, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
-      element::lagrange_variant lvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// Overloaded constructor
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-      const std::array<std::vector<cmdspan2_t>, 4>& x,
-      const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type,
-      sobolev::space sobolev_space, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
-      element::dpc_variant dvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// Overloaded constructor
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-      const std::array<std::vector<cmdspan2_t>, 4>& x,
-      const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type,
-      sobolev::space sobolev_space, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
 

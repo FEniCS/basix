@@ -726,7 +726,8 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
                        maps::type::identity, sobolev::space::L2, discontinuous,
-                       degree, degree, element::dpc_variant::legendre);
+                       degree, degree, element::lagrange_variant::unset,
+                       element::dpc_variant::legendre);
 }
 //-----------------------------------------------------------------------------
 impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
@@ -1182,11 +1183,11 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
   const impl::mdarray2_t pt = make_dpc_points(celltype, degree, variant);
   x[tdim].push_back(pt);
 
-  return FiniteElement(element::family::DPC, celltype, degree, {},
-                       impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
-                       impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                       maps::type::identity, sobolev::space::L2, discontinuous,
-                       degree, degree, variant);
+  return FiniteElement(
+      element::family::DPC, celltype, degree, {},
+      impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()), impl::to_mdspan(x),
+      impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::L2,
+      discontinuous, degree, degree, element::lagrange_variant::unset, variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_div(

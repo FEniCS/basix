@@ -183,6 +183,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   return FiniteElement(element::family::bubble, celltype, degree, {}, wview,
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
                        maps::type::identity, sobolev::space::H1, discontinuous,
-                       -1, degree);
+                       -1, degree, element::lagrange_variant::unset,
+                       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

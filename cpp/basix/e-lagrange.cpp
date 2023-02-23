@@ -783,7 +783,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
                        impl::cmdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
                        maps::type::identity, sobolev::space::H1, true, degree,
-                       degree, variant);
+                       degree, variant, element::dpc_variant::unset);
 }
 //----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -936,7 +936,7 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
         impl::cmdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
         impl::to_mdspan(_x, _xshape), impl::to_mdspan(_M, _Mshape), 0,
         maps::type::identity, sobolev::space::H1, discontinuous, degree, degree,
-        element::lagrange_variant::vtk);
+        element::lagrange_variant::vtk, element::dpc_variant::unset);
   }
   else
   {
@@ -945,7 +945,7 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
         impl::cmdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
         impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
         sobolev::space::H1, discontinuous, degree, degree,
-        element::lagrange_variant::vtk);
+        element::lagrange_variant::vtk, element::dpc_variant::unset);
   }
 }
 //-----------------------------------------------------------------------------
@@ -991,7 +991,8 @@ FiniteElement create_legendre(cell::type celltype, int degree,
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
                        maps::type::identity, sobolev::space::H1, discontinuous,
-                       degree, degree, element::lagrange_variant::legendre);
+                       degree, degree, element::lagrange_variant::legendre,
+                       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 FiniteElement create_bernstein(cell::type celltype, int degree,
@@ -1157,7 +1158,8 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
                        maps::type::identity, sobolev::space::H1, discontinuous,
-                       degree, degree, element::lagrange_variant::bernstein);
+                       degree, degree, element::lagrange_variant::bernstein,
+                       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 } // namespace
@@ -1176,11 +1178,12 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     std::array<std::vector<impl::mdarray4_t>, 4> M;
     x[0].emplace_back(1, 0);
     M[0].emplace_back(std::vector<double>{1.0}, 1, 1, 1, 1);
-    return FiniteElement(family::P, cell::type::point, 0, {},
-                         impl::mdspan2_t(math::eye(1).data(), 1, 1),
-                         impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                         maps::type::identity, sobolev::space::H1,
-                         discontinuous, degree, degree);
+    return FiniteElement(
+        family::P, cell::type::point, 0, {},
+        impl::mdspan2_t(math::eye(1).data(), 1, 1), impl::to_mdspan(x),
+        impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::H1,
+        discontinuous, degree, degree, element::lagrange_variant::unset,
+        element::dpc_variant::unset);
   }
 
   if (variant == lagrange_variant::vtk)
@@ -1331,6 +1334,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        xview, Mview, 0, maps::type::identity,
                        sobolev::space::H1, discontinuous, degree, degree,
-                       variant, tensor_factors);
+                       variant, element::dpc_variant::unset, tensor_factors);
 }
 //-----------------------------------------------------------------------------

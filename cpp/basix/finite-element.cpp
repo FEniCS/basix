@@ -494,60 +494,10 @@ basix::FiniteElement basix::create_custom_element(
   return basix::FiniteElement(
       element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
       x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
-      highest_complete_degree, highest_degree);
+      highest_complete_degree, highest_degree, element::lagrange_variant::unset,
+      element::dpc_variant::unset);
 }
 
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    element::lagrange_variant lvariant,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, sobolev_space,
-                    discontinuous, highest_complete_degree, highest_degree,
-                    lvariant, element::dpc_variant::unset, tensor_factors)
-{
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    element::dpc_variant dvariant,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, sobolev_space,
-                    discontinuous, highest_complete_degree, highest_degree,
-                    element::lagrange_variant::unset, dvariant, tensor_factors)
-{
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, sobolev_space,
-                    discontinuous, highest_complete_degree, highest_degree,
-                    element::lagrange_variant::unset,
-                    element::dpc_variant::unset, tensor_factors)
-{
-}
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,

@@ -19,6 +19,7 @@
 #include "polyset.h"
 #include <basix/version.h>
 #include <cmath>
+#include <iostream>
 #include <numeric>
 
 #define str_macro(X) #X
@@ -653,6 +654,8 @@ FiniteElement::FiniteElement(
       for (std::size_t i = 0; i < M[d][e].extent(0); ++i)
         edofs_d[e].push_back(dof++);
   }
+
+  std::cout << "ndofs = " << dof << "\n";
 
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
       = cell::sub_entity_connectivity(cell_type);

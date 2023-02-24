@@ -644,6 +644,22 @@ FiniteElement::FiniteElement(
 
   std::cout << "ndofs = " << dof << "\n";
 
+  if (!_dof_ordering.empty())
+  {
+    std::cout << "Got a dof ordering\n";
+    if (_dof_ordering.size() != dof)
+      throw std::runtime_error("Incorrect number of dofs in ordering\n");
+    std::vector<int> check(_dof_ordering.size(), 0);
+    for (int q : _dof_ordering)
+    {
+      assert(q >= 0 and q < _dof_ordering.size());
+      check[q] += 1;
+    }
+    for (int q : check)
+      if (q != 1)
+        throw std::runtime_error("Dof ordering not a permutation\n");
+  }
+
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
       = cell::sub_entity_connectivity(cell_type);
   for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
@@ -1368,6 +1384,11 @@ bool FiniteElement::interpolation_is_identity() const
 int FiniteElement::interpolation_nderivs() const
 {
   return _interpolation_nderivs;
+}
+//-----------------------------------------------------------------------------
+const std::vector<int>& FiniteElement::dof_ordering() const
+{
+  return _dof_ordering;
 }
 //-----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>

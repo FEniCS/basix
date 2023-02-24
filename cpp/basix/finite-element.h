@@ -1052,6 +1052,9 @@ public:
   /// The number of derivatives needed when interpolating
   int interpolation_nderivs() const;
 
+  /// Get dof layout
+  const std::vector<int>& dof_ordering() const;
+
 private:
   // Cell type
   cell::type _cell_type;

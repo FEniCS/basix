@@ -478,7 +478,8 @@ Interface to the Basix C++ library.
       .def_property_readonly("has_tensor_product_factorisation",
                              &FiniteElement::has_tensor_product_factorisation)
       .def_property_readonly("interpolation_nderivs",
-                             &FiniteElement::interpolation_nderivs);
+                             &FiniteElement::interpolation_nderivs)
+      .def_property_readonly("dof_ordering", &FiniteElement::dof_ordering);
 
   py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("unset", element::lagrange_variant::unset)
@@ -566,7 +567,8 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         bool discontinuous, const std::vector<int>& dof_layout) -> FiniteElement
+         bool discontinuous,
+         const std::vector<int>& dof_layout) -> FiniteElement
       {
         return basix::create_element(
             family_name, cell_name, degree, element::lagrange_variant::unset,

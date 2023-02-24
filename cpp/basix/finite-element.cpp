@@ -658,6 +658,17 @@ FiniteElement::FiniteElement(
     for (int q : check)
       if (q != 1)
         throw std::runtime_error("Dof ordering not a permutation\n");
+
+    // Apply permutation to _edofs
+    for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
+    {
+      for (auto& entity : _edofs[d])
+      {
+        for (int& q : entity)
+          q = _dof_ordering[q];
+        }
+     }
+
   }
 
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity

@@ -320,7 +320,7 @@ public:
   /// @param[in] lvariant The Lagrange variant of the element
   /// @param[in] dvariant The DPC variant of the element
   /// @param[in] tensor_factors The factors in the tensor product
-  /// @param[in] tensor_factors DOF reordering
+  /// @param[in] dof_ordering DOF reordering
   /// representation of this element
   FiniteElement(
       element::family family, cell::type cell_type, int degree,

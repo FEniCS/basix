@@ -566,6 +566,17 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
+         bool discontinuous, const std::vector<int>& dof_layout) -> FiniteElement
+      {
+        return basix::create_element(
+            family_name, cell_name, degree, element::lagrange_variant::unset,
+            element::dpc_variant::unset, discontinuous, dof_layout);
+      },
+      basix::docstring::create_element__family_cell_degree_discontinuous
+          .c_str());
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
          bool discontinuous) -> FiniteElement
       {
         return basix::create_element(

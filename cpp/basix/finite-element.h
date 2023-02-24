@@ -1237,10 +1237,12 @@ create_custom_element(cell::type cell_type,
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
+/// @param[in] dof_ordering Ordering of dofs for ElementDofLayout
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, element::lagrange_variant lvariant,
-                             element::dpc_variant dvariant, bool discontinuous);
+                             element::dpc_variant dvariant, bool discontinuous,
+                             std::vector<int> dof_ordering = {});
 
 /// Return the Basix version number
 /// @return version string

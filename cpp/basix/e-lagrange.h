@@ -17,5 +17,5 @@ namespace basix::element
 /// @param[in] discontinuous True if the is discontinuous
 /// @return A finite element
 FiniteElement create_lagrange(cell::type celltype, int degree,
-                              lagrange_variant variant, bool discontinuous);
+                              lagrange_variant variant, bool discontinuous, std::vector<int> dof_ordering={});
 } // namespace basix::element

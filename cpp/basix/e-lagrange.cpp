@@ -782,7 +782,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   return FiniteElement(element::family::P, celltype, degree, {},
                        impl::cmdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                       maps::type::identity, sobolev::space::H1, true, degree,
+                       maps::type::identity, sobolev::space::L2, true, degree,
                        degree, variant, element::dpc_variant::unset);
 }
 //----------------------------------------------------------------------------
@@ -935,7 +935,7 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
         element::family::P, celltype, degree, {},
         impl::cmdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
         impl::to_mdspan(_x, _xshape), impl::to_mdspan(_M, _Mshape), 0,
-        maps::type::identity, sobolev::space::H1, discontinuous, degree, degree,
+        maps::type::identity, sobolev::space::L2, discontinuous, degree, degree,
         element::lagrange_variant::vtk, element::dpc_variant::unset);
   }
   else
@@ -987,11 +987,13 @@ FiniteElement create_legendre(cell::type celltype, int degree,
     for (std::size_t j = 0; j < pts.extent(0); ++j)
       _M(i, 0, j, 0) = phi(i, j) * wts[j];
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   return FiniteElement(element::family::P, celltype, degree, {},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                       maps::type::identity, sobolev::space::H1, discontinuous,
-                       degree, degree, element::lagrange_variant::legendre,
+                       maps::type::identity, space, discontinuous, degree,
+                       degree, element::lagrange_variant::legendre,
                        element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
@@ -1153,12 +1155,14 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
     }
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   const std::size_t ndofs = polyset::dim(celltype, degree);
   return FiniteElement(element::family::P, celltype, degree, {},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                       maps::type::identity, sobolev::space::H1, discontinuous,
-                       degree, degree, element::lagrange_variant::bernstein,
+                       maps::type::identity, space, discontinuous, degree,
+                       degree, element::lagrange_variant::bernstein,
                        element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
@@ -1329,12 +1333,13 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   auto tensor_factors
       = create_tensor_product_factors(celltype, degree, variant);
   return FiniteElement(family::P, celltype, degree, {},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                       xview, Mview, 0, maps::type::identity,
-                       sobolev::space::H1, discontinuous, degree, degree,
-                       variant, element::dpc_variant::unset, tensor_factors, dof_ordering);
+                       xview, Mview, 0, maps::type::identity, space,
+                       discontinuous, degree, degree, variant, tensor_factors);
 }
 //-----------------------------------------------------------------------------

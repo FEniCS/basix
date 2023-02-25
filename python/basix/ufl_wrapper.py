@@ -711,7 +711,7 @@ class MixedElement(_BasixElementBase):
     @property
     def basix_sobolev_space(self):
         """Return a Basix enum representing the underlying Sobolev space."""
-        return _basix.sobolev_space.intersection(
+        return _basix.sobolev_spaces.intersection(
             [e.basix_sobolev_space for e in self._sub_elements])
 
     def sub_elements(self) -> _typing.List[_BasixElementBase]:

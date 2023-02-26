@@ -213,13 +213,14 @@ basix::FiniteElement basix::create_element(element::family family,
     throw std::runtime_error("Cannot create a custom element directly. Try "
                              "using `create_custom_element` instead");
   }
+
   if (degree < 0)
   {
     throw std::runtime_error("Cannot create an element with a negative degree");
   }
 
   // Checklist of variant compatibility (lagrange, DPC) for each
-  const std::map<element::family, std::array<bool, 2>> has_variant
+  static const std::map<element::family, std::array<bool, 2>> has_variant
       = {{element::family::P, {true, false}},
          {element::family::RT, {true, false}},
          {element::family::N1E, {true, false}},
@@ -233,8 +234,10 @@ basix::FiniteElement basix::create_element(element::family family,
   if (auto it = has_variant.find(family); it != has_variant.end())
   {
     if (it->second[0] == false and lvariant != element::lagrange_variant::unset)
+    {
       throw std::runtime_error(
           "Cannot pass a Lagrange variant to this element.");
+    }
     if (it->second[1] == false and dvariant != element::dpc_variant::unset)
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
   }

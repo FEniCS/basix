@@ -1264,7 +1264,8 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         elif family == EF.DPC:
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
-    e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
+    opts = _basix.ElementOptions(lagrange_variant, dpc_variant, discontinuous)
+    e = _basix.create_element(family, cell, degree, opts)
     return BasixElement(e, gdim=gdim)
 
 

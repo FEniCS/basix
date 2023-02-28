@@ -136,6 +136,21 @@ make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
 
 } // namespace element
 
+struct ElementOptions
+{
+  /// The variant of Lagrange to use
+  element::lagrange_variant lagrange_variant;
+
+  /// The variant of DPC to use
+  element::dpc_variant dpc_variant;
+
+  /// Indicates whether the element is discontinuous
+  /// between cells points of the element. The discontinuous element will have
+  /// the same DOFs, but they will all be associated with the interior of the
+  /// cell.
+  bool discontinuous;
+};
+
 /// @brief A finite element.
 ///
 /// The basis of a finite element is stored as a set of coefficients,
@@ -1227,15 +1242,12 @@ create_custom_element(cell::type cell_type,
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @param[in] dvariant The variant of DPC to use
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
+/// @param[in] options Optional features of the element
 /// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant lvariant,
-                             element::dpc_variant dvariant, bool discontinuous);
+FiniteElement
+create_element(element::family family, cell::type cell, int degree,
+               ElementOptions options = {element::lagrange_variant::unset,
+                                         element::dpc_variant::unset, false});
 
 /// Return the Basix version number
 /// @return version string

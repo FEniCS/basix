@@ -204,10 +204,12 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           element::dpc_variant dvariant,
-                                           bool discontinuous)
+                                           ElementOptions options)
 {
+  element::dpc_variant dvariant = options.dpc_variant;
+  element::lagrange_variant lvariant = options.lagrange_variant;
+  bool discontinuous = options.discontinuous;
+
   if (family == element::family::custom)
   {
     throw std::runtime_error("Cannot create a custom element directly. Try "

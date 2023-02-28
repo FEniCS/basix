@@ -94,10 +94,8 @@ def test_poly(celltype, degree):
 @pytest.mark.parametrize("degree", range(1, 4))
 def test_element(celltype, degree):
     bern = get_bernstein_polynomials_entity_order(celltype, degree)
-    opt = basix.ElementOptions()
-    opt.lagrange_variant = basix.LagrangeVariant.bernstein
-    lagrange = basix.create_element(basix.ElementFamily.P, celltype, degree, opt)
-
+    lagrange = basix.create_element(basix.ElementFamily.P, celltype, degree,
+                                    basix.LagrangeVariant.bernstein)
     pts = basix.create_lattice(celltype, 6, basix.LatticeType.equispaced, True)
     nderiv = 3
     wtab = lagrange.tabulate(nderiv, pts)

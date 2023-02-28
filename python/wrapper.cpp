@@ -227,26 +227,6 @@ Interface to the Basix C++ library.
       .value("CR", element::family::CR)
       .value("Hermite", element::family::Hermite);
 
-  py::class_<ElementOptions>(m, "ElementOptions", "Element options")
-      .def("__init__",
-           [](ElementOptions& self)
-           {
-             self.lagrange_variant = element::lagrange_variant::unset;
-             self.dpc_variant = element::dpc_variant::unset;
-             self.discontinuous = false;
-           })
-      .def("__init__",
-           [](ElementOptions& self, element::lagrange_variant lv,
-              element::dpc_variant dpcv, bool discontinuous)
-           {
-             self.lagrange_variant = lv;
-             self.dpc_variant = dpcv;
-             self.discontinuous = discontinuous;
-           })
-      .def_readwrite("lagrange_variant", &ElementOptions::lagrange_variant)
-      .def_readwrite("dpc_variant", &ElementOptions::dpc_variant)
-      .def_readwrite("discontinuous", &ElementOptions::discontinuous);
-
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
       .def(
           "tabulate",
@@ -588,19 +568,94 @@ Interface to the Basix C++ library.
       [](element::family family_name, cell::type cell_name, int degree,
          bool discontinuous) -> FiniteElement
       {
-        return basix::create_element(family_name, cell_name, degree,
-                                     {element::lagrange_variant::unset,
-                                      element::dpc_variant::unset,
-                                      discontinuous});
+        return basix::create_element(
+            family_name, cell_name, degree, element::lagrange_variant::unset,
+            element::dpc_variant::unset, discontinuous);
       },
       basix::docstring::create_element__family_cell_degree_discontinuous
           .c_str());
 
-  m.def("create_element",
-        [](element::family family_name, cell::type cell_name, int degree,
-           ElementOptions options) -> FiniteElement {
-          return basix::create_element(family_name, cell_name, degree, options);
-        });
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::lagrange_variant lvariant,
+         bool discontinuous) -> FiniteElement
+      {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     element::dpc_variant::unset,
+                                     discontinuous);
+      },
+      basix::docstring::
+          create_element__family_cell_degree_lvariant_discontinuous.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::dpc_variant dvariant, bool discontinuous) -> FiniteElement
+      {
+        return basix::create_element(family_name, cell_name, degree,
+                                     element::lagrange_variant::unset, dvariant,
+                                     discontinuous);
+      },
+      basix::docstring::
+          create_element__family_cell_degree_dvariant_discontinuous.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::lagrange_variant lvariant, element::dpc_variant dvariant,
+         bool discontinuous) -> FiniteElement
+      {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     dvariant, discontinuous);
+      },
+      basix::docstring::
+          create_element__family_cell_degree_lvariant_dvariant_discontinuous
+              .c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name,
+         int degree) -> FiniteElement
+      {
+        return basix::create_element(family_name, cell_name, degree,
+                                     element::lagrange_variant::unset,
+                                     element::dpc_variant::unset, false);
+      },
+      basix::docstring::create_element__family_cell_degree.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::lagrange_variant lvariant) -> FiniteElement
+      {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     element::dpc_variant::unset, false);
+      },
+      basix::docstring::create_element__family_cell_degree_lvariant.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::dpc_variant dvariant) -> FiniteElement
+      {
+        return basix::create_element(family_name, cell_name, degree,
+                                     element::lagrange_variant::unset, dvariant,
+                                     false);
+      },
+      basix::docstring::create_element__family_cell_degree_dvariant.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::lagrange_variant lvariant,
+         element::dpc_variant dvariant) -> FiniteElement
+      {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     dvariant, false);
+      },
+      basix::docstring::create_element__family_cell_degree_lvariant_dvariant
+          .c_str());
 
   // Interpolate between elements
   m.def(

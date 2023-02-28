@@ -202,12 +202,23 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
+
+// FIXME - remove this after no longer needed in DOLFINx
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
                                            element::lagrange_variant lvariant,
                                            bool discontinuous)
 {
   return create_element(family, cell, degree, lvariant,
+                        element::dpc_variant::unset, discontinuous);
+}
+
+// FIXME - remove this after no longer needed in DOLFINx
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           bool discontinuous)
+{
+  return create_element(family, cell, degree, element::lagrange_variant::unset,
                         element::dpc_variant::unset, discontinuous);
 }
 

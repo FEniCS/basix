@@ -205,6 +205,15 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
                                            element::lagrange_variant lvariant,
+                                           bool discontinuous)
+{
+  return create_element(family, cell, degree, lvariant,
+                        element::dpc_variant::unset, discontinuous);
+}
+
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           element::lagrange_variant lvariant,
                                            element::dpc_variant dvariant,
                                            bool discontinuous)
 {

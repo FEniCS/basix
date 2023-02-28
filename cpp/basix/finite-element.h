@@ -1237,6 +1237,20 @@ FiniteElement create_element(element::family family, cell::type cell,
                              int degree, element::lagrange_variant lvariant,
                              element::dpc_variant dvariant, bool discontinuous);
 
+/// Create an element using a given Lagrange variant and a given DPC variant
+/// @todo - Remove this function when DOLFINx is updated
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+/// @param[in] lvariant The variant of Lagrange to use
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree, element::lagrange_variant lvariant,
+                             bool discontinuous);
+
 /// Return the Basix version number
 /// @return version string
 std::string version();

@@ -132,10 +132,12 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement(element::family::RT, celltype, degree, {tdim},
                        impl::mdspan2_t(B.data(), B.extents()), xview, Mview, 0,
-                       maps::type::contravariantPiola, sobolev::space::HDiv,
-                       discontinuous, degree - 1, degree, lvariant,
+                       maps::type::contravariantPiola, space, discontinuous,
+                       degree - 1, degree, lvariant,
                        element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

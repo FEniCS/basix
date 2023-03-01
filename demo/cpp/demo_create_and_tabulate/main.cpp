@@ -28,8 +28,8 @@ int main(int argc, char* argv[])
   auto variant = basix::element::lagrange_variant::equispaced;
 
   // Create the lagrange element
-  basix::FiniteElement lagrange
-      = basix::create_element(family, cell_type, k, variant);
+  basix::FiniteElement lagrange = basix::create_element(
+      family, cell_type, k, variant, basix::element::dpc_variant::unset, false);
 
   // Get the number of degrees of freedom for the element
   int dofs = lagrange.dim();

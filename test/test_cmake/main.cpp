@@ -6,7 +6,8 @@ int main()
 {
   auto _element = std::make_unique<basix::FiniteElement>(basix::create_element(
       basix::element::family::P, basix::cell::type::triangle, 1,
-      basix::element::lagrange_variant::equispaced, false));
+      basix::element::lagrange_variant::equispaced,
+      basix::element::dpc_variant::unset, false));
 
   return 0;
 }

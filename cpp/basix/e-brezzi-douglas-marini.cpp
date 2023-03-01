@@ -94,6 +94,6 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        xview, Mview, 0, maps::type::contravariantPiola,
                        sobolev::space::HDiv, discontinuous, degree, degree,
-                       lvariant);
+                       lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

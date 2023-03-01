@@ -202,6 +202,26 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
 //-----------------------------------------------------------------------------
 } // namespace
 //-----------------------------------------------------------------------------
+
+// FIXME - remove this after no longer needed in DOLFINx
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           element::lagrange_variant lvariant,
+                                           bool discontinuous)
+{
+  return create_element(family, cell, degree, lvariant,
+                        element::dpc_variant::unset, discontinuous);
+}
+
+// FIXME - remove this after no longer needed in DOLFINx
+basix::FiniteElement basix::create_element(element::family family,
+                                           cell::type cell, int degree,
+                                           bool discontinuous)
+{
+  return create_element(family, cell, degree, element::lagrange_variant::unset,
+                        element::dpc_variant::unset, discontinuous);
+}
+
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
                                            element::lagrange_variant lvariant,
@@ -213,22 +233,42 @@ basix::FiniteElement basix::create_element(element::family family,
     throw std::runtime_error("Cannot create a custom element directly. Try "
                              "using `create_custom_element` instead");
   }
+
   if (degree < 0)
   {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
+  // Checklist of variant compatibility (lagrange, DPC) for each
+  static const std::map<element::family, std::array<bool, 2>> has_variant
+      = {{element::family::P, {true, false}},
+         {element::family::RT, {true, false}},
+         {element::family::N1E, {true, false}},
+         {element::family::serendipity, {true, true}},
+         {element::family::DPC, {false, true}},
+         {element::family::Regge, {false, false}},
+         {element::family::HHJ, {false, false}},
+         {element::family::CR, {false, false}},
+         {element::family::bubble, {false, false}},
+         {element::family::Hermite, {false, false}}};
+  if (auto it = has_variant.find(family); it != has_variant.end())
+  {
+    if (it->second[0] == false and lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (it->second[1] == false and dvariant != element::dpc_variant::unset)
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
   }
 
   switch (family)
   {
   // P family
   case element::family::P:
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_lagrange(cell, degree, lvariant, discontinuous);
   case element::family::RT:
   {
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -241,8 +281,6 @@ basix::FiniteElement basix::create_element(element::family family,
   }
   case element::family::N1E:
   {
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -282,109 +320,24 @@ basix::FiniteElement basix::create_element(element::family family,
       return element::create_nedelec2(cell, degree, lvariant, discontinuous);
     }
   case element::family::DPC:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
     return element::create_dpc(cell, degree, dvariant, discontinuous);
+
   // Matrix elements
   case element::family::Regge:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_regge(cell, degree, discontinuous);
   case element::family::HHJ:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_hhj(cell, degree, discontinuous);
+
   // Other elements
   case element::family::CR:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_cr(cell, degree, discontinuous);
   case element::family::bubble:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_bubble(cell, degree, discontinuous);
   case element::family::Hermite:
     return element::create_hermite(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found.");
   }
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::dpc_variant dvariant,
-                                           bool discontinuous)
-{
-  return create_element(family, cell, degree, element::lagrange_variant::unset,
-                        dvariant, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           bool discontinuous)
-{
-  return create_element(family, cell, degree, lvariant,
-                        element::dpc_variant::unset, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           bool discontinuous)
-{
-  return create_element(family, cell, degree, element::lagrange_variant::unset,
-                        element::dpc_variant::unset, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant)
-{
-  return create_element(family, cell, degree, lvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::dpc_variant dvariant)
-{
-  return create_element(family, cell, degree, dvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           element::dpc_variant dvariant)
-{
-  return create_element(family, cell, degree, lvariant, dvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree)
-{
-  return create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
@@ -548,60 +501,10 @@ basix::FiniteElement basix::create_custom_element(
   return basix::FiniteElement(
       element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
       x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
-      highest_complete_degree, highest_degree);
+      highest_complete_degree, highest_degree, element::lagrange_variant::unset,
+      element::dpc_variant::unset);
 }
 
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    element::lagrange_variant lvariant,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, sobolev_space,
-                    discontinuous, highest_complete_degree, highest_degree,
-                    lvariant, element::dpc_variant::unset, tensor_factors)
-{
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    element::dpc_variant dvariant,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, sobolev_space,
-                    discontinuous, highest_complete_degree, highest_degree,
-                    element::lagrange_variant::unset, dvariant, tensor_factors)
-{
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, sobolev_space,
-                    discontinuous, highest_complete_degree, highest_degree,
-                    element::lagrange_variant::unset,
-                    element::dpc_variant::unset, tensor_factors)
-{
-}
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
@@ -977,6 +880,7 @@ FiniteElement::FiniteElement(
       }
     }
   }
+
   // Check if interpolation matrix is the identity
   cmdspan2_t matM(_matM.first.data(), _matM.second);
   _interpolation_is_identity = matM.extent(0) == matM.extent(1);

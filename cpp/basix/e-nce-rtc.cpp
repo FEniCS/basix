@@ -175,7 +175,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        xview, Mview, 0, maps::type::contravariantPiola,
                        sobolev::space::HDiv, discontinuous, degree - 1, degree,
-                       lvariant);
+                       lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_nce(cell::type celltype, int degree,
@@ -397,6 +397,6 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
                        xview, Mview, 0, maps::type::covariantPiola,
                        sobolev::space::HCurl, discontinuous, degree - 1, degree,
-                       lvariant);
+                       lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

@@ -568,8 +568,9 @@ Interface to the Basix C++ library.
       [](element::family family_name, cell::type cell_name, int degree,
          bool discontinuous) -> FiniteElement
       {
-        return basix::create_element(family_name, cell_name, degree,
-                                     discontinuous);
+        return basix::create_element(
+            family_name, cell_name, degree, element::lagrange_variant::unset,
+            element::dpc_variant::unset, discontinuous);
       },
       basix::docstring::create_element__family_cell_degree_discontinuous
           .c_str());
@@ -581,6 +582,7 @@ Interface to the Basix C++ library.
          bool discontinuous) -> FiniteElement
       {
         return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     element::dpc_variant::unset,
                                      discontinuous);
       },
       basix::docstring::
@@ -591,7 +593,8 @@ Interface to the Basix C++ library.
       [](element::family family_name, cell::type cell_name, int degree,
          element::dpc_variant dvariant, bool discontinuous) -> FiniteElement
       {
-        return basix::create_element(family_name, cell_name, degree, dvariant,
+        return basix::create_element(family_name, cell_name, degree,
+                                     element::lagrange_variant::unset, dvariant,
                                      discontinuous);
       },
       basix::docstring::
@@ -614,22 +617,31 @@ Interface to the Basix C++ library.
       "create_element",
       [](element::family family_name, cell::type cell_name,
          int degree) -> FiniteElement
-      { return basix::create_element(family_name, cell_name, degree); },
+      {
+        return basix::create_element(family_name, cell_name, degree,
+                                     element::lagrange_variant::unset,
+                                     element::dpc_variant::unset, false);
+      },
       basix::docstring::create_element__family_cell_degree.c_str());
 
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant lvariant) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree, lvariant);
+         element::lagrange_variant lvariant) -> FiniteElement
+      {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
+                                     element::dpc_variant::unset, false);
       },
       basix::docstring::create_element__family_cell_degree_lvariant.c_str());
 
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         element::dpc_variant dvariant) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree, dvariant);
+         element::dpc_variant dvariant) -> FiniteElement
+      {
+        return basix::create_element(family_name, cell_name, degree,
+                                     element::lagrange_variant::unset, dvariant,
+                                     false);
       },
       basix::docstring::create_element__family_cell_degree_dvariant.c_str());
 
@@ -640,7 +652,7 @@ Interface to the Basix C++ library.
          element::dpc_variant dvariant) -> FiniteElement
       {
         return basix::create_element(family_name, cell_name, degree, lvariant,
-                                     dvariant);
+                                     dvariant, false);
       },
       basix::docstring::create_element__family_cell_degree_lvariant_dvariant
           .c_str());

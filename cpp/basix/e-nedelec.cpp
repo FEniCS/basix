@@ -275,7 +275,8 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   return FiniteElement(element::family::N1E, celltype, degree, {tdim},
                        impl::mdspan2_t(wcoeffs.data(), wshape), xview, Mview, 0,
                        maps::type::covariantPiola, sobolev::space::HCurl,
-                       discontinuous, degree - 1, degree, lvariant);
+                       discontinuous, degree - 1, degree, lvariant,
+                       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 FiniteElement element::create_nedelec2(cell::type celltype, int degree,
@@ -377,6 +378,6 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
                                        tdim * psize, tdim * psize),
                        xview, Mview, 0, maps::type::covariantPiola,
                        sobolev::space::HCurl, discontinuous, degree, degree,
-                       lvariant);
+                       lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

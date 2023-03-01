@@ -50,7 +50,8 @@ int main(int argc, char* argv[])
 
     // Create the lagrange element
     basix::FiniteElement lagrange
-        = basix::create_element(family, cell_type, degree, variant);
+        = basix::create_element(family, cell_type, degree, variant,
+                                basix::element::dpc_variant::unset, false);
 
     // Print bools as true/false instead of 0/1
     std::cout << std::boolalpha;
@@ -128,7 +129,9 @@ int main(int argc, char* argv[])
     auto variant = basix::element::lagrange_variant::equispaced;
 
     // Create the lagrange element
-    auto lagrange = basix::create_element(family, cell_type, degree, variant);
+    auto lagrange
+        = basix::create_element(family, cell_type, degree, variant,
+                                basix::element::dpc_variant::unset, false);
 
     // We can verify this by checking that`dof_transformations_are_identity` is
     // `True`. To confirm that the transformations are identity matrices, we
@@ -154,7 +157,9 @@ int main(int argc, char* argv[])
     auto family = basix::element::family::N1E;
     auto cell_type = basix::cell::type::tetrahedron;
     int degree = 2;
-    auto nedelec = basix::create_element(family, cell_type, degree);
+    auto nedelec = basix::create_element(
+        family, cell_type, degree, basix::element::lagrange_variant::unset,
+        basix::element::dpc_variant::unset, false);
 
     std::cout << "Dof transformations are identity: "
               << nedelec.dof_transformations_are_identity() << std::endl;

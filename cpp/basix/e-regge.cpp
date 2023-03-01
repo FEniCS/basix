@@ -177,9 +177,10 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   // if (discontinuous)
   //   std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim * tdim);
 
-  return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
-                       impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
-                       xview, Mview, 0, maps::type::doubleCovariantPiola,
-                       sobolev::space::HEin, discontinuous, -1, degree);
+  return FiniteElement(
+      element::family::Regge, celltype, degree, {tdim, tdim},
+      impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
+      maps::type::doubleCovariantPiola, sobolev::space::HEin, discontinuous, -1,
+      degree, element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

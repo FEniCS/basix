@@ -1094,10 +1094,11 @@ FiniteElement basix::element::create_serendipity(
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   return FiniteElement(element::family::serendipity, celltype, degree, {},
                        impl::cmdspan2_t(wbuffer.data(), wshape), xview, Mview,
-                       0, maps::type::identity, sobolev::space::H1,
-                       discontinuous,
+                       0, maps::type::identity, space, discontinuous,
                        degree < static_cast<int>(tdim) ? 1 : degree / tdim,
                        degree, lvariant, dvariant);
 }
@@ -1268,9 +1269,7 @@ FiniteElement basix::element::create_serendipity_div(
     wshape = {w.extent(0), w.extent(1)};
   }
   else
-  {
     throw std::runtime_error("Unsupported tdim");
-  }
 
   std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
   std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
@@ -1286,11 +1285,12 @@ FiniteElement basix::element::create_serendipity_div(
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement(element::family::BDM, celltype, degree, {tdim},
                        impl::cmdspan2_t(wbuffer.data(), wshape), xview, Mview,
-                       0, maps::type::contravariantPiola, sobolev::space::HDiv,
-                       discontinuous, degree / tdim, degree + 1, lvariant,
-                       dvariant);
+                       0, maps::type::contravariantPiola, space, discontinuous,
+                       degree / tdim, degree + 1, lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_curl(
@@ -1412,10 +1412,11 @@ FiniteElement basix::element::create_serendipity_curl(
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement(element::family::N2E, celltype, degree, {tdim},
                        impl::cmdspan2_t(wbuffer.data(), wshape), xview, Mview,
-                       0, maps::type::covariantPiola, sobolev::space::HCurl,
-                       discontinuous,
+                       0, maps::type::covariantPiola, space, discontinuous,
                        (degree == 2 && tdim == 3) ? 1 : degree / tdim,
                        degree + 1, lvariant, dvariant);
 }

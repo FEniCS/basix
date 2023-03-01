@@ -93,10 +93,12 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::H2;
   return FiniteElement(
       element::family::Hermite, celltype, degree, {},
       impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs), xview, Mview, 1,
-      maps::type::identity, sobolev::space::H2, discontinuous, -1, degree,
+      maps::type::identity, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

@@ -153,7 +153,7 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
     if element.highest_degree >= 0:
         # The element being tested should be a subset of this Lagrange space
         lagrange = basix.create_element(
-            basix.ElementFamily.P, cell_type, element.highest_degree, basix.LagrangeVariant.equispaced, True)
+            basix.ElementFamily.P, cell_type, element.highest_degree, basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
@@ -165,7 +165,7 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
         # The element being tested should be NOT a subset of this Lagrange space
         lagrange = basix.create_element(
             basix.ElementFamily.P, cell_type, element.highest_degree - 1,
-            basix.LagrangeVariant.equispaced, True)
+            basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
@@ -180,7 +180,7 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
         # This Lagrange space should be a subset to the element being tested
         lagrange = basix.create_element(
             basix.ElementFamily.P, cell_type, element.highest_complete_degree,
-            basix.LagrangeVariant.equispaced, True)
+            basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]
@@ -196,7 +196,7 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
         # This Lagrange space should NOT be a subset to the element being tested
         lagrange = basix.create_element(
             basix.ElementFamily.P, cell_type, element.highest_complete_degree + 1,
-            basix.LagrangeVariant.equispaced, True)
+            basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = np.random.rand(lagrange.dim * element.value_size)
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]

@@ -186,7 +186,7 @@ def sympy_lagrange(celltype, n):
 
 
 def test_point():
-    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.point, 0, True)
+    lagrange = basix.create_element(basix.ElementFamily.P, basix.CellType.point, 0, discontinuous=True)
     assert numpy.allclose(lagrange.tabulate(0, numpy.array([[]])), [[[1]]])
     assert numpy.allclose(lagrange.tabulate(0, numpy.array([[], []])), [[[1, 1]]])
 
@@ -432,7 +432,7 @@ def in_cell(celltype, p):
 ])
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_variant_points(celltype, degree, variant):
-    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
+    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, discontinuous=True)
     for p in e.points:
         assert in_cell(celltype, p)
 
@@ -450,7 +450,7 @@ def test_continuous_lagrange(celltype, variant):
     # The variants used in this test can only be used for discontinuous
     # Lagrange, so trying to create them should throw a runtime error
     with pytest.raises(RuntimeError):
-        basix.create_element(basix.ElementFamily.P, celltype, 4, variant, False)
+        basix.create_element(basix.ElementFamily.P, celltype, 4, variant, discontinuous=False)
 
 
 @pytest.mark.parametrize("celltype", [
@@ -462,8 +462,8 @@ def test_vtk_element(celltype, degree):
     if degree > 5 and celltype == basix.CellType.hexahedron:
         pytest.skip("Skipping slow test on hexahedron")
 
-    equi = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced, True)
-    vtk = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.vtk, True)
+    equi = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced, discontinuous=True)
+    vtk = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.vtk, discontinuous=True)
 
     assert vtk.points.shape == equi.points.shape
 
@@ -546,7 +546,7 @@ def test_vtk_element(celltype, degree):
 ])
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_legendre(celltype, degree, variant):
-    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, True)
+    e = basix.create_element(basix.ElementFamily.P, celltype, degree, variant, discontinuous=True)
     for p in e.points:
         assert in_cell(celltype, p)
 
@@ -564,7 +564,7 @@ def test_legendre(celltype, degree, variant):
 ])
 @pytest.mark.parametrize("degree", range(5))
 def test_dpc(celltype, degree, variant):
-    e = basix.create_element(basix.ElementFamily.DPC, celltype, degree, variant, True)
+    e = basix.create_element(basix.ElementFamily.DPC, celltype, degree, dpc_variant=variant, discontinuous=True)
     for p in e.points:
         assert in_cell(celltype, p)
 
@@ -577,7 +577,7 @@ def test_dpc(celltype, degree, variant):
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_legendre_lagrange_variant(celltype, degree):
     e = basix.create_element(
-        basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.legendre, True)
+        basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.legendre, discontinuous=True)
 
     # Test that the basis functions are orthogonal
     pts, wts = basix.make_quadrature(celltype, degree * 2)
@@ -649,7 +649,7 @@ def test_legendre_lagrange_variant(celltype, degree):
 @pytest.mark.parametrize("degree", range(1, 5))
 def test_legendre_dpc_variant(celltype, degree):
     e = basix.create_element(
-        basix.ElementFamily.DPC, celltype, degree, basix.DPCVariant.legendre, True)
+        basix.ElementFamily.DPC, celltype, degree, dpc_variant=basix.DPCVariant.legendre, discontinuous=True)
 
     # Test that the basis functions are orthogonal
     pts, wts = basix.make_quadrature(celltype, degree * 2)

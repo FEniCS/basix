@@ -153,7 +153,8 @@ def test_degree_bounds(cell_type, degree, element_type, element_args):
     if element.highest_degree >= 0:
         # The element being tested should be a subset of this Lagrange space
         lagrange = basix.create_element(
-            basix.ElementFamily.P, cell_type, element.highest_degree, basix.LagrangeVariant.equispaced, discontinuous=True)
+            basix.ElementFamily.P, cell_type, element.highest_degree,
+            basix.LagrangeVariant.equispaced, discontinuous=True)
         lagrange_coeffs = basix.compute_interpolation_operator(element, lagrange) @ coeffs
         lagrange_tab = lagrange.tabulate(0, points)[0]
         lagrange_values = np.array([lagrange_tab[:, :, 0] @ lagrange_coeffs[i::element.value_size]

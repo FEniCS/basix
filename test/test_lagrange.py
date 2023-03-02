@@ -462,8 +462,10 @@ def test_vtk_element(celltype, degree):
     if degree > 5 and celltype == basix.CellType.hexahedron:
         pytest.skip("Skipping slow test on hexahedron")
 
-    equi = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.equispaced, discontinuous=True)
-    vtk = basix.create_element(basix.ElementFamily.P, celltype, degree, basix.LagrangeVariant.vtk, discontinuous=True)
+    equi = basix.create_element(basix.ElementFamily.P, celltype, degree,
+                                basix.LagrangeVariant.equispaced, discontinuous=True)
+    vtk = basix.create_element(basix.ElementFamily.P, celltype, degree,
+                               basix.LagrangeVariant.vtk, discontinuous=True)
 
     assert vtk.points.shape == equi.points.shape
 
@@ -564,7 +566,8 @@ def test_legendre(celltype, degree, variant):
 ])
 @pytest.mark.parametrize("degree", range(5))
 def test_dpc(celltype, degree, variant):
-    e = basix.create_element(basix.ElementFamily.DPC, celltype, degree, dpc_variant=variant, discontinuous=True)
+    e = basix.create_element(basix.ElementFamily.DPC, celltype, degree,
+                             dpc_variant=variant, discontinuous=True)
     for p in e.points:
         assert in_cell(celltype, p)
 

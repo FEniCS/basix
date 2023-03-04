@@ -22,11 +22,10 @@ enum class space
   HDivDiv = 13,
 };
 
-/// Get the intersection of two Sobolev spaces
-/// @param[in] space1 The first space
-/// @param[in] space2 The second space
-/// @return The intersection
-basix::sobolev::space space_intersection(basix::sobolev::space space1,
-                                         basix::sobolev::space space2);
+/// Get the intersection of two Sobolev spaces.
+/// @param[in] space1 First space
+/// @param[in] space2 Second space
+/// @return Intersection of the spaces
+space space_intersection(space space1, space space2);
 
 } // namespace basix::sobolev

@@ -1340,6 +1340,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   return FiniteElement(family::P, celltype, degree, {},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        xview, Mview, 0, maps::type::identity, space,
-                       discontinuous, degree, degree, variant, tensor_factors);
+                       discontinuous, degree, degree, variant,
+                       dpc_variant::unset, tensor_factors, dof_ordering);
 }
 //-----------------------------------------------------------------------------

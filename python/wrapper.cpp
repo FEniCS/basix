@@ -15,6 +15,7 @@
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <basix/sobolev-spaces.h>
+#include <iostream>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
@@ -567,108 +568,20 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         bool discontinuous,
-         const std::vector<int>& dof_layout) -> FiniteElement
-      {
-        return basix::create_element(
-            family_name, cell_name, degree, element::lagrange_variant::unset,
-            element::dpc_variant::unset, discontinuous, dof_layout);
-      },
-      basix::docstring::create_element__family_cell_degree_discontinuous
-          .c_str());
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         bool discontinuous) -> FiniteElement
-      {
-        return basix::create_element(
-            family_name, cell_name, degree, element::lagrange_variant::unset,
-            element::dpc_variant::unset, discontinuous);
-      },
-      basix::docstring::create_element__family_cell_degree_discontinuous
-          .c_str());
-
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant lvariant,
-         bool discontinuous) -> FiniteElement
-      {
-        return basix::create_element(family_name, cell_name, degree, lvariant,
-                                     element::dpc_variant::unset,
-                                     discontinuous);
-      },
-      basix::docstring::
-          create_element__family_cell_degree_lvariant_discontinuous.c_str());
-
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         element::dpc_variant dvariant, bool discontinuous) -> FiniteElement
-      {
-        return create_element(family_name, cell_name, degree,
-                              element::lagrange_variant::unset, dvariant,
-                              discontinuous);
-      },
-      basix::docstring::
-          create_element__family_cell_degree_dvariant_discontinuous.c_str());
-
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant, element::dpc_variant dvariant,
-         bool discontinuous) -> FiniteElement
+         bool discontinuous, std::vector<int> dof_layout) -> FiniteElement
       {
         return basix::create_element(family_name, cell_name, degree, lvariant,
-                                     dvariant, discontinuous);
+                                     dvariant, discontinuous, dof_layout);
       },
+      py::arg("family_name"), py::arg("cell_name"), py::arg("degree"),
+      py::arg("lagrange_variant") = element::lagrange_variant::unset,
+      py::arg("dpc_variant") = element::dpc_variant::unset,
+      py::arg("discontinuous") = false,
+      py::arg("dof_layout") = std::vector<int>(),
       basix::docstring::
           create_element__family_cell_degree_lvariant_dvariant_discontinuous
               .c_str());
-
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell_name,
-         int degree) -> FiniteElement
-      {
-        return create_element(family_name, cell_name, degree,
-                              element::lagrange_variant::unset,
-                              element::dpc_variant::unset, false);
-      },
-      basix::docstring::create_element__family_cell_degree.c_str());
-
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant lvariant) -> FiniteElement
-      {
-        return basix::create_element(family_name, cell_name, degree, lvariant,
-                                     element::dpc_variant::unset, false);
-      },
-      basix::docstring::create_element__family_cell_degree_lvariant.c_str());
-
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         element::dpc_variant dvariant) -> FiniteElement
-      {
-        return basix::create_element(family_name, cell_name, degree,
-                                     element::lagrange_variant::unset, dvariant,
-                                     false);
-      },
-      basix::docstring::create_element__family_cell_degree_dvariant.c_str());
-
-  m.def(
-      "create_element",
-      [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant lvariant,
-         element::dpc_variant dvariant) -> FiniteElement
-      {
-        return basix::create_element(family_name, cell_name, degree, lvariant,
-                                     dvariant, false);
-      },
-      basix::docstring::create_element__family_cell_degree_lvariant_dvariant
-          .c_str());
 
   // Interpolate between elements
   m.def(

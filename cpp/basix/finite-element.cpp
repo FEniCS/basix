@@ -215,13 +215,14 @@ basix::FiniteElement basix::create_element(element::family family,
     throw std::runtime_error("Cannot create a custom element directly. Try "
                              "using `create_custom_element` instead");
   }
+
   if (degree < 0)
   {
     throw std::runtime_error("Cannot create an element with a negative degree");
   }
 
   // Checklist of variant compatibility (lagrange, DPC) for each
-  const std::map<element::family, std::array<bool, 2>> has_variant
+  static const std::map<element::family, std::array<bool, 2>> has_variant
       = {{element::family::P, {true, false}},
          {element::family::RT, {true, false}},
          {element::family::N1E, {true, false}},
@@ -235,8 +236,10 @@ basix::FiniteElement basix::create_element(element::family family,
   if (auto it = has_variant.find(family); it != has_variant.end())
   {
     if (it->second[0] == false and lvariant != element::lagrange_variant::unset)
+    {
       throw std::runtime_error(
           "Cannot pass a Lagrange variant to this element.");
+    }
     if (it->second[1] == false and dvariant != element::dpc_variant::unset)
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
   }
@@ -646,18 +649,21 @@ FiniteElement::FiniteElement(
 
   if (!_dof_ordering.empty())
   {
-    std::cout << "Got a dof ordering\n";
+    std::cout << "Got a dof ordering.\n";
+
+    // Safety checks
     if (_dof_ordering.size() != dof)
-      throw std::runtime_error("Incorrect number of dofs in ordering\n");
+      throw std::runtime_error("Incorrect number of dofs in ordering.");
     std::vector<int> check(_dof_ordering.size(), 0);
     for (int q : _dof_ordering)
     {
-      assert(q >= 0 and q < _dof_ordering.size());
+      if (q < 0 or q >= _dof_ordering.size())
+        throw std::runtime_error("Out of range: dof_ordering.");
       check[q] += 1;
     }
     for (int q : check)
       if (q != 1)
-        throw std::runtime_error("Dof ordering not a permutation\n");
+        throw std::runtime_error("Dof ordering not a permutation.");
 
     // Apply permutation to _edofs
     for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
@@ -666,9 +672,8 @@ FiniteElement::FiniteElement(
       {
         for (int& q : entity)
           q = _dof_ordering[q];
-        }
-     }
-
+      }
+    }
   }
 
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
@@ -1247,9 +1252,6 @@ void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
     // This assumes 3 bits are used per face. This will need updating if 3D
     // cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
 
     // Permute DOFs on edges
     {
@@ -1258,8 +1260,7 @@ void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
-          precompute::apply_permutation(trans, dofs, dofstart);
-        dofstart += _edofs[1][e].size();
+          precompute::apply_permutation_mapped(trans, dofs, _edofs[1][e]);
       }
     }
 
@@ -1272,13 +1273,11 @@ void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
 
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-          precompute::apply_permutation(trans[1], dofs, dofstart);
+          precompute::apply_permutation_mapped(trans[1], dofs, _edofs[2][f]);
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-          precompute::apply_permutation(trans[0], dofs, dofstart);
-
-        dofstart += _edofs[2][f].size();
+          precompute::apply_permutation_mapped(trans[0], dofs, _edofs[2][f]);
       }
     }
   }
@@ -1300,9 +1299,6 @@ void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
     // This assumes 3 bits are used per face. This will need updating if
     // 3D cells with faces with more than 4 sides are implemented
     int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
 
     // Permute DOFs on edges
     {
@@ -1311,8 +1307,7 @@ void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
       {
         // Reverse an edge
         if (cell_info >> (face_start + e) & 1)
-          precompute::apply_permutation(trans, dofs, dofstart);
-        dofstart += _edofs[1][e].size();
+          precompute::apply_permutation_mapped(trans, dofs, _edofs[1][e]);
       }
     }
 
@@ -1325,13 +1320,11 @@ void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
 
         // Rotate a face
         for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-          precompute::apply_permutation(trans[0], dofs, dofstart);
+          precompute::apply_permutation_mapped(trans[0], dofs, _edofs[2][f]);
 
         // Reflect a face
         if (cell_info >> (3 * f) & 1)
-          precompute::apply_permutation(trans[1], dofs, dofstart);
-
-        dofstart += _edofs[2][f].size();
+          precompute::apply_permutation_mapped(trans[1], dofs, _edofs[2][f]);
       }
     }
   }

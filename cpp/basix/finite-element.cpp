@@ -550,7 +550,7 @@ FiniteElement::FiniteElement(
   _wcoeffs
       = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
 
-  // Copy  M
+  // Copy M
   for (std::size_t i = 0; i < M.size(); ++i)
   {
     for (auto Mi : M[i])
@@ -1024,7 +1024,12 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
 
       for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
         for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
-          basis_data(p, k0, k1, j) = result(k1, k0);
+        {
+          if (_dof_ordering.empty())
+            basis_data(p, k0, k1, j) = result(k1, k0);
+          else
+            basis_data(p, k0, _dof_ordering[k1], j) = result(k1, k0);
+        }
     }
   }
 }

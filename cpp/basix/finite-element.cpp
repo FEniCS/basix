@@ -1022,14 +1022,18 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
       math::dot(C, cmdspan2_t(B.data_handle(), B.extent(0), B.extent(1)),
                 result);
 
-      for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
-        for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
-        {
-          if (_dof_ordering.empty())
+      if (_dof_ordering.empty())
+      {
+        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
             basis_data(p, k0, k1, j) = result(k1, k0);
-          else
+      }
+      else
+      {
+        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
             basis_data(p, k0, _dof_ordering[k1], j) = result(k1, k0);
-        }
+      }
     }
   }
 }

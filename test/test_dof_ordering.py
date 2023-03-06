@@ -5,11 +5,11 @@ np.set_printoptions(suppress=True)
 
 def test_ordering():
 
-    pt = np.array([[1 / 3, 1 / 3]])
+    pt = np.array([[1 / 3, 1 / 3], [.3, .2]])
 
     # reordered element
     el = basix.create_element(basix.ElementFamily.P, basix.CellType.triangle, 2, dof_layout=[0, 3, 5, 1, 2, 4])
-    ord = el.dof_ordering
+    order = el.dof_ordering
     result1 = el.tabulate(1, pt)
 
     # standard element
@@ -18,6 +18,7 @@ def test_ordering():
     presult = np.zeros_like(result2)
 
     # permute standard data
-    presult[:, :, ord, :] = result2
+    presult[:, :, order, :] = result2
 
     assert np.allclose(result1, presult)
+    print(result1)

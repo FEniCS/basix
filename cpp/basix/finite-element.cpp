@@ -674,6 +674,15 @@ FiniteElement::FiniteElement(
           q = _dof_ordering[q];
       }
     }
+
+    // Apply permutation to _points (for interpolation)
+    std::vector<double> new_points(_points.first.size());
+    assert(_points.second[0] == _dof_ordering.size());
+    const int gdim = _points.second[1];
+    for (std::size_t d = 0; d < _dof_ordering.size(); ++d)
+      for (int i = 0; i < gdim; ++i)
+        new_points[gdim * _dof_ordering[d] + i] = _points.first[gdim * d + i];
+    _points = {new_points, _points.second};
   }
 
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity

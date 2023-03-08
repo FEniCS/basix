@@ -274,6 +274,56 @@ Interface to the Basix C++ library.
             return py::array_t<double>(shape, U.data());
           },
           basix::docstring::FiniteElement__pull_back.c_str())
+      .def("apply_transformation",
+           [](const FiniteElement& self, py::array_t<double>& data,
+              int block_size, std::uint32_t cell_info, bool transpose,
+              bool inverse, bool to_transpose)
+           {
+             std::span<double> data_span(data.mutable_data(), data.size());
+             if (transpose)
+             {
+               if (inverse)
+               {
+                 if (to_transpose)
+                   self.apply_inverse_transpose_dof_transformation_to_transpose(
+                       data_span, block_size, cell_info);
+                 else
+                   self.apply_inverse_transpose_dof_transformation(
+                       data_span, block_size, cell_info);
+               }
+               else
+               {
+                 if (to_transpose)
+                   self.apply_transpose_dof_transformation_to_transpose(
+                       data_span, block_size, cell_info);
+                 else
+                   self.apply_transpose_dof_transformation(
+                       data_span, block_size, cell_info);
+               }
+             }
+             else
+             {
+               if (inverse)
+               {
+                 if (to_transpose)
+                   self.apply_inverse_dof_transformation_to_transpose(
+                       data_span, block_size, cell_info);
+                 else
+                   self.apply_inverse_dof_transformation(data_span, block_size,
+                                                         cell_info);
+               }
+               else
+               {
+                 if (to_transpose)
+                   self.apply_dof_transformation_to_transpose(
+                       data_span, block_size, cell_info);
+                 else
+                   self.apply_dof_transformation(data_span, block_size,
+                                                 cell_info);
+               }
+             }
+             return py::array_t<double>(data_span.size(), data_span.data());
+           })
       .def(
           "apply_dof_transformation",
           [](const FiniteElement& self, py::array_t<double>& data,
@@ -303,6 +353,18 @@ Interface to the Basix C++ library.
           {
             std::span<double> data_span(data.mutable_data(), data.size());
             self.apply_inverse_transpose_dof_transformation(
+                data_span, block_size, cell_info);
+            return py::array_t<double>(data_span.size(), data_span.data());
+          },
+          basix::docstring::
+              FiniteElement__apply_inverse_transpose_dof_transformation.c_str())
+      .def(
+          "apply_transpose_dof_transformation_to_transpose",
+          [](const FiniteElement& self, py::array_t<double>& data,
+             int block_size, std::uint32_t cell_info)
+          {
+            std::span<double> data_span(data.mutable_data(), data.size());
+            self.apply_transpose_dof_transformation_to_transpose(
                 data_span, block_size, cell_info);
             return py::array_t<double>(data_span.size(), data_span.data());
           },

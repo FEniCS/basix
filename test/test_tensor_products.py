@@ -79,7 +79,7 @@ def test_tensor_product_factorisation_quadrilateral(degree):
     # create element with tensor product order
     element_tp = basix.create_element(basix.ElementFamily.P, cell_type,
                                       P, basix.LagrangeVariant.gll_warped,
-                                      dof_layout=np.argsort(perm))
+                                      dof_ordering=np.argsort(perm))
 
     data = element_tp.tabulate(1, points)
     dphi_x = data[1, :, :, 0]
@@ -138,7 +138,7 @@ def test_tensor_product_factorisation_hexahedron(degree):
     # create element with tensor product order
     element_tp = basix.create_element(basix.ElementFamily.P, basix.CellType.hexahedron,
                                       P, basix.LagrangeVariant.gll_warped,
-                                      dof_layout=np.argsort(perm))
+                                      dof_ordering=np.argsort(perm))
 
     data = element_tp.tabulate(1, points)
     dphi_x = data[1, :, :, 0]

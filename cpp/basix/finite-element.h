@@ -1052,9 +1052,9 @@ private:
   // Data permutation
   // @param data Data to be permuted
   // @param block_size
-  // @param cell_info Cell permutation bitmap selecting required permutation
-  // @param eperm Permutations to use
-  // @param post Post-reflect (for transpose)
+  // @param cell_info Cell bitmap selecting required permutations
+  // @param eperm Permutation to use
+  // @param post Whether reflect is pre- or post- rotation.
   template <typename T, bool post>
   void permute_data(
       std::span<T> data, int block_size, std::uint32_t cell_info,
@@ -1067,6 +1067,11 @@ private:
       = std::vector<std::pair<std::vector<std::size_t>, array2_t>>;
 
   // Data transformation
+  // @param data Data to be transformed (using matrices)
+  // @param block_size
+  // @param cell_info Cell bitmap selecting required transforms
+  // @param etrans Transformation matrices
+  // @param post Whether reflect is pre- or post- rotation.
   template <typename T, bool post>
   void transform_data(std::span<T> data, int block_size,
                       std::uint32_t cell_info,
@@ -1306,7 +1311,7 @@ void FiniteElement::permute_data(
     }
   }
 }
-
+//-----------------------------------------------------------------------------
 template <typename T, bool post>
 void FiniteElement::transform_data(
     std::span<T> data, int block_size, std::uint32_t cell_info,

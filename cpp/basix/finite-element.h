@@ -1307,9 +1307,6 @@ void FiniteElement::permute_data(
   }
 }
 
-using array2_t = std::pair<std::vector<double>, std::array<std::size_t, 2>>;
-using trans_data_t = std::vector<std::pair<std::vector<std::size_t>, array2_t>>;
-
 template <typename T, bool post>
 void FiniteElement::transform_data(
     std::span<T> data, int block_size, std::uint32_t cell_info,

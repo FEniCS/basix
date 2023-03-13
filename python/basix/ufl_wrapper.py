@@ -567,7 +567,7 @@ class ComponentElement(_BasixElementBase):
             elif len(self.element._value_shape) == 1:
                 output.append(tbl[:, self.component, :])
             elif len(self.element._value_shape) == 2:
-                if isinstance(self.element, BlockedElement) and self.element.symmetric:
+                if isinstance(self.element, TensorElement) and self.element.symmetric:
                     # FIXME: check that this behaves as expected
                     output.append(tbl[:, self.component, :])
                 else:
@@ -884,7 +884,7 @@ class BlockedElement(_BasixElementBase):
     _block_size: int
 
     def __init__(self, repr: str, sub_element: _BasixElementBase, block_size: int,
-                 block_shape: _typing.Optional[_typing.Tuple[int, ...]] = None, symmetric: bool = False,
+                 block_shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
                  gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         assert block_size > 0
@@ -898,7 +898,6 @@ class BlockedElement(_BasixElementBase):
         if block_shape is None:
             block_shape = (block_size, )
         self.block_shape = block_shape
-        self.symmetric = symmetric
 
         super().__init__(repr, sub_element.family(), sub_element.cell_type.name, block_shape,
                          sub_element._degree, sub_element._map, gdim=gdim)
@@ -929,9 +928,6 @@ class BlockedElement(_BasixElementBase):
 
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Reference value shape of the element basis function."""
-        if self.symmetric:
-            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
-            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
         return self._value_shape
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
@@ -1147,7 +1143,36 @@ class TensorElement(BlockedElement):
 
         assert len(shape) == 2
         super().__init__(f"TensorElement({sub_element._repr}, {shape}, {symmetric})", sub_element, bs, shape,
-                         symmetric=symmetric, gdim=gdim)
+                         gdim=gdim)
+
+        self.symmetric = symmetric
+
+        if symmetric:
+            n = 0
+            sub_element_mapping = {}
+            for i in range(shape[0]):
+                for j in range(i + 1):
+                    sub_element_mapping[(i, j)] = n
+                    sub_element_mapping[(j, i)] = n
+                    n += 1
+
+            self._map = "symmetries"
+            self._symmetry = {(i, j): (j, i) for i in range(shape[0]) for j in range(i)}
+            self._flattened_sub_element_mapping = [
+                sub_element_mapping[(i, j)] for i in range(shape[0]) for j in range(shape[1])]
+
+    def flattened_sub_element_mapping(self) -> _typing.List[int]:
+        """Return the flattened sub element mapping."""
+        if not self.symmetric:
+            raise ValueError("Cannot get flattened map for non-symmetric element.")
+        return self._flattened_sub_element_mapping
+
+    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
+        """Reference value shape of the element basis function."""
+        if self.symmetric:
+            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
+            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
+        return super().reference_value_shape()
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:

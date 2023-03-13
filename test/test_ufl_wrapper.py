@@ -10,6 +10,7 @@ from basix import ufl_wrapper
     ("Lagrange", basix.CellType.triangle, 2),
     (basix.ElementFamily.P, basix.CellType.triangle, 2),
     (basix.ElementFamily.P, "triangle", 2),
+    (basix.ElementFamily.P, ufl.triangle, 2),
 ])
 def test_create_element(inputs):
     ufl_wrapper.create_element(*inputs)

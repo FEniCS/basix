@@ -1212,7 +1212,8 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
 
 @_functools.lru_cache()
-def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+def create_element(family: _typing.Union[_basix.ElementFamily, str],
+                   cell: _typing.Union[_basix.CellType, str, _ufl.cell.Cell],
                    degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
                    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
                    gdim: _typing.Optional[int] = None) -> BasixElement:
@@ -1229,6 +1230,8 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         gdim: The geometric dimension of the cell.
 
     """
+    if isinstance(cell, _ufl.cell.Cell):
+        cell = cell.cellname()
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
     if isinstance(family, str):
@@ -1269,7 +1272,8 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
 
 
 @_functools.lru_cache()
-def create_vector_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+def create_vector_element(family: _typing.Union[_basix.ElementFamily, str],
+                          cell: _typing.Union[_basix.CellType, str, _ufl.cell.Cell],
                           degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
                           dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
                           dim: _typing.Optional[int] = None, gdim: _typing.Optional[int] = None) -> VectorElement:
@@ -1294,7 +1298,8 @@ def create_vector_element(family: _typing.Union[_basix.ElementFamily, str], cell
 
 
 @_functools.lru_cache()
-def create_tensor_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+def create_tensor_element(family: _typing.Union[_basix.ElementFamily, str],
+                          cell: _typing.Union[_basix.CellType, str, _ufl.cell.Cell],
                           degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
                           dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
                           shape: _typing.Optional[_typing.Tuple[int, int]] = None, symmetry: bool = False,

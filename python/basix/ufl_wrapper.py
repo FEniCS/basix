@@ -12,8 +12,7 @@ import ufl as _ufl
 # TODO: remove gdim arguments once UFL handles cells better
 # TODO: remove IrreducibleInt once UFL handles element degrees better
 from ufl.algorithms.estimate_degrees import IrreducibleInt as _IrreducibleInt
-from ufl.finiteelement.finiteelementbase import \
-    FiniteElementBase as _FiniteElementBase
+from ufl.finiteelement import FiniteElementBase as _FiniteElementBase
 
 import basix as _basix
 

@@ -128,6 +128,23 @@ void apply_permutation(const std::span<const std::size_t>& perm,
   }
 }
 
+/// Permutation of mapped data
+template <typename E>
+void apply_permutation_mapped(const std::span<const std::size_t>& perm,
+                              const std::span<E>& data,
+                              std::span<const int> emap,
+                              std::size_t block_size = 1)
+{
+  for (std::size_t i = 0; i < perm.size(); ++i)
+  {
+    for (std::size_t b = 0; b < block_size; ++b)
+    {
+      std::swap(data[block_size * emap[i] + b],
+                data[block_size * emap[perm[i]] + b]);
+    }
+  }
+}
+
 /// Apply a (precomputed) permutation to some transposed data
 ///
 /// @note This function is designed to be called at runtime, so its performance

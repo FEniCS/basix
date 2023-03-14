@@ -354,7 +354,7 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
     }
     else
     {
-      const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
+      const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
       x[3] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
       M[3] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
     }

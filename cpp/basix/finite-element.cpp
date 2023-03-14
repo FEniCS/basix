@@ -19,7 +19,6 @@
 #include "polyset.h"
 #include <basix/version.h>
 #include <cmath>
-#include <iostream>
 #include <numeric>
 
 #define str_macro(X) #X
@@ -650,12 +649,8 @@ FiniteElement::FiniteElement(
         edofs_d[e].push_back(dof++);
   }
 
-  std::cout << "ndofs = " << dof << "\n";
-
   if (!_dof_ordering.empty())
   {
-    std::cout << "Got a dof ordering.\n";
-
     // Safety checks
     if (_dof_ordering.size() != dof)
       throw std::runtime_error("Incorrect number of dofs in ordering.");

@@ -244,6 +244,11 @@ basix::FiniteElement basix::create_element(element::family family,
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
   }
 
+  if (dof_ordering.size() > 0 and family != element::family::P)
+  {
+    throw std::runtime_error("DOF ordering only supported for Lagrange");
+  }
+
   switch (family)
   {
   // P family
@@ -1265,40 +1270,7 @@ void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
-  {
-    // This assumes 3 bits are used per face. This will need updating if 3D
-    // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-
-    // Permute DOFs on edges
-    {
-      auto& trans = _eperm.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-          precompute::apply_permutation_mapped(trans, dofs, _edofs[1][e]);
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _eperm.at(_cell_subentity_types[2][f]);
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-          precompute::apply_permutation_mapped(trans[1], dofs, _edofs[2][f]);
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-          precompute::apply_permutation_mapped(trans[0], dofs, _edofs[2][f]);
-      }
-    }
-  }
+  permute_data<std::int32_t, false>(dofs, 1, cell_info, _eperm);
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
@@ -1312,40 +1284,7 @@ void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
-  {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-
-    // Permute DOFs on edges
-    {
-      auto& trans = _eperm_rev.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-          precompute::apply_permutation_mapped(trans, dofs, _edofs[1][e]);
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _eperm_rev.at(_cell_subentity_types[2][f]);
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-          precompute::apply_permutation_mapped(trans[0], dofs, _edofs[2][f]);
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-          precompute::apply_permutation_mapped(trans[1], dofs, _edofs[2][f]);
-      }
-    }
-  }
+  permute_data<std::int32_t, true>(dofs, 1, cell_info, _eperm_rev);
 }
 //-----------------------------------------------------------------------------
 std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>

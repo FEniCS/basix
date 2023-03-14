@@ -651,13 +651,14 @@ FiniteElement::FiniteElement(
 
   if (!_dof_ordering.empty())
   {
+    const int ndof_order = _dof_ordering.size();
     // Safety checks
-    if (_dof_ordering.size() != dof)
+    if (ndof_order != dof)
       throw std::runtime_error("Incorrect number of dofs in ordering.");
     std::vector<int> check(_dof_ordering.size(), 0);
     for (int q : _dof_ordering)
     {
-      if (q < 0 or q >= _dof_ordering.size())
+      if (q < 0 or q >= ndof_order)
         throw std::runtime_error("Out of range: dof_ordering.");
       check[q] += 1;
     }

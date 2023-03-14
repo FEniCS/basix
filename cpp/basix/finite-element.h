@@ -320,8 +320,9 @@ public:
   /// @param[in] lvariant The Lagrange variant of the element
   /// @param[in] dvariant The DPC variant of the element
   /// @param[in] tensor_factors The factors in the tensor product
-  /// @param[in] dof_ordering DOF reordering
   /// representation of this element
+  /// @param[in] dof_ordering DOF reordering: a mapping from the reference order
+  /// to a new permuted order
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
@@ -1131,9 +1132,6 @@ private:
   // Dofs associated with each cell (sub-)entity
   std::vector<std::vector<std::vector<int>>> _edofs;
 
-  // Dof reordering for different ElementDofLayout compatibility
-  std::vector<int> _dof_ordering;
-
   // Dofs associated with the closdure of each cell (sub-)entity
   std::vector<std::vector<std::vector<int>>> _e_closure_dofs;
 
@@ -1200,6 +1198,9 @@ private:
   // scaling factor may additionally be needed.
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
       _tensor_factors;
+
+  // Dof reordering for different ElementDofLayout compatibility
+  std::vector<int> _dof_ordering;
 
   // Is the interpolation matrix an identity?
   bool _interpolation_is_identity;

@@ -100,10 +100,10 @@ def test_enriched_element(elements):
     (basix.ufl.create_element("Discontinuous Lagrange", basix.CellType.triangle, 0),
      "L2", basix.SobolevSpace.L2),
     (basix.ufl.MixedElement((basix.ufl.create_element("Lagrange", basix.CellType.triangle, 2),
-                               basix.ufl.create_element("Lagrange", basix.CellType.triangle, 2))),
+                             basix.ufl.create_element("Lagrange", basix.CellType.triangle, 2))),
      "H1", basix.SobolevSpace.H1),
     (basix.ufl.MixedElement((basix.ufl.create_element("Discontinuous Lagrange", basix.CellType.triangle, 2),
-                               basix.ufl.create_element("Lagrange", basix.CellType.triangle, 2))),
+                             basix.ufl.create_element("Lagrange", basix.CellType.triangle, 2))),
      "L2", basix.SobolevSpace.L2),
 ])
 def test_sobolev_space(e, space0, space1):

@@ -1236,10 +1236,10 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
 
 @_functools.lru_cache()
-def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-            degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-            dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-            gdim: _typing.Optional[int] = None) -> BasixElement:
+def finite_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+                   gdim: _typing.Optional[int] = None) -> BasixElement:
     """Create a UFL element using Basix.
 
     Args:
@@ -1313,7 +1313,7 @@ def vector_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         dim: The length of the vector.
         gdim: The geometric dimension of the cell.
     """
-    e = element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, gdim)
+    e = finite_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, gdim)
     return VectorElement(e, dim, gdim=gdim)
 
 
@@ -1341,7 +1341,7 @@ def tensor_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         gdim: The geometric dimension of the cell.
 
     """
-    e = element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
+    e = finite_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return TensorElement(e, shape, symmetry, gdim=gdim)
 
 
@@ -1466,7 +1466,7 @@ def convert_ufl_element(element: _FiniteElementBase) -> _BasixElementBase:
             elif family_type == EF.DPC:
                 variant_info["dpc_variant"] = _basix.DPCVariant.diagonal_gll
 
-        return element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous,
-                       gdim=element.cell().geometric_dimension())
+        return finite_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous,
+                              gdim=element.cell().geometric_dimension())
     else:
         raise ValueError(f"Unrecognised element type: {element.__class__.__name__}")

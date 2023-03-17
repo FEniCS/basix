@@ -11,8 +11,8 @@ import basix.ufl
     (basix.ElementFamily.P, basix.CellType.triangle, 2),
     (basix.ElementFamily.P, "triangle", 2),
 ])
-def test_create_element(inputs):
-    basix.ufl.create_element(*inputs)
+def test_finite_element(inputs):
+    basix.ufl.finite_element(*inputs)
 
 
 @pytest.mark.parametrize("inputs", [
@@ -21,8 +21,8 @@ def test_create_element(inputs):
     (basix.ElementFamily.P, basix.CellType.triangle, 2),
     (basix.ElementFamily.P, "triangle", 2),
 ])
-def test_create_vector_element(inputs):
-    basix.ufl.create_vector_element(*inputs)
+def test_vector_element(inputs):
+    basix.ufl.vector_element(*inputs)
 
 
 @pytest.mark.parametrize("inputs", [
@@ -31,8 +31,8 @@ def test_create_vector_element(inputs):
     (basix.ElementFamily.P, basix.CellType.triangle, 2),
     (basix.ElementFamily.P, "triangle", 2),
 ])
-def test_create_tensor_element(inputs):
-    basix.ufl.create_tensor_element(*inputs)
+def test_tensor_element(inputs):
+    basix.ufl.tensor_element(*inputs)
 
 
 @pytest.mark.parametrize("inputs", [
@@ -42,7 +42,7 @@ def test_create_tensor_element(inputs):
     (basix.ElementFamily.P, "triangle", 2),
 ])
 def test_tensor_element_hash(inputs):
-    e = basix.ufl.create_element(*inputs)
+    e = basix.ufl.finite_element(*inputs)
     sym = basix.ufl.TensorElement(e, symmetric=True)
     asym = basix.ufl.TensorElement(e, symmetric=None)
     assert sym != asym
@@ -70,12 +70,12 @@ def test_convert_ufl_element(e):
     ("Lagrange", "tetrahedron", 2, [])
 ])
 def test_converted_elements(celltype, family, degree, variants):
-    e1 = basix.ufl.create_element(celltype, family, degree, *variants)
+    e1 = basix.ufl.finite_element(celltype, family, degree, *variants)
     e2 = ufl.FiniteElement(celltype, family, degree)
     assert e1 == basix.ufl.convert_ufl_element(e1)
     assert e1 == basix.ufl.convert_ufl_element(e2)
 
-    e1 = basix.ufl.create_vector_element(celltype, family, degree, *variants)
+    e1 = basix.ufl.vector_element(celltype, family, degree, *variants)
     e2 = ufl.VectorElement(celltype, family, degree)
     assert e1 == basix.ufl.convert_ufl_element(e1)
     assert e1 == basix.ufl.convert_ufl_element(e2)
@@ -83,27 +83,27 @@ def test_converted_elements(celltype, family, degree, variants):
 
 @pytest.mark.parametrize("elements", [
     [ufl.FiniteElement("Lagrange", "triangle", 1), ufl.FiniteElement("Bubble", "triangle", 3)],
-    [ufl.FiniteElement("Lagrange", "quadrilateral", 1), basix.ufl.create_element("Bubble", "quadrilateral", 2)],
+    [ufl.FiniteElement("Lagrange", "quadrilateral", 1), basix.ufl.finite_element("Bubble", "quadrilateral", 2)],
     [ufl.VectorElement("Lagrange", "quadrilateral", 1),
-     basix.ufl.create_vector_element("Bubble", "quadrilateral", 2)],
+     basix.ufl.vector_element("Bubble", "quadrilateral", 2)],
     [ufl.TensorElement("Lagrange", "quadrilateral", 1),
-     basix.ufl.create_tensor_element("Bubble", "quadrilateral", 2)],
+     basix.ufl.tensor_element("Bubble", "quadrilateral", 2)],
 ])
 def test_enriched_element(elements):
-    e = basix.ufl._create_enriched_element([basix.ufl.convert_ufl_element(e) for e in elements])
+    e = basix.ufl.enriched_element([basix.ufl.convert_ufl_element(e) for e in elements])
     # Check that element is hashable
     hash(e)
 
 
 @pytest.mark.parametrize("e,space0,space1", [
-    (basix.ufl.create_element("Lagrange", basix.CellType.triangle, 2), "H1", basix.SobolevSpace.H1),
-    (basix.ufl.create_element("Discontinuous Lagrange", basix.CellType.triangle, 0),
+    (basix.ufl.finite_element("Lagrange", basix.CellType.triangle, 2), "H1", basix.SobolevSpace.H1),
+    (basix.ufl.finite_element("Discontinuous Lagrange", basix.CellType.triangle, 0),
      "L2", basix.SobolevSpace.L2),
-    (basix.ufl.MixedElement((basix.ufl.create_element("Lagrange", basix.CellType.triangle, 2),
-                             basix.ufl.create_element("Lagrange", basix.CellType.triangle, 2))),
+    (basix.ufl.MixedElement((basix.ufl.finite_element("Lagrange", basix.CellType.triangle, 2),
+                             basix.ufl.finite_element("Lagrange", basix.CellType.triangle, 2))),
      "H1", basix.SobolevSpace.H1),
-    (basix.ufl.MixedElement((basix.ufl.create_element("Discontinuous Lagrange", basix.CellType.triangle, 2),
-                             basix.ufl.create_element("Lagrange", basix.CellType.triangle, 2))),
+    (basix.ufl.MixedElement((basix.ufl.finite_element("Discontinuous Lagrange", basix.CellType.triangle, 2),
+                             basix.ufl.finite_element("Lagrange", basix.CellType.triangle, 2))),
      "L2", basix.SobolevSpace.L2),
 ])
 def test_sobolev_space(e, space0, space1):

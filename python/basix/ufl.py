@@ -1236,10 +1236,10 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
 
 @_functools.lru_cache()
-def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-                   gdim: _typing.Optional[int] = None) -> BasixElement:
+def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+            degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+            dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+            gdim: _typing.Optional[int] = None) -> BasixElement:
     """Create a UFL element using Basix.
 
     Args:
@@ -1293,10 +1293,10 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
 
 
 @_functools.lru_cache()
-def create_vector_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                          degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                          dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-                          dim: _typing.Optional[int] = None, gdim: _typing.Optional[int] = None) -> VectorElement:
+def vector_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+                   dim: _typing.Optional[int] = None, gdim: _typing.Optional[int] = None) -> VectorElement:
     """Create a UFL vector element using Basix.
 
     A vector element is an element which uses multiple copies of a
@@ -1313,16 +1313,16 @@ def create_vector_element(family: _typing.Union[_basix.ElementFamily, str], cell
         dim: The length of the vector.
         gdim: The geometric dimension of the cell.
     """
-    e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, gdim)
+    e = element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, gdim)
     return VectorElement(e, dim, gdim=gdim)
 
 
 @_functools.lru_cache()
-def create_tensor_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                          degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                          dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-                          shape: _typing.Optional[_typing.Tuple[int, int]] = None, symmetry: bool = False,
-                          gdim: _typing.Optional[int] = None) -> TensorElement:
+def tensor_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
+                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+                   shape: _typing.Optional[_typing.Tuple[int, int]] = None, symmetry: bool = False,
+                   gdim: _typing.Optional[int] = None) -> TensorElement:
     """Create a UFL tensor element using Basix.
 
     A tensor element is an element which uses multiple copies of a
@@ -1341,12 +1341,12 @@ def create_tensor_element(family: _typing.Union[_basix.ElementFamily, str], cell
         gdim: The geometric dimension of the cell.
 
     """
-    e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
+    e = element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
     return TensorElement(e, shape, symmetry, gdim=gdim)
 
 
-def _create_enriched_element(elements: _typing.List[_BasixElementBase],
-                             map_type: _typing.Optional[_basix.MapType] = None) -> _BasixElementBase:
+def enriched_element(elements: _typing.List[_BasixElementBase],
+                     map_type: _typing.Optional[_basix.MapType] = None) -> _BasixElementBase:
     """Create an enriched element from a list of elements."""
     ct = elements[0].cell_type
     vshape = elements[0].value_shape()
@@ -1413,7 +1413,7 @@ def convert_ufl_element(element: _FiniteElementBase) -> _BasixElementBase:
     elif isinstance(element, _ufl.MixedElement):
         return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])
     elif isinstance(element, _ufl.EnrichedElement):
-        return _create_enriched_element([convert_ufl_element(e) for e in element._elements])
+        return enriched_element([convert_ufl_element(e) for e in element._elements])
     # Elements that will not be supported
     elif isinstance(element, _ufl.NodalEnrichedElement):
         raise RuntimeError("NodalEnrichedElement is not supported. Use EnrichedElement instead.")
@@ -1466,7 +1466,7 @@ def convert_ufl_element(element: _FiniteElementBase) -> _BasixElementBase:
             elif family_type == EF.DPC:
                 variant_info["dpc_variant"] = _basix.DPCVariant.diagonal_gll
 
-        return create_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous,
-                              gdim=element.cell().geometric_dimension())
+        return element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous,
+                       gdim=element.cell().geometric_dimension())
     else:
         raise ValueError(f"Unrecognised element type: {element.__class__.__name__}")

@@ -15,7 +15,6 @@
 #include <basix/polyset.h>
 #include <basix/quadrature.h>
 #include <basix/sobolev-spaces.h>
-#include <iostream>
 #include <pybind11/numpy.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>

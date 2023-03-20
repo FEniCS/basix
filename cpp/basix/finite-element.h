@@ -1199,7 +1199,12 @@ private:
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
       _tensor_factors;
 
-  // Dof reordering for different ElementDofLayout compatibility
+  // Dof reordering for different element dof layout compatibility.
+  // The reference basix layout is ordered by entity, i.e. dofs on
+  // vertices, followed by edges, faces, then internal dofs.
+  // _dof_ordering stores the map to the new order required, e.g.
+  // for a P2 triangle, _dof_ordering=[0 3 5 1 2 4] will place
+  // dofs 0, 3, 5 on the vertices and 1, 2, 4, on the edges.
   std::vector<int> _dof_ordering;
 
   // Is the interpolation matrix an identity?

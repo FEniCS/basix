@@ -1313,12 +1313,12 @@ def element(
     if rank is None:
         rank = len(shape)
 
-    if symmetry if not None and rank != 2:
+    if symmetry is not None and rank != 2:
         raise ValueError("Only rank 2 elements can passed the symmetry argument.")
 
     ufl_e = BasixElement(e, gdim=gdim)
 
-    if shape == e.value_shape:
+    if shape == tuple(e.value_shape):
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")
         return ufl_e

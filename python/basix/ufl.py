@@ -1242,7 +1242,7 @@ def element(
     lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
     dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
     gdim: _typing.Optional[int] = None, rank: _typing.Optional[int] = None,
-    shape: _typing.Optional[_typing.Tuple[int, ...]] = None, symmetry: bool = False
+    shape: _typing.Optional[_typing.Tuple[int, ...]] = None, symmetry: _typing.Optional[bool] = None
 ) -> BasixElement:
     """Create a UFL element using Basix.
 
@@ -1313,19 +1313,21 @@ def element(
     if rank is None:
         rank = len(shape)
 
-    if symmetry and rank != 2:
-        raise ValueError("Only rank 2 elements can be symmetric.")
+    if symmetry if not None and rank != 2:
+        raise ValueError("Only rank 2 elements can passed the symmetry argument.")
 
     ufl_e = BasixElement(e, gdim=gdim)
 
     if shape == e.value_shape:
-        if symmetry:
+        if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")
         return ufl_e
     elif len(e.value_shape) == 0:
         if rank == 1:
             return VectorElement(ufl_e, shape[0], gdim=gdim)
         else:
+            if symmetry is None:
+                symmetry = False
             return TensorElement(ufl_e, shape, gdim=gdim, symmetry=symmetry)
     else:
         raise ValueError("Rank and/or shape inputs are incompatible with this element.")

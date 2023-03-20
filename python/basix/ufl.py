@@ -567,7 +567,7 @@ class ComponentElement(_BasixElementBase):
             elif len(self.element._value_shape) == 1:
                 output.append(tbl[:, self.component, :])
             elif len(self.element._value_shape) == 2:
-                if isinstance(self.element, TensorElement) and self.element.symmetric:
+                if isinstance(self.element, TensorElement) and self.element.symmetry:
                     # FIXME: check that this behaves as expected
                     output.append(tbl[:, self.component, :])
                 else:
@@ -1128,26 +1128,27 @@ class VectorElement(BlockedElement):
 class TensorElement(BlockedElement):
     """A tensor element."""
 
-    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Optional[_typing.Tuple[int, int]] = None,
-                 symmetric: bool = False, gdim: _typing.Optional[int] = None):
+    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
+                 symmetry: bool = False, gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         if gdim is None:
             gdim = len(_basix.topology(sub_element.cell_type)) - 1
         if shape is None:
             shape = (gdim, gdim)
-        if symmetric:
+        if symmetry:
             assert shape[0] == shape[1]
             bs = shape[0] * (shape[0] + 1) // 2
         else:
-            bs = shape[0] * shape[1]
+            bs = 1
+            for i in shape:
+                bs *= i
 
-        assert len(shape) == 2
-        super().__init__(f"TensorElement({sub_element._repr}, {shape}, {symmetric})", sub_element, bs, shape,
+        super().__init__(f"TensorElement({sub_element._repr}, {shape}, {symmetry})", sub_element, bs, shape,
                          gdim=gdim)
 
-        self.symmetric = symmetric
+        self.symmetry = symmetry
 
-        if symmetric:
+        if symmetry:
             n = 0
             sub_element_mapping = {}
             for i in range(shape[0]):
@@ -1163,13 +1164,13 @@ class TensorElement(BlockedElement):
 
     def flattened_sub_element_mapping(self) -> _typing.List[int]:
         """Return the flattened sub element mapping."""
-        if not self.symmetric:
+        if not self.symmetry:
             raise ValueError("Cannot get flattened map for non-symmetric element.")
         return self._flattened_sub_element_mapping
 
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Reference value shape of the element basis function."""
-        if self.symmetric:
+        if self.symmetry:
             assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
             return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
         return super().reference_value_shape()
@@ -1236,10 +1237,13 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
 
 @_functools.lru_cache()
-def finite_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-                   gdim: _typing.Optional[int] = None) -> BasixElement:
+def element(
+    family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
+    lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+    gdim: _typing.Optional[int] = None, rank: _typing.Optional[int] = None,
+    shape: _typing.Optional[_typing.Tuple[int, ...]] = None, symmetry: bool = False
+) -> BasixElement:
     """Create a UFL element using Basix.
 
     Args:
@@ -1251,8 +1255,18 @@ def finite_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         discontinuous: If set to True, the discontinuous version of this
             element will be created.
         gdim: The geometric dimension of the cell.
-
+        rank: The rank of the value shape of the element. For scalar-valued families, `rank=1` can be
+            used to create vector elements where each entry of the vector is represented by the element.
+            Similarly, `rank>2` can be used to create tensor elements. If a shape input is given, then
+            `rank` is not a necessary input.
+        shape: The value shape of the element. For scalar-valued families, this can be used to create
+            vector and tensor elements. If `rank` is set but `shape` is not, then `shape` will be set to
+            `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ..., tdim)` for rank 2 or higher.
+        symmetry: For rank 2 elements only, should the entries of the element be symmetric?
     """
+    if rank is not None and shape is not None and len(shape) != rank:
+        raise ValueError("Rank and shape are incompatible.")
+
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
     if isinstance(family, str):
@@ -1289,60 +1303,32 @@ def finite_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    return BasixElement(e, gdim=gdim)
 
+    if shape is None:
+        if rank is None:
+            shape = tuple(e.value_shape)
+        else:
+            tdim = len(_basix.topology(cell)) - 1
+            shape = tuple(tdim for _ in range(rank))
+    if rank is None:
+        rank = len(shape)
 
-@_functools.lru_cache()
-def vector_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-                   dim: _typing.Optional[int] = None, gdim: _typing.Optional[int] = None) -> VectorElement:
-    """Create a UFL vector element using Basix.
+    if symmetry and rank != 2:
+        raise ValueError("Only rank 2 elements can be symmetric.")
 
-    A vector element is an element which uses multiple copies of a
-    scalar element to represent a vector-valued function.
+    ufl_e = BasixElement(e, gdim=gdim)
 
-    Args:
-        family: The element's family as a Basix enum or a string.
-        cell: The cell type as a Basix enum or a string.
-        degree: The degree of the finite element.
-        lagrange_variant: The variant of Lagrange to be used.
-        dpc_variant: The variant of DPC to be used.
-        discontinuous: If set to True, the discontinuous version of this
-            element will be created.
-        dim: The length of the vector.
-        gdim: The geometric dimension of the cell.
-    """
-    e = finite_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, gdim)
-    return VectorElement(e, dim, gdim=gdim)
-
-
-@_functools.lru_cache()
-def tensor_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-                   shape: _typing.Optional[_typing.Tuple[int, int]] = None, symmetry: bool = False,
-                   gdim: _typing.Optional[int] = None) -> TensorElement:
-    """Create a UFL tensor element using Basix.
-
-    A tensor element is an element which uses multiple copies of a
-    scalar element to represent a tensor-valued function.
-
-    Args:
-        family: The element's family as a Basix enum or a string.
-        cell: The cell type as a Basix enum or a string.
-        degree: The degree of the finite element.
-        lagrange_variant: The variant of Lagrange to be used.
-        dpc_variant: The variant of DPC to be used.
-        discontinuous: If set to True, the discontinuous version of this
-            element will be created.
-        shape: The shape of the tensor.
-        symmetry: Is the tensor symmetric?
-        gdim: The geometric dimension of the cell.
-
-    """
-    e = finite_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    return TensorElement(e, shape, symmetry, gdim=gdim)
+    if shape == e.value_shape:
+        if symmetry:
+            raise ValueError("Cannot pass a symmetry argument to this element.")
+        return ufl_e
+    elif len(e.value_shape) == 0:
+        if rank == 1:
+            return VectorElement(ufl_e, shape[0], gdim=gdim)
+        else:
+            return TensorElement(ufl_e, shape, gdim=gdim, symmetry=symmetry)
+    else:
+        raise ValueError("Rank and/or shape inputs are incompatible with this element.")
 
 
 def enriched_element(elements: _typing.List[_BasixElementBase],
@@ -1402,34 +1388,34 @@ def enriched_element(elements: _typing.List[_BasixElementBase],
                                                      map_type, ss, discontinuous, hcd, hd))
 
 
-def convert_ufl_element(element: _FiniteElementBase) -> _BasixElementBase:
+def convert_ufl_element(ufl_element: _FiniteElementBase) -> _BasixElementBase:
     """Convert a UFL element to a wrapped Basix element."""
-    if isinstance(element, _BasixElementBase):
-        return element
-    elif isinstance(element, _ufl.VectorElement):
-        return VectorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
-    elif isinstance(element, _ufl.TensorElement):
-        return TensorElement(convert_ufl_element(element.sub_elements()[0]), element._value_shape)
-    elif isinstance(element, _ufl.MixedElement):
-        return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])
-    elif isinstance(element, _ufl.EnrichedElement):
-        return enriched_element([convert_ufl_element(e) for e in element._elements])
+    if isinstance(ufl_element, _BasixElementBase):
+        return ufl_element
+    elif hasattr(_ufl, "VectorElement") and isinstance(ufl_element, _ufl.VectorElement):
+        return VectorElement(convert_ufl_element(ufl_element.sub_elements()[0]), ufl_element.num_sub_elements())
+    elif hasattr(_ufl, "TensorElement") and isinstance(ufl_element, _ufl.TensorElement):
+        return TensorElement(convert_ufl_element(ufl_element.sub_elements()[0]), ufl_element._value_shape)
+    elif hasattr(_ufl, "MixedElement") and isinstance(ufl_element, _ufl.MixedElement):
+        return MixedElement([convert_ufl_element(e) for e in ufl_element.sub_elements()])
+    elif hasattr(_ufl, "EnrichedElement") and isinstance(ufl_element, _ufl.EnrichedElement):
+        return enriched_element([convert_ufl_element(e) for e in ufl_element._elements])
     # Elements that will not be supported
-    elif isinstance(element, _ufl.NodalEnrichedElement):
+    elif hasattr(_ufl, "NodalEnrichedElement") and isinstance(ufl_element, _ufl.NodalEnrichedElement):
         raise RuntimeError("NodalEnrichedElement is not supported. Use EnrichedElement instead.")
-    elif isinstance(element, _ufl.BrokenElement):
+    elif hasattr(_ufl, "BrokenElement") and isinstance(ufl_element, _ufl.BrokenElement):
         raise RuntimeError("BrokenElement not supported.")
-    elif isinstance(element, _ufl.HCurlElement):
+    elif hasattr(_ufl, "HCurlElement") and isinstance(ufl_element, _ufl.HCurlElement):
         raise RuntimeError("HCurlElement not supported.")
-    elif isinstance(element, _ufl.HDivElement):
+    elif hasattr(_ufl, "HDivElement") and isinstance(ufl_element, _ufl.HDivElement):
         raise RuntimeError("HDivElement not supported.")
-    elif isinstance(element, _ufl.TensorProductElement):
+    elif hasattr(_ufl, "TensorProductElement") and isinstance(ufl_element, _ufl.TensorProductElement):
         raise RuntimeError("TensorProductElement not supported.")
-    elif isinstance(element, _ufl.RestrictedElement):
+    elif hasattr(_ufl, "RestrictedElement") and isinstance(ufl_element, _ufl.RestrictedElement):
         raise RuntimeError("RestricedElement not supported.")
-    elif isinstance(element, _ufl.FiniteElement):
+    elif isinstance(ufl_element, _ufl.FiniteElementBase):
         # Create a basix element from family name, cell type and degree
-        family_name = element.family()
+        family_name = ufl_element.family()
         discontinuous = False
         if family_name.startswith("Discontinuous "):
             family_name = family_name[14:]
@@ -1443,16 +1429,16 @@ def convert_ufl_element(element: _FiniteElementBase) -> _BasixElementBase:
         if family_name == "DPC":
             discontinuous = True
 
-        family_type = _basix.finite_element.string_to_family(family_name, element.cell().cellname())
-        cell_type = _basix.cell.string_to_type(element.cell().cellname())
+        family_type = _basix.finite_element.string_to_family(family_name, ufl_element.cell().cellname())
+        cell_type = _basix.cell.string_to_type(ufl_element.cell().cellname())
 
         variant_info = {"lagrange_variant": _basix.LagrangeVariant.unset,
                         "dpc_variant": _basix.DPCVariant.unset}
-        if family_type == _basix.ElementFamily.P and element.variant() == "equispaced":
+        if family_type == _basix.ElementFamily.P and ufl_element.variant() == "equispaced":
             # This is used for elements defining cells
             variant_info["lagrange_variant"] = _basix.LagrangeVariant.equispaced
         else:
-            if element.variant() is not None:
+            if ufl_element.variant() is not None:
                 raise ValueError("UFL variants are not supported by FFCx. Please wrap a Basix element directly.")
 
             EF = _basix.ElementFamily
@@ -1466,7 +1452,7 @@ def convert_ufl_element(element: _FiniteElementBase) -> _BasixElementBase:
             elif family_type == EF.DPC:
                 variant_info["dpc_variant"] = _basix.DPCVariant.diagonal_gll
 
-        return finite_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous,
-                              gdim=element.cell().geometric_dimension())
+        return element(family_type, cell_type, ufl_element.degree(), **variant_info, discontinuous=discontinuous,
+                       gdim=ufl_element.cell().geometric_dimension())
     else:
-        raise ValueError(f"Unrecognised element type: {element.__class__.__name__}")
+        raise ValueError(f"Unrecognised element type: {ufl_element.__class__.__name__}")

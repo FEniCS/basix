@@ -1220,7 +1220,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             gdim: _typing.Optional[int] = None, rank: _typing.Optional[int] = None,
             shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
             symmetry: _typing.Optional[bool] = None) -> _ElementBase:
-    """Create a UFL element using Basix.
+    """Create a UFL compatible element using Basix.
 
     Args:
         family: Element family/type.
@@ -1369,7 +1369,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
 
 
 def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:
-    """Convert a UFL element to a wrapped Basix element."""
+    """Convert a UFL element to a UFL compatible Basix element."""
     warn("Converting elements created in UFL to Basix elements is deprecated. You should create the elements directly "
          "using basix.ufl.element instead", DeprecationWarning, stacklevel=2)
     if isinstance(ufl_element, _ElementBase):

@@ -1370,6 +1370,8 @@ def enriched_element(elements: _typing.List[_BasixElementBase],
 
 def convert_ufl_element(ufl_element: _FiniteElementBase) -> _BasixElementBase:
     """Convert a UFL element to a wrapped Basix element."""
+    warn("Converting elements created in UFL to Basix elements is deprecated. You should create the elements directly "
+         "using basix.ufl.element instead", DeprecationWarning, stacklevel=2)
     if isinstance(ufl_element, _BasixElementBase):
         return ufl_element
     elif hasattr(_ufl, "VectorElement") and isinstance(ufl_element, _ufl.VectorElement):

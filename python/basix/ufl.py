@@ -909,9 +909,16 @@ class BlockedElement(_BasixElementBase):
         self._block_size = block_size
         self.block_shape = shape
 
-        super().__init__(f"BlockedElement({sub_element._repr}, {shape})", sub_element.family(),
-                         sub_element.cell_type.name, shape, sub_element._degree, sub_element._map,
-                         gdim=gdim)
+        repr = f"BlockedElement({sub_element._repr}, {shape}"
+        if len(shape) == 2:
+            if symmetry:
+                repr += ", True"
+            else:
+                repr += ", False"
+        repr += ")"
+
+        super().__init__(repr, sub_element.family(), sub_element.cell_type.name, shape,
+                         sub_element._degree, sub_element._map, gdim=gdim)
 
         if symmetry:
             n = 0

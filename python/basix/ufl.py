@@ -883,24 +883,25 @@ class BlockedElement(_BasixElementBase):
     sub_element: _BasixElementBase
     _block_size: int
 
-    def __init__(self, repr: str, sub_element: _BasixElementBase, block_size: int,
-                 block_shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
+    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, ...],
                  gdim: _typing.Optional[int] = None):
         """Initialise the element."""
-        assert block_size > 0
         if sub_element.value_size != 1:
-            raise ValueError("Blocked elements (VectorElement and TensorElement) of "
-                             "non-scalar elements are not supported. Try using MixedElement "
-                             "instead.")
+            raise ValueError("Blocked elements of non-scalar elements are not supported. "
+                             "Try using MixedElement instead.")
+
+        block_size = 1
+        for i in shape:
+            block_size *= i
+        assert block_size > 0
 
         self.sub_element = sub_element
         self._block_size = block_size
-        if block_shape is None:
-            block_shape = (block_size, )
-        self.block_shape = block_shape
+        self.block_shape = shape
 
-        super().__init__(repr, sub_element.family(), sub_element.cell_type.name, block_shape,
-                         sub_element._degree, sub_element._map, gdim=gdim)
+        super().__init__(f"BlockedElement({sub_element._repr}, {shape})", sub_element.family(),
+                         sub_element.cell_type.name, shape, sub_element._degree, sub_element._map,
+                         gdim=gdim)
 
     @property
     def basix_sobolev_space(self):
@@ -1112,19 +1113,6 @@ class BlockedElement(_BasixElementBase):
         return self.sub_element.get_tensor_product_representation()
 
 
-class VectorElement(BlockedElement):
-    """A vector element."""
-
-    def __init__(self, sub_element: _BasixElementBase, size: _typing.Optional[int] = None,
-                 gdim: _typing.Optional[int] = None):
-        """Initialise the element."""
-        if gdim is None:
-            gdim = len(_basix.topology(sub_element.cell_type)) - 1
-        if size is None:
-            size = gdim
-        super().__init__(f"VectorElement({sub_element._repr}, {size})", sub_element, size, (size, ), gdim=gdim)
-
-
 class TensorElement(BlockedElement):
     """A tensor element."""
 
@@ -1143,8 +1131,7 @@ class TensorElement(BlockedElement):
             for i in shape:
                 bs *= i
 
-        super().__init__(f"TensorElement({sub_element._repr}, {shape}, {symmetry})", sub_element, bs, shape,
-                         gdim=gdim)
+        super().__init__(sub_element, shape, gdim=gdim)
 
         self._has_symmetry = symmetry
 
@@ -1324,7 +1311,7 @@ def element(
         return ufl_e
     elif len(e.value_shape) == 0:
         if rank == 1:
-            return VectorElement(ufl_e, shape[0], gdim=gdim)
+            return BlockedElement(ufl_e, shape, gdim=gdim)
         else:
             if symmetry is None:
                 symmetry = False
@@ -1395,7 +1382,7 @@ def convert_ufl_element(ufl_element: _FiniteElementBase) -> _BasixElementBase:
     if isinstance(ufl_element, _BasixElementBase):
         return ufl_element
     elif hasattr(_ufl, "VectorElement") and isinstance(ufl_element, _ufl.VectorElement):
-        return VectorElement(convert_ufl_element(ufl_element.sub_elements()[0]), ufl_element.num_sub_elements())
+        return BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), (ufl_element.num_sub_elements(), ))
     elif hasattr(_ufl, "TensorElement") and isinstance(ufl_element, _ufl.TensorElement):
         return TensorElement(convert_ufl_element(ufl_element.sub_elements()[0]), ufl_element._value_shape)
     elif hasattr(_ufl, "MixedElement") and isinstance(ufl_element, _ufl.MixedElement):

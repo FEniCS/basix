@@ -567,7 +567,7 @@ class ComponentElement(_BasixElementBase):
             elif len(self.element._value_shape) == 1:
                 output.append(tbl[:, self.component, :])
             elif len(self.element._value_shape) == 2:
-                if isinstance(self.element, TensorElement) and self.element._has_symmetry:
+                if isinstance(self.element, BlockedElement) and self.element._has_symmetry:
                     # FIXME: check that this behaves as expected
                     output.append(tbl[:, self.component, :])
                 else:
@@ -884,15 +884,25 @@ class BlockedElement(_BasixElementBase):
     _block_size: int
 
     def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, ...],
-                 gdim: _typing.Optional[int] = None):
+                 gdim: _typing.Optional[int] = None, symmetry: _typing.Optional[bool] = None):
         """Initialise the element."""
         if sub_element.value_size != 1:
             raise ValueError("Blocked elements of non-scalar elements are not supported. "
                              "Try using MixedElement instead.")
+        if symmetry is not None:
+            if len(shape) != 2:
+                raise ValueError("symmetry argument can only be passed to elements of rank 2.")
+            if shape[0] != shape[1]:
+                raise ValueError("symmetry argument can only be passed to square shaped elements.")
 
-        block_size = 1
-        for i in shape:
-            block_size *= i
+        if symmetry:
+            block_size = shape[0] * (shape[0] + 1) // 2
+            self._has_symmetry = True
+        else:
+            block_size = 1
+            for i in shape:
+                block_size *= i
+            self._has_symmetry = False
         assert block_size > 0
 
         self.sub_element = sub_element
@@ -902,6 +912,20 @@ class BlockedElement(_BasixElementBase):
         super().__init__(f"BlockedElement({sub_element._repr}, {shape})", sub_element.family(),
                          sub_element.cell_type.name, shape, sub_element._degree, sub_element._map,
                          gdim=gdim)
+
+        if symmetry:
+            n = 0
+            sub_element_mapping = {}
+            for i in range(shape[0]):
+                for j in range(i + 1):
+                    sub_element_mapping[(i, j)] = n
+                    sub_element_mapping[(j, i)] = n
+                    n += 1
+
+            self._map = "symmetries"
+            self._symmetry = {(i, j): (j, i) for i in range(shape[0]) for j in range(i)}
+            self._flattened_sub_element_mapping = [
+                sub_element_mapping[(i, j)] for i in range(shape[0]) for j in range(shape[1])]
 
     @property
     def basix_sobolev_space(self):
@@ -929,6 +953,9 @@ class BlockedElement(_BasixElementBase):
 
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Reference value shape of the element basis function."""
+        if self._has_symmetry:
+            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
+            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
         return self._value_shape
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
@@ -1112,55 +1139,11 @@ class BlockedElement(_BasixElementBase):
             return None
         return self.sub_element.get_tensor_product_representation()
 
-
-class TensorElement(BlockedElement):
-    """A tensor element."""
-
-    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
-                 symmetry: bool = False, gdim: _typing.Optional[int] = None):
-        """Initialise the element."""
-        if gdim is None:
-            gdim = len(_basix.topology(sub_element.cell_type)) - 1
-        if shape is None:
-            shape = (gdim, gdim)
-        if symmetry:
-            assert shape[0] == shape[1]
-            bs = shape[0] * (shape[0] + 1) // 2
-        else:
-            bs = 1
-            for i in shape:
-                bs *= i
-
-        super().__init__(sub_element, shape, gdim=gdim)
-
-        self._has_symmetry = symmetry
-
-        if symmetry:
-            n = 0
-            sub_element_mapping = {}
-            for i in range(shape[0]):
-                for j in range(i + 1):
-                    sub_element_mapping[(i, j)] = n
-                    sub_element_mapping[(j, i)] = n
-                    n += 1
-
-            self._map = "symmetries"
-            self._symmetry = {(i, j): (j, i) for i in range(shape[0]) for j in range(i)}
-            self._flattened_sub_element_mapping = [
-                sub_element_mapping[(i, j)] for i in range(shape[0]) for j in range(shape[1])]
-
     def flattened_sub_element_mapping(self) -> _typing.List[int]:
         """Return the flattened sub element mapping."""
         if not self._has_symmetry:
             raise ValueError("Cannot get flattened map for non-symmetric element.")
         return self._flattened_sub_element_mapping
-
-    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
-        """Reference value shape of the element basis function."""
-        if self._has_symmetry:
-            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
-            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
-        return super().reference_value_shape()
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:
@@ -1316,12 +1299,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             raise ValueError("Cannot pass a symmetry argument to this element.")
         return ufl_e
     elif len(e.value_shape) == 0:
-        if rank == 1:
-            return BlockedElement(ufl_e, shape, gdim=gdim)
-        else:
-            if symmetry is None:
-                symmetry = False
-            return TensorElement(ufl_e, shape, gdim=gdim, symmetry=symmetry)
+        return BlockedElement(ufl_e, shape, gdim=gdim, symmetry=symmetry)
     else:
         raise ValueError("Rank and/or shape inputs are incompatible with this element.")
 
@@ -1390,7 +1368,8 @@ def convert_ufl_element(ufl_element: _FiniteElementBase) -> _BasixElementBase:
     elif hasattr(_ufl, "VectorElement") and isinstance(ufl_element, _ufl.VectorElement):
         return BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), (ufl_element.num_sub_elements(), ))
     elif hasattr(_ufl, "TensorElement") and isinstance(ufl_element, _ufl.TensorElement):
-        return TensorElement(convert_ufl_element(ufl_element.sub_elements()[0]), ufl_element._value_shape)
+        return BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), ufl_element._value_shape,
+                              symmetry=ufl_element.symmetry())
     elif hasattr(_ufl, "MixedElement") and isinstance(ufl_element, _ufl.MixedElement):
         return MixedElement([convert_ufl_element(e) for e in ufl_element.sub_elements()])
     elif hasattr(_ufl, "EnrichedElement") and isinstance(ufl_element, _ufl.EnrichedElement):

@@ -43,8 +43,8 @@ def test_element(inputs):
 ])
 def test_tensor_element_hash(inputs):
     e = basix.ufl.element(*inputs)
-    sym = basix.ufl.TensorElement(e, symmetry=True)
-    asym = basix.ufl.TensorElement(e, symmetry=None)
+    sym = basix.ufl.BlockedElement(e, shape=(2, 2), symmetry=True)
+    asym = basix.ufl.BlockedElement(e, shape=(2, 2), symmetry=False)
     assert sym != asym
     assert hash(sym) != hash(asym)
 

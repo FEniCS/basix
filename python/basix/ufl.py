@@ -1298,7 +1298,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         blocked = False
 
     if blocked:
-        if rank is not None and len(shape) != rank:
+        if rank is not None and shape is not None and len(shape) != rank:
             raise ValueError("Incompatible shape and rank.")
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")

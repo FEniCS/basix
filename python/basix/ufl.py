@@ -1237,36 +1237,42 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
 
 @_functools.lru_cache()
-def element(
-    family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
-    lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-    dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-    gdim: _typing.Optional[int] = None, rank: _typing.Optional[int] = None,
-    shape: _typing.Optional[_typing.Tuple[int, ...]] = None, symmetry: _typing.Optional[bool] = None
-) -> BasixElement:
+def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
+            lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+            dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+            gdim: _typing.Optional[int] = None, rank: _typing.Optional[int] = None,
+            shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
+            symmetry: _typing.Optional[bool] = None) -> BasixElement:
     """Create a UFL element using Basix.
 
     Args:
-        family: The element's family as a Basix enum or a string.
-        cell: The cell type as a Basix enum or a string.
-        degree: The degree of the finite element.
-        lagrange_variant: The variant of Lagrange to be used.
-        dpc_variant: The variant of DPC to be used.
-        discontinuous: If set to True, the discontinuous version of this
-            element will be created.
-        gdim: The geometric dimension of the cell.
-        rank: The rank of the value shape of the element. For scalar-valued families, `rank=1` can be
-            used to create vector elements where each entry of the vector is represented by the element.
-            Similarly, `rank>2` can be used to create tensor elements. If a shape input is given, then
-            `rank` is not a necessary input.
-        shape: The value shape of the element. For scalar-valued families, this can be used to create
-            vector and tensor elements. If `rank` is set but `shape` is not, then `shape` will be set to
-            `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ..., tdim)` for rank 2 or higher.
-        symmetry: For rank 2 elements only, should the entries of the element be symmetric?
+        family: Element family/type.
+        cell: Element cell type.
+        degree: Degree of the finite element.
+        lagrange_variant: Variant of Lagrange to be used.
+        dpc_variant: Variant of DPC to be used.
+        discontinuous: If `True`, the discontinuous version of the
+            element is created.
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
+        rank: Rank of the value shape of the element. For scalar-valued
+            families, setting `rank=1` creates a vector element where
+            each component of the vector is represented by the element.
+            Similarly, `rank>2` creates a tensor element. If `shape` is
+            provided, then `rank` is not required .
+        shape: Value shape of the element. For scalar-valued families,
+            this can be used to create vector and tensor elements. If
+            `rank` is set but `shape` is not, then `shape` will be set
+            to `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ...,
+            tdim)` for rank 2 or higher.
+        symmetry: Set to `True` if the tensor is symmetric. Valid for
+            rank 2 elements only.
+
     """
     if rank is not None and shape is not None and len(shape) != rank:
         raise ValueError("Rank and shape are incompatible.")
 
+    # Conversion of string arguments to types
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
     if isinstance(family, str):

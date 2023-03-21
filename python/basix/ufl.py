@@ -42,7 +42,7 @@ def ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     return _spacemap[s]
 
 
-class _BasixElementBase(_FiniteElementBase):
+class _ElementBase(_FiniteElementBase):
     """A base wrapper to allow Basix elements to be used with UFL.
 
     This class includes methods and properties needed by UFL and FFCx.
@@ -308,7 +308,7 @@ class _BasixElementBase(_FiniteElementBase):
         pass
 
 
-class BasixElement(_BasixElementBase):
+class BasixElement(_ElementBase):
     """A wrapper allowing Basix elements to be used directly with UFL."""
 
     element: _basix.finite_element.FiniteElement
@@ -362,7 +362,7 @@ class BasixElement(_BasixElementBase):
         # TODO: update FFCx to remove the need for transposing here
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         For example, for a MixedElement, this will return the
@@ -519,13 +519,13 @@ class BasixElement(_BasixElementBase):
         return self.element.get_tensor_product_representation()
 
 
-class ComponentElement(_BasixElementBase):
+class ComponentElement(_ElementBase):
     """An element representing one component of a BasixElement."""
 
-    element: _BasixElementBase
+    element: _ElementBase
     component: int
 
-    def __init__(self, element: _BasixElementBase, component: int, gdim: _typing.Optional[int] = None):
+    def __init__(self, element: _ElementBase, component: int, gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         self.element = element
         self.component = component
@@ -577,7 +577,7 @@ class ComponentElement(_BasixElementBase):
                 raise NotImplementedError()
         return _np.asarray(output, dtype=_np.float64)
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -677,12 +677,12 @@ class ComponentElement(_BasixElementBase):
         raise NotImplementedError()
 
 
-class MixedElement(_BasixElementBase):
+class MixedElement(_ElementBase):
     """A mixed element that combines two or more elements."""
 
-    _sub_elements: _typing.List[_BasixElementBase]
+    _sub_elements: _typing.List[_ElementBase]
 
-    def __init__(self, sub_elements: _typing.List[_BasixElementBase], gdim: _typing.Optional[int] = None):
+    def __init__(self, sub_elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
@@ -709,7 +709,7 @@ class MixedElement(_BasixElementBase):
         """Basix Sobolev space that the element belongs to."""
         return _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in self._sub_elements])
 
-    def sub_elements(self) -> _typing.List[_BasixElementBase]:
+    def sub_elements(self) -> _typing.List[_ElementBase]:
         """List of sub elements."""
         return self._sub_elements
 
@@ -748,7 +748,7 @@ class MixedElement(_BasixElementBase):
             tables.append(new_table)
         return _np.asarray(tables, dtype=_np.float64)
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -876,14 +876,14 @@ class MixedElement(_BasixElementBase):
         return max([e.interpolation_nderivs for e in self._sub_elements])
 
 
-class BlockedElement(_BasixElementBase):
+class BlockedElement(_ElementBase):
     """Element with a block size that contains multiple copies of a sub element."""
 
     block_shape: _typing.Tuple[int, ...]
-    sub_element: _BasixElementBase
+    sub_element: _ElementBase
     _block_size: int
 
-    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Tuple[int, ...],
+    def __init__(self, sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
                  gdim: _typing.Optional[int] = None, symmetry: _typing.Optional[bool] = None):
         """Initialise the element."""
         if sub_element.value_size != 1:
@@ -939,7 +939,7 @@ class BlockedElement(_BasixElementBase):
         """Basix enum representing the underlying Sobolev space."""
         return self.sub_element.basix_sobolev_space
 
-    def sub_elements(self) -> _typing.List[_BasixElementBase]:
+    def sub_elements(self) -> _typing.List[_ElementBase]:
         """List of sub elements."""
         return [self.sub_element for _ in range(self._block_size)]
 
@@ -986,7 +986,7 @@ class BlockedElement(_BasixElementBase):
             output.append(new_table)
         return _np.asarray(output, dtype=_np.float64)
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -1219,7 +1219,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
             gdim: _typing.Optional[int] = None, rank: _typing.Optional[int] = None,
             shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
-            symmetry: _typing.Optional[bool] = None) -> BasixElement:
+            symmetry: _typing.Optional[bool] = None) -> _ElementBase:
     """Create a UFL element using Basix.
 
     Args:
@@ -1311,8 +1311,8 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         raise ValueError("Rank and/or shape inputs are incompatible with this element.")
 
 
-def enriched_element(elements: _typing.List[_BasixElementBase],
-                     map_type: _typing.Optional[_basix.MapType] = None) -> _BasixElementBase:
+def enriched_element(elements: _typing.List[_ElementBase],
+                     map_type: _typing.Optional[_basix.MapType] = None) -> _ElementBase:
     """Create an enriched element from a list of elements."""
     ct = elements[0].cell_type
     vshape = elements[0].value_shape()
@@ -1368,11 +1368,11 @@ def enriched_element(elements: _typing.List[_BasixElementBase],
                                                      map_type, ss, discontinuous, hcd, hd))
 
 
-def convert_ufl_element(ufl_element: _FiniteElementBase) -> _BasixElementBase:
+def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:
     """Convert a UFL element to a wrapped Basix element."""
     warn("Converting elements created in UFL to Basix elements is deprecated. You should create the elements directly "
          "using basix.ufl.element instead", DeprecationWarning, stacklevel=2)
-    if isinstance(ufl_element, _BasixElementBase):
+    if isinstance(ufl_element, _ElementBase):
         return ufl_element
     elif hasattr(_ufl, "VectorElement") and isinstance(ufl_element, _ufl.VectorElement):
         return BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), (ufl_element.num_sub_elements(), ))

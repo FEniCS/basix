@@ -884,7 +884,7 @@ class BlockedElement(_ElementBase):
     _block_size: int
 
     def __init__(self, sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
-                 gdim: _typing.Optional[int] = None, symmetry: _typing.Optional[bool] = None):
+                 symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None,):
         """Initialise the element."""
         if sub_element.value_size != 1:
             raise ValueError("Blocked elements of non-scalar elements are not supported. "
@@ -1217,9 +1217,8 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
             lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
             dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-            gdim: _typing.Optional[int] = None, rank: _typing.Optional[int] = None,
-            shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
-            symmetry: _typing.Optional[bool] = None) -> _ElementBase:
+            rank: _typing.Optional[int] = None, shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
+            symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible element using Basix.
 
     Args:
@@ -1230,8 +1229,6 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         dpc_variant: Variant of DPC to be used.
         discontinuous: If `True`, the discontinuous version of the
             element is created.
-        gdim: Geometric dimension. If not set the geometric dimension is
-            set equal to the topological dimension of the cell.
         rank: Rank of the value shape of the element. For scalar-valued
             families, setting `rank=1` creates a vector element where
             each component of the vector is represented by the element.
@@ -1244,7 +1241,8 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             tdim)` for rank 2 or higher.
         symmetry: Set to `True` if the tensor is symmetric. Valid for
             rank 2 elements only.
-
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
     """
     if rank is not None and shape is not None and len(shape) != rank:
         raise ValueError("Rank and shape are incompatible.")
@@ -1286,34 +1284,39 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-
-    if shape is None:
-        if rank is None:
-            shape = tuple(e.value_shape)
-        else:
-            tdim = len(_basix.topology(cell)) - 1
-            shape = tuple(tdim for _ in range(rank))
-    if rank is None:
-        rank = len(shape)
-
-    if symmetry is not None and rank != 2:
-        raise ValueError("Only rank 2 elements can passed the symmetry argument.")
-
     ufl_e = BasixElement(e, gdim=gdim)
 
-    if shape == tuple(e.value_shape):
+    vs = tuple(e.value_shape)
+    tdim = len(_basix.topology(cell)) - 1
+
+    blocked = True
+    if shape is None and rank is None:
+        blocked = False
+    elif shape is not None and shape == vs:
+        blocked = False
+    elif rank is not None and tuple(tdim for _ in range(rank)) == vs:
+        blocked = False
+
+    if blocked:
+        if rank is not None and len(shape) != rank:
+            raise ValueError("Incompatible shape and rank.")
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")
         return ufl_e
-    elif len(e.value_shape) == 0:
-        return BlockedElement(ufl_e, shape, gdim=gdim, symmetry=symmetry)
     else:
-        raise ValueError("Rank and/or shape inputs are incompatible with this element.")
+        return blocked_element(ufl_e, shape=shape, rank=rank, gdim=gdim, symmetry=symmetry)
 
 
 def enriched_element(elements: _typing.List[_ElementBase],
-                     map_type: _typing.Optional[_basix.MapType] = None) -> _ElementBase:
-    """Create an enriched element from a list of elements."""
+                     map_type: _typing.Optional[_basix.MapType] = None,
+                     gdim: _typing.Optional[int] = None) -> _ElementBase:
+    """Create an UFL compatible enriched element from a list of elements.
+
+    Args:
+        elements: The list of elements
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
+    """
     ct = elements[0].cell_type
     vshape = elements[0].value_shape()
     vsize = elements[0].value_size
@@ -1364,8 +1367,90 @@ def enriched_element(elements: _typing.List[_ElementBase],
             _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.highest_degree, hd)
         row += e.dim
 
-    return BasixElement(_basix.create_custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
-                                                     map_type, ss, discontinuous, hcd, hd))
+    return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
+                          map_type, ss, discontinuous, hcd, hd, gdim=gdim)
+
+
+def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
+                   wcoeffs: _npt.NDArray[_np.float64], x: _typing.List[_typing.List[_npt.NDArray[_np.float64]]],
+                   M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
+                   map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
+                   highest_complete_degree: int, highest_degree: int,
+                   gdim: _typing.Optional[int] = None) -> _ElementBase:
+    """
+    Create a UFL compatible custom Basixelement.
+
+    Args:
+        cell_type: The cell type
+        value_shape: The value shape of the element
+        wcoeffs: Matrices for the kth value index containing the expansion coefficients defining a
+            polynomial basis spanning the polynomial space for this element. Shape is
+            (dim(finite element polyset), dim(Legenre polynomials))
+        x: Interpolation points. Indices are (tdim, entity index, point index, dim)
+        M: The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index, derivative)
+        interpolation_nderivs: The number of derivatives that need to be used during interpolation
+        map_type: The type of map to be used to map values from the reference to a cell
+        sobolev_space: The underlying Sobolev space for the element
+        discontinuous: Indicates whether or not this is the discontinuous version of the element
+        highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange)
+        element of degree n is a subspace of this element
+        highest_degree: The degree of a polynomial in this element's polyset
+    """
+    return BasixElement(_basix.create_custom_element(
+        cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,
+        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree), gdim=gdim)
+
+
+def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:
+    """Create a UFL compatible mixed element from a list of elements.
+
+    Args:
+        elements: The list of elements
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
+    """
+    return MixedElement(elements, gdim=gdim)
+
+
+def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = None,
+                    shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
+                    symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None) -> _ElementBase:
+    """Create a UFL compatible blocked element.
+
+    Args:
+        sub_element: The element used for each block.
+        rank: Rank of the value shape of the element. For scalar-valued
+            families, setting `rank=1` creates a vector element where
+            each component of the vector is represented by the element.
+            Similarly, `rank>2` creates a tensor element. If `shape` is
+            provided, then `rank` is not required .
+        shape: Value shape of the element. For scalar-valued families,
+            this can be used to create vector and tensor elements. If
+            `rank` is set but `shape` is not, then `shape` will be set
+            to `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ...,
+            tdim)` for rank 2 or higher.
+        symmetry: Set to `True` if the tensor is symmetric. Valid for
+            rank 2 elements only.
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
+    """
+    if len(sub_element.value_shape()) != 0:
+        raise ValueError("Cannot create a blocked element containing a non-scalar element.")
+    if rank is None and shape is None:
+        raise ValueError("At least one of rank and shape must be set.")
+
+    if shape is None:
+        if rank is None:
+            shape = tuple(sub_element.value_shape())
+        else:
+            tdim = len(_basix.topology(sub_element.cell_type)) - 1
+            shape = tuple(tdim for _ in range(rank))
+    if rank is None:
+        rank = len(shape)
+    if rank != len(shape):
+        raise ValueError("Incompatible rank and shape.")
+
+    return BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
 
 
 def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:

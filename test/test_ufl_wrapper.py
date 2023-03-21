@@ -43,8 +43,8 @@ def test_element(inputs):
 ])
 def test_tensor_element_hash(inputs):
     e = basix.ufl.element(*inputs)
-    sym = basix.ufl.BlockedElement(e, shape=(2, 2), symmetry=True)
-    asym = basix.ufl.BlockedElement(e, shape=(2, 2), symmetry=False)
+    sym = basix.ufl.blocked_element(e, shape=(2, 2), symmetry=True)
+    asym = basix.ufl.blocked_element(e, shape=(2, 2), symmetry=False)
     assert sym != asym
     assert hash(sym) != hash(asym)
 
@@ -99,11 +99,11 @@ def test_enriched_element(elements):
     (basix.ufl.element("Lagrange", basix.CellType.triangle, 2), "H1", basix.SobolevSpace.H1),
     (basix.ufl.element("Discontinuous Lagrange", basix.CellType.triangle, 0),
      "L2", basix.SobolevSpace.L2),
-    (basix.ufl.MixedElement((basix.ufl.element("Lagrange", basix.CellType.triangle, 2),
-                             basix.ufl.element("Lagrange", basix.CellType.triangle, 2))),
+    (basix.ufl.mixed_element([basix.ufl.element("Lagrange", basix.CellType.triangle, 2),
+                              basix.ufl.element("Lagrange", basix.CellType.triangle, 2)]),
      "H1", basix.SobolevSpace.H1),
-    (basix.ufl.MixedElement((basix.ufl.element("Discontinuous Lagrange", basix.CellType.triangle, 2),
-                             basix.ufl.element("Lagrange", basix.CellType.triangle, 2))),
+    (basix.ufl.mixed_element([basix.ufl.element("Discontinuous Lagrange", basix.CellType.triangle, 2),
+                              basix.ufl.element("Lagrange", basix.CellType.triangle, 2)]),
      "L2", basix.SobolevSpace.L2),
 ])
 def test_sobolev_space(e, space0, space1):

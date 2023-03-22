@@ -43,10 +43,10 @@ def ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
 
 
 class _ElementBase(_FiniteElementBase):
-    """A base wrapper to allow Basix elements to be used with UFL.
+    """A base wrapper to allow elements to be used with UFL.
 
-    This class includes methods and properties needed by UFL and FFCx.
-
+    This class includes methods and properties needed by UFL and FFCx. This is a base class containing
+    functions common to all the element types defined in this file.
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
@@ -135,14 +135,14 @@ class _ElementBase(_FiniteElementBase):
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_typing.Any, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
-        For example, for a MixedElement, this will return the
+        For example, for a mixed element, this will return the
         sub-element that represents the given component, the offset of
-        that sub-element, and a stride of 1. For a BlockedElement, this
+        that sub-element, and a stride of 1. For a blocked element, this
         will return the sub-element, an offset equal to the component
         number, and a stride equal to the block size. For vector-valued
         element (eg H(curl) and H(div) elements), this returns a
-        ComponentElement (and as offset of 0 and a stride of 1). When
-        tabulate is called on the ComponentElement, only the part of the
+        component element (and as offset of 0 and a stride of 1). When
+        tabulate is called on the component element, only the part of the
         table for the given component is returned.
 
         Args:
@@ -308,8 +308,12 @@ class _ElementBase(_FiniteElementBase):
         pass
 
 
-class BasixElement(_ElementBase):
-    """A wrapper allowing Basix elements to be used directly with UFL."""
+class _BasixElement(_ElementBase):
+    """A wrapper allowing Basix elements to be used directly with UFL.
+
+    This class allows elements created with `basix.create_element` to be wrapped as UFL compatible elements.
+    Users should not directly call this class's initiliser, but should use the `element` function instead.
+    """
 
     element: _basix.finite_element.FiniteElement
 
@@ -342,7 +346,7 @@ class BasixElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, BasixElement) and self.element == other.element
+        return isinstance(other, _BasixElement) and self.element == other.element
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -365,14 +369,14 @@ class BasixElement(_ElementBase):
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
-        For example, for a MixedElement, this will return the
+        For example, for a mixed element, this will return the
         sub-element that represents the given component, the offset of
-        that sub-element, and a stride of 1. For a BlockedElement, this
+        that sub-element, and a stride of 1. For a blocked element, this
         will return the sub-element, an offset equal to the component
         number, and a stride equal to the block size. For vector-valued
         element (eg H(curl) and H(div) elements), this returns a
-        ComponentElement (and as offset of 0 and a stride of 1). When
-        tabulate is called on the ComponentElement, only the part of the
+        component element (and as offset of 0 and a stride of 1). When
+        tabulate is called on the component element, only the part of the
         table for the given component is returned.
 
         Args:
@@ -382,7 +386,7 @@ class BasixElement(_ElementBase):
             component element, offset of the component, stride of the component
         """
         assert flat_component < self.value_size
-        return ComponentElement(self, flat_component), 0, 1
+        return _ComponentElement(self, flat_component), 0, 1
 
     @property
     def ufcx_element_type(self) -> str:
@@ -519,8 +523,11 @@ class BasixElement(_ElementBase):
         return self.element.get_tensor_product_representation()
 
 
-class ComponentElement(_ElementBase):
-    """An element representing one component of a BasixElement."""
+class _ComponentElement(_ElementBase):
+    """An element representing one component of a _BasixElement.
+
+    This element type is used when UFL's `get_component_element` function is called.
+    """
 
     element: _ElementBase
     component: int
@@ -529,7 +536,7 @@ class ComponentElement(_ElementBase):
         """Initialise the element."""
         self.element = element
         self.component = component
-        super().__init__(f"ComponentElement({element._repr}, {component})",
+        super().__init__(f"component element ({element._repr}, {component})",
                          f"Component of {element.family_name}",
                          element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
@@ -540,7 +547,7 @@ class ComponentElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return (isinstance(other, ComponentElement) and self.element == other.element
+        return (isinstance(other, _ComponentElement) and self.element == other.element
                 and self.component == other.component)
 
     def __hash__(self) -> int:
@@ -567,7 +574,7 @@ class ComponentElement(_ElementBase):
             elif len(self.element._value_shape) == 1:
                 output.append(tbl[:, self.component, :])
             elif len(self.element._value_shape) == 2:
-                if isinstance(self.element, BlockedElement) and self.element._has_symmetry:
+                if isinstance(self.element, _BlockedElement) and self.element._has_symmetry:
                     # FIXME: check that this behaves as expected
                     output.append(tbl[:, self.component, :])
                 else:
@@ -677,8 +684,12 @@ class ComponentElement(_ElementBase):
         raise NotImplementedError()
 
 
-class MixedElement(_ElementBase):
-    """A mixed element that combines two or more elements."""
+class _MixedElement(_ElementBase):
+    """A mixed element that combines two or more elements.
+
+    This can be used when multiple different elements appear in a form. Users should not directly call this
+    class's initiliser, but should use the `mixed_element` function instead.
+    """
 
     _sub_elements: _typing.List[_ElementBase]
 
@@ -691,7 +702,7 @@ class MixedElement(_ElementBase):
         else:
             mapname = "undefined"
 
-        super().__init__("MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
+        super().__init__("mixed element (" + ", ".join(i._repr for i in sub_elements) + ")",
                          "mixed element", sub_elements[0].cell_type.name,
                          (sum(i.value_size for i in sub_elements), ), mapname=mapname, gdim=gdim)
 
@@ -715,7 +726,7 @@ class MixedElement(_ElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, MixedElement) and len(self._sub_elements) == len(other._sub_elements):
+        if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False
@@ -876,8 +887,12 @@ class MixedElement(_ElementBase):
         return max([e.interpolation_nderivs for e in self._sub_elements])
 
 
-class BlockedElement(_ElementBase):
-    """Element with a block size that contains multiple copies of a sub element."""
+class _BlockedElement(_ElementBase):
+    """Element with a block size that contains multiple copies of a sub element.
+
+    This can be used to (for example) create vector and tensor Lagrange elements. Users should not
+    directly call this classes initiliser, but should use the `blocked_element` function instead.
+    """
 
     block_shape: _typing.Tuple[int, ...]
     sub_element: _ElementBase
@@ -888,7 +903,7 @@ class BlockedElement(_ElementBase):
         """Initialise the element."""
         if sub_element.value_size != 1:
             raise ValueError("Blocked elements of non-scalar elements are not supported. "
-                             "Try using MixedElement instead.")
+                             "Try using _MixedElement instead.")
         if symmetry is not None:
             if len(shape) != 2:
                 raise ValueError("symmetry argument can only be passed to elements of rank 2.")
@@ -909,7 +924,7 @@ class BlockedElement(_ElementBase):
         self._block_size = block_size
         self.block_shape = shape
 
-        repr = f"BlockedElement({sub_element._repr}, {shape}"
+        repr = f"blocked element ({sub_element._repr}, {shape}"
         if len(shape) == 2:
             if symmetry:
                 repr += ", True"
@@ -946,7 +961,7 @@ class BlockedElement(_ElementBase):
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
-            isinstance(other, BlockedElement) and self._block_size == other._block_size
+            isinstance(other, _BlockedElement) and self._block_size == other._block_size
             and self.block_shape == other.block_shape and self.sub_element == other.sub_element)
 
     def __hash__(self) -> int:
@@ -1284,7 +1299,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    ufl_e = BasixElement(e, gdim=gdim)
+    ufl_e = _BasixElement(e, gdim=gdim)
 
     vs = tuple(e.value_shape)
     tdim = len(_basix.topology(cell)) - 1
@@ -1398,7 +1413,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
     """
-    return BasixElement(_basix.create_custom_element(
+    return _BasixElement(_basix.create_custom_element(
         cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,
         map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree), gdim=gdim)
 
@@ -1411,7 +1426,7 @@ def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[i
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
     """
-    return MixedElement(elements, gdim=gdim)
+    return _MixedElement(elements, gdim=gdim)
 
 
 def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = None,
@@ -1452,7 +1467,7 @@ def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = Non
     if rank != len(shape):
         raise ValueError("Incompatible rank and shape.")
 
-    return BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
+    return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
 
 
 def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:
@@ -1462,12 +1477,12 @@ def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:
     if isinstance(ufl_element, _ElementBase):
         return ufl_element
     elif hasattr(_ufl, "VectorElement") and isinstance(ufl_element, _ufl.VectorElement):
-        return BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), (ufl_element.num_sub_elements(), ))
+        return _BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), (ufl_element.num_sub_elements(), ))
     elif hasattr(_ufl, "TensorElement") and isinstance(ufl_element, _ufl.TensorElement):
-        return BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), ufl_element._value_shape,
-                              symmetry=ufl_element.symmetry())
+        return _BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), ufl_element._value_shape,
+                               symmetry=ufl_element.symmetry())
     elif hasattr(_ufl, "MixedElement") and isinstance(ufl_element, _ufl.MixedElement):
-        return MixedElement([convert_ufl_element(e) for e in ufl_element.sub_elements()])
+        return _MixedElement([convert_ufl_element(e) for e in ufl_element.sub_elements()])
     elif hasattr(_ufl, "EnrichedElement") and isinstance(ufl_element, _ufl.EnrichedElement):
         return enriched_element([convert_ufl_element(e) for e in ufl_element._elements])
     # Elements that will not be supported

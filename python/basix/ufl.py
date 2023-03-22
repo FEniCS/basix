@@ -1298,13 +1298,13 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         blocked = False
 
     if blocked:
+        return blocked_element(ufl_e, shape=shape, rank=rank, gdim=gdim, symmetry=symmetry)
+    else:
         if rank is not None and shape is not None and len(shape) != rank:
             raise ValueError("Incompatible shape and rank.")
         if symmetry is not None:
             raise ValueError("Cannot pass a symmetry argument to this element.")
         return ufl_e
-    else:
-        return blocked_element(ufl_e, shape=shape, rank=rank, gdim=gdim, symmetry=symmetry)
 
 
 def enriched_element(elements: _typing.List[_ElementBase],

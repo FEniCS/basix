@@ -28,7 +28,7 @@ _spacemap = {
 }
 
 
-def ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
+def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     """Convert a Basix Sobolev space enum to a UFL Sobolev space.
 
     Args:
@@ -299,7 +299,7 @@ class _ElementBase(_FiniteElementBase):
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
-        return ufl_sobolev_space_from_enum(self.basix_sobolev_space)
+        return _ufl_sobolev_space_from_enum(self.basix_sobolev_space)
 
     @property
     @_abstractmethod
@@ -1322,6 +1322,7 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         return ufl_e
 
 
+@_functools.lru_cache()
 def enriched_element(elements: _typing.List[_ElementBase],
                      map_type: _typing.Optional[_basix.MapType] = None,
                      gdim: _typing.Optional[int] = None) -> _ElementBase:
@@ -1387,6 +1388,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
                           map_type, ss, discontinuous, hcd, hd, gdim=gdim)
 
 
+@_functools.lru_cache()
 def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
                    wcoeffs: _npt.NDArray[_np.float64], x: _typing.List[_typing.List[_npt.NDArray[_np.float64]]],
                    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
@@ -1418,6 +1420,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree), gdim=gdim)
 
 
+@_functools.lru_cache()
 def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible mixed element from a list of elements.
 
@@ -1429,6 +1432,7 @@ def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[i
     return _MixedElement(elements, gdim=gdim)
 
 
+@_functools.lru_cache()
 def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = None,
                     shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
                     symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None) -> _ElementBase:

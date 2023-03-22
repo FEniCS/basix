@@ -1314,6 +1314,7 @@ def enriched_element(elements: _typing.List[_ElementBase],
 
     Args:
         elements: The list of elements
+        map_type: The map type for the enriched element.
         gdim: Geometric dimension. If not set the geometric dimension is
             set equal to the topological dimension of the cell.
     """
@@ -1377,8 +1378,7 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
                    map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
                    highest_complete_degree: int, highest_degree: int,
                    gdim: _typing.Optional[int] = None) -> _ElementBase:
-    """
-    Create a UFL compatible custom Basixelement.
+    """Create a UFL compatible custom Basix element.
 
     Args:
         cell_type: The cell type
@@ -1395,6 +1395,8 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange)
         element of degree n is a subspace of this element
         highest_degree: The degree of a polynomial in this element's polyset
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
     """
     return BasixElement(_basix.create_custom_element(
         cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,

@@ -4,7 +4,7 @@ import functools as _functools
 import hashlib as _hashlib
 import typing as _typing
 from abc import abstractmethod as _abstractmethod
-from warnings import warn
+from warnings import _warn
 
 import numpy as _np
 import numpy.typing as _npt
@@ -1273,8 +1273,8 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
             family = "P"
             discontinuous = True
         if family == "CG":
-            warn("\"CG\" element name is deprecated. Consider using \"Lagrange\" or \"P\" instead",
-                 DeprecationWarning, stacklevel=2)
+            _warn("\"CG\" element name is deprecated. Consider using \"Lagrange\" or \"P\" instead",
+                  DeprecationWarning, stacklevel=2)
             family = "P"
             discontinuous = False
         if family == "DPC":
@@ -1476,8 +1476,8 @@ def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = Non
 
 def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:
     """Convert a UFL element to a UFL compatible Basix element."""
-    warn("Converting elements created in UFL to Basix elements is deprecated. You should create the elements directly "
-         "using basix.ufl.element instead", DeprecationWarning, stacklevel=2)
+    _warn("Converting elements created in UFL to Basix elements is deprecated. You should create the elements directly "
+          "using basix.ufl.element instead", DeprecationWarning, stacklevel=2)
     if isinstance(ufl_element, _ElementBase):
         return ufl_element
     elif hasattr(_ufl, "VectorElement") and isinstance(ufl_element, _ufl.VectorElement):

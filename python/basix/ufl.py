@@ -4,7 +4,7 @@ import functools as _functools
 import hashlib as _hashlib
 import typing as _typing
 from abc import abstractmethod as _abstractmethod
-from warnings import _warn
+from warnings import warn as _warn
 
 import numpy as _np
 import numpy.typing as _npt

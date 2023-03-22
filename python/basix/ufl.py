@@ -1322,7 +1322,6 @@ def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Unio
         return ufl_e
 
 
-@_functools.lru_cache()
 def enriched_element(elements: _typing.List[_ElementBase],
                      map_type: _typing.Optional[_basix.MapType] = None,
                      gdim: _typing.Optional[int] = None) -> _ElementBase:
@@ -1388,7 +1387,6 @@ def enriched_element(elements: _typing.List[_ElementBase],
                           map_type, ss, discontinuous, hcd, hd, gdim=gdim)
 
 
-@_functools.lru_cache()
 def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
                    wcoeffs: _npt.NDArray[_np.float64], x: _typing.List[_typing.List[_npt.NDArray[_np.float64]]],
                    M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
@@ -1420,7 +1418,6 @@ def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typin
         map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree), gdim=gdim)
 
 
-@_functools.lru_cache()
 def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:
     """Create a UFL compatible mixed element from a list of elements.
 

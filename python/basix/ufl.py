@@ -1195,18 +1195,18 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     data += "__"
     for entity in element.x:
         for points in entity:
-            data = ",".join([f"{i}" for p in points for i in p])
+            data += ",".join([f"{i}" for p in points for i in p])
             data += "_"
     data += "__"
 
     for entity in element.M:
         for matrices in entity:
-            data = ",".join([f"{i}" for mat in matrices for row in mat for i in row])
+            data += ",".join([f"{i}" for mat in matrices for row in mat for i in row])
             data += "_"
     data += "__"
 
     for mat in element.entity_transformations().values():
-        data = ",".join([f"{i}" for row in mat for i in row])
+        data += ",".join([f"{i}" for row in mat for i in row])
         data += "__"
     signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
 

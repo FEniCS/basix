@@ -77,5 +77,5 @@ if (SKBUILD)
   endif()
 
   install(TARGETS _basixcpp DESTINATION .)
-  install(TARGETS nanobind DESTINATION lib)
+# install(TARGETS nanobind DESTINATION lib)
 endif()

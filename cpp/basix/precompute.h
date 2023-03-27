@@ -251,7 +251,7 @@ void apply_matrix(const std::span<const std::size_t>& v_size_t,
                   const std::span<E>& data, std::size_t offset = 0,
                   std::size_t block_size = 1)
 {
-  using U = typename impl::scalar_value_type<T>;
+  using U = typename impl::scalar_value_type_t<E>;
 
   const std::size_t dim = v_size_t.size();
   apply_permutation(v_size_t, data, offset, block_size);
@@ -262,7 +262,7 @@ void apply_matrix(const std::span<const std::size_t>& v_size_t,
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[block_size * (offset + i) + b]
-            += static_cast<T>(M(i, j)) * data[block_size * (offset + j) + b];
+            += static_cast<U>(M(i, j)) * data[block_size * (offset + j) + b];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)
@@ -293,7 +293,7 @@ void apply_matrix_to_transpose(
     const std::span<E>& data, std::size_t offset = 0,
     std::size_t block_size = 1)
 {
-  using U = typename impl::scalar_value_type<T>;
+  using U = typename impl::scalar_value_type_t<E>;
 
   const std::size_t dim = v_size_t.size();
   const std::size_t data_size
@@ -306,7 +306,7 @@ void apply_matrix_to_transpose(
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[data_size * b + offset + i]
-            += static_cast<T>(M(i, j)) * data[data_size * b + offset + j];
+            += static_cast<U>(M(i, j)) * data[data_size * b + offset + j];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)

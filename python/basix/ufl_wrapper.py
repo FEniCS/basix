@@ -38,7 +38,7 @@ def ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
         UFL Sobolev space
     """
     if s not in _spacemap:
-        raise ValueError(f"Could not convert to UFL Sobolev space: {s.name}")
+        raise ValueError(f"Could not convert to UFL Sobolev space: {s.__name__}")
     return _spacemap[s]
 
 
@@ -320,17 +320,17 @@ class BasixElement(_BasixElementBase):
             repr = f"custom Basix element ({_compute_signature(element)})"
         else:
             self._is_custom = False
-            repr = (f"Basix element ({element.family.name}, {element.cell_type.name}, {element.degree}, "
-                    f"{element.lagrange_variant.name}, {element.dpc_variant.name}, {element.discontinuous})")
+            repr = (f"Basix element ({element.family.__name__}, {element.cell_type.__name__}, {element.degree}, "
+                    f"{element.lagrange_variant.__name__}, {element.dpc_variant.__name__}, {element.discontinuous})")
 
-        if element.cell_type.name in ["interval", "triangle", "tetrahedron"]:
+        if element.cell_type.__name__ in ["interval", "triangle", "tetrahedron"]:
             super().__init__(
-                repr, element.family.name, element.cell_type.name, tuple(element.value_shape), element.degree,
+                repr, element.family.__name__, element.cell_type.__name__, tuple(element.value_shape), element.degree,
                 _map_type_to_string(element.map_type), gdim=gdim)
         else:
             # TODO: remove IrreducibleInt once UFL handles element degrees better
             super().__init__(
-                repr, element.family.name, element.cell_type.name, tuple(element.value_shape),
+                repr, element.family.__name__, element.cell_type.__name__, tuple(element.value_shape),
                 _IrreducibleInt(element.degree), _map_type_to_string(element.map_type), gdim=gdim)
 
         self.element = element
@@ -435,7 +435,7 @@ class BasixElement(_BasixElementBase):
     @property
     def family_name(self) -> str:
         """Family name of the element."""
-        return self.element.family.name
+        return self.element.family.__name__
 
     @property
     def element_family(self) -> _typing.Union[_basix.ElementFamily, None]:
@@ -531,7 +531,7 @@ class ComponentElement(_BasixElementBase):
         self.component = component
         super().__init__(f"ComponentElement({element._repr}, {component})",
                          f"Component of {element.family_name}",
-                         element.cell_type.name, (1, ), element._degree, gdim=gdim)
+                         element.cell_type.__name__, (1, ), element._degree, gdim=gdim)
 
     @property
     def basix_sobolev_space(self):
@@ -692,7 +692,7 @@ class MixedElement(_BasixElementBase):
             mapname = "undefined"
 
         super().__init__("MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
-                         "mixed element", sub_elements[0].cell_type.name,
+                         "mixed element", sub_elements[0].cell_type.__name__,
                          (sum(i.value_size for i in sub_elements), ), mapname=mapname, gdim=gdim)
 
     def degree(self) -> int:
@@ -899,7 +899,7 @@ class BlockedElement(_BasixElementBase):
             block_shape = (block_size, )
         self.block_shape = block_shape
 
-        super().__init__(repr, sub_element.family(), sub_element.cell_type.name, block_shape,
+        super().__init__(repr, sub_element.family(), sub_element.cell_type.__name__, block_shape,
                          sub_element._degree, sub_element._map, gdim=gdim)
 
     @property
@@ -1211,7 +1211,7 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
     """
     assert element.family == _basix.ElementFamily.custom
-    signature = (f"{element.cell_type.name}, {element.value_shape}, {element.map_type.name}, "
+    signature = (f"{element.cell_type.__name__}, {element.value_shape}, {element.map_type.__name__}, "
                  f"{element.discontinuous}, {element.highest_complete_degree}, {element.highest_degree}, ")
     data = ",".join([f"{i}" for row in element.wcoeffs for i in row])
     data += "__"
@@ -1270,7 +1270,7 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
         if family == "DPC":
             discontinuous = True
 
-        family = _basix.finite_element.string_to_family(family, cell.name)
+        family = _basix.finite_element.string_to_family(family, cell.__name__)
 
     # Default variant choices
     EF = _basix.ElementFamily

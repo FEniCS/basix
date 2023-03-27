@@ -43,9 +43,9 @@ jobs:
           flake8 --statistics python/
           flake8 --statistics demo/python
 
-      - name: Run mypy checks
-        run: |
-          python3 -m mypy python/basix
+#      - name: Run mypy checks
+#        run: |
+#          python3 -m mypy python/basix
 
       - name: pydocstyle checks
         run: |

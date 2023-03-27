@@ -14,27 +14,29 @@ using namespace basix;
 using namespace basix::indexing;
 
 namespace stdex = std::experimental;
-using mdspan3_t = stdex::mdspan<double, stdex::dextents<std::size_t, 3>>;
-using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 
 namespace
 {
 // Compute coefficients in the Jacobi Polynomial recurrence relation
-constexpr std::array<double, 3> jrc(int a, int n)
+template <typename T>
+constexpr std::array<T, 3> jrc(int a, int n)
 {
-  double an = (a + 2 * n + 1) * (a + 2 * n + 2)
-              / static_cast<double>(2 * (n + 1) * (a + n + 1));
-  double bn = a * a * (a + 2 * n + 1)
-              / static_cast<double>(2 * (n + 1) * (a + n + 1) * (a + 2 * n));
-  double cn = n * (a + n) * (a + 2 * n + 2)
-              / static_cast<double>((n + 1) * (a + n + 1) * (a + 2 * n));
+  T an = (a + 2 * n + 1) * (a + 2 * n + 2)
+              / static_cast<T>(2 * (n + 1) * (a + n + 1));
+  T bn = a * a * (a + 2 * n + 1)
+              / static_cast<T>(2 * (n + 1) * (a + n + 1) * (a + 2 * n));
+  T cn = n * (a + n) * (a + 2 * n + 2)
+              / static_cast<T>((n + 1) * (a + n + 1) * (a + 2 * n));
   return {an, bn, cn};
 }
 //-----------------------------------------------------------------------------
 // At a point, only the constant polynomial can be used. This has value
 // 1 and derivative 0.
-void tabulate_polyset_point_derivs(mdspan3_t P, std::size_t, std::size_t nderiv,
-                                   cmdspan2_t x)
+template <typename T>
+void tabulate_polyset_point_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(0) > 0);
   assert(P.extent(0) == nderiv + 1);
@@ -51,8 +53,11 @@ void tabulate_polyset_point_derivs(mdspan3_t P, std::size_t, std::size_t nderiv,
 // Legendre Polynomials, with the recurrence relation given by
 // n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1, 1]. The
 // range is rescaled here to [0, 1].
-void tabulate_polyset_line_derivs(mdspan3_t P, std::size_t n,
-                                  std::size_t nderiv, cmdspan2_t x)
+template <typename T>
+void tabulate_polyset_line_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(0) > 0);
   assert(P.extent(0) == nderiv + 1);
@@ -72,7 +77,7 @@ void tabulate_polyset_line_derivs(mdspan3_t P, std::size_t n,
     P(0, 1, i) = (x0[i] * 2.0 - 1.0) * P(0, 0, i);
   for (std::size_t p = 2; p <= n; ++p)
   {
-    const double a = 1.0 - 1.0 / static_cast<double>(p);
+    const T a = 1.0 - 1.0 / static_cast<T>(p);
     for (std::size_t i = 0; i < P.extent(2); ++i)
     {
       P(0, p, i) = (x0[i] * 2.0 - 1.0) * P(0, p - 1, i) * (a + 1.0)
@@ -84,7 +89,7 @@ void tabulate_polyset_line_derivs(mdspan3_t P, std::size_t n,
   {
     for (std::size_t p = 1; p <= n; ++p)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(p);
+      const T a = 1.0 - 1.0 / static_cast<T>(p);
       for (std::size_t i = 0; i < P.extent(2); ++i)
       {
         P(k, p, i) = (x0[i] * 2.0 - 1.0) * P(k, p - 1, i) * (a + 1.0)
@@ -97,7 +102,7 @@ void tabulate_polyset_line_derivs(mdspan3_t P, std::size_t n,
   // Normalise
   for (std::size_t p = 0; p < P.extent(1); ++p)
   {
-    const double norm = std::sqrt(2 * p + 1);
+    const T norm = std::sqrt(2 * p + 1);
     for (std::size_t i = 0; i < P.extent(0); ++i)
       for (std::size_t j = 0; j < P.extent(2); ++j)
         P(i, p, j) *= norm;
@@ -111,8 +116,11 @@ void tabulate_polyset_line_derivs(mdspan3_t P, std::size_t n,
 // above, but with a change of variables. The polynomials are then
 // extended in the q direction, using the relation given in Sherwin and
 // Karniadakis 1995 (https://doi.org/10.1016/0045-7825(94)00745-9).
-void tabulate_polyset_triangle_derivs(mdspan3_t P, std::size_t n,
-                                      std::size_t nderiv, cmdspan2_t x)
+template <typename T>
+void tabulate_polyset_triangle_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(1) == 2);
 
@@ -146,7 +154,7 @@ void tabulate_polyset_triangle_derivs(mdspan3_t P, std::size_t n,
             = stdex::submdspan(P, idx(kx, ky), idx(0, p), stdex::full_extent);
         auto p1 = stdex::submdspan(P, idx(kx, ky), idx(0, p - 1),
                                    stdex::full_extent);
-        double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+        T a = static_cast<T>(2 * p - 1) / static_cast<T>(p);
         for (std::size_t i = 0; i < p0.extent(0); ++i)
         {
           p0[i] = ((x0[i] * 2.0 - 1.0) + 0.5 * (x1[i] * 2.0 - 1.0) + 0.5)
@@ -177,7 +185,7 @@ void tabulate_polyset_triangle_derivs(mdspan3_t P, std::size_t n,
           // y^2 terms
           for (std::size_t i = 0; i < p0.extent(0); ++i)
           {
-            const double f3 = 1.0 - x1[i];
+            const T f3 = 1.0 - x1[i];
             p0[i] -= f3 * f3 * p2[i] * (a - 1.0);
           }
 
@@ -218,7 +226,7 @@ void tabulate_polyset_triangle_derivs(mdspan3_t P, std::size_t n,
 
         for (std::size_t q = 1; q < n - p; ++q)
         {
-          const auto [a1, a2, a3] = jrc(2 * p + 1, q);
+          const auto [a1, a2, a3] = jrc<T>(2 * p + 1, q);
           auto pqp1 = stdex::submdspan(P, idx(kx, ky), idx(q + 1, p),
                                        stdex::full_extent);
           auto pqm1 = stdex::submdspan(P, idx(kx, ky), idx(q - 1, p),
@@ -248,7 +256,7 @@ void tabulate_polyset_triangle_derivs(mdspan3_t P, std::size_t n,
       {
         for (std::size_t q = 0; q <= n - p; ++q)
         {
-          const double norm = std::sqrt((p + 0.5) * (p + q + 1)) * 2;
+          const T norm = std::sqrt((p + 0.5) * (p + q + 1)) * 2;
           const int j = idx(q, p);
           for (std::size_t k = 0; k < P.extent(2); ++k)
             P(i, j, k) *= norm;
@@ -258,8 +266,11 @@ void tabulate_polyset_triangle_derivs(mdspan3_t P, std::size_t n,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_tetrahedron_derivs(mdspan3_t P, std::size_t n,
-                                         std::size_t nderiv, cmdspan2_t x)
+template <typename T>
+void tabulate_polyset_tetrahedron_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
@@ -294,7 +305,7 @@ void tabulate_polyset_tetrahedron_derivs(mdspan3_t P, std::size_t n,
                                       stdex::full_extent);
           auto p0m1 = stdex::submdspan(P, idx(kx, ky, kz), idx(0, 0, p - 1),
                                        stdex::full_extent);
-          double a = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+          T a = static_cast<T>(2 * p - 1) / static_cast<T>(p);
           for (std::size_t i = 0; i < p00.size(); ++i)
           {
             p00[i] = ((x0[i] * 2.0 - 1.0)
@@ -332,7 +343,7 @@ void tabulate_polyset_tetrahedron_derivs(mdspan3_t P, std::size_t n,
                                          stdex::full_extent);
             for (std::size_t i = 0; i < p00.size(); ++i)
             {
-              double f2 = x1[i] + x2[i] - 1.0;
+              T f2 = x1[i] + x2[i] - 1.0;
               p00[i] -= f2 * f2 * p0m2[i] * (a - 1.0);
             }
             if (ky > 0)
@@ -412,7 +423,7 @@ void tabulate_polyset_tetrahedron_derivs(mdspan3_t P, std::size_t n,
 
           for (std::size_t q = 1; q < n - p; ++q)
           {
-            auto [aq, bq, cq] = jrc(2 * p + 1, q);
+            auto [aq, bq, cq] = jrc<T>(2 * p + 1, q);
             auto pq1 = stdex::submdspan(P, idx(kx, ky, kz), idx(0, q + 1, p),
                                         stdex::full_extent);
             auto pq = stdex::submdspan(P, idx(kx, ky, kz), idx(0, q, p),
@@ -421,8 +432,8 @@ void tabulate_polyset_tetrahedron_derivs(mdspan3_t P, std::size_t n,
                                          stdex::full_extent);
             for (std::size_t i = 0; i < pq1.size(); ++i)
             {
-              double f4 = 1.0 - x2[i];
-              double f3 = (x1[i] * 2.0 - 1.0 + x2[i]);
+              T f4 = 1.0 - x2[i];
+              T f3 = (x1[i] * 2.0 - 1.0 + x2[i]);
               pq1[i] = pq[i] * (f3 * aq + f4 * bq) - pqm1[i] * f4 * f4 * cq;
             }
             if (ky > 0)
@@ -487,7 +498,7 @@ void tabulate_polyset_tetrahedron_derivs(mdspan3_t P, std::size_t n,
           {
             for (std::size_t r = 1; r < n - p - q; ++r)
             {
-              auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+              auto [ar, br, cr] = jrc<T>(2 * p + 2 * q + 2, r);
               auto pqr1 = stdex::submdspan(P, idx(kx, ky, kz), idx(r + 1, q, p),
                                            stdex::full_extent);
               auto pqr = stdex::submdspan(P, idx(kx, ky, kz), idx(r, q, p),
@@ -534,8 +545,11 @@ void tabulate_polyset_tetrahedron_derivs(mdspan3_t P, std::size_t n,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_pyramid_derivs(mdspan3_t P, std::size_t n,
-                                     std::size_t nderiv, cmdspan2_t x)
+template <typename T>
+void tabulate_polyset_pyramid_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
@@ -581,8 +595,8 @@ void tabulate_polyset_pyramid_derivs(mdspan3_t P, std::size_t n,
         {
           if (p > 0)
           {
-            const double a
-                = static_cast<double>(p - 1) / static_cast<double>(p);
+            const T a
+                = static_cast<T>(p - 1) / static_cast<T>(p);
             auto p00 = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, 0, 0),
                                         stdex::full_extent);
             auto p1 = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p - 1, 0, 0),
@@ -617,7 +631,7 @@ void tabulate_polyset_pyramid_derivs(mdspan3_t P, std::size_t n,
                   P, idx(kx, ky, kz), pyr_idx(p - 2, 0, 0), stdex::full_extent);
               for (std::size_t i = 0; i < p00.size(); ++i)
               {
-                double f2 = 1.0 - x2[i];
+                T f2 = 1.0 - x2[i];
                 p00[i] -= f2 * f2 * p2[i] * a;
               }
 
@@ -644,8 +658,8 @@ void tabulate_polyset_pyramid_derivs(mdspan3_t P, std::size_t n,
 
           for (std::size_t q = 1; q < n + 1; ++q)
           {
-            const double a
-                = static_cast<double>(q - 1) / static_cast<double>(q);
+            const T a
+                = static_cast<T>(q - 1) / static_cast<T>(q);
             auto r_pq = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
                                          stdex::full_extent);
 
@@ -681,7 +695,7 @@ void tabulate_polyset_pyramid_derivs(mdspan3_t P, std::size_t n,
                   P, idx(kx, ky, kz), pyr_idx(p, q - 2, 0), stdex::full_extent);
               for (std::size_t i = 0; i < r_pq.size(); ++i)
               {
-                const double f2 = 1.0 - x2[i];
+                const T f2 = 1.0 - x2[i];
                 r_pq[i] -= f2 * f2 * _p[i] * a;
               }
 
@@ -739,7 +753,7 @@ void tabulate_polyset_pyramid_derivs(mdspan3_t P, std::size_t n,
           {
             for (std::size_t q = 0; q < n - r; ++q)
             {
-              auto [ar, br, cr] = jrc(2 * p + 2 * q + 2, r);
+              auto [ar, br, cr] = jrc<T>(2 * p + 2 * q + 2, r);
               auto r_pqr = stdex::submdspan(
                   P, idx(kx, ky, kz), pyr_idx(p, q, r + 1), stdex::full_extent);
               auto _r0 = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, r),
@@ -784,8 +798,11 @@ void tabulate_polyset_pyramid_derivs(mdspan3_t P, std::size_t n,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_quad_derivs(mdspan3_t P, std::size_t n,
-                                  std::size_t nderiv, cmdspan2_t x)
+template <typename T>
+void tabulate_polyset_quad_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(1) == 2);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
@@ -822,7 +839,7 @@ void tabulate_polyset_quad_derivs(mdspan3_t P, std::size_t n,
 
     for (std::size_t py = 2; py <= n; ++py)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(py);
+      const T a = 1.0 - 1.0 / static_cast<T>(py);
       for (std::size_t i = 0; i < result.extent(1); ++i)
       {
         result(quad_idx(0, py), i)
@@ -847,7 +864,7 @@ void tabulate_polyset_quad_derivs(mdspan3_t P, std::size_t n,
 
     for (std::size_t py = 2; py <= n; ++py)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(py);
+      const T a = 1.0 - 1.0 / static_cast<T>(py);
       for (std::size_t i = 0; i < result.extent(1); ++i)
       {
         result(quad_idx(0, py), i)
@@ -874,7 +891,7 @@ void tabulate_polyset_quad_derivs(mdspan3_t P, std::size_t n,
   }
   for (std::size_t px = 2; px <= n; ++px)
   {
-    const double a = 1.0 - 1.0 / static_cast<double>(px);
+    const T a = 1.0 - 1.0 / static_cast<T>(px);
     for (std::size_t ky = 0; ky <= nderiv; ++ky)
     {
       auto result = stdex::submdspan(P, idx(0, ky), stdex::full_extent,
@@ -912,7 +929,7 @@ void tabulate_polyset_quad_derivs(mdspan3_t P, std::size_t n,
 
     for (std::size_t px = 2; px <= n; ++px)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(px);
+      const T a = 1.0 - 1.0 / static_cast<T>(px);
       for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
       {
         auto result = stdex::submdspan(P, idx(kx, ky), stdex::full_extent,
@@ -948,8 +965,11 @@ void tabulate_polyset_quad_derivs(mdspan3_t P, std::size_t n,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
-                                 cmdspan2_t x)
+template <typename T>
+void tabulate_polyset_hex_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
@@ -992,7 +1012,7 @@ void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
     // for larger values of pz
     for (std::size_t pz = 2; pz <= n; ++pz)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(pz);
+      const T a = 1.0 - 1.0 / static_cast<T>(pz);
       for (std::size_t i = 0; i < result.extent(1); ++i)
       {
         result(hex_idx(0, 0, pz), i)
@@ -1021,7 +1041,7 @@ void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
     // for larger values of pz
     for (std::size_t pz = 2; pz <= n; ++pz)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(pz);
+      const T a = 1.0 - 1.0 / static_cast<T>(pz);
       for (std::size_t i = 0; i < result.extent(1); ++i)
       {
         result(hex_idx(0, 0, pz), i)
@@ -1051,7 +1071,7 @@ void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
 
   for (std::size_t py = 2; py <= n; ++py)
   {
-    const double a = 1.0 - 1.0 / static_cast<double>(py);
+    const T a = 1.0 - 1.0 / static_cast<T>(py);
     for (std::size_t kz = 0; kz <= nderiv; ++kz)
     {
       auto result = stdex::submdspan(P, idx(0, 0, kz), stdex::full_extent,
@@ -1092,7 +1112,7 @@ void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
 
     for (std::size_t py = 2; py <= n; ++py)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(py);
+      const T a = 1.0 - 1.0 / static_cast<T>(py);
       for (std::size_t kz = 0; kz <= nderiv - ky; ++kz)
       {
         auto result = stdex::submdspan(P, idx(0, ky, kz), stdex::full_extent,
@@ -1139,7 +1159,7 @@ void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
   // For larger values of px
   for (std::size_t px = 2; px <= n; ++px)
   {
-    const double a = 1.0 - 1.0 / static_cast<double>(px);
+    const T a = 1.0 - 1.0 / static_cast<T>(px);
     for (std::size_t ky = 0; ky <= nderiv; ++ky)
     {
       for (std::size_t kz = 0; kz <= nderiv - ky; ++kz)
@@ -1193,7 +1213,7 @@ void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
     // For larger values of px
     for (std::size_t px = 2; px <= n; ++px)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(px);
+      const T a = 1.0 - 1.0 / static_cast<T>(px);
       for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
       {
         for (std::size_t kz = 0; kz <= nderiv - kx - ky; ++kz)
@@ -1238,8 +1258,11 @@ void tabulate_polyset_hex_derivs(mdspan3_t P, std::size_t n, std::size_t nderiv,
   }
 }
 //-----------------------------------------------------------------------------
-void tabulate_polyset_prism_derivs(mdspan3_t P, std::size_t n,
-                                   std::size_t nderiv, cmdspan2_t x)
+template <typename T>
+void tabulate_polyset_prism_derivs(
+    stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
+    std::size_t nderiv,
+    stdex::mdspan<const T, stdex::dextents<std::size_t, 2>> x)
 {
   assert(x.extent(1) == 3);
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) * (nderiv + 3) / 6);
@@ -1280,8 +1303,8 @@ void tabulate_polyset_prism_derivs(mdspan3_t P, std::size_t n,
                                    stdex::full_extent);
         auto p1 = stdex::submdspan(P, idx(kx, ky, 0), prism_idx(p - 1, 0, 0),
                                    stdex::full_extent);
-        const double a
-            = static_cast<double>(2 * p - 1) / static_cast<double>(p);
+        const T a
+            = static_cast<T>(2 * p - 1) / static_cast<T>(p);
         for (std::size_t i = 0; i < p0.size(); ++i)
         {
           p0[i] = ((x0[i] * 2.0 - 1.0) + 0.5 * (x1[i] * 2.0 - 1.0) + 0.5)
@@ -1313,7 +1336,7 @@ void tabulate_polyset_prism_derivs(mdspan3_t P, std::size_t n,
                                      stdex::full_extent);
           for (std::size_t i = 0; i < p0.size(); ++i)
           {
-            double f2 = (1.0 - x1[i]);
+            T f2 = (1.0 - x1[i]);
             p0[i] -= f2 * f2 * p2[i] * (a - 1.0);
           }
           if (ky > 0)
@@ -1363,7 +1386,7 @@ void tabulate_polyset_prism_derivs(mdspan3_t P, std::size_t n,
                                      stdex::full_extent);
           auto pqm1 = stdex::submdspan(
               P, idx(kx, ky, 0), prism_idx(p, q - 1, 0), stdex::full_extent);
-          const auto [a1, a2, a3] = jrc(2 * p + 1, q);
+          const auto [a1, a2, a3] = jrc<T>(2 * p + 1, q);
           for (std::size_t i = 0; i < p0.size(); ++i)
             pqp1[i] = pq[i] * ((x1[i] * 2.0 - 1.0) * a1 + a2) - pqm1[i] * a3;
           if (ky > 0)
@@ -1383,7 +1406,7 @@ void tabulate_polyset_prism_derivs(mdspan3_t P, std::size_t n,
   {
     for (std::size_t r = 1; r <= n; ++r)
     {
-      const double a = 1.0 - 1.0 / static_cast<double>(r);
+      const T a = 1.0 - 1.0 / static_cast<T>(r);
       for (std::size_t kx = 0; kx <= nderiv - kz; ++kx)
       {
         for (std::size_t ky = 0; ky <= nderiv - kx - kz; ++ky)
@@ -1444,12 +1467,11 @@ void tabulate_polyset_prism_derivs(mdspan3_t P, std::size_t n,
 }
 } // namespace
 //-----------------------------------------------------------------------------
+template <typename T>
 void polyset::tabulate(
-    std::experimental::mdspan<double,
-                              std::experimental::dextents<std::size_t, 3>>
-        P,
+    std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 3>> P,
     cell::type celltype, int d, int n,
-    std::experimental::mdspan<const double,
+    std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x)
 {
@@ -1484,20 +1506,35 @@ void polyset::tabulate(
   }
 }
 //-----------------------------------------------------------------------------
-std::pair<std::vector<double>, std::array<std::size_t, 3>> polyset::tabulate(
+template <typename T>
+std::pair<std::vector<T>, std::array<std::size_t, 3>> polyset::tabulate(
     cell::type celltype, int d, int n,
-    std::experimental::mdspan<const double,
+    std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x)
 {
   std::array<std::size_t, 3> shape
       = {(std::size_t)polyset::nderivs(celltype, n),
          (std::size_t)polyset::dim(celltype, d), x.extent(0)};
-  std::vector<double> P(shape[0] * shape[1] * shape[2]);
-  stdex::mdspan<double, stdex::dextents<std::size_t, 3>> _P(P.data(), shape);
+  std::vector<T> P(shape[0] * shape[1] * shape[2]);
+  stdex::mdspan<T, stdex::dextents<std::size_t, 3>> _P(P.data(), shape);
   polyset::tabulate(_P, celltype, d, n, x);
   return {std::move(P), std::move(shape)};
 }
+
+// Explicit instantiation for double and float
+template std::pair<std::vector<double>, std::array<std::size_t, 3>>
+polyset::tabulate(
+    cell::type, int, int,
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>);
+
+template std::pair<std::vector<float>, std::array<std::size_t, 3>>
+polyset::tabulate(
+    cell::type, int, int,
+    std::experimental::mdspan<const float,
+                              std::experimental::dextents<std::size_t, 2>>);
+
 //-----------------------------------------------------------------------------
 int polyset::dim(cell::type celltype, int d)
 {

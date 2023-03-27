@@ -161,9 +161,10 @@ namespace basix::polyset
 ///
 /// - The third index is the basis function index.
 /// @todo Does the order for the third index need to be documented?
-std::pair<std::vector<double>, std::array<std::size_t, 3>>
+template <typename T>
+std::pair<std::vector<T>, std::array<std::size_t, 3>>
 tabulate(cell::type celltype, int d, int n,
-         std::experimental::mdspan<const double,
+         std::experimental::mdspan<const T,
                                    std::experimental::dextents<std::size_t, 2>>
              x);
 
@@ -207,12 +208,13 @@ tabulate(cell::type celltype, int d, int n,
 /// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// (number of points, geometric dimension).
+template<typename T>
 void tabulate(
-    std::experimental::mdspan<double,
+    std::experimental::mdspan<T,
                               std::experimental::dextents<std::size_t, 3>>
         P,
     cell::type celltype, int d, int n,
-    std::experimental::mdspan<const double,
+    std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x);
 

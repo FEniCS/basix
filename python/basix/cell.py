@@ -10,9 +10,6 @@ from ._basixcpp import sub_entity_connectivity  # noqa: F401
 from ._basixcpp import CellType as _CT
 
 
-setattr(_CT, "__hash__", lambda w: int(w))
-
-
 def string_to_type(cell: str) -> _CT:
     """Convert a string to a Basix CellType.
 

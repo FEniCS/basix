@@ -238,16 +238,18 @@ void apply_matrix(const std::span<const std::size_t>& v_size_t,
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[block_size * (offset + i) + b]
-            += M(i, j) * data[block_size * (offset + j) + b];
+            += static_cast<T>(M(i, j)) * data[block_size * (offset + j) + b];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)
     {
-      data[block_size * (offset + dim - i) + b] *= M(dim - i, dim - i);
+      data[block_size * (offset + dim - i) + b]
+          *= static_cast<T>(M(dim - i, dim - i));
       for (std::size_t j = 0; j < dim - i; ++j)
       {
         data[block_size * (offset + dim - i) + b]
-            += M(dim - i, j) * data[block_size * (offset + j) + b];
+            += static_cast<T>(M(dim - i, j))
+               * data[block_size * (offset + j) + b];
       }
     }
   }
@@ -278,16 +280,17 @@ void apply_matrix_to_transpose(
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[data_size * b + offset + i]
-            += M(i, j) * data[data_size * b + offset + j];
+            += static_cast<T>(M(i, j)) * data[data_size * b + offset + j];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)
     {
-      data[data_size * b + offset + dim - i] *= M(dim - i, dim - i);
+      data[data_size * b + offset + dim - i]
+          *= static_cast<T>(M(dim - i, dim - i));
       for (std::size_t j = 0; j < dim - i; ++j)
       {
         data[data_size * b + offset + dim - i]
-            += M(dim - i, j) * data[data_size * b + offset + j];
+            += static_cast<T>(M(dim - i, j)) * data[data_size * b + offset + j];
       }
     }
   }

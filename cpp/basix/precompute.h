@@ -7,11 +7,33 @@
 #include "mdspan.hpp"
 #include <span>
 #include <tuple>
+#include <type_traits>
 #include <vector>
 
 /// Matrix and permutation precomputation
 namespace basix::precompute
 {
+
+namespace impl
+{
+/// @private These structs are used to get the float/value type from a
+/// template argument, including support for complex types.
+template <typename T, typename = void>
+struct scalar_value_type
+{
+  /// @internal
+  typedef T value_type;
+};
+/// @private
+template <typename T>
+struct scalar_value_type<T, std::void_t<typename T::value_type>>
+{
+  typedef typename T::value_type value_type;
+};
+/// @private Convenience typedef
+template <typename T>
+using scalar_value_type_t = typename scalar_value_type<T>::value_type;
+} // namespace impl
 
 /// Prepare a permutation
 ///
@@ -229,6 +251,8 @@ void apply_matrix(const std::span<const std::size_t>& v_size_t,
                   const std::span<E>& data, std::size_t offset = 0,
                   std::size_t block_size = 1)
 {
+  using U = typename impl::scalar_value_type_t<E>;
+
   const std::size_t dim = v_size_t.size();
   apply_permutation(v_size_t, data, offset, block_size);
   for (std::size_t b = 0; b < block_size; ++b)
@@ -238,16 +262,18 @@ void apply_matrix(const std::span<const std::size_t>& v_size_t,
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[block_size * (offset + i) + b]
-            += M(i, j) * data[block_size * (offset + j) + b];
+            += static_cast<U>(M(i, j)) * data[block_size * (offset + j) + b];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)
     {
-      data[block_size * (offset + dim - i) + b] *= M(dim - i, dim - i);
+      data[block_size * (offset + dim - i) + b]
+          *= static_cast<U>(M(dim - i, dim - i));
       for (std::size_t j = 0; j < dim - i; ++j)
       {
         data[block_size * (offset + dim - i) + b]
-            += M(dim - i, j) * data[block_size * (offset + j) + b];
+            += static_cast<U>(M(dim - i, j))
+               * data[block_size * (offset + j) + b];
       }
     }
   }
@@ -267,6 +293,8 @@ void apply_matrix_to_transpose(
     const std::span<E>& data, std::size_t offset = 0,
     std::size_t block_size = 1)
 {
+  using U = typename impl::scalar_value_type_t<E>;
+
   const std::size_t dim = v_size_t.size();
   const std::size_t data_size
       = (data.size() + (dim < block_size ? block_size - dim : 0)) / block_size;
@@ -278,16 +306,17 @@ void apply_matrix_to_transpose(
       for (std::size_t j = i + 1; j < dim; ++j)
       {
         data[data_size * b + offset + i]
-            += M(i, j) * data[data_size * b + offset + j];
+            += static_cast<U>(M(i, j)) * data[data_size * b + offset + j];
       }
     }
     for (std::size_t i = 1; i <= dim; ++i)
     {
-      data[data_size * b + offset + dim - i] *= M(dim - i, dim - i);
+      data[data_size * b + offset + dim - i]
+          *= static_cast<U>(M(dim - i, dim - i));
       for (std::size_t j = 0; j < dim - i; ++j)
       {
         data[data_size * b + offset + dim - i]
-            += M(dim - i, j) * data[data_size * b + offset + j];
+            += static_cast<U>(M(dim - i, j)) * data[data_size * b + offset + j];
       }
     }
   }

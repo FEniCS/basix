@@ -171,11 +171,13 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement(element::family::RT, celltype, degree, {tdim},
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
-                       xview, Mview, 0, maps::type::contravariantPiola,
-                       sobolev::space::HDiv, discontinuous, degree - 1, degree,
-                       lvariant);
+                       xview, Mview, 0, maps::type::contravariantPiola, space,
+                       discontinuous, degree - 1, degree, lvariant,
+                       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_nce(cell::type celltype, int degree,
@@ -393,10 +395,12 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement(element::family::N1E, celltype, degree, {tdim},
                        impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
-                       xview, Mview, 0, maps::type::covariantPiola,
-                       sobolev::space::HCurl, discontinuous, degree - 1, degree,
-                       lvariant);
+                       xview, Mview, 0, maps::type::covariantPiola, space,
+                       discontinuous, degree - 1, degree, lvariant,
+                       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

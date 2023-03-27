@@ -9,12 +9,15 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - "main"
   workflow_dispatch: ~
 
 jobs:
   build:
     name: Build and test (Red Hat)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     container: rockylinux/rockylinux:9
 
     env:

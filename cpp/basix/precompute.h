@@ -118,12 +118,29 @@ void apply_permutation(const std::span<const std::size_t>& perm,
                        const std::span<E>& data, std::size_t offset = 0,
                        std::size_t block_size = 1)
 {
-  for (std::size_t b = 0; b < block_size; ++b)
+  for (std::size_t i = 0; i < perm.size(); ++i)
   {
-    for (std::size_t i = 0; i < perm.size(); ++i)
+    for (std::size_t b = 0; b < block_size; ++b)
     {
       std::swap(data[block_size * (offset + i) + b],
                 data[block_size * (offset + perm[i]) + b]);
+    }
+  }
+}
+
+/// Permutation of mapped data
+template <typename E>
+void apply_permutation_mapped(const std::span<const std::size_t>& perm,
+                              const std::span<E>& data,
+                              std::span<const int> emap,
+                              std::size_t block_size = 1)
+{
+  for (std::size_t i = 0; i < perm.size(); ++i)
+  {
+    for (std::size_t b = 0; b < block_size; ++b)
+    {
+      std::swap(data[block_size * emap[i] + b],
+                data[block_size * emap[perm[i]] + b]);
     }
   }
 }
@@ -157,7 +174,9 @@ void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
 ///
 /// This computes the LU decomposition of the transpose of the matrix
 ///
-/// This function returns the permutation @f$P@f$P in the representation @f$PA^t=LU@f$ (precomputed as in `prepare_permutation()`). The LU decomposition of @f$A^t@f$ is computed in-place
+/// This function returns the permutation @f$P@f$P in the representation
+/// @f$PA^t=LU@f$ (precomputed as in `prepare_permutation()`). The LU
+/// decomposition of @f$A^t@f$ is computed in-place
 ///
 /// For an example of how the permutation in this form is applied, see
 /// `apply_matrix()`.

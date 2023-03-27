@@ -321,6 +321,8 @@ public:
   /// @param[in] dvariant The DPC variant of the element
   /// @param[in] tensor_factors The factors in the tensor product
   /// representation of this element
+  /// @param[in] dof_ordering DOF reordering: a mapping from the reference order
+  /// to a new permuted order
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
@@ -332,48 +334,8 @@ public:
       element::lagrange_variant lvariant, element::dpc_variant dvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
-      = {});
-
-  /// Overloaded constructor
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-      const std::array<std::vector<cmdspan2_t>, 4>& x,
-      const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type,
-      sobolev::space sobolev_space, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
-      element::lagrange_variant lvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// Overloaded constructor
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-      const std::array<std::vector<cmdspan2_t>, 4>& x,
-      const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type,
-      sobolev::space sobolev_space, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
-      element::dpc_variant dvariant,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
-
-  /// Overloaded constructor
-  FiniteElement(
-      element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-      const std::array<std::vector<cmdspan2_t>, 4>& x,
-      const std::array<std::vector<cmdspan4_t>, 4>& M,
-      int interpolation_nderivs, maps::type map_type,
-      sobolev::space sobolev_space, bool discontinuous,
-      int highest_complete_degree, int highest_degree,
-      std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-          tensor_factors
-      = {});
+      = {},
+      std::vector<int> dof_ordering = {});
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -805,7 +767,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_dof_transformation(const std::span<T>& data, int block_size,
+  void apply_dof_transformation(std::span<T> data, int block_size,
                                 std::uint32_t cell_info) const;
 
   /// Apply transpose DOF transformations to some data
@@ -817,8 +779,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_transpose_dof_transformation(const std::span<T>& data,
-                                          int block_size,
+  void apply_transpose_dof_transformation(std::span<T> data, int block_size,
                                           std::uint32_t cell_info) const;
 
   /// Apply inverse transpose DOF transformations to some data
@@ -830,8 +791,9 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_inverse_transpose_dof_transformation(
-      const std::span<T>& data, int block_size, std::uint32_t cell_info) const;
+  void
+  apply_inverse_transpose_dof_transformation(std::span<T> data, int block_size,
+                                             std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some data
   ///
@@ -842,8 +804,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_inverse_dof_transformation(const std::span<T>& data,
-                                        int block_size,
+  void apply_inverse_dof_transformation(std::span<T> data, int block_size,
                                         std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some transposed data
@@ -855,8 +816,7 @@ public:
   /// @param block_size The number of data points per DOF
   /// @param cell_info The permutation info for the cell
   template <typename T>
-  void apply_dof_transformation_to_transpose(const std::span<T>& data,
-                                             int block_size,
+  void apply_dof_transformation_to_transpose(std::span<T> data, int block_size,
                                              std::uint32_t cell_info) const;
 
   /// Apply transpose DOF transformations to some transposed data
@@ -869,7 +829,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void apply_transpose_dof_transformation_to_transpose(
-      const std::span<T>& data, int block_size, std::uint32_t cell_info) const;
+      std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
   /// @brief Apply inverse transpose DOF transformations to some
   /// transposed data.
@@ -882,7 +842,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void apply_inverse_transpose_dof_transformation_to_transpose(
-      const std::span<T>& data, int block_size, std::uint32_t cell_info) const;
+      std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
   /// Apply inverse DOF transformations to some transposed data
   ///
@@ -894,7 +854,7 @@ public:
   /// @param cell_info The permutation info for the cell
   template <typename T>
   void apply_inverse_dof_transformation_to_transpose(
-      const std::span<T>& data, int block_size, std::uint32_t cell_info) const;
+      std::span<T> data, int block_size, std::uint32_t cell_info) const;
 
   /// Return the interpolation points, i.e. the coordinates on the
   /// reference element where a function need to be evaluated in order
@@ -1091,7 +1051,38 @@ public:
   /// The number of derivatives needed when interpolating
   int interpolation_nderivs() const;
 
+  /// Get dof layout
+  const std::vector<int>& dof_ordering() const;
+
 private:
+  // Data permutation
+  // @param data Data to be permuted
+  // @param block_size
+  // @param cell_info Cell bitmap selecting required permutations
+  // @param eperm Permutation to use
+  // @param post Whether reflect is pre- or post- rotation.
+  template <typename T, bool post>
+  void permute_data(
+      std::span<T> data, int block_size, std::uint32_t cell_info,
+      const std::map<cell::type, std::vector<std::vector<std::size_t>>>& eperm)
+      const;
+
+  using array2_t = std::pair<std::vector<double>, std::array<std::size_t, 2>>;
+  using array3_t = std::pair<std::vector<double>, std::array<std::size_t, 3>>;
+  using trans_data_t
+      = std::vector<std::pair<std::vector<std::size_t>, array2_t>>;
+
+  // Data transformation
+  // @param data Data to be transformed (using matrices)
+  // @param block_size
+  // @param cell_info Cell bitmap selecting required transforms
+  // @param etrans Transformation matrices
+  // @param post Whether reflect is pre- or post- rotation.
+  template <typename T, bool post, typename OP>
+  void
+  transform_data(std::span<T> data, int block_size, std::uint32_t cell_info,
+                 const std::map<cell::type, trans_data_t>& etrans, OP op) const;
+
   // Cell type
   cell::type _cell_type;
 
@@ -1107,7 +1098,7 @@ private:
   // Lagrange variant
   element::lagrange_variant _lagrange_variant;
 
-  // Lagrange variant
+  // DPC variant
   element::dpc_variant _dpc_variant;
 
   // Degree that was input when creating the element
@@ -1143,9 +1134,6 @@ private:
 
   // Dofs associated with the closdure of each cell (sub-)entity
   std::vector<std::vector<std::vector<int>>> _e_closure_dofs;
-
-  using array2_t = std::pair<std::vector<double>, std::array<std::size_t, 2>>;
-  using array3_t = std::pair<std::vector<double>, std::array<std::size_t, 3>>;
 
   // Entity transformations
   std::map<cell::type, array3_t> _entity_transformations;
@@ -1184,9 +1172,6 @@ private:
   // _dof_transformations_are_identity is False
   std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm_rev;
 
-  using trans_data_t
-      = std::vector<std::pair<std::vector<std::size_t>, array2_t>>;
-
   // The entity transformations in precomputed form
   std::map<cell::type, trans_data_t> _etrans;
 
@@ -1213,6 +1198,14 @@ private:
   // scaling factor may additionally be needed.
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
       _tensor_factors;
+
+  // Dof reordering for different element dof layout compatibility.
+  // The reference basix layout is ordered by entity, i.e. dofs on
+  // vertices, followed by edges, faces, then internal dofs.
+  // _dof_ordering stores the map to the new order required, e.g.
+  // for a P2 triangle, _dof_ordering=[0 3 5 1 2 4] will place
+  // dofs 0, 3, 5 on the vertices and 1, 2, 4, on the edges.
+  std::vector<int> _dof_ordering;
 
   // Is the interpolation matrix an identity?
   bool _interpolation_is_identity;
@@ -1264,19 +1257,6 @@ create_custom_element(cell::type cell_type,
                       sobolev::space sobolev_space, bool discontinuous,
                       int highest_complete_degree, int highest_degree);
 
-/// Create an element using a given Lagrange variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant lvariant,
-                             bool discontinuous);
-
 /// Create an element using a given Lagrange variant and a given DPC variant
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
@@ -1286,637 +1266,286 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
+/// @param[in] dof_ordering Ordering of dofs for ElementDofLayout
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, element::lagrange_variant lvariant,
-                             element::dpc_variant dvariant, bool discontinuous);
-
-/// Create an element using a given DPC variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined on
-/// @param[in] degree The degree of the element
-/// @param[in] dvariant The variant of DPC to use
-/// @param[in] discontinuous Indicates whether the element is discontinuous
-/// between cells points of the element. The discontinuous element will have the
-/// same DOFs, but they will all be associated with the interior of the cell.
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::dpc_variant dvariant,
-                             bool discontinuous);
-
-/// Create an element
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @param[in] discontinuous Indicates whether the element is
-/// discontinuous between cells points of the element. The discontinuous
-/// element will have the same DOFs, but they will all be associated
-/// with the interior of the cell.
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, bool discontinuous);
-
-/// Create a continuous element using a given Lagrange variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant lvariant);
-
-/// Create a continuous element using a given Lagrange variant and a given DPC
-/// variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @param[in] lvariant The variant of Lagrange to use
-/// @param[in] dvariant The variant of DPC to use
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant lvariant,
-                             element::dpc_variant dvariant);
-
-/// Create a continuous element using a given DPC variant
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @param[in] dvariant The variant of DPC to use
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::dpc_variant dvariant);
-
-/// Create a continuous element
-/// @param[in] family The element family
-/// @param[in] cell The reference cell type that the element is defined
-/// on
-/// @param[in] degree The degree of the element
-/// @return A finite element
-FiniteElement create_element(element::family family, cell::type cell,
-                             int degree);
+                             element::dpc_variant dvariant, bool discontinuous,
+                             std::vector<int> dof_ordering = {});
 
 /// Return the Basix version number
 /// @return version string
 std::string version();
 
 //-----------------------------------------------------------------------------
+template <typename T, bool post>
+void FiniteElement::permute_data(
+    std::span<T> data, int block_size, std::uint32_t cell_info,
+    const std::map<cell::type, std::vector<std::vector<std::size_t>>>& eperm)
+    const
+{
+  if (_cell_tdim >= 2)
+  {
+    // This assumes 3 bits are used per face. This will need updating if 3D
+    // cells with faces with more than 4 sides are implemented
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+
+    // Permute DOFs on edges
+    {
+      auto& trans = eperm.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
+      {
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+          precompute::apply_permutation_mapped(trans, data, _edofs[1][e],
+                                               block_size);
+      }
+    }
+
+    if (_cell_tdim == 3)
+    {
+      // Permute DOFs on faces
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
+      {
+        auto& trans = eperm.at(_cell_subentity_types[2][f]);
+
+        // Reflect a face (pre rotate)
+        if (!post and cell_info >> (3 * f) & 1)
+          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+                                               block_size);
+
+        // Rotate a face
+        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+          precompute::apply_permutation_mapped(trans[0], data, _edofs[2][f],
+                                               block_size);
+
+        // Reflect a face (post rotate)
+        if (post and cell_info >> (3 * f) & 1)
+          precompute::apply_permutation_mapped(trans[1], data, _edofs[2][f],
+                                               block_size);
+      }
+    }
+  }
+}
+//-----------------------------------------------------------------------------
+template <typename T, bool post, typename OP>
+void FiniteElement::transform_data(
+    std::span<T> data, int block_size, std::uint32_t cell_info,
+    const std::map<cell::type, trans_data_t>& etrans, OP op) const
+{
+  if (_cell_tdim >= 2)
+  {
+    // This assumes 3 bits are used per face. This will need updating if
+    // 3D cells with faces with more than 4 sides are implemented
+    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
+    int dofstart = 0;
+    for (auto& edofs0 : _edofs[0])
+      dofstart += edofs0.size();
+
+    // Transform DOFs on edges
+    {
+      auto& [v_size_t, matrix] = etrans.at(cell::type::interval)[0];
+      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
+      {
+        // Reverse an edge
+        if (cell_info >> (face_start + e) & 1)
+        {
+          op(std::span(v_size_t),
+             cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+             block_size);
+        }
+        dofstart += _edofs[1][e].size();
+      }
+    }
+
+    if (_cell_tdim == 3)
+    {
+      // Permute DOFs on faces
+      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
+      {
+        auto& trans = etrans.at(_cell_subentity_types[2][f]);
+
+        // Reflect a face (pre rotation)
+        if (!post and cell_info >> (3 * f) & 1)
+        {
+          const auto& m = trans[1];
+          const auto& v_size_t = std::get<0>(m);
+          const auto& matrix = std::get<1>(m);
+          op(std::span(v_size_t),
+             cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+             block_size);
+        }
+
+        // Rotate a face
+        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
+        {
+          const auto& m = trans[0];
+          const auto& v_size_t = std::get<0>(m);
+          const auto& matrix = std::get<1>(m);
+          op(std::span(v_size_t),
+             cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+             block_size);
+        }
+
+        // Reflect a face (post rotation)
+        if (post and cell_info >> (3 * f) & 1)
+        {
+          const auto& m = trans[1];
+          const auto& v_size_t = std::get<0>(m);
+          const auto& matrix = std::get<1>(m);
+          op(std::span(v_size_t),
+             cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
+             block_size);
+        }
+
+        dofstart += _edofs[2][f].size();
+      }
+    }
+  }
+}
+//-----------------------------------------------------------------------------
 template <typename T>
-void FiniteElement::apply_dof_transformation(const std::span<T>& data,
-                                             int block_size,
+void FiniteElement::apply_dof_transformation(std::span<T> data, int block_size,
                                              std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
-  {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Transform DOFs on edges
-    {
-      auto& [v_size_t, matrix] = _etrans.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-        {
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[1][e].size();
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _etrans.at(_cell_subentity_types[2][f]);
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-        {
-          const auto& m = trans[1];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& matrix = std::get<1>(m);
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          const auto& m = trans[0];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& matrix = std::get<1>(m);
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        dofstart += _edofs[2][f].size();
-      }
-    }
-  }
+  if (_dof_transformations_are_permutations)
+    permute_data<T, false>(data, block_size, cell_info, _eperm);
+  else
+    transform_data<T, false>(data, block_size, cell_info, _etrans,
+                             precompute::apply_matrix<double, T>);
 }
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_transpose_dof_transformation(
-    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
+    std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
-  {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Transform DOFs on edges
-    {
-      auto& [v_size_t, matrix] = _etransT.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-        {
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[1][e].size();
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _etransT.at(_cell_subentity_types[2][f]);
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          auto& m = trans[0];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-        {
-          auto& m = trans[1];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[2][f].size();
-      }
-    }
-  }
+  if (_dof_transformations_are_permutations)
+    permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
+  else
+    transform_data<T, true>(data, block_size, cell_info, _etransT,
+                            precompute::apply_matrix<double, T>);
 }
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_transpose_dof_transformation(
-    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
+    std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
-  {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Transform DOFs on edges
-    for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-    {
-      // Reverse an edge
-      if (cell_info >> (face_start + e) & 1)
-      {
-        auto& [v_size_t, matrix] = _etrans_invT.at(cell::type::interval)[0];
-        precompute::apply_matrix(std::span(v_size_t),
-                                 cmdspan2_t(matrix.first.data(), matrix.second),
-                                 data, dofstart, block_size);
-      }
-      dofstart += _edofs[1][e].size();
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _etrans_invT.at(_cell_subentity_types[2][f]);
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-        {
-          auto& m = trans[1];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          const auto& m = trans[0];
-          const auto& v_size_t = std::get<0>(m);
-          const auto& matrix = std::get<1>(m);
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        dofstart += _edofs[2][f].size();
-      }
-    }
-  }
+  if (_dof_transformations_are_permutations)
+    permute_data<T, false>(data, block_size, cell_info, _eperm);
+  else
+    transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
+                             precompute::apply_matrix<double, T>);
 }
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_dof_transformation(
-    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
+    std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
-  {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Transform DOFs on edges
-    {
-      auto& [v_size_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-        {
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[1][e].size();
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _etrans_inv.at(_cell_subentity_types[2][f]);
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          auto& m = trans[0];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-        {
-          auto& m = trans[1];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        dofstart += _edofs[2][f].size();
-      }
-    }
-  }
+  if (_dof_transformations_are_permutations)
+    permute_data<T, true>(data, block_size, cell_info, _eperm_rev);
+  else
+    transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
+                            precompute::apply_matrix<double, T>);
 }
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_dof_transformation_to_transpose(
-    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
+    std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
+  if (_dof_transformations_are_permutations)
   {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Transform DOFs on edges
+    assert(data.size() % block_size == 0);
+    const int step = data.size() / block_size;
+    for (int i = 0; i < block_size; ++i)
     {
-      auto& [v_size_t, matrix] = _etrans.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-        {
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        dofstart += _edofs[1][e].size();
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _etrans.at(_cell_subentity_types[2][f]);
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-        {
-          auto& m = trans[1];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          auto& m = trans[0];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[2][f].size();
-      }
+      std::span<T> dblock(data.data() + i * step, step);
+      permute_data<T, false>(dblock, 1, cell_info, _eperm);
     }
   }
+  else
+    transform_data<T, false>(data, block_size, cell_info, _etrans,
+                             precompute::apply_matrix_to_transpose<double, T>);
 }
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
-    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
+    std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
+  if (_dof_transformations_are_permutations)
   {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Transform DOFs on edges
+    assert(data.size() % block_size == 0);
+    const int step = data.size() / block_size;
+    for (int i = 0; i < block_size; ++i)
     {
-      auto& [v_size_t, matrix] = _etrans_invT.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-        {
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[1][e].size();
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _etrans_invT.at(_cell_subentity_types[2][f]);
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-        {
-          auto& m = trans[1];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          auto& m = trans[0];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[2][f].size();
-      }
+      std::span<T> dblock(data.data() + i * step, step);
+      permute_data<T, false>(dblock, 1, cell_info, _eperm);
     }
   }
+  else
+    transform_data<T, false>(data, block_size, cell_info, _etrans_invT,
+                             precompute::apply_matrix_to_transpose<double, T>);
 }
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_transpose_dof_transformation_to_transpose(
-    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
+    std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
+  if (_dof_transformations_are_permutations)
   {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Transform DOFs on edges
+    assert(data.size() % block_size == 0);
+    const int step = data.size() / block_size;
+    for (int i = 0; i < block_size; ++i)
     {
-      auto& [v_size_t, matrix] = _etransT.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-        {
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[1][e].size();
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _etransT.at(_cell_subentity_types[2][f]);
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          auto& m = trans[0];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-        {
-          auto& m = trans[1];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[2][f].size();
-      }
+      std::span<T> dblock(data.data() + i * step, step);
+      permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
     }
   }
+  else
+    transform_data<T, true>(data, block_size, cell_info, _etransT,
+                            precompute::apply_matrix_to_transpose<double, T>);
 }
 //-----------------------------------------------------------------------------
 template <typename T>
 void FiniteElement::apply_inverse_dof_transformation_to_transpose(
-    const std::span<T>& data, int block_size, std::uint32_t cell_info) const
+    std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
+  if (_dof_transformations_are_permutations)
   {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Transform DOFs on edges
+    assert(data.size() % block_size == 0);
+    const int step = data.size() / block_size;
+    for (int i = 0; i < block_size; ++i)
     {
-      auto& [v_size_t, matrix] = _etrans_inv.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-        {
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-        dofstart += _edofs[1][e].size();
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _etrans_inv.at(_cell_subentity_types[2][f]);
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-        {
-          auto& m = trans[0];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-        {
-          auto& m = trans[1];
-          auto& v_size_t = std::get<0>(m);
-          auto& matrix = std::get<1>(m);
-          precompute::apply_matrix_to_transpose(
-              std::span(v_size_t),
-              cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-              block_size);
-        }
-
-        dofstart += _edofs[2][f].size();
-      }
+      std::span<T> dblock(data.data() + i * step, step);
+      permute_data<T, true>(dblock, 1, cell_info, _eperm_rev);
     }
   }
+  else
+    transform_data<T, true>(data, block_size, cell_info, _etrans_inv,
+                            precompute::apply_matrix_to_transpose<double, T>);
 }
 //-----------------------------------------------------------------------------
 

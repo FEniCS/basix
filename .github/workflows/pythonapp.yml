@@ -20,23 +20,19 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         python-version: ["3.8", "3.9", "3.10"]
-    env:
-      CC: gcc-10
-      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y upgrade
-          sudo apt-get install -y doxygen libgraphviz-dev libopenblas-dev liblapack-dev ninja-build
+          sudo apt-get install -y doxygen graphviz libopenblas-dev liblapack-dev ninja-build
 
       - name: Install Basix
         run: python3 -m pip -v install .[ci]
@@ -144,16 +140,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-22.04]
         python-version: ["3.10"]
-    env:
-      CC: gcc-10
-      CXX: g++-10
 
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -189,10 +182,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-    env:
-      CC: gcc-10
-      CXX: g++-10
+        os: [ubuntu-22.04]
 
     steps:
       - uses: actions/checkout@v3
@@ -206,7 +196,7 @@ jobs:
           sudo cmake --install build-dir
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: "3.10"
       - name: Run C++ demos

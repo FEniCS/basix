@@ -85,9 +85,10 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
-  return FiniteElement(element::family::CR, celltype, 1, {},
-                       impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                       xview, Mview, 0, maps::type::identity,
-                       sobolev::space::L2, discontinuous, degree, degree);
+  return FiniteElement(
+      element::family::CR, celltype, 1, {},
+      impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs), xview, Mview, 0,
+      maps::type::identity, sobolev::space::L2, discontinuous, degree, degree,
+      element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-PROJECT(basix_nanobind VERSION "0.6.0.0"  LANGUAGES CXX)
+PROJECT(basix_nanobind VERSION "0.7.0.0"  LANGUAGES CXX)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -39,8 +39,7 @@ list(APPEND CMAKE_PREFIX_PATH "${_tmp_dir}")
 find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
 message("Hints: $ENV{PYBIND11_ROOT}")
-find_package(nanobind REQUIRED CONFIG HINTS ${PYBIND11_DIR} ${PYBIND11_ROOT}
-  $ENV{PYBIND11_DIR} $ENV{PYBIND11_ROOT})
+find_package(nanobind REQUIRED)
 
 # Create the binding library
 # pybind11_add_module(_basixcpp MODULE wrapper.cpp)

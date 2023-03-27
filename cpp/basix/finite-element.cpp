@@ -206,29 +206,56 @@ basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
                                            element::lagrange_variant lvariant,
                                            element::dpc_variant dvariant,
-                                           bool discontinuous)
+                                           bool discontinuous,
+                                           std::vector<int> dof_ordering)
 {
   if (family == element::family::custom)
   {
     throw std::runtime_error("Cannot create a custom element directly. Try "
                              "using `create_custom_element` instead");
   }
+
   if (degree < 0)
   {
     throw std::runtime_error("Cannot create an element with a negative degree");
+  }
+
+  // Checklist of variant compatibility (lagrange, DPC) for each
+  static const std::map<element::family, std::array<bool, 2>> has_variant
+      = {{element::family::P, {true, false}},
+         {element::family::RT, {true, false}},
+         {element::family::N1E, {true, false}},
+         {element::family::serendipity, {true, true}},
+         {element::family::DPC, {false, true}},
+         {element::family::Regge, {false, false}},
+         {element::family::HHJ, {false, false}},
+         {element::family::CR, {false, false}},
+         {element::family::bubble, {false, false}},
+         {element::family::Hermite, {false, false}}};
+  if (auto it = has_variant.find(family); it != has_variant.end())
+  {
+    if (it->second[0] == false and lvariant != element::lagrange_variant::unset)
+    {
+      throw std::runtime_error(
+          "Cannot pass a Lagrange variant to this element.");
+    }
+    if (it->second[1] == false and dvariant != element::dpc_variant::unset)
+      throw std::runtime_error("Cannot pass a DPC variant to this element.");
+  }
+
+  if (dof_ordering.size() > 0 and family != element::family::P)
+  {
+    throw std::runtime_error("DOF ordering only supported for Lagrange");
   }
 
   switch (family)
   {
   // P family
   case element::family::P:
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
-    return element::create_lagrange(cell, degree, lvariant, discontinuous);
+    return element::create_lagrange(cell, degree, lvariant, discontinuous,
+                                    dof_ordering);
   case element::family::RT:
   {
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -241,8 +268,6 @@ basix::FiniteElement basix::create_element(element::family family,
   }
   case element::family::N1E:
   {
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     switch (cell)
     {
     case cell::type::quadrilateral:
@@ -282,109 +307,24 @@ basix::FiniteElement basix::create_element(element::family family,
       return element::create_nedelec2(cell, degree, lvariant, discontinuous);
     }
   case element::family::DPC:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
     return element::create_dpc(cell, degree, dvariant, discontinuous);
+
   // Matrix elements
   case element::family::Regge:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_regge(cell, degree, discontinuous);
   case element::family::HHJ:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_hhj(cell, degree, discontinuous);
+
   // Other elements
   case element::family::CR:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_cr(cell, degree, discontinuous);
   case element::family::bubble:
-    if (lvariant != element::lagrange_variant::unset)
-    {
-      throw std::runtime_error(
-          "Cannot pass a Lagrange variant to this element.");
-    }
-    if (dvariant != element::dpc_variant::unset)
-      throw std::runtime_error("Cannot pass a DPC variant to this element.");
     return element::create_bubble(cell, degree, discontinuous);
   case element::family::Hermite:
     return element::create_hermite(cell, degree, discontinuous);
   default:
     throw std::runtime_error("Element family not found.");
   }
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::dpc_variant dvariant,
-                                           bool discontinuous)
-{
-  return create_element(family, cell, degree, element::lagrange_variant::unset,
-                        dvariant, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           bool discontinuous)
-{
-  return create_element(family, cell, degree, lvariant,
-                        element::dpc_variant::unset, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           bool discontinuous)
-{
-  return create_element(family, cell, degree, element::lagrange_variant::unset,
-                        element::dpc_variant::unset, discontinuous);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant)
-{
-  return create_element(family, cell, degree, lvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::dpc_variant dvariant)
-{
-  return create_element(family, cell, degree, dvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree,
-                                           element::lagrange_variant lvariant,
-                                           element::dpc_variant dvariant)
-{
-  return create_element(family, cell, degree, lvariant, dvariant, false);
-}
-//-----------------------------------------------------------------------------
-basix::FiniteElement basix::create_element(element::family family,
-                                           cell::type cell, int degree)
-{
-  return create_element(family, cell, degree, false);
 }
 //-----------------------------------------------------------------------------
 std::tuple<std::array<std::vector<std::vector<double>>, 4>,
@@ -548,7 +488,8 @@ basix::FiniteElement basix::create_custom_element(
   return basix::FiniteElement(
       element::family::custom, cell_type, highest_degree, value_shape, wcoeffs,
       x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
-      highest_complete_degree, highest_degree);
+      highest_complete_degree, highest_degree, element::lagrange_variant::unset,
+      element::dpc_variant::unset);
 }
 
 //-----------------------------------------------------------------------------
@@ -559,60 +500,10 @@ FiniteElement::FiniteElement(
     const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
     maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
     int highest_complete_degree, int highest_degree,
-    element::lagrange_variant lvariant,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, sobolev_space,
-                    discontinuous, highest_complete_degree, highest_degree,
-                    lvariant, element::dpc_variant::unset, tensor_factors)
-{
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    element::dpc_variant dvariant,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, sobolev_space,
-                    discontinuous, highest_complete_degree, highest_degree,
-                    element::lagrange_variant::unset, dvariant, tensor_factors)
-{
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
-    std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
-    : FiniteElement(family, cell_type, degree, value_shape, wcoeffs, x, M,
-                    interpolation_nderivs, map_type, sobolev_space,
-                    discontinuous, highest_complete_degree, highest_degree,
-                    element::lagrange_variant::unset,
-                    element::dpc_variant::unset, tensor_factors)
-{
-}
-//-----------------------------------------------------------------------------
-FiniteElement::FiniteElement(
-    element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
-    int highest_complete_degree, int highest_degree,
     element::lagrange_variant lvariant, element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
+        tensor_factors,
+    std::vector<int> dof_ordering)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
@@ -621,7 +512,7 @@ FiniteElement::FiniteElement(
       _highest_complete_degree(highest_complete_degree),
       _value_shape(value_shape), _map_type(map_type),
       _sobolev_space(sobolev_space), _discontinuous(discontinuous),
-      _tensor_factors(tensor_factors)
+      _tensor_factors(tensor_factors), _dof_ordering(dof_ordering)
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
@@ -663,7 +554,7 @@ FiniteElement::FiniteElement(
   _wcoeffs
       = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
 
-  // Copy  M
+  // Copy M
   for (std::size_t i = 0; i < M.size(); ++i)
   {
     for (auto Mi : M[i])
@@ -756,6 +647,43 @@ FiniteElement::FiniteElement(
     for (std::size_t e = 0; e < M[d].size(); ++e)
       for (std::size_t i = 0; i < M[d][e].extent(0); ++i)
         edofs_d[e].push_back(dof++);
+  }
+
+  if (!_dof_ordering.empty())
+  {
+    const int ndof_order = _dof_ordering.size();
+    // Safety checks
+    if (ndof_order != dof)
+      throw std::runtime_error("Incorrect number of dofs in ordering.");
+    std::vector<int> check(_dof_ordering.size(), 0);
+    for (int q : _dof_ordering)
+    {
+      if (q < 0 or q >= ndof_order)
+        throw std::runtime_error("Out of range: dof_ordering.");
+      check[q] += 1;
+    }
+    for (int q : check)
+      if (q != 1)
+        throw std::runtime_error("Dof ordering not a permutation.");
+
+    // Apply permutation to _edofs
+    for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
+    {
+      for (auto& entity : _edofs[d])
+      {
+        for (int& q : entity)
+          q = _dof_ordering[q];
+      }
+    }
+
+    // Apply permutation to _points (for interpolation)
+    std::vector<double> new_points(_points.first.size());
+    assert(_points.second[0] == _dof_ordering.size());
+    const int gdim = _points.second[1];
+    for (std::size_t d = 0; d < _dof_ordering.size(); ++d)
+      for (int i = 0; i < gdim; ++i)
+        new_points[gdim * _dof_ordering[d] + i] = _points.first[gdim * d + i];
+    _points = {new_points, _points.second};
   }
 
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
@@ -977,6 +905,7 @@ FiniteElement::FiniteElement(
       }
     }
   }
+
   // Check if interpolation matrix is the identity
   cmdspan2_t matM(_matM.first.data(), _matM.second);
   _interpolation_is_identity = matM.extent(0) == matM.extent(1);
@@ -1103,9 +1032,18 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
       math::dot(C, cmdspan2_t(B.data_handle(), B.extent(0), B.extent(1)),
                 result);
 
-      for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
-        for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
-          basis_data(p, k0, k1, j) = result(k1, k0);
+      if (_dof_ordering.empty())
+      {
+        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+            basis_data(p, k0, k1, j) = result(k1, k0);
+      }
+      else
+      {
+        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+            basis_data(p, k0, _dof_ordering[k1], j) = result(k1, k0);
+      }
     }
   }
 }
@@ -1328,46 +1266,7 @@ void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
-  {
-    // This assumes 3 bits are used per face. This will need updating if 3D
-    // cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Permute DOFs on edges
-    {
-      auto& trans = _eperm.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-          precompute::apply_permutation(trans, dofs, dofstart);
-        dofstart += _edofs[1][e].size();
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _eperm.at(_cell_subentity_types[2][f]);
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-          precompute::apply_permutation(trans[1], dofs, dofstart);
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-          precompute::apply_permutation(trans[0], dofs, dofstart);
-
-        dofstart += _edofs[2][f].size();
-      }
-    }
-  }
+  permute_data<std::int32_t, false>(dofs, 1, cell_info, _eperm);
 }
 //-----------------------------------------------------------------------------
 void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
@@ -1381,46 +1280,7 @@ void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
   if (_dof_transformations_are_identity)
     return;
 
-  if (_cell_tdim >= 2)
-  {
-    // This assumes 3 bits are used per face. This will need updating if
-    // 3D cells with faces with more than 4 sides are implemented
-    int face_start = _cell_tdim == 3 ? 3 * _edofs[2].size() : 0;
-    int dofstart = 0;
-    for (auto& edofs0 : _edofs[0])
-      dofstart += edofs0.size();
-
-    // Permute DOFs on edges
-    {
-      auto& trans = _eperm_rev.at(cell::type::interval)[0];
-      for (std::size_t e = 0; e < _edofs[1].size(); ++e)
-      {
-        // Reverse an edge
-        if (cell_info >> (face_start + e) & 1)
-          precompute::apply_permutation(trans, dofs, dofstart);
-        dofstart += _edofs[1][e].size();
-      }
-    }
-
-    if (_cell_tdim == 3)
-    {
-      // Permute DOFs on faces
-      for (std::size_t f = 0; f < _edofs[2].size(); ++f)
-      {
-        auto& trans = _eperm_rev.at(_cell_subentity_types[2][f]);
-
-        // Rotate a face
-        for (std::uint32_t r = 0; r < (cell_info >> (3 * f + 1) & 3); ++r)
-          precompute::apply_permutation(trans[0], dofs, dofstart);
-
-        // Reflect a face
-        if (cell_info >> (3 * f) & 1)
-          precompute::apply_permutation(trans[1], dofs, dofstart);
-
-        dofstart += _edofs[2][f].size();
-      }
-    }
-  }
+  permute_data<std::int32_t, true>(dofs, 1, cell_info, _eperm_rev);
 }
 //-----------------------------------------------------------------------------
 std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>
@@ -1481,6 +1341,11 @@ bool FiniteElement::interpolation_is_identity() const
 int FiniteElement::interpolation_nderivs() const
 {
   return _interpolation_nderivs;
+}
+//-----------------------------------------------------------------------------
+const std::vector<int>& FiniteElement::dof_ordering() const
+{
+  return _dof_ordering;
 }
 //-----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>

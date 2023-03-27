@@ -37,8 +37,8 @@ variants = [
     [basix.LagrangeVariant.gll_warped],
     [basix.LagrangeVariant.legendre],
     [basix.LagrangeVariant.bernstein],
-    [basix.DPCVariant.diagonal_gll],
-    [basix.DPCVariant.legendre],
+    [basix.LagrangeVariant.unset, basix.DPCVariant.diagonal_gll],
+    [basix.LagrangeVariant.unset, basix.DPCVariant.legendre],
     [basix.LagrangeVariant.legendre, basix.DPCVariant.legendre],
 ]
 
@@ -76,7 +76,7 @@ def test_create_element(cell, degree, family, variant):
             raise e
 
     try:
-        element = basix.create_element(family, cell, degree, *variant, True)
+        element = basix.create_element(family, cell, degree, *variant, discontinuous=True)
         assert element.degree == degree
     except RuntimeError as e:
         if len(e.args) == 0 or "dgesv" in e.args[0]:

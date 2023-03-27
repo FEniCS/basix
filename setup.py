@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(name="fenics-basix",
       python_requires='>=3.7.0',
-      version="0.6.0.dev0",
+      version="0.7.0.dev0",
       description='Basix Python interface',
       long_description=long_description,
       long_description_content_type="text/markdown",

@@ -89,11 +89,12 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
 
   // The number of order (degree) scalar polynomials
   const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
-
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement(family::BDM, celltype, degree, {tdim},
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                       xview, Mview, 0, maps::type::contravariantPiola,
-                       sobolev::space::HDiv, discontinuous, degree, degree,
-                       lvariant);
+                       xview, Mview, 0, maps::type::contravariantPiola, space,
+                       discontinuous, degree, degree, lvariant,
+                       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

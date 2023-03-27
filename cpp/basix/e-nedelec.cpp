@@ -272,10 +272,13 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement(element::family::N1E, celltype, degree, {tdim},
                        impl::mdspan2_t(wcoeffs.data(), wshape), xview, Mview, 0,
-                       maps::type::covariantPiola, sobolev::space::HCurl,
-                       discontinuous, degree - 1, degree, lvariant);
+                       maps::type::covariantPiola, space, discontinuous,
+                       degree - 1, degree, lvariant,
+                       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
 FiniteElement element::create_nedelec2(cell::type celltype, int degree,
@@ -351,7 +354,7 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
     }
     else
     {
-      const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
+      const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
       x[3] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
       M[3] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
     }
@@ -377,6 +380,6 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
                                        tdim * psize, tdim * psize),
                        xview, Mview, 0, maps::type::covariantPiola,
                        sobolev::space::HCurl, discontinuous, degree, degree,
-                       lvariant);
+                       lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

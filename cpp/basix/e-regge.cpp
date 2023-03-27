@@ -174,12 +174,12 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
     Mview = impl::to_mdspan(Mbuffer, Mshape);
   }
 
-  // if (discontinuous)
-  //   std::tie(x, M) = element::make_discontinuous(x, M, tdim, tdim * tdim);
-
-  return FiniteElement(element::family::Regge, celltype, degree, {tdim, tdim},
-                       impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()),
-                       xview, Mview, 0, maps::type::doubleCovariantPiola,
-                       sobolev::space::HEin, discontinuous, -1, degree);
+  sobolev::space space
+      = discontinuous ? sobolev::space::L2 : sobolev::space::HEin;
+  return FiniteElement(
+      element::family::Regge, celltype, degree, {tdim, tdim},
+      impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
+      maps::type::doubleCovariantPiola, space, discontinuous, -1, degree,
+      element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

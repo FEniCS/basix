@@ -321,6 +321,8 @@ public:
   /// @param[in] dvariant The DPC variant of the element
   /// @param[in] tensor_factors The factors in the tensor product
   /// representation of this element
+  /// @param[in] dof_ordering DOF reordering: a mapping from the reference order
+  /// to a new permuted order
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
@@ -332,7 +334,8 @@ public:
       element::lagrange_variant lvariant, element::dpc_variant dvariant,
       std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
           tensor_factors
-      = {});
+      = {},
+      std::vector<int> dof_ordering = {});
 
   /// Copy constructor
   FiniteElement(const FiniteElement& element) = default;
@@ -1048,6 +1051,9 @@ public:
   /// The number of derivatives needed when interpolating
   int interpolation_nderivs() const;
 
+  /// Get dof layout
+  const std::vector<int>& dof_ordering() const;
+
 private:
   // Data permutation
   // @param data Data to be permuted
@@ -1193,6 +1199,14 @@ private:
   std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
       _tensor_factors;
 
+  // Dof reordering for different element dof layout compatibility.
+  // The reference basix layout is ordered by entity, i.e. dofs on
+  // vertices, followed by edges, faces, then internal dofs.
+  // _dof_ordering stores the map to the new order required, e.g.
+  // for a P2 triangle, _dof_ordering=[0 3 5 1 2 4] will place
+  // dofs 0, 3, 5 on the vertices and 1, 2, 4, on the edges.
+  std::vector<int> _dof_ordering;
+
   // Is the interpolation matrix an identity?
   bool _interpolation_is_identity;
 
@@ -1252,10 +1266,12 @@ create_custom_element(cell::type cell_type,
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
+/// @param[in] dof_ordering Ordering of dofs for ElementDofLayout
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
                              int degree, element::lagrange_variant lvariant,
-                             element::dpc_variant dvariant, bool discontinuous);
+                             element::dpc_variant dvariant, bool discontinuous,
+                             std::vector<int> dof_ordering = {});
 
 /// Return the Basix version number
 /// @return version string

@@ -206,7 +206,8 @@ basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
                                            element::lagrange_variant lvariant,
                                            element::dpc_variant dvariant,
-                                           bool discontinuous)
+                                           bool discontinuous,
+                                           std::vector<int> dof_ordering)
 {
   if (family == element::family::custom)
   {
@@ -242,11 +243,17 @@ basix::FiniteElement basix::create_element(element::family family,
       throw std::runtime_error("Cannot pass a DPC variant to this element.");
   }
 
+  if (dof_ordering.size() > 0 and family != element::family::P)
+  {
+    throw std::runtime_error("DOF ordering only supported for Lagrange");
+  }
+
   switch (family)
   {
   // P family
   case element::family::P:
-    return element::create_lagrange(cell, degree, lvariant, discontinuous);
+    return element::create_lagrange(cell, degree, lvariant, discontinuous,
+                                    dof_ordering);
   case element::family::RT:
   {
     switch (cell)
@@ -495,7 +502,8 @@ FiniteElement::FiniteElement(
     int highest_complete_degree, int highest_degree,
     element::lagrange_variant lvariant, element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
-        tensor_factors)
+        tensor_factors,
+    std::vector<int> dof_ordering)
     : _cell_type(cell_type), _cell_tdim(cell::topological_dimension(cell_type)),
       _cell_subentity_types(cell::subentity_types(cell_type)), _family(family),
       _lagrange_variant(lvariant), _dpc_variant(dvariant), _degree(degree),
@@ -504,7 +512,7 @@ FiniteElement::FiniteElement(
       _highest_complete_degree(highest_complete_degree),
       _value_shape(value_shape), _map_type(map_type),
       _sobolev_space(sobolev_space), _discontinuous(discontinuous),
-      _tensor_factors(tensor_factors)
+      _tensor_factors(tensor_factors), _dof_ordering(dof_ordering)
 {
   // Check that discontinuous elements only have DOFs on interior
   if (discontinuous)
@@ -546,7 +554,7 @@ FiniteElement::FiniteElement(
   _wcoeffs
       = {wcoeffs_ortho_b, {wcoeffs_ortho.extent(0), wcoeffs_ortho.extent(1)}};
 
-  // Copy  M
+  // Copy M
   for (std::size_t i = 0; i < M.size(); ++i)
   {
     for (auto Mi : M[i])
@@ -639,6 +647,43 @@ FiniteElement::FiniteElement(
     for (std::size_t e = 0; e < M[d].size(); ++e)
       for (std::size_t i = 0; i < M[d][e].extent(0); ++i)
         edofs_d[e].push_back(dof++);
+  }
+
+  if (!_dof_ordering.empty())
+  {
+    const int ndof_order = _dof_ordering.size();
+    // Safety checks
+    if (ndof_order != dof)
+      throw std::runtime_error("Incorrect number of dofs in ordering.");
+    std::vector<int> check(_dof_ordering.size(), 0);
+    for (int q : _dof_ordering)
+    {
+      if (q < 0 or q >= ndof_order)
+        throw std::runtime_error("Out of range: dof_ordering.");
+      check[q] += 1;
+    }
+    for (int q : check)
+      if (q != 1)
+        throw std::runtime_error("Dof ordering not a permutation.");
+
+    // Apply permutation to _edofs
+    for (std::size_t d = 0; d < _cell_tdim + 1; ++d)
+    {
+      for (auto& entity : _edofs[d])
+      {
+        for (int& q : entity)
+          q = _dof_ordering[q];
+      }
+    }
+
+    // Apply permutation to _points (for interpolation)
+    std::vector<double> new_points(_points.first.size());
+    assert(_points.second[0] == _dof_ordering.size());
+    const int gdim = _points.second[1];
+    for (std::size_t d = 0; d < _dof_ordering.size(); ++d)
+      for (int i = 0; i < gdim; ++i)
+        new_points[gdim * _dof_ordering[d] + i] = _points.first[gdim * d + i];
+    _points = {new_points, _points.second};
   }
 
   const std::vector<std::vector<std::vector<std::vector<int>>>> connectivity
@@ -987,9 +1032,18 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
       math::dot(C, cmdspan2_t(B.data_handle(), B.extent(0), B.extent(1)),
                 result);
 
-      for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
-        for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
-          basis_data(p, k0, k1, j) = result(k1, k0);
+      if (_dof_ordering.empty())
+      {
+        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+            basis_data(p, k0, k1, j) = result(k1, k0);
+      }
+      else
+      {
+        for (std::size_t k0 = 0; k0 < basis_data.extent(1); ++k0)
+          for (std::size_t k1 = 0; k1 < basis_data.extent(2); ++k1)
+            basis_data(p, k0, _dof_ordering[k1], j) = result(k1, k0);
+      }
     }
   }
 }
@@ -1287,6 +1341,11 @@ bool FiniteElement::interpolation_is_identity() const
 int FiniteElement::interpolation_nderivs() const
 {
   return _interpolation_nderivs;
+}
+//-----------------------------------------------------------------------------
+const std::vector<int>& FiniteElement::dof_ordering() const
+{
+  return _dof_ordering;
 }
 //-----------------------------------------------------------------------------
 std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>

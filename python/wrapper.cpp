@@ -478,7 +478,8 @@ Interface to the Basix C++ library.
       .def_property_readonly("has_tensor_product_factorisation",
                              &FiniteElement::has_tensor_product_factorisation)
       .def_property_readonly("interpolation_nderivs",
-                             &FiniteElement::interpolation_nderivs);
+                             &FiniteElement::interpolation_nderivs)
+      .def_property_readonly("dof_ordering", &FiniteElement::dof_ordering);
 
   py::enum_<element::lagrange_variant>(m, "LagrangeVariant")
       .value("unset", element::lagrange_variant::unset)
@@ -567,18 +568,18 @@ Interface to the Basix C++ library.
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
          element::lagrange_variant lvariant, element::dpc_variant dvariant,
-         bool discontinuous) -> FiniteElement
+         bool discontinuous,
+         const std::vector<int>& dof_ordering) -> FiniteElement
       {
         return basix::create_element(family_name, cell_name, degree, lvariant,
-                                     dvariant, discontinuous);
+                                     dvariant, discontinuous, dof_ordering);
       },
       py::arg("family_name"), py::arg("cell_name"), py::arg("degree"),
       py::arg("lagrange_variant") = element::lagrange_variant::unset,
       py::arg("dpc_variant") = element::dpc_variant::unset,
       py::arg("discontinuous") = false,
-      basix::docstring::
-          create_element__family_cell_degree_lvariant_dvariant_discontinuous
-              .c_str());
+      py::arg("dof_ordering") = std::vector<int>(),
+      basix::docstring::create_element.c_str());
 
   // Interpolate between elements
   m.def(

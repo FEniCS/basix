@@ -414,65 +414,7 @@ Returns:
     A custom finite element
 )";
 
-const std::string create_element__family_cell_degree_discontinuous = R"(
-Create an element
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    discontinuous: Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_lvariant_discontinuous
-    = R"(
-Create an element using a given Lagrange variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    lvariant: The variant of Lagrange to use
-    discontinuous: Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_lvariant = R"(
-Create a continuous element using a given Lagrange variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    lvariant: The variant of Lagrange to use
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_dvariant_discontinuous
-    = R"(
-Create an element using a given DPC variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    dvariant: The variant of DPC to use
-    discontinuous: Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
-
-Returns:
-    A finite element
-)";
-
-const std::string
-    create_element__family_cell_degree_lvariant_dvariant_discontinuous
-    = R"(
+const std::string create_element = R"(
 Create an element using a given Lagrange variant and a given DPC variant
 
 Args:
@@ -482,46 +424,7 @@ Args:
     lvariant: The variant of Lagrange to use
     dvariant: The variant of DPC to use
     discontinuous: Indicates whether the element is discontinuous between cells points of the element. The discontinuous element will have the same DOFs, but they will all be associated with the interior of the cell.
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_dvariant = R"(
-Create a continuous element using a given DPC variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    dvariant: The variant of DPC to use
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree_lvariant_dvariant = R"(
-Create a continuous element using a given Lagrange variant and a given DPC
-variant
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
-    lvariant: The variant of Lagrange to use
-    dvariant: The variant of DPC to use
-
-Returns:
-    A finite element
-)";
-
-const std::string create_element__family_cell_degree = R"(
-Create a continuous element
-
-Args:
-    family: The element family
-    cell: The reference cell type that the element is defined on
-    degree: The degree of the element
+    dof_layout: Ordering of dofs (optional arg)
 
 Returns:
     A finite element
@@ -588,7 +491,7 @@ Returns:
     Polynomial sets, for each derivative, tabulated at points.
     The shape is `(number of derivatives computed, number of points,
     basis index)`.
-    
+
     - The first index is the derivative. The first entry is the basis
     itself. Derivatives are stored in triangular (2D) or tetrahedral
     (3D) ordering, eg if `(p, q)` denotes `p` order dervative with
@@ -597,10 +500,10 @@ Returns:
     [5] -> (0, 2), [6] -> (3, 0),...
     The function basix::indexing::idx maps tuples `(p, q, r)` to the array
     index.
-    
+
     - The second index is the point, with index `i` correspondign to the
     point in row `i` of @p x.
-    
+
     - The third index is the basis function index.
     TODO: Does the order for the third index need to be documented?
 )";

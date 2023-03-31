@@ -247,116 +247,23 @@ Returns:
     {{finite-element.h > create_custom_element(cell_type, value_shape, wcoeffs, x, M, interpolation_nderivs, map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree) > return}}
 )";
 
-{{DOCTYPE}} create_element__family_cell_degree_discontinuous = R"(
-{{finite-element.h > create_element(family, cell, degree, discontinuous) > doc}}
-
-Args:
-    {{finite-element.h > create_element(family, cell, degree, discontinuous) > param > family}}
-    {{finite-element.h > create_element(family, cell, degree, discontinuous) > param > cell}}
-    {{finite-element.h > create_element(family, cell, degree, discontinuous) > param > degree}}
-    {{finite-element.h > create_element(family, cell, degree, discontinuous) > param > discontinuous}}
-
-Returns:
-    {{finite-element.h > create_element(family, cell, degree, discontinuous) > return}}
-)";
-
-{{DOCTYPE}} create_element__family_cell_degree_lvariant_discontinuous
-    = R"(
-{{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > doc}}
-
-Args:
-    {{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > family}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > cell}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > degree}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > lvariant}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > param > discontinuous}}
-
-Returns:
-    {{finite-element.h > create_element(family, cell, degree, lvariant, discontinuous) > return}}
-)";
-
-{{DOCTYPE}} create_element__family_cell_degree_lvariant = R"(
-{{finite-element.h > create_element(family, cell, degree, lvariant) > doc}}
-
-Args:
-    {{finite-element.h > create_element(family, cell, degree, lvariant) > param > family}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant) > param > cell}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant) > param > degree}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant) > param > lvariant}}
-
-Returns:
-    {{finite-element.h > create_element(family, cell, degree, lvariant) > return}}
-)";
-
-{{DOCTYPE}} create_element__family_cell_degree_dvariant_discontinuous
-    = R"(
-{{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > doc}}
-
-Args:
-    {{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > family}}
-    {{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > cell}}
-    {{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > degree}}
-    {{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > dvariant}}
-    {{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > param > discontinuous}}
-
-Returns:
-    {{finite-element.h > create_element(family, cell, degree, dvariant, discontinuous) > return}}
-)";
 
 {{DOCTYPE}}
-    create_element__family_cell_degree_lvariant_dvariant_discontinuous
+    create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering
     = R"(
-{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > doc}}
+{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous, dof_ordering) > doc}}
 
 Args:
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > family}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > cell}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > degree}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > lvariant}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > dvariant}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > param > discontinuous}}
+    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous, dof_ordering) > param > family}}
+    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous, dof_ordering) > param > cell}}
+    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous, dof_ordering) > param > degree}}
+    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous, dof_ordering) > param > lvariant}}
+    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous, dof_ordering) > param > dvariant}}
+    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous, dof_ordering) > param > discontinuous}}
+    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous, dof_ordering) > param > dof_ordering}}
 
 Returns:
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous) > return}}
-)";
-
-{{DOCTYPE}} create_element__family_cell_degree_dvariant = R"(
-{{finite-element.h > create_element(family, cell, degree, dvariant) > doc}}
-
-Args:
-    {{finite-element.h > create_element(family, cell, degree, dvariant) > param > family}}
-    {{finite-element.h > create_element(family, cell, degree, dvariant) > param > cell}}
-    {{finite-element.h > create_element(family, cell, degree, dvariant) > param > degree}}
-    {{finite-element.h > create_element(family, cell, degree, dvariant) > param > dvariant}}
-
-Returns:
-    {{finite-element.h > create_element(family, cell, degree, dvariant) > return}}
-)";
-
-{{DOCTYPE}} create_element__family_cell_degree_lvariant_dvariant = R"(
-{{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > doc}}
-
-Args:
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > family}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > cell}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > degree}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > lvariant}}
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > param > dvariant}}
-
-Returns:
-    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant) > return}}
-)";
-
-{{DOCTYPE}} create_element__family_cell_degree = R"(
-{{finite-element.h > create_element(family, cell, degree) > doc}}
-
-Args:
-    {{finite-element.h > create_element(family, cell, degree) > param > family}}
-    {{finite-element.h > create_element(family, cell, degree) > param > cell}}
-    {{finite-element.h > create_element(family, cell, degree) > param > degree}}
-
-Returns:
-    {{finite-element.h > create_element(family, cell, degree) > return}}
+    {{finite-element.h > create_element(family, cell, degree, lvariant, dvariant, discontinuous, dof_ordering) > return}}
 )";
 
 {{DOCTYPE}} compute_interpolation_operator = R"(

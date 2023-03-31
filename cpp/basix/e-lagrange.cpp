@@ -1171,7 +1171,8 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 //----------------------------------------------------------------------------
 FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
                                               lagrange_variant variant,
-                                              bool discontinuous)
+                                              bool discontinuous,
+                                              std::vector<int> dof_ordering)
 {
   if (celltype == cell::type::point)
   {
@@ -1187,7 +1188,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         impl::mdspan2_t(math::eye(1).data(), 1, 1), impl::to_mdspan(x),
         impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::H1,
         discontinuous, degree, degree, element::lagrange_variant::unset,
-        element::dpc_variant::unset);
+        element::dpc_variant::unset, {}, dof_ordering);
   }
 
   if (variant == lagrange_variant::vtk)
@@ -1340,6 +1341,6 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
                        impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
                        xview, Mview, 0, maps::type::identity, space,
                        discontinuous, degree, degree, variant,
-                       dpc_variant::unset, tensor_factors);
+                       dpc_variant::unset, tensor_factors, dof_ordering);
 }
 //-----------------------------------------------------------------------------

@@ -4,7 +4,7 @@ import functools as _functools
 import hashlib as _hashlib
 import typing as _typing
 from abc import abstractmethod as _abstractmethod
-from warnings import warn
+from warnings import warn as _warn
 
 import numpy as _np
 import numpy.typing as _npt
@@ -28,7 +28,7 @@ _spacemap = {
 }
 
 
-def ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
+def _ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     """Convert a Basix Sobolev space enum to a UFL Sobolev space.
 
     Args:
@@ -42,11 +42,11 @@ def ufl_sobolev_space_from_enum(s: _basix.SobolevSpace):
     return _spacemap[s]
 
 
-class _BasixElementBase(_FiniteElementBase):
-    """A base wrapper to allow Basix elements to be used with UFL.
+class _ElementBase(_FiniteElementBase):
+    """A base wrapper to allow elements to be used with UFL.
 
-    This class includes methods and properties needed by UFL and FFCx.
-
+    This class includes methods and properties needed by UFL and FFCx. This is a base class containing
+    functions common to all the element types defined in this file.
     """
 
     def __init__(self, repr: str, name: str, cellname: str, value_shape: _typing.Tuple[int, ...],
@@ -135,14 +135,14 @@ class _BasixElementBase(_FiniteElementBase):
     def get_component_element(self, flat_component: int) -> _typing.Tuple[_typing.Any, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
-        For example, for a MixedElement, this will return the
+        For example, for a mixed element, this will return the
         sub-element that represents the given component, the offset of
-        that sub-element, and a stride of 1. For a BlockedElement, this
+        that sub-element, and a stride of 1. For a blocked element, this
         will return the sub-element, an offset equal to the component
         number, and a stride equal to the block size. For vector-valued
         element (eg H(curl) and H(div) elements), this returns a
-        ComponentElement (and as offset of 0 and a stride of 1). When
-        tabulate is called on the ComponentElement, only the part of the
+        component element (and as offset of 0 and a stride of 1). When
+        tabulate is called on the component element, only the part of the
         table for the given component is returned.
 
         Args:
@@ -299,7 +299,7 @@ class _BasixElementBase(_FiniteElementBase):
 
     def sobolev_space(self):
         """Return the underlying Sobolev space."""
-        return ufl_sobolev_space_from_enum(self.basix_sobolev_space)
+        return _ufl_sobolev_space_from_enum(self.basix_sobolev_space)
 
     @property
     @_abstractmethod
@@ -308,8 +308,12 @@ class _BasixElementBase(_FiniteElementBase):
         pass
 
 
-class BasixElement(_BasixElementBase):
-    """A wrapper allowing Basix elements to be used directly with UFL."""
+class _BasixElement(_ElementBase):
+    """A wrapper allowing Basix elements to be used directly with UFL.
+
+    This class allows elements created with `basix.create_element` to be wrapped as UFL compatible elements.
+    Users should not directly call this class's initiliser, but should use the `element` function instead.
+    """
 
     element: _basix.finite_element.FiniteElement
 
@@ -342,7 +346,7 @@ class BasixElement(_BasixElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return isinstance(other, BasixElement) and self.element == other.element
+        return isinstance(other, _BasixElement) and self.element == other.element
 
     def __hash__(self) -> int:
         """Return a hash."""
@@ -362,17 +366,17 @@ class BasixElement(_BasixElementBase):
         # TODO: update FFCx to remove the need for transposing here
         return tab.transpose((0, 1, 3, 2)).reshape((tab.shape[0], tab.shape[1], -1))
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
-        For example, for a MixedElement, this will return the
+        For example, for a mixed element, this will return the
         sub-element that represents the given component, the offset of
-        that sub-element, and a stride of 1. For a BlockedElement, this
+        that sub-element, and a stride of 1. For a blocked element, this
         will return the sub-element, an offset equal to the component
         number, and a stride equal to the block size. For vector-valued
         element (eg H(curl) and H(div) elements), this returns a
-        ComponentElement (and as offset of 0 and a stride of 1). When
-        tabulate is called on the ComponentElement, only the part of the
+        component element (and as offset of 0 and a stride of 1). When
+        tabulate is called on the component element, only the part of the
         table for the given component is returned.
 
         Args:
@@ -382,7 +386,7 @@ class BasixElement(_BasixElementBase):
             component element, offset of the component, stride of the component
         """
         assert flat_component < self.value_size
-        return ComponentElement(self, flat_component), 0, 1
+        return _ComponentElement(self, flat_component), 0, 1
 
     @property
     def ufcx_element_type(self) -> str:
@@ -519,17 +523,20 @@ class BasixElement(_BasixElementBase):
         return self.element.get_tensor_product_representation()
 
 
-class ComponentElement(_BasixElementBase):
-    """An element representing one component of a BasixElement."""
+class _ComponentElement(_ElementBase):
+    """An element representing one component of a _BasixElement.
 
-    element: _BasixElementBase
+    This element type is used when UFL's `get_component_element` function is called.
+    """
+
+    element: _ElementBase
     component: int
 
-    def __init__(self, element: _BasixElementBase, component: int, gdim: _typing.Optional[int] = None):
+    def __init__(self, element: _ElementBase, component: int, gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         self.element = element
         self.component = component
-        super().__init__(f"ComponentElement({element._repr}, {component})",
+        super().__init__(f"component element ({element._repr}, {component})",
                          f"Component of {element.family_name}",
                          element.cell_type.name, (1, ), element._degree, gdim=gdim)
 
@@ -540,7 +547,7 @@ class ComponentElement(_BasixElementBase):
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        return (isinstance(other, ComponentElement) and self.element == other.element
+        return (isinstance(other, _ComponentElement) and self.element == other.element
                 and self.component == other.component)
 
     def __hash__(self) -> int:
@@ -567,7 +574,7 @@ class ComponentElement(_BasixElementBase):
             elif len(self.element._value_shape) == 1:
                 output.append(tbl[:, self.component, :])
             elif len(self.element._value_shape) == 2:
-                if isinstance(self.element, TensorElement) and self.element.symmetric:
+                if isinstance(self.element, _BlockedElement) and self.element._has_symmetry:
                     # FIXME: check that this behaves as expected
                     output.append(tbl[:, self.component, :])
                 else:
@@ -577,7 +584,7 @@ class ComponentElement(_BasixElementBase):
                 raise NotImplementedError()
         return _np.asarray(output, dtype=_np.float64)
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -677,12 +684,16 @@ class ComponentElement(_BasixElementBase):
         raise NotImplementedError()
 
 
-class MixedElement(_BasixElementBase):
-    """A mixed element that combines two or more elements."""
+class _MixedElement(_ElementBase):
+    """A mixed element that combines two or more elements.
 
-    _sub_elements: _typing.List[_BasixElementBase]
+    This can be used when multiple different elements appear in a form. Users should not directly call this
+    class's initiliser, but should use the `mixed_element` function instead.
+    """
 
-    def __init__(self, sub_elements: _typing.List[_BasixElementBase], gdim: _typing.Optional[int] = None):
+    _sub_elements: _typing.List[_ElementBase]
+
+    def __init__(self, sub_elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None):
         """Initialise the element."""
         assert len(sub_elements) > 0
         self._sub_elements = sub_elements
@@ -691,7 +702,7 @@ class MixedElement(_BasixElementBase):
         else:
             mapname = "undefined"
 
-        super().__init__("MixedElement(" + ", ".join(i._repr for i in sub_elements) + ")",
+        super().__init__("mixed element (" + ", ".join(i._repr for i in sub_elements) + ")",
                          "mixed element", sub_elements[0].cell_type.name,
                          (sum(i.value_size for i in sub_elements), ), mapname=mapname, gdim=gdim)
 
@@ -709,13 +720,13 @@ class MixedElement(_BasixElementBase):
         """Basix Sobolev space that the element belongs to."""
         return _basix.sobolev_spaces.intersection([e.basix_sobolev_space for e in self._sub_elements])
 
-    def sub_elements(self) -> _typing.List[_BasixElementBase]:
+    def sub_elements(self) -> _typing.List[_ElementBase]:
         """List of sub elements."""
         return self._sub_elements
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
-        if isinstance(other, MixedElement) and len(self._sub_elements) == len(other._sub_elements):
+        if isinstance(other, _MixedElement) and len(self._sub_elements) == len(other._sub_elements):
             for i, j in zip(self._sub_elements, other._sub_elements):
                 if i != j:
                     return False
@@ -748,7 +759,7 @@ class MixedElement(_BasixElementBase):
             tables.append(new_table)
         return _np.asarray(tables, dtype=_np.float64)
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -876,45 +887,81 @@ class MixedElement(_BasixElementBase):
         return max([e.interpolation_nderivs for e in self._sub_elements])
 
 
-class BlockedElement(_BasixElementBase):
-    """Element with a block size that contains multiple copies of a sub element."""
+class _BlockedElement(_ElementBase):
+    """Element with a block size that contains multiple copies of a sub element.
+
+    This can be used to (for example) create vector and tensor Lagrange elements. Users should not
+    directly call this classes initiliser, but should use the `blocked_element` function instead.
+    """
 
     block_shape: _typing.Tuple[int, ...]
-    sub_element: _BasixElementBase
+    sub_element: _ElementBase
     _block_size: int
 
-    def __init__(self, repr: str, sub_element: _BasixElementBase, block_size: int,
-                 block_shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
-                 gdim: _typing.Optional[int] = None):
+    def __init__(self, sub_element: _ElementBase, shape: _typing.Tuple[int, ...],
+                 symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None,):
         """Initialise the element."""
-        assert block_size > 0
         if sub_element.value_size != 1:
-            raise ValueError("Blocked elements (VectorElement and TensorElement) of "
-                             "non-scalar elements are not supported. Try using MixedElement "
-                             "instead.")
+            raise ValueError("Blocked elements of non-scalar elements are not supported. "
+                             "Try using _MixedElement instead.")
+        if symmetry is not None:
+            if len(shape) != 2:
+                raise ValueError("symmetry argument can only be passed to elements of rank 2.")
+            if shape[0] != shape[1]:
+                raise ValueError("symmetry argument can only be passed to square shaped elements.")
+
+        if symmetry:
+            block_size = shape[0] * (shape[0] + 1) // 2
+            self._has_symmetry = True
+        else:
+            block_size = 1
+            for i in shape:
+                block_size *= i
+            self._has_symmetry = False
+        assert block_size > 0
 
         self.sub_element = sub_element
         self._block_size = block_size
-        if block_shape is None:
-            block_shape = (block_size, )
-        self.block_shape = block_shape
+        self.block_shape = shape
 
-        super().__init__(repr, sub_element.family(), sub_element.cell_type.name, block_shape,
+        repr = f"blocked element ({sub_element._repr}, {shape}"
+        if len(shape) == 2:
+            if symmetry:
+                repr += ", True"
+            else:
+                repr += ", False"
+        repr += ")"
+
+        super().__init__(repr, sub_element.family(), sub_element.cell_type.name, shape,
                          sub_element._degree, sub_element._map, gdim=gdim)
+
+        if symmetry:
+            n = 0
+            sub_element_mapping = {}
+            for i in range(shape[0]):
+                for j in range(i + 1):
+                    sub_element_mapping[(i, j)] = n
+                    sub_element_mapping[(j, i)] = n
+                    n += 1
+
+            self._map = "symmetries"
+            self._symmetry = {(i, j): (j, i) for i in range(shape[0]) for j in range(i)}
+            self._flattened_sub_element_mapping = [
+                sub_element_mapping[(i, j)] for i in range(shape[0]) for j in range(shape[1])]
 
     @property
     def basix_sobolev_space(self):
         """Basix enum representing the underlying Sobolev space."""
         return self.sub_element.basix_sobolev_space
 
-    def sub_elements(self) -> _typing.List[_BasixElementBase]:
+    def sub_elements(self) -> _typing.List[_ElementBase]:
         """List of sub elements."""
         return [self.sub_element for _ in range(self._block_size)]
 
     def __eq__(self, other) -> bool:
         """Check if two elements are equal."""
         return (
-            isinstance(other, BlockedElement) and self._block_size == other._block_size
+            isinstance(other, _BlockedElement) and self._block_size == other._block_size
             and self.block_shape == other.block_shape and self.sub_element == other.sub_element)
 
     def __hash__(self) -> int:
@@ -928,6 +975,9 @@ class BlockedElement(_BasixElementBase):
 
     def reference_value_shape(self) -> _typing.Tuple[int, ...]:
         """Reference value shape of the element basis function."""
+        if self._has_symmetry:
+            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
+            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
         return self._value_shape
 
     def tabulate(self, nderivs: int, points: _npt.NDArray[_np.float64]) -> _npt.NDArray[_np.float64]:
@@ -951,7 +1001,7 @@ class BlockedElement(_BasixElementBase):
             output.append(new_table)
         return _np.asarray(output, dtype=_np.float64)
 
-    def get_component_element(self, flat_component: int) -> _typing.Tuple[_BasixElementBase, int, int]:
+    def get_component_element(self, flat_component: int) -> _typing.Tuple[_ElementBase, int, int]:
         """Get element that represents a component of the element, and the offset and stride of the component.
 
         Args:
@@ -1111,68 +1161,11 @@ class BlockedElement(_BasixElementBase):
             return None
         return self.sub_element.get_tensor_product_representation()
 
-
-class VectorElement(BlockedElement):
-    """A vector element."""
-
-    def __init__(self, sub_element: _BasixElementBase, size: _typing.Optional[int] = None,
-                 gdim: _typing.Optional[int] = None):
-        """Initialise the element."""
-        if gdim is None:
-            gdim = len(_basix.topology(sub_element.cell_type)) - 1
-        if size is None:
-            size = gdim
-        super().__init__(f"VectorElement({sub_element._repr}, {size})", sub_element, size, (size, ), gdim=gdim)
-
-
-class TensorElement(BlockedElement):
-    """A tensor element."""
-
-    def __init__(self, sub_element: _BasixElementBase, shape: _typing.Optional[_typing.Tuple[int, int]] = None,
-                 symmetric: bool = False, gdim: _typing.Optional[int] = None):
-        """Initialise the element."""
-        if gdim is None:
-            gdim = len(_basix.topology(sub_element.cell_type)) - 1
-        if shape is None:
-            shape = (gdim, gdim)
-        if symmetric:
-            assert shape[0] == shape[1]
-            bs = shape[0] * (shape[0] + 1) // 2
-        else:
-            bs = shape[0] * shape[1]
-
-        assert len(shape) == 2
-        super().__init__(f"TensorElement({sub_element._repr}, {shape}, {symmetric})", sub_element, bs, shape,
-                         gdim=gdim)
-
-        self.symmetric = symmetric
-
-        if symmetric:
-            n = 0
-            sub_element_mapping = {}
-            for i in range(shape[0]):
-                for j in range(i + 1):
-                    sub_element_mapping[(i, j)] = n
-                    sub_element_mapping[(j, i)] = n
-                    n += 1
-
-            self._map = "symmetries"
-            self._symmetry = {(i, j): (j, i) for i in range(shape[0]) for j in range(i)}
-            self._flattened_sub_element_mapping = [
-                sub_element_mapping[(i, j)] for i in range(shape[0]) for j in range(shape[1])]
-
     def flattened_sub_element_mapping(self) -> _typing.List[int]:
         """Return the flattened sub element mapping."""
-        if not self.symmetric:
+        if not self._has_symmetry:
             raise ValueError("Cannot get flattened map for non-symmetric element.")
         return self._flattened_sub_element_mapping
-
-    def reference_value_shape(self) -> _typing.Tuple[int, ...]:
-        """Reference value shape of the element basis function."""
-        if self.symmetric:
-            assert len(self.block_shape) == 2 and self.block_shape[0] == self.block_shape[1]
-            return (self.block_shape[0] * (self.block_shape[0] + 1) // 2, )
-        return super().reference_value_shape()
 
 
 def _map_type_to_string(map_type: _basix.MapType) -> str:
@@ -1217,18 +1210,18 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
     data += "__"
     for entity in element.x:
         for points in entity:
-            data = ",".join([f"{i}" for p in points for i in p])
+            data += ",".join([f"{i}" for p in points for i in p])
             data += "_"
     data += "__"
 
     for entity in element.M:
         for matrices in entity:
-            data = ",".join([f"{i}" for mat in matrices for row in mat for i in row])
+            data += ",".join([f"{i}" for mat in matrices for row in mat for i in row])
             data += "_"
     data += "__"
 
     for mat in element.entity_transformations().values():
-        data = ",".join([f"{i}" for row in mat for i in row])
+        data += ",".join([f"{i}" for row in mat for i in row])
         data += "__"
     signature += _hashlib.sha1(data.encode('utf-8')).hexdigest()
 
@@ -1236,23 +1229,40 @@ def _compute_signature(element: _basix.finite_element.FiniteElement) -> str:
 
 
 @_functools.lru_cache()
-def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                   degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                   dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-                   gdim: _typing.Optional[int] = None) -> BasixElement:
-    """Create a UFL element using Basix.
+def element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str], degree: int,
+            lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
+            dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
+            rank: _typing.Optional[int] = None, shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
+            symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None) -> _ElementBase:
+    """Create a UFL compatible element using Basix.
 
     Args:
-        family: The element's family as a Basix enum or a string.
-        cell: The cell type as a Basix enum or a string.
-        degree: The degree of the finite element.
-        lagrange_variant: The variant of Lagrange to be used.
-        dpc_variant: The variant of DPC to be used.
-        discontinuous: If set to True, the discontinuous version of this
-            element will be created.
-        gdim: The geometric dimension of the cell.
-
+        family: Element family/type.
+        cell: Element cell type.
+        degree: Degree of the finite element.
+        lagrange_variant: Variant of Lagrange to be used.
+        dpc_variant: Variant of DPC to be used.
+        discontinuous: If `True`, the discontinuous version of the
+            element is created.
+        rank: Rank of the value shape of the element. For scalar-valued
+            families, setting `rank=1` creates a vector element where
+            each component of the vector is represented by the element.
+            Similarly, `rank>2` creates a tensor element. If `shape` is
+            provided, then `rank` is not required .
+        shape: Value shape of the element. For scalar-valued families,
+            this can be used to create vector and tensor elements. If
+            `rank` is set but `shape` is not, then `shape` will be set
+            to `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ...,
+            tdim)` for rank 2 or higher.
+        symmetry: Set to `True` if the tensor is symmetric. Valid for
+            rank 2 elements only.
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
     """
+    if rank is not None and shape is not None and len(shape) != rank:
+        raise ValueError("Rank and shape are incompatible.")
+
+    # Conversion of string arguments to types
     if isinstance(cell, str):
         cell = _basix.cell.string_to_type(cell)
     if isinstance(family, str):
@@ -1263,8 +1273,8 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
             family = "P"
             discontinuous = True
         if family == "CG":
-            warn("\"CG\" element name is deprecated. Consider using \"Lagrange\" or \"P\" instead",
-                 DeprecationWarning, stacklevel=2)
+            _warn("\"CG\" element name is deprecated. Consider using \"Lagrange\" or \"P\" instead",
+                  DeprecationWarning, stacklevel=2)
             family = "P"
             discontinuous = False
         if family == "DPC":
@@ -1289,65 +1299,40 @@ def create_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typi
             dpc_variant = _basix.DPCVariant.diagonal_gll
 
     e = _basix.create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    return BasixElement(e, gdim=gdim)
+    ufl_e = _BasixElement(e, gdim=gdim)
+
+    vs = tuple(e.value_shape)
+    tdim = len(_basix.topology(cell)) - 1
+
+    blocked = True
+    if shape is None and rank is None:
+        blocked = False
+    elif shape is not None and shape == vs:
+        blocked = False
+    elif rank is not None and tuple(tdim for _ in range(rank)) == vs:
+        blocked = False
+
+    if blocked:
+        return blocked_element(ufl_e, shape=shape, rank=rank, gdim=gdim, symmetry=symmetry)
+    else:
+        if rank is not None and shape is not None and len(shape) != rank:
+            raise ValueError("Incompatible shape and rank.")
+        if symmetry is not None:
+            raise ValueError("Cannot pass a symmetry argument to this element.")
+        return ufl_e
 
 
-@_functools.lru_cache()
-def create_vector_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                          degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                          dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-                          dim: _typing.Optional[int] = None, gdim: _typing.Optional[int] = None) -> VectorElement:
-    """Create a UFL vector element using Basix.
-
-    A vector element is an element which uses multiple copies of a
-    scalar element to represent a vector-valued function.
-
-    Args:
-        family: The element's family as a Basix enum or a string.
-        cell: The cell type as a Basix enum or a string.
-        degree: The degree of the finite element.
-        lagrange_variant: The variant of Lagrange to be used.
-        dpc_variant: The variant of DPC to be used.
-        discontinuous: If set to True, the discontinuous version of this
-            element will be created.
-        dim: The length of the vector.
-        gdim: The geometric dimension of the cell.
-    """
-    e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous, gdim)
-    return VectorElement(e, dim, gdim=gdim)
-
-
-@_functools.lru_cache()
-def create_tensor_element(family: _typing.Union[_basix.ElementFamily, str], cell: _typing.Union[_basix.CellType, str],
-                          degree: int, lagrange_variant: _basix.LagrangeVariant = _basix.LagrangeVariant.unset,
-                          dpc_variant: _basix.DPCVariant = _basix.DPCVariant.unset, discontinuous: bool = False,
-                          shape: _typing.Optional[_typing.Tuple[int, int]] = None, symmetry: bool = False,
-                          gdim: _typing.Optional[int] = None) -> TensorElement:
-    """Create a UFL tensor element using Basix.
-
-    A tensor element is an element which uses multiple copies of a
-    scalar element to represent a tensor-valued function.
+def enriched_element(elements: _typing.List[_ElementBase],
+                     map_type: _typing.Optional[_basix.MapType] = None,
+                     gdim: _typing.Optional[int] = None) -> _ElementBase:
+    """Create an UFL compatible enriched element from a list of elements.
 
     Args:
-        family: The element's family as a Basix enum or a string.
-        cell: The cell type as a Basix enum or a string.
-        degree: The degree of the finite element.
-        lagrange_variant: The variant of Lagrange to be used.
-        dpc_variant: The variant of DPC to be used.
-        discontinuous: If set to True, the discontinuous version of this
-            element will be created.
-        shape: The shape of the tensor.
-        symmetry: Is the tensor symmetric?
-        gdim: The geometric dimension of the cell.
-
+        elements: The list of elements
+        map_type: The map type for the enriched element.
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
     """
-    e = create_element(family, cell, degree, lagrange_variant, dpc_variant, discontinuous)
-    return TensorElement(e, shape, symmetry, gdim=gdim)
-
-
-def _create_enriched_element(elements: _typing.List[_BasixElementBase],
-                             map_type: _typing.Optional[_basix.MapType] = None) -> _BasixElementBase:
-    """Create an enriched element from a list of elements."""
     ct = elements[0].cell_type
     vshape = elements[0].value_shape()
     vsize = elements[0].value_size
@@ -1398,38 +1383,125 @@ def _create_enriched_element(elements: _typing.List[_BasixElementBase],
             _basix.PolynomialType.legendre, ct, e._wcoeffs, vsize, e.highest_degree, hd)
         row += e.dim
 
-    return BasixElement(_basix.create_custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
-                                                     map_type, ss, discontinuous, hcd, hd))
+    return custom_element(ct, list(vshape), wcoeffs, x, M, nderivs,
+                          map_type, ss, discontinuous, hcd, hd, gdim=gdim)
 
 
-def convert_ufl_element(element: _FiniteElementBase) -> _BasixElementBase:
-    """Convert a UFL element to a wrapped Basix element."""
-    if isinstance(element, _BasixElementBase):
-        return element
-    elif isinstance(element, _ufl.VectorElement):
-        return VectorElement(convert_ufl_element(element.sub_elements()[0]), element.num_sub_elements())
-    elif isinstance(element, _ufl.TensorElement):
-        return TensorElement(convert_ufl_element(element.sub_elements()[0]), element._value_shape)
-    elif isinstance(element, _ufl.MixedElement):
-        return MixedElement([convert_ufl_element(e) for e in element.sub_elements()])
-    elif isinstance(element, _ufl.EnrichedElement):
-        return _create_enriched_element([convert_ufl_element(e) for e in element._elements])
+def custom_element(cell_type: _basix.CellType, value_shape: _typing.Union[_typing.List[int], _typing.Tuple[int, ...]],
+                   wcoeffs: _npt.NDArray[_np.float64], x: _typing.List[_typing.List[_npt.NDArray[_np.float64]]],
+                   M: _typing.List[_typing.List[_npt.NDArray[_np.float64]]], interpolation_nderivs: int,
+                   map_type: _basix.MapType, sobolev_space: _basix.SobolevSpace, discontinuous: bool,
+                   highest_complete_degree: int, highest_degree: int,
+                   gdim: _typing.Optional[int] = None) -> _ElementBase:
+    """Create a UFL compatible custom Basix element.
+
+    Args:
+        cell_type: The cell type
+        value_shape: The value shape of the element
+        wcoeffs: Matrices for the kth value index containing the expansion coefficients defining a
+            polynomial basis spanning the polynomial space for this element. Shape is
+            (dim(finite element polyset), dim(Legenre polynomials))
+        x: Interpolation points. Indices are (tdim, entity index, point index, dim)
+        M: The interpolation matrices. Indices are (tdim, entity index, dof, vs, point_index, derivative)
+        interpolation_nderivs: The number of derivatives that need to be used during interpolation
+        map_type: The type of map to be used to map values from the reference to a cell
+        sobolev_space: The underlying Sobolev space for the element
+        discontinuous: Indicates whether or not this is the discontinuous version of the element
+        highest_complete_degree: The highest degree n such that a Lagrange (or vector Lagrange)
+        element of degree n is a subspace of this element
+        highest_degree: The degree of a polynomial in this element's polyset
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
+    """
+    return _BasixElement(_basix.create_custom_element(
+        cell_type, list(value_shape), wcoeffs, x, M, interpolation_nderivs,
+        map_type, sobolev_space, discontinuous, highest_complete_degree, highest_degree), gdim=gdim)
+
+
+def mixed_element(elements: _typing.List[_ElementBase], gdim: _typing.Optional[int] = None) -> _ElementBase:
+    """Create a UFL compatible mixed element from a list of elements.
+
+    Args:
+        elements: The list of elements
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
+    """
+    return _MixedElement(elements, gdim=gdim)
+
+
+@_functools.lru_cache()
+def blocked_element(sub_element: _ElementBase, rank: _typing.Optional[int] = None,
+                    shape: _typing.Optional[_typing.Tuple[int, ...]] = None,
+                    symmetry: _typing.Optional[bool] = None, gdim: _typing.Optional[int] = None) -> _ElementBase:
+    """Create a UFL compatible blocked element.
+
+    Args:
+        sub_element: The element used for each block.
+        rank: Rank of the value shape of the element. For scalar-valued
+            families, setting `rank=1` creates a vector element where
+            each component of the vector is represented by the element.
+            Similarly, `rank>2` creates a tensor element. If `shape` is
+            provided, then `rank` is not required .
+        shape: Value shape of the element. For scalar-valued families,
+            this can be used to create vector and tensor elements. If
+            `rank` is set but `shape` is not, then `shape` will be set
+            to `()` for rank 0, `(tdim, )` for rank 1, and `(tdim, ...,
+            tdim)` for rank 2 or higher.
+        symmetry: Set to `True` if the tensor is symmetric. Valid for
+            rank 2 elements only.
+        gdim: Geometric dimension. If not set the geometric dimension is
+            set equal to the topological dimension of the cell.
+    """
+    if len(sub_element.value_shape()) != 0:
+        raise ValueError("Cannot create a blocked element containing a non-scalar element.")
+    if rank is None and shape is None:
+        raise ValueError("At least one of rank and shape must be set.")
+
+    if shape is None:
+        if rank is None:
+            shape = tuple(sub_element.value_shape())
+        else:
+            tdim = len(_basix.topology(sub_element.cell_type)) - 1
+            shape = tuple(tdim for _ in range(rank))
+    if rank is None:
+        rank = len(shape)
+    if rank != len(shape):
+        raise ValueError("Incompatible rank and shape.")
+
+    return _BlockedElement(sub_element, shape=shape, symmetry=symmetry, gdim=gdim)
+
+
+def convert_ufl_element(ufl_element: _FiniteElementBase) -> _ElementBase:
+    """Convert a UFL element to a UFL compatible Basix element."""
+    _warn("Converting elements created in UFL to Basix elements is deprecated. You should create the elements directly "
+          "using basix.ufl.element instead", DeprecationWarning, stacklevel=2)
+    if isinstance(ufl_element, _ElementBase):
+        return ufl_element
+    elif hasattr(_ufl, "VectorElement") and isinstance(ufl_element, _ufl.VectorElement):
+        return _BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), (ufl_element.num_sub_elements(), ))
+    elif hasattr(_ufl, "TensorElement") and isinstance(ufl_element, _ufl.TensorElement):
+        return _BlockedElement(convert_ufl_element(ufl_element.sub_elements()[0]), ufl_element._value_shape,
+                               symmetry=ufl_element.symmetry())
+    elif hasattr(_ufl, "MixedElement") and isinstance(ufl_element, _ufl.MixedElement):
+        return _MixedElement([convert_ufl_element(e) for e in ufl_element.sub_elements()])
+    elif hasattr(_ufl, "EnrichedElement") and isinstance(ufl_element, _ufl.EnrichedElement):
+        return enriched_element([convert_ufl_element(e) for e in ufl_element._elements])
     # Elements that will not be supported
-    elif isinstance(element, _ufl.NodalEnrichedElement):
+    elif hasattr(_ufl, "NodalEnrichedElement") and isinstance(ufl_element, _ufl.NodalEnrichedElement):
         raise RuntimeError("NodalEnrichedElement is not supported. Use EnrichedElement instead.")
-    elif isinstance(element, _ufl.BrokenElement):
+    elif hasattr(_ufl, "BrokenElement") and isinstance(ufl_element, _ufl.BrokenElement):
         raise RuntimeError("BrokenElement not supported.")
-    elif isinstance(element, _ufl.HCurlElement):
+    elif hasattr(_ufl, "HCurlElement") and isinstance(ufl_element, _ufl.HCurlElement):
         raise RuntimeError("HCurlElement not supported.")
-    elif isinstance(element, _ufl.HDivElement):
+    elif hasattr(_ufl, "HDivElement") and isinstance(ufl_element, _ufl.HDivElement):
         raise RuntimeError("HDivElement not supported.")
-    elif isinstance(element, _ufl.TensorProductElement):
+    elif hasattr(_ufl, "TensorProductElement") and isinstance(ufl_element, _ufl.TensorProductElement):
         raise RuntimeError("TensorProductElement not supported.")
-    elif isinstance(element, _ufl.RestrictedElement):
+    elif hasattr(_ufl, "RestrictedElement") and isinstance(ufl_element, _ufl.RestrictedElement):
         raise RuntimeError("RestricedElement not supported.")
-    elif isinstance(element, _ufl.FiniteElement):
+    elif isinstance(ufl_element, _ufl.FiniteElementBase):
         # Create a basix element from family name, cell type and degree
-        family_name = element.family()
+        family_name = ufl_element.family()
         discontinuous = False
         if family_name.startswith("Discontinuous "):
             family_name = family_name[14:]
@@ -1443,16 +1515,16 @@ def convert_ufl_element(element: _FiniteElementBase) -> _BasixElementBase:
         if family_name == "DPC":
             discontinuous = True
 
-        family_type = _basix.finite_element.string_to_family(family_name, element.cell().cellname())
-        cell_type = _basix.cell.string_to_type(element.cell().cellname())
+        family_type = _basix.finite_element.string_to_family(family_name, ufl_element.cell().cellname())
+        cell_type = _basix.cell.string_to_type(ufl_element.cell().cellname())
 
         variant_info = {"lagrange_variant": _basix.LagrangeVariant.unset,
                         "dpc_variant": _basix.DPCVariant.unset}
-        if family_type == _basix.ElementFamily.P and element.variant() == "equispaced":
+        if family_type == _basix.ElementFamily.P and ufl_element.variant() == "equispaced":
             # This is used for elements defining cells
             variant_info["lagrange_variant"] = _basix.LagrangeVariant.equispaced
         else:
-            if element.variant() is not None:
+            if ufl_element.variant() is not None:
                 raise ValueError("UFL variants are not supported by FFCx. Please wrap a Basix element directly.")
 
             EF = _basix.ElementFamily
@@ -1466,7 +1538,7 @@ def convert_ufl_element(element: _FiniteElementBase) -> _BasixElementBase:
             elif family_type == EF.DPC:
                 variant_info["dpc_variant"] = _basix.DPCVariant.diagonal_gll
 
-        return create_element(family_type, cell_type, element.degree(), **variant_info, discontinuous=discontinuous,
-                              gdim=element.cell().geometric_dimension())
+        return element(family_type, cell_type, ufl_element.degree(), **variant_info, discontinuous=discontinuous,
+                       gdim=ufl_element.cell().geometric_dimension())
     else:
-        raise ValueError(f"Unrecognised element type: {element.__class__.__name__}")
+        raise ValueError(f"Unrecognised element type: {ufl_element.__class__.__name__}")

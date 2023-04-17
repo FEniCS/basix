@@ -310,19 +310,27 @@ mapinfo_t get_mapinfo(cell::type cell_type)
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 2>>
 compute_transformation(
-    cell::type cell_type, const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, cmdspan2_t coeffs,
-    const mdarray2_t& J, double detJ, const mdarray2_t& K,
+    cell::type cell_type,
+    const std::array<
+        std::vector<std::pair<std::vector<double>, std::array<std::size_t, 2>>>,
+        4>& x,
+    const std::array<
+        std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>,
+        4>& M,
+    cmdspan2_t coeffs, const mdarray2_t& J, double detJ, const mdarray2_t& K,
     const std::function<std::array<double, 3>(std::span<const double>)>
         map_point,
     int degree, int tdim, const int entity, std::size_t vs,
     const maps::type map_type)
 {
-  if (x[tdim].size() == 0 or x[tdim][entity].extent(0) == 0)
+  if (x[tdim].size() == 0 or x[tdim][entity].second[0] == 0)
     return {{}, {0, 0}};
 
-  cmdspan2_t pts = x[tdim][entity];
-  cmdspan4_t imat = M[tdim][entity];
+  cmdspan2_t pts(x[tdim][entity].first.data(), x[tdim][entity].second[0],
+                 x[tdim][entity].second[1]);
+  cmdspan4_t imat(M[tdim][entity].first.data(), M[tdim][entity].second[0],
+                  M[tdim][entity].second[1], M[tdim][entity].second[2],
+                  M[tdim][entity].second[3]);
 
   const std::size_t ndofs = imat.extent(0);
   const std::size_t npts = pts.extent(0);
@@ -331,14 +339,14 @@ compute_transformation(
   std::size_t dofstart = 0;
   for (int d = 0; d < tdim; ++d)
     for (std::size_t i = 0; i < M[d].size(); ++i)
-      dofstart += M[d][i].extent(0);
+      dofstart += M[d][i].second[0];
   for (int i = 0; i < entity; ++i)
-    dofstart += M[tdim][i].extent(0);
+    dofstart += M[tdim][i].second[0];
 
   std::size_t total_ndofs = 0;
   for (int d = 0; d <= 3; ++d)
     for (std::size_t i = 0; i < M[d].size(); ++i)
-      total_ndofs += M[d][i].extent(0);
+      total_ndofs += M[d][i].second[0];
 
   // Map the points to reverse the edge, then tabulate at those points
   mdarray2_t mapped_pts(pts.extents());
@@ -414,12 +422,10 @@ std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
     cell::type cell_type,
     const std::array<
-        std::vector<std::experimental::mdspan<
-            const double, std::experimental::dextents<std::size_t, 2>>>,
+        std::vector<std::pair<std::vector<double>, std::array<std::size_t, 2>>>,
         4>& x,
     const std::array<
-        std::vector<std::experimental::mdspan<
-            const double, std::experimental::dextents<std::size_t, 4>>>,
+        std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>,
         4>& M,
     const std::experimental::mdspan<
         const double, std::experimental::dextents<std::size_t, 2>>& coeffs,
@@ -433,7 +439,7 @@ doftransforms::compute_entity_transformations(
   {
     const int tdim = cell::topological_dimension(entity_type);
     const int entity = find_first_subentity(cell_type, entity_type);
-    std::size_t ndofs = M[tdim].size() == 0 ? 0 : M[tdim][entity].extent(0);
+    std::size_t ndofs = M[tdim].size() == 0 ? 0 : M[tdim][entity].second[0];
 
     std::vector<double> transform;
     transform.reserve(emap_data.size() * ndofs * ndofs);
@@ -444,7 +450,6 @@ doftransforms::compute_entity_transformations(
                                    degree, tdim, entity, vs, map_type);
       transform.insert(transform.end(), t2b.begin(), t2b.end());
     }
-
     out.try_emplace(entity_type,
                     std::pair(std::move(transform),
                               std::array{emap_data.size(), ndofs, ndofs}));

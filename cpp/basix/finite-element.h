@@ -1054,6 +1054,9 @@ public:
   /// Get dof layout
   const std::vector<int>& dof_ordering() const;
 
+  /// Generate the element data
+  void generate() const;
+
 private:
   // Data permutation
   // @param data Data to be permuted
@@ -1127,7 +1130,10 @@ private:
   // \alpha^{i}_{k}@f$, then _coeffs(i, j) = @f$\alpha^i_k@f$. ie
   // _coeffs.row(i) are the expansion coefficients for shape function i
   // (@f$\psi_{i}@f$).
-  std::pair<std::vector<double>, std::array<std::size_t, 2>> _coeffs;
+  mutable std::pair<std::vector<double>, std::array<std::size_t, 2>> _coeffs;
+
+  // The number of basis functions that the element has
+  std::size_t _dim;
 
   // Dofs associated with each cell (sub-)entity
   std::vector<std::vector<std::vector<int>>> _edofs;
@@ -1136,7 +1142,7 @@ private:
   std::vector<std::vector<std::vector<int>>> _e_closure_dofs;
 
   // Entity transformations
-  std::map<cell::type, array3_t> _entity_transformations;
+  mutable std::map<cell::type, array3_t> _entity_transformations;
 
   // Set of points used for point evaluation
   // Experimental - currently used for an implementation of
@@ -1157,32 +1163,33 @@ private:
 
   // Indicates whether or not the DOF transformations are all
   // permutations
-  bool _dof_transformations_are_permutations;
+  mutable bool _dof_transformations_are_permutations;
 
   // Indicates whether or not the DOF transformations are all identity
-  bool _dof_transformations_are_identity;
+  mutable bool _dof_transformations_are_identity;
 
   // The entity permutations (factorised). This will only be set if
   // _dof_transformations_are_permutations is True and
   // _dof_transformations_are_identity is False
-  std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm;
+  mutable std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm;
 
   // The reverse entity permutations (factorised). This will only be set
   // if _dof_transformations_are_permutations is True and
   // _dof_transformations_are_identity is False
-  std::map<cell::type, std::vector<std::vector<std::size_t>>> _eperm_rev;
+  mutable std::map<cell::type, std::vector<std::vector<std::size_t>>>
+      _eperm_rev;
 
   // The entity transformations in precomputed form
-  std::map<cell::type, trans_data_t> _etrans;
+  mutable std::map<cell::type, trans_data_t> _etrans;
 
   // The transposed entity transformations in precomputed form
-  std::map<cell::type, trans_data_t> _etransT;
+  mutable std::map<cell::type, trans_data_t> _etransT;
 
   // The inverse entity transformations in precomputed form
-  std::map<cell::type, trans_data_t> _etrans_inv;
+  mutable std::map<cell::type, trans_data_t> _etrans_inv;
 
   // The inverse transpose entity transformations in precomputed form
-  std::map<cell::type, trans_data_t> _etrans_invT;
+  mutable std::map<cell::type, trans_data_t> _etrans_invT;
 
   // Indicates whether or not this is the discontinuous version of the
   // element
@@ -1208,7 +1215,7 @@ private:
   std::vector<int> _dof_ordering;
 
   // Is the interpolation matrix an identity?
-  bool _interpolation_is_identity;
+  mutable bool _interpolation_is_identity;
 
   // The coefficients that define the polynomial set in terms of the
   // orthonormal polynomials
@@ -1221,6 +1228,9 @@ private:
   // std::array<
   //     std::vector<std::pair<std::vector<double>, std::array<std::size_t,
   //     4>>>, 4> _M;
+
+  // Has the element data been generated?
+  mutable bool _generated;
 };
 
 /// Create a custom finite element
@@ -1284,6 +1294,7 @@ void FiniteElement::permute_data(
     const std::map<cell::type, std::vector<std::vector<std::size_t>>>& eperm)
     const
 {
+  generate();
   if (_cell_tdim >= 2)
   {
     // This assumes 3 bits are used per face. This will need updating if 3D
@@ -1333,6 +1344,7 @@ void FiniteElement::transform_data(
     std::span<T> data, int block_size, std::uint32_t cell_info,
     const std::map<cell::type, trans_data_t>& etrans, OP op) const
 {
+  generate();
   if (_cell_tdim >= 2)
   {
     // This assumes 3 bits are used per face. This will need updating if
@@ -1408,6 +1420,7 @@ template <typename T>
 void FiniteElement::apply_dof_transformation(std::span<T> data, int block_size,
                                              std::uint32_t cell_info) const
 {
+  generate();
   if (_dof_transformations_are_identity)
     return;
 
@@ -1422,6 +1435,7 @@ template <typename T>
 void FiniteElement::apply_transpose_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
+  generate();
   if (_dof_transformations_are_identity)
     return;
 
@@ -1436,6 +1450,7 @@ template <typename T>
 void FiniteElement::apply_inverse_transpose_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
+  generate();
   if (_dof_transformations_are_identity)
     return;
 
@@ -1450,6 +1465,7 @@ template <typename T>
 void FiniteElement::apply_inverse_dof_transformation(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
+  generate();
   if (_dof_transformations_are_identity)
     return;
 
@@ -1464,6 +1480,7 @@ template <typename T>
 void FiniteElement::apply_dof_transformation_to_transpose(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
+  generate();
   if (_dof_transformations_are_identity)
     return;
 
@@ -1486,6 +1503,7 @@ template <typename T>
 void FiniteElement::apply_inverse_transpose_dof_transformation_to_transpose(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
+  generate();
   if (_dof_transformations_are_identity)
     return;
 
@@ -1508,6 +1526,7 @@ template <typename T>
 void FiniteElement::apply_transpose_dof_transformation_to_transpose(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
+  generate();
   if (_dof_transformations_are_identity)
     return;
 
@@ -1530,6 +1549,7 @@ template <typename T>
 void FiniteElement::apply_inverse_dof_transformation_to_transpose(
     std::span<T> data, int block_size, std::uint32_t cell_info) const
 {
+  generate();
   if (_dof_transformations_are_identity)
     return;
 

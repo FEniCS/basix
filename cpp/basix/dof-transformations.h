@@ -38,12 +38,10 @@ std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>
 compute_entity_transformations(
     cell::type cell_type,
     const std::array<
-        std::vector<std::experimental::mdspan<
-            const double, std::experimental::dextents<std::size_t, 2>>>,
+        std::vector<std::pair<std::vector<double>, std::array<std::size_t, 2>>>,
         4>& x,
     const std::array<
-        std::vector<std::experimental::mdspan<
-            const double, std::experimental::dextents<std::size_t, 4>>>,
+        std::vector<std::pair<std::vector<double>, std::array<std::size_t, 4>>>,
         4>& M,
     const std::experimental::mdspan<
         const double, std::experimental::dextents<std::size_t, 2>>& coeffs,

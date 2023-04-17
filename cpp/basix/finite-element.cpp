@@ -565,11 +565,7 @@ FiniteElement::FiniteElement(
     }
   }
 
-  // Compute C = (BD^T)^{-1} B
-  _coeffs.first
-      = math::solve(cmdspan2_t(_dual_matrix.first.data(), _dual_matrix.second),
-                    wcoeffs_ortho);
-  _coeffs.second = {_dual_matrix.second[1], wcoeffs_ortho.extent(1)};
+  _dim = _dual_matrix.second[1];
 
   std::size_t num_points = 0;
   for (auto& x_dim : x)
@@ -601,15 +597,11 @@ FiniteElement::FiniteElement(
   }
 
   // Check that number of dofs is equal to number of coefficients
-  if (num_dofs != _coeffs.second[0])
+  if (num_dofs != _dim)
   {
     throw std::runtime_error(
         "Number of entity dofs does not match total number of dofs");
   }
-
-  _entity_transformations = doftransforms::compute_entity_transformations(
-      cell_type, x, M, cmdspan2_t(_coeffs.first.data(), _coeffs.second),
-      highest_degree, value_size, map_type);
 
   const std::size_t nderivs
       = polyset::nderivs(cell_type, interpolation_nderivs);
@@ -707,218 +699,244 @@ FiniteElement::FiniteElement(
       std::sort(_e_closure_dofs[d][e].begin(), _e_closure_dofs[d][e].end());
     }
   }
+  _generated = false;
+}
 
-  // Check if base transformations are all permutations
-  _dof_transformations_are_permutations = true;
-  _dof_transformations_are_identity = true;
-  for (const auto& [ctype, trans_data] : _entity_transformations)
+void FiniteElement::generate() const
+{
+  if (!_generated)
   {
-    cmdspan3_t trans(trans_data.first.data(), trans_data.second);
+    _generated = true;
 
-    for (std::size_t i = 0;
-         _dof_transformations_are_permutations and i < trans.extent(0); ++i)
+    cmdspan2_t wcoeffs_ortho(_wcoeffs.first.data(), _wcoeffs.second[0],
+                             _wcoeffs.second[1]);
+
+    // Compute C = (BD^T)^{-1} B
+    _coeffs.first = math::solve(
+        cmdspan2_t(_dual_matrix.first.data(), _dual_matrix.second),
+        wcoeffs_ortho);
+    _coeffs.second = {_dim, _wcoeffs.second[1]};
+
+    const std::size_t value_size = std::reduce(
+        _value_shape.begin(), _value_shape.end(), 1, std::multiplies{});
+
+    _entity_transformations = doftransforms::compute_entity_transformations(
+        _cell_type, _x, _M, cmdspan2_t(_coeffs.first.data(), _coeffs.second),
+        _highest_degree, value_size, _map_type);
+
+    // Check if base transformations are all permutations
+    _dof_transformations_are_permutations = true;
+    _dof_transformations_are_identity = true;
+    for (const auto& [ctype, trans_data] : _entity_transformations)
     {
-      for (std::size_t row = 0; row < trans.extent(1); ++row)
+      cmdspan3_t trans(trans_data.first.data(), trans_data.second);
+
+      for (std::size_t i = 0;
+           _dof_transformations_are_permutations and i < trans.extent(0); ++i)
       {
-        double rmin(0), rmax(0), rtot(0);
-        for (std::size_t k = 0; k < trans.extent(2); ++k)
+        for (std::size_t row = 0; row < trans.extent(1); ++row)
         {
-          double r = trans(i, row, k);
-          rmin = std::min(r, rmin);
-          rmax = std::max(r, rmax);
-          rtot += r;
-        }
-
-        if ((trans.extent(2) != 1 and std::abs(rmin) > 1.0e-8)
-            or std::abs(rmax - 1.0) > 1.0e-8 or std::abs(rtot - 1.0) > 1.0e-8)
-        {
-          _dof_transformations_are_permutations = false;
-          _dof_transformations_are_identity = false;
-          break;
-        }
-
-        if (std::abs(trans(i, row, row) - 1) > 1.0e-8)
-          _dof_transformations_are_identity = false;
-      }
-    }
-    if (!_dof_transformations_are_permutations)
-      break;
-  }
-
-  if (!_dof_transformations_are_identity)
-  {
-    // If transformations are permutations, then create the permutations
-    if (_dof_transformations_are_permutations)
-    {
-      for (const auto& [ctype, trans_data] : _entity_transformations)
-      {
-        cmdspan3_t trans(trans_data.first.data(), trans_data.second);
-
-        for (std::size_t i = 0; i < trans.extent(0); ++i)
-        {
-          std::vector<std::size_t> perm(trans.extent(1));
-          std::vector<std::size_t> rev_perm(trans.extent(1));
-          for (std::size_t row = 0; row < trans.extent(1); ++row)
+          double rmin(0), rmax(0), rtot(0);
+          for (std::size_t k = 0; k < trans.extent(2); ++k)
           {
-            for (std::size_t col = 0; col < trans.extent(1); ++col)
-            {
-              if (trans(i, row, col) > 0.5)
-              {
-                perm[row] = col;
-                rev_perm[col] = row;
-                break;
-              }
-            }
+            double r = trans(i, row, k);
+            rmin = std::min(r, rmin);
+            rmax = std::max(r, rmax);
+            rtot += r;
           }
 
-          // Factorise the permutations
-          precompute::prepare_permutation(perm);
-          precompute::prepare_permutation(rev_perm);
+          if ((trans.extent(2) != 1 and std::abs(rmin) > 1.0e-8)
+              or std::abs(rmax - 1.0) > 1.0e-8 or std::abs(rtot - 1.0) > 1.0e-8)
+          {
+            _dof_transformations_are_permutations = false;
+            _dof_transformations_are_identity = false;
+            break;
+          }
 
-          // Store the permutations
-          auto& eperm = _eperm.try_emplace(ctype).first->second;
-          auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
-          eperm.push_back(perm);
-          eperm_rev.push_back(rev_perm);
+          if (std::abs(trans(i, row, row) - 1) > 1.0e-8)
+            _dof_transformations_are_identity = false;
+        }
+      }
+      if (!_dof_transformations_are_permutations)
+        break;
+    }
 
-          // Generate the entity transformations from the permutations
-          std::pair<std::vector<double>, std::array<std::size_t, 2>> identity
-              = {std::vector<double>(perm.size() * perm.size()),
-                 {perm.size(), perm.size()}};
-          std::fill(identity.first.begin(), identity.first.end(), 0.);
-          for (std::size_t i = 0; i < perm.size(); ++i)
-            identity.first[i * perm.size() + i] = 1;
+    if (!_dof_transformations_are_identity)
+    {
+      // If transformations are permutations, then create the permutations
+      if (_dof_transformations_are_permutations)
+      {
+        for (const auto& [ctype, trans_data] : _entity_transformations)
+        {
+          cmdspan3_t trans(trans_data.first.data(), trans_data.second);
+
+          for (std::size_t i = 0; i < trans.extent(0); ++i)
+          {
+            std::vector<std::size_t> perm(trans.extent(1));
+            std::vector<std::size_t> rev_perm(trans.extent(1));
+            for (std::size_t row = 0; row < trans.extent(1); ++row)
+            {
+              for (std::size_t col = 0; col < trans.extent(1); ++col)
+              {
+                if (trans(i, row, col) > 0.5)
+                {
+                  perm[row] = col;
+                  rev_perm[col] = row;
+                  break;
+                }
+              }
+            }
+
+            // Factorise the permutations
+            precompute::prepare_permutation(perm);
+            precompute::prepare_permutation(rev_perm);
+
+            // Store the permutations
+            auto& eperm = _eperm.try_emplace(ctype).first->second;
+            auto& eperm_rev = _eperm_rev.try_emplace(ctype).first->second;
+            eperm.push_back(perm);
+            eperm_rev.push_back(rev_perm);
+
+            // Generate the entity transformations from the permutations
+            std::pair<std::vector<double>, std::array<std::size_t, 2>> identity
+                = {std::vector<double>(perm.size() * perm.size()),
+                   {perm.size(), perm.size()}};
+            std::fill(identity.first.begin(), identity.first.end(), 0.);
+            for (std::size_t i = 0; i < perm.size(); ++i)
+              identity.first[i * perm.size() + i] = 1;
+
+            auto& etrans = _etrans.try_emplace(ctype).first->second;
+            auto& etransT = _etransT.try_emplace(ctype).first->second;
+            auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
+            auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
+            etrans.push_back({perm, identity});
+            etrans_invT.push_back({perm, identity});
+            etransT.push_back({rev_perm, identity});
+            etrans_inv.push_back({rev_perm, identity});
+          }
+        }
+      }
+      else
+      {
+
+        // Precompute the DOF transformations
+        for (const auto& [ctype, trans_data] : _entity_transformations)
+        {
+          cmdspan3_t trans(trans_data.first.data(), trans_data.second);
+
+          // Buffers for matrices
+          std::vector<double> M_b, Minv_b, matint;
 
           auto& etrans = _etrans.try_emplace(ctype).first->second;
           auto& etransT = _etransT.try_emplace(ctype).first->second;
           auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
           auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
-          etrans.push_back({perm, identity});
-          etrans_invT.push_back({perm, identity});
-          etransT.push_back({rev_perm, identity});
-          etrans_inv.push_back({rev_perm, identity});
-        }
-      }
-    }
-    else
-    {
-
-      // Precompute the DOF transformations
-      for (const auto& [ctype, trans_data] : _entity_transformations)
-      {
-        cmdspan3_t trans(trans_data.first.data(), trans_data.second);
-
-        // Buffers for matrices
-        std::vector<double> M_b, Minv_b, matint;
-
-        auto& etrans = _etrans.try_emplace(ctype).first->second;
-        auto& etransT = _etransT.try_emplace(ctype).first->second;
-        auto& etrans_invT = _etrans_invT.try_emplace(ctype).first->second;
-        auto& etrans_inv = _etrans_inv.try_emplace(ctype).first->second;
-        for (std::size_t i = 0; i < trans.extent(0); ++i)
-        {
-          if (trans.extent(1) == 0)
+          for (std::size_t i = 0; i < trans.extent(0); ++i)
           {
-            etrans.push_back({});
-            etransT.push_back({});
-            etrans_invT.push_back({});
-            etrans_inv.push_back({});
-          }
-          else
-          {
-            const std::size_t dim = trans.extent(1);
-            assert(dim == trans.extent(2));
-
+            if (trans.extent(1) == 0)
             {
-              std::pair<std::vector<double>, std::array<std::size_t, 2>> mat
-                  = {std::vector<double>(dim * dim), {dim, dim}};
-              for (std::size_t k0 = 0; k0 < dim; ++k0)
-                for (std::size_t k1 = 0; k1 < dim; ++k1)
-                  mat.first[k0 * dim + k1] = trans(i, k0, k1);
-              std::vector<std::size_t> mat_p = precompute::prepare_matrix(mat);
-              etrans.push_back({mat_p, mat});
-            }
-
-            {
-              std::pair<std::vector<double>, std::array<std::size_t, 2>> matT
-                  = {std::vector<double>(dim * dim), {dim, dim}};
-              for (std::size_t k0 = 0; k0 < dim; ++k0)
-                for (std::size_t k1 = 0; k1 < dim; ++k1)
-                  matT.first[k0 * dim + k1] = trans(i, k1, k0);
-              std::vector<std::size_t> matT_p
-                  = precompute::prepare_matrix(matT);
-              etransT.push_back({matT_p, matT});
-            }
-
-            M_b.resize(dim * dim);
-            mdspan2_t M(M_b.data(), dim, dim);
-            for (std::size_t k0 = 0; k0 < dim; ++k0)
-              for (std::size_t k1 = 0; k1 < dim; ++k1)
-                M(k0, k1) = trans(i, k0, k1);
-
-            // Rotation of a face: this is in the only base transformation
-            // such that M^{-1} != M.
-            // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
-            // For a triangular face, M^3 = Id, so M^{-1} = M^2.
-            Minv_b.resize(dim * dim);
-            mdspan2_t Minv(Minv_b.data(), dim, dim);
-            if (ctype == cell::type::quadrilateral and i == 0)
-            {
-              matint.resize(dim * dim);
-              mdspan2_t mat_int(matint.data(), dim, dim);
-              math::dot(M, M, mat_int);
-
-              math::dot(mat_int, M, Minv);
-            }
-            else if (ctype == cell::type::triangle and i == 0)
-            {
-              math::dot(M, M, Minv);
+              etrans.push_back({});
+              etransT.push_back({});
+              etrans_invT.push_back({});
+              etrans_inv.push_back({});
             }
             else
             {
-              Minv_b.assign(M_b.begin(), M_b.end());
-            }
+              const std::size_t dim = trans.extent(1);
+              assert(dim == trans.extent(2));
 
-            {
-              std::pair<std::vector<double>, std::array<std::size_t, 2>> mat_inv
-                  = {std::vector<double>(dim * dim), {dim, dim}};
+              {
+                std::pair<std::vector<double>, std::array<std::size_t, 2>> mat
+                    = {std::vector<double>(dim * dim), {dim, dim}};
+                for (std::size_t k0 = 0; k0 < dim; ++k0)
+                  for (std::size_t k1 = 0; k1 < dim; ++k1)
+                    mat.first[k0 * dim + k1] = trans(i, k0, k1);
+                std::vector<std::size_t> mat_p
+                    = precompute::prepare_matrix(mat);
+                etrans.push_back({mat_p, mat});
+              }
+
+              {
+                std::pair<std::vector<double>, std::array<std::size_t, 2>> matT
+                    = {std::vector<double>(dim * dim), {dim, dim}};
+                for (std::size_t k0 = 0; k0 < dim; ++k0)
+                  for (std::size_t k1 = 0; k1 < dim; ++k1)
+                    matT.first[k0 * dim + k1] = trans(i, k1, k0);
+                std::vector<std::size_t> matT_p
+                    = precompute::prepare_matrix(matT);
+                etransT.push_back({matT_p, matT});
+              }
+
+              M_b.resize(dim * dim);
+              mdspan2_t M(M_b.data(), dim, dim);
               for (std::size_t k0 = 0; k0 < dim; ++k0)
                 for (std::size_t k1 = 0; k1 < dim; ++k1)
-                  mat_inv.first[k0 * dim + k1] = Minv(k0, k1);
-              std::vector<std::size_t> mat_inv_p
-                  = precompute::prepare_matrix(mat_inv);
-              etrans_inv.push_back({mat_inv_p, mat_inv});
-            }
+                  M(k0, k1) = trans(i, k0, k1);
 
-            {
-              std::pair<std::vector<double>, std::array<std::size_t, 2>>
-                  mat_invT = {std::vector<double>(dim * dim), {dim, dim}};
-              for (std::size_t k0 = 0; k0 < dim; ++k0)
-                for (std::size_t k1 = 0; k1 < dim; ++k1)
-                  mat_invT.first[k0 * dim + k1] = Minv(k1, k0);
-              std::vector<std::size_t> mat_invT_p
-                  = precompute::prepare_matrix(mat_invT);
-              etrans_invT.push_back({mat_invT_p, mat_invT});
+              // Rotation of a face: this is in the only base transformation
+              // such that M^{-1} != M.
+              // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
+              // For a triangular face, M^3 = Id, so M^{-1} = M^2.
+              Minv_b.resize(dim * dim);
+              mdspan2_t Minv(Minv_b.data(), dim, dim);
+              if (ctype == cell::type::quadrilateral and i == 0)
+              {
+                matint.resize(dim * dim);
+                mdspan2_t mat_int(matint.data(), dim, dim);
+                math::dot(M, M, mat_int);
+
+                math::dot(mat_int, M, Minv);
+              }
+              else if (ctype == cell::type::triangle and i == 0)
+              {
+                math::dot(M, M, Minv);
+              }
+              else
+              {
+                Minv_b.assign(M_b.begin(), M_b.end());
+              }
+
+              {
+                std::pair<std::vector<double>, std::array<std::size_t, 2>>
+                    mat_inv = {std::vector<double>(dim * dim), {dim, dim}};
+                for (std::size_t k0 = 0; k0 < dim; ++k0)
+                  for (std::size_t k1 = 0; k1 < dim; ++k1)
+                    mat_inv.first[k0 * dim + k1] = Minv(k0, k1);
+                std::vector<std::size_t> mat_inv_p
+                    = precompute::prepare_matrix(mat_inv);
+                etrans_inv.push_back({mat_inv_p, mat_inv});
+              }
+
+              {
+                std::pair<std::vector<double>, std::array<std::size_t, 2>>
+                    mat_invT = {std::vector<double>(dim * dim), {dim, dim}};
+                for (std::size_t k0 = 0; k0 < dim; ++k0)
+                  for (std::size_t k1 = 0; k1 < dim; ++k1)
+                    mat_invT.first[k0 * dim + k1] = Minv(k1, k0);
+                std::vector<std::size_t> mat_invT_p
+                    = precompute::prepare_matrix(mat_invT);
+                etrans_invT.push_back({mat_invT_p, mat_invT});
+              }
             }
           }
         }
       }
     }
-  }
 
-  // Check if interpolation matrix is the identity
-  cmdspan2_t matM(_matM.first.data(), _matM.second);
-  _interpolation_is_identity = matM.extent(0) == matM.extent(1);
-  for (std::size_t row = 0; _interpolation_is_identity && row < matM.extent(0);
-       ++row)
-  {
-    for (std::size_t col = 0; col < matM.extent(1); ++col)
+    // Check if interpolation matrix is the identity
+    cmdspan2_t matM(_matM.first.data(), _matM.second);
+    _interpolation_is_identity = matM.extent(0) == matM.extent(1);
+    for (std::size_t row = 0;
+         _interpolation_is_identity && row < matM.extent(0); ++row)
     {
-      double v = col == row ? 1.0 : 0.0;
-      if (std::abs(matM(row, col) - v) > 1.0e-12)
+      for (std::size_t col = 0; col < matM.extent(1); ++col)
       {
-        _interpolation_is_identity = false;
-        break;
+        double v = col == row ? 1.0 : 0.0;
+        if (std::abs(matM(row, col) - v) > 1.0e-12)
+        {
+          _interpolation_is_identity = false;
+          break;
+        }
       }
     }
   }
@@ -926,6 +944,7 @@ FiniteElement::FiniteElement(
 //-----------------------------------------------------------------------------
 bool FiniteElement::operator==(const FiniteElement& e) const
 {
+  generate();
   if (this == &e)
     return true;
   else if (family() == element::family::custom
@@ -970,13 +989,14 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
     ndsize /= i;
   std::size_t vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                    std::multiplies{});
-  std::size_t ndofs = _coeffs.second[0];
+  std::size_t ndofs = _dim;
   return {ndsize, num_points, ndofs, vs};
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 4>>
 FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
 {
+  generate();
   std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
   std::vector<double> data(shape[0] * shape[1] * shape[2] * shape[3]);
   tabulate(nd, x, mdspan4_t(data.data(), shape));
@@ -987,6 +1007,7 @@ std::pair<std::vector<double>, std::array<std::size_t, 4>>
 FiniteElement::tabulate(int nd, const std::span<const double>& x,
                         std::array<std::size_t, 2> shape) const
 {
+  generate();
   std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
   std::vector<double> datab(phishape[0] * phishape[1] * phishape[2]
                             * phishape[3]);
@@ -998,6 +1019,7 @@ FiniteElement::tabulate(int nd, const std::span<const double>& x,
 void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
                              impl::mdspan4_t basis_data) const
 {
+  generate();
   if (x.extent(1) != _cell_tdim)
   {
     throw std::runtime_error("Point dim (" + std::to_string(x.extent(1))
@@ -1014,8 +1036,8 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
   const int vs = std::accumulate(_value_shape.begin(), _value_shape.end(), 1,
                                  std::multiplies{});
 
-  std::vector<double> C_b(_coeffs.second[0] * psize);
-  mdspan2_t C(C_b.data(), _coeffs.second[0], psize);
+  std::vector<double> C_b(_dim * psize);
+  mdspan2_t C(C_b.data(), _dim, psize);
 
   cmdspan2_t coeffs_view(_coeffs.first.data(), _coeffs.second);
   std::vector<double> result_b(C.extent(0) * bsize[2]);
@@ -1052,6 +1074,7 @@ void FiniteElement::tabulate(int nd, const std::span<const double>& x,
                              std::array<std::size_t, 2> xshape,
                              const std::span<double>& basis) const
 {
+  generate();
   std::array<std::size_t, 4> shape = tabulate_shape(nd, xshape[0]);
   assert(x.size() == xshape[0] * xshape[1]);
   assert(basis.size() == shape[0] * shape[1] * shape[2] * shape[3]);
@@ -1074,7 +1097,7 @@ const std::vector<std::size_t>& FiniteElement::value_shape() const
   return _value_shape;
 }
 //-----------------------------------------------------------------------------
-int FiniteElement::dim() const { return _coeffs.second[0]; }
+int FiniteElement::dim() const { return _dim; }
 //-----------------------------------------------------------------------------
 element::family FiniteElement::family() const { return _family; }
 //-----------------------------------------------------------------------------
@@ -1086,11 +1109,13 @@ bool FiniteElement::discontinuous() const { return _discontinuous; }
 //-----------------------------------------------------------------------------
 bool FiniteElement::dof_transformations_are_permutations() const
 {
+  generate();
   return _dof_transformations_are_permutations;
 }
 //-----------------------------------------------------------------------------
 bool FiniteElement::dof_transformations_are_identity() const
 {
+  generate();
   return _dof_transformations_are_identity;
 }
 //-----------------------------------------------------------------------------
@@ -1115,6 +1140,7 @@ FiniteElement::entity_closure_dofs() const
 std::pair<std::vector<double>, std::array<std::size_t, 3>>
 FiniteElement::base_transformations() const
 {
+  generate();
   const std::size_t nt = num_transformations(this->cell_type());
   const std::size_t ndofs = this->dim();
 
@@ -1257,6 +1283,7 @@ FiniteElement::pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
 void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
                                  std::uint32_t cell_info) const
 {
+  generate();
   if (!_dof_transformations_are_permutations)
   {
     throw std::runtime_error(
@@ -1272,6 +1299,7 @@ void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
 void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
                                    std::uint32_t cell_info) const
 {
+  generate();
   if (!_dof_transformations_are_permutations)
   {
     throw std::runtime_error(
@@ -1286,6 +1314,7 @@ void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
 std::map<cell::type, std::pair<std::vector<double>, std::array<std::size_t, 3>>>
 FiniteElement::entity_transformations() const
 {
+  generate();
   return _entity_transformations;
 }
 //-----------------------------------------------------------------------------
@@ -1318,6 +1347,7 @@ FiniteElement::M() const
 const std::pair<std::vector<double>, std::array<std::size_t, 2>>&
 FiniteElement::coefficient_matrix() const
 {
+  generate();
   return _coeffs;
 }
 //-----------------------------------------------------------------------------
@@ -1335,6 +1365,7 @@ element::dpc_variant FiniteElement::dpc_variant() const { return _dpc_variant; }
 //-----------------------------------------------------------------------------
 bool FiniteElement::interpolation_is_identity() const
 {
+  generate();
   return _interpolation_is_identity;
 }
 //-----------------------------------------------------------------------------

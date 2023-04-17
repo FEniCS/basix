@@ -994,10 +994,8 @@ class _BlockedElement(_ElementBase):
         assert self.value_size == self._block_size  # TODO: remove this assumption
         output = []
         for table in self.sub_element.tabulate(nderivs, points):
-            new_table = _np.zeros((table.shape[0], table.shape[1] * self._block_size**2))
-            for block in range(self._block_size):
-                col = block * (self._block_size + 1)
-                new_table[:, col: col + table.shape[1] * self._block_size**2: self._block_size**2] = table
+            # Repeat sub element horizontally
+            new_table = _np.tile(table, (1, self._block_size))
             output.append(new_table)
         return _np.asarray(output, dtype=_np.float64)
 

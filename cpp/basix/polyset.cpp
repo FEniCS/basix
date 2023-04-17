@@ -17,16 +17,16 @@ namespace stdex = std::experimental;
 
 namespace
 {
-// Compute coefficients in the Jacobi Polynomial recurrence relation
+/// Compute coefficients in the Jacobi Polynomial recurrence relation
 template <typename T>
 constexpr std::array<T, 3> jrc(int a, int n)
 {
   T an = (a + 2 * n + 1) * (a + 2 * n + 2)
-              / static_cast<T>(2 * (n + 1) * (a + n + 1));
+         / static_cast<T>(2 * (n + 1) * (a + n + 1));
   T bn = a * a * (a + 2 * n + 1)
-              / static_cast<T>(2 * (n + 1) * (a + n + 1) * (a + 2 * n));
+         / static_cast<T>(2 * (n + 1) * (a + n + 1) * (a + 2 * n));
   T cn = n * (a + n) * (a + 2 * n + 2)
-              / static_cast<T>((n + 1) * (a + n + 1) * (a + 2 * n));
+         / static_cast<T>((n + 1) * (a + n + 1) * (a + 2 * n));
   return {an, bn, cn};
 }
 //-----------------------------------------------------------------------------
@@ -48,11 +48,12 @@ void tabulate_polyset_point_derivs(
     P(0, 0, i) = 1.0;
 }
 //-----------------------------------------------------------------------------
-// Compute the complete set of derivatives from 0 to nderiv, for all the
-// polynomials up to order n on a line segment. The polynomials used are
-// Legendre Polynomials, with the recurrence relation given by
-// n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1, 1]. The
-// range is rescaled here to [0, 1].
+
+/// Compute the complete set of derivatives from 0 to nderiv, for all
+/// the polynomials up to order n on a line segment. The polynomials
+/// used are Legendre Polynomials, with the recurrence relation given by
+/// n P(n) = (2n - 1) x P_{n-1} - (n - 1) P_{n-2} in the interval [-1,
+/// 1]. The range is rescaled here to [0, 1].
 template <typename T>
 void tabulate_polyset_line_derivs(
     stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
@@ -71,10 +72,11 @@ void tabulate_polyset_line_derivs(
   if (n == 0)
     return;
 
-  const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
 
   for (std::size_t i = 0; i < P.extent(2); ++i)
     P(0, 1, i) = (x0[i] * 2.0 - 1.0) * P(0, 0, i);
+
   for (std::size_t p = 2; p <= n; ++p)
   {
     const T a = 1.0 - 1.0 / static_cast<T>(p);
@@ -109,13 +111,14 @@ void tabulate_polyset_line_derivs(
   }
 }
 //-----------------------------------------------------------------------------
-// Compute the complete set of derivatives from 0 to nderiv, for all the
-// polynomials up to order n on a triangle in [0, 1][0, 1]. The
-// polynomials P_{pq} are built up in sequence, firstly along q = 0,
-// which is a line segment, as in tabulate_polyset_interval_derivs
-// above, but with a change of variables. The polynomials are then
-// extended in the q direction, using the relation given in Sherwin and
-// Karniadakis 1995 (https://doi.org/10.1016/0045-7825(94)00745-9).
+
+/// Compute the complete set of derivatives from 0 to nderiv, for all
+/// the polynomials up to order n on a triangle in [0, 1][0, 1]. The
+/// polynomials P_{pq} are built up in sequence, firstly along q = 0,
+/// which is a line segment, as in tabulate_polyset_interval_derivs
+/// above, but with a change of variables. The polynomials are then
+/// extended in the q direction, using the relation given in Sherwin and
+/// Karniadakis 1995 (https://doi.org/10.1016/0045-7825(94)00745-9).
 template <typename T>
 void tabulate_polyset_triangle_derivs(
     stdex::mdspan<T, stdex::dextents<std::size_t, 3>> P, std::size_t n,
@@ -124,8 +127,8 @@ void tabulate_polyset_triangle_derivs(
 {
   assert(x.extent(1) == 2);
 
-  const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
-  const auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
+  auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
+  auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
 
   assert(P.extent(0) == (nderiv + 1) * (nderiv + 2) / 2);
   assert(P.extent(1) == (n + 1) * (n + 2) / 2);
@@ -595,8 +598,7 @@ void tabulate_polyset_pyramid_derivs(
         {
           if (p > 0)
           {
-            const T a
-                = static_cast<T>(p - 1) / static_cast<T>(p);
+            const T a = static_cast<T>(p - 1) / static_cast<T>(p);
             auto p00 = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, 0, 0),
                                         stdex::full_extent);
             auto p1 = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p - 1, 0, 0),
@@ -658,8 +660,7 @@ void tabulate_polyset_pyramid_derivs(
 
           for (std::size_t q = 1; q < n + 1; ++q)
           {
-            const T a
-                = static_cast<T>(q - 1) / static_cast<T>(q);
+            const T a = static_cast<T>(q - 1) / static_cast<T>(q);
             auto r_pq = stdex::submdspan(P, idx(kx, ky, kz), pyr_idx(p, q, 0),
                                          stdex::full_extent);
 
@@ -889,6 +890,7 @@ void tabulate_polyset_quad_derivs(
       }
     }
   }
+
   for (std::size_t px = 2; px <= n; ++px)
   {
     const T a = 1.0 - 1.0 / static_cast<T>(px);
@@ -908,6 +910,7 @@ void tabulate_polyset_quad_derivs(
       }
     }
   }
+
   for (std::size_t kx = 1; kx <= nderiv; ++kx)
   {
     for (std::size_t ky = 0; ky <= nderiv - kx; ++ky)
@@ -985,7 +988,6 @@ void tabulate_polyset_hex_derivs(
   const auto x0 = stdex::submdspan(x, stdex::full_extent, 0);
   const auto x1 = stdex::submdspan(x, stdex::full_extent, 1);
   const auto x2 = stdex::submdspan(x, stdex::full_extent, 2);
-
   assert(x0.extent(0) > 0);
   assert(x1.extent(0) > 0);
   assert(x2.extent(0) > 0);
@@ -1156,6 +1158,7 @@ void tabulate_polyset_hex_derivs(
       }
     }
   }
+
   // For larger values of px
   for (std::size_t px = 2; px <= n; ++px)
   {
@@ -1182,6 +1185,7 @@ void tabulate_polyset_hex_derivs(
       }
     }
   }
+
   // For larger values of kx
   for (std::size_t kx = 1; kx <= nderiv; ++kx)
   {
@@ -1210,6 +1214,7 @@ void tabulate_polyset_hex_derivs(
         }
       }
     }
+
     // For larger values of px
     for (std::size_t px = 2; px <= n; ++px)
     {
@@ -1290,6 +1295,7 @@ void tabulate_polyset_prism_derivs(
       P(idx(0, 0, 0), prism_idx(0, 0, 0), i) = std::sqrt(2);
     return;
   }
+
   for (std::size_t i = 0; i < P.extent(2); ++i)
     P(idx(0, 0, 0), prism_idx(0, 0, 0), i) = 1.0;
 
@@ -1303,8 +1309,7 @@ void tabulate_polyset_prism_derivs(
                                    stdex::full_extent);
         auto p1 = stdex::submdspan(P, idx(kx, ky, 0), prism_idx(p - 1, 0, 0),
                                    stdex::full_extent);
-        const T a
-            = static_cast<T>(2 * p - 1) / static_cast<T>(p);
+        const T a = static_cast<T>(2 * p - 1) / static_cast<T>(p);
         for (std::size_t i = 0; i < p0.size(); ++i)
         {
           p0[i] = ((x0[i] * 2.0 - 1.0) + 0.5 * (x1[i] * 2.0 - 1.0) + 0.5)
@@ -1339,6 +1344,7 @@ void tabulate_polyset_prism_derivs(
             T f2 = (1.0 - x1[i]);
             p0[i] -= f2 * f2 * p2[i] * (a - 1.0);
           }
+
           if (ky > 0)
           {
             auto result0
@@ -1370,6 +1376,7 @@ void tabulate_polyset_prism_derivs(
                                    stdex::full_extent);
         for (std::size_t i = 0; i < p1.size(); ++i)
           p1[i] = p0[i] * ((x1[i] * 2.0 - 1.0) * (1.5 + p) + 0.5 + p);
+
         if (ky > 0)
         {
           auto result0 = stdex::submdspan(
@@ -1389,6 +1396,7 @@ void tabulate_polyset_prism_derivs(
           const auto [a1, a2, a3] = jrc<T>(2 * p + 1, q);
           for (std::size_t i = 0; i < p0.size(); ++i)
             pqp1[i] = pq[i] * ((x1[i] * 2.0 - 1.0) * a1 + a2) - pqm1[i] * a3;
+
           if (ky > 0)
           {
             auto result0 = stdex::submdspan(
@@ -1425,6 +1433,7 @@ void tabulate_polyset_prism_derivs(
                     = (x2[i] * 2.0 - 1.0) * result(prism_idx(p, q, r - 1), i)
                       * (a + 1.0);
               }
+
               if (kz > 0)
               {
                 for (std::size_t i = 0; i < result.extent(1); ++i)
@@ -1434,6 +1443,7 @@ void tabulate_polyset_prism_derivs(
                          * (a + 1.0);
                 }
               }
+
               if (r > 1)
               {
                 for (std::size_t i = 0; i < result.extent(1); ++i)
@@ -1467,7 +1477,7 @@ void tabulate_polyset_prism_derivs(
 }
 } // namespace
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::floating_point T>
 void polyset::tabulate(
     std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 3>> P,
     cell::type celltype, int d, int n,
@@ -1506,7 +1516,7 @@ void polyset::tabulate(
   }
 }
 //-----------------------------------------------------------------------------
-template <typename T>
+template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>> polyset::tabulate(
     cell::type celltype, int d, int n,
     std::experimental::mdspan<const T,
@@ -1521,6 +1531,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 3>> polyset::tabulate(
   polyset::tabulate(_P, celltype, d, n, x);
   return {std::move(P), std::move(shape)};
 }
+//-----------------------------------------------------------------------------
 
 /// @cond
 // Explicit instantiation for double and float

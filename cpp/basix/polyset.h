@@ -7,6 +7,7 @@
 #include "cell.h"
 #include "mdspan.hpp"
 #include <array>
+#include <concepts>
 #include <utility>
 #include <vector>
 
@@ -89,8 +90,8 @@
 /// ### Prism
 /// The polynomial set for a prism can be computed by using using the recurrence
 /// relation for the triangle to get the polynomials that are constant with
-/// respect to \f$z\f$, then applying the recurrence relation for the interval to
-/// compute further polynomials with \f$z\f$s.
+/// respect to \f$z\f$, then applying the recurrence relation for the interval
+/// to compute further polynomials with \f$z\f$s.
 ///
 /// ### Pyramid
 /// Orthogonal polynomials on the pyramid element are best calculated in the
@@ -149,19 +150,19 @@ namespace basix::polyset
 ///
 /// - The first index is the derivative. The first entry is the basis
 /// itself. Derivatives are stored in triangular (2D) or tetrahedral
-/// (3D) ordering, eg if `(p, q)` denotes `p` order dervative with
-/// repsect to `x` and `q` order derivative with respect to `y`, [0] ->
+/// (3D) ordering, eg if `(p, q)` denotes `p` order derivative with
+/// respect to `x` and `q` order derivative with respect to `y`, [0] ->
 /// (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
 /// [5] -> (0, 2), [6] -> (3, 0),...
 /// The function basix::indexing::idx maps tuples `(p, q, r)` to the array
 /// index.
 ///
-/// - The second index is the point, with index `i` correspondign to the
+/// - The second index is the point, with index `i` corresponding to the
 /// point in row `i` of @p x.
 ///
 /// - The third index is the basis function index.
 /// @todo Does the order for the third index need to be documented?
-template <typename T>
+template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 3>>
 tabulate(cell::type celltype, int d, int n,
          std::experimental::mdspan<const T,
@@ -191,14 +192,14 @@ tabulate(cell::type celltype, int d, int n,
 ///
 /// - The first index is the derivative. The first entry is the basis
 /// itself. Derivatives are stored in triangular (2D) or tetrahedral
-/// (3D) ordering, eg if `(p, q)` denotes `p` order dervative with
-/// repsect to `x` and `q` order derivative with respect to `y`, [0] ->
+/// (3D) ordering, eg if `(p, q)` denotes `p` order derivative with
+/// respect to `x` and `q` order derivative with respect to `y`, [0] ->
 /// (0, 0), [1] -> (1, 0), [2] -> (0, 1), [3] -> (2, 0), [4] -> (1, 1),
 /// [5] -> (0, 2), [6] -> (3, 0),...
 /// The function basix::indexing::idx maps tuples `(p, q, r)` to the array
 /// index.
 ///
-/// - The second index is the point, with index `i` correspondign to the
+/// - The second index is the point, with index `i` corresponding to the
 /// point in row `i` of @p x.
 ///
 /// - The third index is the basis function index.
@@ -208,11 +209,9 @@ tabulate(cell::type celltype, int d, int n,
 /// @param[in] n Maximum derivative order. Use n = 0 for the basis only.
 /// @param[in] x Points at which to evaluate the basis. The shape is
 /// (number of points, geometric dimension).
-template<typename T>
+template <std::floating_point T>
 void tabulate(
-    std::experimental::mdspan<T,
-                              std::experimental::dextents<std::size_t, 3>>
-        P,
+    std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 3>> P,
     cell::type celltype, int d, int n,
     std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>

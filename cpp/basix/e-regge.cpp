@@ -47,7 +47,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-  const auto [gbuffer, gshape] = cell::geometry(celltype);
+  const auto [gbuffer, gshape] = cell::geometry<double>(celltype);
   impl::cmdspan2_t geometry(gbuffer.data(), gshape);
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;
@@ -78,15 +78,15 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
       {
         // Entity coordinates
         const auto [ebuffer, eshape]
-            = cell::sub_entity_geometry(celltype, d, e);
+            = cell::sub_entity_geometry<double>(celltype, d, e);
         impl::cmdspan2_t entity_x(ebuffer.data(), eshape);
 
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
 
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
-        const auto [_pts, wts]
-            = quadrature::make_quadrature<double>(ct, degree + (degree + 1 - d));
+        const auto [_pts, wts] = quadrature::make_quadrature<double>(
+            ct, degree + (degree + 1 - d));
         impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
         FiniteElement moment_space = create_lagrange(

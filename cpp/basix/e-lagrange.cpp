@@ -770,8 +770,8 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
             : (celltype == cell::type::tetrahedron ? degree + 4 : degree + 2);
 
   // Create points in interior
-  const auto [pt, shape] = lattice::create<double>(celltype, lattice_degree,
-                                           lattice_type, false, simplex_method);
+  const auto [pt, shape] = lattice::create<double>(
+      celltype, lattice_degree, lattice_type, false, simplex_method);
   x[tdim].emplace_back(pt, shape);
 
   const std::size_t num_dofs = shape[0];
@@ -1075,7 +1075,8 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 
   for (std::size_t v = 0; v < topology[0].size(); ++v)
   {
-    const auto [entity, shape] = cell::sub_entity_geometry(celltype, 0, v);
+    const auto [entity, shape]
+        = cell::sub_entity_geometry<double>(celltype, 0, v);
     x[0].emplace_back(entity, shape[0], shape[1]);
     M[0].emplace_back(std::vector<double>{1.0}, 1, 1, 1, 1);
   }
@@ -1127,7 +1128,8 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
           impl::mdarray4_t(nb_interior[d], 1, npts, 1));
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
-        auto [_entity_x, shape] = cell::sub_entity_geometry(celltype, d, e);
+        auto [_entity_x, shape]
+            = cell::sub_entity_geometry<double>(celltype, d, e);
         impl::mdspan2_t entity_x(_entity_x.data(), shape);
         std::span<const double> x0(entity_x.data_handle(), shape[1]);
         {
@@ -1254,8 +1256,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       M[i] = std::vector(num_entities, impl::mdarray4_t(0, 1, 0, 1));
     }
 
-    const auto [pt, shape]
-        = lattice::create<double>(celltype, 0, lattice_type, true, simplex_method);
+    const auto [pt, shape] = lattice::create<double>(celltype, 0, lattice_type,
+                                                     true, simplex_method);
     x[tdim].emplace_back(pt, shape[0], shape[1]);
     auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
     std::fill(_M.data(), _M.data() + _M.size(), 0);
@@ -1271,7 +1273,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       for (std::size_t e = 0; e < topology[dim].size(); ++e)
       {
         const auto [entity_x, entity_x_shape]
-            = cell::sub_entity_geometry(celltype, dim, e);
+            = cell::sub_entity_geometry<double>(celltype, dim, e);
         if (dim == 0)
         {
           x[dim].emplace_back(entity_x, entity_x_shape[0], entity_x_shape[1]);
@@ -1294,8 +1296,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const auto [pt, shape] = lattice::create<double>(ct, degree, lattice_type,
-                                                   false, simplex_method);
+          const auto [pt, shape] = lattice::create<double>(
+              ct, degree, lattice_type, false, simplex_method);
           impl::cmdspan2_t lattice(pt.data(), shape);
           std::span<const double> x0(entity_x.data(), entity_x_shape[1]);
           impl::cmdspan2_t entity_x_view(entity_x.data(), entity_x_shape);

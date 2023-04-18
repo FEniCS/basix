@@ -66,7 +66,7 @@ Interface to the Basix C++ library.
       "geometry",
       [](cell::type celltype)
       {
-        auto [x, shape] = cell::geometry(celltype);
+        auto [x, shape] = cell::geometry<double>(celltype);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::geometry.c_str());
@@ -76,7 +76,8 @@ Interface to the Basix C++ library.
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
       {
-        auto [x, shape] = cell::sub_entity_geometry(celltype, dim, index);
+        auto [x, shape]
+            = cell::sub_entity_geometry<double>(celltype, dim, index);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::sub_entity_geometry.c_str());
@@ -120,8 +121,8 @@ Interface to the Basix C++ library.
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior)
       {
-        auto [x, shape] = lattice::create<double>(celltype, n, type, exterior,
-                                          lattice::simplex_method::none);
+        auto [x, shape] = lattice::create<double>(
+            celltype, n, type, exterior, lattice::simplex_method::none);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
@@ -131,7 +132,8 @@ Interface to the Basix C++ library.
       [](cell::type celltype, int n, lattice::type type, bool exterior,
          lattice::simplex_method method)
       {
-        auto [x, shape] = lattice::create<double>(celltype, n, type, exterior, method);
+        auto [x, shape]
+            = lattice::create<double>(celltype, n, type, exterior, method);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method
@@ -174,13 +176,13 @@ Interface to the Basix C++ library.
 
   m.def(
       "cell_volume",
-      [](cell::type cell_type) -> double { return cell::volume(cell_type); },
+      [](cell::type cell_type) -> double { return cell::volume<double>(cell_type); },
       basix::docstring::cell_volume.c_str());
   m.def(
       "cell_facet_normals",
       [](cell::type cell_type)
       {
-        auto [n, shape] = cell::facet_normals(cell_type);
+        auto [n, shape] = cell::facet_normals<double>(cell_type);
         return py::array_t<double>(shape, n.data());
       },
       basix::docstring::cell_facet_normals.c_str());
@@ -188,7 +190,8 @@ Interface to the Basix C++ library.
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
       {
-        std::vector<double> v = cell::facet_reference_volumes(cell_type);
+        std::vector<double> v
+            = cell::facet_reference_volumes<double>(cell_type);
         std::array<std::size_t, 1> shape = {v.size()};
         return py::array_t<double>(shape, v.data());
       },
@@ -197,7 +200,7 @@ Interface to the Basix C++ library.
       "cell_facet_outward_normals",
       [](cell::type cell_type)
       {
-        auto [n, shape] = cell::facet_outward_normals(cell_type);
+        auto [n, shape] = cell::facet_outward_normals<double>(cell_type);
         return py::array_t<double>(shape, n.data());
       },
       basix::docstring::cell_facet_outward_normals.c_str());
@@ -207,7 +210,7 @@ Interface to the Basix C++ library.
       "cell_facet_jacobians",
       [](cell::type cell_type)
       {
-        auto [J, shape] = cell::facet_jacobians(cell_type);
+        auto [J, shape] = cell::facet_jacobians<double>(cell_type);
         return py::array_t<double>(shape, J.data());
       },
       basix::docstring::cell_facet_jacobians.c_str());
@@ -587,8 +590,8 @@ Interface to the Basix C++ library.
       [](const FiniteElement& element_from, const FiniteElement& element_to)
           -> const py::array_t<double, py::array::c_style>
       {
-        auto [out, shape]
-            = basix::compute_interpolation_operator<double>(element_from, element_to);
+        auto [out, shape] = basix::compute_interpolation_operator<double>(
+            element_from, element_to);
         return py::array_t<double>(shape, out.data());
       },
       basix::docstring::compute_interpolation_operator.c_str());

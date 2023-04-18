@@ -5,6 +5,7 @@
 #pragma once
 
 #include <array>
+#include <concepts>
 #include <utility>
 #include <vector>
 

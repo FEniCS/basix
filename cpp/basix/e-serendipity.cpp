@@ -759,8 +759,8 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
     {
     case cell::type::quadrilateral:
     {
-      const auto [data, shape] = lattice::create<double>(cell::type::triangle, degree,
-                                                 latticetype, true, latticesm);
+      const auto [data, shape] = lattice::create<double>(
+          cell::type::triangle, degree, latticetype, true, latticesm);
       return to_mdarray(data, shape);
     }
     case cell::type::hexahedron:
@@ -859,8 +859,8 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
       std::size_t n = 0;
       for (int j = 0; j <= degree; ++j)
       {
-        const auto [data, shape]
-            = lattice::create<double>(cell::type::interval, j, latticetype, true);
+        const auto [data, shape] = lattice::create<double>(
+            cell::type::interval, j, latticetype, true);
         auto interval_pts = to_mdspan(data, shape);
         const double y = gap * (j % 2 == 0 ? j / 2 : degree - (j - 1) / 2);
         const double coord0 = y < 1 ? y : y - 1;
@@ -977,7 +977,7 @@ FiniteElement basix::element::create_serendipity(
   std::array<std::vector<impl::mdarray4_t>, 4> M;
 
   // dim 0 (vertices)
-  const auto [gdata, gshape] = cell::geometry(celltype);
+  const auto [gdata, gshape] = cell::geometry<double>(celltype);
   impl::cmdspan2_t geometry(gdata.data(), gshape);
   for (std::size_t i = 0; i < geometry.extent(0); ++i)
   {
@@ -1223,8 +1223,9 @@ FiniteElement basix::element::create_serendipity_div(
         = facettype == cell::type::interval
               ? element::create_lagrange(facettype, degree, lvariant, true)
               : element::create_dpc(facettype, degree, dvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<double>(
-        facet_moment_space, celltype, tdim, 2 * degree + 1);
+    auto [_x, xshape, _M, Mshape]
+        = moments::make_normal_integral_moments<double>(
+            facet_moment_space, celltype, tdim, 2 * degree + 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {
@@ -1343,8 +1344,9 @@ FiniteElement basix::element::create_serendipity_curl(
   {
     FiniteElement edge_moment_space = element::create_lagrange(
         cell::type::interval, degree, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments<double>(
-        edge_moment_space, celltype, tdim, 2 * degree + 1);
+    auto [_x, xshape, _M, Mshape]
+        = moments::make_tangent_integral_moments<double>(
+            edge_moment_space, celltype, tdim, 2 * degree + 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
     {

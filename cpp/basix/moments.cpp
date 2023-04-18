@@ -74,7 +74,7 @@ map_points(const cell::type celltype0, const cell::type celltype1,
   {
     // Get entity geometry
     const auto [entity_buffer, eshape]
-        = cell::sub_entity_geometry(celltype0, entity_dim, e);
+        = cell::sub_entity_geometry<T>(celltype0, entity_dim, e);
     mdspan2_t<const T> entity_x(entity_buffer.data(), eshape);
 
     // Axes on the cell entity
@@ -307,7 +307,7 @@ moments::make_tangent_integral_moments(const FiniteElement& V,
   // Iterate over cell entities
   for (std::size_t e = 0; e < num_entities; ++e)
   {
-    const auto [ebuffer, eshape] = cell::sub_entity_geometry(celltype, 1, e);
+    const auto [ebuffer, eshape] = cell::sub_entity_geometry<T>(celltype, 1, e);
     mdspan2_t<const T> edge_x(ebuffer.data(), eshape);
 
     std::vector<T> tangent(edge_x.extent(1));
@@ -385,7 +385,7 @@ moments::make_normal_integral_moments(const FiniteElement& V,
   {
     // Map quadrature points onto facet (cell entity e)
     const auto [ebuffer, eshape]
-        = cell::sub_entity_geometry(celltype, tdim - 1, e);
+        = cell::sub_entity_geometry<T>(celltype, tdim - 1, e);
     mdspan2_t<const T> facet_x(ebuffer.data(), eshape);
 
     auto& _pb = pb.emplace_back(pshape[0] * pshape[1]);
@@ -435,8 +435,10 @@ moments::make_normal_integral_moments(const FiniteElement& V,
 
 /// @cond
 // Explicit instantiation for double and float
-// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
-//                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
+// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t,
+// 2>,
+//                     std::vector<std::vector<float>>, std::array<std::size_t,
+//                     4>>
 // moments::make_integral_moments(const FiniteElement&, cell::type, std::size_t,
 //                                int);
 template std::tuple<
@@ -445,8 +447,10 @@ template std::tuple<
 moments::make_integral_moments(const FiniteElement&, cell::type, std::size_t,
                                int);
 
-// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
-//                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
+// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t,
+// 2>,
+//                     std::vector<std::vector<float>>, std::array<std::size_t,
+//                     4>>
 // moments::make_dot_integral_moments(const FiniteElement&, cell::type,
 //                                    std::size_t, int);
 template std::tuple<
@@ -455,8 +459,10 @@ template std::tuple<
 moments::make_dot_integral_moments(const FiniteElement&, cell::type,
                                    std::size_t, int);
 
-// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
-//                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
+// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t,
+// 2>,
+//                     std::vector<std::vector<float>>, std::array<std::size_t,
+//                     4>>
 // moments::make_tangent_integral_moments(const FiniteElement&, cell::type,
 //                                        std::size_t, int);
 template std::tuple<
@@ -465,8 +471,10 @@ template std::tuple<
 moments::make_tangent_integral_moments(const FiniteElement&, cell::type,
                                        std::size_t, int);
 
-// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
-//                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
+// template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t,
+// 2>,
+//                     std::vector<std::vector<float>>, std::array<std::size_t,
+//                     4>>
 // moments::make_normal_integral_moments(const FiniteElement&, cell::type,
 //                                       std::size_t, int);
 template std::tuple<

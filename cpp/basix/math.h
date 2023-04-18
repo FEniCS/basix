@@ -152,11 +152,51 @@ std::pair<std::vector<T>, std::vector<T>> eigh(const std::span<const T>& A,
 /// @param[in] A The matrix
 /// @param[in] B Right-hand side matrix/vector
 /// @return A^{-1} B
-std::vector<double>
+template <std::floating_point T>
+std::vector<T>
 solve(const std::experimental::mdspan<
-          const double, std::experimental::dextents<std::size_t, 2>>& A,
+          const T, std::experimental::dextents<std::size_t, 2>>& A,
       const std::experimental::mdspan<
-          const double, std::experimental::dextents<std::size_t, 2>>& B);
+          const T, std::experimental::dextents<std::size_t, 2>>& B)
+{
+  static_assert(std::is_same_v<T, float> or std::is_same_v<T, double>);
+
+  namespace stdex = std::experimental;
+
+  // Copy A and B to column-major storage
+  stdex::mdarray<T, stdex::dextents<std::size_t, 2>, stdex::layout_left> _A(
+      A.extents()),
+      _B(B.extents());
+  for (std::size_t i = 0; i < A.extent(0); ++i)
+    for (std::size_t j = 0; j < A.extent(1); ++j)
+      _A(i, j) = A(i, j);
+  for (std::size_t i = 0; i < B.extent(0); ++i)
+    for (std::size_t j = 0; j < B.extent(1); ++j)
+      _B(i, j) = B(i, j);
+
+  int N = _A.extent(0);
+  int nrhs = _B.extent(1);
+  int lda = _A.extent(0);
+  int ldb = _B.extent(0);
+  // Pivot indices that define the permutation matrix for the LU solver
+  std::vector<int> piv(N);
+  int info;
+  if constexpr (std::is_same_v<T, float>)
+    sgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), _B.data(), &ldb, &info);
+  else if constexpr (std::is_same_v<T, double>)
+    dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), _B.data(), &ldb, &info);
+  if (info != 0)
+    throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
+
+  // Copy result to row-major storage
+  std::vector<T> rb(_B.extent(0) * _B.extent(1));
+  stdex::mdspan<T, stdex::dextents<std::size_t, 2>> r(rb.data(), _B.extents());
+  for (std::size_t i = 0; i < _B.extent(0); ++i)
+    for (std::size_t j = 0; j < _B.extent(1); ++j)
+      r(i, j) = _B(i, j);
+
+  return rb;
+}
 
 /// Check if A is a singular matrix
 /// @param[in] A The matrix

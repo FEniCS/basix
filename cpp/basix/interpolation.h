@@ -42,7 +42,8 @@ class FiniteElement;
 /// @return Matrix operator that maps the 'from' degrees-of-freedom to
 /// the 'to' degrees-of-freedom. Shape is (ndofs(element_to),
 /// ndofs(element_from))
-std::pair<std::vector<double>, std::array<std::size_t, 2>>
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>>
 compute_interpolation_operator(const FiniteElement& element_from,
                                const FiniteElement& element_to);
 

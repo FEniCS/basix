@@ -770,7 +770,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
             : (celltype == cell::type::tetrahedron ? degree + 4 : degree + 2);
 
   // Create points in interior
-  const auto [pt, shape] = lattice::create(celltype, lattice_degree,
+  const auto [pt, shape] = lattice::create<double>(celltype, lattice_degree,
                                            lattice_type, false, simplex_method);
   x[tdim].emplace_back(pt, shape);
 
@@ -1118,7 +1118,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
         std::vector<double> id = math::eye(nb[d]);
         impl::mdspan2_t _id(id.data(), nb[d], nb[d]);
         impl::mdspan2_t _mat(mat.data(), mat.extents());
-        std::vector<double> minv_data = math::solve(_mat, _id);
+        std::vector<double> minv_data = math::solve<double>(_mat, _id);
         std::copy(minv_data.begin(), minv_data.end(), minv.data());
       }
 
@@ -1255,7 +1255,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     }
 
     const auto [pt, shape]
-        = lattice::create(celltype, 0, lattice_type, true, simplex_method);
+        = lattice::create<double>(celltype, 0, lattice_type, true, simplex_method);
     x[tdim].emplace_back(pt, shape[0], shape[1]);
     auto& _M = M[tdim].emplace_back(shape[0], 1, shape[0], 1);
     std::fill(_M.data(), _M.data() + _M.size(), 0);
@@ -1283,7 +1283,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         }
         else if (dim == tdim)
         {
-          const auto [pt, shape] = lattice::create(
+          const auto [pt, shape] = lattice::create<double>(
               celltype, degree, lattice_type, false, simplex_method);
           x[dim].emplace_back(pt, shape[0], shape[1]);
           auto& _M = M[dim].emplace_back(shape[0], 1, shape[0], 1);
@@ -1294,7 +1294,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
         else
         {
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
-          const auto [pt, shape] = lattice::create(ct, degree, lattice_type,
+          const auto [pt, shape] = lattice::create<double>(ct, degree, lattice_type,
                                                    false, simplex_method);
           impl::cmdspan2_t lattice(pt.data(), shape);
           std::span<const double> x0(entity_x.data(), entity_x_shape[1]);

@@ -120,7 +120,7 @@ Interface to the Basix C++ library.
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior)
       {
-        auto [x, shape] = lattice::create(celltype, n, type, exterior,
+        auto [x, shape] = lattice::create<double>(celltype, n, type, exterior,
                                           lattice::simplex_method::none);
         return py::array_t<double>(shape, x.data());
       },
@@ -131,7 +131,7 @@ Interface to the Basix C++ library.
       [](cell::type celltype, int n, lattice::type type, bool exterior,
          lattice::simplex_method method)
       {
-        auto [x, shape] = lattice::create(celltype, n, type, exterior, method);
+        auto [x, shape] = lattice::create<double>(celltype, n, type, exterior, method);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method
@@ -588,7 +588,7 @@ Interface to the Basix C++ library.
           -> const py::array_t<double, py::array::c_style>
       {
         auto [out, shape]
-            = basix::compute_interpolation_operator(element_from, element_to);
+            = basix::compute_interpolation_operator<double>(element_from, element_to);
         return py::array_t<double>(shape, out.data());
       },
       basix::docstring::compute_interpolation_operator.c_str());

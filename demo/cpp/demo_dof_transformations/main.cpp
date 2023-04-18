@@ -194,7 +194,7 @@ int main(int argc, char* argv[])
     // To demonstrate how these transformations can be used, we create a
     // lattice of points where we will tabulate the element.
 
-    const auto [pdata, shape] = basix::lattice::create(
+    const auto [pdata, shape] = basix::lattice::create<double>(
         cell_type, 5, basix::lattice::type::equispaced, true);
     std::experimental::mdspan<const double,
                               std::experimental::dextents<std::size_t, 2>>

@@ -567,7 +567,7 @@ FiniteElement::FiniteElement(
 
   // Compute C = (BD^T)^{-1} B
   _coeffs.first
-      = math::solve(cmdspan2_t(_dual_matrix.first.data(), _dual_matrix.second),
+      = math::solve<double>(cmdspan2_t(_dual_matrix.first.data(), _dual_matrix.second),
                     wcoeffs_ortho);
   _coeffs.second = {_dual_matrix.second[1], wcoeffs_ortho.extent(1)};
 

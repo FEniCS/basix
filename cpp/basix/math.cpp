@@ -35,43 +35,43 @@ void basix::math::impl::dot_blas(const std::span<const double>& A,
          &ldb, const_cast<double*>(A.data()), &lda, &beta, C.data(), &ldc);
 }
 //------------------------------------------------------------------
-std::vector<double> basix::math::solve(
-    const std::experimental::mdspan<
-        const double, std::experimental::dextents<std::size_t, 2>>& A,
-    const std::experimental::mdspan<
-        const double, std::experimental::dextents<std::size_t, 2>>& B)
-{
-  // Copy A and B to column-major storage
-  stdex::mdarray<double, stdex::dextents<std::size_t, 2>, stdex::layout_left>
-      _A(A.extents()), _B(B.extents());
-  for (std::size_t i = 0; i < A.extent(0); ++i)
-    for (std::size_t j = 0; j < A.extent(1); ++j)
-      _A(i, j) = A(i, j);
-  for (std::size_t i = 0; i < B.extent(0); ++i)
-    for (std::size_t j = 0; j < B.extent(1); ++j)
-      _B(i, j) = B(i, j);
+// std::vector<double> basix::math::solve(
+//     const std::experimental::mdspan<
+//         const double, std::experimental::dextents<std::size_t, 2>>& A,
+//     const std::experimental::mdspan<
+//         const double, std::experimental::dextents<std::size_t, 2>>& B)
+// {
+//   // Copy A and B to column-major storage
+//   stdex::mdarray<double, stdex::dextents<std::size_t, 2>, stdex::layout_left>
+//       _A(A.extents()), _B(B.extents());
+//   for (std::size_t i = 0; i < A.extent(0); ++i)
+//     for (std::size_t j = 0; j < A.extent(1); ++j)
+//       _A(i, j) = A(i, j);
+//   for (std::size_t i = 0; i < B.extent(0); ++i)
+//     for (std::size_t j = 0; j < B.extent(1); ++j)
+//       _B(i, j) = B(i, j);
 
-  int N = _A.extent(0);
-  int nrhs = _B.extent(1);
-  int lda = _A.extent(0);
-  int ldb = _B.extent(0);
-  // Pivot indices that define the permutation matrix for the LU solver
-  std::vector<int> piv(N);
-  int info;
-  dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), _B.data(), &ldb, &info);
-  if (info != 0)
-    throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
+//   int N = _A.extent(0);
+//   int nrhs = _B.extent(1);
+//   int lda = _A.extent(0);
+//   int ldb = _B.extent(0);
+//   // Pivot indices that define the permutation matrix for the LU solver
+//   std::vector<int> piv(N);
+//   int info;
+//   dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), _B.data(), &ldb, &info);
+//   if (info != 0)
+//     throw std::runtime_error("Call to dgesv failed: " + std::to_string(info));
 
-  // Copy result to row-major storage
-  std::vector<double> rb(_B.extent(0) * _B.extent(1));
-  stdex::mdspan<double, stdex::dextents<std::size_t, 2>> r(rb.data(),
-                                                           _B.extents());
-  for (std::size_t i = 0; i < _B.extent(0); ++i)
-    for (std::size_t j = 0; j < _B.extent(1); ++j)
-      r(i, j) = _B(i, j);
+//   // Copy result to row-major storage
+//   std::vector<double> rb(_B.extent(0) * _B.extent(1));
+//   stdex::mdspan<double, stdex::dextents<std::size_t, 2>> r(rb.data(),
+//                                                            _B.extents());
+//   for (std::size_t i = 0; i < _B.extent(0); ++i)
+//     for (std::size_t j = 0; j < _B.extent(1); ++j)
+//       r(i, j) = _B(i, j);
 
-  return rb;
-}
+//   return rb;
+// }
 //------------------------------------------------------------------
 bool basix::math::is_singular(
     const std::experimental::mdspan<

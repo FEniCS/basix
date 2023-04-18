@@ -741,7 +741,7 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
   if (degree == 0)
   {
     const auto [data, shape]
-        = lattice::create(celltype, 0, lattice::type::equispaced, true);
+        = lattice::create<double>(celltype, 0, lattice::type::equispaced, true);
     return to_mdarray(data, shape);
   }
 
@@ -759,13 +759,13 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
     {
     case cell::type::quadrilateral:
     {
-      const auto [data, shape] = lattice::create(cell::type::triangle, degree,
+      const auto [data, shape] = lattice::create<double>(cell::type::triangle, degree,
                                                  latticetype, true, latticesm);
       return to_mdarray(data, shape);
     }
     case cell::type::hexahedron:
     {
-      const auto [data, shape] = lattice::create(
+      const auto [data, shape] = lattice::create<double>(
           cell::type::tetrahedron, degree, latticetype, true, latticesm);
       return to_mdarray(data, shape);
     }
@@ -790,7 +790,7 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
       std::size_t n = 0;
       for (int j = 0; j <= degree; ++j)
       {
-        const auto [data, shape] = lattice::create(
+        const auto [data, shape] = lattice::create<double>(
             cell::type::interval, degree - j, latticetype, true);
         auto interval_pts = to_mdspan(data, shape);
         for (int i = 0; i <= degree - j; ++i)
@@ -812,7 +812,7 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
       {
         for (int j = 0; j <= degree - k; ++j)
         {
-          const auto [data, shape] = lattice::create(
+          const auto [data, shape] = lattice::create<double>(
               cell::type::interval, degree - j - k, latticetype, true);
           auto interval_pts = to_mdspan(data, shape);
           for (int i = 0; i <= degree - j - k; ++i)
@@ -860,7 +860,7 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
       for (int j = 0; j <= degree; ++j)
       {
         const auto [data, shape]
-            = lattice::create(cell::type::interval, j, latticetype, true);
+            = lattice::create<double>(cell::type::interval, j, latticetype, true);
         auto interval_pts = to_mdspan(data, shape);
         const double y = gap * (j % 2 == 0 ? j / 2 : degree - (j - 1) / 2);
         const double coord0 = y < 1 ? y : y - 1;
@@ -886,7 +886,7 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
       for (int k = 0; k <= degree; ++k)
       {
         const double z = gap * (k % 2 == 0 ? k / 2 : degree - (k - 1) / 2);
-        const auto [data, shape] = lattice::create(
+        const auto [data, shape] = lattice::create<double>(
             cell::type::triangle, k, latticetype, true, latticesm);
         auto triangle_pts = to_mdspan(data, shape);
         if (z < 1)

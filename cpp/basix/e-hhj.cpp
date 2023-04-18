@@ -180,7 +180,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
   return FiniteElement(
       element::family::HHJ, celltype, degree, {tdim, tdim},
       impl::mdspan2_t<T>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
-      maps::type::contravariantPiola, space, discontinuous, -1, degree,
+      maps::type::doubleContravariantPiola, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

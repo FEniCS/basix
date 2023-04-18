@@ -181,7 +181,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   return FiniteElement(
       element::family::Regge, celltype, degree, {tdim, tdim},
       impl::mdspan2_t<T>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
-      maps::type::covariantPiola, space, discontinuous, -1, degree,
+      maps::type::doubleCovariantPiola, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

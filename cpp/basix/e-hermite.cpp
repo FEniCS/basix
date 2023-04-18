@@ -37,11 +37,11 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
       = cell::topology(celltype);
 
   const auto [gdata, gshape] = cell::geometry<T>(celltype);
-  impl::mdspan2_t<const T> geometry(gdata.data(), gshape);
+  impl::mdspan_t<const T, 2> geometry(gdata.data(), gshape);
   const std::size_t deriv_count = polyset::nderivs(celltype, 1);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   // Loop over entities of dimension 'dim'
   for (std::size_t e = 0; e < topology[0].size(); ++e)
@@ -77,14 +77,14 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
 
   if (tdim == 3)
   {
-    x[3] = std::vector<impl::mdarray2_t<T>>(topology[2].size(),
-                                            impl::mdarray2_t<T>(0, tdim));
-    M[3] = std::vector<impl::mdarray4_t<T>>(
-        topology[2].size(), impl::mdarray4_t<T>(0, 1, 0, deriv_count));
+    x[3] = std::vector<impl::mdarray_t<T, 2>>(topology[2].size(),
+                                              impl::mdarray_t<T, 2>(0, tdim));
+    M[3] = std::vector<impl::mdarray_t<T, 4>>(
+        topology[2].size(), impl::mdarray_t<T, 4>(0, 1, 0, deriv_count));
   }
 
-  std::array<std::vector<mdspan2_t<const T>>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t<const T>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<T>>, 4> xbuffer;
   std::array<std::vector<std::vector<T>>, 4> Mbuffer;
   if (discontinuous)
@@ -101,7 +101,7 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
       = discontinuous ? sobolev::space::L2 : sobolev::space::H2;
   return FiniteElement(
       element::family::Hermite, celltype, degree, {},
-      impl::mdspan2_t<T>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
+      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 1, maps::type::identity, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }

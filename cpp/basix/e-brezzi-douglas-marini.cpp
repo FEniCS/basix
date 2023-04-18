@@ -26,13 +26,13 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
     throw std::runtime_error("Unsupported cell type");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, impl::mdarray2_t<T>(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t<T>(0, tdim, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
   // Integral moments on facets
@@ -68,15 +68,15 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   else
   {
     std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector(num_ent, impl::mdarray2_t<T>(0, tdim));
-    M[tdim] = std::vector(num_ent, impl::mdarray4_t<T>(0, tdim, 0, 1));
+    x[tdim] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<mdspan2_t<const T>>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t<const T>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<T>>, 4> xbuffer;
   std::array<std::vector<std::vector<T>>, 4> Mbuffer;
   if (discontinuous)
@@ -95,7 +95,7 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement(
       family::BDM, celltype, degree, {tdim},
-      impl::mdspan2_t<T>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
+      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::contravariantPiola, space, discontinuous, degree,
       degree, lvariant, element::dpc_variant::unset);
 }

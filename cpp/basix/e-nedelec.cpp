@@ -23,7 +23,7 @@ namespace
 {
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-impl::mdarray2_t<T> create_nedelec_2d_space(int degree)
+impl::mdarray_t<T, 2> create_nedelec_2d_space(int degree)
 {
   // Number of order (degree) vector polynomials
   const std::size_t nv = degree * (degree + 1) / 2;
@@ -37,16 +37,16 @@ impl::mdarray2_t<T> create_nedelec_2d_space(int degree)
   // Tabulate polynomial set at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, cell::type::triangle, 2 * degree);
-  impl::mdspan2_t<const T> pts(_pts.data(), wts.size(),
+  impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                _pts.size() / wts.size());
   const auto [_phi, shape]
       = polyset::tabulate(cell::type::triangle, degree, 0, pts);
-  impl::mdspan3_t<const T> phi(_phi.data(), shape);
+  impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
   const std::size_t psize = phi.extent(1);
 
   // Create coefficients for order (degree-1) vector polynomials
-  impl::mdarray2_t<T> wcoeffs(nv * 2 + ns, psize * 2);
+  impl::mdarray_t<T, 2> wcoeffs(nv * 2 + ns, psize * 2);
   for (std::size_t i = 0; i < nv; ++i)
   {
     wcoeffs(i, i) = 1.0;
@@ -73,7 +73,7 @@ impl::mdarray2_t<T> create_nedelec_2d_space(int degree)
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-impl::mdarray2_t<T> create_nedelec_3d_space(int degree)
+impl::mdarray_t<T, 2> create_nedelec_3d_space(int degree)
 {
   // Reference tetrahedron
   const std::size_t tdim = 3;
@@ -98,15 +98,15 @@ impl::mdarray2_t<T> create_nedelec_3d_space(int degree)
   // Tabulate polynomial basis at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
-  impl::mdspan2_t<const T> pts(_pts.data(), wts.size(),
+  impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                _pts.size() / wts.size());
   const auto [_phi, shape]
       = polyset::tabulate(cell::type::tetrahedron, degree, 0, pts);
-  impl::mdspan3_t<const T> phi(_phi.data(), shape);
+  impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
   const std::size_t psize = phi.extent(1);
 
   // Create coefficients for order (degree-1) polynomials
-  impl::mdarray2_t<T> wcoeffs(ndofs, psize * tdim);
+  impl::mdarray_t<T, 2> wcoeffs(ndofs, psize * tdim);
   for (std::size_t i = 0; i < tdim; ++i)
     for (std::size_t j = 0; j < nv; ++j)
       wcoeffs(i * nv + j, i * psize + j) = 1.0;
@@ -172,13 +172,13 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
-    x[0] = std::vector(num_ent, impl::mdarray2_t<T>(0, tdim));
-    M[0] = std::vector(num_ent, impl::mdarray4_t<T>(0, tdim, 0, 1));
+    x[0] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[0] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
   std::vector<T> wcoeffs;
@@ -187,7 +187,7 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   {
   case cell::type::triangle:
   {
-    impl::mdarray2_t<T> w = create_nedelec_2d_space<T>(degree);
+    impl::mdarray_t<T, 2> w = create_nedelec_2d_space<T>(degree);
     wshape = {w.extent(0), w.extent(1)};
     wcoeffs.resize(wshape[0] * wshape[1]);
     std::copy_n(w.data(), w.size(), wcoeffs.data());
@@ -195,7 +195,7 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   }
   case cell::type::tetrahedron:
   {
-    impl::mdarray2_t<T> w = create_nedelec_3d_space<T>(degree);
+    impl::mdarray_t<T, 2> w = create_nedelec_3d_space<T>(degree);
     wshape = {w.extent(0), w.extent(1)};
     wcoeffs.resize(wshape[0] * wshape[1]);
     std::copy_n(w.data(), w.size(), wcoeffs.data());
@@ -236,8 +236,8 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-    x[2] = std::vector(num_ent, impl::mdarray2_t<T>(0, tdim));
-    M[2] = std::vector(num_ent, impl::mdarray4_t<T>(0, tdim, 0, 1));
+    x[2] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[2] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
   // Volume dofs
@@ -259,13 +259,13 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
-      x[3] = std::vector(num_ent, impl::mdarray2_t<T>(0, tdim));
-      M[3] = std::vector(num_ent, impl::mdarray4_t<T>(0, tdim, 0, 1));
+      x[3] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+      M[3] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
     }
   }
 
-  std::array<std::vector<mdspan2_t<const T>>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t<const T>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<T>>, 4> xbuffer;
   std::array<std::vector<std::vector<T>>, 4> Mbuffer;
   if (discontinuous)
@@ -282,7 +282,7 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement(element::family::N1E, celltype, degree, {tdim},
-                       impl::mdspan2_t<T>(wcoeffs.data(), wshape), xview, Mview,
+                       impl::mdspan_t<T, 2>(wcoeffs.data(), wshape), xview, Mview,
                        0, maps::type::covariantPiola, space, discontinuous,
                        degree - 1, degree, lvariant,
                        element::dpc_variant::unset);
@@ -300,14 +300,14 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
   if (degree < 1)
     throw std::runtime_error("Degree must be at least 1");
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
-    x[0] = std::vector(num_ent, impl::mdarray2_t<T>(0, tdim));
-    M[0] = std::vector(num_ent, impl::mdarray4_t<T>(0, tdim, 0, 1));
+    x[0] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[0] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
   // Integral representation for the edge dofs
@@ -342,8 +342,8 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-    x[2] = std::vector(num_ent, impl::mdarray2_t<T>(0, tdim));
-    M[2] = std::vector(num_ent, impl::mdarray4_t<T>(0, tdim, 0, 1));
+    x[2] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[2] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
   if (tdim == 3)
@@ -364,13 +364,13 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
-      x[3] = std::vector(num_ent, impl::mdarray2_t<T>(0, tdim));
-      M[3] = std::vector(num_ent, impl::mdarray4_t<T>(0, tdim, 0, 1));
+      x[3] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+      M[3] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
     }
   }
 
-  std::array<std::vector<mdspan2_t<const T>>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t<const T>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<T>>, 4> xbuffer;
   std::array<std::vector<std::vector<T>>, 4> Mbuffer;
   if (discontinuous)
@@ -385,7 +385,7 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
 
   const std::size_t psize = polyset::dim(celltype, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim},
-                       impl::mdspan2_t<T>(math::eye<T>(tdim * psize).data(),
+                       impl::mdspan_t<T, 2>(math::eye<T>(tdim * psize).data(),
                                           tdim * psize, tdim * psize),
                        xview, Mview, 0, maps::type::covariantPiola,
                        sobolev::space::HCurl, discontinuous, degree, degree,

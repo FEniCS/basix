@@ -30,7 +30,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   const std::size_t ndofs = basis_size * nc;
   const std::size_t psize = basis_size * tdim * tdim;
 
-  impl::mdarray2_t<T> wcoeffs(ndofs, psize);
+  impl::mdarray_t<T, 2> wcoeffs(ndofs, psize);
   for (std::size_t i = 0; i < tdim; ++i)
   {
     for (std::size_t j = 0; j < tdim; ++j)
@@ -49,15 +49,15 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const auto [gbuffer, gshape] = cell::geometry<T>(celltype);
-  impl::mdspan2_t<const T> geometry(gbuffer.data(), gshape);
+  impl::mdspan_t<const T, 2> geometry(gbuffer.data(), gshape);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
-    x[0] = std::vector(num_ent, impl::mdarray2_t<T>(0, tdim));
-    M[0] = std::vector(num_ent, impl::mdarray4_t<T>(0, tdim * tdim, 0, 1));
+    x[0] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[0] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim * tdim, 0, 1));
   }
 
   // Loop over edge and higher dimension entities
@@ -80,7 +80,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
         // Entity coordinates
         const auto [ebuffer, eshape]
             = cell::sub_entity_geometry<T>(celltype, d, e);
-        impl::mdspan2_t<const T> entity_x(ebuffer.data(), eshape);
+        impl::mdspan_t<const T, 2> entity_x(ebuffer.data(), eshape);
 
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
@@ -88,13 +88,13 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
         const auto [_pts, wts]
             = quadrature::make_quadrature<T>(ct, degree + (degree + 1 - d));
-        impl::mdspan2_t<const T> pts(_pts.data(), wts.size(),
+        impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                      _pts.size() / wts.size());
 
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
         const auto [phib, phishape] = moment_space.tabulate(0, pts);
-        impl::mdspan4_t<const T> moment_values(phib.data(), phishape);
+        impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
 
         auto& _x = x[d].emplace_back(pts.extent(0), tdim);
 
@@ -126,7 +126,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
 
             // outer product v.v^T
             auto [buffer, shape] = math::outer(edge, edge);
-            impl::mdspan2_t<const T> result(buffer.data(), shape);
+            impl::mdspan_t<const T, 2> result(buffer.data(), shape);
             for (std::size_t i = 0; i < vvt.extent(1); ++i)
               for (std::size_t j = 0; j < vvt.extent(2); ++j)
                 vvt(c, i, j) = result(i, j);
@@ -162,8 +162,8 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face and
   // d(d-1)(d+1) on the interior in 3D
 
-  std::array<std::vector<mdspan2_t<const T>>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t<const T>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<T>>, 4> xbuffer;
   std::array<std::vector<std::vector<T>>, 4> Mbuffer;
   if (discontinuous)
@@ -180,7 +180,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
       = discontinuous ? sobolev::space::L2 : sobolev::space::HEin;
   return FiniteElement(
       element::family::Regge, celltype, degree, {tdim, tdim},
-      impl::mdspan2_t<T>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
+      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
       maps::type::doubleCovariantPiola, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }

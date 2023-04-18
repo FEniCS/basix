@@ -21,14 +21,14 @@ namespace
 {
 //----------------------------------------------------------------------------
 template <std::floating_point T>
-impl::mdarray2_t<T> vtk_triangle_points(std::size_t degree)
+impl::mdarray_t<T, 2> vtk_triangle_points(std::size_t degree)
 {
   const T d = 1 / static_cast<T>(degree + 3);
   if (degree == 0)
-    return basix::impl::mdarray2_t<T>({d, d}, 1, 2);
+    return basix::impl::mdarray_t<T, 2>({d, d}, 1, 2);
 
   const std::size_t npoints = polyset::dim(cell::type::triangle, degree);
-  impl::mdarray2_t<T> out(npoints, 2);
+  impl::mdarray_t<T, 2> out(npoints, 2);
 
   out(0, 0) = d;
   out(0, 1) = d;
@@ -183,7 +183,7 @@ vtk_tetrahedron_points(std::size_t degree)
   if (degree >= 4)
   {
     const auto pts = vtk_tetrahedron_points<T>(degree - 4);
-    auto _out = impl::mdspan2_t<T>(out.data(), out.extents());
+    auto _out = impl::mdspan_t<T, 2>(out.data(), out.extents());
     auto out_view = stdex::submdspan(_out, std::pair<int, int>{n, npoints},
                                      stdex::full_extent);
     for (std::size_t i = 0; i < out_view.extent(0); ++i)
@@ -202,16 +202,16 @@ vtk_tetrahedron_points(std::size_t degree)
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-std::pair<std::array<std::vector<impl::mdarray2_t<T>>, 4>,
-          std::array<std::vector<impl::mdarray4_t<T>>, 4>>
+std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
+          std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_interval(std::size_t degree)
 {
   // constexpr std::size_t tdim = 1;
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::interval);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   // Points at vertices
   x[0].emplace_back(std::vector<T>{0.0}, 1, 1);
@@ -232,15 +232,15 @@ vtk_data_interval(std::size_t degree)
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
-std::pair<std::array<std::vector<impl::mdarray2_t<T>>, 4>,
-          std::array<std::vector<impl::mdarray4_t<T>>, 4>>
+std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
+          std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_triangle(std::size_t degree)
 {
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::triangle);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   // Points at vertices
   x[0].emplace_back(std::vector<T>{0., 0.}, 1, 2);
@@ -251,11 +251,11 @@ vtk_data_triangle(std::size_t degree)
 
   // Points on edges
   {
-    std::array<impl::mdspan2_t<T>, 3> xview;
+    std::array<impl::mdspan_t<T, 2>, 3> xview;
     for (int i = 0; i < 3; ++i)
     {
       auto& _x = x[1].emplace_back(degree - 1, 2);
-      xview[i] = impl::mdspan2_t<T>(_x.data(), _x.extents());
+      xview[i] = impl::mdspan_t<T, 2>(_x.data(), _x.extents());
     }
 
     for (std::size_t i = 1; i < degree; ++i)
@@ -296,15 +296,15 @@ vtk_data_triangle(std::size_t degree)
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
-std::pair<std::array<std::vector<impl::mdarray2_t<T>>, 4>,
-          std::array<std::vector<impl::mdarray4_t<T>>, 4>>
+std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
+          std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_quadrilateral(std::size_t degree)
 {
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::quadrilateral);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   // Points at vertices
   x[0].emplace_back(std::vector<T>{0., 0.}, 1, 2);
@@ -316,11 +316,11 @@ vtk_data_quadrilateral(std::size_t degree)
 
   // Points on edges
   {
-    std::array<impl::mdspan2_t<T>, 4> xview;
+    std::array<impl::mdspan_t<T, 2>, 4> xview;
     for (int i = 0; i < 4; ++i)
     {
       auto& _x = x[1].emplace_back(degree - 1, 2);
-      xview[i] = impl::mdspan2_t<T>(_x.data(), _x.extents());
+      xview[i] = impl::mdspan_t<T, 2>(_x.data(), _x.extents());
     }
 
     for (std::size_t i = 1; i < degree; ++i)
@@ -369,15 +369,15 @@ vtk_data_quadrilateral(std::size_t degree)
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
-std::pair<std::array<std::vector<impl::mdarray2_t<T>>, 4>,
-          std::array<std::vector<impl::mdarray4_t<T>>, 4>>
+std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
+          std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_tetrahedron(std::size_t degree)
 {
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::tetrahedron);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   // Points at vertices
   x[0].emplace_back(std::vector<T>{0., 0., 0.}, 1, 3);
@@ -389,11 +389,11 @@ vtk_data_tetrahedron(std::size_t degree)
 
   // Points on edges
   {
-    std::array<impl::mdspan2_t<T>, 6> xview;
+    std::array<impl::mdspan_t<T, 2>, 6> xview;
     for (int i = 0; i < 6; ++i)
     {
       auto& _x = x[1].emplace_back(degree - 1, 3);
-      xview[i] = impl::mdspan2_t<T>(_x.data(), _x.extents());
+      xview[i] = impl::mdspan_t<T, 2>(_x.data(), _x.extents());
     }
 
     for (std::size_t i = 1; i < degree; ++i)
@@ -435,11 +435,11 @@ vtk_data_tetrahedron(std::size_t degree)
   if (degree >= 3)
   {
     const auto pts = vtk_triangle_points<T>(degree - 3);
-    std::array<impl::mdspan2_t<T>, 4> xview;
+    std::array<impl::mdspan_t<T, 2>, 4> xview;
     for (int i = 0; i < 4; ++i)
     {
       auto& _x = x[2].emplace_back(pts.extent(0), 3);
-      xview[i] = impl::mdspan2_t<T>(_x.data(), _x.extents());
+      xview[i] = impl::mdspan_t<T, 2>(_x.data(), _x.extents());
     }
 
     for (std::size_t i = 0; i < pts.extent(0); ++i)
@@ -498,15 +498,15 @@ vtk_data_tetrahedron(std::size_t degree)
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
-std::pair<std::array<std::vector<impl::mdarray2_t<T>>, 4>,
-          std::array<std::vector<impl::mdarray4_t<T>>, 4>>
+std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
+          std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_hexahedron(std::size_t degree)
 {
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::hexahedron);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   // Points at vertices
   x[0].emplace_back(std::vector<T>{0., 0., 0.}, 1, 3);
@@ -522,11 +522,11 @@ vtk_data_hexahedron(std::size_t degree)
 
   // Points on edges
   {
-    std::array<impl::mdspan2_t<T>, 12> xview;
+    std::array<impl::mdspan_t<T, 2>, 12> xview;
     for (int i = 0; i < 12; ++i)
     {
       auto& _x = x[1].emplace_back(degree - 1, 3);
-      xview[i] = impl::mdspan2_t<T>(_x.data(), _x.extents());
+      xview[i] = impl::mdspan_t<T, 2>(_x.data(), _x.extents());
     }
 
     for (std::size_t i = 1; i < degree; ++i)
@@ -590,11 +590,11 @@ vtk_data_hexahedron(std::size_t degree)
 
   // Points on faces
   {
-    std::array<impl::mdspan2_t<T>, 6> xview;
+    std::array<impl::mdspan_t<T, 2>, 6> xview;
     for (int i = 0; i < 6; ++i)
     {
       auto& _x = x[2].emplace_back((degree - 1) * (degree - 1), 3);
-      xview[i] = impl::mdspan2_t<T>(_x.data(), _x.extents());
+      xview[i] = impl::mdspan_t<T, 2>(_x.data(), _x.extents());
     }
 
     int n = 0;
@@ -764,15 +764,15 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
   for (std::size_t i = 0; i < tdim; ++i)
   {
     std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector<impl::mdarray2_t<T>>(num_ent,
-                                            impl::mdarray2_t<T>(0, tdim));
-    M[i] = std::vector<impl::mdarray4_t<T>>(num_ent,
-                                            impl::mdarray4_t<T>(0, 1, 0, 1));
+    x[i] = std::vector<impl::mdarray_t<T, 2>>(num_ent,
+                                              impl::mdarray_t<T, 2>(0, tdim));
+    M[i] = std::vector<impl::mdarray_t<T, 4>>(
+        num_ent, impl::mdarray_t<T, 4>(0, 1, 0, 1));
   }
 
   const int lattice_degree
@@ -792,7 +792,7 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
 
   return FiniteElement(
       element::family::P, celltype, degree, {},
-      impl::mdspan2_t<const T>(math::eye<T>(ndofs).data(), ndofs, ndofs),
+      impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
       sobolev::space::L2, true, degree, degree, variant,
       element::dpc_variant::unset);
@@ -915,8 +915,8 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
   if (!discontinuous)
     throw std::runtime_error("Continuous VTK element not yet supported.");
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
   switch (celltype)
   {
   case cell::type::interval:
@@ -946,7 +946,7 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
         impl::to_mdspan(x), impl::to_mdspan(M), tdim, 1);
     return FiniteElement(
         element::family::P, celltype, degree, {},
-        impl::mdspan2_t<const T>(math::eye<T>(ndofs).data(), ndofs, ndofs),
+        impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
         impl::to_mdspan(_x, _xshape), impl::to_mdspan(_M, _Mshape), 0,
         maps::type::identity, sobolev::space::L2, discontinuous, degree, degree,
         element::lagrange_variant::vtk, element::dpc_variant::unset);
@@ -955,7 +955,7 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
   {
     return FiniteElement(
         element::family::P, celltype, degree, {},
-        impl::mdspan2_t<const T>(math::eye<T>(ndofs).data(), ndofs, ndofs),
+        impl::mdspan_t<const T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
         impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
         sobolev::space::H1, discontinuous, degree, degree,
         element::lagrange_variant::vtk, element::dpc_variant::unset);
@@ -974,18 +974,18 @@ FiniteElement create_legendre(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   // Evaluate moment space at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, celltype, degree * 2);
   assert(!wts.empty());
-  impl::mdspan2_t<const T> pts(_pts.data(), wts.size(),
+  impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                _pts.size() / wts.size());
   const auto [_phi, pshape] = polynomials::tabulate(polynomials::type::legendre,
                                                     celltype, degree, pts);
-  impl::mdspan2_t<const T> phi(_phi.data(), pshape);
+  impl::mdspan_t<const T, 2> phi(_phi.data(), pshape);
   for (std::size_t d = 0; d < tdim; ++d)
   {
     for (std::size_t e = 0; e < topology[d].size(); ++e)
@@ -1006,7 +1006,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   return FiniteElement(
       element::family::P, celltype, degree, {},
-      impl::mdspan2_t<T>(math::eye<T>(ndofs).data(), ndofs, ndofs),
+      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::legendre,
       element::dpc_variant::unset);
@@ -1028,8 +1028,8 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
 
   const std::array<std::size_t, 4> nb
       = {1,
@@ -1111,41 +1111,41 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
       const auto [_pts, wts] = quadrature::make_quadrature<T>(
           quadrature::type::Default, ct[d], degree * 2);
       assert(!wts.empty());
-      impl::mdspan2_t<const T> pts(_pts.data(), wts.size(),
+      impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
                                    _pts.size() / wts.size());
 
       const auto [_phi, pshape] = polynomials::tabulate(
           polynomials::type::legendre, ct[d], degree, pts);
-      impl::mdspan2_t<const T> phi(_phi.data(), pshape);
+      impl::mdspan_t<const T, 2> phi(_phi.data(), pshape);
       const auto [_bern, bshape] = polynomials::tabulate(
           polynomials::type::bernstein, ct[d], degree, pts);
-      impl::mdspan2_t<const T> bern(_bern.data(), bshape);
+      impl::mdspan_t<const T, 2> bern(_bern.data(), bshape);
 
       assert(phi.extent(0) == nb[d]);
       const std::size_t npts = pts.extent(0);
 
-      impl::mdarray2_t<T> mat(nb[d], nb[d]);
+      impl::mdarray_t<T, 2> mat(nb[d], nb[d]);
       for (std::size_t i = 0; i < nb[d]; ++i)
         for (std::size_t j = 0; j < nb[d]; ++j)
           for (std::size_t k = 0; k < wts.size(); ++k)
             mat(i, j) += wts[k] * bern(j, k) * phi(i, k);
 
-      impl::mdarray2_t<T> minv(mat.extents());
+      impl::mdarray_t<T, 2> minv(mat.extents());
       {
         std::vector<T> id = math::eye<T>(nb[d]);
-        impl::mdspan2_t<T> _id(id.data(), nb[d], nb[d]);
-        impl::mdspan2_t<T> _mat(mat.data(), mat.extents());
+        impl::mdspan_t<T, 2> _id(id.data(), nb[d], nb[d]);
+        impl::mdspan_t<T, 2> _mat(mat.data(), mat.extents());
         std::vector<T> minv_data = math::solve<T>(_mat, _id);
         std::copy(minv_data.begin(), minv_data.end(), minv.data());
       }
 
-      M[d] = std::vector<impl::mdarray4_t<T>>(
+      M[d] = std::vector<impl::mdarray_t<T, 4>>(
           cell::num_sub_entities(celltype, d),
-          impl::mdarray4_t<T>(nb_interior[d], 1, npts, 1));
+          impl::mdarray_t<T, 4>(nb_interior[d], 1, npts, 1));
       for (std::size_t e = 0; e < topology[d].size(); ++e)
       {
         auto [_entity_x, shape] = cell::sub_entity_geometry<T>(celltype, d, e);
-        impl::mdspan2_t<T> entity_x(_entity_x.data(), shape);
+        impl::mdspan_t<T, 2> entity_x(_entity_x.data(), shape);
         std::span<const T> x0(entity_x.data_handle(), shape[1]);
         {
           auto& _x = x[d].emplace_back(pts.extent(0), shape[1]);
@@ -1177,7 +1177,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   const std::size_t ndofs = polyset::dim(celltype, degree);
   return FiniteElement(
       element::family::P, celltype, degree, {},
-      impl::mdspan2_t<T>(math::eye<T>(ndofs).data(), ndofs, ndofs),
+      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
       discontinuous, degree, degree, element::lagrange_variant::bernstein,
       element::dpc_variant::unset);
@@ -1198,13 +1198,13 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     if (degree != 0)
       throw std::runtime_error("Can only create order 0 Lagrange on a point");
 
-    std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-    std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+    std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+    std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
     x[0].emplace_back(1, 0);
     M[0].emplace_back(std::vector<T>{1.0}, 1, 1, 1, 1);
     return FiniteElement(
         family::P, cell::type::point, 0, {},
-        impl::mdspan2_t<T>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
+        impl::mdspan_t<T, 2>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
         impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::H1,
         discontinuous, degree, degree, element::lagrange_variant::unset,
         element::dpc_variant::unset, {}, dof_ordering);
@@ -1256,8 +1256,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<impl::mdarray2_t<T>>, 4> x;
-  std::array<std::vector<impl::mdarray4_t<T>>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
   if (degree == 0)
   {
     if (!discontinuous)
@@ -1269,8 +1269,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     for (std::size_t i = 0; i < tdim; ++i)
     {
       std::size_t num_entities = cell::num_sub_entities(celltype, i);
-      x[i] = std::vector(num_entities, impl::mdarray2_t<T>(0, tdim));
-      M[i] = std::vector(num_entities, impl::mdarray4_t<T>(0, 1, 0, 1));
+      x[i] = std::vector(num_entities, impl::mdarray_t<T, 2>(0, tdim));
+      M[i] = std::vector(num_entities, impl::mdarray_t<T, 4>(0, 1, 0, 1));
     }
 
     const auto [pt, shape]
@@ -1315,9 +1315,9 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           cell::type ct = cell::sub_entity_type(celltype, dim, e);
           const auto [pt, shape] = lattice::create<T>(ct, degree, lattice_type,
                                                       false, simplex_method);
-          impl::mdspan2_t<const T> lattice(pt.data(), shape);
+          impl::mdspan_t<const T, 2> lattice(pt.data(), shape);
           std::span<const T> x0(entity_x.data(), entity_x_shape[1]);
-          impl::mdspan2_t<const T> entity_x_view(entity_x.data(),
+          impl::mdspan_t<const T, 2> entity_x_view(entity_x.data(),
                                                  entity_x_shape);
 
           auto& _x = x[dim].emplace_back(shape[0], entity_x_shape[1]);
@@ -1339,8 +1339,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<mdspan2_t<const T>>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t<const T>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<T>>, 4> xbuffer;
   std::array<std::vector<std::vector<T>>, 4> Mbuffer;
   if (discontinuous)
@@ -1359,8 +1359,8 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
       = create_tensor_product_factors(celltype, degree, variant);
   return FiniteElement(
       family::P, celltype, degree, {},
-      impl::mdspan2_t<T>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview, Mview,
-      0, maps::type::identity, space, discontinuous, degree, degree, variant,
-      dpc_variant::unset, tensor_factors, dof_ordering);
+      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
+      Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
+      variant, dpc_variant::unset, tensor_factors, dof_ordering);
 }
 //-----------------------------------------------------------------------------

@@ -26,9 +26,8 @@ namespace py = pybind11;
 using namespace basix;
 
 namespace stdex = std::experimental;
-using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
-using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
-using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
+template <typename T, std::size_t d>
+using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -255,10 +254,13 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& K)
           {
             auto [u, shape] = self.push_forward(
-                cmdspan3_t(U.data(), U.shape(0), U.shape(1), U.shape(2)),
-                cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
+                mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
+                                          U.shape(2)),
+                mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
+                                          J.shape(2)),
                 std::span<const double>(detJ.data(), detJ.size()),
-                cmdspan3_t(K.data(), K.shape(0), K.shape(1), K.shape(2)));
+                mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
+                                          K.shape(2)));
             return py::array_t<double>(shape, u.data());
           },
           basix::docstring::FiniteElement__push_forward.c_str())
@@ -271,10 +273,13 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& K)
           {
             auto [U, shape] = self.pull_back(
-                cmdspan3_t(u.data(), u.shape(0), u.shape(1), u.shape(2)),
-                cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
+                mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
+                                          u.shape(2)),
+                mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
+                                          J.shape(2)),
                 std::span<const double>(detJ.data(), detJ.size()),
-                cmdspan3_t(K.data(), K.shape(0), K.shape(1), K.shape(2)));
+                mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
+                                          K.shape(2)));
             return py::array_t<double>(shape, U.data());
           },
           basix::docstring::FiniteElement__pull_back.c_str())
@@ -531,7 +536,7 @@ Interface to the Basix C++ library.
         if (M.size() != 4)
           throw std::runtime_error("M has the wrong size");
 
-        std::array<std::vector<impl::mdspan2_t<const double>>, 4> _x;
+        std::array<std::vector<impl::mdspan_t<const double, 2>>, 4> _x;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
@@ -543,7 +548,7 @@ Interface to the Basix C++ library.
           }
         }
 
-        std::array<std::vector<impl::mdspan4_t<const double>>, 4> _M;
+        std::array<std::vector<impl::mdspan_t<const double, 4>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
@@ -562,9 +567,10 @@ Interface to the Basix C++ library.
 
         return basix::create_custom_element(
             cell_type, _vs,
-            cmdspan2_t(wcoeffs.data(), wcoeffs.shape(0), wcoeffs.shape(1)), _x,
-            _M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
-            highest_complete_degree, highest_degree);
+            mdspan_t<const double, 2>(wcoeffs.data(), wcoeffs.shape(0),
+                                      wcoeffs.shape(1)),
+            _x, _M, interpolation_nderivs, map_type, sobolev_space,
+            discontinuous, highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());
 

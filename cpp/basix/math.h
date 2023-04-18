@@ -8,8 +8,30 @@
 
 #include "mdspan.hpp"
 #include <array>
+#include <concepts>
 #include <span>
+#include <utility>
 #include <vector>
+
+extern "C"
+{
+  void ssyevd_(char* jobz, char* uplo, int* n, float* a, int* lda, float* w,
+               float* work, int* lwork, int* iwork, int* liwork, int* info);
+  void dsyevd_(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
+               double* work, int* lwork, int* iwork, int* liwork, int* info);
+
+  void sgesv_(int* N, int* NRHS, float* A, int* LDA, int* IPIV, float* B,
+              int* LDB, int* INFO);
+  void dgesv_(int* N, int* NRHS, double* A, int* LDA, int* IPIV, double* B,
+              int* LDB, int* INFO);
+
+  void dgemm_(char* transa, char* transb, int* m, int* n, int* k, double* alpha,
+              double* a, int* lda, double* b, int* ldb, double* beta, double* c,
+              int* ldc);
+
+  int dgetrf_(const int* m, const int* n, double* a, const int* lda, int* lpiv,
+              int* info);
+}
 
 /// Mathematical functions
 ///
@@ -65,8 +87,63 @@ std::array<typename U::value_type, 3> cross(const U& u, const V& v)
 /// @return Eigenvalues (0) and eigenvectors (1). The eigenvector array
 /// uses column-major storage, which each column being an eigenvector.
 /// @pre The matrix `A` must be symmetric
-std::pair<std::vector<double>, std::vector<double>>
-eigh(const std::span<const double>& A, std::size_t n);
+template <std::floating_point T>
+std::pair<std::vector<T>, std::vector<T>> eigh(const std::span<const T>& A,
+                                               std::size_t n)
+{
+  static_assert(std::is_same_v<T, float> or std::is_same_v<T, double>);
+
+  // Copy A
+  std::vector<T> M(A.begin(), A.end());
+
+  // Allocate storage for eigenvalues
+  std::vector<T> w(n, 0);
+
+  int N = n;
+  char jobz = 'V'; // Compute eigenvalues and eigenvectors
+  char uplo = 'L'; // Lower
+  int ldA = n;
+  int lwork = -1;
+  int liwork = -1;
+  int info;
+  std::vector<T> work(1);
+  std::vector<int> iwork(1);
+
+  // Query optimal workspace size
+  if constexpr (std::is_same_v<T, float>)
+  {
+    ssyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
+            iwork.data(), &liwork, &info);
+  }
+  else if constexpr (std::is_same_v<T, double>)
+  {
+    dsyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
+            iwork.data(), &liwork, &info);
+  }
+
+  if (info != 0)
+    throw std::runtime_error("Could not find workspace size for syevd.");
+
+  // Solve eigen problem
+  work.resize(work[0]);
+  iwork.resize(iwork[0]);
+  lwork = work.size();
+  liwork = iwork.size();
+  if constexpr (std::is_same_v<T, float>)
+  {
+    ssyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
+            iwork.data(), &liwork, &info);
+  }
+  else if constexpr (std::is_same_v<T, double>)
+  {
+    dsyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
+            iwork.data(), &liwork, &info);
+  }
+  if (info != 0)
+    throw std::runtime_error("Eigenvalue computation did not converge.");
+
+  return {std::move(w), std::move(M)};
+}
 
 /// Solve A X = B
 /// @param[in] A The matrix

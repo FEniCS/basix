@@ -35,7 +35,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, qwts] = quadrature::make_quadrature(
+  const auto [_pts, qwts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, celltype, 2 * degree);
   impl::cmdspan2_t pts(_pts.data(), qwts.size(), _pts.size() / qwts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
@@ -196,7 +196,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   const std::size_t tdim = cell::topological_dimension(celltype);
 
   // Evaluate the expansion polynomials at the quadrature points
-  const auto [_pts, wts] = quadrature::make_quadrature(
+  const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, celltype, 2 * degree);
   impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);

@@ -86,7 +86,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
 
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
         const auto [_pts, wts]
-            = quadrature::make_quadrature(ct, degree + (degree + 1 - d));
+            = quadrature::make_quadrature<double>(ct, degree + (degree + 1 - d));
         impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
         FiniteElement moment_space = create_lagrange(

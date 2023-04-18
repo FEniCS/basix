@@ -11,22 +11,6 @@
 
 namespace stdex = std::experimental;
 
-extern "C"
-{
-  void dsyevd_(char* jobz, char* uplo, int* n, double* a, int* lda, double* w,
-               double* work, int* lwork, int* iwork, int* liwork, int* info);
-
-  void dgesv_(int* N, int* NRHS, double* A, int* LDA, int* IPIV, double* B,
-              int* LDB, int* INFO);
-
-  void dgemm_(char* transa, char* transb, int* m, int* n, int* k, double* alpha,
-              double* a, int* lda, double* b, int* ldb, double* beta, double* c,
-              int* ldc);
-
-  int dgetrf_(const int* m, const int* n, double* a, const int* lda, int* lpiv,
-              int* info);
-}
-
 //------------------------------------------------------------------
 void basix::math::impl::dot_blas(const std::span<const double>& A,
                                  std::array<std::size_t, 2> Ashape,
@@ -49,44 +33,6 @@ void basix::math::impl::dot_blas(const std::span<const double>& A,
   char trans = 'N';
   dgemm_(&trans, &trans, &N, &M, &K, &alpha, const_cast<double*>(B.data()),
          &ldb, const_cast<double*>(A.data()), &lda, &beta, C.data(), &ldc);
-}
-//------------------------------------------------------------------
-std::pair<std::vector<double>, std::vector<double>>
-basix::math::eigh(const std::span<const double>& A, std::size_t n)
-{
-  // Copy A
-  std::vector<double> M(A.begin(), A.end());
-
-  // Allocate storage for eigenvalues
-  std::vector<double> w(n, 0);
-
-  int N = n;
-  char jobz = 'V'; // Compute eigenvalues and eigenvectors
-  char uplo = 'L'; // Lower
-  int ldA = n;
-  int lwork = -1;
-  int liwork = -1;
-  int info;
-  std::vector<double> work(1);
-  std::vector<int> iwork(1);
-
-  // Query optimal workspace size
-  dsyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
-          iwork.data(), &liwork, &info);
-  if (info != 0)
-    throw std::runtime_error("Could not find workspace size for syevd.");
-
-  // Solve eigen problem
-  work.resize(work[0]);
-  iwork.resize(iwork[0]);
-  lwork = work.size();
-  liwork = iwork.size();
-  dsyevd_(&jobz, &uplo, &N, M.data(), &ldA, w.data(), work.data(), &lwork,
-          iwork.data(), &liwork, &info);
-  if (info != 0)
-    throw std::runtime_error("Eigenvalue computation did not converge.");
-
-  return {std::move(w), std::move(M)};
 }
 //------------------------------------------------------------------
 std::vector<double> basix::math::solve(

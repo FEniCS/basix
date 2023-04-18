@@ -48,7 +48,7 @@ std::vector<double> create_interval_gll(std::size_t n, bool exterior)
     return {0.5};
   else
   {
-    const std::vector<double> pts = quadrature::get_gll_points(n + 1);
+    const std::vector<double> pts = quadrature::get_gll_points<double>(n + 1);
     const std::size_t b = exterior ? 0 : 1;
     std::vector<double> x(n + 1 - 2 * b);
     if (exterior)
@@ -90,7 +90,7 @@ std::vector<double> create_interval_gl(std::size_t n, bool exterior)
   if (n == 0)
     return {0.5};
   else
-    return quadrature::get_gl_points(n - 1);
+    return quadrature::get_gl_points<double>(n - 1);
 }
 //-----------------------------------------------------------------------------
 std::vector<double> create_interval_gl_plus_endpoints(std::size_t n,
@@ -749,7 +749,7 @@ xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
   const double h = 1.0 / static_cast<double>(n);
 
   // Interpolate warp factor along interval
-  std::vector<double> pts = quadrature::get_gll_points(n + 1);
+  std::vector<double> pts = quadrature::get_gll_points<double>(n + 1);
   std::transform(pts.begin(), pts.end(), pts.begin(),
                  [](auto x) { return 0.5 * x; });
   for (int i = 0; i < n + 1; ++i)

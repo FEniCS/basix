@@ -89,7 +89,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
 
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
         const auto [ptsbuffer, wts]
-            = quadrature::make_quadrature(ct, degree + (degree + 1 - d));
+            = quadrature::make_quadrature<double>(ct, degree + (degree + 1 - d));
         impl::cmdspan2_t pts(ptsbuffer.data(), wts.size(),
                              ptsbuffer.size() / wts.size());
 

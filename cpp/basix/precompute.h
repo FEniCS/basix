@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "math.h"
 #include "mdspan.hpp"
+#include <concepts>
 #include <span>
 #include <tuple>
 #include <type_traits>
@@ -208,8 +210,12 @@ void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
 /// These are (as described above):
 /// - A permutation (precomputed as in `prepare_permutation()`);
 /// - the vector @f$D@f$;
+template <std::floating_point T>
 std::vector<std::size_t>
-prepare_matrix(std::pair<std::vector<double>, std::array<std::size_t, 2>>& A);
+prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
+{
+  return math::transpose_lu<T>(A);
+}
 
 /// @brief Apply a (precomputed) matrix.
 ///

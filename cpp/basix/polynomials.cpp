@@ -5,18 +5,24 @@
 #include "polynomials.h"
 #include "mdspan.hpp"
 #include "polyset.h"
+#include <concepts>
 #include <utility>
 #include <vector>
 
 using namespace basix;
 namespace stdex = std::experimental;
-using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
-using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
-using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
-using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
 
 namespace
 {
+template <typename T>
+using mdarray2_t = stdex::mdarray<T, stdex::dextents<std::size_t, 2>>;
+
+template <typename T>
+using mdspan2_t = stdex::mdspan<T, stdex::dextents<std::size_t, 2>>;
+
+template <typename T>
+using mdspan3_t = stdex::mdspan<T, stdex::dextents<std::size_t, 3>>;
+
 //-----------------------------------------------------------------------------
 constexpr int single_choose(int n, int k)
 {
@@ -39,8 +45,9 @@ int choose(int n, const std::vector<int>& powers)
   return out;
 }
 //-----------------------------------------------------------------------------
-std::pair<std::vector<double>, std::array<std::size_t, 2>>
-tabulate_bernstein(cell::type celltype, int d, cmdspan2_t x)
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>>
+tabulate_bernstein(cell::type celltype, int d, mdspan2_t<const T> x)
 {
   if (celltype != cell::type::interval and celltype != cell::type::triangle
       and celltype != cell::type::tetrahedron)
@@ -53,10 +60,10 @@ tabulate_bernstein(cell::type celltype, int d, cmdspan2_t x)
   const std::size_t pdim = dim(polynomials::type::bernstein, celltype, d);
 
   std::array<std::size_t, 2> shape = {pdim, x.extent(0)};
-  std::vector<double> values_b(shape[0] * shape[1]);
-  mdspan2_t values(values_b.data(), shape);
+  std::vector<T> values_b(shape[0] * shape[1]);
+  mdspan2_t<T> values(values_b.data(), shape);
 
-  mdarray2_t lambdas(x.extent(1) + 1, x.extent(0));
+  mdarray2_t<T> lambdas(x.extent(1) + 1, x.extent(0));
   for (std::size_t j = 0; j < lambdas.extent(1); ++j)
     lambdas(0, j) = 1.0;
   for (std::size_t i = 0; i < x.extent(1); ++i)
@@ -105,10 +112,10 @@ tabulate_bernstein(cell::type celltype, int d, cmdspan2_t x)
 } // namespace
 
 //-----------------------------------------------------------------------------
-std::pair<std::vector<double>, std::array<std::size_t, 2>>
-polynomials::tabulate(
+template <std::floating_point T>
+std::pair<std::vector<T>, std::array<std::size_t, 2>> polynomials::tabulate(
     polynomials::type polytype, cell::type celltype, int d,
-    std::experimental::mdspan<const double,
+    std::experimental::mdspan<const T,
                               std::experimental::dextents<std::size_t, 2>>
         x)
 {
@@ -134,4 +141,20 @@ int polynomials::dim(polynomials::type, cell::type cell, int d)
 {
   return polyset::dim(cell, d);
 }
+//-----------------------------------------------------------------------------
+/// @cond
+// Explicit instantiation for double and float
+template std::pair<std::vector<float>, std::array<std::size_t, 2>>
+polynomials::tabulate(
+    polynomials::type, cell::type, int,
+    std::experimental::mdspan<const float,
+                              std::experimental::dextents<std::size_t, 2>>);
+template std::pair<std::vector<double>, std::array<std::size_t, 2>>
+polynomials::tabulate(
+    polynomials::type, cell::type, int,
+    std::experimental::mdspan<const double,
+                              std::experimental::dextents<std::size_t, 2>>);
+
+/// @endcond
+
 //-----------------------------------------------------------------------------

@@ -10,6 +10,7 @@
 #include <array>
 #include <concepts>
 #include <span>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -29,6 +30,8 @@ extern "C"
               double* a, int* lda, double* b, int* ldb, double* beta, double* c,
               int* ldc);
 
+  int sgetrf_(const int* m, const int* n, float* a, const int* lda, int* lpiv,
+              int* info);
   int dgetrf_(const int* m, const int* n, double* a, const int* lda, int* lpiv,
               int* info);
 }
@@ -165,8 +168,36 @@ bool is_singular(const std::experimental::mdspan<
 /// @param[in,out] A The matrix
 /// @return The LU permutation, in prepared format (see
 /// `basix::precompute::prepare_permutation`)
+template <std::floating_point T>
 std::vector<std::size_t>
-transpose_lu(std::pair<std::vector<double>, std::array<std::size_t, 2>>& A);
+transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
+{
+  static_assert(std::is_same_v<T, float> or std::is_same_v<T, double>);
+
+  std::size_t dim = A.second[0];
+  assert(dim == A.second[1]);
+  int N = dim;
+  int info;
+  std::vector<int> lu_perm(dim);
+
+  // Comput LU decomposition of M
+  if constexpr (std::is_same_v<T, float>)
+    sgetrf_(&N, &N, A.first.data(), &N, lu_perm.data(), &info);
+  else if constexpr (std::is_same_v<T, double>)
+    dgetrf_(&N, &N, A.first.data(), &N, lu_perm.data(), &info);
+
+  if (info != 0)
+  {
+    throw std::runtime_error("LU decomposition failed: "
+                             + std::to_string(info));
+  }
+
+  std::vector<std::size_t> perm(dim);
+  for (std::size_t i = 0; i < dim; ++i)
+    perm[i] = static_cast<std::size_t>(lu_perm[i] - 1);
+
+  return perm;
+}
 
 /// Compute C = A * B
 /// @param[in] A Input matrix

@@ -165,7 +165,7 @@ tabulate_dlagrange(std::size_t n, std::span<const double> x)
       equi_pts.data(), n + 1, 1);
 
   const auto [dual_values_b, dshape]
-      = polyset::tabulate(cell::type::interval, n, 0, equi_pts_v);
+      = polyset::tabulate<double>(cell::type::interval, n, 0, equi_pts_v);
   stdex::mdspan<const double, stdex::dextents<std::size_t, 3>> dual_values(
       dual_values_b.data(), dshape);
 
@@ -179,7 +179,7 @@ tabulate_dlagrange(std::size_t n, std::span<const double> x)
   using cmdspan2_t
       = stdex::mdspan<const double,
                       stdex::extents<std::size_t, stdex::dynamic_extent, 1>>;
-  const auto [tabulated_values_b, tshape] = polyset::tabulate(
+  const auto [tabulated_values_b, tshape] = polyset::tabulate<double>(
       cell::type::interval, n, 0, cmdspan2_t(x.data(), x.size(), 1));
   stdex::mdspan<const double, stdex::dextents<std::size_t, 3>> tabulated_values(
       tabulated_values_b.data(), tshape);

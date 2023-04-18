@@ -39,7 +39,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan2_t<const double> pts(_pts.data(), qwts.size(), _pts.size() / qwts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
-  impl::cmdspan3_t phi(_phi.data(), shape);
+  impl::mdspan3_t<const double> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.extent(1);
@@ -51,7 +51,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   const std::size_t ndofs = facet_count * facet_dofs + internal_dofs;
 
   // Create coefficients for order (degree-1) vector polynomials
-  impl::mdarray2_t wcoeffs(ndofs, psize * tdim);
+  impl::mdarray2_t<double>  wcoeffs(ndofs, psize * tdim);
   const int nv_interval = polyset::dim(cell::type::interval, degree);
   const int ns_interval = polyset::dim(cell::type::interval, degree - 1);
   int dof = 0;
@@ -113,14 +113,14 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
 
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
   }
 
   {
@@ -153,8 +153,8 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[tdim] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
   }
 
   std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
@@ -200,7 +200,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
-  impl::cmdspan3_t phi(_phi.data(), shape);
+  impl::mdspan3_t<const double> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
   const int psize = phi.extent(1);
@@ -215,7 +215,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
                             + volume_count * volume_dofs;
 
   // Create coefficients for order (degree-1) vector polynomials
-  impl::mdarray2_t wcoeffs(ndofs, psize * tdim);
+  impl::mdarray2_t<double>  wcoeffs(ndofs, psize * tdim);
 
   const int nv_interval = polyset::dim(cell::type::interval, degree);
   const int ns_interval = polyset::dim(cell::type::interval, degree - 1);
@@ -316,13 +316,13 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
 
   x[0] = std::vector(cell::num_sub_entities(celltype, 0),
-                     impl::mdarray2_t(0, tdim));
+                     impl::mdarray2_t<double>(0, tdim));
   M[0] = std::vector(cell::num_sub_entities(celltype, 0),
-                     impl::mdarray4_t(0, tdim, 0, 1));
+                     impl::mdarray4_t<double>(0, tdim, 0, 1));
 
   {
     FiniteElement edge_moment_space = element::create_lagrange(
@@ -355,8 +355,8 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-    x[2] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[2] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[2] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[2] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
   }
   if (tdim == 3)
   {
@@ -376,8 +376,8 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
-      x[3] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-      M[3] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+      x[3] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+      M[3] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
     }
   }
 

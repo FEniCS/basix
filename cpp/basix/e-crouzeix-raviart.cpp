@@ -42,19 +42,19 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
   const auto [gdata, shape] = cell::geometry<double>(celltype);
   impl::mdspan2_t<const double> geometry(gdata.data(), shape);
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     const std::size_t num_ent = topology[i].size();
-    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t<double>(0, 1, 0, 1));
   }
 
-  x[tdim - 1] = std::vector(facet_topology.size(), impl::mdarray2_t(1, tdim));
+  x[tdim - 1] = std::vector(facet_topology.size(), impl::mdarray2_t<double>(1, tdim));
   M[tdim - 1]
       = std::vector(facet_topology.size(),
-                    impl::mdarray4_t(std::vector<double>{1.0}, 1, 1, 1, 1));
+                    impl::mdarray4_t<double>(std::vector<double>{1.0}, 1, 1, 1, 1));
 
   // Compute facet midpoints
   for (std::size_t f = 0; f < facet_topology.size(); ++f)
@@ -68,8 +68,8 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
     }
   }
 
-  x[tdim] = std::vector(topology[tdim].size(), impl::mdarray2_t(0, tdim));
-  M[tdim] = std::vector(topology[tdim].size(), impl::mdarray4_t(0, 1, 0, 1));
+  x[tdim] = std::vector(topology[tdim].size(), impl::mdarray2_t<double>(0, tdim));
+  M[tdim] = std::vector(topology[tdim].size(), impl::mdarray4_t<double>(0, 1, 0, 1));
 
   std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
   std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
@@ -87,7 +87,7 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
 
   return FiniteElement(
       element::family::CR, celltype, 1, {},
-      impl::mdspan2_t<double>(math::eye(ndofs).data(), ndofs, ndofs), xview, Mview, 0,
+      impl::mdspan2_t<double>(math::eye<double>(ndofs).data(), ndofs, ndofs), xview, Mview, 0,
       maps::type::identity, sobolev::space::L2, discontinuous, degree, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }

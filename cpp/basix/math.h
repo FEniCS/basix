@@ -26,6 +26,9 @@ extern "C"
   void dgesv_(int* N, int* NRHS, double* A, int* LDA, int* IPIV, double* B,
               int* LDB, int* INFO);
 
+  void sgemm_(char* transa, char* transb, int* m, int* n, int* k, float* alpha,
+              float* a, int* lda, float* b, int* ldb, float* beta, float* c,
+              int* ldc);
   void dgemm_(char* transa, char* transb, int* m, int* n, int* k, double* alpha,
               double* a, int* lda, double* b, int* ldb, double* beta, double* c,
               int* ldc);
@@ -49,10 +52,38 @@ namespace impl
 /// @param[in] A Input matrix
 /// @param[in] B Input matrix
 /// @return A * B
-void dot_blas(const std::span<const double>& A,
-              std::array<std::size_t, 2> Ashape,
-              const std::span<const double>& B,
-              std::array<std::size_t, 2> Bshape, const std::span<double>& C);
+template <std::floating_point T>
+void dot_blas(std::span<const T> A, std::array<std::size_t, 2> Ashape,
+              std::span<const T> B, std::array<std::size_t, 2> Bshape,
+              std::span<T> C)
+{
+  static_assert(std::is_same_v<T, float> or std::is_same_v<T, double>);
+
+  assert(Ashape[1] == Bshape[0]);
+  assert(C.size() == Ashape[0] * Bshape[1]);
+
+  int M = Ashape[0];
+  int N = Bshape[1];
+  int K = Ashape[1];
+
+  T alpha = 1;
+  T beta = 0;
+  int lda = K;
+  int ldb = N;
+  int ldc = N;
+  char trans = 'N';
+  if constexpr (std::is_same_v<T, float>)
+  {
+    sgemm_(&trans, &trans, &N, &M, &K, &alpha, const_cast<T*>(B.data()), &ldb,
+           const_cast<T*>(A.data()), &lda, &beta, C.data(), &ldc);
+  }
+  else if constexpr (std::is_same_v<T, double>)
+  {
+    dgemm_(&trans, &trans, &N, &M, &K, &alpha, const_cast<T*>(B.data()), &ldb,
+           const_cast<T*>(A.data()), &lda, &beta, C.data(), &ldc);
+  }
+}
+
 } // namespace impl
 
 /// @brief Compute the outer product of vectors u and v.
@@ -94,8 +125,6 @@ template <std::floating_point T>
 std::pair<std::vector<T>, std::vector<T>> eigh(const std::span<const T>& A,
                                                std::size_t n)
 {
-  static_assert(std::is_same_v<T, float> or std::is_same_v<T, double>);
-
   // Copy A
   std::vector<T> M(A.begin(), A.end());
 
@@ -159,8 +188,6 @@ solve(const std::experimental::mdspan<
       const std::experimental::mdspan<
           const T, std::experimental::dextents<std::size_t, 2>>& B)
 {
-  static_assert(std::is_same_v<T, float> or std::is_same_v<T, double>);
-
   namespace stdex = std::experimental;
 
   // Copy A and B to column-major storage
@@ -201,8 +228,43 @@ solve(const std::experimental::mdspan<
 /// Check if A is a singular matrix
 /// @param[in] A The matrix
 /// @return A bool indicating if the matrix is singular
-bool is_singular(const std::experimental::mdspan<
-                 const double, std::experimental::dextents<std::size_t, 2>>& A);
+template <std::floating_point T>
+bool is_singular(std::experimental::mdspan<
+                 const T, std::experimental::dextents<std::size_t, 2>>
+                     A)
+{
+  // Copy to column major matrix
+  namespace stdex = std::experimental;
+  stdex::mdarray<T, stdex::dextents<std::size_t, 2>, stdex::layout_left> _A(
+      A.extents());
+  for (std::size_t i = 0; i < A.extent(0); ++i)
+    for (std::size_t j = 0; j < A.extent(1); ++j)
+      _A(i, j) = A(i, j);
+
+  std::vector<T> B(A.extent(1), 1);
+  int N = _A.extent(0);
+  int nrhs = 1;
+  int lda = _A.extent(0);
+  int ldb = B.size();
+
+  // Pivot indices that define the permutation matrix for the LU solver
+  std::vector<int> piv(N);
+  int info;
+  if constexpr (std::is_same_v<T, float>)
+    sgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), B.data(), &ldb, &info);
+  else if constexpr (std::is_same_v<T, double>)
+    dgesv_(&N, &nrhs, _A.data(), &lda, piv.data(), B.data(), &ldb, &info);
+
+  if (info < 0)
+  {
+    throw std::runtime_error("dgesv failed due to invalid value: "
+                             + std::to_string(info));
+  }
+  else if (info > 0)
+    return true;
+  else
+    return false;
+}
 
 /// Compute the LU decomposition of the transpose of a square matrix A
 /// @param[in,out] A The matrix
@@ -212,8 +274,6 @@ template <std::floating_point T>
 std::vector<std::size_t>
 transpose_lu(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 {
-  static_assert(std::is_same_v<T, float> or std::is_same_v<T, double>);
-
   std::size_t dim = A.second[0];
   assert(dim == A.second[1]);
   int N = dim;
@@ -260,7 +320,8 @@ void dot(const U& A, const V& B, W&& C)
   }
   else
   {
-    impl::dot_blas(
+    using T = typename std::decay_t<U>::value_type;
+    impl::dot_blas<T>(
         std::span(A.data_handle(), A.size()), {A.extent(0), A.extent(1)},
         std::span(B.data_handle(), B.size()), {B.extent(0), B.extent(1)},
         std::span(C.data_handle(), C.size()));
@@ -270,6 +331,15 @@ void dot(const U& A, const V& B, W&& C)
 /// Build an identity matrix
 /// @param[in] n The number of rows/columns
 /// @return Identity matrix using row-major storage
-std::vector<double> eye(std::size_t n);
+template <std::floating_point T>
+std::vector<T> eye(std::size_t n)
+{
+  std::vector<T> I(n * n, 0);
+  namespace stdex = std::experimental;
+  stdex::mdspan<T, stdex::dextents<std::size_t, 2>> Iview(I.data(), n, n);
+  for (std::size_t i = 0; i < n; ++i)
+    Iview(i, i) = 1;
+  return I;
+}
 
 } // namespace basix::math

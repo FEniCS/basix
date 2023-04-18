@@ -44,13 +44,13 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
-  impl::cmdspan3_t phi(_phi.data(), shape);
+  impl::mdspan3_t<const double> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.extent(1);
 
   // Create coefficients for order (degree-1) vector polynomials
-  impl::mdarray2_t B(nv * tdim + ns, psize * tdim);
+  impl::mdarray2_t<double>  B(nv * tdim + ns, psize * tdim);
   for (std::size_t i = 0; i < tdim; ++i)
     for (std::size_t j = 0; j < nv; ++j)
       B(nv * i + j, psize * i + j) = 1.0;
@@ -73,13 +73,13 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
   }
 
   // Add integral moments on facets
@@ -114,8 +114,8 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[tdim] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
   }
 
   std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);

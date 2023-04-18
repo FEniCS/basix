@@ -54,14 +54,14 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
 
   for (std::size_t i = 0; i < tdim; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t<double>(0, 1, 0, 1));
   }
 
   // Evaluate the expansion polynomials at the quadrature points
@@ -69,7 +69,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
-  impl::cmdspan3_t phi(_phi.data(), shape);
+  impl::mdspan3_t<const double> phi(_phi.data(), shape);
 
   // The number of order (degree) polynomials
   const std::size_t psize = phi.extent(1);
@@ -102,7 +102,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::interval:
   {
     const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 2, 0, pts);
-    impl::cmdspan3_t p1(_phi1.data(), shape);
+    impl::mdspan3_t<const double> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
@@ -114,7 +114,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::triangle:
   {
     const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 3, 0, pts);
-    impl::cmdspan3_t p1(_phi1.data(), shape);
+    impl::mdspan3_t<const double> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
@@ -127,7 +127,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::tetrahedron:
   {
     const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 4, 0, pts);
-    impl::cmdspan3_t p1(_phi1.data(), shape);
+    impl::mdspan3_t<const double> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
@@ -141,7 +141,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::quadrilateral:
   {
     const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 2, 0, pts);
-    impl::cmdspan3_t p1(_phi1.data(), shape);
+    impl::mdspan3_t<const double> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
@@ -154,7 +154,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   case cell::type::hexahedron:
   {
     const auto [_phi1, shape] = polyset::tabulate(celltype, degree - 2, 0, pts);
-    impl::cmdspan3_t p1(_phi1.data(), shape);
+    impl::mdspan3_t<const double> p1(_phi1.data(), shape);
     phi1 = create_phi1(p1, phi1_buffer);
     for (std::size_t i = 0; i < pts.extent(0); ++i)
     {
@@ -169,7 +169,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
     throw std::runtime_error("Unknown cell type.");
   }
 
-  impl::mdarray2_t wcoeffs(ndofs, psize);
+  impl::mdarray2_t<double>  wcoeffs(ndofs, psize);
   for (std::size_t i = 0; i < phi1.extent(0); ++i)
     for (std::size_t j = 0; j < psize; ++j)
       for (std::size_t k = 0; k < wts.size(); ++k)

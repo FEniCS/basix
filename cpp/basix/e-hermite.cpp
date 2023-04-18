@@ -36,8 +36,8 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
   impl::mdspan2_t<const double> geometry(gdata.data(), gshape);
   const std::size_t deriv_count = polyset::nderivs(celltype, 1);
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
 
   // Loop over entities of dimension 'dim'
   for (std::size_t e = 0; e < topology[0].size(); ++e)
@@ -73,10 +73,10 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
 
   if (tdim == 3)
   {
-    x[3] = std::vector<impl::mdarray2_t>(topology[2].size(),
-                                         impl::mdarray2_t(0, tdim));
-    M[3] = std::vector<impl::mdarray4_t>(
-        topology[2].size(), impl::mdarray4_t(0, 1, 0, deriv_count));
+    x[3] = std::vector<impl::mdarray2_t<double>>(topology[2].size(),
+                                         impl::mdarray2_t<double>(0, tdim));
+    M[3] = std::vector<impl::mdarray4_t<double>>(
+        topology[2].size(), impl::mdarray4_t<double>(0, 1, 0, deriv_count));
   }
 
   std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
@@ -97,7 +97,7 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
       = discontinuous ? sobolev::space::L2 : sobolev::space::H2;
   return FiniteElement(
       element::family::Hermite, celltype, degree, {},
-      impl::mdspan2_t<double>(math::eye(ndofs).data(), ndofs, ndofs), xview, Mview, 1,
+      impl::mdspan2_t<double>(math::eye<double>(ndofs).data(), ndofs, ndofs), xview, Mview, 1,
       maps::type::identity, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }

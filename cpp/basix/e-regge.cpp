@@ -29,7 +29,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   const std::size_t ndofs = basis_size * nc;
   const std::size_t psize = basis_size * tdim * tdim;
 
-  impl::mdarray2_t wcoeffs(ndofs, psize);
+  impl::mdarray2_t<double>  wcoeffs(ndofs, psize);
   for (std::size_t i = 0; i < tdim; ++i)
   {
     for (std::size_t j = 0; j < tdim; ++j)
@@ -50,13 +50,13 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   const auto [gbuffer, gshape] = cell::geometry<double>(celltype);
   impl::mdspan2_t<const double> geometry(gbuffer.data(), gshape);
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
 
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
-    x[0] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[0] = std::vector(num_ent, impl::mdarray4_t(0, tdim * tdim, 0, 1));
+    x[0] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[0] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim * tdim, 0, 1));
   }
 
   // Loop over edge and higher dimension entities

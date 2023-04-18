@@ -20,22 +20,23 @@ using namespace basix;
 namespace
 {
 //----------------------------------------------------------------------------
-impl::mdarray2_t make_serendipity_space_2d(int degree)
+impl::mdarray2_t<double> make_serendipity_space_2d(int degree)
 {
   const std::size_t ndofs = degree == 1 ? 4 : degree * (degree + 3) / 2 + 3;
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree);
-  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(),
+                                    _pts.size() / wts.size());
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::quadrilateral, degree, 0, pts);
-  impl::cmdspan3_t Pq(_Pq.data(), shape);
+  impl::mdspan3_t<const double> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
 
   // Create coefficients for order (degree) polynomials
-  impl::mdarray2_t wcoeffs(ndofs, psize);
+  impl::mdarray2_t<double> wcoeffs(ndofs, psize);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
     for (int j = 0; j <= degree - i; ++j)
@@ -109,7 +110,7 @@ serendipity_3d_indices(int total, int linear, std::vector<int> done = {})
   return out;
 }
 //----------------------------------------------------------------------------
-impl::mdarray2_t make_serendipity_space_3d(int degree)
+impl::mdarray2_t<double> make_serendipity_space_3d(int degree)
 {
   const std::size_t ndofs
       = degree == 0
@@ -124,15 +125,16 @@ impl::mdarray2_t make_serendipity_space_3d(int degree)
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree);
-  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(),
+                                    _pts.size() / wts.size());
 
   const auto [_Ph, shape]
       = polyset::tabulate(cell::type::hexahedron, degree, 0, pts);
-  impl::cmdspan3_t Ph(_Ph.data(), shape);
+  impl::mdspan3_t<const double> Ph(_Ph.data(), shape);
   const std::size_t psize = Ph.extent(1);
 
   // Create coefficients for order (degree) polynomials
-  impl::mdarray2_t wcoeffs(ndofs, psize);
+  impl::mdarray2_t<double> wcoeffs(ndofs, psize);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
     for (int j = 0; j <= degree - i; ++j)
@@ -170,23 +172,24 @@ impl::mdarray2_t make_serendipity_space_3d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
-impl::mdarray2_t make_serendipity_div_space_2d(int degree)
+impl::mdarray2_t<double> make_serendipity_div_space_2d(int degree)
 {
   const std::size_t ndofs = degree * (degree + 3) + 4;
 
   // Evaluate the expansion polynomials at the quadrature points
   auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
-  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(),
+                                    _pts.size() / wts.size());
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts);
-  impl::cmdspan3_t Pq(_Pq.data(), shape);
+  impl::mdspan3_t<const double> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
   const std::size_t nv = polyset::dim(cell::type::triangle, degree);
 
   // Create coefficients for order (degree) vector polynomials
-  impl::mdarray2_t wcoeffs(ndofs, psize * 2);
+  impl::mdarray2_t<double> wcoeffs(ndofs, psize * 2);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
     for (int j = 0; j <= degree - i; ++j)
@@ -237,24 +240,25 @@ impl::mdarray2_t make_serendipity_div_space_2d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
-impl::mdarray2_t make_serendipity_div_space_3d(int degree)
+impl::mdarray2_t<double> make_serendipity_div_space_3d(int degree)
 {
   const std::size_t ndofs = (degree + 1) * (degree * (degree + 5) + 12) / 2;
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
-  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(),
+                                    _pts.size() / wts.size());
 
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts);
-  impl::cmdspan3_t Pq(_Pq.data(), shape);
+  impl::mdspan3_t<const double> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
   const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
 
   // Create coefficients for order (degree) vector polynomials
-  impl::mdarray2_t wcoeffs(ndofs, psize * 3);
+  impl::mdarray2_t<double> wcoeffs(ndofs, psize * 3);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
   {
@@ -382,23 +386,24 @@ impl::mdarray2_t make_serendipity_div_space_3d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
-impl::mdarray2_t make_serendipity_curl_space_2d(int degree)
+impl::mdarray2_t<double> make_serendipity_curl_space_2d(int degree)
 {
   const std::size_t ndofs = degree * (degree + 3) + 4;
 
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, cell::type::quadrilateral, 2 * degree + 2);
-  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(),
+                                    _pts.size() / wts.size());
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::quadrilateral, degree + 1, 0, pts);
-  impl::cmdspan3_t Pq(_Pq.data(), shape);
+  impl::mdspan3_t<const double> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
   const std::size_t nv = polyset::dim(cell::type::triangle, degree);
 
   // Create coefficients for order (degree) vector polynomials
-  impl::mdarray2_t wcoeffs(ndofs, psize * 2);
+  impl::mdarray2_t<double> wcoeffs(ndofs, psize * 2);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
     for (int j = 0; j <= degree - i; ++j)
@@ -451,7 +456,7 @@ impl::mdarray2_t make_serendipity_curl_space_2d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
-impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
+impl::mdarray2_t<double> make_serendipity_curl_space_3d(int degree)
 {
   const std::size_t ndofs = degree <= 3
                                 ? 6 * (degree * (degree + 1) + 2)
@@ -461,16 +466,17 @@ impl::mdarray2_t make_serendipity_curl_space_3d(int degree)
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, cell::type::hexahedron, 2 * degree + 2);
-  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(),
+                                    _pts.size() / wts.size());
   const auto [_Pq, shape]
       = polyset::tabulate(cell::type::hexahedron, degree + 1, 0, pts);
-  impl::cmdspan3_t Pq(_Pq.data(), shape);
+  impl::mdspan3_t<const double> Pq(_Pq.data(), shape);
 
   const std::size_t psize = Pq.extent(1);
   const std::size_t nv = polyset::dim(cell::type::tetrahedron, degree);
 
   // Create coefficients for order (degree) vector polynomials
-  impl::mdarray2_t wcoeffs(ndofs, psize * 3);
+  impl::mdarray2_t<double> wcoeffs(ndofs, psize * 3);
   int row_n = 0;
   for (int i = 0; i <= degree; ++i)
   {
@@ -664,27 +670,28 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
 
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, celltype, degree * 2);
-  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(),
+                                    _pts.size() / wts.size());
 
   // Evaluate moment space at quadrature points
   const auto [_phi, shape] = polynomials::tabulate(polynomials::type::legendre,
                                                    celltype, degree, pts);
   impl::mdspan2_t<const double> phi(_phi.data(), shape);
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
 
   for (std::size_t i = 0; i < tdim; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t<double>(0, 1, 0, 1));
   }
 
   x[tdim].emplace_back(_pts, pts.extent(0), pts.extent(1));
   auto& _M = M[tdim].emplace_back(ndofs, 1, pts.extent(0), 1);
 
-  impl::mdarray2_t wcoeffs(ndofs, psize);
+  impl::mdarray2_t<double> wcoeffs(ndofs, psize);
   if (celltype == cell::type::quadrilateral)
   {
     int row_n = 0;
@@ -722,21 +729,21 @@ FiniteElement create_legendre_dpc(cell::type celltype, int degree,
     }
   }
 
-  return FiniteElement(element::family::DPC, celltype, degree, {},
-                       impl::mdspan2_t<double>(wcoeffs.data(), wcoeffs.extents()),
-                       impl::to_mdspan(x), impl::to_mdspan(M), 0,
-                       maps::type::identity, sobolev::space::L2, discontinuous,
-                       degree, degree, element::lagrange_variant::unset,
-                       element::dpc_variant::legendre);
+  return FiniteElement(
+      element::family::DPC, celltype, degree, {},
+      impl::mdspan2_t<double>(wcoeffs.data(), wcoeffs.extents()),
+      impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
+      sobolev::space::L2, discontinuous, degree, degree,
+      element::lagrange_variant::unset, element::dpc_variant::legendre);
 }
 //-----------------------------------------------------------------------------
-impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
-                                 element::dpc_variant variant)
+impl::mdarray2_t<double> make_dpc_points(cell::type celltype, int degree,
+                                         element::dpc_variant variant)
 {
-  auto to_mdspan
-      = [](auto& x, auto shape) { return impl::mdspan2_t<const double>(x.data(), shape); };
+  auto to_mdspan = [](auto& x, auto shape)
+  { return impl::mdspan2_t<const double>(x.data(), shape); };
   auto to_mdarray = [](auto& x, auto shape)
-  { return impl::mdarray2_t(x, shape[0], shape[1]); };
+  { return impl::mdarray2_t<double>(x, shape[0], shape[1]); };
 
   if (degree == 0)
   {
@@ -786,7 +793,7 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
     {
     case cell::type::quadrilateral:
     {
-      impl::mdarray2_t pts((degree + 2) * (degree + 1) / 2, 2);
+      impl::mdarray2_t<double> pts((degree + 2) * (degree + 1) / 2, 2);
       std::size_t n = 0;
       for (int j = 0; j <= degree; ++j)
       {
@@ -806,7 +813,8 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
     }
     case cell::type::hexahedron:
     {
-      impl::mdarray2_t pts((degree + 3) * (degree + 2) * (degree + 1) / 6, 3);
+      impl::mdarray2_t<double> pts(
+          (degree + 3) * (degree + 2) * (degree + 1) / 6, 3);
       std::size_t n = 0;
       for (int k = 0; k <= degree; ++k)
       {
@@ -852,7 +860,7 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
     {
     case cell::type::quadrilateral:
     {
-      impl::mdarray2_t pts((degree + 2) * (degree + 1) / 2, 2);
+      impl::mdarray2_t<double> pts((degree + 2) * (degree + 1) / 2, 2);
       const double gap = static_cast<double>(2 * (degree + 1))
                          / (degree * degree + degree + 1);
 
@@ -877,7 +885,8 @@ impl::mdarray2_t make_dpc_points(cell::type celltype, int degree,
     }
     case cell::type::hexahedron:
     {
-      impl::mdarray2_t pts((degree + 3) * (degree + 2) * (degree + 1) / 6, 3);
+      impl::mdarray2_t<double> pts(
+          (degree + 3) * (degree + 2) * (degree + 1) / 6, 3);
 
       const double gap
           = static_cast<double>(3 * degree) / (degree * degree + 1);
@@ -973,8 +982,8 @@ FiniteElement basix::element::create_serendipity(
 
   const std::size_t tdim = cell::topological_dimension(celltype);
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
 
   // dim 0 (vertices)
   const auto [gdata, gshape] = cell::geometry<double>(celltype);
@@ -1005,8 +1014,8 @@ FiniteElement basix::element::create_serendipity(
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 1);
-    x[1] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[1] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
+    x[1] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[1] = std::vector(num_ent, impl::mdarray4_t<double>(0, 1, 0, 1));
   }
 
   if (tdim >= 2)
@@ -1027,8 +1036,8 @@ FiniteElement basix::element::create_serendipity(
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-      x[2] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-      M[2] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
+      x[2] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+      M[2] = std::vector(num_ent, impl::mdarray4_t<double>(0, 1, 0, 1));
     }
   }
 
@@ -1050,8 +1059,8 @@ FiniteElement basix::element::create_serendipity(
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
-      x[3] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-      M[3] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
+      x[3] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+      M[3] = std::vector(num_ent, impl::mdarray4_t<double>(0, 1, 0, 1));
     }
   }
 
@@ -1059,7 +1068,7 @@ FiniteElement basix::element::create_serendipity(
   std::array<std::size_t, 2> wshape;
   if (tdim == 1)
   {
-    wbuffer = math::eye(degree + 1);
+    wbuffer = math::eye<double>(degree + 1);
     wshape = {static_cast<std::size_t>(degree + 1),
               static_cast<std::size_t>(degree + 1)};
   }
@@ -1080,8 +1089,10 @@ FiniteElement basix::element::create_serendipity(
     throw std::runtime_error("Unsupported tdim");
   }
 
-  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview
+      = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview
+      = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -1097,8 +1108,9 @@ FiniteElement basix::element::create_serendipity(
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   return FiniteElement(element::family::serendipity, celltype, degree, {},
-                       impl::mdspan2_t<const double>(wbuffer.data(), wshape), xview, Mview,
-                       0, maps::type::identity, space, discontinuous,
+                       impl::mdspan2_t<const double>(wbuffer.data(), wshape),
+                       xview, Mview, 0, maps::type::identity, space,
+                       discontinuous,
                        degree < static_cast<int>(tdim) ? 1 : degree / tdim,
                        degree, lvariant, dvariant);
 }
@@ -1141,7 +1153,7 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
 
   const std::size_t ndofs = polyset::dim(simplex_type, degree);
   const std::size_t psize = polyset::dim(celltype, degree);
-  impl::mdarray2_t wcoeffs(ndofs, psize);
+  impl::mdarray2_t<double> wcoeffs(ndofs, psize);
   if (celltype == cell::type::quadrilateral)
   {
     int row_n = 0;
@@ -1166,29 +1178,31 @@ FiniteElement basix::element::create_dpc(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
 
   const std::size_t tdim = cell::topological_dimension(celltype);
   for (std::size_t i = 0; i < tdim; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t(0, 1, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t<double>(0, 1, 0, 1));
   }
 
   auto& _M = M[tdim].emplace_back(ndofs, 1, ndofs, 1);
   for (std::size_t i = 0; i < _M.extent(0); ++i)
     _M(i, 0, i, 0) = 1.0;
 
-  const impl::mdarray2_t pt = make_dpc_points(celltype, degree, variant);
+  const impl::mdarray2_t<double> pt
+      = make_dpc_points(celltype, degree, variant);
   x[tdim].push_back(pt);
 
   return FiniteElement(
       element::family::DPC, celltype, degree, {},
-      impl::mdspan2_t<double>(wcoeffs.data(), wcoeffs.extents()), impl::to_mdspan(x),
-      impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::L2,
-      discontinuous, degree, degree, element::lagrange_variant::unset, variant);
+      impl::mdspan2_t<double>(wcoeffs.data(), wcoeffs.extents()),
+      impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity,
+      sobolev::space::L2, discontinuous, degree, degree,
+      element::lagrange_variant::unset, variant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_div(
@@ -1208,14 +1222,14 @@ FiniteElement basix::element::create_serendipity_div(
   const cell::type facettype
       = (tdim == 2) ? cell::type::interval : cell::type::quadrilateral;
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
 
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
   }
 
   {
@@ -1251,8 +1265,8 @@ FiniteElement basix::element::create_serendipity_div(
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[tdim] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
   }
 
   std::vector<double> wbuffer;
@@ -1272,8 +1286,10 @@ FiniteElement basix::element::create_serendipity_div(
   else
     throw std::runtime_error("Unsupported tdim");
 
-  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview
+      = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview
+      = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -1289,9 +1305,10 @@ FiniteElement basix::element::create_serendipity_div(
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement(element::family::BDM, celltype, degree, {tdim},
-                       impl::mdspan2_t<const double>(wbuffer.data(), wshape), xview, Mview,
-                       0, maps::type::contravariantPiola, space, discontinuous,
-                       degree / tdim, degree + 1, lvariant, dvariant);
+                       impl::mdspan2_t<const double>(wbuffer.data(), wshape),
+                       xview, Mview, 0, maps::type::contravariantPiola, space,
+                       discontinuous, degree / tdim, degree + 1, lvariant,
+                       dvariant);
 }
 //-----------------------------------------------------------------------------
 FiniteElement basix::element::create_serendipity_curl(
@@ -1312,7 +1329,8 @@ FiniteElement basix::element::create_serendipity_curl(
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_Qpts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, celltype, 2 * degree + 1);
-  impl::mdspan2_t<const double> Qpts(_Qpts.data(), wts.size(), _Qpts.size() / wts.size());
+  impl::mdspan2_t<const double> Qpts(_Qpts.data(), wts.size(),
+                                     _Qpts.size() / wts.size());
 
   std::vector<double> wbuffer;
   std::array<std::size_t, 2> wshape;
@@ -1333,12 +1351,12 @@ FiniteElement basix::element::create_serendipity_curl(
     throw std::runtime_error("Unsupported tdim");
   }
 
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray2_t<double>>, 4> x;
+  std::array<std::vector<impl::mdarray4_t<double>>, 4> M;
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 0);
-    x[0] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[0] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[0] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[0] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
   }
 
   {
@@ -1372,8 +1390,8 @@ FiniteElement basix::element::create_serendipity_curl(
   else
   {
     const std::size_t num_ent = cell::num_sub_entities(celltype, 2);
-    x[2] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[2] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[2] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+    M[2] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
   }
 
   if (tdim == 3)
@@ -1395,13 +1413,15 @@ FiniteElement basix::element::create_serendipity_curl(
     else
     {
       const std::size_t num_ent = cell::num_sub_entities(celltype, 3);
-      x[3] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-      M[3] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+      x[3] = std::vector(num_ent, impl::mdarray2_t<double>(0, tdim));
+      M[3] = std::vector(num_ent, impl::mdarray4_t<double>(0, tdim, 0, 1));
     }
   }
 
-  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview
+      = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview
+      = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -1417,8 +1437,9 @@ FiniteElement basix::element::create_serendipity_curl(
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement(element::family::N2E, celltype, degree, {tdim},
-                       impl::mdspan2_t<const double>(wbuffer.data(), wshape), xview, Mview,
-                       0, maps::type::covariantPiola, space, discontinuous,
+                       impl::mdspan2_t<const double>(wbuffer.data(), wshape),
+                       xview, Mview, 0, maps::type::covariantPiola, space,
+                       discontinuous,
                        (degree == 2 && tdim == 3) ? 1 : degree / tdim,
                        degree + 1, lvariant, dvariant);
 }

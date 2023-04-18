@@ -28,27 +28,29 @@ namespace impl
 template <typename T>
 using mdspan2_t
     = std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 2>>;
-
+template <typename T>
+using mdspan3_t
+    = std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 3>>;
 template <typename T>
 using mdspan4_t
     = std::experimental::mdspan<T, std::experimental::dextents<std::size_t, 4>>;
-using cmdspan3_t
-    = std::experimental::mdspan<const double,
-                                std::experimental::dextents<std::size_t, 3>>;
 
+template <typename T>
 using mdarray2_t
-    = std::experimental::mdarray<double,
+    = std::experimental::mdarray<T,
                                  std::experimental::dextents<std::size_t, 2>>;
+template <typename T>
 using mdarray4_t
-    = std::experimental::mdarray<double,
+    = std::experimental::mdarray<T,
                                  std::experimental::dextents<std::size_t, 4>>;
 
 /// Create a container of cmdspan2_t objects from a container of
 /// mdarray2_t objects
-inline std::array<std::vector<mdspan2_t<const double>>, 4>
-to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
+template <typename T>
+std::array<std::vector<mdspan2_t<const T>>, 4>
+to_mdspan(std::array<std::vector<mdarray2_t<T>>, 4>& x)
 {
-  std::array<std::vector<mdspan2_t<const double>>, 4> x1;
+  std::array<std::vector<mdspan2_t<const T>>, 4> x1;
   for (std::size_t i = 0; i < x.size(); ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
       x1[i].emplace_back(x[i][j].data(), x[i][j].extents());
@@ -58,10 +60,11 @@ to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
 
 /// Create a container of cmdspan4_t objects from a container of
 /// mdarray4_t objects
-inline std::array<std::vector<mdspan4_t<const double>>, 4>
-to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
+template <typename T>
+std::array<std::vector<mdspan4_t<const T>>, 4>
+to_mdspan(std::array<std::vector<mdarray4_t<T>>, 4>& M)
 {
-  std::array<std::vector<mdspan4_t<const double>>, 4> M1;
+  std::array<std::vector<mdspan4_t<const T>>, 4> M1;
   for (std::size_t i = 0; i < M.size(); ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
       M1[i].emplace_back(M[i][j].data(), M[i][j].extents());
@@ -71,28 +74,30 @@ to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
 
 /// Create a container of cmdspan2_t objects from containers holding
 /// data buffers and shapes
-inline std::array<std::vector<mdspan2_t<const double>>, 4>
-to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& x,
+template <typename T>
+std::array<std::vector<mdspan2_t<const T>>, 4>
+to_mdspan(const std::array<std::vector<std::vector<T>>, 4>& x,
           const std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
 {
-  std::array<std::vector<mdspan2_t<const double>>, 4> x1;
+  std::array<std::vector<mdspan2_t<const T>>, 4> x1;
   for (std::size_t i = 0; i < x.size(); ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
-      x1[i].push_back(mdspan2_t<const double>(x[i][j].data(), shape[i][j]));
+      x1[i].push_back(mdspan2_t<const T>(x[i][j].data(), shape[i][j]));
 
   return x1;
 }
 
 /// Create a container of cmdspan4_t objects from containers holding
 /// data buffers and shapes
-inline std::array<std::vector<mdspan4_t<const double>>, 4>
-to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
+template <typename T>
+std::array<std::vector<mdspan4_t<const T>>, 4>
+to_mdspan(const std::array<std::vector<std::vector<T>>, 4>& M,
           const std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
 {
-  std::array<std::vector<mdspan4_t<const double>>, 4> M1;
+  std::array<std::vector<mdspan4_t<const T>>, 4> M1;
   for (std::size_t i = 0; i < M.size(); ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
-      M1[i].push_back(mdspan4_t<const double>(M[i][j].data(), shape[i][j]));
+      M1[i].push_back(mdspan4_t<const T>(M[i][j].data(), shape[i][j]));
 
   return M1;
 }
@@ -102,11 +107,8 @@ to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
 namespace element
 {
 /// Typedef for mdspan
-template <typename T>
-using mdspan2_t = impl::mdspan2_t<T>;
-/// Typedef for mdspan
-template <typename T>
-using mdspan4_t = impl::mdspan4_t<T>;
+using impl::mdspan2_t;
+using impl::mdspan4_t;
 
 /// Creates a version of the interpolation points, interpolation
 /// matrices and entity transformation that represent a discontinuous
@@ -554,8 +556,9 @@ public:
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
   std::pair<std::vector<double>, std::array<std::size_t, 3>>
-  push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
-               std::span<const double> detJ, impl::cmdspan3_t K) const;
+  push_forward(impl::mdspan3_t<const double> U, impl::mdspan3_t<const double> J,
+               std::span<const double> detJ,
+               impl::mdspan3_t<const double> K) const;
 
   /// Map function values from a physical cell to the reference
   /// @param[in] u The function values on the cell
@@ -565,8 +568,9 @@ public:
   /// @return The function values on the reference. The indices are
   /// [Jacobian index, point index, components].
   std::pair<std::vector<double>, std::array<std::size_t, 3>>
-  pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
-            std::span<const double> detJ, impl::cmdspan3_t K) const;
+  pull_back(impl::mdspan3_t<const double> u, impl::mdspan3_t<const double> J,
+            std::span<const double> detJ,
+            impl::mdspan3_t<const double> K) const;
 
   /// Return a function that performs the appropriate
   /// push-forward/pull-back for the element type

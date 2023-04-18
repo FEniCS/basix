@@ -40,6 +40,10 @@ using mdarray2_t
     = std::experimental::mdarray<T,
                                  std::experimental::dextents<std::size_t, 2>>;
 template <typename T>
+using mdarray3_t
+    = std::experimental::mdarray<T,
+                                 std::experimental::dextents<std::size_t, 3>>;
+template <typename T>
 using mdarray4_t
     = std::experimental::mdarray<T,
                                  std::experimental::dextents<std::size_t, 4>>;

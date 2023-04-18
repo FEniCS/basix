@@ -98,8 +98,8 @@ impl::mdarray2_t<T> create_nedelec_3d_space(int degree)
   // Tabulate polynomial basis at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
-  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(),
-                                    _pts.size() / wts.size());
+  impl::mdspan2_t<const T> pts(_pts.data(), wts.size(),
+                               _pts.size() / wts.size());
   const auto [_phi, shape]
       = polyset::tabulate(cell::type::tetrahedron, degree, 0, pts);
   impl::mdspan3_t<const T> phi(_phi.data(), shape);

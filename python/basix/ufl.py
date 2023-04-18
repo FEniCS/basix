@@ -995,7 +995,7 @@ class _BlockedElement(_ElementBase):
         output = []
         for table in self.sub_element.tabulate(nderivs, points):
             # Repeat sub element horizontally
-            new_table = _np.tile(table, (1, self._block_size))
+            new_table = _np.repeat(table, self._block_size, axis=2)
             output.append(new_table)
         return _np.asarray(output, dtype=_np.float64)
 

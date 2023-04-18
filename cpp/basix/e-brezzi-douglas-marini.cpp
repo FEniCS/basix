@@ -73,8 +73,8 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -92,7 +92,7 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement(family::BDM, celltype, degree, {tdim},
-                       impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
+                       impl::mdspan2_t<double>(math::eye(ndofs).data(), ndofs, ndofs),
                        xview, Mview, 0, maps::type::contravariantPiola, space,
                        discontinuous, degree, degree, lvariant,
                        element::dpc_variant::unset);

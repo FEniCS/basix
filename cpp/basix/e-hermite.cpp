@@ -33,7 +33,7 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
       = cell::topology(celltype);
 
   const auto [gdata, gshape] = cell::geometry<double>(celltype);
-  impl::cmdspan2_t geometry(gdata.data(), gshape);
+  impl::mdspan2_t<const double> geometry(gdata.data(), gshape);
   const std::size_t deriv_count = polyset::nderivs(celltype, 1);
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;
@@ -79,8 +79,8 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
         topology[2].size(), impl::mdarray4_t(0, 1, 0, deriv_count));
   }
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -97,7 +97,7 @@ FiniteElement basix::element::create_hermite(cell::type celltype, int degree,
       = discontinuous ? sobolev::space::L2 : sobolev::space::H2;
   return FiniteElement(
       element::family::Hermite, celltype, degree, {},
-      impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs), xview, Mview, 1,
+      impl::mdspan2_t<double>(math::eye(ndofs).data(), ndofs, ndofs), xview, Mview, 1,
       maps::type::identity, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }

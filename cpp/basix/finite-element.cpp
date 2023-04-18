@@ -26,10 +26,11 @@
 
 using namespace basix;
 namespace stdex = std::experimental;
-using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
+template <typename T>
+using mdspan2_t = stdex::mdspan<T, stdex::dextents<std::size_t, 2>>;
+
 using mdspan3_t = stdex::mdspan<double, stdex::dextents<std::size_t, 3>>;
 using mdspan4_t = stdex::mdspan<double, stdex::dextents<std::size_t, 4>>;
-using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
 using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
 using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
 
@@ -40,7 +41,7 @@ namespace
 {
 //----------------------------------------------------------------------------
 /// This function orthogonalises and normalises the rows of a matrix in place
-void orthogonalise(mdspan2_t& wcoeffs)
+void orthogonalise(mdspan2_t<double>& wcoeffs)
 {
   for (std::size_t i = 0; i < wcoeffs.extent(0); ++i)
   {
@@ -106,11 +107,11 @@ constexpr int num_transformations(cell::type cell_type)
   }
 }
 //-----------------------------------------------------------------------------
-std::pair<std::vector<double>, std::array<std::size_t, 2>>
-compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
-                    const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
-                    const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
-                    int degree, int nderivs)
+std::pair<std::vector<double>, std::array<std::size_t, 2>> compute_dual_matrix(
+    cell::type cell_type, mdspan2_t<const double> B,
+    const std::array<std::vector<impl::mdspan2_t<const double>>, 4>& x,
+    const std::array<std::vector<impl::mdspan4_t<const double>>, 4>& M,
+    int degree, int nderivs)
 {
   std::size_t num_dofs(0), vs(0);
   for (auto& Md : M)
@@ -138,7 +139,7 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
     for (std::size_t e = 0; e < x[d].size(); ++e)
     {
       // Evaluate polynomial basis at x[d]
-      cmdspan2_t x_e = x[d][e];
+      mdspan2_t<const double> x_e = x[d][e];
       cmdspan3_t P;
       if (x_e.extent(0) > 0)
       {
@@ -169,15 +170,17 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
         // only.
 
         std::vector<double> Pt_b(P.extent(2) * P.extent(1));
-        mdspan2_t Pt(Pt_b.data(), P.extent(2), P.extent(1));
+        mdspan2_t<double> Pt(Pt_b.data(), P.extent(2), P.extent(1));
         for (std::size_t i = 0; i < Pt.extent(0); ++i)
           for (std::size_t j = 0; j < Pt.extent(1); ++j)
             Pt(i, j) = P(0, j, i);
 
         std::vector<double> De_b(Me.extent(0) * Me.extent(1) * Pt.extent(1));
-        mdspan2_t De(De_b.data(), Me.extent(0) * Me.extent(1), Pt.extent(1));
-        math::dot(cmdspan2_t(Me.data_handle(), Me.extent(0) * Me.extent(1),
-                             Me.extent(2)),
+        mdspan2_t<double> De(De_b.data(), Me.extent(0) * Me.extent(1),
+                             Pt.extent(1));
+        math::dot(mdspan2_t<const double>(Me.data_handle(),
+                                          Me.extent(0) * Me.extent(1),
+                                          Me.extent(2)),
                   Pt, De);
 
         // Expand and copy
@@ -192,11 +195,11 @@ compute_dual_matrix(cell::type cell_type, cmdspan2_t B,
   }
 
   // Flatten D
-  cmdspan2_t Df(D.data(), D.extent(0) * D.extent(1), D.extent(2));
+  mdspan2_t<const double> Df(D.data(), D.extent(0) * D.extent(1), D.extent(2));
 
   std::array shape = {B.extent(0), Df.extent(1)};
   std::vector<double> C(shape[0] * shape[1]);
-  math::dot(B, Df, mdspan2_t(C.data(), shape));
+  math::dot(B, Df, mdspan2_t<double>(C.data(), shape));
   return {std::move(C), shape};
 }
 //-----------------------------------------------------------------------------
@@ -331,9 +334,10 @@ std::tuple<std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
            std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::array<std::size_t, 4>>, 4>>
-element::make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
-                            const std::array<std::vector<cmdspan4_t>, 4>& M,
-                            std::size_t tdim, std::size_t value_size)
+element::make_discontinuous(
+    const std::array<std::vector<mdspan2_t<const double>>, 4>& x,
+    const std::array<std::vector<mdspan4_t<const double>>, 4>& M,
+    std::size_t tdim, std::size_t value_size)
 {
   std::size_t npoints = 0;
   std::size_t Mshape0 = 0;
@@ -403,9 +407,9 @@ element::make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_custom_element(
     cell::type cell_type, const std::vector<std::size_t>& value_shape,
-    const impl::cmdspan2_t& wcoeffs,
-    const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
-    const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
+    const impl::mdspan2_t<const double>& wcoeffs,
+    const std::array<std::vector<impl::mdspan2_t<const double>>, 4>& x,
+    const std::array<std::vector<impl::mdspan4_t<const double>>, 4>& M,
     int interpolation_nderivs, maps::type map_type,
     sobolev::space sobolev_space, bool discontinuous,
     int highest_complete_degree, int highest_degree)
@@ -479,7 +483,7 @@ basix::FiniteElement basix::create_custom_element(
 
   auto [dualmatrix, dualshape] = compute_dual_matrix(
       cell_type, wcoeffs, x, M, highest_degree, interpolation_nderivs);
-  if (math::is_singular(cmdspan2_t(dualmatrix.data(), dualshape)))
+  if (math::is_singular(mdspan2_t<const double>(dualmatrix.data(), dualshape)))
   {
     throw std::runtime_error(
         "Dual matrix is singular, there is an error in your inputs");
@@ -495,10 +499,12 @@ basix::FiniteElement basix::create_custom_element(
 //-----------------------------------------------------------------------------
 FiniteElement::FiniteElement(
     element::family family, cell::type cell_type, int degree,
-    const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-    const std::array<std::vector<cmdspan2_t>, 4>& x,
-    const std::array<std::vector<cmdspan4_t>, 4>& M, int interpolation_nderivs,
-    maps::type map_type, sobolev::space sobolev_space, bool discontinuous,
+    const std::vector<std::size_t>& value_shape,
+    const mdspan2_t<const double>& wcoeffs,
+    const std::array<std::vector<mdspan2_t<const double>>, 4>& x,
+    const std::array<std::vector<mdspan4_t<const double>>, 4>& M,
+    int interpolation_nderivs, maps::type map_type,
+    sobolev::space sobolev_space, bool discontinuous,
     int highest_complete_degree, int highest_degree,
     element::lagrange_variant lvariant, element::dpc_variant dvariant,
     std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
@@ -542,8 +548,8 @@ FiniteElement::FiniteElement(
   }
 
   std::vector<double> wcoeffs_ortho_b(wcoeffs.extent(0) * wcoeffs.extent(1));
-  mdspan2_t wcoeffs_ortho(wcoeffs_ortho_b.data(), wcoeffs.extent(0),
-                          wcoeffs.extent(1));
+  mdspan2_t<double> wcoeffs_ortho(wcoeffs_ortho_b.data(), wcoeffs.extent(0),
+                                  wcoeffs.extent(1));
   std::copy(wcoeffs.data_handle(), wcoeffs.data_handle() + wcoeffs.size(),
             wcoeffs_ortho_b.begin());
   if (family != element::family::P)
@@ -566,9 +572,9 @@ FiniteElement::FiniteElement(
   }
 
   // Compute C = (BD^T)^{-1} B
-  _coeffs.first
-      = math::solve<double>(cmdspan2_t(_dual_matrix.first.data(), _dual_matrix.second),
-                    wcoeffs_ortho);
+  _coeffs.first = math::solve<double>(
+      mdspan2_t<const double>(_dual_matrix.first.data(), _dual_matrix.second),
+      wcoeffs_ortho);
   _coeffs.second = {_dual_matrix.second[1], wcoeffs_ortho.extent(1)};
 
   std::size_t num_points = 0;
@@ -578,7 +584,7 @@ FiniteElement::FiniteElement(
 
   _points.first.reserve(num_points * _cell_tdim);
   _points.second = {num_points, _cell_tdim};
-  mdspan2_t pview(_points.first.data(), _points.second);
+  mdspan2_t<double> pview(_points.first.data(), _points.second);
   for (auto& x_dim : x)
     for (auto& x_e : x_dim)
       for (std::size_t p = 0; p < x_e.extent(0); ++p)
@@ -608,7 +614,8 @@ FiniteElement::FiniteElement(
   }
 
   _entity_transformations = doftransforms::compute_entity_transformations(
-      cell_type, x, M, cmdspan2_t(_coeffs.first.data(), _coeffs.second),
+      cell_type, x, M,
+      mdspan2_t<const double>(_coeffs.first.data(), _coeffs.second),
       highest_degree, value_size, map_type);
 
   const std::size_t nderivs
@@ -616,8 +623,8 @@ FiniteElement::FiniteElement(
 
   _matM = {std::vector<double>(num_dofs * value_size * num_points1 * nderivs),
            {num_dofs, value_size * num_points1 * nderivs}};
-  mdspan4_t Mview(_matM.first.data(), num_dofs, value_size, num_points1,
-                  nderivs);
+  mdspan4_t<double> Mview(_matM.first.data(), num_dofs, value_size, num_points1,
+                          nderivs);
 
   // Loop over each topological dimensions
   std::size_t dof_offset(0), point_offset(0);
@@ -851,7 +858,7 @@ FiniteElement::FiniteElement(
             }
 
             M_b.resize(dim * dim);
-            mdspan2_t M(M_b.data(), dim, dim);
+            mdspan2_t<double> M(M_b.data(), dim, dim);
             for (std::size_t k0 = 0; k0 < dim; ++k0)
               for (std::size_t k1 = 0; k1 < dim; ++k1)
                 M(k0, k1) = trans(i, k0, k1);
@@ -861,11 +868,11 @@ FiniteElement::FiniteElement(
             // For a quadrilateral face, M^4 = Id, so M^{-1} = M^3.
             // For a triangular face, M^3 = Id, so M^{-1} = M^2.
             Minv_b.resize(dim * dim);
-            mdspan2_t Minv(Minv_b.data(), dim, dim);
+            mdspan2_t<double> Minv(Minv_b.data(), dim, dim);
             if (ctype == cell::type::quadrilateral and i == 0)
             {
               matint.resize(dim * dim);
-              mdspan2_t mat_int(matint.data(), dim, dim);
+              mdspan2_t<double> mat_int(matint.data(), dim, dim);
               math::dot(M, M, mat_int);
 
               math::dot(mat_int, M, Minv);
@@ -907,7 +914,7 @@ FiniteElement::FiniteElement(
   }
 
   // Check if interpolation matrix is the identity
-  cmdspan2_t matM(_matM.first.data(), _matM.second);
+  mdspan2_t<const double> matM(_matM.first.data(), _matM.second);
   _interpolation_is_identity = matM.extent(0) == matM.extent(1);
   for (std::size_t row = 0; _interpolation_is_identity && row < matM.extent(0);
        ++row)
@@ -975,11 +982,11 @@ FiniteElement::tabulate_shape(std::size_t nd, std::size_t num_points) const
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 4>>
-FiniteElement::tabulate(int nd, impl::cmdspan2_t x) const
+FiniteElement::tabulate(int nd, impl::mdspan2_t<const double> x) const
 {
   std::array<std::size_t, 4> shape = tabulate_shape(nd, x.extent(0));
   std::vector<double> data(shape[0] * shape[1] * shape[2] * shape[3]);
-  tabulate(nd, x, mdspan4_t(data.data(), shape));
+  tabulate(nd, x, mdspan4_t<double>(data.data(), shape));
   return {std::move(data), shape};
 }
 //-----------------------------------------------------------------------------
@@ -990,13 +997,13 @@ FiniteElement::tabulate(int nd, const std::span<const double>& x,
   std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
   std::vector<double> datab(phishape[0] * phishape[1] * phishape[2]
                             * phishape[3]);
-  tabulate(nd, cmdspan2_t(x.data(), shape[0], shape[1]),
-           mdspan4_t(datab.data(), phishape));
+  tabulate(nd, mdspan2_t<const double>(x.data(), shape[0], shape[1]),
+           mdspan4_t<double>(datab.data(), phishape));
   return {std::move(datab), phishape};
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
-                             impl::mdspan4_t basis_data) const
+void FiniteElement::tabulate(int nd, impl::mdspan2_t<const double> x,
+                             impl::mdspan4_t<double> basis_data) const
 {
   if (x.extent(1) != _cell_tdim)
   {
@@ -1015,22 +1022,24 @@ void FiniteElement::tabulate(int nd, impl::cmdspan2_t x,
                                  std::multiplies{});
 
   std::vector<double> C_b(_coeffs.second[0] * psize);
-  mdspan2_t C(C_b.data(), _coeffs.second[0], psize);
+  mdspan2_t<double> C(C_b.data(), _coeffs.second[0], psize);
 
-  cmdspan2_t coeffs_view(_coeffs.first.data(), _coeffs.second);
+  mdspan2_t<const double> coeffs_view(_coeffs.first.data(), _coeffs.second);
   std::vector<double> result_b(C.extent(0) * bsize[2]);
-  mdspan2_t result(result_b.data(), C.extent(0), bsize[2]);
+  mdspan2_t<double> result(result_b.data(), C.extent(0), bsize[2]);
   for (std::size_t p = 0; p < basis.extent(0); ++p)
   {
-    cmdspan2_t B(basis_b.data() + p * bsize[1] * bsize[2], bsize[1], bsize[2]);
+    mdspan2_t<const double> B(basis_b.data() + p * bsize[1] * bsize[2],
+                              bsize[1], bsize[2]);
     for (int j = 0; j < vs; ++j)
     {
       for (std::size_t k0 = 0; k0 < coeffs_view.extent(0); ++k0)
         for (std::size_t k1 = 0; k1 < psize; ++k1)
           C(k0, k1) = coeffs_view(k0, k1 + psize * j);
 
-      math::dot(C, cmdspan2_t(B.data_handle(), B.extent(0), B.extent(1)),
-                result);
+      math::dot(
+          C, mdspan2_t<const double>(B.data_handle(), B.extent(0), B.extent(1)),
+          result);
 
       if (_dof_ordering.empty())
       {
@@ -1055,7 +1064,8 @@ void FiniteElement::tabulate(int nd, const std::span<const double>& x,
   std::array<std::size_t, 4> shape = tabulate_shape(nd, xshape[0]);
   assert(x.size() == xshape[0] * xshape[1]);
   assert(basis.size() == shape[0] * shape[1] * shape[2] * shape[3]);
-  tabulate(nd, cmdspan2_t(x.data(), xshape), mdspan4_t(basis.data(), shape));
+  tabulate(nd, mdspan2_t<const double>(x.data(), xshape),
+           mdspan4_t<double>(basis.data(), shape));
 }
 //-----------------------------------------------------------------------------
 cell::type FiniteElement::cell_type() const { return _cell_type; }

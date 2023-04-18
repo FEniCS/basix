@@ -48,7 +48,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const auto [gbuffer, gshape] = cell::geometry<double>(celltype);
-  impl::cmdspan2_t geometry(gbuffer.data(), gshape);
+  impl::mdspan2_t<const double> geometry(gbuffer.data(), gshape);
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;
   std::array<std::vector<impl::mdarray4_t>, 4> M;
@@ -79,7 +79,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
         // Entity coordinates
         const auto [ebuffer, eshape]
             = cell::sub_entity_geometry<double>(celltype, d, e);
-        impl::cmdspan2_t entity_x(ebuffer.data(), eshape);
+        impl::mdspan2_t<const double> entity_x(ebuffer.data(), eshape);
 
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
@@ -87,7 +87,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
         const auto [_pts, wts] = quadrature::make_quadrature<double>(
             ct, degree + (degree + 1 - d));
-        impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+        impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
 
         FiniteElement moment_space = create_lagrange(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
@@ -124,7 +124,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
 
             // outer product v.v^T
             auto [buffer, shape] = math::outer(edge, edge);
-            impl::cmdspan2_t result(buffer.data(), shape);
+            impl::mdspan2_t<const double> result(buffer.data(), shape);
             for (std::size_t i = 0; i < vvt.extent(1); ++i)
               for (std::size_t j = 0; j < vvt.extent(2); ++j)
                 vvt(c, i, j) = result(i, j);
@@ -160,8 +160,8 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
   // Regge has (d+1) dofs on each edge, 3d(d+1)/2 on each face and
   // d(d-1)(d+1) on the interior in 3D
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -178,7 +178,7 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
       = discontinuous ? sobolev::space::L2 : sobolev::space::HEin;
   return FiniteElement(
       element::family::Regge, celltype, degree, {tdim, tdim},
-      impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
+      impl::mdspan2_t<double>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
       maps::type::doubleCovariantPiola, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }

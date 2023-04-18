@@ -176,7 +176,8 @@ Interface to the Basix C++ library.
 
   m.def(
       "cell_volume",
-      [](cell::type cell_type) -> double { return cell::volume<double>(cell_type); },
+      [](cell::type cell_type) -> double
+      { return cell::volume<double>(cell_type); },
       basix::docstring::cell_volume.c_str());
   m.def(
       "cell_facet_normals",
@@ -530,7 +531,7 @@ Interface to the Basix C++ library.
         if (M.size() != 4)
           throw std::runtime_error("M has the wrong size");
 
-        std::array<std::vector<cmdspan2_t>, 4> _x;
+        std::array<std::vector<impl::mdspan2_t<const double>>, 4> _x;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
@@ -542,7 +543,7 @@ Interface to the Basix C++ library.
           }
         }
 
-        std::array<std::vector<cmdspan4_t>, 4> _M;
+        std::array<std::vector<impl::mdspan4_t<const double>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)

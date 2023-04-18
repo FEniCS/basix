@@ -67,7 +67,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, celltype, 2 * degree);
-  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
   impl::cmdspan3_t phi(_phi.data(), shape);
 
@@ -86,7 +86,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   auto create_phi1 = [](auto& phi, auto& buffer)
   {
     buffer.resize(phi.extent(1) * phi.extent(2));
-    impl::mdspan2_t phi1(buffer.data(), phi.extent(1), phi.extent(2));
+    impl::mdspan2_t<double> phi1(buffer.data(), phi.extent(1), phi.extent(2));
     for (std::size_t i = 0; i < phi1.extent(0); ++i)
       for (std::size_t j = 0; j < phi1.extent(1); ++j)
         phi1(i, j) = phi(0, i, j);
@@ -95,7 +95,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
 
   // Create coefficients for order (degree-1) vector polynomials
   std::vector<double> phi1_buffer;
-  impl::mdspan2_t phi1;
+  impl::mdspan2_t<double> phi1;
   std::vector<double> bubble;
   switch (celltype)
   {
@@ -179,7 +179,7 @@ FiniteElement basix::element::create_bubble(cell::type celltype, int degree,
   for (std::size_t i = 0; i < _M.extent(0); ++i)
     _M(i, 0, i, 0) = 1.0;
 
-  impl::mdspan2_t wview(wcoeffs.data(), wcoeffs.extents());
+  impl::mdspan2_t<double> wview(wcoeffs.data(), wcoeffs.extents());
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   return FiniteElement(

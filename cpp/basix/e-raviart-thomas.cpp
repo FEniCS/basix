@@ -42,7 +42,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   // Evaluate the expansion polynomials at the quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, celltype, 2 * degree);
-  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
   impl::cmdspan3_t phi(_phi.data(), shape);
 
@@ -118,8 +118,8 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
     M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
   }
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -135,7 +135,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
   return FiniteElement(element::family::RT, celltype, degree, {tdim},
-                       impl::mdspan2_t(B.data(), B.extents()), xview, Mview, 0,
+                       impl::mdspan2_t<double>(B.data(), B.extents()), xview, Mview, 0,
                        maps::type::contravariantPiola, space, discontinuous,
                        degree - 1, degree, lvariant,
                        element::dpc_variant::unset);

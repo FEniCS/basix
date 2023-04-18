@@ -40,7 +40,7 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
   const std::size_t ndofs = facet_topology.size();
 
   const auto [gdata, shape] = cell::geometry<double>(celltype);
-  impl::cmdspan2_t geometry(gdata.data(), shape);
+  impl::mdspan2_t<const double> geometry(gdata.data(), shape);
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;
   std::array<std::vector<impl::mdarray4_t>, 4> M;
@@ -71,8 +71,8 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
   x[tdim] = std::vector(topology[tdim].size(), impl::mdarray2_t(0, tdim));
   M[tdim] = std::vector(topology[tdim].size(), impl::mdarray4_t(0, 1, 0, 1));
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -87,7 +87,7 @@ FiniteElement basix::element::create_cr(cell::type celltype, int degree,
 
   return FiniteElement(
       element::family::CR, celltype, 1, {},
-      impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs), xview, Mview, 0,
+      impl::mdspan2_t<double>(math::eye(ndofs).data(), ndofs, ndofs), xview, Mview, 0,
       maps::type::identity, sobolev::space::L2, discontinuous, degree, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }

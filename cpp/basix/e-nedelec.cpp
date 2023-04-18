@@ -35,7 +35,7 @@ impl::mdarray2_t create_nedelec_2d_space(int degree)
   // Tabulate polynomial set at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, cell::type::triangle, 2 * degree);
-  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape]
       = polyset::tabulate(cell::type::triangle, degree, 0, pts);
   impl::cmdspan3_t phi(_phi.data(), shape);
@@ -94,7 +94,7 @@ impl::mdarray2_t create_nedelec_3d_space(int degree)
   // Tabulate polynomial basis at quadrature points
   const auto [_pts, wts] = quadrature::make_quadrature<double>(
       quadrature::type::Default, cell::type::tetrahedron, 2 * degree);
-  impl::cmdspan2_t pts(_pts.data(), wts.size(), _pts.size() / wts.size());
+  impl::mdspan2_t<const double> pts(_pts.data(), wts.size(), _pts.size() / wts.size());
   const auto [_phi, shape]
       = polyset::tabulate(cell::type::tetrahedron, degree, 0, pts);
   impl::cmdspan3_t phi(_phi.data(), shape);
@@ -257,8 +257,8 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -275,7 +275,7 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
   return FiniteElement(element::family::N1E, celltype, degree, {tdim},
-                       impl::mdspan2_t(wcoeffs.data(), wshape), xview, Mview, 0,
+                       impl::mdspan2_t<double>(wcoeffs.data(), wshape), xview, Mview, 0,
                        maps::type::covariantPiola, space, discontinuous,
                        degree - 1, degree, lvariant,
                        element::dpc_variant::unset);
@@ -360,8 +360,8 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
   if (discontinuous)
@@ -376,7 +376,7 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
 
   const std::size_t psize = polyset::dim(celltype, degree);
   return FiniteElement(element::family::N2E, celltype, degree, {tdim},
-                       impl::mdspan2_t(math::eye(tdim * psize).data(),
+                       impl::mdspan2_t<double>(math::eye(tdim * psize).data(),
                                        tdim * psize, tdim * psize),
                        xview, Mview, 0, maps::type::covariantPiola,
                        sobolev::space::HCurl, discontinuous, degree, degree,

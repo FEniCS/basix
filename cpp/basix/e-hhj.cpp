@@ -50,7 +50,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
   const auto [gbuffer, gshape] = cell::geometry<double>(celltype);
-  impl::cmdspan2_t geometry(gbuffer.data(), gshape);
+  impl::mdspan2_t<const double> geometry(gbuffer.data(), gshape);
 
   std::array<std::vector<impl::mdarray2_t>, 4> x;
   std::array<std::vector<impl::mdarray4_t>, 4> M;
@@ -82,7 +82,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         const auto [entity_x_buffer, eshape]
             = cell::sub_entity_geometry<double>(celltype, d, e);
         std::span<const double> x0(entity_x_buffer.data(), eshape[1]);
-        impl::cmdspan2_t entity_x(entity_x_buffer.data(), eshape);
+        impl::mdspan2_t<const double> entity_x(entity_x_buffer.data(), eshape);
 
         // Tabulate points in lattice
         cell::type ct = cell::sub_entity_type(celltype, d, e);
@@ -90,7 +90,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
         const std::size_t ndofs = polyset::dim(ct, degree + 1 - d);
         const auto [ptsbuffer, wts]
             = quadrature::make_quadrature<double>(ct, degree + (degree + 1 - d));
-        impl::cmdspan2_t pts(ptsbuffer.data(), wts.size(),
+        impl::mdspan2_t<const double> pts(ptsbuffer.data(), wts.size(),
                              ptsbuffer.size() / wts.size());
 
         FiniteElement moment_space = create_lagrange(
@@ -159,8 +159,8 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
     }
   }
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<mdspan2_t<const double>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan4_t<const double>>, 4> Mview = impl::to_mdspan(M);
 
   std::array<std::vector<std::vector<double>>, 4> xbuffer;
   std::array<std::vector<std::vector<double>>, 4> Mbuffer;
@@ -178,7 +178,7 @@ FiniteElement basix::element::create_hhj(cell::type celltype, int degree,
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDivDiv;
   return FiniteElement(
       element::family::HHJ, celltype, degree, {tdim, tdim},
-      impl::mdspan2_t(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
+      impl::mdspan2_t<double>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
       maps::type::doubleContravariantPiola, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }

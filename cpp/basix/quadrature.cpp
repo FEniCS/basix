@@ -14,13 +14,10 @@
 using namespace basix;
 
 namespace stdex = std::experimental;
-
-template <typename T>
-using mdspan2_t = stdex::mdspan<T, stdex::dextents<std::size_t, 2>>;
-template <typename T>
-using mdarray3_t = stdex::mdarray<T, stdex::dextents<std::size_t, 3>>;
-template <typename T>
-using mdarray2_t = stdex::mdarray<T, stdex::dextents<std::size_t, 2>>;
+template <typename T, std::size_t d>
+using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
+template <typename T, std::size_t d>
+using mdarray_t = stdex::mdarray<T, stdex::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -89,7 +86,7 @@ std::array<std::vector<T>, 2> gauss(const std::vector<T>& alpha,
                                     const std::vector<T>& beta)
 {
   std::vector<T> Abuffer(alpha.size() * alpha.size(), 0);
-  mdspan2_t<T> A(Abuffer.data(), alpha.size(), alpha.size());
+  mdspan_t<T, 2> A(Abuffer.data(), alpha.size(), alpha.size());
   for (std::size_t i = 0; i < alpha.size(); ++i)
     A(i, i) = alpha[i];
   for (std::size_t i = 0; i < alpha.size() - 1; ++i)
@@ -161,12 +158,12 @@ std::array<std::vector<T>, 2> lobatto(const std::vector<T>& alpha,
 /// @return Array of polynomial derivative values (rows) at points
 /// (columns)
 template <std::floating_point T>
-mdarray2_t<T> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
-                                   const std::span<const T>& x)
+mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
+                                     const std::span<const T>& x)
 {
   std::vector<std::size_t> shape = {x.size()};
-  mdarray3_t<T> J(nderiv + 1, n + 1, x.size());
-  mdarray2_t<T> Jd(n + 1, x.size());
+  mdarray_t<T, 3> J(nderiv + 1, n + 1, x.size());
+  mdarray_t<T, 2> Jd(n + 1, x.size());
 
   for (std::size_t i = 0; i < nderiv + 1; ++i)
   {
@@ -221,7 +218,7 @@ mdarray2_t<T> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
         J(i, j, k) = Jd(j, k);
   }
 
-  mdarray2_t<T> result(nderiv + 1, x.size());
+  mdarray_t<T, 2> result(nderiv + 1, x.size());
   for (std::size_t i = 0; i < result.extent(0); ++i)
     for (std::size_t j = 0; j < result.extent(1); ++j)
       result(i, j) = J(i, n, j);
@@ -253,10 +250,9 @@ std::vector<T> compute_gauss_jacobi_points(T a, int m)
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
       std::span<const T> _x(&x[k], 1);
-      const mdarray2_t<T> f = compute_jacobi_deriv<T>(a, m, 1, _x);
-      const T delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
+      mdarray_t<T, 2> f = compute_jacobi_deriv<T>(a, m, 1, _x);
+      T delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
       x[k] -= delta;
-
       if (std::abs(delta) < eps)
         break;
       ++j;
@@ -272,8 +268,8 @@ template <std::floating_point T>
 std::array<std::vector<T>, 2> compute_gauss_jacobi_rule(T a, int m)
 {
   std::vector<T> pts = compute_gauss_jacobi_points<T>(a, m);
-  const mdarray2_t<T> Jd = compute_jacobi_deriv<T>(a, m, 1, pts);
-  const T a1 = std::pow(2.0, a + 1.0);
+  mdarray_t<T, 2> Jd = compute_jacobi_deriv<T>(a, m, 1, pts);
+  T a1 = std::pow(2.0, a + 1.0);
   std::vector<T> wts(m);
   for (int i = 0; i < m; ++i)
   {
@@ -303,7 +299,7 @@ std::array<std::vector<T>, 2> make_quadrature_triangle_collapsed(std::size_t m)
   auto [pty, wy] = compute_gauss_jacobi_rule<T>(1.0, m);
 
   std::vector<T> pts(m * m * 2);
-  mdspan2_t<T> x(pts.data(), m * m, 2);
+  mdspan_t<T, 2> x(pts.data(), m * m, 2);
   std::vector<T> wts(m * m);
   int c = 0;
   for (std::size_t i = 0; i < m; ++i)
@@ -329,7 +325,7 @@ make_quadrature_tetrahedron_collapsed(std::size_t m)
   auto [ptz, wz] = compute_gauss_jacobi_rule<T>(2.0, m);
 
   std::vector<T> pts(m * m * m * 3);
-  mdspan2_t<T> x(pts.data(), m * m * m, 3);
+  mdspan_t<T, 2> x(pts.data(), m * m * m, 3);
   std::vector<T> wts(m * m * m);
   int c = 0;
   for (std::size_t i = 0; i < m; ++i)
@@ -363,7 +359,7 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
   {
     auto [QptsL, QwtsL] = make_quadrature_line<T>(np);
     std::vector<T> pts(np * np * 2);
-    mdspan2_t<T> x(pts.data(), np * np, 2);
+    mdspan_t<T, 2> x(pts.data(), np * np, 2);
     std::vector<T> wts(np * np);
     int c = 0;
     for (std::size_t i = 0; i < np; ++i)
@@ -382,7 +378,7 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
   {
     auto [QptsL, QwtsL] = make_quadrature_line<T>(np);
     std::vector<T> pts(np * np * np * 3);
-    mdspan2_t<T> x(pts.data(), np * np * np, 3);
+    mdspan_t<T, 2> x(pts.data(), np * np * np, 3);
     std::vector<T> wts(np * np * np);
     int c = 0;
     for (std::size_t i = 0; i < np; ++i)
@@ -405,10 +401,10 @@ std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
   {
     const auto [QptsL, QwtsL] = make_quadrature_line<T>(np);
     const auto [_QptsT, QwtsT] = make_quadrature_triangle_collapsed<T>(np);
-    mdspan2_t<const T> QptsT(_QptsT.data(), QwtsT.size(),
-                             _QptsT.size() / QwtsT.size());
+    mdspan_t<const T, 2> QptsT(_QptsT.data(), QwtsT.size(),
+                               _QptsT.size() / QwtsT.size());
     std::vector<T> pts(np * QptsT.extent(0) * 3);
-    mdspan2_t<T> x(pts.data(), np * QptsT.extent(0), 3);
+    mdspan_t<T, 2> x(pts.data(), np * QptsT.extent(0), 3);
     std::vector<T> wts(np * QptsT.extent(0));
     int c = 0;
     for (std::size_t i = 0; i < QptsT.extent(0); ++i)
@@ -486,7 +482,7 @@ std::array<std::vector<T>, 2> make_gll_quadrature(cell::type celltype,
   {
     auto [QptsL, QwtsL] = make_gll_line<T>(np);
     std::vector<T> pts(np * np * 2);
-    mdspan2_t<T> x(pts.data(), np * np, 2);
+    mdspan_t<T, 2> x(pts.data(), np * np, 2);
     std::vector<T> wts(np * np);
     int c = 0;
     for (std::size_t i = 0; i < np; ++i)
@@ -505,7 +501,7 @@ std::array<std::vector<T>, 2> make_gll_quadrature(cell::type celltype,
   {
     auto [QptsL, QwtsL] = make_gll_line<T>(np);
     std::vector<T> pts(np * np * np * 3);
-    mdspan2_t<T> x(pts.data(), np * np * np, 3);
+    mdspan_t<T, 2> x(pts.data(), np * np * np, 3);
     std::vector<T> wts(np * np * np);
     int c = 0;
     for (std::size_t i = 0; i < np; ++i)

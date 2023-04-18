@@ -14,14 +14,10 @@ namespace stdex = std::experimental;
 
 namespace
 {
-template <typename T>
-using mdarray2_t = stdex::mdarray<T, stdex::dextents<std::size_t, 2>>;
-
-template <typename T>
-using mdspan2_t = stdex::mdspan<T, stdex::dextents<std::size_t, 2>>;
-
-template <typename T>
-using mdspan3_t = stdex::mdspan<T, stdex::dextents<std::size_t, 3>>;
+template <typename T, std::size_t d>
+using mdarray_t = stdex::mdarray<T, stdex::dextents<std::size_t, d>>;
+template <typename T, std::size_t d>
+using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
 
 //-----------------------------------------------------------------------------
 constexpr int single_choose(int n, int k)
@@ -47,7 +43,7 @@ int choose(int n, const std::vector<int>& powers)
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
-tabulate_bernstein(cell::type celltype, int d, mdspan2_t<const T> x)
+tabulate_bernstein(cell::type celltype, int d, mdspan_t<const T, 2> x)
 {
   if (celltype != cell::type::interval and celltype != cell::type::triangle
       and celltype != cell::type::tetrahedron)
@@ -61,9 +57,9 @@ tabulate_bernstein(cell::type celltype, int d, mdspan2_t<const T> x)
 
   std::array<std::size_t, 2> shape = {pdim, x.extent(0)};
   std::vector<T> values_b(shape[0] * shape[1]);
-  mdspan2_t<T> values(values_b.data(), shape);
+  mdspan_t<T, 2> values(values_b.data(), shape);
 
-  mdarray2_t<T> lambdas(x.extent(1) + 1, x.extent(0));
+  mdarray_t<T, 2> lambdas(x.extent(1) + 1, x.extent(0));
   for (std::size_t j = 0; j < lambdas.extent(1); ++j)
     lambdas(0, j) = 1.0;
   for (std::size_t i = 0; i < x.extent(1); ++i)

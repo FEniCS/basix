@@ -10,10 +10,8 @@
 using namespace basix;
 
 namespace stdex = std::experimental;
-template <typename T>
-using mdspan2_t = stdex::mdspan<T, stdex::dextents<std::size_t, 2>>;
-template <typename T>
-using mdspan4_t = stdex::mdspan<T, stdex::dextents<std::size_t, 4>>;
+template <typename T, std::size_t D>
+using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, D>>;
 
 //----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -29,10 +27,10 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
 
   const auto [points, shape] = element_to.points();
   const auto [tab_b, tab_shape]
-      = element_from.tabulate(0, mdspan2_t<const T>(points.data(), shape));
-  mdspan4_t<const T> tab(tab_b.data(), tab_shape);
+      = element_from.tabulate(0, mdspan_t<const T, 2>(points.data(), shape));
+  mdspan_t<const T, 4> tab(tab_b.data(), tab_shape);
   const auto [imb, imshape] = element_to.interpolation_matrix();
-  mdspan2_t<const T> i_m(imb.data(), imshape);
+  mdspan_t<const T, 2> i_m(imb.data(), imshape);
 
   const std::size_t dim_to = element_to.dim();
   const std::size_t dim_from = element_from.dim();
@@ -52,7 +50,7 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
       // Map element_from's components into element_to
       std::array<std::size_t, 2> shape = {dim_to * vs_from, dim_from};
       std::vector<T> outb(shape[0] * shape[1], 0.0);
-      mdspan2_t<T> out(outb.data(), shape);
+      mdspan_t<T, 2> out(outb.data(), shape);
       for (std::size_t i = 0; i < vs_from; ++i)
         for (std::size_t j = 0; j < dim_to; ++j)
           for (std::size_t k = 0; k < dim_from; ++k)
@@ -66,7 +64,7 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
       // Map duplicates of element_to to components of element_to
       std::array<std::size_t, 2> shape = {dim_to, dim_from * vs_to};
       std::vector<T> outb(shape[0] * shape[1], 0.0);
-      mdspan2_t<T> out(outb.data(), shape);
+      mdspan_t<T, 2> out(outb.data(), shape);
       for (std::size_t i = 0; i < vs_to; ++i)
         for (std::size_t j = 0; j < dim_from; ++j)
           for (std::size_t k = 0; k < dim_to; ++k)
@@ -85,7 +83,7 @@ basix::compute_interpolation_operator(const FiniteElement& element_from,
   {
     std::array<std::size_t, 2> shape = {dim_to, dim_from};
     std::vector<T> outb(shape[0] * shape[1], 0.0);
-    mdspan2_t<T> out(outb.data(), shape);
+    mdspan_t<T, 2> out(outb.data(), shape);
     for (std::size_t i = 0; i < dim_to; ++i)
       for (std::size_t j = 0; j < dim_from; ++j)
         for (std::size_t k = 0; k < vs_from; ++k)

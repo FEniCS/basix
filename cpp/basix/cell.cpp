@@ -11,10 +11,8 @@
 using namespace basix;
 
 namespace stdex = std::experimental;
-template <typename T>
-using mdspan2_t = stdex::mdspan<T, stdex::dextents<std::size_t, 2>>;
-template <typename T>
-using mdspan3_t = stdex::mdspan<T, stdex::dextents<std::size_t, 3>>;
+template <typename T, std::size_t D>
+using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, D>>;
 
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
@@ -332,11 +330,11 @@ cell::sub_entity_geometry(cell::type celltype, int dim, int index)
     throw std::runtime_error("Invalid entity index");
 
   const auto [cell_geometry, shape] = cell::geometry<T>(celltype);
-  mdspan2_t<const T> geometry(cell_geometry.data(), shape);
+  mdspan_t<const T, 2> geometry(cell_geometry.data(), shape);
 
   std::array<std::size_t, 2> subshape = {t[index].size(), geometry.extent(1)};
   std::vector<T> sub_geometry(subshape[0] * subshape[1]);
-  mdspan2_t<T> sub_entity(sub_geometry.data(), subshape);
+  mdspan_t<T, 2> sub_entity(sub_geometry.data(), subshape);
   for (std::size_t i = 0; i < sub_entity.extent(0); ++i)
     for (std::size_t j = 0; j < sub_entity.extent(1); ++j)
       sub_entity(i, j) = geometry(t[index][i], j);
@@ -433,7 +431,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>>
 cell::facet_outward_normals(cell::type cell_type)
 {
   auto [normals, shape] = cell::facet_normals<T>(cell_type);
-  mdspan2_t<T> n(normals.data(), shape);
+  mdspan_t<T, 2> n(normals.data(), shape);
   std::vector<bool> facet_orientations = cell::facet_orientations(cell_type);
   for (std::size_t f = 0; f < n.extent(0); ++f)
   {
@@ -455,10 +453,10 @@ cell::facet_normals(cell::type cell_type)
   std::vector<std::vector<int>> facets = cell::topology(cell_type)[tdim - 1];
   auto [xdata, xshape] = cell::geometry<T>(cell_type);
 
-  mdspan2_t<const T> x(xdata.data(), xshape);
+  mdspan_t<const T, 2> x(xdata.data(), xshape);
   std::array<std::size_t, 2> shape = {facets.size(), tdim};
   std::vector<T> normal(shape[0] * shape[1]);
-  mdspan2_t<T> n(normal.data(), shape);
+  mdspan_t<T, 2> n(normal.data(), shape);
   switch (tdim)
   {
   case 1:
@@ -508,11 +506,11 @@ std::vector<bool> cell::facet_orientations(cell::type cell_type)
 {
   const std::size_t tdim = cell::topological_dimension(cell_type);
   const auto [_x, xshape] = cell::geometry<double>(cell_type);
-  mdspan2_t<const double> x(_x.data(), xshape);
+  mdspan_t<const double, 2> x(_x.data(), xshape);
   std::vector<std::vector<int>> facets = topology(cell_type)[tdim - 1];
 
   const auto [normals, shape] = cell::facet_normals<double>(cell_type);
-  mdspan2_t<const double> n(normals.data(), shape);
+  mdspan_t<const double, 2> n(normals.data(), shape);
 
   std::vector<double> midpoint(x.extent(1), 0.0);
   for (std::size_t i = 0; i < x.extent(1); ++i)
@@ -619,12 +617,12 @@ cell::facet_jacobians(cell::type cell_type)
   }
 
   const auto [_x, xshape] = cell::geometry<T>(cell_type);
-  mdspan2_t<const T> x(_x.data(), xshape);
+  mdspan_t<const T, 2> x(_x.data(), xshape);
   std::vector<std::vector<int>> facets = topology(cell_type)[tdim - 1];
 
   std::array<std::size_t, 3> shape = {facets.size(), tdim, tdim - 1};
   std::vector<T> jacobians(shape[0] * shape[1] * shape[2]);
-  mdspan3_t<T> J(jacobians.data(), shape);
+  mdspan_t<T, 3> J(jacobians.data(), shape);
   for (std::size_t f = 0; f < facets.size(); ++f)
   {
     const std::vector<int>& facet = facets[f];

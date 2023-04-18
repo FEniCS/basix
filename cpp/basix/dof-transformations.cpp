@@ -16,21 +16,15 @@
 using namespace basix;
 
 namespace stdex = std::experimental;
-template <typename T>
-using mdarray2_t = stdex::mdarray<T, stdex::dextents<std::size_t, 2>>;
-template <typename T>
-using mdarray3_t = stdex::mdarray<T, stdex::dextents<std::size_t, 3>>;
-
-template <typename T>
-using mdspan2_t = stdex::mdspan<T, stdex::dextents<std::size_t, 2>>;
-template <typename T>
-using mdspan4_t = stdex::mdspan<T, stdex::dextents<std::size_t, 4>>;
+template <typename T, std::size_t d>
+using mdarray_t = stdex::mdarray<T, stdex::dextents<std::size_t, d>>;
+template <typename T, std::size_t d>
+using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
 
 template <typename T>
 using map_data_t
     = std::tuple<std::function<std::array<T, 3>(std::span<const T>)>,
-                 mdarray2_t<T>, T, mdarray2_t<T>>;
-
+                 mdarray_t<T, 2>, T, mdarray_t<T, 2>>;
 template <typename T>
 using mapinfo_t = std::map<cell::type, std::vector<map_data_t<T>>>;
 
@@ -98,9 +92,9 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
     auto map = [](auto pt) -> std::array<T, 3> {
       return {pt[1], pt[0], 0.0};
     };
-    mdarray2_t<T> J({0., 1., 1., 0.}, 2, 2);
+    mdarray_t<T, 2> J({0., 1., 1., 0.}, 2, 2);
     T detJ = -1.0;
-    mdarray2_t<T> K({0., 1., 1., 0.}, 2, 2);
+    mdarray_t<T, 2> K({0., 1., 1., 0.}, 2, 2);
     data.push_back(std::tuple(map, J, detJ, K));
     return mapinfo;
   }
@@ -111,9 +105,9 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
     auto map = [](auto pt) -> std::array<T, 3> {
       return {1 - pt[0], pt[1], 0};
     };
-    mdarray2_t<T> J({-1., 0., 0., 1.}, 2, 2);
+    mdarray_t<T, 2> J({-1., 0., 0., 1.}, 2, 2);
     T detJ = -1.0;
-    mdarray2_t<T> K({-1., 0., 0., 1.}, 2, 2);
+    mdarray_t<T, 2> K({-1., 0., 0., 1.}, 2, 2);
     data.push_back(std::tuple(map, J, detJ, K));
     return mapinfo;
   }
@@ -125,9 +119,9 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       auto map = [](auto pt) -> std::array<T, 3> {
         return {pt[0], pt[2], pt[1]};
       };
-      mdarray2_t<T> J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
+      mdarray_t<T, 2> J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
       T detJ = -1.0;
-      mdarray2_t<T> K({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
+      mdarray_t<T, 2> K({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
       data.push_back(std::tuple(map, J, detJ, K));
     }
 
@@ -137,18 +131,18 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         auto map = [](auto pt) -> std::array<T, 3> {
           return {pt[2], pt[0], pt[1]};
         };
-        mdarray2_t<T> J({0., 0., 1., 1., 0., 0., 0., 1., 0.}, 3, 3);
+        mdarray_t<T, 2> J({0., 0., 1., 1., 0., 0., 0., 1., 0.}, 3, 3);
         T detJ = 1.0;
-        mdarray2_t<T> K({0., 1., 0., 0., 0., 1., 1., 0., 0.}, 3, 3);
+        mdarray_t<T, 2> K({0., 1., 0., 0., 0., 1., 1., 0., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<T, 3> {
           return {pt[0], pt[2], pt[1]};
         };
-        mdarray2_t<T> J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
+        mdarray_t<T, 2> J({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
         T detJ = -1.0;
-        mdarray2_t<T> K({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
+        mdarray_t<T, 2> K({1., 0., 0., 0., 0., 1., 0., 1., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -163,9 +157,9 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       auto map = [](auto pt) -> std::array<T, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
-      mdarray2_t<T> J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
+      mdarray_t<T, 2> J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       T detJ = -1.0;
-      mdarray2_t<T> K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
+      mdarray_t<T, 2> K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       data.push_back(std::tuple(map, J, detJ, K));
     }
 
@@ -175,18 +169,18 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         auto map = [](auto pt) -> std::array<T, 3> {
           return {1 - pt[1], pt[0], pt[2]};
         };
-        mdarray2_t<T> J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         T detJ = 1.0;
-        mdarray2_t<T> K({0., 1., 0., -1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> K({0., 1., 0., -1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<T, 3> {
           return {pt[1], pt[0], pt[2]};
         };
-        mdarray2_t<T> J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         T detJ = -1.0;
-        mdarray2_t<T> K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -200,9 +194,9 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       auto map = [](auto pt) -> std::array<T, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
-      mdarray2_t<T> J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
+      mdarray_t<T, 2> J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       T detJ = -1.0;
-      mdarray2_t<T> K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
+      mdarray_t<T, 2> K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       data.push_back(std::tuple(map, J, detJ, K));
     }
     {
@@ -211,18 +205,18 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         auto map = [](auto pt) -> std::array<T, 3> {
           return {1 - pt[1] - pt[0], pt[0], pt[2]};
         };
-        mdarray2_t<T> J({-1., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> J({-1., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         T detJ = 1.0;
-        mdarray2_t<T> K({0., 1., 0., -1., -1., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> K({0., 1., 0., -1., -1., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<T, 3> {
           return {pt[1], pt[0], pt[2]};
         };
-        mdarray2_t<T> J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         T detJ = -1.;
-        mdarray2_t<T> K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -232,18 +226,18 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         auto map = [](auto pt) -> std::array<T, 3> {
           return {1 - pt[2], pt[1], pt[0]};
         };
-        mdarray2_t<T> J({0., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
+        mdarray_t<T, 2> J({0., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         T detJ = 1.0;
-        mdarray2_t<T> K({0., 0., 1., 0., 1., 0., -1., 0., 0.}, 3, 3);
+        mdarray_t<T, 2> K({0., 0., 1., 0., 1., 0., -1., 0., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       { // scope
         auto map = [](auto pt) -> std::array<T, 3> {
           return {pt[2], pt[1], pt[0]};
         };
-        mdarray2_t<T> J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
+        mdarray_t<T, 2> J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         T detJ = -1.;
-        mdarray2_t<T> K({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
+        mdarray_t<T, 2> K({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -258,9 +252,9 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
       auto map = [](auto pt) -> std::array<T, 3> {
         return {1 - pt[0], pt[1], pt[2]};
       };
-      mdarray2_t<T> J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
+      mdarray_t<T, 2> J({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       T detJ = -1.;
-      mdarray2_t<T> K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
+      mdarray_t<T, 2> K({-1., 0., 0., 0., 1., 0., 0., 0., 1.}, 3, 3);
       data.push_back(std::tuple(map, J, detJ, K));
     }
 
@@ -270,18 +264,18 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         auto map = [](auto pt) -> std::array<T, 3> {
           return {1 - pt[1], pt[0], pt[2]};
         };
-        mdarray2_t<T> J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> J({0., -1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         T detJ = 1.;
-        mdarray2_t<T> K({0., 1., 0., -1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> K({0., 1., 0., -1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<T, 3> {
           return {pt[1], pt[0], pt[2]};
         };
-        mdarray2_t<T> J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> J({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         T detJ = -1.;
-        mdarray2_t<T> K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
+        mdarray_t<T, 2> K({0., 1., 0., 1., 0., 0., 0., 0., 1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -292,18 +286,18 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
         auto map = [](auto pt) -> std::array<T, 3> {
           return {1 - pt[2] - pt[0], pt[1], pt[0]};
         };
-        mdarray2_t<T> J({-1., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
+        mdarray_t<T, 2> J({-1., 0., -1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         T detJ = 1.;
-        mdarray2_t<T> K({0., 0., 1., 0., 1., 0., -1., 0., -1.}, 3, 3);
+        mdarray_t<T, 2> K({0., 0., 1., 0., 1., 0., -1., 0., -1.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
       {
         auto map = [](auto pt) -> std::array<T, 3> {
           return {pt[2], pt[1], pt[0]};
         };
-        mdarray2_t<T> J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
+        mdarray_t<T, 2> J({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         T detJ = -1.;
-        mdarray2_t<T> K({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
+        mdarray_t<T, 2> K({0., 0., 1., 0., 1., 0., 1., 0., 0.}, 3, 3);
         data.push_back(std::tuple(map, J, detJ, K));
       }
     }
@@ -318,18 +312,18 @@ mapinfo_t<T> get_mapinfo(cell::type cell_type)
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
     cell::type cell_type,
-    const std::array<std::vector<mdspan2_t<const T>>, 4>& x,
-    const std::array<std::vector<mdspan4_t<const T>>, 4>& M,
-    mdspan2_t<const T> coeffs, const mdarray2_t<T>& J, T detJ,
-    const mdarray2_t<T>& K,
+    const std::array<std::vector<mdspan_t<const T, 2>>, 4>& x,
+    const std::array<std::vector<mdspan_t<const T, 4>>, 4>& M,
+    mdspan_t<const T, 2> coeffs, const mdarray_t<T, 2>& J, T detJ,
+    const mdarray_t<T, 2>& K,
     const std::function<std::array<T, 3>(std::span<const T>)> map_point,
     int degree, int tdim, int entity, std::size_t vs, const maps::type map_type)
 {
   if (x[tdim].size() == 0 or x[tdim][entity].extent(0) == 0)
     return {{}, {0, 0}};
 
-  mdspan2_t<const T> pts = x[tdim][entity];
-  mdspan4_t<const T> imat = M[tdim][entity];
+  mdspan_t<const T, 2> pts = x[tdim][entity];
+  mdspan_t<const T, 4> imat = M[tdim][entity];
 
   const std::size_t ndofs = imat.extent(0);
   const std::size_t npts = pts.extent(0);
@@ -348,7 +342,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
       total_ndofs += M[d][i].extent(0);
 
   // Map the points to reverse the edge, then tabulate at those points
-  mdarray2_t<T> mapped_pts(pts.extents());
+  mdarray_t<T, 2> mapped_pts(pts.extents());
   for (std::size_t p = 0; p < mapped_pts.extent(0); ++p)
   {
     auto mp = map_point(
@@ -359,15 +353,15 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
 
   auto [polyset_vals_b, polyset_shape] = polyset::tabulate(
       cell_type, degree, 0,
-      mdspan2_t<const T>(mapped_pts.data(), mapped_pts.extents()));
+      mdspan_t<const T, 2>(mapped_pts.data(), mapped_pts.extents()));
   assert(polyset_shape[0] == 1);
-  mdspan2_t<const T> polyset_vals(polyset_vals_b.data(), polyset_shape[1],
-                                  polyset_shape[2]);
+  mdspan_t<const T, 2> polyset_vals(polyset_vals_b.data(), polyset_shape[1],
+                                    polyset_shape[2]);
 
-  mdarray3_t<T> tabulated_data(npts, total_ndofs, vs);
+  mdarray_t<T, 3> tabulated_data(npts, total_ndofs, vs);
   for (std::size_t j = 0; j < vs; ++j)
   {
-    mdarray2_t<T> result(polyset_vals.extent(1), coeffs.extent(0));
+    mdarray_t<T, 2> result(polyset_vals.extent(1), coeffs.extent(0));
     for (std::size_t k0 = 0; k0 < coeffs.extent(0); ++k0)
       for (std::size_t k1 = 0; k1 < polyset_vals.extent(1); ++k1)
         for (std::size_t k2 = 0; k2 < polyset_vals.extent(0); ++k2)
@@ -379,17 +373,17 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
   }
 
   // Pull back
-  mdarray3_t<T> pulled_data(tabulated_data.extents());
+  mdarray_t<T, 3> pulled_data(tabulated_data.extents());
   {
-    mdarray2_t<T> temp_data(pulled_data.extent(1), pulled_data.extent(2));
+    mdarray_t<T, 2> temp_data(pulled_data.extent(1), pulled_data.extent(2));
     for (std::size_t i = 0; i < npts; ++i)
     {
-      mdspan2_t<const T> tab(
+      mdspan_t<const T, 2> tab(
           tabulated_data.data()
               + i * tabulated_data.extent(1) * tabulated_data.extent(2),
           tabulated_data.extent(1), tabulated_data.extent(2));
 
-      pull_back(map_type, mdspan2_t<T>(temp_data.data(), temp_data.extents()),
+      pull_back(map_type, mdspan_t<T, 2>(temp_data.data(), temp_data.extents()),
                 tab, J, detJ, K);
 
       for (std::size_t k0 = 0; k0 < temp_data.extent(0); ++k0)
@@ -400,7 +394,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_transformation(
 
   // Interpolate to calculate coefficients
   std::vector<T> transformb(ndofs * ndofs);
-  mdspan2_t<T> transform(transformb.data(), ndofs, ndofs);
+  mdspan_t<T, 2> transform(transformb.data(), ndofs, ndofs);
   for (std::size_t d = 0; d < imat.extent(3); ++d)
   {
     for (std::size_t i = 0; i < vs; ++i)

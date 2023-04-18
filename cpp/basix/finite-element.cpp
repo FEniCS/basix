@@ -622,8 +622,8 @@ FiniteElement::FiniteElement(
 
   _matM = {std::vector<double>(num_dofs * value_size * num_points1 * nderivs),
            {num_dofs, value_size * num_points1 * nderivs}};
-  mdspan_t<double, 4> Mview(_matM.first.data(), num_dofs, value_size, num_points1,
-                          nderivs);
+  mdspan_t<double, 4> Mview(_matM.first.data(), num_dofs, value_size,
+                            num_points1, nderivs);
 
   // Loop over each topological dimensions
   std::size_t dof_offset(0), point_offset(0);
@@ -992,7 +992,7 @@ FiniteElement::tabulate(int nd, impl::mdspan_t<const double, 2> x) const
 }
 //-----------------------------------------------------------------------------
 std::pair<std::vector<double>, std::array<std::size_t, 4>>
-FiniteElement::tabulate(int nd, const std::span<const double>& x,
+FiniteElement::tabulate(int nd, std::span<const double> x,
                         std::array<std::size_t, 2> shape) const
 {
   std::array<std::size_t, 4> phishape = tabulate_shape(nd, shape[0]);
@@ -1031,7 +1031,7 @@ void FiniteElement::tabulate(int nd, impl::mdspan_t<const double, 2> x,
   for (std::size_t p = 0; p < basis.extent(0); ++p)
   {
     mdspan_t<const double, 2> B(basis_b.data() + p * bsize[1] * bsize[2],
-                              bsize[1], bsize[2]);
+                                bsize[1], bsize[2]);
     for (int j = 0; j < vs; ++j)
     {
       for (std::size_t k0 = 0; k0 < coeffs_view.extent(0); ++k0)
@@ -1039,7 +1039,8 @@ void FiniteElement::tabulate(int nd, impl::mdspan_t<const double, 2> x,
           C(k0, k1) = coeffs_view(k0, k1 + psize * j);
 
       math::dot(
-          C, mdspan_t<const double, 2>(B.data_handle(), B.extent(0), B.extent(1)),
+          C,
+          mdspan_t<const double, 2>(B.data_handle(), B.extent(0), B.extent(1)),
           result);
 
       if (_dof_ordering.empty())
@@ -1058,9 +1059,9 @@ void FiniteElement::tabulate(int nd, impl::mdspan_t<const double, 2> x,
   }
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::tabulate(int nd, const std::span<const double>& x,
+void FiniteElement::tabulate(int nd, std::span<const double> x,
                              std::array<std::size_t, 2> xshape,
-                             const std::span<double>& basis) const
+                             std::span<double> basis) const
 {
   std::array<std::size_t, 4> shape = tabulate_shape(nd, xshape[0]);
   assert(x.size() == xshape[0] * xshape[1]);
@@ -1268,7 +1269,7 @@ FiniteElement::pull_back(impl::mdspan_t<const double, 3> u,
   return {std::move(Ub), shape};
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
+void FiniteElement::permute_dofs(std::span<std::int32_t> dofs,
                                  std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)
@@ -1283,7 +1284,7 @@ void FiniteElement::permute_dofs(const std::span<std::int32_t>& dofs,
   permute_data<std::int32_t, false>(dofs, 1, cell_info, _eperm);
 }
 //-----------------------------------------------------------------------------
-void FiniteElement::unpermute_dofs(const std::span<std::int32_t>& dofs,
+void FiniteElement::unpermute_dofs(std::span<std::int32_t> dofs,
                                    std::uint32_t cell_info) const
 {
   if (!_dof_transformations_are_permutations)

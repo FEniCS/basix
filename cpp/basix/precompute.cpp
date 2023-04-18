@@ -7,7 +7,7 @@
 using namespace basix;
 
 //-----------------------------------------------------------------------------
-void precompute::prepare_permutation(const std::span<std::size_t>& perm)
+void precompute::prepare_permutation(std::span<std::size_t> perm)
 {
   for (std::size_t row = 0; row < perm.size(); ++row)
   {

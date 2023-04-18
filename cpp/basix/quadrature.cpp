@@ -159,7 +159,7 @@ std::array<std::vector<T>, 2> lobatto(const std::vector<T>& alpha,
 /// (columns)
 template <std::floating_point T>
 mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
-                                     const std::span<const T>& x)
+                                     std::span<const T> x)
 {
   std::vector<std::size_t> shape = {x.size()};
   mdarray_t<T, 3> J(nderiv + 1, n + 1, x.size());

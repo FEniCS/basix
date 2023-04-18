@@ -216,7 +216,7 @@ std::vector<T> warp_function(lattice::type lattice_type, int n,
   for (int i = 0; i < n + 1; ++i)
     pts[i] -= static_cast<T>(i) / static_cast<T>(n);
 
-  const stdex::mdarray<T, stdex::dextents<std::size_t, 2>> v
+  stdex::mdarray<T, stdex::dextents<std::size_t, 2>> v
       = tabulate_dlagrange(n, x);
   std::vector<T> w(v.extent(1), 0);
   for (std::size_t i = 0; i < v.extent(0); ++i)

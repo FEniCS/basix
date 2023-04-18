@@ -122,7 +122,7 @@ std::array<typename U::value_type, 3> cross(const U& u, const V& v)
 /// uses column-major storage, which each column being an eigenvector.
 /// @pre The matrix `A` must be symmetric
 template <std::floating_point T>
-std::pair<std::vector<T>, std::vector<T>> eigh(const std::span<const T>& A,
+std::pair<std::vector<T>, std::vector<T>> eigh(std::span<const T> A,
                                                std::size_t n)
 {
   // Copy A
@@ -183,10 +183,12 @@ std::pair<std::vector<T>, std::vector<T>> eigh(const std::span<const T>& A,
 /// @return A^{-1} B
 template <std::floating_point T>
 std::vector<T>
-solve(const std::experimental::mdspan<
-          const T, std::experimental::dextents<std::size_t, 2>>& A,
-      const std::experimental::mdspan<
-          const T, std::experimental::dextents<std::size_t, 2>>& B)
+solve(std::experimental::mdspan<const T,
+                                std::experimental::dextents<std::size_t, 2>>
+          A,
+      std::experimental::mdspan<const T,
+                                std::experimental::dextents<std::size_t, 2>>
+          B)
 {
   namespace stdex = std::experimental;
 

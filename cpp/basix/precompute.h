@@ -84,7 +84,7 @@ using scalar_value_type_t = typename scalar_value_type<T>::value_type;
 /// `apply_permutation()`.
 ///
 /// @param[in,out] perm A permutation
-void prepare_permutation(const std::span<std::size_t>& perm);
+void prepare_permutation(std::span<std::size_t> perm);
 
 /// Apply a (precomputed) permutation
 ///
@@ -138,9 +138,8 @@ void prepare_permutation(const std::span<std::size_t>& perm);
 /// @param[in] offset The position in the data to start applying the permutation
 /// @param[in] block_size The block size of the data
 template <typename E>
-void apply_permutation(const std::span<const std::size_t>& perm,
-                       const std::span<E>& data, std::size_t offset = 0,
-                       std::size_t block_size = 1)
+void apply_permutation(std::span<const std::size_t> perm, std::span<E> data,
+                       std::size_t offset = 0, std::size_t block_size = 1)
 {
   for (std::size_t i = 0; i < perm.size(); ++i)
   {
@@ -154,9 +153,8 @@ void apply_permutation(const std::span<const std::size_t>& perm,
 
 /// Permutation of mapped data
 template <typename E>
-void apply_permutation_mapped(const std::span<const std::size_t>& perm,
-                              const std::span<E>& data,
-                              std::span<const int> emap,
+void apply_permutation_mapped(std::span<const std::size_t> perm,
+                              std::span<E> data, std::span<const int> emap,
                               std::size_t block_size = 1)
 {
   for (std::size_t i = 0; i < perm.size(); ++i)
@@ -176,9 +174,8 @@ void apply_permutation_mapped(const std::span<const std::size_t>& perm,
 ///
 /// see `apply_permutation()`.
 template <typename E>
-void apply_permutation_to_transpose(const std::span<const std::size_t>& perm,
-                                    const std::span<E>& data,
-                                    std::size_t offset = 0,
+void apply_permutation_to_transpose(std::span<const std::size_t> perm,
+                                    std::span<E> data, std::size_t offset = 0,
                                     std::size_t block_size = 1)
 {
   const std::size_t dim = perm.size();
@@ -251,10 +248,11 @@ prepare_matrix(std::pair<std::vector<T>, std::array<std::size_t, 2>>& A)
 /// permutation
 /// @param[in] block_size The block size of the data
 template <typename T, typename E>
-void apply_matrix(const std::span<const std::size_t>& v_size_t,
-                  const std::experimental::mdspan<
-                      const T, std::experimental::dextents<std::size_t, 2>>& M,
-                  const std::span<E>& data, std::size_t offset = 0,
+void apply_matrix(std::span<const std::size_t> v_size_t,
+                  std::experimental::mdspan<
+                      const T, std::experimental::dextents<std::size_t, 2>>
+                      M,
+                  std::span<E> data, std::size_t offset = 0,
                   std::size_t block_size = 1)
 {
   using U = typename impl::scalar_value_type_t<E>;
@@ -293,11 +291,11 @@ void apply_matrix(const std::span<const std::size_t>& v_size_t,
 /// See `apply_matrix()`.
 template <typename T, typename E>
 void apply_matrix_to_transpose(
-    const std::span<const std::size_t>& v_size_t,
-    const std::experimental::mdspan<
-        const T, std::experimental::dextents<std::size_t, 2>>& M,
-    const std::span<E>& data, std::size_t offset = 0,
-    std::size_t block_size = 1)
+    std::span<const std::size_t> v_size_t,
+    std::experimental::mdspan<const T,
+                              std::experimental::dextents<std::size_t, 2>>
+        M,
+    std::span<E> data, std::size_t offset = 0, std::size_t block_size = 1)
 {
   using U = typename impl::scalar_value_type_t<E>;
 

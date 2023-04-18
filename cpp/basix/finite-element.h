@@ -406,7 +406,7 @@ public:
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
   std::pair<std::vector<double>, std::array<std::size_t, 4>>
-  tabulate(int nd, const std::span<const double>& x,
+  tabulate(int nd, std::span<const double> x,
            std::array<std::size_t, 2> shape) const;
 
   /// Compute basis values and derivatives at set of points.
@@ -462,9 +462,9 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  void tabulate(int nd, const std::span<const double>& x,
+  void tabulate(int nd, std::span<const double> x,
                 std::array<std::size_t, 2> xshape,
-                const std::span<double>& basis) const;
+                std::span<double> basis) const;
 
   /// Get the element cell type
   /// @return The cell type
@@ -736,7 +736,7 @@ public:
   ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void permute_dofs(const std::span<std::int32_t>& dofs,
+  void permute_dofs(std::span<std::int32_t> dofs,
                     std::uint32_t cell_info) const;
 
   /// Unpermute the dof numbering on a cell
@@ -746,7 +746,7 @@ public:
   ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void unpermute_dofs(const std::span<std::int32_t>& dofs,
+  void unpermute_dofs(std::span<std::int32_t> dofs,
                       std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some data

@@ -86,7 +86,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   {
     const FiniteElement facet_moment_space
         = element::create_lagrange(facettype, degree - 1, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<double>(
         facet_moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -101,7 +101,7 @@ FiniteElement basix::element::create_rt(cell::type celltype, int degree,
   if (degree > 1)
   {
     // Interior integral moment
-    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<double>(
         element::create_lagrange(celltype, degree - 2, lvariant, true),
         celltype, tdim, 2 * degree - 2);
     assert(_x.size() == _M.size());

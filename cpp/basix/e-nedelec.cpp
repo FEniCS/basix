@@ -202,7 +202,7 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   {
     FiniteElement edge_space = element::create_lagrange(
         cell::type::interval, degree - 1, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments<double>(
         edge_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -217,7 +217,7 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   {
     FiniteElement face_space = element::create_lagrange(
         cell::type::triangle, degree - 2, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<double>(
         face_space, celltype, tdim, 2 * degree - 2);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -238,7 +238,7 @@ FiniteElement element::create_nedelec(cell::type celltype, int degree,
   {
     if (degree > 2 and tdim == 3)
     {
-      auto [_x, xshape, _M, Mshape] = moments::make_integral_moments(
+      auto [_x, xshape, _M, Mshape] = moments::make_integral_moments<double>(
           element::create_lagrange(cell::type::tetrahedron, degree - 3,
                                    lvariant, true),
           cell::type::tetrahedron, 3, 2 * degree - 3);
@@ -306,7 +306,7 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
   {
     FiniteElement edge_space = element::create_lagrange(cell::type::interval,
                                                         degree, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments<double>(
         edge_space, celltype, tdim, 2 * degree);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -321,7 +321,7 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
     // Integral moments on faces
     FiniteElement face_space
         = element::create_rt(cell::type::triangle, degree - 1, lvariant, true);
-    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<double>(
         face_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -341,7 +341,7 @@ FiniteElement element::create_nedelec2(cell::type celltype, int degree,
   {
     if (degree > 2)
     {
-      auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments(
+      auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<double>(
           element::create_rt(cell::type::tetrahedron, degree - 2, lvariant,
                              true),
           celltype, tdim, 2 * degree - 2);

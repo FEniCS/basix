@@ -4786,9 +4786,6 @@ std::vector<T> quadrature::get_gll_points(int m)
   return pts;
 }
 //-----------------------------------------------------------------------------
-
-/// @cond
-// Explicit instantiation for double and float
 template std::array<std::vector<float>, 2>
 quadrature::make_quadrature(quadrature::type, cell::type, int);
 template std::array<std::vector<double>, 2>
@@ -4804,6 +4801,4 @@ template std::vector<double> quadrature::get_gl_points(int);
 
 template std::vector<float> quadrature::get_gll_points(int);
 template std::vector<double> quadrature::get_gll_points(int);
-/// @endcond
-
 //-----------------------------------------------------------------------------

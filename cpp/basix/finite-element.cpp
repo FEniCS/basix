@@ -525,7 +525,6 @@ template basix::FiniteElement<double> basix::create_custom_element(
     const std::array<std::vector<impl::mdspan_t<const double, 2>>, 4>&,
     const std::array<std::vector<impl::mdspan_t<const double, 4>>, 4>&, int,
     maps::type, sobolev::space sobolev_space, bool, int, int);
-
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 FiniteElement<F>::FiniteElement(

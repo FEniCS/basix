@@ -204,7 +204,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 2>> compute_dual_matrix(
 } // namespace
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-basix::FiniteElement<T>
+FiniteElement<T>
 basix::create_element(element::family family, cell::type cell, int degree,
                       element::lagrange_variant lvariant,
                       element::dpc_variant dvariant, bool discontinuous,
@@ -407,6 +407,7 @@ element::make_discontinuous(
           std::move(Mshapes)};
 }
 //-----------------------------------------------------------------------------
+/// @cond
 template std::tuple<std::array<std::vector<std::vector<float>>, 4>,
                     std::array<std::vector<std::array<std::size_t, 2>>, 4>,
                     std::array<std::vector<std::vector<float>>, 4>,
@@ -423,9 +424,10 @@ element::make_discontinuous(
     const std::array<std::vector<mdspan_t<const double, 2>>, 4>&,
     const std::array<std::vector<mdspan_t<const double, 4>>, 4>&, std::size_t,
     std::size_t);
+/// @endcond
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-basix::FiniteElement<T> basix::create_custom_element(
+FiniteElement<T> basix::create_custom_element(
     cell::type cell_type, const std::vector<std::size_t>& value_shape,
     impl::mdspan_t<const T, 2> wcoeffs,
     const std::array<std::vector<impl::mdspan_t<const T, 2>>, 4>& x,
@@ -513,19 +515,22 @@ basix::FiniteElement<T> basix::create_custom_element(
       element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+/// @cond
 template FiniteElement<float> basix::create_custom_element(
     cell::type, const std::vector<std::size_t>&,
     impl::mdspan_t<const float, 2> wcoeffs,
     const std::array<std::vector<impl::mdspan_t<const float, 2>>, 4>&,
     const std::array<std::vector<impl::mdspan_t<const float, 4>>, 4>&, int,
     maps::type, sobolev::space sobolev_space, bool, int, int);
-template basix::FiniteElement<double> basix::create_custom_element(
+template FiniteElement<double> basix::create_custom_element(
     cell::type, const std::vector<std::size_t>&,
     impl::mdspan_t<const double, 2> wcoeffs,
     const std::array<std::vector<impl::mdspan_t<const double, 2>>, 4>&,
     const std::array<std::vector<impl::mdspan_t<const double, 4>>, 4>&, int,
     maps::type, sobolev::space sobolev_space, bool, int, int);
+/// @endcond
 //-----------------------------------------------------------------------------
+/// @cond
 template <std::floating_point F>
 FiniteElement<F>::FiniteElement(
     element::family family, cell::type cell_type, int degree,
@@ -958,6 +963,7 @@ FiniteElement<F>::FiniteElement(
     }
   }
 }
+/// @endcond
 //-----------------------------------------------------------------------------
 template <std::floating_point F>
 bool FiniteElement<F>::operator==(const FiniteElement& e) const
@@ -1233,6 +1239,8 @@ std::string basix::version()
   return version_str;
 }
 //-----------------------------------------------------------------------------
+/// @cond
 template class basix::FiniteElement<float>;
 template class basix::FiniteElement<double>;
+/// @endcond
 //-----------------------------------------------------------------------------

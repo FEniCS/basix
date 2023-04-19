@@ -1532,6 +1532,7 @@ std::pair<std::vector<T>, std::array<std::size_t, 3>> polyset::tabulate(
   return {std::move(P), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
+/// @cond
 template std::pair<std::vector<float>, std::array<std::size_t, 3>>
 polyset::tabulate(
     cell::type, int, int,
@@ -1542,6 +1543,7 @@ polyset::tabulate(
     cell::type, int, int,
     std::experimental::mdspan<const double,
                               std::experimental::dextents<std::size_t, 2>>);
+/// @endcond
 //-----------------------------------------------------------------------------
 int polyset::dim(cell::type celltype, int d)
 {

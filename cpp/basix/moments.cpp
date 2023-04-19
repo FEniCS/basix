@@ -425,6 +425,7 @@ moments::make_normal_integral_moments(const FiniteElement<T>& V,
   return {pb, pshape, Db, Dshape};
 }
 //----------------------------------------------------------------------------
+/// @cond
 template std::tuple<std::vector<std::vector<float>>, std::array<std::size_t, 2>,
                     std::vector<std::vector<float>>, std::array<std::size_t, 4>>
 moments::make_integral_moments(const FiniteElement<float>&, cell::type,
@@ -464,4 +465,5 @@ template std::tuple<
     std::vector<std::vector<double>>, std::array<std::size_t, 4>>
 moments::make_normal_integral_moments(const FiniteElement<double>&, cell::type,
                                       std::size_t, int);
+/// @endcond
 //----------------------------------------------------------------------------

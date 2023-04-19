@@ -138,6 +138,7 @@ int polynomials::dim(polynomials::type, cell::type cell, int d)
   return polyset::dim(cell, d);
 }
 //-----------------------------------------------------------------------------
+/// @cond
 template std::pair<std::vector<float>, std::array<std::size_t, 2>>
 polynomials::tabulate(
     polynomials::type, cell::type, int,
@@ -148,4 +149,5 @@ polynomials::tabulate(
     polynomials::type, cell::type, int,
     std::experimental::mdspan<const double,
                               std::experimental::dextents<std::size_t, 2>>);
+/// @endcond
 //-----------------------------------------------------------------------------

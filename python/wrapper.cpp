@@ -589,7 +589,7 @@ Interface to the Basix C++ library.
       py::arg("dpc_variant") = element::dpc_variant::unset,
       py::arg("discontinuous") = false,
       py::arg("dof_ordering") = std::vector<int>(),
-      basix::docstring::create_element.c_str());
+      basix::docstring::create_element__family_cell_degree_lvariant_dvariant_discontinuous_dof_ordering.c_str());
 
   // Interpolate between elements
   m.def(

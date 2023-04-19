@@ -47,6 +47,7 @@ def prepare_cpp(content):
 
     out = re.sub(r"namespace [^{]*\{", ";", out)
     out = re.sub(r"class [^{]*\{", "", out)
+    out = re.sub(r" = \{\}", "", out)
 
     while "{" in out:
         out = re.sub(r"\{[^{}]*\}", ";", out)
@@ -79,8 +80,7 @@ def get_docstring(matches):
         function += "("
 
     if function not in content:
-        print(function)
-    assert function in content
+        raise ValueError(f"function {function} not found")
     doc = content.split(function)[0].split(";")[-1]
 
     # Convert doxygen syntax to Python docs

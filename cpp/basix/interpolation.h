@@ -11,6 +11,7 @@
 
 namespace basix
 {
+template <std::floating_point T>
 class FiniteElement;
 
 /// Computes a matrix that represents the interpolation between two
@@ -45,7 +46,7 @@ class FiniteElement;
 /// ndofs(element_from))
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
-compute_interpolation_operator(const FiniteElement& element_from,
-                               const FiniteElement& element_to);
+compute_interpolation_operator(const FiniteElement<T>& element_from,
+                               const FiniteElement<T>& element_to);
 
 } // namespace basix

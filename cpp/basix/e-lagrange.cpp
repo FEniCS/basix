@@ -748,10 +748,10 @@ variant_to_lattice(cell::type celltype, element::lagrange_variant variant)
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-FiniteElement create_d_lagrange(cell::type celltype, int degree,
-                                element::lagrange_variant variant,
-                                lattice::type lattice_type,
-                                lattice::simplex_method simplex_method)
+FiniteElement<T> create_d_lagrange(cell::type celltype, int degree,
+                                   element::lagrange_variant variant,
+                                   lattice::type lattice_type,
+                                   lattice::simplex_method simplex_method)
 {
   if (celltype == cell::type::prism or celltype == cell::type::pyramid)
   {
@@ -798,7 +798,8 @@ FiniteElement create_d_lagrange(cell::type celltype, int degree,
       element::dpc_variant::unset);
 }
 //----------------------------------------------------------------------------
-std::vector<std::tuple<std::vector<FiniteElement>, std::vector<int>>>
+template <std::floating_point T>
+std::vector<std::tuple<std::vector<FiniteElement<T>>, std::vector<int>>>
 create_tensor_product_factors(cell::type celltype, int degree,
                               element::lagrange_variant variant)
 {
@@ -806,8 +807,8 @@ create_tensor_product_factors(cell::type celltype, int degree,
   {
   case cell::type::quadrilateral:
   {
-    FiniteElement sub_element
-        = element::create_lagrange(cell::type::interval, degree, variant, true);
+    FiniteElement<T> sub_element = element::create_lagrange<T>(
+        cell::type::interval, degree, variant, true);
     std::vector<int> perm((degree + 1) * (degree + 1));
     if (degree == 0)
       perm[0] = 0;
@@ -835,8 +836,8 @@ create_tensor_product_factors(cell::type celltype, int degree,
   }
   case cell::type::hexahedron:
   {
-    FiniteElement sub_element
-        = element::create_lagrange(cell::type::interval, degree, variant, true);
+    FiniteElement<T> sub_element = element::create_lagrange<T>(
+        cell::type::interval, degree, variant, true);
     std::vector<int> perm((degree + 1) * (degree + 1) * (degree + 1));
     if (degree == 0)
       perm[0] = 0;
@@ -901,8 +902,8 @@ create_tensor_product_factors(cell::type celltype, int degree,
 }
 //----------------------------------------------------------------------------
 template <std::floating_point T>
-FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
-                                 bool discontinuous)
+FiniteElement<T> create_vtk_element(cell::type celltype, std::size_t degree,
+                                    bool discontinuous)
 {
   if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
@@ -963,8 +964,8 @@ FiniteElement create_vtk_element(cell::type celltype, std::size_t degree,
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-FiniteElement create_legendre(cell::type celltype, int degree,
-                              bool discontinuous)
+FiniteElement<T> create_legendre(cell::type celltype, int degree,
+                                 bool discontinuous)
 {
   if (!discontinuous)
     throw std::runtime_error("Legendre variant must be discontinuous");
@@ -982,7 +983,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
       quadrature::type::Default, celltype, degree * 2);
   assert(!wts.empty());
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
   const auto [_phi, pshape] = polynomials::tabulate(polynomials::type::legendre,
                                                     celltype, degree, pts);
   impl::mdspan_t<const T, 2> phi(_phi.data(), pshape);
@@ -1004,7 +1005,7 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::P, celltype, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
@@ -1013,8 +1014,8 @@ FiniteElement create_legendre(cell::type celltype, int degree,
 }
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
-FiniteElement create_bernstein(cell::type celltype, int degree,
-                               bool discontinuous)
+FiniteElement<T> create_bernstein(cell::type celltype, int degree,
+                                  bool discontinuous)
 {
   assert(degree > 0);
   if (celltype != cell::type::interval and celltype != cell::type::triangle
@@ -1112,7 +1113,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
           quadrature::type::Default, ct[d], degree * 2);
       assert(!wts.empty());
       impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                                   _pts.size() / wts.size());
+                                     _pts.size() / wts.size());
 
       const auto [_phi, pshape] = polynomials::tabulate(
           polynomials::type::legendre, ct[d], degree, pts);
@@ -1175,7 +1176,7 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   const std::size_t ndofs = polyset::dim(celltype, degree);
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::P, celltype, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs),
       impl::to_mdspan(x), impl::to_mdspan(M), 0, maps::type::identity, space,
@@ -1186,13 +1187,12 @@ FiniteElement create_bernstein(cell::type celltype, int degree,
 } // namespace
 
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
-                                              lagrange_variant variant,
-                                              bool discontinuous,
-                                              std::vector<int> dof_ordering)
+template <std::floating_point T>
+FiniteElement<T>
+basix::element::create_lagrange(cell::type celltype, int degree,
+                                lagrange_variant variant, bool discontinuous,
+                                std::vector<int> dof_ordering)
 {
-  using T = double;
-
   if (celltype == cell::type::point)
   {
     if (degree != 0)
@@ -1202,7 +1202,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
     std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
     x[0].emplace_back(1, 0);
     M[0].emplace_back(std::vector<T>{1.0}, 1, 1, 1, 1);
-    return FiniteElement(
+    return FiniteElement<T>(
         family::P, cell::type::point, 0, {},
         impl::mdspan_t<T, 2>(math::eye<T>(1).data(), 1, 1), impl::to_mdspan(x),
         impl::to_mdspan(M), 0, maps::type::identity, sobolev::space::H1,
@@ -1318,7 +1318,7 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
           impl::mdspan_t<const T, 2> lattice(pt.data(), shape);
           std::span<const T> x0(entity_x.data(), entity_x_shape[1]);
           impl::mdspan_t<const T, 2> entity_x_view(entity_x.data(),
-                                                 entity_x_shape);
+                                                   entity_x_shape);
 
           auto& _x = x[dim].emplace_back(shape[0], entity_x_shape[1]);
           for (std::size_t i = 0; i < shape[0]; ++i)
@@ -1356,11 +1356,15 @@ FiniteElement basix::element::create_lagrange(cell::type celltype, int degree,
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::H1;
   auto tensor_factors
-      = create_tensor_product_factors(celltype, degree, variant);
-  return FiniteElement(
+      = create_tensor_product_factors<T>(celltype, degree, variant);
+  return FiniteElement<T>(
       family::P, celltype, degree, {},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::identity, space, discontinuous, degree, degree,
       variant, dpc_variant::unset, tensor_factors, dof_ordering);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<double>
+basix::element::create_lagrange(cell::type, int, lagrange_variant, bool,
+                                std::vector<int>);
 //-----------------------------------------------------------------------------

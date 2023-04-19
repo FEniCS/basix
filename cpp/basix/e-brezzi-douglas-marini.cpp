@@ -17,11 +17,11 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement element::create_bdm(cell::type celltype, int degree,
-                                  lagrange_variant lvariant, bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> element::create_bdm(cell::type celltype, int degree,
+                                     lagrange_variant lvariant,
+                                     bool discontinuous)
 {
-  using T = double;
-
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
@@ -37,8 +37,8 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
 
   // Integral moments on facets
   const cell::type facettype = sub_entity_type(celltype, tdim - 1, 0);
-  const FiniteElement facet_moment_space
-      = create_lagrange(facettype, degree, lvariant, true);
+  const FiniteElement<T> facet_moment_space
+      = create_lagrange<T>(facettype, degree, lvariant, true);
   {
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
         facet_moment_space, celltype, tdim, degree * 2);
@@ -56,7 +56,7 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   {
     // Interior integral moment
     auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
-        create_nedelec(celltype, degree - 1, lvariant, true), celltype, tdim,
+        create_nedelec<T>(celltype, degree - 1, lvariant, true), celltype, tdim,
         2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -93,10 +93,15 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
-  return FiniteElement(
+  return FiniteElement<T>(
       family::BDM, celltype, degree, {tdim},
       impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
       Mview, 0, maps::type::contravariantPiola, space, discontinuous, degree,
       degree, lvariant, element::dpc_variant::unset);
 }
+//-----------------------------------------------------------------------------
+
+template FiniteElement<double> element::create_bdm(cell::type, int,
+                                                   lagrange_variant, bool);
+
 //-----------------------------------------------------------------------------

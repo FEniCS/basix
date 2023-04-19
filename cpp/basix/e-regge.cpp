@@ -15,11 +15,10 @@ using namespace basix;
 namespace stdex = std::experimental;
 
 //-----------------------------------------------------------------------------
-FiniteElement element::create_regge(cell::type celltype, int degree,
-                                    bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> element::create_regge(cell::type celltype, int degree,
+                                       bool discontinuous)
 {
-  using T = double;
-
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported celltype");
 
@@ -89,9 +88,9 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
         const auto [_pts, wts]
             = quadrature::make_quadrature<T>(ct, degree + (degree + 1 - d));
         impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                                     _pts.size() / wts.size());
+                                       _pts.size() / wts.size());
 
-        FiniteElement moment_space = create_lagrange(
+        FiniteElement moment_space = create_lagrange<T>(
             ct, degree + 1 - d, element::lagrange_variant::legendre, true);
         const auto [phib, phishape] = moment_space.tabulate(0, pts);
         impl::mdspan_t<const T, 4> moment_values(phib.data(), phishape);
@@ -178,10 +177,12 @@ FiniteElement element::create_regge(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HEin;
-  return FiniteElement(
+  return FiniteElement<T>(
       element::family::Regge, celltype, degree, {tdim, tdim},
       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
       maps::type::doubleCovariantPiola, space, discontinuous, -1, degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<double> element::create_regge(cell::type, int, bool);
 //-----------------------------------------------------------------------------

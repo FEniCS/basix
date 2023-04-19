@@ -7,6 +7,7 @@
 #include "cell.h"
 #include "element-families.h"
 #include "finite-element.h"
+#include <concepts>
 
 namespace basix::element
 {
@@ -17,6 +18,8 @@ namespace basix::element
 /// @param[in] discontinuous True if the is discontinuous
 /// @param[in] dof_ordering DOF reordering
 /// @return A finite element
-FiniteElement create_lagrange(cell::type celltype, int degree,
-                              lagrange_variant variant, bool discontinuous, std::vector<int> dof_ordering={});
+template <std::floating_point T>
+FiniteElement<T> create_lagrange(cell::type celltype, int degree,
+                                 lagrange_variant variant, bool discontinuous,
+                                 std::vector<int> dof_ordering = {});
 } // namespace basix::element

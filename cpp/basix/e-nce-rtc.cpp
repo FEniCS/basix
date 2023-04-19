@@ -16,12 +16,11 @@
 using namespace basix;
 
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
-                                         element::lagrange_variant lvariant,
-                                         bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> basix::element::create_rtc(cell::type celltype, int degree,
+                                            element::lagrange_variant lvariant,
+                                            bool discontinuous)
 {
-  using T = double;
-
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
   {
@@ -40,7 +39,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   const auto [_pts, qwts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), qwts.size(),
-                               _pts.size() / qwts.size());
+                                 _pts.size() / qwts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
@@ -127,8 +126,8 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   }
 
   {
-    FiniteElement moment_space
-        = element::create_lagrange(facettype, degree - 1, lvariant, true);
+    FiniteElement<T> moment_space
+        = element::create_lagrange<T>(facettype, degree - 1, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
         moment_space, celltype, tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
@@ -144,7 +143,7 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
   if (degree > 1)
   {
     auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
-        element::create_nce(celltype, degree - 1, lvariant, true), celltype,
+        element::create_nce<T>(celltype, degree - 1, lvariant, true), celltype,
         tdim, 2 * degree - 1);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -176,19 +175,18 @@ FiniteElement basix::element::create_rtc(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
-  return FiniteElement(element::family::RT, celltype, degree, {tdim},
-                       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
-                       xview, Mview, 0, maps::type::contravariantPiola, space,
-                       discontinuous, degree - 1, degree, lvariant,
-                       element::dpc_variant::unset);
+  return FiniteElement<T>(
+      element::family::RT, celltype, degree, {tdim},
+      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
+      maps::type::contravariantPiola, space, discontinuous, degree - 1, degree,
+      lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
-FiniteElement basix::element::create_nce(cell::type celltype, int degree,
-                                         element::lagrange_variant lvariant,
-                                         bool discontinuous)
+template <std::floating_point T>
+FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
+                                            element::lagrange_variant lvariant,
+                                            bool discontinuous)
 {
-  using T = double;
-
   if (celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
   {
@@ -204,7 +202,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   const auto [_pts, wts] = quadrature::make_quadrature<T>(
       quadrature::type::Default, celltype, 2 * degree);
   impl::mdspan_t<const T, 2> pts(_pts.data(), wts.size(),
-                               _pts.size() / wts.size());
+                                 _pts.size() / wts.size());
   const auto [_phi, shape] = polyset::tabulate(celltype, degree, 0, pts);
   impl::mdspan_t<const T, 3> phi(_phi.data(), shape);
 
@@ -331,7 +329,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
                      impl::mdarray_t<T, 4>(0, tdim, 0, 1));
 
   {
-    FiniteElement edge_moment_space = element::create_lagrange(
+    FiniteElement<T> edge_moment_space = element::create_lagrange<T>(
         cell::type::interval, degree - 1, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_tangent_integral_moments<T>(
         edge_moment_space, celltype, tdim, 2 * degree - 1);
@@ -347,7 +345,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   if (degree > 1)
   {
     // Face integral moment
-    FiniteElement moment_space = element::create_rtc(
+    FiniteElement<T> moment_space = element::create_rtc<T>(
         cell::type::quadrilateral, degree - 1, lvariant, true);
     auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
         moment_space, celltype, tdim, 2 * degree - 1);
@@ -368,7 +366,7 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
   {
     if (degree > 1)
     {
-      FiniteElement moment_space = element::create_rtc(
+      FiniteElement<T> moment_space = element::create_rtc<T>(
           cell::type::hexahedron, degree - 1, lvariant, true);
       auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
           moment_space, celltype, tdim, 2 * degree - 1);
@@ -403,10 +401,15 @@ FiniteElement basix::element::create_nce(cell::type celltype, int degree,
 
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HCurl;
-  return FiniteElement(element::family::N1E, celltype, degree, {tdim},
-                       impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()),
-                       xview, Mview, 0, maps::type::covariantPiola, space,
-                       discontinuous, degree - 1, degree, lvariant,
-                       element::dpc_variant::unset);
+  return FiniteElement<T>(
+      element::family::N1E, celltype, degree, {tdim},
+      impl::mdspan_t<T, 2>(wcoeffs.data(), wcoeffs.extents()), xview, Mview, 0,
+      maps::type::covariantPiola, space, discontinuous, degree - 1, degree,
+      lvariant, element::dpc_variant::unset);
 }
+//-----------------------------------------------------------------------------
+template FiniteElement<double>
+basix::element::create_rtc(cell::type, int, element::lagrange_variant, bool);
+template FiniteElement<double>
+basix::element::create_nce(cell::type, int, element::lagrange_variant, bool);
 //-----------------------------------------------------------------------------

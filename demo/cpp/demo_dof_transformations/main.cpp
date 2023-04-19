@@ -49,9 +49,9 @@ int main(int argc, char* argv[])
     auto variant = basix::element::lagrange_variant::equispaced;
 
     // Create the lagrange element
-    basix::FiniteElement lagrange
-        = basix::create_element(family, cell_type, degree, variant,
-                                basix::element::dpc_variant::unset, false);
+    basix::FiniteElement lagrange = basix::create_element<double>(
+        family, cell_type, degree, variant, basix::element::dpc_variant::unset,
+        false);
 
     // Print bools as true/false instead of 0/1
     std::cout << std::boolalpha;

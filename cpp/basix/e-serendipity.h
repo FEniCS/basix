@@ -7,6 +7,7 @@
 #include "cell.h"
 #include "element-families.h"
 #include "finite-element.h"
+#include <concepts>
 
 namespace basix::element
 {
@@ -21,10 +22,11 @@ namespace basix::element
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
-FiniteElement create_serendipity(cell::type celltype, int degree,
-                                 element::lagrange_variant lvariant,
-                                 element::dpc_variant dvariant,
-                                 bool discontinuous);
+template <std::floating_point T>
+FiniteElement<T> create_serendipity(cell::type celltype, int degree,
+                                    element::lagrange_variant lvariant,
+                                    element::dpc_variant dvariant,
+                                    bool discontinuous);
 
 /// Create a DPC (discontinuous polynomial cubical) element on cell with given
 /// degree.
@@ -35,8 +37,9 @@ FiniteElement create_serendipity(cell::type celltype, int degree,
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
-FiniteElement create_dpc(cell::type celltype, int degree,
-                         element::dpc_variant variant, bool discontinuous);
+template <std::floating_point T>
+FiniteElement<T> create_dpc(cell::type celltype, int degree,
+                            element::dpc_variant variant, bool discontinuous);
 
 /// Create a serendipity H(div) element on cell with given degree
 /// @param[in] celltype The cell type
@@ -48,10 +51,11 @@ FiniteElement create_dpc(cell::type celltype, int degree,
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
-FiniteElement create_serendipity_div(cell::type celltype, int degree,
-                                     element::lagrange_variant lvariant,
-                                     element::dpc_variant dvariant,
-                                     bool discontinuous);
+template <std::floating_point T>
+FiniteElement<T> create_serendipity_div(cell::type celltype, int degree,
+                                        element::lagrange_variant lvariant,
+                                        element::dpc_variant dvariant,
+                                        bool discontinuous);
 
 /// Create a serendipity H(curl) element on cell with given degree
 /// @param[in] celltype The cell type
@@ -63,8 +67,9 @@ FiniteElement create_serendipity_div(cell::type celltype, int degree,
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
-FiniteElement create_serendipity_curl(cell::type celltype, int degree,
-                                      element::lagrange_variant lvariant,
-                                      element::dpc_variant dvariant,
-                                      bool discontinuous);
+template <std::floating_point T>
+FiniteElement<T> create_serendipity_curl(cell::type celltype, int degree,
+                                         element::lagrange_variant lvariant,
+                                         element::dpc_variant dvariant,
+                                         bool discontinuous);
 } // namespace basix::element

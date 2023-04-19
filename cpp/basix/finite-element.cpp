@@ -327,11 +327,15 @@ basix::create_element(element::family family, cell::type cell, int degree,
     throw std::runtime_error("Element family not found.");
   }
 }
+//-----------------------------------------------------------------------------
+template basix::FiniteElement<float>
+basix::create_element(element::family, cell::type, int,
+                      element::lagrange_variant, element::dpc_variant, bool,
+                      std::vector<int>);
 template basix::FiniteElement<double>
 basix::create_element(element::family, cell::type, int,
                       element::lagrange_variant, element::dpc_variant, bool,
                       std::vector<int>);
-
 //-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::tuple<std::array<std::vector<std::vector<T>>, 4>,

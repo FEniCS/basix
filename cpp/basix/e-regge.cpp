@@ -184,5 +184,6 @@ FiniteElement<T> element::create_regge(cell::type celltype, int degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+template FiniteElement<float> element::create_regge(cell::type, int, bool);
 template FiniteElement<double> element::create_regge(cell::type, int, bool);
 //-----------------------------------------------------------------------------

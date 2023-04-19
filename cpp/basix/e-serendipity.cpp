@@ -1444,14 +1444,28 @@ FiniteElement<T> element::create_serendipity_curl(
                           degree + 1, lvariant, dvariant);
 }
 //-----------------------------------------------------------------------------
+template FiniteElement<float>
+element::create_serendipity(cell::type, int, element::lagrange_variant,
+                            element::dpc_variant, bool);
 template FiniteElement<double>
 element::create_serendipity(cell::type, int, element::lagrange_variant,
                             element::dpc_variant, bool);
+
+template FiniteElement<float> element::create_dpc(cell::type, int,
+                                                  element::dpc_variant, bool);
 template FiniteElement<double> element::create_dpc(cell::type, int,
                                                    element::dpc_variant, bool);
+
+template FiniteElement<float>
+element::create_serendipity_div(cell::type, int, element::lagrange_variant,
+                                element::dpc_variant, bool);
 template FiniteElement<double>
 element::create_serendipity_div(cell::type, int, element::lagrange_variant,
                                 element::dpc_variant, bool);
+
+template FiniteElement<float>
+element::create_serendipity_curl(cell::type, int, element::lagrange_variant,
+                                 element::dpc_variant, bool);
 template FiniteElement<double>
 element::create_serendipity_curl(cell::type, int, element::lagrange_variant,
                                  element::dpc_variant, bool);

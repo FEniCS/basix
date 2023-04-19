@@ -190,5 +190,6 @@ FiniteElement<T> basix::element::create_bubble(cell::type celltype, int degree,
       degree, element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+template FiniteElement<float> element::create_bubble(cell::type, int, bool);
 template FiniteElement<double> element::create_bubble(cell::type, int, bool);
 //-----------------------------------------------------------------------------

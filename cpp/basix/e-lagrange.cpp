@@ -1364,7 +1364,10 @@ basix::element::create_lagrange(cell::type celltype, int degree,
       variant, dpc_variant::unset, tensor_factors, dof_ordering);
 }
 //-----------------------------------------------------------------------------
-template FiniteElement<double>
-basix::element::create_lagrange(cell::type, int, lagrange_variant, bool,
-                                std::vector<int>);
+template FiniteElement<float> element::create_lagrange(cell::type, int,
+                                                       lagrange_variant, bool,
+                                                       std::vector<int>);
+template FiniteElement<double> element::create_lagrange(cell::type, int,
+                                                        lagrange_variant, bool,
+                                                        std::vector<int>);
 //-----------------------------------------------------------------------------

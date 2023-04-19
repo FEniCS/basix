@@ -143,6 +143,8 @@ FiniteElement<T> basix::element::create_rt(cell::type celltype, int degree,
                           element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+template FiniteElement<float>
+basix::element::create_rt(cell::type, int, element::lagrange_variant, bool);
 template FiniteElement<double>
 basix::element::create_rt(cell::type, int, element::lagrange_variant, bool);
 //-----------------------------------------------------------------------------

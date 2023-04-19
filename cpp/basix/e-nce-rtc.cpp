@@ -408,8 +408,13 @@ FiniteElement<T> basix::element::create_nce(cell::type celltype, int degree,
       lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
+template FiniteElement<float>
+basix::element::create_rtc(cell::type, int, element::lagrange_variant, bool);
 template FiniteElement<double>
 basix::element::create_rtc(cell::type, int, element::lagrange_variant, bool);
+
+template FiniteElement<float>
+basix::element::create_nce(cell::type, int, element::lagrange_variant, bool);
 template FiniteElement<double>
 basix::element::create_nce(cell::type, int, element::lagrange_variant, bool);
 //-----------------------------------------------------------------------------

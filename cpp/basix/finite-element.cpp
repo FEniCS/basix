@@ -1236,5 +1236,6 @@ std::string basix::version()
   return version_str;
 }
 //-----------------------------------------------------------------------------
+template class basix::FiniteElement<float>;
 template class basix::FiniteElement<double>;
 //-----------------------------------------------------------------------------

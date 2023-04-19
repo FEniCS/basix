@@ -367,7 +367,6 @@ element::make_discontinuous(
   {
     xshapes[i] = std::vector(x[i].size(), std::array<std::size_t, 2>{0, tdim});
     x_data[i].resize(x[i].size());
-
     Mshapes[i] = std::vector(
         M[i].size(), std::array<std::size_t, 4>{0, value_size, 0, nderivs});
     M_data[i].resize(M[i].size());
@@ -376,11 +375,9 @@ element::make_discontinuous(
   std::array<std::size_t, 2> xshape = {npoints, tdim};
   std::vector<T> xb(xshape[0] * xshape[1]);
   stdex::mdspan<T, stdex::dextents<std::size_t, 2>> new_x(xb.data(), xshape);
-
   std::array<std::size_t, 4> Mshape = {Mshape0, value_size, npoints, nderivs};
   std::vector<T> Mb(Mshape[0] * Mshape[1] * Mshape[2] * Mshape[3]);
   stdex::mdspan<T, stdex::dextents<std::size_t, 4>> new_M(Mb.data(), Mshape);
-
   int x_n = 0;
   int M_n = 0;
   for (int i = 0; i < 4; ++i)
@@ -406,10 +403,10 @@ element::make_discontinuous(
   xshapes[tdim].push_back(xshape);
   M_data[tdim].push_back(Mb);
   Mshapes[tdim].push_back(Mshape);
-
   return {std::move(x_data), std::move(xshapes), std::move(M_data),
           std::move(Mshapes)};
 }
+//-----------------------------------------------------------------------------
 template std::tuple<std::array<std::vector<std::vector<float>>, 4>,
                     std::array<std::vector<std::array<std::size_t, 2>>, 4>,
                     std::array<std::vector<std::vector<float>>, 4>,
@@ -441,12 +438,9 @@ basix::FiniteElement<T> basix::create_custom_element(
   const std::size_t psize = polyset::dim(cell_type, highest_degree);
   const std::size_t value_size = std::reduce(
       value_shape.begin(), value_shape.end(), 1, std::multiplies{});
-
   const std::size_t deriv_count
       = polyset::nderivs(cell_type, interpolation_nderivs);
-
   const std::size_t tdim = cell::topological_dimension(cell_type);
-
   std::size_t ndofs = 0;
   for (std::size_t i = 0; i <= 3; ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
@@ -518,13 +512,13 @@ basix::FiniteElement<T> basix::create_custom_element(
       highest_complete_degree, highest_degree, element::lagrange_variant::unset,
       element::dpc_variant::unset);
 }
-// template FiniteElement basix::create_custom_element(
-//     cell::type, const std::vector<std::size_t>&,
-//     impl::mdspan_t<const float, 2> wcoeffs,
-//     const std::array<std::vector<impl::mdspan_t<const float, 2>>, 4>&,
-//     const std::array<std::vector<impl::mdspan_t<const float, 4>>, 4>&, int,
-//     maps::type, sobolev::space sobolev_space, bool, int, int);
-
+//-----------------------------------------------------------------------------
+template FiniteElement<float> basix::create_custom_element(
+    cell::type, const std::vector<std::size_t>&,
+    impl::mdspan_t<const float, 2> wcoeffs,
+    const std::array<std::vector<impl::mdspan_t<const float, 2>>, 4>&,
+    const std::array<std::vector<impl::mdspan_t<const float, 4>>, 4>&, int,
+    maps::type, sobolev::space sobolev_space, bool, int, int);
 template basix::FiniteElement<double> basix::create_custom_element(
     cell::type, const std::vector<std::size_t>&,
     impl::mdspan_t<const double, 2> wcoeffs,

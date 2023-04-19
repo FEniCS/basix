@@ -94,6 +94,6 @@ FiniteElement<T> basix::element::create_cr(cell::type celltype, int degree,
       degree, element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
-template FiniteElement<float> basix::element::create_cr(cell::type, int, bool);
-template FiniteElement<double> basix::element::create_cr(cell::type, int, bool);
+template FiniteElement<float> element::create_cr(cell::type, int, bool);
+template FiniteElement<double> element::create_cr(cell::type, int, bool);
 //-----------------------------------------------------------------------------

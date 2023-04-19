@@ -390,13 +390,13 @@ FiniteElement<T> element::create_nedelec2(cell::type celltype, int degree,
       discontinuous, degree, degree, lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
-template FiniteElement<float>
-basix::element::create_nedelec(cell::type, int, lagrange_variant, bool);
-template FiniteElement<double>
-basix::element::create_nedelec(cell::type, int, lagrange_variant, bool);
+template FiniteElement<float> element::create_nedelec(cell::type, int,
+                                                      lagrange_variant, bool);
+template FiniteElement<double> element::create_nedelec(cell::type, int,
+                                                       lagrange_variant, bool);
 
-template FiniteElement<float>
-basix::element::create_nedelec2(cell::type, int, lagrange_variant, bool);
-template FiniteElement<double>
-basix::element::create_nedelec2(cell::type, int, lagrange_variant, bool);
+template FiniteElement<float> element::create_nedelec2(cell::type, int,
+                                                       lagrange_variant, bool);
+template FiniteElement<double> element::create_nedelec2(cell::type, int,
+                                                        lagrange_variant, bool);
 //-----------------------------------------------------------------------------

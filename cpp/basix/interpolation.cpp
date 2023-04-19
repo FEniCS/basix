@@ -94,12 +94,10 @@ basix::compute_interpolation_operator(const FiniteElement<T>& element_from,
   }
 }
 //----------------------------------------------------------------------------
-/// @cond
 template std::pair<std::vector<float>, std::array<std::size_t, 2>>
 basix::compute_interpolation_operator(const FiniteElement<float>&,
                                       const FiniteElement<float>&);
 template std::pair<std::vector<double>, std::array<std::size_t, 2>>
 basix::compute_interpolation_operator(const FiniteElement<double>&,
                                       const FiniteElement<double>&);
-/// @endcond
 //-----------------------------------------------------------------------------

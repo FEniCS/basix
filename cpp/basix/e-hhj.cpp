@@ -183,7 +183,6 @@ FiniteElement<T> basix::element::create_hhj(cell::type celltype, int degree,
       element::lagrange_variant::unset, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------
-template FiniteElement<float> basix::element::create_hhj(cell::type, int, bool);
-template FiniteElement<double> basix::element::create_hhj(cell::type, int,
-                                                          bool);
+template FiniteElement<float> element::create_hhj(cell::type, int, bool);
+template FiniteElement<double> element::create_hhj(cell::type, int, bool);
 //-----------------------------------------------------------------------------

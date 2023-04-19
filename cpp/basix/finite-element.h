@@ -290,15 +290,16 @@ public:
   /// @param[in] value_shape The value shape of the element
   /// @param[in] wcoeffs Matrices for the kth value index containing the
   /// expansion coefficients defining a polynomial basis spanning the
-  /// polynomial space for this element. Shape is (dim(finite element polyset),
-  /// dim(Legendre polynomials))
+  /// polynomial space for this element. Shape is (dim(finite element
+  /// polyset), dim(Legendre polynomials))
   /// @param[in] x Interpolation points. Indices are (tdim, entity
   /// index, point index, dim)
   /// @param[in] M The interpolation matrices. Indices are (tdim, entity
   /// index, dof, vs, point_index, derivative)
   /// @param[in] map_type The type of map to be used to map values from
   /// the reference to a cell
-  /// @param[in] sobolev_space The underlying Sobolev space for the element
+  /// @param[in] sobolev_space The underlying Sobolev space for the
+  /// element
   /// @param[in] discontinuous Indicates whether or not this is the
   /// discontinuous version of the element
   /// @param[in] highest_complete_degree The highest degree n such that
@@ -311,8 +312,8 @@ public:
   /// @param[in] dvariant The DPC variant of the element
   /// @param[in] tensor_factors The factors in the tensor product
   /// representation of this element
-  /// @param[in] dof_ordering DOF reordering: a mapping from the reference order
-  /// to a new permuted order
+  /// @param[in] dof_ordering DOF reordering: a mapping from the
+  /// reference order to a new permuted order
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
       const std::vector<std::size_t>& value_shape, mdspan_t<const F, 2> wcoeffs,

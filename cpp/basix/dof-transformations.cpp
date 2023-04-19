@@ -453,9 +453,7 @@ doftransforms::compute_entity_transformations(
   return out;
 }
 //-----------------------------------------------------------------------------
-
 /// @cond
-// Explicit instantiation for double and float
 template std::map<cell::type,
                   std::pair<std::vector<float>, std::array<std::size_t, 3>>>
 doftransforms::compute_entity_transformations(
@@ -488,5 +486,4 @@ doftransforms::compute_entity_transformations(
                               std::experimental::dextents<std::size_t, 2>>,
     int, std::size_t, maps::type);
 /// @endcond
-
 //-----------------------------------------------------------------------------

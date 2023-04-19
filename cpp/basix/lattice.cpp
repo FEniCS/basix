@@ -764,142 +764,6 @@ create_pyramid_equispaced(int n, bool exterior)
   return {std::move(xb), std::move(shape)};
 }
 //-----------------------------------------------------------------------------
-/*
-xt::xtensor<double, 2> create_pyramid_gll_warped(int n, bool exterior)
-{
-  // FIXME
-  throw std::runtime_error("GLL on Pyramid is not currently working.");
-
-  const double h = 1.0 / static_cast<double>(n);
-
-  // Interpolate warp factor along interval
-  std::vector<double> pts = quadrature::get_gll_points<double>(n + 1);
-  std::transform(pts.begin(), pts.end(), pts.begin(),
-                 [](auto x) { return 0.5 * x; });
-  for (int i = 0; i < n + 1; ++i)
-    pts[i] += (0.5 - static_cast<double>(i) / static_cast<double>(n));
-
-  // Get interpolated value at r in range [-1, 1]
-  auto w = [&](double r) -> double
-  {
-    xt::xtensor<double, 2> rr = {{0.5 * (r + 1.0)}};
-    xt::xtensor<double, 1> v
-        = xt::view(tabulate_dlagrange(n, rr), xt::all(), 0);
-    double d = 0.0;
-    for (std::size_t i = 0; i < pts.size(); ++i)
-      d += v[i] * pts[i];
-    return d;
-  };
-
-  const std::size_t b = (exterior == false) ? 1 : 0;
-  n -= b * 3;
-  std::size_t m = (n + 1) * (n + 2) * (2 * n + 3) / 6;
-  xt::xtensor<double, 2> points({m, 3});
-  int c = 0;
-  for (int k = 0; k < n + 1; ++k)
-  {
-    for (int j = 0; j < n + 1 - k; ++j)
-    {
-      for (int i = 0; i < n + 1 - k; ++i)
-      {
-        double x = h * (i + b);
-        double y = h * (j + b);
-        double z = h * (k + b);
-
-        // Barycentric coordinates of triangle in x-z plane
-        const double l1 = x;
-        const double l2 = z;
-        const double l3 = 1 - x - z;
-
-        // Barycentric coordinates of triangle in y-z plane
-        const double l4 = y;
-        const double l5 = z;
-        const double l6 = 1 - y - z;
-
-        // b1-b6 are the blending factors for each edge
-        double b1, f1, f2;
-        if (std::fabs(l1) < 1e-12)
-        {
-          b1 = 1.0;
-          f1 = 0.0;
-          f2 = 0.0;
-        }
-        else
-        {
-          b1 = 2.0 * l3 / (2.0 * l3 + l1) * 2.0 * l2 / (2.0 * l2 + l1);
-          f1 = l1 / (l1 + l4);
-          f2 = l1 / (l1 + l6);
-        }
-
-        // r1-r4 are the edge positions for each of the z>0 edges
-        // calculated so that they use the barycentric coordinates of
-        // the triangle, if the point lies on a triangular face. f1-f4
-        // are face selecting functions, which blend between adjacent
-        // triangular faces
-        const double r1 = (l2 - l3) * f1 + (l5 - l6) * (1 - f1);
-        const double r2 = (l2 - l3) * f2 + (l5 - l4) * (1 - f2);
-
-        double b2;
-        if (std::fabs(l2) < 1e-12)
-          b2 = 1.0;
-        else
-          b2 = 2.0 * l3 / (2.0 * l3 + l2) * 2.0 * l1 / (2.0 * l1 + l2);
-
-        double b3, f3, f4;
-        if (std::fabs(l3) < 1e-12)
-        {
-          b3 = 1.0;
-          f3 = 0.0;
-          f4 = 0.0;
-        }
-        else
-        {
-          b3 = 2.0 * l2 / (2.0 * l2 + l3) * 2.0 * l1 / (2.0 * l1 + l3);
-          f3 = l3 / (l3 + l4);
-          f4 = l3 / (l3 + l6);
-        }
-
-        const double r3 = (l2 - l1) * f3 + (l5 - l6) * (1.0 - f3);
-        const double r4 = (l2 - l1) * f4 + (l5 - l4) * (1.0 - f4);
-
-        double b4;
-        if (std::fabs(l4) < 1e-12)
-          b4 = 1.0;
-        else
-          b4 = 2 * l6 / (2.0 * l6 + l4) * 2.0 * l5 / (2.0 * l5 + l4);
-
-        double b5;
-        if (std::fabs(l5) < 1e-12)
-          b5 = 1.0;
-        else
-          b5 = 2.0 * l6 / (2.0 * l6 + l5) * 2.0 * l4 / (2.0 * l4 + l5);
-
-        double b6;
-        if (std::fabs(l6) < 1e-12)
-          b6 = 1.0;
-        else
-          b6 = 2.0 * l4 / (2.0 * l4 + l6) * 2.0 * l5 / (2.0 * l5 + l6);
-
-        double dx = -b3 * b4 * w(r3) - b3 * b6 * w(r4) + b2 * w(l1 - l3);
-        double dy = -b1 * b6 * w(r2) - b3 * b6 * w(r4) + b5 * w(l4 - l6);
-        double dz = b1 * b4 * w(r1) + b1 * b6 * w(r2) + b3 * b4 * w(r3)
-                    + b3 * b6 * w(r4);
-        x += dx;
-        y += dy;
-        z += dz;
-
-        points(c, 0) = x;
-        points(c, 1) = y;
-        points(c, 2) = z;
-        c++;
-      }
-    }
-  }
-
-  return points;
-}
-*/
-//-----------------------------------------------------------------------------
 template <std::floating_point T>
 std::pair<std::vector<T>, std::array<std::size_t, 2>>
 create_pyramid(int n, lattice::type lattice_type, bool exterior,
@@ -914,10 +778,6 @@ create_pyramid(int n, lattice::type lattice_type, bool exterior,
     throw std::runtime_error(
         "Non-equispaced points on pyramids not supported yet.");
   }
-
-  // if (lattice_type == lattice::type::gll
-  //     and simplex_method == lattice::simplex_method::warp)
-  //   return create_pyramid_gll_warped(n, exterior);
 }
 } // namespace
 //-----------------------------------------------------------------------------
@@ -952,7 +812,6 @@ lattice::create(cell::type celltype, int n, lattice::type type, bool exterior,
   }
 }
 //-----------------------------------------------------------------------------
-
 /// @cond
 // Explicit instantiation for double and float
 template std::pair<std::vector<float>, std::array<std::size_t, 2>>
@@ -960,5 +819,4 @@ lattice::create(cell::type, int, lattice::type, bool, lattice::simplex_method);
 template std::pair<std::vector<double>, std::array<std::size_t, 2>>
 lattice::create(cell::type, int, lattice::type, bool, lattice::simplex_method);
 /// @endcond
-
 //-----------------------------------------------------------------------------

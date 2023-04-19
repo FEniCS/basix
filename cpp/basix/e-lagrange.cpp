@@ -206,7 +206,7 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_interval(std::size_t degree)
 {
-  // constexpr std::size_t tdim = 1;
+  const T deg = static_cast<T>(degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::interval);
 
@@ -222,7 +222,7 @@ vtk_data_interval(std::size_t degree)
   // Points on interval
   auto& _x = x[1].emplace_back(degree - 1, 1);
   for (std::size_t i = 1; i < degree; ++i)
-    _x(i - 1, 0) = i / static_cast<T>(degree);
+    _x(i - 1, 0) = i / deg;
 
   auto& _M = M[1].emplace_back(degree - 1, 1, degree - 1, 1);
   for (std::size_t i = 0; i < degree - 1; ++i)
@@ -236,6 +236,7 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_triangle(std::size_t degree)
 {
+  const T deg = static_cast<T>(degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::triangle);
 
@@ -260,14 +261,14 @@ vtk_data_triangle(std::size_t degree)
 
     for (std::size_t i = 1; i < degree; ++i)
     {
-      xview[0](i - 1, 0) = i / static_cast<T>(degree);
+      xview[0](i - 1, 0) = i / deg;
       xview[0](i - 1, 1) = 0;
 
-      xview[1](i - 1, 0) = (degree - i) / static_cast<T>(degree);
-      xview[1](i - 1, 1) = i / static_cast<T>(degree);
+      xview[1](i - 1, 0) = (degree - i) / deg;
+      xview[1](i - 1, 1) = i / deg;
 
       xview[2](i - 1, 0) = 0;
-      xview[2](i - 1, 1) = (degree - i) / static_cast<T>(degree);
+      xview[2](i - 1, 1) = (degree - i) / deg;
     }
 
     for (int i = 0; i < 3; ++i)
@@ -300,6 +301,7 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_quadrilateral(std::size_t degree)
 {
+  const T deg = deg;
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::quadrilateral);
 
@@ -325,17 +327,17 @@ vtk_data_quadrilateral(std::size_t degree)
 
     for (std::size_t i = 1; i < degree; ++i)
     {
-      xview[0](i - 1, 0) = i / static_cast<T>(degree);
+      xview[0](i - 1, 0) = i / deg;
       xview[0](i - 1, 1) = 0;
 
       xview[1](i - 1, 0) = 1;
-      xview[1](i - 1, 1) = i / static_cast<T>(degree);
+      xview[1](i - 1, 1) = i / deg;
 
-      xview[2](i - 1, 0) = i / static_cast<T>(degree);
+      xview[2](i - 1, 0) = i / deg;
       xview[2](i - 1, 1) = 1;
 
       xview[3](i - 1, 0) = 0;
-      xview[3](i - 1, 1) = i / static_cast<T>(degree);
+      xview[3](i - 1, 1) = i / deg;
     }
 
     for (int i = 0; i < 4; ++i)
@@ -354,8 +356,8 @@ vtk_data_quadrilateral(std::size_t degree)
     {
       for (std::size_t i = 1; i < degree; ++i)
       {
-        _x(n, 0) = i / static_cast<T>(degree);
-        _x(n, 1) = j / static_cast<T>(degree);
+        _x(n, 0) = i / deg;
+        _x(n, 1) = j / deg;
         ++n;
       }
     }
@@ -373,6 +375,8 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_tetrahedron(std::size_t degree)
 {
+  const T deg = static_cast<T>(degree);
+
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::tetrahedron);
 
@@ -398,29 +402,29 @@ vtk_data_tetrahedron(std::size_t degree)
 
     for (std::size_t i = 1; i < degree; ++i)
     {
-      xview[0](i - 1, 0) = i / static_cast<T>(degree);
+      xview[0](i - 1, 0) = i / deg;
       xview[0](i - 1, 1) = 0;
       xview[0](i - 1, 2) = 0;
 
-      xview[1](i - 1, 0) = (degree - i) / static_cast<T>(degree);
-      xview[1](i - 1, 1) = i / static_cast<T>(degree);
+      xview[1](i - 1, 0) = (degree - i) / deg;
+      xview[1](i - 1, 1) = i / deg;
       xview[1](i - 1, 2) = 0;
 
       xview[2](i - 1, 0) = 0;
-      xview[2](i - 1, 1) = (degree - i) / static_cast<T>(degree);
+      xview[2](i - 1, 1) = (degree - i) / deg;
       xview[2](i - 1, 2) = 0;
 
       xview[3](i - 1, 0) = 0;
       xview[3](i - 1, 1) = 0;
-      xview[3](i - 1, 2) = i / static_cast<T>(degree);
+      xview[3](i - 1, 2) = i / deg;
 
-      xview[4](i - 1, 0) = (degree - i) / static_cast<T>(degree);
+      xview[4](i - 1, 0) = (degree - i) / deg;
       xview[4](i - 1, 1) = 0;
-      xview[4](i - 1, 2) = i / static_cast<T>(degree);
+      xview[4](i - 1, 2) = i / deg;
 
       xview[5](i - 1, 0) = 0;
-      xview[5](i - 1, 1) = (degree - i) / static_cast<T>(degree);
-      xview[5](i - 1, 2) = i / static_cast<T>(degree);
+      xview[5](i - 1, 1) = (degree - i) / deg;
+      xview[5](i - 1, 2) = i / deg;
     }
 
     for (int i = 0; i < 6; ++i)
@@ -502,6 +506,7 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_hexahedron(std::size_t degree)
 {
+  const T deg = static_cast<T>(degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::hexahedron);
 
@@ -531,53 +536,53 @@ vtk_data_hexahedron(std::size_t degree)
 
     for (std::size_t i = 1; i < degree; ++i)
     {
-      xview[0](i - 1, 0) = i / static_cast<T>(degree);
+      xview[0](i - 1, 0) = i / deg;
       xview[0](i - 1, 1) = 0;
       xview[0](i - 1, 2) = 0;
 
       xview[1](i - 1, 0) = 1;
-      xview[1](i - 1, 1) = i / static_cast<T>(degree);
+      xview[1](i - 1, 1) = i / deg;
       xview[1](i - 1, 2) = 0;
 
-      xview[2](i - 1, 0) = i / static_cast<T>(degree);
+      xview[2](i - 1, 0) = i / deg;
       xview[2](i - 1, 1) = 1;
       xview[2](i - 1, 2) = 0;
 
       xview[3](i - 1, 0) = 0;
-      xview[3](i - 1, 1) = i / static_cast<T>(degree);
+      xview[3](i - 1, 1) = i / deg;
       xview[3](i - 1, 2) = 0;
 
-      xview[4](i - 1, 0) = i / static_cast<T>(degree);
+      xview[4](i - 1, 0) = i / deg;
       xview[4](i - 1, 1) = 0;
       xview[4](i - 1, 2) = 1;
 
       xview[5](i - 1, 0) = 1;
-      xview[5](i - 1, 1) = i / static_cast<T>(degree);
+      xview[5](i - 1, 1) = i / deg;
       xview[5](i - 1, 2) = 1;
 
-      xview[6](i - 1, 0) = i / static_cast<T>(degree);
+      xview[6](i - 1, 0) = i / deg;
       xview[6](i - 1, 1) = 1;
       xview[6](i - 1, 2) = 1;
 
       xview[7](i - 1, 0) = 0;
-      xview[7](i - 1, 1) = i / static_cast<T>(degree);
+      xview[7](i - 1, 1) = i / deg;
       xview[7](i - 1, 2) = 1;
 
       xview[8](i - 1, 0) = 0;
       xview[8](i - 1, 1) = 0;
-      xview[8](i - 1, 2) = i / static_cast<T>(degree);
+      xview[8](i - 1, 2) = i / deg;
 
       xview[9](i - 1, 0) = 1;
       xview[9](i - 1, 1) = 0;
-      xview[9](i - 1, 2) = i / static_cast<T>(degree);
+      xview[9](i - 1, 2) = i / deg;
 
       xview[10](i - 1, 0) = 1;
       xview[10](i - 1, 1) = 1;
-      xview[10](i - 1, 2) = i / static_cast<T>(degree);
+      xview[10](i - 1, 2) = i / deg;
 
       xview[11](i - 1, 0) = 0;
       xview[11](i - 1, 1) = 1;
-      xview[11](i - 1, 2) = i / static_cast<T>(degree);
+      xview[11](i - 1, 2) = i / deg;
     }
 
     for (int i = 0; i < 12; ++i)
@@ -603,27 +608,27 @@ vtk_data_hexahedron(std::size_t degree)
       for (std::size_t i = 1; i < degree; ++i)
       {
         xview[0](n, 0) = 0;
-        xview[0](n, 1) = i / static_cast<T>(degree);
-        xview[0](n, 2) = j / static_cast<T>(degree);
+        xview[0](n, 1) = i / deg;
+        xview[0](n, 2) = j / deg;
 
         xview[1](n, 0) = 1;
-        xview[1](n, 1) = i / static_cast<T>(degree);
-        xview[1](n, 2) = j / static_cast<T>(degree);
+        xview[1](n, 1) = i / deg;
+        xview[1](n, 2) = j / deg;
 
-        xview[2](n, 0) = i / static_cast<T>(degree);
+        xview[2](n, 0) = i / deg;
         xview[2](n, 1) = 0;
-        xview[2](n, 2) = j / static_cast<T>(degree);
+        xview[2](n, 2) = j / deg;
 
-        xview[3](n, 0) = i / static_cast<T>(degree);
+        xview[3](n, 0) = i / deg;
         xview[3](n, 1) = 1;
-        xview[3](n, 2) = j / static_cast<T>(degree);
+        xview[3](n, 2) = j / deg;
 
-        xview[4](n, 0) = i / static_cast<T>(degree);
-        xview[4](n, 1) = j / static_cast<T>(degree);
+        xview[4](n, 0) = i / deg;
+        xview[4](n, 1) = j / deg;
         xview[4](n, 2) = 0;
 
-        xview[5](n, 0) = i / static_cast<T>(degree);
-        xview[5](n, 1) = j / static_cast<T>(degree);
+        xview[5](n, 0) = i / deg;
+        xview[5](n, 1) = j / deg;
         xview[5](n, 2) = 1;
 
         ++n;
@@ -649,9 +654,9 @@ vtk_data_hexahedron(std::size_t degree)
       {
         for (std::size_t i = 1; i < degree; ++i)
         {
-          _x(n, 0) = i / static_cast<T>(degree);
-          _x(n, 1) = j / static_cast<T>(degree);
-          _x(n, 2) = k / static_cast<T>(degree);
+          _x(n, 0) = i / deg;
+          _x(n, 1) = j / deg;
+          _x(n, 2) = k / deg;
           ++n;
         }
       }

@@ -301,7 +301,7 @@ std::pair<std::array<std::vector<impl::mdarray_t<T, 2>>, 4>,
           std::array<std::vector<impl::mdarray_t<T, 4>>, 4>>
 vtk_data_quadrilateral(std::size_t degree)
 {
-  const T deg = deg;
+  const T deg = static_cast<T>(degree);
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(cell::type::quadrilateral);
 

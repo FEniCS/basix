@@ -11,11 +11,11 @@
 #include <iostream>
 
 namespace stdex = std::experimental;
-using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
+template <typename T, std::size_t d>
+using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
 
 int main(int argc, char* argv[])
 {
-
   // Create a degree 4 Lagrange element on a quadrilateral
   // For Lagrange elements, we use `basix::element::family::P`.
   auto family = basix::element::family::P;
@@ -47,7 +47,7 @@ int main(int argc, char* argv[])
     std::cout << s << " ";
   std::cout << "]" << std::endl;
 
-  cmdspan4_t tab(tab_data.data(), shape);
+  mdspan_t<const double, 4> tab(tab_data.data(), shape);
   std::cout << "Tabulate data (0, 0, :, 0): [ ";
   for (std::size_t i = 0; i < tab.extent(2); ++i)
     std::cout << tab(0, 0, i, 0) << " ";

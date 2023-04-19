@@ -20,17 +20,19 @@ using namespace basix;
 FiniteElement element::create_bdm(cell::type celltype, int degree,
                                   lagrange_variant lvariant, bool discontinuous)
 {
+  using T = double;
+
   if (celltype != cell::type::triangle and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Unsupported cell type");
 
   const std::size_t tdim = cell::topological_dimension(celltype);
-  std::array<std::vector<impl::mdarray2_t>, 4> x;
-  std::array<std::vector<impl::mdarray4_t>, 4> M;
+  std::array<std::vector<impl::mdarray_t<T, 2>>, 4> x;
+  std::array<std::vector<impl::mdarray_t<T, 4>>, 4> M;
   for (std::size_t i = 0; i < tdim - 1; ++i)
   {
     std::size_t num_ent = cell::num_sub_entities(celltype, i);
-    x[i] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[i] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[i] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[i] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
   // Integral moments on facets
@@ -38,7 +40,7 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   const FiniteElement facet_moment_space
       = create_lagrange(facettype, degree, lvariant, true);
   {
-    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_normal_integral_moments<T>(
         facet_moment_space, celltype, tdim, degree * 2);
     assert(_x.size() == _M.size());
     for (std::size_t i = 0; i < _x.size(); ++i)
@@ -53,7 +55,7 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   if (degree > 1)
   {
     // Interior integral moment
-    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments(
+    auto [_x, xshape, _M, Mshape] = moments::make_dot_integral_moments<T>(
         create_nedelec(celltype, degree - 1, lvariant, true), celltype, tdim,
         2 * degree - 1);
     assert(_x.size() == _M.size());
@@ -66,17 +68,17 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   else
   {
     std::size_t num_ent = cell::num_sub_entities(celltype, tdim);
-    x[tdim] = std::vector(num_ent, impl::mdarray2_t(0, tdim));
-    M[tdim] = std::vector(num_ent, impl::mdarray4_t(0, tdim, 0, 1));
+    x[tdim] = std::vector(num_ent, impl::mdarray_t<T, 2>(0, tdim));
+    M[tdim] = std::vector(num_ent, impl::mdarray_t<T, 4>(0, tdim, 0, 1));
   }
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
 
-  std::array<std::vector<cmdspan2_t>, 4> xview = impl::to_mdspan(x);
-  std::array<std::vector<cmdspan4_t>, 4> Mview = impl::to_mdspan(M);
-  std::array<std::vector<std::vector<double>>, 4> xbuffer;
-  std::array<std::vector<std::vector<double>>, 4> Mbuffer;
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> xview = impl::to_mdspan(x);
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> Mview = impl::to_mdspan(M);
+  std::array<std::vector<std::vector<T>>, 4> xbuffer;
+  std::array<std::vector<std::vector<T>>, 4> Mbuffer;
   if (discontinuous)
   {
     std::array<std::vector<std::array<std::size_t, 2>>, 4> xshape;
@@ -91,10 +93,10 @@ FiniteElement element::create_bdm(cell::type celltype, int degree,
   const std::size_t ndofs = tdim * polyset::dim(celltype, degree);
   sobolev::space space
       = discontinuous ? sobolev::space::L2 : sobolev::space::HDiv;
-  return FiniteElement(family::BDM, celltype, degree, {tdim},
-                       impl::mdspan2_t(math::eye(ndofs).data(), ndofs, ndofs),
-                       xview, Mview, 0, maps::type::contravariantPiola, space,
-                       discontinuous, degree, degree, lvariant,
-                       element::dpc_variant::unset);
+  return FiniteElement(
+      family::BDM, celltype, degree, {tdim},
+      impl::mdspan_t<T, 2>(math::eye<T>(ndofs).data(), ndofs, ndofs), xview,
+      Mview, 0, maps::type::contravariantPiola, space, discontinuous, degree,
+      degree, lvariant, element::dpc_variant::unset);
 }
 //-----------------------------------------------------------------------------

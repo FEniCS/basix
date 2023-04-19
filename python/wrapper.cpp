@@ -26,9 +26,8 @@ namespace py = pybind11;
 using namespace basix;
 
 namespace stdex = std::experimental;
-using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
-using cmdspan3_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 3>>;
-using cmdspan4_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 4>>;
+template <typename T, std::size_t d>
+using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
 
 namespace
 {
@@ -66,7 +65,7 @@ Interface to the Basix C++ library.
       "geometry",
       [](cell::type celltype)
       {
-        auto [x, shape] = cell::geometry(celltype);
+        auto [x, shape] = cell::geometry<double>(celltype);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::geometry.c_str());
@@ -76,7 +75,8 @@ Interface to the Basix C++ library.
       "sub_entity_geometry",
       [](cell::type celltype, int dim, int index)
       {
-        auto [x, shape] = cell::sub_entity_geometry(celltype, dim, index);
+        auto [x, shape]
+            = cell::sub_entity_geometry<double>(celltype, dim, index);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::sub_entity_geometry.c_str());
@@ -120,8 +120,8 @@ Interface to the Basix C++ library.
       "create_lattice",
       [](cell::type celltype, int n, lattice::type type, bool exterior)
       {
-        auto [x, shape] = lattice::create(celltype, n, type, exterior,
-                                          lattice::simplex_method::none);
+        auto [x, shape] = lattice::create<double>(
+            celltype, n, type, exterior, lattice::simplex_method::none);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::create_lattice__celltype_n_type_exterior.c_str());
@@ -131,7 +131,8 @@ Interface to the Basix C++ library.
       [](cell::type celltype, int n, lattice::type type, bool exterior,
          lattice::simplex_method method)
       {
-        auto [x, shape] = lattice::create(celltype, n, type, exterior, method);
+        auto [x, shape]
+            = lattice::create<double>(celltype, n, type, exterior, method);
         return py::array_t<double>(shape, x.data());
       },
       basix::docstring::create_lattice__celltype_n_type_exterior_method
@@ -174,13 +175,14 @@ Interface to the Basix C++ library.
 
   m.def(
       "cell_volume",
-      [](cell::type cell_type) -> double { return cell::volume(cell_type); },
+      [](cell::type cell_type) -> double
+      { return cell::volume<double>(cell_type); },
       basix::docstring::cell_volume.c_str());
   m.def(
       "cell_facet_normals",
       [](cell::type cell_type)
       {
-        auto [n, shape] = cell::facet_normals(cell_type);
+        auto [n, shape] = cell::facet_normals<double>(cell_type);
         return py::array_t<double>(shape, n.data());
       },
       basix::docstring::cell_facet_normals.c_str());
@@ -188,7 +190,8 @@ Interface to the Basix C++ library.
       "cell_facet_reference_volumes",
       [](cell::type cell_type)
       {
-        std::vector<double> v = cell::facet_reference_volumes(cell_type);
+        std::vector<double> v
+            = cell::facet_reference_volumes<double>(cell_type);
         std::array<std::size_t, 1> shape = {v.size()};
         return py::array_t<double>(shape, v.data());
       },
@@ -197,7 +200,7 @@ Interface to the Basix C++ library.
       "cell_facet_outward_normals",
       [](cell::type cell_type)
       {
-        auto [n, shape] = cell::facet_outward_normals(cell_type);
+        auto [n, shape] = cell::facet_outward_normals<double>(cell_type);
         return py::array_t<double>(shape, n.data());
       },
       basix::docstring::cell_facet_outward_normals.c_str());
@@ -207,7 +210,7 @@ Interface to the Basix C++ library.
       "cell_facet_jacobians",
       [](cell::type cell_type)
       {
-        auto [J, shape] = cell::facet_jacobians(cell_type);
+        auto [J, shape] = cell::facet_jacobians<double>(cell_type);
         return py::array_t<double>(shape, J.data());
       },
       basix::docstring::cell_facet_jacobians.c_str());
@@ -251,10 +254,13 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& K)
           {
             auto [u, shape] = self.push_forward(
-                cmdspan3_t(U.data(), U.shape(0), U.shape(1), U.shape(2)),
-                cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
+                mdspan_t<const double, 3>(U.data(), U.shape(0), U.shape(1),
+                                          U.shape(2)),
+                mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
+                                          J.shape(2)),
                 std::span<const double>(detJ.data(), detJ.size()),
-                cmdspan3_t(K.data(), K.shape(0), K.shape(1), K.shape(2)));
+                mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
+                                          K.shape(2)));
             return py::array_t<double>(shape, u.data());
           },
           basix::docstring::FiniteElement__push_forward.c_str())
@@ -267,10 +273,13 @@ Interface to the Basix C++ library.
              const py::array_t<double, py::array::c_style>& K)
           {
             auto [U, shape] = self.pull_back(
-                cmdspan3_t(u.data(), u.shape(0), u.shape(1), u.shape(2)),
-                cmdspan3_t(J.data(), J.shape(0), J.shape(1), J.shape(2)),
+                mdspan_t<const double, 3>(u.data(), u.shape(0), u.shape(1),
+                                          u.shape(2)),
+                mdspan_t<const double, 3>(J.data(), J.shape(0), J.shape(1),
+                                          J.shape(2)),
                 std::span<const double>(detJ.data(), detJ.size()),
-                cmdspan3_t(K.data(), K.shape(0), K.shape(1), K.shape(2)));
+                mdspan_t<const double, 3>(K.data(), K.shape(0), K.shape(1),
+                                          K.shape(2)));
             return py::array_t<double>(shape, U.data());
           },
           basix::docstring::FiniteElement__pull_back.c_str())
@@ -527,7 +536,7 @@ Interface to the Basix C++ library.
         if (M.size() != 4)
           throw std::runtime_error("M has the wrong size");
 
-        std::array<std::vector<cmdspan2_t>, 4> _x;
+        std::array<std::vector<impl::mdspan_t<const double, 2>>, 4> _x;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < x[i].size(); ++j)
@@ -539,7 +548,7 @@ Interface to the Basix C++ library.
           }
         }
 
-        std::array<std::vector<cmdspan4_t>, 4> _M;
+        std::array<std::vector<impl::mdspan_t<const double, 4>>, 4> _M;
         for (int i = 0; i < 4; ++i)
         {
           for (std::size_t j = 0; j < M[i].size(); ++j)
@@ -558,9 +567,10 @@ Interface to the Basix C++ library.
 
         return basix::create_custom_element(
             cell_type, _vs,
-            cmdspan2_t(wcoeffs.data(), wcoeffs.shape(0), wcoeffs.shape(1)), _x,
-            _M, interpolation_nderivs, map_type, sobolev_space, discontinuous,
-            highest_complete_degree, highest_degree);
+            mdspan_t<const double, 2>(wcoeffs.data(), wcoeffs.shape(0),
+                                      wcoeffs.shape(1)),
+            _x, _M, interpolation_nderivs, map_type, sobolev_space,
+            discontinuous, highest_complete_degree, highest_degree);
       },
       basix::docstring::create_custom_element.c_str());
 
@@ -587,8 +597,8 @@ Interface to the Basix C++ library.
       [](const FiniteElement& element_from, const FiniteElement& element_to)
           -> const py::array_t<double, py::array::c_style>
       {
-        auto [out, shape]
-            = basix::compute_interpolation_operator(element_from, element_to);
+        auto [out, shape] = basix::compute_interpolation_operator<double>(
+            element_from, element_to);
         return py::array_t<double>(shape, out.data());
       },
       basix::docstring::compute_interpolation_operator.c_str());
@@ -611,7 +621,7 @@ Interface to the Basix C++ library.
       "make_quadrature",
       [](quadrature::type rule, cell::type celltype, int m)
       {
-        auto [pts, w] = quadrature::make_quadrature(rule, celltype, m);
+        auto [pts, w] = quadrature::make_quadrature<double>(rule, celltype, m);
         std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
         return std::pair(py::array_t<double>(shape, pts.data()),
                          py::array_t<double>(w.size(), w.data()));
@@ -622,7 +632,7 @@ Interface to the Basix C++ library.
       "make_quadrature",
       [](cell::type celltype, int m)
       {
-        auto [pts, w] = quadrature::make_quadrature(celltype, m);
+        auto [pts, w] = quadrature::make_quadrature<double>(celltype, m);
         std::array<std::size_t, 2> shape = {w.size(), pts.size() / w.size()};
         return std::pair(py::array_t<double>(shape, pts.data()),
                          py::array_t<double>(w.size(), w.data()));

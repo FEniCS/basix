@@ -8,21 +8,23 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <concepts>
 #include <vector>
 
 using namespace basix;
 
 namespace stdex = std::experimental;
-using mdspan2_t = stdex::mdspan<double, stdex::dextents<std::size_t, 2>>;
-using cmdspan2_t = stdex::mdspan<const double, stdex::dextents<std::size_t, 2>>;
-using mdarray3_t = stdex::mdarray<double, stdex::dextents<std::size_t, 3>>;
-using mdarray2_t = stdex::mdarray<double, stdex::dextents<std::size_t, 2>>;
+template <typename T, std::size_t d>
+using mdspan_t = stdex::mdspan<T, stdex::dextents<std::size_t, d>>;
+template <typename T, std::size_t d>
+using mdarray_t = stdex::mdarray<T, stdex::dextents<std::size_t, d>>;
 
 namespace
 {
 
 //----------------------------------------------------------------------------
-std::array<std::vector<double>, 2> rec_jacobi(int N, double a, double b)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> rec_jacobi(int N, T a, T b)
 {
   // Generate the recursion coefficients alpha_k, beta_k
 
@@ -43,23 +45,23 @@ std::array<std::vector<double>, 2> rec_jacobi(int N, double a, double b)
   // Adapted from the MATLAB code by Dirk Laurie and Walter Gautschi
   // http://www.cs.purdue.edu/archives/2002/wxg/codes/r_jacobi.m
 
-  const double nu = (b - a) / (a + b + 2.0);
-  const double mu = std::pow(2.0, (a + b + 1)) * std::tgamma(a + 1.0)
-                    * std::tgamma(b + 1.0) / std::tgamma(a + b + 2.0);
+  const T nu = (b - a) / (a + b + 2.0);
+  const T mu = std::pow(2.0, (a + b + 1)) * std::tgamma(a + 1.0)
+               * std::tgamma(b + 1.0) / std::tgamma(a + b + 2.0);
 
-  std::vector<double> n(N - 1);
+  std::vector<T> n(N - 1);
   std::iota(n.begin(), n.end(), 1.0);
-  std::vector<double> nab(n.size());
+  std::vector<T> nab(n.size());
   std::transform(n.begin(), n.end(), nab.begin(),
                  [a, b](auto x) { return 2.0 * x + a + b; });
 
-  std::vector<double> alpha(N);
+  std::vector<T> alpha(N);
   alpha.front() = nu;
   std::transform(nab.begin(), nab.end(), std::next(alpha.begin()),
                  [a, b](auto nab)
                  { return (b * b - a * a) / (nab * (nab + 2.0)); });
 
-  std::vector<double> beta(N);
+  std::vector<T> beta(N);
   beta.front() = mu;
   std::transform(n.begin(), n.end(), nab.begin(), std::next(beta.begin()),
                  [a, b](auto n, auto nab)
@@ -79,11 +81,12 @@ std::array<std::vector<double>, 2> rec_jacobi(int N, double a, double b)
 /// @param[in] alpha
 /// @param[in] beta
 /// @return (0) coordinates and (1) weights
-std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
-                                         const std::vector<double>& beta)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> gauss(const std::vector<T>& alpha,
+                                    const std::vector<T>& beta)
 {
-  std::vector<double> Abuffer(alpha.size() * alpha.size(), 0);
-  mdspan2_t A(Abuffer.data(), alpha.size(), alpha.size());
+  std::vector<T> Abuffer(alpha.size() * alpha.size(), 0);
+  mdspan_t<T, 2> A(Abuffer.data(), alpha.size(), alpha.size());
   for (std::size_t i = 0; i < alpha.size(); ++i)
     A(i, i) = alpha[i];
   for (std::size_t i = 0; i < alpha.size() - 1; ++i)
@@ -92,19 +95,19 @@ std::array<std::vector<double>, 2> gauss(const std::vector<double>& alpha,
     A(i, i + 1) = std::sqrt(beta[i + 1]);
   }
 
-  auto [evals, evecs] = math::eigh(Abuffer, alpha.size());
+  auto [evals, evecs] = math::eigh<T>(Abuffer, alpha.size());
 
   // Determine weights from the first component of each eigenvector
-  std::vector<double> w(alpha.size());
+  std::vector<T> w(alpha.size());
   for (std::size_t i = 0; i < alpha.size(); ++i)
     w[i] = beta[0] * evecs[i * alpha.size()] * evecs[i * alpha.size()];
 
   return {std::move(evals), std::move(w)};
 }
 //----------------------------------------------------------------------------
-std::array<std::vector<double>, 2> lobatto(const std::vector<double>& alpha,
-                                           const std::vector<double>& beta,
-                                           double xl1, double xl2)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> lobatto(const std::vector<T>& alpha,
+                                      const std::vector<T>& beta, T xl1, T xl2)
 {
   // Compute the Lobatto nodes and weights with the preassigned
   // nodes xl1, xl2
@@ -126,7 +129,7 @@ std::array<std::vector<double>, 2> lobatto(const std::vector<double>& alpha,
   assert(alpha.size() == beta.size());
 
   // Solve tridiagonal system using Thomas algorithm
-  double g1(0.0), g2(0.0);
+  T g1(0.0), g2(0.0);
   const std::size_t n = alpha.size();
   for (std::size_t i = 1; i < n - 1; ++i)
   {
@@ -136,9 +139,9 @@ std::array<std::vector<double>, 2> lobatto(const std::vector<double>& alpha,
   g1 = 1.0 / (alpha[n - 1] - xl1 - std::sqrt(beta[n - 2]) * g1);
   g2 = 1.0 / (alpha[n - 1] - xl2 - std::sqrt(beta[n - 2]) * g2);
 
-  std::vector<double> alpha_l = alpha;
+  std::vector<T> alpha_l = alpha;
   alpha_l[n - 1] = (g1 * xl2 - g2 * xl1) / (g1 - g2);
-  std::vector<double> beta_l = beta;
+  std::vector<T> beta_l = beta;
   beta_l[n - 1] = (xl2 - xl1) / (g1 - g2);
 
   return gauss(alpha_l, beta_l);
@@ -154,12 +157,13 @@ std::array<std::vector<double>, 2> lobatto(const std::vector<double>& alpha,
 /// @param[in] x Points at which to evaluate
 /// @return Array of polynomial derivative values (rows) at points
 /// (columns)
-mdarray2_t compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
-                                const std::span<const double>& x)
+template <std::floating_point T>
+mdarray_t<T, 2> compute_jacobi_deriv(T a, std::size_t n, std::size_t nderiv,
+                                     std::span<const T> x)
 {
   std::vector<std::size_t> shape = {x.size()};
-  mdarray3_t J(nderiv + 1, n + 1, x.size());
-  mdarray2_t Jd(n + 1, x.size());
+  mdarray_t<T, 3> J(nderiv + 1, n + 1, x.size());
+  mdarray_t<T, 2> Jd(n + 1, x.size());
 
   for (std::size_t i = 0; i < nderiv + 1; ++i)
   {
@@ -195,10 +199,10 @@ mdarray2_t compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
 
     for (std::size_t j = 2; j < n + 1; ++j)
     {
-      const double a1 = 2 * j * (j + a) * (2 * j + a - 2);
-      const double a2 = (2 * j + a - 1) * (a * a) / a1;
-      const double a3 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
-      const double a4 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / a1;
+      const T a1 = 2 * j * (j + a) * (2 * j + a - 2);
+      const T a2 = (2 * j + a - 1) * (a * a) / a1;
+      const T a3 = (2 * j + a - 1) * (2 * j + a) / (2 * j * (j + a));
+      const T a4 = 2 * (j + a - 1) * (j - 1) * (2 * j + a) / a1;
 
       for (std::size_t k = 0; k < Jd.extent(1); ++k)
         Jd(j, k) = Jd(j - 1, k) * (x[k] * a3 + a2) - Jd(j - 2, k) * a4;
@@ -214,7 +218,7 @@ mdarray2_t compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
         J(i, j, k) = Jd(j, k);
   }
 
-  mdarray2_t result(nderiv + 1, x.size());
+  mdarray_t<T, 2> result(nderiv + 1, x.size());
   for (std::size_t i = 0; i < result.extent(0); ++i)
     for (std::size_t j = 0; j < result.extent(1); ++j)
       result(i, j) = J(i, n, j);
@@ -222,15 +226,16 @@ mdarray2_t compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
   return result;
 }
 //-----------------------------------------------------------------------------
-std::vector<double> compute_gauss_jacobi_points(double a, int m)
+template <std::floating_point T>
+std::vector<T> compute_gauss_jacobi_points(T a, int m)
 {
   /// Computes the m roots of \f$P_{m}^{a,0}\f$ on [-1,1] by Newton's
   /// method. The initial guesses are the Chebyshev points.  Algorithm
   /// implemented from the pseudocode given by Karniadakis and Sherwin.
 
-  constexpr double eps = 1.e-8;
+  constexpr T eps = 1.0e-8;
   constexpr int max_iter = 100;
-  std::vector<double> x(m);
+  std::vector<T> x(m);
   for (int k = 0; k < m; ++k)
   {
     // Initial guess
@@ -241,14 +246,13 @@ std::vector<double> compute_gauss_jacobi_points(double a, int m)
     int j = 0;
     while (j < max_iter)
     {
-      double s = 0;
+      T s = 0;
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
-      std::span<const double> _x(&x[k], 1);
-      const mdarray2_t f = compute_jacobi_deriv(a, m, 1, _x);
-      const double delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
+      std::span<const T> _x(&x[k], 1);
+      mdarray_t<T, 2> f = compute_jacobi_deriv<T>(a, m, 1, _x);
+      T delta = f(0, 0) / (f(1, 0) - f(0, 0) * s);
       x[k] -= delta;
-
       if (std::abs(delta) < eps)
         break;
       ++j;
@@ -260,25 +264,27 @@ std::vector<double> compute_gauss_jacobi_points(double a, int m)
 //-----------------------------------------------------------------------------
 
 /// @note Computes on [-1, 1]
-std::array<std::vector<double>, 2> compute_gauss_jacobi_rule(double a, int m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> compute_gauss_jacobi_rule(T a, int m)
 {
-  std::vector<double> pts = compute_gauss_jacobi_points(a, m);
-  const mdarray2_t Jd = compute_jacobi_deriv(a, m, 1, pts);
-  const double a1 = std::pow(2.0, a + 1.0);
-  std::vector<double> wts(m);
+  std::vector<T> pts = compute_gauss_jacobi_points<T>(a, m);
+  mdarray_t<T, 2> Jd = compute_jacobi_deriv<T>(a, m, 1, pts);
+  T a1 = std::pow(2.0, a + 1.0);
+  std::vector<T> wts(m);
   for (int i = 0; i < m; ++i)
   {
-    const double x = pts[i];
-    const double f = Jd(1, i);
+    T x = pts[i];
+    T f = Jd(1, i);
     wts[i] = a1 / (1.0 - x * x) / (f * f);
   }
 
   return {std::move(pts), std::move(wts)};
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2> make_quadrature_line(int m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> make_quadrature_line(int m)
 {
-  auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
+  auto [ptx, wx] = compute_gauss_jacobi_rule<T>(0.0, m);
   std::transform(wx.begin(), wx.end(), wx.begin(),
                  [](auto w) { return 0.5 * w; });
   std::transform(ptx.begin(), ptx.end(), ptx.begin(),
@@ -286,15 +292,15 @@ std::array<std::vector<double>, 2> make_quadrature_line(int m)
   return {std::move(ptx), std::move(wx)};
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2>
-make_quadrature_triangle_collapsed(std::size_t m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> make_quadrature_triangle_collapsed(std::size_t m)
 {
-  auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
-  auto [pty, wy] = compute_gauss_jacobi_rule(1.0, m);
+  auto [ptx, wx] = compute_gauss_jacobi_rule<T>(0.0, m);
+  auto [pty, wy] = compute_gauss_jacobi_rule<T>(1.0, m);
 
-  std::vector<double> pts(m * m * 2);
-  mdspan2_t x(pts.data(), m * m, 2);
-  std::vector<double> wts(m * m);
+  std::vector<T> pts(m * m * 2);
+  mdspan_t<T, 2> x(pts.data(), m * m, 2);
+  std::vector<T> wts(m * m);
   int c = 0;
   for (std::size_t i = 0; i < m; ++i)
   {
@@ -310,16 +316,17 @@ make_quadrature_triangle_collapsed(std::size_t m)
   return {std::move(pts), std::move(wts)};
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2>
+template <std::floating_point T>
+std::array<std::vector<T>, 2>
 make_quadrature_tetrahedron_collapsed(std::size_t m)
 {
-  auto [ptx, wx] = compute_gauss_jacobi_rule(0.0, m);
-  auto [pty, wy] = compute_gauss_jacobi_rule(1.0, m);
-  auto [ptz, wz] = compute_gauss_jacobi_rule(2.0, m);
+  auto [ptx, wx] = compute_gauss_jacobi_rule<T>(0.0, m);
+  auto [pty, wy] = compute_gauss_jacobi_rule<T>(1.0, m);
+  auto [ptz, wz] = compute_gauss_jacobi_rule<T>(2.0, m);
 
-  std::vector<double> pts(m * m * m * 3);
-  mdspan2_t x(pts.data(), m * m * m, 3);
-  std::vector<double> wts(m * m * m);
+  std::vector<T> pts(m * m * m * 3);
+  mdspan_t<T, 2> x(pts.data(), m * m * m, 3);
+  std::vector<T> wts(m * m * m);
   int c = 0;
   for (std::size_t i = 0; i < m; ++i)
   {
@@ -339,20 +346,21 @@ make_quadrature_tetrahedron_collapsed(std::size_t m)
   return {std::move(pts), std::move(wts)};
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2>
-make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> make_gauss_jacobi_quadrature(cell::type celltype,
+                                                           std::size_t m)
 {
   const std::size_t np = (m + 2) / 2;
   switch (celltype)
   {
   case cell::type::interval:
-    return make_quadrature_line(np);
+    return make_quadrature_line<T>(np);
   case cell::type::quadrilateral:
   {
-    auto [QptsL, QwtsL] = make_quadrature_line(np);
-    std::vector<double> pts(np * np * 2);
-    mdspan2_t x(pts.data(), np * np, 2);
-    std::vector<double> wts(np * np);
+    auto [QptsL, QwtsL] = make_quadrature_line<T>(np);
+    std::vector<T> pts(np * np * 2);
+    mdspan_t<T, 2> x(pts.data(), np * np, 2);
+    std::vector<T> wts(np * np);
     int c = 0;
     for (std::size_t i = 0; i < np; ++i)
     {
@@ -368,10 +376,10 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
   }
   case cell::type::hexahedron:
   {
-    auto [QptsL, QwtsL] = make_quadrature_line(np);
-    std::vector<double> pts(np * np * np * 3);
-    mdspan2_t x(pts.data(), np * np * np, 3);
-    std::vector<double> wts(np * np * np);
+    auto [QptsL, QwtsL] = make_quadrature_line<T>(np);
+    std::vector<T> pts(np * np * np * 3);
+    mdspan_t<T, 2> x(pts.data(), np * np * np, 3);
+    std::vector<T> wts(np * np * np);
     int c = 0;
     for (std::size_t i = 0; i < np; ++i)
     {
@@ -391,12 +399,13 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
   }
   case cell::type::prism:
   {
-    const auto [QptsL, QwtsL] = make_quadrature_line(np);
-    const auto [_QptsT, QwtsT] = make_quadrature_triangle_collapsed(np);
-    cmdspan2_t QptsT(_QptsT.data(), QwtsT.size(), _QptsT.size() / QwtsT.size());
-    std::vector<double> pts(np * QptsT.extent(0) * 3);
-    mdspan2_t x(pts.data(), np * QptsT.extent(0), 3);
-    std::vector<double> wts(np * QptsT.extent(0));
+    const auto [QptsL, QwtsL] = make_quadrature_line<T>(np);
+    const auto [_QptsT, QwtsT] = make_quadrature_triangle_collapsed<T>(np);
+    mdspan_t<const T, 2> QptsT(_QptsT.data(), QwtsT.size(),
+                               _QptsT.size() / QwtsT.size());
+    std::vector<T> pts(np * QptsT.extent(0) * 3);
+    mdspan_t<T, 2> x(pts.data(), np * QptsT.extent(0), 3);
+    std::vector<T> wts(np * QptsT.extent(0));
     int c = 0;
     for (std::size_t i = 0; i < QptsT.extent(0); ++i)
     {
@@ -414,9 +423,9 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
   case cell::type::pyramid:
     throw std::runtime_error("Pyramid not yet supported");
   case cell::type::triangle:
-    return make_quadrature_triangle_collapsed(np);
+    return make_quadrature_triangle_collapsed<T>(np);
   case cell::type::tetrahedron:
-    return make_quadrature_tetrahedron_collapsed(np);
+    return make_quadrature_tetrahedron_collapsed<T>(np);
   default:
     throw std::runtime_error("Unsupported celltype for make_quadrature");
   }
@@ -428,7 +437,8 @@ make_gauss_jacobi_quadrature(cell::type celltype, std::size_t m)
 /// Greg von Winckel's implementation. This facilitates implementing
 /// spectral elements. The quadrature rule uses m points for a degree of
 /// precision of 2m-3.
-std::array<std::vector<double>, 2> compute_gll_rule(int m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> compute_gll_rule(int m)
 {
   if (m < 2)
   {
@@ -437,10 +447,10 @@ std::array<std::vector<double>, 2> compute_gll_rule(int m)
   }
 
   // Calculate the recursion coefficients
-  auto [alpha, beta] = rec_jacobi(m, 0.0, 0.0);
+  auto [alpha, beta] = rec_jacobi<T>(m, 0.0, 0.0);
 
   // Compute Lobatto nodes and weights
-  auto [xs_ref, ws_ref] = lobatto(alpha, beta, -1.0, 1.0);
+  auto [xs_ref, ws_ref] = lobatto<T>(alpha, beta, -1.0, 1.0);
 
   // Reorder to match 1d dof ordering
   std::rotate(xs_ref.rbegin(), xs_ref.rbegin() + 1, xs_ref.rend() - 1);
@@ -448,9 +458,10 @@ std::array<std::vector<double>, 2> compute_gll_rule(int m)
   return {xs_ref, ws_ref};
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2> make_gll_line(int m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> make_gll_line(int m)
 {
-  auto [ptx, wx] = compute_gll_rule(m);
+  auto [ptx, wx] = compute_gll_rule<T>(m);
   std::transform(wx.begin(), wx.end(), wx.begin(),
                  [](auto w) { return 0.5 * w; });
   std::transform(ptx.begin(), ptx.end(), ptx.begin(),
@@ -458,20 +469,21 @@ std::array<std::vector<double>, 2> make_gll_line(int m)
   return {ptx, wx};
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2> make_gll_quadrature(cell::type celltype,
-                                                       std::size_t m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> make_gll_quadrature(cell::type celltype,
+                                                  std::size_t m)
 {
   const std::size_t np = (m + 4) / 2;
   switch (celltype)
   {
   case cell::type::interval:
-    return make_gll_line(np);
+    return make_gll_line<T>(np);
   case cell::type::quadrilateral:
   {
-    auto [QptsL, QwtsL] = make_gll_line(np);
-    std::vector<double> pts(np * np * 2);
-    mdspan2_t x(pts.data(), np * np, 2);
-    std::vector<double> wts(np * np);
+    auto [QptsL, QwtsL] = make_gll_line<T>(np);
+    std::vector<T> pts(np * np * 2);
+    mdspan_t<T, 2> x(pts.data(), np * np, 2);
+    std::vector<T> wts(np * np);
     int c = 0;
     for (std::size_t i = 0; i < np; ++i)
     {
@@ -487,10 +499,10 @@ std::array<std::vector<double>, 2> make_gll_quadrature(cell::type celltype,
   }
   case cell::type::hexahedron:
   {
-    auto [QptsL, QwtsL] = make_gll_line(np);
-    std::vector<double> pts(np * np * np * 3);
-    mdspan2_t x(pts.data(), np * np * np, 3);
-    std::vector<double> wts(np * np * np);
+    auto [QptsL, QwtsL] = make_gll_line<T>(np);
+    std::vector<T> pts(np * np * np * 3);
+    mdspan_t<T, 2> x(pts.data(), np * np * np, 3);
+    std::vector<T> wts(np * np * np);
     int c = 0;
     for (std::size_t i = 0; i < np; ++i)
     {
@@ -521,39 +533,40 @@ std::array<std::vector<double>, 2> make_gll_quadrature(cell::type celltype,
   }
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2>
-make_strang_fix_quadrature(cell::type celltype, std::size_t m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> make_strang_fix_quadrature(cell::type celltype,
+                                                         std::size_t m)
 {
   if (celltype == cell::type::triangle)
   {
     if (m == 2)
     {
       // Scheme from Strang and Fix, 3 points, degree of precision 2
-      std::vector<double> x
+      std::vector<T> x
           = {1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0, 2.0 / 3.0, 2.0 / 3.0, 1.0 / 6.0};
-      std::vector<double> w = {1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0};
+      std::vector<T> w = {1.0 / 6.0, 1.0 / 6.0, 1.0 / 6.0};
       return {std::move(x), std::move(w)};
     }
     else if (m == 3)
     {
       // Scheme from Strang and Fix, 6 points, degree of precision 3
-      std::vector<double> x
+      std::vector<T> x
           = {0.659027622374092, 0.231933368553031, 0.659027622374092,
              0.109039009072877, 0.231933368553031, 0.659027622374092,
              0.231933368553031, 0.109039009072877, 0.109039009072877,
              0.659027622374092, 0.109039009072877, 0.231933368553031};
-      std::vector<double> w(6, 1.0 / 12.0);
+      std::vector<T> w(6, 1.0 / 12.0);
       return {std::move(x), std::move(w)};
     }
     else if (m == 4)
     {
       // Scheme from Strang and Fix, 6 points, degree of precision 4
-      std::vector<double> x
+      std::vector<T> x
           = {0.816847572980459, 0.091576213509771, 0.091576213509771,
              0.816847572980459, 0.091576213509771, 0.091576213509771,
              0.108103018168070, 0.445948490915965, 0.445948490915965,
              0.108103018168070, 0.445948490915965, 0.445948490915965};
-      std::vector<double> w
+      std::vector<T> w
           = {0.054975871827661,  0.054975871827661,  0.054975871827661,
              0.1116907948390055, 0.1116907948390055, 0.1116907948390055};
       return {std::move(x), std::move(w)};
@@ -561,25 +574,25 @@ make_strang_fix_quadrature(cell::type celltype, std::size_t m)
     else if (m == 5)
     {
       // Scheme from Strang and Fix, 7 points, degree of precision 5
-      std::vector<double> x
+      std::vector<T> x
           = {0.33333333333333333, 0.33333333333333333, 0.79742698535308720,
              0.10128650732345633, 0.10128650732345633, 0.79742698535308720,
              0.10128650732345633, 0.10128650732345633, 0.05971587178976981,
              0.47014206410511505, 0.47014206410511505, 0.05971587178976981,
              0.47014206410511505, 0.47014206410511505};
-      std::vector<double> w = {0.1125,
-                               0.06296959027241358,
-                               0.06296959027241358,
-                               0.06296959027241358,
-                               0.06619707639425308,
-                               0.06619707639425308,
-                               0.06619707639425308};
+      std::vector<T> w = {0.1125,
+                          0.06296959027241358,
+                          0.06296959027241358,
+                          0.06296959027241358,
+                          0.06619707639425308,
+                          0.06619707639425308,
+                          0.06619707639425308};
       return {std::move(x), std::move(w)};
     }
     else if (m == 6)
     {
       // Scheme from Strang and Fix, 12 points, degree of precision 6
-      std::vector<double> x
+      std::vector<T> x
           = {0.873821971016996, 0.063089014491502, 0.063089014491502,
              0.873821971016996, 0.063089014491502, 0.063089014491502,
              0.501426509658179, 0.249286745170910, 0.249286745170910,
@@ -588,7 +601,7 @@ make_strang_fix_quadrature(cell::type celltype, std::size_t m)
              0.053145049844816, 0.310352451033785, 0.636502499121399,
              0.310352451033785, 0.053145049844816, 0.053145049844816,
              0.636502499121399, 0.053145049844816, 0.310352451033785};
-      std::vector<double> w
+      std::vector<T> w
           = {0.0254224531851035, 0.0254224531851035, 0.0254224531851035,
              0.0583931378631895, 0.0583931378631895, 0.0583931378631895,
              0.041425537809187,  0.041425537809187,  0.041425537809187,
@@ -598,10 +611,12 @@ make_strang_fix_quadrature(cell::type celltype, std::size_t m)
     else
       throw std::runtime_error("Strang-Fix not implemented for this order.");
   }
+
   throw std::runtime_error("Strang-Fix not implemented for this cell type.");
 }
 //-------------------------------------------------------------------------------------------------------
-std::array<std::vector<double>, 2>
+template <std::floating_point T>
+std::array<std::vector<T>, 2>
 make_zienkiewicz_taylor_quadrature(cell::type celltype, std::size_t m)
 {
   if (celltype == cell::type::triangle)
@@ -609,7 +624,7 @@ make_zienkiewicz_taylor_quadrature(cell::type celltype, std::size_t m)
     if (m == 0 or m == 1)
     {
       // Scheme from Zienkiewicz and Taylor, 1 point, degree of precision 1
-      return {std::vector<double>{1.0 / 3.0, 1.0 / 3.0}, {0.5}};
+      return {std::vector<T>{1.0 / 3.0, 1.0 / 3.0}, {0.5}};
     }
     else
     {
@@ -623,29 +638,29 @@ make_zienkiewicz_taylor_quadrature(cell::type celltype, std::size_t m)
     if (m == 0 or m == 1)
     {
       // Scheme from Zienkiewicz and Taylor, 1 point, degree of precision 1
-      return {std::vector<double>{0.25, 0.25, 0.25}, {1.0 / 6.0}};
+      return {std::vector<T>{0.25, 0.25, 0.25}, {1.0 / 6.0}};
     }
     else if (m == 2)
     {
       // Scheme from Zienkiewicz and Taylor, 4 points, degree of
       // precision
       // 2
-      constexpr double a = 0.585410196624969, b = 0.138196601125011;
-      std::vector<double> x = {a, b, b, b, a, b, b, b, a, b, b, b};
+      constexpr T a = 0.585410196624969, b = 0.138196601125011;
+      std::vector<T> x = {a, b, b, b, a, b, b, b, a, b, b, b};
       return {std::move(x), {1.0 / 24.0, 1.0 / 24.0, 1.0 / 24.0, 1.0 / 24.0}};
     }
     else if (m == 3)
     {
       // Scheme from Zienkiewicz and Taylor, 5 points, degree of
       // precision 3 Note : this scheme has a negative weight
-      std::vector<double> x{
+      std::vector<T> x{
           0.2500000000000000, 0.2500000000000000, 0.2500000000000000,
           0.5000000000000000, 0.1666666666666666, 0.1666666666666666,
           0.1666666666666666, 0.5000000000000000, 0.1666666666666666,
           0.1666666666666666, 0.1666666666666666, 0.5000000000000000,
           0.1666666666666666, 0.1666666666666666, 0.1666666666666666};
-      std::vector<double> w{-0.8 / 6.0, 0.45 / 6.0, 0.45 / 6.0, 0.45 / 6.0,
-                            0.45 / 6.0};
+      std::vector<T> w{-0.8 / 6.0, 0.45 / 6.0, 0.45 / 6.0, 0.45 / 6.0,
+                       0.45 / 6.0};
       return {std::move(x), std::move(w)};
     }
     else
@@ -659,8 +674,9 @@ make_zienkiewicz_taylor_quadrature(cell::type celltype, std::size_t m)
       "Zienkiewicz-Taylor not implemented for this cell type.");
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
-                                                         std::size_t m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> make_keast_quadrature(cell::type celltype,
+                                                    std::size_t m)
 {
   if (celltype == cell::type::tetrahedron)
   {
@@ -670,7 +686,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
       // Values taken from
       // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
       // (KEAST5)
-      std::vector<double> x
+      std::vector<T> x
           = {0.0000000000000000, 0.5000000000000000, 0.5000000000000000,
              0.5000000000000000, 0.0000000000000000, 0.5000000000000000,
              0.5000000000000000, 0.5000000000000000, 0.0000000000000000,
@@ -685,7 +701,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
              0.3143728734931922, 0.3143728734931922, 0.3143728734931922,
              0.3143728734931922, 0.3143728734931922, 0.0568813795204234,
              0.3143728734931922, 0.0568813795204234, 0.3143728734931922};
-      std::vector<double> w
+      std::vector<T> w
           = {0.003174603174603167, 0.003174603174603167, 0.003174603174603167,
              0.003174603174603167, 0.003174603174603167, 0.003174603174603167,
              0.014764970790496783, 0.014764970790496783, 0.014764970790496783,
@@ -699,7 +715,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
       // Values taken from
       // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
       // (KEAST6)
-      std::vector<double> x
+      std::vector<T> x
           = {0.2500000000000000, 0.2500000000000000, 0.2500000000000000,
              0.0000000000000000, 0.3333333333333333, 0.3333333333333333,
              0.3333333333333333, 0.3333333333333333, 0.3333333333333333,
@@ -715,7 +731,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
              0.0665501535736643, 0.4334498464263357, 0.4334498464263357,
              0.4334498464263357, 0.0665501535736643, 0.4334498464263357,
              0.4334498464263357, 0.4334498464263357, 0.0665501535736643};
-      std::vector<double> w
+      std::vector<T> w
           = {0.030283678097089182, 0.006026785714285717, 0.006026785714285717,
              0.006026785714285717, 0.006026785714285717, 0.011645249086028967,
              0.011645249086028967, 0.011645249086028967, 0.011645249086028967,
@@ -729,7 +745,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
       // Values taken from
       // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
       // (KEAST7)
-      std::vector<double> x
+      std::vector<T> x
           = {0.3561913862225449, 0.2146028712591517, 0.2146028712591517,
              0.2146028712591517, 0.2146028712591517, 0.2146028712591517,
              0.2146028712591517, 0.2146028712591517, 0.3561913862225449,
@@ -754,7 +770,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
              0.0636610018750175, 0.6030056647916491, 0.2696723314583159,
              0.2696723314583159, 0.0636610018750175, 0.6030056647916491,
              0.6030056647916491, 0.2696723314583159, 0.0636610018750175};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.0066537917096946494, 0.0066537917096946494, 0.0066537917096946494,
           0.0066537917096946494, 0.0016795351758867834, 0.0016795351758867834,
           0.0016795351758867834, 0.0016795351758867834, 0.009226196923942399,
@@ -771,7 +787,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
       // Values taken from
       // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
       // (KEAST8)
-      std::vector<double> x
+      std::vector<T> x
           = {0.2500000000000000, 0.2500000000000000, 0.2500000000000000,
              0.7653604230090441, 0.0782131923303186, 0.0782131923303186,
              0.0782131923303186, 0.0782131923303186, 0.0782131923303186,
@@ -803,7 +819,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
              0.1000000000000000, 0.6000000000000000, 0.2000000000000000,
              0.2000000000000000, 0.1000000000000000, 0.6000000000000000,
              0.6000000000000000, 0.2000000000000000, 0.1000000000000000};
-      std::vector<double> w
+      std::vector<T> w
           = {0.0182642234661088,   0.010599941524414166, 0.010599941524414166,
              0.010599941524414166, 0.010599941524414166, -0.06251774011432995,
              -0.06251774011432995, -0.06251774011432995, -0.06251774011432995,
@@ -823,7 +839,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
       // Values taken from
       // http://people.sc.fsu.edu/~jburkardt/datasets/quadrature_rules_tet/quadrature_rules_tet.html
       // (KEAST9)
-      std::vector<double> x
+      std::vector<T> x
           = {0.2500000000000000, 0.2500000000000000, 0.2500000000000000,
              0.6175871903000830, 0.1274709365666390, 0.1274709365666390,
              0.1274709365666390, 0.1274709365666390, 0.1274709365666390,
@@ -869,7 +885,7 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
              0.0379700484718286, 0.1937464752488044, 0.7303134278075384,
              0.7303134278075384, 0.0379700484718286, 0.1937464752488044,
              0.1937464752488044, 0.7303134278075384, 0.0379700484718286};
-      std::vector<double> w = {
+      std::vector<T> w = {
           -0.03932700664129262,  0.0040813160593427,    0.0040813160593427,
           0.0040813160593427,    0.0040813160593427,    0.0006580867733043499,
           0.0006580867733043499, 0.0006580867733043499, 0.0006580867733043499,
@@ -894,37 +910,38 @@ std::array<std::vector<double>, 2> make_keast_quadrature(cell::type celltype,
     throw std::runtime_error("Keast not implemented for this cell type.");
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2>
-make_xiao_gimbutas_quadrature(cell::type celltype, int m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> make_xiao_gimbutas_quadrature(cell::type celltype,
+                                                            int m)
 {
   if (celltype == cell::type::triangle)
   {
     if (m == 1)
     {
       // Xiao Gimbutas, 3 points, degree 1
-      std::vector<double> x = {0.3333333333333333, 0.3333333333333333};
-      std::vector<double> w = {0.5};
+      std::vector<T> x = {0.3333333333333333, 0.3333333333333333};
+      std::vector<T> w = {0.5};
       return {std::move(x), std::move(w)};
     }
     else if (m == 2)
     {
       // Xiao Gimbutas, 3 points, degree 2
-      std::vector<double> x
+      std::vector<T> x
           = {0.16666666666666666, 0.16666666666666666, 0.16666666666666666,
              0.6666666666666667,  0.6666666666666667,  0.16666666666666666};
-      std::vector<double> w
+      std::vector<T> w
           = {0.16666666666666666, 0.16666666666666666, 0.16666666666666666};
       return {std::move(x), std::move(w)};
     }
     else if (m == 3)
     {
       // Xiao Gimbutas, 3 points, degree 3
-      std::vector<double> x
+      std::vector<T> x
           = {0.4459484909159649,  0.4459484909159649, 0.09157621350977085,
              0.09157621350977085, 0.4459484909159649, 0.10810301816807022,
              0.09157621350977085, 0.8168475729804583, 0.10810301816807022,
              0.4459484909159649,  0.8168475729804583, 0.09157621350977085};
-      std::vector<double> w
+      std::vector<T> w
           = {0.11169079483900574, 0.05497587182766094, 0.11169079483900574,
              0.05497587182766094, 0.11169079483900574, 0.05497587182766094};
       return {std::move(x), std::move(w)};
@@ -932,12 +949,12 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 4)
     {
       // Xiao Gimbutas, 3 points, degree 4
-      std::vector<double> x
+      std::vector<T> x
           = {0.4459484909159649,  0.4459484909159649, 0.09157621350977085,
              0.09157621350977085, 0.4459484909159649, 0.10810301816807022,
              0.09157621350977085, 0.8168475729804583, 0.10810301816807022,
              0.4459484909159649,  0.8168475729804583, 0.09157621350977085};
-      std::vector<double> w
+      std::vector<T> w
           = {0.11169079483900574, 0.05497587182766094, 0.11169079483900574,
              0.05497587182766094, 0.11169079483900574, 0.05497587182766094};
       return {std::move(x), std::move(w)};
@@ -945,25 +962,25 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 5)
     {
       // Xiao Gimbutas, 3 points, degree 5
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,  0.3333333333333333,  0.1012865073234564,
              0.1012865073234564,  0.47014206410511505, 0.47014206410511505,
              0.1012865073234564,  0.7974269853530872,  0.47014206410511505,
              0.05971587178976989, 0.7974269853530872,  0.1012865073234564,
              0.05971587178976989, 0.47014206410511505};
-      std::vector<double> w = {0.1125,
-                               0.06296959027241357,
-                               0.0661970763942531,
-                               0.06296959027241357,
-                               0.0661970763942531,
-                               0.06296959027241357,
-                               0.0661970763942531};
+      std::vector<T> w = {0.1125,
+                          0.06296959027241357,
+                          0.0661970763942531,
+                          0.06296959027241357,
+                          0.0661970763942531,
+                          0.06296959027241357,
+                          0.0661970763942531};
       return {std::move(x), std::move(w)};
     }
     else if (m == 6)
     {
       // Xiao Gimbutas, 3 points, degree 6
-      std::vector<double> x
+      std::vector<T> x
           = {0.21942998254978302,  0.21942998254978302,  0.48013796411221504,
              0.48013796411221504,  0.21942998254978302,  0.561140034900434,
              0.48013796411221504,  0.039724071775569914, 0.561140034900434,
@@ -972,7 +989,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.019371724361240805, 0.14161901592396814,  0.8390092597147911,
              0.14161901592396814,  0.019371724361240805, 0.8390092597147911,
              0.14161901592396814,  0.019371724361240805, 0.8390092597147911};
-      std::vector<double> w
+      std::vector<T> w
           = {0.08566656207649052, 0.04036554479651549, 0.08566656207649052,
              0.04036554479651549, 0.08566656207649052, 0.04036554479651549,
              0.02031727989683033, 0.02031727989683033, 0.02031727989683033,
@@ -982,7 +999,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 7)
     {
       // Xiao Gimbutas, 3 points, degree 7
-      std::vector<double> x
+      std::vector<T> x
           = {0.47319565368925104,  0.47319565368925104,  0.057797640054506494,
              0.057797640054506494, 0.24166360639724743,  0.24166360639724743,
              0.47319565368925104,  0.05360869262149792,  0.057797640054506494,
@@ -993,7 +1010,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.046971206130085534, 0.2593390118657857,   0.6936897820041288,
              0.2593390118657857,   0.046971206130085534, 0.6936897820041288,
              0.2593390118657857,   0.046971206130085534, 0.6936897820041288};
-      std::vector<double> w
+      std::vector<T> w
           = {0.02659041664838023,  0.020459085197028434, 0.06386262428056692,
              0.02659041664838023,  0.020459085197028434, 0.06386262428056692,
              0.02659041664838023,  0.020459085197028434, 0.06386262428056692,
@@ -1004,7 +1021,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 8)
     {
       // Xiao Gimbutas, 3 points, degree 8
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,   0.3333333333333333,  0.17056930775176027,
              0.17056930775176027,  0.4592925882927231,  0.4592925882927231,
              0.05054722831703107,  0.05054722831703107, 0.17056930775176027,
@@ -1016,7 +1033,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.26311282963463806,  0.7284923929554044,  0.26311282963463806,
              0.008394777409957675, 0.7284923929554044,  0.26311282963463806,
              0.008394777409957675, 0.7284923929554044};
-      std::vector<double> w
+      std::vector<T> w
           = {0.0721578038388936,   0.05160868526735912,  0.04754581713364232,
              0.01622924881159904,  0.05160868526735912,  0.04754581713364232,
              0.01622924881159904,  0.05160868526735912,  0.04754581713364232,
@@ -1028,7 +1045,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 9)
     {
       // Xiao Gimbutas, 3 points, degree 9
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,  0.3333333333333333,  0.4896825191987376,
              0.4896825191987376,  0.1882035356190328,  0.1882035356190328,
              0.43708959149293664, 0.43708959149293664, 0.04472951339445275,
@@ -1042,7 +1059,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.2219629891607657,  0.741198598784498,   0.2219629891607657,
              0.0368384120547363,  0.741198598784498,   0.2219629891607657,
              0.0368384120547363,  0.741198598784498};
-      std::vector<double> w
+      std::vector<T> w
           = {0.04856789814139942,  0.015667350113569536, 0.03982386946360513,
              0.03891377050238714,  0.012788837829349017, 0.015667350113569536,
              0.03982386946360513,  0.03891377050238714,  0.012788837829349017,
@@ -1055,7 +1072,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 10)
     {
       // Xiao Gimbutas, 3 points, degree 10
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,   0.3333333333333333,   0.4951734598011705,
              0.4951734598011705,   0.019139415242841296, 0.019139415242841296,
              0.18448501268524653,  0.18448501268524653,  0.42823482094371884,
@@ -1073,7 +1090,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.8315416244168035,   0.13373475510086913,  0.6357241363774714,
              0.3266931362813369,   0.03472362048232748,  0.8315416244168035,
              0.03758272734119169,  0.6357241363774714};
-      std::vector<double> w
+      std::vector<T> w
           = {0.041807437186986963, 0.004896295249209152, 0.003192679615059327,
              0.039316884873188636, 0.03762366398427199,  0.004896295249209152,
              0.003192679615059327, 0.039316884873188636, 0.03762366398427199,
@@ -1088,7 +1105,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 11)
     {
       // Xiao Gimbutas, 3 points, degree 11
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,    0.3333333333333333,   0.030846895635588123,
              0.030846895635588123,  0.49878016517846074,  0.49878016517846074,
              0.11320782728669404,   0.11320782728669404,  0.4366550163931761,
@@ -1108,7 +1125,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.8263297175927509,    0.1593036198376935,   0.6417047167143861,
              0.31063121631346313,   0.014366662569555624, 0.8263297175927509,
              0.04766406697215078,   0.6417047167143861};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.040722567354675644,  0.006124648475353982,  0.0062327459369406904,
           0.02006462119065416,   0.031547436079949344,  0.033922553871847574,
           0.006124648475353982,  0.0062327459369406904, 0.02006462119065416,
@@ -1124,7 +1141,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 12)
     {
       // Xiao Gimbutas, 3 points, degree 12
-      std::vector<double> x
+      std::vector<T> x
           = {0.27146250701492614,  0.27146250701492614,  0.10925782765935432,
              0.10925782765935432,  0.4401116486585931,   0.4401116486585931,
              0.4882037509455415,   0.4882037509455415,   0.02464636343633564,
@@ -1147,7 +1164,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.12727971723358936,  0.6853101639063919,   0.29165567973834094,
              0.1162960196779266,   0.6282497516835561,   0.021382490256170623,
              0.85133779251024,     0.023034156355267166, 0.6853101639063919};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.03127060659795138,   0.014243026034438775,  0.024959167464030475,
           0.012133419040726017,  0.0039658212549868194, 0.03127060659795138,
           0.014243026034438775,  0.024959167464030475,  0.012133419040726017,
@@ -1164,7 +1181,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 13)
     {
       // Xiao Gimbutas, 3 points, degree 13
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,   0.3333333333333333,   0.4961358947410461,
              0.4961358947410461,   0.4696086896534919,   0.4696086896534919,
              0.23111028494908226,  0.23111028494908226,  0.4144775702790546,
@@ -1190,7 +1207,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.8512338800096335,   0.1267997757838373,   0.01898800438375904,
              0.6889333070396046,   0.09773603106601653,  0.6355187156236324,
              0.021966344206529244, 0.8512338800096335};
-      std::vector<double> w
+      std::vector<T> w
           = {0.02581132333214541,   0.004970738180536294, 0.01639062080186149,
              0.023031204796389124,  0.0234735477710776,   0.015451548987879897,
              0.0040146998976292115, 0.004970738180536294, 0.01639062080186149,
@@ -1209,7 +1226,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 14)
     {
       // Xiao Gimbutas, 3 points, degree 14
-      std::vector<double> x
+      std::vector<T> x
           = {0.41764471934045394,  0.41764471934045394,  0.0617998830908727,
              0.0617998830908727,   0.2734775283088387,   0.2734775283088387,
              0.1772055324125435,   0.1772055324125435,   0.0193909612487011,
@@ -1238,7 +1255,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.11897449769695682,  0.014646950055654471, 0.6869801678080878,
              0.09291624935697185,  0.5702222908466832,   0.05712475740364799,
              0.7706085547749965,   0.001268330932872076, 0.8797571713701712};
-      std::vector<double> w
+      std::vector<T> w
           = {0.016394176772062678, 0.007216849834888334, 0.025887052253645793,
              0.02108129436849651,  0.002461701801200041, 0.010941790684714446,
              0.016394176772062678, 0.007216849834888334, 0.025887052253645793,
@@ -1258,7 +1275,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 15)
     {
       // Xiao Gimbutas, 3 points, degree 15
-      std::vector<double> x = {
+      std::vector<T> x = {
           0.3333333333333333,    0.3333333333333333,    0.1299782299330779,
           0.1299782299330779,    0.4600769492970597,    0.4600769492970597,
           0.4916858166302972,    0.4916858166302972,    0.22153234079514206,
@@ -1292,7 +1309,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.016027089786345473,  0.8337725261484158,    0.09765044243024235,
           0.5792382424060449,    0.018454251904633165,  0.673598066611694,
           0.0011135352740137417, 0.960851235424877};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.01486520987403566,   0.00369875203352305,   0.010797043968219226,
           0.0079161381750109,    0.023143643052599038,  0.023168020695603617,
           0.007542237123798534,  0.00369875203352305,   0.010797043968219226,
@@ -1315,7 +1332,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 16)
     {
       // Xiao Gimbutas, 3 points, degree 16
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,    0.3333333333333333,    0.06667447224023837,
              0.06667447224023837,   0.24132168070137838,   0.24132168070137838,
              0.41279809595522365,   0.41279809595522365,   0.15006373658703515,
@@ -1353,7 +1370,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.010812972776103751,  0.8995779382011905,    0.10665316053614844,
              0.5967314670634686,    0.051354315344013114,  0.7788823295056971,
              0.0036969427073556124, 0.7822542773667971};
-      std::vector<double> w
+      std::vector<T> w
           = {0.023113955157095672,  0.006212712797780504, 0.020592020534896276,
              0.020492609893407683,  0.014391748351374455, 0.013546834733855226,
              0.001894567619132111,  0.006212712797780504, 0.020592020534896276,
@@ -1378,7 +1395,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 17)
     {
       // Xiao Gimbutas, 3 points, degree 17
-      std::vector<double> x
+      std::vector<T> x
           = {0.4171034443615992,   0.4171034443615992,   0.18035811626637066,
              0.18035811626637066,  0.2857065024365867,   0.2857065024365867,
              0.06665406347959701,  0.06665406347959701,  0.014755491660754072,
@@ -1419,7 +1436,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.7150722591106424,   0.15750547792686992,  0.5432755795961598,
              0.06734937786736123,  0.6263690303864522,   0.07804234056828245,
              0.7532351459364581,   0.016017642362119337, 0.824790070165088};
-      std::vector<double> w
+      std::vector<T> w
           = {0.013655463264051053, 0.013156315294008993, 0.01885811857639764,
              0.006229500401152722, 0.001386943788818821, 0.01250972547524868,
              0.013655463264051053, 0.013156315294008993, 0.01885811857639764,
@@ -1445,7 +1462,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 18)
     {
       // Xiao Gimbutas, 3 points, degree 18
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,   0.3333333333333333,    0.4749182113240457,
              0.4749182113240457,   0.15163850697260495,   0.15163850697260495,
              0.4110671018759195,   0.4110671018759195,    0.2656146099053742,
@@ -1491,7 +1508,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.06612245802840343,  0.7553984164057089,    0.14906691012577386,
              0.5823597834782124,   0.011691824674667157,  0.5772425066507145,
              0.014331524778941987, 0.8528896449496688};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.01537426061955793,   0.006553513745869378,  0.0101591694227292,
           0.01673599702992395,   0.015558198301003067,  0.0002660028084738903,
           0.006895143302383471,  0.006553513745869378,  0.0101591694227292,
@@ -1520,7 +1537,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 19)
     {
       // Xiao Gimbutas, 3 points, degree 19
-      std::vector<double> x = {
+      std::vector<T> x = {
           0.3333333333333333,    0.3333333333333333,    0.05252627985410363,
           0.05252627985410363,   0.11144805571699878,   0.11144805571699878,
           0.011639027327922657,  0.011639027327922657,  0.25516213315312486,
@@ -1570,7 +1587,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.07456118930435514,   0.7040048688065313,    0.04088831446497813,
           0.60508575853531,      0.014923638907438481,  0.7431822570856689,
           0.0020691038491023883, 0.6333104818121875};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.017234580425452638,  0.0035546968113974735, 0.007617478258502418,
           0.0008825962091542701, 0.01587642729376499,   0.01576867932261981,
           0.012325990526792415,  0.011491785488561626,  0.005160941091209432,
@@ -1601,7 +1618,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 20)
     {
       // Xiao Gimbutas, 3 points, degree 20
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,   0.3333333333333333,   0.18629499774454095,
              0.18629499774454095,  0.037310880598884766, 0.037310880598884766,
              0.476245611540499,    0.476245611540499,    0.4455510569559248,
@@ -1655,7 +1672,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.038363684775374655, 0.8616840189364867,   0.009831548292802588,
              0.5701446928909732,   0.05498747914298685,  0.6118777035474257,
              0.01073721285601111,  0.7086813757203236};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.013910110701453116,  0.009173462974252915,  0.0021612754106655778,
           0.007101825303408441,  0.009452399933232448,  0.014083201307520249,
           0.013788050629070459,  0.00079884079106662,   0.007830230776074535,
@@ -1688,7 +1705,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 21)
     {
       // Xiao Gimbutas, 3 points, degree 21
-      std::vector<double> x
+      std::vector<T> x
           = {0.2989362353149826,   0.2989362353149826,   0.4970078754686856,
              0.4970078754686856,   0.40361758654638513,  0.40361758654638513,
              0.11898857762271953,  0.11898857762271953,  0.19028871809127856,
@@ -1747,7 +1764,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.6001398284888722,   0.10045802007411446,  0.6829423567359031,
              0.04945106556854055,  0.8217191264694079,   0.010254635872924515,
              0.6287919561081533,   0.010301903643423904, 0.9339785312842042};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.01072556096456617,   0.0022189148485329394, 0.011500352326641932,
           0.006828016226115099,  0.009727620930375354,  0.006107205081692191,
           0.009807237613912011,  0.0035760425506418257, 0.0007543496361893447,
@@ -1782,7 +1799,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 22)
     {
       // Xiao Gimbutas, 3 points, degree 22
-      std::vector<double> x
+      std::vector<T> x
           = {0.3851845246273021,   0.3851845246273021,    0.4577694113676721,
              0.4577694113676721,   0.29455825902995014,   0.29455825902995014,
              0.18851052363028398,  0.18851052363028398,   0.42198188879353493,
@@ -1847,7 +1864,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.6745231247723869,   0.009144711374964054,  0.8449815687515108,
              0.048254924114641384, 0.7754476410608586,    0.009163909248185229,
              0.7468454447123217,   0.0017984649889483744, 0.9802672139581126};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.006746541941805331,  0.006930699762117096,  0.010537881978726092,
           0.008010649562574445,  0.009426546276920644,  0.002644669832992209,
           0.0017845545829281882, 0.007207856564052301,  0.006746541941805331,
@@ -1885,7 +1902,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 23)
     {
       // Xiao Gimbutas, 3 points, degree 23
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,    0.3333333333333333,   0.0390072687570322,
              0.0390072687570322,    0.4803288773373085,   0.4803288773373085,
              0.08684104820763322,   0.08684104820763322,  0.39432350601154154,
@@ -1955,7 +1972,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.05835157523751544,   0.7687161216332605,   0.1548301554055162,
              0.5288655369406456,    0.014758969729945169, 0.5874824534670472,
              0.03299370819253279,   0.688212121993365};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.012626530161518105,  0.001957870129516468,  0.00569894463390038,
           0.004479958512756771,  0.011837304231564011,  0.011903931443749882,
           0.007279724696370875,  0.0012037723020907048, 0.009475975334669443,
@@ -1996,7 +2013,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 24)
     {
       // Xiao Gimbutas, 3 points, degree 24
-      std::vector<double> x
+      std::vector<T> x
           = {0.3333333333333333,   0.3333333333333333,   0.4188909749106028,
              0.4188909749106028,   0.16236063371692644,  0.16236063371692644,
              0.04098562900111713,  0.04098562900111713,  0.006731270887888441,
@@ -2072,7 +2089,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.007234558457782137, 0.8986440987448518,   0.09556626952736523,
              0.724037578585869,    0.007987921880847964, 0.8172747318363464,
              0.008074910870208776, 0.9546336170785};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.00627284492280016,   0.006555266350942619,  0.0051895080282000966,
           0.0019168498654645917, 0.0003086272527483216, 0.002171623361085349,
           0.010260004335754922,  0.005176247385426301,  0.005013696533694453,
@@ -2116,7 +2133,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 25)
     {
       // Xiao Gimbutas, 3 points, degree 25
-      std::vector<double> x = {
+      std::vector<T> x = {
           0.3876420304045634,    0.3876420304045634,    0.21100450806149668,
           0.21100450806149668,   0.2994923158045085,    0.2994923158045085,
           0.03722292599244087,   0.03722292599244087,   0.1451092435745004,
@@ -2197,7 +2214,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.8735191347263744,    0.13700669408707095,   0.6293704957712138,
           0.02454006024752439,   0.7188645300434557,    0.007188828261693038,
           0.9517423526265223,    0.0008914643174981278, 0.7196923470332413};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.006844925774136122,  0.005793631618005297,  0.009008820350850738,
           0.001698648860952368,  0.005745762931282399,  0.00795565506872921,
           0.006827137593764007,  0.004591410629910018,  0.0004032551441623084,
@@ -2243,7 +2260,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 26)
     {
       // Xiao Gimbutas, 3 points, degree 26
-      std::vector<double> x = {
+      std::vector<T> x = {
           0.3333333333333333,    0.3333333333333333,    0.06673712257646625,
           0.06673712257646625,   0.0063401164920769415, 0.0063401164920769415,
           0.4937530328963848,    0.4937530328963848,    0.388787497107594,
@@ -2331,7 +2348,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.05116587368513777,   0.6650459874553918,    0.02278459925089566,
           0.7606687342756272,    0.009473297912213558,  0.6776281990129065,
           0.0004640077321756526, 0.7731011948601068};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.010243331294611621,  0.002456912651483009,  0.00026347655834093594,
           0.002651079590933673,  0.00973403391859144,   0.00976782346162377,
           0.005764251817328446,  0.006627629724272634,  0.008472172539264045,
@@ -2381,7 +2398,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 27)
     {
       // Xiao Gimbutas, 3 points, degree 27
-      std::vector<double> x = {
+      std::vector<T> x = {
           0.3807140211811872,    0.3807140211811872,    0.4466678037038646,
           0.4466678037038646,    0.41614137880541213,   0.41614137880541213,
           0.08030464778843843,   0.08030464778843843,   0.23340040666987116,
@@ -2476,7 +2493,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.9595414606840932,    0.03503442252769738,   0.8848535036252014,
           0.019352001318038967,  0.8334345667830386,    0.007332472549040455,
           0.7629478741931164,    0.0004903284434629743, 0.8518541504366672};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.00478004248372996,   0.004705079904727113,  0.006025113512075217,
           0.0026063109364009383, 0.006735657699024688,  0.007873982890681327,
           0.00564122127234919,   0.003558618706437321,  0.0013886697644770905,
@@ -2529,7 +2546,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 28)
     {
       // Xiao Gimbutas, 3 points, degree 28
-      std::vector<double> x = {
+      std::vector<T> x = {
           0.3039829225164842,    0.3039829225164842,    0.004804126196658098,
           0.004804126196658098,  0.45827990424041193,   0.45827990424041193,
           0.38626797357004206,   0.38626797357004206,   0.2582640721504622,
@@ -2630,87 +2647,87 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.6004482009469116,    0.005646565993466159,  0.5515700274862902,
           0.11808906971509502,   0.5441122670843226,    0.018242291012294715,
           0.8895285197924231,    0.0012002556014871519, 0.92850900392038};
-      std::vector<double> w = {0.007181233150323068,  0.00015556760434074816,
-                               0.0044258525054465805, 0.007105293195224093,
-                               0.006546374294544483,  0.0039049716855431705,
-                               0.006773797801662755,  0.003841055289297512,
-                               0.005971334820124114,  0.0025641260023390343,
-                               0.007181233150323068,  0.00015556760434074816,
-                               0.0044258525054465805, 0.007105293195224093,
-                               0.006546374294544483,  0.0039049716855431705,
-                               0.006773797801662755,  0.003841055289297512,
-                               0.005971334820124114,  0.0025641260023390343,
-                               0.007181233150323068,  0.00015556760434074816,
-                               0.0044258525054465805, 0.007105293195224093,
-                               0.006546374294544483,  0.0039049716855431705,
-                               0.006773797801662755,  0.003841055289297512,
-                               0.005971334820124114,  0.0025641260023390343,
-                               0.0010587697788404492, 0.002947836117257123,
-                               0.006278628108338439,  0.006553057062049693,
-                               0.0008894477096277566, 0.004005964643347482,
-                               0.004232347867138302,  0.0011883821338438917,
-                               0.0021384711675089727, 0.0025656386910186484,
-                               0.0004742702129447003, 0.0051229932808521,
-                               0.0011622726822320252, 0.004462558070138275,
-                               0.0029589418861769453, 0.003130267321484276,
-                               0.0015700888217440182, 0.0063935692114779,
-                               0.0016024580953965175, 0.0003625672974930415,
-                               0.0010587697788404492, 0.002947836117257123,
-                               0.006278628108338439,  0.006553057062049693,
-                               0.0008894477096277566, 0.004005964643347482,
-                               0.004232347867138302,  0.0011883821338438917,
-                               0.0021384711675089727, 0.0025656386910186484,
-                               0.0004742702129447003, 0.0051229932808521,
-                               0.0011622726822320252, 0.004462558070138275,
-                               0.0029589418861769453, 0.003130267321484276,
-                               0.0015700888217440182, 0.0063935692114779,
-                               0.0016024580953965175, 0.0003625672974930415,
-                               0.0010587697788404492, 0.002947836117257123,
-                               0.006278628108338439,  0.006553057062049693,
-                               0.0008894477096277566, 0.004005964643347482,
-                               0.004232347867138302,  0.0011883821338438917,
-                               0.0021384711675089727, 0.0025656386910186484,
-                               0.0004742702129447003, 0.0051229932808521,
-                               0.0011622726822320252, 0.004462558070138275,
-                               0.0029589418861769453, 0.003130267321484276,
-                               0.0015700888217440182, 0.0063935692114779,
-                               0.0016024580953965175, 0.0003625672974930415,
-                               0.0010587697788404492, 0.002947836117257123,
-                               0.006278628108338439,  0.006553057062049693,
-                               0.0008894477096277566, 0.004005964643347482,
-                               0.004232347867138302,  0.0011883821338438917,
-                               0.0021384711675089727, 0.0025656386910186484,
-                               0.0004742702129447003, 0.0051229932808521,
-                               0.0011622726822320252, 0.004462558070138275,
-                               0.0029589418861769453, 0.003130267321484276,
-                               0.0015700888217440182, 0.0063935692114779,
-                               0.0016024580953965175, 0.0003625672974930415,
-                               0.0010587697788404492, 0.002947836117257123,
-                               0.006278628108338439,  0.006553057062049693,
-                               0.0008894477096277566, 0.004005964643347482,
-                               0.004232347867138302,  0.0011883821338438917,
-                               0.0021384711675089727, 0.0025656386910186484,
-                               0.0004742702129447003, 0.0051229932808521,
-                               0.0011622726822320252, 0.004462558070138275,
-                               0.0029589418861769453, 0.003130267321484276,
-                               0.0015700888217440182, 0.0063935692114779,
-                               0.0016024580953965175, 0.0003625672974930415,
-                               0.0010587697788404492, 0.002947836117257123,
-                               0.006278628108338439,  0.006553057062049693,
-                               0.0008894477096277566, 0.004005964643347482,
-                               0.004232347867138302,  0.0011883821338438917,
-                               0.0021384711675089727, 0.0025656386910186484,
-                               0.0004742702129447003, 0.0051229932808521,
-                               0.0011622726822320252, 0.004462558070138275,
-                               0.0029589418861769453, 0.003130267321484276,
-                               0.0015700888217440182, 0.0063935692114779,
-                               0.0016024580953965175, 0.0003625672974930415};
+      std::vector<T> w = {0.007181233150323068,  0.00015556760434074816,
+                          0.0044258525054465805, 0.007105293195224093,
+                          0.006546374294544483,  0.0039049716855431705,
+                          0.006773797801662755,  0.003841055289297512,
+                          0.005971334820124114,  0.0025641260023390343,
+                          0.007181233150323068,  0.00015556760434074816,
+                          0.0044258525054465805, 0.007105293195224093,
+                          0.006546374294544483,  0.0039049716855431705,
+                          0.006773797801662755,  0.003841055289297512,
+                          0.005971334820124114,  0.0025641260023390343,
+                          0.007181233150323068,  0.00015556760434074816,
+                          0.0044258525054465805, 0.007105293195224093,
+                          0.006546374294544483,  0.0039049716855431705,
+                          0.006773797801662755,  0.003841055289297512,
+                          0.005971334820124114,  0.0025641260023390343,
+                          0.0010587697788404492, 0.002947836117257123,
+                          0.006278628108338439,  0.006553057062049693,
+                          0.0008894477096277566, 0.004005964643347482,
+                          0.004232347867138302,  0.0011883821338438917,
+                          0.0021384711675089727, 0.0025656386910186484,
+                          0.0004742702129447003, 0.0051229932808521,
+                          0.0011622726822320252, 0.004462558070138275,
+                          0.0029589418861769453, 0.003130267321484276,
+                          0.0015700888217440182, 0.0063935692114779,
+                          0.0016024580953965175, 0.0003625672974930415,
+                          0.0010587697788404492, 0.002947836117257123,
+                          0.006278628108338439,  0.006553057062049693,
+                          0.0008894477096277566, 0.004005964643347482,
+                          0.004232347867138302,  0.0011883821338438917,
+                          0.0021384711675089727, 0.0025656386910186484,
+                          0.0004742702129447003, 0.0051229932808521,
+                          0.0011622726822320252, 0.004462558070138275,
+                          0.0029589418861769453, 0.003130267321484276,
+                          0.0015700888217440182, 0.0063935692114779,
+                          0.0016024580953965175, 0.0003625672974930415,
+                          0.0010587697788404492, 0.002947836117257123,
+                          0.006278628108338439,  0.006553057062049693,
+                          0.0008894477096277566, 0.004005964643347482,
+                          0.004232347867138302,  0.0011883821338438917,
+                          0.0021384711675089727, 0.0025656386910186484,
+                          0.0004742702129447003, 0.0051229932808521,
+                          0.0011622726822320252, 0.004462558070138275,
+                          0.0029589418861769453, 0.003130267321484276,
+                          0.0015700888217440182, 0.0063935692114779,
+                          0.0016024580953965175, 0.0003625672974930415,
+                          0.0010587697788404492, 0.002947836117257123,
+                          0.006278628108338439,  0.006553057062049693,
+                          0.0008894477096277566, 0.004005964643347482,
+                          0.004232347867138302,  0.0011883821338438917,
+                          0.0021384711675089727, 0.0025656386910186484,
+                          0.0004742702129447003, 0.0051229932808521,
+                          0.0011622726822320252, 0.004462558070138275,
+                          0.0029589418861769453, 0.003130267321484276,
+                          0.0015700888217440182, 0.0063935692114779,
+                          0.0016024580953965175, 0.0003625672974930415,
+                          0.0010587697788404492, 0.002947836117257123,
+                          0.006278628108338439,  0.006553057062049693,
+                          0.0008894477096277566, 0.004005964643347482,
+                          0.004232347867138302,  0.0011883821338438917,
+                          0.0021384711675089727, 0.0025656386910186484,
+                          0.0004742702129447003, 0.0051229932808521,
+                          0.0011622726822320252, 0.004462558070138275,
+                          0.0029589418861769453, 0.003130267321484276,
+                          0.0015700888217440182, 0.0063935692114779,
+                          0.0016024580953965175, 0.0003625672974930415,
+                          0.0010587697788404492, 0.002947836117257123,
+                          0.006278628108338439,  0.006553057062049693,
+                          0.0008894477096277566, 0.004005964643347482,
+                          0.004232347867138302,  0.0011883821338438917,
+                          0.0021384711675089727, 0.0025656386910186484,
+                          0.0004742702129447003, 0.0051229932808521,
+                          0.0011622726822320252, 0.004462558070138275,
+                          0.0029589418861769453, 0.003130267321484276,
+                          0.0015700888217440182, 0.0063935692114779,
+                          0.0016024580953965175, 0.0003625672974930415};
       return {std::move(x), std::move(w)};
     }
     else if (m == 29)
     {
       // Xiao Gimbutas, 3 points, degree 29
-      std::vector<double> x = {
+      std::vector<T> x = {
           0.49891482463768616,  0.49891482463768616,    0.4343804267617306,
           0.4343804267617306,   0.0410973356271182,     0.0410973356271182,
           0.2084053051324009,   0.2084053051324009,     0.16074588443196364,
@@ -2817,7 +2834,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
           0.7364820152304077,   0.06787840431144707,    0.6437257357698205,
           0.13953560718108263,  0.5930980425461418,     0.008066585704166612,
           0.5861680189969418,   0.00012344681228740494, 0.8135558255123531};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.0007582310515784511,  0.005585550147583929,  0.0014302457530784435,
           0.006269601721311614,   0.005285708929113789,  0.0030672005823594553,
           0.008155119403871603,   0.004086439220613566,  0.00515655831762925,
@@ -2876,7 +2893,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 30)
     {
       // Xiao Gimbutas, 3 points, degree 30
-      std::vector<double> x
+      std::vector<T> x
           = {0.003318724936644646, 0.003318724936644646, 0.07237240722467797,
              0.07237240722467797,  0.047157910242171974, 0.047157910242171974,
              0.4680301736511254,   0.4680301736511254,   0.01268660467446775,
@@ -2991,131 +3008,129 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.9414155840249848,   0.027294230652095765, 0.8787459746951743,
              0.005691211445416102, 0.8588999350346495,   0.005162347016621321,
              0.5986161382437196,   0.000533708660694491, 0.9699822487416316};
-      std::vector<double> w = {8.586495068552472e-05,  0.001900966334207759,
-                               0.0014222168338437478,  0.0038920643661654237,
-                               0.0004232750726644445,  0.0036934559174571445,
-                               0.005376425482716406,   0.007798045662912898,
-                               0.006202479514073004,   0.00745727538134288,
-                               0.0013956590598703843,  8.586495068552472e-05,
-                               0.001900966334207759,   0.0014222168338437478,
-                               0.0038920643661654237,  0.0004232750726644445,
-                               0.0036934559174571445,  0.005376425482716406,
-                               0.007798045662912898,   0.006202479514073004,
-                               0.00745727538134288,    0.0013956590598703843,
-                               8.586495068552472e-05,  0.001900966334207759,
-                               0.0014222168338437478,  0.0038920643661654237,
-                               0.0004232750726644445,  0.0036934559174571445,
-                               0.005376425482716406,   0.007798045662912898,
-                               0.006202479514073004,   0.00745727538134288,
-                               0.0013956590598703843,  0.002107379231956217,
-                               0.0029624613725460075,  0.0029721100922122435,
-                               0.003438592193767963,   0.0020462494841735996,
-                               0.0044363272530086725,  0.003767161464773241,
-                               0.003402003378050937,   0.000603348284271059,
-                               0.0009794742889466218,  0.0011372229504993392,
-                               0.002682342423093155,   0.0029350349015327634,
-                               0.005651511771468744,   0.007158242634833795,
-                               0.006463011725059148,   0.003140798290445832,
-                               0.0023509684970529836,  0.0009152534380744139,
-                               0.0019109402735475102,  0.0009599402787344589,
-                               0.0013212839615816257,  0.00016781085573320113,
-                               0.002107379231956217,   0.0029624613725460075,
-                               0.0029721100922122435,  0.003438592193767963,
-                               0.0020462494841735996,  0.0044363272530086725,
-                               0.003767161464773241,   0.003402003378050937,
-                               0.000603348284271059,   0.0009794742889466218,
-                               0.0011372229504993392,  0.002682342423093155,
-                               0.0029350349015327634,  0.005651511771468744,
-                               0.007158242634833795,   0.006463011725059148,
-                               0.003140798290445832,   0.0023509684970529836,
-                               0.0009152534380744139,  0.0019109402735475102,
-                               0.0009599402787344589,  0.0013212839615816257,
-                               0.00016781085573320113, 0.002107379231956217,
-                               0.0029624613725460075,  0.0029721100922122435,
-                               0.003438592193767963,   0.0020462494841735996,
-                               0.0044363272530086725,  0.003767161464773241,
-                               0.003402003378050937,   0.000603348284271059,
-                               0.0009794742889466218,  0.0011372229504993392,
-                               0.002682342423093155,   0.0029350349015327634,
-                               0.005651511771468744,   0.007158242634833795,
-                               0.006463011725059148,   0.003140798290445832,
-                               0.0023509684970529836,  0.0009152534380744139,
-                               0.0019109402735475102,  0.0009599402787344589,
-                               0.0013212839615816257,  0.00016781085573320113,
-                               0.002107379231956217,   0.0029624613725460075,
-                               0.0029721100922122435,  0.003438592193767963,
-                               0.0020462494841735996,  0.0044363272530086725,
-                               0.003767161464773241,   0.003402003378050937,
-                               0.000603348284271059,   0.0009794742889466218,
-                               0.0011372229504993392,  0.002682342423093155,
-                               0.0029350349015327634,  0.005651511771468744,
-                               0.007158242634833795,   0.006463011725059148,
-                               0.003140798290445832,   0.0023509684970529836,
-                               0.0009152534380744139,  0.0019109402735475102,
-                               0.0009599402787344589,  0.0013212839615816257,
-                               0.00016781085573320113, 0.002107379231956217,
-                               0.0029624613725460075,  0.0029721100922122435,
-                               0.003438592193767963,   0.0020462494841735996,
-                               0.0044363272530086725,  0.003767161464773241,
-                               0.003402003378050937,   0.000603348284271059,
-                               0.0009794742889466218,  0.0011372229504993392,
-                               0.002682342423093155,   0.0029350349015327634,
-                               0.005651511771468744,   0.007158242634833795,
-                               0.006463011725059148,   0.003140798290445832,
-                               0.0023509684970529836,  0.0009152534380744139,
-                               0.0019109402735475102,  0.0009599402787344589,
-                               0.0013212839615816257,  0.00016781085573320113,
-                               0.002107379231956217,   0.0029624613725460075,
-                               0.0029721100922122435,  0.003438592193767963,
-                               0.0020462494841735996,  0.0044363272530086725,
-                               0.003767161464773241,   0.003402003378050937,
-                               0.000603348284271059,   0.0009794742889466218,
-                               0.0011372229504993392,  0.002682342423093155,
-                               0.0029350349015327634,  0.005651511771468744,
-                               0.007158242634833795,   0.006463011725059148,
-                               0.003140798290445832,   0.0023509684970529836,
-                               0.0009152534380744139,  0.0019109402735475102,
-                               0.0009599402787344589,  0.0013212839615816257,
-                               0.00016781085573320113};
+      std::vector<T> w = {8.586495068552472e-05,  0.001900966334207759,
+                          0.0014222168338437478,  0.0038920643661654237,
+                          0.0004232750726644445,  0.0036934559174571445,
+                          0.005376425482716406,   0.007798045662912898,
+                          0.006202479514073004,   0.00745727538134288,
+                          0.0013956590598703843,  8.586495068552472e-05,
+                          0.001900966334207759,   0.0014222168338437478,
+                          0.0038920643661654237,  0.0004232750726644445,
+                          0.0036934559174571445,  0.005376425482716406,
+                          0.007798045662912898,   0.006202479514073004,
+                          0.00745727538134288,    0.0013956590598703843,
+                          8.586495068552472e-05,  0.001900966334207759,
+                          0.0014222168338437478,  0.0038920643661654237,
+                          0.0004232750726644445,  0.0036934559174571445,
+                          0.005376425482716406,   0.007798045662912898,
+                          0.006202479514073004,   0.00745727538134288,
+                          0.0013956590598703843,  0.002107379231956217,
+                          0.0029624613725460075,  0.0029721100922122435,
+                          0.003438592193767963,   0.0020462494841735996,
+                          0.0044363272530086725,  0.003767161464773241,
+                          0.003402003378050937,   0.000603348284271059,
+                          0.0009794742889466218,  0.0011372229504993392,
+                          0.002682342423093155,   0.0029350349015327634,
+                          0.005651511771468744,   0.007158242634833795,
+                          0.006463011725059148,   0.003140798290445832,
+                          0.0023509684970529836,  0.0009152534380744139,
+                          0.0019109402735475102,  0.0009599402787344589,
+                          0.0013212839615816257,  0.00016781085573320113,
+                          0.002107379231956217,   0.0029624613725460075,
+                          0.0029721100922122435,  0.003438592193767963,
+                          0.0020462494841735996,  0.0044363272530086725,
+                          0.003767161464773241,   0.003402003378050937,
+                          0.000603348284271059,   0.0009794742889466218,
+                          0.0011372229504993392,  0.002682342423093155,
+                          0.0029350349015327634,  0.005651511771468744,
+                          0.007158242634833795,   0.006463011725059148,
+                          0.003140798290445832,   0.0023509684970529836,
+                          0.0009152534380744139,  0.0019109402735475102,
+                          0.0009599402787344589,  0.0013212839615816257,
+                          0.00016781085573320113, 0.002107379231956217,
+                          0.0029624613725460075,  0.0029721100922122435,
+                          0.003438592193767963,   0.0020462494841735996,
+                          0.0044363272530086725,  0.003767161464773241,
+                          0.003402003378050937,   0.000603348284271059,
+                          0.0009794742889466218,  0.0011372229504993392,
+                          0.002682342423093155,   0.0029350349015327634,
+                          0.005651511771468744,   0.007158242634833795,
+                          0.006463011725059148,   0.003140798290445832,
+                          0.0023509684970529836,  0.0009152534380744139,
+                          0.0019109402735475102,  0.0009599402787344589,
+                          0.0013212839615816257,  0.00016781085573320113,
+                          0.002107379231956217,   0.0029624613725460075,
+                          0.0029721100922122435,  0.003438592193767963,
+                          0.0020462494841735996,  0.0044363272530086725,
+                          0.003767161464773241,   0.003402003378050937,
+                          0.000603348284271059,   0.0009794742889466218,
+                          0.0011372229504993392,  0.002682342423093155,
+                          0.0029350349015327634,  0.005651511771468744,
+                          0.007158242634833795,   0.006463011725059148,
+                          0.003140798290445832,   0.0023509684970529836,
+                          0.0009152534380744139,  0.0019109402735475102,
+                          0.0009599402787344589,  0.0013212839615816257,
+                          0.00016781085573320113, 0.002107379231956217,
+                          0.0029624613725460075,  0.0029721100922122435,
+                          0.003438592193767963,   0.0020462494841735996,
+                          0.0044363272530086725,  0.003767161464773241,
+                          0.003402003378050937,   0.000603348284271059,
+                          0.0009794742889466218,  0.0011372229504993392,
+                          0.002682342423093155,   0.0029350349015327634,
+                          0.005651511771468744,   0.007158242634833795,
+                          0.006463011725059148,   0.003140798290445832,
+                          0.0023509684970529836,  0.0009152534380744139,
+                          0.0019109402735475102,  0.0009599402787344589,
+                          0.0013212839615816257,  0.00016781085573320113,
+                          0.002107379231956217,   0.0029624613725460075,
+                          0.0029721100922122435,  0.003438592193767963,
+                          0.0020462494841735996,  0.0044363272530086725,
+                          0.003767161464773241,   0.003402003378050937,
+                          0.000603348284271059,   0.0009794742889466218,
+                          0.0011372229504993392,  0.002682342423093155,
+                          0.0029350349015327634,  0.005651511771468744,
+                          0.007158242634833795,   0.006463011725059148,
+                          0.003140798290445832,   0.0023509684970529836,
+                          0.0009152534380744139,  0.0019109402735475102,
+                          0.0009599402787344589,  0.0013212839615816257,
+                          0.00016781085573320113};
       return {std::move(x), std::move(w)};
     }
     else
-    {
       throw std::runtime_error("Xiao-Gimbutas not implemented for this order.");
-    }
   }
   else if (celltype == cell::type::tetrahedron)
   {
     if (m == 1)
     {
       // Xiao Gimbutas, 4 points, degree 1
-      std::vector<double> x = {0.25, 0.25, 0.25};
-      std::vector<double> w = {0.16666666666666666};
+      std::vector<T> x = {0.25, 0.25, 0.25};
+      std::vector<T> w = {0.16666666666666666};
       return {std::move(x), std::move(w)};
     }
     else if (m == 2)
     {
       // Xiao Gimbutas, 4 points, degree 2
-      std::vector<double> x
+      std::vector<T> x
           = {0.1236668003284584,    0.8215725409676198, 0.03993304864149842,
              0.4574615870855955,    0.155933120499186,  0.3817653560693467,
              0.3653145188146345,    0.1800296935103654, 0.006923235573627467,
              0.0003755150287292757, 0.2160764291848478, 0.4307017070778361};
-      std::vector<double> w = {0.016934591412496782, 0.04646292944776137,
-                               0.050086823222829334, 0.05318232258357918};
+      std::vector<T> w = {0.016934591412496782, 0.04646292944776137,
+                          0.050086823222829334, 0.05318232258357918};
       return {std::move(x), std::move(w)};
     }
     else if (m == 3)
     {
       // Xiao Gimbutas, 4 points, degree 3
-      std::vector<double> x
+      std::vector<T> x
           = {0.6414297914956963,  0.1620014916985245,  0.1838503504920977,
              0.3454441557197307,  0.01090521221118924, 0.2815238021235462,
              0.439858947649275,   0.1901170024392839,  0.01140332944455717,
              0.03787163178235702, 0.170816925164989,   0.1528181430909273,
              0.1248048621652472,  0.1586851632274406,  0.5856628056552158,
              0.1414827519695045,  0.5712260521491151,  0.1469183900871696};
-      std::vector<double> w
+      std::vector<T> w
           = {0.020387000459557516, 0.021344402118457815, 0.022094671190740867,
              0.0234374016100672,   0.0374025278195929,   0.042000663468250383};
       return {std::move(x), std::move(w)};
@@ -3123,7 +3138,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 4)
     {
       // Xiao Gimbutas, 4 points, degree 4
-      std::vector<double> x
+      std::vector<T> x
           = {0.1746940586972306,  0.04049050672759043, 0.01356070187980288,
              0.08140491840285925, 0.752508507009655,   0.06809937093820666,
              0.7412288820936226,  0.0672232948933834,  0.03518392977359872,
@@ -3135,7 +3150,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.3292329597426469,  0.02956949520647961, 0.3179035602133946,
              0.1038441164109932,  0.4327102390477686,  0.3538232392092971,
              0.3044484024344968,  0.2402766649280726,  0.126801725915392};
-      std::vector<double> w
+      std::vector<T> w
           = {0.006541848487473326, 0.009212228192656149, 0.009232299811929395,
              0.009988864191093254, 0.011578327656272562, 0.012693785874259726,
              0.013237780011337552, 0.01774467235924835,  0.018372372071416284,
@@ -3145,7 +3160,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 5)
     {
       // Xiao Gimbutas, 4 points, degree 5
-      std::vector<double> x
+      std::vector<T> x
           = {0.4544962958743503,  0.4544962958743504,  0.04550370412564962,
              0.04550370412564967, 0.4544962958743504,  0.4544962958743504,
              0.04550370412564973, 0.4544962958743503,  0.04550370412564969,
@@ -3160,7 +3175,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.06734224221009824, 0.3108859192633006,  0.3108859192633007,
              0.3108859192633006,  0.3108859192633007,  0.3108859192633006,
              0.3108859192633006,  0.3108859192633007,  0.06734224221009814};
-      std::vector<double> w
+      std::vector<T> w
           = {0.0070910034628469025, 0.007091003462846909, 0.007091003462846909,
              0.007091003462846912,  0.007091003462846912, 0.0070910034628469155,
              0.012248840519393652,  0.012248840519393652, 0.012248840519393655,
@@ -3171,7 +3186,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 6)
     {
       // Xiao Gimbutas, 4 points, degree 6
-      std::vector<double> x
+      std::vector<T> x
           = {0.02431897424814286,  0.03883608434488445,  0.9029287990136113,
              0.02286582381402311,  0.9037700013321819,   0.02933572108317866,
              0.008781957777518898, 0.0405760510668179,   0.08860035046891021,
@@ -3195,7 +3210,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.1521038113099309,   0.1246499636374863,   0.201234567364421,
              0.3041692653497818,   0.3191942803489312,   0.04438334435720821,
              0.2558207842649862,   0.2794200529459882,   0.269569929633272};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.0011826324752765881, 0.001206879481977829,  0.0017372226206159916,
           0.0026542465308339587, 0.0037609445463571384, 0.0040385478129073915,
           0.00425072071117374,   0.005251568313784406,  0.006619016274847046,
@@ -3209,7 +3224,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 7)
     {
       // Xiao Gimbutas, 4 points, degree 7
-      std::vector<double> x
+      std::vector<T> x
           = {0.001996825818299818,  0.01920799348858535,  0.6513348958482376,
              0.06092218458545083,   0.3234568417895977,   0.6151709883118704,
              0.0005004334442718418, 0.6355215105837613,   0.0598944722319085,
@@ -3241,7 +3256,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.2175544442163533,    0.2521305306293954,   0.4487392553835752,
              0.4372480897645487,    0.1098959763270211,   0.2765716827388576,
              0.2188126225475045,    0.176438223014948,    0.1757661102664513};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.0012846968603334146, 0.002000632031369977,  0.002085684575720105,
           0.002783666843940815,  0.0030095129140263084, 0.0032004686326964665,
           0.0034317247720467565, 0.003452013693960475,  0.0034787841936317,
@@ -3258,7 +3273,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 8)
     {
       // Xiao Gimbutas, 4 points, degree 8
-      std::vector<double> x
+      std::vector<T> x
           = {0.0009718783690150193, 0.9573816260583027,   0.01600798423129822,
              0.01760715612687848,   0.008855594278705747, 0.9485639297990048,
              0.9408082028316022,    0.0300522477759322,   0.006719678822153188,
@@ -3303,7 +3318,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.1646955059003284,    0.2495207660799524,   0.249905550725755,
              0.4118962036484124,    0.1582590933458902,   0.2073917351406235,
              0.2003307068778031,    0.2274620499867547,   0.4489545286636978};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.0002523242325191773, 0.000290863922550942,  0.00034651409450314665,
           0.0004244834198904958, 0.0011495713860626099, 0.0012535250586434693,
           0.0016460861324811202, 0.0016881535417914368, 0.00197757011617887,
@@ -3324,7 +3339,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 9)
     {
       // Xiao Gimbutas, 4 points, degree 9
-      std::vector<double> x
+      std::vector<T> x
           = {0.006891366839295159, 0.7203807203359198,  0.2440786635406753,
              0.1555789083027259,   0.7830238380676567,  0.03722731406074435,
              0.8847735952623145,   0.03746715582104113, 0.04313984945003826,
@@ -3382,7 +3397,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.2709662131081065,   0.3336191905680228,  0.1998230301014543,
              0.3787443941211687,   0.143482922419707,   0.3469408062547597,
              0.1819772234774806,   0.1650628409073057,  0.3092464405790883};
-      std::vector<double> w = {
+      std::vector<T> w = {
           0.0007162016044045418, 0.0009077771144629987, 0.0009168420416400242,
           0.0009750266138313078, 0.0011001900925731798, 0.0011235667369375677,
           0.001171941882444346,  0.0011744621157262513, 0.0011822813558184364,
@@ -3407,7 +3422,7 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
     else if (m == 10)
     {
       // Xiao Gimbutas, 4 points, degree 10
-      std::vector<double> x
+      std::vector<T> x
           = {0.004844889527768171, 0.004844889527573282, 0.9854653314167374,
              0.946719848292354,    0.006667080448351054, 0.00806750556190488,
              0.006667080448658992, 0.03854556569737443,  0.008067505561779886,
@@ -3482,49 +3497,49 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.3395130626209017,   0.1286811682481305,   0.4110926574949583,
              0.1286811682481935,   0.1207131116358556,   0.4110926574950111,
              0.2570719807624278,   0.2570719807625507,   0.2287840577124626};
-      std::vector<double> w = {6.365271938318e-05,     0.00013168318579095435,
-                               0.00013168318579197532, 0.00013168318579277535,
-                               0.0002820943065241142,  0.0002820943065245265,
-                               0.0002820943065259753,  0.0010231923733042463,
-                               0.0010231923733075212,  0.0010231923733079599,
-                               0.0011033909837475048,  0.0011033909837480274,
-                               0.0011033909837487538,  0.00116416016749959,
-                               0.0011641601675003968,  0.0011641601675006052,
-                               0.001191461909106609,   0.0011914619091069783,
-                               0.0011914619091077897,  0.001368674554135069,
-                               0.0013686745541369087,  0.0013686745541372192,
-                               0.001522996656033314,   0.00152299665603406,
-                               0.0015229966560349054,  0.0016958310152239383,
-                               0.0016958310152242648,  0.00169583101522512,
-                               0.0018736985584823533,  0.0018736985584836066,
-                               0.0018736985584844332,  0.0018987030975030218,
-                               0.0018987030975037966,  0.0018987030975040383,
-                               0.0019028288945829631,  0.0019591843153447786,
-                               0.001969493864818562,   0.001969493864819973,
-                               0.001969493864825328,   0.002064660777657845,
-                               0.0020646607776616814,  0.0020646607776622417,
-                               0.002083913166714165,   0.002083913166715285,
-                               0.0020839131667166597,  0.002094685984369893,
-                               0.002094685984373115,   0.002094685984375275,
-                               0.00219141969443908,    0.0021914196944394283,
-                               0.002191419694440678,   0.002284450780288395,
-                               0.0022844507802891865,  0.002284450780289795,
-                               0.0027774049091755302,  0.00277740490917618,
-                               0.0027774049091794984,  0.003445098889335028,
-                               0.0034450988893415164,  0.0034450988893420715,
-                               0.004234512641858648,   0.004234512641859507,
-                               0.004234512641860643,   0.004471157472950426,
-                               0.004471157472951478,   0.004471157472952013,
-                               0.0045538831991611866,  0.004553883199161758,
-                               0.004553883199163369,   0.004651927948037353,
-                               0.004682093742486137,   0.004682093742490215,
-                               0.004682093742491071,   0.0077630869974032015};
+      std::vector<T> w = {6.365271938318e-05,     0.00013168318579095435,
+                          0.00013168318579197532, 0.00013168318579277535,
+                          0.0002820943065241142,  0.0002820943065245265,
+                          0.0002820943065259753,  0.0010231923733042463,
+                          0.0010231923733075212,  0.0010231923733079599,
+                          0.0011033909837475048,  0.0011033909837480274,
+                          0.0011033909837487538,  0.00116416016749959,
+                          0.0011641601675003968,  0.0011641601675006052,
+                          0.001191461909106609,   0.0011914619091069783,
+                          0.0011914619091077897,  0.001368674554135069,
+                          0.0013686745541369087,  0.0013686745541372192,
+                          0.001522996656033314,   0.00152299665603406,
+                          0.0015229966560349054,  0.0016958310152239383,
+                          0.0016958310152242648,  0.00169583101522512,
+                          0.0018736985584823533,  0.0018736985584836066,
+                          0.0018736985584844332,  0.0018987030975030218,
+                          0.0018987030975037966,  0.0018987030975040383,
+                          0.0019028288945829631,  0.0019591843153447786,
+                          0.001969493864818562,   0.001969493864819973,
+                          0.001969493864825328,   0.002064660777657845,
+                          0.0020646607776616814,  0.0020646607776622417,
+                          0.002083913166714165,   0.002083913166715285,
+                          0.0020839131667166597,  0.002094685984369893,
+                          0.002094685984373115,   0.002094685984375275,
+                          0.00219141969443908,    0.0021914196944394283,
+                          0.002191419694440678,   0.002284450780288395,
+                          0.0022844507802891865,  0.002284450780289795,
+                          0.0027774049091755302,  0.00277740490917618,
+                          0.0027774049091794984,  0.003445098889335028,
+                          0.0034450988893415164,  0.0034450988893420715,
+                          0.004234512641858648,   0.004234512641859507,
+                          0.004234512641860643,   0.004471157472950426,
+                          0.004471157472951478,   0.004471157472952013,
+                          0.0045538831991611866,  0.004553883199161758,
+                          0.004553883199163369,   0.004651927948037353,
+                          0.004682093742486137,   0.004682093742490215,
+                          0.004682093742491071,   0.0077630869974032015};
       return {std::move(x), std::move(w)};
     }
     else if (m == 11)
     {
       // Xiao Gimbutas, 4 points, degree 11
-      std::vector<double> x
+      std::vector<T> x
           = {0.02174356161974667,  0.02174356162123492,  0.9347693151393625,
              0.01214887718924207,  0.4733927262830146,   0.5068373557636653,
              0.473392726282396,    0.007621040764793446, 0.5068373557636205,
@@ -3620,60 +3635,60 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.3107744236696469,   0.3006898038543989,   0.2609901451144841,
              0.3006898038549698,   0.1275456273614465,   0.260990145113821,
              0.296008469913471,    0.2960084699134847,   0.1119745902596869};
-      std::vector<double> w = {0.00018520507764804083, 0.00024392157838708066,
-                               0.000243921578397049,   0.000243921578397797,
-                               0.0004426544798853663,  0.00044265447988711795,
-                               0.000442654479888878,   0.00046562748965273685,
-                               0.00046562748965351384, 0.00046562748965519116,
-                               0.000527992042630873,   0.000527992042630885,
-                               0.000527992042634342,   0.0005450543594569904,
-                               0.000545054359463543,   0.0005450543594640881,
-                               0.0007232685232691291,  0.0007232685232705268,
-                               0.0007232685232867013,  0.000852258543339523,
-                               0.0008522585433631999,  0.0008522585433649738,
-                               0.0008570829478892283,  0.0008570829478907689,
-                               0.0008570829479115868,  0.001012842250592951,
-                               0.001012842250593049,   0.0010128422505964068,
-                               0.0010128681282489697,  0.0010128681282520911,
-                               0.001012868128252403,   0.0010556629969665655,
-                               0.001055662996989173,   0.001055662996989902,
-                               0.0010621542172256188,  0.0010621542172265183,
-                               0.0010621542172285483,  0.0011697598043711175,
-                               0.0011697598043717676,  0.0011697598043740865,
-                               0.0012002940734976602,  0.001200294073497819,
-                               0.0012002940735026382,  0.001204257126245662,
-                               0.0012042571262564923,  0.0012042571262568921,
-                               0.001384148614025617,   0.001384148614025973,
-                               0.001384148614030434,   0.0015051557681943553,
-                               0.0015051557681955198,  0.0015051557682016624,
-                               0.0016274985904939964,  0.0016274985904981987,
-                               0.0016274985905059345,  0.0018737072129849982,
-                               0.00187370721298583,    0.0018737072129913232,
-                               0.00193958466403963,    0.0019496326390221017,
-                               0.0019496326390307033,  0.0019496326390484552,
-                               0.00207150412472298,    0.0020715041247248048,
-                               0.002071504124725327,   0.0021498066057806515,
-                               0.002149806605781448,   0.0021498066057846865,
-                               0.00253409922583179,    0.00253409922583231,
-                               0.002534099225833395,   0.0025971204712147886,
-                               0.002597120471219267,   0.002597120471221267,
-                               0.0028928877153485666,  0.002892887715353863,
-                               0.00289288771535987,    0.0029018056586740813,
-                               0.0029018056586777047,  0.002901805658680232,
-                               0.0029993712524892485,  0.003281967182103737,
-                               0.0032819671821101765,  0.0032819671821297963,
-                               0.0033417252382084,     0.0033417252382101736,
-                               0.0033417252382157863,  0.0036081871202086548,
-                               0.0036081871202103036,  0.0036081871202163014,
-                               0.00450476478426666,    0.004597380383431189,
-                               0.0045973803834320915,  0.00459738038343333,
-                               0.004960765552103523};
+      std::vector<T> w = {0.00018520507764804083, 0.00024392157838708066,
+                          0.000243921578397049,   0.000243921578397797,
+                          0.0004426544798853663,  0.00044265447988711795,
+                          0.000442654479888878,   0.00046562748965273685,
+                          0.00046562748965351384, 0.00046562748965519116,
+                          0.000527992042630873,   0.000527992042630885,
+                          0.000527992042634342,   0.0005450543594569904,
+                          0.000545054359463543,   0.0005450543594640881,
+                          0.0007232685232691291,  0.0007232685232705268,
+                          0.0007232685232867013,  0.000852258543339523,
+                          0.0008522585433631999,  0.0008522585433649738,
+                          0.0008570829478892283,  0.0008570829478907689,
+                          0.0008570829479115868,  0.001012842250592951,
+                          0.001012842250593049,   0.0010128422505964068,
+                          0.0010128681282489697,  0.0010128681282520911,
+                          0.001012868128252403,   0.0010556629969665655,
+                          0.001055662996989173,   0.001055662996989902,
+                          0.0010621542172256188,  0.0010621542172265183,
+                          0.0010621542172285483,  0.0011697598043711175,
+                          0.0011697598043717676,  0.0011697598043740865,
+                          0.0012002940734976602,  0.001200294073497819,
+                          0.0012002940735026382,  0.001204257126245662,
+                          0.0012042571262564923,  0.0012042571262568921,
+                          0.001384148614025617,   0.001384148614025973,
+                          0.001384148614030434,   0.0015051557681943553,
+                          0.0015051557681955198,  0.0015051557682016624,
+                          0.0016274985904939964,  0.0016274985904981987,
+                          0.0016274985905059345,  0.0018737072129849982,
+                          0.00187370721298583,    0.0018737072129913232,
+                          0.00193958466403963,    0.0019496326390221017,
+                          0.0019496326390307033,  0.0019496326390484552,
+                          0.00207150412472298,    0.0020715041247248048,
+                          0.002071504124725327,   0.0021498066057806515,
+                          0.002149806605781448,   0.0021498066057846865,
+                          0.00253409922583179,    0.00253409922583231,
+                          0.002534099225833395,   0.0025971204712147886,
+                          0.002597120471219267,   0.002597120471221267,
+                          0.0028928877153485666,  0.002892887715353863,
+                          0.00289288771535987,    0.0029018056586740813,
+                          0.0029018056586777047,  0.002901805658680232,
+                          0.0029993712524892485,  0.003281967182103737,
+                          0.0032819671821101765,  0.0032819671821297963,
+                          0.0033417252382084,     0.0033417252382101736,
+                          0.0033417252382157863,  0.0036081871202086548,
+                          0.0036081871202103036,  0.0036081871202163014,
+                          0.00450476478426666,    0.004597380383431189,
+                          0.0045973803834320915,  0.00459738038343333,
+                          0.004960765552103523};
       return {std::move(x), std::move(w)};
     }
     else if (m == 12)
     {
       // Xiao Gimbutas, 4 points, degree 12
-      std::vector<double> x
+      std::vector<T> x
           = {0.005336077019643312, 0.00533607701965122,  0.9839917689410563,
              0.02289609338296681,  0.9546184848667337,   0.01790586600742269,
              0.004579555742875841, 0.0228960933829682,   0.0179058660074233,
@@ -3796,73 +3811,73 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.231647695217251,    0.1341799864280973,   0.1266237132343931,
              0.3053295843360563,   0.305329584336061,    0.08401124699181982,
              0.2482123715562289,   0.2482123715562241,   0.2553628853313281};
-      std::vector<double> w = {3.336665703934045e-05,  8.429047994003496e-05,
-                               8.42904799400373e-05,   8.429047994005044e-05,
-                               0.0002149093453616615,  0.000214909345361668,
-                               0.00021490934536169885, 0.0003477168822065943,
-                               0.0003477168822067472,  0.00034771688220676085,
-                               0.00034938896941761667, 0.0003493889694176177,
-                               0.00034938896941761986, 0.00036951072812999795,
-                               0.00036951072813002267, 0.00036951072813010886,
-                               0.00043580724293473854, 0.0004358072429347666,
-                               0.00043580724293479047, 0.0004693930811221192,
-                               0.00046939308112213947, 0.000469393081122183,
-                               0.00047266648548842713, 0.0004726664854884277,
-                               0.00047266648548845966, 0.0005211217875707378,
-                               0.0005211217875707438,  0.0005211217875707549,
-                               0.0005256622670893608,  0.0005256622670894092,
-                               0.0005256622670894917,  0.0005271978638527369,
-                               0.0005271978638527777,  0.0005271978638527842,
-                               0.0005369300725478063,  0.0005369300725478469,
-                               0.000536930072547865,   0.0005566045279494747,
-                               0.0005566045279495304,  0.000556604527949537,
-                               0.0006129569463521267,  0.0006129569463521502,
-                               0.0006129569463521515,  0.0007008690706483745,
-                               0.0007008690706484037,  0.0007008690706485162,
-                               0.0008238259069470653,  0.0008887153590631331,
-                               0.0008887153590632215,  0.0008887153590632422,
-                               0.0010498461857128857,  0.0010498461857129228,
-                               0.0010498461857129625,  0.0012296728163221301,
-                               0.0012296728163221822,  0.0012296728163222826,
-                               0.0012860526386169384,  0.0012860526386169403,
-                               0.0012860526386169514,  0.0013011726613118815,
-                               0.0013011726613120303,  0.0013011726613120442,
-                               0.0013077514257282738,  0.0013077514257283426,
-                               0.0013077514257283478,  0.001333432670675809,
-                               0.0013334326706758266,  0.001333432670675831,
-                               0.0013859680589182145,  0.0013859680589182338,
-                               0.0013859680589183101,  0.0014030871341772979,
-                               0.0014030871341773462,  0.0014030871341773807,
-                               0.0014306258422900732,  0.0014306258422900986,
-                               0.0014306258422901264,  0.0014481262251185862,
-                               0.0014481262251186703,  0.0014481262251187074,
-                               0.0015201310181193032,  0.0015201310181193215,
-                               0.001520131018119335,   0.0018509975122165715,
-                               0.0018566467954329133,  0.0018566467954329567,
-                               0.00185664679543301,    0.0019099333823615115,
-                               0.0019099333823615501,  0.001909933382361565,
-                               0.001925296724080295,   0.0019252967240803384,
-                               0.0019252967240803549,  0.0019506389267458684,
-                               0.0019506389267458799,  0.00195063892674594,
-                               0.001981330865268667,   0.001981330865268715,
-                               0.0019813308652687485,  0.00202612293640226,
-                               0.0020261229364022834,  0.0020261229364023216,
-                               0.0021899086547603466,  0.002189908654760405,
-                               0.0021899086547604815,  0.0025877797901108766,
-                               0.0025877797901111468,  0.0025877797901113883,
-                               0.0028180784812232604,  0.0028180784812233983,
-                               0.0028180784812235748,  0.0031305630728214965,
-                               0.0031305630728215637,  0.0031305630728215767,
-                               0.003251426805132802,   0.003251426805132915,
-                               0.0032514268051329347,  0.003658706854740727,
-                               0.0036587068547407633,  0.003658706854740793,
-                               0.004252858800216373,   0.0049174945629996405};
+      std::vector<T> w = {3.336665703934045e-05,  8.429047994003496e-05,
+                          8.42904799400373e-05,   8.429047994005044e-05,
+                          0.0002149093453616615,  0.000214909345361668,
+                          0.00021490934536169885, 0.0003477168822065943,
+                          0.0003477168822067472,  0.00034771688220676085,
+                          0.00034938896941761667, 0.0003493889694176177,
+                          0.00034938896941761986, 0.00036951072812999795,
+                          0.00036951072813002267, 0.00036951072813010886,
+                          0.00043580724293473854, 0.0004358072429347666,
+                          0.00043580724293479047, 0.0004693930811221192,
+                          0.00046939308112213947, 0.000469393081122183,
+                          0.00047266648548842713, 0.0004726664854884277,
+                          0.00047266648548845966, 0.0005211217875707378,
+                          0.0005211217875707438,  0.0005211217875707549,
+                          0.0005256622670893608,  0.0005256622670894092,
+                          0.0005256622670894917,  0.0005271978638527369,
+                          0.0005271978638527777,  0.0005271978638527842,
+                          0.0005369300725478063,  0.0005369300725478469,
+                          0.000536930072547865,   0.0005566045279494747,
+                          0.0005566045279495304,  0.000556604527949537,
+                          0.0006129569463521267,  0.0006129569463521502,
+                          0.0006129569463521515,  0.0007008690706483745,
+                          0.0007008690706484037,  0.0007008690706485162,
+                          0.0008238259069470653,  0.0008887153590631331,
+                          0.0008887153590632215,  0.0008887153590632422,
+                          0.0010498461857128857,  0.0010498461857129228,
+                          0.0010498461857129625,  0.0012296728163221301,
+                          0.0012296728163221822,  0.0012296728163222826,
+                          0.0012860526386169384,  0.0012860526386169403,
+                          0.0012860526386169514,  0.0013011726613118815,
+                          0.0013011726613120303,  0.0013011726613120442,
+                          0.0013077514257282738,  0.0013077514257283426,
+                          0.0013077514257283478,  0.001333432670675809,
+                          0.0013334326706758266,  0.001333432670675831,
+                          0.0013859680589182145,  0.0013859680589182338,
+                          0.0013859680589183101,  0.0014030871341772979,
+                          0.0014030871341773462,  0.0014030871341773807,
+                          0.0014306258422900732,  0.0014306258422900986,
+                          0.0014306258422901264,  0.0014481262251185862,
+                          0.0014481262251186703,  0.0014481262251187074,
+                          0.0015201310181193032,  0.0015201310181193215,
+                          0.001520131018119335,   0.0018509975122165715,
+                          0.0018566467954329133,  0.0018566467954329567,
+                          0.00185664679543301,    0.0019099333823615115,
+                          0.0019099333823615501,  0.001909933382361565,
+                          0.001925296724080295,   0.0019252967240803384,
+                          0.0019252967240803549,  0.0019506389267458684,
+                          0.0019506389267458799,  0.00195063892674594,
+                          0.001981330865268667,   0.001981330865268715,
+                          0.0019813308652687485,  0.00202612293640226,
+                          0.0020261229364022834,  0.0020261229364023216,
+                          0.0021899086547603466,  0.002189908654760405,
+                          0.0021899086547604815,  0.0025877797901108766,
+                          0.0025877797901111468,  0.0025877797901113883,
+                          0.0028180784812232604,  0.0028180784812233983,
+                          0.0028180784812235748,  0.0031305630728214965,
+                          0.0031305630728215637,  0.0031305630728215767,
+                          0.003251426805132802,   0.003251426805132915,
+                          0.0032514268051329347,  0.003658706854740727,
+                          0.0036587068547407633,  0.003658706854740793,
+                          0.004252858800216373,   0.0049174945629996405};
       return {std::move(x), std::move(w)};
     }
     else if (m == 13)
     {
       // Xiao Gimbutas, 4 points, degree 13
-      std::vector<double> x
+      std::vector<T> x
           = {0.01034510725658796,  0.01034510725652366,  0.9689646782302881,
              0.9412811493523093,   0.008913012362466612, 0.03023687451099998,
              0.008913012362483565, 0.01956896377423934,  0.03023687451100695,
@@ -4009,85 +4024,85 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.4002127949623002,   0.1108495022995989,   0.3263197105354845,
              0.1626179922025704,   0.4002127949623043,   0.326319710535522,
              0.2505588869395824,   0.2505588869395491,   0.2483233391813068};
-      std::vector<double> w = {4.134324458614672e-05,  0.00010841532703717533,
-                               0.00010841532703736251, 0.00010841532703751804,
-                               0.00021516249282564702, 0.00021516249282587435,
-                               0.00021516249282610783, 0.00022347525797821485,
-                               0.0002234752579784065,  0.00022347525797851097,
-                               0.00023853469157155934, 0.00023853469157180234,
-                               0.00023853469157185316, 0.00033613166424808783,
-                               0.0003361316642481367,  0.00033613166424835715,
-                               0.0003480651020245443,  0.0003480651020245613,
-                               0.00034806510202475897, 0.00035512259072977237,
-                               0.00035512259073010164, 0.0003551225907301965,
-                               0.00035608395080367433, 0.0003560839508037468,
-                               0.00035608395080396967, 0.0003691445658330918,
-                               0.0003691445658331333,  0.000369144565833457,
-                               0.000371173748022265,   0.0003711737480225677,
-                               0.00037117374802262765, 0.00040213122869147067,
-                               0.000402131228691888,   0.00040213122869227303,
-                               0.0004154352296915045,  0.000415435229691703,
-                               0.0004154352296917142,  0.000426698597924656,
-                               0.0004266985979252545,  0.0004266985979257583,
-                               0.0004530237838723606,  0.0004530237838724362,
-                               0.0004530237838729462,  0.0005183573574952897,
-                               0.0005183573574953276,  0.0005183573574954048,
-                               0.0005341727061933349,  0.0005341727061939642,
-                               0.0005341727061944354,  0.0006550908587339017,
-                               0.0006550908587343363,  0.0006550908587344126,
-                               0.0006619235298199111,  0.0006619235298200495,
-                               0.0006619235298204403,  0.0006904621960691755,
-                               0.0006904621960692998,  0.0006904621960698748,
-                               0.0007517374404992122,  0.0007517374404998534,
-                               0.0007517374404998906,  0.0007731049469574419,
-                               0.0007731049469581392,  0.0007731049469581534,
-                               0.0007934548044526308,  0.0007934548044530055,
-                               0.0007934548044531542,  0.0008002620463692416,
-                               0.000800262046369655,   0.0008002620463703901,
-                               0.0008144758584702261,  0.0008144758584703776,
-                               0.0008144758584716199,  0.0009212791124099626,
-                               0.0009212791124102366,  0.0009212791124106396,
-                               0.0009317064412002208,  0.0009317064412010393,
-                               0.0009317064412011602,  0.000938800900399439,
-                               0.0009388009003994993,  0.0009388009003998087,
-                               0.0011277704236273554,  0.0011277704236277617,
-                               0.0011277704236277934,  0.0011558578573166221,
-                               0.001155857857316737,   0.0011558578573169188,
-                               0.001177874388273861,   0.001177874388275692,
-                               0.0011778743882767226,  0.00126388507718553,
-                               0.0012638850771856667,  0.001263885077185743,
-                               0.00130986012194251,    0.0013098601219425701,
-                               0.0013098601219427271,  0.0013824952238897048,
-                               0.0013824952238897677,  0.0013824952238899353,
-                               0.0014385650798460579,  0.0015235584390117577,
-                               0.0015235584390132365,  0.001523558439014583,
-                               0.001553388089457361,   0.001553388089457734,
-                               0.0015533880894588244,  0.0015785619534530034,
-                               0.0015785619534532253,  0.0015785619534532372,
-                               0.0016097788682893919,  0.001609778868289749,
-                               0.0016097788682897544,  0.0016802161392982585,
-                               0.00168021613929846,    0.0016802161392987117,
-                               0.0017764529129038432,  0.00177645291290503,
-                               0.0017764529129061567,  0.0018087386127984568,
-                               0.0018087386127986667,  0.0018087386127988634,
-                               0.0019104583647188483,  0.0019104583647194969,
-                               0.00191045836472014,    0.0021274466568828383,
-                               0.00212744665688324,    0.002127446656884127,
-                               0.0023400227806175985,  0.00256011618791495,
-                               0.0025601161879153333,  0.0025601161879153585,
-                               0.00257113625207729,    0.0025711362520778134,
-                               0.0025711362520780268,  0.002834280437245222,
-                               0.002961688555453913,   0.002961688555454135,
-                               0.002961688555454362,   0.0031167609951133716,
-                               0.003116760995113398,   0.0031167609951139037,
-                               0.003303366568208123,   0.00330336656820916,
-                               0.0033033665682094884,  0.004303940769897278};
+      std::vector<T> w = {4.134324458614672e-05,  0.00010841532703717533,
+                          0.00010841532703736251, 0.00010841532703751804,
+                          0.00021516249282564702, 0.00021516249282587435,
+                          0.00021516249282610783, 0.00022347525797821485,
+                          0.0002234752579784065,  0.00022347525797851097,
+                          0.00023853469157155934, 0.00023853469157180234,
+                          0.00023853469157185316, 0.00033613166424808783,
+                          0.0003361316642481367,  0.00033613166424835715,
+                          0.0003480651020245443,  0.0003480651020245613,
+                          0.00034806510202475897, 0.00035512259072977237,
+                          0.00035512259073010164, 0.0003551225907301965,
+                          0.00035608395080367433, 0.0003560839508037468,
+                          0.00035608395080396967, 0.0003691445658330918,
+                          0.0003691445658331333,  0.000369144565833457,
+                          0.000371173748022265,   0.0003711737480225677,
+                          0.00037117374802262765, 0.00040213122869147067,
+                          0.000402131228691888,   0.00040213122869227303,
+                          0.0004154352296915045,  0.000415435229691703,
+                          0.0004154352296917142,  0.000426698597924656,
+                          0.0004266985979252545,  0.0004266985979257583,
+                          0.0004530237838723606,  0.0004530237838724362,
+                          0.0004530237838729462,  0.0005183573574952897,
+                          0.0005183573574953276,  0.0005183573574954048,
+                          0.0005341727061933349,  0.0005341727061939642,
+                          0.0005341727061944354,  0.0006550908587339017,
+                          0.0006550908587343363,  0.0006550908587344126,
+                          0.0006619235298199111,  0.0006619235298200495,
+                          0.0006619235298204403,  0.0006904621960691755,
+                          0.0006904621960692998,  0.0006904621960698748,
+                          0.0007517374404992122,  0.0007517374404998534,
+                          0.0007517374404998906,  0.0007731049469574419,
+                          0.0007731049469581392,  0.0007731049469581534,
+                          0.0007934548044526308,  0.0007934548044530055,
+                          0.0007934548044531542,  0.0008002620463692416,
+                          0.000800262046369655,   0.0008002620463703901,
+                          0.0008144758584702261,  0.0008144758584703776,
+                          0.0008144758584716199,  0.0009212791124099626,
+                          0.0009212791124102366,  0.0009212791124106396,
+                          0.0009317064412002208,  0.0009317064412010393,
+                          0.0009317064412011602,  0.000938800900399439,
+                          0.0009388009003994993,  0.0009388009003998087,
+                          0.0011277704236273554,  0.0011277704236277617,
+                          0.0011277704236277934,  0.0011558578573166221,
+                          0.001155857857316737,   0.0011558578573169188,
+                          0.001177874388273861,   0.001177874388275692,
+                          0.0011778743882767226,  0.00126388507718553,
+                          0.0012638850771856667,  0.001263885077185743,
+                          0.00130986012194251,    0.0013098601219425701,
+                          0.0013098601219427271,  0.0013824952238897048,
+                          0.0013824952238897677,  0.0013824952238899353,
+                          0.0014385650798460579,  0.0015235584390117577,
+                          0.0015235584390132365,  0.001523558439014583,
+                          0.001553388089457361,   0.001553388089457734,
+                          0.0015533880894588244,  0.0015785619534530034,
+                          0.0015785619534532253,  0.0015785619534532372,
+                          0.0016097788682893919,  0.001609778868289749,
+                          0.0016097788682897544,  0.0016802161392982585,
+                          0.00168021613929846,    0.0016802161392987117,
+                          0.0017764529129038432,  0.00177645291290503,
+                          0.0017764529129061567,  0.0018087386127984568,
+                          0.0018087386127986667,  0.0018087386127988634,
+                          0.0019104583647188483,  0.0019104583647194969,
+                          0.00191045836472014,    0.0021274466568828383,
+                          0.00212744665688324,    0.002127446656884127,
+                          0.0023400227806175985,  0.00256011618791495,
+                          0.0025601161879153333,  0.0025601161879153585,
+                          0.00257113625207729,    0.0025711362520778134,
+                          0.0025711362520780268,  0.002834280437245222,
+                          0.002961688555453913,   0.002961688555454135,
+                          0.002961688555454362,   0.0031167609951133716,
+                          0.003116760995113398,   0.0031167609951139037,
+                          0.003303366568208123,   0.00330336656820916,
+                          0.0033033665682094884,  0.004303940769897278};
       return {std::move(x), std::move(w)};
     }
     else if (m == 14)
     {
       // Xiao Gimbutas, 4 points, degree 14
-      std::vector<double> x
+      std::vector<T> x
           = {0.006857703680959708, 0.006857703681460325, 0.9794268889578419,
              0.009252353846064727, 0.004788844763930928, 0.03329961033004269,
              0.9526591910590293,   0.009252353846425697, 0.03329961033024104,
@@ -4265,101 +4280,101 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.332296083385749,    0.3494651707568161,   0.1644327097772045,
              0.3494651707565804,   0.1538060360803426,   0.1644327097771141,
              0.2432210319415151,   0.2432210319416702,   0.2703369041747087};
-      std::vector<double> w = {2.2105078592571967e-05, 5.104037863193469e-05,
-                               5.1040378634203715e-05, 5.104037863543036e-05,
-                               6.442538948289391e-05,  6.442538948628821e-05,
-                               6.442538948864303e-05,  0.0001664251559695554,
-                               0.00016642515597055306, 0.00016642515597261462,
-                               0.00016751105250402333, 0.00016751105250589703,
-                               0.00016751105250894984, 0.0002517305490836875,
-                               0.00025173054908493396, 0.000251730549085241,
-                               0.0002595061872553382,  0.00025950618726126,
-                               0.0002595061872718605,  0.00026235085677183735,
-                               0.00026235085677843987, 0.0002623508567806215,
-                               0.0002896234674114693,  0.00028962346741212385,
-                               0.00028962346741429767, 0.00032793268910043645,
-                               0.0003279326891004587,  0.0003279326891011032,
-                               0.00033555287853835234, 0.0003355528785454428,
-                               0.0003355528785475206,  0.00033972253178854585,
-                               0.0003397225317983497,  0.00033972253180672413,
-                               0.0003441188150776556,  0.000344118815078894,
-                               0.00034411881507963863, 0.0003761105389994102,
-                               0.0003761105390067088,  0.00037611053901267236,
-                               0.0003795403780601865,  0.00037954037806408534,
-                               0.00037954037806870296, 0.0004344437592961113,
-                               0.00043444375930333496, 0.00043444375930493687,
-                               0.00043682384903025753, 0.000436823849034062,
-                               0.00043682384903561935, 0.0004725137441075373,
-                               0.00047251374410967945, 0.0004725137441096982,
-                               0.0004780758505185763,  0.0004780758505195665,
-                               0.0004780758505243325,  0.0004793254756053175,
-                               0.000505119620061448,   0.0005051196200666875,
-                               0.0005051196200669975,  0.0005119272825804478,
-                               0.0005119272825807408,  0.0005119272825811382,
-                               0.0005134274075967697,  0.0005134274075983005,
-                               0.0005134274075996252,  0.000515837164893621,
-                               0.0005158371648967786,  0.0005158371649003289,
-                               0.0005239737595642078,  0.000523973759571332,
-                               0.0005239737595797443,  0.0005773932407917512,
-                               0.0005773932407934662,  0.0005773932407945836,
-                               0.0005790788253746123,  0.0005790788253774553,
-                               0.0005790788253779831,  0.0006040034240449698,
-                               0.000604003424045841,   0.0006040034240459377,
-                               0.0006139296700493458,  0.00061392967005271,
-                               0.00061392967005407,    0.0006336953465478912,
-                               0.000633695346548282,   0.0006336953465503019,
-                               0.0006348790199076738,  0.0006348790199103522,
-                               0.0006348790199122382,  0.0006452115628213609,
-                               0.0006452115628249428,  0.0006452115628287022,
-                               0.0006583108630969198,  0.0006583108630977938,
-                               0.0006583108631030258,  0.0006802125901020557,
-                               0.0006802125901023802,  0.0006802125901092864,
-                               0.0007200311129131547,  0.0007200311129157382,
-                               0.0007200311129206584,  0.0007932872325677078,
-                               0.0008076554699327818,  0.0008076554699409858,
-                               0.0008076554699433273,  0.0008218351357600976,
-                               0.0008218351357606448,  0.0008218351357671569,
-                               0.0009040682164432678,  0.0009040682164456141,
-                               0.0009040682164485006,  0.0009101648818636473,
-                               0.0009101648818741396,  0.0009101648818818196,
-                               0.0009545436306200294,  0.0009545436306268908,
-                               0.0009545436306312901,  0.001116608586184538,
-                               0.0011166085861889575,  0.0011166085861902028,
-                               0.001224916907034844,   0.0012249169070348833,
-                               0.0012249169070411472,  0.0013681663198938994,
-                               0.0013681663199072208,  0.0013681663199158513,
-                               0.0014250918814340463,  0.0014250918814431518,
-                               0.0014250918814463257,  0.001517977935285033,
-                               0.0015179779352933332,  0.0015179779352944818,
-                               0.001521769855485114,   0.001521769855489261,
-                               0.0015217698554902874,  0.0015499925409594095,
-                               0.0015499925409598898,  0.0015499925409610817,
-                               0.0015744566170081877,  0.0015744566170082241,
-                               0.0015744566170109685,  0.0016030264549198375,
-                               0.0016030264549219807,  0.0016030264549262445,
-                               0.0016739002367449065,  0.00167390023675795,
-                               0.0016739002367584183,  0.0016764283713183198,
-                               0.0016764283713183751,  0.0016764283713199717,
-                               0.001679265691424395,   0.0016792656914285016,
-                               0.0016792656914316033,  0.001744383239019985,
-                               0.001744383239027185,   0.0017443832390316317,
-                               0.0018482705191982616,  0.0018482705192122333,
-                               0.0018482705192153315,  0.00191279023267428,
-                               0.0019127902326753633,  0.0019127902326829017,
-                               0.00220492904019695,    0.0022049290401975953,
-                               0.002204929040208505,   0.00245029757423239,
-                               0.0024502975742393385,  0.0024502975742462865,
-                               0.002481588450245397,   0.0025078657023787183,
-                               0.0025078657023794634,  0.0025078657023869535,
-                               0.002703211730841763,   0.002983445658017808,
-                               0.00298344565801923,    0.0029834456580193486,
-                               0.0031781597181588447};
+      std::vector<T> w = {2.2105078592571967e-05, 5.104037863193469e-05,
+                          5.1040378634203715e-05, 5.104037863543036e-05,
+                          6.442538948289391e-05,  6.442538948628821e-05,
+                          6.442538948864303e-05,  0.0001664251559695554,
+                          0.00016642515597055306, 0.00016642515597261462,
+                          0.00016751105250402333, 0.00016751105250589703,
+                          0.00016751105250894984, 0.0002517305490836875,
+                          0.00025173054908493396, 0.000251730549085241,
+                          0.0002595061872553382,  0.00025950618726126,
+                          0.0002595061872718605,  0.00026235085677183735,
+                          0.00026235085677843987, 0.0002623508567806215,
+                          0.0002896234674114693,  0.00028962346741212385,
+                          0.00028962346741429767, 0.00032793268910043645,
+                          0.0003279326891004587,  0.0003279326891011032,
+                          0.00033555287853835234, 0.0003355528785454428,
+                          0.0003355528785475206,  0.00033972253178854585,
+                          0.0003397225317983497,  0.00033972253180672413,
+                          0.0003441188150776556,  0.000344118815078894,
+                          0.00034411881507963863, 0.0003761105389994102,
+                          0.0003761105390067088,  0.00037611053901267236,
+                          0.0003795403780601865,  0.00037954037806408534,
+                          0.00037954037806870296, 0.0004344437592961113,
+                          0.00043444375930333496, 0.00043444375930493687,
+                          0.00043682384903025753, 0.000436823849034062,
+                          0.00043682384903561935, 0.0004725137441075373,
+                          0.00047251374410967945, 0.0004725137441096982,
+                          0.0004780758505185763,  0.0004780758505195665,
+                          0.0004780758505243325,  0.0004793254756053175,
+                          0.000505119620061448,   0.0005051196200666875,
+                          0.0005051196200669975,  0.0005119272825804478,
+                          0.0005119272825807408,  0.0005119272825811382,
+                          0.0005134274075967697,  0.0005134274075983005,
+                          0.0005134274075996252,  0.000515837164893621,
+                          0.0005158371648967786,  0.0005158371649003289,
+                          0.0005239737595642078,  0.000523973759571332,
+                          0.0005239737595797443,  0.0005773932407917512,
+                          0.0005773932407934662,  0.0005773932407945836,
+                          0.0005790788253746123,  0.0005790788253774553,
+                          0.0005790788253779831,  0.0006040034240449698,
+                          0.000604003424045841,   0.0006040034240459377,
+                          0.0006139296700493458,  0.00061392967005271,
+                          0.00061392967005407,    0.0006336953465478912,
+                          0.000633695346548282,   0.0006336953465503019,
+                          0.0006348790199076738,  0.0006348790199103522,
+                          0.0006348790199122382,  0.0006452115628213609,
+                          0.0006452115628249428,  0.0006452115628287022,
+                          0.0006583108630969198,  0.0006583108630977938,
+                          0.0006583108631030258,  0.0006802125901020557,
+                          0.0006802125901023802,  0.0006802125901092864,
+                          0.0007200311129131547,  0.0007200311129157382,
+                          0.0007200311129206584,  0.0007932872325677078,
+                          0.0008076554699327818,  0.0008076554699409858,
+                          0.0008076554699433273,  0.0008218351357600976,
+                          0.0008218351357606448,  0.0008218351357671569,
+                          0.0009040682164432678,  0.0009040682164456141,
+                          0.0009040682164485006,  0.0009101648818636473,
+                          0.0009101648818741396,  0.0009101648818818196,
+                          0.0009545436306200294,  0.0009545436306268908,
+                          0.0009545436306312901,  0.001116608586184538,
+                          0.0011166085861889575,  0.0011166085861902028,
+                          0.001224916907034844,   0.0012249169070348833,
+                          0.0012249169070411472,  0.0013681663198938994,
+                          0.0013681663199072208,  0.0013681663199158513,
+                          0.0014250918814340463,  0.0014250918814431518,
+                          0.0014250918814463257,  0.001517977935285033,
+                          0.0015179779352933332,  0.0015179779352944818,
+                          0.001521769855485114,   0.001521769855489261,
+                          0.0015217698554902874,  0.0015499925409594095,
+                          0.0015499925409598898,  0.0015499925409610817,
+                          0.0015744566170081877,  0.0015744566170082241,
+                          0.0015744566170109685,  0.0016030264549198375,
+                          0.0016030264549219807,  0.0016030264549262445,
+                          0.0016739002367449065,  0.00167390023675795,
+                          0.0016739002367584183,  0.0016764283713183198,
+                          0.0016764283713183751,  0.0016764283713199717,
+                          0.001679265691424395,   0.0016792656914285016,
+                          0.0016792656914316033,  0.001744383239019985,
+                          0.001744383239027185,   0.0017443832390316317,
+                          0.0018482705191982616,  0.0018482705192122333,
+                          0.0018482705192153315,  0.00191279023267428,
+                          0.0019127902326753633,  0.0019127902326829017,
+                          0.00220492904019695,    0.0022049290401975953,
+                          0.002204929040208505,   0.00245029757423239,
+                          0.0024502975742393385,  0.0024502975742462865,
+                          0.002481588450245397,   0.0025078657023787183,
+                          0.0025078657023794634,  0.0025078657023869535,
+                          0.002703211730841763,   0.002983445658017808,
+                          0.00298344565801923,    0.0029834456580193486,
+                          0.0031781597181588447};
       return {std::move(x), std::move(w)};
     }
     else if (m == 15)
     {
       // Xiao Gimbutas, 4 points, degree 15
-      std::vector<double> x
+      std::vector<T> x
           = {0.02484175292278384,   0.008848046489432548,  0.9372660613009632,
              0.008848046489437518,  0.02904413928681676,   0.9372660613009608,
              0.02904413928681213,   0.02484175292278018,   0.9372660613009554,
@@ -4574,113 +4589,113 @@ make_xiao_gimbutas_quadrature(cell::type celltype, int m)
              0.1933538189344859,    0.3430667724481031,    0.2910280425505916,
              0.1725513660668472,    0.1933538189345398,    0.2910280425506466,
              0.1627284320161738,    0.1627284320161655,    0.5118147039514781};
-      std::vector<double> w = {5.0949499461256536e-05, 5.094949946129215e-05,
-                               5.0949499461363764e-05, 8.091578025333847e-05,
-                               8.09157802534108e-05,   8.091578025341743e-05,
-                               9.003858468151016e-05,  9.003858468155147e-05,
-                               9.003858468155359e-05,  0.00011096788435521842,
-                               0.00011096788435523033, 0.00011096788435523135,
-                               0.00014301129642297394, 0.0001430112964229811,
-                               0.00014301129642299053, 0.0001435686140277277,
-                               0.00014356861402773594, 0.00014356861402778517,
-                               0.00017047619231215117, 0.00017047619231217833,
-                               0.00017047619231222533, 0.00017795546384389533,
-                               0.00017795546384394634, 0.00017795546384398616,
-                               0.00018791251008007368, 0.00018791251008008316,
-                               0.00018791251008011434, 0.00018853254351190317,
-                               0.00018853254351192117, 0.0001885325435119355,
-                               0.000203420107255822,   0.00020342010725582285,
-                               0.00020342010725585117, 0.00023831202538122532,
-                               0.000238312025381286,   0.00023831202538146515,
-                               0.00024702490709429967, 0.0002470249070943653,
-                               0.00024702490709436765, 0.00025848719013847165,
-                               0.00025848719013854435, 0.00025848719013861867,
-                               0.000265583230932468,   0.00026558323093246863,
-                               0.0002655832309324773,  0.00029768749691803264,
-                               0.0002976874969180593,  0.000297687496918183,
-                               0.0002989438206765175,  0.0002989438206765232,
-                               0.0002989438206765322,  0.0003205499531253637,
-                               0.0003205499531254577,  0.0003205499531255287,
-                               0.0003351988396668535,  0.00033519883966689985,
-                               0.00033519883966691964, 0.000357511187619173,
-                               0.000357511187619211,   0.00035751118761923035,
-                               0.0003766593641388355,  0.00037665936413884397,
-                               0.00037665936413898253, 0.0004170560045706985,
-                               0.00041705600457073996, 0.00041705600457075487,
-                               0.0004206908093603285,  0.0004206908093604563,
-                               0.00042069080936051436, 0.0004403404439190608,
-                               0.0004403404439191172,  0.00044034044391935267,
-                               0.0004510176089945963,  0.00045101760899459884,
-                               0.0004510176089946125,  0.00048092536064853767,
-                               0.0004809253606485387,  0.0004809253606485603,
-                               0.0004921683513968802,  0.000492168351396902,
-                               0.0004921683513969398,  0.0004972651138408006,
-                               0.0004972651138408805,  0.0004972651138410044,
-                               0.0005046209614997817,  0.0005046209614998177,
-                               0.0005046209614999028,  0.0005053606662589742,
-                               0.0005053606662590495,  0.0005053606662590833,
-                               0.000507488410074817,   0.000507488410074818,
-                               0.0005074884100748625,  0.0005296283626829228,
-                               0.0005296283626829545,  0.0005296283626830274,
-                               0.0005961391122951584,  0.0005961391122951768,
-                               0.0005961391122952683,  0.0006063199394915311,
-                               0.0006063199394916362,  0.0006063199394917882,
-                               0.0006305106887630419,  0.0006305106887630918,
-                               0.0006305106887631449,  0.0006490437338464095,
-                               0.00064904373384643,    0.0006490437338465401,
-                               0.0006784672244327731,  0.0006784672244328733,
-                               0.0006784672244328974,  0.0007018738744954993,
-                               0.0007018738744955992,  0.0007018738744956027,
-                               0.0007044998612670034,  0.0007044998612670082,
-                               0.0007044998612670204,  0.0007123210856255668,
-                               0.0007123210856256313,  0.0007123210856256491,
-                               0.0007180840505148808,  0.0007180840505148981,
-                               0.0007180840505149077,  0.0007320095837554124,
-                               0.000732009583755433,   0.0007320095837555596,
-                               0.0007487529433902918,  0.0007487529433903294,
-                               0.0007487529433904035,  0.0007633124179686057,
-                               0.0007633124179687115,  0.0007633124179687585,
-                               0.0007665117920190594,  0.0007665117920191146,
-                               0.0007665117920191253,  0.000782684926528277,
-                               0.0007826849265283078,  0.0007826849265283831,
-                               0.0008216462765614071,  0.0008216462765614102,
-                               0.0008216462765614202,  0.0008401904995806664,
-                               0.0008401904995807659,  0.000840190499580874,
-                               0.0008649691231126786,  0.0008649691231126842,
-                               0.0008649691231126886,  0.0009771082729624124,
-                               0.0009771082729625377,  0.0009771082729625865,
-                               0.001003226140444279,   0.0010032261404442897,
-                               0.001003226140444467,   0.0011107068782117186,
-                               0.0011107068782118005,  0.001110706878211849,
-                               0.0011541194419159395,  0.0011541194419163337,
-                               0.0011541194419164846,  0.0011888869781639686,
-                               0.0011888869781640197,  0.0011888869781641177,
-                               0.0012039315081215961,  0.0012039315081217672,
-                               0.0012039315081217863,  0.0012677548100906834,
-                               0.0012677548100907092,  0.0012677548100908191,
-                               0.0013075346711990234,  0.001307534671199086,
-                               0.0013075346711991051,  0.0013386099794468343,
-                               0.0013386099794469022,  0.0013386099794470629,
-                               0.0013454689764230332,  0.0013454689764231366,
-                               0.0013454689764231468,  0.001398358195255936,
-                               0.0013983581952560142,  0.0013983581952561012,
-                               0.001511722175784935,   0.001536829401278278,
-                               0.0015368294012785917,  0.0015368294012786117,
-                               0.001568496765944744,   0.0016371705077032532,
-                               0.0016371705077033274,  0.0016371705077033551,
-                               0.0016680098648530085,  0.0016680098648530152,
-                               0.0016680098648534517,  0.0016801415184265068,
-                               0.0016801415184265085,  0.0016801415184265866,
-                               0.0016912148002698566,  0.0016912148002698867,
-                               0.0016912148002702135,  0.0018093524420684734,
-                               0.0018093524420685033,  0.001809352442068565,
-                               0.0018270943485695949,  0.0018270943485701834,
-                               0.0018270943485707415,  0.0018747167751995899,
-                               0.0018892190654910483,  0.0018892190654914516,
-                               0.0018892190654915483,  0.0019096117089971417,
-                               0.0019096117089973984,  0.0019096117089977185,
-                               0.002049458570185687,   0.00204945857018569,
-                               0.002049458570187277,   0.0024074895531075533};
+      std::vector<T> w = {5.0949499461256536e-05, 5.094949946129215e-05,
+                          5.0949499461363764e-05, 8.091578025333847e-05,
+                          8.09157802534108e-05,   8.091578025341743e-05,
+                          9.003858468151016e-05,  9.003858468155147e-05,
+                          9.003858468155359e-05,  0.00011096788435521842,
+                          0.00011096788435523033, 0.00011096788435523135,
+                          0.00014301129642297394, 0.0001430112964229811,
+                          0.00014301129642299053, 0.0001435686140277277,
+                          0.00014356861402773594, 0.00014356861402778517,
+                          0.00017047619231215117, 0.00017047619231217833,
+                          0.00017047619231222533, 0.00017795546384389533,
+                          0.00017795546384394634, 0.00017795546384398616,
+                          0.00018791251008007368, 0.00018791251008008316,
+                          0.00018791251008011434, 0.00018853254351190317,
+                          0.00018853254351192117, 0.0001885325435119355,
+                          0.000203420107255822,   0.00020342010725582285,
+                          0.00020342010725585117, 0.00023831202538122532,
+                          0.000238312025381286,   0.00023831202538146515,
+                          0.00024702490709429967, 0.0002470249070943653,
+                          0.00024702490709436765, 0.00025848719013847165,
+                          0.00025848719013854435, 0.00025848719013861867,
+                          0.000265583230932468,   0.00026558323093246863,
+                          0.0002655832309324773,  0.00029768749691803264,
+                          0.0002976874969180593,  0.000297687496918183,
+                          0.0002989438206765175,  0.0002989438206765232,
+                          0.0002989438206765322,  0.0003205499531253637,
+                          0.0003205499531254577,  0.0003205499531255287,
+                          0.0003351988396668535,  0.00033519883966689985,
+                          0.00033519883966691964, 0.000357511187619173,
+                          0.000357511187619211,   0.00035751118761923035,
+                          0.0003766593641388355,  0.00037665936413884397,
+                          0.00037665936413898253, 0.0004170560045706985,
+                          0.00041705600457073996, 0.00041705600457075487,
+                          0.0004206908093603285,  0.0004206908093604563,
+                          0.00042069080936051436, 0.0004403404439190608,
+                          0.0004403404439191172,  0.00044034044391935267,
+                          0.0004510176089945963,  0.00045101760899459884,
+                          0.0004510176089946125,  0.00048092536064853767,
+                          0.0004809253606485387,  0.0004809253606485603,
+                          0.0004921683513968802,  0.000492168351396902,
+                          0.0004921683513969398,  0.0004972651138408006,
+                          0.0004972651138408805,  0.0004972651138410044,
+                          0.0005046209614997817,  0.0005046209614998177,
+                          0.0005046209614999028,  0.0005053606662589742,
+                          0.0005053606662590495,  0.0005053606662590833,
+                          0.000507488410074817,   0.000507488410074818,
+                          0.0005074884100748625,  0.0005296283626829228,
+                          0.0005296283626829545,  0.0005296283626830274,
+                          0.0005961391122951584,  0.0005961391122951768,
+                          0.0005961391122952683,  0.0006063199394915311,
+                          0.0006063199394916362,  0.0006063199394917882,
+                          0.0006305106887630419,  0.0006305106887630918,
+                          0.0006305106887631449,  0.0006490437338464095,
+                          0.00064904373384643,    0.0006490437338465401,
+                          0.0006784672244327731,  0.0006784672244328733,
+                          0.0006784672244328974,  0.0007018738744954993,
+                          0.0007018738744955992,  0.0007018738744956027,
+                          0.0007044998612670034,  0.0007044998612670082,
+                          0.0007044998612670204,  0.0007123210856255668,
+                          0.0007123210856256313,  0.0007123210856256491,
+                          0.0007180840505148808,  0.0007180840505148981,
+                          0.0007180840505149077,  0.0007320095837554124,
+                          0.000732009583755433,   0.0007320095837555596,
+                          0.0007487529433902918,  0.0007487529433903294,
+                          0.0007487529433904035,  0.0007633124179686057,
+                          0.0007633124179687115,  0.0007633124179687585,
+                          0.0007665117920190594,  0.0007665117920191146,
+                          0.0007665117920191253,  0.000782684926528277,
+                          0.0007826849265283078,  0.0007826849265283831,
+                          0.0008216462765614071,  0.0008216462765614102,
+                          0.0008216462765614202,  0.0008401904995806664,
+                          0.0008401904995807659,  0.000840190499580874,
+                          0.0008649691231126786,  0.0008649691231126842,
+                          0.0008649691231126886,  0.0009771082729624124,
+                          0.0009771082729625377,  0.0009771082729625865,
+                          0.001003226140444279,   0.0010032261404442897,
+                          0.001003226140444467,   0.0011107068782117186,
+                          0.0011107068782118005,  0.001110706878211849,
+                          0.0011541194419159395,  0.0011541194419163337,
+                          0.0011541194419164846,  0.0011888869781639686,
+                          0.0011888869781640197,  0.0011888869781641177,
+                          0.0012039315081215961,  0.0012039315081217672,
+                          0.0012039315081217863,  0.0012677548100906834,
+                          0.0012677548100907092,  0.0012677548100908191,
+                          0.0013075346711990234,  0.001307534671199086,
+                          0.0013075346711991051,  0.0013386099794468343,
+                          0.0013386099794469022,  0.0013386099794470629,
+                          0.0013454689764230332,  0.0013454689764231366,
+                          0.0013454689764231468,  0.001398358195255936,
+                          0.0013983581952560142,  0.0013983581952561012,
+                          0.001511722175784935,   0.001536829401278278,
+                          0.0015368294012785917,  0.0015368294012786117,
+                          0.001568496765944744,   0.0016371705077032532,
+                          0.0016371705077033274,  0.0016371705077033551,
+                          0.0016680098648530085,  0.0016680098648530152,
+                          0.0016680098648534517,  0.0016801415184265068,
+                          0.0016801415184265085,  0.0016801415184265866,
+                          0.0016912148002698566,  0.0016912148002698867,
+                          0.0016912148002702135,  0.0018093524420684734,
+                          0.0018093524420685033,  0.001809352442068565,
+                          0.0018270943485695949,  0.0018270943485701834,
+                          0.0018270943485707415,  0.0018747167751995899,
+                          0.0018892190654910483,  0.0018892190654914516,
+                          0.0018892190654915483,  0.0019096117089971417,
+                          0.0019096117089973984,  0.0019096117089977185,
+                          0.002049458570185687,   0.00204945857018569,
+                          0.002049458570187277,   0.0024074895531075533};
       return {std::move(x), std::move(w)};
     }
     else
@@ -4723,47 +4738,72 @@ quadrature::type quadrature::get_default_rule(cell::type celltype, int m)
     return type::gauss_jacobi;
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2>
+template <std::floating_point T>
+std::array<std::vector<T>, 2>
 quadrature::make_quadrature(quadrature::type rule, cell::type celltype, int m)
 {
   switch (rule)
   {
   case quadrature::type::Default:
-    return make_quadrature(get_default_rule(celltype, m), celltype, m);
+    return make_quadrature<T>(get_default_rule(celltype, m), celltype, m);
   case quadrature::type::gauss_jacobi:
-    return make_gauss_jacobi_quadrature(celltype, m);
+    return make_gauss_jacobi_quadrature<T>(celltype, m);
   case quadrature::type::gll:
-    return make_gll_quadrature(celltype, m);
+    return make_gll_quadrature<T>(celltype, m);
   case quadrature::type::xiao_gimbutas:
-    return make_xiao_gimbutas_quadrature(celltype, m);
+    return make_xiao_gimbutas_quadrature<T>(celltype, m);
   case quadrature::type::zienkiewicz_taylor:
-    return make_zienkiewicz_taylor_quadrature(celltype, m);
+    return make_zienkiewicz_taylor_quadrature<T>(celltype, m);
   case quadrature::type::keast:
-    return make_keast_quadrature(celltype, m);
+    return make_keast_quadrature<T>(celltype, m);
   case quadrature::type::strang_fix:
-    return make_strang_fix_quadrature(celltype, m);
+    return make_strang_fix_quadrature<T>(celltype, m);
   default:
     throw std::runtime_error("Unknown quadrature rule");
   }
 }
 //-----------------------------------------------------------------------------
-std::array<std::vector<double>, 2>
-quadrature::make_quadrature(cell::type celltype, int m)
+template <std::floating_point T>
+std::array<std::vector<T>, 2> quadrature::make_quadrature(cell::type celltype,
+                                                          int m)
 {
-  return make_quadrature(quadrature::type::Default, celltype, m);
+  return make_quadrature<T>(quadrature::type::Default, celltype, m);
 }
 //-----------------------------------------------------------------------------
-std::vector<double> quadrature::get_gl_points(int m)
+template <std::floating_point T>
+std::vector<T> quadrature::get_gl_points(int m)
 {
-  std::vector<double> pts = compute_gauss_jacobi_points(0, m);
+  std::vector<T> pts = compute_gauss_jacobi_points<T>(0, m);
   std::transform(pts.begin(), pts.end(), pts.begin(),
                  [](auto x) { return 0.5 + 0.5 * x; });
   return pts;
 }
 //-----------------------------------------------------------------------------
-std::vector<double> quadrature::get_gll_points(int m)
+template <std::floating_point T>
+std::vector<T> quadrature::get_gll_points(int m)
 {
-  auto [pts, wts] = make_gll_line(m);
+  auto [pts, wts] = make_gll_line<T>(m);
   return pts;
 }
+//-----------------------------------------------------------------------------
+
+/// @cond
+// Explicit instantiation for double and float
+template std::array<std::vector<float>, 2>
+quadrature::make_quadrature(quadrature::type, cell::type, int);
+template std::array<std::vector<double>, 2>
+quadrature::make_quadrature(quadrature::type, cell::type, int);
+
+template std::array<std::vector<float>, 2>
+quadrature::make_quadrature(cell::type, int);
+template std::array<std::vector<double>, 2>
+quadrature::make_quadrature(cell::type, int);
+
+template std::vector<float> quadrature::get_gl_points(int);
+template std::vector<double> quadrature::get_gl_points(int);
+
+template std::vector<float> quadrature::get_gll_points(int);
+template std::vector<double> quadrature::get_gll_points(int);
+/// @endcond
+
 //-----------------------------------------------------------------------------

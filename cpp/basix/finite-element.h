@@ -25,35 +25,21 @@ namespace basix
 
 namespace impl
 {
-using mdspan2_t
-    = std::experimental::mdspan<double,
-                                std::experimental::dextents<std::size_t, 2>>;
-using mdspan4_t
-    = std::experimental::mdspan<double,
-                                std::experimental::dextents<std::size_t, 4>>;
-using cmdspan2_t
-    = std::experimental::mdspan<const double,
-                                std::experimental::dextents<std::size_t, 2>>;
-using cmdspan3_t
-    = std::experimental::mdspan<const double,
-                                std::experimental::dextents<std::size_t, 3>>;
-using cmdspan4_t
-    = std::experimental::mdspan<const double,
-                                std::experimental::dextents<std::size_t, 4>>;
-
-using mdarray2_t
-    = std::experimental::mdarray<double,
-                                 std::experimental::dextents<std::size_t, 2>>;
-using mdarray4_t
-    = std::experimental::mdarray<double,
-                                 std::experimental::dextents<std::size_t, 4>>;
+template <typename T, std::size_t d>
+using mdspan_t
+    = std::experimental::mdspan<T, std::experimental::dextents<std::size_t, d>>;
+template <typename T, std::size_t d>
+using mdarray_t
+    = std::experimental::mdarray<T,
+                                 std::experimental::dextents<std::size_t, d>>;
 
 /// Create a container of cmdspan2_t objects from a container of
 /// mdarray2_t objects
-inline std::array<std::vector<cmdspan2_t>, 4>
-to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
+template <typename T>
+std::array<std::vector<mdspan_t<const T, 2>>, 4>
+to_mdspan(std::array<std::vector<mdarray_t<T, 2>>, 4>& x)
 {
-  std::array<std::vector<cmdspan2_t>, 4> x1;
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> x1;
   for (std::size_t i = 0; i < x.size(); ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
       x1[i].emplace_back(x[i][j].data(), x[i][j].extents());
@@ -63,10 +49,11 @@ to_mdspan(std::array<std::vector<mdarray2_t>, 4>& x)
 
 /// Create a container of cmdspan4_t objects from a container of
 /// mdarray4_t objects
-inline std::array<std::vector<cmdspan4_t>, 4>
-to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
+template <typename T>
+std::array<std::vector<mdspan_t<const T, 4>>, 4>
+to_mdspan(std::array<std::vector<mdarray_t<T, 4>>, 4>& M)
 {
-  std::array<std::vector<cmdspan4_t>, 4> M1;
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> M1;
   for (std::size_t i = 0; i < M.size(); ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
       M1[i].emplace_back(M[i][j].data(), M[i][j].extents());
@@ -76,28 +63,30 @@ to_mdspan(std::array<std::vector<mdarray4_t>, 4>& M)
 
 /// Create a container of cmdspan2_t objects from containers holding
 /// data buffers and shapes
-inline std::array<std::vector<cmdspan2_t>, 4>
-to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& x,
+template <typename T>
+std::array<std::vector<mdspan_t<const T, 2>>, 4>
+to_mdspan(const std::array<std::vector<std::vector<T>>, 4>& x,
           const std::array<std::vector<std::array<std::size_t, 2>>, 4>& shape)
 {
-  std::array<std::vector<cmdspan2_t>, 4> x1;
+  std::array<std::vector<mdspan_t<const T, 2>>, 4> x1;
   for (std::size_t i = 0; i < x.size(); ++i)
     for (std::size_t j = 0; j < x[i].size(); ++j)
-      x1[i].push_back(cmdspan2_t(x[i][j].data(), shape[i][j]));
+      x1[i].push_back(mdspan_t<const T, 2>(x[i][j].data(), shape[i][j]));
 
   return x1;
 }
 
 /// Create a container of cmdspan4_t objects from containers holding
 /// data buffers and shapes
-inline std::array<std::vector<cmdspan4_t>, 4>
-to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
+template <typename T>
+std::array<std::vector<mdspan_t<const T, 4>>, 4>
+to_mdspan(const std::array<std::vector<std::vector<T>>, 4>& M,
           const std::array<std::vector<std::array<std::size_t, 4>>, 4>& shape)
 {
-  std::array<std::vector<cmdspan4_t>, 4> M1;
+  std::array<std::vector<mdspan_t<const T, 4>>, 4> M1;
   for (std::size_t i = 0; i < M.size(); ++i)
     for (std::size_t j = 0; j < M[i].size(); ++j)
-      M1[i].push_back(cmdspan4_t(M[i][j].data(), shape[i][j]));
+      M1[i].push_back(mdspan_t<const T, 4>(M[i][j].data(), shape[i][j]));
 
   return M1;
 }
@@ -107,9 +96,8 @@ to_mdspan(const std::array<std::vector<std::vector<double>>, 4>& M,
 namespace element
 {
 /// Typedef for mdspan
-using cmdspan2_t = impl::cmdspan2_t;
-/// Typedef for mdspan
-using cmdspan4_t = impl::cmdspan4_t;
+template <typename T, std::size_t d>
+using mdspan_t = impl::mdspan_t<T, d>;
 
 /// Creates a version of the interpolation points, interpolation
 /// matrices and entity transformation that represent a discontinuous
@@ -130,9 +118,10 @@ std::tuple<std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::array<std::size_t, 2>>, 4>,
            std::array<std::vector<std::vector<double>>, 4>,
            std::array<std::vector<std::array<std::size_t, 4>>, 4>>
-make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
-                   const std::array<std::vector<cmdspan4_t>, 4>& M,
-                   std::size_t tdim, std::size_t value_size);
+make_discontinuous(
+    const std::array<std::vector<mdspan_t<const double, 2>>, 4>& x,
+    const std::array<std::vector<mdspan_t<const double, 4>>, 4>& M,
+    std::size_t tdim, std::size_t value_size);
 
 } // namespace element
 
@@ -143,12 +132,10 @@ make_discontinuous(const std::array<std::vector<cmdspan2_t>, 4>& x,
 /// type, when tabulating.
 class FiniteElement
 {
-  using cmdspan2_t
-      = std::experimental::mdspan<const double,
-                                  std::experimental::dextents<std::size_t, 2>>;
-  using cmdspan4_t
-      = std::experimental::mdspan<const double,
-                                  std::experimental::dextents<std::size_t, 4>>;
+  template <typename T, std::size_t d>
+  using mdspan_t
+      = std::experimental::mdspan<T,
+                                  std::experimental::dextents<std::size_t, d>>;
 
 public:
   /// @brief Construct a finite element.
@@ -325,9 +312,10 @@ public:
   /// to a new permuted order
   FiniteElement(
       element::family family, cell::type cell_type, int degree,
-      const std::vector<std::size_t>& value_shape, const cmdspan2_t& wcoeffs,
-      const std::array<std::vector<cmdspan2_t>, 4>& x,
-      const std::array<std::vector<cmdspan4_t>, 4>& M,
+      const std::vector<std::size_t>& value_shape,
+      mdspan_t<const double, 2> wcoeffs,
+      const std::array<std::vector<mdspan_t<const double, 2>>, 4>& x,
+      const std::array<std::vector<mdspan_t<const double, 4>>, 4>& M,
       int interpolation_nderivs, maps::type map_type,
       sobolev::space sobolev_space, bool discontinuous,
       int highest_complete_degree, int highest_degree,
@@ -392,7 +380,7 @@ public:
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
   std::pair<std::vector<double>, std::array<std::size_t, 4>>
-  tabulate(int nd, impl::cmdspan2_t x) const;
+  tabulate(int nd, impl::mdspan_t<const double, 2> x) const;
 
   /// Compute basis values and derivatives at set of points.
   ///
@@ -418,7 +406,7 @@ public:
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
   std::pair<std::vector<double>, std::array<std::size_t, 4>>
-  tabulate(int nd, const std::span<const double>& x,
+  tabulate(int nd, std::span<const double> x,
            std::array<std::size_t, 2> shape) const;
 
   /// Compute basis values and derivatives at set of points.
@@ -446,7 +434,8 @@ public:
   ///
   /// @todo Remove all internal dynamic memory allocation, pass scratch
   /// space as required
-  void tabulate(int nd, impl::cmdspan2_t x, impl::mdspan4_t basis) const;
+  void tabulate(int nd, impl::mdspan_t<const double, 2> x,
+                mdspan_t<double, 4> basis) const;
 
   /// Compute basis values and derivatives at set of points.
   ///
@@ -473,9 +462,9 @@ public:
   /// - The third index is the basis function index
   /// - The fourth index is the basis function component. Its has size
   /// one for scalar basis functions.
-  void tabulate(int nd, const std::span<const double>& x,
+  void tabulate(int nd, std::span<const double> x,
                 std::array<std::size_t, 2> xshape,
-                const std::span<double>& basis) const;
+                std::span<double> basis) const;
 
   /// Get the element cell type
   /// @return The cell type
@@ -553,8 +542,9 @@ public:
   /// @return The function values on the cell. The indices are [Jacobian
   /// index, point index, components].
   std::pair<std::vector<double>, std::array<std::size_t, 3>>
-  push_forward(impl::cmdspan3_t U, impl::cmdspan3_t J,
-               std::span<const double> detJ, impl::cmdspan3_t K) const;
+  push_forward(impl::mdspan_t<const double, 3> U,
+               impl::mdspan_t<const double, 3> J, std::span<const double> detJ,
+               impl::mdspan_t<const double, 3> K) const;
 
   /// Map function values from a physical cell to the reference
   /// @param[in] u The function values on the cell
@@ -564,8 +554,9 @@ public:
   /// @return The function values on the reference. The indices are
   /// [Jacobian index, point index, components].
   std::pair<std::vector<double>, std::array<std::size_t, 3>>
-  pull_back(impl::cmdspan3_t u, impl::cmdspan3_t J,
-            std::span<const double> detJ, impl::cmdspan3_t K) const;
+  pull_back(impl::mdspan_t<const double, 3> u,
+            impl::mdspan_t<const double, 3> J, std::span<const double> detJ,
+            impl::mdspan_t<const double, 3> K) const;
 
   /// Return a function that performs the appropriate
   /// push-forward/pull-back for the element type
@@ -745,7 +736,7 @@ public:
   ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void permute_dofs(const std::span<std::int32_t>& dofs,
+  void permute_dofs(std::span<std::int32_t> dofs,
                     std::uint32_t cell_info) const;
 
   /// Unpermute the dof numbering on a cell
@@ -755,7 +746,7 @@ public:
   ///
   /// @param[in,out] dofs The dof numbering for the cell
   /// @param cell_info The permutation info for the cell
-  void unpermute_dofs(const std::span<std::int32_t>& dofs,
+  void unpermute_dofs(std::span<std::int32_t> dofs,
                       std::uint32_t cell_info) const;
 
   /// Apply DOF transformations to some data
@@ -1247,15 +1238,14 @@ private:
 /// @param[in] highest_degree The degree of a polynomial in this element's
 /// polyset
 /// @return A custom finite element
-FiniteElement
-create_custom_element(cell::type cell_type,
-                      const std::vector<std::size_t>& value_shape,
-                      const impl::cmdspan2_t& wcoeffs,
-                      const std::array<std::vector<impl::cmdspan2_t>, 4>& x,
-                      const std::array<std::vector<impl::cmdspan4_t>, 4>& M,
-                      int interpolation_nderivs, maps::type map_type,
-                      sobolev::space sobolev_space, bool discontinuous,
-                      int highest_complete_degree, int highest_degree);
+FiniteElement create_custom_element(
+    cell::type cell_type, const std::vector<std::size_t>& value_shape,
+    const impl::mdspan_t<const double, 2>& wcoeffs,
+    const std::array<std::vector<impl::mdspan_t<const double, 2>>, 4>& x,
+    const std::array<std::vector<impl::mdspan_t<const double, 4>>, 4>& M,
+    int interpolation_nderivs, maps::type map_type,
+    sobolev::space sobolev_space, bool discontinuous,
+    int highest_complete_degree, int highest_degree);
 
 /// Create an element using a given Lagrange variant and a given DPC variant
 /// @param[in] family The element family
@@ -1351,8 +1341,8 @@ void FiniteElement::transform_data(
         if (cell_info >> (face_start + e) & 1)
         {
           op(std::span(v_size_t),
-             cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-             block_size);
+             mdspan_t<const double, 2>(matrix.first.data(), matrix.second),
+             data, dofstart, block_size);
         }
         dofstart += _edofs[1][e].size();
       }
@@ -1372,8 +1362,8 @@ void FiniteElement::transform_data(
           const auto& v_size_t = std::get<0>(m);
           const auto& matrix = std::get<1>(m);
           op(std::span(v_size_t),
-             cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-             block_size);
+             mdspan_t<const double, 2>(matrix.first.data(), matrix.second),
+             data, dofstart, block_size);
         }
 
         // Rotate a face
@@ -1383,8 +1373,8 @@ void FiniteElement::transform_data(
           const auto& v_size_t = std::get<0>(m);
           const auto& matrix = std::get<1>(m);
           op(std::span(v_size_t),
-             cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-             block_size);
+             mdspan_t<const double, 2>(matrix.first.data(), matrix.second),
+             data, dofstart, block_size);
         }
 
         // Reflect a face (post rotation)
@@ -1394,8 +1384,8 @@ void FiniteElement::transform_data(
           const auto& v_size_t = std::get<0>(m);
           const auto& matrix = std::get<1>(m);
           op(std::span(v_size_t),
-             cmdspan2_t(matrix.first.data(), matrix.second), data, dofstart,
-             block_size);
+             mdspan_t<const double, 2>(matrix.first.data(), matrix.second),
+             data, dofstart, block_size);
         }
 
         dofstart += _edofs[2][f].size();
